@@ -52,6 +52,22 @@ const SKYAT = `${RICH} window.__look(window.__state().rockLeftX - 300);`;
 
 
 const SCENES = {
+  // The call to build the bench, standing over the bare patch it will go on.
+  // The first thing a player is ever asked to press -- see raise.js -- so this
+  // is a picture of an empty yard with one button in it.
+  call: `window.__reset(); window.__crew(1); window.__give(100); window.__fast(2);
+         window.__look(window.__state().benchX - 380);`,
+
+  // ...and the same patch nine seconds after it was pressed: the fence, the
+  // tape, the bar, the one body swinging at it, and as much of the bench as has
+  // actually gone up.
+  benchup: `window.__reset(); window.__crew(1); window.__give(100); window.__fast(2);
+            requestAnimationFrame(() => {
+              document.getElementById('raise').click();
+              window.__fast(12);
+              window.__look(window.__state().benchX - 380);
+            });`,
+
   // Bodies, wearing everything the school sells, standing where you can see them.
   crew: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});

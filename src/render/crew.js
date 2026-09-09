@@ -22,19 +22,32 @@ import { S, bench, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawRunSwitch } from './machines.js';
 import { drawCircle, drawMark } from './marks.js';
+import { withRise } from './rise.js';
+import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 
 // The bench is not in the yard until there is something on it worth buying, and
 // once it is there it says so without being opened: a dot for something you can
 // afford this second, a flag for a heading you have never seen. A flag is worth
 // more than a dot -- one more row under `you` is not news, a whole new group is.
+//
+// It is also built rather than delivered (see raise.js), so while it is going
+// up it is drawn through the same clip every other rising building is: as much
+// of it as the work has actually done, from the ground up. The clamped block
+// stands two cells proud of the slab, so the box the clip is taken over starts
+// there rather than at the bench's own top -- otherwise the last thing to go on
+// would be the first thing showing.
 export function drawBench() {
-  if (!S.seenBench) return;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(bench.x, bench.y, bench.w, P * 2);                       // top slab
-  ctx.fillRect(bench.x + P, bench.y + P * 2, P * 2, bench.h - P * 2);   // legs
-  ctx.fillRect(bench.x + bench.w - P * 3, bench.y + P * 2, P * 2, bench.h - P * 2);
-  ctx.fillRect(bench.x + P * 4, bench.y - P * 2, P * 2, P * 2);         // something clamped to it
+  const up = raising();
+  if (!S.seenBench && !up) return;
+  withRise(up ? 'bench' : null, bench.x, bench.y + bench.h,
+           bench.w, bench.h + P * 2, () => {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(bench.x, bench.y, bench.w, P * 2);                       // top slab
+    ctx.fillRect(bench.x + P, bench.y + P * 2, P * 2, bench.h - P * 2);   // legs
+    ctx.fillRect(bench.x + bench.w - P * 3, bench.y + P * 2, P * 2, bench.h - P * 2);
+    ctx.fillRect(bench.x + P * 4, bench.y - P * 2, P * 2, P * 2);         // something clamped to it
+  });
 }
 
 // The body: one hollow square, whoever it is. Each job used to carry a mark of

@@ -4,7 +4,8 @@
 // 4 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
-import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, haveRock, asScreen } from './kit.js';
+import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, raf,
+         pressRaise, raiseEl, haveRock, asScreen } from './kit.js';
 
 export const TESTS = [
   // Nothing is shown before it can be used: the bench is not in the yard until
@@ -15,7 +16,12 @@ export const TESTS = [
   ['the bench arrives when there is something to buy', async () => {
     const bare = state();
     window.__give(100);
-    for (let i = 0; i < 30 && !state().seenBench; i++) await sleep(40);
+    for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+    await raf();
+    const called = state();
+    const hit = await pressRaise();
+    const started = state();
+    const built = runUntil(() => state().seenBench, 90);
     const earned = state();
     await hoverBench();                       // reading the board marks it read
     await sleep(150);
@@ -25,7 +31,15 @@ export const TESTS = [
     return [
       ok(!bare.seenBench, 'no bench on a game that cannot afford anything'),
       ok(!bare.benchMark, 'and nothing drawn over it', `${bare.benchMark}`),
-      ok(earned.seenBench, 'it arrives with the first row you can afford'),
+      ok(!bare.benchCall, 'and nothing asking to build one'),
+      ok(called.benchCall && !called.seenBench,
+         'the first row you can afford brings the call, not the bench'),
+      ok(hit === raiseEl(), 'the call is on the window and nothing is over it',
+         hit ? `${hit.tagName}#${hit.id}` : 'nothing there'),
+      ok(started.benchRising && !started.seenBench,
+         'pressing it starts the build rather than the bench'),
+      ok(!started.benchCall, 'and the call goes as it is pressed'),
+      ok(built && earned.seenBench, 'the bench stands once the work is done'),
       ok(earned.benchMark === 'flag', 'a group you have never seen flies a flag',
          `${earned.benchMark}`),
       ok(read.benchMark === 'dot', 'once read it is back to a dot for what you can afford',

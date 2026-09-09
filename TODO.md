@@ -57,8 +57,7 @@ above it. `stand` -> `climbTo(w, surfaceUnder(w))` is the path, and
 feeding `wayAt` that keeps it there, and the first push down is still unfound.
 ## The bench arrives out of nothing (2026-09-08)
 
-**Designed, not built. Awaiting approval before any code.** See "The bench is built, not
-delivered (design, not built)" at the end of DESIGN.md.
+**Built.** See "The bench is built, not delivered (built)" at the end of DESIGN.md.
 
 The `bench` step in `STEPS` flips `S.seenBench` the frame `canAfford()` first goes true and a
 workbench appears on ground that was bare -- the one structure in the game that teleports, and the
@@ -70,9 +69,15 @@ hammers, the standard bar runs over the footprint, and the bench is drawn when t
 No dust price -- the row you could afford is still there to buy afterwards -- and the call cannot
 time out or be dismissed, because everything you can ever buy is on that bench.
 
-**One call to make before any code:** whether the control is drawn in the yard (recommended: the
-machine's run switch is the precedent, and everything else in this yard is drawn) or a real DOM
-button floated over the canvas the way the boards are.
+The control is a real button on the page, floated over the bench's footprint by `seatCall` in
+board.js and seated off the same world-to-screen arithmetic the boards use -- the user's call. It is
+the one control a player *must* find, and chrome reads as chrome in a way a mark on the ground does
+not.
+
+Checked in both tiers: `test/bench-raise.test.mjs` presses the same function the button calls and
+follows the digger off the rock and back, and the browser tier's opening group finds the button with
+`elementFromPoint` and clicks whatever is actually there. Two scenes for the picture: `call` and
+`benchup`.
 
 
 ## The shop boards resize while you read them (2026-09-08)

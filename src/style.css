@@ -956,3 +956,32 @@ canvas {
 .panel.hushed .sheet,
 .panel.hushed .purse { opacity: 0; transform: translateY(3px) scale(.985); }
 .panel.hushed { pointer-events: none; }
+
+/* The call to build the bench.
+   The one button in the game that is not on a board and not drawn on the
+   ground -- see raise.js for why the bench is built rather than delivered. It
+   is a sheet like the boards are, in the same ink and the same hand, because a
+   thing you press should look like the other things you press; what marks it
+   out is that it stands alone over bare ground with nothing else on the page.
+   Pinned bottom-left and moved by a transform, the way a board is (`seatCall`
+   in board.js): the number it carries is how far up its bottom edge stands. */
+#raise {
+  position: fixed;
+  left: 0; top: auto; bottom: 0;
+  z-index: 11;                 /* over a board, which it is never open beside */
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid #000;
+  font: 12px ui-monospace, "Courier New", monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #000;
+  cursor: pointer;
+  white-space: nowrap;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+#raise[hidden] { display: none; }
+/* Under the cursor: the sheet fills in. The boards' own invitation -- a row you
+   can press inverts rather than moving, and this is the same offer. */
+#raise:hover { background: #000; color: #fff; }

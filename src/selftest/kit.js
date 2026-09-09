@@ -127,12 +127,36 @@ export const boulderWorld = () => {
   return { x: s.rockX, y: s.rockY };
 };
 
-// The bench is not in the yard until the first upgrade is affordable, so a check
-// that wants to open it has to earn it first.
+// The call to build the bench, and pressing it the way a player does: find what
+// is actually under the middle of the button and click *that*, so a check
+// cannot pass on a button that is off the window or behind something else.
+// Returns what it found, for the one check that is about the button itself.
+export const raiseEl = () => document.getElementById('raise');
+
+export async function pressRaise() {
+  const el = raiseEl();
+  // The button is put where the bench is by `seatCall`, which runs in `hud()` --
+  // so it is not on the page until a frame has been drawn since the call went
+  // out. Without this wait the rect is all noughts, `elementFromPoint` answers
+  // with the canvas at the top corner, and the click lands on bare sky.
+  for (let i = 0; i < 10 && el.hidden; i++) await raf();
+  const r = el.getBoundingClientRect();
+  const hit = document.elementFromPoint(Math.round(r.left + r.width / 2),
+                                        Math.round(r.top + r.height / 2));
+  if (hit) hit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  return hit;
+}
+
+// The bench is not in the yard until the first upgrade is affordable AND
+// somebody has built it, so a check that wants to open it has to earn it and
+// then put it up. See raise.js: the call arrives with the first row you could
+// buy, and the build is eighteen worker-seconds with your one digger on it.
 export async function haveBench() {
   if (state().seenBench) return;
   window.__give(100);
-  for (let i = 0; i < 30 && !state().seenBench; i++) await sleep(40);
+  for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+  await pressRaise();
+  runUntil(() => state().seenBench, 90);
 }
 
 export async function hoverBench() {
