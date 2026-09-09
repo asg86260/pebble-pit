@@ -12,7 +12,7 @@ export const TOWER_ROWS = [
   {
     key: 'unlocktower',
     kind: 'building', site: 'yard', at: () => tower.x + tower.w / 2,
-    name: 'raise the tower',
+    name: 'build the tower',
     note: () => 'what a core is for',
     bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin

@@ -3987,9 +3987,18 @@ a row is called on one board cannot use that anywhere else.
 
 The bench names the same stat the same way for different bodies, and lets the
 section heading say whose it is: `carry` and `haulcarry` are both **strength**,
-under *you* and *the crew*; `speed` and `minerspeed` are both **swing**, under
-*you* and *the rock*. That is not a collision to be fixed. It is the language,
-and everything below is an attempt to make the rest of the boards speak it.
+under *your gear* and *crew gear*; `speed` and `minerspeed` are both **swing**,
+under *your gear* and *rock miners*. That is not a collision to be fixed. It is
+the language, and everything below is an attempt to make the rest of the boards
+speak it.
+
+**A heading is a label, not a voice.** It says who or what the rows under it are
+about, in the plainest words the game has for that -- *rock miners*, *housing*,
+*critical hits*, *build*. The personality lives in the rows and their notes,
+where it is attached to a thing you are actually deciding about; a heading with
+a voice on it is a riddle standing between you and a list. This is why *a lucky
+swing* became *critical hits*, *the block* became *housing*, *the rock* became
+*rock miners* and *put up* became *build*.
 
 ### The rules
 
@@ -4002,7 +4011,7 @@ remember. See `test/boards.test.mjs`.
 | `rung` | a bare noun, naming the quantity. The board and its section say whose it is. |
 | `place` | **"another X"**, where X is what marks one body's place at that station. |
 | `machine` | **"the X"**. |
-| `building` | **"⟨verb⟩ the X"**, one verb per place, chosen once and kept. |
+| `building` | **"build the X"**. One verb for all of them: ten rows with ten verbs read as ten unrelated purchases. The narrative shield rows are the exception -- they are a scripted arc, not a catalogue. |
 | tune rows | **"tune the X"**, the same verb for all four. The note carries the flavour. |
 | capability | the plain sentence of what you can now do. |
 
