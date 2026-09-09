@@ -1482,9 +1482,10 @@ and it means a farm that has stopped being tended cannot climb its own ladder.
 The places keep the old rule; the ladders ask the place to feed itself.
 
 **The last band is the research.** `labtend` and `labcave` -- the multipliers
-that were the lab's -- become band four of the speed ladders: three rungs, the
+that were the lab's -- become band four of the speed ladders, and the yield
+ladders get a multiplier of their own on the same machinery: three rungs, the
 all-coins card, still gated on the bench standing and still a BUILD that bodies
-have to finish. That
+have to finish. See "Band four is the multiplier". That
 is where the second speed row went: it is not a rival ladder any more, it is
 the top of the only one.
 
@@ -1525,6 +1526,40 @@ This is the "quarry lamps" rule kept rather than broken. That row was renamed
 because it was *called* the reason it worked while the ladder said nothing about
 its rate. These cards say the rate in the unit and the gain line, every one of
 them; the name sits on top and is allowed to be fun.
+
+### Band four is the multiplier
+
+The last three rungs of a ladder are not more of the rung field -- they are the
+multiplier over it, on the machinery that is already there. `mult.js` keeps four
+of these and each is a level in `S.mult`, a `STEP` of a quarter again per rung,
+a work cost that climbs with the rung, and `finish()` to land one. `labtend` and
+`labcave` were exactly this, sold as a rival row beside the rung they multiplied;
+band four is the same rung in the only place it makes sense, at the top of the
+ladder it multiplies.
+
+So a ladder's twelve rungs are **nine of its own field and three of a
+multiplier**, and `rung()` reads `level` up to nine and `9 + levelOf(field)`
+after. The yield ladders get two new multiplier fields on the same machinery --
+`crop` for the farm, `seam` for the quarry -- so all four ladders end the same
+way and nothing about band four is special-cased per ground.
+
+Two consequences, both wanted:
+
+- **A working is a BUILD.** These rows carry `work`, so bodies leave what they
+  are doing and stand at the site until it is finished. That was the lab's whole
+  bargain and it survives the lab.
+- **`levelOf` needs a cap per key, not one for all four.** It clamps at `RUNGS`
+  today, which is five. The crew's two -- `swing` and `haul`, on the shack and
+  the house -- keep five; the four station ladders end at three, because a band
+  is three rungs. One table, `MULT_MAX`, read by `levelOf` in the one place it
+  clamps.
+
+**What that costs at the top.** Tending and the cut used to run five rungs to
+the floor and then multiply by up to 3.05; now they run nine rungs to the same
+floor and multiply by up to 1.95. The very top of both rates comes down by
+about a third. That is a `STEP` question rather than a shape question -- a
+per-key step, or a fourth rung -- and it is a knob, so it is the dev panel's to
+settle on a yard.
 
 **Band four costs sparks, so band four is magic.** A spark is what the machines
 and the rift are bought with and nothing mundane is priced in one, so the top of

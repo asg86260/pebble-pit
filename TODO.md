@@ -10,14 +10,18 @@ grounds sell", gives each ground a place row and **two ten-rung ladders** --
 yield and speed -- climbed through four cards of three, three, three and one
 rung, each card its own name and wording. The bill deepens by band: dust, then
 dust and the ground's own coin, then the other ground's too, then everything
-the yard makes. `labtend` and `labcave` become the last rung of each speed
-ladder rather than a rival row. One helper, `tierRows`, builds all eight cards
+the yard makes. `labtend` and `labcave` become band four of each speed ladder
+rather than a rival row, and the yield ladders get a multiplier each on the same
+machinery -- so a ladder is nine rungs of its own field and three of a
+multiplier, and `levelOf` takes a cap per key instead of one `RUNGS` for all. One helper, `tierRows`, builds all eight cards
 from a table. The farm's opening prices roughly double (`PLOT_COST` 260 → 520,
 first yield rung 720 dust), which was the request this started as.
 
-**Blocked on:** approval of the design, and on the numbers it leaves open --
-each ladder's first price and steepness, and whether a yield rung is a flat
-extra per go or a share of one.
+**Blocked on:** approval of the design. The numbers it leaves open are dev-panel
+work: each ladder's first price and steepness, whether a yield rung is a flat
+extra per go or a share of one, and the multiplier `STEP` -- three rungs at a
+quarter again is about a third less at the top of a rate than the five rungs
+`labtend` had.
 
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
