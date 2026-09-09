@@ -1,5 +1,23 @@
 # Still to do
 
+## The farm and the quarry sell the same rate twice (2026-09-08)
+
+**Designed, not built. Awaiting approval.** Both boards open with a place row, a
+`speed` rung and a `speed ×` multiplier over that same rung -- two rows for one
+variable, and the `tend` rung's own comment admits it is "a rate on a rate of
+nothing" before there is a second plot. The design in DESIGN.md, "What the two
+grounds sell", retires the two dust/spore rate rungs (their saved levels keep
+applying; only the rows leave) and puts a **yield** row and a **reach** row on
+each board instead: fertilizer and the sprinkler on the farm, powder and the
+shoring in the quarry, each drawing something in the yard. `speed ×` stays as
+the single rate ladder. The farm's opening prices roughly double at the same
+time (`PLOT_COST` 260 → 520, the first yield rung 720 dust), which was the
+request this started as.
+
+**Blocked on:** approval of the design, and on two numbers it leaves open -- how
+steep each new ladder is, and whether the sprinkler's top rung reaches a fully
+even share across the row.
+
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
 **Open. Six browser checks red on main; the node tier is green.** The shack was

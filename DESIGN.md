@@ -1418,6 +1418,80 @@ explanation. The scrubbing house's rule: the disease is the advertisement.
 are the ones at which a yard that has been playing along has *just* opened
 those stations, and that is a thing to measure on a save rather than pick.
 
+## What the two grounds sell (design, not built)
+
+The farm and the quarry sell the same four rows as each other, and two of those
+four are the same rate sold twice. Open the farm and the board is *another
+plot*, *speed* (a dust rung over tending) and *speed ×* (the old lab
+multiplier, over that same tending, in spores) -- one row that makes the plots
+faster, and beside it a second row that makes the first row's answer bigger.
+The quarry does it too: *another shovel*, *speed*, *speed ×*. A player reading
+either board has to work out which speed is which before spending anything, and
+the honest answer is that there was never a reason for two.
+
+It is worse than redundant. The `tend` rung's own comment concedes that at the
+old price "tending speed was worth buying before there was a second plot to
+tend, which is the farm selling you a rate on a rate of nothing" -- and the fix
+applied then was to triple the price, which makes a bad row expensive rather
+than making it a good row.
+
+**The ask:** each ground sells rows that move *different* variables, and each
+new row is a thing standing in the yard. A board should read as a list of
+different decisions, not one decision at three prices.
+
+**The farm.**
+
+| row | coin | what it moves | what it draws |
+|---|---|---|---|
+| another plot | dust | standing room for one more hand | the furrow, as now |
+| fertilizer | dust | the **yield** of a cut: an ordinary cut comes off worth more than one spore, rising a rung at a time | the plot's soil band goes darker per rung, per-cell out of the ground palette, and a sack stands at the head of the row |
+| the sprinkler | spore | the **reach** of a hand's attention: the share of tending that lands off the plot the body is standing at (`TEND_HERE`), up to an even share across the whole row | a standpipe at the head of the row, throwing an arc of motes over the plots while somebody is working it |
+| speed × | spore | the rate, as now -- and now the only rate row | nothing new |
+
+**The quarry**, the same shape in its own words:
+
+| row | coin | what it moves | what it draws |
+|---|---|---|---|
+| another shovel | spore | standing room at the face, as now | the bench |
+| powder | dust | the **yield** of a dig: `seamShards()` per bench goes up a rung at a time | a crate at the rim, and the face carries the marks of the last shot |
+| the shoring | shard | the **trip**: timbered walls make the climb out of the hole quicker, which is the cost that grows every time the cut goes deeper | timbers down the wall, one stage per rung, so the hole visibly gets worked rather than only deeper |
+| speed × | spore | the dig rate, as now | nothing new |
+
+Four rows a board, and no two of them answer the same question: *how many
+bodies*, *how much per go*, *how much of the place one body covers*, *how
+fast*. Both machines and both endless tune ladders sit under them unchanged.
+
+**Why the yield row and not another rate.** A rate row is only ever worth what
+the headcount already is -- it multiplies work that is happening. A yield row
+pays the same on a yard with one hand as on a full one, so it is the row a
+thin early yard actually wants, and it is the one that makes the *first* plot
+and the *first* bench worth standing at. The two rows pull in different
+directions on purpose: powder rewards a deep hole, the shoring rewards getting
+in and out of it, and which one you want depends on how you are playing.
+
+**The sprinkler does not grow anything.** Nothing grows with nobody on the farm
+-- that rule is not up for sale. The sprinkler moves where a working hand's
+attention *lands*, which is a share of the same one plot's worth of tending
+either way, so a farm with nobody on it is still a farm with nobody on it and
+the standpipe throws nothing.
+
+**What happens to the two rungs being retired.** `S.tendLevel` and
+`S.quarryPaceLevel` keep feeding `tendMs` and `cellMs` exactly as they do now;
+only the rows leave the boards. A save that bought eight rungs of tending keeps
+all eight -- what you bought you keep -- and no save is rewritten. The fields
+stay in `SAVED`.
+
+**Prices.** The farm's opening prices roughly double: `PLOT_COST` 260 → 520,
+and fertilizer's first rung is 720 dust where the retired `tend` rung asked
+360. The farm is a place you open after the rock has been paying for a while,
+and its board should cost like it. The quarry's `BENCH_COST` and the new powder
+rung want the same treatment for the same reason, at the same factor.
+
+**Not decided:** how steep each new ladder is past its first rung, and whether
+the sprinkler's top rung is a fully even share across the row or stops short of
+it. Both are dev-panel questions -- one `export let` and one `TUNABLE` row each
+-- and are worth answering on a yard rather than on paper.
+
 ## Not doing
 
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
