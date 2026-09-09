@@ -6,17 +6,18 @@
 `speed` rung and a `speed ×` multiplier over that same rung -- two rows for one
 variable, and the `tend` rung's own comment admits it is "a rate on a rate of
 nothing" before there is a second plot. The design in DESIGN.md, "What the two
-grounds sell", retires the two dust/spore rate rungs (their saved levels keep
-applying; only the rows leave) and puts a **yield** row and a **reach** row on
-each board instead: fertilizer and the sprinkler on the farm, powder and the
-shoring in the quarry, each drawing something in the yard. `speed ×` stays as
-the single rate ladder. The farm's opening prices roughly double at the same
-time (`PLOT_COST` 260 → 520, the first yield rung 720 dust), which was the
-request this started as.
+grounds sell", gives each ground a place row and **two ten-rung ladders** --
+yield and speed -- climbed through four cards of three, three, three and one
+rung, each card its own name and wording. The bill deepens by band: dust, then
+dust and the ground's own coin, then the other ground's too, then everything
+the yard makes. `labtend` and `labcave` become the last rung of each speed
+ladder rather than a rival row. One helper, `tierRows`, builds all eight cards
+from a table. The farm's opening prices roughly double (`PLOT_COST` 260 → 520,
+first yield rung 720 dust), which was the request this started as.
 
-**Blocked on:** approval of the design, and on two numbers it leaves open -- how
-steep each new ladder is, and whether the sprinkler's top rung reaches a fully
-even share across the row.
+**Blocked on:** approval of the design, and on the numbers it leaves open --
+each ladder's first price and steepness, and whether a yield rung is a flat
+extra per go or a share of one.
 
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 

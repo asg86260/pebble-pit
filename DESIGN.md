@@ -1435,62 +1435,115 @@ tend, which is the farm selling you a rate on a rate of nothing" -- and the fix
 applied then was to triple the price, which makes a bad row expensive rather
 than making it a good row.
 
-**The ask:** each ground sells rows that move *different* variables, and each
-new row is a thing standing in the yard. A board should read as a list of
-different decisions, not one decision at three prices.
+### The shape
 
-**The farm.**
+Each ground sells **a place, and two ladders**, and nothing else until its
+machine.
 
-| row | coin | what it moves | what it draws |
-|---|---|---|---|
-| another plot | dust | standing room for one more hand | the furrow, as now |
-| fertilizer | dust | the **yield** of a cut: an ordinary cut comes off worth more than one spore, rising a rung at a time | the plot's soil band goes darker per rung, per-cell out of the ground palette, and a sack stands at the head of the row |
-| the sprinkler | spore | the **reach** of a hand's attention: the share of tending that lands off the plot the body is standing at (`TEND_HERE`), up to an even share across the whole row | a standpipe at the head of the row, throwing an arc of motes over the plots while somebody is working it |
-| speed × | spore | the rate, as now -- and now the only rate row | nothing new |
+- **The place** is what it is today. *another plot* to `FARM_PLOTS_MAX`,
+  *another shovel* to `QUARRY_BENCH_MAX`, one coin, one price curve, and it
+  ends where it ends now.
+- **A yield ladder** -- how much a single go is worth. A cut comes off the plot
+  worth more than one spore; a dig turns up more than `seamShards()` says
+  today.
+- **A speed ladder** -- how often that go happens. This is `tendMs` and
+  `cellMs`, the rungs that exist now.
 
-**The quarry**, the same shape in its own words:
+Two ladders, and they answer different questions: a yield rung pays the same
+on a yard with one hand as on a full one, so it is the row a thin early yard
+actually wants, while a speed rung is only ever worth what the headcount
+already is. The old board had two speeds and no yield at all.
 
-| row | coin | what it moves | what it draws |
-|---|---|---|---|
-| another shovel | spore | standing room at the face, as now | the bench |
-| powder | dust | the **yield** of a dig: `seamShards()` per bench goes up a rung at a time | a crate at the rim, and the face carries the marks of the last shot |
-| the shoring | shard | the **trip**: timbered walls make the climb out of the hole quicker, which is the cost that grows every time the cut goes deeper | timbers down the wall, one stage per rung, so the hole visibly gets worked rather than only deeper |
-| speed × | spore | the dig rate, as now | nothing new |
+### A ladder is four cards, not one
 
-Four rows a board, and no two of them answer the same question: *how many
-bodies*, *how much per go*, *how much of the place one body covers*, *how
-fast*. Both machines and both endless tune ladders sit under them unchanged.
+Ten rungs each, in bands of three, three, three and one -- and **each band is
+its own card, with its own name and its own words**. The card you can see is
+the band you are on; finishing a band retires that card and the next one takes
+its place. So the board still shows one yield row and one speed row at a time,
+and the ladder is ten rungs long without ever being a ten-pip row nobody reads.
 
-**Why the yield row and not another rate.** A rate row is only ever worth what
-the headcount already is -- it multiplies work that is happening. A yield row
-pays the same on a yard with one hand as on a full one, so it is the row a
-thin early yard actually wants, and it is the one that makes the *first* plot
-and the *first* bench worth standing at. The two rows pull in different
-directions on purpose: powder rewards a deep hole, the shoring rewards getting
-in and out of it, and which one you want depends on how you are playing.
+What deepens across the bands is the **bill**. `bill` is already a list of
+`[coin, n]` pairs that `billOf`, `canPay` and the price text all handle -- the
+machines are priced that way -- so this costs nothing structurally.
 
-**The sprinkler does not grow anything.** Nothing grows with nobody on the farm
--- that rule is not up for sale. The sprinkler moves where a working hand's
-attention *lands*, which is a share of the same one plot's worth of tending
-either way, so a farm with nobody on it is still a farm with nobody on it and
-the standpipe throws nothing.
+| band | rungs | what it costs |
+|---|---|---|
+| 1 | 1-3 | dust, and a lot of it |
+| 2 | 4-6 | dust **and the ground's own coin** |
+| 3 | 7-9 | dust, its own coin, **and the other ground's** |
+| 4 | 10 | dust, shard, spore, core and a spark -- everything the yard makes |
 
-**What happens to the two rungs being retired.** `S.tendLevel` and
-`S.quarryPaceLevel` keep feeding `tendMs` and `cellMs` exactly as they do now;
-only the rows leave the boards. A save that bought eight rungs of tending keeps
-all eight -- what you bought you keep -- and no save is rewritten. The fields
-stay in `SAVED`.
+**The ground's own coin, and why that is not the rule being broken.** A station
+is not bought *deeper* with the thing it makes -- that is why a plot costs dust
+and a bench costs spores, and that stands. A ladder is not depth. Band two is
+the crop going back into the ground it came off, which is what fertilizer *is*,
+and it means a farm that has stopped being tended cannot climb its own ladder.
+The places keep the old rule; the ladders ask the place to feed itself.
 
-**Prices.** The farm's opening prices roughly double: `PLOT_COST` 260 → 520,
-and fertilizer's first rung is 720 dust where the retired `tend` rung asked
-360. The farm is a place you open after the rock has been paying for a while,
-and its board should cost like it. The quarry's `BENCH_COST` and the new powder
-rung want the same treatment for the same reason, at the same factor.
+**The last rung is the research.** `labtend` and `labcave` -- the multipliers
+that were the lab's -- become band four, one rung, the all-coins card, still
+gated on the bench standing and still a BUILD that bodies have to finish. That
+is where the second speed row went: it is not a rival ladder any more, it is
+the top of the only one.
 
-**Not decided:** how steep each new ladder is past its first rung, and whether
-the sprinkler's top rung is a fully even share across the row or stops short of
-it. Both are dev-panel questions -- one `export let` and one `TUNABLE` row each
--- and are worth answering on a yard rather than on paper.
+### The eight cards
+
+The farm, in the order you meet them:
+
+| band | yield card | speed card |
+|---|---|---|
+| 1 | **compost** — what the row throws off, turned back in | **hand tools** — a hoe apiece, and hands that stoop faster |
+| 2 | **fertilizer** — a sack at the head of the row, the soil band darker per rung | **the sprinkler** — a standpipe throwing an arc over the plots while somebody works it |
+| 3 | **the seed line** — the best of each crop kept back for the next | **the ditch** — water walked to the row once and running after |
+| 4 | **the strain** — a crop bred for the yard it stands in | **the glasshouse** — the old `labtend`, the research rung, at the top of the speed ladder |
+
+The quarry, the same four beats in its own words:
+
+| band | yield card | speed card |
+|---|---|---|
+| 1 | **the sledge** — break what comes out rather than carry it whole | **the ramp** — a graded way in and out instead of a scramble |
+| 2 | **powder** — a crate at the rim, shot marks on the face | **the shoring** — timbers down the wall, a stage per rung |
+| 3 | **the assay** — knowing which seam is worth the swing | **the tramway** — a way for stone to leave the hole that is not somebody's arms |
+| 4 | **the deep seam** — the ground under the ground | **the survey** — the old `labcave`, the research rung, at the top of the speed ladder |
+
+Every one of those draws something. The rule the yard already keeps is that a
+number that changes without something appearing in the world is a spreadsheet
+with a picture on top, and a band that is three purchases long has earned a
+visible stage.
+
+### The mechanism
+
+One helper, used four times, rather than eight hand-written rows:
+
+`tierRows(field, bands)` takes the level field the whole ladder counts on
+(`S.tendLevel` and three new ones) and a table of four bands -- name, the
+sentence the card says, the coins it adds -- and returns the four rows. Which
+card shows is `Math.floor(level / 3)`; `rung()` is the level within the band
+and `rungs()` is three (one at band four). A new band is a line in the table,
+and the wording of every card in the game sits in one readable block per
+ladder. There is no per-card price code: the bill is `rungCost(first, level)`
+in dust plus the band's coins at `DUST_PER` of that.
+
+**The speed ladders keep the range they have.** `tendMs` and `cellMs` run from
+their base to their floor over `RUNGS` rungs today; over ten they run from the
+same base to the same floor in finer steps. The end of the ladder is where it
+is now -- this is not a speed increase, it is the same climb sold in more
+decisions.
+
+**Saves.** `S.tendLevel` and `S.quarryPaceLevel` keep their meaning and their
+place in `SAVED`; a save at rung four simply opens on band two's card. The two
+yield levels are new fields and go in `SAVED`.
+
+**Prices.** Band one is deliberately steep in dust: the farm is a place you
+open after the rock has been paying for a while and its board should cost like
+it. `PLOT_COST` 260 → 520, and the first yield rung 720 dust where the retired
+`tend` rung asked 360. The quarry's `BENCH_COST` and its band one want the same
+factor for the same reason.
+
+**Not decided:** the exact first price and steepness of each of the four
+ladders, and how much a yield rung is worth -- a flat extra per go, or a share
+of a go. Both are dev-panel questions, one `export let` and one `TUNABLE` row
+each, and are worth answering on a yard rather than on paper.
 
 ## Not doing
 
