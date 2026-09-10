@@ -427,7 +427,6 @@ export const S = {
   // time a rock comes off. One object rather than a field per feat -- see
   // notices.js, which is the only thing that writes it.
   tally: {},
-  noticeBoardOpen: false, // and whether the board is open right now
   looBoardOpen: false,      // and the outhouse's, which carries the janitor's ladder
 
   // --- the air ----------------------------------------------------------------
@@ -492,6 +491,7 @@ export const S = {
   // than a count the yard derives, and new buildings wait for one. See
   // buildbench.js and DESIGN.md, "The build yard".
   buildbench: { x: 0, y: 0, w: 0, h: 0 },   // where the trestle stands (reseated at boot)
+  noticeboard: { x: 0, y: 0, w: 0, h: 0 }, // and the record, on its posts (reseated at boot)
   buildbenchOpen: false,  // the construction bench is built
   buildPostLevel: 0,      // rungs of `buildposts`: +1 builder and +1 concurrent build each
   buildPaceLevel: 0       // rungs of `buildpace`: how much faster a builder works
@@ -641,6 +641,7 @@ export const SAVED = [
   // and `rebalance` on restore re-derives or clamps it, the way the dealt
   // counts are.
   'buildbench',
+  'noticeboard',
   'buildbenchOpen',
   'buildPostLevel',
   'buildPaceLevel',
@@ -799,7 +800,6 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
   'shackBoardOpen',                        // and the rock's own, at the shack
-  'noticeBoardOpen',                     // and the noticeboard's
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame.
   // (wave7b-build: `builders` moved to SAVED -- once the construction bench is

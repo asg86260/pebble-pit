@@ -236,9 +236,12 @@ canvas.addEventListener('pointermove', e => {
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
                : nearOuthouse(S.mouse.x, S.mouse.y) ? 'outhouse'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house'
-               // and the books over the pit, which are a patch of air rather
-               // than a building: anything actually standing on the ground wins
-               // over them, the same way the house comes after the rest
+               // and the noticeboard, which carries the books and the record.
+               // It is a building like the rest of them now rather than a
+               // patch of air at the pit mouth, but it stays last in the
+               // cascade all the same: it stands on the busiest strip in the
+               // yard, between the bench and the front doors, so anything
+               // else you might actually be pointing at wins over it.
                : nearStats(S.mouse.x, S.mouse.y) ? 'stats' : null;
     // Standing at a station outranks being on the way to the open board.
     //

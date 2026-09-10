@@ -471,6 +471,21 @@ const SCENES = {
               (window.__state().towerX - 361);`,
 
   // A board, open, with everything on it.
+  // The noticeboard, between the work bench and the front doors, with a record
+  // pinned to it. The board fills with slips as the record does, so the two
+  // shots worth having are a yard that has only just started and one that has
+  // done a great deal: `notices` is the first and `notices2` the second.
+  //
+  // Neither tier can see any of this -- how many slips are up, whether the
+  // newest stands proud of the rest, whether the thing reads as a board you
+  // walk up to rather than as another shed with the door left off. The shot
+  // is the check.
+  notices: `window.__reset(); window.__crew(1); window.__give(400); window.__fast(4);
+            window.__look(window.__state().noticesX); window.__fast(6);`,
+
+  notices2: `window.__reset(); window.__crew(1); window.__jump(30); window.__tip(90000); window.__fast(6);
+             window.__look(window.__state().noticesX); window.__fast(6);`,
+
   boards: `${RICH} window.__board('tower');`,
 
   // The three boards whose headings name a trade or a purchase rather than a

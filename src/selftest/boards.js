@@ -1046,7 +1046,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the books stand over the pit, and walking up to them opens them', async () => {
+  ['the books and the record hang on the noticeboard, and walking up opens them', async () => {
     newRun();
     await settle();
     window.__crew(3, 3);
@@ -1061,7 +1061,17 @@ export const TESTS = [
     // What the dust row says, off the sheet: a mark, a number and a clock.
     const dust = document.querySelector('#statsshop [data-key="ratedust"]');
     const said = dust ? dust.children[2].innerHTML : '';
-    await hoverAway();
+    // Away has to mean away, and which way is away has changed. These used to
+    // stand at the pit mouth, off on their own, so the top-left corner of the
+    // screen was away from everything -- which is what `hoverAway` points at.
+    // They hang on the noticeboard now, well to the LEFT of the rock the view
+    // opens on, so their sheet opens on that side and the top-left corner is
+    // squarely on the way to it. The safe wedge holds the board up, quite
+    // rightly (see the note by the cascade in input.js).
+    //
+    // So this walks away to the other corner, which is the one that means it.
+    point('pointermove', canvas().clientWidth - 4, 4, 0);
+    await sleep(250);
     const shut = !state().statsBoardOpen;
     window.__crew(0, 0);
 

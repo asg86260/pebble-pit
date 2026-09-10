@@ -1,3 +1,5 @@
+import { P } from './yard.js';
+
 // The noticeboard's numbers: how often the rules are asked, and every threshold
 // a notice is earned at. See DESIGN.md, "The noticeboard, and the record on it".
 
@@ -38,3 +40,19 @@ export const NOTICE_KNOBS = [
   { key: 'NOTICE_FAST_ROCK_S', label: 'a quick rock', min: 10, max: 300, step: 5,
     get: () => NOTICE_FAST_ROCK_S, set: v => { NOTICE_FAST_ROCK_S = v; } }
 ];
+
+
+// --- the board it all hangs on ------------------------------------------------
+// A panel on two posts, standing between the work bench and the houses. It is
+// furniture rather than a building: nobody works in it, and it wants to read
+// as something you walk up to and peer at, not as another shed.
+//
+// Wide enough for the slips to be legible as slips at the yard's ordinary
+// zoom, and no wider -- the strip it stands on is the busiest ground in the
+// yard and the crew have to get past it.
+export const BOARD_W = P * 11;
+export const BOARD_H = P * 8;          // the panel
+export const BOARD_LEG = P * 3;        // and how far it stands off the ground
+// How many slips the panel can show at once. The board fills up as the record
+// does, which is the whole of what it has to say from across the yard.
+export const BOARD_SLIPS = 12;

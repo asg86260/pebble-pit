@@ -337,6 +337,11 @@ export const snapshot = () => ({
   // about the walk having moved out to make room for it reads both from here.
   shackOpen: S.shackOpen,
   shackX: Math.round(shack.x),
+  // the noticeboard, and how much of the record is on it
+  noticesX: Math.round(S.noticeboard.x),
+  noticesY: Math.round(S.noticeboard.y),
+  won: (S.won || []).length,
+  wonUnread: Math.max(0, (S.won || []).length - (S.wonSeen | 0)),
   shackW: Math.round(shack.w),
   offers: STATIONS.filter(k => hasOffer(k)),
   stands: Object.fromEntries(STATIONS.map(k => [k, (r => r && { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) })(standRect(k))]).filter(([, v]) => v)),
