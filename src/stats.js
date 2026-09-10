@@ -34,10 +34,10 @@ import { MARK } from './upgrades.js';
 // the pit and the purse beside every board already go by: nothing in this game
 // names a thing you have not met.
 const BOOKS = [
-  { key: 'dust',  name: 'dust',   mark: 'dust',  count: () => S.banked, seen: () => true },
+  { key: 'dust',  name: 'pebbles', mark: 'dust',  count: () => S.banked, seen: () => true },
   { key: 'core',  name: 'cores',  mark: 'core',  count: () => S.cores,  seen: () => S.seenCore },
-  { key: 'shard', name: 'stone',  mark: 'shard', count: () => S.shards, seen: () => S.seenShard },
-  { key: 'spore', name: 'crop',   mark: 'spore', count: () => S.spores, seen: () => S.seenSpore },
+  { key: 'shard', name: 'ore',     mark: 'shard', count: () => S.shards, seen: () => S.seenShard },
+  { key: 'spore', name: 'crops',   mark: 'spore', count: () => S.spores, seen: () => S.seenSpore },
   { key: 'spark', name: 'sparks', mark: 'spark', count: () => S.sparks, seen: () => S.seenSpark }
 ];
 

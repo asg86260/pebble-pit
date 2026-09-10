@@ -377,10 +377,10 @@ function cellLabel(v) {
   if (!v) return null;
   if (v === CORE_CELL) return 'core';
   const k = findKind(v);
-  if (k === SHARD_CELL) return 'shard';
-  if (k === SPORE_CELL) return 'spore';
+  if (k === SHARD_CELL) return 'ore';
+  if (k === SPORE_CELL) return 'crop';
   if (k === SPARK_CELL) return 'spark';
-  return isDust(v) ? 'dust' : null;
+  return isDust(v) ? 'pebble' : null;
 }
 
 // Every building that has a name on its own board, plus the two that do not
@@ -493,7 +493,7 @@ export function whatIsAt(x, y) {
   if (overBird(x, y)) return 'bird';
   if (potAt(x, y)) return 'pot';
   if (balloonAt(x, y)) return 'balloon';
-  if (cropAt(x, y)) return 'food';
+  if (cropAt(x, y)) return 'crop';
   return null;
 }
 

@@ -6264,6 +6264,31 @@ they are for every other build.
   bench, click the call, run the yard until the work lands, assert the bench and
   assert the digger went back to the rock.
 
+## What the five resources are called (built)
+
+Player-facing, they are **pebbles**, **cores**, **ore**, **crops** and
+**sparks**. That is the whole vocabulary, and nothing shown to the player uses
+another word for any of them.
+
+They were dust, cores, stone, crop and sparks, which had two problems. "Dust"
+and "stone" were describing the same substance at two sizes, so a player who
+had both had no way to tell from the names which one the quarry made. And the
+yard had a third word in play for things it had already named: a plot's ripe
+crop answered `food` to the hover, and the unit of dust was a `grain` -- so the
+counter, the books and the tooltip could each call the same stuff something
+different.
+
+**The code still says `dust`, `shard` and `spore`.** The keys on `S`, the CSS
+classes, the unit keys in `UNITS`, the fields in `SAVED` -- none of them moved,
+because they name the thing in the code rather than on the screen, and renaming
+a save field is a migration for no gain. The rename is a display-layer rename
+only: `BOOKS` in stats.js, `cellLabel` in input.js, and the handful of row
+notes and section titles that spelled a resource out in words.
+
+So when reading this document: `shard` in a code sample is the thing the boards
+call ore, and `spore` is crops. The two vocabularies are deliberate and the
+seam between them is the display layer.
+
 ## The noticeboard, and the record on it (design, not built)
 
 The yard has kept a great many facts about itself since the first rock and has

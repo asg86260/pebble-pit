@@ -175,7 +175,7 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
 // their own line on the day the ground is broken. See `shape` in shop.js.
 export const SCHOOL_SECTIONS = [
   { title: 'rock miners', keys: ['breaker'] },
-  { title: 'dust carters', keys: ['carter'] },
+  { title: 'pebble carters', keys: ['carter'] },
   { title: 'quarry blasters', keys: ['blaster'] },
   { title: 'farm growers', keys: ['grower'] }
 ];

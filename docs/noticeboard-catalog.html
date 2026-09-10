@@ -650,15 +650,15 @@ const CATALOG = [
     title: 'What happens on its own',
     note: 'The spine of the suite. These land while you are playing, in roughly this order, and every one of them reads a fact already standing on S — nothing has to be counted for them.',
     items: [
-      { key: 'firstgrain',  name: 'the first grain',           note: "put a grain of dust in the hole", reads: 'banked > 0' },
+      { key: 'firstgrain',  name: 'the first pebble',          note: "put a pebble in the hole", reads: 'banked > 0' },
       { key: 'firstrock',   name: 'the first rock off',        note: "clear a whole boulder off the yard", reads: 'boulderNo >= 2' },
       { key: 'gotout',      name: 'they got out',              note: "free the body trapped under the first boulder", reads: 'rescued' },
       { key: 'firstcore',   name: 'something was inside it',   note: "bank a core out of a broken rock", reads: 'seenCore' },
       { key: 'firsthire',   name: 'somebody else in the yard', note: "hire your first body", reads: 'crew >= 1' },
-      { key: 'firstshard',  name: 'the first stone',           note: "bring a stone up out of the quarry", reads: 'seenShard' },
-      { key: 'firstspore',  name: 'the first crop',            note: "take a crop off a farm plot", reads: 'seenSpore' },
+      { key: 'firstshard',  name: 'the first ore',             note: "bring ore up out of the quarry", reads: 'seenShard' },
+      { key: 'firstspore',  name: 'the first crops',           note: "take crops off a farm plot", reads: 'seenSpore' },
       { key: 'firstspark',  name: 'the first spark',           note: "come by your first spark", reads: 'seenSpark' },
-      { key: 'holefull',    name: 'the hole turned a grain away', note: "fill the hole until it turns a grain away", reads: 'seenFullPit' },
+      { key: 'holefull',    name: 'the hole turned a pebble away', note: "fill the hole until it turns a pebble away", reads: 'seenFullPit' },
       { key: 'rifttorn',    name: 'the rift torn',             note: "tear the rift open", reads: 'riftOpen' },
       { key: 'drowned',     name: 'the pit drowned',           note: "widen the rift until the pit drowns", reads: 'drowned' },
       { key: 'allshields',  name: 'everything the sky threw, answered', note: "raise and answer every kind of shield the sky throws", reads: 'every kind in shieldsDone' },
@@ -680,18 +680,18 @@ const CATALOG = [
       { key: 'rock25',   name: 'twenty-five rocks',             note: "clear twenty-five boulders", reads: 'boulderNo >= 25' },
       { key: 'rock50',   name: 'fifty rocks',                   note: "clear fifty boulders", reads: 'boulderNo >= 50' },
       { key: 'rock100',  name: 'a hundred rocks',               note: "clear a hundred boulders", reads: 'boulderNo >= 100' },
-      { key: 'dust1e4',  name: 'ten thousand grains',           note: "bank ten thousand grains", reads: 'banked >= 1e4' },
-      { key: 'dust1e5',  name: 'a hundred thousand grains',     note: "bank a hundred thousand grains", reads: 'banked >= 1e5' },
-      { key: 'dust1e6',  name: 'a million grains',              note: "bank a million grains", reads: 'banked >= 1e6' },
-      { key: 'dust1e7',  name: 'ten million grains',            note: "bank ten million grains", reads: 'banked >= 1e7' },
-      { key: 'dust1e8',  name: 'a hundred million grains',      note: "bank a hundred million grains", reads: 'banked >= 1e8' },
+      { key: 'dust1e4',  name: 'ten thousand pebbles',          note: "bank ten thousand pebbles", reads: 'banked >= 1e4' },
+      { key: 'dust1e5',  name: 'a hundred thousand pebbles',    note: "bank a hundred thousand pebbles", reads: 'banked >= 1e5' },
+      { key: 'dust1e6',  name: 'a million pebbles',             note: "bank a million pebbles", reads: 'banked >= 1e6' },
+      { key: 'dust1e7',  name: 'ten million pebbles',           note: "bank ten million pebbles", reads: 'banked >= 1e7' },
+      { key: 'dust1e8',  name: 'a hundred million pebbles',     note: "bank a hundred million pebbles", reads: 'banked >= 1e8' },
       { key: 'crew5',    name: 'a crew of five',                note: "hire a crew of five", reads: 'crew >= 5' },
       { key: 'crew10',   name: 'a crew of ten',                 note: "hire a crew of ten", reads: 'crew >= 10' },
       { key: 'crew25',   name: 'a crew of twenty-five',         note: "hire a crew of twenty-five", reads: 'crew >= 25' },
       { key: 'crew50',   name: 'a crew of fifty',               note: "hire a crew of fifty", reads: 'crew >= 50' },
       { key: 'cut1e3',   name: 'a thousand cells out of the cut', note: "dig a thousand cells out of the quarry", reads: 'quarryTotal >= 1e3' },
       { key: 'cut1e4',   name: 'ten thousand cells out of the cut', note: "dig ten thousand cells out of the quarry", reads: 'quarryTotal >= 1e4' },
-      { key: 'rift1e6',  name: 'a million through the rift',    note: "send a million grains through the rift", reads: 'riftAte >= 1e6' },
+      { key: 'rift1e6',  name: 'a million through the rift',    note: "send a million pebbles through the rift", reads: 'riftAte >= 1e6' },
       { key: 'brew100',  name: 'a hundred batches',             note: "brew a hundred batches", reads: 'brews >= 100' },
       { key: 'lived1h',  name: 'an hour on one clock',          note: "keep one body on the payroll for an hour", reads: 'records.lived, the eldest' },
       { key: 'lived10h', name: 'ten hours on one clock',        note: "keep one body on the payroll for ten hours", reads: 'records.lived, the eldest' },
@@ -711,7 +711,7 @@ const CATALOG = [
       { key: 'everyjob',    name: 'every job staffed at once', note: "put at least one body on every job at once", reads: 'every count in JOBS above nought' },
       { key: 'onebodyall',  name: 'one body that has done every job', note: "work one body through every job in the yard", reads: 'every key present in a record’s at' },
       { key: 'buried',      name: 'the yard buried',           note: "let every station's pile fill at the same time", reads: 'pileFull, all of them' },
-      { key: 'spotless',    name: 'spotless, with nobody sweeping', note: "clear every grain off the floor without hiring a janitor", reads: 'floorGrains === 0 && janitors === 0' },
+      { key: 'spotless',    name: 'spotless, with nobody sweeping', note: "clear every pebble off the floor without hiring a janitor", reads: 'floorGrains === 0 && janitors === 0' },
       { key: 'critstreak',  name: 'a crit streak',             note: "land a run of critical hits without missing", reads: 'tally: crits running', needs: true },
       { key: 'tablebeaten', name: 'the table beaten',          note: "win a run of hands at the casino", reads: 'tally: hands won running', needs: true },
       { key: 'tableruin',   name: 'the table ruinous',         note: "lose a run of hands at the casino", reads: 'tally: hands lost running', needs: true },
@@ -722,8 +722,8 @@ const CATALOG = [
 
 // Bumped with the build, so a local copy written by the version that kept
 // clobbering itself cannot come back to life.
-const BUILD = 'build 6 · local';
-const KEEP = 'boulder-record-v4';
+const BUILD = 'build 7 · local';
+const KEEP = 'boulder-record-v5';
 const allItems = CATALOG.flatMap(s => s.items);
 const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
 const secOf  = Object.fromEntries(CATALOG.map(s => [s.id, s]));
