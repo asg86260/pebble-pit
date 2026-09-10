@@ -22,7 +22,7 @@ import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
+import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
@@ -224,6 +224,7 @@ export const STEPS = [
   { name: 'survey',  step: countTick },
   { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
   { name: 'rock',    step: stepRock },        // a new one on its way down
+  { name: 'shack',   step: c => stepShack(c.dt) },  // and the hut scooting over to make room for it
   // and whatever is standing over the yard, and what the rock makes of it.
   // Straight after the rock: it reads where the rock has got to this frame and
   // may stop it there, so it has to run on the same frame the rock moved.

@@ -18,6 +18,7 @@ import { WORKER, QUARRY_WALK } from '../config.js';
 import { S } from '../state.js';
 import { busyAt } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
+import { shack } from '../state.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
 import { TYPE } from '../jobs.js';
 
@@ -25,7 +26,9 @@ import { TYPE } from '../jobs.js';
 // naming the bindings while the object is built reads them before they exist
 // -- the same note BUILDING_OF in render/bars.js carries.
 const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed()],
-                  [TYPE.FARM]: ['farm', () => farmShed()] };
+                  [TYPE.FARM]: ['farm', () => farmShed()],
+                  // the rock's gang fits its picks at its own hut
+                  [TYPE.ROCK]: ['shack', () => shack] };
 
 // The site whose shed this body would build at, if its trade has one. Asked by
 // stepTender: a machine's post must not outbid an open work at the station, or

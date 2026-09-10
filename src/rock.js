@@ -38,6 +38,13 @@ export function depthOf() {
 
 // how big rock n is, in cells. It may never grow into the building on its flank,
 // nor out of the sky kept clear above the ground line
+// How wide rock n would be, in cells, before the flank has its say: what the
+// shack stands off (see `shackSpot`, world.js), which is why it is on its own.
+export const rockWidthAt = n => {
+  const w = Math.min(ROCK_W_MAX, Math.round(ROCK_W + (n - 1) * ROCK_GROW_W));
+  return w - (w % 2);
+};
+
 export function rockSize() {
   const w = Math.round(ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W);
   const h = Math.round(ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H);
