@@ -530,7 +530,7 @@
       the design argues for. Nothing here pays out, unlocks a row or changes a
       rate &mdash; a notice is a record, not a reward.
       <strong>Every name and note is editable</strong>: click the text and
-      reword it. <strong>Cut</strong> strikes a notice off. Everything saves as
+      reword it &mdash; a note says <em>what you did to earn the notice</em>, not a remark about it. <strong>Cut</strong> strikes a notice off. Everything saves as
       you go, and nothing is settled until you approve it at the foot of the
       page.
     </p>
@@ -650,24 +650,24 @@ const CATALOG = [
     title: 'What happens on its own',
     note: 'The spine of the suite. These land while you are playing, in roughly this order, and every one of them reads a fact already standing on S — nothing has to be counted for them.',
     items: [
-      { key: 'firstgrain',  name: 'the first grain',           note: 'something went in the hole', reads: 'banked > 0' },
-      { key: 'firstrock',   name: 'the first rock off',        note: 'and another one is coming', reads: 'boulderNo >= 2' },
-      { key: 'gotout',      name: 'they got out',              note: 'the one under the boulder, on their feet', reads: 'rescued' },
-      { key: 'firstcore',   name: 'something was inside it',   note: 'the rock was hiding a core all along', reads: 'seenCore' },
-      { key: 'firsthire',   name: 'somebody else in the yard', note: 'you are not doing this alone any more', reads: 'crew >= 1' },
-      { key: 'firstshard',  name: 'the first stone',           note: 'brought up out of the cut', reads: 'seenShard' },
-      { key: 'firstspore',  name: 'the first crop',            note: 'taken off a plot', reads: 'seenSpore' },
-      { key: 'firstspark',  name: 'the first spark',           note: 'the machines have a currency now', reads: 'seenSpark' },
-      { key: 'holefull',    name: 'the hole turned a grain away', note: 'it holds what it holds', reads: 'seenFullPit' },
-      { key: 'rifttorn',    name: 'the rift torn',             note: 'the dust goes somewhere else now', reads: 'riftOpen' },
-      { key: 'drowned',     name: 'the pit drowned',           note: 'the hole is a surface', reads: 'drowned' },
-      { key: 'allshields',  name: 'everything the sky threw, answered', note: 'every kind raised and dealt with', reads: 'every kind in shieldsDone' },
-      { key: 'star',        name: 'a star called down',        note: 'the tower did what a tower is for', reads: 'meteorOpen' },
-      { key: 'firsthat',    name: 'a hat off the stand',       note: 'somebody is a wizard now', reads: 'wizardHats >= 1' },
-      { key: 'firstbrew',   name: 'the first batch',           note: 'the pot came off cold', reads: 'brews >= 1' },
-      { key: 'firsttrade',  name: 'somebody taught a trade',   note: 'a job became a craft', reads: 'any of the four trade counts' },
-      { key: 'alltrades',   name: 'every trade taught',        note: 'the school has nobody left to send', reads: 'all four at their cap' },
-      { key: 'allbuilt',    name: 'every building standing',   note: 'the whole walk, end to end', reads: 'the *Open flags, all of them' }
+      { key: 'firstgrain',  name: 'the first grain',           note: "put a grain of dust in the hole", reads: 'banked > 0' },
+      { key: 'firstrock',   name: 'the first rock off',        note: "clear a whole boulder off the yard", reads: 'boulderNo >= 2' },
+      { key: 'gotout',      name: 'they got out',              note: "free the body trapped under the first boulder", reads: 'rescued' },
+      { key: 'firstcore',   name: 'something was inside it',   note: "bank a core out of a broken rock", reads: 'seenCore' },
+      { key: 'firsthire',   name: 'somebody else in the yard', note: "hire your first body", reads: 'crew >= 1' },
+      { key: 'firstshard',  name: 'the first stone',           note: "bring a stone up out of the quarry", reads: 'seenShard' },
+      { key: 'firstspore',  name: 'the first crop',            note: "take a crop off a farm plot", reads: 'seenSpore' },
+      { key: 'firstspark',  name: 'the first spark',           note: "come by your first spark", reads: 'seenSpark' },
+      { key: 'holefull',    name: 'the hole turned a grain away', note: "fill the hole until it turns a grain away", reads: 'seenFullPit' },
+      { key: 'rifttorn',    name: 'the rift torn',             note: "tear the rift open", reads: 'riftOpen' },
+      { key: 'drowned',     name: 'the pit drowned',           note: "widen the rift until the pit drowns", reads: 'drowned' },
+      { key: 'allshields',  name: 'everything the sky threw, answered', note: "raise and answer every kind of shield the sky throws", reads: 'every kind in shieldsDone' },
+      { key: 'star',        name: 'a star called down',        note: "call a star down from the tower", reads: 'meteorOpen' },
+      { key: 'firsthat',    name: 'a hat off the stand',       note: "finish a wizard hat at the tower", reads: 'wizardHats >= 1' },
+      { key: 'firstbrew',   name: 'the first batch',           note: "brew a batch at the apothecary", reads: 'brews >= 1' },
+      { key: 'firsttrade',  name: 'somebody taught a trade',   note: "send somebody to the school and teach them a trade", reads: 'any of the four trade counts' },
+      { key: 'alltrades',   name: 'every trade taught',        note: "teach every trade there is to teach", reads: 'all four at their cap' },
+      { key: 'allbuilt',    name: 'every building standing',   note: "put up every building in the yard", reads: 'the *Open flags, all of them' }
     ]
   },
   {
@@ -675,27 +675,27 @@ const CATALOG = [
     title: 'Numbers, for the long tail',
     note: 'The late yard runs itself and there is nothing left ticking. These are what tick. Every threshold is a placeholder wanting a played yard and the dev panel — each one an export let with a TUNABLE row, so it can be argued with rather than guessed at twice.',
     items: [
-      { key: 'rock5',    name: 'five rocks',                    note: '', reads: 'boulderNo >= 5' },
-      { key: 'rock10',   name: 'ten rocks',                     note: '', reads: 'boulderNo >= 10' },
-      { key: 'rock25',   name: 'twenty-five rocks',             note: '', reads: 'boulderNo >= 25' },
-      { key: 'rock50',   name: 'fifty rocks',                   note: '', reads: 'boulderNo >= 50' },
-      { key: 'rock100',  name: 'a hundred rocks',               note: 'well past the plateau', reads: 'boulderNo >= 100' },
-      { key: 'dust1e4',  name: 'ten thousand grains',           note: '', reads: 'banked >= 1e4' },
-      { key: 'dust1e5',  name: 'a hundred thousand grains',     note: '', reads: 'banked >= 1e5' },
-      { key: 'dust1e6',  name: 'a million grains',              note: '', reads: 'banked >= 1e6' },
-      { key: 'dust1e7',  name: 'ten million grains',            note: '', reads: 'banked >= 1e7' },
-      { key: 'dust1e8',  name: 'a hundred million grains',      note: 'the rift has been earning this, not the hole', reads: 'banked >= 1e8' },
-      { key: 'crew5',    name: 'a crew of five',                note: '', reads: 'crew >= 5' },
-      { key: 'crew10',   name: 'a crew of ten',                 note: '', reads: 'crew >= 10' },
-      { key: 'crew25',   name: 'a crew of twenty-five',         note: '', reads: 'crew >= 25' },
-      { key: 'crew50',   name: 'a crew of fifty',               note: 'a settlement, not a crew', reads: 'crew >= 50' },
-      { key: 'cut1e3',   name: 'a thousand cells out of the cut', note: '', reads: 'quarryTotal >= 1e3' },
-      { key: 'cut1e4',   name: 'ten thousand cells out of the cut', note: '', reads: 'quarryTotal >= 1e4' },
-      { key: 'rift1e6',  name: 'a million through the rift',    note: 'none of it is here', reads: 'riftAte >= 1e6' },
-      { key: 'brew100',  name: 'a hundred batches',             note: '', reads: 'brews >= 100' },
-      { key: 'lived1h',  name: 'an hour on one clock',          note: 'somebody has been here a while', reads: 'records.lived, the eldest' },
-      { key: 'lived10h', name: 'ten hours on one clock',        note: 'and they were here at the start', reads: 'records.lived, the eldest' },
-      { key: 'bestmined',name: 'the yard’s best hand',     note: 'more rock off this one body than any other', reads: 'records.mined, the highest' }
+      { key: 'rock5',    name: 'five rocks',                    note: "clear five boulders", reads: 'boulderNo >= 5' },
+      { key: 'rock10',   name: 'ten rocks',                     note: "clear ten boulders", reads: 'boulderNo >= 10' },
+      { key: 'rock25',   name: 'twenty-five rocks',             note: "clear twenty-five boulders", reads: 'boulderNo >= 25' },
+      { key: 'rock50',   name: 'fifty rocks',                   note: "clear fifty boulders", reads: 'boulderNo >= 50' },
+      { key: 'rock100',  name: 'a hundred rocks',               note: "clear a hundred boulders", reads: 'boulderNo >= 100' },
+      { key: 'dust1e4',  name: 'ten thousand grains',           note: "bank ten thousand grains", reads: 'banked >= 1e4' },
+      { key: 'dust1e5',  name: 'a hundred thousand grains',     note: "bank a hundred thousand grains", reads: 'banked >= 1e5' },
+      { key: 'dust1e6',  name: 'a million grains',              note: "bank a million grains", reads: 'banked >= 1e6' },
+      { key: 'dust1e7',  name: 'ten million grains',            note: "bank ten million grains", reads: 'banked >= 1e7' },
+      { key: 'dust1e8',  name: 'a hundred million grains',      note: "bank a hundred million grains", reads: 'banked >= 1e8' },
+      { key: 'crew5',    name: 'a crew of five',                note: "hire a crew of five", reads: 'crew >= 5' },
+      { key: 'crew10',   name: 'a crew of ten',                 note: "hire a crew of ten", reads: 'crew >= 10' },
+      { key: 'crew25',   name: 'a crew of twenty-five',         note: "hire a crew of twenty-five", reads: 'crew >= 25' },
+      { key: 'crew50',   name: 'a crew of fifty',               note: "hire a crew of fifty", reads: 'crew >= 50' },
+      { key: 'cut1e3',   name: 'a thousand cells out of the cut', note: "dig a thousand cells out of the quarry", reads: 'quarryTotal >= 1e3' },
+      { key: 'cut1e4',   name: 'ten thousand cells out of the cut', note: "dig ten thousand cells out of the quarry", reads: 'quarryTotal >= 1e4' },
+      { key: 'rift1e6',  name: 'a million through the rift',    note: "send a million grains through the rift", reads: 'riftAte >= 1e6' },
+      { key: 'brew100',  name: 'a hundred batches',             note: "brew a hundred batches", reads: 'brews >= 100' },
+      { key: 'lived1h',  name: 'an hour on one clock',          note: "keep one body on the payroll for an hour", reads: 'records.lived, the eldest' },
+      { key: 'lived10h', name: 'ten hours on one clock',        note: "keep one body on the payroll for ten hours", reads: 'records.lived, the eldest' },
+      { key: 'bestmined',name: 'the yard’s best hand',     note: "work one body until it has taken more rock off than anybody else", reads: 'records.mined, the highest' }
     ]
   },
   {
@@ -703,27 +703,27 @@ const CATALOG = [
     title: 'Feats you would have to set out for',
     note: 'The ones worth having, and where the work is. Each names the witness it needs — and every witness is a key in one saved object, S.tally, bumped at the single place the event happens. Never a field per feat, scattered across fourteen modules.',
     items: [
-      { key: 'nobodyhired', name: 'nobody hired',              note: 'a rock cleared with an empty payroll', reads: 'boulderNo steps while crew === 0', needs: true },
-      { key: 'ownhand',     name: 'your own hand alone',       note: 'not one worker touched that rock', reads: 'tally: no worker mined this rock', needs: true },
-      { key: 'nevertouched',name: 'never touched it',          note: 'and the other way round — you did not swing once', reads: 'tally: no swing of yours this rock', needs: true },
-      { key: 'underminute', name: 'a rock off in under a minute', note: '', reads: 'tally: the stamp of the last step', needs: true },
-      { key: 'fullnocut',   name: 'the hole filled before the cut was opened', note: 'the hard way, on purpose', reads: 'seenFullPit && !quarryOpen' },
-      { key: 'everyjob',    name: 'every job staffed at once', note: 'a body at every post in the yard', reads: 'every count in JOBS above nought' },
-      { key: 'onebodyall',  name: 'one body that has done every job', note: 'they have been everywhere', reads: 'every key present in a record’s at' },
-      { key: 'buried',      name: 'the yard buried',           note: 'every pile full at the same moment', reads: 'pileFull, all of them' },
-      { key: 'spotless',    name: 'spotless, with nobody sweeping', note: 'not a grain on the floor and no janitor hired', reads: 'floorGrains === 0 && janitors === 0' },
-      { key: 'critstreak',  name: 'a crit streak',             note: '', reads: 'tally: crits running', needs: true },
-      { key: 'tablebeaten', name: 'the table beaten',          note: 'hands won, one after another', reads: 'tally: hands won running', needs: true },
-      { key: 'tableruin',   name: 'the table ruinous',         note: 'and the other side of that coin', reads: 'tally: hands lost running', needs: true },
-      { key: 'broke',       name: 'broke, having been rich',   note: 'a million held, then nothing of any of it', reads: 'tally: the high-water mark', needs: true }
+      { key: 'nobodyhired', name: 'nobody hired',              note: "clear a whole boulder with nobody on the payroll", reads: 'boulderNo steps while crew === 0', needs: true },
+      { key: 'ownhand',     name: 'your own hand alone',       note: "clear a boulder without a single worker touching it", reads: 'tally: no worker mined this rock', needs: true },
+      { key: 'nevertouched',name: 'never touched it',          note: "clear a boulder without swinging at it once yourself", reads: 'tally: no swing of yours this rock', needs: true },
+      { key: 'underminute', name: 'a rock off in under a minute', note: "clear a boulder in under a minute", reads: 'tally: the stamp of the last step', needs: true },
+      { key: 'fullnocut',   name: 'the hole filled before the cut was opened', note: "fill the hole before opening the quarry", reads: 'seenFullPit && !quarryOpen' },
+      { key: 'everyjob',    name: 'every job staffed at once', note: "put at least one body on every job at once", reads: 'every count in JOBS above nought' },
+      { key: 'onebodyall',  name: 'one body that has done every job', note: "work one body through every job in the yard", reads: 'every key present in a record’s at' },
+      { key: 'buried',      name: 'the yard buried',           note: "let every station's pile fill at the same time", reads: 'pileFull, all of them' },
+      { key: 'spotless',    name: 'spotless, with nobody sweeping', note: "clear every grain off the floor without hiring a janitor", reads: 'floorGrains === 0 && janitors === 0' },
+      { key: 'critstreak',  name: 'a crit streak',             note: "land a run of critical hits without missing", reads: 'tally: crits running', needs: true },
+      { key: 'tablebeaten', name: 'the table beaten',          note: "win a run of hands at the casino", reads: 'tally: hands won running', needs: true },
+      { key: 'tableruin',   name: 'the table ruinous',         note: "lose a run of hands at the casino", reads: 'tally: hands lost running', needs: true },
+      { key: 'broke',       name: 'broke, having been rich',   note: "hold a million, then spend down to nothing of every currency", reads: 'tally: the high-water mark', needs: true }
     ]
   }
 ];
 
 // Bumped with the build, so a local copy written by the version that kept
 // clobbering itself cannot come back to life.
-const BUILD = 'build 5 · local';
-const KEEP = 'boulder-record-v3';
+const BUILD = 'build 6 · local';
+const KEEP = 'boulder-record-v4';
 const allItems = CATALOG.flatMap(s => s.items);
 const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
 const secOf  = Object.fromEntries(CATALOG.map(s => [s.id, s]));
@@ -1137,7 +1137,6 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) flush
 // moving off the artifact did not quietly lose them; both can be reverted on
 // their own slip like any other edit.
 const CARRIED = {
-  firstgrain: { note: 'gotta start somewhere' },
   gotout: { name: 'you saved your sqwife' }
 };
 

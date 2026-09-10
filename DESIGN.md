@@ -6335,9 +6335,22 @@ One object, in the shape the boards already read:
 ```js
 { key:  'firstcore',
   name: 'a core in the hole',
-  note: 'the first thing the rock was hiding',
+  note: 'bank a core out of a broken rock',
   when: () => S.seenCore }
 ```
+
+**The note says what you did to earn it.** Not a remark about it, not a joke at
+its expense, not a line of flavor -- the plain thing you had to do, in the words
+the yard would use. A record that comments on itself is a record you stop
+trusting: the first time a note is a quip rather than a fact, every other note
+becomes a thing to be read twice, and the sheet stops being the one place in the
+game that tells you plainly what happened. It is also the only wording that is
+any use to the player who has *not* earned a notice yet and is trying to work
+out what it wants.
+
+`name` names the moment and may be as plain or as pointed as it likes -- "the
+hole turned a grain away" is a title. `note` is the requirement, and is never
+anything else.
 
 `when` is a predicate over the game, asked a couple of times a second by the same
 sampler that already drives the books (`sampleBooks`), never per frame. Forty-odd
