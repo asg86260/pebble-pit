@@ -2,31 +2,37 @@
 
 ## The noticeboard and the record on it (2026-09-09)
 
-**Designed, not built.** DESIGN.md, "The noticeboard, and the record on it".
-A board between the work bench and the houses that says what you have done:
-forty-odd notices in three kinds -- things you pass anyway, numbers for the long
-tail, and feats you would have to set out for. The income books move off the pit
-mouth and onto it as its second sheet, which retires `booksRect` and the
-hand-tightened hit patch that had to be kept out of the rift's air.
+**Approved 2026-09-10. Not built.** DESIGN.md, "The noticeboard, and the record
+on it", now carries the approved catalog: forty-two notices of the fifty-two
+proposed, with the approved name and note for each written out verbatim. Ten
+were struck off on the sheet and are gone rather than parked. A board between
+the work bench and the houses that says what you have done; the income books
+move off the pit mouth onto it as its second sheet, which retires `booksRect`
+and the hand-tightened hit patch kept out of the rift's air.
 
 **Recognition only.** No notice pays out, unlocks a row or changes a rate. That
 is the decision the whole feature hangs off, and it is the same bargain
 `records.js` already strikes with the crew's own histories.
 
-**Blocked on:** approval of the design, and three calls inside it that a shot
-would settle faster than an argument --
+**The three calls came down:** the locked list is counted, not named; a body
+walks over when a notice lands, and the tick stays too; a body's own record
+goes on the crew list off the house board, as its own later piece of work.
 
-- **The locked list.** The design says unearned notices are not named, only
-  counted (`14 of 52`), which is the rule the books and the counter already
-  follow. Many players want a list to work through. One predicate either way.
-- **The walk.** Whether a body comes over and stands at the board when a notice
-  lands, or whether the bobbing tick over the station is the whole of it.
-- **Every threshold in the long-tail table**, which are placeholders wanting a
-  played yard and the dev panel.
+**What it costs, after the cuts.** Thirty of the forty-two are one comparison
+against a field already on `S`. Only three need anything remembered between
+frames -- two per-rock flags and one stamp, all cleared when a rock lands -- and
+the two that wanted counters of their own (a crit streak, broke-having-been-rich)
+are both cut. The casino pair and `nobody hired` are event hooks: marked earned
+where the thing happens, with nothing carried.
 
-Not a fix, and big enough for the wave treatment: the catalog, the board and its
-two sheets, the site row, and the witnesses at their event sites are four tracks
-with nearly disjoint ownership.
+**Left open, and both dev-panel questions rather than code:** every threshold in
+the numbers table, and the 50,000 on the two casino notices.
+
+Big enough for the wave treatment: the catalog, the board and its two sheets,
+the site row, and the witnesses at their event sites are four tracks with nearly
+disjoint ownership.
+
+The sheet the approval was made on is `docs/noticeboard-catalog.html`.
 
 ## The farm and the quarry sell the same rate twice (2026-09-08)
 
