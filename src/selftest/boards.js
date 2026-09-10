@@ -222,8 +222,16 @@ export const TESTS = [
     window.__grant({ cores: 9, shards: 900, spores: 900 });
     window.__crew(4, 3, 2, 2);
     window.__air({ janitors: 1 });
+    // The shack stands, so its door is off the bench and the rock's gear is on
+    // the shack's own sheet, where it is measured with the rest. The door is
+    // the one card under this purse that carries a note -- a description line
+    // under the row, by design (see `.rows .note` in style.css) -- and a note
+    // is a second thing that makes a card taller, which the rule below does not
+    // yet say anything about. The rows measured here are the ones the rule was
+    // written about; a note card's rhythm is a call still to be made.
+    window.__shack();
     run(20);
-    const boards = ['bench', 'house', 'quarry', 'farm', 'school', 'scrub',
+    const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'school', 'scrub',
                     'tower', 'casino'];
     const bad = [];
     let seen = 0;
@@ -247,19 +255,32 @@ export const TESTS = [
         r.selectNodeContents(t);
         return Math.max(1, r.getClientRects().length);
       };
-      // A card whose title is one line is the board's step. Anything taller has
-      // to be taller by exactly the lines its title gained.
-      const one = rows.filter(e => lines(e) === 1).map(h);
+      // The cards stand two to a line of the sheet, and a line of the sheet is
+      // as tall as the taller of its two -- that is what a grid does, and the
+      // alternative, cards of different heights side by side with ragged
+      // bottoms, is the very thing this check exists to keep off the boards.
+      // So the rule is read a line of the sheet at a time: its height is the
+      // step plus a line per line of the *longest* title on it, and every card
+      // on it is that height.
+      const top = e => Math.round(e.getBoundingClientRect().top);
+      const shelves = [...new Set(rows.map(top))].map(t => rows.filter(e => top(e) === t));
+      const longest = shelf => Math.max(...shelf.map(lines));
+      // A line of the sheet whose titles are all one line is the board's step.
+      // Anything taller has to be taller by exactly the lines its longest title
+      // gained.
+      const one = shelves.filter(s => longest(s) === 1).flatMap(s => s.map(h));
       if (!one.length) continue;
       const step = Math.min(...one);
       const ragged = one.filter(x => x !== step).length;
       if (ragged) bad.push(`${name}: ${ragged} one-line cards off ${step}px`);
       const line = Math.round((Math.max(...rows.map(h)) - step) /
                               Math.max(1, Math.max(...rows.map(lines)) - 1));
-      for (const e of rows) {
-        const want = step + (lines(e) - 1) * (line || 0);
-        if (Math.abs(h(e) - want) > 1) {
-          bad.push(`${name}: ${h(e)}px on ${lines(e)} title lines, wanted ${want}px`);
+      for (const shelf of shelves) {
+        const want = step + (longest(shelf) - 1) * (line || 0);
+        for (const e of shelf) {
+          if (Math.abs(h(e) - want) > 1) {
+            bad.push(`${name}: ${h(e)}px beside ${longest(shelf)} title lines, wanted ${want}px`);
+          }
         }
       }
     }
@@ -932,6 +953,11 @@ export const TESTS = [
     // its rows were written, so it hung low until you closed it and opened it
     // again. Nothing after this check ever sees a board opening for the first
     // time, so if this is not where it is caught it is not caught at all.
+    //
+    // Its own yard, so the bench it reads is a fresh bench with the rows a
+    // hundred dust puts on it, whichever neighbor ran before it in the shard.
+    newRun();
+    await settle();
     await hoverBench();
     const b = board();
     const first = document.getElementById('panel').getBoundingClientRect();
@@ -943,8 +969,12 @@ export const TESTS = [
     const r = b.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const rows = [...shop().children];
+    // A row's description, when it has one, is a line under the row and spans
+    // the whole card (`.rows .note`, style.css) -- it is not a column, and the
+    // shack's door is the one row on a fresh bench that carries one.
     const cells = rows.filter(el => !el.dataset.sect)
-                      .map(el => [...el.children].map(sp => sp.textContent));
+                      .map(el => [...el.children].filter(sp => !sp.classList.contains('note'))
+                                                 .map(sp => sp.textContent));
     return [
       ok(!b.hidden, 'board opens when the cursor nears the bench'),
       ok(r.width > 40 && r.height > 40, 'board has a size', `${r.width}x${r.height}`),
