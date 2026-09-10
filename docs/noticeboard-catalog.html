@@ -722,7 +722,7 @@ const CATALOG = [
 
 // Bumped with the build, so a local copy written by the version that kept
 // clobbering itself cannot come back to life.
-const BUILD = 'build 8 · local';
+const BUILD = 'build 9 · local';
 const KEEP = 'boulder-record-v5';
 const allItems = CATALOG.flatMap(s => s.items);
 const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
@@ -1156,8 +1156,26 @@ const CARRIED = {
 const KEYS = ['boulder-record-v5', 'boulder-record-v4', 'boulder-record-v3',
               'boulder-record-v2', 'boulder-record'];
 
+/* Every sheet MERGED, oldest first, not the newest one chosen.
+
+   Choosing was wrong and nearly threw the real sheet away. The bump left
+   two copies: a full one under the old key -- twenty-two rewordings and
+   seven cuts -- and a nearly empty one under the new key, written a minute
+   LATER when the reader re-cut a few slips on what looked like a fresh
+   page. By timestamp the empty one wins, which is exactly backwards. A
+   later sheet is not a fuller sheet when the thing that made it later was
+   the sheet being emptied.
+
+   So nothing is chosen and nothing is dropped:
+
+   - a CUT is an act. They union. A sheet that does not mention a cut was
+     not putting that notice back, it simply never saw it.
+   - a REWORDING is merged field by field, later over earlier, so a name
+     rewritten twice keeps the second one while a note the bump orphaned
+     comes back from the sheet that still has it.
+   - a CALL and an APPROVAL only ever move to an answer, never to a blank. */
 function loadState() {
-  let best = null, bestAt = '';
+  const sheets = [];
   for (const k of KEYS) {
     let v = null;
     try { v = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { continue; }
@@ -1165,12 +1183,22 @@ function loadState() {
     const has = Object.keys(v.edits || {}).length || Object.keys(v.cut || {}).length ||
                 Object.keys(v.sections || {}).length || Object.keys(v.calls || {}).length ||
                 v.approved;
-    if (!has) continue;
-    // The newest sheet wins, and one with no stamp still beats nothing.
-    const at = v.at || '';
-    if (!best || at > bestAt) { best = v; bestAt = at; }
+    if (has) sheets.push(v);
   }
-  return best;
+  if (!sheets.length) return null;
+
+  sheets.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+
+  const out = { cut: {}, calls: {}, edits: {}, sections: {}, approved: null, at: '' };
+  for (const v of sheets) {
+    Object.assign(out.cut, v.cut || {});
+    for (const k in (v.calls || {})) if (v.calls[k]) out.calls[k] = v.calls[k];
+    for (const k in (v.edits || {})) out.edits[k] = { ...(out.edits[k] || {}), ...v.edits[k] };
+    for (const k in (v.sections || {})) out.sections[k] = { ...(out.sections[k] || {}), ...v.sections[k] };
+    if (v.approved) out.approved = v.approved;
+    if (v.at && v.at > out.at) out.at = v.at;
+  }
+  return out;
 }
 
 try {
@@ -1179,7 +1207,7 @@ try {
     Object.assign(state, found);
     // Carry it on to the current key at once, so an older one is never read
     // twice and never has to be found again.
-    if (localStorage.getItem(KEEP) === null) keepHere();
+    keepHere();
   } else {
     state.edits = CARRIED;
     state.at = new Date().toISOString();
