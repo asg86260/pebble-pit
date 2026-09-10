@@ -28,6 +28,7 @@ import { farmShed, quarryShed } from '../world.js';
 import { shack } from '../state.js';
 import { apothHut } from '../apothecary.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
+import { settle } from './commute.js';
 import { TYPE } from '../jobs.js';
 
 // Deferred with arrows: this module sits in an import cycle with world.js, so
@@ -89,13 +90,22 @@ export function stepShedwork(w) {
     w.route = null;
   }
 
-  // The work has landed (or been dropped): the claim clears and the body walks
-  // back to its post -- `goal: 'to'` is the walk, so nothing teleports.
+  // The work has landed (or been dropped): the claim clears and the body goes
+  // back to its job as a fresh hire standing where it is -- `settle` puts it on
+  // whatever its own factory says a body starting out is doing, which for a
+  // quarrier, a farmhand or a stirrer is `goal: 'to'`, the walk to its post,
+  // and for a rockhand is no goal at all. Nothing teleports either way.
+  //
+  // It used to write `goal: 'to'` itself, for every trade alike. The rock's
+  // stepper has no notion of `to` and never clears it, so a rockhand that had
+  // fitted one pick carried the word for the rest of its life, the claim above
+  // read it as "still commuting" and passed it over for ever, and the second
+  // row bought at the hut sat at nought for the rest of the run -- through
+  // reloads too, since a body's goal is saved with it. Four critics found it
+  // (docs/critics-2026-09-10.md), and a player's save reproduced it in one
+  // load: test/shack-stall.test.mjs.
   if (!busyAt(w.onBuild)) {
-    w.onBuild = null;
-    w.atShed = false;
-    w.goal = 'to';
-    w.route = null;
+    settle(w);
     return false;
   }
 

@@ -108,7 +108,15 @@ export function keepOf(w) {
 
 // and back again, on to a body the factory has just made
 export function wearRecord(w, from) {
+  const hasGoal = 'goal' in w;
   for (const k of KEEPS) if (from[k] != null) w[k] = from[k];
+  // A goal is only worn by a body whose job has one. The factory made `w` a
+  // moment ago, so what it carries is the job's own starting goal -- `to` for
+  // the trades that walk to a post, nothing for a rockhand -- and a saved word
+  // the job has no stepper for would ride along unread for ever. Saves written
+  // before the shed release was fixed (shedhand.js) hold rockhands marked `to`
+  // that no shack work could claim; this is what puts them right on the way in.
+  if (!hasGoal) delete w.goal;
   // A save written before tonics stacked has one `dose` rather than a list of
   // them; it is read as a list of one. Either way a dose with no `left` on it is
   // older still -- it was written as a moment on a clock that has since started
