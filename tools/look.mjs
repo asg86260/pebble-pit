@@ -508,7 +508,7 @@ const SCENES = {
   boards: `${RICH} window.__board('tower');`,
 
   // The three boards whose headings name a trade or a purchase rather than a
-  // place -- the shack's "rock miners", the house's "housing" and "crew gear",
+  // place -- the shack's "the miners", the house's "the crew", the bench's "the haulers",
   // the school's four trades. Headings are the only thing these shots are for,
   // and no suite can read one, so they are shot rather than asserted.
   // The shack against the rock, at both ends of the rock's growth: the walk

@@ -242,15 +242,15 @@ function people() {
   }));
 }
 
-// Two headings: what you can build, and who is already living in it. The people
-// are not cut up by job -- that would put the same body under a different word
-// every time it was moved -- but a purchase is not a person, and a row you can
-// spend dust on sitting unlabelled next to one is a row you press by accident.
-//
-// The second heading is still here now that the names have moved off this board:
-// the sheet that opens off it wears the same word at the top, which is how a
-// submenu says which heading it came out of.
+// One heading over two rows. It was two -- "the crew" over the door and
+// "housing" over the roof -- from the days the names were poured out under the
+// first one and a purchase needed a heading of its own to keep it from being
+// pressed by accident. With the names on their own sheet the door is a row
+// like any other, and a heading over one row was saying nothing the row did
+// not. "the crew", not "the houses": the board is already titled "the house",
+// and both rows are about the people -- who is in, and room for one more. The
+// sheet that opens off the door wears the same word, which is how a submenu
+// says which heading it came out of.
 export const crewSections = () => [
-  { title: 'the crew', keys: [CREW_ROW.key] },
-  { title: 'housing', keys: [HOUSE_ROW.key] }
+  { title: 'the crew', keys: [CREW_ROW.key, HOUSE_ROW.key] }
 ];

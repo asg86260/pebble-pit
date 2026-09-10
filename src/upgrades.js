@@ -837,18 +837,22 @@ registerRows(UPGRADES);
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
-  { title: 'your gear', keys: ['carry', 'auto', 'speed', 'pick'] },
-  // Placeholder heading -- Track A owns the final wording. The crit rows apply
-  // to the whole yard, so the bench is their natural home.
-  { title: 'critical hits', keys: ['critchance', 'critmult'] },
+  // "you", not "your gear": you are the cursor, and the heading under this one
+  // is the one about gear.
+  { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
+  // The crit rows apply to the whole yard, so the bench is their natural home.
+  // "lucky swings" rather than the genre's "critical hits": a heading here is a
+  // thing in the yard, not a term from another game's manual.
+  { title: 'lucky swings', keys: ['critchance', 'critmult'] },
   // Everything a hauler is issued: what they carry, how fast they walk, the
   // multiplier over that, and the machine that carries without them. All of it
   // was sold at the house for a while, in two moves, and all of it has come
   // back: the house is for putting a roof up, and the bench is where kit is
   // fitted -- yours under the heading above, theirs under this one. Ladder
   // first, the thing that climbs past it last, the way the shack orders the
-  // rock's. See crewboard.js.
-  { title: 'crew gear', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'labhaul', 'belt', 'tunebelt'] },
+  // rock's. Named for the job, the way the shack's is: "the haulers" beside
+  // "the miners", and "crew" left to the house, where the crew live.
+  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'labhaul', 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

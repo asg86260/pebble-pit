@@ -93,7 +93,7 @@ export const SWING_MULT = ladder({
 
 export const HAUL_MULT = ladder({
   key: 'labhaul', field: 'haul',
-  name: 'speed ×',
+  name: 'pace ×',
   unit: 'px/s',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',

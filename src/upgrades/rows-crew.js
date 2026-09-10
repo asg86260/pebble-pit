@@ -19,7 +19,7 @@ export const CREW_ROWS = [
     // The heading over these rows already says "crew gear", so the rows do not
     // need to say "worker" as well -- and what a body can pick up in one go is
     // its strength rather than its load, which is the thing it is carrying.
-    name: 'strength',
+    name: 'load',
     unit: 'px',
     rung: () => S.haulCarryLevel,
     from: () => haulCap(),
@@ -71,7 +71,7 @@ export const CREW_ROWS = [
   {
     key: 'haulpace',
     kind: 'rung', site: 'bench',
-    name: 'speed',
+    name: 'pace',
     unit: 'px/s',
     pct: true,
     rung: () => S.haulPaceLevel,
