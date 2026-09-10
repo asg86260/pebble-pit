@@ -359,19 +359,23 @@ export const TESTS = [
     const coins = row && [...row.querySelectorAll('.cost i')].map(i => i.className);
     const said = row && row.querySelector('.cost').textContent.trim();
     const tall = row && Math.round(row.getBoundingClientRect().height);
-    // A bill wraps inside its cell once it is longer than the card can hold, and
-    // a wrapped bill makes its card taller than the others. Four fits, so this
-    // one must not be wrapping.
+    // A bill wraps inside its cell once it is longer than the card can hold --
+    // the stylesheet says so, and names the wizard among the handful of rows
+    // wide enough to do it. So what is pinned is not that four coins sit on one
+    // line (they did, until the coins got dearer) but that the wrap is the one
+    // the design promises: every coin inside the cell's right edge, nothing
+    // clipped, and the card grown to hold the second line rather than the bill
+    // running out of the card.
     //
     // Measured rather than asked of a class name. There used to be a `.split`
     // class, put on by counting the coins, and this checked for it -- so it was
     // really checking that somebody had counted to four, not that the words fit.
-    // The bill wraps on its own now, which means the honest question is whether
-    // the cell is taller than one of the coins in it.
     const cell = row && row.querySelector('.cost');
-    const coin = cell && cell.querySelector('span');
-    const stacked = !!cell && !!coin &&
-      cell.getBoundingClientRect().height > coin.getBoundingClientRect().height * 1.5;
+    const box = cell && cell.getBoundingClientRect();
+    const card = row && row.getBoundingClientRect();
+    const spans = cell ? [...cell.querySelectorAll('span')].map(s => s.getBoundingClientRect()) : [];
+    const inside = !!box && spans.length === 4 && spans.every(r =>
+      r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= card.bottom + 1);
     window.__board(null);
     return [
       ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
@@ -382,8 +386,8 @@ export const TESTS = [
          said),
       ok(!row?.dataset.note && !row?.title,
          'and the row keeps it all to itself: no sheet opens beside it'),
-      ok(stacked === false, 'and the bill of four still fits on one line',
-         stacked ? 'it stacked' : 'one line')
+      ok(inside, 'and the bill of four stays inside its own cell, wrapped or not',
+         spans.map(r => `${Math.round(r.left)}-${Math.round(r.right)}`).join(' ') + ` in ${Math.round(box?.left)}-${Math.round(box?.right)}`)
     ];
   }],
 
