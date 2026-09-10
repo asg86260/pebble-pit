@@ -47,12 +47,19 @@ export const NOTICE_KNOBS = [
 // furniture rather than a building: nobody works in it, and it wants to read
 // as something you walk up to and peer at, not as another shed.
 //
-// Wide enough for the slips to be legible as slips at the yard's ordinary
-// zoom, and no wider -- the strip it stands on is the busiest ground in the
-// yard and the crew have to get past it.
-export const BOARD_W = P * 11;
+// Wide enough for the sheets on it to be legible as sheets at the yard's
+// ordinary zoom, and no wider -- the strip it stands on is the busiest ground
+// in the yard and the crew have to get past it. Thirteen is what three
+// three-cell sheets with a cell of board between and around them come to
+// (see SHEETS in render/noticeboard.js); the panel is sized off its contents
+// rather than the contents squeezed to fit a panel, which is what left the
+// old slips off the lattice.
+export const BOARD_W = P * 13;
 export const BOARD_H = P * 8;          // the panel
 export const BOARD_LEG = P * 3;        // and how far it stands off the ground
-// How many slips the panel can show at once. The board fills up as the record
-// does, which is the whole of what it has to say from across the yard.
-export const BOARD_SLIPS = 12;
+// What the sheets pinned to it are drawn in: paper, not dust. The heap shades
+// top out at a mid grey and read as dirt against the black panel; these are
+// the clouds' whites and a step under, so a sheet is a sheet from across the
+// yard. Each sheet takes one off its own index, because paper on a board is
+// not one white (see render/noticeboard.js).
+export const PAPER = ['#f2f2f2', '#e3e3e3', '#d4d4d4', '#ebebeb'];

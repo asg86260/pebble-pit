@@ -158,11 +158,21 @@ export const padOf = row => row.pile ? row.standoff + heapBase(row.pile) * P : 0
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_W_MAX = 92;
-// The hand's width the rock keeps clear of its flank building, rather than
+// The ground the biggest rock keeps clear of its flank SLOT, rather than
 // growing up against the wall. It was `P * 14` written into `rockSize`
 // (rock.js) -- a number in a module, and the module could not be read against
 // the spacing that had to agree with it. The two ends of one decision.
-export const ROCK_FLANK_CLEAR = P * 6;
+//
+// Fourteen is not a hand's width; it is the ram's parking space. The ram
+// stands off the flank building by RAM_CLEAR and is spriteW(RAM) -- eleven
+// cells -- long, and `ramTargetX` (rock.js) parks it no nearer the flank than
+// that, so a slot any closer to the biggest rock puts the machine and its
+// tender's post inside the boulder. It was cut to six once, for the hut, and
+// the endgame checks buried a rockhand at the ram's post. The hut itself
+// stands nearer than this (SHACK_CLEAR, config/buildings.js; `shackSpot`,
+// world.js) and only reaches the slot at the biggest rock. shack.test.mjs
+// holds this number against the ram's real width.
+export const ROCK_FLANK_CLEAR = P * 14;
 
 // The bare ground between the rock's centre and the near wall of the first
 // site along. Measured from `S.cx` rather than from the rock's edge, because the

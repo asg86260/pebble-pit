@@ -17,7 +17,8 @@ import { S, floor } from '../state.js';
 import { commutePace } from '../upgrades.js';
 import { siteBox } from '../works.js';
 import { duck, stand } from '../crew.js';
-import { onYard } from './body.js';
+import { onYard, surfaceUnder } from './body.js';
+import { bridgeSpan } from '../world.js';
 import { buriedAt } from '../intro.js';
 import { MEET_CLEAR } from '../config.js';
 
@@ -194,6 +195,17 @@ const danceEnd = now =>
 // `endsAt` is when the yard stops celebrating, and it is here for the last join
 // of all: a body still in the air when the dance is switched off lands by
 // teleport. It is the same rule as every other join, asked one beat early.
+// On the bridge over the cut -- a ramp or the deck -- which is a way, not the
+// yard: the walk keeps a body there until it comes down, the way it keeps one
+// on a face or a ladder. A body stopped on the ramp danced on a slope, and the
+// stride that took it back to work was a cell of height for the ramp's own
+// twenty degrees, which read as the dance dropping it.
+const onBridge = w => {
+  if (!S.quarryOpen) return false;
+  const { x0, x1 } = bridgeSpan();
+  return w.x + WORKER > x0 && w.x < x1;
+};
+
 function jig(w, now, zone, endsAt) {
   // the mark it dances on, taken once: where it stands. It used to be a spot
   // rolled a few cells either side, because the dance paced across it and the
@@ -210,6 +222,20 @@ function jig(w, now, zone, endsAt) {
     // taken -- "wait for the walk to finish" was tried and a commute the dance
     // itself preempts never finishes, so nobody mid-errand ever danced. Off the
     // yard (a face, a ladder) the walk keeps the body; it joins if it tops out.
+    // ...nor a body on the bridge, walking or between strides: it is on a
+    // slope, and it comes down before it joins in.
+    if (onBridge(w)) return;
+    // And on its own surface before the foot is taken. A body loaded from a
+    // save keeps the y it was saved at, and the ground under that x may have
+    // changed under it -- the walk closes up and spreads out as the yard's
+    // spacing changes -- so a farmhand saved on bare yard can be standing a
+    // cell and a half into a heap. Latched there, the stride that took it back
+    // to work climbed out of the heap in one frame, which read as the dance
+    // dropping it. So it does not join until its own stepper has it standing
+    // where it stands: the climb is eased, and nothing jumps. `surfaceUnder`
+    // asks the way the body is on, so a quarrier on the floor of the cut and a
+    // rockhand on the crest are on their surfaces and join at once.
+    if (Math.abs(w.y - surfaceUnder(w)) > P) return;
     if (w.walking) {
       if (!onYard(w)) return;
       w.walking = false; w.legs = null; w.leg = 0;

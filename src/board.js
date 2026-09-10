@@ -16,8 +16,6 @@ import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
-import { recordRows } from './record.js';
-import { markNoticesRead } from './notices.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
 import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
@@ -122,7 +120,7 @@ const listFor = which =>
   which === 'farm' ? FARM_UPGRADES :
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
-  which === 'stats' ? [...STATS_UPGRADES, ...recordRows()] :
+  which === 'stats' ? STATS_UPGRADES :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
   // Gathered when asked, like the house's -- see shack.js.
   which === 'shack' ? shackRows() :
@@ -155,7 +153,9 @@ const standing = which =>
   which === 'outhouse' ? S.outhouseOpen :
   which === 'shack' ? S.shackOpen :
   which === 'buildbench' ? S.buildbenchOpen :
-  which === 'stats' ? S.banked > 0 || S.won.length > 0 :
+  // The books open once the hole has had something in it. The record used to
+  // open them too; it hangs on the held sheet now (record.js).
+  which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
 
 // Where a station's mark goes: the middle of it, on the ground. Now that the
@@ -878,9 +878,6 @@ function settle(want) {
   S.apothBoardOpen = want === 'apothecary';
   S.towerBoardOpen = want === 'tower';
   S.statsBoardOpen = want === 'stats';
-  // Opening the board reads what is on it: the bobbing tick over the
-  // noticeboard comes down, and the next notice to land puts it back up.
-  if (want === 'stats') markNoticesRead();
   S.looBoardOpen = want === 'outhouse';
   S.shackBoardOpen = want === 'shack';
 
@@ -1021,7 +1018,7 @@ function fill(which) {
   // and for the same reason: what is on them moves on its own, and a rate that
   // went stale the moment you opened it would be the board telling you what the
   // yard used to be earning.
-  if (which === 'stats') refresh(statsShopEl, [...STATS_UPGRADES, ...recordRows()], null);
+  if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
   if (which === 'shack') refresh(shackShopEl, shackRows(), null);
   if (which === 'buildbench') refresh(buildShopEl, BUILDBENCH_UPGRADES, null);

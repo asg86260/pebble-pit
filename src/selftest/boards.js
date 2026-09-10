@@ -1135,7 +1135,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the books and the record hang on the noticeboard, and walking up opens them', async () => {
+  ['the books hang on the noticeboard, and walking up opens them', async () => {
     newRun();
     await settle();
     window.__crew(3, 3);

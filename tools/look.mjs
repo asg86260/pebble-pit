@@ -503,10 +503,10 @@ const SCENES = {
   // walk up to rather than as another shed with the door left off. The shot
   // is the check.
   notices: `window.__reset(); window.__crew(1); window.__give(400); window.__fast(4);
-            window.__look(window.__state().noticesX); window.__fast(6);`,
+            window.__look(window.__state().noticesX - 440); window.__fast(6);`,
 
   notices2: `window.__reset(); window.__crew(1); window.__jump(30); window.__tip(90000); window.__fast(6);
-             window.__look(window.__state().noticesX); window.__fast(6);`,
+             window.__look(window.__state().noticesX - 440); window.__fast(6);`,
 
   boards: `${RICH} window.__board('tower');`,
 

@@ -6,19 +6,19 @@
 // megabytes written every second.
 
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
-         ABYSS_AT } from './config.js';
+         ABYSS_AT, WORKER } from './config.js';
 import { load, save, clear, isSave, loadRaw, saveRaw, savePrev } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, BLANK, SAVED, SAVED_BY_HAND, floor, pit, cut, sky } from './state.js';
+import { S, BLANK, SAVED, SAVED_BY_HAND, floor, pit, cut, sky, quarry } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
-import { resite, openingCamX, clampCam } from './world.js';
+import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
@@ -504,6 +504,7 @@ export function restore() {
     // A game that has never been played does not start with a rock. It starts
     // with two people, and the rock is what happens to them -- see intro.js.
     makeBoulder();
+    settleShack();
     clearBoulder();
     S.coreBuried = false;
     startIntro();
@@ -548,6 +549,11 @@ export function restore() {
     S.rescued = false;
     return;
   }
+  // The hut where this save's rock puts it, now that the rock is known. The
+  // yard was laid out with the hut off rock one; a save from rock forty-two
+  // would otherwise come back with the hut inside the boulder and the gang's
+  // kit stand under it, scooting out over the first seconds of play.
+  settleShack();
   // Everything the save keeps as it stands, in one pass off the list in
   // state.js. It runs first because the hand-written lines below it read what it
   // sets -- the rift is clamped to `S.stored`, the wizards to `S.wizardHats` --
@@ -1014,6 +1020,19 @@ function restoreCrew(who) {
       const { x, y, goal, inside, site, ...rest } = rec;
       rec = rest;
     }
+    // A body that was standing on ground this layout has a hole in. The walk
+    // closes up and spreads out as the yard's spacing changes (`padOf`, config/
+    // sites.js), and a save's bodies keep the x they were saved at -- so a
+    // farmhand saved on bare yard came back at ground height over the mouth of
+    // the cut, where the ladder and the dance took turns with it. It stands at
+    // the near edge of the mouth instead, on ground that is there, and walks
+    // from that. A body saved DOWN in the cut is in the cut on purpose and keeps
+    // its place; only a body at ground height is over a hole it never entered.
+    if (Number.isFinite(rec.x) && overCutMouth(rec.x)
+        && (!Number.isFinite(rec.y) || rec.y + WORKER <= S.groundY + 1)) {
+      const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
+      rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
+    }
     S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
   }
 }
@@ -1129,6 +1148,7 @@ export function reset(fresh = true) {
   S.shieldsDone = [];
   S.rockHeld = false;
   makeBoulder();
+  settleShack();                   // beside rock one, not sliding in from where it stood
   clearBoulder();
   S.coreBuried = false;
   startIntro();                    // a reset is a game that has never been played

@@ -6459,7 +6459,38 @@ So when reading this document: `shard` in a code sample is the thing the boards
 call ore, and `spore` is crops. The two vocabularies are deliberate and the
 seam between them is the display layer.
 
-## The noticeboard, and the record on it (approved, not built)
+## The noticeboard, and the record on it (built, then amended)
+
+### Amendment — the record moves to the held sheet; the board is the books
+
+Three things, all asked for after living with it:
+
+**The board is pinned between the bench and the front doors.** It was placed by purchase order
+like a station, and it is not a station -- it is furniture on the busiest strip of the yard, and
+one yard had it out past the school. `PINNED_FIRST` in world.js is `shack, bench, notices, house`.
+
+**The record is a list on the held sheet, not a second sheet on the board.** The books answer
+"what is the yard earning now"; the record answers "what has happened". Asked at one place they
+read as one board with two moods. And the record's rows were built in a board's shape -- they lit
+up under the cursor, they carried a note in the price column, they were the shape of a thing you
+might buy -- for a list on which nothing is for sale. So the record is written on to the held
+sheet (the settings sheet, the one surface that is already not the yard) when the game is held:
+a heading with the count, one plain line a notice, name left and what earned it right, no hover
+and no button. Holding the game is what reads it -- the tick over the board comes down then. The
+noticeboard's own sheet is the books, and opens with the first grain banked. `record.js`,
+`showRecord`; `hold` in input.js.
+
+**The sprite is on the lattice.** The old slips were laid out at thirteen and a half pixels a
+column on a six-pixel grid, which put a hairline gutter between every pair and a lopsided bottom
+row, and their number tracked the record, which is no longer on the board. The face is a fixed
+arrangement of six pinned sheets -- three across the top, three of unequal width along the bottom
+-- in paper tones (`PAPER`, config/notices.js; the heap greys read as dirt against the black
+panel), each with a line or two of ink on it. Every edge is a whole cell; the panel is thirteen
+cells wide because that is what three three-cell sheets with a cell around each come to, rather
+than the sheets squeezed into a panel sized first.
+
+### The original design
+
 
 The yard has kept a great many facts about itself since the first rock and has
 never once said any of them back. `banked` counts every grain that ever went in

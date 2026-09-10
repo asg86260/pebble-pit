@@ -7,7 +7,7 @@
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
-        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, ROCK_FLANK_CLEAR,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
@@ -18,7 +18,9 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
-import { rockWidthAt } from './rock.js';
+import { rockWidthAt, RAM_REACH } from './rock.js';
+import { machine } from './machines.js';
+import { spriteW, RAM } from './sprites.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 import { JOB } from './jobs.js';
@@ -241,7 +243,11 @@ export function layPiles() {
 // the rock, which is the one station that was standing before anything was
 // bought. Ordering it by purchase would let a yard that put it up late have the
 // gang's hut out past the plots, which is the one place it cannot be.
-const PINNED_FIRST = ['shack', 'bench', 'house'];
+// And the noticeboard, between the bench and the front doors: it is furniture
+// on the busiest strip of the yard, not a station you buy, and a board that
+// stood wherever the purchase order happened to put it was out past the
+// school in one yard and beside the tower in another.
+const PINNED_FIRST = ['shack', 'bench', 'notices', 'house'];
 const PINNED_LAST = ['casino'];
 
 function siteOrder() {
@@ -634,20 +640,35 @@ export const walkY = x => Math.min(groundAt(x), S.groundY) - WORKER;
 // something the player decides by buying (`siteOrder`) -- and the greatest
 // right-hand edge is the nearest thing to the rock by definition, whichever row
 // of the table it came out of.
-// Where the hut stands for the rock that is here: ROCK_FLANK_CLEAR off its
-// left edge, and never further out than the slot the walk reserved for it,
-// which is this same sum for the biggest rock there will ever be. Off the
-// rock's NUMBER rather than its placed width: the rock's width is clamped to
-// what stands on its flank, and a hut placed off the clamped width would be
-// the knot `placeSites` was untied from. `S.placed` is what the walk laid out
-// and does not move, so `flankX` -- and through it the rock's cap -- still
-// reads the slot, and the hut can stand wherever it likes short of it.
+// Where the hut stands for the rock that is here: SHACK_CLEAR off its left
+// edge, and never further out than the slot the walk reserved for it, which is
+// where it stands at the biggest rock there will ever be. Off the rock's
+// NUMBER rather than its placed width: the rock's width is clamped to what
+// stands on its flank, and a hut placed off the clamped width would be the
+// knot `placeSites` was untied from. `S.placed` is what the walk laid out and
+// does not move, so `flankX` -- and through it the rock's cap and the ram's
+// parking -- still reads the slot, and the hut can stand wherever it likes
+// short of it.
+//
+// Short of the ram, too. The ram parks RAM_REACH plus its own length off the
+// face (`ramTargetX`, rock.js) and keeps RAM_CLEAR behind it, so once it is
+// bought the hut stands behind that space rather than under the machine: a
+// purchase that scoots the hut back a dozen cells, which is a thing to watch
+// once and the right bargain for a machine that wants the ground.
 export const shackSpot = () => {
   const spot = S.placed?.shack;
   if (!spot) return shack.x;
-  const near = S.cx - (rockWidthAt(S.boulderNo) / 2) * P - ROCK_FLANK_CLEAR - shack.w;
+  const ram = machine('ram')?.bought;
+  const clear = ram ? RAM_CLEAR + P * (RAM_REACH + spriteW(RAM)) : SHACK_CLEAR;
+  const near = S.cx - (rockWidthAt(S.boulderNo) / 2) * P - clear - shack.w;
   return Math.max(spot.x, Math.round(near / P) * P);
 };
+
+// The hut where it belongs, now. For laying the yard out and for a check that
+// jumps the rock number -- a rock that arrives in one frame rather than out of
+// the sky gives the hut no time to get out of its way, and a rockhand at the
+// door would be standing inside the boulder.
+export const settleShack = () => { shack.x = shackSpot(); };
 
 // One frame of the hut scooting over. A new rock is a broader rock, so its
 // number going up moves the spot out, and the hut walks there at SHACK_SCOOT
@@ -741,7 +762,7 @@ export function seatSites() {
   // Its slot is where it stands at the biggest rock; the hut itself stands
   // nearer, off the rock that is actually there -- see `shackSpot`.
   seat(shack, 'shack', SHACK_H);
-  shack.x = shackSpot();
+  settleShack();
 
   seat(school, 'school', SCHOOL_H);
 

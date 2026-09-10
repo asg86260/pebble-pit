@@ -90,13 +90,21 @@ export const CASINO_H = P * 12;
 // nothing through that one.
 export const SHACK_W = P * 8;
 export const SHACK_H = P * 11;
-// The hut stands ROCK_FLANK_CLEAR off THIS rock, not off the biggest rock there
-// will ever be, and scoots out toward its slot in the walk as each bigger one
-// comes down -- this is how far it slides in a second. A rock is three cells
-// broader than the last, so a scoot is a cell or two: about a second of a hut
-// shuffling over while the new rock is still in the air, which is a thing you
-// can watch rather than a building somewhere else after the dust settles.
-export const SHACK_SCOOT = 18;
+// How far the hut stands off the rock that is here -- THIS rock, not the
+// biggest there will ever be. Every other shed in the yard wears three cells
+// off its wall; this one keeps a little more because the rock's own apron is
+// where its spoil lands. With the ram bought the hut stands behind the ram's
+// parking space instead (see `shackSpot`, world.js): the machine parks off
+// the face and the hut may not be under it.
+export const SHACK_CLEAR = P * 6;
+// The hut scoots out toward its slot in the walk as each bigger rock comes
+// down -- this is how far it slides in a second. A rock is three cells
+// broader than the last, so a scoot is a cell and a half, and it has to be
+// done before the rock lands: the number goes up as the rock is made in the
+// sky and it is down in about seven tenths of a second (ROCK_DROP, DROP_GRAV).
+// Thirty a second is a third of a second of a hut shuffling over while the
+// rock is still in the air -- a thing you can watch, and finished in time.
+export const SHACK_SCOOT = 30;
 // What it costs. The cheapest bill in the game, and the only one paid in dust
 // alone: this is a hut for the gang that digs the dust, put up before the yard
 // has any other coin to its name, and a bill in a currency the rock does not

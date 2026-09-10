@@ -16,7 +16,9 @@ import { buildBoard } from '../src/shop.js';
 import { kitX } from '../src/world.js';
 import { JOB } from '../src/jobs.js';
 import { rockSize, rockWidthAt } from '../src/rock.js';
-import { ROCK_FLANK_CLEAR, SHACK_SCOOT } from '../src/config.js';
+import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_SCOOT, RAM_CLEAR } from '../src/config.js';
+import { RAM_REACH } from '../src/rock.js';
+import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
 import { SHACK_GEAR } from '../src/shack.js';
 import { workAt } from '../src/works.js';
@@ -194,9 +196,11 @@ group('the walk moved out to make room, and the rock is the size it was', async 
     ok(leftEdge > slotRight,
        "the biggest rock still stops short of the hut's slot",
        `rock edge ${Math.round(leftEdge)}, slot ${slotRight}`),
-    ok(hutRight === slotRight && leftEdge > hutRight,
-       'and the hut has scooted out to that slot to make room for it',
-       `hut ${hutRight}, slot ${slotRight}`)
+    // The hut stands its own clearance off the biggest rock, short of the slot:
+    // the slot's extra room is the ram's parking space, not the hut's.
+    ok(leftEdge > hutRight && hutRight >= slotRight,
+       'and the hut has scooted out to make room for it, no further than its slot',
+       `rock edge ${Math.round(leftEdge)}, hut ${hutRight}, slot ${slotRight}`)
   ];
 });
 
@@ -301,13 +305,41 @@ group('the shack stands off the rock that is here, and scoots out for the next',
 
   return [
     ok(later > one, 'rocks came and went', `${one} -> ${later}`),
-    ok(off1 === ROCK_FLANK_CLEAR, 'at rock one the hut stands the clearance off the rock',
-       `${off1}px, clearance ${ROCK_FLANK_CLEAR}`),
+    ok(off1 === SHACK_CLEAR, 'at rock one the hut stands the clearance off the rock',
+       `${off1}px, clearance ${SHACK_CLEAR}`),
     ok(xN < x1, 'and has moved out by the time a broader rock is down', `${x1} -> ${xN}`),
-    ok(offN === ROCK_FLANK_CLEAR, 'to the same clearance off the new one', `${offN}px`),
+    ok(offN === SHACK_CLEAR, 'to the same clearance off the new one', `${offN}px`),
     ok(!jumps.length, 'sliding, never jumping', jumps.slice(0, 3).join(', ')),
     ok(monotone, 'and only ever outward'),
     ok(xN >= slot, 'never past its slot in the walk', `${xN} vs slot ${slot}`),
     ok(kit < xN, "and the gang's kit stand went with it", `${kit} vs hut ${xN}`)
+  ];
+});
+
+// --- the ram wants the ground between the hut and the rock ---------------------
+// The ram parks off the face and keeps RAM_CLEAR behind it, and the slot the
+// walk reserves is what it parks against at the biggest rock -- so the slot's
+// clearance is the ram's parking space, held here against the ram's real
+// width rather than trusted. And a hut standing six cells off the rock is a hut
+// under the machine, so buying the ram scoots it back behind the parking space.
+group('the hut stands behind the ram once there is one, and the slot always did', async () => {
+  window.__reset();
+  window.__crew(3, 0);
+  window.__shack();
+  window.__jump(1);
+  run(1);
+  const before = shack.x;
+  window.__machine('ram', { bought: true, on: false });
+  run(15);
+  const after = shack.x;
+  const edge = S.cx - (rockWidthAt(S.boulderNo) / 2) * P;
+  const parked = edge - P * (RAM_REACH + spriteW(RAM));     // the ram's tail, at a fresh face
+  return [
+    ok(ROCK_FLANK_CLEAR >= RAM_CLEAR + P * spriteW(RAM),
+       'the slot leaves the ram its parking space at the biggest rock',
+       `${ROCK_FLANK_CLEAR}px against ${RAM_CLEAR + P * spriteW(RAM)}`),
+    ok(after < before, 'buying the ram moves the hut out', `${before} -> ${after}`),
+    ok(after + shack.w + RAM_CLEAR <= parked, 'clear of where the ram parks',
+       `hut to ${after + shack.w}, ram from ${parked}`)
   ];
 });

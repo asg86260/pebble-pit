@@ -18,7 +18,7 @@ import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
-import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
+import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
          pitCapacity, inHole, seedPitCores } from './pit.js';
@@ -122,7 +122,9 @@ export const clearFloor = () => {
 
 export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); S.dirty = true; };
 
-export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); S.dirty = true; };
+// The hut is settled rather than left to scoot: a jump is many rocks in one
+// frame, and the hut walks out for one rock at a time.
+export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); S.dirty = true; };
 
 export const preview = n => {
   const keep = S.boulderNo;

@@ -32,6 +32,8 @@ import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H }
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene } from './cutscene.js';
+import { showRecord } from './record.js';
+import { markNoticesRead } from './notices.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -682,6 +684,10 @@ addEventListener('keydown', e => {
 export function hold(on) {
   S.paused = on;
   document.getElementById('held').hidden = !on;   // now, not next frame
+  // The record is written on to the sheet as it opens, and opening it reads
+  // it: the tick over the noticeboard comes down, and the next notice to land
+  // puts it back up.
+  if (on) { showRecord(document.getElementById('record')); markNoticesRead(); }
   S.dirty = true;
 }
 document.getElementById('resume').addEventListener('click', () => hold(false));

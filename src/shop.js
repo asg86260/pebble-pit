@@ -19,7 +19,6 @@ import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
-import { recordRows, recordSections } from './record.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
 import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
@@ -778,8 +777,7 @@ const BOARDS = {
   // has happened -- so they are two sections rather than two boards: the
   // yard already groups a sheet by heading, and a second sheet would have
   // wanted a control to open it that no board in the game has.
-  stats:  () => [statsEl, [...STATS_UPGRADES, ...recordRows()],
-                 [...STATS_SECTIONS, ...recordSections()], 'nothing has come in yet'],
+  stats:  () => [statsEl, STATS_UPGRADES, STATS_SECTIONS, 'nothing has come in yet'],
   // Nothing on it until there is mess on the ground to want a janitor for --
   // see `show` on the outhouse row, which is the board's whole first offer.
   outhouse: () => [looEl, OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS, 'the brooms are all on their hooks'],

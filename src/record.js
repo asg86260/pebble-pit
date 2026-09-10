@@ -1,14 +1,14 @@
-// The record sheet: the notices you have earned, newest first.
+// The record: the notices you have earned, newest first, on the held sheet.
 //
-// It is the noticeboard's second sheet. The first is the books -- what the yard
-// is *earning*, a second at a time -- and the two are deliberately different
-// questions asked at the same place: the books say what is coming in, the record
-// says what has happened. A rate does not belong on this sheet and a lifetime
-// total does not belong on that one.
-//
-// Nothing here is for sale. The rows are readouts in the shape every other board
-// already uses, the same way the books' rows are, so the sheet lines up with the
-// rest of the game and no second kind of row had to be invented.
+// It hung on the noticeboard as a second sheet under the books, in the shape
+// of a board's rows. Two things were wrong with that. The books are about what
+// the yard is *earning*, a second at a time, and the record is about what has
+// happened -- different questions, and the board was answering both. And a
+// board's rows answer to a cursor: they light up, they carry a note, they are
+// the shape of something you might buy, and nothing here is for sale. So it is
+// a plain list on the one sheet that is not the yard -- the held sheet, where
+// the settings already are -- written when the game is held, and it is read
+// there: holding the game is what brings the tick over the board down.
 
 import { S } from './state.js';
 import { NOTICES, noticeCount, noticeTotal } from './notices.js';
@@ -30,45 +30,35 @@ const earned = () => NOTICES.filter(n => S.won.includes(n.key));
 const newestFirst = () =>
   earned().slice().sort((a, b) => (S.wonAt[b.key] || 0) - (S.wonAt[a.key] || 0));
 
-export const RECORD_UPGRADES = [];
 
-// Rebuilt from the record rather than held, because the list grows behind your
-// back: a notice lands while you are looking at the rock. `buildBoard` asks for
-// the rows every frame the sheet is open and only touches the DOM when the set
-// has actually changed -- the same bargain the crew list strikes for the same
-// reason.
-export function recordRows() {
-  const rows = newestFirst().map(n => ({
-    key: 'notice' + n.key,
-    name: n.name,
-    // What you did to earn it, which is what a note on this sheet is for. Never
-    // a remark about the notice: a record that comments on itself is a record
-    // you read twice. See DESIGN.md.
-    note: () => n.note,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => true
-  }));
-
-  // ...and the one line that says how much board is left. It is a row rather
-  // than a heading so that it sits at the foot of the list where a total goes,
-  // and it is the only thing on the sheet that mentions a notice you have not
-  // earned -- as a number, never as a name.
-  rows.push({
-    key: 'noticecount',
-    name: `${noticeCount()} of ${noticeTotal()}`,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => true
-  });
-
-  return rows;
+// The list, as it stands. Rebuilt each time the sheet is shown rather than
+// held, because the record grows behind your back.
+export function recordList() {
+  return newestFirst().map(n => ({ name: n.name, note: n.note }));
 }
 
-export const recordSections = () => [
-  { title: 'the record', keys: recordRows().map(r => r.key) }
-];
+// Written into the sheet's own element: a heading with the count, then one
+// line a notice -- the name, and what you did to earn it. Nothing here is a
+// button and nothing has a hover; it is a page to read. See "Unearned notices
+// are not named" above for why the count is the only word about the rest.
+export function showRecord(el) {
+  const rows = recordList();
+  el.replaceChildren();
+  const head = document.createElement('div');
+  head.className = 'head';
+  head.textContent = `the record \u00b7 ${noticeCount()} of ${noticeTotal()}`;
+  el.appendChild(head);
+  for (const r of rows) {
+    const line = document.createElement('div');
+    line.className = 'line';
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = r.name;
+    const note = document.createElement('span');
+    note.className = 'note';
+    note.textContent = r.note;
+    line.append(name, note);
+    el.appendChild(line);
+  }
+  el.hidden = rows.length === 0;
+}

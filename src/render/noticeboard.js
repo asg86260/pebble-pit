@@ -1,5 +1,5 @@
 // The noticeboard: a panel on two posts, standing between the work bench and
-// the front doors, with the record pinned to it.
+// the front doors, with the books pinned to it.
 //
 // It is furniture rather than a building. Every other station in the yard is a
 // box with a door in it, because every other station is somewhere a body goes
@@ -7,35 +7,47 @@
 // no doorway: a face you walk up to and read, held up off the ground on legs,
 // which is what tells you at a glance that it is not another shed.
 //
-// **The board fills up as the record does.** How many slips are pinned to it is
-// how much you have done, capped at what the panel holds. That is the whole of
-// what it has to say from across the yard, and it is the reason to draw the
-// slips at all rather than a blank rectangle: a board with two notices on it and
-// a board with forty look different from the far side of the world.
+// It used to fill up with slips as the record did. The record hangs on the
+// held sheet now (record.js), and what the board carries is the books -- a
+// few sheets of figures, the same few from the first minute to the last -- so
+// the face is a fixed arrangement of pinned sheets with lines of writing on
+// them, and nothing about it changes with the score. The old slips were laid
+// out at thirteen and a half pixels a column on a six-pixel lattice, which put
+// a hairline gutter between every pair and a lopsided bottom row; everything
+// here is whole cells.
 
-import { BOARD_LEG, BOARD_SLIPS, P, SHADES } from '../config.js';
+import { BOARD_LEG, P, PAPER } from '../config.js';
 import { S } from '../state.js';
-import { noticeCount, noticeTotal, unreadNotices } from '../notices.js';
 import { ctx } from './ctx.js';
 
-// The slips are laid out in a grid inside the panel, in the order they were
-// earned, so the board fills left to right and top to bottom the way a real one
-// would. Their size comes from the panel rather than being written down: a
-// wider board tomorrow shows the same twelve slips, bigger.
-const COLS = 4, ROWS = 3;
+// The sheets, in cells off the panel's top-left: where each one is pinned and
+// how big it is. Three across the top row and three along the bottom, of
+// unequal widths, because a board with six identical cards on it reads as a
+// spreadsheet and one with a wide sheet, a narrow one and a torn corner reads
+// as somebody's. The writing is a list of rows within the sheet, each a run
+// of ink cells: [row, from, width].
+// The writing is lines, not glyphs: a run of ink half a cell tall, a cell of
+// paper between runs, never reaching the sheet's edge. Half-cell runs at cell
+// spacing were tried and read as digits.
+const SHEETS = [
+  { x: 1, y: 1, w: 3, h: 3, ink: [[0.5, 0.5, 2], [1.5, 0.5, 1.5]] },
+  { x: 5, y: 1, w: 3, h: 3, ink: [[0.5, 0.5, 1.5], [1.5, 0.5, 2]] },
+  { x: 9, y: 1, w: 3, h: 3, ink: [[0.5, 0.5, 2]] },
+  { x: 1, y: 5, w: 3, h: 2, ink: [[0.5, 0.5, 2]] },
+  { x: 5, y: 5, w: 2, h: 2, ink: [[0.5, 0.5, 1]] },
+  { x: 8, y: 5, w: 4, h: 2, ink: [[0.5, 0.5, 3]] }
+];
 
-// A slip's tone. Paper on a board is not one white -- these have been rained on
-// and pinned up at different times -- so each takes a shade off its own index.
-// One tone across the lot reads as printed paint rather than as paper, which is
-// the rule every heap and every band in this game already follows.
-const toneOf = i => SHADES[(i * 5 + 2) % SHADES.length];
+// A sheet's tone. Paper on a board is not one white -- these have been rained
+// on and pinned up at different times -- so each takes a shade off its own
+// index. One tone across the lot reads as printed paint rather than as paper,
+// which is the rule every heap and every band in this game already follows.
+const toneOf = i => PAPER[(i * 3 + 1) % PAPER.length];
 
 export function drawNoticeboard() {
-  // Nothing until the yard has done something worth a board. The first notice
-  // is the first pebble in the pit, so in practice it goes up in the first
-  // minute -- but a board standing empty over a yard that has not started is a
-  // promise the game has not earned yet.
-  if (!noticeCount()) return;
+  // Nothing until the yard has something to keep books on: the board goes up
+  // with the first grain banked, which is when its sheet opens too.
+  if (!(S.banked > 0)) return;
 
   const r = S.noticeboard;
   if (!r || !r.w) return;
@@ -52,35 +64,12 @@ export function drawNoticeboard() {
   ctx.fillRect(r.x, r.y, r.w, r.h);
   ctx.fillRect(r.x - P / 2, r.y - P / 2, r.w + P, P / 2);
 
-  // the slips
-  const pad = P;
-  const gw = (r.w - pad * 2) / COLS, gh = (r.h - pad * 2) / ROWS;
-  const sw = Math.max(P, Math.round((gw - P / 2) / P) * P);
-  const sh = Math.max(P, Math.round((gh - P / 2) / P) * P);
-  const shown = Math.min(BOARD_SLIPS, noticeCount());
-
-  for (let i = 0; i < shown; i++) {
-    const cx = i % COLS, cy = Math.floor(i / COLS);
+  // the sheets, and the writing on them
+  SHEETS.forEach((s, i) => {
+    const x = r.x + s.x * P, y = r.y + s.y * P;
     ctx.fillStyle = toneOf(i);
-    ctx.fillRect(Math.round(r.x + pad + cx * gw), Math.round(r.y + pad + cy * gh), sw, sh);
-  }
-
-  // Something new is pinned up and you have not been over to look at it. The
-  // bobbing tick over the station says so as well (see drawDoneMarks) -- this is
-  // the same fact said at the board's own scale, for the times you are looking
-  // straight at it: the newest slip stands proud of the rest.
-  if (unreadNotices() > 0 && shown) {
-    const i = Math.min(shown, BOARD_SLIPS) - 1;
-    const cx = i % COLS, cy = Math.floor(i / COLS);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(Math.round(r.x + pad + cx * gw) - P / 2,
-                 Math.round(r.y + pad + cy * gh) - P / 2, sw + P, sh + P);
-  }
-
-  // and once the record is full the board is papered over, which is its own
-  // small reward for having done the lot
-  if (noticeCount() >= noticeTotal()) {
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(r.x + pad, r.y + pad, r.w - pad * 2, r.h - pad * 2);
-  }
+    ctx.fillRect(x, y, s.w * P, s.h * P);
+    ctx.fillStyle = '#000';
+    for (const [row, from, w] of s.ink) ctx.fillRect(x + from * P, y + row * P, w * P, P / 2);   // half-cell: a line of ink, on the half lattice
+  });
 }

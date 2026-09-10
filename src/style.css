@@ -637,6 +637,17 @@ canvas {
   color: #000;
 }
 .held[hidden] { display: none; }
+/* The record, a page to read: lower case like a quotation, one line a notice
+   with the name on the left and what earned it on the right, and no hover on
+   any of it -- nothing here is pressed. Held to a screen's worth and scrolled
+   past that, so forty notices do not push the buttons off the window. */
+.held .record { display: flex; flex-direction: column; gap: 3px; width: 34em; max-width: 80vw;
+                max-height: 32vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
+                font-size: 11px; }
+.held .record[hidden] { display: none; }
+.held .record .head { letter-spacing: .14em; text-transform: uppercase; font-size: 10px; margin-bottom: 4px; }
+.held .record .line { display: flex; justify-content: space-between; gap: 2em; }
+.held .record .note { color: #666; text-align: right; }
 .held .word { font-size: 17px; letter-spacing: .3em; }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn
