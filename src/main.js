@@ -21,6 +21,7 @@ import { hud, remeasure } from './board.js';
 import { buildShop } from './shop.js';
 import { persist, restore } from './persist.js';
 import './input.js';           // the mouse, the wheel and the keyboard
+import './settings.js';        // wave-release, track A: the held sheet's shelf
 import { tick } from './clock.js';
 
 // The window changed size: lay the world out again, and measure the board that

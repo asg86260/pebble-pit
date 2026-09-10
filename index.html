@@ -17,7 +17,6 @@
   <div id="board" class="page" hidden>
     <div class="title">the bench</div>
     <div id="shop" class="rows"></div>
-    <button id="reset" type="button">reset progress</button>
   </div>
   <div id="lab" class="page" hidden>
     <div class="title">the lab</div>
@@ -116,10 +115,36 @@
 </div>
 
 <!-- Held. In the middle of the window, because a game that has stopped should
-     say so where you are already looking, not in a corner you have to find. -->
+     say so where you are already looking, not in a corner you have to find.
+
+     It is also the settings sheet, because settings are not a place: every
+     board in the yard is somewhere you walked to, and this is the one surface
+     that already is not the yard and already says the game is stopped. So the
+     things a player needs a shelf for -- the motion switch, the save in and
+     out, the reset, the keys, the build -- hang under the word rather than on
+     a second sheet or a corner button. See settings.js. -->
 <div id="held" class="held" hidden>
   <div class="word">paused</div>
   <button id="resume" type="button">resume</button>
+  <div class="rule"></div>
+  <button id="motion" type="button">motion: full</button>
+  <div class="pair">
+    <button id="savecopy" type="button">save a copy</button>
+    <button id="loadsave" type="button">load a save</button>
+  </div>
+  <!-- the paste, folded away until load a save asks for it -->
+  <div id="paste" class="paste" hidden>
+    <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
+    <div class="pair">
+      <button id="loadit" type="button">load it</button>
+      <button id="nevermind" type="button">never mind</button>
+    </div>
+  </div>
+  <div class="said"></div>
+  <button id="reset" type="button">reset progress</button>
+  <div class="small">space holds &middot; &larr; &rarr; look about</div>
+  <div id="build" class="small"></div>
+  <div class="small">rocks keep coming. there is no finish line.</div>
 </div>
 
 <!-- Stopped. The same sheet, for the game breaking rather than being held:
@@ -128,6 +153,7 @@
 <div id="crashed" class="held" hidden>
   <div class="word">stopped</div>
   <div class="why"></div>
+  <div class="rule"></div>
   <button id="copysave" type="button">copy save</button>
   <div class="said"></div>
 </div>

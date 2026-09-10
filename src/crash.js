@@ -40,19 +40,15 @@ export function fatal(err) {
 // The save, out of the browser and into your hand. It is the save that was
 // written *before* the throw -- nothing has been written since, which is the
 // whole point -- so what you paste back in is a yard that was still standing.
-// The clipboard is not allowed on every page; when it is not, the text is
-// left where the console can reach it, and the sheet says so.
+// The copying itself is the settings sheet's `copyOut`, so the two sheets hand
+// over the same blob the same way. It is fetched at the click rather than
+// imported at the top: this file has to be the first thing evaluated, before
+// any of the game, and settings.js pulls the whole yard in behind it.
 document.getElementById('copysave').addEventListener('click', async () => {
   let raw = '';
   try { raw = localStorage.getItem(KEY) || ''; } catch {}
-  if (!raw) { said.textContent = 'nothing saved yet'; return; }
-  try {
-    await navigator.clipboard.writeText(raw);
-    said.textContent = 'copied ' + Math.round(raw.length / 1024) + 'kb';
-  } catch {
-    window.__save = raw;
-    said.textContent = 'in window.__save';
-  }
+  const { copyOut } = await import('./settings.js');
+  await copyOut(raw, said);
 });
 
 // A throw with no frame around it: during boot, in a pointer handler, in a
