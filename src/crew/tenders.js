@@ -10,7 +10,7 @@ import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
 import { quarryFace } from '../quarry.js';
 import { busyAt } from '../works.js';
 import { shedSite } from './shedhand.js';
-import { inWorking } from '../route.js';
+import { inWorking, keepTo, stepRoute, ways } from '../route.js';
 import { foul } from '../smog.js';
 import { S, floor } from '../state.js';
 import { spelled } from '../tower.js';
@@ -79,21 +79,24 @@ export function stepTender(w, now) {
     if (d < mine - 0.5 || (Math.abs(d - mine) <= 0.5 && i < me)) return false;
   }
 
-  // Down a hole and needing to be up top. A body caught by the lever while it is
-  // still on the floor of the cut has to *climb out* -- assigning it `walkY`
-  // lifted it straight up through the wall, which is the one thing this yard
-  // never does. The muck branch has the same problem and solves it the same way:
-  // walk the floor to the foot of the ladder, then go up it.
-  if (w.y + WORKER > S.groundY + 1) {
-    const foot = quarryFace();
-    const d = foot - w.x;
-    if (Math.abs(d) > 1) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-    } else {
-      w.x = foot;
-      w.y = Math.max(w.y - CLIMB_PACE, walkY(w.x + WORKER / 2));
-    }
+  // Down a working and needing to be up top. A body caught by the lever while
+  // it is still on the floor of the cut has to *climb out* -- assigning it
+  // `walkY` lifted it straight up through the wall, which is the one thing
+  // this yard never does.
+  //
+  // It is a route, not a walk written out by hand. This used to walk the floor
+  // to `quarryFace()` and climb there, which is right for the cut and only the
+  // cut: a hauler on the floor of the HOLE, called to the belt, was walked
+  // along the pit's floor toward the quarry's ladder and out through the pit's
+  // near wall -- `verifyWorld` found it two hundred and seventy-six pixels
+  // under the yard with no working under it. The ways know where their
+  // ladders are (`links`, route.js); asking them is what every other errand
+  // that leaves a working does.
+  if (inWorking(w)) {
+    if (!keepTo(w, post, ways().yard)) return false;
     w.resting = false;
+    if (stepRoute(w, commutePace())) return true;
+    w.route = null;
     return true;
   }
   // A tender is not on its way to a cell any more, and a claim it left behind

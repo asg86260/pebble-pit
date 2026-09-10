@@ -985,11 +985,18 @@ export const following = t => (S.follow && S.follow.pointed > t ? S.follow : nul
 // happened to leave room for it; the shack's ground between the two put the
 // bench off a desk-sized window without anything having decided that it
 // should be.
+//
+// When it does not fit, the seat is the seat and nothing else has a say. It
+// was `max(withBench, seat)`, a guard against the view opening left of the
+// bench -- which the seat cannot do on a window too narrow to hold both. What
+// the guard actually did, once the bench moved in close to the rock, was win:
+// the bench's edge stood right of the seat on a phone, and the phone opened
+// on the bench with the rock off the right-hand edge, which is the exact
+// picture this function exists to prevent.
 export const openingCamX = () => {
   const withBench = bench.x - OPENING_MARGIN;
   const rockFar = rockLeft() + S.gw * P + OPENING_MARGIN;
-  return rockFar - withBench <= S.viewW ? withBench
-       : Math.max(withBench, S.cx - S.viewW * OPENING_ROCK_AT);
+  return rockFar - withBench <= S.viewW ? withBench : S.cx - S.viewW * OPENING_ROCK_AT;
 };
 
 // one frame of that glide
