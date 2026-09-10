@@ -858,12 +858,12 @@ export const seamShards = () =>
 // cut is more cells than CUT_DIG_MS has sixtieths, so the floor was already
 // the swing at pace nought, and a ladder applied *inside* the max had nothing
 // left to shorten.
-export function cellMs() {
+export function cellMs(lvl = paceLadder()) {
   const cells = quarryCells();
   let want = 0;
   for (let c = 0; c < cells.length; c++) want += quarryTarget(c);
   const per = CUT_DIG_MS / Math.max(1, want);
-  return Math.max(CUT_SWING_MIN, per) * paceShare();
+  return Math.max(CUT_SWING_MIN, per) * paceShare(lvl);
 }
 
 
@@ -1059,10 +1059,15 @@ defineMachine('jaw', {
   // would have to climb a ladder into a hole full of machine to do a job that is
   // done at the top of it.
   tendAt: quarryFace,
-  // One cell takes it the station's own clock divided by what it is worth. The
-  // pace upgrade and the quarry's own multiplier are inside `cellMs`, so they
-  // keep applying to the machine exactly as they do to the hands.
-  ms: rate => cellMs() / Math.max(0.01, rate),
+  // One cell takes it the station's own clock at pace nought, divided by what
+  // it is worth. The cut's pace ladder is NOT in here: its rungs -- ramps,
+  // scaffolding, rail carts -- are the walk between cells, and a rig on the
+  // deck does not walk. The machine's own ladder is `tune the jaw`. (It used to
+  // read the ladder's `cellMs`, which the ladder could not move off its floor,
+  // so nothing showed; the day the ladder reached the swing the jaw ran four
+  // times faster at pace eight and fouled four times as much, and the sky the
+  // house is balanced against went with it.)
+  ms: rate => cellMs(0) / Math.max(0.01, rate),
   // Not while the ground it stands on is gone, not while the hole is full of
   // silt, and not while there is nowhere to put what comes out. Every one of
   // those is the station's own rule, asked the station's own way.
