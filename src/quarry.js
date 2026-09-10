@@ -10,7 +10,7 @@
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
-         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS, TIER_OWN } from './config.js';
+         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
@@ -70,6 +70,19 @@ export const quarryMs = (lvl = paceLadder()) =>
   Math.max(500, Math.round(quarryGap(lvl) / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN))));
 
 export const quarryRate = (lvl = paceLadder()) => 60000 / quarryMs(lvl);   // trips a minute
+
+// The ladder's share of a pace-nought dig: one at the foot, a fifth at the top
+// of the nine, and the band-four multiplier over that. It governs *both* halves
+// of a dig -- the swing at a cell (`cellMs`) and the shuffle between cells
+// (`stepQuarrier`) -- because measured, a quarrier spends nine tenths of its
+// shift walking: 3184 of 3600 frames on the floor of a two-bench cut. The
+// ladder used to shorten the swing alone, from under a 60 ms floor it had
+// already hit at pace nought, so twelve rungs sold as `+16%` each changed the
+// shards a cut gave up by not one (docs/critics-2026-09-10.md, A4). Off one
+// curve, the row's claim and the dig's speed are the same number by
+// construction. Ramps, scaffolding, rail carts: the names were always about
+// the walk.
+export const paceShare = (lvl = paceLadder()) => quarryMs(lvl) / quarryMs(0);
 
 // --- the ladder ---------------------------------------------------------------
 // Bodies used to sink into the quarry and rise out of it wherever they happened to
@@ -573,7 +586,9 @@ export function stepQuarrier(w, now, ctx = null) {
     // Halving only the swing stopped doubling anything the moment a body had to
     // walk to every cell -- but a trade is a man who knows the work, not a man
     // who runs, so it is a shade over a shuffle rather than a sprint.
-    w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 1.5 : 1), Math.abs(d));
+    // And the ladder is under its feet: see `paceShare`.
+    const step = CUT_STEP * (w.trained ? 1.5 : 1) / paceShare();
+    w.x += Math.sign(d) * Math.min(step, Math.abs(d));
     return;                                    // on its way: it is not digging yet
   }
   w.x = to;
@@ -833,23 +848,22 @@ export const seamDig = (lvl = seamLadder()) =>
 export const seamShards = () =>
   Math.max(1, Math.round(seamDig() * (spelled('luck') ? SPELL_LUCK : 1)));
 
-// How long one cell takes. The whole dig is CUT_DIG_MS at pace nought, spread
-// over however many cells the quarry is -- so taking the quarry deeper makes the dig
-// longer, which is the trade for a bigger seam, and the pace upgrade shortens
-// the swing rather than the hole.
+// How long one cell takes. The swinging in a whole dig is CUT_DIG_MS at pace
+// nought, spread over however many cells the quarry is -- so taking the quarry
+// deeper makes the dig longer, which is the trade for a bigger seam -- and the
+// pace ladder takes its share off that (`paceShare`), the same share it takes
+// off the walk between cells.
+//
+// The floor is under the pace-nought swing, not under the ladder's answer: a
+// cut is more cells than CUT_DIG_MS has sixtieths, so the floor was already
+// the swing at pace nought, and a ladder applied *inside* the max had nothing
+// left to shorten.
 export function cellMs() {
   const cells = quarryCells();
   let want = 0;
   for (let c = 0; c < cells.length; c++) want += quarryTarget(c);
   const per = CUT_DIG_MS / Math.max(1, want);
-  // The same climb it always made, in finer steps: the pace ladder was five
-  // rungs of a fifth off each and the last band multiplied on top, and it is
-  // nine rungs to the same floor now. `RUNGS` is still in here because it is
-  // what the floor was measured in -- nine rungs land exactly where five used
-  // to, which is the whole of what "the same floor" means.
-  const lvl = paceLadder();
-  const own = Math.pow(0.82, RUNGS * Math.min(TIER_OWN, lvl) / TIER_OWN);
-  return Math.max(60, per * own / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN)));
+  return Math.max(CUT_SWING_MIN, per) * paceShare();
 }
 
 
