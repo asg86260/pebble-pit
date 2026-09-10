@@ -17,7 +17,7 @@
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
          RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX,
-         RIFT_SLOW_FROM, RIFT_GONE } from './config.js';
+         RIFT_SLOW_FROM, RIFT_GONE, CLOCK_LEAP_MS } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -144,7 +144,8 @@ export function settleIntoWorld() {
 // clock.js) it has to be the first thing the frame knows.
 function startFrame(c) {
   const frameNow = clockNow();
-  c.dt = Math.min(100, frameNow - (S.lastFrame || frameNow));  // a long tab-out is not a long frame
+  // a long tab-out is not a long frame -- and the clock agrees, see `tick`
+  c.dt = Math.min(CLOCK_LEAP_MS, frameNow - (S.lastFrame || frameNow));
   S.lastFrame = frameNow;
   setFrames(c.dt);
   c.now = clockNow();

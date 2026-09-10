@@ -69,11 +69,27 @@ export const TO_BENCH = -336;    // rock centre to the bench
 export const BENCH_W = P * 12;   // and how wide it stands
 export const TO_LAB = -2334;     // rock centre to the lab, at the far end
 
+// --- wave-release: track D -- the hidden window's clock -----------------------
+// The most the game's clock may move in one frame, in milliseconds. A frame
+// that arrives after a long gap -- the window was hidden, the machine slept,
+// the tab was throttled -- is not a long frame: `dt` in game.js is clamped to
+// this so nothing walks through a wall, and `tick` in clock.js advances `now()`
+// by no more than the same amount so nothing measured against a moment on the
+// clock -- a dose, a spin, a break, the next boulder -- resolves the instant
+// you come back. One number, read in both places, is what keeps the two halves
+// of the frame agreeing that a hidden window is a pause. A tenth of a second is
+// six frames: a hitch that long is felt, and anything longer reads as time
+// that did not happen.
+export let CLOCK_LEAP_MS = 100;
+
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
 // `let` is. config.js gathers every file's rows into one TUNABLE.
 export const YARD_KNOBS = [
   { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true,
-    get: () => CELL, set: v => { CELL = v; } }
+    get: () => CELL, set: v => { CELL = v; } },
+  // wave-release: track D
+  { key: 'CLOCK_LEAP_MS', label: 'clock leap ms', min: 17, max: 1000, step: 1,
+    get: () => CLOCK_LEAP_MS, set: v => { CLOCK_LEAP_MS = v; } }
 ];

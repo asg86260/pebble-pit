@@ -15,6 +15,8 @@
 // run twenty seconds of yard and the next real frame carries on from there
 // rather than snapping back and leaving every timer in the game twenty seconds
 // in the future, which looks exactly like the game having seized up.
+import { CLOCK_LEAP_MS } from './config.js';
+
 let t = performance.now();
 let wall = performance.now();
 
@@ -37,15 +39,29 @@ export const now = () => t;
 // back, and this is why the comment above still holds where it matters.
 export function restart(at = 0) { t = at; wall = performance.now(); }
 
-// A real frame: however much the wall moved, unless the game is being held.
+// A real frame: however much the wall moved, up to one leap, unless the game
+// is being held.
 //
-// The wall is read either way. A pause that stopped reading it would come back
-// having missed however long you were away and add the lot in one go, which is
-// every timer in the yard firing at once -- the same thing a long tab-out would
-// do if `dt` were not clamped.
+// The leap is the whole of it. A hidden window gets no frames -- the browser
+// stops calling `requestAnimationFrame` -- so the first frame back sees a wall
+// that has moved by however long you were away. This used to add the lot to
+// `t` in one go while `dt` downstream was clamped to a tenth of a second: the
+// yard did no work for the hour and every deadline measured against `now()` --
+// a dose, a spin, a break, the next boulder -- fired on the frame you came
+// back. Capping the clock at the same tenth that caps `dt` makes the two halves
+// of the frame say the same thing, and what they say is that a hidden window
+// is a pause: the yard stands where you left it, and so does everything you
+// paid for. Nothing is owed for the time away and nothing is taken for it.
+//
+// A held frame adds nothing at all, and that is the same rule seen from the
+// other side: a pause is a gap the wall moved across and the clock did not.
+// The wall is still read on every frame, held or hidden, so that the frame
+// after a pause measures itself from the pause's end rather than from its
+// start -- otherwise the first frame back would be one long leap for however
+// long the space bar was down, which is the very thing the cap is here to stop.
 export function tick(held) {
   const r = performance.now();
-  if (!held) t += Math.max(0, r - wall);
+  if (!held) t += Math.min(CLOCK_LEAP_MS, Math.max(0, r - wall));
   wall = r;
 }
 
