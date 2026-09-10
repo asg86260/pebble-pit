@@ -1106,3 +1106,10 @@ export const HANDLES = {
   // given body would get somewhere
   __route: routeOf, __surface: surfaceAt, __ways: waysNow
 };
+
+// --- wave-release: track B ------------------------------------------------------
+// The motion preference, for a scene or a check: `__motion(true)` asks for less,
+// `false` for the full picture, `null` to follow the system. It answers with
+// what the camera will actually do, which is the only thing worth knowing.
+import { setPref, reducedMotion } from './prefs.js';
+HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };

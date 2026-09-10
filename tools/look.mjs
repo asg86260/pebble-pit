@@ -664,7 +664,19 @@ const SCENES = {
     window.__fast(18);`,
   raintaper: `${SKYAT} window.__air({haze: 4200});
     (() => { for (let i = 0; i < 120 && !window.__state().smog.raining; i++) window.__fast(1); })();
-    (() => { for (let i = 0; i < 90 && window.__state().smog.haze > 700; i++) window.__fast(1); })();`
+    (() => { for (let i = 0; i < 90 && window.__state().smog.haze > 700; i++) window.__fast(1); })();`,
+
+  // wave-release, track B. The opening half a second into the one left
+  // standing getting up -- the beat the view eases back out over. With the
+  // full picture the view is still close and on its way; under reduced motion
+  // it is already the yard's own framing from the first frame of the beat, and
+  // the body and the rock are exactly where they are in the other shot.
+  introup: `window.__motion(false); window.__reset(true); window.__fast(12.5);`,
+  introstill: `window.__motion(true); window.__reset(true); window.__fast(12.5);`,
+  // and the loop shown, a few seconds in: the full picture chases the grain,
+  // the still seat sits between the rock and the mouth of the hole
+  introshow: `window.__motion(false); window.__reset(true); window.__fast(18);`,
+  introshowstill: `window.__motion(true); window.__reset(true); window.__fast(18);`
 };
 
 const args = process.argv.slice(2);
