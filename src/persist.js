@@ -11,7 +11,7 @@ import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, BLANK, SAVED, floor, pit, cut, sky } from './state.js';
+import { S, BLANK, SAVED, SAVED_BY_HAND, floor, pit, cut, sky } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
@@ -194,6 +194,21 @@ function readSaved(s) {
     else if (typeof blank === 'boolean') S[k] = !!v;
     else S[k] = v;
   }
+}
+
+// The by-hand fields, for a yard with no save behind it. Reading a save sets
+// each of these in its own line below, because each needs judgment; reading no
+// save needs none, and the answer is the declaration, same as `readSaved`. It
+// used to be a second hand-written list -- two of them, one in `restore` and one
+// in `reset` -- and each had quietly lost fields the other still had: a reset
+// kept the last game's drowned pit, because `drowned` was in neither. The few
+// left out here are not blanked but *built* -- the rock and its size by
+// `makeBoulder`, the machines by `freshMachines`, the crew by walking out -- and
+// the run's seed and the view are settled by whoever called.
+const BUILT = new Set(['runSeed', 'camX', 'floor', 'boulder', 'gw', 'gh', 'boulderNo',
+                       'machines', 'workers']);
+function blankByHand() {
+  for (const k of SAVED_BY_HAND) if (!BUILT.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
 }
 
 export function persist() {
@@ -497,6 +512,7 @@ export function restore() {
     // same one line as reading a save, so the two cannot drift apart. This used
     // to be sixty assignments, and it had already lost several of them.
     readSaved({});
+    blankByHand();
     S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
     S.crew = 0;
@@ -1024,6 +1040,7 @@ export function reset(fresh = true) {
   // list is the only place either of them says so. Naming a hundred fields here
   // is what let a new game start with the last game's quarry in it.
   readSaved({});
+  blankByHand();
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;
