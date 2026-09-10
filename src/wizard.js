@@ -35,6 +35,14 @@ import { TYPE } from './jobs.js';
 // near the sky, and where it comes back down to.
 export const underMeteor = () => sky.x - WORKER / 2;
 
+// Whether this wizard is at the tower: up in the ring, or stood on the ground
+// under it with its walk done. The tower's works used to count a wizard the
+// moment it was assigned, which is the count-not-a-body defect every other
+// station had already been cured of -- a hat rung finished for a wizard still
+// two thousand pixels out across the yard (docs/critics-2026-09-10.md, A7).
+export const atTower = w =>
+  w.aloft || (!w.walking && Math.abs((w.spot ?? underMeteor()) - w.x) <= WORKER);
+
 export function newWizard() {
   // Its own spot on the ground under the meteor, a few cells either side of the
   // middle of it. They go up from where they are standing, so a gang given one
