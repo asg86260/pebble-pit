@@ -1118,7 +1118,7 @@ export function reset(fresh = true) {
 // and a page that had a good save before has the same good save after either
 // answer.
 export function exportSave() {
-  try { return localStorage.getItem('boulder-clicker/v4') || ''; } catch { return ''; }
+  return loadRaw() || '';
 }
 
 // A pasted blob, made the yard.

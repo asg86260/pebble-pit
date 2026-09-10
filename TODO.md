@@ -26,7 +26,9 @@ at 720 dust. Checks in `test/ladders.test.mjs`, bought through the rows.
 
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
-**Open. Six browser checks red on main; the node tier is green.** The shack was
+**Fixed, 2026-09-09 (wave release, track F).** The badge rides the shack board's own title when the board is `lone`; `openingCamX` frames bench-to-rock when the window has the room and falls back to the rock-first seat when not; the four neighbor-state checks set up their own yard. Sharded tier 430/430. Left as it was: the shack still draws a "rock miners" heading under a title that now wears the badge -- two lines about one crew.
+
+Originally: **Open. Six browser checks red on main; the node tier is green.** The shack was
 built and merged with seven green node checks of its own and the browser tier
 never run, so everything below is the join between "the rock's rows moved to the
 hut" and the checks that still look for them on the bench. Diagnosis for each,
@@ -183,7 +185,28 @@ lists. It is red on main too; the shack's own fields are listed.
 
 ## Wave release — the web-side checklist (2026-09-09)
 
-**Approved 2026-09-09; six tracks launched from branch `worktree-wave-release`.** See
+**Built and landed, 2026-09-09.** Six tracks, all green, merged without a
+conflict; the integration afterward was three things: `isSave` tightened to
+the boot's own rule (a blob with any string for a rock used to boot a new game
+over the player's and report success); `ways()` memoized on its eight scalars
+so the perf gate's `ways <= 1` holds (it was 53 a frame on the busy yard, one
+per body from `wayAt`'s default argument -- the spec's premise was wrong about
+main, not the gate); and the sheet's round-trip check re-run once C's
+`importSave` was under A's button. Two findings surfaced by the tracks, not
+fixed:
+
+- **The sim is camera-dependent.** The sky's motes spend the shared seeded
+  RNG at *screen* positions, so two camera placements draw different numbers
+  and the intro's thrown grain lands on a different frame (1180 vs 1195).
+  Cosmetics should have their own generator; until they do, no check can
+  assert frame-exact timing across a camera change.
+- **`addGrain` on full bare ground has no region.** The region lookup returns
+  `null` for bare yard, the same value as "no region", so `inRegion` is always
+  true and the search runs to `b.cols` -- it can walk into a neighbor's
+  strip, which is the teleport the comment above it says was fixed. Neither
+  gate yard hit it in 300 frames; the gate would flag it.
+
+Originally: see
 `docs/wave-release.md` (the spec, canon for the five tracks) and "The sheet"
 at the end of DESIGN.md (the reasoning). Tracks: A the settings sheet on the
 held sheet, with the version and the reset button; B reduced motion; C save

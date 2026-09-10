@@ -14,7 +14,13 @@ export const PREV_KEY = 'boulder-clicker/v4.prev';
 // `importSave` both ask this one question, so a blob refused at the door of
 // one is refused at the door of the other.
 export function isSave(s) {
-  return typeof s?.stored === 'number' && typeof s?.boulder === 'string';
+  // The same three facts `restore` reads before it will take a blob for a
+  // yard rather than a first visit: a purse, and a rock whose string is the
+  // size its width and height say it is. A blob with any string for a rock
+  // used to pass here, and `restore` then quietly booted a new game over the
+  // player's -- so the shape check and the boot's own check are one rule.
+  return typeof s?.stored === 'number' && typeof s?.boulder === 'string' &&
+         s.gw > 0 && s.gh > 0 && s.boulder.length === s.gw * s.gh;
 }
 
 export function load() {

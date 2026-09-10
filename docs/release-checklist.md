@@ -36,13 +36,13 @@ it is.
   and a check proves it. → report §"9. Save robustness beyond one slot" (the
   mechanism moves to disk; the guarantees are the same)
 
-- [ ] **Save export and import.** Done: native save/open dialogs replace the
+- [x] **Save export and import.** (2026-09-09: web transport — `exportSave`/`importSave` in `persist.js`, `.prev` one-deep undo, the sheet's `save a copy` / `load a save`; native dialogs come with the desk, see DESIGN.md "The desk") Done: native save/open dialogs replace the
   download/paste flow — the dev-only `copy save` in `src/dev.js` becomes a
   player-facing "save a copy" writing a file where the player chooses, and
   import opens one, validates it, and keeps the current save until the new one
   has restored cleanly. → report §"2. Player save export and import"
 
-- [ ] **Hidden-window clock leap.** Done: a minimized window or a suspended
+- [x] **Hidden-window clock leap.** (2026-09-09: `CLOCK_LEAP_MS` clamps `tick` and `dt` alike; `test/clock-leap.test.mjs`) Done: a minimized window or a suspended
   machine no longer resolves every timed thing at once on return. Today
   `clock.js` adds the whole away duration on the first frame back while `dt`
   clamps to 100 ms. The cheap mitigation is `backgroundThrottling: false` on
@@ -50,12 +50,12 @@ it is.
   still needs the clock decision. → report §"3. The hidden tab must not spend
   the yard's clock"
 
-- [ ] **Settings sheet.** Done: one player-reachable sheet holding mute, reduced
+- [x] **Settings sheet.** (2026-09-09: the held sheet, `src/settings.js`; mute row waits for audio) Done: one player-reachable sheet holding mute, reduced
   motion, export/import, the keyboard bindings, and the version — the shelf the
   items above and below put things on, built once rather than four times.
   → report §"4. A settings sheet"
 
-- [ ] **Reduced motion.** Done: `prefers-reduced-motion` is read as the default
+- [x] **Reduced motion.** (2026-09-09: `prefs.js` + the switch; `lookAt` snaps, `shakeView` declines, the intro plays from a still seat; `test/motion.test.mjs`) Done: `prefers-reduced-motion` is read as the default
   of a switch on the settings sheet, and it turns off the camera moves and the
   shake — the motion that is punctuation — while the yard keeps walking.
   → report §"5. Reduced motion"
@@ -74,7 +74,7 @@ it is.
   is approved before any code, then the layer is built to it with a mute that
   remembers. → report §"7. Audio, and a mute that remembers"
 
-- [ ] **Version and the no-ending sentence.** Done: the git hash and build date
+- [x] **Version and the no-ending sentence.** (2026-09-09: `__BUILD__` via `define`, `src/version.js`, both lines on the sheet; the store-page half waits for a store page) Done: the git hash and build date
   are injected via `define` in `vite.config.js` and shown on the settings
   sheet, and one honest sentence — rocks keep coming, there is no finish line —
   is somewhere a player will read it. → report §"10. Say the version"
@@ -85,7 +85,7 @@ it is.
   boundary still needs noticing. → report §"11. Cache-busting across an update
   mid-run" (the cache half falls away; the version-boundary half stays)
 
-- [ ] **Perf gate on main.** Done: one check in the node tier that would go red
+- [x] **Perf gate on main.** (2026-09-09: `test/perf-gate.test.mjs` counts `ways()` builds and `addGrain` columns; `ways()` is memoized on its eight scalars, PERF.md §8) Done: one check in the node tier that would go red
   if the busy yard's frame cost regressed — preferably asserting a count (an
   allocation or walk count per frame) rather than a wall-clock time, per the
   house rule against thresholds on noisy statistics.

@@ -216,8 +216,29 @@ export const feetOn = (way, leftX) => standTop(leftX, way.at) - WORKER;
 // than an obstacle on it -- you pass in front of a bank, and the ground line is
 // where you pass it at. The hill is not part of it: it is a way of its own, and
 // the reason why is written out at `groundTop`.
+//
+// Built once per outline, not once per asker. Everything the object holds is
+// either a live function (`at`) or one of eight scalars -- whether the cut is
+// open, the hole's box, the cut's box, and the two ends of the hill -- so the
+// same eight scalars mean the same ways, and a caller that gets the last object
+// back is getting exactly what a fresh build would have made. Without this
+// every body asked twice a frame through `wayAt`'s default argument, and the
+// busy yard built it fifty times a frame doing routing that had not changed
+// since the frame before. The perf gate (test/perf-gate.test.mjs) counts the
+// builds, so a caller that starts building its own again shows up there.
+let last = null, lastKey = '';
+
 export function ways() {
-  globalThis.__perf.ways++;                  // the perf gate's: one build a frame is the rule
+  const span = rockSpan();
+  const key = `${S.quarryOpen ? 1 : 0}|${pit.grid && pit.cols ? pit.x + ',' + pit.w : ''}|` +
+              `${quarry.x},${quarry.w}|${span ? span.from + ',' + span.to : ''}`;
+  if (last && key === lastKey) return last;
+  lastKey = key;
+  return last = buildWays(span);
+}
+
+function buildWays(span) {
+  globalThis.__perf.ways++;                  // the perf gate's: a build only when the outline changed
   const out = { yard: { key: 'yard', from: -1e6, to: 1e6, at: groundTop } };
 
   // The floor of the cut, which exists while there is a cut. It is below the
@@ -260,7 +281,6 @@ export function ways() {
   // asked, so the way *is* the outline of what is left. Mine the crest down and
   // the walk over it flattens the same frame; mine a flank away and the hill
   // gets shorter and its foot moves in.
-  const span = rockSpan();
   if (span) out.rock = { key: 'rock', from: span.from, to: span.to, at: rockTop };
 
   return out;

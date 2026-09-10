@@ -6264,10 +6264,11 @@ they are for every other build.
   bench, click the call, run the yard until the work lands, assert the bench and
   assert the digger went back to the rock.
 
-## The sheet (design, not built)
+## The sheet (built)
 
-Spec: `docs/wave-release.md`. The bargain in one paragraph, because the spec
-is a build document and this is the reasoning.
+Spec: `docs/wave-release.md`; built 2026-09-09 by six tracks, landed on main the
+same day. The bargain in one paragraph, because the spec is a build document
+and this is the reasoning.
 
 Every board in this game is a place you walked to, and settings are not a
 place. The one surface that is already not the yard is the held sheet -- space
