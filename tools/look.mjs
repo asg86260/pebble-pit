@@ -523,6 +523,10 @@ const SCENES = {
                  window.__fast(6); window.__look(window.__state().shackX - 200);`,
 
   shackboard: `${RICH} window.__school({breakers:3}); window.__shack(); window.__board('shack');`,
+  // The swing multiplier on the go: a rockhand at the hut, the bar over its roof,
+  // nobody standing in the middle of the boulder.
+  shackwork: `${RICH} window.__school({breakers:3}); window.__shack(); window.__invest(); window.__buy('labswing');
+              window.__fast(6); window.__look(window.__state().shackX - 400);`,
   houseboard: `${RICH} window.__crew(3,2,2,2); window.__board('house');`,
   schoolboard: `${RICH} window.__school({breakers:3,carters:1}); window.__board('school');`,
 

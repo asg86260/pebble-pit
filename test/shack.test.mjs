@@ -22,6 +22,7 @@ import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
 import { SHACK_GEAR } from '../src/shack.js';
 import { workAt } from '../src/works.js';
+import { barSpot } from '../src/render/bars.js';
 import { TYPE } from '../src/jobs.js';
 import { shack } from '../src/state.js';
 
@@ -269,6 +270,41 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
     ok(working === 2, 'the other two go on at the rock', `${working}`),
     ok(landed && released, 'the work lands and the claim clears'),
     ok(level === 1, 'and the rung is bought', `${level}`)
+  ];
+});
+
+// And the multiplier over the rung, the same way. It was `site: 'yard'` --
+// every ladder was -- with no ground of its own, so `siteBox` guessed the
+// middle of the rock and a spare builder went and stood in the boulder to fit
+// it. A row on the shack's board is worked at the shack, by the gang. And the
+// bar hangs over the hut while it is: the shack was not in works.js's box
+// table, so `barSpot` had nowhere to put one.
+group('the swing multiplier bought at the shack is worked there too, under a bar over the hut', async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__invest();
+  window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
+  window.__crew(2, 0);
+  runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
+
+  const bought = window.__buy('labswing');
+  const w = workAt('shack');
+  const spot = w && barSpot('shack', w);
+  const overHut = !!spot && spot.x >= shack.x && spot.x <= shack.x + shack.w && spot.y < shack.y;
+  const nowhereElse = !workAt('yard') && !workAt('bench');
+  const claimed = () => S.workers.filter(o => o.onBuild === 'shack');
+  const inShack = o => o.x + WORKER > shack.x && o.x < shack.x + shack.w;
+  const arrived = runUntil(() => claimed().some(o => o.atShed && inShack(o)), 60);
+  const landed = runUntil(() => !workAt('shack'), 400);
+  const level = S.mult?.swing ?? 0;
+
+  return [
+    ok(bought, 'the row is bought like a player buys it'),
+    ok(!!w && w.key === 'labswing', "and the work is the shack's", w ? w.key : 'no work'),
+    ok(nowhereElse, "not the yard's or the bench's"),
+    ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
+    ok(arrived, 'a rockhand stands at the shack to fit it'),
+    ok(landed && level > 0, 'and it lands', `${level}`)
   ];
 });
 

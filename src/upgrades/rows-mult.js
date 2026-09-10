@@ -33,7 +33,12 @@ import { invested } from './site.js';
 // `handsAt(site) * effortAt(site)` -- and the lab was a second name for it.
 //
 // `board` says which sheet draws it; the bench takes the rows that name none.
-const ladder = ({ key, field, name, unit, cost, currency, board, show }) => ({
+// `site` says where it is worked, and by whom: the yard by default, which is a
+// spare builder standing wherever the row's ground is. A row sold at a
+// station's own board names that station instead, so the rule the boards
+// already follow -- a decision about a place is made at the place -- holds
+// for the work too, not just the purchase.
+const ladder = ({ key, field, name, unit, cost, currency, board, site = 'yard', show }) => ({
   key,
   name,
   unit,
@@ -44,7 +49,7 @@ const ladder = ({ key, field, name, unit, cost, currency, board, show }) => ({
   rungs: () => RUNGS,
   cost,
   currency,
-  kind: 'rung', site: 'yard',
+  kind: 'rung', site,
   board,
   // What it costs in somebody's time, climbing with the rung the way the price
   // does -- the same worker-seconds the research always asked for.
@@ -76,6 +81,11 @@ export const SWING_MULT = ladder({
   // stood at its flank -- which is the sentence the shack was built to make
   // false.
   board: 'shack',
+  // And worked there, by one of the gang, the way its two rungs are (see
+  // rows-rock.js). Left on the yard it had no ground of its own, so the guess
+  // in `siteBox` centered it on the rock and a spare builder stood in the
+  // middle of the boulder to fit a multiplier the hut had just sold.
+  site: 'shack',
   // Not before a shard has been seen, or it is a row asking for a currency a
   // fresh yard has never been shown. See A8 in feedback3.md.
   show: () => standing() && S.seenShard

@@ -38,9 +38,12 @@ import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
 import { coreHome } from './core.js';
 import { mult, workFor, FIELD } from './mult.js';
-// What multipliers are being worked on right now. They are builds at the yard's
-// site, so this picks the multiplier rows out of whatever the yard is putting up.
-const research = () => worksAt('yard').filter(w => FIELD[w.key]);
+// What multipliers are being worked on right now: the multiplier rows out of
+// whatever every site is putting up. They were read off the yard's works alone,
+// which was right while every ladder was `site: 'yard'`; a ladder sold at a
+// station's own board is worked there now (the swing's, at the shack), and a
+// reading that only looked at the yard said "nothing on the go" while it was.
+const research = () => SITES.flatMap(site => worksAt(site)).filter(w => FIELD[w.key]);
 import { rates } from './stats.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';

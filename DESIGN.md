@@ -6057,7 +6057,11 @@ up by thirty-five cells a side.
 **And the hut's rows are worked at the hut.** They moved onto the shack's board and stayed
 `site: 'bench'`, so a pick bought at the door was fitted a walk away by whoever was spare. It is
 the quarry's rule now: `site: 'shack'`, gang `JOB.ROCK`, and the work claims one rockhand to stand
-at the hut for the duration (shedhand.js).
+at the hut for the duration (shedhand.js). All of them, the multiplier included: `swing ×` was the
+one row on the board still `site: 'yard'`, and a yard row with no ground of its own is centered on
+the rock, so a spare builder stood in the middle of the boulder to fit it. And the bar hangs over
+the hut while any of them is on the go -- the shack is in works.js's site-box table, which is where
+`barSpot` reads a roof from.
 
 ### What moves in
 

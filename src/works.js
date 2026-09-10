@@ -19,7 +19,7 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school } from './state.js';
+import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school, shack } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 
@@ -245,7 +245,10 @@ const YARD_ROW_SITE = {
   unlockapothecary: 'apothecary'
 };
 
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school };
+// The shack is in it so its bar has a roof to hang over: `barSpot` reads the
+// site's box, and a site missing here answered null -- so the rock's rows were
+// worked at the hut with no bar anywhere while they were.
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school, shack };
 
 // Every room the settlement will have once the one going up lands -- one more
 // than today's count, the same way `nextHouseAt` in house.js asks.

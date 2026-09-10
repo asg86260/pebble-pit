@@ -15,8 +15,8 @@
 
 import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
 
-// The swing multiplier is the one on the bench, under `the rock`, beside the
-// rung it multiplies.
+// The swing multiplier is the one on the shack's board, beside the rung it
+// multiplies.
 group('a multiplier is bought at the thing it multiplies, and takes work', async () => {
   window.__reset();
   // `__fullSites` rather than `openSites`, which takes the ladders to their top:
@@ -26,11 +26,11 @@ group('a multiplier is bought at the thing it multiplies, and takes work', async
   window.__fullSites();
   window.__invest();                 // the trestle is what they wait on
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
-  window.__crew(0, 3);
-  // Somebody has to build it. With the trestle standing, a builder is a post you
-  // hire like any other and a work with nobody on it waits, fenced -- which is
-  // the whole bargain the lab used to carry and the reason this is a build.
-  window.__assign('builders', 1);
+  // Somebody has to build it, and the somebody is one of the rock's own gang:
+  // the swing's row is sold at the shack and worked there (see shack.js), so a
+  // work with no rockhand to claim waits, fenced -- which is the whole bargain
+  // the lab used to carry and the reason this is a build.
+  window.__crew(2, 3);
   run(2);
 
   const before = state();
