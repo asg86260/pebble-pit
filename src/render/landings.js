@@ -15,8 +15,7 @@ import { rising as risingAt } from './rise.js';
 // has no idea where any of these places actually stand: the drawing side draws
 // every one of them and so is the one place that already knows.
 const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse',
-                     'quarry', 'farm', 'house',
-                     'buildbench'];   // wave7b-build: the construction bench lands too
+                     'quarry', 'farm', 'house'];
 const wasRising = {};
 export function stepRiseLandings() {
   for (const place of RISE_PLACES) {
@@ -26,7 +25,6 @@ export function stepRiseLandings() {
                  : place === 'tower' ? tower : place === 'casino' ? casino
                  : place === 'scrub' ? scrub : place === 'outhouse' ? outhouse
                  : place === 'quarry' ? quarryShed() : place === 'farm' ? farmShed()
-                 : place === 'buildbench' ? S.buildbench
                  : null;
       if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); }
       else {

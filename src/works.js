@@ -20,7 +20,7 @@
 // way the machines ask about their tenders.
 
 import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school } from './state.js';
-import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT, BUILD_PACE_STEP } from './config.js';
+import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 
 // Where a row's work stands, and therefore whose hands do it.
@@ -105,9 +105,7 @@ export const OPENS_PLACE = {
   unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
   unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
-  unlockapothecary: 'apothecary',
-  // wave7b-build: the construction bench is the last free-standing build.
-  unlockbuildbench: 'buildbench'
+  unlockapothecary: 'apothecary'
 };
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
@@ -129,25 +127,12 @@ export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === JOB.BUILD);
 // up there, and whoever is spare goes and does it.
 const noGang = site => !(S[SITE_JOB[site]] > 0);
 
-// wave7b-build: whether a site's open work is the kind that rises out of the
-// ground -- a building or a machine. With the construction bench open, those
-// are the builders' and nobody else's, whoever the site's own gang is: a
-// station raising a machine goes on producing while a builder puts it up.
-const risingKind = w => {
-  const kind = rowFor(w.key)?.kind;
-  return kind === 'building' || kind === 'machine';
-};
-export const hasRisingWork = site => worksAt(site).some(risingKind);
-
-// A site the builders man: the two with no gang of their own always, and --
-// once the bench is open -- any station whose open work is a building or a
-// machine, because those change hands to the builders then.
-export const builderManned = site =>
-  SITE_JOB[site] === JOB.BUILD || (S.buildbenchOpen && hasRisingWork(site));
+// A site the builders man: the ones with no gang of their own. A station with a
+// gang raises its own work, so nobody is lent to it.
+export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)
-                                        || (S.buildbenchOpen && hasRisingWork(site))));
+  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
 
 // And where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -257,7 +242,7 @@ const YARD_ROW_SITE = {
   house: 'house', unlockshack: 'shack', unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm',
   unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
-  unlockapothecary: 'apothecary', unlockbuildbench: 'buildbench'
+  unlockapothecary: 'apothecary'
 };
 
 const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school };
@@ -434,10 +419,8 @@ export function stepWorks(dt) {
     // nobody at it stands at nought instead of creeping along at a fraction.
     // The lab keeps the spread: a scholar between two benches is one scholar's
     // work being done over both, which is what that looks like from outside.
-    // ...and the builders' own pace ladder, BUILD_GANG's old meaning as a rung.
     const manned = builderManned(site);
-    const pace = manned ? Math.pow(BUILD_PACE_STEP, S.buildPaceLevel) : 1;
-    const effort = effortAt(site) * pace;
+    const effort = effortAt(site);
     // Backwards, because a finished work is spliced out of the list it is being
     // walked.
     for (let i = list.length - 1; i >= 0; i--) {

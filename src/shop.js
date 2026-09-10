@@ -21,7 +21,6 @@ import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
-import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -37,7 +36,6 @@ const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
 const looEl = document.getElementById('looshop');
 const shackEl = document.getElementById('shackshop');
-const buildEl = document.getElementById('buildshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -627,7 +625,7 @@ export function refresh(el, list, headcount) {
         //
         // It used to name every work at the site, joined with commas, and that
         // was the single worst thing on these boards for standing still. The
-        // yard holds `buildPosts() + 1` works at once -- up to seven -- so this
+        // yard holds several works at once, so this
         // one cell could ask for any width it liked, and the sheet, being
         // content-sized, handed it over: measured on the bench, two names took
         // the board from 525 pixels wide to 731 and three took it to 1167, and
@@ -791,10 +789,6 @@ const BOARDS = {
   // with no number anywhere is the one count in the yard you would have to
   // take by eye. It rides the title -- see `build`.
   shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands],
-  // The trestle's own two ladders. It is never empty once it stands -- both rows
-  // show on `buildbenchOpen` -- but the line is there for the same reason every
-  // other board has one: a blank sheet is a bug you would have to rule out.
-  buildbench: () => [buildEl, BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS, 'the bench is bare'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']

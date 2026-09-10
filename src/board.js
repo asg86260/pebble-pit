@@ -18,7 +18,6 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
-import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
 import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
@@ -37,7 +36,6 @@ const towerShopEl = document.getElementById('towershop');
 const statsShopEl = document.getElementById('statsshop');
 const looShopEl = document.getElementById('looshop');
 const shackShopEl = document.getElementById('shackshop');
-const buildShopEl = document.getElementById('buildshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'),
@@ -50,8 +48,7 @@ const pages = { bench: document.getElementById('board'),
                 tower: document.getElementById('towerboard'),
                 stats: document.getElementById('statsboard'),
                 outhouse: document.getElementById('looboard'),
-                shack: document.getElementById('shackboard'),
-                buildbench: document.getElementById('buildboard') };
+                shack: document.getElementById('shackboard') };
 
 // How far up a ladder you are is a row of pips, and how big and how dark they
 // are is a number rather than a rule -- so the two of them live in config with
@@ -89,9 +86,6 @@ const standAt = { bench, lab, school, casino, scrub, tower, shack,
                   // sheet all belong to the building that holds the rungs.
                   get apothecary() { return apothHut(); },
                   outhouse,
-                  // The trestle is reseated at boot, so it is read when asked
-                  // rather than captured while this table is being built.
-                  get buildbench() { return S.buildbench; },
                   get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },
@@ -124,7 +118,6 @@ const listFor = which =>
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
   // Gathered when asked, like the house's -- see shack.js.
   which === 'shack' ? shackRows() :
-  which === 'buildbench' ? BUILDBENCH_UPGRADES :
   which === 'house' ? crewRows() : [];
 
 // Every station that has a board. One list, so that a thing which is true of all
@@ -132,7 +125,7 @@ const listFor = which =>
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'school', 'casino', 'scrub', 'quarry',
                          'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
-                         'buildbench', 'shack'];
+                         'shack'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -152,7 +145,6 @@ const standing = which =>
   // row that puts the building up is on the bench with the other unlocks.
   which === 'outhouse' ? S.outhouseOpen :
   which === 'shack' ? S.shackOpen :
-  which === 'buildbench' ? S.buildbenchOpen :
   // The books open once the hole has had something in it. The record used to
   // open them too; it hangs on the held sheet now (record.js).
   which === 'stats' ? S.banked > 0 :
@@ -1021,7 +1013,6 @@ function fill(which) {
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
   if (which === 'shack') refresh(shackShopEl, shackRows(), null);
-  if (which === 'buildbench') refresh(buildShopEl, BUILDBENCH_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') {

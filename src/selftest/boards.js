@@ -165,7 +165,7 @@ export const TESTS = [
     // Every station standing, because a board nobody has built sells nothing
     // and a card that is not on a board cannot be measured.
     window.__fullSites();
-    window.__buildbench(true);
+    window.__invest();
     // The far end of both ground ladders, which is where the bills get wide
     // enough to squeeze the card -- the state the defect actually needed.
     window.__levels({ cropLevel: 9, tendLevel: 4, seamLevel: 9 });
@@ -173,7 +173,7 @@ export const TESTS = [
     const bad = [];
     const seen = new Set();
     for (const name of ['bench', 'house', 'quarry', 'farm', 'school', 'scrub',
-                        'tower', 'casino', 'buildbench', 'outhouse']) {
+                        'tower', 'casino', 'outhouse']) {
       window.__board(name);
       await sleep(320);                        // the sheet scales in; let it land
       for (const card of document.querySelectorAll(
@@ -345,7 +345,7 @@ export const TESTS = [
     // finished yard buys -- so its row does not appear until the plots, the cut
     // and the lab are all standing.
     window.__crew(0, 0, 1, 1);
-    window.__buildbench(true);
+    window.__invest();
     window.__crew(0, 0);
     run(30);
     window.__build();
@@ -851,7 +851,7 @@ export const TESTS = [
     // enough of everything that every row on every board is showing
     window.__crew(4, 3);
     window.__grant({ cores: 6, shards: 4000, spores: 4000, sparks: 400 });
-    window.__buildbench(true);
+    window.__invest();
     window.__school({ open: true });
     window.__loo(true);
     window.__air({ open: true, purifiers: 1 });
@@ -1388,7 +1388,7 @@ export const TESTS = [
     const SAYS = ['busy', 'busy (9)', 'building', 'on the way', 'nobody on it'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
-                         'outhouse', 'buildbench', 'house']) {
+                         'outhouse', 'house']) {
       window.__board(which);
       await settle(0.1);
       const page = document.querySelector('#panel .page:not([hidden])');

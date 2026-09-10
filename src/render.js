@@ -48,7 +48,7 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
+import { drawSchool, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
@@ -151,8 +151,7 @@ const LAYERS = [
   // that piles up *against* the wall and buries its foot is a heap. The buildings
   // are the yard and the loose stuff is what the yard is full of.
   { name: 'bench', draw: drawBench },
-  { name: 'build bench', draw: drawBuildBench }, // wave7b-build: the trestle beside it
-  { name: 'noticeboard', draw: drawNoticeboard },  // and the record, on the way to the houses
+  { name: 'noticeboard', draw: drawNoticeboard },  // the record, on the way to the houses
   { name: 'settlement', draw: drawSettlement },  // and the crew are drawn later still, so they walk in front of both
   { name: 'rising room', draw: drawRisingHouse },// the one room still going up, if a hire is under way
 

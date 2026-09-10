@@ -49,11 +49,6 @@ export const POSTS = [
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
-  // wave7b-build: the builders, hired at the construction bench once it
-  // stands. Before it, building is not a job you assign at all -- the yard
-  // derives it -- so the post is simply not shown.
-  { key: 'buildjob', job: JOB.BUILD,
-    at: () => S.buildbench.x + S.buildbench.w / 2, show: () => S.buildbenchOpen },
   // One teacher, through the school's door, or the trades on its board stall.
   // (wave6-sim, item 1)
   { key: 'teachjob', job: JOB.TEACH,

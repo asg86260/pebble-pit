@@ -15,7 +15,7 @@ export const TESTS = [
     window.__grant({ cores: 20 });
     window.__give(20000);
     window.__dig(23);                            // room for the winnings
-    window.__buildbench(true);
+    window.__invest();
     buildShopFromTest();
     const before = document.querySelector('#shop button[data-key="unlockcasino"]');
     before.click();
@@ -116,7 +116,7 @@ export const TESTS = [
     window.__grant({ cores: 20 });
     window.__give(20000);
     window.__dig(23);
-    window.__buildbench(true);
+    window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
     window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
@@ -178,7 +178,7 @@ export const TESTS = [
     window.__grant({ cores: 20 });
     window.__give(30000);
     window.__dig(23);
-    window.__buildbench(true);
+    window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
     window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
@@ -232,7 +232,7 @@ export const TESTS = [
     window.__grant({ cores: 20 });
     window.__give(30000);
     window.__dig(23);
-    window.__buildbench(true);
+    window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
     window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's

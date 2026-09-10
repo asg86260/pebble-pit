@@ -20,6 +20,7 @@ import { S } from '../state.js';
 import { RUNGS } from '../config.js';
 import { rungCost } from '../upgrades.js';
 import { STEP, levelOf, mult, workFor, finish } from '../mult.js';
+import { invested } from './site.js';
 
 // A multiplier's row, which is the same row four times over a different rate.
 //
@@ -52,14 +53,14 @@ const ladder = ({ key, field, name, unit, cost, currency, board, show }) => ({
   show
 });
 
-// Every one of them waits on the construction bench.
+// Every one of them waits on the yard being invested in.
 //
 // The lab was a building you bought before any multiplier was for sale, and that
 // beat is worth keeping: a rate that multiplies the whole yard should cost you a
-// decision first. The trestle is the thing that does the work now, it lands at
-// about the tier the lab used to (a core and some thousands of dust), and it is
-// the honest gate -- you cannot research without somewhere to research from.
-const standing = () => S.buildbenchOpen;
+// decision first. The lab went, the trestle stood in for it, and the trestle has
+// gone too -- so what these wait on is the decision itself rather than whichever
+// building happens to be standing at that tier. See `invested` in site.js.
+const standing = invested;
 
 export const SWING_MULT = ladder({
   key: 'labswing', field: 'swing',

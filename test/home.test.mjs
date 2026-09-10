@@ -2,7 +2,7 @@
 // home, and turn a light on behind a window.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
-import { STATION_GAP, BOARD_W } from '../src/config.js';
+import { STATION_GAP } from '../src/config.js';
 // A yard with nothing in it to carry is a yard nobody needs to be stood in.
 // The one thing that has to be true is that letting them go is never a
 // decision you regret: they are all back the moment there is dust.
@@ -159,14 +159,14 @@ group('the crew have somewhere to live', async () => {
     //
     // So each side is checked against the rule that actually decides it.
     //
-    // Neither the bench nor the block has a heap, so nothing but the walk --
-    // and the noticeboard, which is pinned between them -- stands between them:
-    // a gap, the board, and a gap. (For a while every site owned the widest
-    // heap's worth of apron whether it had a heap or not, and this read that
-    // plus the gap; a site pads by its own heap now -- `padOf`, config/sites.js.)
-    ok(big.ofBench === STATION_GAP * 2 + BOARD_W,
-       'the block stands a gap, the noticeboard and a gap off the bench',
-       `${big.ofBench}px, gap ${STATION_GAP}, board ${BOARD_W}`),
+    // Neither the bench nor the block has a heap, so nothing but the walk
+    // stands between them; the noticeboard is furniture standing IN that walk,
+    // not a slot widening it. (For a while every site owned the widest heap's
+    // worth of apron whether it had a heap or not, and this read that plus the
+    // gap; a site pads by its own heap now -- `padOf`, config/sites.js.)
+    ok(big.ofBench === STATION_GAP,
+       'the block stands a station\'s gap off the bench, like every neighbour',
+       `${big.ofBench}px, gap ${STATION_GAP}`),
     ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
        `${big.benchOfApron}px`),
     ok(big.ofApron > 0, 'with the block further out again',

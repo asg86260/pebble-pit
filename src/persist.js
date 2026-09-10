@@ -602,13 +602,6 @@ export function restore() {
   // four bodies short. See DESIGN.md, "The lab is deleted".
   S.scholars = 0;
   const wasScholars = s.scholars ?? s.labbers ?? 0;
-  // And what the lab's own two ladders were worth is handed to the trestle's,
-  // which are the same two things under new names: a bench held a piece of
-  // research, a post holds a build, and instruments and a better hammer are both
-  // how fast one pair of hands gets through it. A player who bought the lab out
-  // keeps what they paid for.
-  if (s.labRooms > 1) S.buildPostLevel = Math.max(+s.buildPostLevel || 0, s.labRooms - 1);
-  if (s.labKitLevel) S.buildPaceLevel = Math.max(+s.buildPaceLevel || 0, +s.labKitLevel || 0);
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.

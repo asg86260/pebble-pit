@@ -19,6 +19,7 @@ import { QUARRY_FOUL } from './config.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
+import { invested } from './upgrades/site.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
@@ -882,7 +883,7 @@ const QUARRY_YIELD = tierRows({
     { key: 'seam3',   name: 'dynamite',      coins: ['shard', 'spore'] },
     { key: 'labseam', name: 'enchanted TNT',
       coins: ['shard', 'spore', 'core', 'spark'],
-      gate: () => S.buildbenchOpen }
+      gate: invested }
   ]
 });
 
@@ -899,7 +900,7 @@ const QUARRY_SPEED = tierRows({
     { key: 'quarrypace3', name: 'rail carts',       coins: ['shard', 'spore'] },
     { key: 'labcave',     name: 'anti-gravity zone',
       coins: ['shard', 'spore', 'core', 'spark'],
-      gate: () => S.buildbenchOpen }
+      gate: invested }
   ]
 });
 

@@ -16,6 +16,7 @@ import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
+import { invested } from './upgrades/site.js';
 import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
@@ -305,9 +306,10 @@ const FARM_YIELD = tierRows({
     { key: 'crop3',   name: 'hybrid seed', coins: ['spore', 'shard'] },
     { key: 'labcrop', name: 'astral GMOs',
       coins: ['shard', 'spore', 'core', 'spark'],
-      // The last band is the research, and the research still waits on the
-      // trestle: there is nowhere to work from without it.
-      gate: () => S.buildbenchOpen }
+      // The last band is the research, and research waits on the yard having
+      // been invested in -- see `invested`, which is what the trestle's flag
+      // was standing in for.
+      gate: invested }
   ]
 });
 
@@ -324,7 +326,7 @@ const FARM_SPEED = tierRows({
     { key: 'tend3',   name: 'greenhouses',   coins: ['spore', 'shard'] },
     { key: 'labtend', name: "summer's aura",
       coins: ['shard', 'spore', 'core', 'spark'],
-      gate: () => S.buildbenchOpen }
+      gate: invested }
   ]
 });
 

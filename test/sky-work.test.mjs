@@ -454,7 +454,7 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // the work bench are all up. (It waited on the lab; the lab is gone and the
   // trestle took its place in the run. See DESIGN.md, "The lab is deleted".)
   openSites();
-  window.__buildbench(true);
+  window.__invest();
   // Hands spare to put it up: a building past the bench is built by the yard,
   // and a yard with nobody in it builds nothing. See works.js.
   window.__crew(0, 3);

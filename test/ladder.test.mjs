@@ -11,7 +11,6 @@ import { group, ok, state, yard, openSites, buyBuilt } from './helpers.mjs';
 
 import { RUNGS, MINE_FLOOR } from '../src/config.js';
 import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
-import { BUILDBENCH_UPGRADES } from '../src/upgrades/rows-buildbench.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
@@ -21,7 +20,7 @@ import { CASINO_UPGRADES } from '../src/casino.js';
 
 // Every board's rows in one list, for the checks that are about all of them
 // rather than about one ladder.
-const ALL_ROWS = [...UPGRADES, ...BUILDBENCH_UPGRADES, ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
+const ALL_ROWS = [...UPGRADES, ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
                   ...QUARRY_UPGRADES, ...FARM_UPGRADES, ...TOWER_UPGRADES,
                   ...CASINO_UPGRADES];
 
@@ -112,7 +111,7 @@ group('above the first tier a rung costs its own coin and dust', async () => {
 group('no row says a unit the board cannot draw', async () => {
   window.__reset();
   openSites();
-  window.__buildbench(true);
+  window.__invest();
 
   const said = [];
   const bad = [];

@@ -83,9 +83,7 @@ const RISING_BOX = { lab: () => lab, scrub: () => scrub, school: () => school,
                      tower: towerSpireBox,
                      apothecary: () => apothHut(),
                      quarry: () => quarryShed(), farm: () => farmShed(),
-                     house: () => siteBox('yard'),
-                     // wave7b-build: the construction bench raises like any place
-                     buildbench: () => S.buildbench };
+                     house: () => siteBox('yard') };
 
 // wave7b-build: which place a yard work is raising, per WORK now -- the yard
 // holds two builds at once, and each bar belongs over its own.

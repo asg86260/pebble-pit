@@ -4850,7 +4850,7 @@ and got nothing. Still open, deliberately:
   only when the new door swallows it. The walk-in rule says the latter; the
   counter should read "in transit" somehow or the numbers look wrong.
 
-## The build yard (built)
+## The build yard (built, then scrapped)
 
 A rung and a building cost the same click and read the same on the board, but
 one is a number and the other is a thing that should exist in the yard.
@@ -4878,14 +4878,38 @@ fenced footprint, no bar moving -- until a builder frees up, which is itself
 the signal to buy the second post. BUILD_GANG (wave 3) folds in: the gang
 multiplier becomes the builder's pace ladder.
 
-**As built (wave 7b).** Canon in `docs/wave7b.md`. Before the bench is
-bought, builds behave exactly as they always did (one `if`, no migration);
-the bench itself is the last self-raising build. With it open, only builders
-count toward building and machine works, queued builds stand fenced with an
+**As built (wave 7b).** Canon in `docs/wave7b.md`. Before the bench was
+bought, builds behaved exactly as they always did (one `if`, no migration);
+the bench itself was the last self-raising build. With it open, only builders
+counted toward building and machine works, queued builds stood fenced with an
 empty bar, and the `buildposts` ladder (sparks, +1 concurrent build and +1
-builder each) with a `buildpace` ladder replaces BUILD_GANG. Machines' tuning
-rungs stayed instant. Still open: the buried-square-as-first-builder story,
-and per-key `leftAt` so a two-build yard's row clocks read exactly.
+builder each) with a `buildpace` ladder replaced BUILD_GANG.
+
+**Scrapped.** The construction bench is gone. It was two trestles in the yard
+standing side by side, and the row that raised it read `build the work bench`
+-- named after the shop it stood next to, which is the collision that made
+both of them awkward to talk about. What it bought was a build *queue*: works
+standing fenced because nobody had been hired to them, and a post ladder to
+widen it. Nobody wanted the queue. Workers build things themselves, which is
+what the yard did before the bench and does again -- the yard derives a spare
+body per busy site and lends the nearest one when nobody is spare.
+
+The removal was the deletion of one `if` in `rebalance` and the else branch
+below it, which had been the pre-bench world the whole time. Gone with it: the
+`buildposts` and `buildpace` ladders (a sparks sink and a spores sink), the
+builder post on the roster, the trestle in `render/stations.js`, and the
+yard's room going back to one build at a time.
+
+Three rows had been gated on `S.buildbenchOpen` -- the casino, the
+multipliers and the tower. Each of them had named whichever building happened
+to sit at that tier: the lab first, then the trestle when the lab went. Two
+scrapped buildings in a row is the mechanism asking to be written down, so it
+is `invested()` in `upgrades/site.js` now -- two places bought and the first
+rock behind you -- which is the thing those rows were actually waiting for.
+
+The workbench stays. The ten `build the X` rows have nowhere else to live: a
+place cannot sell the row that opens it, and the invented stand for one of
+them (the janitor's closet) was already tried and scrapped.
 
 ## The grind pass (design, not built)
 
@@ -5327,8 +5351,9 @@ So the question is only which rows still have a place to go.
 
 **What moves.** The crew's six rows — strength, speed, harness, boots, the belt, tune the belt —
 go to the houses, where the crew live and where the board already stands. The build yard's `posts`
-and `pace` go to the construction bench, which is already a registered site and only wants a board.
-`build the bench` itself stays, by the rule above.
+and `pace` went to the construction bench, which is already a registered site and only wants a
+board — and then the construction bench was scrapped and both ladders with it, so that half of
+this is moot. `build the bench` itself stays, by the rule above.
 
 **What does not, and why that is not a failure.** `you` has no station because you are the cursor.
 The shields stand in the yard but are not buildings you walk up to. And the rock's rows stay, which
@@ -5370,6 +5395,10 @@ drives both:
 registerSite('lab',  { room: labRooms, effort: labPace, started: () => begin() });
 registerSite('yard', { room: () => (S.buildbenchOpen ? buildPosts() + 1 : 1) });
 ```
+
+(The yard's line is the shape it had while the construction bench stood. The bench is gone and
+the yard takes the default room of one again, which is what it had before — the argument below is
+unaffected either way.)
 
 Both run through `handsAt(site) * effortAt(site)`. Research and building are one mechanic
 implemented twice under two worker names, and the lab's `instruments` and `another bench` are
@@ -6467,7 +6496,9 @@ Three things, all asked for after living with it:
 
 **The board is pinned between the bench and the front doors.** It was placed by purchase order
 like a station, and it is not a station -- it is furniture on the busiest strip of the yard, and
-one yard had it out past the school. `PINNED_FIRST` in world.js is `shack, bench, notices, house`.
+one yard had it out past the school. It is out of `SITES` altogether and centered in the gap the
+walk already leaves between the bench and the house (`seatSites`, world.js), so it claims no
+slot and the world is no wider for it.
 
 **The record is a list on the held sheet, not a second sheet on the board.** The books answer
 "what is the yard earning now"; the record answers "what has happened". Asked at one place they
