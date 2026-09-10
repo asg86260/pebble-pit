@@ -10,7 +10,7 @@ import { yard, group, ok, state, run, runUntil, openSites, P } from './helpers.m
 import { S, floor, sky, tower } from '../src/state.js';
 import { at as cellAt } from '../src/grid.js';
 import { placeSites, bankCeiling } from '../src/world.js';
-import { PILE_LIMIT, padOf, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
+import { PILE_LIMIT, padOf, hangOf, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
 
 // What ground a site has spoken for, in two readings.
 //
@@ -34,6 +34,7 @@ function extents() {
     return {
       key: row.key,
       pad: padOf(row),
+      hang: hangOf(row),
       side: row.side,
       from: box.x,
       to: box.x + box.w,
@@ -46,8 +47,9 @@ function extents() {
 // The separation the walk spends between a pair of neighbouring walls: the
 // bare gap, plus the ground of whichever heaps lie between them -- the nearer
 // site's if its heap lies on its far side, the further site's if it throws
-// toward the rock.
-const pitch = (near, far) => STATION_GAP
+// toward the rock -- plus whatever the nearer site hangs off its left side,
+// which is the side facing the further one.
+const pitch = (near, far) => STATION_GAP + near.hang
   + (near.side === 'left' ? near.pad : 0) + (far.side === 'left' ? 0 : far.pad);
 
 group('one gap, and the same one, between every pair of stations', () => {

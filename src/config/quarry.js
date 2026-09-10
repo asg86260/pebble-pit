@@ -1,5 +1,14 @@
 import { P } from './yard.js';
 
+// The bridge over the quarry: a ramp up, a flat deck over the mouth, a ramp
+// down, and the crew walk every bit of it. Twenty degrees is a rise of four
+// cells over a run of eleven -- 19.98 degrees, which is as close to twenty as
+// this lattice gets, and both ends land on a whole cell. Here rather than in
+// world.js because the yard's spacing has to know how far the near ramp
+// reaches (see `KIT_OUT` in sites.js), and config cannot read world.js.
+export const BRIDGE_RISE = P * 4;
+export const BRIDGE_RUN = P * 11;
+
 // --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
 // come back out with a shard. The trip time is the whole of the mechanic: it is

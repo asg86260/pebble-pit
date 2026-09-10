@@ -13,7 +13,8 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT,
+        BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
@@ -124,27 +125,27 @@ export const kitX = job =>
   // does not, so the stand has to have both answers. A helmet on a stand in the
   // middle of the thing you are clicking was never right -- it is furniture
   // standing on the works -- and this is the move that takes it off.
-  job === JOB.ROCK ? (S.shackOpen ? shack.x - P * 6 : rockLeft() - P * 4) :
+  job === JOB.ROCK ? (S.shackOpen ? shack.x - KIT_OUT.shack : rockLeft() - P * 4) :
   // well back from the lip: the full-hole warning stands five cells short of
   // the edge, and a trestle under a warning triangle is two marks in one place
   job === JOB.HAUL ? pit.x - P * 16 :
-  // clear of the bridge: the ramp up to the deck starts right at the mouth, and
-  // a trestle standing on a slope is a trestle about to fall over
-  job === JOB.QUARRY ? quarry.x - BRIDGE_RUN - P * 5 :
-  // clear of the first plot and of whoever is stooping over it: a farmhand
-  // stands a body's width off its plot, which is where a stand four cells out
-  // would be standing too
-  job === JOB.FARM ? farm.x - P * 18 :
+  // How far out each stands is `KIT_OUT` (config/sites.js), because the walk
+  // that spaces the yard pads every site's left side by its own stand: the
+  // number that seats the stand and the number that reserves its ground are
+  // one number. The quarry's clears the bridge, the farm's the first plot and
+  // whoever is stooping over it; the reasons are written beside the table.
+  job === JOB.QUARRY ? quarry.x - KIT_OUT.quarry :
+  job === JOB.FARM ? farm.x - KIT_OUT.farm :
   // The stirrers' stand outside the pot, clear to the left of the door.
-  job === JOB.STIR ? apothecary.x - P * 6 :
+  job === JOB.STIR ? apothecary.x - KIT_OUT.apothecary :
   // The wizards' stand is at the foot of the tower, because the tower is what
   // makes them: a hat on a stand outside the door of the place it was made in.
-  job === JOB.WIZARD ? tower.x - P * 8 :
+  job === JOB.WIZARD ? tower.x - KIT_OUT.tower :
   // And the janitors' outside the outhouse, which is where their caps come from --
   // the shed keeps them, the way the tower keeps the cones. Clear to the left of
   // the front, because the door is cut in the middle of it and a stand across a
   // doorway is a stand somebody has to walk round to get in.
-  job === JOB.JANITOR ? outhouse.x - P * 6 : null;
+  job === JOB.JANITOR ? outhouse.x - KIT_OUT.outhouse : null;
 
 // The strips as they stand, and whether they still describe the yard.
 //
@@ -296,11 +297,13 @@ export function placeSites() {
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 
     // One separation, the same one, between every pair of neighbours: the
-    // ground each site owns for its own heap (`padOf`, config/sites.js) plus
-    // STATION_GAP of bare walk. The pad lies on whichever side the heap does,
-    // so the bare ground between one drawn thing and the next is STATION_GAP
-    // everywhere -- a site that makes nothing owns no pad and stands a walk
-    // off its neighbour's wall, not a walk off where a heap would have been.
+    // ground each site owns for its own heap (`padOf`, config/sites.js), the
+    // ground it owns for what it hangs off its left side (`hangOf` -- its
+    // kit stand, its shed), plus STATION_GAP of bare walk. The pad lies on
+    // whichever side the heap does and the hang always on the left, so the
+    // bare ground between one drawn thing and the next is STATION_GAP
+    // everywhere -- a site that makes nothing and hangs nothing owns no
+    // padding and stands a walk off its neighbour's wall.
     const pad = padOf(row);
     const near = row.side === 'left' ? 0 : pad;     // on the rock side of the wall
     const left = snap(x - near - w);
@@ -317,7 +320,7 @@ export function placeSites() {
         strips.push({ key: row.pile, from, to: from + pileW });
       }
     }
-    x = snap(left - (pad - near) - STATION_GAP);
+    x = snap(left - (pad - near) - hangOf(row) - STATION_GAP);
   }
 
   // The rock's own spoil is NOT in here, and that is deliberate. Every strip the
@@ -577,11 +580,10 @@ export function standOn(surfaceY) {
 }
 
 // The bridge over the quarry: a ramp up, a flat deck over the mouth, a ramp
-// down, and the crew walk every bit of it. Twenty degrees is a rise of four
-// cells over a run of eleven -- 19.98 degrees, which is as close to twenty as
-// this lattice gets, and both ends land on a whole cell.
-export const BRIDGE_RISE = P * 4;
-export const BRIDGE_RUN = P * 11;
+// down, and the crew walk every bit of it. Its shape is in config/quarry.js,
+// where the yard's spacing can read it; re-exported so nothing that walks it
+// has to know that.
+export { BRIDGE_RISE, BRIDGE_RUN };
 
 export function bridgeSpan() {
   const d0 = Math.round(quarry.x / P) * P;                 // the deck covers the mouth

@@ -3,7 +3,7 @@ import { CASINO_W, OUTHOUSE_W, SHACK_W, TOWER_W } from './buildings.js';
 import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
-import { QUARRY_W } from './quarry.js';
+import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 import { LAB_W, SCHOOL_W } from './school.js';
 import { SCRUB_W } from './scrub.js';
 import { BOARD_W } from './notices.js';
@@ -77,11 +77,16 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 // a gap measured against the lab is a guess the moment the farm is standing
 // there instead.
 //
-// So there is one. It is wide enough to clear the widest thing a site hangs off
-// its own left-hand side -- the farmhands' kit stand, eighteen cells out from
-// the first plot -- because that stand is furniture belonging to the site
-// behind it and may not end up inside the next site along.
-export const STATION_GAP = P * 20;
+// So there is one, and it is BARE ground: nothing of either neighbour stands
+// in it. It was twenty cells and sized to clear the farmhands' kit stand,
+// eighteen cells out from the first plot -- which is to say the gap was
+// mostly stand. The apothecary's last pot stood two cells off the farm's kit
+// stand, the stand a cell off the farm's shed, the shed three cells off the
+// first plot, and the two stations read as one long row of things. What a
+// site hangs off its left side is its own furniture (`hang`, below) and is
+// padded for by the site that owns it, the way a heap is; the gap is what is
+// left over, and it is left over everywhere.
+export const STATION_GAP = P * 24;
 // And the bare ground between the tower's wall and the near end of the star's
 // ground under it. See the tower's row below: the star is the tower's business,
 // so the ground it drops its rind on is reserved by the tower's own slot.
@@ -93,6 +98,29 @@ export const SUN_GAP = P * 3;
 // The presence is the extra course and the lip; what tells them apart is the
 // detail each one carries (see drawFarmShed / drawQuarryShed in render/sites.js).
 export const SHACK_RISE = P;
+
+// Where each trade's kit stand is put down, as bare ground LEFT of the station
+// it belongs to. `kitX` in world.js seats the stand off these, and the walk
+// below pads each site's left side by them, so the stand a body walks to and
+// the ground reserved for it are one number rather than two that agree.
+//
+// The quarry's clears the bridge: the ramp up to the deck starts right at the
+// mouth, and a trestle standing on a slope is a trestle about to fall over.
+// The farm's clears the first plot and whoever is stooping over it: a farmhand
+// stands a body's width off its plot, which is where a stand four cells out
+// would be standing too. The rest stand clear of a door.
+export const KIT_OUT = {
+  shack: P * 6, outhouse: P * 6, quarry: BRIDGE_RUN + P * 5,
+  farm: P * 18, apothecary: P * 6, tower: P * 8
+};
+// A stand's slab is drawn from a cell left of its x (drawKitStands, render/
+// crew.js), so its reach is one more cell than where it is put down.
+export const STAND_REACH = P;
+// The farthest thing a site with a kit stand hangs off its left side is the
+// stand: the sheds (SHED_GAP + a shed's width, nine cells) and the farm's
+// fence post (FARM_GATE, six) and the bridge's near ramp (BRIDGE_RUN, eleven)
+// all fall inside it.
+const kitHang = key => KIT_OUT[key] + STAND_REACH;
 export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
 
 export const SITES = [
@@ -102,7 +130,8 @@ export const SITES = [
   // and the whole walk behind it stand one shack further out whether or not
   // anybody has bought one -- and the rock, which is measured off whatever is
   // nearest rather than off the bench by name, is exactly the size it was.
-  { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null },
+  { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null,
+    hang: () => kitHang('shack') },
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   // The settlement owns the ground the noticeboard stands on. The board is
   // furniture rather than a station (see world.js, where it is seated) and so
@@ -114,11 +143,15 @@ export const SITES = [
   // board is centered in a gap that has a walk's worth of ground round it.
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,
     furniture: () => BOARD_W },
-  { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null },
+  { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,
+    hang: () => kitHang('outhouse') },
   { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
-  { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry' },
-  { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm' },
-  { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null },
+  { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry',
+    hang: () => kitHang('quarry') },
+  { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm',
+    hang: () => kitHang('farm') },
+  { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null,
+    hang: () => kitHang('apothecary') },
   // The lab had a row here. It is deleted, and a building that is gone must not
   // go on holding ground: left in the table it kept its own width plus a
   // station's padding of empty yard, which is a hole in the walk where a
@@ -130,7 +163,8 @@ export const SITES = [
   // it to the star, so the two are one station in everything but where they
   // stand -- and the rind the star drops has to land on ground somebody has
   // reserved, or it walks the yard looking for a column with room in it.
-  { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left' }
+  { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left',
+    hang: () => kitHang('tower') }
 ];
 
 // The ground a site owns beside itself for its heap: the heap at full width
@@ -153,6 +187,18 @@ export const SITES = [
 export const padOf = row =>
   row.pile ? row.standoff + heapBase(row.pile) * P :
   row.furniture ? row.furniture() : 0;
+
+// And the ground a site owns on its LEFT for what it hangs there -- its kit
+// stand, its shed, its fence post -- past whatever its pad already reserves on
+// that side. A site whose heap lies to its left (the scrubbing house, the
+// tower) has ground there already, and its stand sits in it; one whose heap
+// lies toward the rock has nothing on its left but the walk, and the walk
+// may not be where its furniture ends up. This is what keeps STATION_GAP
+// bare: the walk steps past the hang before it steps the gap.
+export const hangOf = row => {
+  const hang = row.hang ? row.hang() : 0;
+  return row.side === 'left' ? Math.max(0, hang - padOf(row)) : hang;
+};
 
 // How wide the rock is ever allowed to get, and how much bare ground it keeps
 // off the building on its flank. They live up here, ahead of the walk, because
@@ -221,8 +267,8 @@ export const YARD_MARGIN = P * 10;
 // So the ground is as wide as the table says it needs to be, and the next
 // station that grows moves the world's edge instead of walking through it. The
 // sum is what `placeSites` in world.js spends on one pass: every site's own
-// width, the standoff to its heap and the heap itself, with one STATION_GAP
-// between each pair -- and it does not depend on the ORDER the walk visits them
+// width, the standoff to its heap and the heap itself, what it hangs off its
+// left side, with one STATION_GAP between each pair -- and it does not depend on the ORDER the walk visits them
 // in, which is what makes it safe to work out here while the order is a thing
 // the player decides by buying.
 //
@@ -232,7 +278,7 @@ export const YARD_MARGIN = P * 10;
 // means something else. Growing it at all is a migration -- see `floorShift` in
 // persist.js, which slides a save's dust across by however many columns the
 // world gained on its left.
-const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row), 0)
+const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row), 0)
   + STATION_GAP * (SITES.length - 1);
 export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
