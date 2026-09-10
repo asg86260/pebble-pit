@@ -26,6 +26,17 @@ import { rand } from './rng.js';
 
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 
+// The perf gate's counters (test/perf-gate.test.mjs; PERF.md section 8). Two
+// things that were once most of a frame -- `ways()` rebuilt over and over,
+// `addGrain` searching the whole floor for a column with room -- are counted
+// per frame rather than timed, because a count is the same on a quiet machine
+// and a loaded one and a millisecond is not. Published on `globalThis` so the
+// check reads the live module's count and not a second instance's (CLAUDE.md,
+// "Anything drawn"). `route.js` adds to `ways`; the other two are added to in
+// `addGrain` below: `grains` is how many grains were dropped in this frame,
+// which is what `grainCols` is a multiple of.
+globalThis.__perf = { ways: 0, grainCols: 0, grains: 0 };
+
 // A cell holds a shade of dust, or something that is not dust at all: a core,
 // a shard or a spore. They live in the same plots and move the same way;
 // what they are not is worth one dust.
@@ -198,7 +209,7 @@ export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 //
 // Past the reach the grain is simply dropped. Falling off the world is truer
 // than appearing in a heap nobody filled.
-const BARRED_REACH = 96;
+export const BARRED_REACH = 96;
 
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
@@ -206,6 +217,7 @@ const BARRED_REACH = 96;
 // and a single thing that is not dust lies where it was dropped.
 export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
+  globalThis.__perf.grains++;                // the perf gate's: one grain dropped in
   // Two different reasons a column will not take a grain, and they want two
   // different answers.
   //
@@ -226,7 +238,8 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   // it is worse than losing the grain, because it puts dust somewhere nobody
   // carried it. So it looks a few cells either side and then gives up.
   const barred = c => at(b, c, b.rows - 1) || (skip && skip(c));
-  const full = c => barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1));
+  // (the increment is the perf gate's: one per column asked whether it has room)
+  const full = c => (globalThis.__perf.grainCols++, barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1)));
   if (full(col)) {
     // ...and it may not cross out of the ground it landed on.
     //
