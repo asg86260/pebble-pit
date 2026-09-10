@@ -33,14 +33,24 @@ import { TYPE } from '../jobs.js';
 // Deferred with arrows: this module sits in an import cycle with world.js, so
 // naming the bindings while the object is built reads them before they exist
 // -- the same note BUILDING_OF in render/bars.js carries.
-const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed()],
-                  [TYPE.FARM]: ['farm', () => farmShed()],
+//
+// The third entry is the goal that sends the body home when the work lands.
+// `'to'` is "walk to your post" for a quarrier, a farmhand and a stirrer, and
+// each one's stepper consumes it. A rockhand has no goal of its own -- it
+// climbs back to the layer from wherever it stands -- so `'to'` on a rockhand
+// is never consumed, and a goal nobody consumes is permanent: the claim above
+// refuses a `'to'` body and `ARRIVED` in muster.js does not count it, so the
+// third pick bought with a two-body gang sat at 0/9 for ever and the ram,
+// gated on eight shack works, could not be bought in play. Four critics found
+// it independently (docs/critics-2026-09-10.md, A1).
+const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed(), 'to'],
+                  [TYPE.FARM]: ['farm', () => farmShed(), 'to'],
                   // the rock's gang fits its picks at its own hut
-                  [TYPE.ROCK]: ['shack', () => shack],
+                  [TYPE.ROCK]: ['shack', () => shack, null],
                   // and a keeper breaks the next pot's ground from the building
                   // itself: the hut is what the row is bought at and what the
                   // bar hangs over
-                  [TYPE.STIR]: ['apothecary', () => apothHut()] };
+                  [TYPE.STIR]: ['apothecary', () => apothHut(), 'to'] };
 
 // Every site a gang builds for itself this way. `handsAt` in muster.js reads
 // it rather than keeping a list of its own, so a trade added here is counted
@@ -66,7 +76,7 @@ export const atShed = w => !!(w.onBuild && w.atShed);
 export function stepShedwork(w) {
   const of = SHED_OF[w.type];
   if (!of) return false;
-  const [site, shed] = of;
+  const [site, shed, home] = of;
 
   if (!w.onBuild) {
     // A site with an open work claims one gang body -- the first arrived one
@@ -90,11 +100,11 @@ export function stepShedwork(w) {
   }
 
   // The work has landed (or been dropped): the claim clears and the body walks
-  // back to its post -- `goal: 'to'` is the walk, so nothing teleports.
+  // back to its post -- the home goal is the walk, so nothing teleports.
   if (!busyAt(w.onBuild)) {
     w.onBuild = null;
     w.atShed = false;
-    w.goal = 'to';
+    w.goal = home;
     w.route = null;
     return false;
   }
