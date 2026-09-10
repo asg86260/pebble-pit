@@ -748,9 +748,10 @@ canvas {
    They ran off the right-hand edge of the sheet.
 
    The whole row goes to the price, the same as the row that buys the tower
-   itself. Nothing is lost by it: what these rows buy is said in the note under
-   the name, and a gain column on a row that buys a *thing* rather than a rate
-   had nothing to put in it anyway. */
+   itself. Nothing is lost by it, on one condition: every row on this board
+   says what it buys in the note under the name -- the two rungs (tower.js,
+   `wizspeed` and `wizpower`) put the number the column would have shown into
+   theirs, because for a while they had no note and so said nothing at all. */
 #towershop button .gain { display: none; }
 
 /* A row that is a reading rather than a purchase. It sits on a board of things

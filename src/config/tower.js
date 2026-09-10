@@ -61,15 +61,19 @@ export const WIZ_MS = 2600;
 // thing you grind; an enchantment is a thing that is either on the yard or not,
 // and the sentence "the machines run half again as fast" is worth more than five
 // rungs of nine per cent.
+// Worded as what changes, in the plainest numbers there are. The first draft
+// said "half again as fast" and "a quarter again as much", which is a fraction
+// you have to work out on a board you are meant to read at a glance -- and
+// "raise the houses" for a price cut said nothing at all about the price.
 export const SPELLS = [
-  { key: 'drive',  name: 'quicken the machines', spark: 45,
-    note: 'every machine in the yard works half again as fast' },
-  { key: 'luck',   name: 'bless the cut',        spark: 35,
-    note: 'a dig turns up a quarter again as much ore' },
-  { key: 'thrift', name: 'raise the houses',     spark: 30,
-    note: 'a house costs half what it did' },
-  { key: 'sweep',  name: 'hasten the janitors',  spark: 25,
-    note: 'a janitor shovels and walks at twice the pace' }
+  { key: 'drive',  name: 'speed the machines',   spark: 45,
+    note: 'every machine in the yard runs 50% faster' },
+  { key: 'luck',   name: 'enrich the quarry',    spark: 35,
+    note: 'every dig in the quarry brings up 25% more ore' },
+  { key: 'thrift', name: 'cheapen the houses',   spark: 30,
+    note: 'every house from now on costs half as much' },
+  { key: 'sweep',  name: 'quicken the janitors', spark: 25,
+    note: 'janitors shovel and walk twice as fast' }
 ];
 export const SPELL_DRIVE = 1.5;      // what each one is worth
 export const SPELL_LUCK = 1.25;

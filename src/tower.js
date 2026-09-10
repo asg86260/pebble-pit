@@ -96,6 +96,11 @@ export const TOWER_UPGRADES = [
     key: 'wizspeed',
     kind: 'rung', site: 'tower',
     name: 'quicker casting',
+    // The tower board hides its gain column (see style.css, `#towershop .gain`)
+    // on the reasoning that the note under the name says what a row buys -- and
+    // these two rungs had no note, so they said nothing at all. The note carries
+    // the number the column would have, and what the number is of.
+    note: () => `every wizard throws a bolt at the star ${Math.round((STEP - 1) * 100)}% more often`,
     unit: 'bolts/min',
     pct: true,
     rung: () => S.wizSpeedLevel,
@@ -113,6 +118,7 @@ export const TOWER_UPGRADES = [
     key: 'wizpower',
     kind: 'rung', site: 'tower',
     name: 'heavier bolts',
+    note: () => `each bolt knocks ${wizBite() + 1} cells off the star instead of ${wizBite()}`,
     unit: 'cells/bolt',
     rung: () => S.wizPowerLevel,
     from: () => wizBite(),
@@ -134,11 +140,11 @@ export const TOWER_UPGRADES = [
   {
     key: TYPE.WIZARD,
     name: 'train a wizard',
-    // No note. What the note said was how long it takes, and how long a thing
-    // takes is part of what it costs -- so it is priced in the bill with the
-    // rest of it, under a clock, and the row does not need a second sheet to
-    // open beside it to say one number. While one is being trained the clock
-    // counts down what is left of it.
+    // The note says what a wizard is for, not how long one takes: how long a
+    // thing takes is part of what it costs, so that is priced in the bill under
+    // a clock, and while one is being trained the clock counts down what is
+    // left of it.
+    note: () => 'flies up and bolts the star apart for sparks, and summons a new one when the sky is empty',
     // At the tower, where hats come from. The first one is the awkward case --
     // there is nobody up there until a hat exists -- and it is not answered
     // here: a station standing empty is lent a hand by the yard (see
