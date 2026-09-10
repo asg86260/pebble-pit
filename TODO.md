@@ -13,6 +13,17 @@ is backed up (shards and sparks at zero for six hours), the quarry speed ladder
 does nothing at any depth, and a hauler parks forever on a poop-only column.
 Fix those, re-run the bot, then tune.
 
+## Every station's work goes to a spare hand (2026-09-10)
+
+**Designed, awaiting approval** -- "Every station's work is done by a spare
+hand" in DESIGN.md. The shedhand claim (quarry, farm, shack, apothecary) and
+the standing credit (scrub, tower, school) both go; every site is
+builder-manned the way the bench and the ground already are, a hauler walks
+over and does the work, and the yard borrows the nearest body when nobody is
+carrying. It closes the item below and the critics' top defect (a shack rung
+that never lands once the ram caps the gang at one). The teacher post is
+retired with it.
+
 ## The scrubbing house, the tower and the school build their rungs for free (2026-09-10)
 
 **Diagnosed, not fixed.** Three gang stations still credit an upgrade to a body

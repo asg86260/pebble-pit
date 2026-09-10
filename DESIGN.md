@@ -6843,3 +6843,70 @@ and it read as leaning on the house. The house row in `SITES` now carries
 pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
+
+## Every station's work is done by a spare hand (design, not built)
+
+**The rule.** A row bought at any station -- a rung, a hat, a trade, a pot, a
+multiplier -- is a piece of work, and the body that does it is a spare hand:
+one of the haulers, walked over from carrying dust, standing at the station
+while the bar fills, and walking back to the dust when it lands. It is the
+yard's own rule for the bench and the ground (`rebalance`, upgrades.js),
+applied to every site there is. Nothing about the station's own gang changes:
+they go on digging, farming, swinging, stirring, scrubbing and casting the
+whole time, and none of them credits the bar.
+
+**What it replaces.** Two rules, and a defect in each:
+
+- The shedhand rule (wave6-sim item 2): the quarry, the farm, the shack and the
+  apothecary each *claimed one of their own gang* to the shed for the
+  duration. The bargain was honest -- a producer stops producing -- but the
+  claim could stall for good. A rock gang capped at one by the ram, or a
+  one-body gang with a load in its hands, never gets a body that qualifies
+  (`shedhand.js:73`), so the row takes your spores and sits at nought for the
+  rest of the run. Four critics found it independently
+  (`docs/critics-2026-09-10.md`); it kills the ram.
+- The standing rule: the scrubbing house, the tower and the school credit a
+  body at its post, and the post is where it works, so the fan ladder fills
+  while the house scrubs and the hat rises while the wizard casts. That is the
+  "rungs for free" defect in TODO.md, diagnosed and left for a balance call.
+
+One rule closes both. A spare hand is a real cost -- a hauler off the dust for
+the duration, which you can see -- and it is a cost that is always payable,
+because carrying is the job nobody is assigned to and the yard borrows the
+nearest station body when nobody is carrying (the fallback the bench has
+always had; it is deliberate and it stays).
+
+**What goes.**
+
+- `crew/shedhand.js`, the claim (`w.onBuild`, `w.atShed`), `SHED_SITES`, and
+  the `stepShedwork(w) ||` in front of four trades' `work` in crew/jobs.js.
+  The tenders' and the commute's references to the claim go with it.
+- `SITE_JOB` in works.js. It said which gang's presence credits each site, and
+  the answer is now "the builders" for every site, so the table is a constant
+  and `builderManned` is `true`. `SITES` stays as the list of places a work
+  can be at. `noGang` goes: a station with nobody in it is now the same case
+  as a station full of people.
+- The `ARRIVED` table in crew/muster.js, which counted the gang for
+  `handsAt`. `handsAt(site)` is the number of builders standing at the site,
+  capped one per work, as it already is on the yard.
+- The teacher. The school's trades and hats were its whole job (wave6-sim
+  item 1 put it there so the school stopped depending on whoever was spare),
+  and under this rule that is exactly who does them. The job comes off `TYPE`,
+  `JOB`, the roster, the kit table, `SAVED`, and the save is migrated: a save
+  with teachers on it puts them back on carrying. `crew/teacher.js` is
+  deleted.
+
+**What stays, and is checked.** The bar over the station (`barSpot`); the
+builder's walk to the station's own front (`siteX` → `footHook`, which is what
+lends a builder to an empty tower today); one body per work; the swing at
+`w.y`; the lent body walking home when the last site clears; `stalled(site)`
+for a site with a work and nobody at it, which is what the mark on the row
+reads. Every existing "worked at the shed, by the gang" check turns into
+"worked at the station, by a spare hand" -- the same walk, the same bar, a
+different hat on the body -- and each of them still buys the row the way a
+player does.
+
+**The bargain, stated.** An upgrade costs the yard one carrier for the
+duration. A yard with no spare carriers pays with its nearest producer
+instead, visibly, and gets it back. A one-body station is never stalled by
+its own upgrade, and no station gets its rungs for nothing.
