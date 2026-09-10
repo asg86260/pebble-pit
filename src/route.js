@@ -217,6 +217,7 @@ export const feetOn = (way, leftX) => standTop(leftX, way.at) - WORKER;
 // where you pass it at. The hill is not part of it: it is a way of its own, and
 // the reason why is written out at `groundTop`.
 export function ways() {
+  globalThis.__perf.ways++;                  // the perf gate's: one build a frame is the rule
   const out = { yard: { key: 'yard', from: -1e6, to: 1e6, at: groundTop } };
 
   // The floor of the cut, which exists while there is a cut. It is below the
