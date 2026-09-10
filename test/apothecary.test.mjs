@@ -330,7 +330,14 @@ group('another pot claims a keeper to the hut while the shelf keeps it busy', as
   const pots0 = yard.S.apothPots;
   const landed = runUntil(() => !workAt('apothecary'), 120);
   const released = runUntil(() => claimed().length === 0, 10);
-  const backAtPot = runUntil(() => yard.S.workers.some(w => w.type === 'stirrer' && w.goal === 'in'), 90);
+  // Back at the pot means it has stood there -- 'in' -- and a keeper with stock
+  // on the shelf and a body wanting it stands there for exactly one frame before
+  // it sets out again, which a once-a-second sample only catches by luck (it did,
+  // until the yard grew and the rounds got longer). 'out' is entered from 'in'
+  // and nowhere else, and a released body sets off empty-handed with 'to', so a
+  // stirrer out again with an armful has been to the pot as surely as one at it.
+  const backAtPot = runUntil(() => yard.S.workers.some(w => w.type === 'stirrer'
+    && (w.goal === 'in' || (w.goal === 'out' && w.holding > 0))), 90);
 
   return [
     ok(bought, 'the pot is bought like a player buys it'),
