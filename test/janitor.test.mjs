@@ -299,3 +299,57 @@ group('a shoveller with somebody in its elbow moves off the spot', async () => {
        `${moved.toFixed(2)}px`)
   ];
 });
+
+// A janitor part way through a mess is on the job for every frame of it,
+// including the one frame between columns when its hands are empty.
+//
+// Measured, for the same reason the loiter group is: the fault was one frame
+// long. A finished column is let go and the next picked up a frame later (see
+// `takeMess`), and that frame used to be handed back as "off muck duty" -- so
+// the janitor's own work got the body for one frame and walked it a stride
+// toward the shed at a full commute, and the next frame's claim walked it
+// straight back. Once per column, which on a thin strip is once per swing: a
+// body lurching half a cell toward home and back every half second, which is
+// what "vibrating while it cleans" looks like from the chair.
+//
+// So the rule is: **a body that is back on the mess a frame later never left
+// it.** Every frame of the clear-up is sampled for the shape of the fault --
+// on the job, off it for one frame, on it again -- and any ground covered in
+// that middle frame is the lurch. A body that genuinely runs out of columns to
+// claim (the haulers hold the last few) walks home at a commute, and that is a
+// walk, not a lurch: it does not come back the next frame.
+group('a janitor between two columns of one mess stands where it is', async () => {
+  window.__reset();
+  window.__crew(3, 2);
+  window.__loo(true);
+  window.__tune('LOO_EVERY', 600000);
+  window.__air({ janitors: 1, haze: 0, muck: 0 });
+  run(30);
+  // A thin strip, one cell to a column, so every swing finishes a column and
+  // the between-columns frame comes round as often as it possibly can.
+  window.__muckSet(c => (c > 338 && c < 368) ? 1 : 0);   // bare yard between the farm and the quarry
+
+  const janitor = () => yard.S.workers.find(w => w.type === 'janitor');
+  const started = runUntil(() => janitor().goal === 'muck' && !janitor().route, 60);
+
+  let columns = 0, lurches = 0, worst = 0, last = null;
+  const seen = [];
+  for (let i = 0; i < 1800 && muckLeft() > 0; i++) {
+    run(1 / 60);
+    const j = janitor();
+    if (j.muckAt != null && j.muckAt !== last) { columns++; last = j.muckAt; }
+    seen.push({ x: j.x, on: j.goal === 'muck' });
+    if (seen.length > 3) seen.shift();
+    if (seen.length < 3 || !seen[0].on || seen[1].on || !seen[2].on) continue;
+    const step = Math.abs(seen[1].x - seen[0].x);
+    if (step > 0) { lurches++; worst = Math.max(worst, step); }
+  }
+
+  window.__reset();
+  return [
+    ok(started, 'the janitor gets to the strip and starts on it'),
+    ok(columns >= 6, 'and works its way along it column by column', `${columns} columns`),
+    ok(lurches === 0, 'without ever taking a stride toward the shed between two of them',
+       `${lurches} lurches, worst ${worst.toFixed(2)}px`)
+  ];
+});

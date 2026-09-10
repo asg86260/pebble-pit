@@ -105,7 +105,17 @@ export function takeMess(w, c) {
   // just finished with -- so a same-frame re-pick was barred from the four
   // columns either side of where it stood, and a lone cleaner hopped away from
   // its own remnants. One frame of empty hands and the rebuild is clean.
-  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) { w.muckAt = null; return false; }
+  //
+  // And that frame is still a frame on the job. This used to hand back false,
+  // which told the caller the body was off muck duty -- so `mess.back` put it on
+  // its own goal and its own work moved it for one frame: a janitor took one
+  // stride toward its shed at a full commute, and the next frame's claim walked
+  // it straight back. Once per column, which on a thin strip is once per swing
+  // -- a body that lurches half a cell toward home and back every half second
+  // is the reported "janitor vibrating while it cleans". Empty hands between two
+  // columns of the same mess are not a walk home; the body stands where it is
+  // and picks again next frame.
+  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) { w.muckAt = null; return true; }
   if (w.muckAt == null) {
     // A janitor's own mess first -- see B4 in wave-feedback3.md. `nearestMuck`
     // treats every kind alike and hands out whichever column is nearest, which
@@ -149,7 +159,7 @@ export function takeMess(w, c) {
   // is dropped and picked up again next frame, the same way an emptied column
   // is, rather than worked from arm's length.
   const to = patch == null ? null : workSpot(patch);
-  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return false; }
+  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return true; }
   // A mess under the coming rock, or the far side of it, is not fetched through
   // the fall. The walk never asked about the zone, so a body sent at one ground
   // against the zone's wall -- stepping in, shoved out by the duck, stepping in
