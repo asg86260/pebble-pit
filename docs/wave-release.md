@@ -22,6 +22,7 @@ then the guardrails. When scopes collide, cut the guardrail before the door.
 | 4 save export and import (web transport; the seam Electron's dialogs swap into) | C save |
 | 5 hidden-window clock leap | D clock |
 | 12 perf gate on main | E perf |
+| the six browser checks red since the shack landed (TODO.md, "The shack landed on the browser tier") | F shack |
 
 **Not this wave, on purpose.** The Electron shell (2), save-to-disk (3),
 packaging (8) and the update policy (11) are one wave of their own after the
@@ -59,10 +60,11 @@ reorder. Conflicts there are expected and cheap.
 | track | owns | do NOT touch |
 |---|---|---|
 | A sheet | `index.html`, `src/style.css`, new `src/settings.js`, `src/crash.js` (the one import of `copyOut`), `src/input.js` (the reset button block only), new `src/selftest/settings.js`, `test/settings.test.mjs` | `src/prefs.js`, `src/version.js`, `vite.config.js`, `src/persist.js`, `src/save.js`, `src/world.js`, `src/clock.js`, `src/board.js` |
-| B motion | `src/world.js`, `src/intro.js`, `src/cutscene.js`, new `src/config/motion.js`, `test/motion.test.mjs` | `src/prefs.js`, `index.html`, `src/style.css`, `src/input.js`, `src/render/*` |
+| B motion | `src/world.js` **except `openingCamX`** (track F's; stay out of that function), `src/intro.js`, `src/cutscene.js`, new `src/config/motion.js`, `test/motion.test.mjs` | `src/prefs.js`, `index.html`, `src/style.css`, `src/input.js`, `src/render/*` |
 | C save | `src/save.js`, `src/persist.js`, `test/save-import.test.mjs`, new fixture files under `test/fixtures/` | `index.html`, `src/settings.js`, `src/style.css`, `src/clock.js`, `src/game.js` |
 | D clock | `src/clock.js`, `src/game.js` (the `dt` clamp line and its constant only), `test/clock-leap.test.mjs` | `src/persist.js`, `src/world.js`, everything of A/B/C/E |
 | E perf | `test/perf-gate.test.mjs`, counter lines inside `src/route.js` and `src/grid.js` (additive, published on `globalThis` — see the track), `PERF.md` (a new §, additive) | every file another track owns; `tools/node/break-perf.mjs` is read-only |
+| F shack | `src/shop.js`, `src/config/view.js`, **only the `openingCamX` function** in `src/world.js`, `src/selftest/boards.js`, `src/selftest/view.js`, `src/selftest/crew.js`, `src/style.css` **additive-only** (one block at the end under `/* wave-release: track F */`) | the rest of `src/world.js` (track B), `index.html`, `src/settings.js`, `src/board.js` |
 
 ## Register, for anything drawn or written
 
@@ -343,6 +345,65 @@ threshold on a noisy statistic, so the gate asserts **counts**, not time.
 is a finding, not a reason to loosen the ceiling: report the counts you saw
 and the frame they spiked on, and leave the check red with the numbers in the
 assertion message.
+
+---
+
+## Track F — the shack's six browser reds
+
+**Intent.** The shack (the rockhands' hut, with the rock's own board) merged
+with the node tier green and the browser tier never run. Six checks are red
+on main; every one is diagnosed in TODO.md under "The shack landed on the
+browser tier without ever being run against it" — read that entry before
+anything else. Two of them needed the user's call; the calls are made here.
+
+**The calls, decided:**
+
+1. **The headcount badge goes on the shack board's own title.** The shack's
+   sheet has a single group, so `lone` in `shop.js` draws no section heading
+   and the rockhands' badge had no home. When a board is `lone`, the badge
+   `shop.js:517` builds goes into that board's `.title` div (the one in
+   `index.html`, e.g. `#shackboard .title`) as the same `span.badge`, after
+   the title text, and is kept up to date the same way the section badge is.
+   The style rule `.rows .sect .badge` in `style.css` is generalized by an
+   additive rule for `.page .title .badge` that gives the same look (solid
+   black, opacity 1, same size). The check `the headcount rides on the section
+   as a badge` (`selftest/crew.js:494`) is rewritten to look for the badge on
+   the shack board's title, keeping every assertion it makes about the badge
+   itself (bare number, span inside the heading, solid black); its throw
+   (`firstChild` of undefined) goes with the guard being evaluated first.
+2. **The opening view widens so the bench is in it on a desk-sized window.**
+   `openingCamX` (`world.js:894`) is `max(bench.x - P*10, S.cx - S.viewW*0.4)`.
+   The shack now reserves ground between the rock and the bench, so on
+   1440×900 the bench stands ~540 px past the view. Change the rule, not the
+   number: the opening camera frames **from the rock's left edge to the
+   bench's right edge** when the window has the room, and falls back to the
+   rock-first rule when it does not — express it as one derived expression in
+   `openingCamX`, with any new constant in `src/config/view.js`. The check
+   `the opening view is looking at the rock` (`selftest/view.js:11`) stays as
+   written and goes green; if `deskFits` and `deskShowsBench` cannot both hold
+   at 1440×900 with the shack's ground in between, report the measured widths
+   and stop — do not weaken the check.
+
+**The other four** are checks reading a yard a neighbor left behind under the
+sharded run (`tools/test.mjs`), and pass alone:
+
+3. `your pick and a rockhand bite are bought apart` (`selftest/view.js`) —
+   make the group set up its own yard: `newRun()`, the purse it needs, and
+   open the hut and the bench itself. It must pass under
+   `node tools/test.mjs` (sharded), not only under `--only`.
+4. `shop opens at the bench and is not buried` and `a card is only ever taller
+   by a whole line of title` (`selftest/boards.js`) — the same: a fresh run
+   and an explicit purse, so the rows on the bench are the rows the check
+   assumes. If the "whole line of title" check's arithmetic is wrong about a
+   card that now exists (the 83 px on 3 lines it reports), that is a real
+   layout finding — report it with a shot cropped to that card; do not
+   adjust the expected number.
+5. Run the **whole browser tier once, sharded**, as the last thing:
+   `GAME=http://localhost:5206/ CDP_PORT=9406 node tools/test.mjs` — this
+   track's deliverable is that command exiting 0 on your branch (track A's
+   new group may be absent on your branch; that is fine). Paste the
+   failures list. This is the one track allowed a full browser run, because
+   the sharded run *is* the subject.
 
 ---
 

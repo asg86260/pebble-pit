@@ -183,12 +183,12 @@ lists. It is red on main too; the shack's own fields are listed.
 
 ## Wave release — the web-side checklist (2026-09-09)
 
-**Designed, awaiting approval before any track is launched.** See
+**Approved 2026-09-09; six tracks launched from branch `worktree-wave-release`.** See
 `docs/wave-release.md` (the spec, canon for the five tracks) and "The sheet"
 at the end of DESIGN.md (the reasoning). Tracks: A the settings sheet on the
 held sheet, with the version and the reset button; B reduced motion; C save
 export/import with a one-deep `.prev`; D the hidden window's clock clamp;
-E a count-based perf gate. The seam modules (`src/prefs.js`, `src/version.js`,
+E a count-based perf gate; F the shack's six browser reds (calls made: the badge on the shack board's title, the opening view widened to frame rock-to-bench). The seam modules (`src/prefs.js`, `src/version.js`,
 the `__BUILD__` define, the `importSave` stub) are on the branch already so
 that no track waits on another. Not in it: the Electron shell, disk saves and
 packaging (one wave after the shell design), audio (its own wave after the
