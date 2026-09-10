@@ -7,7 +7,7 @@
 
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
          ABYSS_AT } from './config.js';
-import { load, save, clear } from './save.js';
+import { load, save, clear, isSave, loadRaw, saveRaw, savePrev } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
@@ -18,7 +18,7 @@ import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
-import { resite } from './world.js';
+import { resite, openingCamX, clampCam } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
@@ -1116,12 +1116,72 @@ export function reset(fresh = true) {
 // under a second key until the new one has restored cleanly, and only then let
 // it go. It returns true on a yard that took, false on a blob that was refused,
 // and a page that had a good save before has the same good save after either
-// answer. Track C builds it; until then it says so.
+// answer.
 export function exportSave() {
   try { return localStorage.getItem('boulder-clicker/v4') || ''; } catch { return ''; }
 }
 
+// A pasted blob, made the yard.
+//
+// The order matters. The blob is parsed and shown the same door `load` uses,
+// so anything `load` would ignore on the next boot is refused here rather than
+// written and then ignored. What is under KEY now goes to PREV_KEY before the
+// blob goes under KEY, because `restore` reads the store and nothing else: the
+// blob has to be the save before the yard can be read out of it, and the
+// player's own save has to be somewhere else by then.
+//
+// Then the boot, as main.js does it and nowhere else: `restore`, the shop rows
+// the save decides, and anybody the counts say is missing. This is the one
+// place outside main.js that boots the yard, because it is the one place a
+// whole different yard arrives while the page is already up -- the sheet is
+// open and the player is looking, so the page is not reloaded to do it.
+//
+// `restore` throwing is the case the second key is for. A blob that parses is
+// not a blob that reads: a field of the wrong shape can throw from anywhere in
+// a thousand lines, and the yard is half-read by then. So the previous save
+// goes back under KEY and is read again, which is the same call a page load
+// makes and leaves the same yard it would leave. The player had a good save
+// before and has the same good save after.
+//
+// On a page that has never saved, "the previous save" is nothing, and nothing
+// is what goes back: a fresh game, which is what the page had. The sky, the
+// pit and the crew are all rebuilt by `restore` from what is under KEY, so a
+// half-read yard leaves no residue the second read does not overwrite.
+//
+// The yard is written down first. What is kept is the yard the player is
+// looking at, not the one the interval last got round to: the store can be a
+// second behind the game, and a second of a yard is a second of somebody's
+// run.
 export function importSave(raw) {
-  throw new Error('importSave: not built (docs/wave-release.md, track C)');
+  let s;
+  try { s = JSON.parse(raw); } catch { return false; }
+  if (!isSave(s)) return false;
+  persist();
+  const was = loadRaw();
+  savePrev(was);
+  saveRaw(raw);
+  try {
+    restore();
+  } catch {
+    if (was == null) clear(); else saveRaw(was);
+    restore();
+    bootYard();
+    return false;
+  }
+  bootYard();
+  S.dirty = true;
+  persist();
+  return true;
+}
+
+// The rest of what main.js does after `restore`, so a yard that came in
+// through the sheet stands the way one that came in through a page load does:
+// the rows, the bodies, and the view where the save left it -- clamped, because
+// the save's world may be a different width from the one the page laid out.
+function bootYard() {
+  buildShop();
+  syncWorkers();
+  S.camX = S.camWas ?? openingCamX();
+  clampCam();
 }
 
