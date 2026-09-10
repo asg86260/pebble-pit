@@ -13,8 +13,8 @@ import { colOf, topRow, bottomY } from '../src/grid.js';
 import { nearHouse } from '../src/board.js';
 import { houseRect } from '../src/crewboard.js';
 
-// D1 -- a placed grain reads as dust.
-group('a placed grain on the ground reads as dust', async () => {
+// D1 -- a placed grain reads as what the boards call it.
+group('a placed grain on the ground reads as a pebble', async () => {
   window.__reset();
   const x = yard.floor.x + P * 10;
   window.__pile(x, 3);
@@ -24,7 +24,7 @@ group('a placed grain on the ground reads as dust', async () => {
 
   return [
     ok(r >= 0, 'the grain actually landed', `row ${r}`),
-    ok(label === 'dust', 'and the cursor over it reads "dust"', `got ${label}`)
+    ok(label === 'pebble', 'and the cursor over it reads "pebble"', `got ${label}`)
   ];
 });
 

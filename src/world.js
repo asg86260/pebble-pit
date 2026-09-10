@@ -13,7 +13,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, padOf,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
@@ -679,11 +679,31 @@ export function seatSites() {
 
   seat(bench, 'bench', P * 7);
 
-  // The noticeboard. It hangs off the ground on its posts rather than sitting
-  // on it, so its rect is the PANEL and the legs are drawn below it -- what
-  // you point at to read the thing is the part with the writing on.
-  seat(S.noticeboard, 'notices', BOARD_H);
-  S.noticeboard.y -= BOARD_LEG;
+  // The noticeboard, which does NOT get a slot of its own.
+  //
+  // It was a row in SITES for an afternoon, and that is a bigger thing to be
+  // than it looks: a row reserves ground, the whole walk moves along by a slot,
+  // the world gets wider on the left, and the floor gains columns. The yard
+  // absorbed all of that and the SKY did not -- more floor is more ground for
+  // dust to lie on, and the scrubbing house went from taking what a fan is
+  // rated for to taking seven times it. Three seeded checks went red for
+  // reasons that had nothing to do with a board.
+  //
+  // A slot is for a station: something with a gang, a heap, and a width that
+  // grows into the ground it reserved. This has none of those. It is furniture,
+  // and it stands in the gap the walk already leaves between the work
+  // bench and the front doors -- centered in it, so it is derived from its two
+  // neighbours rather than measured off either, and it moves when they move.
+  //
+  // It hangs off the ground on its posts rather than sitting on it, so the rect
+  // is the PANEL: what you point at to read the thing is the part with the
+  // writing on.
+  const gapFrom = placed.at.house.x + placed.at.house.w;
+  const gapTo = placed.at.bench.x;
+  S.noticeboard.w = BOARD_W;
+  S.noticeboard.h = BOARD_H;
+  S.noticeboard.x = Math.round((gapFrom + (gapTo - gapFrom - BOARD_W) / 2) / P) * P;
+  S.noticeboard.y = S.groundY - BOARD_H - BOARD_LEG;
 
   // The two that are not `seat`-shaped, seated HERE all the same.
   //
