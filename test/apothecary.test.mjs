@@ -8,8 +8,9 @@
 // assigned through the same `assign` a roster button calls, and the pot is set
 // through the same `set` the board row's click calls.
 
-import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
-import { doseLive, boiling, brewMs, dosesPer, workBoost, critBoost,
+import { group, ok, state, run, runUntil, openSites, buyNow, yard, WORKER } from './helpers.mjs';
+import { workAt } from '../src/works.js';
+import { doseLive, boiling, potBoiling, apothHut, brewMs, dosesPer, workBoost, critBoost,
          doseStockTotal, potTonicOf, potSpentOf } from '../src/apothecary.js';
 
 // Open the farm, put the apothecary up, and hand the yard enough coin to brew.
@@ -291,5 +292,53 @@ group('the potency rows reveal after a batch lands', async () => {
     ok(hiddenAtOpen, 'no potency row on the frame the door opens'),
     ok(landed, 'a batch lands', `brews ${yard.S.brews}`),
     ok(rowShown(), 'and the stew ladder is on the board after it')
+  ];
+});
+
+// --- another pot is broken by a keeper stood at the hut -----------------------
+// The building's rungs are built by its own hands, and "its own hands" used to
+// mean a stirrer stood at the pot: the bar moved only on frames its keeper had
+// `goal === 'in'`. A keeper with stock on the shelf is out dealing on nearly
+// every frame, so "another pot" climbed while the first batch brewed and then
+// froze for good -- a second pot that never came. The quarry's rule instead
+// (shedhand.js): the work claims one keeper to the hut, the pot it kept goes
+// cold, and the bar moves while it stands there. Bought like a player and
+// built the slow way, with a shelf full enough to keep the keeper busy.
+group('another pot claims a keeper to the hut while the shelf keeps it busy', async () => {
+  standApothecary();
+  window.__crew(3, 8, 2, 3);                   // enough bodies to want every dose
+  window.__grant({ spores: 20000, shards: 4000 });
+  yard.S.potKeep = true;
+  window.__assign('stirrers', 1);
+  window.__pot('stew', 0);
+  // a batch on the shelf, so the keeper has rounds to walk
+  runUntil(() => doseStockTotal() > 0, 120);
+
+  const bought = window.__buy('anotherpot');
+  const claimed = () => yard.S.workers.filter(w => w.onBuild === 'apothecary');
+  const hut = apothHut();
+  const inHut = w => w.x + WORKER > hut.x && w.x < hut.x + hut.w;
+  const arrived = runUntil(() => claimed().some(w => w.atShed && inHut(w)), 60);
+  const atStart = workAt('apothecary')?.done ?? -1;
+  const litAtStart = potBoiling(0);
+  run(4);
+  const later = workAt('apothecary')?.done ?? atStart + 999;
+  // the keeper is at the hut, not the pot: nothing lights meanwhile
+  const litWhileClaimed = !litAtStart && potBoiling(0);
+  const notBrewing = claimed().every(w => w.goal !== 'in');
+
+  const pots0 = yard.S.apothPots;
+  const landed = runUntil(() => !workAt('apothecary'), 120);
+  const released = runUntil(() => claimed().length === 0, 10);
+  const backAtPot = runUntil(() => yard.S.workers.some(w => w.type === 'stirrer' && w.goal === 'in'), 90);
+
+  return [
+    ok(bought, 'the pot is bought like a player buys it'),
+    ok(arrived, 'one keeper is claimed and stands at the hut'),
+    ok(later > atStart, 'the bar advances while it stands there', `${atStart} -> ${later}`),
+    ok(notBrewing && !litWhileClaimed, 'and its pot is cold meanwhile'),
+    ok(landed && yard.S.apothPots === pots0 + 1, 'the second pot lands',
+       `${pots0} -> ${yard.S.apothPots}`),
+    ok(released && backAtPot, 'the claim clears and the keeper walks back to the pot')
   ];
 });

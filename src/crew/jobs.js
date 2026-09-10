@@ -146,10 +146,14 @@ export const JOBS = {
   // A stirrer at the pot is behind a door like a scholar; a stirrer out dealing a
   // dose is a body walking a load and belongs to the yard again. `shutIn` only
   // while it is through the door.
+  //
+  // The building's own rungs claim one keeper to the hut, the quarry's and the
+  // farm's rule (shedhand.js): the pot it kept goes cold for the duration, and
+  // the bar moves only while it stands there.
   [TYPE.STIR]: {
     factory: newStirrer,
     want: () => S.stirrers,
-    step: { work: stepStirrer, shutIn: w => w.goal === 'in' }
+    step: { work: w => stepShedwork(w) || stepStirrer(w), shutIn: w => w.goal === 'in' }
   },
 
   // A teacher behind the school's door is behind a door like a scholar: the

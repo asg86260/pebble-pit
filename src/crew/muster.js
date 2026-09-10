@@ -13,7 +13,7 @@ import { newRecord } from './records.js';
 import { retask } from './commute.js';
 import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted } from './jobs.js';
-import { atShed } from './shedhand.js';
+import { atShed, SHED_SITES } from './shedhand.js';
 
 // --- who is actually at a site ------------------------------------------------
 // The one question works.js cannot answer for itself, registered here the same
@@ -65,7 +65,7 @@ setHands(site => {
   // standing there, not the gang at its posts. The rest of the gang goes on
   // producing and none of it credits the bar. A station with no gang at all is
   // still helped by a lent builder, through `helping` above. (wave6-sim, item 2)
-  const shedwork = site === 'quarry' || site === 'farm' || site === 'shack';
+  const shedwork = SHED_SITES.has(site);
   const there = S.workers.filter(w => helping(w)
                                    || (shedwork ? atShed(w) && w.onBuild === site
                                                : at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
