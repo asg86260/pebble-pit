@@ -34,11 +34,10 @@ import { S, pit } from './state.js';
 import { now, frames } from './clock.js';
 import { makeBoulder, boulderAlive } from './rock.js';
 import { spawnChip, aim } from './dust.js';
-import { walkY, setZoom, clampCam, lookAt } from './world.js';
-import { rebalance, assign } from './upgrades.js';
+import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
+import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { rand } from './rng.js';
-import { JOB } from './jobs.js';
 import { reducedMotion } from './prefs.js';
 
 // Where the two of them stand: either side of the spot the rock is about to
@@ -525,26 +524,35 @@ function show(t) {
   if (t - S.introAt >= INTRO_SHOW_MAX) finish();
 }
 
-// And it goes back to the rock. It is digging its mate out -- that is the whole
-// of why any of this is happening -- so leaving it stood at the lip when the
-// demonstration is over is leaving it doing the one thing the story says it
-// would not. The trip to the hole was a thing it went and did; the rock is where
-// it lives.
-function toWork() {
-  if (S.crew > 0 && !S.rockhands) assign(JOB.ROCK, 1);
-}
-
+// And it is left carrying. The demonstration just taught "you dig, it carries",
+// and the yard is handed over in that shape -- DESIGN.md, "The opening". It
+// used to be put back on the rock here, on the argument that digging its mate
+// out is the whole story; but a one-body yard with that body on the rock is a
+// yard where nothing is carried, so the counter sat at 1 for ten minutes, no
+// row ever lit, and the only way out was a roster button nothing explains.
+// The newcomer critic quit inside two minutes on exactly that
+// (docs/critics-2026-09-10.md, A2). A body on no roster job is a hauler, which
+// is what the demonstration's own body was.
 function finish() {
   S.intro = null;
   S.introDone = true;
   S.buried = true;
   S.pair = [];
   S.crew = Math.max(1, S.crew);
+  // The show made it a rockhand so the swing and the throw were the crew's own
+  // code (see `show`); the body it made is retasked here, not remade, so it
+  // stands where it stood and walks from there.
+  S.rockhands = 0;
   rebalance();
   syncWorkers();
-  toWork();                        // back on the rock, which is where it lives
   S.camLockY = null;               // the yard has its own view back
   setZoom(1);
+  // and back to the opening seat: the show walked the view out to the hole,
+  // and the bench and the house are off the left of it from there. The call to
+  // build the bench is the first thing the player is asked to press, and it
+  // was being pressed clamped to the window's edge over a hole, with the bench
+  // itself out of shot.
+  lookAt(openingCamX() + S.viewW / 2);
   S.dirty = true;
 }
 
