@@ -116,6 +116,10 @@ export function takeMess(w, c) {
   // columns of the same mess are not a walk home; the body stands where it is
   // and picks again next frame.
   if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; return true; }
+  // ...and the same frame of empty hands when the hauler's own hole branch let
+  // the column go a few lines up (see `muckDropped` there): the set is just as
+  // stale for a release made anywhere else in the frame.
+  if (w.muckDropped) { w.muckDropped = false; return true; }
   if (w.muckAt == null) {
     // A janitor's own mess first -- see B4 in wave-feedback3.md. `nearestMuck`
     // treats every kind alike and hands out whichever column is nearest, which

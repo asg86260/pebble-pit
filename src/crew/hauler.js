@@ -188,8 +188,15 @@ export function haulerWork(w, c) {
     // Its own kinds, in both the release and the gate: a hauler may not touch
     // a body's mess, and a gate on *all* mess sent it down for what it could
     // not shift, to stand on it.
-    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) w.muckAt = null;
-    else if (w.muckAt == null && muckFor(w) > 0) {
+    // "A frame apart" has to hold across the whole frame: this branch let the
+    // column go and did not pick, and then `takeMess`, further down the same
+    // frame, saw empty hands and picked -- against the set built at the top of
+    // the frame with this body's own elbows still in it, so the nearest column
+    // it was allowed was always a stride off. A lone hauler between two heaps
+    // hopped from one to the other and back (docs/critics-2026-09-10.md, A9).
+    // The flag is the frame's own and `takeMess` clears it.
+    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; w.muckDropped = true; }
+    else if (w.muckAt == null && !w.muckDropped && muckFor(w) > 0) {
       const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }
