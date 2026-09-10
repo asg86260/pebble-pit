@@ -68,7 +68,7 @@ const allTrades = () =>
 // every building the yard can put up, standing
 const allBuilt = () =>
   S.quarryOpen && S.farmOpen && S.apothecaryOpen && S.casinoOpen &&
-  S.shackOpen && S.outhouseOpen && S.buildbenchOpen && S.towerOpen &&
+  S.shackOpen && S.outhouseOpen && S.towerOpen &&
   S.schoolOpen && S.scrubOpen;
 
 // A body on every post there is, read off the JOB word list rather than off a

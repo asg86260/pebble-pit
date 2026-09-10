@@ -487,15 +487,7 @@ export const S = {
   // wave6-sim: the training grounds' own body. See crew/teacher.js.
   teachers: 0,            // bodies put on the school; the works there stall without one
 
-  // --- wave7b-build: the build yard ---
-  // The construction bench: once it stands, builders are a post you hire rather
-  // than a count the yard derives, and new buildings wait for one. See
-  // buildbench.js and DESIGN.md, "The build yard".
-  buildbench: { x: 0, y: 0, w: 0, h: 0 },   // where the trestle stands (reseated at boot)
-  noticeboard: { x: 0, y: 0, w: 0, h: 0 }, // and the record, on its posts (reseated at boot)
-  buildbenchOpen: false,  // the construction bench is built
-  buildPostLevel: 0,      // rungs of `buildposts`: +1 builder and +1 concurrent build each
-  buildPaceLevel: 0       // rungs of `buildpace`: how much faster a builder works
+  noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
 
 // The yard as it is written above, kept.
@@ -635,17 +627,12 @@ export const SAVED = [
   'chip',                 // which of CASINO_CHIPS is on the table
   // wave6-sim
   JOB.TEACH,
-  // wave7b-build: the construction bench and its two ladders. The rect is
-  // reseated by the layout at boot, so saving it costs nothing and keeps the
-  // list honest about a field the roundtrip test can see. The builders count is
-  // a hired post once the bench is open, so it is kept like every other job --
-  // and `rebalance` on restore re-derives or clamps it, the way the dealt
-  // counts are.
-  'buildbench',
+  // The record's rect is reseated by the layout at boot, so saving it costs
+  // nothing and keeps the list honest about a field the roundtrip test can see.
   'noticeboard',
-  'buildbenchOpen',
-  'buildPostLevel',
-  'buildPaceLevel',
+  // The builders. Derived by `rebalance` rather than hired, but saved like
+  // every other job count so the roundtrip is honest about a field that exists
+  // -- and re-derived on restore, the way the dealt counts are.
   JOB.BUILD,
   // The record. `tally` is saved because a rock half-mined when you closed
   // the tab was still half-mined by somebody when you come back, and who bit

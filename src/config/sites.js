@@ -7,7 +7,6 @@ import { QUARRY_W } from './quarry.js';
 import { LAB_W, SCHOOL_W } from './school.js';
 import { SCRUB_W } from './scrub.js';
 import { BENCH_W, P } from './yard.js';
-import { BUILDBENCH_W } from './build.js';
 import { BOARD_W } from './notices.js';
 
 export const TO_LEDGE = 636;     // rock centre to the lip of the pit
@@ -105,10 +104,6 @@ export const SITES = [
   // nearest rather than off the bench by name, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null },
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
-  // wave7b-build: the construction bench, standing right beside the work bench
-  // -- where you buy a thing and where somebody is hired to build it are next
-  // to each other. Its ground is reserved from the start like everybody's.
-  { key: 'buildbench', w: () => BUILDBENCH_W,              standoff: 0,  pile: null },
   // The record, between the bench and the front doors. It is put where the
   // crew already pass: the houses are where they live and the bench is where
   // they are kitted, so the strip between the two is the ground most walked

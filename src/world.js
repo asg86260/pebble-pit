@@ -13,7 +13,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, BOARD_H, BOARD_LEG, padOf,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, padOf,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
@@ -180,12 +180,12 @@ const groundKey = () =>
 
 export function layPiles() {
   const now = groundKey();
-  // wave7b-build: the construction bench's rect lives on S -- which a reset or
-  // a restore replaces wholesale with the blank declaration, under a `laid`
-  // key that has not changed -- so a rect with no width is itself the signal
-  // the seats are stale, whatever the key says. Seated below, so this fires
-  // once per reset rather than every frame.
-  if (now === laid && S.buildbench.w > 0) return;
+  // The noticeboard's rect lives on S -- which a reset or a restore replaces
+  // wholesale with the blank declaration, under a `laid` key that has not
+  // changed -- so a rect with no width is itself the signal the seats are
+  // stale, whatever the key says. Seated below, so this fires once per reset
+  // rather than every frame.
+  if (now === laid && S.noticeboard.w > 0) return;
   laid = now;
   // The strips AND the buildings. `refreshPiles` lays the ground each heap
   // lies on; the boxes the buildings are drawn from are seated in `relayout`,
@@ -678,11 +678,6 @@ export function seatSites() {
   };
 
   seat(bench, 'bench', P * 7);
-
-  // wave7b-build: the construction bench, a trestle on the ground right beside
-  // the work bench. Its rect lives on S so a save carries it, but where it
-  // stands is this walk's answer like everybody's.
-  seat(S.buildbench, 'buildbench', BUILDBENCH_H);
 
   // The noticeboard. It hangs off the ground on its posts rather than sitting
   // on it, so its rect is the PANEL and the legs are drawn below it -- what

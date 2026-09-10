@@ -31,32 +31,9 @@ export const WORK_STEP = 1.35;
 // meaning one thing
 export const BUILD_EFFORT = 1;
 
-// --- wave7b-build: the build yard ---------------------------------------------
-// `BUILD_GANG` is gone. Its cap ("one spare body per build") was the temporary
-// answer to who builds things; the answer is a builder now -- a post at the
-// construction bench -- and the gang's pace meaning returns as the `buildpace`
-// rung below. See DESIGN.md, "The build yard".
-//
-// The construction bench itself: a trestle beside the work bench, sized so the
-// hammer lying on it reads at a glance and no wider -- it is furniture, not a
-// station you look at.
-export const BUILDBENCH_W = P * 8;
-export const BUILDBENCH_H = P * 4;
-// How much faster a builder works per `buildpace` rung -- the same step the
-// work table climbs by, so a rung of pace pays back exactly one rung of climb.
-export const BUILD_PACE_STEP = 1.35;
-// How long the two ladders are. Posts: 0..2, so at the top three builds rise at
-// once; pace: three rungs, the kit ladders' length, because it is gear.
-export const BUILD_POST_RUNGS = 2;
-export const BUILD_PACE_RUNGS = 3;
-// What the first rung of each costs. Posts are plant, so they are priced in the
-// machines' currency; pace is labor, priced in the yard's crop.
-export const BUILDPOSTS_SPARKS0 = 40;
-export const BUILDPACE_SPORES0 = 12;
-// The bench itself: two cores -- a place, priced like the quarry -- and the
-// dust every bill past tier one asks for, a shade under the quarry's.
-export const BUILDBENCH_CORES = 2;
-export const BUILDBENCH_DUST = 1500;
+// `BUILD_GANG` is gone: its cap ("one spare body per build") is written into
+// `rebalance` in upgrades.js now, which is the one place that decides who is
+// building. See DESIGN.md, "The build yard".
 
 // --- the farm's and the quarry's own sheds -----------------------------------
 // The two stations with a board and nothing to hold it -- see C5 in

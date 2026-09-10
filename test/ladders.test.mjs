@@ -67,7 +67,7 @@ group('a card is retired when its band is finished, and the next one takes its p
 group('each band asks for one more coin than the last', async () => {
   window.__reset();
   openSites();
-  window.__buildbench(true);
+  window.__invest();
   rich();
   const coins = key => window.__rows().filter(r => r.key === key)[0]
                              ?.bill.map(([m]) => m).filter(m => m !== 'time') ?? [];
@@ -93,7 +93,7 @@ group('each band asks for one more coin than the last', async () => {
 group('the last band is a build that bodies have to finish', async () => {
   window.__reset();
   openSites();
-  window.__buildbench(true);
+  window.__invest();
   rich();
   window.__crew(0, 0, 0, 2);                 // two farmhands, to do the work
   run(2);

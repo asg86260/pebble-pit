@@ -165,7 +165,7 @@ export const TESTS = [
     // the cut and the lab all have to be up before it is offered. Read in this
     // order because opening the plots is what takes their own door off the board.
     window.__crew(0, 0, 1, 1);
-    window.__buildbench(true);
+    window.__invest();
     window.__crew(0, 0);
     buildShopFromTest();
     refreshShopFromTest();

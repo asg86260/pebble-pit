@@ -56,15 +56,6 @@ export function dropTargets() {
                rect: { x: r.x - ASSIGN_PAD, y: 0,
                        w: r.w + ASSIGN_PAD * 2, h: r.y + r.h + ASSIGN_PAD } });
   }
-  // The construction bench (wave7b-build): builders are hired by count too,
-  // and the trestle is their post. Its rect lives on S rather than in
-  // board.js's ring of stands, so it is read directly.
-  if (S.buildbenchOpen && S.buildbench.w > 0) {
-    const b = S.buildbench;
-    out.push({ key: 'buildbench', job: JOB.BUILD, ring: b,
-               rect: { x: b.x - ASSIGN_PAD, y: 0,
-                       w: b.w + ASSIGN_PAD * 2, h: b.y + b.h + ASSIGN_PAD } });
-  }
   if (rockDown()) {
     const left = cellPos(0, 0).px;
     const box = { x: left, y: rockFootY() - S.gh * P,
