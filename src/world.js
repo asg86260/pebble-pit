@@ -20,6 +20,7 @@ import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 import { JOB } from './jobs.js';
+import { reducedMotion } from './prefs.js';
 
 const canvas = document.getElementById('c');
 
@@ -852,9 +853,17 @@ export function resize(after) {
 // Send the view somewhere, gently. Opening a new site is four cores and a row
 // in a menu; without this the player buys it and nothing appears to happen,
 // because the thing they bought is off the left of the screen.
+//
+// Under reduced motion the same call is a cut. Every glide in the game -- a
+// purchase, a board, a cutscene letting go, the rescue -- comes through this
+// one door, so declining to glide here is the whole of the camera: the view is
+// at the target on the frame it was asked for and `stepCamera` finds nothing
+// to do. The preference is read on every call rather than once at load, so the
+// switch on the sheet takes effect on the very next glide.
 export function lookAt(x) {
   S.camTo = x - S.viewW / 2;
   sent = true;
+  if (reducedMotion()) { S.camX = S.camTo; S.camTo = null; clampCam(); }
 }
 
 // Whether the view was sent somewhere since anybody last asked. A purchase that
@@ -948,7 +957,14 @@ export function clampCam() {
 // whole picture is standing on, so everything in the world moves together --
 // this is not the camera being pushed, it is the yard being shaken, and it is
 // added on top of wherever you happen to be looking.
+//
+// Under reduced motion nothing here moves. The knock is still asked for from
+// every place that asks -- a rock landing, the casino's table, the rift tearing,
+// a building going up -- and none of them needs to know; the one function that
+// moves the view is the one that declines, and `stepShake` runs and finds
+// nothing left to rock.
 export function shakeView(amount) {
+  if (reducedMotion()) return;
   if (amount <= S.shake) return;      // a small knock does not interrupt a big one
   S.shake = amount;
   S.shakePh = 0;
