@@ -6495,8 +6495,16 @@ it needs. This is where the work is.
 | the yard buried: every pile full at once | `pileFull`, all of them |
 | a spotless yard with nobody sweeping | `floorGrains === 0 && janitors === 0` |
 | a crit streak | tally |
-| the table beaten, and the table ruinous | tally: hands won and lost running |
+| the table beaten, and the table ruinous | a hand settles paying, or taking, a stake of 50k or more |
 | broke, having been rich | tally: a million held, then nothing of any of them |
+
+The two casino notices were a *streak* -- hands won or lost one after another --
+and they are a single spin now, at 50,000. A streak is the wrong shape for that
+room: the table is one big decision repeated, so what you remember about it is
+the size of the hand rather than how many of them went your way, and a run of
+small wins is not a story. It also needs no tally at all -- the pair is read off
+the hand as it settles, which is one place, once. The 50,000 is a placeholder
+like every other threshold here, and wants a played yard.
 
 Fifty-two, written out. The count is not a target -- it is what fell out of asking
 what this yard can honestly recognize -- and the right response to "that is too

@@ -713,8 +713,8 @@ const CATALOG = [
       { key: 'buried',      name: 'the yard buried',           note: "let every station's pile fill at the same time", reads: 'pileFull, all of them' },
       { key: 'spotless',    name: 'spotless, with nobody sweeping', note: "clear every pebble off the floor without hiring a janitor", reads: 'floorGrains === 0 && janitors === 0' },
       { key: 'critstreak',  name: 'a crit streak',             note: "land a run of critical hits without missing", reads: 'tally: crits running', needs: true },
-      { key: 'tablebeaten', name: 'the table beaten',          note: "win a run of hands at the casino", reads: 'tally: hands won running', needs: true },
-      { key: 'tableruin',   name: 'the table ruinous',         note: "lose a run of hands at the casino", reads: 'tally: hands lost running', needs: true },
+      { key: 'tablebeaten', name: "we're so back",             note: "win 50k in a single spin at the casino", reads: 'a hand settles paying 50k or more', needs: true },
+      { key: 'tableruin',   name: 'time to get a loan',        note: "lose a 50k stake in a single spin at the casino", reads: 'a hand settles taking a stake of 50k or more', needs: true },
       { key: 'broke',       name: 'broke, having been rich',   note: "hold a million, then spend down to nothing of every currency", reads: 'tally: the high-water mark', needs: true }
     ]
   }
@@ -722,7 +722,7 @@ const CATALOG = [
 
 // Bumped with the build, so a local copy written by the version that kept
 // clobbering itself cannot come back to life.
-const BUILD = 'build 9 · local';
+const BUILD = 'build 10 · local';
 const KEEP = 'boulder-record-v5';
 const allItems = CATALOG.flatMap(s => s.items);
 const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
