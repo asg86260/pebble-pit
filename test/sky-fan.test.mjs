@@ -353,7 +353,9 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   window.__reset();
   window.__crew(3, 3, 3, 3);
   window.__fullSites();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  // A purse for three machines at once, which is more than a thousand of
+  // anything the machines are priced in.
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9 });
   window.__tip(90000);
   window.__air({ haze: 0, muck: 0 });
   // Each machine is built rather than had -- see works.js -- so the yard has to
