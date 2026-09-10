@@ -1019,3 +1019,19 @@ canvas {
 /* Under the cursor: the sheet fills in. The boards' own invitation -- a row you
    can press inverts rather than moving, and this is the same offer. */
 #raise:hover { background: #000; color: #fff; }
+
+/* wave-release: track F */
+/* The same headcount, worn on the title of a board with a single group -- the
+   shack, whose one group is the rock miners and whose sheet is about nobody
+   else. The section rule above is the look; this one only widens where the
+   badge is allowed to sit, so a count on a title and a count on a heading
+   read as the same thing. Solid black on a title that is already black. */
+.page .title .badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 4px;
+  color: #fff;
+  background: #000;
+  font: inherit;
+  letter-spacing: 0;
+}

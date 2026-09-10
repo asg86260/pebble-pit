@@ -5,7 +5,7 @@
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
-  hoverStation, run, buy, asScreen, finger } from './kit.js';
+  hoverStation, run, buy, asScreen, finger, newRun, settle } from './kit.js';
 
 export const TESTS = [
   ['the opening view is looking at the rock', async () => {
@@ -85,6 +85,13 @@ export const TESTS = [
   // Your pick and a rockhand's are two different tools. One row that bought both
   // was doing two jobs, and it sat under `you` while half of it was on the rock.
   ['your pick and a rockhand bite are bought apart', async () => {
+    // Its own yard, whatever ran before it. The runner starts every group from
+    // a fresh game, but a fresh game has no bench and no hut, and this check is
+    // about pressing a row on each: it raises both itself rather than trusting
+    // whichever neighbor it shares a shard with to have left them standing.
+    newRun();
+    await settle(0.5);
+    await haveBench();
     window.__crew(1, 0);
     // Yours is cut stone and theirs is what they are fed on: no core buys a
     // rate any more, they open places. And dust with it -- every rung above the
@@ -100,7 +107,11 @@ export const TESTS = [
     window.__shack();
     await hoverStation('shack');
     const before = state();
-    const gotBite = await buy('rockhandpick');
+    // The bite is on the hut's sheet, not the bench's, so `buy` -- which reads
+    // the bench -- cannot press it. Pressed where it is, the way it is bought.
+    const bite = document.querySelector('#shackshop button[data-key="rockhandpick"]');
+    const gotBite = !!bite && !bite.disabled;
+    if (gotBite) { bite.click(); window.__finish(); await sleep(150); }
     const mid = state();
     await hoverBench();
     const gotPick = await buy('pick');

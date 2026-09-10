@@ -253,7 +253,7 @@ export const boardReworded = () => { const was = reworded; reworded = false; ret
 // row element and makes new ones, which takes the row under the cursor with it
 // -- and the hover on it. A worker tipping a shard into the pit rebuilt the
 // whole board, so the highlight blinked off every time anybody banked anything.
-function build(el, list, sections, empty) {
+function build(el, list, sections, empty, heads) {
   // whether these rows are the submenu itself rather than a board -- see the
   // note further down about what a row hover means
   const inSubmenu = el === crewListEl;
@@ -262,8 +262,21 @@ function build(el, list, sections, empty) {
   // under it, a heading reading "the tower", over a single row. Where there are
   // several headings they are doing their job -- telling the groups apart --
   // and one of them matching the board's name is fine.
-  const title = el.closest('.page')?.querySelector('.title')?.textContent.trim();
+  //
+  // The name is read off the title once and kept, because the title may be
+  // wearing a badge by the second time through, and a name read with the
+  // number on the end of it would never match its own heading again.
+  const titleEl = el.closest('.page')?.querySelector('.title');
+  if (titleEl && !titleEl.dataset.name) titleEl.dataset.name = titleEl.textContent.trim();
+  const title = titleEl?.dataset.name;
   const lone = grouped(list, sections).length === 1;
+  // A board with a single group has no heading for a headcount to ride -- the
+  // shack's one group is the rock miners, and the heading either folds into the
+  // title or stands alone over every row on the sheet. Either way the sheet is
+  // about one crew, and the count belongs to the sheet: `refresh` wears it on
+  // the title instead. The board says whom it counts; a board that counts
+  // nobody, or has several groups, keeps its title bare.
+  el._titled = lone && heads && titleEl ? { el: titleEl, heads } : null;
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
@@ -496,28 +509,35 @@ const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 // has no `.note` element and this does nothing.
 const sayNote = (row, u) => { const n = row.querySelector('.note'); if (n && typeof u.note === 'function') say(n, u.note()); };
 
+// A headcount worn after a line of words -- a section heading, or the title of
+// a board with one group. The words are the only text in the line's own
+// textContent, so overwriting them can never leave a stale badge behind; the
+// badge, when there is one, is appended after as its own element rather than
+// folded into the words, so the count can be styled apart from a heading that
+// stays dim.
+//
+// And only when it actually changes. This runs every frame the board is open,
+// and building a fresh element sixty times a second lays the whole panel out
+// sixty times a second, for a number that moves when you move somebody. The
+// board is careful about this everywhere else; so is this.
+function wearBadge(line, words, n) {
+  if (line.dataset.count === String(n)) return;
+  line.dataset.count = n;
+  moved = true;                            // a badge is a word, and words have a width
+  line.textContent = words;
+  if (n) {
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = n;
+    line.appendChild(badge);
+  }
+}
+
 export function refresh(el, list, headcount) {
+  if (el._titled) wearBadge(el._titled.el, el._titled.el.dataset.name, el._titled.heads());
   for (const row of el.children) {
     if (row.dataset.sect) {
-      // The heading is the only text in the row's own textContent, so overwriting
-      // it here can never leave a stale badge behind; the badge, when there is
-      // one, is appended after as its own element rather than folded into the
-      // words, so the count can be styled apart from a title that stays dim.
-      const n = headcount ? headcount(row.dataset.sect) : 0;
-      // And only when it actually changes. This runs every frame the board is
-      // open, and building a fresh element sixty times a second lays the whole
-      // panel out sixty times a second, for a number that moves when you move
-      // somebody. The board is careful about this everywhere else; so is this.
-      if (row.dataset.count === String(n)) continue;
-      row.dataset.count = n;
-      moved = true;                          // a badge is a word, and words have a width
-      row.textContent = row.dataset.sect;
-      if (n) {
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = n;
-        row.appendChild(badge);
-      }
+      wearBadge(row, row.dataset.sect, headcount ? headcount(row.dataset.sect) : 0);
       continue;
     }
     if (row.dataset.dial) {
@@ -759,7 +779,13 @@ const BOARDS = {
   // The rock's board. Its rows are gathered from UPGRADES when asked rather
   // than held -- see shack.js -- so this row asks for them the same way the
   // house's does.
-  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock'],
+  //
+  // The fifth thing is whom the sheet counts. The bench's headings each carry
+  // the bodies under them (`headcount`, board.js); the shack has one group and
+  // so no heading to hang the rockhands on, and a crew you can see swinging
+  // with no number anywhere is the one count in the yard you would have to
+  // take by eye. It rides the title -- see `build`.
+  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands],
   // The trestle's own two ladders. It is never empty once it stands -- both rows
   // show on `buildbenchOpen` -- but the line is there for the same reason every
   // other board has one: a blank sheet is a bug you would have to rule out.
