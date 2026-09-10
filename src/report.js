@@ -590,6 +590,7 @@ export const snapshot = () => ({
   crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}|p${wayAt(w.x, w.y).key}|w${w.trained ? (w.kitOf || '?')[0] : '-'}|y${Math.round(w.y)}`),
   mining: S.mining,
   paused: S.paused,
+  fatal: S.fatal,
   saying: S.workers.filter(w => w.say).length,
   moves: [...new Set(S.workers.map(w => w.move).filter(Boolean))].sort(),
   falling: S.workers.filter(w => w.falling).length,

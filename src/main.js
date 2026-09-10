@@ -7,6 +7,8 @@
 
 import './style.css';
 
+// First, so that a throw anywhere below has something listening for it.
+import { fatal } from './crash.js';
 import { S } from './state.js';
 // The game itself. This file is the shell around it: a window, a canvas, a
 // mouse and a frame loop -- see game.js.
@@ -62,18 +64,27 @@ function record(t0, t1, t2, t3) {
 
 // Held, the yard is still drawn -- it is the thing you are looking at, and a
 // paused game that stopped painting would be a game that had crashed.
+//
+// And a frame that throws is the last frame: the loop is not rescheduled, so
+// the picture stays where it stopped, and the yard is marked fatal so nothing
+// below writes the state that threw over the save. See crash.js.
 const heldSheet = document.getElementById('held');
 function frame() {
-  tick(S.paused);
-  if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
-  const t0 = mark();
-  if (!S.paused) step();
-  const t1 = mark();
-  draw();
-  const t2 = mark();
-  hud();
-  const t3 = mark();
-  if (DEV) record(t0, t1, t2, t3);
+  try {
+    tick(S.paused);
+    if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
+    const t0 = mark();
+    if (!S.paused) step();
+    const t1 = mark();
+    draw();
+    const t2 = mark();
+    hud();
+    const t3 = mark();
+    if (DEV) record(t0, t1, t2, t3);
+  } catch (e) {
+    fatal(e);
+    return;
+  }
   requestAnimationFrame(frame);
 }
 

@@ -211,7 +211,10 @@ for (const t of TUNABLE) {
 }
 
 line('', box => {
-  button(box, 'reset the game', () => window.__reset());
+  // The whole thing, opening included, on a seed of its own: this is the
+  // player's "reset progress" and not the hook the scenes above use, which
+  // skips the opening and keeps the run so a check can compare two halves.
+  button(box, 'reset the game', () => window.__reset(true, true));
   // Your whole yard, on the clipboard. A report about something the yard is
   // doing wrong is only as good as the yard it happened in, and "open the
   // console and type this" is a thing to get wrong at the end of a sentence

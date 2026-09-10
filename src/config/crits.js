@@ -24,5 +24,15 @@ export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
 // reaches them, not the solo clicking that sees them first. The mult rung
 // carries both scalings: wave 7's double-for-fewer-rungs, then the grind
 // pass's four-across-the-ladder.
-export const CRIT_CHANCE_COST = 240;   // first rung, dust, rungCost-shaped like the rest
-export const CRIT_MULT_COST = 640;
+//
+// And the pair is priced in the quarry's blue and the farm's green rather than
+// in dust alone. A crit reaches every station, so what it asks for should come
+// from more than one of them: a rung is a trip to the seam AND a trip to the
+// plots, which is a decision, where a heap of dust is only a wait. `billOf`
+// appends the dust line at the exchange rate, as it does for every row priced
+// in coins -- so the coins here are cut to about half the old dust price and
+// the total a rung asks for lands roughly where it did.
+export const CRIT_CHANCE_SHARD = 1;    // first rung, rungCost-shaped like the rest
+export const CRIT_CHANCE_SPORE = 4;
+export const CRIT_MULT_SHARD = 3;
+export const CRIT_MULT_SPORE = 9;

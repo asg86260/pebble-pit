@@ -480,6 +480,7 @@ export const S = {
   // this is only the number it was started from.
   runSeed: 0,
   dirty: false,           // something changed worth saving
+  fatal: '',              // the game has stopped on a throw; nothing is written after it
   lastFrame: 0,           // for the length of the last frame
   settleAt: 0,            // the column the pit settler got to last frame
 
@@ -815,7 +816,7 @@ export const EPHEMERAL = [
   // complete; declaring them above would be better, and is somebody's tidy-up.
   'placed', 'strips', 'introHeart',
   // housekeeping
-  'dirty', 'lastFrame', 'settleAt',
+  'dirty', 'fatal', 'lastFrame', 'settleAt',
   // wave7-sky: the buried square's core errand is a moment, not a fact -- a
   // reload finds the square at home and the core wherever the save left it
   'buriedX', 'buriedErrand',

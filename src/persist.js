@@ -197,7 +197,11 @@ function readSaved(s) {
 }
 
 export function persist() {
-  if (!S.dirty) return;
+  // A yard that has thrown is not written down. The loop stops on a throw, but
+  // the interval that calls this does not, and once a second it would put the
+  // state that just threw over the last save that was whole -- a bug that
+  // should have cost a reload costing the run instead. See crash.js.
+  if (S.fatal || !S.dirty) return;
   S.dirty = false;
   save({
     ...savedFields(),

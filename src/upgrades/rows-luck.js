@@ -1,4 +1,5 @@
-import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_MULT_RUNGS } from '../config.js';
+import { CRIT_CHANCE_SHARD, CRIT_CHANCE_SPORE, CRIT_MULT_SHARD, CRIT_MULT_SPORE,
+         CRIT_MULT_RUNGS } from '../config.js';
 import { critChance, critMult } from '../crit.js';
 import { S } from '../state.js';
 import { rungCost } from '../upgrades.js';
@@ -22,9 +23,16 @@ export const LUCK_ROWS = [
     rung: () => S.critChanceLevel,
     from: () => Math.round(critChance(S.critChanceLevel) * 100),
     to: () => Math.round(critChance(S.critChanceLevel + 1) * 100),
-    cost: () => rungCost(CRIT_CHANCE_COST, S.critChanceLevel),
+    // Blue and green, because a crit lands at every station and so should be
+    // owed to more than one of them. The dust line comes off the exchange rate
+    // in billOf; see config/crits.js.
+    bill: () => [['shard', rungCost(CRIT_CHANCE_SHARD, S.critChanceLevel)],
+                 ['spore', rungCost(CRIT_CHANCE_SPORE, S.critChanceLevel)]],
     buy: () => S.critChanceLevel++,
-    show: () => true
+    // Nothing in this game names a coin you have not met, so a row priced in
+    // both waits for both. The pair used to show from the first frame, when
+    // they were priced in dust and dust is the only coin you start with.
+    show: () => S.seenShard && S.seenSpore
   },
   {
     key: 'critmult',
@@ -38,8 +46,9 @@ export const LUCK_ROWS = [
     rungs: () => CRIT_MULT_RUNGS,
     from: () => critMult(S.critMultLevel),
     to: () => critMult(S.critMultLevel + 1),
-    cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel),
+    bill: () => [['shard', rungCost(CRIT_MULT_SHARD, S.critMultLevel)],
+                 ['spore', rungCost(CRIT_MULT_SPORE, S.critMultLevel)]],
     buy: () => S.critMultLevel++,
-    show: () => true
+    show: () => S.seenShard && S.seenSpore
   }
 ];

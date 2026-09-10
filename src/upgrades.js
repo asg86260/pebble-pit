@@ -27,8 +27,7 @@ import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
          HOUSE_COST0, HOUSE_RATE,
          MACHINE_TUNE,
-         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
-  CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
+         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
@@ -367,30 +366,7 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 // below, because a second hand-kept copy of it is precisely the bug `rebalance`
 // was fixed for one screen down: the copy that gets forgotten is the one that
 // matters.
-//
-// ...and a station that is not standing holds nobody at all, which is asked
-// first because it is a different question from how many a place holds.
-//
-// `benches()` and `plotCount()` count what a quarry or a farm WOULD hold: they
-// are read by the drawing as much as by the staffing, and a quarry draws its
-// benches from the frame it is dug. Neither of them knows whether the place has
-// been opened, so the floor plan reported standing room for a hole nobody had
-// broken -- and `assignJob` filled it. Two bodies were put down a quarry that
-// did not exist, walked to where the cut will be, and stood twenty-four pixels
-// under the ground line inside a working `ways()` has no entry for, because
-// there is no cut. `verify.js` called it what it looked like: a body under the
-// yard with nothing under it.
-//
-// Only these two need asking. Every other station's count is already nought
-// until the place is built -- the pots, the wizards' hats -- because it is a
-// count of things that get built rather than a level that can be bought ahead.
-const STANDING = {
-  [JOB.QUARRY]: () => S.quarryOpen,
-  [JOB.FARM]: () => S.farmOpen
-};
-
 const capOfBare = job =>
-  STANDING[job] && !STANDING[job]() ? 0 :
   job === JOB.QUARRY ? benches() :
   job === JOB.FARM ? plotCount() :
   // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
@@ -1085,26 +1061,39 @@ export function buy(u) {
   // and not while the site is already putting something up. One work per site is
   // the whole of what makes the waiting a decision -- see works.js.
   if (siteBusy(u)) return false;
-  // What is spent flies to the station that sold the row, not to the bench: buy a
-  // rung of the farm and the dust arcs to the farm, buy a brew rung and it arcs
-  // to the cauldron. The destination is the row's own site (`siteBox`), and it is
-  // set for the length of the payment and cleared straight after, so a spend with
-  // nobody's `payTo` around it -- the rift -- still falls back to the bench. A
-  // row with no site of its own (the bench's own, a yard building) leaves it null
-  // and pays to the bench, which is where it is bought.
-  const box = u.site && u.site !== 'yard' ? siteBox(u.site) : null;
+  // Past the bench, paying does not buy the thing: it starts the yard building
+  // it, and the row's own `buy` runs when somebody has finished the work. The
+  // coin is taken either way and taken now -- what you are waiting on is the
+  // labour, not the bill.
+  //
+  // The work is started BEFORE the bill is taken, and that order is the whole
+  // of what makes a building's dust fly to the right place. A yard row's
+  // destination is the ground the thing is going up on, and that ground does
+  // not exist until `start` reserves it (`reserve` in works.js, which re-lays
+  // the yard on the spot) -- so a payment taken first had nowhere to aim and
+  // fell back to the bench, which is the one place the dust is not going. A
+  // start that comes to nothing returns before a coin is touched, which is the
+  // same bargain as the checks above it.
+  if (takesTime(u) && !start(u.site, u, u.at?.())) return false;
+
+  // What is spent flies to where it is going, not to the bench: buy a rung of
+  // the farm and the dust arcs to the farm, buy a brew rung and it arcs to the
+  // cauldron, buy a whole new building and it arcs to the fenced-off patch it
+  // is rising on. The destination is the row's own site (`siteBox`) -- for a
+  // yard row, the box of the work just started -- and it is set for the length
+  // of the payment and cleared straight after, so a spend with nobody's `payTo`
+  // around it -- the rift -- still falls back to the bench. A row with no site
+  // at all is the bench's own and pays there, which is where it is bought.
+  const box = u.site === 'yard' ? siteBox('yard', workOn(u.key))
+            : u.site           ? siteBox(u.site)
+            : null;
   if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
   payTo();                                       // back to the bench for the next spend
 
-  // Past the bench, paying does not buy the thing: it starts the yard building
-  // it, and the row's own `buy` runs when somebody has finished the work. The
-  // coin is taken either way and taken now -- what you are waiting on is the
-  // labour, not the bill.
-  if (takesTime(u)) start(u.site, u, u.at?.());
-  else u.buy();
+  if (!takesTime(u)) u.buy();
   S.dirty = true;
   buildShop();
   return true;

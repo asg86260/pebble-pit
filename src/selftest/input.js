@@ -1,11 +1,13 @@
 // The keyboard and the cursor: holding the yard still, and what a shape says a
 // press will do.
 //
-// 3 groups, in the order they have always run in --
+// 4 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
          runUntil, haveBench } from './kit.js';
+import { S } from '../state.js';
+import { fatal } from '../crash.js';
 
 export const TESTS = [
   // Space stops the clock. Not a flag every system checks -- the clock simply
@@ -175,6 +177,42 @@ export const TESTS = [
       // and the stations group hovers one for the tooltip half of this rule.
       ok(warn === 'crosshair',
          'and the hole, which cannot stop any more, is not a thing to ask', warn)
+    ];
+  }],
+
+  // A throw puts the stopped sheet up with the browser's own line about it,
+  // and the save can be taken from the sheet. The throw is handed to `fatal`
+  // rather than thrown: a real uncaught error is what the suite's own listener
+  // counts as a failed run, and a throw inside a frame would stop the loop for
+  // every group after this one, which is the point of it. The autosave guard
+  // is checked in the node tier (test/crash.test.mjs); this is the half that
+  // needs a page.
+  ['a throw stops the game and offers the save', async () => {
+    newRun();
+    await settle();
+    window.__crew(1, 1);
+    run(5);
+    const sheet = document.getElementById('crashed');
+    const before = sheet.hidden;
+    fatal(new Error('the yard fell over'));
+    const up = !sheet.hidden;
+    const why = sheet.querySelector('.why').textContent;
+    const known = window.__state().fatal;
+    document.getElementById('copysave').click();
+    await sleep(100);
+    const said = sheet.querySelector('.said').textContent;
+    // and put back, so the groups after this one have a live page
+    S.fatal = '';
+    sheet.hidden = true;
+    sheet.querySelector('.said').textContent = '';
+    window.__crew(0, 0);
+    return [
+      ok(before, 'the sheet is down while the game runs'),
+      ok(up, 'and up once something has thrown'),
+      ok(/the yard fell over/.test(why), 'saying what, in the browser\'s words', why),
+      ok(/the yard fell over/.test(known), 'and the yard knows it has stopped', known),
+      ok(/copied \d+kb|in window\.__save/.test(said),
+         'and the save comes out of the sheet', said),
     ];
   }],
 ];

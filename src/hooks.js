@@ -178,13 +178,9 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   S.benchLevel = Math.max(S.benchLevel, sp - QUARRY_BENCH0);
   S.plotLevel = Math.max(S.plotLevel, f - FARM_PLOTS0);
   // The places open BEFORE the crew are shared out, because sharing them out is
-  // what reads the room. These two lines used to sit under `rebalance`, which
-  // worked only for as long as a shut station still reported standing room in
-  // it: the bodies were placed in a quarry that did not exist yet and the flag
-  // caught up a line later. Now that the floor plan asks whether a place is
-  // standing (`STANDING`, upgrades.js), asking for three down the quarry and
-  // opening it afterwards shares all three out to carrying dust and then opens
-  // an empty hole.
+  // what reads the room. Harmless while a shut station still reports standing
+  // room in it -- which is what `benches()` does, see the note on `__assign`
+  // below -- and wrong the moment anything asks whether the place is there.
   if (sp > 0) S.quarryOpen = true;
   if (f > 0) S.farmOpen = true;
   resite();
@@ -268,7 +264,30 @@ export const school = (o = {}) => {
 };
 
 // dev: move one body between jobs, the same way the board does
-export const assign = (job, d = 1) => { assignJob(job, d); };
+//
+// ...and open the place first, which is what `__crew` above already does for
+// the jobs it is handed. The board can only ever send somebody to a station
+// that is standing, because a shut station has no board to press -- so the
+// asymmetry between these two handles was the only way to reach a state the
+// game itself has no route to, and a check reached it: two quarriers were
+// assigned to a quarry nobody had dug, walked to where the cut will be, and
+// stood twenty-four pixels under the ground line inside a working `ways()` has
+// no entry for. `verify.js` reported it as a body under the yard, which is
+// exactly what it was.
+//
+// The deeper reason it was possible is that `benches()` and `plotCount()` count
+// what a quarry or a farm WOULD hold -- they are read by the drawing as much as
+// by the staffing -- so the floor plan reports standing room for a hole in the
+// ground that is not there. Gating `capOfBare` on the place being open is the
+// rule that would say so once for everybody, and it is written down in TODO.md
+// rather than done here: it moves bodies in every check that ever staffed a
+// station before opening it, which is a change worth making on its own and not
+// as a rider on a hook.
+const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
+export const assign = (job, d = 1) => {
+  if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
+  assignJob(job, d);
+};
 
 // dev: rebuild the boards, for a check that changed the game behind their back
 export const rebuildBoards = () => { buildShop(); };

@@ -145,6 +145,65 @@ export const TESTS = [
     ];
   }],
 
+  // What a card gives you is the reason to press it, and a bill is allowed to
+  // cost the card another line but never a word of that.
+  //
+  // It went the other way for a while and nothing said so: the gain sat in a
+  // `1fr` track against the bill's `auto`, so on a card whose bill runs to six
+  // coins -- the farm's astral GMOs, deep in the yield ladder -- the bill took
+  // the whole card and the gain cell came out exactly nought pixels wide. The
+  // line was still in the markup, still in the DOM, and simply not on the
+  // screen; every check about statuses passed, because a status spans the card
+  // and never sits in that track. So this is the check that reads the gain
+  // cards actually carry, in a yard rich enough to have the deep bills in it.
+  ['no card ever eats the line that says what it gives', async () => {
+    newRun();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900, sparks: 999 });
+    window.__crew(4, 3, 2, 2);
+    // Every station standing, because a board nobody has built sells nothing
+    // and a card that is not on a board cannot be measured.
+    window.__fullSites();
+    window.__buildbench(true);
+    // The far end of both ground ladders, which is where the bills get wide
+    // enough to squeeze the card -- the state the defect actually needed.
+    window.__levels({ cropLevel: 9, tendLevel: 4, seamLevel: 9 });
+    run(20);
+    const bad = [];
+    const seen = new Set();
+    for (const name of ['bench', 'house', 'quarry', 'farm', 'school', 'scrub',
+                        'tower', 'casino', 'buildbench', 'outhouse']) {
+      window.__board(name);
+      await sleep(320);                        // the sheet scales in; let it land
+      for (const card of document.querySelectorAll(
+        '.page:not([hidden]) .rows button[data-key]')) {
+        const g = card.querySelector('.gain');
+        if (!g || !g.offsetParent || !g.textContent.trim()) continue;
+        seen.add(card.dataset.key);
+        // The words, not the box: a Range says where the ink actually ends,
+        // where the cell's own rect only says how wide the track came out.
+        const r = document.createRange();
+        r.selectNodeContents(g);
+        const ink = Math.round(r.getBoundingClientRect().width);
+        const room = Math.round(g.getBoundingClientRect().width);
+        if (ink - room > 1) bad.push(`${name}:${card.dataset.key} "${g.textContent}" ${ink}>${room}`);
+      }
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      // Named rather than counted: the card the defect was found on is the one
+      // this check exists for, so a setup that stops putting it on the board
+      // should fail here rather than quietly measure ten easy cards instead.
+      ok(seen.has('labcrop') && seen.size > 12,
+         'the deep bills are on the boards to read',
+         `${seen.size} lines${seen.has('labcrop') ? '' : ', no labcrop'}`),
+      ok(bad.length === 0, 'and every one of them fits the cell it is in',
+         bad.join(' | ') || 'all whole')
+    ];
+  }],
+
   // Down the sheet as well as across it. A board whose cards are all different
   // heights is a board you read one card at a time, because there is no rhythm
   // to run your eye down.
@@ -1350,7 +1409,15 @@ export const TESTS = [
       ok(spill === 0,
          'and no card on any board is given a status it cannot hold',
          spills.join(', ') || 'none spill'),
-      ok(shouted === before,
+      // The WIDTH, and only the width. What a card gives you is never truncated
+      // now -- its column has a `min-content` floor under it (style.css) -- so
+      // an impossible line takes the room it needs and the bill beside it wraps
+      // to another line, which makes that one card a line taller. That is the
+      // right way round: a card growing a line is a card you can still read,
+      // where the same room taken out of the gain is words nobody ever sees.
+      // The board getting WIDER is the thing `pinWidth` exists to stop, and it
+      // still does: without it this line takes the bench from 525 to over 1100.
+      ok(shouted.split('x')[0] === before.split('x')[0],
          'a line far too long for a card cannot widen the board either',
          `${before} -> ${shouted}`),
       // And then the row goes, which is a change to what the board HOLDS rather
