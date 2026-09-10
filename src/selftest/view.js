@@ -153,6 +153,11 @@ export const TESTS = [
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
                                      [412, 915, 2.6, 'android'], [768, 1024, 2, 'tablet']]) {
       await asScreen(w, h, dpr, () => {
+        // Where a phone OPENS, which is what the check is about. A resize keeps
+        // the camera where it was, so without this the view was whatever the
+        // last group had scrolled to, narrowed -- and it read the rock in shot
+        // for exactly as long as that happened to be true.
+        window.__look(state().openCamX);
         const s = state();
         const rockLeft = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
         const rockRight = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
