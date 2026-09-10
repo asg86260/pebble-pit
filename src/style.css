@@ -643,6 +643,35 @@ canvas {
    the sheet into a page */
 .held .why { text-transform: none; letter-spacing: 0; max-width: 34em; text-align: center; }
 .held .said:empty { display: none; }
+/* the sheet's one-line reply is held to the same width as a quotation, so a
+   long answer wraps under the buttons rather than stretching the card */
+.held .said { max-width: 34em; text-align: center; }
+/* the line between the word and the rest: the top of the sheet is about the
+   game being stopped, the bottom is about what you can do while it is */
+.held .rule { width: 60%; border-top: 1px solid #000; }
+/* the sheet's small hand, for the lines that are said rather than offered:
+   the keys, the build, the one sentence about there being no ending */
+.held .small { font-size: 10px; }
+/* two buttons on one line, since they are two halves of the same thing */
+.held .pair { display: flex; gap: 10px; }
+/* The paste, for a save coming back in: as wide as the sheet, one hand, and
+   no resize handle, because the sheet is shrink-wrapped to its words and a
+   corner that stretched it would stretch everything. It folds away entirely
+   when it is not asked for rather than leaving a gap. */
+.held .paste { display: flex; flex-direction: column; align-items: center; gap: 10px; align-self: stretch; }
+.held .paste[hidden] { display: none; }
+.held textarea {
+  align-self: stretch;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #000;
+  background: #fff;
+  border: 1px solid #000;
+  padding: 4px;
+  resize: none;
+  outline: none;
+}
 
 .held button {
   font: inherit;
@@ -767,8 +796,7 @@ canvas {
   line-height: 1.5;
 }
 
-#hidedone,
-#reset {
+#hidedone {
   align-self: flex-start;
   margin-top: 8px;
   font: inherit;
@@ -781,7 +809,11 @@ canvas {
   opacity: .35;
   cursor: pointer;
 }
-#hidedone:hover,
+#hidedone:hover { opacity: 1; }
+/* The reset lives on the held sheet now (wave-release, track A) and keeps the
+   look it had on the bench: dashed and faded, the one button on the sheet you
+   are not meant to reach for, and solid black once it is armed and asking. */
+#reset { border-style: dashed; opacity: .35; }
 #reset:hover { opacity: 1; }
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
 /* the switch reads as thrown when it is thrown */
@@ -822,8 +854,7 @@ canvas {
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
-  #hidedone,
-#reset { padding: 6px 8px; }
+  #hidedone { padding: 6px 8px; }
   /* The panel stacks on a phone, so the submenu lands under the board it came
      out of rather than beside it -- which is still a submenu, and is the only
      way round that fits. Between the two of them they have one screen to share,
