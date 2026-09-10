@@ -563,3 +563,59 @@ millisecond and was left alone.
 On a machine running other things the same script shows frames of forty
 milliseconds on both checkouts. That is the machine. The rule in section 0 --
 take the minimum, not the mean -- is what makes the table above worth anything.
+
+## 8. The gate (2026-09-09)
+
+`test/perf-gate.test.mjs` steps the busy yard from the top of this file and the
+endgame yard from section 4 three hundred frames each and reads three counters
+after every frame, published on `globalThis.__perf` from inside the modules
+that do the work (a dynamic import after an edit is a second module instance
+and always reads zero -- CLAUDE.md, "Anything drawn"). `ways` is how many times
+`ways()` in route.js was built that frame: the set of surfaces a body can walk
+is worked out from the yard rather than kept, and section 3 item 1 is the pass
+that took `refresh` from one build per column to one a frame -- one a frame is
+the rule the gate asserts. `grainCols` is how many columns `addGrain` in
+grid.js asked whether they had room, and `grains` is how many grains it dropped
+in, so the first reads as a per-grain figure: section 4's spike was one grain
+searching six hundred columns of ninety rows, and the fix keeps a grain inside
+the ground it landed on. The ceiling is derived from the yard on the frame it
+is checked, not typed in -- the larger of the widest strip in `S.piles` in
+columns (a heaped grain may spread the length of its own strip and no further)
+and `2 * BARRED_REACH + 1` (a grain over barred ground walks that far out on
+both sides) -- and the assertion is `grainCols <= grains * ceiling` per frame,
+written as a product so a frame with no grains is a frame with no search. Both
+counts are exact and the sim is seeded, so two runs of the file say the same
+numbers: on the day it landed, the busy yard's worst frame was 161 columns over
+7 grains against a ceiling of 193 a grain, and the endgame yard's was 3 over 1.
+The `ways` rule was red the day it landed -- 53 builds a frame on the busy yard
+and 79 on the endgame one, one per body per `wayAt` from `inWorking` and
+`surfaceUnder` -- and it was left red rather than loosened; see the check.
+
+It counts rather than times because a millisecond here is a fact about the
+machine at least as much as about the game. Section 0's rule -- take the
+minimum of ten segments, never the mean -- exists because this machine runs
+other agents, and forty-millisecond frames turn up on main and on a branch
+alike when it is loaded; a wall-clock ceiling generous enough never to fire
+under that is too generous to notice the busy yard going from 0.12 back to
+0.80. A count is the same number quiet or loaded, on this machine or a phone,
+and it is the thing the two big passes actually changed: not how long the work
+took but how much of it there was. That is also the house rule -- assert the
+rule directly rather than a threshold on a noisy statistic -- applied to the
+frame. The gate says nothing about the draw, the sky or anything section 7
+measured; it pins the two regressions that have already happened once, which
+is the only kind a gate can be honest about.
+
+When a legitimate change needs the ceiling moved, move the derivation and not
+the number. The grain ceiling is read off `S.piles` and `BARRED_REACH`, so a
+wider strip or a longer barred walk raises it on its own; a new search that is
+neither -- a grain allowed to cross into a neighbor's strip, say -- is a new
+rule about where dust may go, and the honest change is to state that rule in
+the ceiling's comment in the check and derive the new bound from it, never to
+multiply the old one by a slack factor. The `ways` rule has no number to move:
+if a change genuinely needs a second build a frame, the change is to `ways()`
+itself -- memoize it on the frame, or thread the one build through the callers
+that ask for it by default argument (`wayAt`, `footing`, `route`, `wayOver`)
+-- and the gate stays at one. A red gate is a finding to write into this file
+with the frame it spiked on and what the yard was doing, the way section 4 was
+written, and the fix is on main; it is never a reason to loosen the check on
+the branch that made it red.
