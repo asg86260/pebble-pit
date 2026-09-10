@@ -204,8 +204,15 @@ group('smoke rises and goes out, and does not pile up', async () => {
   window.__tip(90000);
   buyBuilt('jaw');
 
-  await run(10);
-  const early = state().machSmoke;
+  await run(7);
+  // The most in the air over a few seconds, not the count at one instant: the
+  // stack puffs a few motes every second and a half and they go out together,
+  // so a single reading can land in the gap between one puff going out and the
+  // next -- it read nought at exactly ten seconds with the tender aboard and
+  // the machine running. A threshold on a noisy statistic; this is the
+  // statistic asked properly.
+  let early = 0;
+  for (let i = 0; i < 12; i++) { await run(0.25); early = Math.max(early, state().machSmoke); }
   // Long enough that a leak would be plain: the stack puffs about four motes
   // every second and a half, so an hour's worth of frames with nothing expiring
   // runs into the hundreds while a healthy yard sits at a handful.

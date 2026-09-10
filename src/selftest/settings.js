@@ -26,9 +26,12 @@ const motion = () => document.getElementById('motion');
 
 // what a player reads, top to bottom: each child of the sheet that is showing,
 // as its text with the whitespace folded
+// The record is a list whose length is the yard's doing, so it is read as its
+// heading: what the check is about is that the line is there, in its place.
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
-  .map(el => el.textContent.replace(/\s+/g, ' ').trim());
+  .map(el => el.id === 'record' ? 'the record'
+                                : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
   ['the held sheet is the settings sheet', async () => {
@@ -43,6 +46,8 @@ export const TESTS = [
       'paused',
       'resume',
       '',                                     // the rule
+      'the record',                           // the list, when there is one -- see record.js
+      '',                                     // and its rule
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'save a copy load a save',
       'reset progress',
