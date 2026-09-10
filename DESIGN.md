@@ -6263,3 +6263,28 @@ they are for every other build.
 - One check, bought the player's way: mine to the first affordable row, assert no
   bench, click the call, run the yard until the work lands, assert the bench and
   assert the digger went back to the rock.
+
+## The sheet (design, not built)
+
+Spec: `docs/wave-release.md`. The bargain in one paragraph, because the spec
+is a build document and this is the reasoning.
+
+Every board in this game is a place you walked to, and settings are not a
+place. The one surface that is already not the yard is the held sheet -- space
+stops the clock and a white card in the middle of the window says so -- and
+it is reachable from the first second of a new game, before a bench exists.
+So the sheet grows rather than a second surface being added: under PAUSED and
+its resume button go the motion switch, the save going out and coming back in,
+the reset button (off the bench, where it was the one row that was not a
+purchase), the two keys written down, the build's name, and the one honest
+sentence about there being no finish line. No corner button, no gear, no row
+on any board. What the player gives up is nothing; what the fiction gives up
+is one card it already had.
+
+Reduced motion means the camera and the shake -- the punctuation -- and
+nothing the yard itself does: bodies walk, rain falls, the wheel spins, the
+star breathes. The intro plays every beat from a still seat.
+
+A hidden window is a pause. The clock may not leap on return, because a
+leap is every timed thing you paid for resolving at once, which is the one
+punishment for walking away that pillar 2 forbids.

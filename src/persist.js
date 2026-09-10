@@ -1107,3 +1107,21 @@ export function reset(fresh = true) {
   persist();
 }
 
+// --- the save, in and out of the player's hands (wave-release, track C) ------
+//
+// The two doors the settings sheet opens. `exportSave` is the raw blob, exactly
+// as stored -- huge, honest, and pasteable into a bug report, which is what
+// `copy save` on the dev panel has always handed over. `importSave` is the
+// other way: parse, check the shape the way `load` does, keep the current save
+// under a second key until the new one has restored cleanly, and only then let
+// it go. It returns true on a yard that took, false on a blob that was refused,
+// and a page that had a good save before has the same good save after either
+// answer. Track C builds it; until then it says so.
+export function exportSave() {
+  try { return localStorage.getItem('boulder-clicker/v4') || ''; } catch { return ''; }
+}
+
+export function importSave(raw) {
+  throw new Error('importSave: not built (docs/wave-release.md, track C)');
+}
+

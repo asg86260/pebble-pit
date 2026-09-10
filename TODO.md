@@ -181,6 +181,19 @@ test/persist-roundtrip.test.mjs fails on `rescued`, `rescueTo`, `landAt`,
 `shield`, `shieldsDone` and `rockHeld` — six fields in none of state.js's three
 lists. It is red on main too; the shack's own fields are listed.
 
+## Wave release — the web-side checklist (2026-09-09)
+
+**Designed, awaiting approval before any track is launched.** See
+`docs/wave-release.md` (the spec, canon for the five tracks) and "The sheet"
+at the end of DESIGN.md (the reasoning). Tracks: A the settings sheet on the
+held sheet, with the version and the reset button; B reduced motion; C save
+export/import with a one-deep `.prev`; D the hidden window's clock clamp;
+E a count-based perf gate. The seam modules (`src/prefs.js`, `src/version.js`,
+the `__BUILD__` define, the `importSave` stub) are on the branch already so
+that no track waits on another. Not in it: the Electron shell, disk saves and
+packaging (one wave after the shell design), audio (its own wave after the
+sound rule), touch tooltips.
+
 ## Everything that is not content (2026-09-08)
 
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
