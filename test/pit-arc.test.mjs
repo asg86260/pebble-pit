@@ -154,3 +154,21 @@ group('a save comes back in the era it was written in', async () => {
        `${old.riftAte}`)
   ];
 });
+
+// A reset is a game that has never been played, and one that has never been
+// played is solid. `riftAte` and `drowned` are by-hand fields, and the reset
+// blanked its by-hand fields off a list of its own that had never heard of
+// them -- so a drowned yard reset to a fresh crew standing beside the abyss.
+group('a reset puts a drowned yard back to solid', async () => {
+  window.__reset();
+  window.__rift();
+  const before = state();
+  window.__reset(true, true);            // the dev panel's button: a new run, opening and all
+  const after = state();
+  return [
+    ok(before.drowned && before.riftAte >= ABYSS_AT, 'the yard was drowned to begin with'),
+    ok(!after.drowned, 'and is not after the reset'),
+    ok(!after.riftOpen && after.riftAte === 0, 'the rift is neither torn nor fed',
+       `open ${after.riftOpen}, ate ${after.riftAte}`)
+  ];
+});

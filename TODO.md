@@ -1,5 +1,39 @@
 # Still to do
 
+## The noticeboard and the record on it (2026-09-09)
+
+**Approved 2026-09-10. Not built.** DESIGN.md, "The noticeboard, and the record
+on it", now carries the approved catalog: forty-two notices of the fifty-two
+proposed, with the approved name and note for each written out verbatim. Ten
+were struck off on the sheet and are gone rather than parked. A board between
+the work bench and the houses that says what you have done; the income books
+move off the pit mouth onto it as its second sheet, which retires `booksRect`
+and the hand-tightened hit patch kept out of the rift's air.
+
+**Recognition only.** No notice pays out, unlocks a row or changes a rate. That
+is the decision the whole feature hangs off, and it is the same bargain
+`records.js` already strikes with the crew's own histories.
+
+**The three calls came down:** the locked list is counted, not named; a body
+walks over when a notice lands, and the tick stays too; a body's own record
+goes on the crew list off the house board, as its own later piece of work.
+
+**What it costs, after the cuts.** Thirty of the forty-two are one comparison
+against a field already on `S`. Only three need anything remembered between
+frames -- two per-rock flags and one stamp, all cleared when a rock lands -- and
+the two that wanted counters of their own (a crit streak, broke-having-been-rich)
+are both cut. The casino pair and `nobody hired` are event hooks: marked earned
+where the thing happens, with nothing carried.
+
+**Left open, and both dev-panel questions rather than code:** every threshold in
+the numbers table, and the 50,000 on the two casino notices.
+
+Big enough for the wave treatment: the catalog, the board and its two sheets,
+the site row, and the witnesses at their event sites are four tracks with nearly
+disjoint ownership.
+
+The sheet the approval was made on is `docs/noticeboard-catalog.html`.
+
 ## The farm and the quarry sell the same rate twice (2026-09-08)
 
 **Built, 2026-09-09.** Both boards sold a `speed` rung and a `speed x` over that

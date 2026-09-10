@@ -236,9 +236,12 @@ canvas.addEventListener('pointermove', e => {
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
                : nearOuthouse(S.mouse.x, S.mouse.y) ? 'outhouse'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house'
-               // and the books over the pit, which are a patch of air rather
-               // than a building: anything actually standing on the ground wins
-               // over them, the same way the house comes after the rest
+               // and the noticeboard, which carries the books and the record.
+               // It is a building like the rest of them now rather than a
+               // patch of air at the pit mouth, but it stays last in the
+               // cascade all the same: it stands on the busiest strip in the
+               // yard, between the bench and the front doors, so anything
+               // else you might actually be pointing at wins over it.
                : nearStats(S.mouse.x, S.mouse.y) ? 'stats' : null;
     // Standing at a station outranks being on the way to the open board.
     //
@@ -377,10 +380,10 @@ function cellLabel(v) {
   if (!v) return null;
   if (v === CORE_CELL) return 'core';
   const k = findKind(v);
-  if (k === SHARD_CELL) return 'shard';
-  if (k === SPORE_CELL) return 'spore';
+  if (k === SHARD_CELL) return 'ore';
+  if (k === SPORE_CELL) return 'crop';
   if (k === SPARK_CELL) return 'spark';
-  return isDust(v) ? 'dust' : null;
+  return isDust(v) ? 'pebble' : null;
 }
 
 // Every building that has a name on its own board, plus the two that do not
@@ -493,7 +496,7 @@ export function whatIsAt(x, y) {
   if (overBird(x, y)) return 'bird';
   if (potAt(x, y)) return 'pot';
   if (balloonAt(x, y)) return 'balloon';
-  if (cropAt(x, y)) return 'food';
+  if (cropAt(x, y)) return 'crop';
   return null;
 }
 

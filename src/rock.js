@@ -12,6 +12,7 @@ import {
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
+import { noteBite } from './notices.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
@@ -37,6 +38,13 @@ export function depthOf() {
 
 // how big rock n is, in cells. It may never grow into the building on its flank,
 // nor out of the sky kept clear above the ground line
+// How wide rock n would be, in cells, before the flank has its say: what the
+// shack stands off (see `shackSpot`, world.js), which is why it is on its own.
+export const rockWidthAt = n => {
+  const w = Math.min(ROCK_W_MAX, Math.round(ROCK_W + (n - 1) * ROCK_GROW_W));
+  return w - (w % 2);
+};
+
 export function rockSize() {
   const w = Math.round(ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W);
   const h = Math.round(ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H);
@@ -576,7 +584,7 @@ export function pickCell(mx, my) {
 // (`workBoost`), the same way the farm quickens a stoop. Your own click carries
 // no body and so neither bonus, which is right -- the tonics are dealt to the
 // crew, not to your cursor.
-export function knockOff(mx, my, want = pickCount(), dirties = true, body = null) {
+export function knockOff(mx, my, want = pickCount(), dirties = true, body = null, from = 'you') {
   const c = pickCell(mx, my);
   if (!c) return;
 
@@ -585,6 +593,8 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   // and it is being paid here rather than out of the counter.
   want = throughRockMuck(want);
   if (want < 1) { S.dirty = true; return; }
+
+  noteBite(body ? 'crew' : from);   // somebody has now bitten this rock
 
   // The rock is an unbounded job, so a crit ADDS: this swing takes several
   // pixels' worth off the face at once, and there is no ceiling on how much
@@ -769,7 +779,7 @@ defineMachine('ram', {
     const x = rockLeft() + col * P + P / 2;
     const y = rockTopY(col) + P * 2;
     const bite = rockhandBite();
-    const took = knockOff(x, y, bite * n) || 0;
+    const took = knockOff(x, y, bite * n, true, null, 'machine') || 0;
     if (!took) return 0;
     // Credited what it took, not one a strike -- `mined` counts cells off the
     // hill everywhere else it is written, and a machine that counted strikes

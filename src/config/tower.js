@@ -65,7 +65,7 @@ export const SPELLS = [
   { key: 'drive',  name: 'quicken the machines', spark: 45,
     note: 'every machine in the yard works half again as fast' },
   { key: 'luck',   name: 'bless the cut',        spark: 35,
-    note: 'a dig turns up a quarter again as much stone' },
+    note: 'a dig turns up a quarter again as much ore' },
   { key: 'thrift', name: 'raise the houses',     spark: 30,
     note: 'a house costs half what it did' },
   { key: 'sweep',  name: 'hasten the janitors',  spark: 25,

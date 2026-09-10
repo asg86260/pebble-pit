@@ -96,6 +96,28 @@ const SCENES = {
                pointerId: 1, isPrimary: true, button: 0, buttons: 0, bubbles: true }));
            });`,
 
+  // The rock's own flank: the hill, the hut beside it and the bench beyond,
+  // with the ground between them. A picture of spacing, so the camera sits on
+  // the rock's left edge and lets the walk run out to the left of it.
+  flank: `window.__reset(); window.__crew(3,1); window.__shack(); window.__give(100);
+          window.__fast(2);
+          requestAnimationFrame(() => {
+            document.getElementById('raise').click();
+            window.__fast(40);
+            window.__look(window.__state().benchX - 120);
+          });`,
+
+  // ...and the same, six rocks in: the hut has scooted out to keep its
+  // clearance off a broader rock, and the bench has not moved.
+  flankgrown: `window.__reset(); window.__crew(3,1); window.__shack(); window.__give(100);
+          window.__fast(2);
+          requestAnimationFrame(() => {
+            document.getElementById('raise').click();
+            window.__fast(40);
+            for (let i = 0; i < 5; i++) { window.__next(); window.__fast(6); }
+            window.__look(window.__state().benchX - 120);
+          });`,
+
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
@@ -471,6 +493,21 @@ const SCENES = {
               (window.__state().towerX - 361);`,
 
   // A board, open, with everything on it.
+  // The noticeboard, between the work bench and the front doors, with a record
+  // pinned to it. The board fills with slips as the record does, so the two
+  // shots worth having are a yard that has only just started and one that has
+  // done a great deal: `notices` is the first and `notices2` the second.
+  //
+  // Neither tier can see any of this -- how many slips are up, whether the
+  // newest stands proud of the rest, whether the thing reads as a board you
+  // walk up to rather than as another shed with the door left off. The shot
+  // is the check.
+  notices: `window.__reset(); window.__crew(1); window.__give(400); window.__fast(4);
+            window.__look(window.__state().noticesX); window.__fast(6);`,
+
+  notices2: `window.__reset(); window.__crew(1); window.__jump(30); window.__tip(90000); window.__fast(6);
+             window.__look(window.__state().noticesX); window.__fast(6);`,
+
   boards: `${RICH} window.__board('tower');`,
 
   // The three boards whose headings name a trade or a purchase rather than a

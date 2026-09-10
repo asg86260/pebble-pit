@@ -2,6 +2,7 @@
 
 import { P, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM } from './config.js';
 import { S, pit } from './state.js';
+import { noteRockCleared } from './notices.js';
 import { addGrain } from './grid.js';
 import { rockEdge } from './world.js';
 import { aim } from './dust.js';
@@ -104,6 +105,7 @@ export function stepCore() {
     // Nothing lands on top of the celebration. The next rock waits for the
     // crew to finish, then comes down out of the sky on to the bare ground.
     if ((clear || now() > S.nextBoulderAt) && now() >= S.danceUntil) {
+      noteRockCleared();   // what the one just finished was like
       S.boulderNo++;
       makeBoulder(true);
       S.dirty = true;

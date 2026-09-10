@@ -41,8 +41,9 @@ import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_T
          CASINO_WHEEL, CASINO_KNOCK,
          CASINO_WIN_KNOCK, TABLE_LIFE, TABLE_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM,
-         P, SHADES, SHARD_CELL, SPORE_CELL, someFind } from './config.js';
+         P, SHADES, SHARD_CELL, SPORE_CELL, someFind, CASINO_BIG } from './config.js';
 import { S, pit, casino, table } from './state.js';
+import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, topRow, at, put, bottomY, surfaceY } from './grid.js';
 import { shakeView } from './world.js';
@@ -540,6 +541,7 @@ export function stepCasino(dt) {
     // a wheel that stopped and told you nothing is a wheel you had to have been
     // watching, and you are usually somewhere else in the yard.
     S.hand = { won: S.spinWon, n: S.spinWon ? pot() : 0, cur, at: now() };
+    noteHand(S.spinWon, S.hand.n || S.pot?.n || 0, CASINO_BIG);
     S.dirty = true;
     buildShop();
   }

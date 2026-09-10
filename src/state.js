@@ -415,6 +415,18 @@ export const S = {
   // building. Which board is open is this session's business, like the rest of
   // them, so it is in EPHEMERAL below.
   statsBoardOpen: false,
+  // --- the record: what the yard has done. See notices.js ---
+  // Recognition only: nothing in here feeds a rate, which is the bargain the
+  // whole feature hangs off.
+  won: [],                // the notices earned, in the order they landed
+  wonAt: {},              // and when each one did, so the sheet reads newest first
+  wonSeen: 0,             // how many have been looked at; the rest wear the tick
+  noticeMigrated: false,  // the silent catch-up has been run on this save
+  // What a notice needs remembered that the yard does not already know: who
+  // has bitten this rock, and the stamp of the last one off. Cleared every
+  // time a rock comes off. One object rather than a field per feat -- see
+  // notices.js, which is the only thing that writes it.
+  tally: {},
   looBoardOpen: false,      // and the outhouse's, which carries the janitor's ladder
 
   // --- the air ----------------------------------------------------------------
@@ -480,6 +492,7 @@ export const S = {
   // than a count the yard derives, and new buildings wait for one. See
   // buildbench.js and DESIGN.md, "The build yard".
   buildbench: { x: 0, y: 0, w: 0, h: 0 },   // where the trestle stands (reseated at boot)
+  noticeboard: { x: 0, y: 0, w: 0, h: 0 }, // and the record, on its posts (reseated at boot)
   buildbenchOpen: false,  // the construction bench is built
   buildPostLevel: 0,      // rungs of `buildposts`: +1 builder and +1 concurrent build each
   buildPaceLevel: 0       // rungs of `buildpace`: how much faster a builder works
@@ -629,10 +642,19 @@ export const SAVED = [
   // and `rebalance` on restore re-derives or clamps it, the way the dealt
   // counts are.
   'buildbench',
+  'noticeboard',
   'buildbenchOpen',
   'buildPostLevel',
   'buildPaceLevel',
   JOB.BUILD,
+  // The record. `tally` is saved because a rock half-mined when you closed
+  // the tab was still half-mined by somebody when you come back, and who bit
+  // it is the whole question two of the feats ask.
+  'won',
+  'wonAt',
+  'wonSeen',
+  'noticeMigrated',
+  'tally',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy

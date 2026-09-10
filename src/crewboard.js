@@ -101,7 +101,7 @@ const row = (label, value) => `${label.padEnd(LABEL)}${value}`;
 // there is no second state machine here to fall out of step with them, which is
 // the whole reason this reads off `goal` rather than off a guess made from
 // where the body happens to be standing.
-const NOW = { seek: 'looking for dust', dump: 'tipping a load',
+const NOW = { seek: 'looking for pebbles', dump: 'tipping a load',
               muck: 'shovelling up mess', cut: 'working the cut',
               work: 'working the cut', up: 'climbing out', down: 'climbing down',
               tend: 'tending a plot', home: 'heading home', idle: 'nothing much',

@@ -8,6 +8,7 @@ import { LAB_W, SCHOOL_W } from './school.js';
 import { SCRUB_W } from './scrub.js';
 import { BENCH_W, P } from './yard.js';
 import { BUILDBENCH_W } from './build.js';
+import { BOARD_W } from './notices.js';
 
 export const TO_LEDGE = 636;     // rock centre to the lip of the pit
 // The rock is the only thing left on this side, so the ground the bench and the
@@ -108,6 +109,11 @@ export const SITES = [
   // -- where you buy a thing and where somebody is hired to build it are next
   // to each other. Its ground is reserved from the start like everybody's.
   { key: 'buildbench', w: () => BUILDBENCH_W,              standoff: 0,  pile: null },
+  // The record, between the bench and the front doors. It is put where the
+  // crew already pass: the houses are where they live and the bench is where
+  // they are kitted, so the strip between the two is the ground most walked
+  // in the yard. A board nobody walks past is a board nobody reads.
+  { key: 'notices',  w: () => BOARD_W,                    standoff: 0,  pile: null },
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null },
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null },
   { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
@@ -128,14 +134,20 @@ export const SITES = [
   { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left' }
 ];
 
-// Every site gets the same pad of ground on its heap side, whether or not it
-// has a heap to stand there (station-pad prototype). The pad is DERIVED, not
-// tuned: the widest thing any site actually parks beside itself -- its heap at
-// full width plus the standoff that keeps the heap off its wall. One number,
-// measured off real content, so the yard's rhythm is even by construction:
-// wall to wall, every pair of neighbours is SLOT_PAD + STATION_GAP apart.
-export const SLOT_PAD = Math.max(...SITES.filter(r => r.pile)
-  .map(r => r.standoff + heapBase(r.pile) * P));
+// The ground a site owns beside itself for its heap: the heap at full width
+// plus the standoff that keeps it off the wall, and nothing for a site that
+// makes nothing. DERIVED, not tuned, and measured off the site's OWN content.
+//
+// It was one number for every site -- the widest heap in the yard, the
+// quarry's thirty-five cells, laid beside all thirteen whether or not they had
+// a heap to put there -- on the argument that an even rhythm is wall to wall.
+// Nine of the thirteen have no heap, so the argument bought the shack and the
+// bench three hundred and thirty pixels of bare ground between them and the
+// walk out to the tower a screen and a half of nothing. The rhythm the yard
+// actually reads is the bare ground between one drawn thing and the next, and
+// that is STATION_GAP everywhere by construction once each site is padded by
+// what it parks there and no more.
+export const padOf = row => row.pile ? row.standoff + heapBase(row.pile) * P : 0;
 
 // How wide the rock is ever allowed to get, and how much bare ground it keeps
 // off the building on its flank. They live up here, ahead of the walk, because
@@ -150,11 +162,11 @@ export const ROCK_W_MAX = 92;
 // growing up against the wall. It was `P * 14` written into `rockSize`
 // (rock.js) -- a number in a module, and the module could not be read against
 // the spacing that had to agree with it. The two ends of one decision.
-export const ROCK_FLANK_CLEAR = P * 14;
+export const ROCK_FLANK_CLEAR = P * 6;
 
-// The bare ground between the rock's centre and the far edge of the first slot
-// along. Measured from `S.cx` rather than from the rock's edge, because the rock
-// changes size and the yard does not rearrange itself around it.
+// The bare ground between the rock's centre and the near wall of the first
+// site along. Measured from `S.cx` rather than from the rock's edge, because the
+// rock changes size and the yard does not rearrange itself around it.
 //
 // Derived, not measured. It was 264 -- the width of rock one, by eye -- which
 // left the shack standing three hundred and forty pixels off the boulder while
@@ -163,16 +175,17 @@ export const ROCK_FLANK_CLEAR = P * 14;
 //
 // So it is the room the rock actually needs and no more: the biggest rock
 // reaches ROCK_W_MAX / 2 cells either side of `S.cx`, `rockSize` keeps
-// ROCK_FLANK_CLEAR of bare ground off whatever stands on its flank, and the
-// slot's own SLOT_PAD apron is already inside this distance. Any closer and the
-// rock quietly stops growing short of its own ceiling -- a cap nobody asked for,
-// hidden in a spacing number. Any further and the shack is standing out in the
-// yard for no reason, which is where it was.
+// ROCK_FLANK_CLEAR of bare ground off whatever stands on its flank. Any closer
+// and the rock quietly stops growing short of its own ceiling -- a cap nobody
+// asked for, hidden in a spacing number. Any further and the shack is standing
+// out in the yard for no reason, which is where it was.
 //
 // The shack is what this places, and it is the only site that has a neighbour
-// on its rock side that is not a building. Everything behind it is spaced off
+// on its rock side that is not a building. It has no heap, so nothing of its
+// own stands in the rock's clear ground; a first site that threw toward the
+// rock would need its `padOf` added here. Everything behind it is spaced off
 // its neighbours as before.
-export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR - SLOT_PAD;
+export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR;
 
 // Bare ground kept past the last building, at the far end of the walk, before
 // the world runs out. Somewhere for the camera to stop and for the casino to
@@ -204,7 +217,7 @@ export const YARD_MARGIN = P * 10;
 // means something else. Growing it at all is a migration -- see `floorShift` in
 // persist.js, which slides a save's dust across by however many columns the
 // world gained on its left.
-const WALK = SITES.reduce((n, row) => n + row.w() + SLOT_PAD, 0)
+const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row), 0)
   + STATION_GAP * (SITES.length - 1);
 export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1

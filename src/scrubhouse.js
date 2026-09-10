@@ -137,7 +137,7 @@ export const SCRUB_UPGRADES = [
     name: 'the recycler',
     // What it is for. A row that says "recycler" and nothing else is a row you
     // have to buy to find out about.
-    note: () => 'replaces the filters: what it catches comes back as dust',
+    note: () => 'replaces the filters: what it catches comes back as pebbles',
     cost: () => RECYCLE_SHARDS,
     currency: 'shard',
     buy: () => { S.recycler = true; S.dirty = true; },

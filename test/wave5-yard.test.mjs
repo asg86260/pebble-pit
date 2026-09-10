@@ -10,7 +10,7 @@ import { yard, group, ok, state, run, runUntil, openSites, P } from './helpers.m
 import { S, floor, sky, tower } from '../src/state.js';
 import { at as cellAt } from '../src/grid.js';
 import { placeSites, bankCeiling } from '../src/world.js';
-import { PILE_LIMIT, SLOT_PAD, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
+import { PILE_LIMIT, padOf, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
 
 // What ground a site has spoken for, in two readings.
 //
@@ -18,14 +18,14 @@ import { PILE_LIMIT, SLOT_PAD, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '
 // the walk in `placeSites` spaces. `runFrom`/`runTo` take in its heap as well,
 // which is what is actually drawn on the ground.
 //
-// The two used to be one, and the check below asked for STATION_GAP between
-// drawn extents. That stopped being the rule when every site was given the same
-// apron (`SLOT_PAD`, derived in config/sites.js from the widest heap any site
-// parks beside itself): the walk now spends SLOT_PAD + STATION_GAP between
-// every pair of walls, and a heap lies inside its own site's apron rather than
-// eating the walk. So a site with a small heap -- or none at all -- leaves the
-// rest of its apron bare, and measuring extent to extent read that spare apron
-// as an uneven gap. The rhythm is even; it is even wall to wall.
+// The rule is one STATION_GAP of bare ground between one drawn thing and the
+// next. For a while every site was given the same apron -- the widest heap in
+// the yard, laid beside all of them -- and the rhythm was said to be even wall
+// to wall; nine sites with no heap stood a quarry's spoil apart for nothing.
+// Now a site owns exactly the ground its own heap takes (`padOf`, config/
+// sites.js), on the side the heap lies, so the bare ground between drawn runs
+// is the gap everywhere and wall to wall is that plus whatever heap stands
+// between the two walls.
 function extents() {
   const { at, strips } = placeSites();
   return SITES.map(row => {
@@ -33,6 +33,8 @@ function extents() {
     const strip = strips.find(p => p.key === row.pile);
     return {
       key: row.key,
+      pad: padOf(row),
+      side: row.side,
       from: box.x,
       to: box.x + box.w,
       runFrom: Math.min(box.x, strip ? strip.from : Infinity),
@@ -41,16 +43,21 @@ function extents() {
   }).sort((a, b) => a.from - b.from);
 }
 
-// The one separation the walk spends between a pair of neighbouring walls.
-const PITCH = SLOT_PAD + STATION_GAP;
+// The separation the walk spends between a pair of neighbouring walls: the
+// bare gap, plus the ground of whichever heaps lie between them -- the nearer
+// site's if its heap lies on its far side, the further site's if it throws
+// toward the rock.
+const pitch = (near, far) => STATION_GAP
+  + (near.side === 'left' ? near.pad : 0) + (far.side === 'left' ? 0 : far.pad);
 
 group('one gap, and the same one, between every pair of stations', () => {
   openSites();
   const runs = extents();
   const gaps = runs.slice(1).map((r, i) => ({ pair: `${runs[i].key}->${r.key}`,
                                               gap: r.from - runs[i].to,
+                                              pitch: pitch(r, runs[i]),
                                               bare: r.runFrom - runs[i].runTo }));
-  const odd = gaps.filter(g => g.gap !== PITCH);
+  const odd = gaps.filter(g => g.gap !== g.pitch);
   // A heap that has been given more ground than its own site's apron holds
   // would show up here and nowhere else: it would reach across the walk into
   // the neighbour's apron, and the bare ground between two drawn runs would
@@ -60,8 +67,8 @@ group('one gap, and the same one, between every pair of stations', () => {
   return [
     ok(runs.length === SITES.length, 'every site in the table stood somewhere',
        `${runs.length} of ${SITES.length}`),
-    ok(!odd.length, 'and each pair of walls stands the same distance apart',
-       odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${PITCH} throughout`),
+    ok(!odd.length, 'and each pair of walls stands a gap and their heaps apart',
+       odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${STATION_GAP} bare throughout`),
     ok(!crowded.length, 'with no heap reaching out of its own apron into the walk',
        crowded.map(g => `${g.pair} ${g.bare}`).join(', ')
        || `at least ${STATION_GAP} bare between every drawn pair`),
@@ -283,7 +290,7 @@ group('a save from before the move loads, and its crew walk to the new spots', (
     ok(floor.cols === Math.ceil(S.worldW / P),
        'the ground it saved still fits the world it is laid on',
        `${floor.cols} columns`),
-    ok(runs.every((r, i) => !i || r.from - runs[i - 1].to === PITCH),
+    ok(runs.every((r, i) => !i || r.from - runs[i - 1].to === pitch(r, runs[i - 1])),
        'and it is laid out on the new spacing, not the one it was saved under',
        runs.slice(1).map((r, i) => `${runs[i].key}->${r.key} ${r.from - runs[i].to}`)
          .join(', ')),

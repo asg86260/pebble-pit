@@ -16,6 +16,8 @@ import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
+import { recordRows } from './record.js';
+import { markNoticesRead } from './notices.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
 import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
@@ -60,21 +62,17 @@ const pages = { bench: document.getElementById('board'),
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
-
-// Where you stand to read the books: the mouth of the pit, at its near lip. The
-// books are the only board in the game that does not belong to a building, and
-// that is the point of them -- the pit is the yard's bank, the counter floating
-// over it says what you have, and standing at the same place says how fast it is
-// arriving. Derived off the hole rather than written as a position, so it goes
-// wherever the layout puts the hole.
+// Where you stand to read the books, and the record beside them: the
+// noticeboard, between the work bench and the front doors.
 //
-// Below the ground line rather than in the air above it, which is where the
-// counter card is drawn. That air is the rift's: the disc hangs three cells
-// clear of the ground at the near end of the hole -- the same few feet -- and a
-// menu that opened whenever you looked at the black hole would be the worst
-// place in the yard to put one.
-const booksRect = () => ({ x: pit.x, y: S.groundY,
-                           w: P * BOOKS_STAND_W, h: P * BOOKS_STAND_H });
+// The books used to be the one board in the game with no building under
+// them -- an invisible ten-by-five patch at the near lip of the pit, with a
+// hand-tightened hover box because the ordinary eight cells of padding
+// reached into the rift's air. That was the best answer available while they
+// had nowhere to live. They have somewhere now, and the tight patch and the
+// rift no longer have to be kept out of each other's way, because they are
+// no longer in the same place.
+const booksRect = () => S.noticeboard;
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
@@ -124,7 +122,7 @@ const listFor = which =>
   which === 'farm' ? FARM_UPGRADES :
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
-  which === 'stats' ? STATS_UPGRADES :
+  which === 'stats' ? [...STATS_UPGRADES, ...recordRows()] :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
   // Gathered when asked, like the house's -- see shack.js.
   which === 'shack' ? shackRows() :
@@ -157,7 +155,7 @@ const standing = which =>
   which === 'outhouse' ? S.outhouseOpen :
   which === 'shack' ? S.shackOpen :
   which === 'buildbench' ? S.buildbenchOpen :
-  which === 'stats' ? S.banked > 0 :
+  which === 'stats' ? S.banked > 0 || S.won.length > 0 :
   which === 'house' ? S.crew > 0 : false;
 
 // Where a station's mark goes: the middle of it, on the ground. Now that the
@@ -258,12 +256,11 @@ export const nearShack = (x, y) => S.shackOpen && near(shack, x, y);
 // padding reaches into it -- the same complaint the quarry's ramp raised, and
 // answered the same way. One cell of grace above, two either side and two below,
 // which is a comfortable target and reaches nothing else.
-export const nearStats = (x, y) => {
-  if (!standing('stats')) return false;
-  const r = booksRect();
-  return x > r.x - P * 2 && x < r.x + r.w + P * 2 &&
-         y > r.y - P && y < r.y + r.h + P * 2;
-};
+// The books and the record hang on the same board, so they answer to the same
+// patch of yard. It is the ordinary `near` every other station uses now: the
+// tight hand-cut box was the rift's fault and the rift is a long way from
+// here.
+export const nearStats = (x, y) => standing('stats') && near(S.noticeboard, x, y);
 // And the house, once anybody lives in it -- with a tight right edge rather than
 // the usual eight cells.
 //
@@ -881,6 +878,9 @@ function settle(want) {
   S.apothBoardOpen = want === 'apothecary';
   S.towerBoardOpen = want === 'tower';
   S.statsBoardOpen = want === 'stats';
+  // Opening the board reads what is on it: the bobbing tick over the
+  // noticeboard comes down, and the next notice to land puts it back up.
+  if (want === 'stats') markNoticesRead();
   S.looBoardOpen = want === 'outhouse';
   S.shackBoardOpen = want === 'shack';
 
@@ -1021,7 +1021,7 @@ function fill(which) {
   // and for the same reason: what is on them moves on its own, and a rate that
   // went stale the moment you opened it would be the board telling you what the
   // yard used to be earning.
-  if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
+  if (which === 'stats') refresh(statsShopEl, [...STATS_UPGRADES, ...recordRows()], null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
   if (which === 'shack') refresh(shackShopEl, shackRows(), null);
   if (which === 'buildbench') refresh(buildShopEl, BUILDBENCH_UPGRADES, null);

@@ -87,7 +87,7 @@ export const TESTS = [
       const h = heads.find(el => el.dataset.sect === title);
       return h && h.querySelector('.badge');
     };
-    const rock = badge('rock miners'), dust = badge('dust carters'), quarry = badge('quarry blasters');
+    const rock = badge('rock miners'), dust = badge('pebble carters'), quarry = badge('quarry blasters');
 
     await hoverAway();
     window.__look(state().openCamX);

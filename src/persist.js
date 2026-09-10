@@ -11,7 +11,7 @@ import { load, save, clear, isSave, loadRaw, saveRaw, savePrev } from './save.js
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, BLANK, SAVED, floor, pit, cut, sky } from './state.js';
+import { S, BLANK, SAVED, SAVED_BY_HAND, floor, pit, cut, sky } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
@@ -27,6 +27,7 @@ import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } fr
 import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './stats.js';
+import { catchUpNotices, resetNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -193,6 +194,21 @@ function readSaved(s) {
     else if (typeof blank === 'boolean') S[k] = !!v;
     else S[k] = v;
   }
+}
+
+// The by-hand fields, for a yard with no save behind it. Reading a save sets
+// each of these in its own line below, because each needs judgment; reading no
+// save needs none, and the answer is the declaration, same as `readSaved`. It
+// used to be a second hand-written list -- two of them, one in `restore` and one
+// in `reset` -- and each had quietly lost fields the other still had: a reset
+// kept the last game's drowned pit, because `drowned` was in neither. The few
+// left out here are not blanked but *built* -- the rock and its size by
+// `makeBoulder`, the machines by `freshMachines`, the crew by walking out -- and
+// the run's seed and the view are settled by whoever called.
+const BUILT = new Set(['runSeed', 'camX', 'floor', 'boulder', 'gw', 'gh', 'boulderNo',
+                       'machines', 'workers']);
+function blankByHand() {
+  for (const k of SAVED_BY_HAND) if (!BUILT.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
 }
 
 export function persist() {
@@ -496,6 +512,7 @@ export function restore() {
     // same one line as reading a save, so the two cannot drift apart. This used
     // to be sixty assignments, and it had already lost several of them.
     readSaved({});
+    blankByHand();
     S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
     S.crew = 0;
@@ -827,6 +844,17 @@ export function restore() {
   // after it has run is a correction nobody is standing for.
   if (S.workers.length > S.crew) { S.crew = S.workers.length; rebalance(); }
   syncWorkers();               // and anybody the counts say is missing
+  // A save written BEFORE the record existed satisfies a great many rules at
+  // once, and thirty ticks is a feature introducing itself by shouting. Those
+  // are earned silently and marked already read: these are things you did, and
+  // the board is late, not you.
+  //
+  // Only that save, though, and it is asked of the SAVE rather than of a flag
+  // on S. Any save this version wrote carries `won`, and running the catch-up
+  // on one of those would mark every notice you had earned and not yet gone and
+  // looked at as read -- closing the tab would quietly clear the board's tick.
+  if (!(s && 'won' in s)) catchUpNotices();
+  S.noticeMigrated = true;
   // A site with no gang of its own -- the yard, the bench -- that was busy when
   // the tab shut is busy again the moment it comes back: `S.works` is written
   // above, before the crew even exists. But nobody was sent to it, because the
@@ -1012,6 +1040,7 @@ export function reset(fresh = true) {
   // list is the only place either of them says so. Naming a hundred fields here
   // is what let a new game start with the last game's quarry in it.
   readSaved({});
+  blankByHand();
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;
@@ -1083,6 +1112,7 @@ export function reset(fresh = true) {
   S.plotTone = [];
   syncWorkers();
   resetRates();
+  resetNotices();
   floor.grid.fill(0);
   pit.grid.fill(0);
   recount(floor);                          // both ledgers, both emptied behind `put`

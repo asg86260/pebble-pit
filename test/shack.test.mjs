@@ -8,16 +8,20 @@
 // building, the rows land on its board and leave the bench's, and the helmets
 // come off the middle of the rock.
 
-import { group, ok, P, runUntil, state, yard } from './helpers.mjs';
+import { group, ok, P, run, runUntil, state, yard, WORKER } from './helpers.mjs';
 import { SECTIONS, UPGRADES } from '../src/upgrades.js';
 import { shackRows, shackSections } from '../src/shack.js';
 import { standRect, STATIONS } from '../src/board.js';
 import { buildBoard } from '../src/shop.js';
 import { kitX } from '../src/world.js';
 import { JOB } from '../src/jobs.js';
-import { rockSize } from '../src/rock.js';
+import { rockSize, rockWidthAt } from '../src/rock.js';
+import { ROCK_FLANK_CLEAR, SHACK_SCOOT } from '../src/config.js';
 import { SHACK_DUST } from '../src/config.js';
 import { SHACK_GEAR } from '../src/shack.js';
+import { workAt } from '../src/works.js';
+import { TYPE } from '../src/jobs.js';
+import { shack } from '../src/state.js';
 
 const keysOn = id => [...document.getElementById(id).children]
   .map(c => c.dataset.key).filter(Boolean);
@@ -168,13 +172,17 @@ group('the walk moved out to make room, and the rock is the size it was', async 
   const s = state();
   const shackRight = s.shackX + s.shackW;
 
-  // The biggest boulder the game has, measured rather than driven to: what the
-  // rule answers is the subject here, and forty rocks of waiting is not.
-  const was = S.boulderNo;
+  // The biggest boulder the game has, set rather than driven to: what the
+  // rule answers is the subject here, and forty rocks of waiting is not. The
+  // hut is given the seconds it takes to scoot out to its slot for it -- the
+  // hut stands off the rock that is here, and moves as they grow (see
+  // `shackSpot`, world.js) -- and the rock's cap is measured off the slot.
   S.boulderNo = 40;
+  run(20);
   const widest = rockSize().w * P;
-  S.boulderNo = was;
   const leftEdge = S.cx - widest / 2;
+  const slotRight = S.placed.shack.x + S.placed.shack.w;
+  const hutRight = shack.x + shack.w;
 
   window.__reset();
   return [
@@ -183,9 +191,12 @@ group('the walk moved out to make room, and the rock is the size it was', async 
        `${shackRight} vs ${S.cx}`),
     ok(s.benchX < s.shackX, 'with the bench out behind it',
        `bench ${s.benchX}, shack ${s.shackX}`),
-    ok(leftEdge > shackRight,
-       "the biggest rock still stops short of the hut's wall",
-       `rock edge ${Math.round(leftEdge)}, hut ${shackRight}`)
+    ok(leftEdge > slotRight,
+       "the biggest rock still stops short of the hut's slot",
+       `rock edge ${Math.round(leftEdge)}, slot ${slotRight}`),
+    ok(hutRight === slotRight && leftEdge > hutRight,
+       'and the hut has scooted out to that slot to make room for it',
+       `hut ${hutRight}, slot ${slotRight}`)
   ];
 });
 
@@ -211,5 +222,92 @@ group('a yard with the hut up and the ladder climbed survives a reload', async (
     ok(back.open === was.open && back.rung === was.rung,
        'comes back with both', JSON.stringify(back)),
     ok(!!stand, 'and the hut standing to read them at')
+  ];
+});
+
+// --- and its rows are worked at the hut, by the gang ---------------------------
+// The rows moved onto the shack's board and went on being `site: 'bench'`, so
+// a pick bought at the hut was fitted at the bench by whoever was spare. It is
+// the quarry's rule now: the work claims one rockhand, who walks to the shack
+// and stands there while the bar fills, and the bar fills only then.
+group('a rock row bought at the shack is worked at the shack, by a rockhand', async () => {
+  window.__reset();
+  window.__crew(3, 0);
+  window.__shack();
+  window.__give(50000);
+  runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 3, 90);
+
+  const bought = window.__buy('rockhandspeed');
+  const claimed = () => S.workers.filter(w => w.onBuild === 'shack');
+  run(0.5);
+  const nClaimed = claimed().length;
+  const beforeArrive = workAt('shack')?.done ?? -1;
+
+  const inShack = w => w.x + WORKER > shack.x && w.x < shack.x + shack.w;
+  const arrived = runUntil(() => claimed().some(w => w.atShed && inShack(w)), 60);
+  const atStart = workAt('shack')?.done ?? -1;
+  run(4);
+  const later = workAt('shack')?.done ?? atStart + 999;
+  const working = S.workers.filter(w => w.type === TYPE.ROCK && !w.onBuild).length;
+  const nowhereElse = !workAt('bench');
+
+  const landed = runUntil(() => !workAt('shack'), 300);
+  const released = runUntil(() => claimed().length === 0, 10);
+  const level = S.rockhandSpeedLevel;
+
+  return [
+    ok(bought, 'the row is bought like a player buys it'),
+    ok(nowhereElse, 'and nothing of it is at the bench'),
+    ok(nClaimed === 1, 'exactly one rockhand is claimed', `${nClaimed}`),
+    ok(beforeArrive === 0, 'the bar does not move before it is at the hut', `${beforeArrive}`),
+    ok(arrived, 'the claimed body stands at the shack'),
+    ok(later > atStart, 'the bar advances while it stands there', `${atStart} -> ${later}`),
+    ok(working === 2, 'the other two go on at the rock', `${working}`),
+    ok(landed && released, 'the work lands and the claim clears'),
+    ok(level === 1, 'and the rung is bought', `${level}`)
+  ];
+});
+
+// --- the hut stands off THIS rock, and scoots over for the next -----------------
+// Its slot in the walk is where it stands at the biggest rock there will ever
+// be, which is what the rock's growth is capped against; the hut itself stands
+// ROCK_FLANK_CLEAR off the rock that is here, and slides out toward its slot
+// as each broader one comes down. Watched, not teleported: the positions
+// sampled while it moves are between the two spots, and it never goes past
+// the slot.
+group('the shack stands off the rock that is here, and scoots out for the next', async () => {
+  window.__reset();
+  window.__crew(3, 0);
+  window.__shack();
+  window.__jump(1);
+  run(1);
+  const one = S.boulderNo, x1 = shack.x;
+  const edge1 = S.cx - (rockWidthAt(one) / 2) * P;
+  const off1 = edge1 - (x1 + shack.w);
+
+  // A few rocks on: mined out and the next one down, the way it happens.
+  const seen = [];
+  for (let i = 0; i < 4; i++) {
+    window.__next();
+    for (let t = 0; t < 30; t++) { run(0.1); seen.push(shack.x); }
+  }
+  const later = S.boulderNo, xN = shack.x;
+  const offN = S.cx - (rockWidthAt(later) / 2) * P - (xN + shack.w);
+  const slot = S.placed.shack.x;
+  // Gradual: no single tenth of a second moved it further than the scoot pace.
+  const jumps = seen.slice(1).filter((x, i) => Math.abs(x - seen[i]) > SHACK_SCOOT * 0.1 + 0.01);
+  const monotone = seen.every((x, i) => !i || x <= seen[i - 1]);
+  const kit = kitX(JOB.ROCK);
+
+  return [
+    ok(later > one, 'rocks came and went', `${one} -> ${later}`),
+    ok(off1 === ROCK_FLANK_CLEAR, 'at rock one the hut stands the clearance off the rock',
+       `${off1}px, clearance ${ROCK_FLANK_CLEAR}`),
+    ok(xN < x1, 'and has moved out by the time a broader rock is down', `${x1} -> ${xN}`),
+    ok(offN === ROCK_FLANK_CLEAR, 'to the same clearance off the new one', `${offN}px`),
+    ok(!jumps.length, 'sliding, never jumping', jumps.slice(0, 3).join(', ')),
+    ok(monotone, 'and only ever outward'),
+    ok(xN >= slot, 'never past its slot in the walk', `${xN} vs slot ${slot}`),
+    ok(kit < xN, "and the gang's kit stand went with it", `${kit} vs hut ${xN}`)
   ];
 });

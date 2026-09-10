@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Yard's Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* The game is P = 6 pixels to a cell and everything in it sits on that
+     grid. So does this page: every space below is a whole number of cells. */
+  :root {
+    --p:  6px;
+    --p2: 12px;
+    --p3: 18px;
+    --p4: 24px;
+    --p6: 36px;
+    --p8: 48px;
+    --p12: 72px;
+
+    /* Ink on paper. The game is black and white and flat -- no gradients,
+       no textures -- so the page is too. The greys carry a slight cool
+       bias so they read as chosen rather than as a default mid-grey. */
+    --paper:   #e6e9eb;
+    --slip:    #fbfbfa;
+    --slip-2:  #f1f2f0;
+    --ink:     #131415;
+    --ink-2:   #5c6165;
+    --ink-3:   #8b9094;
+    --rule:    #131415;
+    --rule-soft: #c3c8cc;
+    --drop:    #c9ced2;
+    --edit:    #e4e7ea;
+
+    /* The one color in the whole game is the spark, and it is red. It gets
+       exactly one job here: a notice struck off the board. */
+    --spark:   #b93026;
+    --spark-soft: #f0d6d3;
+
+    --focus:   #2f6fdb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #101112;
+      --slip:    #1b1d1f;
+      --slip-2:  #232628;
+      --ink:     #eceef0;
+      --ink-2:   #9ba1a6;
+      --ink-3:   #6d7378;
+      --rule:    #d3d7da;
+      --rule-soft: #383c40;
+      --drop:    #2b2f32;
+      --edit:    #2a2e31;
+      --spark:   #f0655a;
+      --spark-soft: #45211e;
+      --focus:   #78a8ff;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:   #101112;
+    --slip:    #1b1d1f;
+    --slip-2:  #232628;
+    --ink:     #eceef0;
+    --ink-2:   #9ba1a6;
+    --ink-3:   #6d7378;
+    --rule:    #d3d7da;
+    --rule-soft: #383c40;
+    --drop:    #2b2f32;
+    --edit:    #2a2e31;
+    --spark:   #f0655a;
+    --spark-soft: #45211e;
+    --focus:   #78a8ff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Literata, Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: var(--p8) var(--p4) var(--p12);
+  }
+
+  /* --- the masthead ---------------------------------------------------- */
+
+  .mast { border-bottom: 2px solid var(--rule); padding-bottom: var(--p4); }
+
+  .eyebrow {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin: 0 0 var(--p3);
+  }
+
+  .mast-top { display: flex; flex-wrap: wrap; gap: var(--p4); align-items: flex-start; justify-content: space-between; }
+
+  h1 {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-weight: 700;
+    font-size: clamp(28px, 6vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -.01em;
+    margin: 0 0 var(--p3);
+    text-wrap: balance;
+  }
+
+  /* The approval stamp. Ink only -- a stamp is pressed, not printed in
+     color -- and set at a slight angle, which is the one thing on this page
+     that is not square to the grid, because a stamp never is. */
+  .stamp {
+    display: none;
+    border: 3px solid var(--ink);
+    padding: var(--p2) var(--p3);
+    transform: rotate(-3deg);
+    text-align: center;
+    flex: none;
+  }
+  .stamp b {
+    display: block;
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 20px;
+    letter-spacing: .1em;
+  }
+  .stamp span {
+    display: block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    margin-top: 2px;
+  }
+  body.approved .stamp { display: block; }
+
+  .standfirst {
+    max-width: 62ch;
+    font-size: 17px;
+    color: var(--ink-2);
+    margin: 0 0 var(--p4);
+  }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  /* the running tally, in a rail across the masthead */
+  .tally {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--p2) var(--p8);
+    align-items: baseline;
+  }
+  .tally-item { display: flex; align-items: baseline; gap: var(--p2); }
+  .tally-n {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .tally-l {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .tally-item.is-cut .tally-n { color: var(--spark); }
+
+  /* --- editable text ---------------------------------------------------- */
+  /* Anything you can reword shows a faint ruled line under it, the way a
+     form shows you where to write. It goes solid when you are in it. */
+
+  [contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--rule-soft);
+    padding-bottom: 1px;
+    cursor: text;
+  }
+  [contenteditable="true"]:hover { background: var(--edit); }
+  [contenteditable="true"]:focus {
+    background: var(--edit);
+    border-bottom: 1px solid var(--ink);
+  }
+  [contenteditable="true"]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ink-3);
+    font-style: italic;
+  }
+  body.approved [contenteditable] { border-bottom: 0; background: none; cursor: default; }
+
+  /* --- sections -------------------------------------------------------- */
+
+  section { margin-top: var(--p12); }
+
+  .sec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--p2) var(--p4);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: var(--p2);
+    margin-bottom: var(--p2);
+  }
+
+  .sec-head h2 {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: clamp(17px, 2.6vw, 23px);
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+    flex: 1 1 300px;
+  }
+
+  .sec-count {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .sec-note {
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: 15px;
+    margin: 0 0 var(--p4);
+  }
+
+  /* --- the slips ------------------------------------------------------- */
+  /* A notice is a slip of paper pinned to the board: a hard 1px rule and a
+     flat offset shadow. No blur and no radius -- the game has neither. */
+
+  .slips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(286px, 1fr));
+    gap: var(--p3);
+  }
+
+  .slip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--p2);
+    background: var(--slip);
+    border: 1px solid var(--rule);
+    box-shadow: var(--p) var(--p) 0 var(--drop);
+    padding: var(--p3);
+  }
+
+  .slip-top {
+    display: flex;
+    align-items: center;
+    gap: var(--p2);
+    justify-content: space-between;
+  }
+
+  /* Whether a notice can be read off a fact the yard already keeps, or
+     needs somebody to have been watching. A filled square is free; a
+     hollow one costs a witness. */
+  .kind {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--p);
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .kind i {
+    width: 8px; height: 8px;
+    display: inline-block;
+    border: 1px solid var(--ink-2);
+    background: var(--ink-2);
+    flex: none;
+  }
+  .kind.needs i { background: transparent; }
+
+  .slip h3 {
+    font-family: Literata, Georgia, serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .slip .note {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.45;
+    min-height: 1.45em;
+  }
+
+  .reads {
+    margin-top: auto;
+    padding-top: var(--p2);
+    border-top: 1px solid var(--rule-soft);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-2);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .reads b {
+    font-weight: 500;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 10px;
+    margin-right: var(--p);
+  }
+
+  .slip-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--p2);
+    justify-content: space-between;
+    min-height: 22px;
+  }
+
+  .edited {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: none;
+    align-items: center;
+    gap: var(--p);
+  }
+  .slip.is-edited .edited { display: inline-flex; }
+
+  .mini {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--rule-soft);
+    color: var(--ink-2);
+    padding: 3px var(--p);
+    cursor: pointer;
+  }
+  .mini:hover { border-color: var(--rule); color: var(--ink); }
+  .mini:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  body.approved .mini { display: none; }
+
+  .cut-btn[aria-pressed="true"] {
+    background: var(--spark);
+    border-color: var(--spark);
+    color: #fff;
+  }
+
+  /* struck off */
+  .slip.is-cut {
+    background: var(--slip-2);
+    border-color: var(--spark);
+    box-shadow: var(--p) var(--p) 0 var(--spark-soft);
+  }
+  .slip.is-cut h3 {
+    color: var(--spark);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+  .slip.is-cut .note,
+  .slip.is-cut .reads,
+  .slip.is-cut .kind { opacity: .5; }
+
+  /* --- the three calls -------------------------------------------------- */
+
+  .calls { margin-top: var(--p12); border-top: 2px solid var(--rule); padding-top: var(--p4); }
+
+  .call {
+    border: 1px solid var(--rule);
+    background: var(--slip);
+    box-shadow: var(--p) var(--p) 0 var(--drop);
+    padding: var(--p4);
+    margin-bottom: var(--p6);
+  }
+
+  .call h3 {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 15px;
+    margin: 0 0 var(--p2);
+  }
+  .call p { margin: 0 0 var(--p3); max-width: 64ch; font-size: 15px; color: var(--ink-2); }
+  .call code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
+
+  .opts { display: flex; flex-wrap: wrap; gap: var(--p2); }
+
+  .opt {
+    font-family: Literata, Georgia, serif;
+    font-size: 14px;
+    padding: var(--p2) var(--p3);
+    background: transparent;
+    border: 1px solid var(--rule-soft);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .opt:hover { border-color: var(--rule); }
+  .opt:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .opt[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  body.approved .opt { pointer-events: none; }
+  body.approved .opt:not([aria-pressed="true"]) { opacity: .35; }
+
+  /* --- the approval ----------------------------------------------------- */
+
+  .sign {
+    margin-top: var(--p12);
+    border: 3px solid var(--rule);
+    background: var(--slip);
+    padding: var(--p6);
+  }
+  .sign h2 {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 19px;
+    margin: 0 0 var(--p3);
+  }
+  .sign p { margin: 0 0 var(--p3); max-width: 64ch; color: var(--ink-2); font-size: 15px; }
+
+  .ledger {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--p3);
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    padding: var(--p3) 0;
+    margin-bottom: var(--p4);
+  }
+  .led-l {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+  }
+  .led-v { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .led-v.warn { color: var(--spark); }
+
+  .big {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 14px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: var(--p3) var(--p6);
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    cursor: pointer;
+  }
+  .big:hover { background: transparent; color: var(--ink); }
+  .big:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .big.ghost { background: transparent; color: var(--ink); }
+  .big.ghost:hover { background: var(--ink); color: var(--paper); }
+
+  .signrow { display: flex; flex-wrap: wrap; gap: var(--p2); }
+  .handback {
+    margin: var(--p4) 0 0;
+    max-width: 64ch;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .handback strong { color: var(--ink); font-weight: 600; }
+
+  body.approved #approve { display: none; }
+  #reopen { display: none; }
+  body.approved #reopen { display: inline-block; }
+  body.approved #sign-ask { display: none; }
+  #sign-done { display: none; }
+  body.approved #sign-done { display: block; }
+
+  /* --- footer ---------------------------------------------------------- */
+
+  footer {
+    margin-top: var(--p8);
+    border-top: 1px solid var(--rule-soft);
+    padding-top: var(--p3);
+    font-size: 13px;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--p2) var(--p4);
+    justify-content: space-between;
+  }
+  footer code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; }
+
+  #saved {
+    font-family: Silkscreen, ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Boulder Clicker &middot; design, not built</p>
+    <div class="mast-top">
+      <div>
+        <h1>The Yard's Record</h1>
+      </div>
+      <div class="stamp" aria-hidden="true">
+        <b>Approved</b>
+        <span id="stamp-when"></span>
+      </div>
+    </div>
+    <p class="standfirst">
+      Every notice the yard could honestly put on its board, in the three kinds
+      the design argues for. Nothing here pays out, unlocks a row or changes a
+      rate &mdash; a notice is a record, not a reward.
+      <strong>Every name and note is editable</strong>: click the text and
+      reword it &mdash; a note says <em>what you did to earn the notice</em>, not a remark about it. <strong>Cut</strong> strikes a notice off. Everything saves as
+      you go, and nothing is settled until you approve it at the foot of the
+      page.
+    </p>
+    <div class="tally">
+      <div class="tally-item"><span class="tally-n" id="n-keep">0</span><span class="tally-l">keeping</span></div>
+      <div class="tally-item is-cut"><span class="tally-n" id="n-cut">0</span><span class="tally-l">struck off</span></div>
+      <div class="tally-item"><span class="tally-n" id="n-edit">0</span><span class="tally-l">reworded</span></div>
+      <div class="tally-item"><span class="tally-n" id="n-free">0</span><span class="tally-l">read a standing fact</span></div>
+      <div class="tally-item"><span class="tally-n" id="n-witness">0</span><span class="tally-l">need a witness</span></div>
+    </div>
+  </header>
+
+  <main id="board"></main>
+
+  <div class="calls">
+    <p class="eyebrow">Three calls the design left open</p>
+
+    <div class="call">
+      <h3>The locked list</h3>
+      <p>
+        The design says unearned notices are not named, only counted
+        (<em>14 of 52</em>) &mdash; the rule the books and the counter already
+        follow: nothing in this game names a thing you have not met. But plenty
+        of players want a list to work through, and a bare count may read as coy
+        rather than as restraint. One predicate either way.
+      </p>
+      <div class="opts" data-call="lockedList">
+        <button class="opt" data-value="counted" type="button">Counted only, not named</button>
+        <button class="opt" data-value="named" type="button">Name them, greyed out</button>
+        <button class="opt" data-value="hybrid" type="button">Name the next few only</button>
+      </div>
+    </div>
+
+    <div class="call">
+      <h3>The walk</h3>
+      <p>
+        Whether a body comes over from the houses and stands at the board for a
+        beat when a notice lands &mdash; the way the crew already dance when a
+        rock comes down &mdash; or whether the bobbing tick over the station is
+        the whole of it. The walk is the most in-register version of &ldquo;the
+        yard noticed&rdquo;; it is also an errand, a route and a state, for a
+        thing that is already legible without one.
+      </p>
+      <div class="opts" data-call="walk">
+        <button class="opt" data-value="tick" type="button">The tick is the whole of it</button>
+        <button class="opt" data-value="walk" type="button">Somebody walks over</button>
+        <button class="opt" data-value="look" type="button">Build the tick, then look</button>
+      </div>
+    </div>
+
+    <div class="call">
+      <h3>Where a body&rsquo;s own record is shown</h3>
+      <p>
+        <code>records.js</code> has kept a name, an age, and what each body has
+        mined, quarried, farmed and stored since the crew were made people, and
+        nothing in the game has ever displayed any of it. The record sheet is one
+        candidate; the crew list off the house board is the other. Named here so
+        it does not get solved twice.
+      </p>
+      <div class="opts" data-call="bodies">
+        <button class="opt" data-value="record" type="button">On the record sheet</button>
+        <button class="opt" data-value="crewlist" type="button">On the crew list</button>
+        <button class="opt" data-value="later" type="button">Separate feature, later</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sign">
+    <h2>Sign it off</h2>
+    <p id="sign-ask">
+      Approving locks the sheet and tells me the catalog is settled: I take the
+      wording as it stands here, build only what is not struck off, and follow
+      whichever way the three calls came down. You can reopen it afterwards if
+      something needs another pass.
+    </p>
+    <p id="sign-done">
+      Settled. I will build the catalog exactly as it stands on this sheet.
+      Reopen it if something needs another pass.
+    </p>
+
+    <div class="ledger">
+      <div><span class="led-l">Notices to build</span><span class="led-v" id="led-keep">&mdash;</span></div>
+      <div><span class="led-l">Struck off</span><span class="led-v" id="led-cut">&mdash;</span></div>
+      <div><span class="led-l">Reworded by you</span><span class="led-v" id="led-edit">&mdash;</span></div>
+      <div><span class="led-l">Need a witness</span><span class="led-v" id="led-witness">&mdash;</span></div>
+      <div><span class="led-l">Open calls answered</span><span class="led-v" id="led-calls">&mdash;</span></div>
+    </div>
+
+    <div class="signrow">
+      <button class="big" id="approve" type="button">Approve the catalog</button>
+      <button class="big ghost" id="reopen" type="button">Reopen for changes</button>
+      <button class="big ghost" id="copy" type="button">Copy decisions</button>
+      <button class="big ghost" id="download" type="button">Save as file</button>
+    </div>
+    <p class="handback">
+      Running locally, this sheet is yours alone &mdash; nothing leaves the
+      browser. <strong>Copy decisions</strong> puts a plain summary of every cut,
+      rewording and call on the clipboard: paste it back to me and I will build
+      from exactly that.
+    </p>
+  </div>
+
+  <footer>
+    <span>DESIGN.md &mdash; &ldquo;The noticeboard, and the record on it (design, not built)&rdquo;</span>
+    <span><code>worktree-achievements-design</code> &middot; <code id="build"></code></span>
+    <span id="saved"></span>
+  </footer>
+</div>
+
+<script>
+/* The catalog. Every entry names the fact it reads, because that is the part
+   worth checking: a notice either reads something the yard already keeps
+   (`free`), or it needs somebody to have been watching (`witness`). */
+const CATALOG = [
+  {
+    id: 'pass',
+    title: 'What happens on its own',
+    note: 'The spine of the suite. These land while you are playing, in roughly this order, and every one of them reads a fact already standing on S — nothing has to be counted for them.',
+    items: [
+      { key: 'firstgrain',  name: 'the first pebble',          note: "put a pebble in the hole", reads: 'banked > 0' },
+      { key: 'firstrock',   name: 'the first rock off',        note: "clear a whole boulder off the yard", reads: 'boulderNo >= 2' },
+      { key: 'gotout',      name: 'they got out',              note: "free the body trapped under the first boulder", reads: 'rescued' },
+      { key: 'firstcore',   name: 'something was inside it',   note: "bank a core out of a broken rock", reads: 'seenCore' },
+      { key: 'firsthire',   name: 'somebody else in the yard', note: "hire your first body", reads: 'crew >= 1' },
+      { key: 'firstshard',  name: 'the first ore',             note: "bring ore up out of the quarry", reads: 'seenShard' },
+      { key: 'firstspore',  name: 'the first crops',           note: "take crops off a farm plot", reads: 'seenSpore' },
+      { key: 'firstspark',  name: 'the first spark',           note: "come by your first spark", reads: 'seenSpark' },
+      { key: 'holefull',    name: 'the hole turned a pebble away', note: "fill the hole until it turns a pebble away", reads: 'seenFullPit' },
+      { key: 'rifttorn',    name: 'the rift torn',             note: "tear the rift open", reads: 'riftOpen' },
+      { key: 'drowned',     name: 'the pit drowned',           note: "widen the rift until the pit drowns", reads: 'drowned' },
+      { key: 'allshields',  name: 'everything the sky threw, answered', note: "raise and answer every kind of shield the sky throws", reads: 'every kind in shieldsDone' },
+      { key: 'star',        name: 'a star called down',        note: "call a star down from the tower", reads: 'meteorOpen' },
+      { key: 'firsthat',    name: 'a hat off the stand',       note: "finish a wizard hat at the tower", reads: 'wizardHats >= 1' },
+      { key: 'firstbrew',   name: 'the first batch',           note: "brew a batch at the apothecary", reads: 'brews >= 1' },
+      { key: 'firsttrade',  name: 'somebody taught a trade',   note: "send somebody to the school and teach them a trade", reads: 'any of the four trade counts' },
+      { key: 'alltrades',   name: 'every trade taught',        note: "teach every trade there is to teach", reads: 'all four at their cap' },
+      { key: 'allbuilt',    name: 'every building standing',   note: "put up every building in the yard", reads: 'the *Open flags, all of them' }
+    ]
+  },
+  {
+    id: 'numbers',
+    title: 'Numbers, for the long tail',
+    note: 'The late yard runs itself and there is nothing left ticking. These are what tick. Every threshold is a placeholder wanting a played yard and the dev panel — each one an export let with a TUNABLE row, so it can be argued with rather than guessed at twice.',
+    items: [
+      { key: 'rock5',    name: 'five rocks',                    note: "clear five boulders", reads: 'boulderNo >= 5' },
+      { key: 'rock10',   name: 'ten rocks',                     note: "clear ten boulders", reads: 'boulderNo >= 10' },
+      { key: 'rock25',   name: 'twenty-five rocks',             note: "clear twenty-five boulders", reads: 'boulderNo >= 25' },
+      { key: 'rock50',   name: 'fifty rocks',                   note: "clear fifty boulders", reads: 'boulderNo >= 50' },
+      { key: 'rock100',  name: 'a hundred rocks',               note: "clear a hundred boulders", reads: 'boulderNo >= 100' },
+      { key: 'dust1e4',  name: 'ten thousand pebbles',          note: "bank ten thousand pebbles", reads: 'banked >= 1e4' },
+      { key: 'dust1e5',  name: 'a hundred thousand pebbles',    note: "bank a hundred thousand pebbles", reads: 'banked >= 1e5' },
+      { key: 'dust1e6',  name: 'a million pebbles',             note: "bank a million pebbles", reads: 'banked >= 1e6' },
+      { key: 'dust1e7',  name: 'ten million pebbles',           note: "bank ten million pebbles", reads: 'banked >= 1e7' },
+      { key: 'dust1e8',  name: 'a hundred million pebbles',     note: "bank a hundred million pebbles", reads: 'banked >= 1e8' },
+      { key: 'crew5',    name: 'a crew of five',                note: "hire a crew of five", reads: 'crew >= 5' },
+      { key: 'crew10',   name: 'a crew of ten',                 note: "hire a crew of ten", reads: 'crew >= 10' },
+      { key: 'crew25',   name: 'a crew of twenty-five',         note: "hire a crew of twenty-five", reads: 'crew >= 25' },
+      { key: 'crew50',   name: 'a crew of fifty',               note: "hire a crew of fifty", reads: 'crew >= 50' },
+      { key: 'cut1e3',   name: 'a thousand cells out of the cut', note: "dig a thousand cells out of the quarry", reads: 'quarryTotal >= 1e3' },
+      { key: 'cut1e4',   name: 'ten thousand cells out of the cut', note: "dig ten thousand cells out of the quarry", reads: 'quarryTotal >= 1e4' },
+      { key: 'rift1e6',  name: 'a million through the rift',    note: "send a million pebbles through the rift", reads: 'riftAte >= 1e6' },
+      { key: 'brew100',  name: 'a hundred batches',             note: "brew a hundred batches", reads: 'brews >= 100' },
+      { key: 'lived1h',  name: 'an hour on one clock',          note: "keep one body on the payroll for an hour", reads: 'records.lived, the eldest' },
+      { key: 'lived10h', name: 'ten hours on one clock',        note: "keep one body on the payroll for ten hours", reads: 'records.lived, the eldest' },
+      { key: 'bestmined',name: 'the yard’s best hand',     note: "work one body until it has taken more rock off than anybody else", reads: 'records.mined, the highest' }
+    ]
+  },
+  {
+    id: 'feats',
+    title: 'Feats you would have to set out for',
+    note: 'The ones worth having, and where the work is. Each names the witness it needs — and every witness is a key in one saved object, S.tally, bumped at the single place the event happens. Never a field per feat, scattered across fourteen modules.',
+    items: [
+      { key: 'nobodyhired', name: 'nobody hired',              note: "clear a whole boulder with nobody on the payroll", reads: 'boulderNo steps while crew === 0', needs: true },
+      { key: 'ownhand',     name: 'your own hand alone',       note: "clear a boulder without a single worker touching it", reads: 'tally: no worker mined this rock', needs: true },
+      { key: 'nevertouched',name: 'never touched it',          note: "clear a boulder without swinging at it once yourself", reads: 'tally: no swing of yours this rock', needs: true },
+      { key: 'underminute', name: 'a rock off in under a minute', note: "clear a boulder in under a minute", reads: 'tally: the stamp of the last step', needs: true },
+      { key: 'fullnocut',   name: 'the hole filled before the cut was opened', note: "fill the hole before opening the quarry", reads: 'seenFullPit && !quarryOpen' },
+      { key: 'everyjob',    name: 'every job staffed at once', note: "put at least one body on every job at once", reads: 'every count in JOBS above nought' },
+      { key: 'onebodyall',  name: 'one body that has done every job', note: "work one body through every job in the yard", reads: 'every key present in a record’s at' },
+      { key: 'buried',      name: 'the yard buried',           note: "let every station's pile fill at the same time", reads: 'pileFull, all of them' },
+      { key: 'spotless',    name: 'spotless, with nobody sweeping', note: "clear every pebble off the floor without hiring a janitor", reads: 'floorGrains === 0 && janitors === 0' },
+      { key: 'critstreak',  name: 'a crit streak',             note: "land a run of critical hits without missing", reads: 'tally: crits running', needs: true },
+      { key: 'tablebeaten', name: "we're so back",             note: "win 50k in a single spin at the casino", reads: 'a hand settles paying 50k or more', needs: true },
+      { key: 'tableruin',   name: 'time to get a loan',        note: "lose a 50k stake in a single spin at the casino", reads: 'a hand settles taking a stake of 50k or more', needs: true },
+      { key: 'broke',       name: 'broke, having been rich',   note: "hold a million, then spend down to nothing of every currency", reads: 'tally: the high-water mark', needs: true }
+    ]
+  }
+];
+
+// Bumped with the build, so a local copy written by the version that kept
+// clobbering itself cannot come back to life.
+const BUILD = 'build 10 · local';
+const KEEP = 'boulder-record-v5';
+const allItems = CATALOG.flatMap(s => s.items);
+const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
+const secOf  = Object.fromEntries(CATALOG.map(s => [s.id, s]));
+
+/* What the viewer has changed, and nothing they have not: an edit is only
+   stored when it differs from what the catalog above says, so reverting is
+   deleting rather than writing the original back. */
+const state = { cut: {}, calls: {}, edits: {}, sections: {}, approved: null };
+let db = null;
+
+/* --- drawing the board ------------------------------------------------- */
+
+const board = document.getElementById('board');
+
+/* One editable field. `plaintext-only` where the browser has it, and paste
+   is flattened either way -- a slip is a line of text, not a document. */
+function editable(el, placeholder, read, write) {
+  el.setAttribute('contenteditable', 'plaintext-only');
+  if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true');
+  // Remembered so that reopening an approved sheet puts back the mode this
+  // browser actually supports, rather than downgrading every field to 'true'.
+  el.dataset.ce = el.getAttribute('contenteditable');
+  el.dataset.live = '1';               // every field the approval locks
+  el.setAttribute('role', 'textbox');
+  if (placeholder) el.dataset.placeholder = placeholder;
+  el.textContent = read();
+
+  el.addEventListener('paste', e => {
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' ');
+    document.execCommand('insertText', false, t);
+  });
+  // A slip is one line. Enter means "done", not "new paragraph".
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  });
+  // While you type, ONLY the state and the counts move. Nothing rewrites the
+  // text under the caret, and nothing touches the contenteditable attribute:
+  // re-setting that on a focused element collapses the selection to the start
+  // of the field, which is what made typing come out scrambled.
+  el.addEventListener('input', () => { write(el.textContent.trim()); counts(); queueSave(); });
+  // Leaving a field commits it and writes at once, rather than waiting on the
+  // typing timer -- closing the tab a moment after the last keystroke used to
+  // drop that keystroke.
+  el.addEventListener('blur', () => { write(el.textContent.trim()); paint(); save(); });
+}
+
+for (const sec of CATALOG) {
+  const el = document.createElement('section');
+  el.innerHTML =
+    '<div class="sec-head">' +
+      '<h2></h2>' +
+      '<span class="sec-count" data-count="' + sec.id + '"></span>' +
+    '</div>' +
+    '<p class="sec-note"></p>' +
+    '<div class="slips"></div>';
+
+  editable(el.querySelector('h2'), 'section title',
+    () => (state.sections[sec.id] || {}).title ?? sec.title,
+    v => setSection(sec.id, 'title', v, sec.title));
+
+  editable(el.querySelector('.sec-note'), 'section note',
+    () => (state.sections[sec.id] || {}).note ?? sec.note,
+    v => setSection(sec.id, 'note', v, sec.note));
+
+  const slips = el.querySelector('.slips');
+  for (const it of sec.items) {
+    const card = document.createElement('article');
+    card.className = 'slip';
+    card.dataset.key = it.key;
+    card.innerHTML =
+      '<div class="slip-top">' +
+        '<span class="kind' + (it.needs ? ' needs' : '') + '"><i></i>' +
+          (it.needs ? 'needs a witness' : 'reads a fact') +
+        '</span>' +
+      '</div>' +
+      '<h3></h3>' +
+      '<p class="note"></p>' +
+      '<div class="reads"><b>reads</b><span></span></div>' +
+      '<div class="slip-foot">' +
+        '<span class="edited">reworded ' +
+          '<button class="mini" data-act="revert" type="button">revert</button>' +
+        '</span>' +
+        '<button class="mini cut-btn" data-act="cut" type="button" aria-pressed="false">cut</button>' +
+      '</div>';
+
+    editable(card.querySelector('h3'), 'name',
+      () => (state.edits[it.key] || {}).name ?? it.name,
+      v => setEdit(it.key, 'name', v, it.name));
+
+    editable(card.querySelector('.note'), 'add a note',
+      () => (state.edits[it.key] || {}).note ?? it.note,
+      v => setEdit(it.key, 'note', v, it.note));
+
+    card.querySelector('.reads span').textContent = it.reads;
+    card.querySelector('[data-act="cut"]').addEventListener('click', () => toggleCut(it.key));
+    card.querySelector('[data-act="revert"]').addEventListener('click', () => revert(it.key));
+
+    slips.appendChild(card);
+  }
+  board.appendChild(el);
+}
+
+/* --- state ------------------------------------------------------------- */
+
+function setEdit(key, field, value, original) {
+  const e = state.edits[key] || {};
+  if (value === original) delete e[field]; else e[field] = value;
+  if (Object.keys(e).length) state.edits[key] = e; else delete state.edits[key];
+}
+
+function setSection(id, field, value, original) {
+  const e = state.sections[id] || {};
+  if (value === original) delete e[field]; else e[field] = value;
+  if (Object.keys(e).length) state.sections[id] = e; else delete state.sections[id];
+}
+
+function revert(key) {
+  delete state.edits[key];
+  paint();
+  save();
+}
+
+function toggleCut(key) {
+  if (state.cut[key]) delete state.cut[key]; else state.cut[key] = true;
+  paint();
+  save();
+}
+
+const nameOf = k => (state.edits[k] || {}).name ?? itemOf[k].name;
+const noteOf = k => (state.edits[k] || {}).note ?? itemOf[k].note;
+
+/* The repaint is in three parts because they run at three different rates.
+   `counts` is safe on every keystroke: it writes numbers into elements
+   nobody is typing in. `text` and `locks` touch the editable fields
+   themselves, so they run when the typing has stopped -- and `locks`
+   re-sets the contenteditable attribute only when the approved flag has
+   actually moved, because setting it on a focused element collapses the
+   selection to the start of the field. */
+
+function counts() {
+  let keep = 0, cut = 0, free = 0, witness = 0;
+  const edited = Object.keys(state.edits).length;
+
+  for (const it of allItems) {
+    if (state.cut[it.key]) cut++;
+    else { keep++; if (it.needs) witness++; else free++; }
+  }
+
+  for (const sec of CATALOG) {
+    const kept = sec.items.filter(i => !state.cut[i.key]).length;
+    const node = board.querySelector('[data-count="' + sec.id + '"]');
+    if (node) node.textContent = 'keeping ' + kept + ' of ' + sec.items.length;
+  }
+
+  document.getElementById('n-keep').textContent = keep;
+  document.getElementById('n-cut').textContent = cut;
+  document.getElementById('n-edit').textContent = edited;
+  document.getElementById('n-free').textContent = free;
+  document.getElementById('n-witness').textContent = witness;
+
+  const answered = ['lockedList', 'walk', 'bodies'].filter(c => state.calls[c]).length;
+  document.getElementById('led-keep').textContent = keep;
+  document.getElementById('led-cut').textContent = cut;
+  document.getElementById('led-edit').textContent = edited;
+  document.getElementById('led-witness').textContent = witness;
+  const lc = document.getElementById('led-calls');
+  lc.textContent = answered + ' of 3';
+  lc.classList.toggle('warn', answered < 3);
+}
+
+function paintText() {
+  const live = document.activeElement;
+  for (const it of allItems) {
+    const card = board.querySelector('.slip[data-key="' + it.key + '"]');
+    if (!card) continue;
+    const h = card.querySelector('h3'), n = card.querySelector('.note');
+    if (h !== live && h.textContent !== nameOf(it.key)) h.textContent = nameOf(it.key);
+    if (n !== live && n.textContent !== noteOf(it.key)) n.textContent = noteOf(it.key);
+  }
+  for (const sec of CATALOG) {
+    const node = board.querySelector('[data-count="' + sec.id + '"]');
+    const secEl = node ? node.closest('section') : null;
+    if (!secEl) continue;
+    const s = state.sections[sec.id] || {};
+    const t = secEl.querySelector('h2'), sn = secEl.querySelector('.sec-note');
+    const tv = s.title ?? sec.title, nv = s.note ?? sec.note;
+    if (t !== live && t.textContent !== tv) t.textContent = tv;
+    if (sn !== live && sn.textContent !== nv) sn.textContent = nv;
+  }
+}
+
+let wasLocked = null;
+function paintLocks() {
+  const on = !!state.approved;
+  document.body.classList.toggle('approved', on);
+  if (on) {
+    document.getElementById('stamp-when').textContent =
+      new Date(state.approved).toLocaleDateString(undefined,
+        { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  if (on === wasLocked) return;
+  wasLocked = on;
+  for (const el of document.querySelectorAll('[data-live]'))
+    el.setAttribute('contenteditable', on ? 'false' : (el.dataset.ce || 'true'));
+}
+
+function paint() {
+  counts();
+  for (const it of allItems) {
+    const card = board.querySelector('.slip[data-key="' + it.key + '"]');
+    if (!card) continue;
+    const isCut = !!state.cut[it.key];
+    card.classList.toggle('is-cut', isCut);
+    card.classList.toggle('is-edited', !!state.edits[it.key]);
+    const cb = card.querySelector('[data-act="cut"]');
+    cb.setAttribute('aria-pressed', isCut ? 'true' : 'false');
+    cb.textContent = isCut ? 'put back' : 'cut';
+  }
+  for (const group of document.querySelectorAll('.opts')) {
+    const picked = state.calls[group.dataset.call];
+    for (const opt of group.querySelectorAll('.opt'))
+      opt.setAttribute('aria-pressed', opt.dataset.value === picked ? 'true' : 'false');
+  }
+  paintText();
+  paintLocks();
+}
+
+for (const group of document.querySelectorAll('.opts')) {
+  for (const opt of group.querySelectorAll('.opt')) {
+    opt.addEventListener('click', () => {
+      if (state.approved) return;
+      const call = group.dataset.call;
+      state.calls[call] = state.calls[call] === opt.dataset.value ? null : opt.dataset.value;
+      paint();
+      save();
+    });
+  }
+}
+
+document.getElementById('approve').addEventListener('click', () => {
+  state.approved = new Date().toISOString();
+  paint();
+  save();
+  document.querySelector('.sign').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+document.getElementById('reopen').addEventListener('click', () => {
+  state.approved = null;
+  paint();
+  save();
+});
+
+/* --- handing the sheet back ------------------------------------------------ */
+/* Run locally there is no store for me to read, so the sheet has to be able to
+   say itself out loud: what was struck off, what was reworded to what, and
+   which way each call came down. Plain text, because it is going into a chat
+   message, not into a parser. */
+
+function asText() {
+  const L = [];
+  const cutKeys = Object.keys(state.cut);
+  const edKeys = Object.keys(state.edits);
+  const answered = ['lockedList', 'walk', 'bodies'].filter(c => state.calls[c]);
+
+  L.push('THE YARD\'S RECORD — decisions');
+  L.push(state.approved ? 'APPROVED ' + state.approved : 'not yet approved');
+  L.push('keeping ' + (allItems.length - cutKeys.length) + ' of ' + allItems.length);
+  L.push('');
+
+  L.push('STRUCK OFF (' + cutKeys.length + ')');
+  if (!cutKeys.length) L.push('  (none)');
+  for (const k of cutKeys) L.push('  ' + k + ' — ' + itemOf[k].name);
+  L.push('');
+
+  L.push('REWORDED (' + edKeys.length + ')');
+  if (!edKeys.length) L.push('  (none)');
+  for (const k of edKeys) {
+    const e = state.edits[k];
+    if (e.name !== undefined) L.push('  ' + k + ' name: "' + itemOf[k].name + '" -> "' + e.name + '"');
+    if (e.note !== undefined) L.push('  ' + k + ' note: "' + itemOf[k].note + '" -> "' + e.note + '"');
+  }
+  L.push('');
+
+  const secKeys = Object.keys(state.sections);
+  if (secKeys.length) {
+    L.push('SECTIONS REWORDED');
+    for (const id of secKeys) {
+      const s = state.sections[id];
+      if (s.title !== undefined) L.push('  ' + id + ' title -> "' + s.title + '"');
+      if (s.note !== undefined) L.push('  ' + id + ' note -> "' + s.note + '"');
+    }
+    L.push('');
+  }
+
+  L.push('THE THREE CALLS (' + answered.length + ' of 3)');
+  const CALL = { lockedList: 'the locked list', walk: 'the walk', bodies: 'a body\'s own record' };
+  for (const c of ['lockedList', 'walk', 'bodies'])
+    L.push('  ' + CALL[c] + ': ' + (state.calls[c] || '(not decided)'));
+
+  return L.join('\n');
+}
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = asText();
+  try {
+    await navigator.clipboard.writeText(text);
+    said('copied to clipboard');
+  } catch (e) {
+    // Clipboard permission is not a given off https. Fall back to selecting
+    // it so the keyboard can do the copying.
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:60vh;z-index:9';
+    document.body.appendChild(ta);
+    ta.select();
+    said('select and copy, then click the page');
+    ta.addEventListener('blur', () => ta.remove());
+  }
+});
+
+document.getElementById('download').addEventListener('click', () => {
+  const blob = new Blob([asText() + '\n\n--- raw ---\n' + JSON.stringify(state, null, 2)],
+                        { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'yards-record.txt';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  said('saved to your downloads');
+});
+
+/* --- keeping it -------------------------------------------------------- */
+/* The store when the viewer has one, the browser when it does not. Either
+   way the page works; only whether the marks outlive this tab changes. */
+
+const saidEl = document.getElementById('saved');
+const said = t => { saidEl.textContent = t; };
+document.getElementById('build').textContent = BUILD;
+
+let pending = null, writing = false, hydrated = false, lastAt = null;
+
+const keepHere = () => {
+  try { localStorage.setItem(KEEP, JSON.stringify(state)); } catch (e) {}
+};
+
+// Every local change stamps the sheet, so that "which side is newer" is a
+// question with an answer -- see the snapshot handler below.
+function touch() {
+  state.at = new Date().toISOString();
+  keepHere();
+}
+
+// While the keys are still coming. Every discrete act -- a cut, a call, an
+// approval, leaving a field -- goes through `save` and writes at once.
+function queueSave() {
+  touch();
+  if (!db) { said('kept in this browser'); return; }
+  said('saving');
+  clearTimeout(pending);
+  pending = setTimeout(save, 500);
+}
+
+async function save() {
+  touch();
+  clearTimeout(pending);
+  pending = null;
+  if (!db) { said('kept in this browser'); return; }
+  writing = true;
+  lastAt = state.at;
+  try {
+    await db.doc('decisions/record').set({
+      cut: Object.keys(state.cut),
+      calls: state.calls,
+      edits: state.edits,
+      sections: state.sections,
+      approved: state.approved,
+      at: state.at
+    });
+    const t = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    said((state.approved ? 'approved · ' : '') + 'saved ' + t);
+  } catch (e) {
+    said('not saved — kept in this browser');
+  }
+  writing = false;
+}
+
+// Take the store's copy as the sheet. Only ever called when the store's copy
+// is the one that should win.
+function adopt(d) {
+  state.cut = Object.fromEntries((d.cut || []).map(k => [k, true]));
+  state.calls = d.calls || {};
+  state.edits = d.edits || {};
+  state.sections = d.sections || {};
+  state.approved = d.approved || null;
+  state.at = d.at || state.at;
+  lastAt = d.at || lastAt;
+  keepHere();
+  paint();
+  said(state.approved ? 'approved · saved' : 'saved');
+}
+
+// A tab closed a moment after the last keystroke used to drop that keystroke
+// on the floor: the timer above had not fired yet.
+const flush = () => { if (pending) save(); };
+addEventListener('pagehide', flush);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+
+// The two rewordings made on the cloud copy before this sheet moved
+// local. Seeded once, on a browser that has never opened this page, so that
+// moving off the artifact did not quietly lose them; both can be reverted on
+// their own slip like any other edit.
+const CARRIED = {
+  gotout: { name: 'you saved your sqwife' }
+};
+
+/* Every key this sheet has ever written under, newest first.
+
+   NEVER BUMP THE KEY AGAIN. It was moved twice -- once to stop a seeded note
+   overriding a new default, once to let the renamed resources through -- and
+   both times it orphaned everything the reader had written instead of
+   carrying it forward. A version of the sheet is a version of MY words; the
+   cuts and rewordings on it are THEIRS, and the two must not share a fate.
+   The defaults are in CATALOG and an edit is only ever stored where it
+   differs from them, so a saved sheet was always safe to read forward and
+   the bump was never buying anything.
+
+   Anything found under an old key is read, used, and written straight back
+   under the current one, so the recovery happens once and quietly. */
+const KEYS = ['boulder-record-v5', 'boulder-record-v4', 'boulder-record-v3',
+              'boulder-record-v2', 'boulder-record'];
+
+/* Every sheet MERGED, oldest first, not the newest one chosen.
+
+   Choosing was wrong and nearly threw the real sheet away. The bump left
+   two copies: a full one under the old key -- twenty-two rewordings and
+   seven cuts -- and a nearly empty one under the new key, written a minute
+   LATER when the reader re-cut a few slips on what looked like a fresh
+   page. By timestamp the empty one wins, which is exactly backwards. A
+   later sheet is not a fuller sheet when the thing that made it later was
+   the sheet being emptied.
+
+   So nothing is chosen and nothing is dropped:
+
+   - a CUT is an act. They union. A sheet that does not mention a cut was
+     not putting that notice back, it simply never saw it.
+   - a REWORDING is merged field by field, later over earlier, so a name
+     rewritten twice keeps the second one while a note the bump orphaned
+     comes back from the sheet that still has it.
+   - a CALL and an APPROVAL only ever move to an answer, never to a blank. */
+function loadState() {
+  const sheets = [];
+  for (const k of KEYS) {
+    let v = null;
+    try { v = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { continue; }
+    if (!v || typeof v !== 'object') continue;
+    const has = Object.keys(v.edits || {}).length || Object.keys(v.cut || {}).length ||
+                Object.keys(v.sections || {}).length || Object.keys(v.calls || {}).length ||
+                v.approved;
+    if (has) sheets.push(v);
+  }
+  if (!sheets.length) return null;
+
+  sheets.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+
+  const out = { cut: {}, calls: {}, edits: {}, sections: {}, approved: null, at: '' };
+  for (const v of sheets) {
+    Object.assign(out.cut, v.cut || {});
+    for (const k in (v.calls || {})) if (v.calls[k]) out.calls[k] = v.calls[k];
+    for (const k in (v.edits || {})) out.edits[k] = { ...(out.edits[k] || {}), ...v.edits[k] };
+    for (const k in (v.sections || {})) out.sections[k] = { ...(out.sections[k] || {}), ...v.sections[k] };
+    if (v.approved) out.approved = v.approved;
+    if (v.at && v.at > out.at) out.at = v.at;
+  }
+  return out;
+}
+
+try {
+  const found = loadState();
+  if (found) {
+    Object.assign(state, found);
+    // Carry it on to the current key at once, so an older one is never read
+    // twice and never has to be found again.
+    keepHere();
+  } else {
+    state.edits = CARRIED;
+    state.at = new Date().toISOString();
+    keepHere();
+  }
+} catch (e) {}
+
+paint();
+
+/* The store is READ EXACTLY ONCE, at load, and never listened to again.
+
+   There was a subscription here, and it is the whole reason this page kept
+   putting old words back on the screen. A subscription's deliveries can be
+   served from cache and can arrive at any moment -- including a second after
+   a keystroke -- and every delivery was taken as the truth about the sheet.
+   Two rounds of guards (is a write in flight, is a field focused, is this
+   delivery older than our last write) each closed one door and left another
+   open: the store's own record shows the page writing forty times over with
+   the same stale contents, which is a page overwriting itself with an older
+   copy of its own data.
+
+   Live sync was never worth anything here. This is one person's review
+   sheet, read and written in one tab. So the page loads what the store has,
+   and from that moment the page is the only author: nothing can arrive to
+   contradict it, because nothing is listening. */
+(async () => {
+  const store = await window.claude?.use?.('db');
+  if (!store) { said('kept in this browser'); return; }
+  db = store;
+  try {
+    const snap = await db.doc('decisions/record').get();
+    const d = snap.exists ? (snap.data() || {}) : null;
+    // Whichever copy is newer wins the one meeting they get: the sheet left
+    // in this browser, or the one the store kept from another session.
+    if (!d) { if (state.at) save(); else said('ready'); return; }
+    if (state.at && d.at && d.at > state.at) adopt(d);
+    else if (state.at) save();
+    else adopt(d);
+  } catch (e) {
+    said('kept in this browser');
+  }
+})();
+</script>
+
+</body>
+</html>

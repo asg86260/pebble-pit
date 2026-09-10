@@ -70,8 +70,10 @@ export const JOBS = {
     factory: newRockhand,
     want: () => S.rockhands,
     step: {
-      work: rockhandWork,
-      mess: { when: rockhandMess, back: rockhandBack }
+      // A pick on the go claims one of the gang to the shack, the way the
+      // quarry's and the farm's rows claim theirs -- see shedhand.js.
+      work: (w, c) => stepShedwork(w) || rockhandWork(w, c),
+      mess: { when: w => !w.onBuild && rockhandMess(w), back: rockhandBack }
     }
   },
 

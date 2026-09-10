@@ -7,17 +7,18 @@
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
-        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, ROCK_FLANK_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, BOARD_H, BOARD_LEG, padOf,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
+import { rockWidthAt } from './rock.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 import { JOB } from './jobs.js';
@@ -289,14 +290,15 @@ export function placeSites() {
     const w = snap((DRAWN_W[row.key] || row.w)());
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 
-    // One separation, the same one, between every pair of neighbours: SLOT_PAD
-    // of owned apron plus STATION_GAP of walk (both in config/sites.js). Every
-    // site gets the pad whether or not it has a heap to stand there, which is
-    // what makes the rhythm even -- a site that makes nothing is spaced the
-    // same as one buried in its own spoil. A heap, where there is one, stands
-    // its standoff from the wall on its own side of the building, inside
-    // ground the uniform separation has already reserved.
-    const left = snap(x - SLOT_PAD - w);
+    // One separation, the same one, between every pair of neighbours: the
+    // ground each site owns for its own heap (`padOf`, config/sites.js) plus
+    // STATION_GAP of bare walk. The pad lies on whichever side the heap does,
+    // so the bare ground between one drawn thing and the next is STATION_GAP
+    // everywhere -- a site that makes nothing owns no pad and stands a walk
+    // off its neighbour's wall, not a walk off where a heap would have been.
+    const pad = padOf(row);
+    const near = row.side === 'left' ? 0 : pad;     // on the rock side of the wall
+    const left = snap(x - near - w);
     at[row.key] = { x: left, w };
     if (pileW) {
       if (row.side === 'left') {
@@ -310,7 +312,7 @@ export function placeSites() {
         strips.push({ key: row.pile, from, to: from + pileW });
       }
     }
-    x = snap(left - STATION_GAP);
+    x = snap(left - (pad - near) - STATION_GAP);
   }
 
   // The rock's own spoil is NOT in here, and that is deliberate. Every strip the
@@ -632,6 +634,34 @@ export const walkY = x => Math.min(groundAt(x), S.groundY) - WORKER;
 // something the player decides by buying (`siteOrder`) -- and the greatest
 // right-hand edge is the nearest thing to the rock by definition, whichever row
 // of the table it came out of.
+// Where the hut stands for the rock that is here: ROCK_FLANK_CLEAR off its
+// left edge, and never further out than the slot the walk reserved for it,
+// which is this same sum for the biggest rock there will ever be. Off the
+// rock's NUMBER rather than its placed width: the rock's width is clamped to
+// what stands on its flank, and a hut placed off the clamped width would be
+// the knot `placeSites` was untied from. `S.placed` is what the walk laid out
+// and does not move, so `flankX` -- and through it the rock's cap -- still
+// reads the slot, and the hut can stand wherever it likes short of it.
+export const shackSpot = () => {
+  const spot = S.placed?.shack;
+  if (!spot) return shack.x;
+  const near = S.cx - (rockWidthAt(S.boulderNo) / 2) * P - ROCK_FLANK_CLEAR - shack.w;
+  return Math.max(spot.x, Math.round(near / P) * P);
+};
+
+// One frame of the hut scooting over. A new rock is a broader rock, so its
+// number going up moves the spot out, and the hut walks there at SHACK_SCOOT
+// rather than being there: a building that moves is a building you can watch
+// move. Everything hung off `shack.x` -- the gang's kit stand, the board, the
+// claimed rockhand's post -- follows, because they all read the live rect.
+export function stepShack(dt) {
+  const to = shackSpot();
+  if (shack.x === to) return;
+  const step = SHACK_SCOOT * dt / 1000;               // dt is in milliseconds
+  shack.x = shack.x > to ? Math.max(to, shack.x - step) : Math.min(to, shack.x + step);
+  S.dirty = true;
+}
+
 export function flankX() {
   let x = -Infinity;
   for (const spot of Object.values(S.placed || {})) x = Math.max(x, spot.x + spot.w);
@@ -653,6 +683,12 @@ export function seatSites() {
   // the work bench. Its rect lives on S so a save carries it, but where it
   // stands is this walk's answer like everybody's.
   seat(S.buildbench, 'buildbench', BUILDBENCH_H);
+
+  // The noticeboard. It hangs off the ground on its posts rather than sitting
+  // on it, so its rect is the PANEL and the legs are drawn below it -- what
+  // you point at to read the thing is the part with the writing on.
+  seat(S.noticeboard, 'notices', BOARD_H);
+  S.noticeboard.y -= BOARD_LEG;
 
   // The two that are not `seat`-shaped, seated HERE all the same.
   //
@@ -702,7 +738,10 @@ export function seatSites() {
   // The rockhands' hut, the first thing along from the rock. Seated whether or
   // not it has been bought, like every other site: the ground is reserved from
   // the moment the table names it, and the draw is what waits on the flag.
+  // Its slot is where it stands at the biggest rock; the hut itself stands
+  // nearer, off the rock that is actually there -- see `shackSpot`.
   seat(shack, 'shack', SHACK_H);
+  shack.x = shackSpot();
 
   seat(school, 'school', SCHOOL_H);
 
