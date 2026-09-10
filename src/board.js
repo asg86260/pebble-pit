@@ -105,7 +105,7 @@ const anchor = which => boardAt(which);
 const listFor = which =>
   // Everything that has not moved to a board of its own. A row names the sheet
   // it belongs to and the bench takes the rest, which is what every row used to
-  // be -- see the note by `CREW_GEAR` in crewboard.js.
+  // be -- see `SHACK_GEAR` in shack.js for a board that reads its rows out.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
   which === 'school' ? SCHOOL_UPGRADES :
   which === 'casino' ? CASINO_UPGRADES :

@@ -757,7 +757,7 @@ export function buildCrewList() {
 // the whole game fails to load.
 const BOARDS = {
   // Everything that has not moved to a board of its own -- see `listFor` in
-  // board.js, which asks the same question, and the note by `CREW_GEAR`.
+  // board.js, which asks the same question.
   bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
   // The table is empty between hands, and says so rather than standing blank.
   casino: () => [casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table'],

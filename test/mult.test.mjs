@@ -90,7 +90,7 @@ group('each multiplier sits on the board of the thing it multiplies', async () =
   return [
     ok(at('labswing').join() === 'shack', "the swing multiplier is at the shack, with the rock's own ladder",
        at('labswing').join() || 'nowhere'),
-    ok(at('labhaul').join() === 'house', "the crew's is where the crew live",
+    ok(at('labhaul').join() === 'bench', "the haulers' is at the bench, with their pace rung",
        at('labhaul').join() || 'nowhere'),
     ok(at('labcave').join() === 'quarry', "the cut's is at the cut",
        at('labcave').join() || 'nowhere'),

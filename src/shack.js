@@ -12,8 +12,7 @@
 // before the hut is up -- so that one is on the bench with every other "open a
 // place" row: see upgrades/rows-shack.js.
 //
-// Read from UPGRADES rather than copied, the way the crew board reads its gear
-// (see `CREW_GEAR` in crewboard.js): these are the same row objects the game
+// Read from UPGRADES rather than copied: these are the same row objects the game
 // already prices, gates and builds, and moving a row between boards is a
 // question of which sheet draws it and nothing else. Each of them carries
 // `board: 'shack'`, which is also what takes it off the bench.
@@ -28,7 +27,7 @@ export const SHACK_GEAR = ['rockhandpick', 'rockhandspeed', 'labswing', 'ram', '
 // Asked for when it is wanted, never gathered at load: upgrades.js reaches this
 // file's neighbors on the way to building UPGRADES, so a list gathered in this
 // module's body would come back `undefined`. Same trick, same reason, as
-// `gearRows` in crewboard.js and `listFor` in board.js.
+// `listFor` in board.js.
 export const shackRows = () =>
   SHACK_GEAR.map(k => UPGRADES.find(u => u.key === k)).filter(Boolean);
 

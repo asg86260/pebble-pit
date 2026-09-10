@@ -97,7 +97,9 @@ export const HAUL_MULT = ladder({
   unit: 'px/s',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
-  board: 'house',
+  // The bench, directly under the pace rung it multiplies -- the same shelf
+  // `swing x` sits on at the shack, for the same reason. It was sold at the
+  // house for a while, which put the multiplier a board away from its rung.
   show: () => standing() && S.seenShard
 });
 

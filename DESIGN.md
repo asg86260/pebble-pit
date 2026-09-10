@@ -1820,8 +1820,12 @@ to do with it.
 
 Red buys them, and dust like every other row. The rungs live on the board of the
 building the machine stands in -- the jaw's at the quarry, the tiller's at the
-farm, the ram's under `the rock` and the belt's under `the crew` -- which is the
-rule the boards were always supposed to follow.
+farm, the ram's under `the rock` -- which is the rule the boards were always
+supposed to follow. The belt's is the exception the rule allows for: carrying
+has no station, so the belt and its ladder sit on the bench under the haulers'
+heading, with the rest of what a hauler is issued. (It was sold at the house
+for a while as the crew's machine, which put a shelf of machinery on the sheet
+you go to for a roof.)
 
 **Endless is load-bearing, not decoration.** A five-rung ladder has a finite
 total cost, and a finite total cost puts the surplus straight back where it was.

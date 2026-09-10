@@ -14,7 +14,7 @@
 import { S } from './state.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_CUBE } from './config.js';
-import { JOB_OF as JOBS_AT, HOUSE_ROW, UPGRADES } from './upgrades.js';
+import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showCrewList } from './board.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
@@ -185,30 +185,15 @@ function point(w) {
 // up went through the settlement on the way and threw the sheet open sideways.
 // A row that only puts a list up is a fine thing to have to reach for; a row you
 // came to press is not.
-// What the crew own that is built out here in the yard: the multiplier over
-// their pace, the belt, and the belt's tuning ladder. All three are
-// `site: 'yard'` -- the work happens where the thing stands, and the bar hangs
-// over it.
-//
-// Their four ladders -- strength, speed, the harness, the boots -- came here
-// with them and have gone back to the bench. A decision about a place is made
-// at the place, which is why these are here; but that rule cuts the other way
-// for a row whose work is done at the workbench. Those four are `site: 'bench'`,
-// so buying one from the block put the bar a yard away from the row you pressed,
-// over a bench the sheet had nothing to do with. See rows-crew.js.
-//
-// Read from UPGRADES rather than copied, so these are the same row objects the
-// game already prices, gates and builds -- moving a row between boards is a
-// question of which sheet draws it, and nothing else.
-export const CREW_GEAR = ['labhaul', 'belt', 'tunebelt'];
-// Read when asked, never at load: upgrades.js reaches this file on the way to
-// building UPGRADES, so the ring is still closing while this module's body runs
-// and a list gathered here would be `undefined`. Same trick, same reason, as
-// `listFor` in board.js.
-const gearRows = () => CREW_GEAR.map(k => UPGRADES.find(u => u.key === k)).filter(Boolean);
-
+// Nothing the crew *use* is sold here any more. Their ladders -- strength,
+// speed, the harness, the boots -- were here once and went back to the bench,
+// and the belt, its tuning and the multiplier over their pace have followed:
+// the house is where you put a roof up and take somebody on, and a shelf of
+// machinery beside that was a second kind of thing on a sheet that only needs
+// one. The haulers' whole kit is one heading on the bench now, where your own
+// is. See `SECTIONS` in upgrades.js.
 export function crewRows() {
-  return [CREW_ROW, HOUSE_ROW, ...gearRows()];
+  return [CREW_ROW, HOUSE_ROW];
 }
 
 // The door through to them. It is priced like the rows below it are -- where the
@@ -267,12 +252,5 @@ function people() {
 // submenu says which heading it came out of.
 export const crewSections = () => [
   { title: 'the crew', keys: [CREW_ROW.key] },
-  { title: 'housing', keys: [HOUSE_ROW.key] },
-  // The belt they push their loads onto, its tuning, and the multiplier over
-  // their pace. Its own heading rather than folded into "the crew" above,
-  // because that one is the door through to the people and this is a shelf of
-  // machinery -- the same distinction the board already draws between a person
-  // and a purchase. What they carry and how fast they walk is not here: those
-  // are fitted at the workbench, so they are sold there. See CREW_GEAR above.
-  { title: 'crew machines', keys: CREW_GEAR }
+  { title: 'housing', keys: [HOUSE_ROW.key] }
 ];
