@@ -34,6 +34,7 @@ import { riftOpen } from './rift.js';
 import { skipCutscene } from './cutscene.js';
 import { showRecord } from './record.js';
 import { markNoticesRead } from './notices.js';
+import { sayStore } from './settings.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -687,7 +688,7 @@ export function hold(on) {
   // The record is written on to the sheet as it opens, and opening it reads
   // it: the tick over the noticeboard comes down, and the next notice to land
   // puts it back up.
-  if (on) { showRecord(document.getElementById('record')); markNoticesRead(); }
+  if (on) { showRecord(document.getElementById('record')); markNoticesRead(); sayStore(); }
   S.dirty = true;
 }
 document.getElementById('resume').addEventListener('click', () => hold(false));

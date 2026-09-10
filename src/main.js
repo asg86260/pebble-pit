@@ -19,7 +19,8 @@ import { syncWorkers } from './crew.js';
 import { draw } from './render.js';
 import { hud, remeasure } from './board.js';
 import { buildShop } from './shop.js';
-import { persist, restore } from './persist.js';
+import { persist, restore, claimSave } from './persist.js';
+import { OWNER_KEY, TAB } from './save.js';
 import './input.js';           // the mouse, the wheel and the keyboard
 import './settings.js';        // wave-release, track A: the held sheet's shelf
 import { tick } from './clock.js';
@@ -116,6 +117,17 @@ setInterval(() => {
 document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);
+// Two tabs on one save (wave-critics, A10). This page names itself as the
+// writer; a page that sees the name change under it has been overtaken by
+// another tab and stops writing (`persist` yields), and when it is next looked
+// at it reloads -- the store is the yard now, and this page's is the stale
+// one. The user switching back is the moment it would otherwise have written
+// an hour-old yard over the hour just played.
+claimSave();
+addEventListener('storage', e => { if (e.key === OWNER_KEY && e.newValue && e.newValue !== TAB) S.yielded = true; });
+document.addEventListener('visibilitychange', () => {
+  if (S.yielded && document.visibilityState === 'visible') location.reload();
+});
 
 // The dev panel and the console handles, and only when this is being run with
 // `bun run dev`. The condition is a constant at build time, so a build drops

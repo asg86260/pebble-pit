@@ -13,6 +13,7 @@
 import { setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave } from './persist.js';
+import { S } from './state.js';
 
 const sheet = document.getElementById('held');
 const motionEl = document.getElementById('motion');
@@ -49,6 +50,17 @@ motionEl.addEventListener('click', () => {
 });
 
 document.getElementById('savecopy').addEventListener('click', () => copyOut(exportSave(), said));
+
+// What the store has to say, said on the sheet when it comes up (wave-critics,
+// A10/A11): a page whose writes are being refused, a page another tab has
+// overtaken, a save that would not read and is waiting to be copied out. Each
+// is a run about to be lost quietly, and the sheet is the one surface that is
+// not the yard. `input.js`'s hold calls this.
+export function sayStore() {
+  if (S.broken) said.textContent = 'your last save could not be read. save a copy hands it over';
+  else if (S.yielded) said.textContent = 'this yard is open in another tab; that one is being saved';
+  else if (S.unsaved) said.textContent = 'not saving: storage is blocked or full. save a copy still works';
+}
 
 // The paste is asked for rather than always there: six rows of empty box on a
 // sheet whose other lines are one word each would be the loudest thing on it.
