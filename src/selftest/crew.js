@@ -5,7 +5,7 @@
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
-  point, onScreen, hoverBench, run, runUntil } from './kit.js';
+  point, onScreen, hoverBench, hoverStation, run, runUntil } from './kit.js';
 
 export const TESTS = [
   // A body let go of used to drop straight down however you were moving when you
@@ -466,10 +466,13 @@ export const TESTS = [
   }],
 
   ['the headcount rides on the section as a badge', async () => {
+    newRun();
+    await settle(0.5);
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
-    // Enough dust that the plots are on offer, so that there is a second heading
-    // to look at: a section is only there while it has a row under it.
+    // Enough dust that the plots are on offer, so that there is a heading with
+    // nobody under it to look at: a section is only there while it has a row
+    // under it.
     //
     // That heading used to be "the farm" -- the bench carried one per building it
     // could sell you. The ten of them are one group called "build" now, so the
@@ -478,21 +481,26 @@ export const TESTS = [
     window.__give(600);                      // the price of the plots
     window.__build();
     await sleep(50);
-    const rows = [...shop().children].filter(el => el.dataset.sect);
-    const rock = rows.find(el => el.dataset.sect === 'the rock');
-    const idle = rows.find(el => el.dataset.sect === 'build');
-    const rockBadge = rock && rock.querySelector('.badge');
+    const idle = [...shop().children].find(el => el.dataset.sect === 'build');
     const idleBadge = idle && idle.querySelector('.badge');
+    // The rockhands' rows moved to their hut, and the hut's sheet has one group,
+    // so there is no heading on it for the count to ride: it rides the board's
+    // own title instead. Read standing at the hut, the way a player reads it.
+    window.__shack();
+    await hoverStation('shack');
+    const rock = document.querySelector('#shackboard .title');
+    const rockBadge = rock && rock.querySelector('.badge');
     const s = state();
+    window.__crew(0, 0);
     return [
-      ok(!!rockBadge, 'a section with people under it carries a badge'),
-      ok(rockBadge && rockBadge.textContent === String(s.rockhands),
+      ok(!!rockBadge, 'a board about people carries their count as a badge'),
+      ok(!!rockBadge && rockBadge.textContent === String(s.rockhands),
          'the badge is the bare number, no x and no word', rockBadge && rockBadge.textContent),
       ok(!!idle && !idleBadge, 'a section with nobody has no badge'),
-      ok(rockBadge && rockBadge.parentElement === rock, 'the badge is a span inside the heading'),
-      ok(rockBadge && rock.firstChild.nodeValue === 'the rock',
-         'the heading keeps its own title as plain text', rock.firstChild.nodeValue),
-      ok(rockBadge && getComputedStyle(rockBadge).backgroundColor === 'rgb(0, 0, 0)' &&
+      ok(!!rockBadge && rockBadge.parentElement === rock, 'the badge is a span inside the title'),
+      ok(!!rockBadge && rock.firstChild.nodeValue === 'the shack',
+         'the title keeps its own name as plain text', rockBadge && rock.firstChild.nodeValue),
+      ok(!!rockBadge && getComputedStyle(rockBadge).backgroundColor === 'rgb(0, 0, 0)' &&
          getComputedStyle(rockBadge).opacity === '1',
          'the badge is solid black, not dimmed with the rest of the heading',
          rockBadge && `${getComputedStyle(rockBadge).backgroundColor} @ ${getComputedStyle(rockBadge).opacity}`)
