@@ -6288,3 +6288,117 @@ star breathes. The intro plays every beat from a still seat.
 A hidden window is a pause. The clock may not leap on return, because a
 leap is every timed thing you paid for resolving at once, which is the one
 punishment for walking away that pillar 2 forbids.
+
+## The desk: an Electron shell (design, not built)
+
+The target is a desktop app, not a hosted page. This is the project's first
+structural dependency, so this section says what the shell owns, what stays
+in the renderer, and how thin the bridge is -- and it stops there until it is
+approved. Checklist items 2, 3, 8 and 11 (`docs/release-checklist.md`).
+
+### The bargain
+
+Electron buys three things the page cannot have: a save that is a file, a
+window that keeps its clock, and native dialogs for a save going out and
+coming back in. It costs a 100 MB download for a 300 kB game and a second
+process to keep honest. The bargain is worth it only if the game itself does
+not know it is inside a shell -- so the rule is **the renderer is the web
+build, unchanged, plus one adapter**, and everything Electron-shaped lives in
+`electron/` and never imports from `src/`.
+
+### What the shell owns
+
+- **The window.** One `BrowserWindow`, 1440x900 to open, 960x600 minimum,
+  white background so the first frame is not a flash of dark, no menu bar,
+  title "Boulder", `backgroundThrottling: false` so rAF keeps firing when the
+  window is minimized (the clock clamp from the release wave covers suspend).
+  `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`.
+- **The save, as a file.** `app.getPath('userData')/saves/current.json`,
+  written atomically -- to `current.json.tmp`, then renamed over -- and a
+  `last-good.json` written only after the new blob has been parsed back from
+  disk. Named slots are the same directory with the player's name for the
+  file; `current` is the one the game boots from. Nothing ever overwrites a
+  file that has not passed its parse check. The store is `electron/store.cjs`,
+  plain Node with no Electron import, so the node tier can test the atomic
+  write and the fallback by pointing it at a temp directory.
+- **The dialogs.** `showSaveDialog` / `showOpenDialog`, JSON filter, default
+  name `boulder-<date>.json`.
+- **The version**, which is the same `__BUILD__` the web build stamps.
+
+### The bridge
+
+`electron/preload.cjs` exposes exactly one object, `window.desk`, with five
+functions and no events:
+
+```
+desk.read()            -> string | null     the current save, or nothing
+desk.write(raw)        -> Promise<boolean>  atomic; false if the blob failed its parse-back
+desk.exportTo(raw)     -> Promise<boolean>  a save dialog; false if cancelled
+desk.importFrom()      -> Promise<string|null>  an open dialog; the file's text, or nothing
+desk.version()         -> { hash, date }
+```
+
+Nothing else crosses. No `ipcRenderer` reaches the page; no file path is
+ever shown to the renderer.
+
+### The adapter
+
+`src/save.js` gains one seam: a `store` object with `get`/`set`/`remove`
+that is localStorage when `window.desk` is absent and `desk.read`/`desk.write`
+when it is present. `persist`, `restore`, `exportSave` and `importSave` do
+not change. The settings sheet's `save a copy` and `load a save` call
+`desk.exportTo` / `desk.importFrom` when the desk exists and fall back to the
+clipboard and the textarea when it does not -- two branches in
+`src/settings.js`, no third surface.
+
+**Migration.** On first run with no `current.json`, the adapter reads the
+browser's `boulder-clicker/v4` from localStorage and writes it through
+`desk.write` before `restore` runs, so a player who was on the web build
+keeps their yard. The localStorage copy is left in place; it is never read
+again while the file exists.
+
+**Fallback.** If `current.json` fails its shape check, `last-good.json` is
+loaded instead and the settings sheet opens on boot with one line: `the last
+save would not load; this is the one before it`. Offered, not silent -- the
+report's open question, answered: silently restoring an older save is its
+own data loss, so the player is told, once, on the surface they already know.
+
+### Packaging and the channel
+
+`base: './'` in `vite.config.js` (the shell loads `dist/` over `file://`).
+`electron-builder`, one config block in `package.json`: Windows NSIS and
+portable, macOS dmg, Linux AppImage, all unsigned for now. Published to
+itch.io as desktop channels with butler by hand; the script is
+`tools/publish.mjs` and it is the one script that talks to the outside.
+`bun run desk` opens the shell against the dev server (`VITE_DEV_SERVER_URL`),
+`bun run desk:build` builds `dist/` then packages it.
+
+### The version boundary
+
+A save records the `hash` and `date` of the build that wrote it (one field,
+`build`, in `SAVED_BY_HAND`). On load, a save whose `date` is later than the
+app's own is loaded anyway -- the game has never broken a save going
+backward, and refusing would be the punishment -- but the sheet says `this
+save is from a newer build (<date>)` the first time it is opened. There is
+no auto-update; a player is told on the sheet when the itch page has a newer
+build only if the store page is checked by hand, which is to say not by the
+app. Updates are a devlog and a download.
+
+### What it must not do
+
+- Anything in `src/` may not import Electron or reach `window.desk` except
+  `save.js` (the store seam) and `settings.js` (the two dialog branches).
+- No telemetry, no network call of any kind from either process.
+- No offline accrual: a file save changes where the yard is kept, not what a
+  closed app does with the clock.
+
+### How it would be checked
+
+`test/desk-store.test.mjs` (node): the atomic write leaves either the old
+file or the new, never a torn one (kill mid-write by throwing inside the
+rename); a `current.json` that fails the shape check loads `last-good.json`;
+the migration copies the browser save exactly once. `test/desk-adapter.test.mjs`
+(node): with a fake `window.desk`, `persist` goes through `write` and
+`restore` through `read`, and `exportSave`/`importSave` are byte-identical
+either way. The shell itself is looked at, not tested: `bun run desk`, a
+screenshot at 1440x900 and at the minimum size.
