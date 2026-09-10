@@ -1,5 +1,18 @@
 # Still to do
 
+## Nine critics played the game (2026-09-10)
+
+**Read `docs/critics-2026-09-10.md` before proposing any balance or tuning
+work.** Nine persona agents played the yard at `c87c485` and every finding is
+ranked, deduplicated and cross-referenced there. The top of the list is five
+simulation defects that make every existing balance table provisional: a shack
+rung bought after one-per-rock-hand never lands (`shedhand.js:73`, kills the
+ram — found by four critics independently), the intro puts the one body on the
+rock (counter sits at 1 for ten minutes), one find-fetcher while the rock heap
+is backed up (shards and sparks at zero for six hours), the quarry speed ladder
+does nothing at any depth, and a hauler parks forever on a poop-only column.
+Fix those, re-run the bot, then tune.
+
 ## The scrubbing house, the tower and the school build their rungs for free (2026-09-10)
 
 **Diagnosed, not fixed.** Three gang stations still credit an upgrade to a body
