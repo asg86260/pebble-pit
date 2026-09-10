@@ -26,6 +26,7 @@ export * from './config/sky.js';
 export * from './config/scrub.js';
 export * from './config/buildings.js';
 export * from './config/unlocks.js';
+export * from './config/notices.js';
 export * from './config/balloon.js';
 export * from './config/tower.js';
 export * from './config/casino.js';
@@ -110,6 +111,7 @@ import { LAB_KNOBS } from './config/lab.js';
 import { ROCK_KNOBS } from './config/rocks.js';
 import { EFFECT_KNOBS } from './config/effects.js';   // F4
 import { RIFT_KNOBS } from './config/rift.js';
+import { NOTICE_KNOBS } from './config/notices.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,

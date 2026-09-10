@@ -27,6 +27,7 @@ import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } fr
 import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './stats.js';
+import { catchUpNotices, resetNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -823,6 +824,17 @@ export function restore() {
   // after it has run is a correction nobody is standing for.
   if (S.workers.length > S.crew) { S.crew = S.workers.length; rebalance(); }
   syncWorkers();               // and anybody the counts say is missing
+  // A save written BEFORE the record existed satisfies a great many rules at
+  // once, and thirty ticks is a feature introducing itself by shouting. Those
+  // are earned silently and marked already read: these are things you did, and
+  // the board is late, not you.
+  //
+  // Only that save, though, and it is asked of the SAVE rather than of a flag
+  // on S. Any save this version wrote carries `won`, and running the catch-up
+  // on one of those would mark every notice you had earned and not yet gone and
+  // looked at as read -- closing the tab would quietly clear the board's tick.
+  if (!(s && 'won' in s)) catchUpNotices();
+  S.noticeMigrated = true;
   // A site with no gang of its own -- the yard, the bench -- that was busy when
   // the tab shut is busy again the moment it comes back: `S.works` is written
   // above, before the crew even exists. But nobody was sent to it, because the
@@ -1079,6 +1091,7 @@ export function reset(fresh = true) {
   S.plotTone = [];
   syncWorkers();
   resetRates();
+  resetNotices();
   floor.grid.fill(0);
   pit.grid.fill(0);
   recount(floor);                          // both ledgers, both emptied behind `put`

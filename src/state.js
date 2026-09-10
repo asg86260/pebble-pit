@@ -415,6 +415,19 @@ export const S = {
   // building. Which board is open is this session's business, like the rest of
   // them, so it is in EPHEMERAL below.
   statsBoardOpen: false,
+  // --- the record: what the yard has done. See notices.js ---
+  // Recognition only: nothing in here feeds a rate, which is the bargain the
+  // whole feature hangs off.
+  won: [],                // the notices earned, in the order they landed
+  wonAt: {},              // and when each one did, so the sheet reads newest first
+  wonSeen: 0,             // how many have been looked at; the rest wear the tick
+  noticeMigrated: false,  // the silent catch-up has been run on this save
+  // What a notice needs remembered that the yard does not already know: who
+  // has bitten this rock, and the stamp of the last one off. Cleared every
+  // time a rock comes off. One object rather than a field per feat -- see
+  // notices.js, which is the only thing that writes it.
+  tally: {},
+  noticeBoardOpen: false, // and whether the board is open right now
   looBoardOpen: false,      // and the outhouse's, which carries the janitor's ladder
 
   // --- the air ----------------------------------------------------------------
@@ -632,6 +645,14 @@ export const SAVED = [
   'buildPostLevel',
   'buildPaceLevel',
   JOB.BUILD,
+  // The record. `tally` is saved because a rock half-mined when you closed
+  // the tab was still half-mined by somebody when you come back, and who bit
+  // it is the whole question two of the feats ask.
+  'won',
+  'wonAt',
+  'wonSeen',
+  'noticeMigrated',
+  'tally',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy
@@ -778,6 +799,7 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
   'shackBoardOpen',                        // and the rock's own, at the shack
+  'noticeBoardOpen',                     // and the noticeboard's
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame.
   // (wave7b-build: `builders` moved to SAVED -- once the construction bench is

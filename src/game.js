@@ -34,6 +34,7 @@ import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates } from './stats.js';
+import { stepNotices } from './notices.js';
 import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';        // F4
@@ -218,6 +219,7 @@ export const STEPS = [
   // rather than anywhere else because it is the same act -- reading the
   // counters -- and after `clock`, which is what puts `now` on the frame.
   { name: 'books',   step: c => sampleBooks(c.now) },
+  { name: 'notices', step: c => stepNotices(c.now) },   // and whether the yard did anything worth saying
   { name: 'weather', step: c => stepWeather(c.now) },
   { name: 'survey',  step: countTick },
   { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
