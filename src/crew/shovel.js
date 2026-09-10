@@ -115,7 +115,7 @@ export function takeMess(w, c) {
   // is the reported "janitor vibrating while it cleans". Empty hands between two
   // columns of the same mess are not a walk home; the body stands where it is
   // and picks again next frame.
-  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) { w.muckAt = null; return true; }
+  if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; return true; }
   if (w.muckAt == null) {
     // A janitor's own mess first -- see B4 in wave-feedback3.md. `nearestMuck`
     // treats every kind alike and hands out whichever column is nearest, which

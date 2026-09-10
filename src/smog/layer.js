@@ -427,8 +427,18 @@ export const MUCK_ELBOW = 4;
 // of them and the third goes and finds its own.
 // Is there still anything to shift in this column? A claim is held until the
 // column it names is clear, so this is what tells a body it is done with it.
-export function muckAtCol(c) {
-  return c >= 0 && c < floor.cols ? messAt(c) : 0;
+//
+// Anything *this pair of hands* may shift, when the hands are given. A claim
+// is only ever made on a kind the hand may touch (`nearestMuck`), but it was
+// released against every kind, so a hauler that had cleared the weather off a
+// column with a body's own mess under it held the claim for good -- stood on
+// the far lip beside a brown speck, not swinging, for the rest of the run in
+// any yard without a janitor (docs/critics-2026-09-10.md, A5). Asked with no
+// hand it is the old question, for heights and drawing.
+export function muckAtCol(c, hand = null) {
+  if (c < 0 || c >= floor.cols) return 0;
+  if (!hand) return messAt(c);
+  return shiftable(hand).reduce((n, k) => n + (cols(k)[c] || 0), 0);
 }
 
 // A stable number out of who this body is (wave7-sky, A3). The gang used to

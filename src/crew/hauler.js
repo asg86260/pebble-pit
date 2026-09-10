@@ -13,7 +13,7 @@ import { walkY, yardLeft, pileAt } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
-import { muckLeft, muckAtCol, nearestMuck } from '../smog.js';
+import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs } from '../upgrades.js';
 // the swift brew's pace, read per body at every haul walk (feedback7, item 21)
 import { paceBoost } from '../apothecary.js';
@@ -185,13 +185,16 @@ export function haulerWork(w, c) {
   if (!w.carry && !w.hasCore) {
     // Cleared and re-picked a frame apart, for the reason takeMess gives: the
     // frame's set still carries this body's own elbows.
-    if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-    else if (w.muckAt == null && muckLeft() > 0) {
+    // Its own kinds, in both the release and the gate: a hauler may not touch
+    // a body's mess, and a gate on *all* mess sent it down for what it could
+    // not shift, to stand on it.
+    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) w.muckAt = null;
+    else if (w.muckAt == null && muckFor(w) > 0) {
       const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }
   }
-  const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
+  const patch = !w.carry && !w.hasCore && muckFor(w) > 0 && w.muckAt != null
     ? w.muckAt * P + P / 2 : null;
 
   // In the hole, over the hole, or on the ground beyond it: all one errand,

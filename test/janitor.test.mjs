@@ -353,3 +353,40 @@ group('a janitor between two columns of one mess stands where it is', async () =
        `${lurches} lurches, worst ${worst.toFixed(2)}px`)
   ];
 });
+
+// A hauler may shift the weather and not what a body left. It claimed by that
+// rule and let go by the other: the claim was released only when the column
+// held *no mess of any kind*, so a hauler that had cleared the muck off a
+// column with poop under it kept the claim, and stood on the spot -- not
+// swinging, not fetching -- for the rest of the run in any yard without a
+// janitor (critics 2026-09-10, A5). One hauler, one column of both kinds
+// nearby and a heap of plain weather further off: it clears the near column,
+// lets go of it, and goes on to the heap. With no other weather in the yard
+// the trap does not spring -- `takeMess` stands a body down when there is
+// nothing of its kinds left anywhere -- so the far heap is what makes this a
+// check of the release and not of that exit.
+group('a hauler lets go of a column once the mess it may shift is gone', async () => {
+  window.__reset();
+  window.__crew(0, 1);
+  window.__air({ haze: 0, muck: 0 });
+  window.__tune('LOO_EVERY', 600000);
+  run(10);
+  const h = () => yard.S.workers.find(w => w.type === 'hauler');
+  const near = Math.floor((h().x + WORKER / 2) / P) + 6;   // a few cells off, the same way
+  const far = near + 120;                                   // and a heap well beyond it
+  window.__muckSet(c => c === near ? 2 : (c > far && c < far + 8) ? 3 : 0);
+  window.__poopSet(c => c === near ? 2 : 0);
+
+  const muckAtNear = () => (yard.S.muck || [])[near] || 0;
+  const nearGone = runUntil(() => muckAtNear() === 0, 90);
+  const moved = runUntil(() => h().muckAt != null && h().muckAt > far, 90);
+  const poop = state().smog.poop;
+
+  window.__reset();
+  return [
+    ok(nearGone, 'the weather comes off the near column'),
+    ok(poop === 2, 'and what the body left is still there, being nobody\'s to shift', `${poop}`),
+    ok(moved, 'and the hauler lets go of it and goes on to the heap beyond',
+       `${h()?.goal}@${h()?.muckAt}, heap from ${far}`)
+  ];
+});
