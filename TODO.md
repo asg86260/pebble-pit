@@ -1,5 +1,25 @@
 # Still to do
 
+## The scrubbing house, the tower and the school build their rungs for free (2026-09-10)
+
+**Diagnosed, not fixed.** Three gang stations still credit an upgrade to a body
+that goes on producing: `handsAt` counts a purifier, a wizard or a teacher at
+its post, and the post is where it works. The fan ladder fills while the house
+scrubs, the hat rises while the wizard casts, a trade is taught while the
+lesson runs. That is the defect wave6-sim item 2 took out of the quarry and the
+farm, and this pass took out of the apothecary -- where it had the opposite
+face: a keeper is out dealing on nearly every frame, so `another pot` climbed
+through the first batch and then froze.
+
+**The fix is one line a trade** -- an entry in `SHED_OF` (crew/shedhand.js)
+naming where the claimed body stands, and `stepShedwork(w) ||` in front of the
+trade's `work` in crew/jobs.js. What holds it up is not code but where the
+body stands and what it costs: a purifier claimed off the fan is a house that
+stops scrubbing, and a one-wizard tower stops casting while its hat is made.
+Both are the bargain `works.js` already states; both are also balance calls
+the sky's target (`pollution-balance-target`) has a stake in. Decide, then it
+is an hour.
+
 ## The noticeboard and the record on it (2026-09-09)
 
 **Approved 2026-09-10. Not built.** DESIGN.md, "The noticeboard, and the record

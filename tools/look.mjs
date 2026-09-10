@@ -213,6 +213,19 @@ const SCENES = {
     window.__buy('brewspeed'); window.__fast(4);
     window.__look(window.__state().apothecaryX - 300);`,
 
+  // A keeper claimed to the hut: "another pot" on the go with a stirrer on a
+  // keep-brewing pot and stock on the shelf, so the body that would otherwise
+  // be out dealing is stood at the hut under the bar and its pot is cold.
+  potwork: `window.__reset(); window.__crew(2, 4, 0, 3);
+    window.__grant({ cores: 3, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);
+    window.__assign('stirrers', 1); window.__pot('stew');
+    window.__fast(40);
+    window.__buy('anotherpot'); window.__fast(14);
+    window.__look(window.__state().apothecaryX - 300);`,
+
   // The pot row up close: four boiling pots with their bars up, for where the
   // bar hangs against the steam. Same setup as `apothpots`, camera on the pots
   // instead of the building.
