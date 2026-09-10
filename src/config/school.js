@@ -27,7 +27,7 @@ export const LAB_FLUE = 4;       // courses of it standing against the sky, abov
 // What the school costs to build, and what a trade costs once it is up. Shards,
 // all of it: the quarry starts giving them up long before the lab is a thing you
 // could afford, and a currency you cannot spend reads as scenery.
-export const SCHOOL_COST = 4;    // shards to build it
+export const SCHOOL_COST = 20;    // shards to build it
 // and the dust beside them. Every row in this game is priced in dust; the
 // training grounds was the one that was not. It is the first building offered
 // after the quarry opens, so the number is small enough to be a nod to the pile

@@ -11,7 +11,7 @@ import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
-import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, ROCKHAND_RUNGS, RUNGS, QUARRY_CORES } from '../src/config.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LOOPOST_SHARDS, LAB_DUST, ROCKHAND_RUNGS, RUNGS, QUARRY_CORES } from '../src/config.js';
 
 const roster = () => state().roster;
 
@@ -62,7 +62,7 @@ group('the outhouse starts at one post, and loopost buys the second', async () =
   const one = roster().find(r => r.job === 'janitors');
   const shownBefore = OUTHOUSE_UPGRADES.find(u => u.key === 'loopost').show();
 
-  window.__grant({ shards: 20 });
+  window.__grant({ shards: LOOPOST_SHARDS });
   window.__tip(1000);                           // the bill's dust half, from DUST_PER
   const bought = buyBuilt('loopost');
   const two = roster().find(r => r.job === 'janitors');

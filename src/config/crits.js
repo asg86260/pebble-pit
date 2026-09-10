@@ -32,7 +32,7 @@ export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
 // appends the dust line at the exchange rate, as it does for every row priced
 // in coins -- so the coins here are cut to about half the old dust price and
 // the total a rung asks for lands roughly where it did.
-export const CRIT_CHANCE_SHARD = 1;    // first rung, rungCost-shaped like the rest
-export const CRIT_CHANCE_SPORE = 4;
-export const CRIT_MULT_SHARD = 3;
-export const CRIT_MULT_SPORE = 9;
+export const CRIT_CHANCE_SHARD = 5;    // first rung, rungCost-shaped like the rest
+export const CRIT_CHANCE_SPORE = 20;
+export const CRIT_MULT_SHARD = 15;
+export const CRIT_MULT_SPORE = 45;

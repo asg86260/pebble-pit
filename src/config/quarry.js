@@ -35,7 +35,7 @@ export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 //
 // Doubled with the farm's `PLOT_COST`, and for the same reason: a place row on
 // either ground should cost like a place you open once the yard is running.
-export const BENCH_COST = 20;      // spores for the first of them
+export const BENCH_COST = 100;      // spores for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets
 
 // --- what the two ladders cost and are worth ---------------------------------

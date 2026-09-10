@@ -36,7 +36,7 @@ export const QUARRY_DUST = 6000;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
 export const LAB_DUST = 12000;     // the lab
-export const LAB_SPORES = 20;      // and a taste of the ground it multiplies
+export const LAB_SPORES = 100;      // and a taste of the ground it multiplies
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
 // A row shows once you are within this much of affording it. Nothing here is

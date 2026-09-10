@@ -36,8 +36,16 @@ export const DUST_PER_SPARK = 60;
 // And the other three coins on the same line. Shard and spore sat at forty
 // each for a year while the yard minted spores two hundred times as fast as
 // shards -- pricing them apart is the grind pass's first lever (DESIGN.md).
-export const DUST_PER_SHARD = 60;
-export const DUST_PER_SPORE = 15;
+//
+// Then both cut to a fifth. A coin is worth what the yard has to give up to
+// make one, and a staffed farm mints forty-odd spores a minute against a
+// hundred-odd dust: a spore is a few grains' worth of time, not fifteen. Every
+// row that names its own shard or spore leg went up fivefold in the same pass,
+// so a row priced in coins asks for five times the coins and the same dust it
+// did -- the found coins were the cheap half of every bill, and this is what
+// makes them the half you wait on.
+export const DUST_PER_SHARD = 12;
+export const DUST_PER_SPORE = 3;
 export const DUST_PER_CORE = 500;
 // Soot off the stack, per unit of the station's work -- not per minute. A
 // machine is the sky's only producer (`foul` refuses everything else), so this
@@ -164,14 +172,14 @@ export const SMOKE_RISE = 0.4;       // and how fast it goes up
 // line): at the old prices an endgame yard bought a machine out of pocket
 // change the moment the row appeared. A machine is the last thing in the
 // game, and the last thing in the game is saved for.
-export const JAW_BILL    = [['spark', 120], ['dust', 7200], ['spore', 100]];
-export const RAM_BILL    = [['spark', 200], ['dust', 12000], ['shard', 160], ['spore', 120]];
-export const TILLER_BILL = [['spark', 80], ['dust', 4800], ['shard', 72]];
+export const JAW_BILL    = [['spark', 120], ['dust', 7200], ['spore', 500]];
+export const RAM_BILL    = [['spark', 200], ['dust', 12000], ['shard', 800], ['spore', 600]];
+export const TILLER_BILL = [['spark', 80], ['dust', 4800], ['shard', 360]];
 // The belt is the one machine not priced away from its own station's coin,
 // because carrying does not *have* a coin: a hauler makes nothing, it moves what
 // everybody else made. So it is priced in all three grounds, which is the truest
 // thing a price can say about a thing the whole yard uses.
-export const BELT_BILL = [['spark', 160], ['dust', 9600], ['shard', 120], ['spore', 120]];
+export const BELT_BILL = [['spark', 160], ['dust', 9600], ['shard', 600], ['spore', 600]];
 // The rock's notional gang was five; the lip's is what a full crew of carriers
 // looks like, which is rather more -- carrying is the job everybody falls back
 // to, so at any moment most of the yard is doing it.

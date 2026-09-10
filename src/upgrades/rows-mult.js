@@ -74,7 +74,7 @@ export const SWING_MULT = ladder({
   // one new character these boards have taken on.
   name: 'swing ×',
   unit: 'px/s',
-  cost: () => rungCost(3, levelOf('swing')),
+  cost: () => rungCost(15, levelOf('swing')),
   currency: 'shard',
   // The shack draws it, directly under the rung it multiplies. The bench used
   // to, on the argument that the rock had no board of its own and the bench
@@ -95,7 +95,7 @@ export const HAUL_MULT = ladder({
   key: 'labhaul', field: 'haul',
   name: 'speed ×',
   unit: 'px/s',
-  cost: () => rungCost(4, levelOf('haul')),
+  cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
   board: 'house',
   show: () => standing() && S.seenShard

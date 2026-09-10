@@ -63,7 +63,7 @@ export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
 // A first rung at about half the door (900 dust), not a fortieth of it: a board
 // you can clear on the frame it opens is a list, not a set of choices. The
 // grind pass measured exactly that happening -- see DESIGN.md.
-export const BREW_RUNG_SPORE = 18;     // first rung, spore, rungCost-shaped
+export const BREW_RUNG_SPORE = 90;     // first rung, spore, rungCost-shaped
 export const BREW_RUNG_DUST = 450;     // and the dust half, per the house rule
 
 // How many doses a stirrer takes out of the building in one trip, rung by rung.

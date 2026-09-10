@@ -33,7 +33,8 @@ export const TESTS = [
     // Dust as well as stone: every row in the game is priced in both now -- see
     // `billOf` in upgrades.js -- and the training grounds was the one row that
     // used to ask for stone alone.
-    window.__grant({ shards: 30, dust: 5000 });
+    const { SCHOOL_COST } = await import('../config.js');
+    window.__grant({ shards: SCHOOL_COST + 10, dust: 5000 });
     const shut = state();
     const row = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockschool');
@@ -51,7 +52,7 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(!shut.schoolOpen && !!row, 'the bench sells it, and it is not there to start with'),
-      ok(open.schoolOpen && open.shards === shut.shards - 4,
+      ok(open.schoolOpen && open.shards === shut.shards - SCHOOL_COST,
          'shards build it', `${shut.shards} -> ${open.shards}`),
       // Against the two things it is actually between, not against the pixels
       // they happened to sit at: the town is laid out as offsets back from the

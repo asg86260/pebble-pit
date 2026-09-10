@@ -16,9 +16,11 @@ import { rockhandBite, rebalance } from '../src/upgrades.js';
 // --- 1. the pickaxe: three integer rungs, bought off the bench -----------------
 group('the pickaxe ladder is three whole-pixel rungs, bought like a player', async () => {
   const out = [];
-  // the row shows once spores have been seen and there is a crew
+  // the row shows once spores have been seen and there is a crew. The purse
+  // is the dust one, sized like the spore one: enough for the whole ladder
+  // with room to spare, so what the check is about is the rung, not the bill.
   window.__crew(1, 1);
-  window.__grant({ spores: 500 });
+  window.__grant({ spores: 5000 });
   window.__give(50000);
   run(0.5);
 

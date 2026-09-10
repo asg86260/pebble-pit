@@ -40,7 +40,7 @@ export const LOO_POSTS = 1;
 // outhouse is the janitor's whole trade in one building -- the seat, the stand
 // with the caps, the brooms and the board. It kept a separate broom cupboard
 // (the janitor's closet) for a while; one trade gets one building.
-export const LOOPOST_SHARDS = 6;
+export const LOOPOST_SHARDS = 30;
 
 // Far enough past the casino to read as its own place rather than the next unit
 // along: the gaps between the buildings out here run about a hundred and fifty,

@@ -71,9 +71,9 @@ export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 // are three of them -- so a house that could only ever pull at the rate it was
 // built with is a house that stops being an answer the moment the yard is worth
 // having one. A bigger fan is what keeps it in the argument.
-export const FAN_COST = 18;          // shards for the first rung
+export const FAN_COST = 90;          // shards for the first rung
 export const FAN_RATE = 1.75;        // and how much steeper each one gets
-export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
+export const RECYCLE_SHARDS = 120;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one
 // And halved for the same reason: the recycler hands back the same dust a second
 // it did before the cycle slowed. Slowing the sky is not meant to be a quiet cut

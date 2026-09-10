@@ -28,14 +28,14 @@ export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives p
 
 // The net: rope off the farm, and the first idea that is not "build it
 // stronger". It catches the rock and pays out under it, all the way down.
-export const NET_COST = 12;         // spores
+export const NET_COST = 60;         // spores
 export const NET_ROPES = 10;
 export const NET_SLOW = 26;         // world pixels a second the rock sinks through it
 
 // The arch: quarried stone, priced in the quarry's own coin. It catches one --
 // the hold is long enough for the yard to believe it has won, and short enough
 // that the belief is the beat rather than a pause in the game.
-export const ARCH_COST = 20;        // shards
+export const ARCH_COST = 100;        // shards
 export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
 export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs
 

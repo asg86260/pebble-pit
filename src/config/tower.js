@@ -33,8 +33,8 @@ export const METEOR_CORE_SPARKS = 3;
 // takes its time over it: dust, stone and crop go in, and a while later there is
 // a hat on the stand.
 export const WIZ_DUST = 4000;
-export const WIZ_SHARDS = 40;
-export const WIZ_SPORES = 40;
+export const WIZ_SHARDS = 200;
+export const WIZ_SPORES = 200;
 export const WIZ_RATE = 1.7;         // and each one after the first
 export const WIZ_BREW_MS = 120000;   // how long the tower is at it
 // What a wizard does once it is up there: a bolt at the star, this often.

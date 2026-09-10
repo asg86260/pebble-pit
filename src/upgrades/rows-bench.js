@@ -128,7 +128,7 @@ export const BENCH_ROWS = [
     // Its own tier's coin, and dust with it. The rock never stops giving dust,
     // so every rung above the first tier is priced in both -- see "The ladder"
     // in DESIGN.md. Digging stays worth doing for the whole run.
-    bill: () => [['shard', rungCost(4, S.pickLevel)], ['dust', rungCost(240, S.pickLevel)]],
+    bill: () => [['shard', rungCost(20, S.pickLevel)], ['dust', rungCost(240, S.pickLevel)]],
     cost: () => rungCost(240, S.pickLevel),
     buy: () => S.pickLevel++,
     show: () => S.seenShard

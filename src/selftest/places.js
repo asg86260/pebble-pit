@@ -68,7 +68,8 @@ export const TESTS = [
     for (let i = 0; i < 6; i++) window.__assign('farmhands', 1);
     const packed = state();
 
-    window.__grant({ shards: 40, spores: 40 });
+    const { BENCH_COST } = await import('../config.js');
+    window.__grant({ shards: 40, spores: BENCH_COST });
     // And dust, which the farm's rows are priced in now: the plots open before
     // the cut, so pricing them in shards priced the earlier place in a currency
     // the later one has not started making yet.

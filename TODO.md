@@ -625,6 +625,19 @@ ladder as the endless red sink); the quarry/lab doors may still sit heavy
 next real save); verify quarry occupancy on a real save before touching
 shard supply (the bot's shard famine may be its own staffing policy).
 
+Lever 1, second pull (2026-09-10): the found coins were still the cheap half of
+every bill. The bot's yard mints forty-odd spores a minute by hour two and sat
+on 6,400 spare against about 1,270 ever spent on spore-priced rows; shard rows
+opened at one to twenty shards. Every shard and spore leg went up fivefold
+(rows that name their own first rung, the machine bills, the wizard hat, the
+lab door, the fan, the shields, the school, the second cap) and `DUST_PER_SHARD`
+/ `DUST_PER_SPORE` went to a fifth (60 -> 12, 15 -> 3), so the derived dust
+legs and the tier bands' coin legs move by the same factor and the dust does
+not. `BREW_CROP`, the apothecary's per-brew spore drain, was left alone: it is
+upkeep, not a price, and fivefold there would starve the pots. Re-measure with
+the bot once a real save has run on it; the machines' shard legs (800 for the
+ram) are the ones to watch if the endgame reads as a wait.
+
 ## The abyss — BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats

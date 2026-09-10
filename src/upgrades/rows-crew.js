@@ -47,7 +47,7 @@ export const CREW_ROWS = [
     rung: () => S.harnessLevel,
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel, S.harnessLevel + 1),
-    bill: () => [['shard', rungCost(8, S.harnessLevel)], ['dust', rungCost(400, S.harnessLevel)]],
+    bill: () => [['shard', rungCost(40, S.harnessLevel)], ['dust', rungCost(400, S.harnessLevel)]],
     cost: () => rungCost(400, S.harnessLevel),
     buy: () => S.harnessLevel++,
     // Once there is stone to spend, and not before: a row asking for a coin the
@@ -63,7 +63,7 @@ export const CREW_ROWS = [
     rung: () => S.bootsLevel,
     from: () => haulSpeed() * 60,
     to: () => haulSpeed(S.haulPaceLevel, S.bootsLevel + 1) * 60,
-    bill: () => [['shard', rungCost(6, S.bootsLevel)], ['dust', rungCost(300, S.bootsLevel)]],
+    bill: () => [['shard', rungCost(30, S.bootsLevel)], ['dust', rungCost(300, S.bootsLevel)]],
     cost: () => rungCost(300, S.bootsLevel),
     buy: () => S.bootsLevel++,
     show: () => S.seenShard && S.crew > 0
