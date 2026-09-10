@@ -17,6 +17,7 @@
 import { CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM } from './config.js';
 import { S, rift, pit } from './state.js';
 import { lookAt, setZoom, clampCam } from './world.js';
+import { reducedMotion } from './prefs.js';
 
 // The triggers are watched rather than called: pit.js tears the rift and
 // rift.js drowns the pit without either knowing a camera exists, and this
@@ -60,9 +61,17 @@ export function stepCutscene(t) {
   // The tearing is framed on the disc; the drowning on the whole mouth, which
   // is wider than any window, so it centers on the near stretch of the hole
   // where the surface and the counter are.
+  //
+  // The zoom is one call and the view is set, not glided, so the scene is
+  // already watched from a still seat -- except that the disc grows under the
+  // tearing and its center creeps with it. Under reduced motion the framing is
+  // taken on the scene's first frame and kept, so the one thing that moves is
+  // the hole; letting go at the end is a `lookAt`, which is a cut under the same
+  // preference.
   const cx = c.name === 'tear' ? rift.x + rift.w / 2
                                : pit.x + Math.min(700, pit.w) / 2;
-  S.camX = cx - S.viewW / 2;
+  if (reducedMotion()) c.heldX ??= cx;
+  S.camX = (c.heldX ?? cx) - S.viewW / 2;
   S.camTo = null;
   // The ground line low in the frame, the event above it -- the same framing
   // rule the intro keeps, for the same reason: measured up from the pit floor

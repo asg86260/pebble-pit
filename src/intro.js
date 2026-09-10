@@ -39,6 +39,7 @@ import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { rand } from './rng.js';
 import { JOB } from './jobs.js';
+import { reducedMotion } from './prefs.js';
 
 // Where the two of them stand: either side of the spot the rock is about to
 // land on, which is the middle of the yard and the middle of the game. The one
@@ -293,7 +294,14 @@ function hold(t) {
 
   // How far out the view is, nought being right in on them. The opening pulls
   // out at the end of it; the second act pulls back *in* and then out again.
-  const k0 = (t - S.introAt);
+  //
+  // Under reduced motion each beat is watched from where it ends: the pull-out
+  // is the wide framing from the first frame of getting up, the second act is
+  // close from the first frame of the meeting and wide again from the first
+  // frame of the parting. Every beat and every body is still there for the
+  // same length of time -- what goes is the easing between framings, so the
+  // view changes only where one beat hands over to the next.
+  const k0 = reducedMotion() ? Infinity : (t - S.introAt);
   const out = S.intro === 'up' ? ease(Math.min(1, k0 / INTRO_UP_MS))
             : S.intro === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
             : S.intro === 'part' ? ease(Math.min(1, k0 / PART_MS))
@@ -471,9 +479,24 @@ function show(t) {
   // Watching whatever there is to watch: the body while it is working, and the
   // grain once it is in the air, because the grain is the thing being explained
   // and it is going somewhere the body is not.
-  const chip = S.chips.find(c => c.intro);
-  const eye = chip ? chip.x : w.x + WORKER / 2;
-  S.camX += ((eye - S.viewW / 2) - S.camX) * 0.06;
+  //
+  // Under reduced motion the view does not chase anything: it sits, for the
+  // whole of the beat, halfway between the rock the grain comes off and the
+  // mouth it is thrown into -- one framing that holds both ends of the throw
+  // where the window is wide enough, and the ground between them where it is
+  // not. The same target the throw below is aimed at, so the two cannot drift.
+  //
+  // Well inside the mouth rather than just over the lip. A throw is an arc and
+  // an arc has a spread; aimed at the edge, half of them come down short of it
+  // and lie on the ground, which demonstrates nothing.
+  const into = pit.x + P * 24;
+  if (reducedMotion()) {
+    S.camX = (S.cx + into) / 2 - S.viewW / 2;
+  } else {
+    const chip = S.chips.find(c => c.intro);
+    const eye = chip ? chip.x : w.x + WORKER / 2;
+    S.camX += ((eye - S.viewW / 2) - S.camX) * 0.06;
+  }
   S.camTo = null;
   clampCam();
 
@@ -486,10 +509,6 @@ function show(t) {
   // and fetch something, which is the walk this is here to be rid of.
   if (S.floorGrains >= INTRO_SHOW_DUST && !S.introThrew) {
     const fx = w.x + WORKER / 2, fy = w.y + P * 2;
-    // Well inside the mouth rather than just over the lip. A throw is an arc and
-    // an arc has a spread; aimed at the edge, half of them come down short of it
-    // and lie on the ground, which demonstrates nothing.
-    const into = pit.x + P * 24;
     const v = aim(fx, fy, into, P);
     spawnChip(fx, fy, v.vx, v.vy, 4);
     const thrown = S.chips[S.chips.length - 1];
