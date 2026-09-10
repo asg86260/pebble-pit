@@ -29,7 +29,10 @@ export const LUCK_ROWS = [
     bill: () => [['shard', rungCost(CRIT_CHANCE_SHARD, S.critChanceLevel)],
                  ['spore', rungCost(CRIT_CHANCE_SPORE, S.critChanceLevel)]],
     buy: () => S.critChanceLevel++,
-    show: () => true
+    // Nothing in this game names a coin you have not met, so a row priced in
+    // both waits for both. The pair used to show from the first frame, when
+    // they were priced in dust and dust is the only coin you start with.
+    show: () => S.seenShard && S.seenSpore
   },
   {
     key: 'critmult',
@@ -46,6 +49,6 @@ export const LUCK_ROWS = [
     bill: () => [['shard', rungCost(CRIT_MULT_SHARD, S.critMultLevel)],
                  ['spore', rungCost(CRIT_MULT_SPORE, S.critMultLevel)]],
     buy: () => S.critMultLevel++,
-    show: () => true
+    show: () => S.seenShard && S.seenSpore
   }
 ];
