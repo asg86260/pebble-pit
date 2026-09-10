@@ -23,6 +23,7 @@
 import { STATS_WINDOW_S, STATS_SAMPLE_S, STATS_FLOOR } from './config.js';
 import { S } from './state.js';
 import { MARK } from './upgrades.js';
+import { fmt } from './board.js';
 
 // What the books watch, in the order they are read on the board, and the word
 // the yard calls each of them by. Dust is read off `banked` -- every grain ever
@@ -138,8 +139,75 @@ export const STATS_UPGRADES = BOOKS.map(b => ({
   show: () => b.seen()
 }));
 
+// --- the tally ------------------------------------------------------------------
+// What the yard has done, all told. The income rows say what is coming in
+// this half minute and the record (on the held sheet) says which moments have
+// happened; neither is allowed a lifetime total, and the yard has kept a
+// dozen of them since the first rock without saying one back. These are those
+// counters, read straight off `S` -- nothing here is measured or eased, and
+// nothing here is new: every one of them was already being counted, most of
+// them for a notice.
+//
+// Named once you have met the thing, which is the rule the books and the
+// counter already go by: a yard that has never seen the cut is not told it has
+// dug no ore. The names are the yard's own words for each, in the same voice as
+// the income rows above them.
+const TALLY = [
+  { key: 'rocks',  name: 'rocks cleared',
+    count: () => S.boulderNo - 1, seen: () => S.boulderNo >= 2 },
+  { key: 'banked', name: 'pebbles banked', mark: 'dust',
+    count: () => S.banked, seen: () => S.banked > 0 },
+  { key: 'ore',    name: 'ore dug', mark: 'shard',
+    count: () => S.quarryTotal, seen: () => S.seenShard },
+  { key: 'rift',   name: 'through the rift', mark: 'dust',
+    count: () => S.riftAte, seen: () => S.riftOpen },
+  { key: 'brews',  name: 'batches brewed',
+    count: () => S.brews, seen: () => S.brews >= 1 },
+  { key: 'hats',   name: 'hats finished',
+    count: () => S.wizardHats, seen: () => S.wizardHats >= 1 },
+  { key: 'crew',   name: 'on the payroll',
+    count: () => S.crew, seen: () => S.crew >= 1 },
+  { key: 'notes',  name: 'notices earned',
+    count: () => S.won.length, seen: () => S.won.length >= 1 }
+];
+
+// The eldest body's time on the payroll, on the clock every bill is read off.
+// `lived` is a body's own clock, kept by the crew -- the same reading the
+// hour-on-one-clock notice waits for. Minutes under an hour, hours after, in
+// the short form a clock price uses.
+const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
+const sayTime = ms =>
+  ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
+
+const TALLY_UPGRADES = [
+  ...TALLY.map(t => ({
+    key: `tally${t.key}`,
+    name: t.name,
+    price: () => `${t.mark ? MARK[t.mark] + ' ' : ''}${fmt(t.count() || 0)}`,
+    read: true,
+    dead: () => false,
+    cost: () => 0,
+    buy: () => {},
+    show: () => t.seen()
+  })),
+  { key: 'tallyeldest',
+    name: 'longest on one clock',
+    price: () => `${MARK.time} ${sayTime(eldest())}`,
+    read: true,
+    dead: () => false,
+    cost: () => 0,
+    buy: () => {},
+    show: () => eldest() >= 60000 }
+];
+
+// One list for the board: the books' own rows and the tally, so the two places
+// that already read `STATS_UPGRADES` (board.js, shop.js) get both without
+// being told there is a second kind.
+STATS_UPGRADES.push(...TALLY_UPGRADES);
+
 export const STATS_SECTIONS = [
-  { title: 'income', keys: STATS_UPGRADES.map(u => u.key) }
+  { title: 'income', keys: STATS_UPGRADES.filter(u => u.key.startsWith('rate')).map(u => u.key) },
+  { title: 'the tally', keys: TALLY_UPGRADES.map(u => u.key) }
 ];
 
 // --- what the books are reading ------------------------------------------------

@@ -6,6 +6,7 @@ import { heapBase } from './piles.js';
 import { QUARRY_W } from './quarry.js';
 import { LAB_W, SCHOOL_W } from './school.js';
 import { SCRUB_W } from './scrub.js';
+import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 
 export const TO_LEDGE = 636;     // rock centre to the lip of the pit
@@ -103,7 +104,16 @@ export const SITES = [
   // nearest rather than off the bench by name, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null },
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
-  { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null },
+  // The settlement owns the ground the noticeboard stands on. The board is
+  // furniture rather than a station (see world.js, where it is seated) and so
+  // has no slot of its own -- it stands in the walk between the front doors and
+  // the bench. But a walk is STATION_GAP of bare ground, and a board eleven
+  // cells wide set in twenty cells of it left four and a half either side: the
+  // board read as leaning on the house. So the house pads its rock side by the
+  // board's own width, the way a site with a heap pads by its heap, and the
+  // board is centered in a gap that has a walk's worth of ground round it.
+  { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,
+    furniture: () => BOARD_W },
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null },
   { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
   { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry' },
@@ -136,7 +146,13 @@ export const SITES = [
 // actually reads is the bare ground between one drawn thing and the next, and
 // that is STATION_GAP everywhere by construction once each site is padded by
 // what it parks there and no more.
-export const padOf = row => row.pile ? row.standoff + heapBase(row.pile) * P : 0;
+//
+// A heap is one thing a site parks beside itself; a piece of furniture is the
+// other (the house's noticeboard), and it is padded the same way -- by what
+// it is, not by a number about it.
+export const padOf = row =>
+  row.pile ? row.standoff + heapBase(row.pile) * P :
+  row.furniture ? row.furniture() : 0;
 
 // How wide the rock is ever allowed to get, and how much bare ground it keeps
 // off the building on its flank. They live up here, ahead of the walk, because

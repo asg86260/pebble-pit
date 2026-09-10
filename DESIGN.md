@@ -6811,3 +6811,27 @@ All three were open when this was written and all three came down on the sheet:
   question "who is this" is already being asked -- not on the record sheet, which
   is about the yard rather than about any one of them. That is its own piece of
   work and is not part of building this.
+
+### The tally, and the ground under the board (built)
+
+Two things that came after the record went up.
+
+**A second section on the books: the tally.** The books say what is coming in this half minute
+and the record says which moments have happened, and neither is allowed a
+lifetime total -- so the yard went on keeping a dozen of them without saying
+one back. `the tally` sits under the income: rocks cleared, pebbles banked, ore
+dug, pebbles through the rift, batches brewed, hats finished, bodies on the
+payroll, notices earned, and the longest any one body has been on one clock.
+Every figure is read straight off `S`; nothing is measured, eased or newly
+counted, and every row names a thing only once you have met it, the rule the
+books and the counter already keep. It lives in `stats.js` beside the income
+rows, in the same row shape, so the board needed no second kind of row.
+
+**The house owns the board's ground.** The board stands in the walk between
+the front doors and the bench, and a walk is one `STATION_GAP` of bare ground:
+eleven cells of board in twenty cells of walk left four and a half either side,
+and it read as leaning on the house. The house row in `SITES` now carries
+`furniture: () => BOARD_W`, and `padOf` pads a site by its furniture the way it
+pads one by its heap -- so the gap the board is centered in is the walk plus
+the board, and the ground either side of it is a walk's worth. The world is
+eleven columns wider for it, which is the board's own width and no more.
