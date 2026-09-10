@@ -722,7 +722,7 @@ const CATALOG = [
 
 // Bumped with the build, so a local copy written by the version that kept
 // clobbering itself cannot come back to life.
-const BUILD = 'build 7 · local';
+const BUILD = 'build 8 · local';
 const KEEP = 'boulder-record-v5';
 const allItems = CATALOG.flatMap(s => s.items);
 const itemOf = Object.fromEntries(allItems.map(i => [i.key, i]));
@@ -1140,10 +1140,51 @@ const CARRIED = {
   gotout: { name: 'you saved your sqwife' }
 };
 
+/* Every key this sheet has ever written under, newest first.
+
+   NEVER BUMP THE KEY AGAIN. It was moved twice -- once to stop a seeded note
+   overriding a new default, once to let the renamed resources through -- and
+   both times it orphaned everything the reader had written instead of
+   carrying it forward. A version of the sheet is a version of MY words; the
+   cuts and rewordings on it are THEIRS, and the two must not share a fate.
+   The defaults are in CATALOG and an edit is only ever stored where it
+   differs from them, so a saved sheet was always safe to read forward and
+   the bump was never buying anything.
+
+   Anything found under an old key is read, used, and written straight back
+   under the current one, so the recovery happens once and quietly. */
+const KEYS = ['boulder-record-v5', 'boulder-record-v4', 'boulder-record-v3',
+              'boulder-record-v2', 'boulder-record'];
+
+function loadState() {
+  let best = null, bestAt = '';
+  for (const k of KEYS) {
+    let v = null;
+    try { v = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { continue; }
+    if (!v || typeof v !== 'object') continue;
+    const has = Object.keys(v.edits || {}).length || Object.keys(v.cut || {}).length ||
+                Object.keys(v.sections || {}).length || Object.keys(v.calls || {}).length ||
+                v.approved;
+    if (!has) continue;
+    // The newest sheet wins, and one with no stamp still beats nothing.
+    const at = v.at || '';
+    if (!best || at > bestAt) { best = v; bestAt = at; }
+  }
+  return best;
+}
+
 try {
-  const was = JSON.parse(localStorage.getItem(KEEP) || 'null');
-  if (was) Object.assign(state, was);
-  else { state.edits = CARRIED; state.at = new Date().toISOString(); keepHere(); }
+  const found = loadState();
+  if (found) {
+    Object.assign(state, found);
+    // Carry it on to the current key at once, so an older one is never read
+    // twice and never has to be found again.
+    if (localStorage.getItem(KEEP) === null) keepHere();
+  } else {
+    state.edits = CARRIED;
+    state.at = new Date().toISOString();
+    keepHere();
+  }
 } catch (e) {}
 
 paint();
