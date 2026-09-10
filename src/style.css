@@ -77,7 +77,18 @@ canvas {
      The column gap is the wide one because that is where words meet words; the
      row gap is a hairline, because the two lines are already a line apart. */
   --card-gap: 2px 12px;
+  /* Words on a card wrap. The sheet is nowrap, which was right when it was
+     shrink-to-fit -- the words decided its width, so nothing ever had to give
+     -- and is wrong now that the width is fixed: a nowrap cell that runs out of
+     card does not stop, it paints on over the next cell. So every run of words
+     in the rows wraps, and the handful of things that would be nonsense broken
+     across a line are made whole again below, each by name. */
+  white-space: normal;
 }
+/* What stays on one line: a coin and its number, the row of pips, the stepper
+   with its count, the headcount on a heading. Each is one mark, not a phrase,
+   and a mark split over two lines is two marks. */
+.rows .cost > span, .rows .ladder, .rows .step, .rows .badge { white-space: nowrap; }
 /* Headings and anything else loose span the sheet; a card takes one cell of it. */
 .rows > * { grid-column: 1 / -1; }
 .rows > button, .rows > .job { grid-column: auto; }
@@ -162,15 +173,15 @@ canvas {
      every other card's price across the board.
 
      `min-content` is the floor under the left-hand column, and it is what keeps
-     what a card GIVES you on the card. The gain line does not wrap, so its
-     min-content IS the whole line -- which means the column can never be
-     squeezed narrower than the words in it. Without the floor a plain `1fr`
+     what a card GIVES you on the card: the column can never be squeezed
+     narrower than the longest word in it. Without the floor a plain `1fr`
      gives way first and the bill takes everything: the farm's astral GMOs, whose
      bill is six coins deep, had a gain cell exactly zero pixels wide and the
-     line "10 -> 13 spores a cut" was clipped out of existence. The bill is the
-     thing that can afford to give way, because it wraps -- it takes another
-     line inside its own cell and the card is a line taller, which is a card you
-     can still read. */
+     line "10 -> 13 spores a cut" was clipped out of existence. Both sides wrap
+     now -- the bill coin by coin, the gain and the title word by word -- so
+     when the two ask for more than the card has, each takes another line
+     inside its own cell and the card is a line taller, which is a card you can
+     still read. */
   grid-template-columns: minmax(min-content, 1fr) auto;
   gap: var(--card-gap);
   align-items: baseline;
@@ -321,24 +332,21 @@ canvas {
    of pluses is a column you can run your eye down. */
 /* And it is never truncated. What a card gives you is the reason to press it;
    a card that says what it costs and eats what it is worth is a card you cannot
-   read. The column's `min-content` floor (see `.rows button` above) is what
-   holds it: this line does not wrap, so its min-content is the whole of it and
-   the track cannot come out narrower.
-   `min-width: 0` and the clip are the belt to `pinWidth`'s braces (board.js),
-   and they are for the LINE THIS CELL IS LENT -- a status, which spans the whole
-   card and is written live while a build runs. The sheet is a fixed box, so a
-   status longer than the card can only spill over its own border; the clip is
-   there so the word nobody has written yet truncates rather than bleeding into
-   the card beside it. Every status in the vocabulary fits today -- the widest is
-   "nobody on it" -- and the check in selftest/boards.js is what holds that
-   margin, along with the one that says no gain line is ever clipped. */
+   read. It wraps, like every other run of words on the card: the column's
+   `min-content` floor (see `.rows button` above) is its longest word, so the
+   bill can take the width it needs and the gain takes a second line under
+   itself rather than being squeezed to nothing.
+   It used to be nowrap with a clip, and the clip was for the LINE THIS CELL IS
+   LENT -- a status, which spans the whole card and is written live while a
+   build runs -- so that a word nobody had written yet would truncate rather
+   than paint across the card beside it. A wrapping cell has no such word: it
+   takes another line. The check in selftest/boards.js still says no gain is
+   ever clipped, and it is a check of the ink against the cell. */
 .rows button .gain {
   grid-column: 1;
   grid-row: 2;
   opacity: .75;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 /* The second line is a line whether or not there are words on it. A card with
    nothing to say about what it gives -- the row that opens the crew list, say --
@@ -758,6 +766,10 @@ canvas {
    through the ground the board is standing on. Bottom-aligned means a list of
    twenty grows upwards, so the board itself never moves when it comes out. */
 .panel .flyout { transform-origin: 0 100%; }
+/* Cut to its names rather than to the boards' one width: a list as wide as a
+   board beside a board is two boards, and on an ordinary window they would not
+   both fit. The floor is so a name changing under the cursor cannot walk it. */
+.panel .flyout { width: auto; min-width: 34ch; }
 /* `.sheet` is `display: flex`, which outranks the browser's own rule for
    [hidden] -- so without this the list is out from the moment the page loads. */
 .panel .sheet[hidden] { display: none; }
@@ -818,49 +830,6 @@ canvas {
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
 /* the switch reads as thrown when it is thrown */
 #hidedone.on { opacity: 1; border-style: solid; }
-
-/* On a phone the board has to fit the screen and be big enough to hit with a
-   thumb, so the columns tighten and the rows grow. It is opened by a tap on the
-   bench rather than by hovering, because there is no hovering.
-   A phone held sideways is a wide, short window, so short counts as small too. */
-@media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
-  /* No room beside it on a phone, so the purse goes above the board instead and
-     lies along it: four marks in a row is one line, and one line is cheaper than
-     the width of a column the screen has not got. */
-  .panel { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .purse {
-    flex-direction: row;
-    gap: 10px;
-    padding: 4px 8px;
-    transform-origin: 0 100%;
-  }
-  .purse .coin { gap: 4px; }
-  .purse .coin b { min-width: 0; }
-  .panel .sheet {
-    padding: 8px 9px;
-    max-width: calc(100vw - 16px);
-    /* in landscape there may be less room above the bench than the board wants:
-       it scrolls inside itself rather than running off the top */
-    max-height: calc(100vh - 16px);
-    overflow-y: auto;
-    letter-spacing: .06em;
-  }
-  .rows { gap: 1px 4px; }
-  .rows button {
-    padding: 6px 3px;                /* a thumb, not a cursor */
-    letter-spacing: .06em;
-  }
-  .rows .job { padding: 4px 3px; }
-  .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
-  .rows button:hover:not(:disabled) { color: #000; background: none; }
-  .rows button:active:not(:disabled) { color: #fff; background: #000; }
-  #hidedone { padding: 6px 8px; }
-  /* The panel stacks on a phone, so the submenu lands under the board it came
-     out of rather than beside it -- which is still a submenu, and is the only
-     way round that fits. Between the two of them they have one screen to share,
-     so the names get a shorter run of it before they start scrolling. */
-  #crewlist { max-height: 30vh; }
-}
 
 
 /* the lab's stats page: a plain list of rates, under its rows */
@@ -984,21 +953,21 @@ canvas {
 
 .panel .sheet {
   box-sizing: border-box;      /* so a max-height is the height, padding and all */
-  /* A floor under the width, so a note's words changing under the cursor cannot
-     make the sheet a hair narrower and walk the whole board sideways -- the
-     shifting boards of feedback7 items 2 and 3. Wide enough for the ordinary
-     row; a board with longer rows still grows past it and stays there. */
-  min-width: 34ch;
-  /* And a ceiling over it, which the sheet never had: it was shrink-to-fit with
-     nothing above, and simply grew to whatever the longest row asked for. That
-     was survivable while a card stacked its name over its bill, because the
-     widest thing on the board was a bill. With the bill up beside the title the
-     two ask for their widths at once, and an unbounded sheet answers by getting
-     wider instead of by wrapping -- the bench ran off the side of the window.
-     The ceiling is what turns "no room" into a second line of title, which is
-     the whole point of putting them on one row. In `ch`, so it is a count of the
-     sheet's own characters rather than a pixel guess about the type. */
-  max-width: 84ch;
+  /* One width for every board. It was a floor of 34ch and a ceiling of 84ch
+     with the words deciding where in between a sheet came out, and the words
+     decided differently on every board: measured with everything open, the
+     bench, the school and the tower stood at the ceiling, the house and the
+     closet in the five hundreds, the casino and the apothecary at 245 pixels.
+     Thirteen boards that walk into the same spot and are thirteen sizes there.
+     A fixed width is what makes the wrapping predictable as well: a card's
+     tracks can only be planned if every card is the same width, and a title
+     that wraps at the bench should wrap at the same word at the cut.
+     The number is the ceiling the full boards already reached, so nothing that
+     fitted before wraps now; in `ch`, so it is a count of the sheet's own
+     characters rather than a pixel guess about the type. The flyout is left
+     out: it is a list of names beside a board, not a board.
+     A phone overrides this with the width of the glass -- see the media rule. */
+  width: 84ch;
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 12px;
   background: #fff;
@@ -1065,4 +1034,74 @@ canvas {
   background: #000;
   font: inherit;
   letter-spacing: 0;
+}
+
+/* LAST ON PURPOSE. Everything in here overrides a rule above by the same
+   selector, and two rules of one specificity are settled by order alone --
+   this block used to sit in the middle of the file, and every rule in it
+   whose base rule came later (the sheet, the purse, the coin slot) was
+   silently losing: the board never took the width of the glass, never
+   scrolled, and the purse never lay down. A phone override has to be the
+   last word, so it is the last thing in the file. */
+/* On a phone the board has to fit the screen and be big enough to hit with a
+   thumb, so the columns tighten and the rows grow. It is opened by a tap on the
+   bench rather than by hovering, because there is no hovering.
+   A phone held sideways is a wide, short window, so short counts as small too. */
+@media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
+  /* No room beside it on a phone, so the purse goes above the board instead and
+     lies along it: four marks in a row is one line, and one line is cheaper than
+     the width of a column the screen has not got. */
+  .panel { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .purse {
+    flex-direction: row;
+    gap: 10px;
+    padding: 4px 8px;
+    transform-origin: 0 100%;
+  }
+  .purse .coin { gap: 4px; }
+  .purse .coin b { min-width: 0; }
+  .panel .sheet {
+    padding: 8px 9px;
+    /* The one width is the glass, less the panel's margins: the boards are
+       still all one size, it is just the phone's size. `min` rather than a
+       max-width over the fixed width, so the flyout's own `auto` is not
+       clamped by a rule meant for the boards. */
+    width: min(84ch, 100vw - 16px);
+    /* in landscape there may be less room above the bench than the board wants:
+       it scrolls inside itself rather than running off the top */
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    letter-spacing: .06em;
+  }
+  .panel .flyout { width: auto; max-width: calc(100vw - 16px); }
+  /* The same air between cards as on a desk. It was a single pixel between
+     rows here, which is two card borders touching with a hairline of white
+     between them -- a column of boxes rather than a set of cards. Four pixels
+     is the cost of one extra row on a long board, and the cards read as cards. */
+  .rows { gap: 4px; }
+  .rows button {
+    padding: 6px 3px;                /* a thumb, not a cursor */
+    letter-spacing: .06em;
+  }
+  .rows .job { padding: 4px 3px; }
+  .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
+  .rows button:hover:not(:disabled) { color: #000; background: none; }
+  .rows button:active:not(:disabled) { color: #fff; background: #000; }
+  #hidedone { padding: 6px 8px; }
+  /* The panel stacks on a phone, so the submenu lands under the board it came
+     out of rather than beside it -- which is still a submenu, and is the only
+     way round that fits. Between the two of them they have one screen to share,
+     so the names get a shorter run of it before they start scrolling. */
+  #crewlist { max-height: 30vh; }
+}
+
+/* Narrow glass, whatever the height: one card across. Two columns on a sheet
+   the width of a phone are cards of 180 pixels, and a bill of six coins in
+   one of those is three lines of coins beside a gain broken into three words
+   -- readable, but only just. One column is a card wider than a desk card,
+   and nothing on it wraps at all. A short, wide window keeps the pair: the
+   sheet is full width there, and one card across would be a column of very
+   wide cards in very little height. */
+@media (max-width: 560px) {
+  .rows { grid-template-columns: minmax(0, 1fr); }
 }
