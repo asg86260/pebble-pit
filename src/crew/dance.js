@@ -200,8 +200,17 @@ const danceEnd = now =>
 // on a face or a ladder. A body stopped on the ramp danced on a slope, and the
 // stride that took it back to work was a cell of height for the ramp's own
 // twenty degrees, which read as the dance dropping it.
+//
+// On it, not under it. The span alone put every quarrier on the floor of the
+// cut "on the bridge", because the cut is exactly what the bridge spans, so
+// the whole gang stood rigid through every celebration -- unpaid and
+// undanced, the half of the yard that had not noticed, which is the thing the
+// rewrite above was written against (docs/critics-2026-09-10.md, A6). The
+// feet say which: below the ground line is the cut, and `wayAt` draws the
+// same line.
 const onBridge = w => {
   if (!S.quarryOpen) return false;
+  if (w.y + WORKER > S.groundY + 1) return false;
   const { x0, x1 } = bridgeSpan();
   return w.x + WORKER > x0 && w.x < x1;
 };
@@ -231,11 +240,19 @@ function jig(w, now, zone, endsAt) {
     // spacing changes -- so a farmhand saved on bare yard can be standing a
     // cell and a half into a heap. Latched there, the stride that took it back
     // to work climbed out of the heap in one frame, which read as the dance
-    // dropping it. So it does not join until its own stepper has it standing
-    // where it stands: the climb is eased, and nothing jumps. `surfaceUnder`
-    // asks the way the body is on, so a quarrier on the floor of the cut and a
-    // rockhand on the crest are on their surfaces and join at once.
-    if (Math.abs(w.y - surfaceUnder(w)) > P) return;
+    // dropping it. So it does not join until it is standing where it stands.
+    // `surfaceUnder` asks the way the body is on, so a quarrier on the floor of
+    // the cut and a rockhand on the crest are on their surfaces and join at
+    // once.
+    //
+    // And the standing is done HERE, a climb's pace a frame. It used to wait
+    // for the body's own stepper to ease it up -- but the celebration sits
+    // above every stepper in the step list and nothing else may move a body
+    // while the yard dances, so a body a cell off its surface waited for a
+    // stepper that never ran: a quarrier stands a cell down in the cell it is
+    // cutting, and one of every gang stood rigid through every dance
+    // (docs/critics-2026-09-10.md, A6).
+    if (Math.abs(w.y - surfaceUnder(w)) > P) { w.y = stand(w); return; }
     if (w.walking) {
       if (!onYard(w)) return;
       w.walking = false; w.legs = null; w.leg = 0;
