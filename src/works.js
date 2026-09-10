@@ -60,7 +60,13 @@ export const SITE_JOB = {
   // The apothecary, whose gang is its stirrers. Its rungs are built by its own
   // hands the way the plots break the next furrow; the brewing itself is an
   // upkeep stepped in apothecary.js, not a one-shot work here.
-  apothecary: JOB.STIR
+  apothecary: JOB.STIR,
+  // The shack, whose gang is the rock's. A pick is fitted where the gang keeps
+  // its gear, by one of the gang -- the quarry's and the farm's rule, see
+  // shedhand.js. They were `site: 'bench'`, so a row bought on the shack's
+  // board was walked to the bench and worked there by whoever was spare, and
+  // the hut the row hangs in never saw the work it sold.
+  shack: JOB.ROCK
 };
 
 // --- what a site can take, and how fast ----------------------------------------

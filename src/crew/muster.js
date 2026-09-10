@@ -25,6 +25,10 @@ import { atShed } from './shedhand.js';
 // while its gang was halfway down the ladder would be the building claiming
 // something the crew deny.
 const ARRIVED = {
+  // The rock's gang, for the shack: a pick is fitted by one of them standing
+  // at the hut (see shedhand.js), so what is asked of this is only that the
+  // body is one of theirs and not still on its way out.
+  rockhands: w => w.type === TYPE.ROCK && w.goal !== 'to',
   quarriers: w => w.type === TYPE.QUARRY && w.goal !== 'to',
   farmhands: w => w.type === TYPE.FARM && w.goal !== 'to',
   purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',
@@ -61,7 +65,7 @@ setHands(site => {
   // standing there, not the gang at its posts. The rest of the gang goes on
   // producing and none of it credits the bar. A station with no gang at all is
   // still helped by a lent builder, through `helping` above. (wave6-sim, item 2)
-  const shedwork = site === 'quarry' || site === 'farm';
+  const shedwork = site === 'quarry' || site === 'farm' || site === 'shack';
   // wave7b-build: with the construction bench open, a building or a machine is
   // the builders' and nobody else's -- the site's own gang goes on producing
   // and does not credit the bar. Everything that is not a rising kind (a bench

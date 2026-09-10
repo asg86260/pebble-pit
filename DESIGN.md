@@ -6000,6 +6000,36 @@ lay and what kind it was: the exact loss that function exists to prevent, in the
 did not cover. It takes a negative shift now, dropping what runs off the near end -- bare
 `YARD_MARGIN` ground past the last building, which nobody heaps on.
 
+### Amendment — the hut rides the rock after all, and the yard's pads are its own
+
+Two things were still too far apart, and each was a rule that had been argued the other way above.
+
+**The shack stands off the rock that is here, and scoots.** "Riding the rock's live flank" was
+dropped above because placing the *walk* off the live rock re-ties the knot. The walk does not
+move: the shack keeps its slot -- the sum above, less the pad, which is where it stands at the
+biggest rock and what `flankX` and so the rock's cap still read. The *hut* stands nearer:
+`ROCK_FLANK_CLEAR` (six cells now, not fourteen) off the rock by its number, `rockWidthAt(n)`,
+never its clamped width -- and when a broader rock comes down it slides out toward the slot at
+`SHACK_SCOOT` while the rock is still in the air. A cell or two a rock, a second of a hut
+shuffling over; from rock seventeen on it is standing in its slot and the two rules agree. Nothing
+teleports, the rock is the size it always was, and the gang's kit stand, the hut's board and the
+rockhand fitting a pick at the door all read the live rect and go with it. `shackSpot` and
+`stepShack` in world.js.
+
+**A site pads by its own heap.** `SLOT_PAD` was the widest heap in the yard, the quarry's
+thirty-five cells, laid beside all thirteen sites on the argument that an even rhythm is wall to
+wall. Nine of them have no heap, so the shack and the bench stood three hundred and thirty pixels
+apart for nothing, and the walk to the tower was a screen and a half of bare ground. `padOf(row)`
+is the site's own standoff and heap, on the side the heap lies, and the rhythm the yard reads --
+one `STATION_GAP` between one drawn thing and the next -- holds by construction. The quarry and
+the farm are exactly where they were relative to their neighbors; everything with no heap closed
+up by thirty-five cells a side.
+
+**And the hut's rows are worked at the hut.** They moved onto the shack's board and stayed
+`site: 'bench'`, so a pick bought at the door was fitted a walk away by whoever was spare. It is
+the quarry's rule now: `site: 'shack'`, gang `JOB.ROCK`, and the work claims one rockhand to stand
+at the hut for the duration (shedhand.js).
+
 ### What moves in
 
 | row | from | why it can move now |
@@ -6433,7 +6463,8 @@ you have not yet found out is in here.
 It is one predicate on the row's `show` either way, so it stays cheap to revisit
 on a played yard -- but it is settled, and the build goes this way.
 
-### What is recognized — the approved catalog
+
+### What is recognized — the approved catalog
 
 **Forty-two notices, approved 2026-09-10.** Ten of the fifty-two proposed were
 struck off on the sheet and are gone rather than parked: `everything the sky

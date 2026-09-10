@@ -96,6 +96,28 @@ const SCENES = {
                pointerId: 1, isPrimary: true, button: 0, buttons: 0, bubbles: true }));
            });`,
 
+  // The rock's own flank: the hill, the hut beside it and the bench beyond,
+  // with the ground between them. A picture of spacing, so the camera sits on
+  // the rock's left edge and lets the walk run out to the left of it.
+  flank: `window.__reset(); window.__crew(3,1); window.__shack(); window.__give(100);
+          window.__fast(2);
+          requestAnimationFrame(() => {
+            document.getElementById('raise').click();
+            window.__fast(40);
+            window.__look(window.__state().benchX - 120);
+          });`,
+
+  // ...and the same, six rocks in: the hut has scooted out to keep its
+  // clearance off a broader rock, and the bench has not moved.
+  flankgrown: `window.__reset(); window.__crew(3,1); window.__shack(); window.__give(100);
+          window.__fast(2);
+          requestAnimationFrame(() => {
+            document.getElementById('raise').click();
+            window.__fast(40);
+            for (let i = 0; i < 5; i++) { window.__next(); window.__fast(6); }
+            window.__look(window.__state().benchX - 120);
+          });`,
+
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 

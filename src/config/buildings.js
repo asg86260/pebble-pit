@@ -90,6 +90,13 @@ export const CASINO_H = P * 12;
 // nothing through that one.
 export const SHACK_W = P * 8;
 export const SHACK_H = P * 11;
+// The hut stands ROCK_FLANK_CLEAR off THIS rock, not off the biggest rock there
+// will ever be, and scoots out toward its slot in the walk as each bigger one
+// comes down -- this is how far it slides in a second. A rock is three cells
+// broader than the last, so a scoot is a cell or two: about a second of a hut
+// shuffling over while the new rock is still in the air, which is a thing you
+// can watch rather than a building somewhere else after the dust settles.
+export const SHACK_SCOOT = 18;
 // What it costs. The cheapest bill in the game, and the only one paid in dust
 // alone: this is a hut for the gang that digs the dust, put up before the yard
 // has any other coin to its name, and a bill in a currency the rock does not
