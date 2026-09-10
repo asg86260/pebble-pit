@@ -6835,3 +6835,144 @@ and it read as leaning on the house. The house row in `SITES` now carries
 pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
+
+## The held sheet, revamped (design, not built)
+
+The held sheet was built as a card with a word on it, then grew a settings
+shelf (the release wave), then the record (the noticeboard amendment). At four
+notices of forty-two the record is already the tallest thing on the card, and
+at forty-two it is a page with a pause button somewhere near the top. This
+section puts the sheet back to one screen and gives everything else a sheet of
+its own behind it. It replaces "The sheet (built)" above where the two differ.
+
+### What the stint found
+
+Pause menus are one of the few pieces of game interface with a settled
+convention, and players notice deviation from it more than they notice
+anything done well within it. The points that held up across the sources,
+kept only where they apply to a game with no combat, no levels and no quit:
+
+- **Escape opens it and Escape closes it.** Esc is the key players reach for
+  to leave the game for a menu; a game that binds pause elsewhere is asking
+  to be re-learned. Inside a nested sheet Esc closes the innermost thing
+  first -- the accessibility rule for every overlay on the web, and the rule
+  every game menu follows without saying so: Esc on a sub-screen is *back*,
+  not *resume*.
+- **The first screen is short.** Six or seven items at most; resume at the
+  top, the dangerous thing at the bottom, and everything that is a list of
+  its own (a record, an options page) behind one line that names it and
+  says how much is there. Progressive disclosure, in the jargon; in plain
+  words, the card you pause into should be readable in one glance.
+- **Records live one level down.** Celeste keeps a journal off the pause menu
+  and never lists it on it; Minecraft's pause screen is five buttons and
+  every statistic is behind one of them. Nobody praised a pause screen for
+  what it listed; the praised ones open instantly, say little, and get out
+  of the way.
+- **Resume takes focus on open.** The most common next action is the one
+  keyboard-ready by default; Enter resumes.
+- **No animation is expected.** The praised minimalist menus (Limbo, Inside,
+  Papers, Please) are a still list. A flat card that is simply there fits
+  this game's register better than one that slides.
+
+Sources: [Creating an intuitive in-game menu](https://indieklem.substack.com/p/9-creating-an-intuitive-in-game-menu),
+[Escaping 101](https://sarahmhigley.com/writing/escaping-101/),
+[Minecraft's game menu](https://minecraft.wiki/w/Game_Menu),
+[Game UI Database, pause screens](https://www.gameuidatabase.com/index.php?scrn=44),
+[Pause menu like a pro](https://danio-quero.medium.com/pause-menu-like-a-pro-7bc70489d0d6).
+
+### The key
+
+**Escape holds the yard; space does nothing.** Escape was free -- boards close
+on the pointer leaving them, not on a key -- and space was the one binding a
+player had to be told about. The keys line reads `esc holds Â· â† â†’ look about`.
+Space is not kept as a second way in: two keys for one act is one to explain
+and one to discover, and a key that is discovered is a key pressed by
+accident. Ctrl/meta/alt combinations stay the browser's.
+
+While the yard is held, Escape means *one step out*: from a sub-sheet, back
+to the front; from the front, resume. Enter on the focused button presses it.
+Tab and shift-tab move between the buttons, which are real buttons and need no
+help; the arrow keys, which look about the yard, do nothing while it is held
+-- a held yard does not answer to anything, and the sheet's own buttons are
+not a list to arrow through.
+
+### The front
+
+One card, one width at every level (`HELD_W`, config/view.js -- the same
+rule as the boards: a card that changes width when its contents change is a
+card that jumps). Top to bottom:
+
+```
+PAUSED
+[resume]
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+[the record Â· 4 of 42]
+[settings]
+esc holds Â· â† â†’ look about
+7b5da28 Â· 2026-09-09
+rocks keep coming. there is no finish line.
+```
+
+Five things a player can press, counting resume; two of them open a sheet
+behind. The record's line carries its count so a player knows whether there is
+anything new to read without opening it; when there are notices earned since
+the sheet was last opened, the count is followed by a black dot -- the same
+mark the noticeboard uses, and it is the noticeboard's `markNoticesRead` that
+clears it, called when the record sheet opens rather than when the game is
+held. The keys line, the build and the sentence stay on the front, in the
+small size, because they are three lines that ask nothing.
+
+### The two sheets behind
+
+Pressing a line swaps the card's contents in place -- same card, same width,
+same spot -- for a sheet with its own title where PAUSED was and `[back]`
+where `[resume]` was. Nothing slides.
+
+**THE RECORD Â· 4 OF 42.** The list `showRecord` already writes, newest first,
+name left and what earned it right, no hover and no button. The list scrolls
+inside the card past `RECORD_ROWS` lines (config/notices.js, twelve to
+start) rather than growing the card past the window; the card's own height
+is the one thing on this screen that must not depend on how much the player
+has done. Under the list, the `n of m` line as now. Unearned notices stay
+unnamed -- that call is made in the noticeboard section and this does not
+reopen it.
+
+**SETTINGS.** Everything the release wave put on the front that is not a
+thing you do every time you pause:
+
+```
+SETTINGS
+[back]
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+[motion: full]
+[save a copy]  [load a save]
+[reset progress]
+```
+
+`load a save` unfolds its paste field under the pair as it does today. Reset
+keeps its dashed, faded look and its two-press arming; it is the dangerous
+thing and it is at the bottom of a sheet one level down, which is where the
+convention puts it and where a hand reaching for resume cannot land on it.
+The mute row lands here with the audio wave.
+
+### What does not change
+
+The crashed sheet is its own card and is untouched -- a stopped game has one
+thing to offer and needs no sub-sheet. The record is still read by holding,
+and the tick over the noticeboard still comes down when the record sheet is
+opened, not when the game is held: reading is opening the record, not
+pausing. The books stay on the noticeboard. The `#held` element, its
+`.held` register and the `hold()` door in input.js stay; the sheet's levels
+are `S.heldSheet` (`front` / `record` / `settings`, EPHEMERAL) and one
+function that writes the card from that word.
+
+### What it would be checked by
+
+Browser, `src/selftest/settings.js`, replacing the wave's four groups where
+they overlap: Escape holds and the card shows the front with resume focused;
+Escape again resumes; the record line opens the record sheet, Escape from it
+returns to the front and the game is still held; the record sheet's list
+scrolls past `RECORD_ROWS` notices without the card growing (measure the
+card's rect before and after granting thirty notices); settings holds
+the motion switch, the save pair and the reset, and reset arms there; space
+does nothing (the yard runs on). The keys line reads `esc holds`.

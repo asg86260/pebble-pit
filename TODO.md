@@ -162,14 +162,14 @@ Left alone deliberately: the casino's four table rows come and go between hands,
 which is a table doing what a table does, and a row leaving because its build
 landed still resizes the board -- that is a change to what the board holds, and
 the design says a board may resize for those.
-## Audio — the rule is written, nothing is built (2026-09-08)
+## Audio â€” the rule is written, nothing is built (2026-09-08)
 
 **Designed, not built. Awaiting approval before any code.** See "The sound of the yard
 (design, not built)" at the end of DESIGN.md, which replaces the one-line seed that used to sit
 under "Open questions". This is the release-checklist audio item, done as the checklist asks: the
 rule first, of the "black and white, flat shapes" kind, approved before a line of it is written.
 
-The law is *you hear the yard, not the game; everything is struck, and nothing is played* — a sound
+The law is *you hear the yard, not the game; everything is struck, and nothing is played* â€” a sound
 only exists where a body moved material, so no UI chrome sounds at all, and every voice is a short
 percussive event or a slow bed of air, nothing bright and nothing long. Six voices off one signal
 chain (stone, wood, metal, water, air, the rift), four density classes (the player's click always
@@ -182,18 +182,18 @@ whether it ships off by default or on and quiet; and whether the tower and the r
 one non-percussive voice or stay silent. The first of those decides whether an hour has an arc, so
 it is not a detail to settle during the build.
 
-No test tier can hear anything, so the ear is the check the way a shot is the check for drawing —
+No test tier can hear anything, so the ear is the check the way a shot is the check for drawing â€”
 but the *decision* half (how many voices a burst of forty grains fires, whether a bed's level
 tracks the storm) is a fact about the yard and gets a node-tier file if audio.js keeps its decisions
 away from its `AudioContext`.
-## A shack at the rock — built (2026-09-08)
+## A shack at the rock â€” built (2026-09-08)
 
 **Built**, on `worktree-rock-shack-design`. See "The shack at the rock" at the
 end of DESIGN.md, whose last subsection records the five things the build
 changed about the design.
 
 The rockhands have a hut off the rock's left flank, and the gang's two ladders,
-the rock's `swing ×`, the ram and the ram's tuning ladder are sold on its board
+the rock's `swing Ã—`, the ram and the ram's tuning ladder are sold on its board
 rather than the bench's. Your own pickaxe, swing and hold-to-mine stay on the
 bench, because you are the cursor. `put up the shack` is a bench row at 150 dust
 and a third of a building's work, offered once the price is within reach. The
@@ -201,7 +201,7 @@ helmets and the headcount moved off the middle of the rock to the hut's door.
 
 The layout cost nothing it was feared to: `SITES` is a declarative table, so the
 shack is one row at the front of it, and the rock's size rule and the ram's
-parking clamp both read `flankX()` — the nearest building — instead of naming the
+parking clamp both read `flankX()` â€” the nearest building â€” instead of naming the
 bench.
 
 **Checked:** test/shack.test.mjs (7 groups, all green), test/mult.test.mjs
@@ -214,10 +214,21 @@ boards/places/cursor/press groups green, and the layout read off
 
 **Known red, not mine:** `every field on S is accounted for` in
 test/persist-roundtrip.test.mjs fails on `rescued`, `rescueTo`, `landAt`,
-`shield`, `shieldsDone` and `rockHeld` — six fields in none of state.js's three
+`shield`, `shieldsDone` and `rockHeld` â€” six fields in none of state.js's three
 lists. It is red on main too; the shack's own fields are listed.
 
-## Wave release — the web-side checklist (2026-09-09)
+## The held sheet, revamped (2026-09-10)
+
+**Designed, awaiting approval before any code.** See "The held sheet, revamped
+(design, not built)" at the end of DESIGN.md. Escape holds instead of space; the
+front is five presses (resume, the record with its count, settings, and three
+lines that ask nothing); the record and the settings are each a sheet behind,
+swapped into the same card, Escape stepping back one level. The record list
+scrolls past `RECORD_ROWS` rather than growing the card. Prompted by the record
+landing inline on the sheet: at four notices it was the tallest thing on the
+card, at forty-two it would be a page.
+
+## Wave release â€” the web-side checklist (2026-09-09)
 
 **Built and landed, 2026-09-09.** Six tracks, all green, merged without a
 conflict; the integration afterward was three things: `isSave` tightened to
@@ -256,7 +267,7 @@ sound rule), touch tooltips.
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
 save, the clock, the window, the tab, the build and the deploy, with file
 references, and then a prioritized list of what is left before this is a thing
-you can hand somebody. The working list is docs/release-checklist.md — one box
+you can hand somebody. The working list is docs/release-checklist.md â€” one box
 per item in priority order, each with what done looks like and a pointer back
 to the report's reasoning; check things off there. Note the target has since
 changed to an Electron desktop app, and the checklist reflects that where the
@@ -284,7 +295,7 @@ clamps dt to 100 ms. The yard does no work and every now()-based deadline --
 doses, a spin, a break, nextBoulderAt -- resolves at once. Pillar 2 says no
 punishment for walking away.
 
-## The builder-throughput tuning pass — measured, not yet fixed (2026-09-08)
+## The builder-throughput tuning pass â€” measured, not yet fixed (2026-09-08)
 
 **Designed, not built.** See "The one bench carries two ladders' worth of waiting" at the end of
 DESIGN.md. This is the tuning pass "The bench is a catch-all, and the lab goes" flagged as a real
@@ -292,14 +303,14 @@ blocker: `buildposts` and `buildpace` now gate every timed purchase in the game.
 
 Measured with `tools/node/yard.mjs`, bought the player's way (`__buy`/`__assign`): a solo build at
 max posts+pace matches its effort math almost exactly (20s measured against 18.3s predicted). But
-a representative backlog — every building, both machines, all four multiplier ladders, 2,332
-worker-seconds total — did not clear in 2,000 game-seconds (over half an hour, against a 90–120
+a representative backlog â€” every building, both machines, all four multiplier ladders, 2,332
+worker-seconds total â€” did not clear in 2,000 game-seconds (over half an hour, against a 90â€“120
 minute run) even at the very top of both ladders, and builders were measured doing useful work only
 about 37% of the time while three or four works sat queued together.
 
 **Not root-caused.** The gap is roughly 4x what the ladders' own numbers predict, and it shows up
 only once several works compete, which means retuning `buildpace`'s price or step is not obviously
-the fix — a builder who swings faster and is idle two-thirds of the time is still idle two-thirds
+the fix â€” a builder who swings faster and is idle two-thirds of the time is still idle two-thirds
 of the time. Next step is instrumenting `handsAt('yard')` against builder positions to find out
 whether the missing time is walking between scattered sites, `slotFor` reassignment thrash, or
 `stepWorks`'s own accounting, before any number in `src/config/build.js` is touched.
@@ -419,7 +430,7 @@ tuning pass, not just the move. And old saves carry `labOpen`, `labRooms`,
 those levels on the inheriting rows, with a fixture save in `test/fixtures/`.
 
 **Open, small:** what the multiplier row is called where it now sits beside its
-base rung. Proposal is `speed ×`.
+base rung. Proposal is `speed Ã—`.
 
 **Decided since:** a row becomes a card -- two lines in a one-pixel edge, two
 across the sheet. Measured off a real page first: every bill in the game carries
@@ -463,7 +474,7 @@ so they can be booked in one go instead of one at a time. The blocker is that
 of those exact -- it is pit.js's account and worth doing carefully rather than
 quickly.
 
-## Seeing the wind — BUILT, one part left (2026-09-07)
+## Seeing the wind â€” BUILT, one part left (2026-09-07)
 
 The dust and the haze say what the wind is doing now. Two changes, both
 drawing, both off one shared shaped number (`gust` in wind.js, the wind's middle
@@ -491,12 +502,12 @@ measured on the same scene, same seed, same clock, main against the branch:
 four thousandths of a level out of 255. The browser `wind` group (24/24) and
 `test/sky-air.test.mjs` (6/6) are green.
 
-## The drain — BUILT (2026-09-06)
+## The drain â€” BUILT (2026-09-06)
 
 feedback8 items 5, 6 and 7 (dust spreads before the rift takes it; no swirl;
 the disc reads as chaotic) were one problem: three separate accounts of how a
-thing falls into the hole — the hauler's aim, `orbit()` in game.js, and the
-sprite's streaks in render/cores.js — and the eye read the disagreement. There
+thing falls into the hole â€” the hauler's aim, `orbit()` in game.js, and the
+sprite's streaks in render/cores.js â€” and the eye read the disagreement. There
 is one law now, `riftFall` in rift.js, and all three read it: the radius comes
 in steadily and the angle is its log, so the turning accelerates as the radius
 shrinks. See "The drain: what falling into the rift looks like (built)" in
@@ -508,13 +519,13 @@ All eight feedback8 items are built. The other five (shop closing on a
 purchase, bar and done-tick above the flag, the resource card off the pit, the
 pile mark under the pile) landed on main earlier the same day.
 
-## The pit's arc — BUILT (2026-09-06)
+## The pit's arc â€” BUILT (2026-09-06)
 
 A third era between the solid pit and the abyss: the first overflow tears a
 *small* hole that inhales at full strength and grows with what it eats
 (`S.riftAte`, derived diameter, nothing sold, nothing tended); at `ABYSS_AT`
-(1,000,000 on the user's review) it collapses and the drowning — the abyss as
-built — happens then instead of at the first overflow. Both transitions are
+(1,000,000 on the user's review) it collapses and the drowning â€” the abyss as
+built â€” happens then instead of at the first overflow. Both transitions are
 one-time cutscenes via `src/cutscene.js`, which owns the camera exclusively,
 never pauses the yard, and skips on any click; this deliberately reverses the
 game.js note against the collapse taking the camera (premise changed: rare
@@ -526,11 +537,11 @@ eyes on it.
 
 **It collides with the grind pass's lever 5** (below), which proposes bringing
 the rift ladder back as the endless red sink. There is no ladder here and the
-arc's whole argument is that there must not be one — the disc grows by being
+arc's whole argument is that there must not be one â€” the disc grows by being
 fed, not bought. Lever 5 needs a different sink, or a decision that overrides
 this section.
 
-## Wave 7b — BUILT (2026-09-06): items 16 and 27
+## Wave 7b â€” BUILT (2026-09-06): items 16 and 27
 
 Hand-assignment and the build yard, canon in `docs/wave7b.md`, both DESIGN.md
 sections flipped to `(built)`. Bulk assignment and touch lift are future work
@@ -543,14 +554,14 @@ the missing under-staffed mark and the approximate `leftAt` on a two-build
 yard -- because the yard holds one build at a time again. Hand-assignment is
 untouched.
 
-## Wave 7 — BUILT (2026-09-06), on `wave7-landing`, awaiting fast-forward
+## Wave 7 â€” BUILT (2026-09-06), on `wave7-landing`, awaiting fast-forward
 
 feedback7.md, four tracks (sky/intro, shop UI, crew interaction, apothecary),
 canon in `docs/wave-feedback7.md`. All 25 buildable items are in; the four
 wave test files plus persist-roundtrip are green on the merged tree, and the
-seams (diamond → aura, the under-staffed tooltip, the swift and gleam brew
+seams (diamond â†’ aura, the under-staffed tooltip, the swift and gleam brew
 call sites, the closet heading) are wired. Items 16 (workers assigned by
-hand) and 27 (the build yard) are designed, not built — their `(design, not
+hand) and 27 (the build yard) are designed, not built â€” their `(design, not
 built)` sections in DESIGN.md await sign-off. Track deviations worth review:
 only job-walkers gross out at poop (bodies mid-commute pass through); the
 buried square tosses cores into the pit's mouth, not at coreHome, to avoid
@@ -563,10 +574,10 @@ ram/machine checks; two board-measuring reds were `getComputedStyle` in the
 node yard (guarded in `panelGap()`); the janitor gagged at the poop it came
 to shovel (the mess crew is exempt from the gross-out now); the jumping
 celebration's check ran on rock 1, which is the reunion where nobody jumps
-by design — it jumps to rock 2 now, and a walking body on the yard gives up
+by design â€” it jumps to rock 2 now, and a walking body on the yard gives up
 its walk to dance instead of never dancing; the casino's thousand-chip check
 was funded for six spins against 40% odds and wave 7's motes shifted the
-seeded rng into a six-loss streak — it is funded for its own forty-spin loop
+seeded rng into a six-loss streak â€” it is funded for its own forty-spin loop
 now. The fan/sky pair was a broken premise in the check itself (the storm
 wait ran the fan on the wound-up sky; the wait comes first now); the books
 rate was green on the re-run. The browser tier's nine reds (same day,
@@ -575,24 +586,24 @@ checks against the slim card, the dance-jumping pair (cured with the node
 one), the board-crossing tooltip pair, the loose-core cursor hint, and one
 shard that died without reporting.
 
-## The grind pass — levers 1–4 BUILT (2026-09-06), lever 5 open
+## The grind pass â€” levers 1â€“4 BUILT (2026-09-06), lever 5 open
 
 The economy measured with a driven playthrough (`tools/node/playbot.mjs`,
 landed with the design): the opening bench clears in eleven minutes, a new
 board is affordable on the frame it opens, spores pile to thirteen thousand
 against seventeen shards, and no six-hour run ever reached a wizard or a
-machine. Diagnosis and six levers — reprice the grounds by mint rate, open
+machine. Diagnosis and six levers â€” reprice the grounds by mint rate, open
 boards poor, let the bench ladders outrun the crew, turn the core waits into
 earnings, bring back the rift ladder as the endless red sink, re-measure with
-the bot — in "The grind pass (design, not built)" in DESIGN.md, with a target
+the bot â€” in "The grind pass (design, not built)" in DESIGN.md, with a target
 pacing table. Playtested and approved 2026-09-06; the re-measure shows the opening
 staggered and the apothecary earning its reveals. Open: lever 5 (the rift
 ladder as the endless red sink); the quarry/lab doors may still sit heavy
-(bot says 200 min / 5.3 h — a saving player will read differently, watch the
+(bot says 200 min / 5.3 h â€” a saving player will read differently, watch the
 next real save); verify quarry occupancy on a real save before touching
 shard supply (the bot's shard famine may be its own staffing policy).
 
-## The abyss — BUILT (2026-09-04)
+## The abyss â€” BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats
 at its surface, instead of a disc hanging in the air. The account, the
@@ -600,7 +611,7 @@ catch-at-the-mouth rule and the spend order are unchanged; the open call went
 to keeping the pit a way through (a plank over the mouth, and `pitTop`
 answers with it). See "The abyss (built)" in DESIGN.md.
 
-## Wave 5 — SHIPPED (2026-09-04)
+## Wave 5 â€” SHIPPED (2026-09-04)
 
 Both batches are on main: the scalability refactor (config/smog/upgrades
 barrels, `SAVED` lists with a round-trip check, the `LAYERS` and `STEPS`
@@ -610,22 +621,22 @@ branches, all merged and green except the standing red below. Two of the
 wave's unasked-for changes were reverted on the user's review (2026-09-04):
 the cauldron kept its original 13-cell shape (the pot pitch widened instead,
 which the derived world budget absorbs), and the tonic plume went back to
-exactly its pre-wave let-go-into-the-yard behavior — item 6 is withdrawn.
+exactly its pre-wave let-go-into-the-yard behavior â€” item 6 is withdrawn.
 
 Follow-ups the wave surfaced, none blocking:
 
-1. **Two checks were red before the wave and are red after** — nobody's
+1. **Two checks were red before the wave and are red after** â€” nobody's
    regression, still undiagnosed, each verified red at `bdb9b7d`:
    `sky-readout.test.mjs` "a speck off a swing is the speck in the band",
    and the browser tier's "a hand through the smoke drags the band along"
-   (the far end drifts a deterministic 1.04px against a 1px bound — a real
+   (the far end drifts a deterministic 1.04px against a 1px bound â€” a real
    small leak in the drag, not noise). Two others from that pre-wave set
    were diagnosed and fixed during the close-out: the board-shut probe had
    been outgrown by the bench board's own height, and the cursor group
    pinned the hole's pile-full mark that the rift design removed.
 2. **The pit is permanently empty in the endgame** (item 20 as built):
    once the rift tears, nothing ever settles on the pit floor again, so the
-   pile — and the crater the nearest-first walk carves — is unobservable
+   pile â€” and the crater the nearest-first walk carves â€” is unobservable
    from that moment on. If that reads badly in play, the correction is an
    inhale that takes what arrives rather than everything present.
 3. **The tower lost its endless red sink** (item 15 removed the black-hole
@@ -636,13 +647,13 @@ Follow-ups the wave surfaced, none blocking:
    migration in apothecary.js reads them once.
 5. **Two rate mechanisms**: `lab.js`'s eased books and `stats.js`'s
    measured window. One should absorb the other; lab.js's is the weaker.
-6. **`src/crew/jobs.js` vs `src/jobs.js`** — the registry and the
+6. **`src/crew/jobs.js` vs `src/jobs.js`** â€” the registry and the
    vocabulary share a basename a directory apart; rename the registry to
    `registry.js` in a quiet moment.
 7. **Seed the `crew` scene in tools/look.mjs** so its shots can prove
    something; unseeded, two same-code runs differ as much as any change.
 
-## The apothecary — BUILT, reviewed, two follow-ups left (2026-09-03)
+## The apothecary â€” BUILT, reviewed, two follow-ups left (2026-09-03)
 
 The apothecary shipped (`src/apothecary.js` + station wiring; DESIGN.md "The
 apothecary (built)"). The pot is an upkeep, the stirrer brews through the door
@@ -655,27 +666,27 @@ blocking:
 
 1. **Only dust arcs to its station; the other coins still leave the hole
    invisibly.** *(Dust done.)* A spent resource now flies to the station that
-   sold the row rather than to the bench — `payTo` in pit.js, set by `buy` off
+   sold the row rather than to the bench â€” `payTo` in pit.js, set by `buy` off
    `siteBox(u.site)`, stamped on each grain and read by `fly` (DESIGN.md "it goes
    to the shop it is spent at (built)"). But shard, spore and core are taken out
    of the hole without a flight, so the crop a brew costs still leaves the pile
    with no visible trip *into* the cauldron. Making the other coins arc to their
-   station too is what is left — and it is a different job from the full
+   station too is what is left â€” and it is a different job from the full
    hauler-carried delivery (`S.owed`), which is still design, not built.
 
 2. **A second pot brews the same tonic, not an independent one.** `another pot`
    adds coverage of the one setting; the DESIGN "Open" recommendation of a
    second independent tonic (two buffs up at once, two preferred stations) is
    the follow-up. The per-tonic effect submenu is likewise a hover note for now
-   — fine for three tonics, worth a real submenu once the lab's recipe ladder
+   â€” fine for three tonics, worth a real submenu once the lab's recipe ladder
    widens the list.
 
-## Crits — BUILT, four of six work paths (2026-09-03)
+## Crits â€” BUILT, four of six work paths (2026-09-03)
 
 Crits fire on the click/miner, the quarrier, the farmhand and the wizard's bolt
 (DESIGN.md "Crits (built)"). The **hauler and labber are deliberately not
 wired**, and the reasons are in the design: a hauler crit is real output nobody
-can see (a crowd of them averages it flat), and the lab is *indoors* — a labber
+can see (a crowd of them averages it flat), and the lab is *indoors* â€” a labber
 crit would be a multiplier on a body you cannot watch, which fails the one hard
 rule ("a crit you cannot see is a multiplier with extra steps"). If the lab ever
 gains a visible unit of work, wire it there. Not a bug to be fixed; a line to
@@ -696,40 +707,40 @@ the board's reading. Items 1 (dust into the cut) and 3 (dust leniency) are done 
 kept below for the record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
-into, and what is blocking it — so none of this has to be re-derived.
+into, and what is blocking it â€” so none of this has to be re-derived.
 
 ---
 
-## 1. Dust should fall into the quarry, and be fetched from it — DONE
+## 1. Dust should fall into the quarry, and be fetched from it â€” DONE
 
 **Status:** done. The cut has its own sand grid, wired into the mouth, the
 ladder, the drawing, the save and the reports.
 
 **What it turned out to be, against the plan above.** A `ceiling` could not
-say "no dust below the dig line" — a ceiling counts rows up from the bottom of
+say "no dust below the dig line" â€” a ceiling counts rows up from the bottom of
 the *plot*, and the bottom of the plot is the deepest the cut will ever go, so
 a ceiling would let dust stand at the bottom of a hole nobody had dug and hang
 rock over it. So the rock still to come out is *in* the grid instead, as cells
 (`ROCK_CELL`, config.js): every column starts full of it from the plot's own
 floor up to wherever the dig has reached, a swing removes exactly the one cell
-under it, and the ordinary sand rules do the rest — dust that was resting on
+under it, and the ordinary sand rules do the rest â€” dust that was resting on
 top simply has nothing under it on the next pass. `src/grid.js` gained one
 optional hook for it, `fixed(c, r)`, so `settle` never reads a piece of
 standing rock as a grain with somewhere to fall or slide into a shallower
 neighbour's open air.
 
 - `cut` in state.js: sized once at the deepest the cut can ever be worked to
-  (`QUARRY_BENCH_MAX` benches), not grown a row at a time — a bench bought
+  (`QUARRY_BENCH_MAX` benches), not grown a row at a time â€” a bench bought
   mid-dig only adds more permanent floor under a column's *current* target, it
   never moves a row a grain is already resting in.
 - `quarry.js`: `wireCut` builds it, `layCut`/`digCell`/`tipCut`/`resetCut`
   keep the rock level with `quarryCells`, `cutTop` is the surface a body or a
-  route reads (the dust's own top, not the bare rock under it — `stepQuarrier`
+  route reads (the dust's own top, not the bare rock under it â€” `stepQuarrier`
   and `ways().cut.at` in route.js both read it now).
 - `game.js`'s chip loop intercepts a chip over the open mouth (`overCutMouth`,
   world.js) the way it already did for the pit; `blocked()` lost the one
-  clause that used to bar the mouth outright. The one edge case — a chip still
-  in the air the instant `fillQuarry` refills the whole column solid — falls
+  clause that used to bar the mouth outright. The one edge case â€” a chip still
+  in the air the instant `fillQuarry` refills the whole column solid â€” falls
   back to landing on the ordinary ground rather than being lost.
 - `crew.js`: a hauler routes down the one ladder for a claim on the cut's own
   dust, `downTheCut` mirroring `downTheHole`'s shape (a route rather than a
@@ -739,7 +750,7 @@ neighbour's open air.
   that only a body able to descend may claim a column it cannot stand on.
 - Drawn (`drawCut` in render.js, after `drawQuarry`'s white fill), saved and
   restored (`persist.js`, the same run-length pattern as the floor, paired
-  with `quarryCells` — which was never saved before this and now is, since an
+  with `quarryCells` â€” which was never saved before this and now is, since an
   unsaved dig depth made a saved cut meaningless), reported (`cutDust` in
   report.js), verified (rule 7 in verify.js now watches the cut's ledger too;
   rules 1 and 2 needed nothing, being written generically against `ways()`
@@ -766,14 +777,14 @@ quarry's own board, and both move the same multiplier.
 **The proposed rule.** A row is exactly one of three kinds, and each kind has
 exactly one home:
 
-1. **A rung** — a finite ladder (`RUNGS = 5`) on a number one station owns. It
+1. **A rung** â€” a finite ladder (`RUNGS = 5`) on a number one station owns. It
    lives on the board of the building that owns that number. The rock and the
    crew own no building, so their rungs are on the bench under "the rock" and
    "the crew". A number has ONE ladder: a second tier is upper rungs priced in
-   the next coin — which is what `pick` already does, billed in shard + dust —
+   the next coin â€” which is what `pick` already does, billed in shard + dust â€”
    never a second row somewhere else.
-2. **A place** — bought once, opens something. The bench.
-3. **A spell or a piece of research** — the tower or the lab.
+2. **A place** â€” bought once, opens something. The bench.
+3. **A spell or a piece of research** â€” the tower or the lab.
 
 **Before doing anything:** produce the full table of every existing row, which
 board it is on today, and where it lands under the rule. Agree that table first.
@@ -781,23 +792,23 @@ Moving rows silently would rearrange a shop the player has learned.
 
 ---
 
-## 3. Dust in front of the rock pile, and off the left end of the yard — DONE
+## 3. Dust in front of the rock pile, and off the left end of the yard â€” DONE
 
 **Status:** done. Two leniency changes, landed together.
 
 **The apron opens.** `blocked()` (`src/world.js`) no longer bars the rock's
-clearance, only its footprint — `pastRock`, the renamed and narrowed
+clearance, only its footprint â€” `pastRock`, the renamed and narrowed
 `pastApron`. The first attempt broke three things by freeing the whole apron at
 once; each now has its own fix instead of being begged off:
 
-1. Grains still cannot come to rest **under the boulder** — `pastRock` covers
+1. Grains still cannot come to rest **under the boulder** â€” `pastRock` covers
    the footprint only, not a hand's width either side, so the ground the rock
    stands on stays barred.
 2. The **heap-side clearance the spoil heap stands off from** is untouched: the
    heap's near end still comes from `rockLeft()`/`SITES`, never from wherever
    dust happens to be lying, so it cannot creep up against the boulder.
 3. `clearApron()` (`src/rock.js`) no longer shovels the footprint's leftover
-   dust into the nearest column — it throws each grain as a `spawnSpoil` chip,
+   dust into the nearest column â€” it throws each grain as a `spawnSpoil` chip,
    the arc a miner's spoil takes, so a new boulder's sweepings land out along
    the heap instead of stacking a wall against it. `bankCeiling`
    (`src/world.js`) treats the footprint edge as the cliff the clearance ramps
@@ -821,7 +832,7 @@ shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ---
 
-## 4. The scrubber balloon — the craft is built; the clog and the fleet are not
+## 4. The scrubber balloon â€” the craft is built; the clog and the fleet are not
 
 **Status:** stage 1 and part of the fleet stage are on main. A balloon is bought
 on the scrubbing house's board, moored with its basket on the ground beside its
@@ -840,7 +851,7 @@ had been written down rather than obeyed:
 
 1. **A berth has to be a claim, not a place in the roster.** The roster's order
    is not stable, so the house's berth went to whichever scrubber sorted first
-   that frame — and when that was the one already in a balloon, it was pulled
+   that frame â€” and when that was the one already in a balloon, it was pulled
    straight back out of it.
 2. **A rider is `aloft`.** The fall rule runs early in the crew pipeline, and a
    body several hundred pixels up with nothing under it is exactly what it is
@@ -851,7 +862,7 @@ had been written down rather than obeyed:
 3. **A thing moving less than a pixel a frame has to keep the fraction.**
    Rounding the craft's `x` every frame at four tenths of a pixel rounds it back
    where it started, for ever. The `x` is fractional now and the rounding happens
-   at the moment of drawing — to a whole pixel, and not to the lattice.
+   at the moment of drawing â€” to a whole pixel, and not to the lattice.
 
 **Still to do:**
 
@@ -862,17 +873,17 @@ had been written down rather than obeyed:
   stalled. Worth settling item 8 first: the two are the same question about what
   a station's clog is *about*.
 - **The fleet, properly.** The rung and the cap are in, and a second craft is
-  bought and staffed — but the lanes have not been looked at with two in the sky,
+  bought and staffed â€” but the lanes have not been looked at with two in the sky,
   and nothing aims a mote at the *nearest* craft: each craft walks the whole sky
   list on its own. Fine for one, wasteful for three.
 - **The reading.** Nothing on the board says whether a craft is up, crewed or
-  still tied to its mast, so the one thing you can do about a balloon — put
-  somebody in it — has no reading next to it the way every other station's does.
+  still tied to its mast, so the one thing you can do about a balloon â€” put
+  somebody in it â€” has no reading next to it the way every other station's does.
 
   The pollution arrow itself is already right, and worth knowing why: `drew` is
   counted **at the mouth**, inside `swallow`, so a craft's catch lands in it
   exactly as the house's does. That is the payoff from the fix written up in
-  DESIGN.md under "The air" — the scrubbing figure used to be *quoted* from
+  DESIGN.md under "The air" â€” the scrubbing figure used to be *quoted* from
   `scrubRate()`, and had it still been quoted, every balloon in the yard would
   have been invisible to the one number the player steers by.
 
@@ -947,28 +958,28 @@ they lived in a scratch script, not the repo.
 
 ---
 
-## 6. The shields — the story arc
+## 6. The shields â€” the story arc
 
 **Status:** designed (DESIGN.md, "The shields"), not built.
-## 6. The shields — the story arc
+## 6. The shields â€” the story arc
 
 **Status:** built, end to end. `src/shield.js` owns every kind through one
-`KINDS` table — material, price, coin, and how it answers a rock — with the
+`KINDS` table â€” material, price, coin, and how it answers a rock â€” with the
 four bench rows, the dome on the tower's board, the piece walk on the kit-walk
 legs, the rescue in `intro.js`, and seven groups in `test/shield.test.mjs`.
 
 Three attempts to stop the next rock: timber props (bench, dust) the rock goes
 straight through; a stone arch (shards) that catches one for a held beat and
 then cracks; and the tower's dome (a spell, cores) that finally holds a rock
-off long enough for the one underneath to walk out. The first two must fail —
-the rocks are the income — and each failure is a beat, not a bill: nobody is
+off long enough for the one underneath to walk out. The first two must fail â€”
+the rocks are the income â€” and each failure is a beat, not a bill: nobody is
 ever under a shield when it goes, and the wreckage flies out along the heap as
 `spawnSpoil` chips and mines back as dust.
 
 **Build it in stages that each leave the game playable:**
 
 1. **The props.** A bench row, a built-plank-by-plank structure over the dig
-   (bodies walk and climb — no teleporting), a scripted smash on the next
+   (bodies walk and climb â€” no teleporting), a scripted smash on the next
    landing, wreckage into the spoil arc. This stage proves the shield
    scaffolding: a structure with a footprint, a build job for the crew, a
    landing that consults what is standing there.
@@ -976,37 +987,37 @@ ever under a shield when it goes, and the wreckage flies out along the heap as
    the *caught* beat (a rock at rest on a shield, every body looking up) and
    the delayed collapse. The arch's stone lands minable.
 3. **The dome.** The tower's fifth spell. Purple rings close over the landing
-   spot; the catch is permanent. The choreography of the mate walking out —
+   spot; the catch is permanent. The choreography of the mate walking out â€”
    the buried-body system (`rock.test.mjs` "the one underneath") changes
    meaning here: after this beat there is nobody under any rock, and the
    says-dots loop moves to two bodies on the surface. Every later rock is
    caught, held a breath, set down.
-1. **The props — DONE.** A bench row (`props`, dust, shown from the fourth
+1. **The props â€” DONE.** A bench row (`props`, dust, shown from the fourth
    rock), a frame sized against the rock it stands over (next footprint wide,
    current peak plus a body's daylight tall), raised one plank per round trip
    from the bench on the kit walk's legs machinery (`sendOn`, a `'plank'`
    leg), smashed in the air the frame the falling rock's foot crosses the
    lid, wreckage out along the heap as `spawnSpoil` chips. Saved, reset,
    reported; `test/props.test.mjs` runs the whole story through `__buy`.
-2. **The arch — DONE.** Same scaffolding, quarried stone, priced in shards and
+2. **The arch â€” DONE.** Same scaffolding, quarried stone, priced in shards and
    offered only once the timber has failed. Two new pieces: the *caught* beat
-   — `S.rockHeld` stops the fall the frame the rock's foot reaches the crown,
-   every body on the ground marks it, and the rock rests there — and the
+   â€” `S.rockHeld` stops the fall the frame the rock's foot reaches the crown,
+   every body on the ground marks it, and the rock rests there â€” and the
    delayed collapse (`ARCH_HOLD_MS`) that drops both. Drawn as a segmental
    arch on two piers, one circle-band law from foot to crown, closing at the
    crown on the trip that finishes it.
-3. **The net, the jack and the dome — DONE.** Rope in spores that catches the
+3. **The net, the jack and the dome â€” DONE.** Rope in spores that catches the
    rock and pays out under it to the ground; a sparks-priced machine that
    catches it and drives it back up before the rams give out; and the tower's
    dome in cores, cast on a clock rather than carried, which holds and then
    sets the rock down gently (`landRock(gentle)`) and stays standing for every
    rock after.
 
-4. **The rescue — DONE.** `startRescue` in `intro.js` as a `'rescue'` scene
+4. **The rescue â€” DONE.** `startRescue` in `intro.js` as a `'rescue'` scene
    phase, triggered by `shield.js` the first time the dome holds a rock with
    somebody still under the spot. The rock waits overhead until they are clear;
-   they walk out on their own legs toward the pit — the working end of the yard
-   — the camera pans with them, somebody comes to meet them, and then they
+   they walk out on their own legs toward the pit â€” the working end of the yard
+   â€” the camera pans with them, somebody comes to meet them, and then they
    **join the crew**, which is the whole of the reward. `S.buried` goes false
    at the start of the walk (so the square is drawn once, out of `S.pair`) and
    `S.rescued` is saved, so the beat cannot play twice.
@@ -1019,12 +1030,12 @@ new structures into the pile-full mark and per-cell variation as given.
 
 ---
 
-## 7. The sky — DONE, with one balance question left
+## 7. The sky â€” DONE, with one balance question left
 
 **Status:** built and on main. See DESIGN.md, "The sky is the band (built)".
 
 **What it turned out to be, against the plan.** The plan was to delete the mote
-band and draw the sky as a picture of `S.haze` — a field of thresholds, a cell
+band and draw the sky as a picture of `S.haze` â€” a field of thresholds, a cell
 painted when its threshold fell under the density. The accounting argument for
 that was right and the picture was wrong, three times over: value noise pulled
 the cells into grey patches (patches are cloud; haze is not made of shapes); an
@@ -1058,11 +1069,11 @@ the weather doing the scrubbing house's job for it.
 ## 8. Rain muck clogs the scrubbing house
 
 **Status:** found while building item 7. Real, reachable in play, and not
-decided — it is a balance call rather than a bug, so it is written down rather
+decided â€” it is a balance call rather than a bug, so it is written down rather
 than patched.
 
-`clogged()` (src/smog.js) counts every grain of muck lying near the house —
-`outletMuck()` walks `muckCols()` across the strip — and the rain drops muck all
+`clogged()` (src/smog.js) counts every grain of muck lying near the house â€”
+`outletMuck()` walks `muckCols()` across the strip â€” and the rain drops muck all
 over the yard. So a sky bad enough to rain often rains on the house's own
 doorstep and stops it. **The house is the answer to pollution, and the weather
 now switches it off exactly when it is needed most.**
@@ -1077,8 +1088,8 @@ it, so it was given a strip like every other station and made to stop when the
 strip filled. That is a rule about *what the house makes*. Weather muck is not
 what the house makes.
 
-**Against.** A yard buried in muck stopping its own works is consistent — the
-rock stops, the cut stops, the plots stop — and the house being no exception is
+**Against.** A yard buried in muck stopping its own works is consistent â€” the
+rock stops, the cut stops, the plots stop â€” and the house being no exception is
 the simpler rule.
 
 **If it changes**, the fix is in `outletMuck`: count only the house's own
@@ -1086,7 +1097,7 @@ leavings rather than every grain on the strip. That needs muck to carry where it
 came from, which `MESS` does not record today, so it is a field on the layer
 rather than a one-liner. Decide the rule first.
 
-## Housekeeping: one test fails every time — FIXED (2026-09-04)
+## Housekeeping: one test fails every time â€” FIXED (2026-09-04)
 
 `test/sky-readout.test.mjs`, "a speck off a swing is the speck in the band":
 the check predated the arrival cross-fade (a settling mote deliberately goes
@@ -1100,13 +1111,13 @@ relocation held a tenth of a second past reaching nothing.
 
 ## Housekeeping: two tests fail at random
 
-Neither is a game bug, but they are why the suite looks untrustworthy — and an
+Neither is a game bug, but they are why the suite looks untrustworthy â€” and an
 untrustworthy suite is most of why iterating feels slow.
 
-- `test/rock.test.mjs`, "the one underneath is covered by the rock" — roughly
+- `test/rock.test.mjs`, "the one underneath is covered by the rock" â€” roughly
   1 run in 6, and it fails alone as well as under load. It watches 400 frames
   and asserts a body says something during them; the window is timing-sensitive.
-- `src/selftest.js`, "a body is thrown rather than dropped" — fails only under
+- `src/selftest.js`, "a body is thrown rather than dropped" â€” fails only under
   full-suite load, on a different assertion each time. It drives a real pointer
   with real `sleep()`s, which get squeezed when the machine is busy.
 
@@ -1115,7 +1126,7 @@ the thing that happened to be true in a fixed window.
 
 ---
 
-## 9. The endgame pass — DONE
+## 9. The endgame pass â€” DONE
 
 **Status:** built, 2026-09-01. `## The endgame pass` in DESIGN.md carries the
 measurements and the two calls that went the other way from the design: the
@@ -1124,7 +1135,7 @@ summoned from the tower rather than bought at the bench. Covered by
 `test/endgame.test.mjs` and the rewritten `test/rift.test.mjs`; the driven-ram
 yard is measured by `tools/node/break-perf.mjs`.
 
-**What it is.** Five faults with one cause — the driven ram outruns everything
+**What it is.** Five faults with one cause â€” the driven ram outruns everything
 downstream. The ram works a falling rock (`ready` never reads `S.rockFall`);
 the belt lifts one grain a beat against the ram's six cells and both are pinned
 at `MACHINE_MAX_BEATS`, so the rock's pile flickers full; the break spikes on
@@ -1139,7 +1150,7 @@ rifter job removed (torn is open, saves restaff the body to carrying); and the
 rift as a black disc hanging in the pit at the near end with the `gulped`
 grains orbiting into it.
 
-## 10. The hole holds everything — DONE
+## 10. The hole holds everything â€” DONE
 
 **Status:** built, 2026-09-01. The rift swallows every kind of cell, counted by
 kind in `S.riftHeld`; the pile shows the counter less what is through; paying
@@ -1152,7 +1163,7 @@ rule 8 that would have caught both.
 ## A miner can end up inside the hill (fixed 2026-09-03)
 
 `test/endgame.test.mjs`, "the ram does not strike a rock that is still coming
-down" — failed with *a body has been buried in the way it is standing on: kit
+down" â€” failed with *a body has been buried in the way it is standing on: kit
 (miner) at 3695,1911 is 39px into the rock and has been under it for 61 frames*.
 Caught by `verify.js`, not by the group's own assertions.
 
@@ -1161,16 +1172,16 @@ warning.** It named the pit collapse, because the test passed at `e0f4c43` and
 failed on the collapse alone. That was a butterfly: the collapse reshuffled the
 run so that a sub-pixel margin was crossed on the one frame that mattered. The
 ram was never involved, the pit was never involved, and `fall` was never a
-candidate — it only fires for a body *above* its ground, and already exempts a
+candidate â€” it only fires for a body *above* its ground, and already exempts a
 climb.
 
 **What was actually happening.** `celebrate` (now in crew/dance.js) gated its
-duck-out-of-the-footprint on `upTop(w)` — feet within a pixel of the ground
+duck-out-of-the-footprint on `upTop(w)` â€” feet within a pixel of the ground
 line. A body half way through its idle bob sits about 1.17px below its footing,
 so `upTop` read false by 0.17px and the duck was skipped; `jig` then baked the
 bob into the footing, so it stayed false for every frame of the fall. The rock
 landed on a body standing in its own footprint, 104px deep. It climbed out
-correctly at the per-frame cap to 39px — and at that moment `relieve` started a
+correctly at the per-frame cap to 39px â€” and at that moment `relieve` started a
 loo break, which returns before any stepper runs, so nothing called the climb
 for `LOO_MS` = 102 frames and it froze there.
 
@@ -1178,7 +1189,7 @@ for `LOO_MS` = 102 frames and it froze there.
 walk's own duck (crew/commute.js) and the fall rule ask. A pixel is a tolerance,
 not a fact about the world, and this one was crossed by the body's own
 animation. The two predicates differ only for a body at ground level over a
-mouth, and no mouth is reachable from a footprint — the drop zone is `S.cx` ±
+mouth, and no mouth is reachable from a footprint â€” the drop zone is `S.cx` Â±
 300 at the widest rock the game allows, the pit's lip is 636 away and the cut's
 mouth 1,434 the other way. Measured over three seeds and 5,400 frames on the
 pre-split tree: 406 body-frames in a live drop zone, of which the two predicates
@@ -1188,12 +1199,12 @@ of the fall once `jig` has baked it in.
 **Left undone, deliberately.** `upTop` survives at two station-errand predicates
 with the same 1px fragility; a false negative there costs one frame of an errand.
 And `relieve` will still start a break for a body being led up a face, which is
-what turned a burial into a 1.7-second freeze — with the duck fixed that measured
+what turned a burial into a 1.7-second freeze â€” with the duck fixed that measured
 zero, so it is prevention rather than a live bug.
 
 **One more thing to look at.** `wayAt` answers `rock` for a body standing under a
 rock that is still 620px up in the sky, and `verify.js`'s `deepest` then measures
-it against the airborne `rockTopY` — "743px into the rock" while the rock is in
+it against the airborne `rockTopY` â€” "743px into the rock" while the rock is in
 the air. Today's falls run 42 frames, under `BURIED_FRAMES` = 60, so it never
 fires; a longer fall or a lower threshold would make it spuriously true.
 `rockDown()` in rock.js is the predicate that would exempt it.
@@ -1203,30 +1214,30 @@ fires; a longer fall or a lower threshold would make it spuriously true.
 ## The floor plan reports room in places that are not there
 
 `capOfBare` (upgrades.js) asks what a station holds and answers off `benches()`
-and `plotCount()`. Both of those count what a quarry or a farm *would* hold —
+and `plotCount()`. Both of those count what a quarry or a farm *would* hold â€”
 they are read by the drawing as much as by the staffing, and a quarry draws its
-benches from the frame it is dug — so neither knows whether the place was ever
+benches from the frame it is dug â€” so neither knows whether the place was ever
 opened. A shut station reports standing room, and `assignJob` will fill it.
 
 **What it cost.** `home.test.mjs` assigned two quarriers without opening a
 quarry. They walked to where the cut will be and stood 24px under the ground
 line, inside a working `ways()` has no entry for, because `ways()` only makes a
 `cut` while `S.quarryOpen`. `verify.js` reported it as "a body is under the yard
-with no working under it", which is exactly what it was — the verifier was right
+with no working under it", which is exactly what it was â€” the verifier was right
 and the yard was wrong.
 
 **Why it is not fixed here.** The rule that says it once for everybody is a gate
 in `capOfBare`: a station that is not standing holds nobody. That was built and
 backed out. It is correct, and it moves bodies in every check that ever staffed
-a station before opening one — three checks went red on it (`dance`,
+a station before opening one â€” three checks went red on it (`dance`,
 `reload`, `sky-fan`), none of them about staffing, all of them shifted by bodies
 landing somewhere else. That is a change worth making deliberately, with the
 fallout read one check at a time, and not as a rider on a bug fix.
 
 **What was done instead.** The two ways in are shut. `__crew` already opened the
 places it was asked to staff; `__assign` now does the same, so the two dev
-handles agree. The board cannot reach this state at all — a shut station has no
-board to press — so with both handles honest there is no route to it left, and
+handles agree. The board cannot reach this state at all â€” a shut station has no
+board to press â€” so with both handles honest there is no route to it left, and
 the gate is a tidying rather than a fix.
 
 **Where to start.** `capOfBare` in upgrades.js; the flags are `S.quarryOpen` and
