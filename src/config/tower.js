@@ -66,13 +66,13 @@ export const WIZ_MS = 2600;
 // you have to work out on a board you are meant to read at a glance -- and
 // "raise the houses" for a price cut said nothing at all about the price.
 export const SPELLS = [
-  { key: 'drive',  name: 'speed the machines',   spark: 45,
+  { key: 'drive',  name: 'speed the machines',   spark: 135,
     note: 'every machine in the yard runs 50% faster' },
-  { key: 'luck',   name: 'enrich the quarry',    spark: 35,
+  { key: 'luck',   name: 'enrich the quarry',    spark: 105,
     note: 'every dig in the quarry brings up 25% more ore' },
-  { key: 'thrift', name: 'cheapen the houses',   spark: 30,
+  { key: 'thrift', name: 'cheapen the houses',   spark: 90,
     note: 'every house from now on costs half as much' },
-  { key: 'sweep',  name: 'quicken the janitors', spark: 25,
+  { key: 'sweep',  name: 'quicken the janitors', spark: 75,
     note: 'janitors shovel and walk twice as fast' }
 ];
 export const SPELL_DRIVE = 1.5;      // what each one is worth
@@ -80,8 +80,8 @@ export const SPELL_LUCK = 1.25;
 export const SPELL_THRIFT = 0.5;
 export const SPELL_SWEEP = 2;
 
-export const WIZ_SPEED_COST = 12;    // sparks for the first rung of either
-export const WIZ_POWER_COST = 16;
+export const WIZ_SPEED_COST = 36;    // sparks for the first rung of either
+export const WIZ_POWER_COST = 48;
 export const WIZ_LADDER_RATE = 1.8;  // and how much steeper each one gets
 // It does not touch the thing. A body hanging against the rind with its arms in
 // it was a rockhand on a rock four hundred feet up; what it does instead is circle

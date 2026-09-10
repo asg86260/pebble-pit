@@ -42,7 +42,7 @@ export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the 
 // The jack: a steel plate on rams, and the only shield that pushes back. The
 // shove is the beat -- it is the closest the yard comes to winning -- so it is
 // slow enough to read as effort rather than as a bounce.
-export const JACK_COST = 30;        // sparks
+export const JACK_COST = 90;        // sparks
 export const JACK_PARTS = 14;
 export const JACK_HOLD_MS = 1200;   // braced under the weight before it starts to lift
 export const JACK_PUSH = 48;        // world pixels it drives the rock back up

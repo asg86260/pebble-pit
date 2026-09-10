@@ -22,17 +22,22 @@ export let MACHINE_GAIN = 1.5;
 // last, which is what stops an endless row from running away with the game --
 // and what makes it a sink deep enough to swallow an endgame's dust.
 export const MACHINE_TUNE = 1.3;
-// The first rung quadrupled with the machines themselves: red gathers far
-// quicker than these prices were written against, and a ladder whose first
-// rungs are always affordable is a dial you turn, not a thing you save for.
-// The climb per rung is unchanged -- 1.55 against a gain of 1.3 is already
+// The first rung quadrupled with the machines themselves, and then trebled
+// again with every other red price: red gathers far quicker than these prices
+// were written against, and a ladder whose first rungs are always affordable
+// is a dial you turn, not a thing you save for. The climb per rung is unchanged -- 1.55 against a gain of 1.3 is already
 // each rung buying less than the last, which is what makes the ladder a sink.
-export const MACHINE_TUNE_COST = 120;
+export const MACHINE_TUNE_COST = 360;
 export const MACHINE_TUNE_UP = 1.55;
 // Dust to the spark, the line every price in this game sits on. `DUST_PER` in
 // upgrades.js is the full table; this is the one entry that is also needed here,
 // where a bill is built and upgrades.js cannot be reached without closing a ring.
-export const DUST_PER_SPARK = 60;
+//
+// Sixty for a long while, then a third of that when every red price went up
+// threefold: the sky gives up four or five sparks a minute however many hats
+// are in it, and a spark was buying an hour's dust. The tuning ladder derives
+// its dust leg from this, so its dust stands where it did while its red climbs.
+export const DUST_PER_SPARK = 20;
 // And the other three coins on the same line. Shard and spore sat at forty
 // each for a year while the yard minted spores two hundred times as fast as
 // shards -- pricing them apart is the grind pass's first lever (DESIGN.md).
@@ -171,15 +176,16 @@ export const SMOKE_RISE = 0.4;       // and how fast it goes up
 // Raised fourfold across the board (and the dust held to the sixty-a-spark
 // line): at the old prices an endgame yard bought a machine out of pocket
 // change the moment the row appeared. A machine is the last thing in the
-// game, and the last thing in the game is saved for.
-export const JAW_BILL    = [['spark', 120], ['dust', 7200], ['spore', 500]];
-export const RAM_BILL    = [['spark', 200], ['dust', 12000], ['shard', 800], ['spore', 600]];
-export const TILLER_BILL = [['spark', 80], ['dust', 4800], ['shard', 360]];
+// game, and the last thing in the game is saved for. Then the red leg trebled
+// with every other red price and the dust stayed put -- see DUST_PER_SPARK.
+export const JAW_BILL    = [['spark', 360], ['dust', 7200], ['spore', 500]];
+export const RAM_BILL    = [['spark', 600], ['dust', 12000], ['shard', 800], ['spore', 600]];
+export const TILLER_BILL = [['spark', 240], ['dust', 4800], ['shard', 360]];
 // The belt is the one machine not priced away from its own station's coin,
 // because carrying does not *have* a coin: a hauler makes nothing, it moves what
 // everybody else made. So it is priced in all three grounds, which is the truest
 // thing a price can say about a thing the whole yard uses.
-export const BELT_BILL = [['spark', 160], ['dust', 9600], ['shard', 600], ['spore', 600]];
+export const BELT_BILL = [['spark', 480], ['dust', 9600], ['shard', 600], ['spore', 600]];
 // The rock's notional gang was five; the lip's is what a full crew of carriers
 // looks like, which is rather more -- carrying is the job everybody falls back
 // to, so at any moment most of the yard is doing it.

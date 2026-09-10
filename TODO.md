@@ -638,6 +638,14 @@ upkeep, not a price, and fivefold there would starve the pots. Re-measure with
 the bot once a real save has run on it; the machines' shard legs (800 for the
 ram) are the ones to watch if the endgame reads as a wait.
 
+And red, the same day: the sky gives up four or five sparks a minute however
+many hats are in it (one star every 42 s), so a wizard rung at 12 was three
+minutes and a spell at 25-45 was five to ten. Every spark leg trebled -- the
+wizard rungs, the four spells, the jack, the four machines, the tuning ladder's
+first rung, the rift and its widening -- and `DUST_PER_SPARK` went 60 -> 20,
+so the tuning ladder's derived dust and the machines' named dust stand where
+they were. A machine is now an hour or two of red past the first wizard.
+
 ## The abyss — BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats

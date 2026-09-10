@@ -85,16 +85,17 @@ test('every bill carries dust', () => {
 // And the two that were fixed, by name, so that putting either back the way it
 // was fails as itself rather than as a line in the list above.
 test('the ram and the belt are priced out of the pile', async () => {
-  const { RAM_BILL, BELT_BILL } = await import('../src/config.js');
+  const { RAM_BILL, BELT_BILL, DUST_PER_SPARK } = await import('../src/config.js');
   for (const [what, bill] of [['ram', RAM_BILL], ['belt', BELT_BILL]]) {
     const dust = bill.find(([money]) => money === 'dust');
     assert.ok(dust && dust[1] > 0, `the ${what} costs no dust`);
-    // Sixty dust to the spark is the line the machines that already had dust sat
-    // on. Not a law -- a machine may be priced where it needs to be -- but far
-    // off it means somebody moved one number and not the others.
+    // DUST_PER_SPARK is the line the machines that already had dust sat on --
+    // within a factor of two either way. Not a law -- a machine may be priced
+    // where it needs to be -- but far off it means somebody moved one number
+    // and not the others.
     const spark = bill.find(([money]) => money === 'spark');
     const ratio = dust[1] / spark[1];
-    assert.ok(ratio > 30 && ratio < 120,
-      `the ${what} is ${Math.round(ratio)} dust to the spark, off the line the rest sit on`);
+    assert.ok(ratio > DUST_PER_SPARK / 2 && ratio < DUST_PER_SPARK * 2,
+      `the ${what} is ${Math.round(ratio)} dust to the spark, off the ${DUST_PER_SPARK} line the rest sit on`);
   }
 });
