@@ -720,7 +720,7 @@ const potencyRow = t => ({
 });
 const potencyRowBare = t => brewRung({
   key: `potency-${t.key}`,
-  name: `a stronger ${t.short}`,
+  name: `${t.short}`,
   unit: t.kind === 'crit' ? 'crit' : '%',
   level: () => potencyLevel(t.key),
   climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
@@ -807,7 +807,7 @@ export const APOTHECARY_UPGRADES = [
 export const APOTHECARY_SECTIONS = [
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
   { title: 'brewing', keys: ['brewspeed', 'bufflength', 'brewdoses', 'dosecarry'] },
-  { title: 'the recipes', keys: TONICS.map(t => `potency-${t.key}`) }
+  { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
 ];
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is
