@@ -15,7 +15,7 @@ export const SHACK_ROWS = [
     key: 'unlockshack',
     kind: 'building', site: 'yard', at: () => shack.x + shack.w / 2,
     name: 'build the shack',
-    note: () => 'somewhere for the gang to keep their gear.',
+    note: () => 'Digging upgrades',
     cost: () => SHACK_DUST,
     // A third of what a building takes. It is a third of a building, and it is
     // the first thing most players will ever put up: a first build that outlasts
