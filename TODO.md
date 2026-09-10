@@ -192,11 +192,19 @@ to the report's reasoning; check things off there. Note the target has since
 changed to an Electron desktop app, and the checklist reflects that where the
 report still argues the web case.
 
-The three that matter. A throw inside frame() stops the loop for good *and*
+The three that matter. ~~A throw inside frame() stops the loop for good *and*
 leaves setInterval(persist) writing the thrown state over the good save once a
-second, so one bug can cost a run rather than a reload. There is no way for a
+second, so one bug can cost a run rather than a reload.~~ **Built, 2026-09-09**
+(item 1): `src/crash.js` -- a throw in a frame, at boot, in a handler or in a
+promise marks `S.fatal`, which `persist` refuses to write past; the loop is not
+rescheduled; the `#crashed` sheet (the held sheet's register: a word, the
+browser's one line, a `copy save` button) goes up in the middle of the window.
+Any uncaught error is fatal on purpose -- a pointer handler that threw has left
+the yard in a state nobody reasoned about, and the save is worth more than the
+session. There is no way for a
 player to get their save out of the browser -- the copy-save button exists but
-is behind import.meta.env.DEV. And the built index.html references its assets
+is behind import.meta.env.DEV (the stopped sheet now has one, but only once the
+game has stopped). And the built index.html references its assets
 absolutely, so dist/ 404s from any subpath and cannot be uploaded to itch or a
 Pages project path as it stands.
 

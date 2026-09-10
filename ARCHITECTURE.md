@@ -45,6 +45,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `persist.js` | reading and writing the game; plain fields come off `SAVED` in state.js in one loop, hand-encoded ones stay here | a field in no list is a red test |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
 | `save.js` | the localStorage key and its guard | rarely |
+| `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
 ## Adding things

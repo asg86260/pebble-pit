@@ -638,6 +638,11 @@ canvas {
 }
 .held[hidden] { display: none; }
 .held .word { font-size: 17px; letter-spacing: .3em; }
+/* what broke, in the browser's own words: lower case, since it is a quotation
+   and not a label, and held to one line's width so a long stack does not turn
+   the sheet into a page */
+.held .why { text-transform: none; letter-spacing: 0; max-width: 34em; text-align: center; }
+.held .said:empty { display: none; }
 
 .held button {
   font: inherit;

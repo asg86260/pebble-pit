@@ -9,7 +9,9 @@ them. Where a line here contradicts the report, the desktop decision wins.
 Check a box only when the done-looks-like sentence is true, not when a piece of
 it is.
 
-- [ ] **Fatal-crash containment.** Done: a throw inside `frame()` is caught, the
+- [x] **Fatal-crash containment.** (2026-09-09: `src/crash.js`, the wrap in
+  `main.js`, `S.fatal` guarding `persist`, the `#crashed` sheet; checks in
+  `test/crash.test.mjs` and the last group of `src/selftest/input.js`.) Done: a throw inside `frame()` is caught, the
   loop stops cleanly, the autosave stops on fatal (so a crash cannot overwrite
   the good save), `window.onerror`/`unhandledrejection` cover boot, and the
   player sees one plain surface saying the game stopped and offering to copy
