@@ -13,7 +13,8 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD } from './config.js';
+        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD,
+        OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
@@ -891,7 +892,22 @@ export const following = t => (S.follow && S.follow.pointed > t ? S.follow : nul
 // hit -- and the bench and the shacks beside it come too when the window is wide
 // enough to hold them. On a phone that is not true, and a view opened on the
 // bench would put the rock off the right-hand edge of a game about a rock.
-export const openingCamX = () => Math.max(bench.x - P * 10, S.cx - S.viewW * 0.4);
+//
+// "Wide enough" is measured rather than assumed: the span from a little before
+// the bench to a little past the rock's far edge, against the width of the
+// view. If it fits, the view opens with the bench at its left-hand edge and
+// the whole rock in shot past it. If it does not, the rock is seated at its
+// usual place in the window and the bench stands as far out of shot as it has
+// to. The old rule was the seat alone, with the bench only when the seat
+// happened to leave room for it; the shack's ground between the two put the
+// bench off a desk-sized window without anything having decided that it
+// should be.
+export const openingCamX = () => {
+  const withBench = bench.x - OPENING_MARGIN;
+  const rockFar = rockLeft() + S.gw * P + OPENING_MARGIN;
+  return rockFar - withBench <= S.viewW ? withBench
+       : Math.max(withBench, S.cx - S.viewW * OPENING_ROCK_AT);
+};
 
 // one frame of that glide
 export function stepCamera(t) {

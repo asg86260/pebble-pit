@@ -87,6 +87,16 @@ export const findKind = v =>
   v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
 export const someFind = base => base + Math.floor(rand() * FIND_TONES);
 
+// Where the view opens -- see `openingCamX` in world.js. The rock is seated this
+// far across the window, as a share of its width, when the window has no room
+// for the bench as well: left of center, because everything you can buy is to
+// the left of the rock and the pit lip to the right, and the lip is the nearer.
+export const OPENING_ROCK_AT = 0.4;
+// And when there is room, the bench stands this far in from the left-hand
+// edge, with the same air past the rock's far side before the edge counts as
+// reached. Ten cells: enough that the bench is not flush against the frame.
+export const OPENING_MARGIN = P * 10;
+
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
