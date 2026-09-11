@@ -47,7 +47,9 @@ Fix those, re-run the bot, then tune.
 ## Every station's work goes to a spare hand (2026-09-10)
 
 **Designed, awaiting approval** -- "Every station's work is done by a spare
-hand" in DESIGN.md. The shedhand claim (quarry, farm, shack, apothecary) and
+hand" in DESIGN.md. **The shack's slice landed 2026-09-10**: a player reported
+bodies stuck walking to the hut, and the shack is builder-manned now
+(`shack: JOB.BUILD`); the quarry, the farm and the apothecary still claim. The shedhand claim (quarry, farm, shack, apothecary) and
 the standing credit (scrub, tower, school) both go; every site is
 builder-manned the way the bench and the ground already are, a hauler walks
 over and does the work, and the yard borrows the nearest body when nobody is

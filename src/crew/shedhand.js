@@ -27,7 +27,6 @@ import { busyAt } from '../works.js';
 import { farmShed, quarryShed, walkY } from '../world.js';
 import { now } from '../clock.js';
 import { stopJig, workJig } from './dance.js';
-import { shack } from '../state.js';
 import { apothHut } from '../apothecary.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
 import { settle } from './commute.js';
@@ -38,8 +37,6 @@ import { TYPE } from '../jobs.js';
 // -- the same note BUILDING_OF in render/bars.js carries.
 const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed()],
                   [TYPE.FARM]: ['farm', () => farmShed()],
-                  // the rock's gang fits its picks at its own hut
-                  [TYPE.ROCK]: ['shack', () => shack],
                   // and a keeper breaks the next pot's ground from the building
                   // itself: the hut is what the row is bought at and what the
                   // bar hangs over

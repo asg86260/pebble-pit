@@ -12,10 +12,10 @@ import { ROCKHAND_SPEED_COST } from '../config.js';
 // as long as the rock had nowhere to hang a sheet; the gang has a hut now. See
 // shack.js, and "The shack at the rock" in DESIGN.md.
 //
-// And they are WORKED there too: `site: 'shack'` claims one of the gang to the
-// hut for the duration, the quarry's and the farm's rule (shedhand.js). The
-// site was the bench for a while after the board moved, so the row you bought
-// at the hut was fitted a walk away by whoever was spare.
+// And they are WORKED there too: `site: 'shack'` walks a spare hand -- a
+// hauler off the dust -- to the hut for the duration, the bench's own rule
+// (`shack` in SITE_JOB, works.js). For a while it claimed one of the rock's
+// gang instead, and a gang capped at one by the ram had nobody to give.
 export const ROCK_ROWS = [
   // And the crew's is what the crew are fed on. The plots grow the only thing in
   // this yard anybody eats, so what a body can take out of the rock is bought in

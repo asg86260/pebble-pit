@@ -61,12 +61,17 @@ export const SITE_JOB = {
   // hands the way the plots break the next furrow; the brewing itself is an
   // upkeep stepped in apothecary.js, not a one-shot work here.
   apothecary: JOB.STIR,
-  // The shack, whose gang is the rock's. A pick is fitted where the gang keeps
-  // its gear, by one of the gang -- the quarry's and the farm's rule, see
-  // shedhand.js. They were `site: 'bench'`, so a row bought on the shack's
-  // board was walked to the bench and worked there by whoever was spare, and
-  // the hut the row hangs in never saw the work it sold.
-  shack: JOB.ROCK
+  // The shack, worked by the yard's spare hands: a hauler walks over, stands
+  // at the hut while the bar fills, and goes back to the dust. It was the
+  // rock's own gang (`JOB.ROCK`, through the shed claim in shedhand.js), and
+  // that stalled twice over -- a gang capped at one by the ram had nobody to
+  // spare, and a claimed rockhand walking to the hut could be stood down on
+  // the way and never arrive, so the row took your spores and sat at nought.
+  // The rock's gang has no post to leave and nothing to carry; the cost of a
+  // pick is a carrier off the dust, which the yard can always pay. This is the
+  // shack's slice of "Every station's work is done by a spare hand" in
+  // DESIGN.md; the quarry, the farm and the apothecary still keep the claim.
+  shack: JOB.BUILD
 };
 
 // --- what a site can take, and how fast ----------------------------------------

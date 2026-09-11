@@ -32,22 +32,24 @@ const load = () => {
   yard.restore();
 };
 
-group('a shack rung in a player\'s save is fitted, by a rockhand that has fitted one before', async () => {
+// The shack's work goes to a spare hand now, not to the gang, so the save's
+// two rockhands are left alone and one of the haulers walks over instead.
+group('a shack rung in a player\'s save is fitted, by a spare hand, and the gang is left alone', async () => {
   load();
   const rockhands = () => S.workers.filter(w => w.type === TYPE.ROCK);
   const marked = rockhands().filter(w => w.goal === 'to').length;
   const work = workAt('shack');
   const at0 = work && { key: work.key, done: work.done };
   const inShack = w => w.x + WORKER > shack.x && w.x < shack.x + shack.w;
-  const arrived = runUntil(() => rockhands().some(w => w.onBuild === 'shack' && w.atShed && inShack(w)), 60);
+  const arrived = runUntil(() => S.workers.some(w => w.type === TYPE.BUILD && w.site === 'shack' && w.goal === 'at' && inShack(w)), 60);
+  const claimed = rockhands().some(w => w.onBuild);
   const landed = runUntil(() => !workAt('shack'), 400);
-  const after = rockhands().filter(w => w.goal === 'to').length;
   window.__crew(0, 0);
   return [
     ok(!!at0 && at0.key === 'labswing' && at0.done === 0, 'the save holds the rung at nought', JSON.stringify(at0)),
     ok(marked === 0, 'the saved "to" comes off the rockhands on the way in', `${marked} marked`),
-    ok(arrived, 'one of them is claimed and stands at the hut'),
-    ok(landed, 'and the rung lands'),
-    ok(after === 0, 'and neither is left marked "to" for the next one', `${after} marked`)
+    ok(arrived, 'a spare hand stands at the hut'),
+    ok(!claimed, 'and neither rockhand is claimed to it'),
+    ok(landed, 'and the rung lands')
   ];
 });
