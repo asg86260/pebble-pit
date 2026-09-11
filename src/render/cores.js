@@ -12,7 +12,7 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_SWELL_ENV_MS, ABYSS_SWELL_ENV_K, ABYSS_SWELL_CALM, ABYSS_RIPPLE_MS,
          ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_STAR_FLOOR, ABYSS_STAR_VARY, ABYSS_TONES,
          ABYSS_MAGIC_TONES, ABYSS_BREATH_BEND,
-         ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW, ABYSS_FLOW_SHEAR,
+         ABYSS_FLOW_MS, ABYSS_BRIDGE_MS, ABYSS_BRIDGE_WAVE, ABYSS_FLOW_COL, ABYSS_FLOW_ROW, ABYSS_FLOW_SHEAR,
          ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y,
          ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2, ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX,
@@ -766,9 +766,26 @@ export function drawAbyss() {
   // ripples and the wisps already animate the surface, and the one bright
   // moving thing in the abyss should be the presence in the deep.)
 
-  // And the plank over the mouth: a board a cell thick lying on the two lips,
+  // And the bridge over the mouth: a cell-thick run across the two lips,
   // which is what a body crossing the drowned pit walks on (see `pitTop`).
-  ctx.fillStyle = '#000';
-  ctx.fillRect(Math.round((pit.x - P) / P) * P, S.groundY - P, pit.w + P * 2, P);
+  // It is not a board any more. The plank that lay here read as furniture --
+  // one black rule over a field of purple light -- so the way across is now
+  // made of the same light as the deep: each cell picks its tone off the
+  // flow, so a brightening travels along the span in slow waves, and the
+  // hash nudges every cell a rung so no stretch of it is one flat color.
+  // It is still solid; that is `pitTop`'s business, not the drawing's.
+  {
+    const bx = Math.round((pit.x - P) / P) * P, bw = pit.w + P * 2, by = S.groundY - P;
+    const a = t / ABYSS_BRIDGE_MS * Math.PI * 2;
+    const last = MAGIC_TONES.length - 1;
+    for (let x = Math.max(bx, from); x < Math.min(bx + bw, to); x += P) {
+      const c = x / P;
+      const f = Math.sin(c * ABYSS_BRIDGE_WAVE - a + seeth(c, 5) / 997);
+      // the bright end of the ramp is index 0, so a crest is a low rung
+      const rung = Math.round((1 - (f + 1) / 2) * last + seeth(c, 9) % 2);
+      ctx.fillStyle = MAGIC_TONES[Math.min(last, rung)];
+      ctx.fillRect(x, by, P, P);
+    }
+  }
 }
 

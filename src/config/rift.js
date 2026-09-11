@@ -316,6 +316,11 @@ export const ABYSS_FLOW_LIFT = 0.45;
 export const ABYSS_WISP_EVERY = 14;   // columns between wisps, roughly
 export const ABYSS_WISP_RISE = P * 7; // how high one climbs before it is gone
 export const ABYSS_WISP_MS = 2400;    // and how long the climb takes
+// The bridge over the mouth is made of the same light: a wave of brightness
+// runs along it, quick enough to catch the eye on a thing you cross in a
+// second, slow enough not to strobe. Wavelength is in cells.
+export const ABYSS_BRIDGE_MS = 1300;   // one wave's travel
+export const ABYSS_BRIDGE_WAVE = 0.48; // radians a cell, about thirteen cells a crest
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 360], ['dust', 20000]];
