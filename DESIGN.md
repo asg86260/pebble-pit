@@ -389,9 +389,11 @@ and a second gambling building past it would blunt that — the walk ends at
 on the casino's roof, twenty-two cells wide and about thirty tall, and the
 CASINO sign climbs to the top of it. From the far end of the yard the tower is
 the one tall thing out there, with the chase of lights round the top, which
-is what a casino looks like from a distance. It costs ◾ 100,000, a row on the
+is what a casino looks like from a distance. It costs ◾ 25,000, a row on the
 bench that shows once the casino stands — the first chip rows are ◾ 10, the
-casino is ◾ 15,000, and the tower is the next rung of the same ladder.
+casino is ◾ 15,000, and the tower is the next rung of the same ladder. It was
+going to be ◾ 100,000 and the dome's rule said no: the dome is the dearest
+thing on any board, in every coin, and its dust line is ◾ 30,000.
 
 **One rock carries the whole pot.** The first thought is the honest-looking
 one — the pot is a heap of grains, so drop every grain through the pegs and
