@@ -10,6 +10,17 @@ the three quiet ways a save was lost. Each has a check that was red before it.
 Every balance number in that document is now worth re-measuring; the bot
 matrix has not been re-run since.
 
+**B2 is a dev-panel question now.** Measured on this tree with the critic's
+matrix (`tmp-critic/sky.mjs` in the fixes-3 worktree): three machines and no
+house, six showers in thirty minutes; a bare house, two; the house maxed against
+tune ten, haze at 5-10% of the cap, never under thirty, never a shower. The
+decided rule says a bought-into house brings the sky under control and never
+lets it go permanently clean; 5-10% is one and arguably the other. `SCRUB_PULL`
+is on the dev panel now ("house pull"). At twelve the sky climbs to 2900, rains
+once, and the rain's muck buries the yard so the stations stop -- the sky then
+reads clean because nothing is working -- so the shower-every-twenty-minutes
+shape wants the muck loop looked at with it, not one dial.
+
 **B5 is a decision, not a fix.** The torn rift inhales everything in the hole
 on the frame it lands (`rift.js`, "how fast"), and the argument for it is
 written there twice over: a pile losing a dozen grains a second reads as a
