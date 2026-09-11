@@ -1,5 +1,18 @@
 # Still to do
 
+## The cutscenes, fleshed out (2026-09-11)
+
+**Status:** designed (DESIGN.md, "The cutscenes, fleshed out"), awaiting
+sign-off; nothing built. The opening gets a beat before the chat — the two
+of them walk out of the house to the spot, which means the house draws its
+first two rooms before anybody is hired — and each shield's answer becomes a
+`cutscene.js` entry, triggered when a rock starts to fall on a finished
+shield and released when the answer is over rather than on a timer. Three
+calls to confirm before code: the house standing from frame one; the dome's
+first hold pulled in on (retiring the intro.js note that says not to); the
+rock *leaving the sky* as the trigger, so the timber's instant failure is
+seen.
+
 ## Scenes: every part of the game, one press away -- BUILT (2026-09-11)
 
 One dev-only list (`src/scenes.js`) read by the held sheet and `tools/look.mjs`

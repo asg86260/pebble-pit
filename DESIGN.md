@@ -6945,6 +6945,142 @@ pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
 
+## The cutscenes, fleshed out (design, not built)
+
+There are two cutscenes in the game and one opening, and between them they
+cover three of the yard's one-time beats. The rest — five shields, each
+answering a rock exactly once, and the two of them walking out to where the
+story starts — happen where the camera happens to be. A shield failing is the
+most expensive thing the player has bought in the game so far, and it goes off
+in the corner of the window if the view was on the farm. The ask is that every
+one-time beat is *shown*: the opening starts at the house, and every shield's
+answer is a cutscene.
+
+### The opening starts at the door
+
+Today the two squares are stood at the landing spot from the first frame, with
+the view pulled in on them. They came from nowhere, which is the one thing
+this game never lets anybody do. So the opening gets a beat in front of the
+one it has: **the two of them come out of the house and walk over to the
+rock's ground**, and the chat, the crush and the rest play exactly as built.
+
+**The house stands before the crew does.** `cubes` in house.js draws no rooms
+at all while `S.crew` is nought, so at the start of a fresh game there is no
+house to come out of. The rooms it will draw once somebody is hired are the
+doorway and one room to live in — two rooms for the first body — and those
+are the two the pair live in. So the house is drawn with its first two rooms
+from the first frame of a fresh game (`n = 2` while the opening runs, as well
+as when `S.crew > 0`), and the crush changes nothing about it: the one left
+standing becomes the crew of one, whose house is the same two rooms. Building
+is additive, and this is the same rule read from the other end — the rooms
+were always there; hiring adds to them.
+
+**The walk.** A new phase, `leave`, before `chat`. The pair are made at the
+door (`doorAt()`), a body's width apart, and walk to `pairX(0)` and `pairX(1)`
+at `COMMUTE_PACE` — the pace anybody crosses the yard at, no story pace. The
+house is 504 px from the spot, so the walk is under two seconds. They talk as
+they go: the same dots, the same turn-taking, the heart on its own clock —
+`talking`'s speech is lifted into a helper both phases call. `chat` begins
+when the second of them arrives; `INTRO_CHAT_MS` is unchanged, so the whole
+opening is longer by exactly the walk.
+
+**The camera** starts pulled in (`INTRO_ZOOM`) on the door and walks with
+them — `camX` tracks the pair's midpoint each frame, the way `show` walks
+with the body that carries the first grain — and is stood still on `S.cx`
+from the moment they arrive, which is where `hold` already puts it. Under
+reduced motion the view is the arrival framing from the first frame: the pair
+walk into a still shot, the way every reduced-motion beat is watched from
+where it ends.
+
+`skipIntro` skips the walk the way it skips the chat: the crush happens at
+the spot with the pair put there. The opening's checks (`intro.test.mjs`)
+gain one: the pair start at the door and the first rock lands on the spot,
+not the door.
+
+### Every shield's answer is a cutscene
+
+The five answers — the timber come straight through, the net paying out, the
+arch catching and cracking, the jack shoving and buckling, the dome holding
+while somebody walks out — are the story's whole spine, and four of them cost
+the player a currency. Each is a one-time event by construction: a failed kind
+goes into `shieldsDone` and its row never returns, and the dome's first hold
+is the one that carries the rescue. They are exactly what `cutscene.js` was
+built for, and they become entries in it rather than a second mechanism.
+
+**The trigger is the rock leaving the sky, not the rock arriving.** The timber
+breaks on the frame the rock reaches it, so a camera that goes on the answer
+sees a wreck. The scene starts when a rock begins to fall (`S.rockFall` goes
+from nought to more) while a finished shield stands (`shieldUp()`), so the
+glide in happens under the fall and the view is stood on the spot before the
+rock meets the thing. Watched, not called, like the gulp: shield.js does not
+learn that a camera exists.
+
+**Once per kind.** The four that fail can only answer once. The dome answers
+every rock after the first; only its first hold — the one with the rescue in
+it — is a scene, and the fact that says so is `S.rescued`, which already
+exists. A save from before this design comes back with its shields where they
+are: a kind in `shieldsDone` never plays, a dome that has already rescued
+never plays.
+
+**A scene ends when the answer is over, not on a timer.** The tear and the
+drowning run a fixed number of seconds; a shield's answer has a length the
+game decides — the net sags for as long as `NET_SLOW` takes, the jack holds
+`JACK_HOLD_MS` and then shoves `JACK_PUSH` at `JACK_PUSH_RATE`, and the
+dome's first hold waits on somebody's walk. So `cutscene.js` gains a scene
+kind whose end is a fact rather than a duration: a shield scene releases a
+beat (`CUT_SHIELD_TAIL_S`, ~1.5 s, so the wreck is seen flying out along the
+heap) after `S.shield` is gone, or, for the dome, after the rock has been set
+down (`S.rockFall === 0 && !S.rockHeld`). A ceiling (`CUT_SHIELD_MAX_S`,
+~30 s) is a safety, never the design.
+
+**The framing** is one rule for all five: centered on the shield's span
+(`S.shield.x + S.shield.w / 2`), pulled in one step (`CUT_SHIELD_ZOOM`, 1.5,
+the tear's), the ground line low in the frame the way every scene keeps it.
+The rescue is the one beat that already moves the camera on its own
+(`lookAt(S.rescueTo)` in `startRescue`) — that pan yields to the scene, which
+is on the same spot anyway, and the intro.js note that pulling in on the
+rescue "would say *watch this*" is retired: the user's call is that it should.
+The camera stays on the span rather than following the walker; the walk out
+from under is a few body-widths and stays in frame at 1.5.
+
+**What is not a scene:** a shield going up. The build is labor at a fenced
+site — the thing you bought is being made by somebody you can watch — and it
+is long, and it is not one-time in the way the answer is. The *unfinished*
+shield smashed by a rock that comes early is not a scene either: it is a
+mistake, not a beat, and nothing should reward the camera for it.
+
+**Skipping and saving** are as built: any click releases the camera and never
+the moment; `cineOwed` carries the scene's name across a reload and the
+answer resumes from the saved `S.shield` and `S.rockHeld`, so the owed scene
+plays over the answer as it stands.
+
+### Shape
+
+- `config/rift.js` → the cutscene numbers move to a `config/cutscene.js`
+  (`CUT_TEAR_*`, `CUT_DROWN_*` join `CUT_SHIELD_ZOOM`, `CUT_SHIELD_TAIL_S`,
+  `CUT_SHIELD_MAX_S`), since they are no longer the rift's.
+- `cutscene.js`: `play` takes an `until` predicate as well as a length; the
+  trigger watch grows a second clause on `S.rockFall` and `shieldUp()`; the
+  framing reads a `spot` per scene name rather than a two-way ternary.
+- `intro.js`: the `leave` phase, `pairX` unchanged, the pair made at the door;
+  `hold` walks `camX` with the pair during `leave`.
+- `house.js`: `cubes` draws two rooms while the opening runs.
+- No new field on `S`: `S.intro === 'leave'` is a phase of a saved-by-hand
+  field that already exists, and the scene names are strings in `S.cine`.
+
+### How it is checked
+
+Node tier: `test/cutscene.test.mjs`, new — for each of the five kinds, the
+yard is stood at that shield built (the `shieldBuilt` setup in scenes.js is
+the recipe), the next rock is thrown, and the check asserts a scene named for
+the kind is running while the rock is in the air, the camera is on the span,
+the yard never paused (a walker keeps walking), and the scene releases after
+the answer with the camera glided home; a second throw at the dome runs no
+scene. `intro.test.mjs` gains the door check above. Then the shots: the
+existing `props!` … `dome!` scenes in tools/look.mjs now show the scene's own
+framing, and `opening` starts at the door — and a new `leaving` scene a
+second in, the pair mid-walk.
+
 ## Scenes: every part of the game, one press away (built)
 
 Built 2026-09-11: `src/scenes.js` (the list), `src/scenesheet.js` (the block on
