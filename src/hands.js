@@ -92,6 +92,7 @@ export function sweep(mx, my) {
   }
   if (taken) {
     S.held += taken;
+    S.seenDrag = true;                    // the bench's 'strength' row is about this
     for (let i = 0; i < taken; i++) {
       S.motes.push({
         s: lifted[i],

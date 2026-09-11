@@ -462,6 +462,7 @@ export const S = {
   // carries a mark when there is: a dot for something you can afford now, a
   // flag for a whole group of rows you have never seen.
   seenBench: false,       // the bench has been earned and stays from then on
+  seenDrag: false,        // you have swept dust up by hand, so the row about it shows
   seenSects: [],          // headings that were on the board last time it was open
   seenRows: [],           // and the rows themselves, so a new one can say so
   // Rows whose reveal has fired. Revealing is one-way: a door that appeared
@@ -536,7 +537,7 @@ export const SAVED = [
   'speedLevel',
   'autoMine',
   'cores',
-  'seenBench',
+  'seenBench', 'seenDrag',
   'seenSects',
   'seenRows',
   'shownRows',

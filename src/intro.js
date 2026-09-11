@@ -76,6 +76,10 @@ export function skipIntro() {
   S.pair = [];
   S.crew = 1;
   S.rockhands = 1;
+  // A yard that skips the opening is a yard that has been played from: the
+  // rows gated on a player's own first act (the bench's 'strength' row waits
+  // for a drag) are open on it, the way they are on any save.
+  S.seenDrag = true;
   finish();
 }
 
