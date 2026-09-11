@@ -294,8 +294,8 @@ const SCENES = {
   // what opens it and there is no hook that puts the list up, nor should there
   // be. A press opens it too; that path is the touchscreen's, and the browser
   // check covers it.
-  apothpick: `window.__reset(); window.__crew(1, 4, 0, 2);
-    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+  apothpick: `window.__reset(); window.__crew(1, 4, 1, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     window.__brews(5);               // a second pot is only offered after five batches

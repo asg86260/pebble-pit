@@ -82,8 +82,8 @@ group('the gleam brew reads on a wizard and on nobody else', async () => {
   const wiz = { type: 'wizard', doses: dose };
   const haul = { type: 'hauler', doses: dose };
   return [
-    ok(!!gleam && gleam.kind === 'spark' && gleam.reagent === 'shard',
-       'the recipe exists, a shard brew of sparks'),
+    ok(!!gleam && gleam.kind === 'spark' && gleam.reagent === 'spark',
+       'the recipe exists, a brew of sparks that costs sparks'),
     ok(takesTonic(wiz, gleam), 'a wizard takes it'),
     ok(!takesTonic(haul, gleam), 'a hauler does not'),
     ok(Math.abs(sparkBoost(wiz) - 1.2) < 0.001,
@@ -105,14 +105,44 @@ group('shard brews are hidden before the quarry opens', async () => {
   const rowBefore = window.__buy('potency-brace');   // the row must not answer
   openSites();                                  // the quarry is broken open
   run(1);
+  const shardAfter = TONICS.filter(t => t.reagent === 'shard').every(tonicShown);
+  // The gleam brew is priced in sparks, and waits on the first spark the same
+  // way the shard brews wait on the quarry.
+  const gleamStillHidden = !tonicShown(tonicOf('gleam'));
+  window.__grant({ sparks: 10 });
   const shownAfter = TONICS.every(tonicShown);
   const rowAfter = window.__buy('potency-brace');
   return [
     ok(hiddenBefore, 'every shard recipe is off the menu with the quarry shut'),
     ok(stewBefore, 'while the stew and the speed brew stand'),
     ok(!rowBefore, 'and a shard potency row cannot be bought'),
-    ok(shownAfter, 'the quarry opens and the whole book stands'),
+    ok(shardAfter, 'the quarry opens and the shard brews stand'),
+    ok(gleamStillHidden, 'the gleam brew waits on a spark being seen'),
+    ok(shownAfter, 'and stands once one is'),
     ok(rowAfter, 'rows and all')
+  ];
+});
+
+// --- the bills differ, and the gleam brew is paid in sparks -------------------
+group('no two brews cost the same, and the gleam brew takes sparks', async () => {
+  standApothecary();
+  window.__grant({ sparks: 10 });
+  run(1);
+  const bills = TONICS.map(t => JSON.stringify(window.__brewCost(t.key)));
+  const gleam = window.__brewCost('gleam');
+  const sparkLine = gleam.find(([m]) => m === 'spark');
+  // Buy it like a player: set a pot to the gleam brew and let it light, then
+  // read what left the purse.
+  const before = { sparks: S().sparks, spores: S().spores };
+  window.__pot('gleam');
+  window.__assign('stirrers', 1);
+  runUntil(() => S().sparks < before.sparks, 200);
+  return [
+    ok(new Set(bills).size === TONICS.length, 'every recipe has a bill of its own', bills.join(' | ')),
+    ok(!!sparkLine && sparkLine[1] > 0, 'the gleam brew has a spark line', JSON.stringify(gleam)),
+    ok(S().sparks === before.sparks - sparkLine[1],
+       'and lighting the pot takes exactly that many sparks', `${before.sparks} -> ${S().sparks}`),
+    ok(S().spores < before.spores, 'along with the crop')
   ];
 });
 
