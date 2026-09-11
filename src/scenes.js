@@ -721,11 +721,11 @@ export const SCENES = {
     run: () => { rich(); window.__board('tower'); } },
 
   // --- the casino -------------------------------------------------------------
-  // The sand board mid-pour: a hundred staked on to the roof, the floor open,
-  // the sheet coming down through the pegs into the slots.
-  casino: { about: 'the casino', say: 'the sand board mid-pour',
+  // The pot on the ground beside the wheel: a hundred staked, so the heap reads
+  // at a glance, with the wheel going round for it.
+  casino: { about: 'the casino', say: 'a hundred on the table, the wheel going',
     run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
-                 window.__buy('stakedust'); window.__fast(4); window.__buy('letgo'); window.__fast(1.2);
+                 window.__buy('stakedust'); window.__fast(3);
                  window.__look(st().casinoX - 380); } },
 
   // --- the pit and the rift ---------------------------------------------------

@@ -50,7 +50,7 @@ import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
-import { CASINO_UPGRADES } from './casino.js';
+import { CASINO_UPGRADES, pickChip } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -1059,6 +1059,8 @@ export const HANDLES = {
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
+  // the chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up
+  __chip: (d = 1) => pickChip(d),
   // Setting the pot the way the board does: clicking a tonic row calls its
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
   // the same functions the pointer calls, so a check that sets the pot this way
