@@ -194,9 +194,11 @@ export function haulerWork(w, c) {
     // the frame with this body's own elbows still in it, so the nearest column
     // it was allowed was always a stride off. A lone hauler between two heaps
     // hopped from one to the other and back (docs/critics-2026-09-10.md, A9).
-    // The flag is the frame's own and `takeMess` clears it.
-    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; w.muckDropped = true; }
-    else if (w.muckAt == null && !w.muckDropped && muckFor(w) > 0) {
+    // The mark is the frame it was dropped on, so it needs nobody to clear it:
+    // a flag that waited for `takeMess` to clear it left a body out past the
+    // hole -- which never reaches `takeMess` -- unable to pick again at all.
+    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; w.muckDropped = now; }
+    else if (w.muckAt == null && w.muckDropped !== now && muckFor(w) > 0) {
       const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }

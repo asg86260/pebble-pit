@@ -105,7 +105,9 @@ document.getElementById('build').textContent = version();
 // it watches the sheet come up instead of being told, and puts it in order
 // each time: the switch reading what is in force now, and nothing left over
 // from the last visit.
-new MutationObserver(() => {
+// (Guarded: input.js imports this file for `sayStore`, and the node yard's
+// document has no observers.)
+if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   if (sheet.hidden) return;
   sayMotion();
   paste.hidden = true;
