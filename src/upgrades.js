@@ -217,7 +217,7 @@ export const UNITS = {
   // What one go on either ground is worth, which is the other half of what the
   // two grounds sell -- a rate says how often, these say how much.
   'shards/dig': '<i class="shard"></i>/dig',
-  'spores/cut': '<i class="spore"></i>/cut'
+  'spores/cut': '<i class="spore"></i>/harvest'
 };
 
 // A second is the clock, never the letter.

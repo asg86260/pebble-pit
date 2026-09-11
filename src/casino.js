@@ -696,9 +696,11 @@ export const saying = () => S.hand ? (S.hand.won ? 'won' : 'lost') : null;
 // now. The two decisions are not priced at all, so they carry what they would
 // pay instead, which is the number the decision is actually about.
 const STAKES = [
-  { key: 'stakedust', name: 'stake', cur: 'dust' },
-  { key: 'stakeshard', name: 'stake', cur: 'shard' },
-  { key: 'stakespore', name: 'stake', cur: 'spore' }
+  // Named by the coin: three cards all reading STAKE differed by a seven-pixel
+  // mark in the price column (critics 2026-09-10, C6).
+  { key: 'stakedust', name: 'stake pebbles', cur: 'dust' },
+  { key: 'stakeshard', name: 'stake ore', cur: 'shard' },
+  { key: 'stakespore', name: 'stake crops', cur: 'spore' }
 ];
 
 const seen = cur => cur === 'shard' ? S.seenShard : cur === 'spore' ? S.seenSpore : true;

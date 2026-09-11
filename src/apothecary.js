@@ -93,13 +93,13 @@ export const carryDoses = () => DOSE_CARRY[carryRung()];
 // picker offers cannot come apart.
 const EVERY_BUT_HAUL = Object.values(JOB).filter(j => j !== JOB.HAUL);
 export const TONICS = [
-  { key: 'stew',   name: 'a hearty stew',   reagent: 'dust',  kind: 'work',
+  { key: 'stew',   name: 'hearty stew',   reagent: 'dust',  kind: 'work',
     base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f', short: 'stew',
     jobs: EVERY_BUT_HAUL },                                                      // green
-  { key: 'brace',  name: 'a bracing tonic', reagent: 'shard', kind: 'crit',
+  { key: 'brace',  name: 'bracing tonic', reagent: 'shard', kind: 'crit',
     base: TONIC_BRACE_CRIT,  unit: 'crit',  color: '#a05fd6', short: 'tonic',
     jobs: EVERY_BUT_HAUL },                                                      // purple
-  { key: 'strong', name: 'a strong brew',   reagent: 'shard', kind: 'carry',
+  { key: 'strong', name: 'strong brew',   reagent: 'shard', kind: 'carry',
     base: TONIC_STRONG_CARRY, unit: 'carry', color: '#4a86c7', short: 'brew',
     jobs: [JOB.HAUL, JOB.QUARRY] },                                              // blue
   { key: 'swift',  name: 'speed brew',      reagent: 'spore', kind: 'pace',
@@ -761,7 +761,7 @@ export const APOTHECARY_UPGRADES = [
   // Who the round favors. A dial that walks the jobs the doses can land on.
   {
     key: 'potprefer', dial: true, site: 'apothecary',
-    name: 'give potion to',
+    name: 'give tonics to',
     value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
     // Seven stations to walk past two buttons at a time; a list you pick from is
     // the whole reason this control exists. "Nobody in particular" is the first

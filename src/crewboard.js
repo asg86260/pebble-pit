@@ -87,7 +87,7 @@ export function whereIs(w) {
 const DOES = { rockhands: 'mining the rock', quarriers: 'quarrying',
                farmhands: 'farming', scholars: 'researching',
                purifiers: 'clearing the air',
-               janitors: 'shovelling', haulers: 'transporting' };
+               janitors: 'shoveling', haulers: 'transporting' };
 // Rows, not a sentence. A card you have to read is a card you read once; a card
 // laid out in a column is one you can glance at with somebody in your hand and
 // take in without stopping. The tip is monospace, so a label padded to a fixed
@@ -102,8 +102,8 @@ const row = (label, value) => `${label.padEnd(LABEL)}${value}`;
 // the whole reason this reads off `goal` rather than off a guess made from
 // where the body happens to be standing.
 const NOW = { seek: 'looking for pebbles', dump: 'tipping a load',
-              muck: 'shovelling up mess', cut: 'working the cut',
-              work: 'working the cut', up: 'climbing out', down: 'climbing down',
+              muck: 'shoveling up mess', cut: 'digging in the quarry',
+              work: 'digging in the quarry', up: 'climbing out', down: 'climbing down',
               tend: 'tending a plot', home: 'heading home', idle: 'nothing much',
               in: 'inside', aloft: 'up in the balloon' };
 

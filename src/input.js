@@ -397,7 +397,7 @@ function cellLabel(v) {
 // hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
 const BUILDING_NAME = {
   shack: 'the shack',
-  bench: 'the bench', lab: 'the lab', school: 'the school', casino: 'the casino',
+  bench: 'the bench', lab: 'the lab', school: 'the training grounds', casino: 'the casino',
   scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
 };
 

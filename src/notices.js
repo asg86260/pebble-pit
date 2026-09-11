@@ -91,7 +91,7 @@ const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
 
 export const NOTICES = [
   // --- what happens on its own -------------------------------------------------
-  { key: 'firstgrain', name: 'makin money',
+  { key: 'firstgrain', name: "makin' money",
     note: 'throw a pebble into the pit', when: () => S.banked > 0 },
   { key: 'firstrock', name: 'better keep digging',
     note: 'clear the first rock', when: () => S.boulderNo >= 2 },
@@ -123,10 +123,10 @@ export const NOTICES = [
   { key: 'firstbrew', name: 'hello, potion seller',
     note: 'brew a batch at the apothecary', when: () => S.brews >= 1 },
   { key: 'firsttrade', name: 'first day of school',
-    note: 'send somebody to the school and teach them a trade',
+    note: 'buy the first hat at the training grounds',
     when: () => S.breakers + S.carters + S.blasters + S.growers >= 1 },
   { key: 'alltrades', name: 'educating the masses',
-    note: 'teach every trade there is to teach', when: allTrades },
+    note: 'stock every station with its hat', when: allTrades },
   { key: 'allbuilt', name: 'building complete',
     note: 'you built everything', when: allBuilt },
 
@@ -134,7 +134,7 @@ export const NOTICES = [
   ...ladder('rock', NOTICE_ROCKS,
             (n, i) => `${SAY[i]} rocks`,
             (n, i) => `clear ${SAY[i]} boulders` +
-                      (i === SAY.length - 1 ? ', thats a lot of rocks' : ''),
+                      (i === SAY.length - 1 ? ", that's a lot of rocks" : ''),
             () => S.boulderNo),
   ...ladder('pebble', NOTICE_PEBBLES,
             (n, i) => `${PEBBLE_SAY[i]} pebbles`,
