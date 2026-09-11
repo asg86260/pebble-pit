@@ -130,7 +130,7 @@ export const TESTS = [
     newRun();
     await sleep(300);
     return [
-      ok(t0.pouring, 'the chip going down starts the pot falling'),
+      ok(t0.pouring && t0.tableAir > 0, 'the chip going down starts the pot falling'),
       ok(t1.letting && t1.gate, 'and letting go opens the floor'),
       ok(done.hand !== undefined && !done.letting && !done.pouring, 'and the hand plays itself out'),
       ok(done.board === 0 && done.table === 0, 'leaving the building empty',

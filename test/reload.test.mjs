@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
-const { stake, canStake, letGo, canLet } = await import('../src/casino.js');
+const { stake, canStake, bank, canBank, pot } = await import('../src/casino.js');
 const { dugShare } = await import('../src/quarry.js');
 const { boulderAlive } = await import('../src/rock.js');
 const { doseLive, doseLeftMs } = await import('../src/apothecary.js');
@@ -105,23 +105,19 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
   window.__tip(2000);
   run(1);
   S.chip = 2;
-  // The board pays about one across the gates and this check is not about the
-  // odds, so it plays until a hand comes in. Each go is paid for out of a fresh
-  // tip: a miss takes the stake, and a purse of nothing cannot put a chip down.
-  let won = 0, before = 0;
-  for (let go = 0; go < 30 && !won; go++) {
-    if (!S.pot && !S.paying && !S.clearing && canStake('dust')) stake('dust');
-    runUntil(() => canLet(), 30);
-    before = S.stored;
-    letGo();
-    // the frame the board settles is the frame the win sets off, so what is
-    // owed is read the moment the floor closes
-    runUntil(() => !S.gate, 60);
-    if (S.paying) won = S.paying.left + S.tableAir.filter(k => k.arc).reduce((n, k) => n + (k.worth || 0), 0);
-    else { runUntil(() => !S.clearing, 30); window.__tip(2000); }
+  // The wheel is even money and this check is not about the odds, so it plays
+  // until a hand comes in. Each go is paid for out of a fresh tip: a loss takes
+  // the stake, and a purse of nothing cannot put a chip down.
+  let spun = false;
+  for (let go = 0; go < 30 && !spun; go++) {
+    if (!S.pot && !S.paying && canStake('dust')) stake('dust');
+    spun = runUntil(() => canBank(), 30);
+    if (!spun && !S.pot && !S.paying) window.__tip(2000);
   }
-  run(0.4);                                    // grains off the slot, most still in the air
-  const owed = S.paying && S.paying.left, air = S.tableAir.filter(k => k.arc).length;
+  const won = pot(), before = S.stored;
+  bank();
+  run(0.4);                                    // grains off the heap, most still in the air
+  const owed = S.paying && S.paying.left, air = S.tableAir.length;
 
   window.__reload();
   const back = S.paying && S.paying.left;
@@ -129,13 +125,13 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
   const paid = S.stored - before;
 
   return [
-    ok(won > 0, 'there was a win to take', `${won}`),
+    ok(spun && won > 0, 'there was a pot to take', `${won}`),
     ok(air > 0 && owed < won, 'and the reload caught it in the air',
-       `${air} grains flying, ${owed} of ${won} still in the slot`),
+       `${air} grains flying, ${owed} of ${won} still on the table`),
     ok(back === won, 'the whole of it is still owed the moment the page comes back',
-       `${won} won, ${back} owed`),
+       `${won} banked, ${back} owed`),
     ok(paid >= won, 'and the hole is paid every last grain of it',
-       `${won} won, ${paid} landed`)
+       `${won} taken, ${paid} landed`)
   ];
 });
 
