@@ -569,19 +569,10 @@ const SCENES = {
   // the dust goes in: a widening is paid in dust, and paid out of the very
   // pile the scene is about. The camera is on the lip, so the air between the
   // brim and the surface is in shot.
-  // The pot on the ground beside the wheel. The table's own plot of sand is
-  // measured off whatever stands next along on the casino's right, and it once
-  // came back one column wide -- a hundred-grain stake put twenty grains down
-  // and the rest were simply not there. A stake this size is a heap you can
-  // read the width of at a glance, which is what the scene is for.
-  casino: `window.__reset(); window.__casino(true); window.__give(6000);
-           window.__buy('stakedust'); window.__fast(3);
-           window.__look(window.__state().casinoX - 380);`,
-
-  // The drop: the board on the casino's roof with a pot on the table and the
-  // rock a few rows down the pegs, the sign lit across the top.
-  plinko: `window.__reset(); window.__plinko(true); window.__give(6000); window.__chip(1);
-           window.__buy('dropdust'); window.__fast(4.3);
+  // The sand board mid-pour: a hundred staked on to the roof, the floor open,
+  // the sheet coming down through the pegs into the slots.
+  casino: `window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+           window.__buy('stakedust'); window.__fast(4); window.__buy('letgo'); window.__fast(1.2);
            window.__look(window.__state().casinoX - 380);`,
 
   // The shelf outside the school: a taught hat waiting to be carried to its

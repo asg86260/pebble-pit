@@ -239,34 +239,30 @@ export const S = {
   labOpen: false,
 
   // --- the casino ---
-  // One table, one pot. `pot` is null until something is staked, and what is on
+  // One roof, one pot. `pot` is null until something is staked, and what is on
   // it is `n` of `cur` -- the same currencies everything else in the game is
   // priced in, because a chip you can only use here would be a fifth currency.
   casinoOpen: false,
   casinoBoardOpen: false,
-  pot: null,              // { cur, stake, n, at } -- what is on the table
-  wheel: 0,               // where the wheel has turned to
-  spinAt: 0,              // when the wheel was set going
-  spinFrom: 0, spinTo: 0, // and the mark it is turning from and to
-  spinUntil: 0,           // and until when it is being spun in earnest
-  // A chip is down and the stake is still raining on to the table. The wheel is
-  // owed a spin and does not start it until the heap has stopped moving, so this
-  // is the beat between the gesture and the wheel. See `pouring` in casino.js.
+  pot: null,              // { cur, stake, n } -- what is standing on the roof
+  // A chip is down and the stake is still raining on to the roof. Nothing can
+  // be let go until the heap has stopped moving. See `pouring` in casino.js.
   pouring: false,
-  tableAir: [],           // the table's grains in the air: arriving, leaving, or on their way to the hole
-  paying: null,           // { cur, left } -- a pot on its way across the yard to the pit
-  spinWon: false,         // what it is about to land on, decided when it starts
+  tableAir: [],           // the casino's grains in the air: arriving on the roof, falling from the gate, leaving, or on their way to the hole
+  paying: null,           // { cur, left, grains } -- a called slot on its way across the yard to the pit
   chip: 0,                // which of CASINO_CHIPS is on the table
-  // The hand that just settled, kept for a few seconds so a wheel you were not
-  // watching still tells you which way it went.
-  hand: null,             // { won, n, cur, at, mult? }
-  // The drop: the plinko board on the casino's roof, and the rock going down
-  // it. `pot.drop` says the pot's owed answer is a drop rather than a spin;
-  // this is the rock in flight -- the ten flips it was dealt, the bin they add
-  // up to, when it let go, and when it landed (null until it has). It is gone
-  // once the rock is winched home. See `drop` in casino.js.
-  plinkoOpen: false,
-  drop: null,             // { path, bin, at, landedAt }
+  slot: 3,                // the slot called, 0..SLOTS-1 -- the middle one to start
+  // The hand is under way: the tray floor is open at column `at` (since
+  // `since`) and the sand is going through the pegs. Null when nothing is
+  // falling. A hand caught here
+  // by a reload comes back a pot on the roof with the call open again, the way
+  // a wheel mid-spin used to -- see persist.js.
+  gate: null,             // { at, since }
+  // The six slots you did not call, lifting off and fading, after a hand.
+  clearing: false,
+  // The hand that just settled, kept for a few seconds so a board you were not
+  // watching still tells you how it went.
+  hand: null,             // { won, n, cur, at, rate }
   labBoardOpen: false,
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read. It was the lab's alone --
@@ -608,7 +604,6 @@ export const SAVED = [
   'doseCarryLevel',
   'labOpen',
   'casinoOpen',
-  'plinkoOpen',
   'scrubOpen',
   'towerOpen',
   'outhouseOpen',
@@ -641,6 +636,7 @@ export const SAVED = [
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
+  'slot',                 // and which slot is called
   // wave6-sim
   JOB.TEACH,
   // The record's rect is reseated by the layout at boot, so saving it costs
@@ -802,8 +798,8 @@ export const EPHEMERAL = [
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',
   // the wheel, and a hand that settled before you closed the tab
-  'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',
-  'drop',                 // a rock mid-board is like a wheel mid-spin: the pot comes back undecided, and the decision is open again
+  'tableAir', 'hand',
+  'gate', 'clearing',     // a hand mid-board comes back a pot on the roof with the call open again
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing
@@ -901,10 +897,14 @@ export const tower = { x: 0, y: 0, w: 0, h: 0 };
 // used to be a second shed for the tools (the janitor's closet); one trade gets
 // one building.
 export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
-// The ground the pot piles up on: a real plot of sand, like the yard and the
-// hole, on the ground either side of the casino. A pot is grains, not a drawing
-// of grains -- see casino.js.
-export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The tray on the casino's roof, where the pot stands: a real plot of sand,
+// like the yard and the hole. A pot is grains, not a drawing of grains -- see
+// casino.js.
+export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// And the board on its face: the pegs and the slots the tray drains through.
+// The pegs are `fixed` cells in this grid, so the sand gets round them by the
+// same rules it gets round a heap.
+export const board = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, fixed: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

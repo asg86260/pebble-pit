@@ -1,13 +1,15 @@
 # Still to do
 
-## The sand board -- DESIGNED, not built (2026-09-10)
+## The sand board -- BUILT (2026-09-11)
 
-The drop (the rock-plinko on the casino roof, built earlier today) got the
-pitch wrong and is superseded: the *sand* goes through the board. The stake
-heaps on the roof, the tray floor gives way, the pour goes through pegs
-(`fixed` cells) into seven slots, and you call a slot beforehand. The wheel
-goes. DESIGN.md, "The sand board (design, not built)". Waiting on sign-off;
-the rock version comes out when this goes in.
+The casino is the machine: the stake heaps in a tray on the roof, the floor
+opens over one of seven slots and tips toward the hole, and the whole pot
+goes through the pegs. You call a slot beforehand; it pays `9 6 6 7 6 6 9`
+per grain, measured. The wheel and the rock-plinko are gone. DESIGN.md, "The
+sand board (built)". Left for later, in order of worth: board memory (the
+losing slots' sand staying for the next hand rather than lifting off); a
+let-it-ride that hoists the won heap back to the roof; a little chance in the
+pour itself, which is deterministic given the gate.
 
 ## Nine critics played the game (2026-09-10)
 
