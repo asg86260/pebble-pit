@@ -492,7 +492,8 @@ export const S = {
   unsaved: false,         // the store refused the last write; the sheet says so
   yielded: false,         // another tab is writing this save; this page has stopped
   broken: false,          // a save that would not read was put aside at boot
-  lastFrame: 0,           // for the length of the last frame
+  staged: false,          // stood at a scene, the player's save kept aside (scenesheet.js)
+  lastFrame: 0,         // for the length of the last frame
   settleAt: 0,            // the column the pit settler got to last frame
 
   // wave6-sim: the training grounds' own body. See crew/teacher.js.
@@ -761,6 +762,8 @@ export const EPHEMERAL = [
   // what the store said about this page: writes refused, another tab writing,
   // a save that would not read put aside -- see persist.js and save.js
   'unsaved', 'yielded', 'broken',
+  // stood at a scene, with the player's own save kept aside -- scenesheet.js
+  'staged',
   // the window and the view, all measured at boot
   'W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'camY', 'camTo', 'camWas',
   'follow', 'camLockY', 'shake', 'shakePh', 'shakeX', 'shakeY',

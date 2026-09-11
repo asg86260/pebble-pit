@@ -133,6 +133,18 @@ change, not a tidy-up; a new feature adds its entry at the right depth.
 (thrown away on purpose). `test/persist-roundtrip.test.mjs` goes red for a
 field in none of them, which is the warning persist.js used to owe you.
 
+## The scenes
+
+`scenes.js` is the one list of scenes: every part of the game stood up fresh
+from the `__` handles, keyed by name, each saying which part it is about
+(`ABOUT`) and why it is set up the way it is. Two things read it and neither
+keeps a list of its own: `tools/look.mjs` shoots one by name through
+`window.__scene`, and `scenesheet.js` -- imported from main.js's dev block,
+beside `dev.js` -- draws a button per scene under a heading per part on the
+held sheet. A scene never touches the player's save: the first press keeps the
+store's blob aside, `S.staged` stops `persist()` writing, and `my yard` on the
+sheet puts it back. Nothing of it ships.
+
 ## The dev panel
 
 `dev.js` is a panel of buttons and sliders over the top right of the yard:

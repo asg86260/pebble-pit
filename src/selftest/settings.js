@@ -31,6 +31,9 @@ const motion = () => document.getElementById('motion');
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
   .map(el => el.id === 'record' ? 'the record'
+           // the scenes, under everything: a block the dev build hangs on the
+           // sheet (scenesheet.js), read here as its heading the same way
+           : el.id === 'scenes' ? 'the scenes'
                                 : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
@@ -54,6 +57,7 @@ export const TESTS = [
       'space holds · ← → look about',
       version(),
       'rocks keep coming. there is no finish line.',
+      'the scenes',
     ];
     const before = state();
     resume();

@@ -1,5 +1,12 @@
 # Still to do
 
+## Scenes: every part of the game, one press away -- BUILT (2026-09-11)
+
+One dev-only list (`src/scenes.js`) read by the held sheet and `tools/look.mjs`
+alike; a heading per part with a button per scene; a scene never touches the
+player's save. DESIGN.md, "Scenes" (built). Left for later: the scrollbar on
+the block is the browser's grey one, not the sheet's hand.
+
 ## The sand board -- BUILT (2026-09-11)
 
 The casino is the machine: the stake heaps in a tray on the roof, the floor
