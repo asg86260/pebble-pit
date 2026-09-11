@@ -226,6 +226,14 @@ canvas {
 .rows button:disabled { color: #8c8c8c; cursor: default; }
 .rows button:disabled .gain, .rows button:disabled .cost { opacity: 1; }
 .rows button:disabled .cost .short { color: #000; }
+/* ...and measured again, by the player this time: over the sky the whole sheet
+   is grey-ish, so one grey against another is still the question left open. A
+   card you cannot pay for is drawn dashed -- the outline of a card rather than
+   a card, which is what the sheet already means by a dashed box (see #reset).
+   Keyed off the bill and not off `:disabled`: a finished ladder and a busy
+   site also cannot be pressed, and neither is "you cannot afford this". The
+   coin the bill marks short is the fact; the border only repeats it. */
+.rows button:has(.cost .short) { border-style: dashed; }
 /* A status is about the whole card and is the one thing on it worth reading
    while it is stalled. */
 .rows button:disabled.waiting .gain { color: #000; }
