@@ -151,6 +151,11 @@ export function installDom({ W = 800, H = 600, dpr = 1 } = {}) {
   globalThis.getComputedStyle = () => ({ columnGap: '', getPropertyValue: () => '' });
   globalThis.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 0);
   globalThis.cancelAnimationFrame = clearTimeout;
+  // settings.js watches the held sheet's `hidden` through one of these at
+  // module top; here nothing ever hides or shows, so an observer that never
+  // fires is the whole of it. input.js imports settings.js, and every yard
+  // check imports input.js, so without this none of them load.
+  globalThis.MutationObserver = class { observe() {} disconnect() {} takeRecords() { return []; } };
   globalThis.window = globalThis;
   globalThis.addEventListener = noop;
   globalThis.removeEventListener = noop;
