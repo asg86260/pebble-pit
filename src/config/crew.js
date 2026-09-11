@@ -206,8 +206,14 @@ export let HAUL_BASE = 1.8;
 export const HAUL_CARRY_COST = 150;     // the haulers' strength ladder, dust
 export const HAUL_PACE_COST = 180;      // and their speed, dust
 export const ROCKHAND_SPEED_COST = 210; // the rockhands' swing, dust
-export const HOUSE_COST0 = 60;          // the first house
-export const HOUSE_RATE = 1.45;         // and how much steeper each body gets
+// The house was 60 at 1.45x, and a full playthrough said bodies were the
+// bottleneck of the whole run: the seventeenth cost 15,800 and the twenty-fifth
+// 447,000, hours of a yard's income for one hauler, when every later station
+// wants two or three more of them. At 45 and 1.30x the tenth is 480, the
+// twentieth 6,600 and the thirtieth 90,000 -- still a decision that late, no
+// longer a wall (critics 2026-09-10, B1 and the house note; playthrough 09-11).
+export const HOUSE_COST0 = 45;          // the first house
+export const HOUSE_RATE = 1.30;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // --- tipping a load into the hole ---------------------------------------------
