@@ -10,6 +10,7 @@ import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
          SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD,
          FLAME_HOT, FLAME_TIP, FLAME_STEAM,
          POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
+import { APOTH_SMOKE } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
@@ -269,7 +270,7 @@ function drawPot(i, g) {
   // A wisp of smoke off the fire -- a mote or two lifting up the belly and
   // thinning out, kept below the rim so it stays part of the fire rather than a
   // column climbing the sky.
-  ctx.fillStyle = '#3a3a3a';
+  ctx.fillStyle = APOTH_SMOKE;
   for (let s = 0; s < 2; s++) {
     const ph = (t / 900 + s * 0.5 + i * 0.23) % 1;
     if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;

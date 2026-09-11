@@ -1137,7 +1137,9 @@ let said = null;
 export function sayHideDone() {
   if (S.hideDone === said) return;
   said = S.hideDone;
-  hideEl.textContent = S.hideDone ? 'finished: hidden' : 'finished: shown';
+  // A verb, what pressing does, not a state -- 'finished: shown' read as a
+  // status (critics C13).
+  hideEl.textContent = S.hideDone ? 'show finished' : 'hide finished';
   hideEl.classList.toggle('on', S.hideDone);
 }
 

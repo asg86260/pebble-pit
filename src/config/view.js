@@ -114,3 +114,7 @@ export const VIEW_KNOBS = [
   { key: 'DEVICE_PIXELS', label: 'pixels a frame', min: 1e6, max: 12e6, step: 5e5, layout: true,
     get: () => DEVICE_PIXELS, set: v => { DEVICE_PIXELS = v; } }
 ];
+
+// The wisp off the apothecary's fire. It was a literal in the drawing; a tone
+// is a number and lives here with the rest.
+export const APOTH_SMOKE = '#3a3a3a';

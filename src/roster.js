@@ -396,12 +396,18 @@ const BAR = P * 3;                 // the arm of a plus, and the whole of a minu
 // carries the same weight as one.
 const THIN = 2;
 
+// A button that would do nothing is drawn dotted -- every other cell of the
+// bar -- rather than in a grey. The yard is black and white, and the tint was
+// the one grey literal in a module (critics 2026-09-10, C13).
 function button(ctx, b, kind, live) {
-  ctx.fillStyle = live ? '#000' : '#c9c9c9';
-  const x = b.x + b.w / 2, y = b.y + b.h / 2;
-  ctx.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
-  if (kind === '+') ctx.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
   ctx.fillStyle = '#000';
+  const x = b.x + b.w / 2, y = b.y + b.h / 2;
+  if (live) ctx.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
+  else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - BAR / 2 + i, y - THIN / 2, P, THIN);
+  if (kind === '+') {
+    if (live) ctx.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
+    else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - THIN / 2, y - BAR / 2 + i, THIN, P);
+  }
 }
 
 // The counts, in screen pixels, after the world has been drawn.
