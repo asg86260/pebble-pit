@@ -27,6 +27,7 @@
 import { P, CRIT_RING_MS, CRIT_RING_R, CRIT_MOTES,
          CRIT_MOTE_LIFE, CRIT_MOTE_SPEED, CRIT_MOTE_DRAG } from './config.js';
 import { S } from './state.js';
+import { rockTop } from './route.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 
@@ -84,6 +85,9 @@ export function stepShocks(dt) {
     if (m.t > m.life) { S.shockMotes.splice(i, 1); continue; }
     m.x += m.vx * frames;
     m.y += m.vy * frames;
+    // A speck that has reached the ground is on the ground: they used to pass
+    // through the yard's line and shrink under it (critics 2026-09-10, C12).
+    if (m.y >= rockTop(m.x)) { S.shockMotes.splice(i, 1); continue; }
     // The blow spends itself: a speck leaves fast and is barely moving by the
     // time it goes, which is what makes the burst read as one push outward
     // rather than as a cloud drifting away.

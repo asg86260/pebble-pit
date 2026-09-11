@@ -25,12 +25,20 @@ export function drawSmoke() {
     // alpha over a dark body is a muddy colour and this is the one thing on a
     // worker that has to stay legible as *which tonic*.
     if (p.color) { drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, k), p.v); continue; }
-    const size = Math.round(P * (p.s || 1) * (1 + k * 1.4));
-    ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
+    // A puff is a few cells at full ink that come apart as it ages -- the
+    // jaw's plume is drawn that way and reads as pixel art; this was a square
+    // growing from one cell to two at half alpha, a soft grey blob in a yard
+    // with no other soft edge (critics 2026-09-10, C12). Which cells stay is
+    // the puff's own phase, so a cloud does not flicker frame to frame.
+    const cells = Math.max(1, Math.round((p.s || 1) * 3 * (1 - k)));
+    const cx = Math.round((p.x - P) / P) * P, cy = Math.round((p.y - P) / P) * P;
     ctx.fillStyle = '#000';
-    ctx.fillRect(Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
+    const seed = Math.floor((p.ph || 0) * 97);
+    for (let i = 0; i < cells; i++) {
+      const dx = (seed + i * 7) % 3, dy = (seed + i * 5) % 3;
+      ctx.fillRect(cx + dx * P, cy + dy * P - Math.round(k * P * 3), P, P);
+    }
   }
-  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 

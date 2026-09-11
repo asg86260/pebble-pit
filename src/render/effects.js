@@ -117,10 +117,11 @@ export function drawShockRing(g, x, y, r, k) {
 // And one speck of the burst: a cell that fades as it goes. Smaller than a grain
 // of dust at every moment of its life, so nothing about it reads as something
 // that could have been banked.
+// A whole cell at full ink for most of its life, half a cell for the last
+// part, gone: two sizes and no alpha, the way everything else here fades
+// (critics 2026-09-10, C12).
 export function drawShockMote(g, x, y, k) {
-  const size = Math.max(1, Math.round(P * (0.8 - k * 0.4)));
-  g.globalAlpha = 1 - k * k;
+  const size = k < 0.6 ? P : Math.max(1, P / 2);
   g.fillStyle = '#000';
   g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
-  g.globalAlpha = 1;
 }

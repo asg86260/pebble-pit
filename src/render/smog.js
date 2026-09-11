@@ -317,10 +317,14 @@ export function drawRain() {
   // One path for the whole shower: four thousand drops is four thousand calls
   // into the canvas otherwise, and they are all the same square in the same
   // colour. See `drawSmog` -- the same trick, for the same reason.
+  // A drop is a dash three cells tall, leaned by the gust -- the smog is a
+  // square and a shower drawn in squares was a dirtier sky, not a storm:
+  // nothing in a still frame said falling (critics 2026-09-10, C12).
+  const lean = Math.round(gust() * P);
   ctx.fillStyle = MUCK_GREY;
   ctx.beginPath();
   for (const d of DROPS)
-    if (onScreen(d.x)) ctx.rect(Math.round(d.x), Math.round(d.y), P, P);
+    if (onScreen(d.x)) ctx.rect(Math.round(d.x) + lean, Math.round(d.y), P, P * 3);
   ctx.fill();
   // Nothing is drawn going the other way any more. What the house takes is the
   // sky itself, dragged in by the draught and drawn by `drawSmog` all the way to

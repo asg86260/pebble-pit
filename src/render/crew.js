@@ -121,7 +121,17 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   // cells wide on a three-cell body), so the snapping was doing nothing but
   // introducing the lag.
   const left = x + (WORKER - spriteW(rows) * P) / 2;
-  drawSprite(ctx, rows, left, y - spriteH(rows) * P);
+  const top = y - spriteH(rows) * P;
+  // On white paper first. The hat, the body's outline and the rock are one
+  // black, so on the crest -- where the rock's gang live -- a helmet merged
+  // with the rock and the outline into one notch and three helmeted bodies
+  // read as three bare squares (critics 2026-09-10, C12). A cell of white
+  // round the glyph is the same argument `drawBody` makes for the body.
+  ctx.fillStyle = '#fff';
+  for (let r = 0; r < rows.length; r++)
+    for (let c = 0; c < rows[r].length; c++)
+      if (rows[r][c] === '#') ctx.fillRect(left + (c - 1) * P, top + (r - 1) * P, P * 3, P * 3);
+  drawSprite(ctx, rows, left, top);
 }
 
 // What a body has on: asked of kit.js, which is the one place that knows. It

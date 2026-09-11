@@ -27,6 +27,14 @@ the cap, never under thirty, never a shower -- and that is the intended shape.
 with the disc (DESIGN.md, "The pit's arc", the amended inhale bullet). The two
 shots are `b5-young.png` and `b5-grown.png` in the rift-reach worktree.
 
+**C12's last item is a drawing decision.** The farm shed, the quarry shed
+and the bench share one silhouette at 1x -- a slab on two legs with a flag
+(`render/sites.js` `drawQuarryShed` / `drawFarmShed`, `render/crew.js`
+`drawBench`). The art director's ask is one feature of three cells or more
+apiece: a pit-prop A-frame roof on the quarry's, a lean-to with the trough
+under it on the farm's, an anvil or vice block on the bench. Three sprites,
+each with more than one reasonable shape: shoot the options before drawing one.
+
 **A8 built 2026-09-11.** A taught hat lands on a shelf outside the school and
 a hauler carries it to its station's stand (DESIGN.md, "The school", the shelf
 section). Shot: `a8-shelf.png` in the rift-reach worktree.

@@ -14,7 +14,7 @@
 
 import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, school, shack } from './state.js';
-import { groundAt, kitX, shelfX } from './world.js';
+import { groundAt, kitX, shelfX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf, shelved } from './upgrades.js';
@@ -60,7 +60,11 @@ export const POSTS = [
   { key: 'farmjob', job: JOB.FARM,
     at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: JOB.QUARRY,
-    at: () => quarry.x + quarry.w / 2, show: () => S.quarryOpen,
+    // Over the shed beside the cut, like every other roster over its
+    // building: it stood in the sky over the mouth, exactly where the jaw's
+    // plume rises, and the plus and the count were in the cloud
+    // (critics 2026-09-10, C12).
+    at: () => { const s = quarryShed(); return s.x + s.w / 2; }, show: () => S.quarryOpen,
     // the quarry is a hole: a roster under the ground line there would be a
     // roster down the shaft, so it stands clear of the floor of it
     // The quarry is a hole, so its roster used to stand below the floor of it --

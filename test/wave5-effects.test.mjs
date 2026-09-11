@@ -22,6 +22,11 @@ import { STEPS } from '../src/game.js';
 // A yard whose hole has given way. It is not bought and never was: the hole
 // collapses the first time it cannot take a grain, so the way a player gets one
 // is to fill the hole -- which is what this does.
+// A hole torn AND grown. The two checks below are about the far end of the
+// arc -- everything, on the frame it lands -- and since the reach landed
+// (rift.js, `riftReach`; docs/critics-2026-09-10.md, B5) a freshly torn hole
+// skims the pile under its mouth and leaves the rest standing. The eating-
+// everything rule is the grown hole's, so that is the hole these use.
 function tornYard() {
   window.__reset();
   window.__crew(0, 4);
@@ -29,9 +34,11 @@ function tornYard() {
   window.__meteor();
   window.__give(60000);              // more than the hole holds: it gives way
   run(4);                            // and the tearing takes the pile with it
+  window.__rift();                   // ...and it has since eaten its fill: the abyss, at full reach
+  run(1);
 }
 
-group('the black hole inhales: nothing settles on the pit floor', async () => {
+group('a grown black hole inhales: nothing settles on the pit floor', async () => {
   tornYard();
   const before = state();
   const pile = 5000;                 // a known pile, tipped into a hole that is open
@@ -92,6 +99,10 @@ group('a save that bought the old widenings still loads, and pulls the same', as
   run(0.5);
   const plain = state().rift;
 
+  // Written down as it stands -- the store otherwise holds whatever the last
+  // group left, which since the reach landed is a hole of some other size.
+  yard.S.dirty = true;
+  yard.persist();
   const save = JSON.parse(localStorage.getItem('boulder-clicker/v4') || '{}');
   save.riftLevel = 7;
   save.riftOpen = true;

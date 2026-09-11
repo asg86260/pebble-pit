@@ -31,6 +31,7 @@ export function puff(x, y, o = {}) {
       drift: (o.drift || 0) + (rand() - 0.5) * 0.25,
       s: (o.s || 1) * (0.75 + rand() * 0.5),
       t: rand() * 0.15,               // and not all at the same age -- seconds
+      ph: rand(),                     // which of its cells stay as it comes apart: see drawSmoke
       // How fast this one goes up and how long it lasts, both its own.
       //
       // They were one pair of numbers for everything that smokes here, which is
