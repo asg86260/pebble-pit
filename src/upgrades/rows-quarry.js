@@ -13,6 +13,7 @@ import { site } from './site.js';
 // before the place that gives them better tools.
 const CAVE = site({
   key: 'unlockquarry', name: 'build the quarry',
+  note: () => 'a cut dug for ore, the blue coin: gear, hats and the wizard are paid in it',
   cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
   show: () => S.farmOpen && !S.quarryOpen,

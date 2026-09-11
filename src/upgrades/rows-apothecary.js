@@ -12,6 +12,7 @@ export const APOTHECARY_ROWS = [
   // it stands early, not late. See DESIGN.md, "The apothecary".
   site({
     key: 'unlockapothecary', name: 'build the apothecary',
+    note: () => 'a pot that brews tonics out of crops, and a keeper who carries them out to the crew',
     cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen',
     // Built at the hut, not at the middle of the plot. The building is the hut;
     // the shelves and the row of pots to its right are what the hut goes on to
