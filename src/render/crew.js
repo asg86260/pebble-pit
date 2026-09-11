@@ -510,7 +510,11 @@ export function drawWorkers() {
     // brew clock and the count in apothecary.js).
     if (underground(w) || inHouse(w) || atHome(w)) continue;
 
-    const look = LOOK[w.type] || PLAIN;
+    // A gang body claimed to its shed is doing a builder's job, and it is
+    // drawn doing it: the hammer's lunge (`workJig`) is thrown away by its own
+    // row -- a rockhand's swing is a blur on the face, not a stoop -- and a
+    // hop with no drive at the bottom of it reads as a body bouncing.
+    const look = (w.onBuild && w.atShed ? LOOK.builder : LOOK[w.type]) || PLAIN;
     const throwOn = w.lunge || 0;
     const x = Math.round(w.x + throwOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
     const y = Math.round(w.y + throwOn * look.lunge * P);

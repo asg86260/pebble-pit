@@ -251,7 +251,18 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
   const inShack = w => w.x + WORKER > shack.x && w.x < shack.x + shack.w;
   const arrived = runUntil(() => claimed().some(w => w.atShed && inShack(w)), 60);
   const atStart = workAt('shack')?.done ?? -1;
-  run(4);
+  // And it works, visibly: the same hammer a builder swings (`workJig`), so
+  // its feet leave the ground and come back, and it never leaves the hut's
+  // front while it does. Sampled every frame -- a body that stood stock-still
+  // in the doorway would sample one y.
+  const ys = new Set(), off = [];
+  for (let i = 0; i < 240; i++) {
+    run(1 / 60);
+    const w = claimed()[0];
+    if (!w) continue;
+    ys.add(Math.round(w.y));
+    if (!inShack(w)) off.push(Math.round(w.x));
+  }
   const later = workAt('shack')?.done ?? atStart + 999;
   const working = S.workers.filter(w => w.type === TYPE.ROCK && !w.onBuild).length;
   const nowhereElse = !workAt('bench');
@@ -267,6 +278,8 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
     ok(beforeArrive === 0, 'the bar does not move before it is at the hut', `${beforeArrive}`),
     ok(arrived, 'the claimed body stands at the shack'),
     ok(later > atStart, 'the bar advances while it stands there', `${atStart} -> ${later}`),
+    ok(ys.size > 1, 'and it swings a hammer while it does, rather than standing still', `${[...ys].join(',')}`),
+    ok(off.length === 0, 'without leaving the front of the hut', off.join(',')),
     ok(working === 2, 'the other two go on at the rock', `${working}`),
     ok(landed && released, 'the work lands and the claim clears'),
     ok(level === 1, 'and the rung is bought', `${level}`)

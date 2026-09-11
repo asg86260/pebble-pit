@@ -24,7 +24,9 @@
 import { WORKER, QUARRY_WALK } from '../config.js';
 import { S } from '../state.js';
 import { busyAt } from '../works.js';
-import { farmShed, quarryShed } from '../world.js';
+import { farmShed, quarryShed, walkY } from '../world.js';
+import { now } from '../clock.js';
+import { stopJig, workJig } from './dance.js';
 import { shack } from '../state.js';
 import { apothHut } from '../apothecary.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
@@ -105,8 +107,24 @@ export function stepShedwork(w) {
   // (docs/critics-2026-09-10.md), and a player's save reproduced it in one
   // load: test/shack-stall.test.mjs.
   if (!busyAt(w.onBuild)) {
+    if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
     settle(w);
     return false;
+  }
+
+  // Arrived, it works, visibly. A body at its shed stood stock-still in the
+  // doorway for the two minutes the bar took, which reads as a body waiting
+  // rather than one doing the thing the bar is about. It hammers now, the
+  // builders' own burst-step-burst (`workJig`, dance.js) along the shed's
+  // front -- the ground it is standing on, not the site's box, which for the
+  // quarry is the hole. Not a second animator: the same move, the same grit.
+  // The walk below is not asked again once it is here: the bursts step the
+  // body along the front, and a walk re-aimed at the doorway every frame
+  // would drag it straight back (the tug of war `stepBuilder` describes).
+  if (w.atShed) {
+    w.foot = walkY(w.x + WORKER / 2);
+    workJig(w, now(), shed());
+    return true;
   }
 
   // Walking to the shed, wherever it started -- a route, not a straight line,

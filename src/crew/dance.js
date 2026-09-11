@@ -406,7 +406,7 @@ export function stopJig(w) {
 // Widening the bench would have fixed the bench and left the next narrow thing
 // anybody stands on to be found by looking at it. Asking the footing is the
 // same question every time.
-function jigSpan(w) {
+function jigSpan(w, zone = null) {
   // The whole of the ground the work is on, less the body's own width so it
   // never hangs off the far end. One rule for every site: a bench top, a
   // building's footprint, the strip of yard a machine is being fitted along.
@@ -415,7 +415,11 @@ function jigSpan(w) {
   // cells back from wherever the body happened to arrive -- which is a patch
   // about the walk rather than about the thing being built, and on a wide site
   // it left the builder working one corner of it.
-  const box = siteBox(w.site);
+  //
+  // A caller that knows its own ground says so (`zone`): a gang body at its
+  // shed is on the shed's front, not on the site's box -- the quarry's box is
+  // the hole, and a rockhand fitting a pick works the hut, not the boulder.
+  const box = zone || siteBox(w.site);
   if (box && box.w > WORKER) return { from: box.x, to: box.x + box.w - WORKER };
   // No zone to speak of: back along the yard from the mark it arrived on --
   // or, on the frame the jig starts and there is no mark yet, from where it is
@@ -424,7 +428,7 @@ function jigSpan(w) {
   return { from: at - BUILD_SHIFT_SPAN, to: at };
 }
 
-export function workJig(w, at) {
+export function workJig(w, at, zone = null) {
   if (w.jigAt == null) {
     // On to the patch before the first blow, not merely near it.
     //
@@ -442,7 +446,7 @@ export function workJig(w, at) {
     // and a builder that had always started just inside the bench started just
     // outside it. A tolerance that depends on the length of a walk is not a
     // tolerance about the bench at all.
-    const span = jigSpan(w);
+    const span = jigSpan(w, zone);
     w.x = Math.max(span.from, Math.min(span.to, w.x));
     w.jigAt = w.x;              // the near end of the patch it is working
     // Away from the thing being built, not into it. `buildStationX` stands the
@@ -504,7 +508,7 @@ export function workJig(w, at) {
       // The patch is whatever the body is standing on -- see `jigSpan`. It
       // turns back at either end of it the way the dance's `step` turns at the
       // edge of its patch.
-      const span = jigSpan(w);
+      const span = jigSpan(w, zone);
       let next = w.x + w.jigDir * BUILD_SHIFT;
       if (next > span.to || next < span.from) {
         w.jigDir = -w.jigDir;
