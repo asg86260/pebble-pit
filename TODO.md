@@ -10,6 +10,19 @@ the three quiet ways a save was lost. Each has a check that was red before it.
 Every balance number in that document is now worth re-measuring; the bot
 matrix has not been re-run since.
 
+**B5 is a decision, not a fix.** The torn rift inhales everything in the hole
+on the frame it lands (`rift.js`, "how fast"), and the argument for it is
+written there twice over: a pile losing a dozen grains a second reads as a
+slightly shorter pile, not as *pulled*, and a rate is a dial on the one object
+in the yard that is not machinery. The late-game critic's ten-hour run is the
+argument against: the pit tore at 4 h 43 m and stood empty until it drowned at
+8 h 27 m -- three hours and forty minutes with no pile, which is the thing the
+whole opening was about, and a drowning that collapses into nothing. The
+critic's shape is an inhale that scales with `riftCells()` (a bigger hole, a
+bigger mouth; full strength only at `RIFT_WMAX`), so the pile is visibly eaten
+from the top and refills. Either the design's reasoning holds and the empty
+era is the picture, or the mouth grows with the hole. Decide before code.
+
 **A8 is a design, not a fix.** A hat the school makes lands on the station's
 own stand, a thousand pixels from the school, with nothing walking it. The
 kit economy (`kit.js`, `crew/kitwalk.js`, `commute.js`'s wear/drop legs, the
