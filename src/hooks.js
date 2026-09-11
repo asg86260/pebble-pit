@@ -499,6 +499,7 @@ export const reload = () => { S.dirty = true; persist(); restore(); buildShop();
 // work. It is a dev hook rather than a path the game takes, which is why it can
 // afford to reach into S like this.
 export const coldReload = () => {
+  S.dirty = true;                  // or a yard whose last act did not dirty it restores the save before
   persist();
   S.machines = null;
   restore();

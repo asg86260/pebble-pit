@@ -34,7 +34,8 @@ import {
   NOTICE_TICK_S, NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE,
   NOTICE_RIFT, NOTICE_BREWS, NOTICE_LIVED_MS, NOTICE_FAST_ROCK_S
 } from './config.js';
-import { S } from './state.js';
+import { S, pit } from './state.js';
+import { pitCapacity } from './pit.js';
 import { now } from './clock.js';
 import { JOB } from './jobs.js';
 
@@ -99,15 +100,18 @@ export const NOTICES = [
   { key: 'firstcore', name: 'something was inside it',
     note: 'bank a core out of a broken rock', when: () => S.seenCore },
   { key: 'firsthire', name: "you've constructed additional pylons",
-    note: 'build another house', when: () => S.crew >= 1 },
+    note: 'build another house', when: () => S.crew >= 2 },
   { key: 'firstshard', name: 'the first ore',
     note: 'bring ore up out of the quarry', when: () => S.seenShard },
   { key: 'firstspore', name: 'cultivation',
     note: 'grow your first crop', when: () => S.seenSpore },
   { key: 'firstspark', name: 'magic in the air',
     note: 'earn your first spark', when: () => S.seenSpark },
+  // Nine tenths full, not full: the first grain the hole cannot take is the
+  // tear, so 'full' and 'torn' landed on the same frame with two notes for one
+  // act (critics 2026-09-10, C15). This one lands as the hole is about to.
   { key: 'holefull', name: 'the pit is full',
-    note: 'fill up the pit', when: () => S.seenFullPit },
+    note: 'fill the pit to the brim', when: () => S.seenFullPit || pit.n >= pitCapacity() * 0.9 },
   { key: 'rifttorn', name: 'the rift torn, storage is solved',
     note: 'fill the pit causing an inter-dimensional rift', when: () => S.riftOpen },
   { key: 'drowned', name: 'the rift has gotten bigger',

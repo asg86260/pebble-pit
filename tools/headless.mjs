@@ -137,6 +137,11 @@ if (shot) {
     const [w, h] = (process.env.WINDOW || '800,600').split(',').map(Number);
     return { x: w / 2 - w / z / 2, y: h / 2 - h / z / 2, width: w / z, height: h / z, scale: z };
   })() : undefined;
+  // A board scales in over a few hundred milliseconds of the wall clock, and a
+  // shot taken the instant the scene has run caught it mid-fade: a ghost sheet
+  // over the yard (critics 2026-09-10, D2). The sim is not advanced by this --
+  // it only moves under __fast -- so it costs nothing but the wait.
+  await new Promise(r => setTimeout(r, Number(process.env.SETTLE || 700)));
   const png = await send('Page.captureScreenshot', clip ? { format: 'png', clip } : { format: 'png' });
   writeFileSync(shot, Buffer.from(png.result.data, 'base64'));
   console.log(`wrote ${shot}`);

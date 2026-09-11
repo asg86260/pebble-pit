@@ -92,6 +92,9 @@ group('opening the board reads what is on it', async () => {
 
 group('the crew ladder is earned by hiring, not by asking', async () => {
   quickCrew();
+  // The yard starts with one body, and one body is nobody hired: the first
+  // hire is the second (critics 2026-09-10, C15).
+  window.__crew(1, 1);
   await run(1);
   return [
     ok(hasNotice('firsthire'), 'somebody in the yard is noticed'),
