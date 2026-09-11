@@ -598,9 +598,21 @@ export function stepQuarrier(w, now, ctx = null) {
   // What is still in the ground, counted before this swing takes a cell out of
   // it, so the cell being dug is one of the ones the stone could be in.
   const left = cellsLeft();
+  // Rolled once for the swing: a crit takes the cell and its neighbors, and
+  // the stone it turns up comes forward with it. A crit that only pulled the
+  // seam's shards forward changed nothing about when the dig finished --
+  // measured, a crit on every swing was worth one dig's stone landing earlier
+  // and not a shard a minute more (docs/critics-2026-09-10.md, B6) -- so a
+  // crit is more ground out at once now, which is what makes it a crit.
+  const crit = critRoll(critBoost(w));
   digCell(c);
+  for (let k = 1; k < crit; k++) {
+    const n = nearestUndug(c);
+    if (n < 0) break;
+    digCell(n);
+  }
   w.cell = null;                               // done with that one: it picks another
-  findShards(w, left);
+  findShards(w, left, crit);
   // Digging raises dust, and none of it reaches the sky. This used to foul once
   // per cell taken, on the argument that digging dirties the air whether or not
   // it turns up a shard -- which is true of dust and false of the rule the yard
@@ -639,7 +651,7 @@ export function stepQuarrier(w, now, ctx = null) {
 //
 // `left` is the count *including* the cell just swung, which is what makes that
 // last cell come out at one-in-one.
-export function findShards(w, left) {
+export function findShards(w, left, crit = critRoll(critBoost(w))) {
   if (S.quarryOwed <= 0 || left <= 0) return;
   let found = 0;
   for (let n = 0; n < S.quarryOwed; n++) if (rand() * left < 1) found++;
@@ -650,7 +662,6 @@ export function findShards(w, left) {
   // and only ever comes down, so a dig with every swing critting still yields
   // exactly `seamShards()`, not a shard more. The crit does not put extra stone
   // in the ground; it brings forward stone that was going to come up anyway.
-  const crit = critRoll(critBoost(w));
   if (crit > 1) found = Math.min(S.quarryOwed, Math.max(found, crit));
   if (!found) return;
   S.quarryOwed -= found;
@@ -664,6 +675,20 @@ export function findShards(w, left) {
     else tossOut(w.x + WORKER / 2, w.y + WORKER);
   }
   S.dirty = true;
+}
+
+// The nearest column to `c` with ground still in it, for a crit's extra cells:
+// the cut is worked down in layers, so the neighbors on the same course go
+// first, and a column dug to its target is passed over.
+function nearestUndug(c) {
+  const cells = quarryCells();
+  for (let d = 1; d < cells.length; d++) {
+    for (const i of [c - d, c + d]) {
+      if (i < 0 || i >= cells.length) continue;
+      if (cells[i] < quarryTarget(i)) return i;
+    }
+  }
+  return -1;
 }
 
 // nobody is out of sight any more: the whole point of a cut rather than a shaft

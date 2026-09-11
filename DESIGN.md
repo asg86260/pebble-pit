@@ -4613,6 +4613,12 @@ face, a stoop over a plot, a trip, a bolt, a second of research.
 | a labber | a second that counts as several | adds |
 | a wizard | a bolt that takes a cluster of cells | pulls forward |
 
+*(Amended 2026-09-11: a crit at the cut also takes the neighboring cells out,
+so the dig finishes sooner. Pulling forward alone changed nothing about the
+rate -- a dig ends when every cell is dug, whenever its stone came up -- and
+the economist measured a crit rung at the quarry as worth nothing a minute
+(docs/critics-2026-09-10.md, B6). The seam is still exactly `seamShards()`.)*
+
 **The bounded jobs pull forward rather than add**, and that is what lets the cut
 have crits at all. A dig is worth `seamShards()` and not a shard more -- see
 `findShards`, and "a dig never ends owing you any". A crit does not put extra
