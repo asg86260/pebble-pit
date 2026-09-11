@@ -319,14 +319,20 @@ canvas {
   border-right: 4.5px solid transparent;
   border-bottom: 8px solid #2f5fd0;    /* the quarry */
 }
-/* a spark: the mark that means the meteor's core, and the only red in the game */
+/* a spark: the mark that means the meteor's core, and the only red in the game.
+
+   Eleven pixels, the outer size of the ring marks it stands beside, with arms
+   three wide. It was seven with arms two wide, and a plus that size is four
+   pixels of arm past a two-pixel hub: at coin size it read as a red blot, and
+   a blot is any coin. A plus is only a plus once the arms are plainly longer
+   than the hub is wide, so the arms got the length and the hub kept its share. */
 .spark {
   display: inline-block;
   position: relative;
-  width: 7px; height: 7px;
+  width: 11px; height: 11px;
   background:
-    linear-gradient(#d93a25, #d93a25) center/2px 7px no-repeat,   /* the sky */
-    linear-gradient(#d93a25, #d93a25) center/7px 2px no-repeat;
+    linear-gradient(#d93a25, #d93a25) center/3px 11px no-repeat,   /* the sky */
+    linear-gradient(#d93a25, #d93a25) center/11px 3px no-repeat;
 }
 /* a spore: the mark that means the farm. A hexagon, the same shape the game
    draws out in the yard -- the board and the world use one alphabet. */
