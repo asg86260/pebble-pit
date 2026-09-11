@@ -469,17 +469,6 @@ function build(el, list, sections, empty, heads) {
       // A finger cannot hover, so the press clears it too -- the same pairing
       // the submenu rows use a few lines up, and for the same reason.
       b.addEventListener('pointerenter', () => markRowSeen(u));
-      // What a stalled row has to say about why -- 'busy with the drill' --
-      // and where a ladder has got to, in the board's own tip. See
-      // `dataset.why` in `fill`.
-      const why = () => {
-        const w = b.dataset.why || b.querySelector('.ladder')?.dataset.why;
-        if (!w) return;
-        const r = b.getBoundingClientRect();
-        showTipAt(w, r.right + 8, r.top - 2);
-      };
-      b.addEventListener('pointerenter', why);
-      b.addEventListener('pointerleave', () => { if (b.dataset.why || b.querySelector('.ladder')?.dataset.why) showTipAt(null); });
       b.addEventListener('pointerdown', () => markRowSeen(u));
       // A board row wears its description inline (see the `.note` line above and
       // `sayNote`); the crew submenu keeps the hover, because a roster of a dozen
@@ -661,12 +650,9 @@ export function refresh(el, list, headcount) {
         sayHTML(gain, !mine ? (queue.length > 1 ? `busy (${queue.length})` : 'busy') :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
-        const why = queue.length ? `busy with ${queue.join(', ')}` : '';
-        // Through the board's own tip, not the browser's `title`: the native
-        // one was the only OS-styled tip in a game with a voice of its own,
-        // a second late and in the wrong face (critics C13). Stored on the
-        // row; `sayRow` below reads it on enter.
-        row.dataset.why = why;
+        // No tip about it. The card says 'busy' and that is enough: the
+        // browser's title was the wrong face, and a tip of the board's own was
+        // one hover too many (the owner's word).
         sayHTML(price, bill);
         grey(row, true);
         continue;
@@ -675,7 +661,7 @@ export function refresh(el, list, headcount) {
     // ...and the site is clear again, so the card goes back to a gain in a
     // column and the note about what was on it goes.
     if (row.classList.contains('waiting')) row.classList.remove('waiting');
-    if (row.dataset.why) row.dataset.why = '';
+
 
     // and a dot on anything that has not been on a board you have looked at
     // -- a purchase, that is: a readout on the books is not a thing to have
@@ -703,7 +689,7 @@ export function refresh(el, list, headcount) {
       const of = rungsOf(u);
       const want = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
       if (ladder.textContent !== want) ladder.textContent = want;
-      ladder.dataset.why = u.rung ? `${at} of ${of}` : '';
+      // No '3 of 5' on hover: the pips are the answer.
     }
     // A finished ladder has nothing left to say in the middle or on the right.
     // "done" rather than a price, because a price on a row you cannot buy is a
