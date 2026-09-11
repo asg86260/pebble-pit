@@ -259,7 +259,14 @@ export const S = {
   chip: 0,                // which of CASINO_CHIPS is on the table
   // The hand that just settled, kept for a few seconds so a wheel you were not
   // watching still tells you which way it went.
-  hand: null,             // { won, n, cur, at }
+  hand: null,             // { won, n, cur, at, mult? }
+  // The drop: the plinko board on the casino's roof, and the rock going down
+  // it. `pot.drop` says the pot's owed answer is a drop rather than a spin;
+  // this is the rock in flight -- the ten flips it was dealt, the bin they add
+  // up to, when it let go, and when it landed (null until it has). It is gone
+  // once the rock is winched home. See `drop` in casino.js.
+  plinkoOpen: false,
+  drop: null,             // { path, bin, at, landedAt }
   labBoardOpen: false,
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read. It was the lab's alone --
@@ -601,6 +608,7 @@ export const SAVED = [
   'doseCarryLevel',
   'labOpen',
   'casinoOpen',
+  'plinkoOpen',
   'scrubOpen',
   'towerOpen',
   'outhouseOpen',
@@ -792,6 +800,7 @@ export const EPHEMERAL = [
   'skyShown', 'flashAt',
   // the wheel, and a hand that settled before you closed the tab
   'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',
+  'drop',                 // a rock mid-board is like a wheel mid-spin: the pot comes back undecided, and the decision is open again
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing

@@ -1,5 +1,13 @@
 # Still to do
 
+## The drop -- BUILT (2026-09-10)
+
+A plinko tower on the casino's roof: one rock carries the whole pot down ten
+rows of pegs into eleven bins paying x39 / x5 / x3 / x1 / x.5 at the middle,
+exactly fair, settling the same pot on the same table. DESIGN.md, "The drop
+(built)"; `test/plinko.test.mjs`; the `plinko` scene. The price is the "the
+drop" knob and has not been played against yet.
+
 ## Nine critics played the game (2026-09-10)
 
 **Section A landed 2026-09-11** (`docs/critics-2026-09-10.md`, A1-A7 and
