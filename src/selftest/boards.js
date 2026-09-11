@@ -1327,9 +1327,12 @@ export const TESTS = [
     // seen and turned off. Read off the page against the bills the yard says it
     // charges, so the check does not know which recipes want dust. (Dust rather
     // than shard: the quarry is shut in this yard, so shard rows were never on
-    // the list to begin with.)
+    // the list to begin with.) "Shown" is whether the row takes up room, not
+    // whether its `hidden` attribute is set: the rows are `display: flex`, which
+    // beat the browser's own rule for the attribute, and every brew stayed on
+    // the list with `hidden` faithfully set on three of them.
     const shown = () => [...pop().querySelectorAll('.opt')]
-      .filter(o => o.dataset.opt && !o.hidden).map(o => o.dataset.opt);
+      .filter(o => o.dataset.opt && o.offsetHeight > 0).map(o => o.dataset.opt);
     const shownBefore = shown();
     window.__pay('dust', state().stored);
     point('pointermove', two()[0], two()[1] + 260, 0);
