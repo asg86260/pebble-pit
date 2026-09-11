@@ -8,6 +8,7 @@ import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed, siteBusy } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
+import { cutsceneRunning } from './cutscene.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
@@ -518,8 +519,20 @@ raiseEl.addEventListener('click', raiseBench);
 let callSize = { w: 0, h: 0 };
 let callAt = { x: null, y: null };
 
+//
+// Over the bench's own ground and nowhere else. It used to clamp to the window
+// when the bench was out of shot, which put it on the left-hand edge over
+// whatever happened to be there: the house board's purse, the quarry roster's
+// plus, the noticeboard's corner, both cutscenes -- and the newcomer pressed
+// it over a bare hole with the bench itself off-screen and nothing visibly
+// happening (docs/critics-2026-09-10.md, C2; four critics). A call you cannot
+// see the site of is not a call, so it is hidden until the bench's own ground
+// is in the window -- and while a board is up, which its z-index was written
+// on the premise of never happening, and while a cutscene has the yard.
 export function seatCall() {
-  if (!callOut()) {
+  const left = (bench.x - S.camX) * S.zoom, right = (bench.x + bench.w - S.camX) * S.zoom;
+  const inShot = right > GAP && left < S.W - GAP;
+  if (!callOut() || !panelEl.hidden || cutsceneRunning() || !inShot) {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
   }
@@ -527,6 +540,8 @@ export function seatCall() {
     raiseEl.hidden = false;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
   }
+  // Centered on the bench, and kept inside the window: the opening seat stands
+  // the bench a few cells in from the edge, nearer than half this is wide.
   const mid = bench.x + bench.w / 2;
   const want = (mid - S.camX) * S.zoom - callSize.w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - callSize.w - GAP)));

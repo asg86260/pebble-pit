@@ -321,15 +321,21 @@ export const TESTS = [
     }
     window.__board(null);
     window.__crew(0, 0);
+    // The emphasis is the other way up since the critics measured the pale
+    // (docs/critics-2026-09-10.md, C1): the coin you are short of is the one
+    // number you came to read, so it is the black one; what you have is grey
+    // with the rest of the row -- a readable grey, never the old pale.
+    const grey = c => { const m = c.match(/\d+/g); return m && +m[0] === +m[1] && +m[0] > 0 && +m[0] < 200; };
     return [
       ok(dim.length > 0 && lit.length > 0,
          'there is a row priced in something you have and something you have not',
          `${lit.length} held, ${dim.length} short`),
-      ok(lit.every(c => c === 'rgb(0, 0, 0)'),
-         'what you have is written as plainly as on any other row',
-         [...new Set(lit)].join(' ')),
-      ok(dim.every(c => c !== 'rgb(0, 0, 0)'),
-         'and only what you are short of is greyed', [...new Set(dim)].join(' '))
+      ok(dim.every(c => c === 'rgb(0, 0, 0)'),
+         'what you are short of is written in black, being the number you came to read',
+         [...new Set(dim)].join(' ')),
+      ok(lit.every(grey),
+         'and what you have is greyed with the rest of the row, readably',
+         [...new Set(lit)].join(' '))
     ];
   }],
 

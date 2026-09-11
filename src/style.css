@@ -1021,26 +1021,29 @@ canvas {
    out is that it stands alone over bare ground with nothing else on the page.
    Pinned bottom-left and moved by a transform, the way a board is (`seatCall`
    in board.js): the number it carries is how far up its bottom edge stands. */
+/* Black at rest, white under the cursor -- the reverse of a board's row,
+   because this is the one control that stands alone on the yard and it was
+   reading as a tooltip (white, a thin rule, the same type as #tip). It is
+   never up beside a board or a cutscene: seatCall hides it for both. */
 #raise {
   position: fixed;
   left: 0; top: auto; bottom: 0;
-  z-index: 11;                 /* over a board, which it is never open beside */
+  z-index: 11;
   padding: 10px 14px;
-  background: #fff;
+  background: #000;
+  color: #fff;
   border: 2px solid #000;
   font: 12px ui-monospace, "Courier New", monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #000;
   cursor: pointer;
   white-space: nowrap;
   will-change: transform;
   backface-visibility: hidden;
 }
 #raise[hidden] { display: none; }
-/* Under the cursor: the sheet fills in. The boards' own invitation -- a row you
-   can press inverts rather than moving, and this is the same offer. */
-#raise:hover { background: #000; color: #fff; }
+/* Under the cursor it inverts, the same offer a board's row makes. */
+#raise:hover { background: #fff; color: #000; }
 
 /* wave-release: track F */
 /* The same headcount, worn on the title of a board with a single group -- the
