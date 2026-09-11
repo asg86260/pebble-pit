@@ -76,6 +76,11 @@ export function startIntro() {
   S.pair = [0, 1].map(i => ({ x: door - (i ? 0 : WORKER * 1.3), y: 0, vx: 0, vy: 0,
                               say: null, turn: i === 0 }));
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
+  // and the view is on the door before the first frame, so the walk out is
+  // watched from the house rather than glided to from wherever the seat was
+  setZoom(INTRO_ZOOM);
+  S.camX = door + WORKER / 2 - S.viewW / 2;
+  S.camTo = null;
 }
 
 // Straight to the yard as it stands after all of it, for the dev hooks and the
@@ -310,18 +315,20 @@ function hold(t) {
   // happens where everything else in this game happens, at the same size.
   if (S.intro === 'show' || S.intro === 'rescue') return;
 
-  // The walk out: pulled right in, and walking with the two of them -- the
-  // view's seat is their midpoint, frame by frame, until they arrive at the
-  // spot and it is stood on the spot, which is where the chat holds it. Under
-  // reduced motion the seat is the arrival's from the first frame, and the pair
-  // walk into a still shot -- every reduced-motion beat is watched from where
-  // it ends.
+  // The walk out: pulled right in, and walking with the two of them. The seat
+  // starts on the door and eases after their midpoint at the same lag the
+  // show's grain is chased with, so the house is still in the picture while
+  // they walk out of it and the view catches them up on the way; it stops at
+  // the spot, which is where the chat holds it. Under reduced motion the seat
+  // is the arrival's from the first frame, and the pair walk into a still shot
+  // -- every reduced-motion beat is watched from where it ends.
   if (S.intro === 'leave') {
     setZoom(INTRO_ZOOM);
     S.camLockY = S.groundY - S.viewH * 0.66;
     const mid = reducedMotion() || !S.pair.length ? S.cx
               : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
-    S.camX = Math.min(mid, S.cx) - S.viewW / 2;
+    const want = Math.min(mid, S.cx) - S.viewW / 2;
+    S.camX = reducedMotion() ? want : S.camX + (want - S.camX) * 0.06;
     S.camTo = null;
     clampCam();
     return;

@@ -132,6 +132,9 @@ export const SCENES = {
   // --- the story --------------------------------------------------------------
   opening: { about: 'the story', say: 'the intro, from the top',
     run: () => window.__reset(true) },
+  // the two of them out of the door and on their way to the spot
+  leaving: { about: 'the story', say: 'the opening, the pair walking out of the house',
+    run: () => window.__reset(true) },
   // the one beat after the first rock: it is mined out, and somebody goes over
   reunion: { about: 'the story', say: 'the first rock mined out, and somebody comes over',
     run: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); } },
