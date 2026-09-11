@@ -7107,6 +7107,14 @@ eleven columns wider for it, which is the board's own width and no more.
 
 ## Every station's work is done by a spare hand (design, not built)
 
+**The shack's slice is built (2026-09-10).** `shack: JOB.BUILD` in `SITE_JOB`;
+the rock is out of `SHED_OF` and `ARRIVED`; a rockhand's step is its own
+again. A pick is fitted by a hauler off the dust and the rock's gang swings
+throughout. Player report: bodies stuck on the walk to the hut. The quarry, the
+farm and the apothecary still keep the shed claim, and the standing rule at the
+house, the tower and the school is untouched -- the rest of this section is
+still the plan.
+
 **The rule.** A row bought at any station -- a rung, a hat, a trade, a pot, a
 multiplier -- is a piece of work, and the body that does it is a spare hand:
 one of the haulers, walked over from carrying dust, standing at the station

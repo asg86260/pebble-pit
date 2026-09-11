@@ -26,10 +26,6 @@ import { atTower } from '../wizard.js';
 // while its gang was halfway down the ladder would be the building claiming
 // something the crew deny.
 const ARRIVED = {
-  // The rock's gang, for the shack: a pick is fitted by one of them standing
-  // at the hut (see shedhand.js), so what is asked of this is only that the
-  // body is one of theirs and not still on its way out.
-  rockhands: w => w.type === TYPE.ROCK && w.goal !== 'to',
   quarriers: w => w.type === TYPE.QUARRY && w.goal !== 'to',
   farmhands: w => w.type === TYPE.FARM && w.goal !== 'to',
   purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',

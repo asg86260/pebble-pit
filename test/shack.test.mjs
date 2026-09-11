@@ -233,23 +233,27 @@ group('a yard with the hut up and the ladder climbed survives a reload', async (
 // --- and its rows are worked at the hut, by the gang ---------------------------
 // The rows moved onto the shack's board and went on being `site: 'bench'`, so
 // a pick bought at the hut was fitted at the bench by whoever was spare. It is
-// the quarry's rule now: the work claims one rockhand, who walks to the shack
-// and stands there while the bar fills, and the bar fills only then.
-group('a rock row bought at the shack is worked at the shack, by a rockhand', async () => {
+// the bench's rule: a spare hand -- a hauler off the dust -- walks to the shack
+// and stands there while the bar fills, and the bar fills only then. It was the
+// quarry's rule, one of the rock's own gang claimed to the hut, and the claim
+// stalled: a gang capped at one by the ram had nobody to give, and a claimed
+// rockhand stood down on the way never arrived. The gang swings throughout.
+group('a rock row bought at the shack is worked at the shack, by a spare hand', async () => {
   window.__reset();
-  window.__crew(3, 0);
+  window.__crew(3, 2);
   window.__shack();
   window.__give(50000);
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 3, 90);
 
   const bought = window.__buy('rockhandspeed');
-  const claimed = () => S.workers.filter(w => w.onBuild === 'shack');
+  const claimed = () => S.workers.filter(w => w.type === TYPE.BUILD && w.site === 'shack');
+  const noRockhand = () => !S.workers.some(w => w.type === TYPE.ROCK && w.onBuild);
   run(0.5);
   const nClaimed = claimed().length;
   const beforeArrive = workAt('shack')?.done ?? -1;
 
   const inShack = w => w.x + WORKER > shack.x && w.x < shack.x + shack.w;
-  const arrived = runUntil(() => claimed().some(w => w.atShed && inShack(w)), 60);
+  const arrived = runUntil(() => claimed().some(w => w.goal === 'at' && inShack(w)), 60);
   const atStart = workAt('shack')?.done ?? -1;
   // And it works, visibly: the same hammer a builder swings (`workJig`), so
   // its feet leave the ground and come back, and it never leaves the hut's
@@ -265,6 +269,7 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
   }
   const later = workAt('shack')?.done ?? atStart + 999;
   const working = S.workers.filter(w => w.type === TYPE.ROCK && !w.onBuild).length;
+  const gangLeftAlone = noRockhand();
   const nowhereElse = !workAt('bench');
 
   const landed = runUntil(() => !workAt('shack'), 300);
@@ -274,14 +279,15 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
   return [
     ok(bought, 'the row is bought like a player buys it'),
     ok(nowhereElse, 'and nothing of it is at the bench'),
-    ok(nClaimed === 1, 'exactly one rockhand is claimed', `${nClaimed}`),
+    ok(nClaimed === 1, 'exactly one spare hand is sent', `${nClaimed}`),
+    ok(gangLeftAlone, "and none of the rock's gang is claimed"),
     ok(beforeArrive === 0, 'the bar does not move before it is at the hut', `${beforeArrive}`),
     ok(arrived, 'the claimed body stands at the shack'),
     ok(later > atStart, 'the bar advances while it stands there', `${atStart} -> ${later}`),
     ok(ys.size > 1, 'and it swings a hammer while it does, rather than standing still', `${[...ys].join(',')}`),
     ok(off.length === 0, 'without leaving the front of the hut', off.join(',')),
-    ok(working === 2, 'the other two go on at the rock', `${working}`),
-    ok(landed && released, 'the work lands and the claim clears'),
+    ok(working === 3, 'all three go on at the rock', `${working}`),
+    ok(landed && released, 'the work lands and the hand goes back to the dust'),
     ok(level === 1, 'and the rung is bought', `${level}`)
   ];
 });
@@ -289,7 +295,7 @@ group('a rock row bought at the shack is worked at the shack, by a rockhand', as
 // And the multiplier over the rung, the same way. It was `site: 'yard'` --
 // every ladder was -- with no ground of its own, so `siteBox` guessed the
 // middle of the rock and a spare builder went and stood in the boulder to fit
-// it. A row on the shack's board is worked at the shack, by the gang. And the
+// it. A row on the shack's board is worked at the shack, by a spare hand. And the
 // bar hangs over the hut while it is: the shack was not in works.js's box
 // table, so `barSpot` had nowhere to put one.
 group('the swing multiplier bought at the shack is worked there too, under a bar over the hut', async () => {
@@ -297,7 +303,7 @@ group('the swing multiplier bought at the shack is worked there too, under a bar
   window.__fullSites();
   window.__invest();
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
-  window.__crew(2, 0);
+  window.__crew(2, 2);
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 
   const bought = window.__buy('labswing');
@@ -305,9 +311,9 @@ group('the swing multiplier bought at the shack is worked there too, under a bar
   const spot = w && barSpot('shack', w);
   const overHut = !!spot && spot.x >= shack.x && spot.x <= shack.x + shack.w && spot.y < shack.y;
   const nowhereElse = !workAt('yard') && !workAt('bench');
-  const claimed = () => S.workers.filter(o => o.onBuild === 'shack');
+  const claimed = () => S.workers.filter(o => o.type === TYPE.BUILD && o.site === 'shack');
   const inShack = o => o.x + WORKER > shack.x && o.x < shack.x + shack.w;
-  const arrived = runUntil(() => claimed().some(o => o.atShed && inShack(o)), 60);
+  const arrived = runUntil(() => claimed().some(o => o.goal === 'at' && inShack(o)), 60);
   const landed = runUntil(() => !workAt('shack'), 400);
   const level = S.mult?.swing ?? 0;
 
@@ -316,7 +322,7 @@ group('the swing multiplier bought at the shack is worked there too, under a bar
     ok(!!w && w.key === 'labswing', "and the work is the shack's", w ? w.key : 'no work'),
     ok(nowhereElse, "not the yard's or the bench's"),
     ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
-    ok(arrived, 'a rockhand stands at the shack to fit it'),
+    ok(arrived, 'a spare hand stands at the shack to fit it'),
     ok(landed && level > 0, 'and it lands', `${level}`)
   ];
 });
@@ -394,10 +400,9 @@ group('the hut stands behind the ram once there is one, and the slot always did'
 });
 
 // --- and the third rung lands with a two-body gang ------------------------------
-// A body sent home from the shed with `goal: 'to'` was never claimed again,
-// because a rockhand consumes no goal and the claim refuses a `'to'` body: a
-// gang of N fitted exactly N picks and the (N+1)th sat at 0 for ever, with the
-// ram behind it. Every rung here is bought through the row and must land.
+// Under the shed claim a gang of N fitted exactly N picks and the (N+1)th sat
+// at 0 for ever, with the ram behind it. The claim is gone from the shack; the
+// check stays, because every rung here is bought through the row and must land.
 group('every shack rung lands, not just one per rockhand', async () => {
   window.__reset();
   window.__crew(2, 2);
