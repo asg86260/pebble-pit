@@ -29,6 +29,7 @@ let sawGulp = 0;
 
 const play = (name, s, zoom) => {
   S.cine = { name, at: 0, s, zoom, backX: S.camX + S.viewW / 2 };
+  S.cineOwed = name;               // until it has been seen through: see `release`
   S.dirty = true;
 };
 
@@ -47,6 +48,14 @@ export function stepCutscene(t) {
     else play('tear', CUT_TEAR_S, CUT_TEAR_ZOOM);
   }
   sawGulp = S.riftGulp || 0;
+  // A scene the last sitting closed the tab on. The gulp is spent by the time a
+  // save is read, so the trigger above never fires for it; the save says which
+  // scene was owed and it plays once, over the hole as it now stands
+  // (critics 2026-09-10, C14).
+  if (S.cineOwed && !S.cine) {
+    if (S.cineOwed === 'drown') play('drown', CUT_DROWN_S, CUT_DROWN_ZOOM);
+    else play('tear', CUT_TEAR_S, CUT_TEAR_ZOOM);
+  }
 
   const c = S.cine;
   if (!c) return;
@@ -81,6 +90,7 @@ export function stepCutscene(t) {
 }
 
 function release() {
+  S.cineOwed = null;
   const back = S.cine ? S.cine.backX : null;
   S.cine = null;
   S.camLockY = null;

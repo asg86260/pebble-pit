@@ -175,7 +175,7 @@ const BELT_LIFT = P * 0.7;
 // It is not saved. Neither are the chips (see `restore`), and for the same
 // reason: what is in the air at the moment you close the tab is a frame's worth
 // of dust, and a save format that carried it would be carrying it for ever.
-const bandY = () => beltY() - P;              // where a load sits: on top of the band
+export const bandY = () => beltY() - P;       // where a load sits: on top of the band
 
 // A grain leaves the ground and is on the machine from this moment. Wherever it
 // lay -- buried in a heap, or up on top of one well above the band -- the scoop

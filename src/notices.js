@@ -207,7 +207,11 @@ export function earn(key, quiet = false) {
   // notices a new array where it can miss a mutation in place -- the same
   // reasoning as `seenRows` in shop.js.
   S.won = [...S.won, key];
-  S.wonAt = { ...S.wonAt, [key]: now() };
+  // In order, not on the clock: `now()` starts again with every page, so a
+  // notice earned ten minutes into the second sitting sorted under one earned
+  // two hours into the first (critics 2026-09-10, C14). A count only goes up.
+  S.wonSeq = (S.wonSeq || 0) + 1;
+  S.wonAt = { ...S.wonAt, [key]: S.wonSeq };
   if (quiet) S.wonSeen = S.won.length;
   S.dirty = true;
   return true;

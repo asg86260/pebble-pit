@@ -23,6 +23,7 @@ import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './worl
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
+import { bandY } from './dust.js';
 import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './upgrades.js';
@@ -273,8 +274,13 @@ function blob() {
     // a reload that dumped you back at the rock threw away the one piece of
     // where-you-were the player sets by hand. Rounded because a pixel of a
     // pixel is not worth the characters.
-    camX: Math.round(S.camX),
-    core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
+    // ...where the view was before a scene took it, while one has it: a save
+    // written mid-tear came back parked on the pit with the scene gone (C14)
+    camX: Math.round(S.cine ? S.cine.backX - S.viewW / 2 : S.camX),
+    // ...and a core on the cursor is written where the cursor was, so it comes
+    // back there rather than at a fifth of the world's width (critics C14)
+    core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y }
+        : S.heldCore && S.mouse ? { x: S.mouse.x - CORE_SIZE / 2, y: S.groundY - CORE_SIZE } : null,
     coreLoose: S.heldCore || !!S.coreItem,
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
@@ -357,6 +363,11 @@ function blob() {
     // and the walk is made again from the school.
     hatShelf: Object.fromEntries(Object.keys({ ...(S.hatShelf || {}) }).map(job =>
       [job, (S.hatShelf[job] || 0) + S.workers.filter(w => w.shelfHat === job).length])),
+    // What is riding the belt: a fast belt holds ninety-odd grains at a time
+    // and every reload used to eat them, the defect the crew's hands were
+    // cured of (critics C14). Position and shade; the band's height is the
+    // world's to answer on the way back in.
+    belt: (S.belt || []).map(b => [Math.round(b.x), b.s]),
     buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
@@ -749,6 +760,18 @@ export function restore() {
   // unrecognised key is dropped, not here: it already has to know which keys
   // are real places, so this file does not need a second copy of that list.
   S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
+  // A save from when the record was stamped off the clock: the stamps are
+  // page-relative milliseconds, and any one of them outranks a sequence number.
+  // Renumber them in the order they had, and carry the count on from there.
+  const stamps = Object.entries(S.wonAt || {});
+  if (stamps.some(([, v]) => v > 100000)) {
+    stamps.sort((a, b) => a[1] - b[1]);
+    S.wonAt = Object.fromEntries(stamps.map(([k], i) => [k, i + 1]));
+    S.wonSeq = stamps.length;
+  }
+  S.belt = Array.isArray(s.belt)
+    ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
+    : [];
   // the shelf outside the school: counts by job, or nothing for a save from
   // before there was one
   S.hatShelf = s.hatShelf && typeof s.hatShelf === 'object'
@@ -1068,8 +1091,14 @@ function restoreCrew(who) {
     // the near edge of the mouth instead, on ground that is there, and walks
     // from that. A body saved DOWN in the cut is in the cut on purpose and keeps
     // its place; only a body at ground height is over a hole it never entered.
+    //
+    // ...at ground height exactly, not above it: a carter saved on the bridge
+    // deck stands over the mouth too, a few cells up, and the old test (feet
+    // at or above the line) moved it ten cells sideways on every reload
+    // (critics 2026-09-10, C14). The deck is a way, and a body on a way is
+    // where it is.
     if (Number.isFinite(rec.x) && overCutMouth(rec.x)
-        && (!Number.isFinite(rec.y) || rec.y + WORKER <= S.groundY + 1)) {
+        && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
       const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
       rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
     }

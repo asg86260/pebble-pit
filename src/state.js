@@ -655,6 +655,8 @@ export const SAVED = [
   // it is the whole question two of the feats ask.
   'won',
   'wonAt',
+  'wonSeq',               // the order notices landed in, which the clock could not keep across a reload
+  'cineOwed',             // a scene the save cut short, played once on the next boot
   'wonSeen',
   'noticeMigrated',
   'tally',
@@ -706,6 +708,7 @@ export const SAVED_BY_HAND = [
   JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
+  'belt',                 // what is riding the belt, as [x, shade] pairs
   'hatShelf',             // hats made at the school and not yet carried to their stand, carriers' included
   'lent',                 // the jobs the builders were borrowed from
   JOB.PURIFY,            // renamed from scrubbers
@@ -785,7 +788,7 @@ export const EPHEMERAL = [
   // fact and is saved; this is the walk, and a reload has no walk in progress.
   'rescueTo',
   // dust in the air: a grain mid-flight has no beginning to come back to
-  'chips', 'belt', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
+  'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
   'shownStored', 'tweenFrom', 'tweenTo', 'tweenAt', 'tweenMs',
   // the tearing of the rift: an event, not a state -- and the cutscene
