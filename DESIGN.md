@@ -3208,11 +3208,22 @@ tower.js): a slow trickle never read as *pulled*, and a purchase ladder made
 the one non-machine in the yard a machine with a dial. The torn era keeps both
 verdicts:
 
-- **It inhales at full strength from the first frame.** No rate, no trickle:
-  everything in the hole goes, exactly as `stepRift` does today
-  (`RIFT_INHALE_MAX` stays the frame ceiling it is). What was wrong with the
-  old rift was never the pull — it was the drip. A small hole taking the whole
-  overflow the moment it tears is visibly working from second one.
+- **It inhales what is within its reach, and the reach grows with it.**
+  *(Amended 2026-09-11.)* It inhaled everything from the first frame, and the
+  late-game critic's ten-hour run showed what that costs: the pit tore at
+  4 h 43 m and was an empty white hole under a black disc until it drowned at
+  8 h 27 m — the pile the whole opening is about, gone for the era that is
+  supposed to be about losing it (docs/critics-2026-09-10.md, B5). So the disc
+  eats what lies within so many cells of its underside: `RIFT_REACH0` cells
+  into the pile the day it tears, the far corner of the hole at `RIFT_WMAX`,
+  climbing geometrically between (`riftReach`). Freshly torn it skims a crater
+  out of the top of the pile under its mouth; the pile stands, its top peeling
+  up into the disc, at a level that sinks as the hole grows; grown, it takes
+  everything, as before. Still no rate and no ladder — the reach is the disc's
+  size and nothing else — and every grain the yard tips in lands on top of the
+  crater, inside the reach, so income never stalls. The disc hangs higher
+  (`RIFT_UP` 3 → 8 cells) so the pile is in view under it: the picture is
+  dust being inhaled more and more, which is what the arc is for.
 - **It sells nothing.** No summon row, no appetite ladder, no upgrade of any
   kind. Its growth is fed, not bought: the diameter is a pure function of the
   grains it has eaten. Nothing tends it, nothing has a dial. Playing the game

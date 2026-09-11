@@ -21,18 +21,9 @@ once, and the rain's muck buries the yard so the stations stop -- the sky then
 reads clean because nothing is working -- so the shower-every-twenty-minutes
 shape wants the muck loop looked at with it, not one dial.
 
-**B5 is a decision, not a fix.** The torn rift inhales everything in the hole
-on the frame it lands (`rift.js`, "how fast"), and the argument for it is
-written there twice over: a pile losing a dozen grains a second reads as a
-slightly shorter pile, not as *pulled*, and a rate is a dial on the one object
-in the yard that is not machinery. The late-game critic's ten-hour run is the
-argument against: the pit tore at 4 h 43 m and stood empty until it drowned at
-8 h 27 m -- three hours and forty minutes with no pile, which is the thing the
-whole opening was about, and a drowning that collapses into nothing. The
-critic's shape is an inhale that scales with `riftCells()` (a bigger hole, a
-bigger mouth; full strength only at `RIFT_WMAX`), so the pile is visibly eaten
-from the top and refills. Either the design's reasoning holds and the empty
-era is the picture, or the mouth grows with the hole. Decide before code.
+**B5 built 2026-09-11.** The torn rift eats by reach, and the reach grows
+with the disc (DESIGN.md, "The pit's arc", the amended inhale bullet). The two
+shots are `b5-young.png` and `b5-grown.png` in the rift-reach worktree.
 
 **A8 is a design, not a fix.** A hat the school makes lands on the station's
 own stand, a thousand pixels from the school, with nothing walking it. The

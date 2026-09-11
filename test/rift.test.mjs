@@ -250,7 +250,9 @@ group('it eats the pile under it, not the whole top of it', async () => {
 // rungs deep and priced in red. There is no row and no rate -- what a torn rift
 // takes is what is in the hole, every frame, and the only number left is a
 // ceiling on how much of that one frame may do. See `stepRift`.
-group('what it takes is the whole pile, not a rate off a ladder', async () => {
+// `__rift` opens the hole drowned -- the abyss, at full reach -- so this is
+// the far end of the arc: everything, on the frame it lands.
+group('a grown hole takes the whole pile, not a rate off a ladder', async () => {
   readyYard();
   window.__rift();
   run(4);                                    // the tear empties it; then it idles
@@ -268,6 +270,45 @@ group('what it takes is the whole pile, not a rate off a ladder', async () => {
        `${owed} -> ${after}`),
     ok(yard.riftMod.riftBite() === 0, 'with nothing owed to the next frame',
        `${yard.riftMod.riftBite()}`)
+  ];
+});
+
+// A young one does not. It eats what is within its reach of its underside, and
+// the reach grows with the disc (see `riftReach`): freshly torn, it skims a
+// crater out of the top of the pile under its mouth and the rest of the pile
+// stands, its top peeling up into the disc -- so the torn era is a pile being
+// lost, not an empty white hole for the three hours between the tear and the
+// drowning (critics 2026-09-10, B5). What the yard tips in still all goes
+// through: the pile holds at a level and the counter climbs by every grain.
+group('a young hole skims the pile it hangs over, and the pile stands under it', async () => {
+  readyYard();
+  window.__tear(30000);                      // torn, barely grown
+  window.__nocine();
+  run(4);
+  const emptied = state().pitGrains;
+  let refused = 0;
+  for (let i = 0; i < 30; i++) {
+    const was = state().stored;
+    window.__tip(100);
+    refused += 100 - (state().stored - was);
+    run(4);
+  }
+  const standing = state().pitGrains;
+  const young = yard.riftMod.riftReach();
+
+  window.__tear(900000);                     // nearly grown: the reach is the hole
+  run(6);
+  const late = state().pitGrains;
+  const grown = yard.riftMod.riftReach();
+
+  return [
+    ok(emptied === 0, 'the tear leaves the hole empty', `${emptied}`),
+    ok(standing > 500, 'and the pile the yard tips in afterward stands under the disc',
+       `${standing} grains after two minutes`),
+    ok(refused === 0, 'with every grain tipped in still counted', `${refused} refused`),
+    ok(grown > young * 10, 'the reach grows with the hole', `${young.toFixed(0)} -> ${grown.toFixed(0)} cells`),
+    ok(late < standing / 4, 'and a grown hole eats what the young one left standing',
+       `${standing} -> ${late}`)
   ];
 });
 
