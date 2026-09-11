@@ -233,8 +233,14 @@ export const UNITS = {
 // whichever row is written next -- because a row's business is what it measures,
 // not how the board spells it. `s` on its own is a duration; a trailing `/s` is
 // a rate, and the clock goes where the letter was in both.
-export const secondsMark = text =>
-  text === 's' ? MARK.time : text.replace(/\/s$/, `/${MARK.time}`);
+//
+// ...and then not. The clock is the mark of a PRICE in time -- the bill's
+// '⏱ 5' -- and the same glyph in a gain line meant 'per second' on the same
+// card: '+30% ■/⏱' beside '⏱ 5', and on the apothecary '30 → 27 ⏱' (a brew's
+// length) beside '⏱ 5' (a build's). One glyph, two meanings, forty pixels
+// apart (critics 2026-09-10, C9). A second is written 's' again wherever it is
+// a unit and not a price; the clock is the bill's alone.
+export const secondsMark = text => text;
 
 // What a unit is drawn as: the mark the yard has a coin for, or the row's own
 // word if it has not -- and either way with its seconds turned into clocks.

@@ -53,6 +53,7 @@ export function drawCount() {
 
   // Everything that is going on it, bottom row first. Gathered before any of it
   // is placed, because how wide the card is decides where it can stand.
+  // Top row first, in the purse's order: dust, core, ore, crops, sparks.
   const dust = digits(Math.round(S.shownStored));
   const lines = [{ cell: null, text: dust }];
   if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(S.cores) });
@@ -188,16 +189,17 @@ export function drawCount() {
       g.fillStyle = '#fff';
       g.fillRect(0, 0, cw, ch);
       g.setTransform(d, 0, 0, d, -cx0, -cy0);   // the card's own place, so nothing shifts
-      // a grain of dust, and then one mark for every other kind, each shown only
-      // once you have seen one
+      // a grain of dust on the top row, and then one mark for every other
+      // kind, each shown only once you have seen one -- the purse's order, so
+      // the two read the same forty pixels apart (critics 2026-09-10, C9).
+      // It was dust on the BOTTOM row and the purse mirrored, and the player
+      // re-learned the order every glance between them.
       g.fillStyle = '#000';
-      g.fillRect(x, y - MARK, MARK, MARK);
-      let at = y;
-      for (const l of lines) {
-        if (!l.cell) continue;                 // the dust is drawn above
-        at -= ROW;
-        drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
-      }
+      lines.forEach((l, i) => {
+        const at = y - (lines.length - 1 - i) * ROW;
+        if (!l.cell) g.fillRect(x, at - MARK, MARK, MARK);
+        else drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
+      });
       markKey = key;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -207,11 +209,7 @@ export function drawCount() {
 
   // and the counts themselves, which are the part that moves
   ctx.fillStyle = '#000';
-  ctx.fillText(dust, x + MARK * 2, y);
-  let row = y;
-  for (const l of lines) {
-    if (!l.cell) continue;
-    row -= ROW;
-    ctx.fillText(l.text, x + MARK * 2, row);
-  }
+  lines.forEach((l, i) => {
+    ctx.fillText(l.text, x + MARK * 2, y - (lines.length - 1 - i) * ROW);
+  });
 }

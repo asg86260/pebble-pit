@@ -38,21 +38,16 @@ group('no row spells a second with the letter s', async () => {
   for (const u of ALL_ROWS) {
     const text = gainText(u);
     if (!text) continue;
-    // The unit is the tail of the line, so this is where a stray `s` would be:
-    // a bare one after the number, or one hanging off a rate's slash.
-    if (/\/s(\b|$)/.test(text) || /\ss$/.test(text)) bad.push(`${u.key}: ${text}`);
+    // The clock is the bill's mark for a price in time, and a gain line that
+    // wore it too said two things with one glyph (critics 2026-09-10, C9): a
+    // gain line never carries it.
+    if (text.includes(MARK.time)) bad.push(`${u.key}: ${text}`);
   }
-  const clock = MARK.time;
   return [
-    ok(unitText('s') === clock, 'a duration is the clock itself', unitText('s')),
-    ok(unitText('px/s').endsWith(`/${clock}`),
-       'and a rate is over one', unitText('px/s')),
-    ok(unitText('motes/s').endsWith(`/${clock}`),
-       'including a rate whose unit the board has no coin for', unitText('motes/s')),
-    ok(unitText('plots/min').endsWith('/min'),
-       'minutes are left alone -- it is the second that had no mark',
-       unitText('plots/min')),
-    ok(bad.length === 0, 'and no row on any board prints one',
+    ok(unitText('s') === 's', 'a duration is written in seconds', unitText('s')),
+    ok(unitText('px/s').endsWith('/s'), 'and a rate is per second', unitText('px/s')),
+    ok(unitText('plots/min').endsWith('/min'), 'and minutes are minutes', unitText('plots/min')),
+    ok(bad.length === 0, "and no gain line on any board wears the bill's clock",
        bad.join(', ') || 'none')
   ];
 });
