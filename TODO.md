@@ -10,6 +10,30 @@ the three quiet ways a save was lost. Each has a check that was red before it.
 Every balance number in that document is now worth re-measuring; the bot
 matrix has not been re-run since.
 
+**B2 is a dev-panel question now.** Measured on this tree with the critic's
+matrix (`tmp-critic/sky.mjs` in the fixes-3 worktree): three machines and no
+house, six showers in thirty minutes; a bare house, two; the house maxed against
+tune ten, haze at 5-10% of the cap, never under thirty, never a shower. The
+decided rule says a bought-into house brings the sky under control and never
+lets it go permanently clean; 5-10% is one and arguably the other. `SCRUB_PULL`
+is on the dev panel now ("house pull"). At twelve the sky climbs to 2900, rains
+once, and the rain's muck buries the yard so the stations stop -- the sky then
+reads clean because nothing is working -- so the shower-every-twenty-minutes
+shape wants the muck loop looked at with it, not one dial.
+
+**B5 is a decision, not a fix.** The torn rift inhales everything in the hole
+on the frame it lands (`rift.js`, "how fast"), and the argument for it is
+written there twice over: a pile losing a dozen grains a second reads as a
+slightly shorter pile, not as *pulled*, and a rate is a dial on the one object
+in the yard that is not machinery. The late-game critic's ten-hour run is the
+argument against: the pit tore at 4 h 43 m and stood empty until it drowned at
+8 h 27 m -- three hours and forty minutes with no pile, which is the thing the
+whole opening was about, and a drowning that collapses into nothing. The
+critic's shape is an inhale that scales with `riftCells()` (a bigger hole, a
+bigger mouth; full strength only at `RIFT_WMAX`), so the pile is visibly eaten
+from the top and refills. Either the design's reasoning holds and the empty
+era is the picture, or the mouth grows with the hole. Decide before code.
+
 **A8 is a design, not a fix.** A hat the school makes lands on the station's
 own stand, a thousand pixels from the school, with nothing walking it. The
 kit economy (`kit.js`, `crew/kitwalk.js`, `commute.js`'s wear/drop legs, the

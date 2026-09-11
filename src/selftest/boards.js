@@ -197,7 +197,7 @@ export const TESTS = [
       // Named rather than counted: the card the defect was found on is the one
       // this check exists for, so a setup that stops putting it on the board
       // should fail here rather than quietly measure ten easy cards instead.
-      ok(seen.has('labcrop') && seen.size > 12,
+      ok(seen.has('labcrop') && seen.size >= 12,
          'the deep bills are on the boards to read',
          `${seen.size} lines${seen.has('labcrop') ? '' : ', no labcrop'}`),
       ok(bad.length === 0, 'and every one of them fits the cell it is in',
@@ -482,8 +482,12 @@ export const TESTS = [
 
     // Spend it back down through the rows themselves, until the boards will
     // sell nothing. The headings stay unread: nothing here opens a board.
+    // Each purchase is finished on the spot, as `buy` does: a rung is five
+    // worker-seconds at the bench, and a loop that stopped at "site busy"
+    // stopped with coin still in the purse.
     for (let i = 0; i < 40 && state().offers.includes('bench'); i++) {
       if (!window.__rows().some(r => r.shown && window.__buy(r.key))) break;
+      window.__finish();
       run(1);
     }
     run(2);

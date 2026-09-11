@@ -24,6 +24,7 @@ import { WORK_BASE } from './config.js';
 import { S, bench } from './state.js';
 import { canAfford } from './upgrades.js';
 import { registerRows, start, workOn } from './works.js';
+import { lookAt } from './world.js';
 
 // The bench's key is `raisebench`, and it is on no board.
 //
@@ -71,5 +72,12 @@ export const callOut = () => !S.seenBench && !raising() && canAfford();
 // check, so what a check proves is what a player does.
 export function raiseBench() {
   if (!callOut()) return false;
-  return start('yard', RAISE_BENCH, bench.x + bench.w / 2);
+  // And the view goes to it if it is not already there: on a window that
+  // opens on the rock alone the bench is off to the left, and the first build
+  // in the game -- the one the mechanic is taught by -- was happening
+  // off-screen (docs/critics-2026-09-10.md, C2).
+  const mid = bench.x + bench.w / 2;
+  const sx = (mid - S.camX) * S.zoom;
+  if (sx < 0 || sx > S.W) lookAt(mid);
+  return start('yard', RAISE_BENCH, mid);
 }

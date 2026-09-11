@@ -5,7 +5,7 @@
 // postOf from here (and game.js calls stepMachines through crew.js's re-export).
 
 import { frames, now } from '../clock.js';
-import { CLIMB_PACE, MACHINE_FOUL, MACHINE_MAX_BEATS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
+import { CLIMB_PACE, MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
 import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
 import { quarryFace } from '../quarry.js';
 import { busyAt } from '../works.js';
@@ -219,9 +219,11 @@ export function stepMachines(now) {
     const ms = Math.max(1, spec.ms(machineRate(m.job)));
     if (!r.beatAt || r.beatAt > now + ms) r.beatAt = now + ms;   // a dial turned down
     if (now < r.beatAt) continue;
-    // How many beats are owed, capped so that a tab left in the background does
-    // not come back and take a hundred cells out of the ground in one frame.
-    let owed = Math.min(MACHINE_MAX_BEATS, Math.max(1, Math.floor((now - r.beatAt) / ms) + 1));
+    // How many beats are owed -- a quarter second's worth at most, so a tab left
+    // in the background does not come back and take a hundred cells out of the
+    // ground in one frame. See MACHINE_CATCHUP_MS for why it is time and not a
+    // count of units.
+    let owed = Math.max(1, Math.floor(Math.min(now - r.beatAt, MACHINE_CATCHUP_MS) / ms) + 1);
     r.beatAt = now + ms;
     // The station's own functions are about to run, and they must not foul: the
     // dirt for this beat goes up off the stack, in soot, all in one place. A flag

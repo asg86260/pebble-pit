@@ -3467,6 +3467,12 @@ oscillation is most of what the endgame *feels* like. And each of the eight bite
 does its own full `refreshRockTops()` pass over the rock grid, so the ram's cost
 is eight scans a frame for one frame's work.
 
+*(2026-09-11: the cap is a quarter second of the machine's own clock now,
+`MACHINE_CATCHUP_MS`, not eight units -- at eight units a frame the cap was the
+rate from the fourth tuning rung on, and rung five bought nothing over rung
+four. A woken tab is still bounded; the dial means what it says. See
+docs/critics-2026-09-10.md, B3.)*
+
 **The rule.** A bite takes a *count*. `bite(tender, n)` does `n` units of the
 station's own work in one call -- `knockOff(x, y, minerBite() * n)` for the ram,
 `n` grains off the ground for the belt, `n` furrows for the tiller, `n` cells for

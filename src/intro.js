@@ -36,6 +36,7 @@ import { makeBoulder, boulderAlive } from './rock.js';
 import { spawnChip, aim } from './dust.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
 import { rebalance } from './upgrades.js';
+import { buildShop } from './shop.js';
 import { syncWorkers } from './crew.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
@@ -81,6 +82,7 @@ export function skipIntro() {
   // for a drag) are open on it, the way they are on any save.
   S.seenDrag = true;
   finish();
+  buildShop();                     // the rows that flag opens are on the board from the first frame
 }
 
 // --- one frame of it ----------------------------------------------------------
