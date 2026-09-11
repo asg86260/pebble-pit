@@ -90,11 +90,16 @@ export const ROCK_GANG = 5;
 // How often a machine's stack puffs, and how big the puff is. The lab's chimney
 // (HOUSE_PUFF_MS) and the cigarette's 0.55 are the two precedents; a machine sits
 // between them -- more often than a hearth, bigger than a cigarette.
-// The most units of its station's work a machine will do in one frame. A machine
-// quicker than a frame does several, or the frame becomes the rate and the gain
-// dial stops meaning anything -- but a tab left in the background for a minute
-// should not come back and take the whole quarry out on the frame it wakes.
-export const MACHINE_MAX_BEATS = 8;
+// The most of its own clock a machine will make up in one frame. A machine
+// quicker than a frame does several units in it, or the frame becomes the rate
+// and the dial stops meaning anything -- but a tab left in the background for
+// a minute should not come back and take the whole quarry out on the frame it
+// wakes. It was a cap on UNITS, eight a frame, and at eight a frame the cap
+// was the rate from about the fourth rung of any tuning ladder: rung five
+// bought nothing over rung four, and a tune-12 claim of 23x delivered 4x
+// (docs/critics-2026-09-10.md, B3). A cap on time lets the dial mean what it
+// says at every rung and still bounds what a woken tab does.
+export const MACHINE_CATCHUP_MS = 250;
 // How long after its last unit of work a machine still reads as running. A beat
 // lands on one frame in three at best, so "is it working" has to be a moment
 // rather than a frame or the drawing strobes.
