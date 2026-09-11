@@ -432,7 +432,19 @@ export function wayOver(x, all = ways()) {
 // `w.inPit`, which was a flag the pit's own state machine kept and no other
 // hole in the yard had. The question is about where a body is, so it is asked
 // of where the body is.
-export const inWorking = w => downAWorking(wayAt(w.x, w.y).key);
+//
+// Below the ground line at all counts, not only inside a working's span. The
+// yard re-walks when a station grows (a second pot; see `DRAWN_W` in world.js)
+// and the cut can move a hundred pixels out from under a quarrier mid-swing.
+// For the one frame before the quarrier's own guard sends it back to the
+// ladder, `wayAt` reads that body as on the yard -- under the ground, in no
+// working, which is the through-a-wall case -- and a stage asked before the
+// guard runs took it at its word: a body was caught short standing in rock and
+// held there for the length of the break, which the world verifier rightly
+// calls buried. A body under the ground line is down a hole whatever the spans
+// say this frame.
+export const inWorking = w => w.y + WORKER > S.groundY + 1
+                           || downAWorking(wayAt(w.x, w.y).key);
 
 // --- the links ----------------------------------------------------------------
 // Where one way joins another, and the only places they do. A link is a ladder:

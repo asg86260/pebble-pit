@@ -28,7 +28,7 @@
 //    because those are facts about the place rather than about a recipe.
 
 import { RUNGS,
-         BREW_CROP, BREW_REAGENT, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
+         BREW_BILL, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
          DOSES0, DOSES5, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
@@ -66,10 +66,13 @@ export const carryRung = () => Math.max(0, Math.min(CARRY_RUNGS, S.doseCarryLeve
 export const carryDoses = () => DOSE_CARRY[carryRung()];
 
 // --- the three tonics ---------------------------------------------------------
-// A crop base plus one reagent that is never the coin of the station it boosts.
-// The stew is the general buff, so its reagent is dust, the shared coin; the two
-// targeted tonics take shard, the coin of neither the crew nor the crit they
-// lift. Each effect is a lever the game already has.
+// A crop base plus one reagent. The stew is the general buff, so its reagent is
+// dust, the shared coin; the two targeted tonics take shard, the coin of
+// neither the crew nor the crit they lift; the gleam brew alone is priced in
+// the coin it makes, sparks, so a wizard's tonic is a bet with the machines'
+// money. Each effect is a lever the game already has. How much of each coin a
+// batch takes is `BREW_BILL` in config -- the reagent here names the second
+// line of that bill and is what the menu gates on.
 // `color` is the liquid in the vial -- each tonic its own, so the stock on the
 // shelf, the vial a stirrer carries, the fire under the pot that is brewing it
 // and the potion floating over a buffed body all read as the same brew by
@@ -102,14 +105,16 @@ export const TONICS = [
   { key: 'swift',  name: 'speed brew',      reagent: 'spore', kind: 'pace',
     base: TONIC_SWIFT_PACE,  unit: 'pace',  color: '#d9a441', short: 'speed',
     jobs: [JOB.HAUL] },                                                          // amber
-  { key: 'gleam',  name: 'gleam brew',      reagent: 'shard', kind: 'spark',
+  { key: 'gleam',  name: 'gleam brew',      reagent: 'spark', kind: 'spark',
     base: TONIC_GLEAM_SPARK, unit: 'spark', color: '#e04848', short: 'gleam',
     jobs: [JOB.WIZARD] }                                                         // red
 ];
-// A shard recipe is hidden until the quarry is open (item 24): shard is the
-// quarry's coin, and a brew priced in a currency the player has never seen is a
-// row about nothing. Asked by the picker and by the potency rows alike.
-export const tonicShown = t => !!t && (t.reagent !== 'shard' || S.quarryOpen);
+// A recipe is hidden until its reagent has been seen (item 24): shard is the
+// quarry's coin and a spark comes off the sky, and a brew priced in a currency
+// the player has never met is a row about nothing. Asked by the picker and by
+// the potency rows alike.
+export const tonicShown = t => !!t && (t.reagent === 'shard' ? !!S.quarryOpen :
+                                       t.reagent === 'spark' ? !!S.seenSpark : true);
 export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 
 // --- the potency ladders, one to a tonic --------------------------------------
@@ -492,21 +497,15 @@ export function stepStirrer(w) {
 // nothing smokes. A one-off brews a single batch and then idles; a keep-brewing
 // pot starts the next batch the moment the last one is minted.
 // What one batch of a tonic costs: crop on every recipe -- the green drain the
-// whole design wants -- plus the reagent that gives that recipe its identity.
+// whole design wants -- plus the reagent that gives that recipe its identity,
+// each recipe its own amounts (`BREW_BILL` in config says why they differ).
 //
-// The one place the price is written. The pot asks it before it lights, the pot
+// The one place the price is read. The pot asks it before it lights, the pot
 // pays it out of the same list, and the picker at the pot prints it, so what you
 // are shown and what you are charged cannot come apart. It reads as a bill --
 // pairs of currency and number -- because that is what every price in this game
 // is, and the picker hands it straight to the same marks the boards print.
-export const brewCost = key => {
-  const t = tonicOf(key);
-  if (!t) return [];
-  // A recipe whose reagent IS the crop (the speed brew) pays one spore line, not
-  // two: a bill saying "spore 5, spore 2" is the same coin written twice.
-  if (t.reagent === 'spore') return [['spore', BREW_CROP + BREW_REAGENT]];
-  return [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]];
-};
+export const brewCost = key => (BREW_BILL[key] || []).map(line => [...line]);
 
 // What is in the pile of a given coin. `purse` in upgrades.js is this, but this
 // module cannot see upgrades.js at load (the ring runs upgrades -> works ->

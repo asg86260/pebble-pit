@@ -14,12 +14,27 @@ export const APOTHECARY_H = P * 15;    // room for the fat belly, the bail handl
 export const APOTHECARY_CORES = 1;     // a place costs a core
 export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it follows
 
-// A tonic is a crop base plus a reagent. The crop is the green drain the whole
-// design wants; the reagent is the second coin that gives the recipe its
-// identity. Both are spent when a brew starts -- carried in, in spirit, though
-// the general carried-to-the-site machinery is a follow-up (see the report).
-export const BREW_CROP = 12;           // spore a brew, on every tonic -- the green drain
-export const BREW_REAGENT = 2;         // the second coin a brew, per the recipe
+// What one batch of each tonic costs. Crop on every recipe -- the green drain
+// the whole design wants -- plus the reagent that gives the recipe its
+// identity, in amounts that differ from brew to brew. Both are spent when a
+// brew starts. They were one flat pair (twelve spore, two of the reagent) on
+// every line of the book, and a menu of five things at one price is a menu with
+// no choice on it: the reagent's name changed and nothing else did. Now the
+// shape of the bill is part of what the tonic is. The stew is the everyday brew
+// and takes the everyday coin; the bracing tonic is the sharp one and pays for
+// it in the scarce coin; the strong brew and the speed brew are the crop-heavy
+// ones, the haulers' brews eating the haulers' own harvest; and the gleam brew
+// is priced in sparks, the machines' coin, because a brew that makes sparks
+// should cost the thing it makes, and a spark is the one price a wizard's owner
+// already feels. `brewCost` in apothecary.js is nothing but a lookup on this,
+// and the reagent named on each recipe in TONICS is the second line here.
+export const BREW_BILL = {
+  stew:   [['spore', 12], ['dust', 40]],
+  brace:  [['spore', 10], ['shard', 4]],
+  strong: [['spore', 16], ['shard', 2]],
+  swift:  [['spore', 20]],
+  gleam:  [['spore', 8],  ['spark', 3]]
+};
 
 // The pot at level 0, and where each ladder takes it by its fifth rung. Every
 // one of these eases straight across `RUNGS` the way the crit ladders do.

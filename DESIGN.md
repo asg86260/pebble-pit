@@ -4798,12 +4798,25 @@ does nothing is a standing order nobody sets. The stew is the general buff, so
 its reagent is dust, the shared coin; the two targeted tonics take shard, the
 coin of neither the crew nor the crit they lift.
 
+**(built, 2026-09-10) The bills differ, recipe by recipe.** Every brew used to
+cost the same flat twelve spore and two of its reagent, and a book of five
+things at one price is a book with no choice in it -- only the reagent's name
+changed from line to line. Each recipe now has a bill of its own (`BREW_BILL`):
+the stew is the everyday brew at the everyday coin (12 spore, 40 dust); the
+bracing tonic is the sharp one and pays in the scarce coin (10 spore, 4 shard);
+the strong brew and the speed brew are the crop-heavy ones, the haulers' brews
+eating the haulers' own harvest (16 spore + 2 shard; 20 spore); and the gleam
+brew is priced in sparks (8 spore, 3 sparks) -- a brew that makes sparks costs
+the thing it makes, and it is hidden until a first spark has been seen, the way
+the shard brews hide until the quarry opens. Three sparks a batch is a real draw
+on the machines' coin (sixty dust to the spark) without being a machine's price.
+
 **One pot, at level 0:**
 
 | dial | value | why |
 |---|---|---|
-| crop base a brew | 5 spore | the green drain, on every tonic |
-| reagent a brew | 2 shard (or dust) | the second coin, per the recipe |
+| crop base a brew | 8–20 spore, per recipe | the green drain, on every tonic |
+| reagent a brew | 40 dust / 4 or 2 shard / 3 sparks, per recipe | the second coin, per the recipe |
 | brew time | 30 s | → **drain = 10 spore/min + 4 reagent/min** to keep one pot lit |
 | buff length | 60 s | — |
 | doses a brew | 3 | → 2 brews/min × 3 = 6 doses/min |
