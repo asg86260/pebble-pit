@@ -34,6 +34,7 @@ export * from './config/school.js';
 export * from './config/sites.js';
 export * from './config/pit.js';
 export * from './config/rift.js';
+export * from './config/cutscene.js';
 export * from './config/view.js';
 export * from './config/dust.js';
 export * from './config/crew.js';

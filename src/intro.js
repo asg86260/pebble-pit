@@ -191,8 +191,12 @@ export function startRescue(t) {
   const half = Math.round((S.gw / 2) * P);
   S.rescueTo = at.x + half + ROCK_CLEAR + WORKER;
   // And the view goes with it. This is the one beat the whole arc was built to
-  // reach, and a beat played off the side of the window is a beat nobody sees;
-  // it is the same gentle pan a purchase gets, not a cut and not a zoom.
+  // reach, and a beat played off the side of the window is a beat nobody sees.
+  // The dome's first hold is a cutscene now (cutscene.js), pulled in on the
+  // span with the rest of the shields' answers, and that overrules this pan
+  // while it runs; the pan is kept for a hold with no scene on it -- a skipped
+  // one, or a save from before the scenes -- and it is the same gentle pan a
+  // purchase gets, not a cut and not a zoom.
   lookAt(S.rescueTo + WORKER / 2);
   // It stops being buried the moment it starts walking: from here it is a
   // square on the ground like any other, and `S.pair` is where the scenes keep
@@ -310,9 +314,10 @@ function hold(t) {
   // The last stretch is not held at all: the view is back to its own size and
   // walking with whoever is doing the showing. See `show`.
   //
-  // Nor is the rescue. It happens in a working yard, and pulling the camera in
-  // on it would say "watch this" -- the whole point of the beat is that it
-  // happens where everything else in this game happens, at the same size.
+  // Nor is the rescue. It happens in a working yard, and whether it is pulled
+  // in on is the shield cutscene's call (cutscene.js), not this one's: the
+  // dome's first hold is a scene like every other shield's answer, and this
+  // yields to it.
   if (S.intro === 'show' || S.intro === 'rescue') return;
 
   // The walk out: pulled right in, and walking with the two of them. The seat

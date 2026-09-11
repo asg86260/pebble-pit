@@ -185,16 +185,6 @@ export const RIFT_GONE = 0.05;       // dimmer than this and it is taken off the
 // horizon, which is where a grain was fast enough to jump two cells.
 export const RIFT_VMAX = 16;         // px a frame: a backstop, not a governor
 
-// --- the cutscenes --------------------------------------------------------------
-// The two one-time transitions -- the tearing and the drowning -- are watched:
-// the camera goes to the pit, the moment plays, the camera comes back. One
-// mechanism (src/cutscene.js) owns the camera for the length of a scene; the
-// yard never pauses, and any click skips. Times are wall seconds, zooms are
-// the setZoom step the scene pulls in to.
-export const CUT_TEAR_S = 4;         // how long the tearing is watched
-export const CUT_TEAR_ZOOM = 1.5;    // pulled in on a small hole being born
-export const CUT_DROWN_S = 6;        // the drowning runs longer than its gulp
-export const CUT_DROWN_ZOOM = 1;     // and is framed wide: the whole mouth goes
 // --- the abyss -----------------------------------------------------------------
 // The rift's picture, since the pit liquefied (see "The abyss" in DESIGN.md):
 // no disc, no orbit. The hole holds a black liquid standing a few cells below

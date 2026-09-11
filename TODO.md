@@ -2,16 +2,16 @@
 
 ## The cutscenes, fleshed out (2026-09-11)
 
-**Status:** designed (DESIGN.md, "The cutscenes, fleshed out"), awaiting
-sign-off; nothing built. The opening gets a beat before the chat — the two
-of them walk out of the house to the spot, which means the house draws its
-first two rooms before anybody is hired — and each shield's answer becomes a
-`cutscene.js` entry, triggered when a rock starts to fall on a finished
-shield and released when the answer is over rather than on a timer. Three
-calls to confirm before code: the house standing from frame one; the dome's
-first hold pulled in on (retiring the intro.js note that says not to); the
-rock *leaving the sky* as the trigger, so the timber's instant failure is
-seen.
+**Status:** built (DESIGN.md, "The cutscenes, fleshed out"). The opening
+gets a beat before the chat — the two of them walk out of the house to the
+spot, so the house draws its first two rooms before anybody is hired — and
+each shield's answer is a `cutscene.js` entry, triggered when a rock starts
+to fall on a finished shield and released when the answer is over rather
+than on a timer, pulled in by a zoom measured against the shield's height.
+`test/cutscene.test.mjs` (5) covers the five answers the player's way;
+`rock.test.mjs` and `motion.test.mjs` carry the opening's new beat. The walk
+out is about four seconds at the yard's own pace — longer than the design
+guessed, and left at the honest pace.
 
 ## Scenes: every part of the game, one press away -- BUILT (2026-09-11)
 

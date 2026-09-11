@@ -772,14 +772,16 @@ export const SCENES = {
   // --- the shields ------------------------------------------------------------
   // Each shield: raised and built through, and the rock reaching it (`!`),
   // and the beat the whole arc is for -- the dome up, a rock on the way, and
-  // somebody still under the spot it is coming down on.
+  // somebody still under the spot it is coming down on. The `!` scenes run
+  // the crew's five-second dance through, so the shot is the rock meeting the
+  // shield with the cutscene's camera on it rather than the dance before it.
   ...Object.fromEntries(SHIELD_ORDER.flatMap(k => [
     [k, { about: 'the shields', say: `the ${k}, built`, run: () => shieldBuilt(k) }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
-                run: () => { shieldBuilt(k); window.__next(); } }]
+                run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }]
   ])),
   rescue: { about: 'the shields', say: 'the dome up, a rock coming, somebody under it',
-    run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); } },
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
 
   // --- the endgame ------------------------------------------------------------
   // Everything at once, every machine running, for the shape of the whole thing.

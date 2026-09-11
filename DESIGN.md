@@ -6945,7 +6945,7 @@ pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
 
-## The cutscenes, fleshed out (design, not built)
+## The cutscenes, fleshed out (built)
 
 There are two cutscenes in the game and one opening, and between them they
 cover three of the yard's one-time beats. The rest — five shields, each
@@ -7036,8 +7036,14 @@ down (`S.rockFall === 0 && !S.rockHeld`). A ceiling (`CUT_SHIELD_MAX_S`,
 ~30 s) is a safety, never the design.
 
 **The framing** is one rule for all five: centered on the shield's span
-(`S.shield.x + S.shield.w / 2`), pulled in one step (`CUT_SHIELD_ZOOM`, 1.5,
-the tear's), the ground line low in the frame the way every scene keeps it.
+(`S.shield.x + S.shield.w / 2`), with the ground line low in the frame
+(`CUT_SHIELD_GROUND`) because everything watched here happens above it. The
+pull-in is *measured*, not fixed: the span, the rock over it (and, for the
+jack, as far up as the rams shove it) and a little sky fill `CUT_SHIELD_FILL`
+of the window, and the zoom is whatever makes that so, never closer than
+`CUT_SHIELD_ZOOM`. A fixed step was tried first and cut the arch's crown off
+the top of the frame -- the shields are of five different heights, and a
+constant cannot be right about all of them.
 The rescue is the one beat that already moves the camera on its own
 (`lookAt(S.rescueTo)` in `startRescue`) — that pan yields to the scene, which
 is on the same spot anyway, and the intro.js note that pulling in on the
@@ -7059,11 +7065,12 @@ plays over the answer as it stands.
 ### Shape
 
 - `config/rift.js` → the cutscene numbers move to a `config/cutscene.js`
-  (`CUT_TEAR_*`, `CUT_DROWN_*` join `CUT_SHIELD_ZOOM`, `CUT_SHIELD_TAIL_S`,
-  `CUT_SHIELD_MAX_S`), since they are no longer the rift's.
-- `cutscene.js`: `play` takes an `until` predicate as well as a length; the
-  trigger watch grows a second clause on `S.rockFall` and `shieldUp()`; the
-  framing reads a `spot` per scene name rather than a two-way ternary.
+  (`CUT_TEAR_*`, `CUT_DROWN_*` join `CUT_SHIELD_ZOOM`, `CUT_SHIELD_FILL`,
+  `CUT_SHIELD_GROUND`, `CUT_SHIELD_TAIL_S`, `CUT_SHIELD_MAX_S`), since they
+  are no longer the rift's.
+- `cutscene.js`: a scene is an entry in a table -- length, zoom, spot, and
+  for the shields an `over` fact and a tail; the trigger watch grows a second
+  clause on the rock leaving the sky under a finished shield.
 - `intro.js`: the `leave` phase, `pairX` unchanged, the pair made at the door;
   `hold` walks `camX` with the pair during `leave`.
 - `house.js`: `cubes` draws two rooms while the opening runs.
@@ -7078,10 +7085,11 @@ the recipe), the next rock is thrown, and the check asserts a scene named for
 the kind is running while the rock is in the air, the camera is on the span,
 the yard never paused (a walker keeps walking), and the scene releases after
 the answer with the camera glided home; a second throw at the dome runs no
-scene. `intro.test.mjs` gains the door check above. Then the shots: the
-existing `props!` … `dome!` scenes in tools/look.mjs now show the scene's own
-framing, and `opening` starts at the door — and a new `leaving` scene a
-second in, the pair mid-walk.
+scene. The opening's checks in `rock.test.mjs` and `motion.test.mjs` gain the
+door and the `leave` beat. Then the shots: the `props!` … `dome!` and
+`rescue` scenes in tools/look.mjs run the dance through and show the scene's
+own framing, and `opening` starts at the door — with a `leaving` scene beside
+it.
 
 ## Scenes: every part of the game, one press away (built)
 
