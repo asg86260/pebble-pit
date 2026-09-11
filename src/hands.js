@@ -8,6 +8,7 @@ import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
 import { capacity } from './upgrades.js';
+import { buildShop } from './shop.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 
@@ -92,7 +93,9 @@ export function sweep(mx, my) {
   }
   if (taken) {
     S.held += taken;
-    S.seenDrag = true;                    // the bench's 'strength' row is about this
+    // The bench's 'strength' row is about this, and appears the first time it
+    // happens -- so the shop is built again, as it is when the first core lands.
+    if (!S.seenDrag) { S.seenDrag = true; buildShop(); }
     for (let i = 0; i < taken; i++) {
       S.motes.push({
         s: lifted[i],

@@ -517,6 +517,7 @@ raiseEl.addEventListener('click', raiseBench);
 // to lay itself out, and this button's words never change -- the boards measure
 // every frame because their contents do.
 let callSize = { w: 0, h: 0 };
+const CALL_TEXT = raiseEl.textContent;
 let callAt = { x: null, y: null };
 
 //
@@ -529,15 +530,26 @@ let callAt = { x: null, y: null };
 // see the site of is not a call, so it is hidden until the bench's own ground
 // is in the window -- and while a board is up, which its z-index was written
 // on the premise of never happening, and while a cutscene has the yard.
+//
+// ...and when the bench's ground is NOT in the window -- a window too narrow
+// to seat the bench and the rock together opens on the rock -- it stays at the
+// edge nearest the bench and says which way, and pressing it turns the view
+// there as well (see `raiseBench`). A call that simply vanished off a narrow
+// window was a first purchase nobody could make.
 export function seatCall() {
-  const left = (bench.x - S.camX) * S.zoom, right = (bench.x + bench.w - S.camX) * S.zoom;
-  const inShot = right > GAP && left < S.W - GAP;
-  if (!callOut() || !panelEl.hidden || cutsceneRunning() || !inShot) {
+  if (!callOut() || !panelEl.hidden || cutsceneRunning()) {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
   }
   if (raiseEl.hidden) {
     raiseEl.hidden = false;
+    callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
+  }
+  const left = (bench.x - S.camX) * S.zoom, right = (bench.x + bench.w - S.camX) * S.zoom;
+  const side = right <= GAP ? '◀ ' : left >= S.W - GAP ? '' : null;
+  const say = side === null ? CALL_TEXT : side === '' ? `${CALL_TEXT} ▶` : `${side}${CALL_TEXT}`;
+  if (raiseEl.textContent !== say) {
+    raiseEl.textContent = say;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
   }
   // Centered on the bench, and kept inside the window: the opening seat stands
