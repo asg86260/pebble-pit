@@ -83,6 +83,10 @@ export const tradeCost = t =>
 function train(t) {
   if (taught(t) >= ceiling(t)) return;
   S[t.count]++;
+  // On to the shelf outside the door, not on to the stand: somebody carries it
+  // over. See `shelved` in upgrades.js.
+  if (!S.hatShelf) S.hatShelf = {};
+  S.hatShelf[t.job] = (S.hatShelf[t.job] || 0) + 1;
   rebalance();
   syncWorkers();
 }

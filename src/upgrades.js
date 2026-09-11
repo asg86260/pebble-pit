@@ -378,7 +378,14 @@ export const worn = job => S.workers.filter(w => w.trained && w.kitOf === job).l
 // empty stand, and when the first recovered its real cart the books read one
 // too many and marched it straight back.
 export const loose = job => S.workers.filter(w => w.hatOff && w.hatOff.of === job).length;
-export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
+// ...and neither is a hat still on the shelf outside the school, or in the
+// hands of the body carrying it over. The school makes the station's hats; it
+// does not put them on the station's stand, a thousand pixels off, out of
+// nothing -- which is what it did (critics 2026-09-10, A8). A taught trade is
+// a hat on the shelf until somebody has walked it to the stand.
+export const shelved = job => (S.hatShelf && S.hatShelf[job]) || 0;
+export const carried = job => S.workers.filter(w => w.shelfHat === job).length;
+export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job) - shelved(job) - carried(job));
 
 // How many bodies a station has room for. Two of them have a floor plan: a cut
 // holds one body per bench and a plot holds one per plot, and there is nowhere

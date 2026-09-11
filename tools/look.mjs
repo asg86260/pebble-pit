@@ -578,6 +578,14 @@ const SCENES = {
            window.__buy('stakedust'); window.__fast(3);
            window.__look(window.__state().casinoX - 380);`,
 
+  // The shelf outside the school: a taught hat waiting to be carried to its
+  // stand, with nobody free to carry it. (critics A8)
+  shelf: `window.__reset(); window.__crew(2,1); window.__give(100); window.__fast(2);
+          document.getElementById('raise').click(); window.__fast(20);
+          window.__grant({shards:100000, dust:40000}); window.__school({open:true});
+          window.__crew(2,0); window.__buy('breaker'); window.__finish(); window.__fast(2);
+          window.__look(window.__state().schoolX - 400);`,
+
   rift: `${RICH} window.__meteor(); window.__rift(); window.__give(60000);
          window.__give(12000);
          window.__fast(4); window.__look(window.__state().pitX - 260);`,

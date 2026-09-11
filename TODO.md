@@ -25,16 +25,9 @@ shape wants the muck loop looked at with it, not one dial.
 with the disc (DESIGN.md, "The pit's arc", the amended inhale bullet). The two
 shots are `b5-young.png` and `b5-grown.png` in the rift-reach worktree.
 
-**A8 is a design, not a fix.** A hat the school makes lands on the station's
-own stand, a thousand pixels from the school, with nothing walking it. The
-kit economy (`kit.js`, `crew/kitwalk.js`, `commute.js`'s wear/drop legs, the
-roster's stand count, `render/kit`) assumes one stand per job, so a hat that
-waits at the school until collected is a second place a job's kit can be: a
-per-job count saved on `S`, `kitX(job)` answering the school while it holds
-one and the station otherwise, the drop leg always to the station, and the
-school drawing its rack. The alternative -- the teacher carries the hat to
-the stand, the way a stirrer walks a dose -- keeps one stand but gives the
-teacher an errand and the hat a walk of its own. Decide which before code.
+**A8 built 2026-09-11.** A taught hat lands on a shelf outside the school and
+a hauler carries it to its station's stand (DESIGN.md, "The school", the shelf
+section). Shot: `a8-shelf.png` in the rift-reach worktree.
 
 **Read `docs/critics-2026-09-10.md` before proposing any balance or tuning
 work.** Nine persona agents played the yard at `c87c485` and every finding is

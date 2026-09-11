@@ -713,6 +713,20 @@ front doors, the stretch everybody walks twice a shift.
 A trade is not something a person carries around — it is **the first n of the bodies on that job**,
 worked out in one place. Move somebody off the rock and the hat goes to whoever is left.
 
+### The shelf outside the door (built 2026-09-11)
+
+A taught hat used to appear on its station's stand the frame the lesson
+landed -- the rock's stand, a thousand pixels from the school, with nothing
+walking it; the one made object in the yard that teleported
+(docs/critics-2026-09-10.md, A8). It lands on a shelf outside the school's door
+now (`S.hatShelf`, by job), drawn as a stand like any other with the hat on it
+and its count over it, and the nearest bare hauler walks over, takes it, and
+carries it to the station's stand, where it is counted as spare only once it
+is put down (`shelved` and `carried` in upgrades.js, the `take`/`put` legs in
+commute.js, the errand in `stepKit`). While nobody is free it waits on the
+shelf where it can be seen. A carrier caught mid-walk by a save comes back a
+plain hauler and the hat is back on the shelf: the walk is made again.
+
 ## Knocking off
 
 **A yard with nothing in it to carry is a yard nobody needs to be stood in.** A body with no dust to
