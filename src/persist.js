@@ -19,7 +19,6 @@ import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
-import { clearCasino } from './casino.js';
 import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
@@ -847,17 +846,16 @@ export function restore() {
   // than made. Safe here because the world is laid out before the save is read
   // (see the boot order in main.js), so there is a width to spread it across.
   skyFromSave();
-  // A pot left on the roof is still on it. The sand itself is never saved, so
-  // it comes back pouring out of the sky again whatever it was doing -- a hand
-  // caught with the floor open comes back a pot on the roof with the call open
-  // again, the way a wheel mid-spin used to. The bet that was made is the chip,
-  // and the chip is what comes back.
+  // A pot left on the table is still on it. It comes back ripe -- the clock it
+  // was climbing on is wall time, and a hand you left an hour ago is a hand you
+  // left long enough.
+  // `drop` rides with it: a stake put down for the board and caught mid-pour
+  // comes back owed a drop, not a spin -- the bet is the bet that was made.
   S.pot = s.pot && s.pot.cur
-    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0 }
+    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0, drop: !!s.pot.drop }
     : null;
-  S.gate = null;
-  S.clearing = false;
-  clearCasino();                // the tray and the board start empty; the pot pours again
+  S.spinUntil = 0;
+  S.drop = null;
   S.tableAir = [];
   // A pot you have already taken comes back still owed to you.
   //
@@ -882,12 +880,12 @@ export function restore() {
   S.paying = s.paying && s.paying.cur && +s.paying.left >= 1
     ? { cur: s.paying.cur,
         left: Math.round(+s.paying.left),
-        grains: Math.max(1, Math.round(+s.paying.grains) || 1),
-        cols: [] }                // nothing to lift off: it throws from the building
+        grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
     : null;
-  // A bet made is a bet made: a pot comes back pouring on to the roof, whether
-  // it was still arriving or already standing there.
-  S.pouring = S.casinoOpen && !!S.pot;
+  // A bet made is a bet made: a pot caught mid-pour comes back mid-pour, the
+  // sand falls again out of an empty table, and the spin it was owed is still
+  // owed. A pot that had already been spun for comes back a pot and nothing more.
+  S.pouring = S.casinoOpen && !!S.pot && !!s.pouring;
   S.hand = null;                // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
@@ -1198,9 +1196,7 @@ export function reset(fresh = true) {
   S.casinoBoardOpen = false;
   S.pot = null;
   S.pouring = false;
-  S.gate = null;
-  S.clearing = false;
-  clearCasino();
+  S.spinUntil = 0;
   S.tableAir = [];
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;

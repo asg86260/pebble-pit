@@ -952,6 +952,7 @@ export const SECTIONS = [
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
+    'unlockplinko',
     'unlockshack', 'unlockouthouse', 'unlocktower', 'unlockschool',
     'unlockscrub'
   ] }

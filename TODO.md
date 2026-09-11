@@ -7,16 +7,13 @@ alike; a heading per part with a button per scene; a scene never touches the
 player's save. DESIGN.md, "Scenes" (built). Left for later: the scrollbar on
 the block is the browser's grey one, not the sheet's hand.
 
-## The sand board -- BUILT (2026-09-11)
+## The drop -- BUILT (2026-09-10)
 
-The casino is the machine: the stake heaps in a tray on the roof, the floor
-opens over one of seven slots and tips toward the hole, and the whole pot
-goes through the pegs. You call a slot beforehand; it pays `9 6 6 7 6 6 9`
-per grain, measured. The wheel and the rock-plinko are gone. DESIGN.md, "The
-sand board (built)". Left for later, in order of worth: board memory (the
-losing slots' sand staying for the next hand rather than lifting off); a
-let-it-ride that hoists the won heap back to the roof; a little chance in the
-pour itself, which is deterministic given the gate.
+A plinko tower on the casino's roof: one rock carries the whole pot down ten
+rows of pegs into eleven bins paying x39 / x5 / x3 / x1 / x.5 at the middle,
+exactly fair, settling the same pot on the same table. DESIGN.md, "The drop
+(built)"; `test/plinko.test.mjs`; the `plinko` scene. The price is the "the
+drop" knob and has not been played against yet.
 
 ## Nine critics played the game (2026-09-10)
 

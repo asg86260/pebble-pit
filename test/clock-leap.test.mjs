@@ -20,6 +20,7 @@ import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs'
 import { CLOCK_LEAP_MS } from '../src/config.js';
 import { now, tick } from '../src/clock.js';
 import { doseLive, doseLeftMs } from '../src/apothecary.js';
+import { spinning } from '../src/casino.js';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -97,6 +98,42 @@ group('a dose bought before tabbing out is still live after', async () => {
     // costs the dose, and not a millisecond more.
     ok(spent >= 0 && spent <= CLOCK_LEAP_MS, 'and it paid one frame for the hour, no more',
        `spent ${spent} of ${before}`)
+  ];
+});
+
+// The spin is staked through the row the player presses, and the wheel goes
+// round only once the sand has landed -- so the check waits for the spin to be
+// in earnest before it leaves.
+group('a spin in flight resolves after its own time, not on return', async () => {
+  window.__reset();
+  window.__casino(true);
+  window.__give(6000);
+  yard.S.chip = 1;
+  window.__build();
+  run(0.5);
+  const staked = window.__buy('stakedust');
+  const began = runUntil(() => state().spinning, 15);
+  const untilBefore = yard.S.spinUntil;
+
+  const wall = fakeWall();
+  let stillSpinning, clockShort;
+  try {
+    wall.away(HOUR);
+    frame();
+    stillSpinning = spinning();
+    clockShort = now() < yard.S.spinUntil;
+  } finally { wall.restore(); }
+  // and it does come to rest, in its own time
+  const rested = runUntil(() => !state().spinning, 10);
+
+  return [
+    ok(staked, 'the chip goes down through its row'),
+    ok(began, 'and the wheel goes round'),
+    ok(untilBefore > 0, 'with a mark on the clock to stop at'),
+    ok(clockShort, 'an hour away leaves the clock short of that mark',
+       `now ${Math.round(now())}, until ${Math.round(yard.S.spinUntil)}`),
+    ok(stillSpinning, 'so the wheel is still going when you come back'),
+    ok(rested, 'and stops when its own time is up')
   ];
 });
 

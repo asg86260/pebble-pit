@@ -62,7 +62,7 @@ import { catchAir } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
-import { stepCasino, stepTable, wireTable, wireBoard } from './casino.js';
+import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
 import { mineMs, restaff, staffSheds, take } from './upgrades.js';
 // The bench is built rather than delivered, and the row it is finished under is
@@ -117,8 +117,7 @@ export function settleIntoWorld() {
   wireGround();
   wirePit();
   wireCut();                               // the cut's own sand, sized off the quarry
-  wireTable();                             // the tray on the casino's roof
-  wireBoard();                             // and the pegs on its face
+  wireTable();                             // the ground the pot piles up on
   resizeGrid(floor);
   if (!pit.grid) setPitGrain();            // the pit never changes with the window
   seedAir();
@@ -250,8 +249,8 @@ export const STEPS = [
   { name: 'smoke',        step: c => stepSmoke(c.dt) },   // and every mote of it climbing and going out
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
-  { name: 'casino',       step: c => stepCasino(c.dt) },  // the hand: the pour settling, the board settling
-  { name: 'table',        step: c => stepTable(c.dt) },   // and the sand: on to the roof, through the pegs, away
+  { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table
+  { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
   { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
   { name: 'intro',        step: c => stepIntro(c.now) },  // and, once and once only, the two of them
   { name: 'buried',       step: c => stepBuried(c.now) }, // and whoever is under the rock, when they can be seen
