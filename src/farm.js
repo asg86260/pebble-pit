@@ -315,7 +315,7 @@ const FARM_YIELD = tierRows({
 
 const FARM_SPEED = tierRows({
   field: 'tendLevel', multKey: 'tend',
-  unit: 'plots/min', pct: true,
+  unit: 'plots/min', pct: true, does: 'tend',
   value: lvl => tendRate(lvl),
   first: TEND_COST,
   site: 'farm', board: 'farm',

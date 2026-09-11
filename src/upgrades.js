@@ -263,7 +263,27 @@ export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 // `from` and `to` are still the current value and the value after: the row is
 // the only place that knows how its own maths works, and the difference is
 // taken here rather than written out by hand thirteen times.
+//
+// And the thing that changes is *named*, when the row's name does not name it.
+// "boots +45%" is a noun and a number with no verb between them: forty-five per
+// cent of what? A row called "swing" is a stat and its share is a share of
+// swinging, but most rows are called after the thing you buy -- boots, a
+// harness, a stew -- and for those the board was leaving the one word that
+// matters to the player's guess. So a row carries `does`, the verb its number
+// is about, and the gain line leads with it: "walk +45%", "carry 1 -> 3",
+// "crit 4 -> 8%". Every proportional row has one -- a share has to be a share
+// of something, and test/gain-verb.test.mjs holds the board to it -- and a
+// count row has one wherever its unit does not already say (a mark of dust a
+// swing, a mark of dust a sweep of the cursor holds).
 export const gainText = u => {
+  // A finished ladder has nothing left to give, verb included -- "walk" over
+  // "done" would be a promise with nothing after it. The board blanks the
+  // column itself; this is so anything else reading the words agrees with it.
+  if (maxed(u)) return '';
+  const amount = gainAmount(u);
+  return amount && u.does ? `${u.does} ${amount}` : amount;
+};
+const gainAmount = u => {
   if (!u.from) return '';
   const a = Number(u.from()), b = Number(u.to());
   if (!isFinite(a) || !isFinite(b)) return '';
@@ -272,7 +292,15 @@ export const gainText = u => {
   // the tower's bolts and the cells one takes off a star -- and what the board
   // printed for all four was the failed lookup: "better instruments, +25%
   // undefined". A missing mark is a unit to write out, not a row to break.
-  const mark = u.unit ? ' ' + unitText(u.unit) : '';
+  //
+  // Glued to the number, not spaced off it: the gain shares its column with the
+  // bill on the line above and can be squeezed to a word's width, and an amount
+  // that breaks -- "4 -> 8" on one line and "%" on the next -- is a number and a
+  // stray symbol. The verb in front of it may break off; the amount never. A
+  // bare symbol (a per cent, a times) is written against its number the way
+  // it is everywhere else; a mark or a word takes the fixed space.
+  const NB = ' ';
+  const mark = !u.unit ? '' : /^[%x]$/.test(u.unit) ? u.unit : NB + unitText(u.unit);
   // A count says what it is now and what it would be. "+1" tells you what the
   // row does and nothing about whether it is worth it: going from one to two is
   // doubling what you can carry, and going from eleven to twelve is not, and the
@@ -286,7 +314,7 @@ export const gainText = u => {
   // benches" is a number pretending to be a measurement.
   if (!u.pct) {
     const say = v => (Number.isInteger(v) ? v : num(v));
-    return `${say(a)} → ${say(b)}${mark}`;
+    return `${say(a)}${NB}→${NB}${say(b)}${mark}`;
   }
   // A rate stepping onto its floor can gain a real amount and round to nothing.
   // A row that says +0% is a row that reads as broken, so the smallest thing a

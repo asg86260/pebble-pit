@@ -46,7 +46,7 @@ export const TESTS = [
          'and the row is a house rather than a headcount', before.houseRow),
       // a count, so it says where the count is going -- see the note on the
       // bench's rows about why "+1" was not enough
-      ok(before.houseRow && /\d → \d/.test(before.houseRow),
+      ok(before.houseRow && /\d → \d/.test(before.houseRow),
          'saying where it takes you, like every other count', before.houseRow),
       ok(after.crew === before.crew + 1, 'buying one takes somebody on',
          `${before.crew} -> ${after.crew}`),

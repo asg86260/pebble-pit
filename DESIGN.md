@@ -1717,6 +1717,31 @@ follows -- tying a shack row to a bench row under "you" would be a gate the
 board cannot show. The four tier ladders already do this through `tierRows` and
 are not touched.
 
+### A gain names what it is a gain of (built)
+
+The gain line said what buying a row *changes* and not the number the game is
+keeping -- "+30%", "1 → 2" -- which is the right rule and was only half of one.
+The thing that changes was named only when the row's name named it: "swing
++34%" is a share of swinging, but "boots +45%" is a noun and a number with no
+verb between them, and boots and pace on one board were two rows moving one
+unstated stat.
+
+So a row carries `does`, the verb its number is about, and the gain line leads
+with it: `walk +45%`, `carry 1 → 3`, `crit 4 → 8%`, `per swing 1 → 2 ■`, `dig
++16%`. Every proportional row has one -- a share has to be a share of something,
+and `test/gain-verb.test.mjs` holds every board to it -- and a count row has one
+wherever its unit does not already say. The tier ladders take it through
+`tierRows` (`dig`, `tend`), the multipliers through `ladder` in rows-mult.js, the
+pot's rungs through `brewRung`. The bracing tonic's unit became `%` like the
+other four: with "crit" in front, "crit 8 → 10 crit" was saying it twice.
+
+Two things the verb forced on the card. The amount is written in no-break
+spaces and a bare symbol is glued to its number (`8%`, `4x`), so an amount never
+splits across a line. And the gain spans the card less the pips' corner rather
+than sharing a column with the bill: the bill is the widest thing on the card
+and was leaving the gain a word's width, which is where "per swing" over "1 → 2"
+came from. The pips are five characters and that is all the gain gives up now.
+
 ## The ladder (design, not built)
 
 What is here now is eight rows that never end. Every one is a level you buy

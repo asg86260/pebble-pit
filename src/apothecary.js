@@ -685,8 +685,8 @@ export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 // A rung on the building, priced spore + dust like every tier-two row. `level`
 // reads the rung and `climb` puts it up, so a ladder kept on `S` as a number and
 // one kept per tonic in a map are the same row to the board.
-const brewRung = ({ key, name, unit, level, climb, from, to, rungs, after = 0 }) => ({
-  key, kind: 'rung', site: 'apothecary', name, unit,
+const brewRung = ({ key, name, unit, does, level, climb, from, to, rungs, after = 0 }) => ({
+  key, kind: 'rung', site: 'apothecary', name, unit, does,
   rung: level,
   rungs,
   from, to,
@@ -718,10 +718,18 @@ const potencyRow = t => ({
   // the deeper craft is earned by brewing.
   show: () => S.apothecaryOpen && S.brews >= 1 && potencyLevel(t.key) < RUNGS && tonicShown(t)
 });
+// What each tonic's number is a number *of*, in the yard's own words: the row
+// is named for the drink, and "stew 25 -> 32%" says nothing about what the
+// drinker does more of.
+const DOES = { work: 'work', crit: 'crit', carry: 'carry', pace: 'walk', spark: 'sparks' };
 const potencyRowBare = t => brewRung({
   key: `potency-${t.key}`,
   name: `${t.short}`,
-  unit: t.kind === 'crit' ? 'crit' : '%',
+  // The bracing tonic adds points of crit chance, which is a percentage like
+  // the rest of them once the verb says "crit"; it used to carry "crit" as its
+  // unit, which with the verb in front read "crit 8 -> 10 crit".
+  unit: '%',
+  does: DOES[t.kind],
   level: () => potencyLevel(t.key),
   climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
   from: () => Math.round(t.base * strengthOf(t.key) * 100),
@@ -782,10 +790,10 @@ export const APOTHECARY_UPGRADES = [
     show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
-  stateRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
+  stateRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', does: 'brew', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel', after: 3,
+  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', does: 'lasts', level: 'lengthLevel', after: 3,
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
   stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel', after: 3,

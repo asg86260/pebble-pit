@@ -359,8 +359,17 @@ canvas {
    takes another line. The check in selftest/boards.js still says no gain is
    ever clipped, and it is a check of the ink against the cell. */
 .rows button .gain {
-  grid-column: 1;
+  /* The whole of the second line, less the corner the pips sit in. It used to
+     be the first column only, which is the column the BILL sizes: a bill four
+     coins deep left the gain the width of a word, and "per swing 1 -> 2" came
+     out as a verb on one line and a number on the next. The pips are the only
+     other thing on this line and they are five characters wide, so the gain
+     keeps their corner clear and takes everything else. Five pips at the
+     tracking `.ladder` sets, in the size it is drawn at -- no ladder in the
+     game is longer (see `rungsOf`). */
+  grid-column: 1 / -1;
   grid-row: 2;
+  padding-right: calc(5 * 1.22 * var(--pip-em, 1em));
   opacity: .75;
   min-width: 0;
 }
@@ -372,14 +381,10 @@ canvas {
    the sheet is set in, so it stays right if the type changes, where a number
    here would be one more thing to retune. */
 .rows button .gain::before { content: ''; display: inline-block; }
-/* A card whose site is busy says so across the whole of its second line. What
-   the row GIVES you shares that line with a bill, so its column is `1fr` against
-   the bill's `auto` and can come out very narrow -- 82 pixels on the crew's
-   `labhaul`, against 101 for "nobody on it". A status is a fact about the card
-   rather than an entry in that column, and the cell beside it on that row is
-   empty, so it can simply have the line. Nothing moves for it: the sheet's width
-   is pinned (see `pinWidth` in board.js) and the row's height does not change. */
-.rows button.waiting .gain { grid-column: 1 / -1; }
+/* A card whose site is busy says so on its second line, which the gain already
+   spans; the status sits where the gain would and the pips keep their corner.
+   Nothing moves for it: the sheet's width is pinned (see `pinWidth` in
+   board.js) and the row's height does not change. */
 /* Hard right on the card's FIRST line, beside the title. `min-width: 0` so a
    bill wider than the card can wrap inside its own cell rather than stretching
    the card past its neighbor -- only four rows in the game are that wide (the

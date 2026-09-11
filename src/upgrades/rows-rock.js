@@ -29,6 +29,7 @@ export const ROCK_ROWS = [
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
     name: 'pickaxe',
     unit: 'px',
+    does: 'per swing',
     rung: () => S.rockhandPickLevel,
     // Its own short ladder: three rungs, each a whole pixel of bite (see
     // rockhandBite), each eight times the old base -- fewer, dearer, and every
@@ -51,6 +52,7 @@ export const ROCK_ROWS = [
     name: 'swing',
     unit: 'px/s',
     pct: true,
+    does: 'hit',
     rung: () => S.rockhandSpeedLevel,
     from: () => rockhandRate(),
     to: () => rockhandRate(S.rockhandSpeedLevel + 1),

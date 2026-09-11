@@ -103,6 +103,7 @@ export const TOWER_UPGRADES = [
     note: () => `every wizard throws a bolt at the star ${Math.round((STEP - 1) * 100)}% more often`,
     unit: 'bolts/min',
     pct: true,
+    does: 'cast',
     rung: () => S.wizSpeedLevel,
     from: () => 60000 / wizMs(),
     to: () => 60000 / (wizMs() / STEP),

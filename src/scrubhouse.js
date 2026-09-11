@@ -103,6 +103,7 @@ export const SCRUB_UPGRADES = [
     name: 'the fan',
     unit: 'motes/s',
     pct: true,
+    does: 'scrub',
     rung: () => S.fanLevel,
     from: () => fanPull(),
     to: () => fanPull() * 1.25,

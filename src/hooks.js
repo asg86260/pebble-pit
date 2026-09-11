@@ -38,7 +38,7 @@ import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW } from './upgrades.js';
+import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW, gainText } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
@@ -709,6 +709,9 @@ export const allRows = () => everyRow().map(u => ({
   // reveal has not fired yet is a row no board would draw, and a check asking
   // what is on the boards should be told what is on the boards. See `revealed`.
   shown: !!revealed(u),
+  // What the row says it gives, as the board prints it -- so a check about the
+  // board's words can read the board's words.
+  gain: gainText(u),
   // Not every row has a price. A job row moves bodies, a dial sets a number and
   // a payout row hands something over -- `billOf` would ask all three what they
   // cost and get an exception.

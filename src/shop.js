@@ -641,14 +641,10 @@ export function refresh(el, list, headcount) {
         // the part worth having on the face of the card anyway: how many are
         // ahead of you is the thing you would act on, and which ones they are is
         // written over the site itself, out in the yard.
-        // A status is about the whole card, not about the column the gain sits
-        // in -- so while one is up the cell takes the card's full width. The
-        // gain column is `1fr` against the bill's `auto`, and on a card with a
-        // wide bill that leaves as little as 82 pixels: measured across every
-        // board, five cards had a gain column narrower than "nobody on it".
-        // Widening the column for all of them would move the bills; letting the
-        // status span the line it already has to itself moves nothing, because
-        // the cell beside it on that row is empty.
+        // A status is about the whole card, and the gain's line -- which it
+        // takes over -- spans the card less the pips' corner (see `.gain` in
+        // style.css), so the longest of them, "nobody on it", fits on every
+        // board.
         row.classList.add('waiting');
         const queue = mine ? [] : worksAt(u.site).map(w => rowFor(w.key)?.name || w.key);
         sayHTML(gain, !mine ? (queue.length > 1 ? `busy (${queue.length})` : 'busy') :

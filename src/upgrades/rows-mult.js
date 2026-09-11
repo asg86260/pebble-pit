@@ -38,8 +38,9 @@ import { invested } from './site.js';
 // station's own board names that station instead, so the rule the boards
 // already follow -- a decision about a place is made at the place -- holds
 // for the work too, not just the purchase.
-const ladder = ({ key, field, name, unit, cost, currency, board, site = 'yard', show, after }) => ({
+const ladder = ({ key, field, name, unit, does, cost, currency, board, site = 'yard', show, after }) => ({
   key,
+  does,
   // The rung it sits under has to be finished first: a multiplier is the top of
   // the ladder it multiplies, not a rival row beside it. See `chained`.
   after,
@@ -77,6 +78,7 @@ export const SWING_MULT = ladder({
   // one new character these boards have taken on.
   name: 'swing ×',
   unit: 'px/s',
+  does: 'hit',
   cost: () => rungCost(15, levelOf('swing')),
   currency: 'shard',
   after: 'rockhandspeed',
@@ -99,6 +101,7 @@ export const HAUL_MULT = ladder({
   key: 'labhaul', field: 'haul',
   name: 'pace ×',
   unit: 'px/s',
+  does: 'walk',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
   after: 'boots',

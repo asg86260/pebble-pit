@@ -903,7 +903,7 @@ const QUARRY_YIELD = tierRows({
 
 const QUARRY_SPEED = tierRows({
   field: 'quarryPaceLevel', multKey: 'quarry',
-  unit: 'trips/min', pct: true,
+  unit: 'trips/min', pct: true, does: 'dig',
   value: lvl => quarryRate(lvl),
   first: QUARRY_PACE_COST,
   site: 'quarry', board: 'quarry',

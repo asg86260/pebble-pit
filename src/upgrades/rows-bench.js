@@ -18,6 +18,7 @@ export const BENCH_ROWS = [
     // "load", which is two names for one idea and a player having to learn both.
     name: 'strength',
     unit: 'px',
+    does: 'hold',
     rung: () => S.carryLevel,
     from: () => capacity(),
     to: () => capacity() + CAP_STEP,
@@ -105,6 +106,7 @@ export const BENCH_ROWS = [
     name: 'swing',
     unit: 'px/s',
     pct: true,
+    does: 'hit',
     rung: () => S.speedLevel,
     from: () => mineRate(S.speedLevel),
     to: () => mineRate(S.speedLevel + 1),
@@ -132,6 +134,7 @@ export const BENCH_ROWS = [
     // than "pick" here and "pickaxe" over there.
     name: 'pickaxe',
     unit: 'px',
+    does: 'per swing',
     rung: () => S.pickLevel,
     from: () => pickCount(),
     to: () => pickCount() + 1,

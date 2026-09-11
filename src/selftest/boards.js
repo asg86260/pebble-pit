@@ -1018,7 +1018,11 @@ export const TESTS = [
       // the row read the same either way. The number you have is the one thing
       // the board could not tell you and the yard could not either -- it is on
       // your cursor, not on a counter.
-      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1]) || /^[\d,.]+ → /.test(c[1])),
+      //
+      // And the verb in front, when the row's name is a thing rather than a stat
+      // -- "walk +30%", "carry 1 -> 2" -- with the amount written in no-break
+      // spaces so it never splits across the line. See `gainText`.
+      ok(cells.every(c => !c[1] || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+ → )/.test(c[1])),
          'a count says where it is going, a rate says what it gains',
          JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,

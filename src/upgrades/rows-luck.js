@@ -20,6 +20,7 @@ export const LUCK_ROWS = [
     kind: 'rung', site: 'bench',
     name: 'chance',
     unit: '%',
+    does: 'crit',
     rung: () => S.critChanceLevel,
     from: () => Math.round(critChance(S.critChanceLevel) * 100),
     to: () => Math.round(critChance(S.critChanceLevel + 1) * 100),
@@ -39,6 +40,7 @@ export const LUCK_ROWS = [
     kind: 'rung', site: 'bench',
     name: 'power',
     unit: 'x',
+    does: 'crit',
     rung: () => S.critMultLevel,
     // One whole unit a rung -- 3, 4, 5, 6 over three rungs -- so no rung ever
     // reads "4 -> 4". The costs doubled to make up for there being fewer of

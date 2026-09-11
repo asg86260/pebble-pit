@@ -55,7 +55,7 @@ export const tierGain = (lvl, per) =>
 //   first    what rung one costs, in dust
 //   bands    four lines: a key, a name, the coins the bill adds, and an
 //            optional gate of the band's own
-export function tierRows({ field, multKey, unit, pct, value, first,
+export function tierRows({ field, multKey, unit, pct, does, value, first,
                            site, board, show, after, bands }) {
   const level = () => tierLevel(field, multKey);
   // The card you can see. The last band stays on the board once it is finished,
@@ -67,7 +67,7 @@ export function tierRows({ field, multKey, unit, pct, value, first,
     return {
       key: band.key,
       name: band.name,
-      unit, pct,
+      unit, pct, does,
       // Every rung of every one of these is a piece of work bodies stand and
       // finish at the place that sells it -- which is what the last band was
       // when it was the lab's, and what the speed rungs already were.
