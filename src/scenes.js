@@ -32,6 +32,7 @@
 // its hoist. They are the valuable part; they moved here with the scenes.
 
 import { S } from './state.js';
+import { JOB, TYPE } from './jobs.js';
 import { PROP_FROM, NET_COST, ARCH_COST, JACK_COST, DOME_BILL } from './config.js';
 
 // The parts, in the order the sheet reads them.
@@ -250,7 +251,7 @@ export const SCENES = {
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
-                 window.__loo(); window.__assign('janitors', 1); window.__fast(20);
+                 window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
                  window.__look(st().rockLeftX - 420); } },
   // The question mark a held body says. Hovered for real -- the pause and the
   // mark come off `pointermove` in pointer.js, and there is no hook that puts
@@ -309,7 +310,7 @@ export const SCENES = {
   // the post's ordinary two lines under the shed.
   loo: { about: 'the crew', say: 'the outhouse, its stand and its janitor',
     run: () => { window.__reset(); window.__crew(0, 3); window.__loo();
-                 window.__assign('janitors', 1); window.__fast(30); window.__look(st().outhouseX - 260); } },
+                 window.__assign(JOB.JANITOR, 1); window.__fast(30); window.__look(st().outhouseX - 260); } },
   // The outhouse with its board up: the shed with the moon on the door, the
   // broom standing beside it, and the janitor's own rungs on the sheet. The
   // shed has to be up first -- the board arrives with the building.
@@ -331,8 +332,8 @@ export const SCENES = {
   apothbuff: { about: 'the crew', say: 'bodies under tonics, standing',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
-                 window.__loo(); window.__assign('janitors', 1); window.__fast(20);
-                 window.__dose('rockhand', 'brace'); window.__dose('janitor', 'strong');
+                 window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
+                 window.__dose(TYPE.ROCK, 'brace'); window.__dose(TYPE.JANITOR, 'strong');
                  window.__look(st().rockLeftX - 420); } },
   // F4 (item 6): the same buff on bodies that are WALKING, which is where it
   // used to come apart -- the plume was let go into the yard, so a body
@@ -342,8 +343,8 @@ export const SCENES = {
   // one under two tonics says the two colors still read apart while it moves.
   buffwalk: { about: 'the crew', say: 'bodies under tonics, walking',
     run: () => { window.__reset(); window.__crew(2, 5);
-                 window.__dose('hauler', 'brace'); window.__dose('hauler', 'strong');
-                 window.__dose('rockhand', 'stew'); window.__fast(12); window.__look(st().pitX - 620); } },
+                 window.__dose(TYPE.HAUL, 'brace'); window.__dose(TYPE.HAUL, 'strong');
+                 window.__dose(TYPE.ROCK, 'stew'); window.__fast(12); window.__look(st().pitX - 620); } },
 
   // --- the bench --------------------------------------------------------------
   // The call to build the bench, standing over the bare patch it will go on.
@@ -520,7 +521,7 @@ export const SCENES = {
                  window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
-                 window.__pot('stew'); window.__assign('stirrers', 1); window.__fast(16);
+                 window.__pot('stew'); window.__assign(JOB.STIR, 1); window.__fast(16);
                  window.__look(st().apothecaryX - 400); } },
   // The apothecary with an upgrade on the go: the site's own bar, which hangs
   // over the hut -- the building -- not over the middle of the plot.
@@ -538,7 +539,7 @@ export const SCENES = {
                  window.__grant({ cores: 3, dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
-                 window.__brews(5); window.__assign('stirrers', 1); window.__pot('stew'); window.__fast(40);
+                 window.__brews(5); window.__assign(JOB.STIR, 1); window.__pot('stew'); window.__fast(40);
                  window.__buy('anotherpot'); window.__fast(14); window.__look(st().apothecaryX - 300); } },
   // Four pots, each bought after the five batches that offer the next.
   // The pot row up close: four boiling pots with their bars up, for where the
@@ -553,7 +554,7 @@ export const SCENES = {
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
-                 window.__assign('stirrers', 4);
+                 window.__assign(JOB.STIR, 4);
                  window.__pot('stew'); window.__pot('brace', 1); window.__pot('strong', 2); window.__pot('stew', 3);
                  window.__fast(30); window.__look(st().apothecaryX + 60); } },
   // Track F1: the whole building at its widest -- the hut, the bookshelf with
@@ -569,7 +570,7 @@ export const SCENES = {
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
-                 window.__assign('stirrers', 4);
+                 window.__assign(JOB.STIR, 4);
                  window.__pot('stew', 0); window.__pot('brace', 1);
                  window.__pot('strong', 2);   // and the fourth left unset, for the empty block
                  window.__fast(50); window.__look(st().apothecaryX - 320); } },
