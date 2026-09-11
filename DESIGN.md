@@ -371,7 +371,7 @@ the whole of the building rather than a detail on it. It turns while there is a 
 spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
 says whether anything is happening.
 
-## The drop (design, not built)
+## The drop (built 2026-09-10)
 
 **A plinko tower on the casino's roof.** The wheel is even money and nothing
 else: half doubles, half takes, and the only decision is when to stop. That
@@ -480,44 +480,62 @@ number. The casino's roof sign moves to the top of the tower with its chase
 of lights; the tower's own roof takes the sign's place as the highest thing
 on the building.
 
-### What would be checked
+### What is checked
 
-`test/plinko.test.mjs`, node tier, fresh game each:
+`test/plinko.test.mjs`, node tier, fresh game each: the bin table pays exactly
+1,024 in 1,024 off `config.js`, so a tuned bin is a red test; the tower is
+bought through its bench row and stands only when the yard has built it;
+twelve drops in a row, each through `dropdust` or `drop it`, each settled to
+`floor(pot × bin)` for the bin the seeded path reached, with the mark saying
+the bin and the heap walking to `tableWant()`; every row shut while the rock is
+out and `drop it` shut until it is home; and a stake put down for the board and
+caught mid-pour comes back owed a drop. The shot is `plinko` in
+`tools/look.mjs`.
 
-- the bin table pays exactly 1 — Σ (C(10,k)/1024 × bin[k]) = 1, computed off
-  `config.js`, so a tuned bin is a red test
-- bought like a player: the tower row is bought through `__buy`, the chip
-  goes down through the row, and the pot on the table after the drop is
-  `stake × bin` for the bin the seeded path landed in
-- a ×½ leaves half the grains on the table (and a ×3 rains in to the log
-  ladder's number), read off `table.n` against `shownFor`
-- drop refused while pouring, spinning, dropping, with the rock not home, and
-  with the pit full
-- a save taken mid-drop restores the same path and lands in the same bin
-- `S.plinkoOpen` and `S.drop` are in `SAVED` / `EPHEMERAL` — the roundtrip
-  test covers that on its own
+### What building it changed
 
-The shot is `plinko` in `tools/look.mjs`: a live pot, the rock four rows
-down, the sign lit at the top.
+- **The pays are written under the slots, white on the tower**, not in them.
+  A three-cell glyph in a three-cell white slot touched the black divider
+  beside it, and three half-marks in a row fused into one bar. A half is
+  written ".5", stacked like the "39", because a half-filled box read as a
+  zero at this size — the one thing a bin must not say.
+- **The pegs are single cells.** A bar the rock's width under a two-cell rock
+  read as a taller peg, and the rock was the one thing on the board you could
+  not find. With dots for pegs the rock is the only square on the white.
+- **The sign runs across the top of the tower** at one cell a glyph, with the
+  chase round it; the roof sign comes down the moment the tower starts going
+  up. Vertically it would have run off the sky.
+- **The heap's ceiling under the tower's overhang is the roof.** The tower is
+  fifty-two cells wide on a twenty-six-cell building, and the table's ceiling
+  of twenty cells put a big pot up behind the board. `table.ceiling` takes a
+  column, so the columns under the overhang stop at eleven and the rest keep
+  twenty; the heap walks sideways there instead.
+- **The settled-hand box stands clear of the tower's right edge**, for the
+  same reason — over the pot was under the overhang.
+- **A save mid-drop is a save mid-spin.** The rock in flight is ephemeral,
+  the way the wheel's spin is: the pot comes back on the table with the
+  decision open again. The design said the same path would replay; making the
+  drop stricter than the wheel would have been a rule with one exception.
+- **`__buy` reports a decision row as fired when it goes dead.** `spin again`
+  and `drop it` stay on the board, have no rung, move no figure and start no
+  work, so the hook answered false to a press that had plainly worked. The
+  fifth signal covers the wheel's row too.
+- The price is a knob (`PLINKO_DUST`, "the drop" on the dev panel), as asked.
 
-### The calls this makes, and would take an argument on
+### The calls this made, signed off
 
 - **Fair, not house-edged.** The wheel is fair and the whole section above
   says why; a drop that paid 0.97 would be the one dishonest object in the
-  yard. If the drop is meant to be a *sink* rather than a bet, that is a
-  different feature.
-- **A tower on the roof, not a building.** The alternative is a second shed
-  past the casino on the ground, which the table heap would then have to walk
-  round. The roof keeps the ground as it is and keeps the far end at one
-  building.
-- **Dust-priced, at ◾ 100,000.** Cores buy stations that produce; sparks buy
-  machines; this produces nothing, so it is priced in the thing it gambles,
-  like the casino itself. The number is a guess at "well past the casino,
-  well before the first machine" and belongs on the dev panel.
-- **Ten rows.** Eight rows caps the edge at about ×27 for a fair table and
-  the tower is squat; twelve puts the edge at one in four thousand, which
-  nobody ever sees. Ten is the tallest board whose top bin a player will hit
-  in an evening.
+  yard.
+- **A tower on the roof, not a building.** A second shed past the casino
+  would have had the table heap walking round it; the roof keeps the ground
+  as it is and the far end at one building.
+- **Dust-priced, and the price is a knob.** Cores buy stations that produce;
+  sparks buy machines; this produces nothing, so it is priced in the thing it
+  gambles, like the casino itself.
+- **Ten rows.** Eight caps the edge at about ×27 for a fair table and the
+  tower is squat; twelve puts the edge at one in four thousand, which nobody
+  ever sees.
 
 ## Crew
 

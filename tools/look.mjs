@@ -578,6 +578,12 @@ const SCENES = {
            window.__buy('stakedust'); window.__fast(3);
            window.__look(window.__state().casinoX - 380);`,
 
+  // The drop: the board on the casino's roof with a pot on the table and the
+  // rock a few rows down the pegs, the sign lit across the top.
+  plinko: `window.__reset(); window.__plinko(true); window.__give(6000); window.__chip(1);
+           window.__buy('dropdust'); window.__fast(4.3);
+           window.__look(window.__state().casinoX - 380);`,
+
   // The shelf outside the school: a taught hat waiting to be carried to its
   // stand, with nobody free to carry it. (critics A8)
   shelf: `window.__reset(); window.__crew(2,1); window.__give(100); window.__fast(2);

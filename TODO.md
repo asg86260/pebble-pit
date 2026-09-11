@@ -1,12 +1,12 @@
 # Still to do
 
-## The drop -- DESIGNED, not built (2026-09-10)
+## The drop -- BUILT (2026-09-10)
 
 A plinko tower on the casino's roof: one rock carries the whole pot down ten
-rows of pegs into eleven bins paying x39 / x5 / x3 / x1 / x1/2 at the middle,
+rows of pegs into eleven bins paying x39 / x5 / x3 / x1 / x.5 at the middle,
 exactly fair, settling the same pot on the same table. DESIGN.md, "The drop
-(design, not built)". Waiting on sign-off of four calls: fair vs house-edged,
-tower-on-roof vs a second shed, the dust price, and ten rows.
+(built)"; `test/plinko.test.mjs`; the `plinko` scene. The price is the "the
+drop" knob and has not been played against yet.
 
 ## Nine critics played the game (2026-09-10)
 
