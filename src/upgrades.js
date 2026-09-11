@@ -265,8 +265,14 @@ export const gainText = u => {
   // A rate stepping onto its floor can gain a real amount and round to nothing.
   // A row that says +0% is a row that reads as broken, so the smallest thing a
   // purchase is ever allowed to claim is one per cent.
+  //
+  // And no mark after it. A proportion is a comparison of a thing with itself,
+  // and the unit cancels out of it: the haulers' pace row read "+30% grains per
+  // clock", which is thirty per cent of nothing anyone could name. The row
+  // still carries its unit -- that is what `from` and `to` are measured in --
+  // but the board has no use for it once the number is a share.
   const up = a > 0 ? Math.round((b / a - 1) * 100) : 0;
-  return `+${b > a ? Math.max(1, up) : up}%${mark}`;
+  return `+${b > a ? Math.max(1, up) : up}%`;
 };
 
 

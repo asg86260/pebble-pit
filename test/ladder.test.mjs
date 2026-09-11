@@ -130,3 +130,26 @@ group('no row says a unit the board cannot draw', async () => {
        bad.join(', ') || 'none')
   ];
 });
+
+// A share has no unit. The haulers' pace and boots rows read "+30% grains per
+// clock" -- the unit `from` and `to` are measured in, hung off a number that is
+// a proportion of them and so has cancelled it out. Asserted over every
+// percentage row rather than the two that were noticed, so a rate row written
+// tomorrow is covered.
+group('a percentage row says the share and nothing after it', async () => {
+  window.__reset();
+  openSites();
+  window.__invest();
+
+  const rows = ALL_ROWS.filter(u => u.pct && u.from);
+  const bad = rows.map(u => [u.key, gainText(u)])
+    .filter(([, t]) => t && !/^\+-?\d+%$/.test(t))
+    .map(([k, t]) => `${k}: ${t}`);
+  const pace = rows.find(u => u.key === 'haulpace');
+  return [
+    ok(rows.length >= 4, 'there are percentage rows', String(rows.length)),
+    ok(pace && /^\+\d+%$/.test(gainText(pace)),
+       'the pace row is a bare percentage', pace && gainText(pace)),
+    ok(bad.length === 0, 'and so is every other one', bad.join(', ') || 'none')
+  ];
+});
