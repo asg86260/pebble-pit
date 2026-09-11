@@ -7270,7 +7270,18 @@ pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
 
-## Scenes: every part of the game, one press away (design, not built)
+## Scenes: every part of the game, one press away (built)
+
+Built 2026-09-11: `src/scenes.js` (the list), `src/scenesheet.js` (the block on
+the held sheet, the kept save, `__scene` / `__scenes`), `tools/look.mjs`
+asking the page. Ninety-nine scenes under fourteen parts. Checked by
+`test/scenes.test.mjs` (the list), `test/scenes-stand-{a..e}.test.mjs` (every
+scene that does not need the page stands a yard up, split five ways because
+each is a real yard and the lot is seven minutes) and the `scenes` browser
+group (the block, the press, the save byte-identical). Two calls made in the
+build: the node yard's snapshot has no `houses` or `craft`, so `houseboard`,
+`balloon` and `brolly` are marked `page` and left to the shot; and the sheet's
+line-list check reads the block as one line, "the scenes".
 
 **The ask.** The game is big enough that finding a feature by playing up to
 it is an hour's work, and a feature nobody can reach is a feature nobody

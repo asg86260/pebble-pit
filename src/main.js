@@ -136,6 +136,7 @@ document.addEventListener('visibilitychange', () => {
 if (import.meta.env.DEV) {
   import('./dev.js');
   import('./console.js');
+  import('./scenesheet.js');
 }
 
 requestAnimationFrame(frame);

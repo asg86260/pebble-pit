@@ -17,12 +17,15 @@ reasoning behind each feature, with sections marked `(built)` or
 
 **Look first.** Most changes here are *drawing*, and neither test tier can see a
 drawing. `node tools/look.mjs <scene> --zoom 4` sets the yard up, runs a second
-of it and writes a png to `shots/` in about fifteen seconds. There are two dozen
-scenes — `crew`, `quarry`, `farm`, `rock`, `yard`, `boards`, `belt`, `rift`,
-`endgame`, `scrubbing` and the rest; the list is `SCENES` at the top of
-`tools/look.mjs`, and several can be named at once, comma-separated. It needs a
-dev server — pass `GAME=http://localhost:<port>/`. Add a scene rather than
-hand-driving the same setup twice.
+of it and writes a png to `shots/` in about fifteen seconds. There are ninety
+scenes, one for every part of the game — `crew`, `quarry`, `farm`, `rock`,
+`yard`, `boards`, `belt`, `rift`, `endgame`, `scrubbing` and the rest; the list
+is `SCENES` in `src/scenes.js`, grouped by the part each is about, and
+`node tools/look.mjs --list` prints it. Several can be named at once,
+comma-separated. It needs a dev server — pass `GAME=http://localhost:<port>/`.
+The same list is drawn as buttons on the held sheet (space) in a dev build, so
+a scene written once is a button and a shot the same day. Add a scene rather
+than hand-driving the same setup twice.
 
 Iterate against a shot, not against a suite. A four-minute run that cannot tell
 you whether a hat is on straight is pure latency.

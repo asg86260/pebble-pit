@@ -225,6 +225,10 @@ export function persist() {
   // state that just threw over the last save that was whole -- a bug that
   // should have cost a reload costing the run instead. See crash.js.
   if (S.fatal || !S.dirty) return;
+  // A yard stood at a scene is not the player's and is never written down:
+  // the save they left is kept aside until `my yard` on the sheet puts it
+  // back. See scenesheet.js.
+  if (S.staged) return;
   // Another page has written since this one did (wave-critics, A10): this
   // page's yard is the stale one, and writing it would put a background tab's
   // hour-old yard over the hour just played in the other. It stops writing and
@@ -1310,7 +1314,8 @@ export function importSave(raw) {
 // through the sheet stands the way one that came in through a page load does:
 // the rows, the bodies, and the view where the save left it -- clamped, because
 // the save's world may be a different width from the one the page laid out.
-function bootYard() {
+// Exported for the scene sheet, which puts a kept save back the same way.
+export function bootYard() {
   buildShop();
   syncWorkers();
   S.camX = S.camWas ?? openingCamX();
