@@ -50,8 +50,11 @@ export const CREW_ROWS = [
     bill: () => [['shard', rungCost(40, S.harnessLevel)], ['dust', rungCost(400, S.harnessLevel)]],
     cost: () => rungCost(400, S.harnessLevel),
     buy: () => S.harnessLevel++,
-    // Once there is stone to spend, and not before: a row asking for a coin the
-    // yard has never handed you is a row that reads as broken.
+    // The second tier of the load ladder, so not until the first is finished --
+    // see `chained` in upgrades.js. And not until there is stone to spend: a row
+    // asking for a coin the yard has never handed you is a row that reads as
+    // broken.
+    after: 'haulcarry',
     show: () => S.seenShard && S.crew > 0
   },
   {
@@ -66,6 +69,7 @@ export const CREW_ROWS = [
     bill: () => [['shard', rungCost(30, S.bootsLevel)], ['dust', rungCost(300, S.bootsLevel)]],
     cost: () => rungCost(300, S.bootsLevel),
     buy: () => S.bootsLevel++,
+    after: 'haulpace',
     show: () => S.seenShard && S.crew > 0
   },
   {

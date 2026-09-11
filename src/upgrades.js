@@ -111,6 +111,32 @@ export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
 // row they have just bought vanishing under their hand.
 export const folds = u => maxed(u) && !u.keep;
 
+// A ladder sold in more than one row is still one ladder, and shows one row at
+// a time. Load and then the harness are two rows over what a pair of hands
+// carries; pace, then boots, then the pace multiplier are three over how fast
+// they walk. Side by side they read as the same thing for sale twice -- and a
+// player with both open is being asked which of two identical rows to buy, which
+// is not a decision, it is a shrug. So a row that continues another names it
+// with `after`, and stays off every board until that row's ladder is finished:
+// the same rule the four cards of a tier ladder already keep (`tierRows`), said
+// once here for the rows written by hand. The finished row folds away under
+// "finished: hidden" and the next one stands where it stood.
+//
+// It wraps `show` rather than being a second gate the boards have to ask about,
+// so everything that reads `show()` -- the sheet, `canAfford`, the bench's mark,
+// `__rows` -- gets the chain for free.
+export const chained = rows => {
+  const byKey = new Map(rows.map(u => [u.key, u]));
+  for (const u of rows) {
+    if (!u.after) continue;
+    const prev = byKey.get(u.after);
+    if (!prev) throw new Error(`${u.key} comes after ${u.after}, which is not a row`);
+    const own = u.show;
+    u.show = () => maxed(prev) && own();
+  }
+  return rows;
+};
+
 // Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
 // is this" is one question with one answer wherever it is asked.
 const mineGap = swing(MINE_BASE, MINE_FLOOR, RUNGS);
@@ -817,7 +843,7 @@ registerRows([HOUSE_ROW]);
 //
 // The economy below is what does not fit in a data file: rebalancing the crew,
 // hiring, staffing, paying a bill. That stays here.
-export const UPGRADES = [
+export const UPGRADES = chained([
   ...BENCH_ROWS,
   ...LUCK_ROWS,
   ...ROCK_ROWS,
@@ -834,7 +860,7 @@ export const UPGRADES = [
   ...SHACK_ROWS,
   ...MULT_ROWS,
   ...SHIELD_ROWS
-];
+]);
 
 // and the yard is told what these rows are, so a work coming back out of a save
 // knows which one it belongs to. See `registerRows`.

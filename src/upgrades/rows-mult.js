@@ -38,8 +38,11 @@ import { invested } from './site.js';
 // station's own board names that station instead, so the rule the boards
 // already follow -- a decision about a place is made at the place -- holds
 // for the work too, not just the purchase.
-const ladder = ({ key, field, name, unit, cost, currency, board, site = 'yard', show }) => ({
+const ladder = ({ key, field, name, unit, cost, currency, board, site = 'yard', show, after }) => ({
   key,
+  // The rung it sits under has to be finished first: a multiplier is the top of
+  // the ladder it multiplies, not a rival row beside it. See `chained`.
+  after,
   name,
   unit,
   pct: true,
@@ -76,6 +79,7 @@ export const SWING_MULT = ladder({
   unit: 'px/s',
   cost: () => rungCost(15, levelOf('swing')),
   currency: 'shard',
+  after: 'rockhandspeed',
   // The shack draws it, directly under the rung it multiplies. The bench used
   // to, on the argument that the rock had no board of its own and the bench
   // stood at its flank -- which is the sentence the shack was built to make
@@ -97,6 +101,7 @@ export const HAUL_MULT = ladder({
   unit: 'px/s',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
+  after: 'boots',
   // The bench, directly under the pace rung it multiplies -- the same shelf
   // `swing x` sits on at the shack, for the same reason. It was sold at the
   // house for a while, which put the multiplier a board away from its rung.

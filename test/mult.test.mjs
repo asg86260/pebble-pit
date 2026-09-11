@@ -14,6 +14,7 @@
 // the price or the wait.
 
 import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+import { RUNGS } from '../src/config.js';
 
 // The swing multiplier is the one on the shack's board, beside the rung it
 // multiplies.
@@ -64,6 +65,9 @@ group('no multiplier is for sale before there is a bench to work at', async () =
   window.__reset();
   openSites();
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
+  // A multiplier is the top of the rung it multiplies, so the rung has to be
+  // finished first -- this check is about the other gate. See ladder-chain.test.mjs.
+  window.__levels({ rockhandSpeedLevel: RUNGS });
   const shut = window.__rows().filter(r => r.key === 'labswing')[0];
   window.__invest();
   const open = window.__rows().filter(r => r.key === 'labswing')[0];

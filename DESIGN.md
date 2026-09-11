@@ -1694,6 +1694,29 @@ itself and the room appearing underneath. See `packPit` in pit.js.
 The paint store below is a *secondary* effect of the same resource rather than a
 second job — it spends red, it does not define it.
 
+### One stat, one row at a time (built)
+
+The bench's crew gear kept the rule the tier cards keep, but by hand and only
+half of it. Load and the harness are two rows over what a hauler carries; pace
+and boots are two over how fast it walks, and the pace multiplier is a third.
+They were all on the board at once, which read as the same upgrade for sale
+twice -- and a player with two identical rows open is not being offered a
+decision.
+
+The rule is general now: **a row that continues another ladder stays off the
+board until that ladder is finished.** A row says so with `after: '<key>'`, and
+`chained()` in `upgrades.js` wraps its `show` so every reader of `show()` -- the
+sheet, `canAfford`, the bench's mark, `__rows` -- gets the gate without asking.
+The finished row folds away under "finished: hidden" and the next stands where
+it stood, which is exactly what a tier card does when its band is done.
+
+What is chained: `haulcarry` → `harness`; `haulpace` → `boots` → `labhaul`;
+`rockhandspeed` → `labswing`. The swing multiplier also lifts your own swing,
+but it is sold under the rockhands' rung at the shack, so that is the ladder it
+follows -- tying a shack row to a bench row under "you" would be a gate the
+board cannot show. The four tier ladders already do this through `tierRows` and
+are not touched.
+
 ## The ladder (design, not built)
 
 What is here now is eight rows that never end. Every one is a level you buy
