@@ -127,10 +127,12 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   // with the rock and the outline into one notch and three helmeted bodies
   // read as three bare squares (critics 2026-09-10, C12). A cell of white
   // round the glyph is the same argument `drawBody` makes for the body.
+  // Above and beside the glyph, never under it: the row under a hat is the top
+  // of the head, and a white cell there took the hat off the body.
   ctx.fillStyle = '#fff';
   for (let r = 0; r < rows.length; r++)
     for (let c = 0; c < rows[r].length; c++)
-      if (rows[r][c] === '#') ctx.fillRect(left + (c - 1) * P, top + (r - 1) * P, P * 3, P * 3);
+      if (rows[r][c] === '#') ctx.fillRect(left + (c - 1) * P, top + (r - 1) * P, P * 3, P * 2);
   drawSprite(ctx, rows, left, top);
 }
 

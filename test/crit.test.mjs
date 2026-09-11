@@ -53,6 +53,36 @@ group('a dig with crits forced on yields exactly the seam, never a shard more', 
   ];
 });
 
+// ...and a crit at the cut takes GROUND, not only stone. Pulling the seam's
+// shards forward changed nothing about when a dig finished, so a crit rung
+// bought at the quarry was worth nothing a minute (critics 2026-09-10, B6): a
+// crit swing takes the cell and its neighbors now, and a gang whose every
+// swing crits gets through a dig -- and so through a seam -- a good deal
+// sooner. Measured 49 -> 117 shards in ten minutes; two and a half is well
+// clear of the noise.
+group('a crit at the cut takes more ground out at once, so the digs come sooner', async () => {
+  const dug = force => {
+    window.__reset();
+    openSites();
+    window.__fullSites();
+    window.__crew(0, 6, 3);
+    window.__clearFloor();
+    window.__crit(force);
+    run(5);
+    const a = state().shards + state().finds.filter(f => f === 'shard').length;
+    run(300);
+    return state().shards + state().finds.filter(f => f === 'shard').length - a;
+  };
+  const plain = dug(false);
+  const critted = dug(true);
+  window.__crit(false);
+  return [
+    ok(plain > 0, 'the cut gives up stone with crits off', `${plain} in five minutes`),
+    ok(critted > plain * 1.6, 'and a gang critting every swing gets a good deal more of it',
+       `${plain} -> ${critted} in five minutes`)
+  ];
+});
+
 // --- 2. the unbounded job: your swing at the rock ADDS -------------------------
 //
 // The rock is bottomless, so a crit is worth `mult` pixels where an ordinary

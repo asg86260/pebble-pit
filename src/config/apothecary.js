@@ -75,11 +75,13 @@ export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
 // is one body, one buff -- a fresh dose refreshes the timer rather than stacking
 // -- so "more doses" and "more bodies reached" are the same sentence. See the
 // report and DESIGN.md "Open".
-// A first rung at about half the door (900 dust), not a fortieth of it: a board
-// you can clear on the frame it opens is a list, not a set of choices. The
-// grind pass measured exactly that happening -- see DESIGN.md.
-export const BREW_RUNG_SPORE = 90;     // first rung, spore, rungCost-shaped
-export const BREW_RUNG_DUST = 450;     // and the dust half, per the house rule
+// A first rung at the door's own price (900 dust), not a fortieth of it: a
+// board you can clear on the frame it opens is a list, not a set of choices.
+// The grind pass measured exactly that happening, and the idle veteran measured
+// it again at half the door -- every ladder bought inside a minute of the door
+// on every run (docs/critics-2026-09-10.md, B9).
+export const BREW_RUNG_SPORE = 120;    // first rung, spore, rungCost-shaped
+export const BREW_RUNG_DUST = 900;     // and the dust half, per the house rule
 
 // How many doses a stirrer takes out of the building in one trip, rung by rung.
 // One at level nought -- a body carrying a single vial, which is what it always

@@ -111,11 +111,9 @@ export const HATS = {
   // hat that is not a trade -- a janitor buys no kit and wears nothing the
   // school sells -- so it is the one that has to be told apart by shape alone,
   // which is why it is lopsided where the others are symmetrical.
-  // A peak out front, so it is not a helmet plus one course: at one screen
-  // pixel a cell the two were the same shape (critics C12).
   cap: [
-    '.##.',
-    '####'
+    '###',
+    '###'
   ]
 };
 
