@@ -32,7 +32,9 @@ export const QUARRY_CORES = 1;     // and the cut, once the plots are feeding it
 // rock never stops being worth digging. See DESIGN.md, "A rung costs the tier's
 // currency and dust, both."
 export const FARM_DUST = 600;      // the plots, and the first real bill
-export const QUARRY_DUST = 6000;   // the quarry
+// Four thousand, from six: the door sat shown-and-red for two and a half hours
+// of a greedy run (critics 2026-09-10, B9).
+export const QUARRY_DUST = 4000;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
 export const LAB_DUST = 12000;     // the lab
@@ -42,7 +44,10 @@ export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
 // A row shows once you are within this much of affording it. Nothing here is
 // revealed by a counter passing a mark nobody can see, and a price you have no
 // idea is coming is a price you cannot save for.
-export const UNLOCK_SHOW = 0.5;
+// Seven tenths, from a half: at a half the quarry's door appeared at three
+// thousand dust with income being spent as it came, and read as a wall
+// (critics B9).
+export const UNLOCK_SHOW = 0.7;
 
 // The rock the first core is in. There is no reason for one to turn up in the
 // first thing you break, before there is anywhere for it to go: four rocks of
