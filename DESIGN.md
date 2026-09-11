@@ -371,6 +371,154 @@ the whole of the building rather than a detail on it. It turns while there is a 
 spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
 says whether anything is happening.
 
+## The drop (design, not built)
+
+**A plinko tower on the casino's roof.** The wheel is even money and nothing
+else: half doubles, half takes, and the only decision is when to stop. That
+is a fine bet and a narrow one — every hand at the table has exactly two
+shapes. The drop is the casino's second table, and the thing it adds is
+*spread*: most drops give a little back or take a little, a few triple it,
+and once in a thousand the whole pot comes back forty times over. It is the
+only place in the yard where the answer is a number rather than a yes or a
+no.
+
+**It is a tower, not a second shed.** The casino is pinned to the far end of
+the walk because a place that makes nothing should be a place you went to,
+and a second gambling building past it would blunt that — the walk ends at
+*the* casino, not at a strip. So the drop goes *up*: a board of pegs standing
+on the casino's roof, twenty-two cells wide and about thirty tall, and the
+CASINO sign climbs to the top of it. From the far end of the yard the tower is
+the one tall thing out there, with the chase of lights round the top, which
+is what a casino looks like from a distance. It costs ◾ 100,000, a row on the
+bench that shows once the casino stands — the first chip rows are ◾ 10, the
+casino is ◾ 15,000, and the tower is the next rung of the same ladder.
+
+**One rock carries the whole pot.** The first thought is the honest-looking
+one — the pot is a heap of grains, so drop every grain through the pegs and
+let each land where it lands — and it is wrong, because a hundred grains
+through a binomial land where the binomial says and the pot comes back at
+almost exactly what it went down as. The picture would be the odds and the
+bet would be gone. So one ball goes down the board and the whole pot rides on
+it, and the ball is a rock, because this is Boulder Clicker and the one round
+thing that falls here is a boulder. It is a two-by-two black block on the
+white face of the board.
+
+**The board is the odds, the way the wheel is.** Ten rows of pegs, eleven
+bins, and the pegs are the whole of the mechanism: a ball at a peg goes left
+or right and nothing else, so where it lands is ten fair coins added up. The
+bins are marked with what they pay, in the sign's own glyphs:
+
+| bin | ×39 | ×5 | ×3 | ×1 | ×½ | ×½ | ×½ | ×1 | ×3 | ×5 | ×39 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| in 1,024 | 1 | 10 | 45 | 120 | 210 | 252 | 210 | 120 | 45 | 10 | 1 |
+
+Which sums to exactly 1,024 in 1,024: **the drop is fair to the grain, the
+same as the wheel**, and the house's whole edge is the same one — a fair bet
+taken for ever ends at nothing. It is written as a table in `config.js`
+rather than as a formula so the numbers can be read off the bins, and a check
+asserts that the table pays 1.000 so nobody tunes one bin without the others.
+Two-thirds of drops (672 of 1,024) land in the three middle bins and halve
+the pot; a quarter hold or triple it; one in fifty pays five; one in five
+hundred pays thirty-nine. The shape of the bet is: you will probably lose
+half, and you are there for the edge.
+
+**The path is picked first and the ball is aimed at it**, the way the wheel
+is. Ten coins are flipped off the seeded rng before the ball moves, and the
+ball then walks that path — two cells down and one across at each row, a
+short pause on the peg, no physics. What you are watching is the thing
+deciding, and a save taken mid-drop replays the same drop. The whole descent
+takes about the wheel's two and a half seconds, and the landing knocks the
+view; an outer bin knocks it hard.
+
+**It settles the same pot on the same table.** A drop is not a second purse.
+The heap on the ground beside the building *is* the pot, and the drop's
+answer is `pot × bin`, which the table already knows how to show: it rains in
+toward the new number or lifts off toward it, and past the first band the log
+ladder means a ×39 is visibly more sand without being thirty-nine times the
+sand. ×½ is the first time the heap ever leaves *partly* — half of it lifts
+off and fades, and the other half stays lying there. Nothing new is drawn for
+that; `drainOut` already stops at `tableWant()`.
+
+**Two rows of chips, and three verbs on a live pot.** Putting a chip down is
+still the spin — that is settled — so the drop gets a chip row of its own
+under the wheel's: *drop* ◾ 10, 100, 1,000, all, in whichever of dust, shards
+or spores is picked. The stake pours on to the table, the wheel keeps its idle
+turn, and when the last grain is still the rock lets go at the top of the
+board instead of the wheel going round. And a pot already on the table can go
+either way:
+
+| | |
+|---|---|
+| **bank it** | take it and walk out |
+| **spin again** | half it doubles, half it is gone |
+| **drop it** | probably half, maybe three, once in a while forty |
+
+So the ladder a player climbs is spin-spin-spin-*drop*: run a pot up on even
+money and then put the whole of it down the pegs for the edge bin. Spin and
+drop are shut for the same reasons at the same times — pouring, spinning,
+dropping, and a pot that has nowhere to land.
+
+**The rock walks back up.** Nothing pops here either: after a drop the rock
+sits in its bin, and a chute up the tower's side winches it back to the
+hopper over a second or so. The drop row is shut until it is home, which is
+never long enough to notice and is the difference between a ball and a
+number.
+
+**What it says when it lands.** The settled-hand box over the building shows
+the bin — ×3, ×½, ×39 — in place of the tick or cross, for the same few
+seconds. A ×39 is a big hand by any measure and goes on the noticeboard the
+way a big wheel win does.
+
+**Drawing it.** The tower is a black block with a white board knocked out of
+its face, the way the wheel is a white disc knocked out of the casino: the
+pegs are single black cells on the white, staggered a cell per row, and the
+bins are a row of black dividers along the bottom with the glyphs under them.
+The rock is a two-by-two black block, and a peg it is sitting on shows white
+through the gap. Everything on the six-cell grid; the board's width is
+eleven bins by two cells, which is why it is twenty-two cells and not a round
+number. The casino's roof sign moves to the top of the tower with its chase
+of lights; the tower's own roof takes the sign's place as the highest thing
+on the building.
+
+### What would be checked
+
+`test/plinko.test.mjs`, node tier, fresh game each:
+
+- the bin table pays exactly 1 — Σ (C(10,k)/1024 × bin[k]) = 1, computed off
+  `config.js`, so a tuned bin is a red test
+- bought like a player: the tower row is bought through `__buy`, the chip
+  goes down through the row, and the pot on the table after the drop is
+  `stake × bin` for the bin the seeded path landed in
+- a ×½ leaves half the grains on the table (and a ×3 rains in to the log
+  ladder's number), read off `table.n` against `shownFor`
+- drop refused while pouring, spinning, dropping, with the rock not home, and
+  with the pit full
+- a save taken mid-drop restores the same path and lands in the same bin
+- `S.plinkoOpen` and `S.drop` are in `SAVED` / `EPHEMERAL` — the roundtrip
+  test covers that on its own
+
+The shot is `plinko` in `tools/look.mjs`: a live pot, the rock four rows
+down, the sign lit at the top.
+
+### The calls this makes, and would take an argument on
+
+- **Fair, not house-edged.** The wheel is fair and the whole section above
+  says why; a drop that paid 0.97 would be the one dishonest object in the
+  yard. If the drop is meant to be a *sink* rather than a bet, that is a
+  different feature.
+- **A tower on the roof, not a building.** The alternative is a second shed
+  past the casino on the ground, which the table heap would then have to walk
+  round. The roof keeps the ground as it is and keeps the far end at one
+  building.
+- **Dust-priced, at ◾ 100,000.** Cores buy stations that produce; sparks buy
+  machines; this produces nothing, so it is priced in the thing it gambles,
+  like the casino itself. The number is a guess at "well past the casino,
+  well before the first machine" and belongs on the dev panel.
+- **Ten rows.** Eight rows caps the edge at about ×27 for a fair table and
+  the tower is squat; twelve puts the edge at one in four thousand, which
+  nobody ever sees. Ten is the tallest board whose top bin a player will hit
+  in an evening.
+
 ## Crew
 
 **Everybody is somebody.** A body used to be a slot: the crew was four counts, people were made out
