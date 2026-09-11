@@ -13,7 +13,7 @@
 import { S } from './state.js';
 import { SKY } from './smog.js';
 import { TUNABLE, tune, PROP_FROM, PROP_COST, NET_COST, ARCH_COST,
-         JACK_COST, DOME_COST } from './config.js';
+         JACK_COST, DOME_BILL } from './config.js';
 import { relayout, beat } from './main.js';
 import { JOB } from './jobs.js';
 
@@ -149,7 +149,14 @@ const shieldYard = () => {
   window.__jump(PROP_FROM);
   window.__give(60000);
   window.__grant({ shards: ARCH_COST * 3, spores: NET_COST * 3,
-                   sparks: JACK_COST * 3, cores: DOME_COST * 3 });
+                   sparks: JACK_COST * 3 });
+  // ...and the dome's whole bill, three times over, which is the dearest ask in
+  // the game and is priced in everything: the dust through the pit, the rest
+  // through the grant.
+  for (const [money, n] of DOME_BILL) {
+    if (money === 'dust') window.__give(n * 3);
+    else window.__grant({ [money + 's']: n * 3 });
+  }
 };
 // Raise one and run its build through rather than skipping it -- the pieces
 // still arrive by walking, only faster than watching.

@@ -5,8 +5,18 @@
 import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         JACK_COST, JACK_PARTS, JACK_PUSH } from '../src/config.js';
+         JACK_COST, JACK_PARTS, JACK_PUSH, DOME_BILL } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
+import { DUST_PER } from '../src/upgrades.js';
+
+// The dome is priced in everything the yard makes, and the fixture pays for
+// it the way the yard would: dust into the hole, the rest through the grant.
+const fundDome = () => {
+  for (const [money, n] of DOME_BILL) {
+    if (money === 'dust') window.__give(n);
+    else window.__grant({ [money + 's']: n });
+  }
+};
 
 // A yard with the coin for a shield and enough rocks behind it to be offered
 // one. The arch also wants the quarry open and the timber already answered.
@@ -231,8 +241,9 @@ group('under the dome, the one underneath walks out', async () => {
   through('net');
   through('arch');
   window.__meteor();
-  window.__grant({ sparks: JACK_COST * 2, cores: 20 });
+  window.__grant({ sparks: JACK_COST * 2 });
   through('jack');
+  fundDome();
   window.__crew(2, 1, 0, 0, 0, 1);         // and somebody who can fly
 
   const before = state();
@@ -272,7 +283,8 @@ group('the dome holds, and sets every rock down after it', async () => {
   through('net');
   through('arch');
   window.__meteor();                       // which also raises the tower
-  window.__grant({ sparks: JACK_COST * 2, cores: 20 });
+  window.__grant({ sparks: JACK_COST * 2 });
+  fundDome();
 
   // The dome is the tower's row, cast rather than carried, and `__upgrades()`
   // is the bench's board -- so it is asked for where it actually lives.
@@ -318,5 +330,36 @@ group('the dome holds, and sets every rock down after it', async () => {
     ok(set, 'and lets it down rather than dropping it'),
     ok(after.shield && after.shield.kind === 'dome', 'the dome is still standing'),
     ok(again && settled, 'and it catches the next one too')
+  ];
+});
+
+// --- the dome is the dearest thing in the game --------------------------------
+// Asserted against every row on every board rather than against a number typed
+// in here: a new machine or a raised price anywhere is what would make this
+// wrong, and this is where it would be caught. Each of the dome's coins stands
+// above the biggest ask of that coin on any other row, and the whole bill,
+// in dust, stands above every other bill in dust.
+group('the dome is priced in every coin and is the dearest thing on any board', async () => {
+  window.__reset();
+  const inDust = bill => bill.reduce((d, [money, n]) =>
+    d + (money === 'time' ? 0 : money === 'dust' ? n : (DUST_PER[money] || 0) * n), 0);
+  const rows = window.__rows().filter(r => r.key !== 'dome' && r.bill.length);
+  const dome = window.__rows().find(r => r.key === 'dome');
+  const coins = ['core', 'dust', 'shard', 'spore', 'spark'];
+  const domeLine = money => (dome.bill.find(([m]) => m === money) || [money, 0])[1];
+  const topOf = money => rows.reduce((best, r) => {
+    const n = (r.bill.find(([m]) => m === money) || [money, 0])[1];
+    return n > best.n ? { n, key: r.key } : best;
+  }, { n: 0, key: null });
+  const under = coins.filter(money => domeLine(money) <= topOf(money).n)
+                     .map(money => `${money}: ${topOf(money).key} asks ${topOf(money).n}`);
+  const dearest = rows.reduce((best, r) => inDust(r.bill) > inDust(best.bill) ? r : best, rows[0]);
+  return [
+    ok(!!dome, 'the dome is on a board'),
+    ok(coins.every(money => domeLine(money) > 0), 'and costs every coin the yard has',
+       JSON.stringify(dome.bill)),
+    ok(under.length === 0, 'more of each than anything else asks', under.join('; ')),
+    ok(inDust(dome.bill) > inDust(dearest.bill), 'and more in all than the next dearest row',
+       `${inDust(dome.bill)} against ${dearest.key} at ${inDust(dearest.bill)}`)
   ];
 });

@@ -50,8 +50,15 @@ export const JACK_PUSH_RATE = 22;   // and how fast, so the shove is visibly har
 
 // The dome: the tower's, and the only one that holds. It is cast rather than
 // carried: the wizards fly over and pour it the way they pour a star into an
-// empty sky, and it is priced in the coin that opens what you don't have.
-export const DOME_COST = 4;         // cores
+// empty sky. It is priced in everything the yard makes, and it is the dearest
+// thing in the game: every line of this bill stands above the biggest ask of
+// that coin on any other board (the ram's shards and sparks, the rift's dust,
+// the star's cores), so the last shield is the whole works' answer to the sky
+// rather than one more coin's. It was four cores alone, which made the end of
+// the argument cheaper than the machine that had just lost it.
+// `test/shield.test.mjs` holds this against every row on every board.
+export const DOME_BILL = [['core', 8], ['dust', 30000], ['shard', 1200],
+                          ['spore', 1000], ['spark', 1000]];
 export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
 // Wizard-seconds of pouring, the same shape as a star's summoning: one body in
 // the ring is three quarters of a minute, two is half that. Nobody on the

@@ -16,7 +16,7 @@ import { STEP } from './mult.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         DOME_COST, DOME_WORK } from './config.js';
+         DOME_BILL, DOME_WORK } from './config.js';
 import { raiseShield, shieldDone } from './shield.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
@@ -183,8 +183,8 @@ export const TOWER_UPGRADES = [
     key: 'dome',
     name: 'conjure the barrier',
     note: () => 'nothing can get past this thing.',
-    bill: () => [['core', DOME_COST], ['time', DOME_WORK * 1000]],
-    cost: () => DOME_COST,
+    bill: () => [...DOME_BILL.map(l => [...l]), ['time', DOME_WORK * 1000]],
+    cost: () => DOME_BILL.find(([m]) => m === 'dust')[1],
     buy: () => raiseShield('dome'),
     // The four before it have all been through, and there is somebody who can
     // fly to cast it. It leaves the board the moment it is bought, because

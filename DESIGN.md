@@ -1310,9 +1310,12 @@ out of the ground, and the ground has been losing this argument for four
 shields.
 
 **The dome.** The fifth try is the wizards', and it is the first shield not made out of the
-thing it is stopping. Sold on the tower's board and priced in cores — the tower is raised for
-cores, and cores open what you don't have, which by then is the one thing left: the sky staying
-shut. And it is not built, it is *summoned*: the wizards fly over from the star and ring the
+thing it is stopping. Sold on the tower's board and priced in everything — cores, dust, shard,
+spore and sparks at once, every line above the biggest ask of that coin anywhere else, so it is
+the dearest thing in the game (`DOME_BILL`; `test/shield.test.mjs` holds it against every row on
+every board). It was four cores alone, which made the end of the argument cheaper than the
+machine that had just lost it; the last shield is the whole works' answer to the sky, and its
+bill says so. And it is not built, it is *summoned*: the wizards fly over from the star and ring the
 landing spot the way they ring an empty sky, and pour — the same act, aimed at the ground, in
 the same purple, sharing the same clock across however many of them are in the ring. The four
 shields before it were labor by somebody standing at the spot; this one is the only labor in

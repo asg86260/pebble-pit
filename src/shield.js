@@ -20,7 +20,7 @@ import {
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS,
   JACK_COST, JACK_PARTS, JACK_HOLD_MS, JACK_PUSH, JACK_PUSH_RATE,
-  DOME_COST, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
+  DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
@@ -55,7 +55,7 @@ export const KINDS = {
   // Magic, and the end of the argument. Cast rather than carried: the wizards
   // fly over and pour it, the way they pour a star into an empty sky, and its
   // progress is their pouring -- see `pourDome`.
-  dome: { pieces: DOME_RINGS, cost: DOME_COST, money: 'core', answer: 'hold',
+  dome: { pieces: DOME_RINGS, bill: DOME_BILL, answer: 'hold',
           cast: true, work: DOME_WORK, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
 };
 
