@@ -41,8 +41,6 @@ import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_T
          CASINO_WHEEL, CASINO_KNOCK,
          CASINO_WIN_KNOCK, TABLE_LIFE, TABLE_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM,
-         PLINKO_ROWS, PLINKO_BINS, PLINKO_MS, PLINKO_HOME_MS, PLINKO_KNOCK, PLINKO_EDGE_KNOCK,
-         PLINKO_PITCH, PLINKO_ROW_H, PLINKO_SIGN_H, PLINKO_HOPPER_H, PLINKO_BIN_H, PLINKO_LABEL_H, PLINKO_MARGIN,
          P, SHADES, SHARD_CELL, SPORE_CELL, someFind, CASINO_BIG } from './config.js';
 import { S, pit, casino, table } from './state.js';
 import { noteHand } from './notices.js';
@@ -74,115 +72,7 @@ export const pouring = () => !!S.pouring;
 // going. Between the chip going down and the wheel stopping there is nothing you
 // can press, which is exactly what it was before -- the wait simply starts at
 // the chip now instead of a second and a half later.
-export const busy = () => pouring() || spinning() || dropping();
-
-// --- the drop -----------------------------------------------------------------
-// The board on the roof: the second way a pot gets settled, and the one whose
-// answer is a number rather than a yes or a no. One rock carries the whole pot
-// -- not a grain each, because a hundred grains through ten rows of pegs land
-// where the binomial says and the bet averages itself away -- and the bin it
-// lands in is what the pot is multiplied by. See DESIGN.md, "The drop".
-
-// The rock is on its way down. Like the wheel going round: nothing you press
-// does anything until it lands.
-export const dropping = () => !!S.drop && now() < S.drop.at + PLINKO_MS;
-
-// And home again, in the hopper. After it lands it sits in its bin and is
-// winched back up the tower's side, and the board is shut until it is back --
-// never long enough to notice, and the difference between a rock and a number.
-export const rockHome = () => !S.drop;
-
-// The tower's face in cells, laid out from the top: the sign across it, the
-// hopper, the peg field, the bins. The peg field is the bins times the pitch
-// wide, with a black margin either side; the sign spans the whole width.
-export const PLINKO_COLS = PLINKO_BINS.length * PLINKO_PITCH;
-export const PLINKO_W = PLINKO_COLS + PLINKO_MARGIN * 2;
-export const PLINKO_FIELD_H = PLINKO_ROWS * PLINKO_ROW_H;
-export const PLINKO_H = PLINKO_SIGN_H + PLINKO_HOPPER_H + PLINKO_FIELD_H + PLINKO_BIN_H + PLINKO_LABEL_H + 1;
-// Where the tower stands: on the roof, centered over the building, on the
-// grid. The rect the fence, the bar and the rising clip all read.
-export const plinkoBox = () => ({
-  x: Math.round((casino.x + casino.w / 2 - (PLINKO_W * P) / 2) / P) * P,
-  y: Math.round((casino.y - PLINKO_H * P) / P) * P,
-  w: PLINKO_W * P, h: PLINKO_H * P
-});
-
-// The rock's stops, hopper to bin, as its top-left cell on the tower's face.
-// A path is ten flips; each one moves the rock half a pitch across and a row
-// down, so ten of them put it dead in the middle of bin `rights`. Thirteen
-// nodes: the hopper, the first peg, one after each flip, and the bin floor.
-export const dropNodes = path => {
-  const top = PLINKO_SIGN_H + PLINKO_HOPPER_H;          // the first row of the peg field
-  let x = PLINKO_MARGIN + PLINKO_COLS / 2 - 1;          // two cells wide, centered
-  const nodes = [[x, top - 3], [x, top - 1]];
-  for (let r = 0; r < PLINKO_ROWS; r++) {
-    x += path[r] ? PLINKO_PITCH / 2 : -PLINKO_PITCH / 2;
-    nodes.push([x, top - 1 + PLINKO_ROW_H * (r + 1)]);
-  }
-  nodes.push([x, top + PLINKO_FIELD_H + PLINKO_BIN_H - 2]);
-  return nodes;
-};
-
-// Where the rock is this frame, in cells on the tower's face, and whether it
-// is on the white of the board or climbing the black of the frame. Falling, it
-// walks the nodes a segment at a time, with a beat on each peg; winched, it
-// goes straight up the frame's left side and across into the hopper.
-export function rockAt() {
-  const nodes = dropNodes(S.drop ? S.drop.path : []);
-  const home = nodes[0];
-  if (!S.drop) return { x: home[0], y: home[1], frame: false };
-  const t = now() - S.drop.at;
-  if (t < PLINKO_MS) {
-    const segs = nodes.length - 1;
-    const k = Math.min(segs - 1e-9, (t / PLINKO_MS) * segs);
-    const i = Math.floor(k), f = k - i;
-    // A rock does not drift off a peg: it sits, then goes. Most of each segment
-    // is the sit and the last part is the move.
-    const e = f < 0.45 ? 0 : (f - 0.45) / 0.55;
-    const a = nodes[i], b = nodes[i + 1];
-    return { x: a[0] + (b[0] - a[0]) * e, y: a[1] + (b[1] - a[1]) * e, frame: false };
-  }
-  const end = nodes[nodes.length - 1];
-  const since = S.drop.landedAt ? now() - S.drop.landedAt : 0;
-  const k = Math.min(1, since / PLINKO_HOME_MS);
-  // out of the bin to the frame, up the frame, and in at the top
-  const side = 1, up = home[1];
-  if (k < 0.25) return { x: end[0] + (side - end[0]) * (k / 0.25), y: end[1], frame: k > 0.15 };
-  if (k < 0.85) return { x: side, y: end[1] + (up - end[1]) * ((k - 0.25) / 0.6), frame: true };
-  return { x: side + (home[0] - side) * ((k - 0.85) / 0.15), y: up, frame: k < 0.95 };
-}
-
-// Let go. Ten coins off the seeded rng, added up into a bin, and the rock is
-// then *aimed* down that path -- the way the wheel is aimed at its slice. What
-// you are watching is the thing deciding, not a simulation that gets told.
-function drop() {
-  S.hand = null;
-  const path = [];
-  for (let r = 0; r < PLINKO_ROWS; r++) path.push(rand() < 0.5);
-  S.drop = { path, bin: path.filter(Boolean).length, at: now(), landedAt: 0 };
-  S.dirty = true;
-  buildShop();
-}
-
-// The rock has landed: the bin says what the pot is now. Halves round down --
-// the odd grain is the house's, which on a stake of one is the whole stake --
-// and a pot that comes to nothing is a pot that is gone.
-function land() {
-  const mult = PLINKO_BINS[S.drop.bin];
-  const cur = S.pot?.cur;
-  const was = S.pot?.n || 0;
-  const n = Math.floor(was * mult);
-  S.pot = n > 0 ? { ...S.pot, n, drop: false } : null;
-  S.drop.landedAt = now();
-  const edge = S.drop.bin === 0 || S.drop.bin === PLINKO_BINS.length - 1;
-  shakeView(edge ? PLINKO_EDGE_KNOCK : PLINKO_KNOCK);
-  // The sand walks itself to the new number -- see `stepTable` -- and the box
-  // over the pot says the bin rather than a tick or a cross.
-  S.hand = { won: mult >= 1, n, cur, at: now(), mult };
-  noteHand(mult > 1, mult > 1 ? n : was - n, CASINO_BIG);
-  S.dirty = true;
-  buildShop();
-}
+export const busy = () => pouring() || spinning();
 
 // --- the chip -----------------------------------------------------------------
 // How much goes down is chosen, not worked out for you. Four chips, and the last
@@ -220,27 +110,18 @@ export const canStake = cur =>
 // the pour is part of the spin, not a window before it.
 export const canRide = () => !!S.pot && !busy() && !S.paying;
 
-// Or down the board. Everything the wheel is shut for, plus the rock not being
-// back in the hopper yet.
-export const canDrop = () => S.plinkoOpen && canRide() && rockHome();
-export const canStakeDrop = cur => S.plinkoOpen && canStake(cur) && rockHome();
-
 // The chip goes down and the wheel goes round -- one gesture, not two. Putting
 // something on the table and then having to press a second thing to find out
 // what happened to it is a form to fill in, not a bet.
-//
-// `board` is the drop's own chip row: the same stake, the same pour, and the
-// rock lets go at the top of the board when the sand is still instead of the
-// wheel going round.
-export function stake(cur, board = false) {
-  if (board ? !canStakeDrop(cur) : !canStake(cur)) return;
+export function stake(cur) {
+  if (!canStake(cur)) return;
   const n = stakeOf(cur);
   if (cur === 'dust') spend(n);
   // Out of the hole first, and off what the rift holds for the rest: a stake is
   // spending like any other. See `spendHeld` in pit.js.
   else if (cur === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (cur === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
-  S.pot = { cur, stake: n, n, drop: board };
+  S.pot = { cur, stake: n, n };
   pour();
 }
 
@@ -321,11 +202,7 @@ function payOutStep(dt) {
 
 // Put the whole of it back on. Same wheel, same even money, and the pot is twice
 // what it was or it is nothing.
-export const ride = () => { if (canRide()) { S.pot.drop = false; pour(); } };
-
-// Or put the whole of it down the board. Same pot, same pour; the answer is a
-// bin rather than a slice. Probably half, maybe three, once in a while forty.
-export const dropIt = () => { if (canDrop()) { S.pot.drop = true; pour(); } };
+export const ride = () => { if (canRide()) pour(); };
 
 // What it lands on is decided now and shown in a second: a wheel that decided
 // when it stopped would be a wheel you could watch for a tell, and the spin is
@@ -426,13 +303,7 @@ export function wireTable() {
   if (!table.painter) table.painter = makePainter(table);
   table.onPut = table.painter.mark;
   table.blocked = underCasino;
-  // ...except under the drop tower's overhang, where the roof is the ceiling:
-  // a heap climbing up behind the board is a heap drawn through a building.
-  table.ceiling = c => {
-    if (!S.plinkoOpen) return TABLE_HIGH;
-    const b = plinkoBox(), x = table.x + c * P;
-    return x + P > b.x && x < b.x + b.w ? casino.h / P - 1 : TABLE_HIGH;
-  };
+  table.ceiling = () => TABLE_HIGH;
   table.repose = true;                 // a heap on the ground stands up
   resizeGrid(table);
 }
@@ -653,13 +524,7 @@ export function stepCasino(dt) {
   // The wheel waits for the pot. A chip that is down is a spin that is owed, and
   // it is paid on the frame the last grain of the stake comes to rest -- not
   // after a second of nothing, and not while there is still sand in the air.
-  if (S.pouring && settledInPile()) { S.pouring = false; S.pot?.drop ? drop() : spin(); }
-  // The rock: it lands, it sits, it is winched home, and then the board is open
-  // again. The pot is settled on the frame it reaches the bin floor.
-  if (S.drop && !S.drop.landedAt && !dropping()) land();
-  if (S.drop && S.drop.landedAt && now() - S.drop.landedAt >= PLINKO_HOME_MS) {
-    S.drop = null; S.dirty = true; buildShop();
-  }
+  if (S.pouring && settledInPile()) { S.pouring = false; spin(); }
   const fast = spinning();
   S.wheel = wheelAt(dt);
   if (!fast && S.spinUntil) {                    // it has just come to rest
@@ -736,19 +601,6 @@ export const CASINO_UPGRADES = [
     // not met, which is the one rule every board in this game keeps.
     show: () => S.casinoOpen && !S.pot && !busy() && !S.paying && seen(t.cur)
   })),
-  // The board's own chips: the same stake down the pegs instead of round the
-  // wheel, so a drop does not have to be won into. One row a currency, under
-  // the wheel's, and only once the tower stands.
-  ...STAKES.map(t => ({
-    key: `drop${t.cur}`,
-    name: 'drop',
-    price: () => `${MARKOF(t.cur)} ${stakeOf(t.cur)}`,
-    cost: () => stakeOf(t.cur),
-    currency: t.cur,
-    dead: () => !canStakeDrop(t.cur),
-    buy: () => stake(t.cur, true),
-    show: () => S.plinkoOpen && S.casinoOpen && !S.pot && !busy() && !S.paying && seen(t.cur)
-  })),
   {
     key: 'bank',
     name: 'bank it',
@@ -774,18 +626,6 @@ export const CASINO_UPGRADES = [
     dead: () => !canRide(),
     buy: ride,
     show: () => S.casinoOpen && !!S.pot
-  },
-  {
-    key: 'dropit',
-    name: 'drop it',
-    // What the top bin would make it, the way the spin row says what a double
-    // would: the number the decision is about is the one you are there for.
-    // The rest of the odds are on the board itself.
-    price: () => `${MARKOF(S.pot?.cur)} ${Math.floor(pot() * PLINKO_BINS[0])}`,
-    cost: () => 0,
-    dead: () => !canDrop(),
-    buy: dropIt,
-    show: () => S.plinkoOpen && S.casinoOpen && !!S.pot
   }
 ];
 
@@ -793,7 +633,6 @@ export const CASINO_UPGRADES = [
 const MARKOF = cur => `<i class="${cur || 'dust'}"></i>`;
 
 export const CASINO_SECTIONS = [
-  { title: 'the table', keys: ['chip', 'stakedust', 'stakeshard', 'stakespore',
-                               'dropdust', 'dropshard', 'dropspore'] },
-  { title: 'winnings', keys: ['bank', 'ride', 'dropit'] }
+  { title: 'the table', keys: ['chip', 'stakedust', 'stakeshard', 'stakespore'] },
+  { title: 'winnings', keys: ['bank', 'ride'] }
 ];

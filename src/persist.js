@@ -849,13 +849,8 @@ export function restore() {
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.
-  // `drop` rides with it: a stake put down for the board and caught mid-pour
-  // comes back owed a drop, not a spin -- the bet is the bet that was made.
-  S.pot = s.pot && s.pot.cur
-    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0, drop: !!s.pot.drop }
-    : null;
+  S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
   S.spinUntil = 0;
-  S.drop = null;
   S.tableAir = [];
   // A pot you have already taken comes back still owed to you.
   //

@@ -49,7 +49,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport } from './house.js';
-import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant, dropping, rockHome, rockAt } from './casino.js';
+import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -288,15 +288,7 @@ export const snapshot = () => ({
   // the beat before the spin: the stake is still coming down out of the sky
   pouring: pouring(),
   tableAir: S.tableAir.length,
-  hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: S.hand.mult ?? null },
-  // The drop: whether the board stands, whether the rock is on its way down
-  // it, and where it is -- in cells on the tower's face, for a check that wants
-  // to see it move.
-  plinkoOpen: S.plinkoOpen,
-  dropping: dropping(),
-  rockHome: rockHome(),
-  drop: S.drop && { bin: S.drop.bin, landed: !!S.drop.landedAt,
-                    at: (r => ({ x: +r.x.toFixed(1), y: +r.y.toFixed(1) }))(rockAt()) },
+  hand: S.hand && { won: S.hand.won, n: S.hand.n },
   potAt: Math.round(potAt().x),
   table: table.n,
   // how many grains that pot is meant to put on the ground, which past the first
