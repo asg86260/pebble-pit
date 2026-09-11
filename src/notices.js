@@ -172,9 +172,9 @@ export const NOTICES = [
   { key: 'everyjob', name: 'every job staffed at once',
     note: 'put at least one body on every job at once', when: everyJobStaffed },
   { key: 'tablebeaten', name: "we're so back",
-    note: 'win 50k in a single spin at the casino' },
+    note: 'win 50k on a single hand at the casino' },
   { key: 'tableruin', name: 'time to get a loan',
-    note: 'lose a 50k stake in a single spin at the casino' }
+    note: 'lose a 50k stake on a single hand at the casino' }
 ];
 
 const BY_KEY = new Map(NOTICES.map(n => [n.key, n]));

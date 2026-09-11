@@ -197,7 +197,7 @@ a minute is a decision.
 It keeps no books. Rates and totals belong on the counter and in the upgrade rows, where the number
 is next to the thing it is about.
 
-## The casino
+## The casino (the wheel; cut 2026-09-11, see "The sand board")
 
 **The one place in the yard that makes nothing.** Everywhere else, a thing you buy does something
 for ever after. This takes what you have and hands some of it back, and the whole of it is a
@@ -371,7 +371,7 @@ the whole of the building rather than a detail on it. It turns while there is a 
 spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
 says whether anything is happening.
 
-## The drop (built 2026-09-10)
+## The drop (built 2026-09-10; cut 2026-09-11 for "The sand board" below)
 
 **A plinko tower on the casino's roof.** The wheel is even money and nothing
 else: half doubles, half takes, and the only decision is when to stop. That
@@ -538,6 +538,163 @@ caught mid-pour comes back owed a drop. The shot is `plinko` in
 - **Ten rows.** Eight caps the edge at about ×27 for a fair table and the
   tower is squat; twelve puts the edge at one in four thousand, which nobody
   ever sees.
+
+## The sand board (built 2026-09-11)
+
+**The drop got the pitch wrong.** "A big plinko board for gambling dust" is
+a board the *dust* goes through, and the drop sent one rock down it with the
+pot written on the rock — a number on a boulder, with the sand standing off
+to one side as a chart of it. The rock version is superseded by this and comes
+out when this goes in.
+
+**The casino is the machine.** One building, read top to bottom:
+
+| | |
+|---|---|
+| **the roof** | a walled tray; the stake pours out of the sky into it and stands there as a heap — this *is* the pot, one grain a dust |
+| **the face** | the peg field, a white board knocked out of the block the way the wheel was, with the pegs as solid cells the sand has to get round |
+| **the foot** | seven slots at ground level, each with what it pays written under it |
+
+There is no wheel any more. The wheel and the board are two answers to the
+same question and a building with both is two buildings; the board is the one
+that uses the sand, so it is the one that stays. The spin rows go with it.
+
+**The sand is the spectacle, and the sand is the bet.** When you let it go,
+the tray floor opens and the whole heap drains through the pegs — a stream
+splitting on every peg, clumping, sheeting down one side, heaps building in
+the slots — settled by the same falling-sand rules the yard and the hole use,
+with the pegs as `fixed` cells (the quarry's own trick for undug rock). Nothing
+about where it lands is decided in advance: it lands where the sand goes. The
+pour of a hundred grains is a hundred grains; the ladder past that stays as it
+is (`shownFor`), because two million squares is still two million squares.
+
+**You call a slot before you let go.** One dial row, *slot* 1–7, and the
+called slot is marked on the foot of the building. What lands in it is paid at
+that slot's rate; what lands in the other six lifts off and fades, the way a
+lost pot always has. Then the called slot's heap flies to the hole grain by
+grain, each carrying its rate, and the counter moves as each one lands — which
+is banking today, from a different heap.
+
+So a hand is: chip → the sand comes down on the roof → call a slot → let it go
+→ watch → paid or gone. There is no *spin again*: the winnings go to the hole,
+and the next hand is a new chip. Every hand is a fresh board — the six losing
+heaps are gone before the next chip goes down, and nothing lies on the pegs
+between hands.
+
+**The rates are measured, not chosen.** Sand through pegs is not a binomial;
+what share reaches each slot depends on the peg layout and on the tray's gate.
+So the shares are *measured* — ten thousand grains through the built board in
+the node yard, read off the slots — and each slot's rate is one over its share,
+rounded to a half, so the board pays about one on average the way the wheel
+did. `test/sandboard.test.mjs` pours the board and asserts the measured pay
+comes within a few percent of one, so a moved peg is a red test rather than a
+quietly crooked board. The rates are written on the slots in the digits the
+drop's bins used.
+
+**Where the gate opens is the luck.** A gate always at the middle of the tray
+would send nearly the same share to every slot every hand, and a bet whose
+answer is the same every time is not a bet. So the tray floor gives way at one
+of several places along its length, picked when you let go, and the sheet
+comes down off-center or dead center as it falls. You see where it opened —
+the hole in the tray is drawn — and by then the call is made. The gate is
+picked first and the sand is aimed at it, the way the wheel was aimed at its
+slice; what you watch is still the thing deciding, because the sand does the
+rest on its own. If the measured spread is still too flat with the gate
+moving, the fix is more gate positions or a peg row that shifts a cell per
+hand, and the test that measures the shares is where that gets decided.
+
+**The building grows to fit the board.** Seven slots four cells apart is
+twenty-eight cells, a wall each side is thirty (`CASINO_W`, from twenty-six).
+Eight peg rows two apart, four cells of air above them for the sheet to fan
+out, eight cells of slot: the face is twenty-eight cells tall, from twelve.
+The tray on the roof is the table's own ceiling, twenty cells. The whole thing
+stands at about the height the old sign did. The sign goes back to the roof —
+across the front of the tray, where it reads as the tray's own edge.
+
+**What it settles on** is the same three facts about the ground the wheel
+waited on: nothing left in the tray, nothing in the air, no column of the
+board still moving. A pot of ten settles in a blink and an all-in takes as
+long as it takes.
+
+**A pot has to have somewhere to land**, as before: a called slot the hole
+will not take stays in the slot until there is room.
+
+### The calls this makes
+
+- **Seven slots, not eleven.** Sand fans less than coins flip; eleven slots
+  off one gate would leave the outer ones empty every hand and their rates
+  meaningless. Seven is the number the measured spread will fill.
+- **The wheel goes.** Said above. If the wheel is missed it is one file to
+  bring back, but a casino with two games in it is a strip.
+- **No spin-again.** Winnings go to the hole. Letting a won heap ride would
+  mean hoisting it back up to the roof, which is a picture worth having later
+  and a second mechanism now.
+- **Rates measured off the built board**, not designed. Written down once
+  they are known, in `config.js`, and held by a test.
+- **A fresh board every hand.** Board memory — leftovers on the pegs tilting
+  the next pour — is the better game and the harder one to keep honest; it is
+  the first thing to try once the plain board is in.
+
+### What building it changed
+
+- **The floor tips toward the hole; it does not tear.** The first build tore
+  the floor open outward from the gate, so the last row of sand on a flat
+  floor had somewhere to go — and that spread the pour over the whole board
+  whatever the gate: every call paid between 0.9 and 1.65 times, which is not
+  a bet. Now a grain on the tray floor runs a cell toward the gate each frame
+  and the heap above it comes down by the sand's own rules, so the whole pot
+  goes through the one hole. Measured, the gate's own slot takes about forty
+  percent of the pour, the slot either side about twenty-eight, and the other
+  four nothing: a call pays near three times one hand in seven, near twice
+  two hands in seven, and nothing the other four.
+- **Seven gates, one over each slot.** Five spread along the tray left the
+  end slots with no gate of their own, and with the whole pour going through
+  one hole the gate *is* the outcome, so every slot gets its turn.
+- **Wider slots, fewer pegs.** Five cells wide, four peg rows, forty-one
+  cells across: three-cell slots twelve deep held thirty-six grains and the
+  thousand chip's two hundred filled five of them to the brim, so every
+  middle slot read the same number every hand. Sixty a slot holds the pour
+  where it lands, and what overflows stands up into the pegs, which is the
+  picture of a big hand.
+- **A grain that finds its column full spills sideways.** An edge gate fills
+  its two slots to the top of the board, and a grain that only tried its own
+  column hung over it for good — the hand never settled. It looks eight
+  columns either side, the way a heap spreads.
+- **The rates are `9 6 6 7 6 6 9`**, measured with `tools/node/board-rates.mjs`
+  and rounded to whole numbers: a stacked "6.5" is a smudge from the far end
+  of the yard, and the nearest whole number puts every slot within a tenth of
+  one. The sand rules lean a little one way (`settle` alternates its first try
+  by cell), so the shares are not quite mirror images; the rounding hides
+  that inside the tenth.
+- **The pour is deterministic given the gate.** The sand rules have no chance
+  in them, so the same gate lands the same counts every hand; the luck is
+  which of the seven gates opens, and nothing else. That is a roulette with
+  seven pockets dressed in sand, and it is honest about it: the odds are on
+  the board, and what you watch is the sand finding them.
+- **The ladder is shorter.** A hundred grains a decade past the first band,
+  brim four hundred: the slots are what the sand has to fit in now, not the
+  ground beside a shed.
+- **Nothing is saved but the pot.** A hand caught with the floor open comes
+  back a pot pouring on to the roof with the call open again, the way a wheel
+  mid-spin used to; a pot that had settled comes back pouring too, because the
+  sand is not saved and the tray has to be refilled.
+- **`__buy`'s dead-row signal** (from the drop) stays: `let it go` is a
+  decision row that goes dead when taken, and the hook reports it fired.
+
+### What is checked
+
+`test/casino.test.mjs`, node tier: the stake rains on to the roof and stands
+there as the pot, grain for grain; a pot still pouring takes neither a second
+chip nor the let-go; a hand bought the player's way — chip row, call dial,
+let-go row — is settled by the called slot at its rate, paid to the hole to
+the grain, and leaves the building empty; a save mid-pour comes back
+mid-pour; the ladder past the first band is the one written down.
+`test/sandboard.test.mjs`: the thousand chip poured from every gate pays
+every slot within a seventh of one against the written rates, and next to
+nothing sits on a peg when the board has settled. Browser tier
+(`selftest/casino.js`): the bench row builds it, the chip and call dials
+run their ranges, and a hand pressed through the page's rows settles. The
+shot is `casino` in `tools/look.mjs`, mid-pour.
 
 ## Crew
 

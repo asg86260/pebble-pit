@@ -49,7 +49,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport } from './house.js';
-import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant, dropping, rockHome, rockAt } from './casino.js';
+import { pot, pouring, letting, stakeOf, chipName, potAt, tableWant, slot, slotCounts, boardGrains, gateCols } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -280,23 +280,21 @@ export const snapshot = () => ({
   shieldsDone: [...S.shieldsDone],
   rockHeld: S.rockHeld,
 
-  // The casino: the stake, the spin, and the pot.
+  // The casino: the stake on the roof, the call, and the sand on the board.
   casinoOpen: S.casinoOpen,
   casinoBoardOpen: S.casinoBoardOpen,
   pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() },
-  spinning: spinning(),
-  // the beat before the spin: the stake is still coming down out of the sky
+  // the stake is still coming down out of the sky on to the roof
   pouring: pouring(),
+  // the floor is open and the sand is going through the pegs
+  letting: letting(),
+  gate: S.gate ? { at: S.gate.at, cols: gateCols().length } : null,
+  clearing: !!S.clearing,
+  slot: slot(),
+  slots: slotCounts(),
+  board: boardGrains(),
   tableAir: S.tableAir.length,
-  hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: S.hand.mult ?? null },
-  // The drop: whether the board stands, whether the rock is on its way down
-  // it, and where it is -- in cells on the tower's face, for a check that wants
-  // to see it move.
-  plinkoOpen: S.plinkoOpen,
-  dropping: dropping(),
-  rockHome: rockHome(),
-  drop: S.drop && { bin: S.drop.bin, landed: !!S.drop.landedAt,
-                    at: (r => ({ x: +r.x.toFixed(1), y: +r.y.toFixed(1) }))(rockAt()) },
+  hand: S.hand && { won: S.hand.won, n: S.hand.n, rate: S.hand.rate, slot: S.hand.slot, counts: S.hand.counts },
   potAt: Math.round(potAt().x),
   table: table.n,
   // how many grains that pot is meant to put on the ground, which past the first
@@ -427,7 +425,6 @@ export const snapshot = () => ({
   // there.
   brews: S.brews,
   casinoX: Math.round(casino.x),
-  wheel: +S.wheel.toFixed(2),
 
   // What is lying on the floor waiting to be found.
   finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
