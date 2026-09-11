@@ -823,7 +823,11 @@ export function showCrewList(on) {
   // Only ever out beside the house. Asked for while any other board is up -- or
   // none -- the answer is no rather than a sheet of names hanging off the lab.
   const want = !!on && at === 'house';
-  if (want === S.crewListOpen) return;
+  // Judged against the sheet, not the flag. A new game blanks the flag before
+  // it puts the board away, so at the moment the board leaves the flag already
+  // says "closed" while the list is still standing on the page -- and a check
+  // on the flag alone let it stand there into the next run.
+  if (want === S.crewListOpen && crewListEl.hidden === !want) return;
   S.crewListOpen = want;
   crewListEl.hidden = !want;
   // Filled before it is measured, for the reason opening a board is: an empty
