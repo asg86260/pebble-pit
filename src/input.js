@@ -657,7 +657,16 @@ function pan(dx) {
   clampCam();
   if (S.camX === was) return;
   S.dirty = true;                          // where you are looking is worth writing down
-  if (S.boardOpen) placeBoard();
+  // A board stays up while its station is in the window and comes down when
+  // you have scrolled it out: it opened because you stood at the station, and
+  // a sheet that follows you two windows off it is a menu that will not go
+  // away -- the house board rode the scroll onto the rock (critics 2026-09-10,
+  // C10). The same rule `pointerleave` already keeps.
+  if (S.boardOpen) {
+    const r = standRect(S.boardOpen);
+    if (r && (r.x + r.w < S.camX || r.x > S.camX + S.viewW)) showPanel(null, true);
+    else placeBoard();
+  }
 }
 
 canvas.addEventListener('wheel', e => {

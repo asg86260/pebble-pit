@@ -729,6 +729,17 @@ export const boardFit = () => ({ w: sized.w, h: sized.h,
 // tooltip is the only place words are cheap: it is not on screen until asked for.
 const tipEl = document.getElementById('tip');
 let tipFor = null;
+// Where the view was when the tip was seated. A tip is seated in screen
+// space once, off a pointer event, and the view can move under it without the
+// pointer moving: the arrow keys, the opening's own camera, a glide to a new
+// station. 'ROCK' hung over empty sky through the whole opening from a click
+// in the previous game (critics 2026-09-10, C10). A tip whose view has moved
+// is taken down; the next pointer move seats a fresh one.
+let tipCam = null;
+export function tipFollowsView() {
+  if (tipFor === null || !tipCam) return;
+  if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoom) showTipAt(null);
+}
 
 export function showTip(text, at) {
   if (!text) return showTipAt(null);
@@ -744,6 +755,7 @@ export function showTipAt(text, sx, sy, centred) {
     return;
   }
   if (text !== tipFor) { tipEl.textContent = text; tipEl.hidden = false; tipFor = text; }
+  tipCam = [S.camX, S.camY, S.zoom];
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   let x = centred ? sx - w / 2 : sx;
 
@@ -766,7 +778,12 @@ export function showTipAt(text, sx, sy, centred) {
     // A note about a row stands clear of the whole board, not just clear of the
     // row. Anchored on the row's own right edge it lands *inside* the sheet --
     // over the rows below it -- because the row ends where the board does.
-    if (r && !panelEl.hidden && x < r.x + r.w) {
+    //
+    // ...and only when it would actually stand on the sheet: the test was on x
+    // alone, so a yard label anywhere in the board's column of the window was
+    // flung to the far side of it -- 'THE BENCH' drawn on the rock, 'HOUSE'
+    // seven hundred pixels from the house (critics 2026-09-10, C10).
+    if (r && !panelEl.hidden && x < r.x + r.w && x + w > r.x && sy < r.y + r.h && sy + h > r.y) {
       const right = r.x + r.w + 8;
       x = right + w <= S.W - GAP ? right
         : r.x - w - 8 >= GAP ? r.x - w - 8       // no room that side: stand on the other
@@ -1151,6 +1168,7 @@ function hush() {
 
 export function hud() {
   hush();
+  tipFollowsView();
   tweenCount(now());
   fillPurse();
   fill(at);
