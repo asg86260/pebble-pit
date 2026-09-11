@@ -34,7 +34,7 @@
 // effect is put into words.
 
 import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
-         tonicGain, tonicOf, tonicShown } from './apothecary.js';
+         tonicGain, tonicOf, tonicShown, canAffordBrew } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
 import { MARK, priceText, purse } from './upgrades.js';
 import { screenAt } from './render/frame.js';
@@ -130,9 +130,16 @@ function openFor(i) {
     // shard is the quarry's coin, and a row priced in a currency the player has
     // never seen is a row about nothing. Asked at every open, not at build, so
     // the list grows the moment the quarry does. The "nothing" row always shows.
+    //
+    // And a brew the purse cannot cover is off the list too: the picker shows
+    // what a pot can be lit on right now, not the whole book. The one the pot is
+    // already turned to stays whatever the purse says, so what it is set to can
+    // be seen and turned off; a pot set to a brew you cannot afford would
+    // otherwise show a list that pretends it is on nothing.
     const t = tonicOf(o.dataset.opt);
-    o.hidden = !!t && !tonicShown(t);
-    o.classList.toggle('on', o.dataset.opt === (at || ''));
+    const on = o.dataset.opt === (at || '');
+    o.hidden = !!t && !(tonicShown(t) && (on || canAffordBrew(t.key)));
+    o.classList.toggle('on', on);
     o.querySelector('.bill').innerHTML = brewCost(o.dataset.opt).map(([money, n]) =>
       `<span class="${purse(money) >= n ? 'have' : 'short'}">` +
       `${MARK[money]} ${priceText(money, n)}</span>`).join('');

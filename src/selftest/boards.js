@@ -1321,6 +1321,26 @@ export const TESTS = [
     const deeper = linesNow();
     const moved = priced.filter(k => before[k] !== deeper[k]);
 
+    // Only what the purse can pay for is on the list. The dust is paid away
+    // through the same `take` every bill goes through, so the rows priced in it
+    // go -- all but the one this pot is already on, which stays so it can be
+    // seen and turned off. Read off the page against the bills the yard says it
+    // charges, so the check does not know which recipes want dust. (Dust rather
+    // than shard: the quarry is shut in this yard, so shard rows were never on
+    // the list to begin with.)
+    const shown = () => [...pop().querySelectorAll('.opt')]
+      .filter(o => o.dataset.opt && !o.hidden).map(o => o.dataset.opt);
+    const shownBefore = shown();
+    window.__pay('dust', state().stored);
+    point('pointermove', two()[0], two()[1] + 260, 0);
+    await sleep(40);
+    point('pointermove', ...two(), 0);
+    await sleep(60);
+    const shownAfter = shown();
+    const wantDust = k => window.__brewCost(k).some(([m]) => m === 'dust');
+    const setTo = state().potTonics[1];
+    const expect = shownBefore.filter(k => k === setTo || !wantDust(k));
+
     return [
       ok(open, 'standing at a cauldron drops its picker open, with no press'),
       ok(swatches === window.__tonics().length + 1,
@@ -1349,7 +1369,10 @@ export const TESTS = [
       ok(!!rung, 'the stew has a potency rung to buy on the board'),
       ok(moved.join(',') === 'stew',
          'a rung on one recipe moves that row and no other',
-         `${moved.join(',') || 'nothing'} moved -- ${before.stew} -> ${deeper.stew}`)
+         `${moved.join(',') || 'nothing'} moved -- ${before.stew} -> ${deeper.stew}`),
+      ok(shownBefore.some(wantDust) && shownAfter.join(',') === expect.join(','),
+         'a brew the purse cannot pay for is off the list, unless the pot is on it',
+         `${shownBefore.join(',')} -> ${shownAfter.join(',')}, wanted ${expect.join(',')}`)
     ];
   }],
   // A board does not change size while it is saying something.

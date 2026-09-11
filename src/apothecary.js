@@ -516,7 +516,9 @@ const held = money =>
   money === 'core' ? S.cores :
   money === 'spark' ? S.sparks : S.stored;
 
-const canAffordBrew = key =>
+// Also the picker's question: a brew the purse cannot cover is off the pot's
+// list, so the menu shows what can be lit and nothing else.
+export const canAffordBrew = key =>
   brewCost(key).length > 0 && brewCost(key).every(([money, n]) => held(money) >= n);
 
 function spendBrew(key) {
