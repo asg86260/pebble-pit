@@ -31,7 +31,7 @@
 // uses: one way of taking dust out of the pile, two destinations.
 
 import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
-         RIFT_GULP_SHOW, RIFT_SHAKE,
+         RIFT_GULP_SHOW, RIFT_SHAKE, RIFT_REACH0,
          RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains } from './pit.js';
@@ -108,12 +108,34 @@ export const riftOpen = () => !!S.riftOpen;
 // that is not machinery. Nothing tends it, nothing switches it on, and it has
 // nothing on the front of it to adjust.
 //
-// So there is no rate and no ladder. What is left is a ceiling on one frame --
-// see RIFT_INHALE_MAX -- which is not a balance number: it is there so that a
-// hundred thousand grains arriving in one act are taken over a few frames
-// instead of walking a million cells inside one. Anything the yard can earn is
-// orders under it.
+// So there is no rate and no ladder. What there is instead is a **reach**: the
+// disc eats what lies within so many cells of its underside, and the reach is
+// the disc's size -- RIFT_REACH0 cells into the pile the day it tears, the
+// whole hole by the time it is RIFT_WMAX across. A young rift skims a crater
+// out of the top of the pile under its mouth, and the pile stands at a level
+// that sinks as the hole grows; a grown one takes everything, as it always did.
+// Neither objection above is touched -- what you see is grains streaming out
+// of a crater into the disc, and there is nothing to buy -- and the pile the
+// opening was about is there to be watched being lost. Every grain the yard
+// tips in lands on top of the crater, inside the reach, so what the yard earns
+// still goes through; a full pit is impossible the same way it was.
+//
+// The ceiling on one frame, RIFT_INHALE_MAX, is not a balance number: it is
+// there so that a hundred thousand grains arriving in one act are taken over a
+// few frames instead of walking a million cells inside one.
 export const riftBite = () => Math.min(pitGrains(), RIFT_INHALE_MAX);
+
+// How far past the air under it it eats, in cells: RIFT_REACH0 at birth, the
+// far corner of the hole at full size, and the climb between them geometric --
+// the hole is six hundred cells long, and a reach that climbed toward that in
+// a straight line was ninety cells at the first sign of growth, which is the
+// empty pit again. Doubling on doubling is what "more and more" looks like:
+// a crater, then a bowl, then the near end, then all of it.
+export function riftReach() {
+  const k = (riftCells() - RIFT_W0) / Math.max(1, RIFT_WMAX - RIFT_W0);
+  const all = pit.cols + pit.rows;
+  return RIFT_UP + RIFT_REACH0 * Math.pow(all / RIFT_REACH0, Math.max(0, Math.min(1, k)));
+}
 
 // --- the swallowing ----------------------------------------------------------
 // Grains off the top of the pile and out of this dimension. Nothing is
@@ -136,7 +158,7 @@ export function stepRift(dt) {
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   const take = riftBite();
   if (!take) return 0;
-  return swallow(take, RIFT_INHALE_SHOW);
+  return swallow(take, RIFT_INHALE_SHOW, false, riftReach());
 }
 
 // The tearing: the hole emptied, over RIFT_GULP seconds, however much is in it.

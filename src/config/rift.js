@@ -33,7 +33,22 @@ export let ABYSS_AT = 1000000;       // grains eaten when the drowning comes
 // happens to measure. Far enough in to clear the counter's card, which stands
 // four cells from the lip.
 export const RIFT_AT = 0.05;
-export const RIFT_UP = 3;        // cells of clear air between it and the ground line
+// Raised from three: the pile has to be in view under it now that the disc
+// eats by reach rather than all at once (see RIFT_REACH0), and at three cells
+// of air a disc eating the top of a full pile sat on its own crater.
+export let RIFT_UP = 8;          // cells of clear air between it and the ground line
+// --- how far it reaches ----------------------------------------------------------
+// The torn rift eats what is within its reach of its underside, and the reach
+// grows with the disc: this many cells past the air under it the day it tears
+// -- a crater in the top of the pile under the mouth -- and the whole hole by
+// the time it is RIFT_WMAX across. Not a rate and not a dial: the pile under a
+// young rift stands, its top peeling up into the disc, at a level that sinks
+// as the hole grows, and every grain the yard tips in lands on that top, inside
+// the reach, and goes. Before this it took everything on the frame it landed,
+// from the tear on, and the pit was an empty white hole under a black disc for
+// the three and a half hours between the tear and the drowning
+// (docs/critics-2026-09-10.md, B5).
+export let RIFT_REACH0 = 4;      // cells below the air, the day it tears
 // --- the tearing ---------------------------------------------------------------
 // What happens the moment a hole that cannot take another grain gives way.
 //
@@ -344,6 +359,10 @@ export const RIFT_KNOBS = [
     get: () => RIFT_W0, set: v => { RIFT_W0 = v; } },
   { key: 'RIFT_WMAX', label: 'rift grown', min: 6, max: 24, step: 1,
     get: () => RIFT_WMAX, set: v => { RIFT_WMAX = v; } },
+  { key: 'RIFT_UP', label: 'rift air', min: 1, max: 16, step: 1,
+    get: () => RIFT_UP, set: v => { RIFT_UP = v; } },
+  { key: 'RIFT_REACH0', label: 'rift reach at birth', min: 1, max: 30, step: 1,
+    get: () => RIFT_REACH0, set: v => { RIFT_REACH0 = v; } },
   { key: 'ABYSS_AT', label: 'drowns at', min: 50000, max: 4000000, step: 50000,
     get: () => ABYSS_AT, set: v => { ABYSS_AT = v; } }
 ];

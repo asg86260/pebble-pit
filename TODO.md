@@ -10,40 +10,18 @@ the three quiet ways a save was lost. Each has a check that was red before it.
 Every balance number in that document is now worth re-measuring; the bot
 matrix has not been re-run since.
 
-**B2 is a dev-panel question now.** Measured on this tree with the critic's
-matrix (`tmp-critic/sky.mjs` in the fixes-3 worktree): three machines and no
-house, six showers in thirty minutes; a bare house, two; the house maxed against
-tune ten, haze at 5-10% of the cap, never under thirty, never a shower. The
-decided rule says a bought-into house brings the sky under control and never
-lets it go permanently clean; 5-10% is one and arguably the other. `SCRUB_PULL`
-is on the dev panel now ("house pull"). At twelve the sky climbs to 2900, rains
-once, and the rain's muck buries the yard so the stations stop -- the sky then
-reads clean because nothing is working -- so the shower-every-twenty-minutes
-shape wants the muck loop looked at with it, not one dial.
+**B2 decided 2026-09-11: a house with balloons keeps up with the machines.**
+Measured, it does -- maxed against tune ten to twelve the sky sits at 5-10% of
+the cap, never under thirty, never a shower -- and that is the intended shape.
+`SCRUB_PULL` is on the dev panel ("house pull") if it ever wants moving.
 
-**B5 is a decision, not a fix.** The torn rift inhales everything in the hole
-on the frame it lands (`rift.js`, "how fast"), and the argument for it is
-written there twice over: a pile losing a dozen grains a second reads as a
-slightly shorter pile, not as *pulled*, and a rate is a dial on the one object
-in the yard that is not machinery. The late-game critic's ten-hour run is the
-argument against: the pit tore at 4 h 43 m and stood empty until it drowned at
-8 h 27 m -- three hours and forty minutes with no pile, which is the thing the
-whole opening was about, and a drowning that collapses into nothing. The
-critic's shape is an inhale that scales with `riftCells()` (a bigger hole, a
-bigger mouth; full strength only at `RIFT_WMAX`), so the pile is visibly eaten
-from the top and refills. Either the design's reasoning holds and the empty
-era is the picture, or the mouth grows with the hole. Decide before code.
+**B5 built 2026-09-11.** The torn rift eats by reach, and the reach grows
+with the disc (DESIGN.md, "The pit's arc", the amended inhale bullet). The two
+shots are `b5-young.png` and `b5-grown.png` in the rift-reach worktree.
 
-**A8 is a design, not a fix.** A hat the school makes lands on the station's
-own stand, a thousand pixels from the school, with nothing walking it. The
-kit economy (`kit.js`, `crew/kitwalk.js`, `commute.js`'s wear/drop legs, the
-roster's stand count, `render/kit`) assumes one stand per job, so a hat that
-waits at the school until collected is a second place a job's kit can be: a
-per-job count saved on `S`, `kitX(job)` answering the school while it holds
-one and the station otherwise, the drop leg always to the station, and the
-school drawing its rack. The alternative -- the teacher carries the hat to
-the stand, the way a stirrer walks a dose -- keeps one stand but gives the
-teacher an errand and the hat a walk of its own. Decide which before code.
+**A8 built 2026-09-11.** A taught hat lands on a shelf outside the school and
+a hauler carries it to its station's stand (DESIGN.md, "The school", the shelf
+section). Shot: `a8-shelf.png` in the rift-reach worktree.
 
 **Read `docs/critics-2026-09-10.md` before proposing any balance or tuning
 work.** Nine persona agents played the yard at `c87c485` and every finding is

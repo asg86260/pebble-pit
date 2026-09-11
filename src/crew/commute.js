@@ -163,6 +163,16 @@ function arrive(w) {
   // travels with it, because what a body is wearing is a fact about the kit and
   // not about the job it happens to be on this second
   if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
+  // Off the shelf outside the school and into its hands, and on to the stand
+  // at the other end -- the hat is counted on the stand from the moment it is
+  // put down there (`spareKit`), and not before. If the shelf is bare by the
+  // time it arrives -- the school's count set back -- it carries nothing.
+  if (w.leg === 'take') {
+    const job = w.fetching;
+    if (job && S.hatShelf && S.hatShelf[job] > 0) { S.hatShelf[job]--; w.shelfHat = job; }
+    else { w.legs = w.legs ? w.legs.filter(l => l.do !== 'put') : null; }
+  }
+  if (w.leg === 'put') { w.shelfHat = null; w.fetching = null; }
   // ...and only if there is still one lying there to pick up. A walk to a stand
   // is a walk, and the yard can change while it is being made: the station's
   // count can go to nought behind a body already half way there -- a machine

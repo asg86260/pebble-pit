@@ -115,6 +115,12 @@ export function atStation(job, x) {
   return true;                     // carrying is done wherever the dust is
 }
 
+// The shelf outside the school where a taught hat waits to be carried to its
+// station: clear to the right of the front, off the doorway, the way every
+// stand stands off its building. One spot for every trade; the marks on it
+// stand in a row (see `kitStands`).
+export const shelfX = () => school.x + school.w + P * 3;
+
 export const kitX = job =>
   // The gang's, outside the shack, which is where their helmets come from -- the
   // hut keeps them the way the shed keeps the caps and the tower keeps the

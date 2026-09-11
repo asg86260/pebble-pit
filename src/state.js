@@ -279,6 +279,10 @@ export const S = {
   // the two grounds sell. `crop` and `seam` are the yield ones and are the only
   // multipliers here that were never the lab's.
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
+  // Hats the school has made and nobody has carried to their stand yet, by
+  // job. A taught trade lands here, outside the school, and a spare hand walks
+  // it to the station -- see `stepKit` in crew/kitwalk.js. (critics A8)
+  hatShelf: {},
 
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -694,6 +698,7 @@ export const SAVED_BY_HAND = [
   JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
+  'hatShelf',             // hats made at the school and not yet carried to their stand, carriers' included
   'lent',                 // the jobs the builders were borrowed from
   JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters

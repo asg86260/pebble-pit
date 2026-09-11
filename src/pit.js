@@ -461,7 +461,7 @@ const SHOWN = 200;
 let payX = null, payY = null;
 export const payTo = (x = null, y = null) => { payX = x; payY = y; };
 
-function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN) {
+function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN, within = Infinity) {
   let left = n;
 
   // What taking one grain is, wherever the walk found it: out of the plot, off
@@ -498,7 +498,7 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
     }
   };
 
-  if (near) nearestSurface(near, n, takes, take);
+  if (near) nearestSurface(near, n, takes, take, within);
   else {
     for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
       for (let c = 0; c < pit.cols && left > 0; c++) {
@@ -508,6 +508,7 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
     }
   }
   S.dirty = true;
+  return n - left;                           // what was actually taken
 }
 
 // Take `want` grains off the pile, nearest a point first, and hand each one to
@@ -533,8 +534,9 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
 // opening once the best distance in hand has reached that offset -- which is why
 // swallowing out of a pile six hundred columns wide only ever looks at the few
 // dozen it is actually eating.
-function nearestSurface(mouth, want, takes, hit) {
+function nearestSurface(mouth, want, takes, hit, within = Infinity) {
   const p = pit.p;
+  const limit = within * within;             // squared, like the keys
   const mcol = colOf(pit, mouth.x);
   const mrow = (bottomY(pit) - mouth.y) / p - 0.5;   // the mouth, in rows
 
@@ -590,6 +592,7 @@ function nearestSurface(mouth, want, takes, hit) {
     if (need > reach) spread(Math.min(need, pit.cols));
     if (!size) { if (lo < 0 && hi >= pit.cols) break; continue; }
 
+    if (key[0] > limit) break;               // the nearest left is past the reach
     const c = col[0], r = top[0], v = at(pit, c, r);
     if (!takes(v)) { drop(); continue; }     // and nothing under it can be reached
     hit(c, r, v);
@@ -684,7 +687,10 @@ export function spend(cost) {
 // mouth while the rest of the pile stands off the side of the window waiting its
 // turn. What the rift does afterwards is pull at what is near it; what the tear
 // does is take the lot.
-export function swallow(n, show, everywhere) {
+// `within` is how far from the mouth a grain may lie, in cells, and be taken:
+// the rift's reach (see `riftReach`). Nothing without it, as the tear and the
+// drowning want.
+export function swallow(n, show, everywhere, within = Infinity) {
   const take = Math.max(0, Math.min(Math.floor(n), count(pit)));
   if (!take) return 0;
   const held = riftHeld();
@@ -692,7 +698,7 @@ export function swallow(n, show, everywhere) {
   // Out of the pile nearest the mouth first: the disc eats what it is over. The
   // mouth is read off `rift` in the state rather than asked of rift.js, which
   // reaches this file for `swallow` and would be a circle.
-  lift(take, S.gulped, v => !!v, v => {
+  const got = lift(take, S.gulped, v => !!v, v => {
     if (isDust(v)) { dust++; return; }
     const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
     if (key) held[key]++;
@@ -706,13 +712,17 @@ export function swallow(n, show, everywhere) {
     // disc was made half again as wide. The underside stands RIFT_UP cells
     // over the ground whatever size the disc grows to, so the bite is the same
     // shape at every size.
-  }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h }, show);
+  }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h }, show, within);
   S.rift = (S.rift || 0) + dust;
   // What it has eaten, ever. Monotonic -- spending reads `riftHeld` and never
   // shrinks this -- and it is what the disc's size and the drowning are
   // derived from: see `riftCells` and the trigger in `stepRift`.
-  S.riftAte = (S.riftAte || 0) + take;
-  return take;
+  //
+  // What was taken, not what was asked for: with a reach (`within`) the two
+  // differ, and crediting the ask grew the disc sixty grains a second off an
+  // empty pile.
+  S.riftAte = (S.riftAte || 0) + got;
+  return got;
 }
 
 

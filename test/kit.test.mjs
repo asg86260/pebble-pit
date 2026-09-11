@@ -413,3 +413,49 @@ group('the carts have no ceiling, and the helmets do', async () => {
     ok(shown.includes('carter'), 'the cart row is still on the board')
   ];
 });
+
+// A hat the school makes is carried to its station, not put there. It used to
+// land on the rock's stand a thousand pixels from the school the frame the
+// trade was taught, with nothing walking it (critics 2026-09-10, A8). It lands
+// on the shelf outside the school now, a spare hauler walks over for it and
+// carries it to the stand, and the stand counts it only once it is put down.
+group('a taught hat waits on the school\'s shelf until somebody carries it to the stand', async () => {
+  window.__reset();
+  window.__grant({ shards: 100000, dust: 40000 });
+  window.__school({ open: true });
+  window.__crew(2, 3);
+  run(5);
+  const { shelved, spareKit, carried } = await import('../src/upgrades.js');
+  const { JOB } = await import('../src/jobs.js');
+  const rock = JOB.ROCK;
+
+  const bought = window.__buy('breaker');
+  // The hat's whole journey, sampled every tenth of a second: when it is first
+  // on the shelf, first in a carrier's hands, first on the stand, first on a
+  // head -- and whether it was ever on two of those at once.
+  const first = { shelf: null, hand: null, stand: null, head: null };
+  let twice = false;
+  const onHead = () => yard.S.workers.filter(w => w.trained && w.kitOf === rock).length;
+  for (let i = 0; i < 2400; i++) {
+    run(0.1);
+    const t = i / 10;
+    const at = { shelf: shelved(rock), hand: carried(rock), stand: spareKit(rock), head: onHead() };
+    for (const k of Object.keys(at)) if (at[k] > 0 && first[k] === null) first[k] = t;
+    if (at.shelf + at.hand + at.stand + at.head > 1) twice = true;
+    if (first.head !== null) break;
+  }
+
+  window.__crew(0, 0);
+  const f = k => first[k] === null ? 'never' : `${first[k]}s`;
+  return [
+    ok(bought, 'the trade is bought through the row'),
+    ok(first.shelf !== null, 'the hat lands on the shelf outside the school', f('shelf')),
+    ok(first.hand !== null && first.hand >= first.shelf, 'a spare hand walks to the shelf and takes it',
+       `shelf ${f('shelf')}, in hand ${f('hand')}`),
+    ok(first.stand !== null && first.stand > first.hand, 'and puts it on the stand, which counts it only then',
+       `in hand ${f('hand')}, on the stand ${f('stand')}`),
+    ok(first.head !== null && first.head > first.stand, 'and a rockhand then fetches it, as for any hat',
+       `on the stand ${f('stand')}, worn ${f('head')}`),
+    ok(!twice, 'and it is never in two places at once')
+  ];
+});
