@@ -101,6 +101,7 @@ import { PIT_KNOBS } from './config/pit.js';
 import { DUST_KNOBS } from './config/dust.js';
 import { AIR_KNOBS } from './config/air.js';
 import { SKY_KNOBS } from './config/sky.js';
+import { SCRUB_KNOBS } from './config/scrub.js';
 import { CREW_KNOBS } from './config/crew.js';
 import { SCHOOL_KNOBS } from './config/school.js';
 import { QUARRY_KNOBS } from './config/quarry.js';
@@ -115,7 +116,7 @@ import { NOTICE_KNOBS } from './config/notices.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
-  ...SKY_KNOBS, ...CREW_KNOBS, ...SCHOOL_KNOBS, ...QUARRY_KNOBS,
+  ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...SCHOOL_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS, ...LAB_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS
 ];

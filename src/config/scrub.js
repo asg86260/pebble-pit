@@ -7,7 +7,7 @@ export const SCRUB_ARM = 3;          // courses of daylight kept under it: a bod
 // half the pace it did, so the house takes half as many specks a second out of a
 // sky that is being filled half as fast. What it is worth against the yard is
 // untouched, which is the only number here that decides anything.
-export const SCRUB_PULL = 29.25;     // motes a second, per body in it -- per mote
+export let SCRUB_PULL = 29.25;       // motes a second, per body in it -- per mote
 // The draught the house makes while it is manned. It is not a hand picking
 // specks out of the band any more: the fan pulls on the whole sky, hardest near
 // the mouth and fainter the further out you are, so the haze leans towards the
@@ -122,3 +122,10 @@ export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
 // anything on the other side up against the lab: GROUND_LEFT and everything out
 // past the casino move by the same amount, so the far end of the walk keeps the
 // margin it had and only this gap changes.
+
+// The dev panel's row for the pull: the house's whole ladder scales off it,
+// so it is the one dial that moves the sky bargain (critics 2026-09-10, B2).
+export const SCRUB_KNOBS = [
+  { key: 'SCRUB_PULL', label: 'house pull', min: 2, max: 60, step: 0.25,
+    get: () => SCRUB_PULL, set: v => { SCRUB_PULL = v; } }
+];
