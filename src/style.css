@@ -8,6 +8,14 @@ html, body {
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+/* `hidden` means hidden, whatever the element's own `display` is. The browser's
+   rule for the attribute is `display: none` at the lowest priority there is, so
+   any author `display: flex` on the same element quietly beats it -- and this
+   file had eight per-element patches for that, one for each place somebody had
+   caught it, while the brews on the pot's picker stayed on the list with the
+   attribute set. One rule with the weight to win, and the attribute can be
+   trusted everywhere. */
+[hidden] { display: none !important; }
 /* the canvas is the window, whatever happens to the script */
 canvas {
   position: fixed;
@@ -38,7 +46,6 @@ canvas {
   will-change: transform;
   backface-visibility: hidden;
 }
-.panel[hidden] { display: none; }
 
 /* The columns are cut to the words that are actually in them.
    Every board used to carry its own hand-guessed widths -- nine of them across
@@ -568,10 +575,6 @@ canvas {
   text-transform: uppercase;
   white-space: nowrap;
 }
-/* `display: flex` above beats the browser's own rule for the hidden attribute,
-   so a shut list has to be shut again here -- without this every list on the
-   board stands permanently open. */
-.optspop[hidden] { display: none; }
 .optspop .opt {
   font: inherit;
   letter-spacing: inherit;
@@ -679,7 +682,6 @@ canvas {
   text-transform: uppercase;
   color: #000;
 }
-.held[hidden] { display: none; }
 /* The record, a page to read: lower case like a quotation, one line a notice
    with the name on the left and what earned it on the right, and no hover on
    any of it -- nothing here is pressed. Held to a screen's worth and scrolled
@@ -687,7 +689,6 @@ canvas {
 .held .record { display: flex; flex-direction: column; gap: 3px; width: 34em; max-width: 80vw;
                 max-height: 32vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
                 font-size: 11px; }
-.held .record[hidden] { display: none; }
 .held .record .head { letter-spacing: .14em; text-transform: uppercase; font-size: 10px; margin-bottom: 4px; }
 .held .record .line { display: flex; justify-content: space-between; gap: 2em; }
 .held .record .note { color: #666; text-align: right; }
@@ -713,7 +714,6 @@ canvas {
    corner that stretched it would stretch everything. It folds away entirely
    when it is not asked for rather than leaving a gap. */
 .held .paste { display: flex; flex-direction: column; align-items: center; gap: 10px; align-self: stretch; }
-.held .paste[hidden] { display: none; }
 .held textarea {
   align-self: stretch;
   font: inherit;
@@ -817,9 +817,6 @@ canvas {
    board beside a board is two boards, and on an ordinary window they would not
    both fit. The floor is so a name changing under the cursor cannot walk it. */
 .panel .flyout { width: auto; min-width: 34ch; }
-/* `.sheet` is `display: flex`, which outranks the browser's own rule for
-   [hidden] -- so without this the list is out from the moment the page loads. */
-.panel .sheet[hidden] { display: none; }
 /* A settlement can get long. The names scroll inside the sheet rather than
    pushing the panel taller than the window, which is the one thing that would
    move the board out from under the cursor that opened this. */
@@ -1030,7 +1027,6 @@ canvas {
   transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1);
 }
 .panel.open .sheet { opacity: 1; transform: none; }
-.panel .page[hidden] { display: none; }
 
 /* The wheel is going. The board is stood over the building it is going in, and
    the whole of what happens next is a thing you watch -- so the board gets out
@@ -1068,7 +1064,6 @@ canvas {
   will-change: transform;
   backface-visibility: hidden;
 }
-#raise[hidden] { display: none; }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 #raise:hover { background: #fff; color: #000; }
 
