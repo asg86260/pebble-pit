@@ -7270,6 +7270,110 @@ pads one by its heap -- so the gap the board is centered in is the walk plus
 the board, and the ground either side of it is a walk's worth. The world is
 eleven columns wider for it, which is the board's own width and no more.
 
+## Scenes: every part of the game, one press away (design, not built)
+
+**The ask.** The game is big enough that finding a feature by playing up to
+it is an hour's work, and a feature nobody can reach is a feature nobody
+looks at. There should be a scene for every part of the game -- the rock and
+its shack, the crew, the cut, the plots, the apothecary, the school, the
+house and its sky, the tower, the casino, the pit and the rift, the shields,
+the endgame -- and pressing one should stand the yard at that place, ready to
+be played, watched and broken.
+
+**The rule.** One list of scenes, written once, read by both of the things
+that want a scene: the shot tool (`tools/look.mjs`) and the sheet in the game.
+A scene is a fact about the game, not about either tool, so it lives with the
+game: `src/scenes.js`, dev-only, and the two readers ask it rather than
+keeping lists of their own. Today there are two lists that cannot see each
+other -- ninety scenes as strings in `look.mjs`, three story beats and the
+shields as buttons in `dev.js` -- which is the same defect the boards had
+before `UPGRADES` was the one list a row is on.
+
+**What a scene is.** A name, the part of the game it is about, one plain
+sentence, and the setup:
+
+```
+rock: { about: 'the rock', say: 'the gang on the crest, the shack beside it',
+        run: () => { window.__reset(); window.__crew(3, 2); window.__shack(); ... } }
+```
+
+`run` is a function, not a string, so it is checked when the file is read and
+reads like the rest of the code; the `__` handles it calls are the ones the
+checks use (hooks.js), which is what makes a scene exactly what you would
+have typed into the console. Every scene starts from `__reset()`: a scene is
+a place in the story, not whatever yard was standing when the button was
+pressed -- the dev panel's beats already say so, and it holds for all of
+them. The list is `SCENES`, keyed by name, and the parts are `ABOUT`, an
+ordered list of the headings, so a scene about a part the list does not name
+is red in `test/scenes.test.mjs` rather than orphaned under nothing.
+
+**The sheet.** The held sheet is the one surface that is not the yard, and it
+is where the settings went for the same reason; scenes go under them, below
+a rule. One heading per part in `ABOUT`'s order, and under each a row of
+buttons, one per scene, drawn in the sheet's own buttons -- black on white,
+the pixel face, nothing new. Pressing one runs the scene, closes the sheet
+and lets the clock go, so the yard is standing where the scene says with
+the player looking at it. The markup is not in `index.html`: `scenes.js`
+appends its own block to `#held` when it is imported, and it is imported
+from the `import.meta.env.DEV` block in `main.js` beside `dev.js`. A build
+has no scenes section because it has no scenes module, which is one gate
+rather than two, and it is the gate the dev panel already stands behind.
+
+**A scene never touches your save.** The sheet is reachable on the player's
+own game, and a scene is a fresh yard, so pressing one on port 5183 would put
+a synthetic yard over an evening's play. So: the first scene pressed in a
+page copies the store's blob aside (`boulder-clicker/v4.kept`), sets
+`S.staged` (ephemeral) and `persist()` declines while it is set -- the one
+line, beside the `fatal` and `yielded` declines it already has. The sheet
+grows a `my yard` button while staged; pressing it puts the kept blob back,
+clears the flag and restores. Reloading a staged page comes up on the kept
+save, because nothing was ever written over it. A scene is a place you
+visit, and the yard you left is where you left it.
+
+**The shot tool reads the same list.** `look.mjs` stops carrying scenes.
+`window.__scene(name)` (published by scenes.js on the same DEV window as the
+other handles) runs one, and `window.__scenes()` returns the names by part,
+so `node tools/look.mjs rock --zoom 4` is the same command with the scene
+looked up in the page instead of the file, and `--list` prints what the sheet
+would show. The comments that explain *why* a scene is set up the way it is
+-- the sky that has to fall into place for eight seconds, the flag shot
+partway through the hoist -- move with the scenes; they are the valuable part.
+
+**What goes.** `SCENES` and `SHIELDS` in `dev.js` and the two rows that draw
+them: the sheet draws the same beats under "the story" and "the shields". The
+dev panel keeps its knobs, its hires, its sky and its clock -- those are
+dials, not places. `SCENES` in `look.mjs` goes with it.
+
+**The parts, and the scenes that go under each** -- the existing ninety,
+sorted, and the gaps filled so that every part has at least one:
+
+- the story: opening, reunion, landing, the intro beats
+- the rock: rock, shack, shackrock, shackwork, crest, core, crit, flank
+- the crew: crew, assign, dance, belt, marks, apron, loo, kit
+- the bench: call, benchup, bench, build, fitting, buildboard, sitebars
+- the cut: quarry, plume, laddersdeep, quarryboard
+- the plots: farm, farmboard
+- the apothecary: apothecary, potwork, apothpots, apothshelf, apothpick, apothbuff, keeper
+- the school: schoolbar, schoolboard, shelf
+- the house and the sky: scrubbing, houseboard, sky0-3, rain, brolly, balloon, moored
+- the tower: towerflag, flag, flaghoist, aura
+- the casino: casino
+- the pit and the rift: rift, grown, rim, drown, tear
+- the shields: props, net, arch, jack, dome, and each one's rock, and the rescue
+- the endgame: endgame, books, notices
+
+**The bargain.** Nothing for the player: none of it ships, and the sheet they
+hold is unchanged in a build. For the work, one list instead of three, and a
+scene that is written once is a button, a shot and a check fixture the same
+day. What it costs is that `look.mjs` needs the page to know a scene's name,
+which it did not before -- and that is the right way round: the page is the
+game.
+
+**Checked by** `test/scenes.test.mjs`: every scene names a part in `ABOUT`;
+every part has a scene; every `run` leaves the yard standing (no throw, one
+second runs); and, through the sheet, a scene pressed on a page with a save
+leaves the store's blob byte-identical and `my yard` brings it back.
+
 ## Every station's work is done by a spare hand (design, not built)
 
 **The shack's slice is built (2026-09-10).** `shack: JOB.BUILD` in `SITE_JOB`;

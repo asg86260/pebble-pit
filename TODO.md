@@ -1,5 +1,13 @@
 # Still to do
 
+## Scenes: every part of the game, one press away (2026-09-11)
+
+**Designed, awaiting approval** -- "Scenes: every part of the game, one press
+away" in DESIGN.md. One dev-only list (`src/scenes.js`) read by both the held
+sheet and `tools/look.mjs`; a heading per part of the game with a button per
+scene; a scene never touches the player's save (`S.staged`, `my yard`). The
+ninety scenes in `look.mjs` and the beats in `dev.js` move into it.
+
 ## The sand board -- BUILT (2026-09-11)
 
 The casino is the machine: the stake heaps in a tray on the roof, the floor
