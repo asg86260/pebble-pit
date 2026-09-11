@@ -9,6 +9,7 @@ import { DANCE_BEAT, DANCE_BUZZ, DANCE_JUMP_H, DANCE_TEMPO_HI, danceJumpBeat } f
 // The bodies themselves, for the same group: which frames the dance actually
 // drew is a fact about a worker and not one the snapshot carries.
 import { S } from '../src/state.js';
+import { sweep } from '../src/hands.js';
 
 // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
 // about on the bare ground, and only then does the next one come down.
@@ -430,6 +431,16 @@ group('the game opens on two squares and a rock lands on one', async () => {
   const banked = state().stored;
   run(2);
   const seat = Math.abs(state().camX - state().openCamX);
+  // The bench's first row is about YOUR hands -- what a drag of the cursor
+  // picks up -- and it is not offered until you have dragged (critics
+  // 2026-09-10, C4): a stranger bought it four times for a mechanic nothing
+  // had shown them.
+  const rowShown = () => !!window.__rows().find(r => r.key === 'carry')?.shown;
+  const beforeDrag = rowShown();
+  const heap = state().piles.find(p => p.key === 'rock');
+  window.__pile(heap.from + P * 2, 4);
+  sweep(heap.from + P * 2 + P / 2, state().groundY - P / 2);
+  const afterDrag = rowShown();
 
   // And the one underneath is still there every time a rock is finished. A body
   // on the rock, so the crew take their five seconds over it: with nobody on
@@ -471,6 +482,8 @@ group('the game opens on two squares and a rock lands on one', async () => {
     ok(banked > after.stored,
        'so the counter moves with no click from the player', `${after.stored} -> ${banked}`),
     ok(seat < 2, 'and the view is back on the opening seat, bench in shot', `${seat} px off`),
+    ok(!beforeDrag && afterDrag, 'and the row about your own hands waits until you have used them',
+       `shown before a drag: ${beforeDrag}, after: ${afterDrag}`),
     ok(bare.buriedVisible,
        'and when the rock is gone they are there, alive, until the next one lands')
   ];

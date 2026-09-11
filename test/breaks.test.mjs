@@ -110,7 +110,12 @@ group('a full hole does not send the crew home any more', async () => {
 // clear up. So they go where they stand, whether the outhouse is up or not, and
 // what the outhouse changes is that a janitor can be posted at all.
 group('the outhouse buys the job, not somewhere to walk to', async () => {
-  window.__crew(3, 3);
+  // A gang on the rock and nobody carrying: whoever goes is standing on the
+  // rock when it goes, which is the length of the yard from the shed. With
+  // haulers in the crew the one due a break was wherever its walk had it --
+  // 295 px from the shed on one seeded run, 675 on another -- and the
+  // distance below read the walk rather than the rule.
+  window.__crew(3, 0);
   window.__loo();                            // the outhouse up
   window.__tune('LOO_EVERY', 4000);          // ten minutes a body, wound in
   window.__air({ haze: 0, muck: 0 });

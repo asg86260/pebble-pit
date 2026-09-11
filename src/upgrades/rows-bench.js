@@ -23,7 +23,13 @@ export const BENCH_ROWS = [
     to: () => capacity() + CAP_STEP,
     cost: () => rungCost(8, S.carryLevel),
     buy: () => S.carryLevel++,
-    show: () => true
+    // Once you have dragged. This is a rung on YOUR hands -- how many grains a
+    // sweep of the cursor picks up -- and it was the first-listed, cheapest row
+    // on the first board, so a newcomer bought it four times (74 dust, before a
+    // 60-dust house) for a mechanic nothing had shown them and nothing changed
+    // that they could see (docs/critics-2026-09-10.md, C4). A row about a thing
+    // you have done is a row you can read.
+    show: () => S.seenDrag
   },
   {
     // The rock's machine, sold at the rock like the other two are sold at

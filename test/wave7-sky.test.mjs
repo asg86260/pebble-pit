@@ -154,6 +154,10 @@ group('wave7 A3: a rained-on yard never doubles a claim (the player\'s route)', 
 // --- A4: the buried square tosses a stray core ---------------------------------
 group('wave7 A4: the square walks to a resting core and tosses it into the pit', () => {
   const checks = [];
+  // Nobody carrying: a hauler fetches a loose core, and the errand under
+  // watch here is the square's own. The dev yard hands over one hauler since
+  // the opening was put right (critics 2026-09-10, A2), so it is said.
+  window.__crew(1, 0);
   // The first rock with a core in it, worked off, so the core drops the way it
   // always does and comes to rest just past the rock's edge.
   window.__jump(5);

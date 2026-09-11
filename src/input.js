@@ -20,7 +20,8 @@ import { nearBench, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, ne
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
-import { rosterHit, overRoster } from './roster.js';
+import { rosterHit, overRoster, rosterSays } from './roster.js';
+import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { hoverAt } from './crew/pointer.js';
@@ -585,6 +586,16 @@ function askedAbout(x, y, cx, cy) {
   // this one -- unless a board is standing over the same spot on the page, in
   // which case there is nothing to add to what it is already saying.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
+  // A roster's buttons say what they do -- see `rosterSays`.
+  const roster = rosterSays(x, y);
+  if (roster) { showTip(roster.text, roster.at); return true; }
+  // And the counter says what it counts. The coin had no name on the opening
+  // screen: a stranger read `[] 0` and nothing else called it anything.
+  if (overCount(cx, cy)) {
+    const r = countRect();
+    showTipAt('pebbles in the pit: what everything costs', r.x + r.w / 2, r.y - P * 5, true);
+    return true;
+  }
   const label = polledWhatIsAt(x, y);
   if (label) {
     showTipAt(label, (x - S.camX) * S.zoom + P * 2, (y - S.camY) * S.zoom - P * 2);

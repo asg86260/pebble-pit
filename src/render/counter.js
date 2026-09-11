@@ -38,6 +38,14 @@ function digits(n) {
   return s;
 }
 
+// Where the card was last drawn, in screen pixels, for the tip over it: the
+// counter was the one thing on the opening screen with no name anywhere --
+// the word 'pebbles' appeared only on the books (wave-critics, C4).
+let countBox = null;
+export const countRect = () => countBox;
+export const overCount = (sx, sy) => !!countBox && sx >= countBox.x && sx < countBox.x + countBox.w
+                                     && sy >= countBox.y && sy < countBox.y + countBox.h;
+
 export function drawCount() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.font = '13px ui-monospace, "Courier New", monospace';
@@ -129,6 +137,7 @@ export function drawCount() {
     box.x = put;
   }
   ctx.fillStyle = '#fff';
+  countBox = box;
   ctx.fillRect(box.x, box.y, box.w, box.h);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;

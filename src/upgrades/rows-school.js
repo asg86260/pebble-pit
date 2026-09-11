@@ -24,6 +24,7 @@ export const SCHOOL_ROWS = [
     key: 'unlockschool',
     kind: 'building', site: 'yard', at: () => school.x + school.w / 2,
     name: 'build the training grounds',
+    note: () => 'makes the hats: a hat doubles whoever wears it at their station',
     // Priced in what the quarry gives, and in dust, because every row is priced
     // in dust -- see the note on the machine bills in config.js. This was the
     // one row in the game that asked for no dust at all.
