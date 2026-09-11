@@ -149,7 +149,7 @@ group('the intro plays to the end from a still seat', async () => {
 
   return [
     ok(still.done, 'the opening ran to the end under reduced motion'),
-    ok(still.beats.join(',') === 'chat,fall,down,up,show',
+    ok(still.beats.join(',') === 'leave,chat,fall,down,up,show',
        'every beat played', still.beats.join(',')),
     ok(sameBeats, 'and every beat handed over on the same frame as with the preference off',
        `${still.at.join(',')} vs ${glided.at.join(',')}`),

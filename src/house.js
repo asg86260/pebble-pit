@@ -70,8 +70,18 @@ const courseWide = c => Math.max(3, HOUSE_COLS - c);
 // the doorway; the rooms after it are the ones with people in them. So there is
 // one window a body from the very first, and building stays what it was: a hire
 // is a room, and room seventeen stands where room seventeen stands.
+//
+// And the two rooms stand before anybody is hired. The opening starts with the
+// two of them walking out of this door, so there has to be a door: a fresh
+// game draws the doorway and the one room from its first frame, and the crush
+// changes nothing about the place -- the one left standing is a crew of one,
+// whose house is the same two rooms. Only a yard that has had its opening and
+// has nobody in it (nothing in the game gets there; the checks do) has no house.
+export const roomsToday = () =>
+  S.crew > 0 ? S.crew + 1 : (S.introDone ? 0 : 2);
+
 export function cubes(nOverride) {
-  const n = nOverride != null ? nOverride : (S.crew > 0 ? S.crew + 1 : 0);
+  const n = nOverride != null ? nOverride : roomsToday();
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
   // The left edge of the ground course, and it never moves: it is worked out
@@ -112,8 +122,7 @@ export function doorAt() {
 // spot offered is the later of the two, which is the one anybody would call
 // "the new room".
 export function nextHouseAt() {
-  const today = S.crew > 0 ? S.crew + 1 : 0;
-  const rooms = cubes(today + (S.crew > 0 ? 1 : 2));
+  const rooms = cubes(roomsToday() + (S.crew > 0 ? 1 : 2));
   const added = rooms[rooms.length - 1];
   return added ? Math.round((added.x + HOUSE_CUBE / 2) / P) * P : houseCx();
 }

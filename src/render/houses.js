@@ -4,7 +4,7 @@
 // drawRisingHouse. ctx comes from ./ctx.js.
 
 import { HOUSE_CUBE } from '../config.js';
-import { drawHouses, cubes as houseCubes } from '../house.js';
+import { drawHouses, cubes as houseCubes, roomsToday } from '../house.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
@@ -20,8 +20,7 @@ export function drawSettlement() {
 // and `risingRoom` (below) both want this and must not disagree about which
 // room is going up, so there is exactly one place that works it out.
 export const roomsIncludingRising = () => {
-  const today = S.crew > 0 ? S.crew + 1 : 0;
-  return houseCubes(today + (S.crew > 0 ? 1 : 2));
+  return houseCubes(roomsToday() + (S.crew > 0 ? 1 : 2));
 };
 
 // The room a hire is currently building, if any -- the one `kind: 'building'`

@@ -60,7 +60,7 @@ export const S = {
   // --- the opening, and the one under the rock ---
   // Nothing about this is scenery: the body under the boulder is why there is a
   // crew, a pit and a rock that keeps coming. See intro.js.
-  intro: null,            // 'chat' while the two of them are talking, then never again
+  intro: null,            // 'leave' while the two of them walk out, 'chat' while they talk, then never again
   introDone: false,
   reunionDone: false,     // and the one beat after the first rock, also once only
   // A scene owns the yard: no rock rolls in on its own and the ground under the

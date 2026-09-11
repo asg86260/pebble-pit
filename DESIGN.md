@@ -6978,7 +6978,9 @@ were always there; hiring adds to them.
 **The walk.** A new phase, `leave`, before `chat`. The pair are made at the
 door (`doorAt()`), a body's width apart, and walk to `pairX(0)` and `pairX(1)`
 at `COMMUTE_PACE` — the pace anybody crosses the yard at, no story pace. The
-house is 504 px from the spot, so the walk is under two seconds. They talk as
+door is about a thousand pixels from the spot, so the walk is about four
+seconds -- the opening's one stretch of nothing but walking, and it is the
+length the yard's own pace makes it. They talk as
 they go: the same dots, the same turn-taking, the heart on its own clock —
 `talking`'s speech is lifted into a helper both phases call. `chat` begins
 when the second of them arrives; `INTRO_CHAT_MS` is unchanged, so the whole

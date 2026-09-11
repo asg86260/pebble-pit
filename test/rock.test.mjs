@@ -404,7 +404,8 @@ group('the game opens on two squares and a rock lands on one', async () => {
   window.__reset(true);                        // the opening, played out
   run(0.4);
   const open = state();
-  run(3);
+  runUntil(() => state().intro !== 'leave', 12);   // the walk over, at the yard's own pace
+  run(1);
   const talking = state();
 
   // it runs on its own clock, in phases, and it is deliberately unhurried
@@ -451,14 +452,21 @@ group('the game opens on two squares and a rock lands on one', async () => {
   const bare = state();
     run(0.3);
   return [
-    ok(open.intro === 'chat' && open.pair === 2,
+    ok(open.intro === 'leave' && open.pair === 2,
        'it opens on two of them, and no rock', `${open.pair} stood there, rock ${open.rock}`),
     ok(open.rock === 0, 'nothing to mine yet', `${open.rock}`),
     ok(open.zoom > 1, 'and it opens close on them', `zoom ${open.zoom}`),
     ok(talking.intro === 'chat', 'they are given a moment to be two people'),
-    ok(seen.join(',') === 'chat,fall,down,up,show',
-       'a rock, a body knocked flat, a body getting up, and the loop shown once',
+    ok(seen.join(',') === 'leave,chat,fall,down,up,show',
+       'a walk out of the house, a rock, a body knocked flat, a body getting up, and the loop shown once',
        seen.join(',')),
+    // They come out of the house, which stands before anybody is hired: the
+    // pair start at its door and the rock lands on the spot, not on the door.
+    ok(open.pairX.every(x => x < open.doorX + 150) && open.houses.cubes === 2,
+       'the two of them come out of the house, which is already standing',
+       `pair at ${open.pairX.join(',')}, door ${open.doorX}, ${open.houses.cubes} rooms`),
+    ok(talking.pairX.every(x => Math.abs(x - open.rockX) < 60),
+       'and walk to the spot before the chat', `pair at ${talking.pairX.join(',')} vs ${open.rockX}`),
     ok(flat && flat.rock > 0, 'the boulder comes down out of the sky',
        flat && `${flat.rock} of rock`),
     ok(flat && flat.pair === 1, 'on one of them', flat && `${flat.pair} left standing`),

@@ -40,6 +40,7 @@ import { buildShop } from './shop.js';
 import { syncWorkers } from './crew.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
+import { doorAt } from './house.js';
 
 // Where the two of them stand: either side of the spot the rock is about to
 // land on, which is the middle of the yard and the middle of the game. The one
@@ -50,7 +51,8 @@ export const introRunning = () => !!S.intro;
 // The phases that own the yard: nothing rolls in on its own while one of these
 // is running, because the rock arriving is a thing the scene does itself.
 export const introHolds = () =>
-  S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part' || S.intro === 'rescue';
+  S.intro === 'leave' || S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part' ||
+  S.intro === 'rescue';
 
 // A fresh game, and nothing has happened yet.
 export function startIntro() {
@@ -60,11 +62,20 @@ export function startIntro() {
   // from the first still set, never throws, and stands there until the timeout
   // takes pity on it.
   S.introThrew = 0;
-  S.intro = 'chat';
+  // They come out of the house. Nobody in this game arrives from nowhere, and
+  // for a long while these two did: stood at the spot from the first frame,
+  // the one pair of bodies in the yard with no door behind them. The house
+  // draws its first two rooms before anybody is hired (house.js, `roomsToday`)
+  // so that there is a door, and the pair step out of it one behind the other
+  // and walk to the spot the way anybody crosses the yard.
+  S.intro = 'leave';
   S.introAt = now();
   S.introSaid = 0;
   S.introHeart = 0;
-  S.pair = [0, 1].map(i => ({ x: pairX(i), y: 0, vx: 0, vy: 0, say: null, turn: i === 0 }));
+  const door = Math.round((doorAt().x - WORKER / 2) / P) * P;
+  S.pair = [0, 1].map(i => ({ x: door - (i ? 0 : WORKER * 1.3), y: 0, vx: 0, vy: 0,
+                              say: null, turn: i === 0 }));
+  for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
 }
 
 // Straight to the yard as it stands after all of it, for the dev hooks and the
@@ -73,6 +84,7 @@ export function startIntro() {
 // nothing being tested.
 export function skipIntro() {
   if (!introRunning()) return;
+  if (S.intro === 'leave') arrive();
   if (S.intro === 'chat') crush();
   S.pair = [];
   S.crew = 1;
@@ -95,6 +107,7 @@ export function stepIntro(t) {
   hold(t);
   for (const b of S.pair) if (b.say && t >= b.say.until) b.say = null;
 
+  if (S.intro === 'leave') return leaving(t);
   if (S.intro === 'chat') return talking(t);
   if (S.intro === 'fall') return falling(t);
   if (S.intro === 'down') return down(t);
@@ -297,6 +310,23 @@ function hold(t) {
   // happens where everything else in this game happens, at the same size.
   if (S.intro === 'show' || S.intro === 'rescue') return;
 
+  // The walk out: pulled right in, and walking with the two of them -- the
+  // view's seat is their midpoint, frame by frame, until they arrive at the
+  // spot and it is stood on the spot, which is where the chat holds it. Under
+  // reduced motion the seat is the arrival's from the first frame, and the pair
+  // walk into a still shot -- every reduced-motion beat is watched from where
+  // it ends.
+  if (S.intro === 'leave') {
+    setZoom(INTRO_ZOOM);
+    S.camLockY = S.groundY - S.viewH * 0.66;
+    const mid = reducedMotion() || !S.pair.length ? S.cx
+              : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
+    S.camX = Math.min(mid, S.cx) - S.viewW / 2;
+    S.camTo = null;
+    clampCam();
+    return;
+  }
+
   // How far out the view is, nought being right in on them. The opening pulls
   // out at the end of it; the second act pulls back *in* and then out again.
   //
@@ -329,25 +359,54 @@ function hold(t) {
   clampCam();
 }
 
+// Out of the door and over to the spot, talking as they go. Their own legs, at
+// the pace anybody crosses the yard at: a story pace would be the one walk in
+// the game that is not like the others. The chat starts when the second of
+// them is stood where the chat has always stood them.
+function leaving(t) {
+  let there = true;
+  for (const [i, b] of S.pair.entries()) {
+    const d = pairX(i) - b.x;
+    if (Math.abs(d) > 1) {
+      b.x += Math.sign(d) * Math.min(COMMUTE_PACE * frames(), Math.abs(d));
+      there = false;
+    }
+    b.y = walkY(b.x + WORKER / 2);
+  }
+  say(t);
+  if (there) arrive();
+}
+
+// Stood at the spot, and the chat begins on its own clock from here.
+function arrive() {
+  for (const [i, b] of S.pair.entries()) { b.x = pairX(i); b.y = walkY(b.x + WORKER / 2); }
+  S.intro = 'chat';
+  S.introAt = now();
+}
+
 // Talking, and every so often one of them says the other thing.
 function talking(t) {
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
-
-  if (t >= (S.introSaid || 0)) {
-    S.introSaid = t + INTRO_BEAT;
-    const who = S.pair.find(b => b.turn) || S.pair[0];
-    // A heart now and then rather than every time: it is a thing being said,
-    // not a label stuck over them, and something said every second is a label.
-    const heart = t - (S.introHeart || 0) > INTRO_HEART_MS;
-    if (heart) S.introHeart = t;
-    who.say = heart
-      ? { mark: 'heart', until: t + INTRO_BEAT * 1.6 }
-      : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
-    for (const b of S.pair) b.turn = b !== who;
-  }
-
+  say(t);
   if (t - S.introAt < INTRO_CHAT_MS) return;
   crush();
+}
+
+// One of them says something, in turn. The walk and the chat share it: they
+// are the same two people talking, before the spot and at it.
+function say(t) {
+  if (t < (S.introSaid || 0)) return;
+  S.introSaid = t + INTRO_BEAT;
+  const who = S.pair.find(b => b.turn) || S.pair[0];
+  if (!who) return;
+  // A heart now and then rather than every time: it is a thing being said,
+  // not a label stuck over them, and something said every second is a label.
+  const heart = t - (S.introHeart || 0) > INTRO_HEART_MS;
+  if (heart) S.introHeart = t;
+  who.say = heart
+    ? { mark: 'heart', until: t + INTRO_BEAT * 1.6 }
+    : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
+  for (const b of S.pair) b.turn = b !== who;
 }
 
 // And it comes down. The one on the left is under it; the one on the right is

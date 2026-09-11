@@ -48,7 +48,7 @@ import { rates } from './stats.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
-import { houseReport } from './house.js';
+import { houseReport, doorAt } from './house.js';
 import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
@@ -265,6 +265,8 @@ export const snapshot = () => ({
   introDone: S.introDone,
   reunionDone: S.reunionDone,
   pair: S.pair.length,
+  pairX: S.pair.map(b => Math.round(b.x)),   // where the two of them are stood, or walking
+  doorX: Math.round(doorAt().x),
   buried: S.buried,
   buriedVisible: buriedVisible(),
   rescued: S.rescued,
