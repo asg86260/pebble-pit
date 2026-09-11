@@ -2,6 +2,25 @@
 
 ## Nine critics played the game (2026-09-10)
 
+**Section A landed 2026-09-11** (`docs/critics-2026-09-10.md`, A1-A7 and
+A9-A11): the shack rung hang, the opening's stuck body, the single
+find-fetcher, the dead quarry pace ladder, the poop-column park, the
+quarriers' dance, the tower crediting a walking wizard, the shovel hop, and
+the three quiet ways a save was lost. Each has a check that was red before it.
+Every balance number in that document is now worth re-measuring; the bot
+matrix has not been re-run since.
+
+**A8 is a design, not a fix.** A hat the school makes lands on the station's
+own stand, a thousand pixels from the school, with nothing walking it. The
+kit economy (`kit.js`, `crew/kitwalk.js`, `commute.js`'s wear/drop legs, the
+roster's stand count, `render/kit`) assumes one stand per job, so a hat that
+waits at the school until collected is a second place a job's kit can be: a
+per-job count saved on `S`, `kitX(job)` answering the school while it holds
+one and the station otherwise, the drop leg always to the station, and the
+school drawing its rack. The alternative -- the teacher carries the hat to
+the stand, the way a stirrer walks a dose -- keeps one stand but gives the
+teacher an errand and the hat a walk of its own. Decide which before code.
+
 **Read `docs/critics-2026-09-10.md` before proposing any balance or tuning
 work.** Nine persona agents played the yard at `c87c485` and every finding is
 ranked, deduplicated and cross-referenced there. The top of the list is five

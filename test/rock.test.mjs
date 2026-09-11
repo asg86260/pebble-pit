@@ -420,6 +420,17 @@ group('the game opens on two squares and a rock lands on one', async () => {
   }
   const after = state();
 
+  // Handed over carrying, in the shape the show taught -- and the view back on
+  // the seat, where the bench is. Left on the rock, nothing was ever carried,
+  // the counter stood at 1 and no row lit (critics 2026-09-10, A2). The pile
+  // the show left on the crest is what it goes and gets: the counter has to
+  // move with no click from the player at all.
+  const handed = { haulers: after.haulers, rockhands: after.rockhands };
+  run(40);
+  const banked = state().stored;
+  run(2);
+  const seat = Math.abs(state().camX - state().openCamX);
+
   // And the one underneath is still there every time a rock is finished. A body
   // on the rock, so the crew take their five seconds over it: with nobody on
   // it there is no celebration and the next rock is down before you can look.
@@ -454,6 +465,12 @@ group('the game opens on two squares and a rock lands on one', async () => {
        'and it has shown you where dust goes before you are given the yard',
        `${after.stored} in the hole`),
     ok(after.buried, 'with the other one under it'),
+    ok(handed.haulers === 1 && handed.rockhands === 0,
+       'and the one left standing is handed over carrying, as the show taught',
+       JSON.stringify(handed)),
+    ok(banked > after.stored,
+       'so the counter moves with no click from the player', `${after.stored} -> ${banked}`),
+    ok(seat < 2, 'and the view is back on the opening seat, bench in shot', `${seat} px off`),
     ok(bare.buriedVisible,
        'and when the rock is gone they are there, alive, until the next one lands')
   ];

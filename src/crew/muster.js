@@ -14,6 +14,7 @@ import { retask } from './commute.js';
 import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted } from './jobs.js';
 import { atShed, SHED_SITES } from './shedhand.js';
+import { atTower } from '../wizard.js';
 
 // --- who is actually at a site ------------------------------------------------
 // The one question works.js cannot answer for itself, registered here the same
@@ -36,8 +37,9 @@ const ARRIVED = {
   // pot, so the brew clock pauses -- same rule the lab and the house keep.
   stirrers: w => w.type === TYPE.STIR && w.goal === 'in',
   // A wizard's work is four hundred pixels up and the walk is to the ground
-  // under it; either way it is at the tower, which is the only thing this asks.
-  wizards: w => w.type === TYPE.WIZARD,
+  // under it; either way it is at the tower -- and it has to *be* there, not
+  // merely be one. See `atTower`.
+  wizards: w => w.type === TYPE.WIZARD && atTower(w),
   builders: w => w.type === TYPE.BUILD && w.goal === 'at',
   // Through the door and at the bench. A scholar crossing the yard is not doing
   // research yet, which is the same rule the purifiers keep.

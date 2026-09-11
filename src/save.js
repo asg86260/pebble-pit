@@ -23,24 +23,65 @@ export function isSave(s) {
          s.gw > 0 && s.gh > 0 && s.boulder.length === s.gw * s.gh;
 }
 
+// A blob that was under KEY and would not read (wave-critics, A11).
+//
+// `load` used to answer null for it, exactly as for no save at all -- and the
+// boot's no-save arm starts the opening, the opening dirties the yard, and the
+// interval writes a fresh game over the blob inside a second. A truncated
+// store, or any shape a later `isSave` refuses, cost the run without a word.
+// So a blob that will not read is put here before null is answered, and the
+// sheet's SAVE A COPY hands it over while `S.broken` says there is one.
+export const BROKEN_KEY = 'boulder-clicker/v4.broken';
+
+// Which page last wrote the save (wave-critics, A10). Two tabs on one origin
+// share the store, and each wrote its own yard over the other's once a second:
+// an hour played in one was gone the moment the other, left open in the
+// background, was clicked. Every page names itself once, writes its name
+// beside the save, and a page that finds another name there yields -- see
+// `persist`, and the `storage` listener in main.js.
+export const OWNER_KEY = 'boulder-clicker/v4.tab';
+export const TAB = Math.random().toString(36).slice(2, 10);
+
 export function load() {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(KEY);
+    raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    if (!isSave(s)) return null;
+    if (!isSave(s)) { stash(raw); return null; }
     return s;
   } catch {
+    stash(raw);
     return null;
   }
 }
 
+function stash(raw) {
+  try { if (raw) localStorage.setItem(BROKEN_KEY, raw); } catch {}
+}
+export function loadBroken() {
+  try { return localStorage.getItem(BROKEN_KEY); } catch { return null; }
+}
+export function clearBroken() {
+  try { localStorage.removeItem(BROKEN_KEY); } catch {}
+}
+
+// Whether it was written. Storage full or blocked (a private window, a quota,
+// an eviction) used to be swallowed here and the game ran on unsaved with no
+// word; the caller says so now.
 export function save(state) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    // storage full or blocked (private mode) - the game keeps running unsaved
-  }
+  return saveRaw(JSON.stringify(state));
+}
+
+// This page's claim to be the one writing the save, and whose it is now. A
+// page that has never written -- the node yard, a page that is only reading --
+// holds no claim and defers to nobody: only a name that is not its own is
+// another page.
+export function claimTab() {
+  try { localStorage.setItem(OWNER_KEY, TAB); } catch {}
+}
+export function tabOwner() {
+  try { return localStorage.getItem(OWNER_KEY); } catch { return null; }
 }
 
 export function clear() {
@@ -55,7 +96,7 @@ export function loadRaw() {
 }
 
 export function saveRaw(raw) {
-  try { localStorage.setItem(KEY, raw); } catch {}
+  try { localStorage.setItem(KEY, raw); return true; } catch { return false; }
 }
 
 // A page that has never saved has nothing to keep, and a `.prev` left over

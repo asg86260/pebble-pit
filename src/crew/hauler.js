@@ -9,11 +9,11 @@ import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER, HOME_WALK,
          PILE_LIMIT } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf } from '../grid.js';
-import { walkY, yardLeft } from '../world.js';
+import { walkY, yardLeft, pileAt } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
-import { muckLeft, muckAtCol, nearestMuck } from '../smog.js';
+import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs } from '../upgrades.js';
 // the swift brew's pace, read per body at every haul walk (feedback7, item 21)
 import { paceBoost } from '../apothecary.js';
@@ -78,7 +78,13 @@ function nearestDust(x, taken) {
 // it is worth a whole shard. Workers take the nearest column of anything, so
 // without this a shard out at the plots waits for the whole yard to be swept
 // clean first -- which, in a yard with a working crew, is never.
-function nearestMark(w, taken) {
+//
+// `served` is the set of grounds somebody is already off fetching from; a find
+// on one of those is passed over for one on a ground nobody is serving. See the
+// cap in `stepHauler`: the nearest find is nearly always the farm's, because
+// the farm drips them and stands next to the walk, and picked by distance
+// alone the quarry's finds -- and the star's sparks -- lay there for hours.
+function nearestMark(w, taken, served = EMPTY) {
   let best = -1, bestD = Infinity;
   // Nothing beyond the near lip: a body cannot cross the hole, so a find over
   // there is one it would set off for and stand at the edge of for ever. What
@@ -90,11 +96,25 @@ function nearestMark(w, taken) {
   for (const m of S.floorMarks) {
     const c = colOf(floor, m.x);
     if (c < first || c > last || taken.has(c) || !at(floor, c, 0)) continue;
+    if (served.has(groundOf(m.x))) continue;
     const d = Math.abs(m.x - w.x);
     if (d < bestD) { bestD = d; best = c; }
   }
   return best;
 }
+const EMPTY = new Set();
+
+// Which ground a find is lying on: the strip its column falls in, or the open
+// yard for one that has rolled off a strip. Two finds on the same strip are the
+// same ground's output, which is the thing the fetch cap counts.
+const groundOf = x => pileAt(x)?.key || 'yard';
+
+// The grounds somebody is already off fetching a find from.
+const servedGrounds = () => {
+  const s = new Set();
+  for (const o of S.workers) if (o.type === TYPE.HAUL && o.forMark) s.add(o.forMark);
+  return s;
+};
 
 // How much more this trip will hold.
 const roomLeft = w => load(w) - (w.carry || 0);
@@ -165,13 +185,23 @@ export function haulerWork(w, c) {
   if (!w.carry && !w.hasCore) {
     // Cleared and re-picked a frame apart, for the reason takeMess gives: the
     // frame's set still carries this body's own elbows.
-    if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-    else if (w.muckAt == null && muckLeft() > 0) {
+    // Its own kinds, in both the release and the gate: a hauler may not touch
+    // a body's mess, and a gate on *all* mess sent it down for what it could
+    // not shift, to stand on it.
+    // "A frame apart" has to hold across the whole frame: this branch let the
+    // column go and did not pick, and then `takeMess`, further down the same
+    // frame, saw empty hands and picked -- against the set built at the top of
+    // the frame with this body's own elbows still in it, so the nearest column
+    // it was allowed was always a stride off. A lone hauler between two heaps
+    // hopped from one to the other and back (docs/critics-2026-09-10.md, A9).
+    // The flag is the frame's own and `takeMess` clears it.
+    if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; w.muckDropped = true; }
+    else if (w.muckAt == null && !w.muckDropped && muckFor(w) > 0) {
       const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }
   }
-  const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
+  const patch = !w.carry && !w.hasCore && muckFor(w) > 0 && w.muckAt != null
     ? w.muckAt * P + P / 2 : null;
 
   // In the hole, over the hole, or on the ground beyond it: all one errand,
@@ -335,7 +365,6 @@ export function haulerWork(w, c) {
         // then the dust first, because that is the half of it that stops the
         // yard working. Whichever is chosen, the other is the fallback: a body
         // that came out to fetch goes back with something.
-        const mark = nearestMark(w, taken);
         const dust = nearestDust(w.x, taken);
         // A find first -- but not by everybody at once while a heap is jammed.
         //
@@ -349,15 +378,26 @@ export function haulerWork(w, c) {
         // dripping finds and a good share of the crew is always off chasing
         // one.
         //
-        // So it is a *cap* rather than a switch. A find is one grain worth a
-        // whole shard, so one body fetching them keeps up with what the yard
-        // produces; everybody else shifts grit. The other two grounds keep
-        // coming in and the rock keeps working.
-        const busy = S.workers.filter(o => o.type === TYPE.HAUL && o.forMark).length;
-        const spare = !backedUp('rock') || busy < 1;
-        const first = spare ? mark : dust;
-        const other = spare ? dust : mark;
-        const pick = first >= 0 ? first : other;
+        // So it is a *cap* rather than a switch -- and the cap is one body per
+        // ground that has a find waiting, not one body for the yard. It was
+        // one for the yard, on the argument that a find is one grain worth a
+        // whole shard and one pair of hands keeps up; measured, it did not. A
+        // player who clicks keeps the rock's heap over the line for the whole
+        // run, so the one body served the farm, the quarry and the star
+        // between them, took the nearest find every time -- the farm's, which
+        // drips them beside the walk -- and the quarry's shards and the star's
+        // sparks lay on the ground for hours: shard income read 0.0/min in
+        // every six-hour run and no machine was ever bought
+        // (docs/critics-2026-09-10.md, A3). One body per ground is what the
+        // old argument actually claims: each ground's own drip is kept up
+        // with. Everybody else shifts grit and the rock keeps working.
+        const jammed = backedUp('rock');
+        const served = jammed ? servedGrounds() : EMPTY;
+        // Whichever is chosen, the other is the fallback -- a served ground's
+        // find included, last: a body that came out to fetch goes back with
+        // something.
+        const mark = nearestMark(w, taken, served);
+        const pick = mark >= 0 ? mark : dust >= 0 ? dust : nearestMark(w, taken);
         // And nothing further off than the hole is, once the hands are more
         // than half full.
         //
@@ -374,10 +414,10 @@ export function haulerWork(w, c) {
           Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
         if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
           w.claim = pick; taken.add(pick);
-          // Remembered so the cap above can count how many are off after
-          // finds. It is a fact about the trip, not about the column: the
-          // column stops being a find the moment it is picked up.
-          w.forMark = isMark(pick);
+          // Remembered so the cap above knows which grounds are being served.
+          // It is a fact about the trip, not about the column: the column
+          // stops being a find the moment it is picked up.
+          w.forMark = isMark(pick) ? groundOf(floor.x + pick * P) : false;
         }
       }
     }

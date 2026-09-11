@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
 const { exportSave, importSave } = await import('../src/persist.js');
-const { PREV_KEY, loadPrev } = await import('../src/save.js');
+const { PREV_KEY, loadPrev, BROKEN_KEY, OWNER_KEY, TAB } = await import('../src/save.js');
 
 const KEY = 'boulder-clicker/v4';
 const player = () =>
@@ -117,5 +117,91 @@ group("the player's yard survives a round trip", async () => {
     ok(b.rift === a.rift && b.riftOpen === a.riftOpen && b.held === a.held,
        'the same rift, contents and all', `${a.rift} ${a.held}`),
     ok(going, 'and the yard runs on')
+  ];
+});
+
+// --- and the three ways a run was lost quietly (critics 2026-09-10, A10/A11) --
+
+// A save that will not read is not a first visit. `load` answered null for a
+// truncated blob exactly as for no blob, the opening began, and the interval
+// wrote a fresh game over the player's inside a second. The blob is put aside
+// now, the yard says so, and SAVE A COPY hands it over rather than the fresh
+// game.
+group('a save that will not read is kept, and is what save a copy hands over', async () => {
+  const good = player();
+  const cut = good.slice(0, Math.floor(good.length * 0.6));
+  window.__reset(true);                          // nobody standing from the last group
+  localStorage.setItem(KEY, cut);
+  localStorage.removeItem(BROKEN_KEY);
+  yard.restore();
+  const fresh = state();
+  run(3);                                        // the interval would have written by now
+  const stashed = localStorage.getItem(BROKEN_KEY);
+  const handed = exportSave();
+  const said = yard.S.broken;
+
+  localStorage.removeItem(BROKEN_KEY);
+  yard.S.broken = false;
+  return [
+    ok(fresh.crew === 0 && fresh.intro, 'the page boots a fresh game, as it must', `${fresh.crew} crew`),
+    ok(said, 'but says the save it found would not read'),
+    ok(stashed === cut, 'and has put the blob aside untouched', `${(stashed || '').length} of ${cut.length} bytes`),
+    ok(handed === cut, 'and save a copy hands that over, not the fresh game',
+       `${handed.length} bytes`)
+  ];
+});
+
+// A store that refuses the write: the game ran on unsaved with no word, and
+// SAVE A COPY read the stale store back. It says so now and hands over the
+// live yard.
+group('a store that will not take the save says so, and save a copy still works', async () => {
+  localStorage.setItem(KEY, player());
+  yard.restore();
+  run(5);
+  const before = localStorage.getItem(KEY);
+  const setItem = localStorage.setItem;
+  localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+  run(5);                                        // a few interval-lengths of play
+  yard.S.dirty = true;
+  const { persist } = await import('../src/persist.js');
+  persist();
+  const unsaved = yard.S.unsaved;
+  const handed = exportSave();
+  localStorage.setItem = setItem;
+  const live = JSON.parse(handed);
+
+  return [
+    ok(unsaved, 'the yard knows the store refused it'),
+    ok(localStorage.getItem(KEY) === before, 'and the store is as it was'),
+    ok(live.stored === state().stored && live.stored !== JSON.parse(before).stored,
+       'and save a copy hands over the yard as it stands, not the stale store',
+       `${live.stored} vs store ${JSON.parse(before).stored}`)
+  ];
+});
+
+// A second tab writing the same save: last writer won, once a second, and
+// neither page knew. A page that finds another page's name beside the save
+// stops writing.
+group('a page overtaken by another tab stops writing', async () => {
+  localStorage.setItem(KEY, player());
+  yard.restore();
+  const { persist, claimSave } = await import('../src/persist.js');
+  claimSave();                                   // this page names itself, as main.js does
+  run(2);
+  yard.S.dirty = true; persist();
+  const mine = localStorage.getItem(KEY);
+  localStorage.setItem(OWNER_KEY, 'someothertab');   // ...and another page writes
+  run(2);
+  yard.S.dirty = true; persist();
+  const after = localStorage.getItem(KEY);
+  const yielded = yard.S.yielded;
+
+  yard.S.yielded = false;
+  localStorage.setItem(OWNER_KEY, TAB);
+  return [
+    ok(mine !== null && JSON.parse(mine).stored === JSON.parse(mine).stored, 'this page was writing'),
+    ok(after === mine, 'and writes nothing once another page has the save',
+       `${(after || '').length} vs ${(mine || '').length} bytes`),
+    ok(yielded, 'and knows it has been overtaken')
   ];
 });

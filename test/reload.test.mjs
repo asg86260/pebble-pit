@@ -60,10 +60,14 @@ group('a refresh does not empty the crew\'s hands', async () => {
 group('a refresh does not send the gang back down the ladder', async () => {
   localStorage.setItem('boulder-clicker/v4', player());
   yard.restore();
-  run(40);                           // down there and digging
-
   const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
   const digging = () => gang().filter(w => w.goal === 'work').length;
+  // Down there and digging -- caught mid-dig rather than at a fixed second: at
+  // this yard's pace a whole dig is half a minute, and a fixed forty seconds
+  // landed on the frame the gang climbed out for the refill.
+  run(10);
+  runUntil(() => digging() === gang().length, 60);
+  run(2);
   const wasY = gang().map(w => Math.round(w.y));
   const wasDigging = digging();
 

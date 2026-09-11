@@ -13,7 +13,8 @@
 
 import { group, ok, state, run, runUntil, openSites, buyNow } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, RUNGS } from '../src/config.js';
+import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, RUNGS,
+         QUARRY_BASE, QUARRY_FLOOR } from '../src/config.js';
 import { rungOf, rungsOf } from '../src/upgrades.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
 import { cellMs, seamDig, QUARRY_UPGRADES } from '../src/quarry.js';
@@ -142,6 +143,39 @@ group('a yield rung changes what one go is worth', async () => {
   ];
 });
 
+// And a speed rung changes how many shards come out of the cut. It did not:
+// the ladder shortened a swing that was already on its floor, and the time a
+// dig takes is nine tenths walking between cells, which the ladder never
+// touched. Pace 0 and pace 9 dug the same 45 shards in ten minutes. Measured
+// after the fix, 45 -> 182. Bought through the row, a band at a time.
+group('a speed rung makes the cut give up shards faster', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  rich();
+  window.__crew(0, 6, 3);
+  window.__clearFloor();
+  run(5);
+  const dug = () => state().shards + state().finds.filter(f => f === 'shard').length;
+  const a0 = dug();
+  run(240);
+  const slow = dug() - a0;
+
+  for (let i = 0; i < 6; i++) buyNow(showing(['quarrypace', 'quarrypace2'])[0]);
+  const lvl = S.quarryPaceLevel;
+  window.__clearFloor();
+  run(5);
+  const b0 = dug();
+  run(240);
+  const fast = dug() - b0;
+
+  return [
+    ok(lvl === 6, 'six rungs bought through the rows', `${lvl}`),
+    ok(fast > slow * 1.8, 'and the cut gives up shards a good deal faster for them',
+       `${slow} -> ${fast} in four minutes`)
+  ];
+});
+
 // A twelve-rung ladder is the same climb in finer steps, not a faster yard. Both
 // speeds must still end exactly where they ended when the ladder was five rungs
 // and the multiplier sat beside it.
@@ -149,24 +183,21 @@ group('the speed ladders end where they always ended', async () => {
   window.__reset();
   openSites();
   const tendTop = tendMs(TIER_OWN);
-  // A long dig, so the reading is the ladder's factor rather than the one-cell
-  // floor `cellMs` clamps at -- that clamp is a different rule and has one of
-  // these of its own.
-  window.__tune('CUT_DIG_MS', 120000);
   const cellAt = lvl => { S.quarryPaceLevel = lvl; return cellMs(); };
   const cell0 = cellAt(0);
   const cellTop = cellAt(TIER_OWN);
   S.quarryPaceLevel = 0;
-  window.__tune('CUT_DIG_MS', 16000);
   return [
     ok(tendTop === TEND_FLOOR, 'tending lands on its floor at the ladder top',
        `${tendTop} vs ${TEND_FLOOR}`),
     ok(tendMs(0) === TEND_BASE, 'and starts from the same base', `${tendMs(0)}`),
-    // The cut's floor was five rungs of a fifth off each; nine rungs land on the
-    // same number.
-    ok(Math.abs(cellTop / cell0 - Math.pow(0.82, RUNGS)) < 1e-9,
-       'and a cell of the cut ends where five rungs of a fifth off used to',
-       `${(cellTop / cell0).toFixed(6)} vs ${Math.pow(0.82, RUNGS).toFixed(6)}`),
+    // The cut's swing and the cut's row climb one curve. The swing used to run
+    // its own (five rungs of a fifth off, 0.371 at the top) while the row
+    // claimed the trip curve's fifth -- and neither reached the ground, because
+    // the swing sat on its floor from rung nought (critics 2026-09-10, A4).
+    ok(Math.abs(cellTop / cell0 - QUARRY_FLOOR / QUARRY_BASE) < 1e-9,
+       'and a cell of the cut ends at the same fifth the row sells',
+       `${(cellTop / cell0).toFixed(6)} vs ${(QUARRY_FLOOR / QUARRY_BASE).toFixed(6)}`),
     ok(TIER_RUNGS === 12 && TIER_OWN === 9, 'twelve rungs, nine of them the field',
        `${TIER_RUNGS}/${TIER_OWN}`)
   ];

@@ -105,3 +105,35 @@ group('the tower can enchant the rest of the yard', async () => {
        'and a spell already laid is not offered twice')
   ];
 });
+
+// And nothing on the tower's board is worked by a wizard that is not there.
+// The tower counted a wizard the moment it was one -- "either way it is at the
+// tower" -- so a hat rung landed for a body still two thousand pixels out
+// across the yard (critics 2026-09-10, A7). One wizard, set down at the far
+// end of the yard and walking: the bar holds at nought until it arrives.
+group('the tower waits for its wizard to arrive', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(0, 1, 0, 0, 0, 1);
+  window.__grant({ sparks: 999, shards: 400, spores: 400, dust: 40000 });
+  run(3);
+  const s0 = state();
+  // the length of the yard away, and walking
+  window.__place('wizard', s0.rockLeftX);
+  const w = yard.S.workers.find(o => o.type === 'wizard');
+  w.walking = true; w.aloft = false;
+  const bought = window.__buy('wizspeed');
+  run(2);
+  const early = state().works.tower?.done ?? -1;
+  const far = Math.abs(w.x - s0.towerX) > 600;
+  const landed = runUntil(() => !state().works.tower, 240);
+  const near = Math.abs(w.x - s0.towerX) < 200 || w.aloft;
+
+  window.__crew(0, 0);
+  return [
+    ok(bought, 'the rung is bought'),
+    ok(far && early === 0, 'and the bar does not move while its wizard is still crossing the yard',
+       `done ${early} with the wizard ${Math.round(Math.abs(w.x - s0.towerX))} px off`),
+    ok(landed && near, 'and lands once it is there', `${landed}, ${Math.round(w.x)} vs tower ${s0.towerX}`)
+  ];
+});

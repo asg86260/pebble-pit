@@ -7,7 +7,8 @@
 
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
          ABYSS_AT, WORKER } from './config.js';
-import { load, save, clear, isSave, loadRaw, saveRaw, savePrev } from './save.js';
+import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
+         claimTab, tabOwner, TAB } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
@@ -211,14 +212,41 @@ function blankByHand() {
   for (const k of SAVED_BY_HAND) if (!BUILT.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
 }
 
+// The last blob this page built, written or not. SAVE A COPY hands this over
+// when the store would not take it: it used to read the store back, which on a
+// page whose writes were failing was the save from before the evening's play.
+let lastBlob = null;
+
 export function persist() {
   // A yard that has thrown is not written down. The loop stops on a throw, but
   // the interval that calls this does not, and once a second it would put the
   // state that just threw over the last save that was whole -- a bug that
   // should have cost a reload costing the run instead. See crash.js.
   if (S.fatal || !S.dirty) return;
+  // Another page has written since this one did (wave-critics, A10): this
+  // page's yard is the stale one, and writing it would put a background tab's
+  // hour-old yard over the hour just played in the other. It stops writing and
+  // says so on the held sheet; main.js reloads it when it is next looked at.
+  // Only a page that has made a claim can be overtaken -- the node yard never
+  // claims and never yields.
+  if (S.yielded || (claimed && tabOwner() !== TAB)) { S.yielded = true; return; }
   S.dirty = false;
-  save({
+  lastBlob = JSON.stringify(blob());
+  // ...and whether the store took it. A private window, a quota or an eviction
+  // used to be swallowed in save.js, and the game ran on unsaved with no word
+  // and no way to get the yard out (A11). The sheet reads `S.unsaved`.
+  S.unsaved = !saveRaw(lastBlob);
+}
+
+// Whether this page has put its name beside the save. main.js does, once, at
+// boot; nothing else ever does.
+let claimed = false;
+export function claimSave() { claimTab(); claimed = true; }
+
+// Everything a save is, as one object. `persist` writes it; `exportSave` hands
+// it over as it stands.
+function blob() {
+  return {
     ...savedFields(),
     // Which run this is, and how far into it the chance has got. The seed alone
     // would start the stream over on every reload -- the same run's name on a
@@ -385,7 +413,7 @@ export function persist() {
     // run-length string. It only means anything alongside `quarryCells`
     // above, so the two are written and read together.
     cut: cut.grid ? { cols: cut.cols, rows: cut.rows, cells: gridStr(cut) } : null
-  });
+  };
 }
 
 // Reading a saved plot into one that has grown at its left-hand end.
@@ -508,6 +536,10 @@ export function restore() {
     clearBoulder();
     S.coreBuried = false;
     startIntro();
+    // A first visit, or a save that would not read. The second is not the
+    // first: `load` has put the blob aside, and the sheet offers it for as
+    // long as it is there.
+    S.broken = !!loadBroken();
     // Reading a save that is not there. Every plain field goes back to what
     // state.js says a yard is, which is what "no save" means -- and it is the
     // same one line as reading a save, so the two cannot drift apart. This used
@@ -1160,8 +1192,17 @@ export function reset(fresh = true) {
 // it go. It returns true on a yard that took, false on a blob that was refused,
 // and a page that had a good save before has the same good save after either
 // answer.
+//
+// The yard as it stands, not the store: the store can be a second behind, and
+// on a page whose writes are failing it is the save from before this sitting.
+// And on a page whose save would not read (see `BROKEN_KEY`), the blob that
+// would not read -- the one thing the player has left of that run.
 export function exportSave() {
-  return loadRaw() || '';
+  const broken = S.broken && loadBroken();
+  if (broken) return broken;
+  S.dirty = true;
+  persist();
+  return lastBlob || loadRaw() || '';
 }
 
 // A pasted blob, made the yard.

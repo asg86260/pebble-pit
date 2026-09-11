@@ -379,3 +379,32 @@ group('the hut stands behind the ram once there is one, and the slot always did'
        `hut to ${after + shack.w}, ram from ${parked}`)
   ];
 });
+
+// --- and the third rung lands with a two-body gang ------------------------------
+// A body sent home from the shed with `goal: 'to'` was never claimed again,
+// because a rockhand consumes no goal and the claim refuses a `'to'` body: a
+// gang of N fitted exactly N picks and the (N+1)th sat at 0 for ever, with the
+// ram behind it. Every rung here is bought through the row and must land.
+group('every shack rung lands, not just one per rockhand', async () => {
+  window.__reset();
+  window.__crew(2, 2);
+  window.__shack();
+  window.__give(200000);
+  window.__grant({ shards: 500, spores: 500 });
+  runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
+
+  const landed = [];
+  for (let i = 0; i < 3; i++) {
+    const bought = window.__buy('rockhandspeed');
+    const done = runUntil(() => !workAt('shack'), 120);
+    landed.push(bought && done);
+  }
+  const level = S.rockhandSpeedLevel;
+  const stuck = S.workers.filter(w => w.type === TYPE.ROCK && w.goal === 'to').length;
+
+  return [
+    ok(landed.every(Boolean), 'three rungs bought in a row each land', JSON.stringify(landed)),
+    ok(level === 3, 'and the ladder reads three', `${level}`),
+    ok(stuck === 0, 'no rockhand is left walking to a post it has no goal for', `${stuck}`)
+  ];
+});

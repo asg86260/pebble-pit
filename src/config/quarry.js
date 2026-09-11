@@ -92,6 +92,10 @@ export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // plus the walking between cells, which is real and is meant to be: a cut is
 // worked by people crossing it, not by a number filling.
 export let CUT_DIG_MS = 16000;   // to get from the surface to the bottom, at pace 0
+// And the least a swing at one cell takes, at pace nought, whatever the cut's
+// size makes of the share above: a cell dug in no time is a body that never
+// visibly swung.
+export const CUT_SWING_MIN = 60;
 // Three, not two.
 //
 // Blue was the thing everybody waited on. A plot comes on by itself while you
@@ -114,7 +118,13 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // wanting a dig to take a certain time, which is no reason for anything in the
 // world to move at a speed: a dig takes as long as digging takes. What makes it
 // affordable is that a body picks a cell from the few nearest it, so the walks
-// are a pace or two and a slow pace costs almost nothing.
+// are a pace or two.
+//
+// They are still most of a dig -- nine tenths of a quarrier's frames, measured
+// -- which is why the pace ladder divides this (see `paceShare` in quarry.js):
+// at the top of its nine rungs a body shuffles five times as fast as this, and
+// the band-four multiplier goes over that. Ramps, scaffolding and rail carts
+// are what the rungs are called.
 export let CUT_STEP = 0.6;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it

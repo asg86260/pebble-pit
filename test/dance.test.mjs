@@ -17,7 +17,7 @@
 // steps straight over one.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, run, state, yard, P, WORKER } from './helpers.mjs';
+import { group, ok, run, runUntil, state, yard, P, WORKER } from './helpers.mjs';
 import { DANCE_BUZZ, JIG_PACE } from '../src/config.js';
 
 // Every frame of the next `secs` seconds, per body: where it is, how high, and
@@ -153,3 +153,35 @@ group('the dance joins up instead of teleporting', async () => {
        `${hanging} bodies switched off in the air`)
   ];
 }, 20250830);
+
+// Everybody, including a quarrier on the floor of the cut. `onBridge` kept a
+// body on the deck out of the dance -- a body stopped on the ramp danced on a
+// slope -- and asked the span alone, which the whole cut is under: every
+// quarrier on the floor was "on the bridge" and stood rigid through every
+// celebration while the yard paid the pause for it (critics 2026-09-10, A6).
+group('the gang on the floor of the cut dance too', async () => {
+  window.__reset();
+  window.__crew(2, 4, 4);
+  window.__fullSites();
+  window.__jump(3);                            // past the first rock: its finish is the reunion, not a dance
+  const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
+  const floorOf = () => gang().filter(w => w.y + WORKER > yard.S.groundY + 1);
+  const down = runUntil(() => floorOf().length === 4, 120);
+  window.__next();
+  // A jumping body's feet leave the ground line, so who is "on the floor" is
+  // read before the dance; who is dancing is the most of the gang ever in it
+  // at once over the celebration, sampled every tenth of a second.
+  let danced = false, jigging = 0;
+  for (let i = 0; i < 40; i++) {
+    run(0.1);
+    danced = danced || state().dancing;
+    jigging = Math.max(jigging, gang().filter(w => w.jigAt != null).length);
+  }
+
+  window.__reset();
+  return [
+    ok(down, 'four quarriers are on the floor of the cut'),
+    ok(danced, 'and the yard celebrates'),
+    ok(jigging === 4, 'and every one of them is in the dance', `${jigging} of 4`)
+  ];
+});

@@ -275,3 +275,43 @@ group('a full rock pile does not stop the crew fetching the other grounds', asyn
        `${before} -> ${state().shards}`)
   ];
 });
+
+// ...and not by one body for every ground. The cap on find-fetching while the
+// rock's heap is jammed was one hauler for the whole yard, picking the nearest
+// find -- so whichever ground stands nearer the walk had every find fetched
+// and the other's lay there for as long as the near one kept dripping, which
+// on a working yard is for ever: shard income read 0.0/min in every six-hour
+// bot run and nothing red was ever bought (critics 2026-09-10, A3). The cap is
+// one body per ground now. Twenty finds on each strip, four carriers, three
+// minutes: measured, the old rule brought in 4 of the near ground's and 0 of
+// the far one's; the new one 4 and 3.
+group('a jammed rock heap still lets each ground\'s finds be fetched', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 4, 0);                    // four carriers, nobody producing
+  window.__clearFloor();
+  run(3);
+
+  const p = state().piles.find(x => x.key === 'rock');
+  for (let i = 0; i < 900; i++) window.__pile(p.from + (i % 60) * 4, 8);
+  run(2);
+  const jammed = state();
+
+  const farm = jammed.piles.find(x => x.key === 'farm');
+  const quarry = jammed.piles.find(x => x.key === 'quarry');
+  for (let i = 0; i < 20; i++) window.__toss('spore', farm.from + 6 + i * 6);
+  for (let i = 0; i < 20; i++) window.__toss('shard', quarry.from + 6 + i * 6);
+  run(1);
+  const before = { shards: state().shards, spores: state().spores };
+  run(180);
+  const got = { shards: state().shards - before.shards, spores: state().spores - before.spores };
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(jammed.pileFull.rock, 'the rock heap is backed up', `${jammed.pileCount.rock} on it`),
+    ok(got.shards > 0 && got.spores > 0,
+       'and both grounds have had a find carried in inside three minutes',
+       JSON.stringify(got))
+  ];
+});
