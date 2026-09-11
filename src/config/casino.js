@@ -106,12 +106,9 @@ export const CASINO_PILE_BRIM = 700;  // and the most that ever lies there
 // DESIGN.md, "The drop".
 //
 // Priced in the thing it gambles, like the casino itself, and a knob because
-// "past the casino, before the first machine" is a guess until a played yard
-// says otherwise. Under the dome's dust line, whatever it is tuned to: the dome
-// is the dearest thing on any board by rule (`DOME_BILL` in shields.js, held
-// by `test/shield.test.mjs`), and a hundred thousand here was the first row to
-// break it.
-export let PLINKO_DUST = 25000;
+// "well past the casino, well before the first machine" is a guess until a
+// played yard says otherwise.
+export let PLINKO_DUST = 100000;
 
 // Ten rows and eleven bins. A rock at a peg goes left or right and nothing
 // else, so where it lands is ten fair coins added up: the odds are the pegs,
@@ -152,6 +149,6 @@ export const PLINKO_LABEL_H = 12;
 export const PLINKO_MARGIN = 4;        // black frame either side of the peg field
 
 export const CASINO_KNOBS = [
-  { key: 'PLINKO_DUST', label: 'the drop', min: 5000, max: 29000, step: 1000,
+  { key: 'PLINKO_DUST', label: 'the drop', min: 20000, max: 1000000, step: 10000,
     get: () => PLINKO_DUST, set: v => { PLINKO_DUST = v; } }
 ];
