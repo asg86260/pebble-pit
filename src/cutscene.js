@@ -80,7 +80,13 @@ export function stepCutscene(t) {
   const cx = c.name === 'tear' ? rift.x + rift.w / 2
                                : pit.x + Math.min(700, pit.w) / 2;
   if (reducedMotion()) c.heldX ??= cx;
-  S.camX = (c.heldX ?? cx) - S.viewW / 2;
+  // Glided to, not cut to: the design says 'glide to the pit mouth, pull in
+  // a step', and the frame set the seat outright on the scene's first frame
+  // -- a jump of a window or more from wherever the player was looking
+  // (critics 2026-09-10, C16). The same ease the camera's own glide uses, so
+  // the way in matches the way out; under reduced motion it is the cut it was.
+  const want = (c.heldX ?? cx) - S.viewW / 2;
+  S.camX = reducedMotion() ? want : S.camX + (want - S.camX) * 0.12;
   S.camTo = null;
   // The ground line low in the frame, the event above it -- the same framing
   // rule the intro keeps, for the same reason: measured up from the pit floor
