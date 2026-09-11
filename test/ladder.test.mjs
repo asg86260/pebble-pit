@@ -136,20 +136,25 @@ group('no row says a unit the board cannot draw', async () => {
 // a proportion of them and so has cancelled it out. Asserted over every
 // percentage row rather than the two that were noticed, so a rate row written
 // tomorrow is covered.
+//
+// What comes BEFORE the share is a different matter: the verb the share is a
+// share of -- "walk +30%" -- which every percentage row now leads with (see
+// test/gain-verb.test.mjs). Nothing after the per cent sign is the rule here.
 group('a percentage row says the share and nothing after it', async () => {
   window.__reset();
   openSites();
   window.__invest();
 
+  const share = /^(?:[a-z ]+ )?\+-?\d+%$/;
   const rows = ALL_ROWS.filter(u => u.pct && u.from);
   const bad = rows.map(u => [u.key, gainText(u)])
-    .filter(([, t]) => t && !/^\+-?\d+%$/.test(t))
+    .filter(([, t]) => t && !share.test(t))
     .map(([k, t]) => `${k}: ${t}`);
   const pace = rows.find(u => u.key === 'haulpace');
   return [
     ok(rows.length >= 4, 'there are percentage rows', String(rows.length)),
-    ok(pace && /^\+\d+%$/.test(gainText(pace)),
-       'the pace row is a bare percentage', pace && gainText(pace)),
+    ok(pace && share.test(gainText(pace)),
+       'the pace row is a verb and a percentage', pace && gainText(pace)),
     ok(bad.length === 0, 'and so is every other one', bad.join(', ') || 'none')
   ];
 });
