@@ -16,12 +16,20 @@
 // never the moment. Nothing here is saved but the name of a scene cut short:
 // a reload mid-scene comes back to a yard that has already had its event, and
 // plays the scene it was owed over the event as it now stands.
+//
+// Letting go is a stretch, not a frame, and it does not go home. The first
+// cut of this put the zoom back and dropped the held height in one frame and
+// then glided the seat to wherever the player had been looking -- which read
+// as a snap, and took the view off the one thing it had just made a fuss
+// about. Now the seat stays on the event and the zoom and the ground line
+// ease out to the yard's own over CUT_OUT_S, the way the opening lets go of
+// its pair; the player scrolls away when they are done looking.
 
 import { P, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
-         CUT_SHIELD_FILL, CUT_SHIELD_GROUND } from './config.js';
+         CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_OUT_S, CUT_GLIDE } from './config.js';
 import { S, rift, pit } from './state.js';
-import { lookAt, setZoom, clampCam } from './world.js';
+import { setZoom, clampCam } from './world.js';
 import { reducedMotion } from './prefs.js';
 import { KINDS, shieldUp } from './shield.js';
 
@@ -83,20 +91,24 @@ let sawFall = false;
 const play = name => {
   const sc = sceneOf(name);
   const zoom = typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
-  S.cine = { name, at: 0, s: sc.s, zoom, backX: S.camX + S.viewW / 2,
+  S.cine = { name, at: 0, s: sc.s, zoom,
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
   S.cineOwed = name;               // until it has been seen through: see `release`
   S.dirty = true;
 };
 
-export const cutsceneRunning = () => !!S.cine;
+// A scene on its way out has let go as far as the player is concerned: the
+// click that would have skipped it lands in the yard instead.
+export const cutsceneRunning = () => !!S.cine && !S.cine.out;
 
 // Any click while a scene runs lands here first -- see `input.js`.
 export function skipCutscene() {
-  if (!S.cine) return false;
+  if (!cutsceneRunning()) return false;
   release();
   return true;
 }
+
+const ease = k => 1 - Math.pow(1 - k, 3);
 
 // Whether the shield standing now is one whose answer is still owed a scene.
 // The four that fail can only answer once -- a failed kind goes into
@@ -123,10 +135,12 @@ export function stepCutscene(t) {
   if (!c) return;
   const sc = sceneOf(c.name);
   if (!c.at) c.at = t;
-  if (t - c.at >= c.s * 1000) { release(); return; }
-  if (sc.over) {
-    if (!c.overAt && sc.over(c)) c.overAt = t;
-    if (c.overAt && t - c.overAt >= sc.tail * 1000) { release(); return; }
+  if (!c.out) {
+    if (t - c.at >= c.s * 1000) release();
+    else if (sc.over) {
+      if (!c.overAt && sc.over(c)) c.overAt = t;
+      if (c.overAt && t - c.overAt >= sc.tail * 1000) release();
+    }
   }
 
   // Own the view for the length of it, every frame rather than once: the zoom
@@ -135,36 +149,56 @@ export function stepCutscene(t) {
   // own pan (`startRescue`) is one of the things overruled here: it is on the
   // same spot anyway.
   S.follow = null;
-  setZoom(c.zoom);
-  // The zoom is one call and the view is set, not glided, so the scene is
-  // already watched from a still seat -- except that the disc grows under the
-  // tearing and its center creeps with it. Under reduced motion the framing is
-  // taken on the scene's first frame and kept, so the one thing that moves is
-  // the hole; letting go at the end is a `lookAt`, which is a cut under the same
-  // preference.
+  // How far let go the scene is: nought while it plays, easing to one over the
+  // way out. The zoom and the ground line are walked between the scene's
+  // framing and the yard's own along it, so the last frame of the scene and
+  // the first frame of the yard having its view back are the same picture.
+  // Under reduced motion the way out is the cut it was.
+  if (c.out) c.outAt ??= t;
+  const out = !c.out ? 0
+            : reducedMotion() ? 1
+            : ease(Math.min(1, (t - c.outAt) / (CUT_OUT_S * 1000)));
+  // The seat's center is what is kept across a zoom change, not its left
+  // edge: the view widens as it pulls out, and holding `camX` would slide the
+  // event off to the right of the frame.
+  const center = S.camX + S.viewW / 2;
+  S.camLockY = null;
+  setZoom(c.zoom + (1 - c.zoom) * out);
+  // The disc grows under the tearing and its center creeps with it. Under
+  // reduced motion the framing is taken on the scene's first frame and kept,
+  // so the one thing that moves is the hole.
   const cx = sc.spot ? sc.spot() : c.spotX;
   if (reducedMotion()) c.heldX ??= cx;
   // Glided to, not cut to: the design says 'glide to the pit mouth, pull in
   // a step', and the frame set the seat outright on the scene's first frame
   // -- a jump of a window or more from wherever the player was looking
-  // (critics 2026-09-10, C16). The same ease the camera's own glide uses, so
-  // the way in matches the way out; under reduced motion it is the cut it was.
-  const want = (c.heldX ?? cx) - S.viewW / 2;
-  S.camX = reducedMotion() ? want : S.camX + (want - S.camX) * 0.12;
+  // (critics 2026-09-10, C16). The same ease the camera's own glide uses;
+  // under reduced motion it is the cut it was.
+  const want = c.heldX ?? cx;
+  const at = reducedMotion() ? want : center + (want - center) * CUT_GLIDE;
+  S.camX = at - S.viewW / 2;
   S.camTo = null;
   // The ground line low in the frame, the event above it -- the same framing
   // rule the intro keeps, for the same reason: measured up from the pit floor
-  // a close view is all pit.
-  S.camLockY = S.groundY - S.viewH * (sc.ground || 0.62);
+  // a close view is all pit. It is walked back to the yard's own height over
+  // the same stretch the zoom is, for the intro's reason too: dropping the
+  // difference in one frame is a hitch you feel.
+  const close = S.groundY - S.viewH * (sc.ground || 0.62);
+  const rest = S.worldH - S.viewH;
+  S.camLockY = close + (rest - close) * out;
   clampCam();
+  if (out >= 1) {
+    S.cine = null;
+    S.camLockY = null;
+    setZoom(1);
+    S.dirty = true;
+  }
 }
 
+// The scene is over, or skipped: it is owed nothing more and starts its way
+// out. The camera is still this module's until the way out is walked.
 function release() {
   S.cineOwed = null;
-  const back = S.cine ? S.cine.backX : null;
-  S.cine = null;
-  S.camLockY = null;
-  setZoom(1);
-  if (back != null) lookAt(back);   // glide home rather than snap
+  S.cine.out = true;
   S.dirty = true;
 }

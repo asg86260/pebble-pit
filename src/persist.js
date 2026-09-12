@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
+import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
          ABYSS_AT, WORKER } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB } from './save.js';
@@ -285,9 +285,11 @@ function blob() {
     // a reload that dumped you back at the rock threw away the one piece of
     // where-you-were the player sets by hand. Rounded because a pixel of a
     // pixel is not worth the characters.
-    // ...where the view was before a scene took it, while one has it: a save
-    // written mid-tear came back parked on the pit with the scene gone (C14)
-    camX: Math.round(S.cine ? S.cine.backX - S.viewW / 2 : S.camX),
+    // ...as a seat at the yard's own zoom, while a scene has it pulled in: the
+    // scene ends on the event now, so its seat is the right one to keep, but
+    // `camX` mid-scene is the left edge of a narrower view than the one that
+    // comes back (C14)
+    camX: Math.round(S.cine ? S.camX + S.viewW / 2 - S.W * P / CELL / 2 : S.camX),
     // ...and a core on the cursor is written where the cursor was, so it comes
     // back there rather than at a fifth of the world's width (critics C14)
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y }

@@ -3322,7 +3322,7 @@ solid.
 ### Cutscenes
 
 Both transitions are one-time events the player should be *shown*: the camera
-goes to the pit, the moment plays with its flair, the camera comes back. The
+goes to the pit, the moment plays with its flair, the camera is let go. The
 pipeline note in game.js decided against the collapse taking the camera, for
 two reasons: a yank interrupts the player, and the ad-hoc grab "stole the
 frame from anything else pointing the camera." The second was a defect of not
@@ -3344,17 +3344,23 @@ One mechanism, `src/cutscene.js`, not two hand-cut camera grabs:
 - **A scene is a list of timed beats** (glide here, zoom to k, hold s
   seconds, release), data in `config.js`, so the two scenes here and any
   later one are entries, not forks.
+- **Letting go does not go home.** The seat stays on the event and the zoom
+  and the held ground line ease out to the yard's own over `CUT_OUT_S`, the
+  way the opening lets go of its pair. The first cut put the zoom back in one
+  frame and glided the view to wherever the player had been looking, which
+  read as a snap and took the picture off the thing it had just made a fuss
+  about (user, 2026-09-12). The player scrolls away when they are done.
 
 The two scenes:
 
 1. **The tearing.** Overflow detected → glide to the pit mouth, pull in a
    step (the intro's zoom machinery, `camLockY`) → a held beat on the brim,
    the shake, white page splitting into the `RIFT_W0` tear → the first
-   overflow visibly streams up into it → release. ~4 seconds.
+   overflow visibly streams up into it → release. ~6 seconds.
 2. **The drowning.** `ABYSS_AT` crossed → glide to the pit, wider frame (the
    whole mouth in view) → the disc strains, the collapse, the existing
    liquefy-from-the-bottom over the gulp's seconds → a beat on the standing
-   black surface → release. ~6 seconds.
+   black surface → release. ~8 seconds.
 
 Flair stays inside the language: black and white, flat shapes, the existing
 shake, interference and fade vocabulary (full fades, flowing interference, no

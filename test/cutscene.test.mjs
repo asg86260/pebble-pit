@@ -97,6 +97,10 @@ for (const kind of ['props', 'net', 'arch', 'jack']) {
       // timber), and what is asserted is that it is put back where it was.
       ok(w.ended && w.ended.zoom === w.zoom0, 'with the zoom put back',
          w.ended && `${w.zoom0} -> ${w.started.zoom} -> ${w.ended.zoom}`),
+      // ...and the seat left on the span, not sent back to where the player
+      // had been looking: the scene ends on the thing it was about.
+      ok(Math.abs(w.camAfter - w.spanX) < 30, 'and the view left on the span',
+         `span ${w.spanX}, seat ${w.camAfter}, was ${w.seat}`),
     ];
   });
 }

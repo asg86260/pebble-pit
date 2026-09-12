@@ -10,7 +10,7 @@
 
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
-const { RIFT_W0, RIFT_WMAX, ABYSS_AT } = await import('../src/config.js');
+const { RIFT_W0, RIFT_WMAX, ABYSS_AT, CUT_TEAR_S, CUT_DROWN_S, CUT_OUT_S } = await import('../src/config.js');
 const { riftCells } = await import('../src/rift.js');
 const { pitTop } = await import('../src/pit.js');
 
@@ -48,7 +48,7 @@ group('the tearing is watched once, and the yard never pauses', async () => {
   run(0.2);
   const during = state();
   const rockBefore = during.rock;
-  run(6);
+  run(CUT_TEAR_S + CUT_OUT_S + 1);     // the scene, its way out, and a breath
   const after = state();
 
   return [
@@ -104,7 +104,7 @@ group('eating its fill drowns the pit', async () => {
   window.__give(20000);                  // and more than enough to cross it
   const crossed = runUntil(() => state().drowned, 30);
   const during = state();
-  run(10);                               // the drowning's gulp and scene run out
+  run(CUT_DROWN_S + CUT_OUT_S + 2);      // the drowning's gulp and scene run out
   const after = state();
 
   return [
