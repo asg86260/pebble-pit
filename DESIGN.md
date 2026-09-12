@@ -7799,6 +7799,15 @@ per work -- the owner's call (2026-09-12), over a first cut at a fixed width
 that clipped names. It fades in and out (`.off`) rather than popping. Held
 (`S.paused`), it is faded with the rest.
 
+**The board stays up on a purchase** (amended 2026-09-12, the owner's ask).
+It used to put itself away when a row was bought (feedback8 item 1) so what
+you paid for could be watched in the yard the sheet covers -- decided when a
+site took one work at a time and the next press was ten seconds off anyway.
+The point of a line is pressing the next row while you are still standing
+there; walking away is one step, and the card in the corner shows the yard's
+doing without the board getting out of its way. A press that buys nothing
+leaves it up as it always did.
+
 ### What it is not
 
 - Not a way to staff a build. One body per site's work, as before.

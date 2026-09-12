@@ -9,7 +9,7 @@ import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES } from './works.js';
-import { closeBoard, closeSubmenu } from './board.js';
+import { closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -422,24 +422,19 @@ function build(el, list, sections, empty, heads) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (u.read) b.classList.add('stat');
-      // A purchase puts the board away. Buying is a thing you do to the yard,
-      // and the yard is what the sheet is covering: the dust arcs to the
-      // station, the gang walks out to build, the flag comes down -- and none
-      // of that is worth watching through a menu. Walking back up is one step.
-      //
-      // Rungs used to leave the board up, so a ladder could be climbed without
-      // re-opening it. That is the case for staying, and it loses to seeing
-      // what you paid for; a ladder is still two steps a rung.
-      //
-      // Only an actual purchase closes it. A press that bought nothing -- no
-      // money, maxed out, a site already busy -- leaves the board where it is,
-      // because a sheet that shuts on a bill you could not pay looks exactly
-      // like a sheet that took your money.
+      // A purchase leaves the board up. It put the board away for a while
+      // (feedback8 item 1): buying is a thing you do to the yard, and the
+      // sheet got out of the light so you could see the dust arc and the gang
+      // walk out. That was decided when a site took one work at a time, so
+      // the next press was ten seconds off anyway. A site takes a line now
+      // (DESIGN.md, "The queue"), and the point of a line is pressing the next
+      // row while you are still standing here -- the owner's call, 2026-09-12.
+      // Walking away is one step, and the card in the corner shows what the
+      // yard is doing without the board having to get out of its way.
       else b.addEventListener('click', () => {
         tookLook();                            // anything the yard sent earlier
-        const bought = buy(u);
+        buy(u);
         tookLook();                            // and whatever this purchase sent
-        if (bought) closeBoard();
       });
       // A row that has something to say says it on hover, in the same words in
       // the same box the yard uses for a mark you went and looked at. It is the

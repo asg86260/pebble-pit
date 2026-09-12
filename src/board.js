@@ -821,10 +821,6 @@ let closing = 0;
 let leaving = 0;
 const LINGER = 130;                    // and how long the moment is
 
-// Shut whatever is open. Called when a press on a row has done its work: see
-// shop.js. It goes through the same path a walk away goes through, so the fade
-// and the seating are the ones the board already has.
-export const closeBoard = () => showPanel(null, true);
 
 // --- the sheet that opens off the house board ---------------------------------
 // The one submenu in the game. It stands beside the board it belongs to, inside

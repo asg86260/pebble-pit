@@ -693,9 +693,9 @@ export const TESTS = [
     // pressed again. Setting the count through a hook would prove nothing about
     // the thing that goes wrong, which is what the board does on the purchase.
     //
-    // A purchase puts the board away now (feedback8 item 1), so a set of three
-    // is three walk-ups -- which is exactly what a player does, and the loop
-    // walks back up the same way rather than reaching past the board.
+    // The board is re-opened before each press. It used to be put away by the
+    // purchase (feedback8 item 1) and stays up now (DESIGN.md, "The queue");
+    // opening it again either way is what keeps the loop about the press.
     const row = () => [...document.querySelectorAll('#schoolshop button[data-key]')]
       .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
     let presses = 0;
@@ -1421,9 +1421,9 @@ export const TESTS = [
     const before = size();
 
     // A row that has to be built, pressed the way a finger presses it. The
-    // press puts the board away -- buying is a thing you do to the yard and the
-    // sheet gets out of the light -- so walking back up to it is part of the
-    // route, and it is the board you walk back up to that this is about.
+    // board is opened again after the press (it stays up now, but this check
+    // is about the board being seated afresh over a build, so it is asked for
+    // anew rather than relied on).
     const row = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockschool');
     row?.click();

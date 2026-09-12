@@ -219,20 +219,15 @@ export const TESTS = [
     ];
   }],
 
-  // Buying puts the board away, rung or place (feedback8 item 1). Every press
-  // that takes money shuts the sheet, because what you bought happens out in
-  // the yard the sheet is covering -- the dust arcs to the station, the gang
-  // walks out to build, the flag comes down.
+  // Buying leaves the board up, rung or place. It put the board away for a
+  // while (feedback8 item 1) so what you bought could be watched in the yard
+  // the sheet covers; a site takes a line now (DESIGN.md, "The queue") and the
+  // point of a line is pressing the next row without walking back up.
   //
-  // The board used to stay up for a rung, so a ladder could be climbed without
-  // walking back; that lost to seeing what you paid for, with the cost of a
-  // walk-up per rung on the table when it was decided.
-  //
-  // A press that buys NOTHING is the other half of the rule and the half worth
-  // guarding: no money, maxed out, a row already being built. The sheet has to stay
-  // up for those, because a board that shuts on a bill you could not pay looks
-  // exactly like a board that took your money.
-  ['buying puts the board away; a press that buys nothing leaves it up', async () => {
+  // A press that buys NOTHING leaves it up too -- no money, maxed out, a row
+  // already being built -- and that half is still worth guarding: the two
+  // cases must look the same from the board and different from the purse.
+  ['buying leaves the board up, and so does a press that buys nothing', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
@@ -242,10 +237,9 @@ export const TESTS = [
     window.__grant({ cores: 5 });
     run(20);
     // Each press reports what it cost as well as what the board did, because
-    // the rule is about the pair: away IF it bought, up if it did not. Reading
-    // the board alone would pass a build that shut the sheet and took nothing.
+    // the rule is about the pair: up either way, and the purse the only tell.
     const press = async key => {
-      await hoverBench();                    // walk back up: the last press shut it
+      await hoverBench();                    // stand at the bench (still there after a press)
       await sleep(250);
       const b = document.querySelector(`#shop button[data-key="${key}"]`);
       if (!b) return null;
@@ -272,7 +266,7 @@ export const TESTS = [
     return [
       ok(!!bought && bought.spent > 0, 'a rung takes the money',
          bought ? `${bought.spent}` : 'no row'),
-      ok(!!bought && bought.open === false, 'and the board goes away with it',
+      ok(!!bought && bought.open === true, 'and the board stays up for the next press',
          `${bought && bought.open}`),
       // Not `=== 0`: the crew are hauling while this runs, so the purse
       // creeps *up* under the press. What matters is that nothing was taken.
@@ -280,7 +274,7 @@ export const TESTS = [
          refused ? `${refused.spent} taken` : 'no row'),
       ok(!!refused && refused.open === true, 'and a press that bought nothing leaves the board up',
          `${refused && refused.open}`),
-      ok(!!place && place.open === false, 'and ordering a place puts it away as well',
+      ok(!!place && place.open === true, 'and ordering a place leaves it up as well',
          `${place && place.open}`)
     ];
   }],
