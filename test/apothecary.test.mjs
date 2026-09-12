@@ -191,19 +191,18 @@ group('a one-off brews a single batch and then idles', async () => {
 // --- the ladders --------------------------------------------------------------
 group('the pot ladders deepen what a brew is worth', async () => {
   standApothecary();
-  const brew0 = brewMs();
   const doses0 = dosesPer();
+  const brew0 = brewMs();
   // a rung on the pot is built by its own hands, like the plots break the next
   // furrow -- so it is a work the yard finishes, not an instant number
-  const boughtSpeed = buyNow('brewspeed');
   const boughtDoses = buyNow('brewdoses');
   const pots0 = yard.S.apothPots;
   const boughtPot = buyNow('anotherpot');
   return [
-    ok(boughtSpeed && brewMs() < brew0, 'brew speed shortens a batch',
-       `${brew0} -> ${brewMs()}`),
-    ok(boughtDoses && dosesPer() > doses0, 'doses a brew reaches more bodies',
+    ok(doses0 === 1, 'a first batch is one dose', `${doses0}`),
+    ok(boughtDoses && dosesPer() === doses0 + 1, 'and a rung on doses a brew is one more body, whole',
        `${doses0} -> ${dosesPer()}`),
+    ok(brewMs() === brew0 && brew0 === 30000, 'the batch clock is not for sale', `${brewMs()}`),
     ok(boughtPot && yard.S.apothPots === pots0 + 1, 'another pot breaks more room',
        `${pots0} -> ${yard.S.apothPots}`)
   ];

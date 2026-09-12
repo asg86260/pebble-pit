@@ -545,7 +545,7 @@ export const SCENES = {
                  window.__grant({ cores: 3, dust: 60000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
-                 window.__buy('brewspeed'); window.__fast(4); window.__look(st().apothecaryX - 300); } },
+                 window.__buy('brewdoses'); window.__fast(4); window.__look(st().apothecaryX - 300); } },
   // A keeper claimed to the hut: "another pot" on the go with a stirrer on a
   // keep-brewing pot and stock on the shelf, so the body that would otherwise
   // be out dealing is stood at the hut under the bar and its pot is cold.

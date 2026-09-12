@@ -8,7 +8,10 @@ ladder's own length); the apothecary's, bench's, crew's, shack's and fan's
 ladders rewritten as band tables; `LADDER` (nine) replaces `RUNGS` (five)
 everywhere but the crew multipliers and the tower. Whole-unit ladders (your
 strength and pick, the haulers' load) climb higher at the top than they did;
-the school's kit rows were left in shards on purpose. The rule is in
+the school's kit rows were left in shards on purpose. Follow-up the same
+day: the apothecary's brew speed and armful ladders are cut and doses a
+brew is one to seven, a dose a rung (DESIGN.md, "Brew speed and the armful
+are cut") -- the building out-brewed its drinkers. The rule is in
 CLAUDE.md "Decided". Worth a look on a real yard: the fan dust-first, and
 whether a 10 px pick at the top is too much rock.
 

@@ -383,7 +383,7 @@ export const S = {
   // -- an earned reveal, in the seenX pattern (the grind pass, DESIGN.md).
   brews: 0,
   doseHold: [],           // doses brewed and not yet carried out, per pot
-  brewLevel: 0,           // brew speed: crop into a dose, faster
+  brewLevel: 0,           // brew speed: a retired ladder, kept so old saves load
   lengthLevel: 0,         // buff length: how long a dose lasts on the body
   strengthLevel: 0,       // buff strength: what a dose is worth while it is up
   dosesLevel: 0,          // doses a brew: how many bodies one batch reaches
@@ -397,7 +397,7 @@ export const S = {
   potSpents: [],          // and whether that pot's one-off batch has been put up
   shelf: {},              // doses in stock on the bookshelf, by tonic key
   potency: {},            // how far each tonic's own strength ladder has climbed
-  doseCarryLevel: 0,      // doses a stirrer takes out in one trip: DOSE_CARRY's rung
+  doseCarryLevel: 0,      // the armful: a retired ladder, kept so old saves load
 
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },

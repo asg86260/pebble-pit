@@ -1768,10 +1768,21 @@ voice, each band the fantastical version of the one before it:
 
 | ladder | unit | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
 |---|---|---|---|---|
-| brew speed | s | a hotter fire | a copper pot | a still |
-| dose length | s | a stoppered vial | a waxed seal | a sealed phial |
-| doses a brew | doses | a wider ladle | a second kettle | a cistern |
-| potency, per tonic | % | a longer steep | a second boiling | a distillate |
+| dose length | s | fresh ingredients | wax seals | extended release |
+| doses a brew | doses | a bigger pot | a second kettle | -- (two cards, 1 -> 7) |
+| potency, per tonic | % | steeped | twice boiled | distilled |
+
+**Brew speed and the armful are cut (2026-09-12).** With doses a brew, brew
+speed, the armful and another pot all for sale, every rung the building sold
+pushed production up and nothing drew it down, and an endgame yard brewed far
+past what its bodies could drink. So the batch clock is fixed at thirty
+seconds (`BREW_MS`) and a stirrer carries one vial (`DOSE_CARRY`): the pot
+brews as fast as a keeper can light it, and what is for sale is how far a batch
+reaches (doses, **one** to seven, a whole dose a rung over two cards -- the
+eased 3 -> 8 rounded to two rungs that read "5 -> 5"), how long it holds (dose
+length -- kept, as the one lever that draws *consumption* down rather than
+pushing production up) and how deep each recipe goes (potency). Saves carrying
+`brewLevel` or `doseCarryLevel` read at the fixed values.
 
 The potency ladders are per tonic already (`S.potency[key]`), and stay so: a
 card called "a longer steep" under the stew deepens the stew. Five tonics, three

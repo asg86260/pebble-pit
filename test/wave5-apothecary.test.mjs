@@ -43,6 +43,9 @@ const setPot = (i, key) => choosePotTonic(i, key);
 // --- two pots, two brews, two shelves -----------------------------------------
 group('a second pot brews its own tonic, onto its own shelf', async () => {
   standApothecary();
+  // A first batch is one dose and a keeper carries it straight out, so stock
+  // only stands on a shelf once a batch is bigger than a pair of hands.
+  window.__levels({ dosesLevel: 3 });
   const boughtPot = buyNow('anotherpot');
   window.__assign('stirrers', 2);              // a keeper apiece
 
@@ -67,6 +70,7 @@ group('a second pot brews its own tonic, onto its own shelf', async () => {
 
 group('turning a pot to another brew does not throw away what it made', async () => {
   standApothecary();
+  window.__levels({ dosesLevel: 3 });          // as above: a batch that leaves stock behind
   buyNow('anotherpot');
   window.__assign('stirrers', 2);
   setPot(0, 'stew');
@@ -129,32 +133,15 @@ group('a potency rung deepens one brew and leaves the others alone', async () =>
 });
 
 // --- the armful ---------------------------------------------------------------
-group('the carry ladder sends a stirrer out with more than one vial', async () => {
+// A stirrer carries one vial, and there is no ladder over it any more: an
+// armful was production climbing by another name, and the building already
+// out-brewed what its bodies could drink. One body, one dose, one walk.
+group('a stirrer carries one vial and nothing sells it more', async () => {
   standApothecary();
-  const was = carryDoses();
-  const bought = buyNow('dosecarry');
+  const rows = window.__rows().map(r => r.key);
   return [
-    ok(was === 1, 'a stirrer starts out carrying one', String(was)),
-    ok(bought && carryDoses() === 2, 'and a rung makes it two',
-       `${was} -> ${carryDoses()}`)
-  ];
-});
-
-group('a fuller armful doses more bodies in one round', async () => {
-  // Bought first, then run: one trip out of the building now lands on two
-  // bodies, so the yard comes under the tonic in half the walks.
-  standApothecary();
-  buyNow('dosecarry');
-  buyNow('dosecarry');                         // three at a time
-  window.__assign('stirrers', 1);
-  setPot(0, 'stew');
-  const onStew = () => yard.S.workers.filter(w =>
-    doses(w).some(d => d.tonic === 'stew')).length;
-  const spread = runUntil(() => onStew() >= 2, 400);
-  const under = onStew();
-  return [
-    ok(carryDoses() === 3, 'the stirrer carries three', String(carryDoses())),
-    ok(spread, 'and more than one body ends up under the brew', `${under} bodies`)
+    ok(carryDoses() === 1, 'one in hand', String(carryDoses())),
+    ok(!rows.includes('dosecarry'), 'and no armful row on any board')
   ];
 });
 

@@ -28,12 +28,12 @@
 //    because those are facts about the place rather than about a recipe.
 
 import { LADDER,
-         BREW_BILL, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
-         DOSES0, DOSES5, STRENGTH0, STRENGTH5,
+         BREW_BILL, BREW_MS, BUFF_MS0, BUFF_MS5,
+         DOSES0, DOSES_CARDS, TIER_BAND, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
          BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
-         DOSE_CARRY, CARRY_RUNGS, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
+         DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
          DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
@@ -42,7 +42,7 @@ import { now, frames } from './clock.js';
 import { rand } from './rng.js';
 import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
-import { rebalance, rungCost, commutePace, unitText } from './upgrades.js';
+import { rebalance, commutePace, unitText } from './upgrades.js';
 import { registerRows } from './works.js';
 import { tierRows, cards } from './upgrades/tiers.js';
 import { puff } from './puff.js';
@@ -58,16 +58,16 @@ const rung = lvl => Math.max(0, Math.min(LADDER, lvl | 0));
 const ease = (a, b, lvl) => a + (b - a) * (rung(lvl) / LADDER);
 
 // How long one batch takes, how long a dose lasts, and how many doses a batch
-// mints -- all read live off the ladders so a rung bought mid-brew is felt on
-// the next batch. These are the building's, one figure for every pot in it.
-export const brewMs = (lvl = S.brewLevel) => ease(BREW_MS0, BREW_MS5, lvl);
+// mints -- the last two read live off their ladders so a rung bought mid-brew
+// is felt on the next batch. These are the building's, one figure for every
+// pot in it. The batch clock is fixed; see BREW_MS.
+export const brewMs = () => BREW_MS;
 export const buffMs = (lvl = S.lengthLevel) => ease(BUFF_MS0, BUFF_MS5, lvl);
-export const dosesPer = (lvl = S.dosesLevel) => Math.round(ease(DOSES0, DOSES5, lvl));
-// How many vials leave the building in a stirrer's hands at once (item 11). One
-// at level nought, four at the top of a three-rung ladder.
-export const carryRung = () => Math.max(0, Math.min(CARRY_RUNGS, S.doseCarryLevel | 0));
-export const carryDoses = () => DOSE_CARRY[carryRung()];
-
+// A whole dose a rung over its own shorter ladder -- see DOSES0.
+export const dosesPer = (lvl = S.dosesLevel) =>
+  DOSES0 + Math.max(0, Math.min(DOSES_CARDS * TIER_BAND, lvl | 0));
+// One vial in a stirrer's hands, always -- see DOSE_CARRY.
+export const carryDoses = () => DOSE_CARRY;
 // --- the three tonics ---------------------------------------------------------
 // A crop base plus one reagent. The stew is the general buff, so its reagent is
 // dust, the shared coin; the two targeted tonics take shard, the coin of
@@ -786,37 +786,16 @@ export const APOTHECARY_UPGRADES = [
     show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
-  ...brewLadder({ field: 'brewLevel', unit: 's', does: 'brew',
-    value: lvl => Math.round(brewMs(lvl) / 1000),
-    bands: [{ key: 'brewspeed',  name: 'a hotter fire' },
-            { key: 'brewspeed2', name: 'a copper pot' },
-            { key: 'brewspeed3', name: 'a still' }] }),
   ...brewLadder({ field: 'lengthLevel', unit: 's', does: 'lasts', after: 3,
     value: lvl => Math.round(buffMs(lvl) / 1000),
-    bands: [{ key: 'bufflength',  name: 'a stoppered vial' },
-            { key: 'bufflength2', name: 'a waxed seal' },
-            { key: 'bufflength3', name: 'a sealed phial' }] }),
+    bands: [{ key: 'bufflength',  name: 'fresh ingredients' },
+            { key: 'bufflength2', name: 'wax seals' },
+            { key: 'bufflength3', name: 'extended release' }] }),
   ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
     value: lvl => dosesPer(lvl),
-    bands: [{ key: 'brewdoses',  name: 'a wider ladle' },
-            { key: 'brewdoses2', name: 'a second kettle' },
-            { key: 'brewdoses3', name: 'a cistern' }] }),
-  // How many vials leave in one pair of hands (item 11). Three rungs, not nine:
-  // the ladder ends where a body carrying an armful of glass stops being one you
-  // believe -- and a three-rung ladder is one card, so it is priced in dust
-  // alone like any first card. Its `note` is the one place the hauler rule is
-  // written on a row.
-  {
-    key: 'dosecarry', kind: 'rung', site: 'apothecary',
-    name: 'a fuller armful', unit: 'doses',
-    rung: carryRung, rungs: () => CARRY_RUNGS,
-    from: () => DOSE_CARRY[carryRung()],
-    to: () => DOSE_CARRY[Math.min(CARRY_RUNGS, carryRung() + 1)],
-    cost: () => rungCost(BREW_RUNG_DUST, carryRung()),
-    buy: () => { S.doseCarryLevel++; },
-    show: () => S.apothecaryOpen
-  },
-
+    // Two cards, not three: a dose a rung and one to seven is six rungs.
+    bands: [{ key: 'brewdoses',  name: 'a bigger pot' },
+            { key: 'brewdoses2', name: 'a second kettle' }] }),
   ...TONICS.flatMap(potencyRows)
 ];
 
@@ -824,7 +803,7 @@ export const APOTHECARY_UPGRADES = [
 // and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
-  { title: 'brewing', keys: [...cards('brewspeed'), ...cards('bufflength'), ...cards('brewdoses'), 'dosecarry'] },
+  { title: 'brewing', keys: [...cards('bufflength'), ...cards('brewdoses')] },
   { title: 'potency', keys: TONICS.flatMap(t => cards(`potency-${t.key}`)) }
 ];
 

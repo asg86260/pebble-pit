@@ -36,16 +36,25 @@ export const BREW_BILL = {
   gleam:  [['spore', 8],  ['spark', 3]]
 };
 
-// The pot at level 0, and where each ladder takes it at the top. Every one of
-// these eases straight across `LADDER` the way the crit ladders do; the names
-// say five because that is how long the ladders were when the tops were set,
-// and the tops have not moved.
-export const BREW_MS0 = 30000;         // 30 s a batch at brew-speed 0...
-export const BREW_MS5 = 15000;         // ...and 15 s at the top: drain and coverage double
-export const BUFF_MS0 = 60000;         // a dose lasts a minute at buff-length 0...
+// The pot's clock and the dose's. A batch is thirty seconds, and that is not
+// a ladder: it was one (30 s down to 15 s), and with doses a brew and pots
+// beside it every rung the building sold pushed production up while nothing
+// drew it down, so an endgame yard brewed far past what its bodies could
+// drink. The pot brews as fast as a keeper can light it; what you buy is how
+// far a batch reaches (doses) and how long it holds (dose length), and how
+// deep each recipe goes (potency). Dose length eases across `LADDER`, the way
+// the crit ladders do; the name says five because that is how long the ladder
+// was when the top was set, and the top has not moved.
+export const BREW_MS = 30000;          // a batch, always
+export const BUFF_MS0 = 60000;         // a dose lasts a minute at dose-length 0...
 export const BUFF_MS5 = 180000;        // ...three minutes at the top
-export const DOSES0 = 3;               // bodies a brew reaches at doses 0...
-export const DOSES5 = 8;               // ...eight at the top
+// Doses a brew: a whole dose a rung, so every rung on the card lands. It eased
+// 3 -> 8 over the ladder and rounded, which put two rungs on the board that
+// read "5 -> 5". One dose to begin with -- a first batch is one vial for one
+// body -- and two cards of three, because seven whole steps is what one to
+// eight is and a card is three rungs.
+export const DOSES0 = 1;               // bodies a brew reaches at doses 0
+export const DOSES_CARDS = 2;          // cards on the ladder: six rungs, one to seven
 // Buff strength: the fraction a level-0 dose is worth, and at the top. The stew
 // is +25% at level 0 -- the lab's own STEP, one familiar size -- and +60% maxed.
 // This ladder is climbed one tonic at a time now (item 14): a rung deepens the
@@ -83,13 +92,11 @@ export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
 // on every run (docs/critics-2026-09-10.md, B9).
 export const BREW_RUNG_DUST = 900;
 
-// How many doses a stirrer takes out of the building in one trip, rung by rung.
-// One at level nought -- a body carrying a single vial, which is what it always
-// did -- then two, three and four, so a full ladder is one walk where there used
-// to be four. Three rungs, not five: the pace of the round is the thing being
-// bought and four vials in a pair of hands is where that stops being believable.
-export const DOSE_CARRY = [1, 2, 3, 4];
-export const CARRY_RUNGS = DOSE_CARRY.length - 1;
+// A stirrer carries one vial. It was a ladder (one to four an armful), and an
+// armful is the walk being decoration: four vials in a pair of hands is four
+// deals for one crossing of the yard, which is production climbing again by
+// another name. One body, one dose, one walk -- the yard's rule.
+export const DOSE_CARRY = 1;
 
 // One stirrer to a pot, and one pot to begin with. `another pot` breaks standing
 // room for one more -- capOfBare-shaped, the farm's "another plot" exactly.
