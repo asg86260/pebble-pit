@@ -1111,9 +1111,9 @@ export const TESTS = [
                   `list ${Math.round(o.right)}/${Math.round(o.top)}` : 'no rects'),
       ok(Math.abs(wasAt - stillAt) < 1, 'and nothing under it moves to make room',
          `${Math.round(wasAt)} -> ${Math.round(stillAt)}`),
-      // The control repeats the choice the way the yard says it -- "rock
-      // hands", in words, per jobSaid -- not the way the key spells it.
-      ok(said === 'rock hands', 'pressing one of them sets it', said),
+      // The control repeats the choice the way the yard says it -- "diggers",
+      // per jobSaid -- not the way the key spells it.
+      ok(said === 'diggers', 'pressing one of them sets it', said),
       ok(shutAfter, 'and the list shuts behind the choice'),
       ok(heldOn, 'the cursor leaving does not shut it on the spot'),
       ok(wanderedOff, 'but it puts itself away a breath later'),

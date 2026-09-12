@@ -64,11 +64,13 @@ group('the job names are spelled in one file and referred to everywhere else', a
     ok(roundTrip, 'every type maps to a job and back to itself'),
     ok(sameSize, 'and the three tables are the same size',
        `${Object.keys(TYPE).length}/${Object.keys(JOB).length}/${Object.keys(JOB_OF).length}`),
-    // The two that are said as two words, and the rest that are said as they are
-    // spelled. This is the thing "labbers" was a symptom of: a key you could not
-    // change without changing the word a player reads.
-    ok(jobSaid(JOB.ROCK) === 'rock hands' && jobSaid(JOB.PURIFY) === 'air purifiers',
-       'the two-word jobs are said in words', `${jobSaid(JOB.ROCK)} / ${jobSaid(JOB.PURIFY)}`),
+    // The jobs whose said name is not their key, and the rest that are said as
+    // they are spelled. This is the thing "labbers" was a symptom of: a key you
+    // could not change without changing the word a player reads -- and it is
+    // what let the rock's gang become the diggers and the cut's the miners
+    // without a save field moving.
+    ok(jobSaid(JOB.ROCK) === 'diggers' && jobSaid(JOB.QUARRY) === 'miners' && jobSaid(JOB.PURIFY) === 'air purifiers',
+       'the renamed jobs are said in their own words', `${jobSaid(JOB.ROCK)} / ${jobSaid(JOB.QUARRY)} / ${jobSaid(JOB.PURIFY)}`),
     ok(jobSaid(JOB.HAUL) === 'haulers', 'and the haulers are haulers, not "the crew"',
        jobSaid(JOB.HAUL))
   ];

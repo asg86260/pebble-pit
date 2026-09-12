@@ -66,5 +66,9 @@ export const TYPE_OF = Object.freeze(Object.fromEntries(
 // board that shows them: a key doubling as its own label is how "labbers"
 // survived being read by anybody, and how the haulers came to be called "the
 // crew" on one dial and "haulers" everywhere else. Nothing prints a raw key.
-const SAID = Object.freeze({ [JOB.ROCK]: 'rock hands', [JOB.PURIFY]: 'air purifiers' });
+//
+// The rock's gang are the diggers and the cut's are the miners (2026-09-12):
+// a body swinging at a boulder digs it down, and a body in a quarry mines it.
+// The keys stay `rockhands` and `quarriers` -- saves and hooks quote them.
+const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.PURIFY]: 'air purifiers' });
 export const jobSaid = job => SAID[job] || job || '';

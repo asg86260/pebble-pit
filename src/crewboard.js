@@ -84,7 +84,7 @@ export function whereIs(w) {
 // A line a job, for the same reason: a body who has spent all day in the
 // scrubbing house does not have a favourite of `undefined`, and it does not
 // have one of `transporting` either.
-const DOES = { rockhands: 'mining the rock', quarriers: 'quarrying',
+const DOES = { rockhands: 'digging the rock', quarriers: 'mining the quarry',
                farmhands: 'farming', scholars: 'researching',
                purifiers: 'clearing the air',
                janitors: 'shoveling', haulers: 'transporting' };
