@@ -17,6 +17,18 @@ export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // twelve, all told
 // ladder's own field, so the field itself only ever climbs this far.
 export const TIER_OWN = TIER_RUNGS - TIER_BAND;
 
+// And every other ladder in the yard: the same cards, three of them. Dust
+// only on the first, dust and crops on the second, dust, crops and ore on the
+// third -- the order the run hands its coins out -- and no fourth, because the
+// grounds' fourth card is the old lab multiplier and nothing else ever had
+// one. See DESIGN.md, "Every ladder is sold in bands". `RUNGS` (five) is what
+// is left to the two crew multipliers and the tower's spark ladders, which are
+// outside that rule by decision.
+export const LADDER_BANDS = 3;                    // cards to an ordinary ladder
+export const LADDER = TIER_BAND * LADDER_BANDS;    // nine rungs, all told
+// The coins each card adds to the dust, first card to last.
+export const BAND_COINS = [[], ['spore'], ['spore', 'shard']];
+
 // How far up each multiplier goes, by the field it multiplies.
 //
 // `levelOf` clamped every one of them at `RUNGS` when there were four and they

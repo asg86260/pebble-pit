@@ -13,7 +13,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, ROCKHAND_RUNGS, RUNGS, ABYSS_AT } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, ROCKHAND_RUNGS, LADDER, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
@@ -89,7 +89,7 @@ export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
   S.rockhandPickLevel = ROCKHAND_RUNGS;
-  S.rockhandSpeedLevel = RUNGS;
+  S.rockhandSpeedLevel = LADDER;
   S.quarryOpen = true;
   S.farmOpen = true;
   // And a full set of specialists, which is the other half of what a machine is

@@ -103,6 +103,19 @@ export function buyNow(key) {
   return true;
 }
 
+// Climb a ladder sold in bands the way a player does: through whichever card
+// is showing. `key` is the first card's key; the second and third are `key2`
+// and `key3` (see `cards` in upgrades/tiers.js). Returns how many rungs went up.
+export function climb(key, n = 9, buy = buyNow) {
+  let got = 0;
+  for (let i = 0; i < n; i++) {
+    const card = window.__rows().find(r => r.shown && [key, `${key}2`, `${key}3`].includes(r.key));
+    if (!card || !buy(card.key)) break;
+    got++;
+  }
+  return got;
+}
+
 export function buyBuilt(key, limit = 120) {
   if (!window.__buy(key)) return false;
   const going = () => Object.values(state().works || {}).flat().some(w => w && w.key === key);

@@ -28,7 +28,7 @@ import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
 import { scrubRate } from '../src/smog.js';
 import { inScrub } from '../src/scrubhouse.js';
-import { SMOG_PER_MOTE } from '../src/config.js';
+import { SMOG_PER_MOTE, LADDER } from '../src/config.js';
 
 // The yard from the field, which is the only honest place to ask this: a fresh
 // yard has no machines, and without a machine there is nothing to foul the sky
@@ -161,14 +161,14 @@ function cleared(fan) {
 
 group('a bigger fan is a bigger draught, not a bigger number', async () => {
   const bare = cleared(0);
-  const full = cleared(5);
+  const full = cleared(LADDER);
   return [
     ok(bare.dry && full.dry, 'both stretches were measured without a shower in them',
        `bare ${bare.dry}, full ${full.dry}`),
     ok(bare.took > 0, 'a house with no fan on it still pulls the sky down',
        `${Math.round(bare.took)} haze in thirty seconds`),
-    // The ladder is five rungs of a quarter each -- 1.25^5, a little over three
-    // times. Well short of that here and the fan is decoration again; this asks
+    // The ladder is worth a little over three times at the top (FAN_TOP, the
+    // old five quarters spread over nine rungs). Well short of that here and the fan is decoration again; this asks
     // for half the ladder's worth, which no amount of luck in where the motes
     // happened to be sitting will hand over.
     ok(full.took > bare.took * 1.5,
@@ -204,7 +204,7 @@ group('the house takes what it is rated at', async () => {
 });
 
 group('the board counts what the mouth swallows', async () => {
-  // An empty sky and a fan five rungs up: the rating is high and there is
+  // An empty sky and a fan at the top of its ladder: the rating is high and there is
   // nothing up there to take, so a board quoting the rating says the house is
   // winning by a mile while it stands there doing nothing.
   //
@@ -217,7 +217,7 @@ group('the board counts what the mouth swallows', async () => {
   // as scrubbing it. What this group is about is the board quoting what was
   // *swallowed* rather than what the fan is rated at, and that needs a sky with
   // nothing in it.
-  fromTheField(5, []);
+  fromTheField(LADDER, []);
   window.__air({ haze: 0 });
   run(4);
   const idle = state().smog;

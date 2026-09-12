@@ -206,6 +206,24 @@ export let HAUL_BASE = 1.8;
 export const HAUL_CARRY_COST = 150;     // the haulers' strength ladder, dust
 export const HAUL_PACE_COST = 180;      // and their speed, dust
 export const ROCKHAND_SPEED_COST = 210; // the rockhands' swing, dust
+// The gear over those two -- a harness on a hauler's back, boots on its feet --
+// used to be priced in shards from the first rung because the shard was the
+// one scarce coin there was. It is a ladder in bands like the rest now, and
+// these are its first rungs in dust; the shard comes back on the third card.
+export const HARNESS_COST = 400;        // the haulers' harness ladder, dust
+export const BOOTS_COST = 300;          // and their boots
+// And what a hauler's walk climbs to. Pace and boots are two ladders over one
+// speed: each is worth this much again of the base at the top of its own
+// ladder, spread evenly rung by rung, so a longer ladder is finer steps to the
+// same top rather than a faster crew.
+export const HAUL_PACE_TOP = 1.5;       // pace at the top: two and a half times the base
+export const BOOTS_TOP = 2.25;          // and boots on top of that
+// Your own bench's three ladders, first rungs in dust. Yours come first and
+// cheap: they are the first rows on the first board, bought before there is a
+// crew to buy for.
+export const CARRY_COST = 8;            // your strength -- what a sweep picks up
+export const SWING_COST = 20;           // your swing
+export const PICK_COST = 240;           // your pickaxe
 // The house was 60 at 1.45x, and a full playthrough said bodies were the
 // bottleneck of the whole run: the seventeenth cost 15,800 and the twenty-fifth
 // 447,000, hours of a yard's income for one hauler, when every later station

@@ -8,9 +8,9 @@
 // checking is what the player meets: the second row is not there, five rungs
 // are bought, and now it is.
 
-import { group, ok, openSites, buyNow } from './helpers.mjs';
+import { group, ok, openSites, climb } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { RUNGS } from '../src/config.js';
+import { LADDER } from '../src/config.js';
 
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);
 const rich = () => window.__grant({ dust: 900000, shards: 9000, spores: 9000, cores: 90 });
@@ -24,17 +24,17 @@ group('boots are not for sale until the pace ladder is finished', async () => {
   window.__crew(1, 0);
 
   const before = shown('boots');
-  const bought = [];
-  for (let i = 0; i < RUNGS; i++) bought.push(buyNow('haulpace'));
+  // Nine rungs over three cards, bought through whichever card is showing.
+  const bought = climb('haulpace', LADDER);
   const after = shown('boots');
   window.__crew(0, 0);
 
   return [
     ok(!before, 'with pace unbought, boots are not on the board'),
-    ok(bought.every(Boolean), 'the pace ladder can be climbed through its row', bought.join()),
-    ok(S.haulPaceLevel === RUNGS, 'to the top', `${S.haulPaceLevel}`),
+    ok(bought === LADDER, 'the pace ladder can be climbed through its cards', `${bought}`),
+    ok(S.haulPaceLevel === LADDER, 'to the top', `${S.haulPaceLevel}`),
     ok(after, 'and only then are boots for sale'),
-    ok(!shown('haulpace'), 'in the place the finished pace row folded away from')
+    ok(!shown('haulpace') && !shown('haulpace2'), 'in the place the finished pace cards folded away from')
   ];
 });
 
@@ -47,12 +47,12 @@ group('every tier of one ladder waits on the one before it', async () => {
   window.__crew(1, 0);
 
   const harness0 = shown('harness'), mult0 = shown('labhaul'), swing0 = shown('labswing');
-  for (let i = 0; i < RUNGS; i++) buyNow('haulcarry');
+  climb('haulcarry', LADDER);
   const harness1 = shown('harness');
-  for (let i = 0; i < RUNGS; i++) buyNow('haulpace');
-  for (let i = 0; i < RUNGS; i++) buyNow('boots');
+  climb('haulpace', LADDER);
+  climb('boots', LADDER);
   const mult1 = shown('labhaul');
-  for (let i = 0; i < RUNGS; i++) buyNow('rockhandspeed');
+  climb('rockhandspeed', LADDER);
   const swing1 = shown('labswing');
   window.__crew(0, 0);
 

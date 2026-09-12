@@ -27,12 +27,12 @@
 //    lasts, how big a batch is and how many a body carries are the building's,
 //    because those are facts about the place rather than about a recipe.
 
-import { RUNGS,
+import { LADDER,
          BREW_BILL, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
          DOSES0, DOSES5, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
-         BREW_RUNG_SPORE, BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
+         BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, CARRY_RUNGS, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
@@ -44,22 +44,25 @@ import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, rungCost, commutePace, unitText } from './upgrades.js';
 import { registerRows } from './works.js';
+import { tierRows, cards } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Each eases straight across the ladder from its level-0 value to the top over
-// `RUNGS`, the way the crit ladders do. A save from before this landed reads as
-// level nought rather than as some rung nothing agrees with.
-const rung = lvl => Math.max(0, Math.min(RUNGS, lvl | 0));
-const ease = (a, b, lvl) => a + (b - a) * (rung(lvl) / RUNGS);
+// `LADDER`, the way the crit ladders do. The top is where it was when the
+// ladders were five rungs; nine is finer steps to it, not a better pot. A save
+// from before this landed reads as level nought rather than as some rung
+// nothing agrees with.
+const rung = lvl => Math.max(0, Math.min(LADDER, lvl | 0));
+const ease = (a, b, lvl) => a + (b - a) * (rung(lvl) / LADDER);
 
 // How long one batch takes, how long a dose lasts, and how many doses a batch
 // mints -- all read live off the ladders so a rung bought mid-brew is felt on
 // the next batch. These are the building's, one figure for every pot in it.
-export const brewMs = () => ease(BREW_MS0, BREW_MS5, S.brewLevel);
-export const buffMs = () => ease(BUFF_MS0, BUFF_MS5, S.lengthLevel);
-export const dosesPer = () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel));
+export const brewMs = (lvl = S.brewLevel) => ease(BREW_MS0, BREW_MS5, lvl);
+export const buffMs = (lvl = S.lengthLevel) => ease(BUFF_MS0, BUFF_MS5, lvl);
+export const dosesPer = (lvl = S.dosesLevel) => Math.round(ease(DOSES0, DOSES5, lvl));
 // How many vials leave the building in a stirrer's hands at once (item 11). One
 // at level nought, four at the top of a three-rung ladder.
 export const carryRung = () => Math.max(0, Math.min(CARRY_RUNGS, S.doseCarryLevel | 0));
@@ -123,7 +126,7 @@ export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 // could ask -- which of these three is worth leaning on -- had already been
 // answered for you by any purchase at all.
 export const potencyLevel = key => rung((S.potency || {})[key]);
-const strengthOf = key => ease(STRENGTH0, STRENGTH5, potencyLevel(key)) / STRENGTH0;
+const strengthOf = (key, lvl = potencyLevel(key)) => ease(STRENGTH0, STRENGTH5, lvl) / STRENGTH0;
 
 // What a tonic is worth right now, at the strength ITS OWN ladder has climbed
 // to. A crit tonic reads in points of chance; the other two in a fraction of the
@@ -683,58 +686,50 @@ export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 // same three things four times over was the board doing a job the yard does
 // better. Reading and setting are different errands and this is the reading one.
 
-// A rung on the building, priced spore + dust like every tier-two row. `level`
-// reads the rung and `climb` puts it up, so a ladder kept on `S` as a number and
-// one kept per tonic in a map are the same row to the board.
-const brewRung = ({ key, name, unit, does, level, climb, from, to, rungs, after = 0 }) => ({
-  key, kind: 'rung', site: 'apothecary', name, unit, does,
-  rung: level,
-  rungs,
-  from, to,
-  bill: () => [['spore', rungCost(BREW_RUNG_SPORE, level())],
-               ['dust', rungCost(BREW_RUNG_DUST, level())]],
-  cost: () => rungCost(BREW_RUNG_DUST, level()),
-  buy: climb,
-  // `after` is batches landed before the row shows at all: the deeper rows of
-  // the craft reveal themselves as the craft is practiced, rather than the
-  // whole board arriving priced and clickable on the frame the door opens.
-  show: () => S.apothecaryOpen && S.brews >= after && level() < (rungs ? rungs() : RUNGS)
-});
-
-// A ladder kept on `S` under its own name -- the building's four.
-const stateRung = o => brewRung({
+// A ladder on the building, in bands like every ladder in the yard (CLAUDE.md,
+// "Decided"): dust for the first card, dust and crops for the second, dust,
+// crops and ore for the third. `after` is batches landed before the ladder
+// shows at all: the deeper rows of the craft reveal themselves as the craft is
+// practiced, rather than the whole board arriving priced and clickable on the
+// frame the door opens. A first rung at the door's own price (900 dust), not a
+// fortieth of it: a board you can clear on the frame it opens is a list, not a
+// set of choices (docs/critics-2026-09-10.md, B9).
+const brewLadder = ({ after = 0, ...o }) => tierRows({
   ...o,
-  level: () => S[o.level],
-  climb: () => { S[o.level]++; }
+  first: BREW_RUNG_DUST,
+  site: 'apothecary',
+  show: () => S.apothecaryOpen && S.brews >= after
 });
 
-// And the per-tonic potency ladders (item 14). One row a tonic, all in the hut's
+// The per-tonic potency ladders (item 14). One ladder a tonic, all in the hut's
 // own section: what you are buying is a deeper version of one recipe, which is a
-// fact about the craft rather than about any one pot.
-const potencyRow = t => ({
-  ...potencyRowBare(t),
-  // A shard recipe the player cannot brew yet is a recipe worth no rung either
-  // (item 24) -- the row hides with the picker entry until the quarry opens.
-  // And no potency row at all until a first batch has landed (the grind pass):
-  // the deeper craft is earned by brewing.
-  show: () => S.apothecaryOpen && S.brews >= 1 && potencyLevel(t.key) < RUNGS && tonicShown(t)
-});
-// What each tonic's number is a number *of*, in the yard's own words: the row
-// is named for the drink, and "stew 25 -> 32%" says nothing about what the
-// drinker does more of.
+// fact about the craft rather than about any one pot. The cards are named for
+// the drink and then for what was done to it, so five ladders showing one card
+// each still read as five tonics.
+//
+// What each tonic's number is a number *of*, in the yard's own words: "stew 25
+// -> 32%" says nothing about what the drinker does more of.
 const DOES = { work: 'work', crit: 'crit', carry: 'carry', pace: 'walk', spark: 'sparks' };
-const potencyRowBare = t => brewRung({
-  key: `potency-${t.key}`,
-  name: `${t.short}`,
+const STEEPS = ['steeped', 'twice boiled', 'distilled'];
+const potencyRows = t => brewLadder({
+  level: () => potencyLevel(t.key),
+  climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
   // The bracing tonic adds points of crit chance, which is a percentage like
   // the rest of them once the verb says "crit"; it used to carry "crit" as its
   // unit, which with the verb in front read "crit 8 -> 10 crit".
   unit: '%',
   does: DOES[t.kind],
-  level: () => potencyLevel(t.key),
-  climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
-  from: () => Math.round(t.base * strengthOf(t.key) * 100),
-  to: () => Math.round(t.base * (ease(STRENGTH0, STRENGTH5, potencyLevel(t.key) + 1) / STRENGTH0) * 100)
+  value: lvl => Math.round(t.base * strengthOf(t.key, lvl) * 100),
+  // No potency card at all until a first batch has landed (the grind pass):
+  // the deeper craft is earned by brewing.
+  after: 1,
+  bands: cards(`potency-${t.key}`).map((key, i) => ({
+    key, name: `${t.short}, ${STEEPS[i]}`,
+    // A shard recipe the player cannot brew yet is a recipe worth no rung
+    // either (item 24) -- the cards hide with the picker entry until the quarry
+    // opens.
+    gate: () => tonicShown(t)
+  }))
 });
 
 export const APOTHECARY_UPGRADES = [
@@ -787,36 +782,50 @@ export const APOTHECARY_UPGRADES = [
     currency: 'dust',
     buy: () => { S.apothPots++; rebalance(); },
     // A second pot is for a craft with batches behind it -- the same earned
-    // reveal the deeper rungs use (`after` on brewRung).
+    // reveal the deeper rungs use (`after` on brewLadder).
     show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
-  stateRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', does: 'brew', level: 'brewLevel',
-    from: () => Math.round(brewMs() / 1000),
-    to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', does: 'lasts', level: 'lengthLevel', after: 3,
-    from: () => Math.round(buffMs() / 1000),
-    to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel', after: 3,
-    from: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel)),
-    to: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel + 1)) }),
-  // How many vials leave in one pair of hands (item 11). Three rungs, not five:
+  ...brewLadder({ field: 'brewLevel', unit: 's', does: 'brew',
+    value: lvl => Math.round(brewMs(lvl) / 1000),
+    bands: [{ key: 'brewspeed',  name: 'a hotter fire' },
+            { key: 'brewspeed2', name: 'a copper pot' },
+            { key: 'brewspeed3', name: 'a still' }] }),
+  ...brewLadder({ field: 'lengthLevel', unit: 's', does: 'lasts', after: 3,
+    value: lvl => Math.round(buffMs(lvl) / 1000),
+    bands: [{ key: 'bufflength',  name: 'a stoppered vial' },
+            { key: 'bufflength2', name: 'a waxed seal' },
+            { key: 'bufflength3', name: 'a sealed phial' }] }),
+  ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
+    value: lvl => dosesPer(lvl),
+    bands: [{ key: 'brewdoses',  name: 'a wider ladle' },
+            { key: 'brewdoses2', name: 'a second kettle' },
+            { key: 'brewdoses3', name: 'a cistern' }] }),
+  // How many vials leave in one pair of hands (item 11). Three rungs, not nine:
   // the ladder ends where a body carrying an armful of glass stops being one you
-  // believe. Its `note` is the one place the hauler rule is written on a row.
-  stateRung({ key: 'dosecarry', name: 'a fuller armful', unit: 'doses',
-    level: 'doseCarryLevel', rungs: () => CARRY_RUNGS,
+  // believe -- and a three-rung ladder is one card, so it is priced in dust
+  // alone like any first card. Its `note` is the one place the hauler rule is
+  // written on a row.
+  {
+    key: 'dosecarry', kind: 'rung', site: 'apothecary',
+    name: 'a fuller armful', unit: 'doses',
+    rung: carryRung, rungs: () => CARRY_RUNGS,
     from: () => DOSE_CARRY[carryRung()],
-    to: () => DOSE_CARRY[Math.min(CARRY_RUNGS, carryRung() + 1)] }),
+    to: () => DOSE_CARRY[Math.min(CARRY_RUNGS, carryRung() + 1)],
+    cost: () => rungCost(BREW_RUNG_DUST, carryRung()),
+    buy: () => { S.doseCarryLevel++; },
+    show: () => S.apothecaryOpen
+  },
 
-  ...TONICS.map(potencyRow)
+  ...TONICS.flatMap(potencyRows)
 ];
 
 // Three sections, all of them the building's: how it is run, how well it runs,
 // and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
-  { title: 'brewing', keys: ['brewspeed', 'bufflength', 'brewdoses', 'dosecarry'] },
-  { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
+  { title: 'brewing', keys: [...cards('brewspeed'), ...cards('bufflength'), ...cards('brewdoses'), 'dosecarry'] },
+  { title: 'potency', keys: TONICS.flatMap(t => cards(`potency-${t.key}`)) }
 ];
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is

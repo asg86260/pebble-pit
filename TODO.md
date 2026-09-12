@@ -1,5 +1,17 @@
 # Still to do
 
+## Every ladder sold in bands -- BUILT (2026-09-12)
+
+DESIGN.md "Every ladder is sold in bands (built)". `tierRows` generalized
+(band count off the table, multiplier band opt-in, `tierCost` over the
+ladder's own length); the apothecary's, bench's, crew's, shack's and fan's
+ladders rewritten as band tables; `LADDER` (nine) replaces `RUNGS` (five)
+everywhere but the crew multipliers and the tower. Whole-unit ladders (your
+strength and pick, the haulers' load) climb higher at the top than they did;
+the school's kit rows were left in shards on purpose. The rule is in
+CLAUDE.md "Decided". Worth a look on a real yard: the fan dust-first, and
+whether a 10 px pick at the top is too much rock.
+
 ## The desk and the sound -- BUILT (2026-09-12)
 
 The last open boxes on `docs/release-checklist.md`, built as one wave from

@@ -1675,6 +1675,232 @@ other coins, which at the top of a ladder is seven cores -- steep, and steep by
 the economy's own exchange rate rather than by a number picked for this row. It
 is the first thing to argue with on a yard.
 
+## Every ladder is sold in bands (built)
+
+The farm and the quarry sell their ladders as cards -- three rungs to a card,
+a bill that deepens card by card, a new name on each -- and nothing else in
+the yard does. The apothecary's four building ladders and five potency ladders
+are flat five-pip rows priced spore-and-dust from the first rung; the bench's,
+the crew's, the shack's and the scrubbing house's are the same shape in other
+coins. So the game has two ways to sell a ladder, and the one every board but
+two uses is the one the grounds' redesign called "a twelve-pip row nobody
+reads" and replaced. This section finishes that replacement: **the band shape
+is the shape of a ladder, everywhere**, and it is a rule from here on (it is
+in CLAUDE.md's "Decided" list): a new ladder on any board is built as bands
+through `tierRows`, and a flat row with one bill from rung one is the old
+shape. The apothecary is the first board to get it because it is the one that
+asked.
+
+What is *not* a ladder, and so not touched: a one-off (`hold to mine`, the
+outhouse's `another cap`, the tower's hat), a count with no ceiling (the
+school's carts, the machines' tune rows), and a place (`another pot`,
+`another plot`). Those keep their coin and their one price.
+
+### The rule
+
+A ladder is **three bands of three rungs**, nine rungs in all, and each band
+is its own card. What deepens across the bands is the bill, and the order the
+coins arrive in is fixed for the whole yard:
+
+| band | rungs | what it costs |
+|---|---|---|
+| 1 | 1-3 | **dust only**, and cheap -- the first card on any board is one an early yard can buy |
+| 2 | 4-6 | dust **and crops** |
+| 3 | 7-9 | dust, crops **and ore** |
+
+Dust, then spore, then shard, because that is the order the run hands them
+out: the rock is there from the first click, the plots are the first thing a
+core buys (`FARM_DUST` 600), the quarry the second (`QUARRY_DUST` 2000). A
+card never asks for a coin the player has not yet seen a body carry, so a
+band-two card on a yard without plots is a card the player cannot read as a
+price at all -- and it is exactly the card that says "break the plots". The
+grounds' own tables already have this order (compost / fertilizer / hybrid
+seed is dust / +spore / +shard) and keep it; nothing there moves.
+
+**No fourth band.** The grounds' fourth card is the old lab multiplier --
+everything the yard makes, a spark and a core in the bill, a BUILD bodies
+stand at -- and it exists because those two multipliers were already in the
+game and needed a home. The other stations never had one, and inventing six
+more all-coins research cards would put sparks on every board in the yard.
+Sparks are the machines' coin, end to end (see "Decided"), and the tower's
+and the machines' own ladders are spark-priced and endless by that decision;
+they are **not** in this design and do not take the band shape. Three bands,
+nine rungs, and the ladder ends where the third card ends.
+
+**The prices are the ladder's, not the card's.** `tierCost` already spreads
+`rungCost`'s five-rung span (about six and a half times, bottom to top) across
+a longer ladder by asking for a fractional level, so a nine-rung ladder keeps
+the bottom and top prices the five-rung one had and puts finer steps between
+them. The first rung's dust price is the number each ladder already carries
+(`BREW_RUNG_DUST`, `HAUL_CARRY_COST`, `FAN_COST`'s dust worth, and so on);
+the crop and ore halves are that dust at what a spore and a shard are worth
+(`DUST_PER`), which is how the grounds' bands price theirs and how the machines
+have always priced sparks. So no new price is typed: a band's bill is the dust
+price said in more coins, and the only tuned number per ladder is still its
+first rung.
+
+**The values are the ladder's too.** Every five-rung ladder eases from a level-0
+value to a level-5 value (`BREW_MS0` -> `BREW_MS5`, `BUFF_MS0` -> `BUFF_MS5`);
+the same two ends now sit at rung 0 and rung 9, and `ease` is asked for the
+nine steps between. A ladder gets longer without getting stronger -- the top of
+the ladder is where it was, there are more decisions on the way up, and each
+one is cheaper than the old rung it replaces. This is the same call the
+grounds made when twelve rungs replaced five.
+
+**A ladder that is already three rungs is one card.** `dosecarry` (a body
+carries 1, 2, 3, 4 vials, and four is where believing stops), `rockhandpick`
+(a whole pixel of bite a rung, three of them), the crit `power` ladder
+(`CRIT_MULT_RUNGS`, three) and the school's kits (`KIT_MAX`) are short on
+purpose, each for a reason written on its row. They stay one card of three
+and take **band one's bill: dust only.** Stretching them to nine would break
+the reason each is short; leaving them dear in shards while everything beside
+them starts in dust would make them the odd rows out on every board. The
+school's carts, which have no ceiling and no pips, are not a ladder and are
+left alone.
+
+### The apothecary's board
+
+Four building ladders and five potency ladders, all through the one helper,
+all three cards deep. The `brewing` section shows one card per ladder -- the
+band it is on -- so the board is no longer than it is now, and the `potency`
+section still shows one card a tonic. The names, in the apothecary's own
+voice, each band the fantastical version of the one before it:
+
+| ladder | unit | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
+|---|---|---|---|---|
+| brew speed | s | a hotter fire | a copper pot | a still |
+| dose length | s | a stoppered vial | a waxed seal | a sealed phial |
+| doses a brew | doses | a wider ladle | a second kettle | a cistern |
+| potency, per tonic | % | a longer steep | a second boiling | a distillate |
+
+The potency ladders are per tonic already (`S.potency[key]`), and stay so: a
+card called "a longer steep" under the stew deepens the stew. Five tonics, three
+cards each, one showing per tonic. `dosecarry` ("a fuller armful") keeps its
+three rungs and its one card and drops the spore half of its bill.
+
+The reveal gates stay where they are: `after` (batches landed) still decides
+when a ladder's first card shows at all, and the grind pass's rule -- no rung
+bought inside a minute of the door -- holds because the first rung's dust
+price is unchanged and the crop half moves to band two, where the player has
+had to brew their way to it. That is the point of the shape here: the first
+card is the cheap one *because* it is dust only, and the ladder gets dear in
+the coins the craft has started spending.
+
+Retire `BREW_RUNG_SPORE`: the spore half of every apothecary rung is derived
+from the dust price by `DUST_PER` from band two on, like the grounds'. One
+fewer tuned number.
+
+### The other boards
+
+The same helper and the same rule, station by station. The keys are
+internal and never renamed (`S.seenRows`, works in flight in a save quote
+them), so band one keeps each ladder's existing key and bands two and three
+take the grounds' convention of `key2` / `key3`. Names are proposed; every one
+is the ladder's idea escalating, in the register of the board it sits on.
+
+| board | ladder | today | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
+|---|---|---|---|---|---|
+| bench | strength (your carry) | dust | a bigger pocket | a satchel | a barrow |
+| bench | swing (your click) | dust | a firmer grip | a weighted haft | a steel head |
+| bench | pickaxe (your bite) | shard+dust | a sharper pick | a forged pick | a tempered pick |
+| bench | chance (crit) | shard+dust | a lucky charm | a rabbit's foot | a found horseshoe |
+| bench | load (haulers) | dust | a bigger sack | a yoke | a handcart |
+| bench | pace (haulers) | dust | good boots | a worn path | a laid track |
+| bench | harness (haulers) | shard+dust | a harness | a leather harness | a padded harness |
+| bench | boots (haulers) | shard+dust | boots | a second pair | hobnails |
+| shack | speed (rockhands) | dust | a rhythm | a work song | a foreman |
+| scrub | the fan | shard | a bigger fan | a second blade | a bellows |
+
+`harness` and `boots` carry a shard from rung one today because the shard was
+the only scarce coin there was to price them in; they take the same shape as
+`load` and `pace` beside them. The crit `power` ladder is one card of three,
+dust only, as above.
+
+The fan is the one change of coin with a balance consequence: it is the sky's
+lever (see "Decided" -- the sky is beaten only by investing here), and it goes
+from shard-only to dust-first. Its dust price is `FAN_COST * DUST_PER_SHARD`,
+the same worth it has today, so a band-one fan costs what it cost and asks for
+it in the coin a polluted early yard actually has -- which brings the sky's
+answer *earlier*, not cheaper. Bands two and three then put the shard back on
+it. If the fan comes under control too early on a real yard, the knob is
+`FAN_COST`, as it is now.
+
+### What the helper has to learn
+
+`tierRows` in `upgrades/tiers.js` is the one place a ladder is built as cards,
+and it is written for the grounds: four bands (`TIER_BANDS`), the last one a
+multiplier finished as a BUILD (`multKey`, `finish`, `workFor`). Three things
+generalize, none of them new mechanism:
+
+1. **The band count is the table's length**, not `TIER_BANDS`. A ladder with
+   three lines in its `bands` is three cards; the grounds keep four.
+2. **The multiplier band is opt-in.** With no `multKey`, every band climbs the
+   ladder's own field and there is no `finish` card. `tierLevel` and `tierGain`
+   already clamp on `TIER_OWN`; they read the own-rung count off the ladder
+   instead.
+3. **`tierCost` takes the ladder's length.** It spreads the five-rung span over
+   `TIER_RUNGS - 1` today; it spreads it over `rungs - 1`.
+
+`TIER_BAND` (three to a card) stays the one shared number -- it is the shape
+of a card, and every board should read the same. The state fields keep their
+names (`S.brewLevel`, `S.carryLevel`, `S.fanLevel`...); a save with a level of
+five on a ladder that is nine long is a player five rungs up a longer ladder,
+at the value `ease` gives rung five of nine -- a little below where they were,
+never above, and no rung lost. `persist-roundtrip` has nothing new to learn.
+
+A save carrying a *finished* five-rung ladder is the one case worth a look:
+`done` on the old board becomes 5 of 9 on the new, with four dust-and-crop
+rungs to buy. That is the design working -- the player is offered the deeper
+craft -- not a migration to write.
+
+### What this costs the player, and why it is worth it
+
+More decisions per ladder and a cheaper first one. A board today asks the same
+two coins nine times over a five-pip row; a board in bands asks one coin for
+three rungs, then two, then three, and says with a new card each time that the
+craft has moved on. That is more to read across a run and less to read at
+once, which is the trade the grounds already made and the one every other
+board is still waiting for.
+
+### Built (notes, 2026-09-12)
+
+What the build decided that the design did not:
+
+- **Whole-unit ladders climb a little higher.** Your strength (a grain a
+  rung), your pickaxe (a pixel a rung) and the haulers' load (a grain a rung)
+  cannot take fractional steps, so nine rungs of a whole unit is a higher top
+  than five were: your pick takes 10 px at the top where it took 6, a hauler
+  carries 10 where it carried 6. The harness went from two grains a rung to
+  one, so its top is 9 where it was 10. Every *rate* ladder -- the swing, the
+  gang's swing, pace, boots, the fan, the crits, every apothecary ladder --
+  eases to the floor or top it always had; `HAUL_PACE_TOP` and `BOOTS_TOP`
+  say the haulers' in config.
+- **The school is left alone.** Its kit rows are a count of hats with a
+  ceiling, not a ladder over a rate, and the carts beside them have no
+  ceiling at all; a board with hats in dust and carts in shards would be the
+  odd one out in the other direction. The shard is what the school is for.
+  One line to change if the rule should reach it anyway.
+- **The potency cards are named for the drink and then the step**: "stew,
+  steeped", "stew, twice boiled", "stew, distilled" -- five ladders showing
+  one card each have to read as five tonics.
+- **The crew's two multipliers** (`labswing`, `labhaul`) keep their five
+  shard rungs and now follow the third card of the ladder they multiply.
+- `cards(key)` in `upgrades/tiers.js` gives a ladder's three keys from its
+  first, and the boards' section lists spread it; `climb(key, n)` in
+  `test/helpers.mjs` buys a ladder through whichever card is showing, the way
+  a player does.
+
+### Open
+
+- **The order of coins on the scrubbing house.** Dust / spore / shard is the
+  yard's order and the design uses it everywhere. The fan is the one ladder
+  where shard is its own coin today, and an argument could be made for
+  dust / shard / spore there. Not taken: one order the whole yard over is the
+  rule, and a per-board exception is the kind of constant the "fix the system"
+  rule exists to refuse.
+- **Card names.** Twenty-some proposed above. Any of them is a word in a
+  table and changes nothing else.
+
 ## Not doing
 
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
