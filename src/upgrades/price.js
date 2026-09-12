@@ -19,7 +19,9 @@ import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE } from '.
 // decides when you stop. A ladder with an end does not need the price to be the
 // wall, because the end is the wall, so a rung can stay affordable enough to be
 // worth reading all the way up.
-export const rungCost = (first, lvl) => Math.round(first * Math.pow(1.6, lvl));
+// `rate` is the step, and a ladder may name its own: the Ladder Book's knob.
+export const RUNG_RATE = 1.6;
+export const rungCost = (first, lvl, rate = RUNG_RATE) => Math.round(first * Math.pow(rate, lvl));
 
 // Sixty to the spark is the line the machines were already sitting on: the
 // tiller exactly, the jaw within a rounding. The rest are set against it by how

@@ -35,8 +35,8 @@ import { STEP, levelOf, workFor, finish } from '../mult.js';
 // and the steps between them are finer. The alternative -- 1.6 twelve times
 // over -- is a hundred and seventy times the first price at the top, which is a
 // row nobody can buy rather than a ladder anybody climbs.
-export const tierCost = (first, lvl, rungs = TIER_RUNGS) =>
-  rungCost(first, (RUNGS - 1) * lvl / (rungs - 1));
+export const tierCost = (first, lvl, rungs = TIER_RUNGS, rate) =>
+  rungCost(first, (RUNGS - 1) * lvl / (rungs - 1), rate);
 
 // Where a ladder stands: its own field up to `own` rungs, and the multiplier
 // over it after that, if it has one. The multiplier is `levelOf`, so it is
@@ -71,13 +71,15 @@ export const cards = key =>
 //            apothecary's potency, one per tonic). Both default to `field`
 //   value    what the ladder is worth at a ladder level -- the from/to
 //   first    what rung one costs, in dust
+//   rate     how much steeper each rung is, over five rungs' worth of the
+//            ladder -- RUNG_RATE (1.6) unless the ladder says otherwise
 //   follows  the key of a row this ladder continues -- `chained` in
 //            upgrades.js keeps every card off the board until that row is done
 //   bands    one line a card: a key, a name, optionally the coins the bill
 //            adds (BAND_COINS by position otherwise) and a gate of the
 //            band's own
 export function tierRows({ field, multKey, level: at, climb, unit, pct, does, value,
-                           first, site, board, show, after, follows, keep, bands }) {
+                           first, rate, site, board, show, after, follows, keep, bands }) {
   const count = bands.length;
   const rungs = TIER_BAND * count;
   // How many rungs are the ladder's own: all of them, unless the last card is
@@ -111,7 +113,7 @@ export function tierRows({ field, multKey, level: at, climb, unit, pct, does, va
       // worth. `billOf` only adds dust to a bill that names none, so naming it
       // here is what stops the conversion being done twice.
       bill: () => {
-        const dust = tierCost(first, level(), rungs);
+        const dust = tierCost(first, level(), rungs, rate);
         return [['dust', dust],
                 ...coins.map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])];
       },
