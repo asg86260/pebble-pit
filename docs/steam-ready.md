@@ -12,7 +12,7 @@ what answers each one. Ticked means built; the rest say what they wait on.
   opens there next time -- only if a display still shows a corner of the
   rectangle, so an unplugged monitor cannot strand it. `electron/main.cjs`.
 - [x] **"No full screen."** F11 and Alt+Enter toggle it, in the shell.
-- [x] **"Escape doesn't pause."** It holds now, the same as space; the
+- [x] **"Escape doesn't pause."** It holds now (landed on main as `a93d10f`, Escape rather than space); the
   sheet's key line says so.
 - [x] **"No way to quit."** A window with no menu bar had Alt+F4 and nothing
   else. `quit` is on the held sheet on the desk (hidden in a browser).

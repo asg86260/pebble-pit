@@ -26,7 +26,7 @@ cause and effect. There is no music -- you hear the yard, not the game.
   in on.
 - **There is no ending.** Rocks keep coming. You'll know when you're done.
 - **Your save is a file.** It autosaves to `%APPDATA%\Boulder\saves\` with
-  a backup beside it, and `save a copy` on the pause sheet (space or esc)
+  a backup beside it, and `save a copy` on the pause sheet (esc)
   writes one wherever you like. Load it on another machine with `load a
   save`.
 - **Sound is on, and quiet.** The mute is on the same sheet and remembers.
