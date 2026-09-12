@@ -33,7 +33,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, JACK_COST, DOME_BILL } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, JACK_COST, DOME_BILL, LADDER } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -55,7 +55,7 @@ const rich = () => {
 // pair of hands, which is what the belt is gated behind. `__fullSites` does the
 // same for the cut, the field and the rock, but carrying has no site to fill.
 const lip = () => {
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
   window.__school({ carters: 6 });
 };
 

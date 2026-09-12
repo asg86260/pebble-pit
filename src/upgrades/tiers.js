@@ -22,7 +22,7 @@
 
 import { S } from '../state.js';
 import { RUNGS, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP } from '../config.js';
-import { rungCost, DUST_PER } from '../upgrades.js';
+import { rungCost, DUST_PER } from './price.js';
 import { STEP, levelOf, workFor, finish } from '../mult.js';
 
 // What a rung of a long ladder costs, from what the first one costs.
