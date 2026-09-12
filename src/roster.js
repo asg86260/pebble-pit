@@ -20,6 +20,7 @@ import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf, shelved } from './upgrades.js';
 import { KIT_MARK, TRADE_OF } from './kit.js';
 import { JOB, jobSaid } from './jobs.js';
+import { shown } from './tween.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -395,7 +396,7 @@ export function drawRosterCounts(ctx, screenAt) {
   for (const p of posts()) {
     const b = boxes(p);
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
-    ctx.fillText(String(S[p.job]), Math.round(at.x), Math.round(at.y));
+    ctx.fillText(String(Math.round(shown('roster:' + p.job, S[p.job]))), Math.round(at.x), Math.round(at.y));
     // What the station owns, not what is being worn: a rock with four helmets
     // and one body on it still has four helmets, and the point of the number is
     // that it tells you what is waiting there for the next body you send.
@@ -405,7 +406,7 @@ export function drawRosterCounts(ctx, screenAt) {
     // wears the hat, so a second count would be the headcount written twice.
     if (p.job !== JOB.WIZARD && TRADE_OF[p.job] && hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
-      ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
+      ctx.fillText(String(Math.round(shown('hats:' + p.job, hats(p.job)))), Math.round(t.x), Math.round(t.y));
     }
 
   }

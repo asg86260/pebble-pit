@@ -22,6 +22,7 @@ import { shackRows } from './shack.js';
 import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
+import { shown } from './tween.js';
 
 const shopEl = document.getElementById('shop');
 const schoolShopEl = document.getElementById('schoolshop');
@@ -1003,18 +1004,10 @@ export const fmt = n => {
   }
 };
 
-// the count runs to its new value and eases in at the end, taking longer for a
-// bigger jump so a purchase reads as a real withdrawal
-export function tweenCount(now) {
-  if (S.stored !== S.tweenTo) {
-    S.tweenFrom = S.shownStored;
-    S.tweenTo = S.stored;
-    S.tweenAt = now;
-    S.tweenMs = Math.max(220, Math.min(900, 180 + Math.abs(S.tweenTo - S.tweenFrom) * 1.6));
-  }
-  const t = Math.max(0, Math.min(1, (now - S.tweenAt) / S.tweenMs));
-  const ease = 1 - Math.pow(1 - t, 3);                  // out-cubic
-  S.shownStored = S.tweenFrom + (S.tweenTo - S.tweenFrom) * ease;
+// The dust count as the card shows it, kept on `S` for the report: the run
+// itself is `tween.js`'s, the same as every other number in the yard.
+export function tweenCount(at) {
+  S.shownStored = shown('dust', S.stored, at);
 }
 
 // how many bodies a section has, so a heading can say so
@@ -1100,7 +1093,7 @@ function fillPurse() {
   let html = '';
   for (const [mark, seen, count] of PURSE) {
     if (!seen()) continue;
-    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(count())}</b></div>`;
+    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(shown('purse:' + mark, count()))}</b></div>`;
   }
   if (html === purseWas) return;
   // A row appearing or going makes the panel a different size, and the panel is

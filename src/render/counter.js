@@ -8,6 +8,7 @@ import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
+import { shown } from '../tween.js';
 
 // The counter is the one thing here that is read rather than looked at, so it is
 // drawn in **screen** pixels and stays the size it is however far the yard has
@@ -54,12 +55,14 @@ export function drawCount() {
   // Everything that is going on it, bottom row first. Gathered before any of it
   // is placed, because how wide the card is decides where it can stand.
   // Top row first, in the purse's order: dust, core, ore, crops, sparks.
-  const dust = digits(Math.round(S.shownStored));
+  // Each read through the tweener, so a load tipping in counts up and a
+  // purchase counts down, on every row alike.
+  const dust = digits(Math.round(shown('dust', S.stored)));
   const lines = [{ cell: null, text: dust }];
-  if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(S.cores) });
-  if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(S.shards) });
-  if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: digits(S.spores) });
-  if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: digits(S.sparks) });
+  if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(Math.round(shown('card:core', S.cores))) });
+  if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(Math.round(shown('card:shard', S.shards))) });
+  if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: digits(Math.round(shown('card:spore', S.spores))) });
+  if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: digits(Math.round(shown('card:spark', S.sparks))) });
 
   // The card.
   //

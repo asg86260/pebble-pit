@@ -21,6 +21,7 @@ import { screenAt } from './frame.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
+import { shown } from '../tween.js';
 
 // --- the two pictures ---------------------------------------------------------
 // One character to a cell: `#` is timber (black), `.` is empty. Retype either to
@@ -390,7 +391,7 @@ export function drawStockCount(screenAt) {
     // this is so that what survives the clip is a number you can read.
     const cell = h / BOTTLE_H;                   // one grid cell, in screen pixels
     const floor = SHELF_NUM_MIN * cell;
-    const said = String(n);
+    const said = String(Math.round(shown('stock:' + book[i].key, n)));
     let size = Math.max(floor, h * 0.9);
     ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
     const room = w - cell;                       // a cell of air inside the well

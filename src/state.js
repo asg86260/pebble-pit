@@ -109,8 +109,7 @@ export const S = {
   // --- the hole ---
   stored: 0,              // dust in the hole: the whole point
   banked: 0,              // and every grain ever put in it, which only goes up
-  shownStored: 0,         // the counter chases the real number
-  tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
+  shownStored: 0,         // the counter chases the real number (see tween.js)
 
   // --- the rift ---
   // Dust that is not here. The hole holds what the hole holds, at full size, for
@@ -796,7 +795,7 @@ export const EPHEMERAL = [
   // dust in the air: a grain mid-flight has no beginning to come back to
   'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
-  'shownStored', 'tweenFrom', 'tweenTo', 'tweenAt', 'tweenMs',
+  'shownStored',
   // the tearing of the rift: an event, not a state -- and the cutscene
   // watching it, which is a camera, not a fact about the yard
   'riftGulp', 'riftShake', 'cine',

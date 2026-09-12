@@ -58,3 +58,14 @@ export const BOOKS_STAND_H = 5;
 // markup, it is this glyph -- the same idea drawn with the same means the card
 // already uses for a shard and a spore.
 export const CLOCK_GLYPH = '◴';
+
+// --- a count on its way ------------------------------------------------------
+// Every number read off the yard -- the counter card, a purse on a board, a
+// roster under a station, a price on a row -- runs to its new value rather than
+// jumping to it (`tween.js`). How long it takes grows with the size of the
+// jump, between a floor short enough that a body arriving reads as one event
+// and a ceiling short enough that a big purchase is over before you look away.
+export const TWEEN_MIN_MS = 220;
+export const TWEEN_MAX_MS = 900;
+export const TWEEN_BASE_MS = 180;      // plus this much per unit of the jump...
+export const TWEEN_PER_UNIT_MS = 1.6;  // ...until the ceiling

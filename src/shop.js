@@ -22,6 +22,7 @@ import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
+import { shown } from './tween.js';
 
 const shopEl = document.getElementById('shop');
 const schoolEl = document.getElementById('schoolshop');
@@ -498,6 +499,10 @@ function build(el, list, sections, empty, heads) {
 // text node was replaced for every name on the board. Nothing on a shop row
 // changes more than a few times a minute. The board is careful about this in
 // every other place; this is the one that was not.
+// A count in a cell, run through the tweener like every other number in the
+// yard. A dial's value can be words ("batch after batch"), and words do not
+// count: only a value that is a number runs.
+const sayCount = (key, v) => typeof v === 'number' ? String(Math.round(shown('count:' + key, v))) : String(v);
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; reworded = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
@@ -519,6 +524,7 @@ const sayNote = (row, u) => { const n = row.querySelector('.note'); if (n && typ
 // sixty times a second, for a number that moves when you move somebody. The
 // board is careful about this everywhere else; so is this.
 function wearBadge(line, words, n) {
+  n = Math.round(shown('badge:' + words, n));
   if (line.dataset.count === String(n)) return;
   line.dataset.count = n;
   moved = true;                            // a badge is a word, and words have a width
@@ -550,7 +556,7 @@ export function refresh(el, list, headcount) {
           o.classList.toggle('on', o.dataset.opt === at);
       } else {
         grey(row.querySelector('.less'), u.lo());
-        say(row.querySelector('.count'), u.value());
+        say(row.querySelector('.count'), sayCount(u.key, u.value()));
         grey(row.querySelector('.more'), u.hi());
       }
       sayNote(row, u);
@@ -560,7 +566,7 @@ export function refresh(el, list, headcount) {
       const u = list.find(x => x.key === row.dataset.job);
       if (!u) continue;
       grey(row.querySelector('.less'), u.count() < 1);
-      say(row.querySelector('.count'), String(u.count()));
+      say(row.querySelector('.count'), sayCount(u.key, u.count()));
       grey(row.querySelector('.more'), u.spare() < 1);
       continue;
     }
@@ -584,7 +590,7 @@ export function refresh(el, list, headcount) {
     // alike, a player with the stone and not the dust reads the same row as one
     // with neither, and has to go and count both piles to find out which.
     const parts = billOf(u).map(([money, n]) =>
-      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`);
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, Math.round(shown('price:' + u.key + ':' + money, n)))}</span>`);
     const bill = parts.join('');
     const [name, gain, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;

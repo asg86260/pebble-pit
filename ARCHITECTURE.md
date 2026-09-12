@@ -39,6 +39,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
+| `tween.js` | a count on its way: every number drawn -- the card, a purse, a roster, a price -- is read through `shown(name, value)` and runs to its value instead of jumping | rarely |
 | `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |

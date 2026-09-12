@@ -33,6 +33,7 @@ import { resetRates } from './stats.js';
 import { catchUpNotices, resetNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
+import { snapShown } from './tween.js';
 
 // A full pit is a million cells, which is a million characters written to
 // localStorage every second if you store it a digit at a time. A pile is nearly
@@ -574,7 +575,7 @@ export function restore() {
     readSaved({});
     blankByHand();
     S.banked = 0;
-    S.shownStored = S.tweenFrom = S.tweenTo = 0;
+    S.shownStored = 0; snapShown();
     S.crew = 0;
     S.seenCore = false;
     S.riftGulp = 0; S.riftShake = 0;   // an event is not a state: see state.js
@@ -628,7 +629,7 @@ export function restore() {
   S.build = s.build && typeof s.build === 'object' ? { hash: String(s.build.hash ?? ''), date: String(s.build.date ?? '') } : null;
   S.newerSave = S.build?.date && BUILD.date && S.build.date > BUILD.date ? S.build.date : null;
   S.banked = s.banked || s.stored || 0;
-  S.shownStored = S.tweenFrom = S.tweenTo = S.stored;
+  S.shownStored = S.stored; snapShown();
   S.seenCore = !!s.seenCore || S.cores > 0;
   // How far the hole has been dug decides how big the plot is, so it goes in
   // before the plot is laid out -- and the saved pile only fits a plot of the
@@ -1157,7 +1158,7 @@ export function reset(fresh = true) {
   S.gulped = [];
   S.ripples = [];
   S.banked = 0;
-  S.shownStored = S.tweenFrom = S.tweenTo = 0;
+  S.shownStored = 0; snapShown();
   S.held = 0;
   S.crew = 0;
   S.seenCore = false;

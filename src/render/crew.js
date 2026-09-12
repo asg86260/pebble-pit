@@ -25,6 +25,7 @@ import { drawCircle, drawMark } from './marks.js';
 import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
+import { shown } from '../tween.js';
 
 // The bench is not in the yard until there is something on it worth buying, and
 // once it is there it says so without being opened: a dot for something you can
@@ -248,7 +249,7 @@ export function drawKitCounts(screenAt) {
     // a helmet and the gap over a cone are the same gap.
     const at = screenAt(k.x - P + STAND_W / 2,
                         k.y - STAND_H - HAT_TALL[k.mark] - P * 2);
-    ctx.fillText(String(k.n), Math.round(at.x), Math.round(at.y));
+    ctx.fillText(String(Math.round(shown('kit:' + k.mark, k.n))), Math.round(at.x), Math.round(at.y));
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
