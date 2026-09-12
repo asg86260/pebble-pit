@@ -1,5 +1,22 @@
 # Still to do
 
+## Every ladder sold in bands -- DESIGNED, awaiting approval (2026-09-12)
+
+DESIGN.md "Every ladder is sold in bands (design, not built)". The grounds'
+card shape -- three rungs a card, the bill deepening dust / +spore / +shard,
+a new name a card -- becomes the shape of every ladder: the apothecary's
+four building ladders and five potency ladders first, then the bench's,
+the crew's, the shack's and the fan. Three bands, nine rungs, no fourth
+(spark) band; ladders already three rungs long stay one dust-only card;
+the tower's and the machines' spark ladders are out by decision. It is a
+standing rule now (CLAUDE.md "Decided"): every new ladder is built in bands.
+
+Build is `tierRows` generalized in three places (band count off the table,
+the multiplier band opt-in, `tierCost` over the ladder's own length), then
+each board's rows rewritten as a band table. No new state fields; the level
+fields keep their names and a saved level reads as rungs up the longer
+ladder. Blocker: sign-off on the card names and on the fan going dust-first.
+
 ## The desk and the sound -- BUILT (2026-09-12)
 
 The last open boxes on `docs/release-checklist.md`, built as one wave from
