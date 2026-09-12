@@ -2495,7 +2495,7 @@ The building is a **hood over a rack of pumps**: four courses of black wall flar
 haze, stepping a cell out a course so the thing is widest where it meets the air and narrowest
 where it stands, and the taper closing the whole way — eleven cells of sky, nine, seven, five, then
 three and one cut white out of the tower's head. Everything else on this ground is the other way
-up: the settlement steps back as it rises, the lab's chimney is under half the body under it, the
+up: the settlement goes straight up at one width, the lab's chimney is under half the body under it, the
 casino is the same block all the way to the roof. A shape that opens upward is a shape that takes
 from up there, and there is only one of them. The first version was a body and a chimney, which is
 exactly what the lab is; the second was a wide hole with something turning in it, which is the

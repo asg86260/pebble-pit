@@ -7,10 +7,10 @@
 // the door a new hire walks out of.
 //
 // It is one shape rather than a row of huts. It spreads along the ground before
-// it climbs and gives up a room every other storey, so what it leaves is a
-// stepped profile with a lip over every part of it that has sky above -- and
-// that profile, not any detail inside it, is what makes it read as somewhere
-// people live rather than as a box.
+// it climbs, the same width on every storey, so what it leaves is a block with
+// a lip along its top edge and over the unfinished end of the top course -- and
+// the rooms punched in it, not any detail of the outline, are what make it read
+// as somewhere people live.
 //
 // Nothing here can be clicked, hovered or opened, and it holds no state of its
 // own: `S.crew` says everything about it there is to say, and every wobble in it
@@ -44,8 +44,8 @@ export const houseCx = () => {
 export const houseLeft = () =>
   Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
-// How many rooms stand in course c: the base, losing one a storey, never fewer
-// than three. A fixed sequence, and it has to be fixed.
+// How many rooms stand in a course: the full width of the plot, every storey.
+// A fixed number, and it has to be fixed.
 //
 // It was worked out from the size of the crew for a while -- a wider base for
 // more bodies, so the whole silhouette spread as you hired. That looked better
@@ -54,7 +54,12 @@ export const houseLeft = () =>
 // obviously do -- add a room -- was the one thing you could not see happen.
 // Building is additive. Room seventeen stands where room seventeen stands
 // whether the crew is eighteen or eighty.
-const courseWide = c => Math.max(3, HOUSE_COLS - c);
+//
+// Then each course lost a room on the one below, for a stepped profile. The
+// first few storeys visibly narrowed as the place went up, which read as the
+// building tapering rather than as anything a builder would do, so a course is
+// now as wide as the plot and the block goes straight up.
+const courseWide = () => HOUSE_COLS;
 
 // Every room, bottom course first and left to right within a course. Rooms in a
 // course touch, which is the point: they share their walls, so what stands there
@@ -89,8 +94,9 @@ export function cubes(nOverride) {
   // its plot from one end instead of sliding along it as it grows.
   const foot = Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
-  // Every course starts at the same edge and is shorter than the one below, so
-  // the settlement steps back from one side and stands square on the other.
+  // Every course starts at the same edge and is as wide as the one below, so
+  // the settlement stands square on both sides and only its top course is
+  // ever part-built.
   // Courses used to sit a room off each other, which looked hand-built standing
   // still and made the whole place restless as it grew: with everything else
   // held still, the wobble was the only thing moving, and it read as a fault.
@@ -248,8 +254,8 @@ export function drawHouses(ctx) {
 
   // The eaves: a lip over whatever has sky above it, hanging half a cell past
   // the end of a run of rooms. It is the only thing that says roof rather than
-  // top edge, and because a course steps back as it climbs, the lips step with
-  // it -- which is the whole of the ramshackle now, and it survives being small.
+  // top edge; with every course the full width, it runs along the top of the
+  // block and drops to the course below at the end of an unfinished top course.
   for (const r of rooms) {
     if (room(r.x, r.y - C)) continue;
     const over = P / 2;

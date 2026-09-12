@@ -256,6 +256,12 @@ export const SCENES = {
                  window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
                  window.__look(st().rockLeftX - 420); } },
+  // The settlement at a size where it has gone up several storeys: a crew of
+  // twenty is twenty-one rooms, which is three full courses and a part of a
+  // fourth, so both the square sides and the unfinished top show in one shot.
+  house: { about: 'the crew', say: 'the house, several storeys up',
+    run: () => { window.__reset(); window.__crew(6, 5, 5, 4); window.__fast(2);
+                 window.__look(st().houses.door - 400); } },
   // The question mark a held body says. Hovered for real -- the pause and the
   // mark come off `pointermove` in pointer.js, and there is no hook that puts
   // the mark up -- so the camera is put on the body first and the pointer sent
