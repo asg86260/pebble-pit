@@ -145,3 +145,6 @@ export * from './config/aura.js';
 
 // the five shields, and the shape a rock is in while it is arriving
 export * from './config/shields.js';
+
+// wave-desk-sound, track B: the sound of the yard -- every SND_ number.
+export * from './config/sound.js';
