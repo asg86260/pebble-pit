@@ -704,8 +704,12 @@ canvas {
 .held .record { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 36em; max-width: 80vw;
                 max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
                 font-size: 11px; }
-.held .record .card { display: flex; flex-direction: column; gap: 3px; padding: 5px 8px;
-                      border: 1px solid #000; }
+/* The name sits at the top of the card and what earned it at the bottom, with
+   the slack between them: a row's cards are stretched to the tallest, so a
+   two-line name beside a one-line name would otherwise leave the two notes at
+   different heights, and a row of cards reads as a row when its notes line up. */
+.held .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
+                      padding: 5px 8px; border: 1px solid #000; }
 .held .record .name { letter-spacing: .1em; text-transform: uppercase; }
 .held .record .note { color: #666; }
 .held .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
