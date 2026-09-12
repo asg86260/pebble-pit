@@ -6458,7 +6458,7 @@ A hidden window is a pause. The clock may not leap on return, because a
 leap is every timed thing you paid for resolving at once, which is the one
 punishment for walking away that pillar 2 forbids.
 
-## The desk: an Electron shell (design, not built)
+## The desk: an Electron shell (built)
 
 The target is a desktop app, not a hosted page. This is the project's first
 structural dependency, so this section says what the shell owns, what stays
@@ -6571,6 +6571,39 @@ the migration copies the browser save exactly once. `test/desk-adapter.test.mjs`
 `restore` through `read`, and `exportSave`/`importSave` are byte-identical
 either way. The shell itself is looked at, not tested: `bun run desk`, a
 screenshot at 1440x900 and at the minimum size.
+
+### Amendments, as built (wave-desk-sound, track A, 2026-09-12)
+
+- **`desk.read()` returns `{ current, lastGood }`**, each a string or null,
+  rather than one string. The fallback rule lives in the renderer's `isSave`,
+  which is the one place that decides what a save is, so the renderer needs
+  both blobs. Still five functions, no events, no path.
+- **`last-good.json` is the save before the last write**, promoted only after
+  the new blob has been read back whole, rather than a copy of the new blob.
+  A copy of the new one would be no help against the one failure the fallback
+  is for -- a build writing a shape the reader refuses -- and the autosave is
+  once a second, so "one write behind" is a second behind. A reset (`write('')`)
+  promotes the yard it clears the same way; nothing empty is ever promoted.
+- **The adapter answers from memory once it has written.** `desk.write` is a
+  promise and the yard reads the store straight back after writing it (an
+  import writes the blob and `restore` reads it), so `save.js` keeps the last
+  blob it wrote and reads the disk only before the first write. The page is the
+  only writer, so the copy in hand is the truth and the file is only ever
+  behind it. `S.unsaved` carries the last answer the disk gave, one write
+  behind.
+- **An empty `current` is a reset, not a reason to fall back.** Only a blob
+  that is present and will not read falls back to `last-good`; otherwise a
+  reset would be undone on the next boot. The migration likewise only runs
+  when neither file has ever existed, so a reset does not bring the browser's
+  old yard back.
+- **"Said once" is once per opening of the sheet.** The held sheet's observer
+  wipes the store line as the sheet comes up and asks `sayStore` again, and
+  lets the two once-only flags (`fellBack`, `newerSave`) go when the sheet
+  goes down. Clearing the flag inside `sayStore` would have lost the line to
+  the same observer's wipe on the boot that sets it.
+- **The fallback does not offer the bad blob.** It is put under `BROKEN_KEY`
+  for the console, but `S.broken` stays false: `save a copy` hands over the
+  yard that is standing, not the blob that would not read.
 
 ## What the five resources are called (built)
 

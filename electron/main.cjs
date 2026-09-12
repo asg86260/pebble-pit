@@ -70,6 +70,9 @@ function open() {
       backgroundThrottling: false
     }
   });
+  // The page's own <title> would otherwise take the window over; the shell
+  // is called Boulder and stays so.
+  win.on('page-title-updated', e => e.preventDefault());
   const dev = process.env.VITE_DEV_SERVER_URL;
   if (dev) win.loadURL(dev);
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));

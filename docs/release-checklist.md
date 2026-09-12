@@ -17,7 +17,7 @@ it is.
   player sees one plain surface saying the game stopped and offering to copy
   the save out. → report §"1. Do not let a throw eat the run"
 
-- [ ] **The Electron shell.** New item, top tier: main process, preload, window
+- [x] **The Electron shell.** (2026-09-12: `electron/main.cjs`, `electron/preload.cjs`; DESIGN.md "The desk"; `bun run desk`) New item, top tier: main process, preload, window
   config, icon, app name. This is the project's first structural dependency, so
   per the working agreement it wants a DESIGN.md section written and approved
   before any code — what the shell owns, what stays in the renderer, and how
@@ -25,7 +25,7 @@ it is.
   boots as a desktop window from it. → no report section; this supersedes the
   report's web-page framing
 
-- [ ] **Save durability.** The shape is decided; write this, do not redesign:
+- [x] **Save durability.** (2026-09-12: `electron/store.cjs` atomic write and rolling `last-good.json`; the store seam, fallback and migration in `src/save.js`; `S.fellBack` said on the sheet; `test/desk-store.test.mjs`, `test/desk-adapter.test.mjs`) The shape is decided; write this, do not redesign:
   the canonical save becomes a file in `app.getPath('userData')`, written by
   the main process atomically (temp file + rename), with a rolling last-good
   backup written only after the new blob has parsed back, and room for multiple
@@ -36,7 +36,7 @@ it is.
   and a check proves it. → report §"9. Save robustness beyond one slot" (the
   mechanism moves to disk; the guarantees are the same)
 
-- [x] **Save export and import.** (2026-09-09: web transport — `exportSave`/`importSave` in `persist.js`, `.prev` one-deep undo, the sheet's `save a copy` / `load a save`; native dialogs come with the desk, see DESIGN.md "The desk") Done: native save/open dialogs replace the
+- [x] **Save export and import.** (2026-09-09: web transport — `exportSave`/`importSave` in `persist.js`, `.prev` one-deep undo, the sheet's `save a copy` / `load a save`; 2026-09-12: the native dialogs, `desk.exportTo`/`desk.importFrom` in `electron/main.cjs`, the two branches in `src/settings.js`) Done: native save/open dialogs replace the
   download/paste flow — the dev-only `copy save` in `src/dev.js` becomes a
   player-facing "save a copy" writing a file where the player chooses, and
   import opens one, validates it, and keeps the current save until the new one
@@ -60,7 +60,7 @@ it is.
   shake — the motion that is punctuation — while the yard keeps walking.
   → report §"5. Reduced motion"
 
-- [ ] **Packaging and release channel.** Done: `base: './'` is set in
+- [x] **Packaging and release channel.** (2026-09-12: `base: './'` and `dist/build.json` in `vite.config.js`; the `build` block and `desk:build` in `package.json`; `tools/publish.mjs` for the itch channels -- not yet run) Done: `base: './'` is set in
   `vite.config.js` (still required — the shell loads over `file://`), the app
   is packaged with electron-builder or Forge into per-OS artifacts, and the
   builds are published on itch.io as the desktop-build channel. This replaces
@@ -79,7 +79,7 @@ it is.
   sheet, and one honest sentence — rocks keep coming, there is no finish line —
   is somewhere a player will read it. → report §"10. Say the version"
 
-- [ ] **Update policy.** Done: what happens when a player is on an old build is
+- [x] **Update policy.** (2026-09-12: `S.build` in the save, `S.newerSave` read in `persist.js`, said once on the sheet by `settings.js`; loaded, never refused; updates are a devlog and a download) Done: what happens when a player is on an old build is
   decided — desktop packaging removes the mid-session cache problem, but a
   save written by a newer build can still meet an older app, so the version
   boundary still needs noticing. → report §"11. Cache-busting across an update
