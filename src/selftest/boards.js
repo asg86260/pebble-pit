@@ -624,13 +624,11 @@ export const TESTS = [
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
     run(20);
-    // Two ladders to their tops, through whichever card of each is showing --
-    // a ladder is sold in bands, and the card left standing at the top is the
-    // last one. The pick waits on the swing being automatic.
+    // Two ladders to their tops, each one card pressed nine times. The pick
+    // waits on the swing being automatic.
     window.__buy('auto');
-    const card = key => window.__rows().find(r => r.shown && [key, `${key}2`, `${key}3`].includes(r.key))?.key;
     for (let i = 0; i < 12; i++) {
-      for (const key of ['carry', 'pick']) { const k = card(key); if (k) { window.__buy(k); window.__finish(); } }
+      for (const key of ['carry', 'pick']) { window.__buy(key); window.__finish(); }
     }
     window.__build();
     window.__board('bench');
@@ -651,7 +649,7 @@ export const TESTS = [
     const went = before.filter(k => !hidden.includes(k));
     return [
       ok(before.length > 0, 'there are rows on the bench', `${before.length}`),
-      ok(went.length === 2 && went.includes('carry3') && went.includes('pick3'),
+      ok(went.length === 2 && went.includes('carry') && went.includes('pick'),
          'and the two ladders at the top of themselves go when they are hidden',
          went.join(',') || 'none went'),
       ok(back.length === before.length, 'and come back when they are shown again',

@@ -173,23 +173,25 @@ canvas {
 
 .rows button {
   display: grid;
-  /* The card: the name and its rungs on top, what it gives and what it costs
-     underneath. Two columns inside the card rather than the sheet's tracks --
-     the gain takes what it needs on the left and the bill sits hard right, and
-     because the card owns its own tracks a long bill in one card cannot push
-     every other card's price across the board.
+  /* The card: three lines, each one fact, none of them wrapping.
 
-     `min-content` is the floor under the left-hand column, and it is what keeps
-     what a card GIVES you on the card: the column can never be squeezed
-     narrower than the longest word in it. Without the floor a plain `1fr`
-     gives way first and the bill takes everything: the farm's astral GMOs, whose
-     bill is six coins deep, had a gain cell exactly zero pixels wide and the
-     line "10 -> 13 spores a cut" was clipped out of existence. Both sides wrap
-     now -- the bill coin by coin, the gain and the title word by word -- so
-     when the two ask for more than the card has, each takes another line
-     inside its own cell and the card is a line taller, which is a card you can
-     still read. */
+       name                          pips
+       what it gives                 clock
+       what it costs
+
+     Two columns. The left is the purchase -- what it is, what it gives, what
+     it costs in coins -- and the right is time: how far up the ladder, how
+     long the work takes. Every fact has its own place and none competes with
+     another for width, which is what the old card never managed: the name and
+     the bill shared a line, so a four-coin bill squeezed "crit chance III" into
+     three words on three lines, and the pips took whatever corner was left.
+     The columns are the card's own tracks, so a long bill in one card cannot
+     push every other card's price across the board; the left is `min-content`
+     floored so the bill's first coin is never clipped, and the right is as
+     wide as the pips. Settled on the card bench (cards.html) against the
+     deepest bill in the game, the grounds' six-coin research card. */
   grid-template-columns: minmax(min-content, 1fr) auto;
+  grid-template-rows: auto auto auto;
   gap: var(--card-gap);
   align-items: baseline;
   font: inherit;
@@ -374,31 +376,13 @@ canvas {
    takes another line. The check in selftest/boards.js still says no gain is
    ever clipped, and it is a check of the ink against the cell. */
 .rows button .gain {
-  /* The whole of the second line, less the corner the pips sit in. It used to
-     be the first column only, which is the column the BILL sizes: a bill four
-     coins deep left the gain the width of a word, and "per swing 1 -> 2" came
-     out as a verb on one line and a number on the next. The pips are the only
-     other thing on this line and they are five characters wide, so the gain
-     keeps their corner clear and takes everything else. Five pips at the
-     tracking `.ladder` sets, in the size it is drawn at -- no ladder in the
-     game is longer (see `rungsOf`). */
-  grid-column: 1 / -1;
+  /* The second line, left: what the row gives, alone on its line and muted.
+     It is the one sentence on the card and it gets the room. */
+  grid-column: 1;
   grid-row: 2;
-  padding-right: calc(5 * 1.22 * var(--pip-em, 1em));
   opacity: .75;
   min-width: 0;
-  /* And it has no say in how wide the card's two columns are. A cell that
-     spans both tracks still votes on them, and a grid hands a spanning cell's
-     whole minimum to the FLEXIBLE track it crosses -- which is the title's.
-     So the width of "3 -> 4 shovels" plus the pips' corner was written into
-     the title column as a floor, and the bill got what was left of the card:
-     eighty-six pixels, which is one coin, and a three-coin bill came out as a
-     stack of three lines with the gain pushed under it. Inline-size
-     containment sizes the tracks as if this cell were empty; it then takes
-     the width the tracks come to, and wraps inside it like any other run of
-     words. The bill keeps the first line, the title wraps under itself if it
-     must, which is the order the rules above promise. */
-  contain: inline-size;
+  white-space: nowrap;
 }
 /* The second line is a line whether or not there are words on it. A card with
    nothing to say about what it gives -- the row that opens the crew list, say --
@@ -407,7 +391,16 @@ canvas {
    An empty inline box rather than a height: it is the line box of whatever type
    the sheet is set in, so it stays right if the type changes, where a number
    here would be one more thing to retune. */
+/* ...unless the card has no second line at all: a row with nothing to say
+   about what it gives -- a building, a one-off -- is two lines, the clock
+   coming up to sit beside the name's line, and does not hold an empty line
+   open under a title. Boards mix the two shapes and read fine; what they must
+   not do is hold a blank line between a name and its price. */
 .rows button .gain::before { content: ''; display: inline-block; }
+.rows button .gain:empty { display: none; }
+.rows button:has(.gain:empty) .cost { grid-row: 2; }
+.rows button:has(.gain:empty) .time { grid-row: 1; align-self: center; }
+.rows button:has(.gain:empty):has(.ladder:not(:empty)) .time { grid-row: 2; }
 /* A card whose site is busy says so on its second line, which the gain already
    spans; the status sits where the gain would and the pips keep their corner.
    Nothing moves for it: the sheet's width is pinned (see `pinWidth` in
@@ -419,12 +412,29 @@ canvas {
    rare second line lands exactly where a bigger purchase is being read more
    slowly anyway. */
 .rows button .cost {
-  grid-column: 2;
-  grid-row: 1;
+  /* The third line, left: the bill as cells -- a mark and a number apiece, the
+     same gap between them on every card, so the coins line up down a board and
+     a longer bill is a wider line rather than a taller card. Every card starts
+     with dust, so the dust price is in the same spot on every card. Nothing
+     shares its line, so it spans both columns; only a bill wider than the
+     whole card wraps, which is no bill the game has. */
+  grid-column: 1 / -1;
+  grid-row: 3;
   min-width: 0;
-  text-align: right;
+  text-align: left;
   opacity: .7;
-  white-space: normal;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* The clock is not a coin: it is the other fact about time and sits under the
+   pips, on the right, on the gain's line. Its own cell, so the bill is coins
+   only. */
+.rows button .time {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  opacity: .7;
+  white-space: nowrap;
 }
 
 /* The row's description, in its own line under the name-gain-price line rather
@@ -475,42 +485,40 @@ canvas {
    the card rather than against a box inside it. The span stays in the markup
    because the row builder reaches for the cells by position. */
 .rows .name { display: contents; }
-/* The title, top left, and it WRAPS. It used to take the whole width of the card
-   with the bill under it, which meant a name of three words pushed the price on
-   to a line of its own -- the card grew a line for the sake of the name, and the
-   price stopped sitting where the eye had learned to find it. The bill is the
-   thing that has to stay put; a long title is the thing that can afford to take
-   a second line. `min-width: 0` is what lets it: without it the track refuses to
-   go narrower than the longest word and the title shoves the bill instead. */
+/* The title: top left, one line, never wrapping. It shares its line with
+   nothing but the pips, which are short, so it has the room; a name longer than
+   that is a name to shorten, not a line to wrap. */
 .rows .what {
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
   font-style: normal;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* The pips take the corner the bill has left: bottom right, on the gain's line.
-   They and the price have swapped places. The price is the answer to the
-   question you open a board to ask and belongs on the title's line where it is
-   read first; how far up a ladder you have got is a glance, and a glance is
-   happy at the far corner. */
+/* The pips: top right, on the title's line. A ladder sold in bands draws them
+   in groups of three, one a band, and each group in its band's coin -- black
+   for dust, green for the crops that join at the second band, blue for the ore
+   at the third -- so the pips are the bill's legend as well as the count. */
 .rows .ladder {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   justify-self: end;
+  align-self: center;
   font-style: normal;
   /* Big enough that a filled pip and a hollow one are plainly different, and
-     dark enough to be counted rather than merely noticed -- at eight tenths of
-     an em and half opacity the row read as a dotted underline. Both numbers are
-     `PIP_EM` and `PIP_TONE` in config/boards.js and are written on to the root
-     by board.js: the pips are on nine boards and every one of them wants the
-     same answer, so there is one place to change it. */
+     dark enough to be counted rather than merely noticed. `PIP_EM` and
+     `PIP_TONE` in config/boards.js, written on to the root by board.js: the
+     pips are on nine boards and every one of them wants the same answer. */
   font-size: var(--pip-em, 1em);
   letter-spacing: .22em;
   line-height: 1;
   opacity: var(--pip-tone, .78);
-  margin-top: 1px;
 }
+.rows .ladder b { font-weight: normal; }
+.rows .ladder b:nth-child(2) { color: #2e9e4b; }   /* the farm's green, as the spore mark */
+.rows .ladder b:nth-child(3) { color: #2f5fd0; }   /* the quarry's blue, as the shard mark */
 /* The hover is a share of the way from the resting tone to full black rather
    than a second tone found by hand -- two hand-tuned numbers would part company
    the moment either was retuned. */
@@ -813,9 +821,9 @@ canvas {
 .rows button .cost {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: baseline;
-  gap: 0 .9em;
+  gap: 0 1.1em;
 }
 
 /* The tower's rows are bills too, and longer ones: three currencies for a hat

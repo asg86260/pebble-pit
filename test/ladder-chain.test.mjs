@@ -10,29 +10,30 @@
 
 import { group, ok, openSites, climb } from './helpers.mjs';
 import { S } from '../src/state.js';
+import { maxed } from '../src/upgrades.js';
 import { LADDER } from '../src/config.js';
 
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);
 const rich = () => window.__grant({ dust: 900000, shards: 9000, spores: 9000, cores: 90 });
 
-group('the cards of one ladder follow one another, and the finished ones fold away', async () => {
+group('a ladder is one card that fills, and says done at the top', async () => {
   window.__reset();
   openSites();
   window.__invest();
   rich();
   window.__crew(1, 0);
 
-  const before = [shown('haulpace'), shown('haulpace2'), shown('haulpace3')];
-  // Nine rungs over three cards, bought through whichever card is showing.
+  const before = shown('haulpace');
   const bought = climb('haulpace', LADDER);
-  const after = [shown('haulpace'), shown('haulpace2'), shown('haulpace3')];
+  const row = window.__upgrades().find(u => u.key === 'haulpace');
+  const still = shown('haulpace');
   window.__crew(0, 0);
 
   return [
-    ok(before.join() === 'true,false,false', 'only the first card is on the board to begin with', before.join()),
-    ok(bought === LADDER, 'the speed ladder can be climbed through its cards', `${bought}`),
+    ok(before, 'the card is on the board to begin with'),
+    ok(bought === LADDER, 'the speed ladder can be climbed on it', `${bought}`),
     ok(S.haulPaceLevel === LADDER, 'to the top', `${S.haulPaceLevel}`),
-    ok(after.join() === 'false,false,true', 'and at the top only the last card stands, saying done', after.join())
+    ok(still && row && maxed(row), 'and at the top the same card stands, finished')
   ];
 });
 

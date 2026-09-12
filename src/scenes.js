@@ -489,6 +489,13 @@ export const SCENES = {
   // A board, open, with everything on it.
   boards: { about: 'the bench', say: 'a board open with everything on it',
     run: () => { rich(); window.__board('tower'); } },
+  // The bench part way up every ladder, so the deepest cards -- dust, crops and
+  // ore on one bill -- stand beside the pips. A picture of the card's width.
+  benchdeep: { about: 'the bench', say: 'the bench with its ladders on their third cards',
+    run: () => { rich(); window.__grant({ shards: 99999, spores: 99999 }); window.__tip(9000000);
+                 window.__levels({ carryLevel: 7, speedLevel: 4, pickLevel: 8, critChanceLevel: 7,
+                                   haulCarryLevel: 6, haulPaceLevel: 8 });
+                 window.__buy('auto'); window.__board('bench'); } },
 
   // --- the cut ----------------------------------------------------------------
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.

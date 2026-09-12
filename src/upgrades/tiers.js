@@ -53,20 +53,15 @@ export const tierLevel = (field, multKey, own = TIER_OWN) =>
 export const tierGain = (lvl, per) =>
   (1 + per * Math.min(TIER_OWN, lvl)) * Math.pow(STEP, Math.max(0, lvl - TIER_OWN));
 
-// The names of a ladder's cards, from one name: the thing it upgrades, then
-// the same with II and III. A card used to carry a name of its own (compost,
-// fertilizer, hybrid seed), and across thirty cards the invented words hid what
-// the ladder was for; a plain description with a numeral says it (2026-09-12).
-const NUMERAL = ['', ' II', ' III', ' IV'];
+// A ladder's bands, from one name: the thing it upgrades. A band used to carry
+// a name of its own (compost, fertilizer, hybrid seed), and across thirty
+// cards the invented words hid what the ladder was for; then a numeral (II,
+// III), which was a second counter beside the pips. The ladder is one card now
+// and the name is the description, once (2026-09-12). The band keys stay --
+// `carry`, `carry2`, `carry3` -- because `S.seenRows` and works in saves quote
+// the first, and the others are how a band is addressed in a table.
 export const named = (key, name, n = LADDER_BANDS) =>
-  Array.from({ length: n }, (_, i) => ({ key: i ? `${key}${i + 1}` : key, name: `${name}${NUMERAL[i]}` }));
-
-// The keys of an ordinary ladder's cards, from the first one's: `carry`,
-// `carry2`, `carry3`. The first keeps the name the ladder had when it was one
-// row -- keys are internal and never renamed, saves quote them -- and the
-// boards' section lists spread this rather than typing three keys a ladder.
-export const cards = key =>
-  Array.from({ length: LADDER_BANDS }, (_, i) => (i ? `${key}${i + 1}` : key));
+  Array.from({ length: n }, (_, i) => ({ key: i ? `${key}${i + 1}` : key, name }));
 
 // The cards of one ladder.
 //
@@ -83,9 +78,12 @@ export const cards = key =>
 //            ladder -- RUNG_RATE (1.6) unless the ladder says otherwise
 //   follows  the key of a row this ladder continues -- `chained` in
 //            upgrades.js keeps every card off the board until that row is done
-//   bands    one line a card: a key, a name, optionally the coins the bill
+//   bands    one line a band: a key, a name, optionally the coins the bill
 //            adds (BAND_COINS by position otherwise) and a gate of the
-//            band's own
+//            band's own. The ladder's own bands are drawn as ONE card, with
+//            every rung on it in groups of three (see `group` below); the
+//            first band's key and name are the card's. A multiplier band is
+//            a card of its own after it -- the grounds' research.
 export function tierRows({ field, multKey, level: at, climb, unit, pct, does, value,
                            first, rate, site, board, show, after, follows, keep, bands }) {
   const count = bands.length;
@@ -95,45 +93,66 @@ export function tierRows({ field, multKey, level: at, climb, unit, pct, does, va
   const own = multKey ? rungs - TIER_BAND : rungs;
   const level = at || (() => tierLevel(field, multKey, own));
   const step = climb || (() => { S[field]++; });
-  // The card you can see. The last band stays on the board once it is finished,
-  // saying "done", the way every other finished ladder in the game does.
-  const shown = () => Math.min(count - 1, Math.floor(level() / TIER_BAND));
 
-  return bands.map((band, i) => {
-    const top = multKey && i === count - 1;
-    const coins = band.coins || BAND_COINS[i] || [];
-    return {
-      key: band.key,
-      name: band.name,
-      unit, pct, does, keep,
-      after: follows,
-      // Every rung of every one of these is a piece of work bodies stand and
-      // finish at the place that sells it -- which is what the last band was
-      // when it was the lab's, and what the speed rungs already were.
-      kind: 'rung', site, board,
-      // The rung within the band, and three of them however far up the ladder
-      // the band sits. That is what makes a card readable: three pips, always.
-      rung: () => Math.max(0, Math.min(TIER_BAND, level() - i * TIER_BAND)),
-      rungs: () => TIER_BAND,
-      from: () => value(level()),
-      to: () => value(level() + 1),
-      // The dust price of the rung, and the band's coins at what that dust is
-      // worth. `billOf` only adds dust to a bill that names none, so naming it
-      // here is what stops the conversion being done twice.
-      bill: () => {
-        const dust = tierCost(first, level(), rungs, rate);
-        return [['dust', dust],
-                ...coins.map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])];
-      },
-      // What it asks of somebody's time. A multiplier band keeps the research
-      // curve it had as a lab row; the rest climb with the ladder rather than
-      // with the rung inside the card, or a band-three rung would be as quick
-      // to put up as a band-one one.
-      work: top ? () => workFor(band.key)
-                : () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, level())),
-      buy: top ? () => finish(band.key)
-               : () => { step(); after?.(); },
-      show: () => show() && shown() === i && (band.gate ? band.gate() : true)
-    };
-  });
+  // The ladder's own bands, as one card. It used to be a card a band, the
+  // name changing as you climbed -- compost, then fertilizer, then hybrid seed
+  // -- and a numeral did the same job once the names became descriptions:
+  // "hauler speed II" over three pips is two counters for one position on a
+  // nine-rung ladder. One card, nine pips in three groups, the bill deepening
+  // as the groups fill: the whole ladder in a glance, and the groups ARE the
+  // bands (the card bench, cards.html, is where this was settled).
+  const ownBands = multKey ? bands.slice(0, -1) : bands;
+  const bandAt = () => Math.min(ownBands.length - 1, Math.floor(Math.min(own - 1, level()) / TIER_BAND));
+  const coinsAt = () => { const b = ownBands[bandAt()]; return b.coins || BAND_COINS[bandAt()] || []; };
+  const card = {
+    key: ownBands[0].key,
+    name: ownBands[0].name,
+    unit, pct, does, keep,
+    after: follows,
+    // Every rung of every one of these is a piece of work bodies stand and
+    // finish at the place that sells it.
+    kind: 'rung', site, board,
+    rung: () => Math.min(own, level()),
+    rungs: () => own,
+    group: TIER_BAND,
+    from: () => value(level()),
+    to: () => value(level() + 1),
+    // The dust price of the rung, and the band's coins at what that dust is
+    // worth. `billOf` only adds dust to a bill that names none, so naming it
+    // here is what stops the conversion being done twice.
+    bill: () => {
+      const dust = tierCost(first, level(), rungs, rate);
+      return [['dust', dust],
+              ...coinsAt().map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])];
+    },
+    // What it asks of somebody's time, climbing with the ladder.
+    work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, level())),
+    buy: () => { step(); after?.(); },
+    show: () => show() && (ownBands[bandAt()].gate ? ownBands[bandAt()].gate() : true)
+  };
+  if (!multKey) return [card];
+
+  // And the multiplier over it: the grounds' fourth band, a research card of
+  // its own that stands once the ladder's own rungs are climbed. It keeps the
+  // research curve it had as a lab row and is finished as a BUILD.
+  const band = bands[bands.length - 1];
+  const research = {
+    key: band.key,
+    name: band.name,
+    unit, pct, does, keep,
+    kind: 'rung', site, board,
+    rung: () => Math.max(0, level() - own),
+    rungs: () => TIER_BAND,
+    from: () => value(level()),
+    to: () => value(level() + 1),
+    bill: () => {
+      const dust = tierCost(first, level(), rungs, rate);
+      const coins = band.coins || BAND_COINS[bands.length - 1] || [];
+      return [['dust', dust], ...coins.map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])];
+    },
+    work: () => workFor(band.key),
+    buy: () => finish(band.key),
+    show: () => show() && level() >= own && (band.gate ? band.gate() : true)
+  };
+  return [card, research];
 }

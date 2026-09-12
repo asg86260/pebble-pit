@@ -44,7 +44,7 @@ group("the haulers' rows say what they are about", async () => {
   const speed1 = row('haulpace'), load = row('haulcarry');
   const g1 = speed1?.gain, gl = load?.gain;
   window.__levels({ haulPaceLevel: 9 });      // the whole speed ladder climbed
-  const pace = row('haulpace3');
+  const pace = row('haulpace');
   window.__crew(0, 0);
   return [
     ok(g1 && g1.startsWith('walk '), 'hauler speed: walk +…', g1),

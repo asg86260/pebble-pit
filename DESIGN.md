@@ -1768,9 +1768,9 @@ voice, each band the fantastical version of the one before it:
 
 | ladder | unit | cards |
 |---|---|---|
-| dose length | s | brew concentration, II, III |
-| doses a brew | doses | batch size, II (two cards, 1 -> 7) |
-| potency, per tonic | % | the tonic's own name, II, III -- "hearty stew II" |
+| dose length | s | brew concentration |
+| doses a brew | doses | batch size (six rungs, 1 -> 7) |
+| potency, per tonic | % | the tonic's own name -- "hearty stew" |
 
 **Brew speed and the armful are cut (2026-09-12).** With doses a brew, brew
 speed, the armful and another pot all for sale, every rung the building sold
@@ -1811,27 +1811,41 @@ is the ladder's idea escalating, in the register of the board it sits on.
 
 | board | ladder | cards |
 |---|---|---|
-| bench | your strength | carry amount, II, III |
-| bench | your swing | auto swing, II, III |
-| bench | your pickaxe | pick damage, II, III |
-| bench | crit chance | crit chance, II, III (2x a rung, 500 dust first) |
+| bench | your strength | carry amount |
+| bench | your swing | auto swing |
+| bench | your pickaxe | pick damage |
+| bench | crit chance | crit chance (2x a rung, 500 dust first) |
 | bench | crit damage | one card, dust + crops + ore, 2x a rung, 1000 dust first |
-| bench | hauler carry | hauler carry, II, III |
-| bench | hauler speed | hauler speed, II, III |
-| shack | diggers' swing | swing speed, II, III |
+| bench | hauler carry | hauler carry |
+| bench | hauler speed | hauler speed |
+| shack | diggers' swing | swing speed |
 | shack | diggers' pick | digger pick damage, one card |
-| scrub | the fan | fan power, II, III |
-| farm | yield / speed | crop yield, farming speed, II, III; research card keeps its name |
-| quarry | yield / speed | ore yield, mining speed, II, III; research card keeps its name |
+| scrub | the fan | fan power |
+| farm | yield / speed | crop yield, farming speed; the research card keeps its name |
+| quarry | yield / speed | ore yield, mining speed; the research card keeps its name |
 
-**Card names are the thing plus a numeral (2026-09-12).** The invented names
+**A ladder is one card (2026-09-12).** A card a band -- compost, then
+fertilizer, then hybrid seed, later "hauler speed II" -- gave a nine-rung
+ladder two counters for one position: which card, and which pip on it. The
+ladder is one card now, its nine pips in three groups, each group in its
+band's coin (black, then the farm's green, then the quarry's blue), the bill
+deepening as the groups fill. The pips are the count and the price's legend
+at once. The card itself is three lines, each one fact and none of them
+wrapping: the name with the pips on its right; the gain with the work clock
+on its right; the coins, left-aligned as cells. Left is the purchase, right
+is time. A card with no gain is two lines. Settled on the card bench
+(`cards.html`) against the six-coin research bill, the widest in the game,
+which fits on one line. The grounds' research card stands beside the finished
+ladder as a card of its own.
+
+**Card names are the thing, once (2026-09-12).** The invented names
 -- compost, fertilizer, hybrid seed; lucky charm, rabbit's foot -- were
 reviewed on the Ladder Book and dropped: across thirty cards the words hid
 what each ladder was for, and a player reading "sprinklers" still had to read
 the gain line to learn it was speed. A card is a short, accurate description
 of what climbs, and the second and third cards are the same words with II and
-III. `named(key, name)` in `upgrades/tiers.js` builds a ladder's cards from
-one name, so the pattern is one call rather than a convention.
+III -- and then, with the ladder one card, the name alone. `named(key, name)`
+in `upgrades/tiers.js` builds a ladder's bands from one name.
 
 **The crew's two multipliers are dropped (2026-09-12).** `labswing` (swing x,
 over the diggers' speed and your own click) and `labhaul` (pace x, over the

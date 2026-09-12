@@ -302,8 +302,8 @@ const FARM_YIELD = tierRows({
   show: () => S.farmOpen,
   bands: [
     { key: 'crop',    name: 'crop yield',     coins: [] },
-    { key: 'crop2',   name: 'crop yield II',  coins: ['spore'] },
-    { key: 'crop3',   name: 'crop yield III', coins: ['spore', 'shard'] },
+    { key: 'crop2',   name: 'crop yield',  coins: ['spore'] },
+    { key: 'crop3',   name: 'crop yield', coins: ['spore', 'shard'] },
     { key: 'labcrop', name: 'astral GMOs',
       coins: ['shard', 'spore', 'core', 'spark'],
       // The last band is the research, and research waits on the yard having
@@ -322,8 +322,8 @@ const FARM_SPEED = tierRows({
   show: () => S.farmOpen,
   bands: [
     { key: 'tend',    name: 'farming speed',     coins: [] },
-    { key: 'tend2',   name: 'farming speed II',  coins: ['spore'] },
-    { key: 'tend3',   name: 'farming speed III', coins: ['spore', 'shard'] },
+    { key: 'tend2',   name: 'farming speed',  coins: ['spore'] },
+    { key: 'tend3',   name: 'farming speed', coins: ['spore', 'shard'] },
     { key: 'labtend', name: "summer's aura",
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }
@@ -381,8 +381,8 @@ export const FARM_UPGRADES = [
 // place row, one yield card and one speed card, whichever bands those are.
 export const FARM_SECTIONS = [
   { title: 'the farm', keys: ['farmplot',
-                              'crop', 'crop2', 'crop3', 'labcrop',
-                              'tend', 'tend2', 'tend3', 'labtend',
+                              'crop', 'labcrop',
+                              'tend', 'labtend',
                               'tiller', 'tunetiller'] }
 ];
 
