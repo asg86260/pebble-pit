@@ -7724,22 +7724,26 @@ uses); the lines behind it are plain names. No site names, no clocks: the
 row on the board has the clock, and the card is where you watch names leave.
 
 ```
-●●●●○ strength
-hold to mine
-pickaxe
+●●●●○ a bigger pocket   ◴  2
+hold to mine            ◴  7
+a bigger sack           ◴ 12
 ```
 
-Hover a name and the board's own tip names the station, under the card.
+Every line carries a clock (amended 2026-09-12, the owner's ask): the front's
+is what is left of it at the pace the site is actually going, or its status
+(`on the way`, `nobody on it`) when nobody is at it; a waiting line's is how
+long until *it* lands, everything ahead of it counted at the site's own rate.
+Hover a name and the board's own tip names the station, beside the line.
 A waiting name is a button: press it and the work is handed back, through
 the row's own `buy`, so the card and the board cannot disagree about what a
 press does. The front name is not a button.
 
-It stands top-right and **under** the boards (`z-index` 9 to their 10): the
-boards keep the bottom-left and on a short window reach the top, and the board
-you walked up to read is the thing that should win the corner. Width is a
-fixed count of characters (`QUEUE_CARD_CH`); a longer name clips with an
-ellipsis rather than widening the card. It fades in and out (`.off`) rather
-than popping. Held (`S.paused`), it is faded with the rest.
+It stands top-left and **under** the boards (`z-index` 9 to their 10): on a
+short window a board reaches the corner, and the board you walked up to read
+is the thing that should win it. It is as wide as its longest name and a line
+per work -- the owner's call (2026-09-12), over a first cut at a fixed width
+that clipped names. It fades in and out (`.off`) rather than popping. Held
+(`S.paused`), it is faded with the rest.
 
 ### What it is not
 

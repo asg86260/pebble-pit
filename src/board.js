@@ -1,7 +1,7 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H, QUEUE_CARD_CH } from './config.js';
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
 import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -59,8 +59,6 @@ const pages = { bench: document.getElementById('board'),
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
-// ...and the queue card's width, for the same reason (queue.js, `.queue` in style.css).
-document.documentElement.style.setProperty?.('--queue-ch', String(QUEUE_CARD_CH));
 // Where you stand to read the books, and the record beside them: the
 // noticeboard, between the work bench and the front doors.
 //

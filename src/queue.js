@@ -5,9 +5,11 @@
 // order things will land; the line at the top of each site's run carries the
 // bar of the thing being built as a row of pips, and the ones below it are
 // plain names. Nothing says which site a name is at -- hover it and the tip
-// does -- and nothing says how long: the row on the board has the clock, and
-// the card is where you look to see the names leave. See DESIGN.md, "The
-// queue".
+// does. Every line carries a clock: the front one's is what is left of it at
+// the pace the site is actually going, or its status when nobody is at it
+// (`on the way`, `nobody on it` -- the row's own words), and a waiting one's
+// is how long until IT lands, everything ahead of it counted. See DESIGN.md,
+// "The queue".
 //
 // A name waiting its turn is a button, and pressing it hands the work back --
 // through the same `buy` its row goes through, so the card and the board can
@@ -15,13 +17,14 @@
 // and is not pressable.
 //
 // The card is absent when nothing is building anywhere. It comes and goes by
-// a fade rather than a pop, and it stands top-right, under the boards: they
-// keep the bottom-left of the window and on a short one reach the top, and
-// a board you walked up to read is the thing that should win the corner.
+// a fade rather than a pop, and it stands top-left, under the boards: on a
+// short window a board reaches the corner, and the board you walked up to read
+// is the thing that should win it. It is as wide as its longest name and as
+// tall as its line -- a card that sizes to what is on it (the owner's call).
 
 import { S } from './state.js';
-import { SITES, worksAt, roomAt, progressOf, rowFor } from './works.js';
-import { buy } from './upgrades.js';
+import { SITES, BUILDER_SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
+import { buy, priceText } from './upgrades.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';
 
@@ -44,6 +47,20 @@ const pips = w => {
   return '●'.repeat(at) + '○'.repeat(QUEUE_PIPS - at);
 };
 
+// What a line's clock says. A site's line is worked one at a time at one pace,
+// so the time until any work lands is the sum of what is left of everything
+// ahead of it plus its own -- each at the site's own rate (`leftAt`), so a lab
+// line quotes the lab's pace and not the yard's. The front line with nobody at
+// it says so instead of quoting a figure: a clock over a work nobody is doing
+// is a promise the yard is not keeping.
+const clockOf = (site, list, i) => {
+  if (i < roomAt(site) && stalled(site))
+    return BUILDER_SITES.includes(site) ? 'on the way' : 'nobody on it';
+  let ms = 0;
+  for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
+  return `<i class="clock"></i><b>${priceText('time', ms)}</b>`;
+};
+
 // The lines are rebuilt only when the set of works changes -- a name arriving,
 // a name leaving, a work stepping up -- and only the pips are rewritten
 // between. A card rebuilt every frame would lose the hover under the cursor.
@@ -54,7 +71,7 @@ export function fillQueue() {
   for (const site of SITES) {
     const list = worksAt(site);
     const going = roomAt(site);
-    list.forEach((w, i) => lines.push({ site, key: w.key, w, front: i < going }));
+    list.forEach((w, i) => lines.push({ site, key: w.key, w, front: i < going, clock: clockOf(site, list, i) }));
   }
   const key = lines.map(l => `${l.site}:${l.key}:${l.front ? 1 : 0}`).join('|');
   if (key !== built) {
@@ -76,15 +93,16 @@ export function fillQueue() {
       n.className = 'name';
       n.textContent = name;
       b.appendChild(n);
+      const c = document.createElement('span');
+      c.className = 'left';
+      c.innerHTML = l.clock;
+      b.appendChild(c);
       // A press on a waiting name hands the work back, by the row's own path.
       if (!l.front) b.addEventListener('click', () => { const u = rowFor(l.key); if (u) buy(u); });
       // The station, on hover, in the board's own tip beside the line.
       const say = () => {
-        // Under the card, flush with its left edge: the card stands on the
-        // window's right edge with nothing but the edge past it, and a tip
-        // over the card would cover the names you are reading.
-        const c = el.getBoundingClientRect();
-        showTipAt(SITE_NAME[l.site] || l.site, c.left, c.bottom + 4);
+        const r = b.getBoundingClientRect();
+        showTipAt(SITE_NAME[l.site] || l.site, r.right + 8, r.top - 2);
       };
       b.addEventListener('pointerenter', say);
       b.addEventListener('pointerleave', () => showTipAt(null));
@@ -95,6 +113,8 @@ export function fillQueue() {
     for (const l of lines) {
       const b = el.children[i++];
       if (l.front) b.firstChild.textContent = pips(l.w);
+      const c = b.lastChild;
+      if (c.innerHTML !== l.clock) c.innerHTML = l.clock;
     }
   }
   // Present while there is anything to say, and faded rather than removed when

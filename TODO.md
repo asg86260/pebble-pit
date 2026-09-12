@@ -17,8 +17,9 @@ whether a 10 px pick at the top is too much rock.
 Every row at a working site read `busy`; a site takes a line now. `S.works[site]`
 grows past one, the front entry is on the go and the rest wait at nought; paid
 on press, handed back in full by pressing the row (or its name on the card)
-until hands are on it. The card is one name a line, top-right, under the
-boards, absent when nothing is building; hover names the station. Design and
+until hands are on it. The card is one name a line with a clock on each,
+top-left, sized to its names, under the boards, absent when nothing is
+building; hover names the station. Design and
 the as-built notes in `DESIGN.md`, "The queue". Checks: `test/queue.test.mjs`
 and the `queue card` browser groups; scene `queue`.
 

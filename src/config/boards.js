@@ -75,7 +75,3 @@ export const TWEEN_PER_UNIT_MS = 1.6;  // ...until the ceiling
 // built: filled for the share done. Five reads at a glance; more reads as a
 // dotted rule.
 export const QUEUE_PIPS = 5;
-// The card's width, in characters of its own type. A name longer than this is
-// clipped with an ellipsis rather than widening the card: the card is a glance
-// and a glance is the same size every time.
-export const QUEUE_CARD_CH = 18;

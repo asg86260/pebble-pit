@@ -27,7 +27,8 @@ export const TESTS = [
     window.__buy('auto');
     run(0.1);
     await raf(); await raf();
-    const two = { showing: showing(), names: names(), front: card().querySelector('button.front .pips')?.textContent };
+    const two = { showing: showing(), names: names(), front: card().querySelector('button.front .pips')?.textContent,
+                  clocks: [...card().querySelectorAll('button .left')].map(c => c.textContent.trim()) };
     window.__finish();
     run(0.1);
     await raf(); await raf();
@@ -39,6 +40,12 @@ export const TESTS = [
       ok(two.names.length === 2 && two.names[1] === 'hold to mine', 'a second press adds a second name behind it',
          two.names.join(', ')),
       ok(!!two.front && two.front.length === 5, 'the front line carries its bar as pips', `${two.front}`),
+      // Two clocks. The front's is a figure, or its status while the builder
+      // is still walking over; the waiting one's is always a figure, and more
+      // than the front's when the front has one, since it counts both.
+      ok(two.clocks.length === 2 && +two.clocks[1] > 0
+         && (two.clocks[0] === 'on the way' || +two.clocks[1] > +two.clocks[0] && +two.clocks[0] > 0),
+         'every line has a clock, and the waiting one counts what is ahead of it', two.clocks.join(' | ')),
       ok(!after, 'and the card goes when the line is empty')
     ];
   }],
