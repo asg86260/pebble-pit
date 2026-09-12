@@ -28,6 +28,7 @@
     "appId": "com.boulderclicker.desk",
     "productName": "Boulder",
     "files": ["dist/**", "electron/**"],
+    "electronLanguages": ["en-US"],
     "directories": { "output": "release" },
     "win": { "target": ["nsis", "portable"] },
     "mac": { "target": ["dmg"] },

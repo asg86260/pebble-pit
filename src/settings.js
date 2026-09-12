@@ -149,6 +149,18 @@ document.getElementById('loadit').addEventListener('click', () => {
 
 document.getElementById('build').textContent = version();
 
+// Quit, on the desk. The page cannot close a window it did not open, except
+// the one the shell opened for it -- so `close()` is the whole of it, and the
+// shell's close handler writes the window down and lets the last autosave
+// land. Off the desk the button has no pane, so `showPane` never shows it:
+// a browser tab has its own way out.
+const quitEl = document.getElementById('quit');
+if (window.desk) {
+  quitEl.dataset.pane = 'main';
+  quitEl.hidden = false;
+  quitEl.addEventListener('click', () => window.close());
+}
+
 // The sheet is opened by two hands -- escape in input.js, and the frame keeping
 // it in step with `S.paused` -- and neither of them knows about this file. So
 // it watches the sheet come up instead of being told, and puts it in order

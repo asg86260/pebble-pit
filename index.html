@@ -148,6 +148,10 @@
   </div>
   <div class="said" data-pane="main"></div>
   <button id="reset" type="button" data-pane="main">reset progress</button>
+  <!-- the desk only: a window with no menu bar needs a way out that is not a
+       key combination. settings.js gives it a pane when window.desk exists;
+       without one the page-turn never shows it. -->
+  <button id="quit" type="button" hidden>quit</button>
   <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about</div>
   <div id="build" class="small" data-pane="main"></div>
   <div class="small" data-pane="main">rocks keep coming. there is no finish line.</div>
