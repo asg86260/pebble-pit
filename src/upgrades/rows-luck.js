@@ -25,9 +25,9 @@ const CHANCE = tierRows({
   // priced in, and the first card is dust now.
   show: () => S.crew > 0,
   bands: [
-    { key: 'critchance',  name: 'a lucky charm' },
-    { key: 'critchance2', name: "a rabbit's foot" },
-    { key: 'critchance3', name: 'a found horseshoe' }
+    { key: 'critchance',  name: 'lucky charm' },
+    { key: 'critchance2', name: "rabbit's foot" },
+    { key: 'critchance3', name: 'found horseshoe' }
   ]
 });
 

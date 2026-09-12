@@ -794,8 +794,8 @@ export const APOTHECARY_UPGRADES = [
   ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
     value: lvl => dosesPer(lvl),
     // Two cards, not three: a dose a rung and one to seven is six rungs.
-    bands: [{ key: 'brewdoses',  name: 'a bigger pot' },
-            { key: 'brewdoses2', name: 'a second kettle' }] }),
+    bands: [{ key: 'brewdoses',  name: 'bigger pot' },
+            { key: 'brewdoses2', name: 'second kettle' }] }),
   ...TONICS.flatMap(potencyRows)
 ];
 

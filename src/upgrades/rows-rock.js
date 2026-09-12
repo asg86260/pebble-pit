@@ -28,9 +28,9 @@ const SPEED = tierRows({
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
   bands: [
-    { key: 'rockhandspeed',  name: 'a rhythm' },
-    { key: 'rockhandspeed2', name: 'a work song' },
-    { key: 'rockhandspeed3', name: 'a foreman' }
+    { key: 'rockhandspeed',  name: 'rhythm' },
+    { key: 'rockhandspeed2', name: 'work song' },
+    { key: 'rockhandspeed3', name: 'foreman' }
   ]
 });
 

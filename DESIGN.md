@@ -1769,7 +1769,7 @@ voice, each band the fantastical version of the one before it:
 | ladder | unit | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
 |---|---|---|---|---|
 | dose length | s | fresh ingredients | wax seals | extended release |
-| doses a brew | doses | a bigger pot | a second kettle | -- (two cards, 1 -> 7) |
+| doses a brew | doses | bigger pot | second kettle | -- (two cards, 1 -> 7) |
 | potency, per tonic | % | steeped | twice boiled | distilled |
 
 **Brew speed and the armful are cut (2026-09-12).** With doses a brew, brew
@@ -1811,16 +1811,16 @@ is the ladder's idea escalating, in the register of the board it sits on.
 
 | board | ladder | today | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
 |---|---|---|---|---|---|
-| bench | strength (your carry) | dust | a bigger pocket | a satchel | a barrow |
-| bench | swing (your click) | dust | a firmer grip | a weighted haft | a steel head |
-| bench | pickaxe (your bite) | shard+dust | a sharper pick | a forged pick | a tempered pick |
-| bench | chance (crit) | shard+dust | a lucky charm | a rabbit's foot | a found horseshoe |
-| bench | load (haulers) | dust | a bigger sack | a yoke | a handcart |
-| bench | pace (haulers) | dust | good boots | a worn path | a laid track |
-| bench | harness (haulers) | shard+dust | a harness | a leather harness | a padded harness |
-| bench | boots (haulers) | shard+dust | boots | a second pair | hobnails |
-| shack | speed (rockhands) | dust | a rhythm | a work song | a foreman |
-| scrub | the fan | shard | a bigger fan | a second blade | a bellows |
+| bench | strength (your carry) | dust | bigger pocket | satchel | barrow |
+| bench | swing (your click) | dust | firmer grip | weighted haft | steel head |
+| bench | pickaxe (your bite) | shard+dust | sharper pick | forged pick | tempered pick |
+| bench | chance (crit) | shard+dust | lucky charm | rabbit's foot | found horseshoe |
+| bench | load (haulers) | dust | bigger sack | yoke | handcart |
+| bench | pace (haulers) | dust | good boots | worn path | laid track |
+| bench | harness (haulers) | shard+dust | harness | leather harness | padded harness |
+| bench | boots (haulers) | shard+dust | boots | second pair | hobnails |
+| shack | speed (rockhands) | dust | rhythm | work song | foreman |
+| scrub | the fan | shard | bigger fan | second blade | bellows |
 
 `harness` and `boots` carry a shard from rung one today because the shard was
 the only scarce coin there was to price them in; they take the same shape as

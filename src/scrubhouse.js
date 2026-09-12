@@ -106,9 +106,9 @@ const FAN = tierRows({
   site: 'scrub',
   show: () => S.scrubOpen,
   bands: [
-    { key: 'fan',  name: 'a bigger fan' },
-    { key: 'fan2', name: 'a second blade' },
-    { key: 'fan3', name: 'a bellows' }
+    { key: 'fan',  name: 'bigger fan' },
+    { key: 'fan2', name: 'second blade' },
+    { key: 'fan3', name: 'bellows' }
   ]
 });
 

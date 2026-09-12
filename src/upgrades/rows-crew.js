@@ -22,9 +22,9 @@ const LOAD = tierRows({
   site: 'bench',
   show: () => S.crew > 0,
   bands: [
-    { key: 'haulcarry',  name: 'a bigger sack' },
-    { key: 'haulcarry2', name: 'a yoke' },
-    { key: 'haulcarry3', name: 'a handcart' }
+    { key: 'haulcarry',  name: 'bigger sack' },
+    { key: 'haulcarry2', name: 'yoke' },
+    { key: 'haulcarry3', name: 'handcart' }
   ]
 });
 
@@ -37,9 +37,9 @@ const HARNESS = tierRows({
   follows: 'haulcarry3',
   show: () => S.crew > 0,
   bands: [
-    { key: 'harness',  name: 'a harness' },
-    { key: 'harness2', name: 'a leather harness' },
-    { key: 'harness3', name: 'a padded harness' }
+    { key: 'harness',  name: 'harness' },
+    { key: 'harness2', name: 'leather harness' },
+    { key: 'harness3', name: 'padded harness' }
   ]
 });
 
@@ -51,9 +51,9 @@ const PACE = tierRows({
   site: 'bench',
   show: () => S.crew > 0,
   bands: [
-    { key: 'haulpace',  name: 'a quick step' },
-    { key: 'haulpace2', name: 'a worn path' },
-    { key: 'haulpace3', name: 'a laid track' }
+    { key: 'haulpace',  name: 'quick step' },
+    { key: 'haulpace2', name: 'worn path' },
+    { key: 'haulpace3', name: 'laid track' }
   ]
 });
 
@@ -67,7 +67,7 @@ const BOOTS = tierRows({
   show: () => S.crew > 0,
   bands: [
     { key: 'boots',  name: 'boots' },
-    { key: 'boots2', name: 'a second pair' },
+    { key: 'boots2', name: 'second pair' },
     { key: 'boots3', name: 'hobnails' }
   ]
 });

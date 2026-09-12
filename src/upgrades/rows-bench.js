@@ -31,9 +31,9 @@ const YOU_CARRY = tierRows({
   // you have done is a row you can read.
   show: () => S.seenDrag,
   bands: [
-    { key: 'carry',  name: 'a bigger pocket' },
-    { key: 'carry2', name: 'a satchel' },
-    { key: 'carry3', name: 'a barrow' }
+    { key: 'carry',  name: 'bigger pocket' },
+    { key: 'carry2', name: 'satchel' },
+    { key: 'carry3', name: 'barrow' }
   ]
 });
 
@@ -48,9 +48,9 @@ const YOU_SWING = tierRows({
   // moment it reached the floor, which is a cap the game would not admit to.
   show: () => S.autoMine,
   bands: [
-    { key: 'speed',  name: 'a firmer grip' },
-    { key: 'speed2', name: 'a weighted haft' },
-    { key: 'speed3', name: 'a steel head' }
+    { key: 'speed',  name: 'firmer grip' },
+    { key: 'speed2', name: 'weighted haft' },
+    { key: 'speed3', name: 'steel head' }
   ]
 });
 
@@ -74,9 +74,9 @@ const YOU_PICK = tierRows({
   // shard while the shard was its coin, and the coin has moved to the last card.
   show: () => S.autoMine,
   bands: [
-    { key: 'pick',  name: 'a sharper pick' },
-    { key: 'pick2', name: 'a forged pick' },
-    { key: 'pick3', name: 'a tempered pick' }
+    { key: 'pick',  name: 'sharper pick' },
+    { key: 'pick2', name: 'forged pick' },
+    { key: 'pick3', name: 'tempered pick' }
   ]
 });
 
