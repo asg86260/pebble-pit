@@ -4,6 +4,7 @@
 // own `assign` -- and the hooks only set up what the group is not about.
 
 import { group, ok, state, run, runUntil, WORKER } from './helpers.mjs';
+import { LADDER } from '../src/config.js';
 import { S } from '../src/state.js';
 import { workAt, siteBox, worksAt } from '../src/works.js';
 import { quarryShed } from '../src/world.js';
@@ -124,7 +125,7 @@ group('a belt being built is boxed rock-to-lip, not at its tail', async () => {
   window.__crew(3, 3);
   window.__fullSites();
   // the belt's own gates: every rung of the lip's gear, and a full set of carts
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
   window.__school({ carters: 9 });
   window.__grant({ shards: 5000, spores: 5000, sparks: 5000 });
   window.__give(200000);

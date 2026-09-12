@@ -9,7 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { MACHINE_PUFF_LIFE } from '../src/config.js';
+import { MACHINE_PUFF_LIFE, LADDER } from '../src/config.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
@@ -56,9 +56,9 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
   return [
     ok(full.benches === 5, 'the cut is down to its last bench', `${full.benches}`),
     ok(full.plots === 7, 'and the whole plot is broken', `${full.plots}`),
-    // The pick ladder is three whole-pixel rungs since wave 7; speed keeps
-    // the house five.
-    ok(full.pick === 3 && full.speed === 5, "and the rock's kit is bought out",
+    // The pick ladder is three whole-pixel rungs since wave 7; speed is the
+    // house ladder, nine rungs in three cards.
+    ok(full.pick === 3 && full.speed === LADDER, "and the rock's kit is bought out",
        `pick ${full.pick}, speed ${full.speed}`),
     ok(quarry && quarry.cap === 5, 'so the cut has five places to stand',
        `cap ${quarry && quarry.cap}`),
@@ -1156,7 +1156,7 @@ group('a belt comes back bought', async () => {
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 20000 });
   window.__school({ carters: 6 });
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
   // B1 (wave-feedback3.md): one builder, not three, so the belt's 180
   // worker-seconds are no longer split three ways.
   buyBuilt('belt', 220);
@@ -1356,7 +1356,7 @@ group('the belt waits for the whole of the lip to be bought out', async () => {
   const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
 
   const bare = shown();
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
   const geared = shown();
   window.__school({ carters: 6 });
   const kitted = shown();
@@ -1413,7 +1413,7 @@ group('the carters outlast the belt', async () => {
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__school({ open: true, carters: 6 });
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
   window.__tip(20000);
   const had = state().carters;
 

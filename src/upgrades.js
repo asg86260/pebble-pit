@@ -65,15 +65,10 @@ const perSecond = ms => lvl => 1000 / ms(lvl);
 
 export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
 
-// What one rung costs, from what the first one costs.
-//
-// Half again a rung, so the top of a ladder is about six times the bottom of it.
-// The old prices doubled and worse -- 1.9 a level on the swing -- which is the
-// arithmetic of a row meant to be bought for ever: the exponent, not the game,
-// decides when you stop. A ladder with an end does not need the price to be the
-// wall, because the end is the wall, so a rung can stay affordable enough to be
-// worth reading all the way up.
-export const rungCost = (first, lvl) => Math.round(first * Math.pow(1.6, lvl));
+// `rungCost` and `DUST_PER` live in upgrades/price.js, a leaf, so the ladder
+// helper can price a row without importing this file -- see the note there.
+import { rungCost, DUST_PER } from './upgrades/price.js';
+export { rungCost, DUST_PER };
 
 // Where a row is on its ladder, and whether it is at the top of it. A row with
 // no `rung` is not a ladder at all -- a building, a one-off, a job -- and is
@@ -1025,15 +1020,6 @@ export function take(money, n) {
 // school, spores at the quarry, red at the tower -- and the dust half is worked
 // out from that here.
 //
-// Sixty to the spark is the line the machines were already sitting on: the
-// tiller exactly, the jaw within a rounding. The rest are set against it by how
-// hard the thing is to come by, and a core -- of which there are nine in the
-// game -- is worth the most of anything.
-//
-// It is a `let` and a row in TUNABLE for the same reason the rates are: this is
-// the exchange rate of the whole economy, and the way to find it is to push it
-// while watching the yard rather than to reason about it.
-export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE };
 
 // What a row costs, as a currency and an amount each. Almost every row in the
 // game is priced in one thing and says so with `cost` and `currency`; the tower
