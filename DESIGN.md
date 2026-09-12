@@ -5846,6 +5846,23 @@ corner. A title with no room left takes a second line instead, which is what a t
 do and a bill cannot. Making that possible needed a ceiling over the sheet — it was shrink-to-fit
 with nothing above it and answered "no room" by getting wider, right off the side of the window.
 
+**Three lines now, the same three on every card (2026-09-12).** The swap above bought the price its
+corner at the cost of everything else: the name and the bill are the two widest things on a card,
+and a grid's columns are shared down every row, so a four-coin bill on the first line starved the
+gain on the second, the name beside it wrapped for a bill it was not even next to, a card with no
+gain came out a line shorter than its neighbor, and the pips sat wherever the row's height left
+them. Read across the bench it was five shapes of card. So the card is three lines: the name on the
+first, the whole width; what it gives on the second, the whole width; the pips at the left of the
+third and the bill hard right on it, and that line is the card's bottom edge whatever the card
+beside it did. Nothing shares a line with words but a run of pips, which is never wider than a few
+characters. A title wraps only when it is longer than the card, which none of them is. A job row and
+a dial take the same three lines with their control where the bill would be, so a board of mixed
+rows is one shape. The cost is a line a card — the bench is about a quarter taller — and it was
+weighed against the two-line shape with the pips beside the title and the gain beside the bill, in a
+shot, and lost to it on the one card whose gain still wrapped. A note under a row is a fourth line,
+between the gain and the bill, and is still the one thing that makes a card taller than its
+neighbor.
+
 **The measurement came first, and it changed the answer twice.** Read off a real page — every board
 open, every building up, the ink in each cell measured with a Range, because a cell is a grid track
 and its own rect is the column width — **every bill in the game carries a clock, all thirty-two of

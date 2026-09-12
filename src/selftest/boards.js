@@ -209,13 +209,17 @@ export const TESTS = [
   // heights is a board you read one card at a time, because there is no rhythm
   // to run your eye down.
   //
-  // One card in two is now allowed to be taller, and only one thing may make it
-  // so: a title that took a second line. That is the bargain of putting the bill
-  // up on the title's line -- the price holds its corner and the name is what
-  // gives way -- and it is worth being exact about, because everything else that
-  // used to make cards ragged was a bug. A bill that stacked to fit a column too
-  // narrow for it, a card with no gain dropping the line its neighbor held: both
-  // of those are still failures here, which is what the whole-lines rule says.
+  // A card is three lines -- the name, the gain, the pips and the bill -- and
+  // only one thing may make it taller: a title longer than the card, which
+  // takes a second line. No title in the game is, now that the bill has a line
+  // of its own and the name has the whole of the first; for a while the two
+  // shared a line and the name gave way to the bill, and this check was the
+  // one that said a card could be taller for that reason and no other. It
+  // still says so, because everything else that used to make cards ragged was
+  // a bug: a bill that stacked to fit a column too narrow for it, a card with
+  // no gain dropping the line its neighbor held, a pips corner that came and
+  // went. All of those are failures here, which is what the whole-lines rule
+  // says.
   ['a card is only ever taller by a whole line of title', async () => {
     newRun();
     await settle();
@@ -263,8 +267,14 @@ export const TESTS = [
       // So the rule is read a line of the sheet at a time: its height is the
       // step plus a line per line of the *longest* title on it, and every card
       // on it is that height.
+      // A line of the sheet with a note card on it is left out: a note is a
+      // description under the row, by design (see `.rows .note` in style.css),
+      // and it is a second thing that makes a card taller which this rule does
+      // not yet say anything about. Its neighbor is stretched to match it,
+      // bill pinned to the bottom, which is the card doing what it should.
       const top = e => Math.round(e.getBoundingClientRect().top);
-      const shelves = [...new Set(rows.map(top))].map(t => rows.filter(e => top(e) === t));
+      const shelves = [...new Set(rows.map(top))].map(t => rows.filter(e => top(e) === t))
+        .filter(shelf => !shelf.some(e => e.querySelector('.note')));
       const longest = shelf => Math.max(...shelf.map(lines));
       // A line of the sheet whose titles are all one line is the board's step.
       // Anything taller has to be taller by exactly the lines its longest title
@@ -274,8 +284,9 @@ export const TESTS = [
       const step = Math.min(...one);
       const ragged = one.filter(x => x !== step).length;
       if (ragged) bad.push(`${name}: ${ragged} one-line cards off ${step}px`);
-      const line = Math.round((Math.max(...rows.map(h)) - step) /
-                              Math.max(1, Math.max(...rows.map(lines)) - 1));
+      const kept = shelves.flat();
+      const line = Math.round((Math.max(...kept.map(h)) - step) /
+                              Math.max(1, Math.max(...kept.map(lines)) - 1));
       for (const shelf of shelves) {
         const want = step + (longest(shelf) - 1) * (line || 0);
         for (const e of shelf) {
