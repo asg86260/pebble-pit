@@ -121,7 +121,7 @@ group('the endgame yard does a frame of work a frame', async () => {
   window.__crew(3, 6, 3, 3);
   window.__fullSites();
   window.__grant({ sparks: 999999, shards: 9999, spores: 9999, dust: 200000 });
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   for (const k of ['jaw', 'ram', 'tiller', 'belt']) window.__machine(k, { bought: true });
   const ram = S.machines.ram; ram.tune = 12; ram.driven = true;
   S.machines.belt.tune = 12;

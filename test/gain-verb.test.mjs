@@ -40,16 +40,18 @@ group("the haulers' rows say what they are about", async () => {
   openSites();
   window.__crew(1, 0);
   S.seenShard = true;
-  window.__levels({ haulPaceLevel: 5 });      // boots wait on pace -- see ladder-chain
   const row = key => window.__rows().find(r => r.key === key);
-  const pace = row('haulpace'), boots = row('boots'), load = row('haulcarry');
+  const speed1 = row('haulpace'), load = row('haulcarry');
+  const g1 = speed1?.gain, gl = load?.gain;
+  window.__levels({ haulPaceLevel: 9 });      // the whole speed ladder climbed
+  const pace = row('haulpace3');
   window.__crew(0, 0);
   return [
-    ok(boots && boots.gain.startsWith('walk '), 'boots: walk +…', boots?.gain),
-    ok(load && load.gain.startsWith('carry '), 'load: carry 1 → 2', load?.gain),
+    ok(g1 && g1.startsWith('walk '), 'hauler speed: walk +…', g1),
+    ok(gl && gl.startsWith('carry '), 'hauler carry: carry 1 → 3', gl),
     // A finished ladder says nothing in the gain column, verb included: "walk"
     // over "done" would be a promise with nothing after it.
-    ok(pace && pace.gain === '', 'a finished pace ladder has no gain line',
+    ok(pace && pace.gain === '', 'a finished speed ladder has no gain line on its last card',
        JSON.stringify(pace?.gain))
   ];
 });

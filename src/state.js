@@ -446,8 +446,6 @@ export const S = {
   // The crew's second tier, which the quarry pays for: a harness to carry with and
   // boots to walk in. Their own counts rather than more rungs on the first two
   // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
-  harnessLevel: 0,
-  bootsLevel: 0,
   introThrew: 0,          // when the opening's one throw was let go of
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
@@ -628,8 +626,6 @@ export const SAVED = [
   // dust, the stone and the crop with it.
   'wizardHats',
   JOB.JANITOR,
-  'harnessLevel',
-  'bootsLevel',
   'seenMess',
   'recycler',
   'seenAir',

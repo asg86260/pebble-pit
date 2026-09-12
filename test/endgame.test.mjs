@@ -72,7 +72,7 @@ group('a beat of the belt lifts a load, not a grain', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
-  window.__levels({ haulCarryLevel: 3, harnessLevel: 2 });
+  window.__levels({ haulCarryLevel: 5 });
   window.__crew(0, 6);
   window.__grant({ sparks: 9999, shards: 999, spores: 999 });
   window.__tip(9000);

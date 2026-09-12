@@ -125,7 +125,7 @@ group('a belt being built is boxed rock-to-lip, not at its tail', async () => {
   window.__crew(3, 3);
   window.__fullSites();
   // the belt's own gates: every rung of the lip's gear, and a full set of carts
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__school({ carters: 9 });
   window.__grant({ shards: 5000, spores: 5000, sparks: 5000 });
   window.__give(200000);

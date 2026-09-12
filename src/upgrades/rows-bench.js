@@ -138,8 +138,7 @@ export const BENCH_ROWS = [
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
     show: () => canBuy('belt',
-                       () => S.haulCarryLevel >= LADDER && S.haulPaceLevel >= LADDER
-                          && S.harnessLevel >= LADDER && S.bootsLevel >= LADDER,
+                       () => S.haulCarryLevel >= LADDER && S.haulPaceLevel >= LADDER,
                        () => kitFull(JOB.HAUL))
   },
   {

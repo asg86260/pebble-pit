@@ -55,7 +55,7 @@ const rich = () => {
 // pair of hands, which is what the belt is gated behind. `__fullSites` does the
 // same for the cut, the field and the rock, but carrying has no site to fill.
 const lip = () => {
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__school({ carters: 6 });
 };
 

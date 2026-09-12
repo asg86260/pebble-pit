@@ -35,10 +35,14 @@ group('a builder walks to its site at a trip\'s pace', async () => {
     // The rungs move it. This is the half that a hard-coded constant silently
     // dropped on the floor, and the half no screenshot would ever show.
     (() => {
+      // quickCrew already stands the walk at the top of its ladder, so measure
+      // from the bottom of it and back.
+      const was = S.haulPaceLevel;
+      S.haulPaceLevel = 0;
       const before = commutePace();
-      S.bootsLevel = 5; S.haulPaceLevel = 5;
+      S.haulPaceLevel = 9;
       const after = commutePace();
-      S.bootsLevel = 0; S.haulPaceLevel = 0;
+      S.haulPaceLevel = was;
       return ok(after > before, 'and the gear the player bought moves it',
                 `${before.toFixed(2)} -> ${after.toFixed(2)}`);
     })()

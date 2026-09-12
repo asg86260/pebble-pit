@@ -203,21 +203,18 @@ export let HAUL_BASE = 1.8;
 // rows serve a compounding crew, so their firsts sit well above the solo rows
 // beside them, and the house climbs steeply enough that the twentieth body is a
 // decision rather than a reflex -- the grind pass, DESIGN.md.
-export const HAUL_CARRY_COST = 150;     // the haulers' strength ladder, dust
+export const HAUL_CARRY_COST = 150;     // the haulers' carry ladder, dust
 export const HAUL_PACE_COST = 180;      // and their speed, dust
-export const ROCKHAND_SPEED_COST = 210; // the rockhands' swing, dust
-// The gear over those two -- a harness on a hauler's back, boots on its feet --
-// used to be priced in shards from the first rung because the shard was the
-// one scarce coin there was. It is a ladder in bands like the rest now, and
-// these are its first rungs in dust; the shard comes back on the third card.
-export const HARNESS_COST = 400;        // the haulers' harness ladder, dust
-export const BOOTS_COST = 300;          // and their boots
-// And what a hauler's walk climbs to. Pace and boots are two ladders over one
-// speed: each is worth this much again of the base at the top of its own
-// ladder, spread evenly rung by rung, so a longer ladder is finer steps to the
-// same top rather than a faster crew.
-export const HAUL_PACE_TOP = 1.5;       // pace at the top: two and a half times the base
-export const BOOTS_TOP = 2.25;          // and boots on top of that
+export const ROCKHAND_SPEED_COST = 210; // the diggers' swing, dust
+// One ladder over what a hauler carries and one over how fast it walks. Each
+// used to be two -- load then a harness, pace then boots -- which was the same
+// thing sold twice under two names, a player reading which of two identical
+// rows to buy. Folded into one ladder apiece (2026-09-12), with the top where
+// the two together reached: a hauler carries this many more grains a rung
+// (nineteen at the top, where load and harness had 1 + 9 + 9), and walks this
+// much again of the base at the top of its ladder (pace's 1.5 and boots' 2.25).
+export const HAUL_CARRY_STEP = 2;       // grains a rung
+export const HAUL_PACE_TOP = 3.75;      // at the top: four and three quarters times the base
 // Your own bench's three ladders, first rungs in dust. Yours come first and
 // cheap: they are the first rows on the first board, bought before there is a
 // crew to buy for.

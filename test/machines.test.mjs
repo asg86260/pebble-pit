@@ -1156,7 +1156,7 @@ group('a belt comes back bought', async () => {
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 20000 });
   window.__school({ carters: 6 });
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   // B1 (wave-feedback3.md): one builder, not three, so the belt's 180
   // worker-seconds are no longer split three ways.
   buyBuilt('belt', 220);
@@ -1356,7 +1356,7 @@ group('the belt waits for the whole of the lip to be bought out', async () => {
   const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
 
   const bare = shown();
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   const geared = shown();
   window.__school({ carters: 6 });
   const kitted = shown();
@@ -1413,7 +1413,7 @@ group('the carters outlast the belt', async () => {
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__school({ open: true, carters: 6 });
-  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER, harnessLevel: LADDER, bootsLevel: LADDER });
+  window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__tip(20000);
   const had = state().carters;
 

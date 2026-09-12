@@ -6,7 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
-         ABYSS_AT, WORKER } from './config.js';
+         ABYSS_AT, WORKER, LADDER } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
@@ -716,6 +716,11 @@ export function restore() {
       ? (r.tookKit == null ? true : !!r.tookKit) : false;
   }
   rebalance();
+  // The harness and the boots were ladders of their own over what a hauler
+  // carries and how fast it walks; a save carrying either folds it into the one
+  // ladder each is now (2026-09-12), trimmed to the ladder's top.
+  S.haulCarryLevel = Math.min(LADDER, (S.haulCarryLevel || 0) + (+s.harnessLevel || 0));
+  S.haulPaceLevel = Math.min(LADDER, (S.haulPaceLevel || 0) + (+s.bootsLevel || 0));
   S.rockhandSpeedLevel = s.rockhandSpeedLevel ?? s.minerSpeedLevel ?? 0;
   // A save from when one pick row bought both keeps what its rock hands had.
   S.rockhandPickLevel = s.rockhandPickLevel ?? s.minerPickLevel ?? (s.pickLevel || 0);

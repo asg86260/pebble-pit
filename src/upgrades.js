@@ -6,7 +6,7 @@
 // on the board.
 
 import {
-  P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, BOOTS_TOP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
+  P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, HAUL_CARRY_STEP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
@@ -147,12 +147,12 @@ export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lv
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
 // stone out of the quarry, because gear is what stone is for.
-// A grain a rung on either ladder: a hauler's load is a whole number of
-// grains, so these are the ladders that got a little longer at the top when
-// nine rungs replaced five (the harness was two a rung, and is one).
-export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lvl + gear;
-export const haulSpeed = (lvl = S.haulPaceLevel, gear = S.bootsLevel) =>
-  HAUL_BASE * (1 + HAUL_PACE_TOP * lvl / LADDER + BOOTS_TOP * gear / LADDER) * mult('haul');
+// What a hauler carries and how fast it walks, one ladder each -- see
+// HAUL_CARRY_STEP. A load is a whole number of grains, so it steps; the walk
+// eases across the ladder to its top.
+export const haulCap = (lvl = S.haulCarryLevel) => 1 + HAUL_CARRY_STEP * Math.max(0, Math.min(LADDER, lvl | 0));
+export const haulSpeed = (lvl = S.haulPaceLevel) =>
+  HAUL_BASE * (1 + HAUL_PACE_TOP * Math.max(0, Math.min(LADDER, lvl)) / LADDER) * mult('haul');
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
 // A trip's pace, for anybody making one. It lived in crew.js, and the stations
 // could not reach it -- crew.js imports them -- so each grew a private walking
@@ -690,8 +690,7 @@ export function rebalance() {
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
   for (const k of ['carryLevel', 'speedLevel', 'pickLevel',
-                   'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
-                   'harnessLevel', 'bootsLevel'])
+                   'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
   // Two ladders got shorter (feedback7 items 19 and 20), so their saved levels
   // clamp against their own tops rather than the shared RUNGS: a save at pick
@@ -926,8 +925,7 @@ export const SECTIONS = [
   // first, the thing that climbs past it last, the way the shack orders the
   // rock's. Named for the job, the way the shack's is: "the haulers" beside
   // "the miners", and "crew" left to the house, where the crew live.
-  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), ...cards('harness'), ...cards('boots'),
-                                 'labhaul', 'belt', 'tunebelt'] },
+  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), 'labhaul', 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

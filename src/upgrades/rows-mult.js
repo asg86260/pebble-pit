@@ -104,7 +104,7 @@ export const HAUL_MULT = ladder({
   does: 'walk',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
-  after: 'boots3',
+  after: 'haulpace3',
   // The bench, directly under the pace rung it multiplies -- the same shelf
   // `swing` sits on at the shack, for the same reason. It was sold at the
   // house for a while, which put the multiplier a board away from its rung.

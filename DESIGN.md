@@ -1815,17 +1815,20 @@ is the ladder's idea escalating, in the register of the board it sits on.
 | bench | swing (your click) | dust | firmer grip | weighted haft | steel head |
 | bench | pickaxe (your bite) | shard+dust | sharper pick | forged pick | tempered pick |
 | bench | chance (crit) | shard+dust | lucky charm | rabbit's foot | found horseshoe |
-| bench | load (haulers) | dust | bigger sack | yoke | handcart |
-| bench | pace (haulers) | dust | good boots | worn path | laid track |
-| bench | harness (haulers) | shard+dust | harness | leather harness | padded harness |
-| bench | boots (haulers) | shard+dust | boots | second pair | hobnails |
+| bench | hauler carry | dust | hauler carry | hauler carry II | hauler carry III |
+| bench | hauler speed | dust | hauler speed | hauler speed II | hauler speed III |
 | shack | speed (rockhands) | dust | rhythm | work song | foreman |
 | scrub | the fan | shard | bigger fan | second blade | bellows |
 
-`harness` and `boots` carry a shard from rung one today because the shard was
-the only scarce coin there was to price them in; they take the same shape as
-`load` and `pace` beside them. The crit `power` ladder is one card of three,
-dust only, as above.
+**The harness and the boots are folded in (2026-09-12).** Load then a harness,
+pace then boots, were two ladders each over one number -- what a hauler
+carries, how fast it walks -- and two rows over one number read as the same
+thing for sale twice. One ladder each now, to the top the pair reached
+together: nineteen grains carried (two a rung from one; load and harness were
+1 + 9 + 9) and four and three quarters times the base walk (`HAUL_PACE_TOP`
+3.75, pace's 1.5 and boots' 2.25). A save carrying `harnessLevel` or
+`bootsLevel` folds it into the ladder that is left, trimmed to the top. The
+crit `power` ladder is one card of three, dust only, as above.
 
 The fan is the one change of coin with a balance consequence: it is the sky's
 lever (see "Decided" -- the sky is beaten only by investing here), and it goes
