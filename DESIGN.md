@@ -343,6 +343,17 @@ been decided, and it is the same board when it returns.
 for a few seconds, in the same place the lab's news stands. A wheel that stopped and told you
 nothing is a wheel you had to have been watching, and you are usually somewhere else in the yard.
 
+**And it is felt (built 2026-09-12).** A settled hand is the one moment in the game that is news,
+and a wheel that stopped and then sat there read as a wheel that had not decided. A **win** is a
+burst: the sign's chase goes to a full strobe for two seconds, the wheel's slices flash sides for
+the first beat, and three fountains of two-cell squares go up out of the wheel a beat apart and
+rain down over the yard, fading as they fall — confetti in the yard's own shades, over the sky and
+the block both. A **loss** is a dud: the sign goes out, and after most of a second its bulbs come
+back one at a time round the ring while the chase picks up among the ones that are back; the pot
+lifts off and fades as it always did. A hard metal punctuation for the one, a dull wooden knock
+for the other. A dribble of bulbs falling off the dark sign was tried for the loss and cut: white
+squares over a white sign, and gone into the ground by the time anybody looked.
+
 **It has a sign, and the sign is the one piece of writing in the yard.** Every other building says
 what it is by being the shape it is — a chimney, a row of plots, a hole in the ground — and a casino
 says what it is by shouting. CASINO runs down a board on the roof with a chase of lights round the

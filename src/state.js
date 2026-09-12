@@ -259,7 +259,7 @@ export const S = {
   chip: 0,                // which of CASINO_CHIPS is on the table
   // The hand that just settled, kept for a few seconds so a wheel you were not
   // watching still tells you which way it went.
-  hand: null,             // { won, n, cur, at }
+  hand: null,             // { won, n, cur, at, bursts }
   labBoardOpen: false,
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read. It was the lab's alone --
