@@ -17,6 +17,7 @@ import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
 import { rand } from './rng.js';
+import { sfx } from './audio.js';
 
 // --- how big the hole is -----------------------------------------------------
 // One hole, the whole thing, from the first frame.
@@ -256,6 +257,7 @@ function throughRift(x, shade) {
     S.riftOpen = true;
     S.riftGulp = RIFT_GULP;
     S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
+    sfx('rift', { x: pit.x + pit.w / 2, cls: 'punct' });
   }
   const held = riftHeld();
   S.riftAte = (S.riftAte || 0) + 1;   // fed at the mouth counts toward its growth
@@ -354,6 +356,7 @@ export function bankDust(x, shade = 1) {
   // brim is 37,566, and the number written down was fifty thousand, so the row
   // could not appear in a game that had done the exact thing it is about.
   if (!addGrain(pit, x, null, shade)) return throughRift(x, shade);
+  sfx('stone', { x });                       // it came down on the pile
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left

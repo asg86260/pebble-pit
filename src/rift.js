@@ -35,6 +35,7 @@ import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
          RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains } from './pit.js';
+import { sfx } from './audio.js';
 
 // --- how big it is -------------------------------------------------------------
 // The disc grows with what it eats and with nothing else: no rung, no dial,
@@ -154,6 +155,7 @@ export function stepRift(dt) {
     S.drowned = true;
     S.riftGulp = RIFT_GULP;
     S.riftShake = RIFT_SHAKE;
+    sfx('rift', { x: pit.x + pit.w / 2, cls: 'punct' });   // the floor gives way
   }
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   const take = riftBite();

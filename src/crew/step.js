@@ -99,6 +99,7 @@ import { retask, stepCommute } from './commute.js';
 import { relieve } from './nature.js';
 import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
+import { sfx } from '../audio.js';
 
 // The yard is celebrating: a rock has just come off, or the next one is on its
 // way down.
@@ -464,5 +465,12 @@ function faceTravel(was) {
   for (const [w, x0] of was) {
     const d = w.x - x0;
     if (Math.abs(d) > FACE_STILL) w.face = Math.sign(d);
+    // A footstep every body's width of ground, measured the same way facing is:
+    // the bodies are squares with no walk cycle, so the stride is the ground
+    // covered, and a step sounds each time the feet cross a stride line. Not
+    // for a body on the cursor or in the balloon -- nothing is walking there.
+    if (d && !w.lifted && !w.aloft && Math.floor(x0 / WORKER) !== Math.floor(w.x / WORKER)) {
+      sfx('stone', { x: w.x, hard: 0 });
+    }
   }
 }

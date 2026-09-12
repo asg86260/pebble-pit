@@ -13,6 +13,7 @@ import { pitFull, pitRefuses } from './pit.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { shockAt } from './shock.js';       // F4: the ring a crit throws
+import { sfx } from './audio.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => rand() + rand() + rand() - 1.5;
@@ -182,6 +183,7 @@ export const bandY = () => beltY() - P;       // where a load sits: on top of th
 // takes it to the band, down as readily as up.
 export function loadBelt(x, y, shade) {
   S.belt.push({ x, y, s: shade });
+  sfx('metal', { x });                      // the scoop sets it on the band
   S.dirty = true;
 }
 
@@ -235,6 +237,7 @@ export function catchBelt(ch, now, f) {
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
   S.belt.push({ x: ch.x, y: bandY(), s: ch.s });
+  sfx('metal', { x: ch.x });                // thrown, and it came down on the band
   S.dirty = true;
   return true;
 }

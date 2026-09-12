@@ -7,6 +7,7 @@
 import { frames, now } from '../clock.js';
 import { CLIMB_PACE, MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
 import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
+import { sfx } from '../audio.js';
 import { quarryFace } from '../quarry.js';
 import { busyAt } from '../works.js';
 import { shedSite } from './shedhand.js';
@@ -250,6 +251,10 @@ export function stepMachines(now) {
     }
     S.machineWorking = false;
     if (!did) continue;
+    // One beat of the machine, however many units it got through this frame:
+    // the fold window is what turns a fast machine into a rattle rather than a
+    // buzz. The ram's is a strike, and it gets the thump under it.
+    sfx('metal', { x: at, big: m.key === 'ram' });
     // It did a unit of work this beat, which is the one thing the stack is
     // allowed to read: a chimney smoking over a machine that is not getting
     // anything done would be the drawing claiming what the yard denies.

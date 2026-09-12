@@ -15,6 +15,7 @@ import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { introHolds } from './intro.js';
 import { rand } from './rng.js';
+import { sfx } from './audio.js';
 
 // The core sits at the *foot* of the rock and only comes loose when it is bare.
 //
@@ -49,6 +50,7 @@ export function dropCore() {
 export function bankCore(x) {
   const at = (x ?? pit.x + pit.w / 2) + (rand() - 0.5) * P * 10;
   if (!addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL)) return false;
+  sfx('stone', { x: at, big: true, cls: 'punct' });   // a core is a boulder's worth of weight
   S.cores++;
   S.seenCore = true;
   S.dirty = true;
