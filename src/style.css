@@ -694,17 +694,21 @@ canvas {
   text-transform: uppercase;
   color: #000;
 }
-/* The record, a page to read behind the front of the sheet: lower case like a
-   quotation, one line a notice with the name on the left and what earned it on
-   the right, and no hover on any of it -- nothing here is pressed. Held to a
-   screen's worth and scrolled past that, so forty notices do not push the back
-   button off the window. */
-.held .record { display: flex; flex-direction: column; gap: 3px; width: 34em; max-width: 80vw;
+/* The achievements, a page to read behind the front of the sheet: one card a
+   notice, two across like a board's, the name in the boards' card hand and
+   what earned it underneath, lower case like a quotation. No hover on any of
+   it -- nothing here is pressed, so it is a div and not a button, and the
+   border is the same one-pixel edge a bought card has. Held to a screen's
+   worth and scrolled past that, so forty cards do not push the back button
+   off the window. */
+.held .record { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 36em; max-width: 80vw;
                 max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
                 font-size: 11px; }
-.held .record .line { display: flex; justify-content: space-between; gap: 2em; }
-.held .record .note { color: #666; text-align: right; }
-.held .record > .note { text-align: center; }   /* "nothing yet", on its own */
+.held .record .card { display: flex; flex-direction: column; gap: 3px; padding: 5px 8px;
+                      border: 1px solid #000; }
+.held .record .name { letter-spacing: .1em; text-transform: uppercase; }
+.held .record .note { color: #666; }
+.held .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 .held .word { font-size: 17px; letter-spacing: .3em; }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn

@@ -30,7 +30,7 @@ const motion = () => document.getElementById('motion');
 // as its name: what the check is about is that the line is there, in its place.
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
-  .map(el => el.id === 'recordbtn' ? 'the record'
+  .map(el => el.id === 'recordbtn' ? 'achievements'
                                    : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
@@ -46,7 +46,7 @@ export const TESTS = [
       'paused',
       'resume',
       '',                                     // the rule
-      'the record',                           // the button to the page behind -- see record.js
+      'achievements',                         // the button to the page behind -- see record.js
       '',                                     // and its rule
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'sound: on',                            // the mute, which remembers -- see audio.js

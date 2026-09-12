@@ -38,34 +38,37 @@ export function recordList() {
   return newestFirst().map(n => ({ name: n.name, note: n.note }));
 }
 
-// The one line about the record on the sheet's front: the count, which is
-// the honest half of a locked list (see above). It is the button that turns
-// the page, so what you press to read the record is the number of it.
-export const recordLabel = () => `the record \u00b7 ${noticeCount()} of ${noticeTotal()}`;
+// The one line about the achievements on the sheet's front: the count, which
+// is the honest half of a locked list (see above). It is the button that turns
+// the page, so what you press to read them is the number of them. "The record"
+// was their name for a while; "achievements" is the word every other game
+// uses, and a player looking for them looks for that word.
+export const recordLabel = () => `achievements \u00b7 ${noticeCount()} of ${noticeTotal()}`;
 
-// Written into the sheet's own element: one line a notice -- the name, and
-// what you did to earn it. Nothing here is a button and nothing has a hover;
-// it is a page to read, behind the button that carries the count. An empty
-// record is a page with nothing on it yet, and says so.
+// Written into the sheet's own element: one card a notice -- the name on top,
+// what you did to earn it underneath -- in the shape the boards' cards take,
+// two across, because an achievement is a thing you hold rather than a line
+// in a ledger. Nothing here is a button and nothing has a hover; it is a page
+// to read, behind the button that carries the count. An empty page says so.
 export function showRecord(el) {
   const rows = recordList();
   el.replaceChildren();
   if (rows.length === 0) {
     const none = document.createElement('div');
-    none.className = 'note';
+    none.className = 'none';
     none.textContent = 'nothing yet';
     el.appendChild(none);
   }
   for (const r of rows) {
-    const line = document.createElement('div');
-    line.className = 'line';
+    const card = document.createElement('div');
+    card.className = 'card';
     const name = document.createElement('span');
     name.className = 'name';
     name.textContent = r.name;
     const note = document.createElement('span');
     note.className = 'note';
     note.textContent = r.note;
-    line.append(name, note);
-    el.appendChild(line);
+    card.append(name, note);
+    el.appendChild(card);
   }
 }

@@ -47,7 +47,7 @@ export const TESTS = [
   // count on the button, the button turns the page to the list, and none of
   // the list is a button or lights up under the cursor -- it is a page, not a
   // board. Back is the front again, resume and all.
-  ['the record is a page on the held sheet, read by holding', async () => {
+  ['the achievements are a page of cards on the held sheet, read by holding', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
@@ -61,9 +61,9 @@ export const TESTS = [
     const frontFirst = !btn.hidden && el.hidden;
     btn.click();
     const turned = el.hidden === false && document.getElementById('resume').hidden;
-    const lines = [...el.querySelectorAll('.line')];
+    const cards = [...el.querySelectorAll('.card')];
     const buttons = el.querySelectorAll('button, [data-key]').length;
-    const cursor = lines.length ? getComputedStyle(lines[0]).cursor : '';
+    const cursor = cards.length ? getComputedStyle(cards[0]).cursor : '';
     const read = state().wonUnread;
     const onBoard = [...document.getElementById('statsshop').querySelectorAll('[data-key]')]
       .some(r => r.dataset.key.startsWith('notice'));
@@ -73,11 +73,11 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(before.wonUnread > 0, 'a notice has landed and is unread', `${before.wonUnread}`),
-      ok(frontFirst && counted.startsWith(`the record \u00b7 ${state().won} of `),
+      ok(frontFirst && counted.startsWith(`achievements \u00b7 ${state().won} of `),
          'the sheet comes up on its front, with the count on the button', counted),
-      ok(turned && lines.length === state().won,
-         'the button turns the page to the list, one line a notice',
-         `${lines.length} lines, ${state().won} won`),
+      ok(turned && cards.length === state().won,
+         'the button turns the page to the cards, one a notice',
+         `${cards.length} cards, ${state().won} won`),
       ok(back, 'and back is the front again'),
       ok(read === 0, 'and holding reads it', `${read} unread`),
       ok(buttons === 0 && cursor !== 'pointer', 'nothing on it is a row or a button',
