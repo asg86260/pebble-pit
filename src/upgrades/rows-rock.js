@@ -45,11 +45,10 @@ export const ROCK_ROWS = [
   {
     key: 'rockhandspeed',
     kind: 'rung', site: 'shack', board: 'shack',
-    // Two words do the work of every rate on these boards now: a **swing** is a
-    // pick hitting rock, and **speed** is how often anything else happens. Each
-    // one means one thing, and a row under "the rock" saying "rockhand" was saying
-    // what the heading already said.
-    name: 'swing',
+    // "speed", not "swing": the shard multiplier below this row is the one
+    // called swing now. Two rows on one board both named for the swing needed a
+    // mark to tell them apart, and the mark read as noise beside the price.
+    name: 'speed',
     unit: 'px/s',
     pct: true,
     does: 'hit',

@@ -73,10 +73,10 @@ const standing = invested;
 
 export const SWING_MULT = ladder({
   key: 'labswing', field: 'swing',
-  // Beside "swing" on the rock, so the two cannot both be called it. The mark
-  // says which is the rung and which is the multiplier over it, and it is the
-  // one new character these boards have taken on.
-  name: 'swing ×',
+  // The rung it sits over is "speed" (rows-rock.js), so this one can be plain
+  // "swing" -- it used to carry a × to keep the two apart when both wanted the
+  // name.
+  name: 'swing',
   unit: 'px/s',
   does: 'hit',
   cost: () => rungCost(15, levelOf('swing')),
@@ -106,7 +106,7 @@ export const HAUL_MULT = ladder({
   currency: 'shard',
   after: 'boots',
   // The bench, directly under the pace rung it multiplies -- the same shelf
-  // `swing x` sits on at the shack, for the same reason. It was sold at the
+  // `swing` sits on at the shack, for the same reason. It was sold at the
   // house for a while, which put the multiplier a board away from its rung.
   show: () => standing() && S.seenShard
 });
