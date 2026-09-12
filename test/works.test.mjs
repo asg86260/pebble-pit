@@ -132,31 +132,35 @@ group('a bench takes the same time however many are in the cut', async () => {
   ];
 });
 
-// One work per site, which is what makes the waiting a decision: while the cut
-// is going down a bench it is not doing anything else, and you had to pick.
-group('a site builds one thing at a time', async () => {
+// One work at a time per site, and the next in line behind it: while the cut
+// is going down a bench it is not doing anything else, and the speed you buy
+// meanwhile waits its turn at nought. (It used to be refused outright -- see
+// DESIGN.md, "The queue", for why that went; test/queue.test.mjs has the line's
+// own checks.)
+group('a site builds one thing at a time, and the next waits in line', async () => {
   window.__reset();
   openSites();
   window.__crew(0, 0, 2, 2);
   window.__grant({ shards: 900, spores: 900, dust: 90000 });
   run(2);
 
-  const level = state().quarryPace ?? null;
   window.__buy('quarrybench');
   const second = window.__buy('quarrypace');
-  const both = Object.values(works()).filter(w => w).length;
+  run(2);
+  const line = (state().line || {}).quarry || [];
   const cut = on('quarrybench');
-  const speed = on('quarrypace');
 
   // ...but the plots are a different place, and get on with their own
   const plot = window.__buy('farmplot');
 
   return [
     ok(!!cut, 'the cut takes the bench'),
-    ok(!second && !speed, 'and will not start a second thing while it is on it',
-       speed ? 'the speed row started as well' : 'it refused'),
-    ok(plot && !!on('farmplot'), 'while the plots get on with their own'),
-    ok(both === 1, 'one work on the cut, and one only', `${both}`)
+    ok(second && line.length === 2 && line[1].key === 'quarrypace',
+       'and the speed bought meanwhile waits in line behind it',
+       line.map(w => w.key).join(',')),
+    ok(line[1] && line[1].done === 0 && cut.done > 0, 'at nought while the bench goes on',
+       `${line[1]?.done} behind ${cut.done}`),
+    ok(plot && !!on('farmplot'), 'while the plots get on with their own')
   ];
 });
 
