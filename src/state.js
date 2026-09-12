@@ -490,6 +490,10 @@ export const S = {
   yielded: false,         // another tab is writing this save; this page has stopped
   broken: false,          // a save that would not read was put aside at boot
   staged: false,          // stood at a scene, the player's save kept aside (scenesheet.js)
+  // wave-desk-sound, track A: the desk's store, and the version boundary.
+  build: null,            // { hash, date } of the build that wrote this save; null for a yard with no save behind it
+  fellBack: false,        // the desk's current save would not read; this is the one before it
+  newerSave: null,        // the date of a save written by a build newer than this one, until the sheet has said so
   lastFrame: 0,         // for the length of the last frame
   settleAt: 0,            // the column the pit settler got to last frame
 
@@ -744,6 +748,10 @@ export const SAVED_BY_HAND = [
   'shield',
   'shieldsDone',
   'rescued',
+  // Which build wrote the save (wave-desk-sound, track A). Written as the
+  // page's own stamp rather than copied off S, and read back into `S.build`
+  // with a default -- see the version boundary in persist.js.
+  'build',
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
 ];
@@ -758,6 +766,9 @@ export const EPHEMERAL = [
   // what the store said about this page: writes refused, another tab writing,
   // a save that would not read put aside -- see persist.js and save.js
   'unsaved', 'yielded', 'broken',
+  // ...and what the desk's store said: the save before the one that would not
+  // read, and a save from a build newer than this one (wave-desk-sound, track A)
+  'fellBack', 'newerSave',
   // stood at a scene, with the player's own save kept aside -- scenesheet.js
   'staged',
   // the window and the view, all measured at boot

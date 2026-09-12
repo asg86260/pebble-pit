@@ -2,6 +2,7 @@
   "name": "boulder-clicker",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,9 +16,23 @@
     "test:browser:serial": "node tools/headless.mjs --serial",
     "test:all": "node --test test/*.test.mjs && node tools/headless.mjs",
     "watch": "node --test --watch",
-    "look": "node tools/look.mjs"
+    "look": "node tools/look.mjs",
+    "desk": "electron .",
+    "desk:build": "vite build && electron-builder",
+    "publish": "node tools/publish.mjs"
+  },
+  "build": {
+    "appId": "com.boulderclicker.desk",
+    "productName": "Boulder",
+    "files": ["dist/**", "electron/**"],
+    "directories": { "output": "release" },
+    "win": { "target": ["nsis", "portable"] },
+    "mac": { "target": ["dmg"] },
+    "linux": { "target": ["AppImage"] }
   },
   "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
     "vite": "^7.1.3"
   }
 }

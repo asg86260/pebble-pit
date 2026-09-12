@@ -18,6 +18,7 @@ import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
+import { BUILD } from './version.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './world.js';
 import { startIntro } from './intro.js';
@@ -253,6 +254,11 @@ export function claimSave() { claimTab(); claimed = true; }
 function blob() {
   return {
     ...savedFields(),
+    // Which build wrote it (wave-desk-sound, track A): the page's own stamp,
+    // not `S.build`, which is the stamp of whoever wrote the save this yard
+    // was read out of. A save is compared against the app that opens it, and
+    // the comparison only means something if every save says who wrote it.
+    build: BUILD,
     // Which run this is, and how far into it the chance has got. The seed alone
     // would start the stream over on every reload -- the same run's name on a
     // different run -- so the generator's one word of state goes with it. See
@@ -560,6 +566,7 @@ export function restore() {
     // first: `load` has put the blob aside, and the sheet offers it for as
     // long as it is there.
     S.broken = !!loadBroken();
+    S.newerSave = null;             // no save, so no build to be newer than this one
     // Reading a save that is not there. Every plain field goes back to what
     // state.js says a yard is, which is what "no save" means -- and it is the
     // same one line as reading a save, so the two cannot drift apart. This used
@@ -613,6 +620,13 @@ export function restore() {
   // and because a field nobody has had to think about should not need a line
   // here at all.
   readSaved(s);
+  // The version boundary (wave-desk-sound, track A). A save from a build newer
+  // than this one is loaded anyway -- the game has never broken a save going
+  // backward, and refusing would be the punishment -- but the sheet says so
+  // the first time it is opened. Dates compare as strings because they are
+  // written as YYYY-MM-DD; a dev build has no date and never says anything.
+  S.build = s.build && typeof s.build === 'object' ? { hash: String(s.build.hash ?? ''), date: String(s.build.date ?? '') } : null;
+  S.newerSave = S.build?.date && BUILD.date && S.build.date > BUILD.date ? S.build.date : null;
   S.banked = s.banked || s.stored || 0;
   S.shownStored = S.tweenFrom = S.tweenTo = S.stored;
   S.seenCore = !!s.seenCore || S.cores > 0;

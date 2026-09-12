@@ -22,7 +22,7 @@ import { buildShop } from './shop.js';
 import { persist, restore, claimSave } from './persist.js';
 import { OWNER_KEY, TAB } from './save.js';
 import './input.js';           // the mouse, the wheel and the keyboard
-import './settings.js';        // wave-release, track A: the held sheet's shelf
+import { sayStore } from './settings.js';   // wave-release, track A: the held sheet's shelf
 import { tick } from './clock.js';
 
 // The window changed size: lay the world out again, and measure the board that
@@ -99,6 +99,10 @@ relayout();
 restore();
 buildShop();
 syncWorkers();
+// The desk's fallback (wave-desk-sound, track A): the save that would not
+// read has been put aside and the one before it is standing. Offered, not
+// silent -- the game opens held, with the sheet saying so.
+if (S.fellBack) { S.paused = true; sayStore(); }
 
 // Where the view opens: where you left it, or -- on a game that has never been
 // played, or a save from before the view was written down -- on the rock.

@@ -1,13 +1,87 @@
+import { S } from './state.js';
+
 const KEY = 'boulder-clicker/v4';
+
+// --- the store seam (wave-desk-sound, track A) --------------------------------
+//
+// Where the save is kept is the one thing the desk changes about the page. On
+// a web page it is localStorage under KEY; in the Electron shell it is a file,
+// reached through the five functions of `window.desk` (electron/preload.cjs).
+// Everything below that reads or writes the save goes through this object and
+// nothing else in src/ ever reaches `window.desk` except settings.js's two
+// dialog branches. The other keys -- the previous save, a broken one, which
+// tab is writing -- stay in localStorage in both modes: localStorage exists in
+// the shell, and those are facts about the page rather than the save.
+//
+// The desk's write is a promise and its read is synchronous, and the yard
+// treats the store as synchronous everywhere -- an import writes the blob and
+// reads it straight back through `restore`. So the adapter keeps the last blob
+// it wrote and answers with that, and the disk is only read when this page
+// has not written yet. This page is the only writer, so the copy in hand is
+// the truth and the file is only ever behind it, never ahead.
+let held;             // the last blob written this session, or '' for none; undefined before the first write
+let heldFor = null;   // ...and which desk it was written through: a new desk is a new store
+let diskTook = true;  // what the disk said about the last write that has answered
+function desk() {
+  const d = (typeof window !== 'undefined' && window.desk) || null;
+  if (d !== heldFor) { heldFor = d; held = undefined; diskTook = true; }
+  return d;
+}
+
+// `desk.read()`'s two blobs, or the page's one. `current` is the raw string
+// exactly as the store has it -- '' is a save that was cleared on purpose and
+// null is a store that has never held one, and `load` needs the difference
+// for the migration.
+function readDesk() {
+  try { return desk().read() || {}; } catch { return {}; }
+}
+
+const store = {
+  get() {
+    const d = desk();
+    if (!d) { try { return localStorage.getItem(KEY); } catch { return null; } }
+    if (held !== undefined) return held;
+    const c = readDesk().current;
+    return c == null ? null : c;
+  },
+  // The save before the current one, on the desk only: the page has no second
+  // copy of its own, and the desk's is the one `load` falls back on.
+  lastGood() {
+    const d = desk();
+    if (!d) return null;
+    const g = readDesk().lastGood;
+    return g == null ? null : g;
+  },
+  // Whether it was taken. On the desk the write is fire-and-forget and the
+  // answer is the last one the disk gave, so a refused write is reported on
+  // the next -- one write behind, but never silent.
+  set(raw) {
+    const d = desk();
+    if (!d) { try { localStorage.setItem(KEY, raw); return true; } catch { return false; } }
+    held = raw;
+    try {
+      Promise.resolve(d.write(raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
+    } catch { diskTook = false; }
+    return diskTook;
+  },
+  // On the desk, removing is writing nothing: the file is truncated rather
+  // than deleted, so the store still says a save was here once and the
+  // migration below does not bring the browser's copy back over a reset.
+  remove() {
+    const d = desk();
+    if (!d) { try { localStorage.removeItem(KEY); } catch {} return; }
+    store.set('');
+  }
+};
 
 // The save before the last import (wave-release, track C).
 //
 // `importSave` in persist.js writes whatever was under KEY here before it lets
 // a pasted blob replace it, and reads it back only if that blob will not
 // restore. It is one step of undo and nothing more: written on every import
-// that takes, never rolled, never read by play. The Electron wave turns this
-// into a rolling backup on disk; until then it is the one place a good save is
-// not lost to a bad paste.
+// that takes, never rolled, never read by play. On the desk the store keeps
+// its own `last-good.json` beside the save (electron/store.cjs); this key is
+// still the one step of undo an import has, in both modes.
 export const PREV_KEY = 'boulder-clicker/v4.prev';
 
 // What a blob has to be before it is believed to be a save. `load` and
@@ -42,18 +116,44 @@ export const BROKEN_KEY = 'boulder-clicker/v4.broken';
 export const OWNER_KEY = 'boulder-clicker/v4.tab';
 export const TAB = Math.random().toString(36).slice(2, 10);
 
-export function load() {
-  let raw = null;
+// The blob as a save, or null when it is not one -- with the raw put aside
+// under BROKEN_KEY when there was one and it would not read.
+function readSave(raw) {
   try {
-    raw = localStorage.getItem(KEY);
-    if (!raw) return null;
     const s = JSON.parse(raw);
-    if (!isSave(s)) { stash(raw); return null; }
-    return s;
-  } catch {
-    stash(raw);
-    return null;
+    if (isSave(s)) return s;
+  } catch {}
+  stash(raw);
+  return null;
+}
+
+export function load() {
+  const d = desk();
+  S.fellBack = false;
+  let raw = store.get();
+  // Migration (wave-desk-sound, track A): the first run of the desk, on a
+  // machine whose browser has a yard. A store that has never held a save --
+  // neither file there, as against a `current` that was cleared on purpose --
+  // takes the browser's copy, once. The localStorage copy is left where it
+  // is; it is never read again while the file exists, because the file exists.
+  if (d && raw == null && store.lastGood() == null) {
+    let web = null;
+    try { web = localStorage.getItem(KEY); } catch {}
+    if (web) { store.set(web); raw = web; }
   }
+  if (!raw) return null;
+  const s = readSave(raw);
+  if (s || !d) return s;
+  // Fallback (desk only): `current` was there and would not read, so the save
+  // before it is the yard, and the sheet says so on boot -- see main.js. Only
+  // a blob that is present and bad falls back: an empty `current` is a reset,
+  // and the reset is not undone. The bad blob is under BROKEN_KEY already.
+  const good = store.lastGood();
+  if (!good) return null;
+  let fell = null;
+  try { const g = JSON.parse(good); if (isSave(g)) fell = g; } catch {}
+  if (fell) S.fellBack = true;
+  return fell;
 }
 
 function stash(raw) {
@@ -85,18 +185,18 @@ export function tabOwner() {
 }
 
 export function clear() {
-  try { localStorage.removeItem(KEY); } catch {}
+  store.remove();
 }
 
 // The raw blob under KEY, or null when there is none. `save` takes the state
 // and writes it; an import has a string in hand and no state yet, so the
 // string goes in as it is.
 export function loadRaw() {
-  try { return localStorage.getItem(KEY); } catch { return null; }
+  return store.get() || null;
 }
 
 export function saveRaw(raw) {
-  try { localStorage.setItem(KEY, raw); return true; } catch { return false; }
+  return store.set(raw);
 }
 
 // A page that has never saved has nothing to keep, and a `.prev` left over

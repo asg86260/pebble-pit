@@ -49,7 +49,20 @@ motionEl.addEventListener('click', () => {
   sayMotion();
 });
 
-document.getElementById('savecopy').addEventListener('click', () => copyOut(exportSave(), said));
+// The desk (wave-desk-sound, track A): in the Electron shell the save goes
+// out through a native save dialog and comes back through an open dialog,
+// and the clipboard and the paste box are the web page's way. Two branches
+// and no third surface; `window.desk` is reached here and in save.js and
+// nowhere else in src/.
+const desk = () => (typeof window !== 'undefined' && window.desk) || null;
+
+document.getElementById('savecopy').addEventListener('click', async () => {
+  const d = desk();
+  if (!d) return copyOut(exportSave(), said);
+  let took = false;
+  try { took = await d.exportTo(exportSave()); } catch {}
+  said.textContent = took ? 'saved' : 'not saved';
+});
 
 // What the store has to say, said on the sheet when it comes up (wave-critics,
 // A10/A11): a page whose writes are being refused, a page another tab has
@@ -57,18 +70,48 @@ document.getElementById('savecopy').addEventListener('click', () => copyOut(expo
 // is a run about to be lost quietly, and the sheet is the one surface that is
 // not the yard. `input.js`'s hold calls this.
 export function sayStore() {
-  if (S.broken) said.textContent = 'your last save could not be read. save a copy hands it over';
+  if (S.fellBack) said.textContent = 'the last save would not load; this is the one before it';
+  else if (S.broken) said.textContent = 'your last save could not be read. save a copy hands it over';
   else if (S.yielded) said.textContent = 'this yard is open in another tab; that one is being saved';
   else if (S.unsaved) said.textContent = 'not saving: storage is blocked or full. save a copy still works';
+  // A save from a build newer than this one is loaded, not refused, and said
+  // once: the sheet's observer below clears it when the sheet goes down.
+  else if (S.newerSave) said.textContent = 'this save is from a newer build (' + S.newerSave + ')';
 }
 
 // The paste is asked for rather than always there: six rows of empty box on a
 // sheet whose other lines are one word each would be the loudest thing on it.
-document.getElementById('loadsave').addEventListener('click', () => {
-  paste.hidden = false;
-  said.textContent = '';
-  box.focus();
+document.getElementById('loadsave').addEventListener('click', async () => {
+  const d = desk();
+  if (!d) {
+    paste.hidden = false;
+    said.textContent = '';
+    box.focus();
+    return;
+  }
+  // The desk's way: an open dialog, and the file's text handed to the same
+  // door the paste goes through, with the same three answers.
+  let raw = null;
+  try { raw = await d.importFrom(); } catch {}
+  if (raw == null) return;                       // cancelled: nothing to say
+  takeIn(raw);
 });
+
+// The blob into the yard, by whichever route it arrived, and the sheet told
+// which of the three things happened. A throw out of the import is not a bad
+// blob and not a reason to stop the game either: the yard the player had is
+// still standing, and the sheet says what happened in the import's own words.
+function takeIn(raw) {
+  let took = false;
+  try {
+    took = importSave(raw);
+  } catch (err) {
+    said.textContent = 'could not load: ' + (err && err.message ? err.message : String(err));
+    return false;
+  }
+  said.textContent = took ? 'loaded' : 'that is not a save';
+  return took;
+}
 document.getElementById('nevermind').addEventListener('click', () => {
   paste.hidden = true;
   box.value = '';
@@ -79,22 +122,9 @@ document.getElementById('nevermind').addEventListener('click', () => {
 // the box open with the text still in it, since the likeliest reason is a
 // paste that missed the end and the fix is another paste, not a fresh start.
 document.getElementById('loadit').addEventListener('click', () => {
-  let took = false;
-  try {
-    took = importSave(box.value);
-  } catch (err) {
-    // A throw out of the import is not a bad paste and not a reason to stop
-    // the game either: the yard the player had is still standing, and the
-    // sheet says what happened in the import's own words.
-    said.textContent = 'could not load: ' + (err && err.message ? err.message : String(err));
-    return;
-  }
-  if (took) {
+  if (takeIn(box.value)) {
     paste.hidden = true;
     box.value = '';
-    said.textContent = 'loaded';
-  } else {
-    said.textContent = 'that is not a save';
   }
 });
 
@@ -107,11 +137,20 @@ document.getElementById('build').textContent = version();
 // from the last visit.
 // (Guarded: input.js imports this file for `sayStore`, and the node yard's
 // document has no observers.)
+//
+// It is also the hand that says what the store has to say. `hold` in input.js
+// calls `sayStore` as it opens the sheet, but this observer runs after that
+// call, and clearing the line here wiped what it had just said -- so the store
+// is asked again once the sheet is in order. And the two lines that are said
+// once -- the desk's fallback, a save from a newer build -- are let go when
+// the sheet goes down, which is what "once" means on a surface that can be
+// opened again.
 if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
-  if (sheet.hidden) return;
+  if (sheet.hidden) { S.fellBack = false; S.newerSave = null; return; }
   sayMotion();
   paste.hidden = true;
   box.value = '';
   said.textContent = '';
+  sayStore();
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
