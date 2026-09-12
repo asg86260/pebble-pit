@@ -62,10 +62,11 @@ what answers each one. Ticked means built; the rest say what they wait on.
   unsigned, unnotarized app outright ("damaged") and the workaround is a
   terminal command, which is why there is no mac channel until there is a
   reason for one. The page says all of this in one line.
-- [ ] **"Generic icon."** The taskbar and the installer show Electron's.
-  Wants a 256px black-and-white icon in the game's register -- the rock, the
-  square, the hole. More than one reasonable shape, so options as shots
-  before one is drawn (`build.icon` in package.json takes a `.ico`/`.png`).
+- [x] **"Generic icon."** The rock on its line, chosen from five drafts
+  (`shots/icons-sheet.png`), 2026-09-12: `build/icon.png` (512, the source
+  electron-builder cuts the .ico from) and `public/icon.png` (64, the
+  page's favicon, copied into dist/). Drawn as a 16x16 map scaled with no
+  smoothing, so it is the same pixels at every size.
 - [x] **"Mute button only."** A slider under the mute, 2026-09-12: a share
   of the designed level, so all the way up is still the quiet the mix was
   pitched at. `volume` in prefs.js, `setVolume` in audio.js.

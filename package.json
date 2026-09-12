@@ -29,6 +29,7 @@
     "productName": "Boulder",
     "files": ["dist/**", "electron/**"],
     "electronLanguages": ["en-US"],
+    "icon": "build/icon.png",
     "directories": { "output": "release" },
     "win": { "target": ["nsis", "portable"] },
     "mac": { "target": ["dmg"] },
