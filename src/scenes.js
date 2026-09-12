@@ -186,7 +186,7 @@ export const SCENES = {
   // roof, nobody standing in the middle of the boulder.
   shackwork: { about: 'the rock', say: 'a rung being fitted at the shack',
     run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__invest();
-                 window.__buy('labswing'); window.__fast(6); window.__look(st().shackX - 400); } },
+                 window.__buy('rockhandspeed'); window.__fast(6); window.__look(st().shackX - 400); } },
   // The rock's own flank: the hill, the hut beside it and the bench beyond,
   // with the ground between them. A picture of spacing, so the camera sits on
   // the rock's left edge and lets the walk run out to the left of it.

@@ -15,48 +15,41 @@ import { LADDER } from '../src/config.js';
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);
 const rich = () => window.__grant({ dust: 900000, shards: 9000, spores: 9000, cores: 90 });
 
-group('the pace multiplier is not for sale until the speed ladder is finished', async () => {
+group('the cards of one ladder follow one another, and the finished ones fold away', async () => {
   window.__reset();
   openSites();
   window.__invest();
   rich();
-  S.seenShard = true;                // the coin the multiplier asks for has been seen
   window.__crew(1, 0);
 
-  const before = shown('labhaul');
+  const before = [shown('haulpace'), shown('haulpace2'), shown('haulpace3')];
   // Nine rungs over three cards, bought through whichever card is showing.
   const bought = climb('haulpace', LADDER);
-  const after = shown('labhaul');
+  const after = [shown('haulpace'), shown('haulpace2'), shown('haulpace3')];
   window.__crew(0, 0);
 
   return [
-    ok(!before, 'with the speed ladder unbought, the multiplier is not on the board'),
+    ok(before.join() === 'true,false,false', 'only the first card is on the board to begin with', before.join()),
     ok(bought === LADDER, 'the speed ladder can be climbed through its cards', `${bought}`),
     ok(S.haulPaceLevel === LADDER, 'to the top', `${S.haulPaceLevel}`),
-    ok(after, 'and only then is the multiplier for sale'),
-    ok(!shown('haulpace') && !shown('haulpace2'), 'in the place the finished speed cards folded away from')
+    ok(after.join() === 'false,false,true', 'and at the top only the last card stands, saying done', after.join())
   ];
 });
 
-group('every tier of one ladder waits on the one before it', async () => {
+group('the fourth card of a ground ladder waits on the three before it', async () => {
   window.__reset();
   openSites();
   window.__invest();
   rich();
-  S.seenShard = true;
   window.__crew(1, 0);
 
-  const mult0 = shown('labhaul'), swing0 = shown('labswing');
-  climb('haulpace', LADDER);
-  const mult1 = shown('labhaul');
-  climb('rockhandspeed', LADDER);
-  const swing1 = shown('labswing');
+  const mult0 = shown('labtend');
+  climb('tend', 9);
+  const mult1 = shown('labtend');
   window.__crew(0, 0);
 
   return [
-    ok(!mult0 && mult1, 'the pace multiplier follows the speed ladder',
-       `${mult0} -> ${mult1}`),
-    ok(!swing0 && swing1, "the swing multiplier follows the rockhands' swing",
-       `${swing0} -> ${swing1}`)
+    ok(!mult0 && mult1, "the plots' multiplier follows the tending ladder",
+       `${mult0} -> ${mult1}`)
   ];
 });

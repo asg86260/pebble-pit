@@ -140,9 +140,9 @@ const mineGap = swing(MINE_BASE, MINE_FLOOR, LADDER);
 const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, LADDER);
 const scoopGap = swing(HAUL_MS, 30, LADDER);
 
-export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
+export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl));
 export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
-export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, rockhandGap(lvl) / mult('swing'));
+export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, rockhandGap(lvl));
 export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lvl);
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
@@ -152,8 +152,8 @@ export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lv
 // eases across the ladder to its top.
 export const haulCap = (lvl = S.haulCarryLevel) => 1 + HAUL_CARRY_STEP * Math.max(0, Math.min(LADDER, lvl | 0));
 export const haulSpeed = (lvl = S.haulPaceLevel) =>
-  HAUL_BASE * (1 + HAUL_PACE_TOP * Math.max(0, Math.min(LADDER, lvl)) / LADDER) * mult('haul');
-export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
+  HAUL_BASE * (1 + HAUL_PACE_TOP * Math.max(0, Math.min(LADDER, lvl)) / LADDER);
+export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
 // A trip's pace, for anybody making one. It lived in crew.js, and the stations
 // could not reach it -- crew.js imports them -- so each grew a private walking
 // speed tuned for its own few feet of ground: FARM_WALK for stepping to the
@@ -925,7 +925,7 @@ export const SECTIONS = [
   // first, the thing that climbs past it last, the way the shack orders the
   // rock's. Named for the job, the way the shack's is: "the haulers" beside
   // "the miners", and "crew" left to the house, where the crew live.
-  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), 'labhaul', 'belt', 'tunebelt'] },
+  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

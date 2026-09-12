@@ -1833,6 +1833,16 @@ of what climbs, and the second and third cards are the same words with II and
 III. `named(key, name)` in `upgrades/tiers.js` builds a ladder's cards from
 one name, so the pattern is one call rather than a convention.
 
+**The crew's two multipliers are dropped (2026-09-12).** `labswing` (swing x,
+over the diggers' speed and your own click) and `labhaul` (pace x, over the
+haulers' walk) were the lab's last two rows still sold as rows: five shard
+rungs under a ladder that had just finished, a second ladder over a number
+that already had one. Same shape as load-then-harness, same answer. `mult.js`
+keeps `S.mult.swing` and `S.mult.haul` readable for old saves and nothing
+multiplies by them; a work in flight for either is dropped on load (a row that
+no longer exists has no work). The grounds' four fourth cards are the only
+multipliers left, and they are cards of their own ladders, not rows beside them.
+
 **The harness and the boots are folded in (2026-09-12).** Load then a harness,
 pace then boots, were two ladders each over one number -- what a hauler
 carries, how fast it walks -- and two rows over one number read as the same

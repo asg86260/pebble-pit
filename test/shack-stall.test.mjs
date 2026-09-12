@@ -20,7 +20,7 @@ import { TYPE } from '../src/jobs.js';
 
 const S = yard.S;
 
-const load = () => {
+const load = (key = 'rockhandspeed') => {
   window.__reset(); window.__crew(2, 9); window.__fullSites(); window.__jump(90); run(1);
   persist();
   const ground = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
@@ -28,6 +28,11 @@ const load = () => {
   for (const k of ['boulder', 'gw', 'gh', 'floor', 'pit', 'cut', 'muck', 'poop', 'rockSand', 'meteorCells', 'noticeboard'])
     if (k in ground) save[k] = ground[k];
   for (const w of save.who) if (w.type === 'quarrier') { w.goal = 'to'; delete w.y; }
+  // The save's shack work was the swing multiplier, a row that no longer
+  // exists. The stall this fixture caught was about *a* shack work with a
+  // gang that could not be spared, so the work is re-keyed to a rung the hut
+  // still sells -- or left as it was, to check an orphan is dropped.
+  for (const list of Object.values(save.works || {})) for (const w of list) if (w.key === 'labswing') w.key = key;
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   yard.restore();
 };
@@ -46,10 +51,20 @@ group('a shack rung in a player\'s save is fitted, by a spare hand, and the gang
   const landed = runUntil(() => !workAt('shack'), 400);
   window.__crew(0, 0);
   return [
-    ok(!!at0 && at0.key === 'labswing' && at0.done === 0, 'the save holds the rung at nought', JSON.stringify(at0)),
+    ok(!!at0 && at0.key === 'rockhandspeed' && at0.done === 0, 'the save holds the rung at nought', JSON.stringify(at0)),
     ok(marked === 0, 'the saved "to" comes off the rockhands on the way in', `${marked} marked`),
     ok(arrived, 'a spare hand stands at the hut'),
     ok(!claimed, 'and neither rockhand is claimed to it'),
     ok(landed, 'and the rung lands')
   ];
+});
+
+// A save whose shack work is a row the game no longer sells -- the swing
+// multiplier, dropped 2026-09-12 -- comes back with no work at the shack at
+// all, rather than a work nobody can finish and a bar that never comes down.
+group('a work for a row that no longer exists is dropped on load', async () => {
+  load('labswing');
+  const work = workAt('shack');
+  window.__crew(0, 0);
+  return [ok(!work, 'no work stands at the shack', work ? work.key : 'none')];
 });

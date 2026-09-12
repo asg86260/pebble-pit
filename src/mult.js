@@ -39,8 +39,7 @@ export const mult = k => Math.pow(STEP, levelOf(k));
 // top of upgrades/rows-mult.js.
 // The four speed keys are the old lab keys; the two yield ones are new, and are
 // the only multipliers in the game that never belonged to the lab.
-export const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend',
-                       labcrop: 'crop', labseam: 'seam' };
+export const FIELD = { labcave: 'quarry', labtend: 'tend', labcrop: 'crop', labseam: 'seam' };
 
 // What a rung asks of the crew, in worker-seconds, climbing with the rung the
 // way the price does.

@@ -38,7 +38,7 @@ export const BAND_COINS = [[], ['spore'], ['spore', 'shard']];
 // where a band ends. One table read in the one place `levelOf` clamps -- a cap
 // only half the game knows about is a row that says 3 of 3 and can still be
 // bought.
+// `swing` and `haul` were here at RUNGS; their rows are gone (rows-mult.js).
 export const MULT_MAX = {
-  swing: RUNGS, haul: RUNGS,
   tend: TIER_BAND, quarry: TIER_BAND, crop: TIER_BAND, seam: TIER_BAND
 };

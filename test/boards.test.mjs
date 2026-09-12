@@ -68,20 +68,21 @@ group('a row no section names is still drawn', async () => {
   window.__invest();
   window.__grant({ shards: 400, spores: 400, cores: 9 });
   window.__tip(20000);
-  window.__levels({ rockhandSpeedLevel: LADDER });   // the rung its multiplier waits on
+  window.__crew(1, 0);                          // the shack's rows want a crew
+  window.__levels({ rockhandSpeedLevel: 6 });   // stand on the third card
 
   // Take a row's key out of every section on its board and check it survives.
   const before = window.__rows().filter(r => r.shown).map(r => r.key);
-  const hidden = window.__unsection('labswing');
+  const hidden = window.__unsection('rockhandspeed3');
   const after = window.__rows().filter(r => r.shown).map(r => r.key);
   window.__unsection(null);                    // and put the sections back
 
   return [
-    ok(before.includes('labswing'), 'the row is on its board to begin with'),
+    ok(before.includes('rockhandspeed3'), 'the row is on its board to begin with'),
     ok(hidden, 'its key can be taken out of every section'),
-    ok(after.includes('labswing'),
+    ok(after.includes('rockhandspeed3'),
        'and it is still drawn with no section naming it',
-       after.filter(k => k.startsWith('lab')).join(','))
+       after.filter(k => k.startsWith('rockhand')).join(','))
   ];
 });
 

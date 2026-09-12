@@ -298,7 +298,7 @@ group('a rock row bought at the shack is worked at the shack, by a spare hand', 
 // it. A row on the shack's board is worked at the shack, by a spare hand. And the
 // bar hangs over the hut while it is: the shack was not in works.js's box
 // table, so `barSpot` had nowhere to put one.
-group('the swing multiplier bought at the shack is worked there too, under a bar over the hut', async () => {
+group('a speed rung bought at the shack is worked there, under a bar over the hut', async () => {
   window.__reset();
   window.__fullSites();
   window.__invest();
@@ -306,7 +306,8 @@ group('the swing multiplier bought at the shack is worked there too, under a bar
   window.__crew(2, 2);
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 
-  const bought = window.__buy('labswing');
+  window.__levels({ rockhandSpeedLevel: 6 });
+  const bought = window.__buy('rockhandspeed3');
   const w = workAt('shack');
   const spot = w && barSpot('shack', w);
   const overHut = !!spot && spot.x >= shack.x && spot.x <= shack.x + shack.w && spot.y < shack.y;
@@ -315,15 +316,15 @@ group('the swing multiplier bought at the shack is worked there too, under a bar
   const inShack = o => o.x + WORKER > shack.x && o.x < shack.x + shack.w;
   const arrived = runUntil(() => claimed().some(o => o.goal === 'at' && inShack(o)), 60);
   const landed = runUntil(() => !workAt('shack'), 400);
-  const level = S.mult?.swing ?? 0;
+  const level = S.rockhandSpeedLevel;
 
   return [
     ok(bought, 'the row is bought like a player buys it'),
-    ok(!!w && w.key === 'labswing', "and the work is the shack's", w ? w.key : 'no work'),
+    ok(!!w && w.key === 'rockhandspeed3', "and the work is the shack's", w ? w.key : 'no work'),
     ok(nowhereElse, "not the yard's or the bench's"),
     ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
     ok(arrived, 'a spare hand stands at the shack to fit it'),
-    ok(landed && level > 0, 'and it lands', `${level}`)
+    ok(landed && level === 7, 'and it lands', `${level}`)
   ];
 });
 
