@@ -11,10 +11,18 @@ ticked. `Boulder Setup 2026.9.12.exe` and the portable built and ran.
 
 Left, in order:
 
-- **Nobody has listened.** The node tier holds the decision half; the mix,
-  the voices and the levels are an ear's job. `SND_*` on the dev panel.
-  Expect the belt (`loadBelt`, one call a grain) to be the first thing to
-  hit the drop ceiling on a busy yard.
+- **The ear pass -- measured, awaiting a call (2026-09-12).** `node
+  tools/listen.mjs` renders every voice through the real `audio.js` to
+  `shots/sound/*.wav` and measures it. The click peaks at −37 dBFS with no
+  front and a 300 ms tail; the rain, wind and rift beds sit 12–17 dB over
+  it, so at any volume the game is beds, and the beds are noise. Design in
+  DESIGN.md, "The ear pass": a 2 ms front on every strike, a body under it
+  (A: a falling sine, a knock; B: the noise bands at eight times the level
+  with the ring cut to a third, a crack -- `--proto` renders both), and the
+  beds down 12 dB. **Blocker:** which body, by ear. Then it is
+  `config/sound.js` numbers and two lines in `play`. Expect the belt
+  (`loadBelt`, one call a grain) to be the first thing to hit the drop
+  ceiling on a busy yard.
 - **A second audio pass** for the sites left off on purpose: birds, the
   dance, the balloon, the school, the apothecary, the wheel, the board, the
   shields' cutscenes.

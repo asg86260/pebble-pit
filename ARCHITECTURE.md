@@ -196,6 +196,7 @@ a build drops the import, the file, and the whole tunable list with it. Checked:
 node tools/unresolved.mjs     # names a module uses but cannot see
 node tools/headless.mjs       # runs __test() in a headless browser, no install
 node tools/headless.mjs "window.__test('quarry')"    # one group, seconds not minutes
+node tools/listen.mjs         # every voice through audio.js to shots/sound/*.wav, measured
 ```
 
 **Checks run the clock rather than sit through it.** `clock.js` is the only thing

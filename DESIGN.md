@@ -6088,6 +6088,57 @@ in the node tier as its own file. Everything downstream of the decision is a lis
    single deliberate exception — the only sustained, pitched, non-percussive voice in the game —
    which would make magic legible by contrast the moment you first heard it. Taking that exception
    once is a design. Taking it twice is the start of a soundtrack.
+### The ear pass (design, not built)
+
+*2026-09-12. The first listen, done with `tools/listen.mjs`: every voice rendered through the real
+`audio.js` into an offline context, written to `shots/sound/*.wav`, and measured. Nothing in
+`audio.js` or `config/sound.js` is changed by this section; it is the diagnosis and the proposal.*
+
+**What it measured.** After the whole master chain, the player's own click on the rock peaks at
+**−37 dBFS** and is audible for 300 ms; wood at −42, metal at −43 for 670 ms. The rain bed sits at
+−25, the wind at −30 in a gust, the rift and the abyss at −20 — twelve to seventeen decibels *over*
+the hand. The only things that reach a laptop speaker at half volume are the beds and the thumps,
+and the beds are filtered noise. So the game sounds like noise because, at the level it plays, noise
+is all it has: the one voice that was meant to be the clearest thing in the mix is the quietest.
+
+The strike's shape is the other half. The 10 ms peak envelope of the click is flat at about −40 dB
+for ninety milliseconds and then drifts down over two hundred more: no front, no body, a "pfff".
+Two causes, both in the voice itself. A bandpass over the pink buffer at Q 1.2 keeps a sliver of an
+already-quiet source, so `level: 0.5` under `SND_MASTER 0.18` is nothing. And a 3 ms linear attack
+into a `setTargetAtTime` release has no transient in it: the first two milliseconds of a struck
+thing carry the strike, and this voice has no first two milliseconds.
+
+**What "short and satisfying" is, in numbers.** A hand strike peaks between −12 and −16 dBFS after
+the master (the mix law's quiet default still holds -- `SND_MASTER` stays), is within 40 dB of its
+peak for 60–150 ms, and has a front: its loudest 10 ms is its first 10 ms. The beds sit at least
+12 dB under the hand, so the still yard is a floor you stop hearing and a click is always over it.
+The `big` thumps stay where they are; they were the only voices already at level.
+
+**The strike, proposed.** Every one-shot gets a *front*: two milliseconds of bandpassed noise
+between 1.6 and 4 kHz, under the corner, the same node for every material with only the center
+moved. Under the front, one of two bodies, and this is the call to make by ear before it is built
+-- `node tools/listen.mjs --proto` renders both, eight files, `A-*` and `B-*`:
+
+- **A, a struck body.** A sine that falls in pitch over ten milliseconds and is gone in forty --
+  the thump the boulder already has, scaled to the material: 140 Hz falling from 2.2× for stone,
+  85 Hz for hard stone, a 390 Hz triangle with a weak 1050 Hz partner for wood, a 620/645 Hz pair
+  beating for metal. Peaks −12 to −15, lengths 80–290 ms. It reads as a knock: something with mass
+  was hit. It is still struck and never a note -- the fall in pitch is what stops it being one --
+  but it is more voice than the palette table promised.
+- **B, the noise design at level.** The bands as specified, with the level raised eight to
+  sixteen times to land at −12 to −16, the ring cut to a third (stone's release constant 20 ms, not
+  60; metal's 40, not 140) and the same front on top. Peaks −12 to −16, lengths 60–200 ms. It reads
+  as a crack: grit, no pitch anywhere. Nearer the letter of the palette; drier to live with.
+
+Whichever is chosen, `hard`, `crit` and `big` keep their meaning: down and duller, more under it,
+the thump beneath. The fold's widening and gain still apply. And the beds come down: rain to about
+−37, wind to −40 in a gust, the rift bed to −32, so the hand clears them by twelve. Levels go
+through `config/sound.js`; the front and the body are two more lines in `play`.
+
+**The tool stays.** `tools/listen.mjs` is `look.mjs` for the other sense: a change to a spec is a
+wav and a row of numbers in ten seconds, and it is the only way this file gets checked, since no
+test in either tier can hear.
+
 ## The shack at the rock (built)
 
 The bench section above ruled that the rock's rows could not leave, and the reason it gave was a
