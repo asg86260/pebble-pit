@@ -1,19 +1,22 @@
-// The scenes on the held sheet, and the two handles the shot tool asks for.
+// The scenes on the dev panel's `scenes` tab, and the two handles the shot
+// tool asks for.
 //
-// The held sheet is the one surface that is not the yard, and it is where the
-// settings went for the same reason; the scenes go under them, below a rule.
-// One heading per part of the game (`ABOUT`, scenes.js) and under each a row
-// of the sheet's own buttons, one per scene. Pressing one runs the scene,
-// closes the sheet and lets the clock go, so the yard is standing where the
-// scene says with the player looking at it.
+// They hung on the held sheet for a while, under the settings. But the sheet
+// is a player's surface -- a dev build's sheet was three screens of buttons
+// under the one line a player reads -- and a scene is a dev's thing, so it
+// lives with the other dev things, on a tab of the panel backtick opens. One
+// heading per part of the game (`ABOUT`, scenes.js) and under each a row of
+// buttons, one per scene. Pressing one runs the scene and lets the clock go if
+// the yard was held, so the yard is standing where the scene says with the
+// player looking at it.
 //
-// Nothing here is in index.html: this module appends its own block to the
-// sheet when it is imported, and it is imported from the `import.meta.env.DEV`
-// block in main.js beside dev.js. A build has no scenes section because it has
+// Nothing here is in index.html: this module fills the tab dev.js hands it
+// when it is imported, and it is imported from the `import.meta.env.DEV`
+// block in main.js beside dev.js. A build has no scenes tab because it has
 // no scenes module -- one gate, and the one the dev panel already stands
 // behind -- so there is no second gate to forget.
 //
-// A scene never touches your save. The sheet is reachable on the player's own
+// A scene never touches your save. The panel is reachable on the player's own
 // game, and a scene is a fresh yard (`__reset` clears the store), so pressing
 // one would put a synthetic yard over an evening's play. So the first scene
 // pressed in a page copies the store's blob aside, sets `S.staged`, and
@@ -26,6 +29,7 @@ import { SCENES, byPart } from './scenes.js';
 import { hold } from './input.js';
 import { restore, bootYard } from './persist.js';
 import { loadRaw, saveRaw } from './save.js';
+import { devPane } from './dev.js';
 
 const KEPT_KEY = 'boulder-clicker/v4.kept';
 const kept = () => { try { return localStorage.getItem(KEPT_KEY); } catch { return null; } };
@@ -62,33 +66,25 @@ export function scene(name) {
   return true;
 }
 
-// --- the block on the sheet --------------------------------------------------
+// --- the block on the tab ----------------------------------------------------
 
-const sheet = document.getElementById('held');
 const block = document.createElement('div');
 block.className = 'scenes';
 block.id = 'scenes';
 
 const style = document.createElement('style');
-// The sheet's own hand: the record's width, a heading per part in the small
-// hand the keys are written in, and the buttons wrapped under it. Scrolls
-// past the record's height, so a hundred buttons do not push the settings
-// off the bottom of the window.
+// The panel's own hand: a heading per part in the panel's faded label tone,
+// and the buttons wrapped under it, as wide as the sliders' tab.
 style.textContent = `
-  .held .scenes { display: flex; flex-direction: column; gap: 8px; width: 34em; max-width: 80vw;
-                  max-height: 34vh; overflow-y: auto; text-transform: none; letter-spacing: 0; }
-  .held .scenes .part { display: flex; flex-direction: column; gap: 4px; }
-  .held .scenes .head { letter-spacing: .14em; text-transform: uppercase; font-size: 10px; }
-  .held .scenes .row { display: flex; flex-wrap: wrap; gap: 4px; }
-  .held .scenes button { font-size: 10px; padding: 1px 5px; }
-  .held .scenes button.mine { align-self: flex-start; }
+  #dev .scenes { display: flex; flex-direction: column; gap: 6px; width: 30em; }
+  #dev .scenes .part { display: flex; flex-direction: column; gap: 2px; }
+  #dev .scenes .head { opacity: .55; }
+  #dev .scenes .row { display: flex; flex-wrap: wrap; gap: 3px; }
+  #dev .scenes button.mine { align-self: flex-start; }
 `;
 
 function refresh() {
   block.replaceChildren();
-  const rule = document.createElement('div');
-  rule.className = 'rule';
-  block.append(rule);
   // The way back, only while there is one: a page that has not pressed a
   // scene has nothing kept and no button.
   if (S.staged) {
@@ -118,7 +114,7 @@ function refresh() {
 }
 
 document.head.append(style);
-sheet.append(block);
+devPane('scenes').append(block);
 refresh();
 
 // A staged page reloaded: the store is empty (the scene's `__reset` cleared

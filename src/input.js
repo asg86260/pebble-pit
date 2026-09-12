@@ -23,6 +23,7 @@ import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
+import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
@@ -33,9 +34,8 @@ import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H }
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene } from './cutscene.js';
-import { showRecord } from './record.js';
 import { markNoticesRead } from './notices.js';
-import { sayStore } from './settings.js';
+import { sayStore, showPane } from './settings.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -688,8 +688,13 @@ addEventListener('keydown', e => {
   // __reset, which never went through the keyboard.
   // The yard stops where it is. Nothing is saved, nothing is skipped: the clock
   // simply does not advance, so a held game comes back exactly where it was left.
-  if (e.code === 'Space' || e.key === ' ') {
+  // Escape and not space: escape is the key every menu on every machine answers
+  // to, and a sheet in the middle of the window is a menu. A list standing open
+  // on a board answers to the same key first -- one press shuts the list, the
+  // next holds the yard -- so the key never does two things at once.
+  if (e.key === 'Escape') {
     e.preventDefault();
+    if (shutOpts()) return;
     hold(!S.paused);
   }
   if (e.key === 'ArrowRight') pan(P * 12);
@@ -702,10 +707,12 @@ addEventListener('keydown', e => {
 export function hold(on) {
   S.paused = on;
   document.getElementById('held').hidden = !on;   // now, not next frame
-  // The record is written on to the sheet as it opens, and opening it reads
-  // it: the tick over the noticeboard comes down, and the next notice to land
+  // The sheet comes up on its front page, whichever page it went down on, and
+  // the record is written as it opens: the count on the button now, the list
+  // when the button is pressed (settings.js). Opening it reads the record --
+  // the tick over the noticeboard comes down, and the next notice to land
   // puts it back up.
-  if (on) { showRecord(document.getElementById('record')); markNoticesRead(); sayStore(); }
+  if (on) { showPane('main'); markNoticesRead(); sayStore(); }
   S.dirty = true;
 }
 document.getElementById('resume').addEventListener('click', () => hold(false));

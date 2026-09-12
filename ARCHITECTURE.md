@@ -143,9 +143,11 @@ from the `__` handles, keyed by name, each saying which part it is about
 keeps a list of its own: `tools/look.mjs` shoots one by name through
 `window.__scene`, and `scenesheet.js` -- imported from main.js's dev block,
 beside `dev.js` -- draws a button per scene under a heading per part on the
-held sheet. A scene never touches the player's save: the first press keeps the
-store's blob aside, `S.staged` stops `persist()` writing, and `my yard` on the
-sheet puts it back. Nothing of it ships.
+dev panel's `scenes` tab (`devPane` in dev.js hands out a tab by name; the
+panel is `yard`, `dials`, `scenes`, `frame`). A scene never touches the
+player's save: the first press keeps the store's blob aside, `S.staged` stops
+`persist()` writing, and `my yard` on the tab puts it back. Nothing of it
+ships.
 
 ## The desk
 

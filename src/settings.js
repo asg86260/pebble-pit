@@ -6,7 +6,7 @@
 // comes up when the game is held. It was a word and a button; now it is also
 // the motion switch, the save going out and coming back in, the reset that
 // used to stand on the bench, the keys, the build and the one sentence about
-// there being no ending. What each of those does is here. What space and
+// there being no ending. What each of those does is here. What escape and
 // resume do is still input.js's, and the reset's two-click arming stays there
 // with it: this file wires the shelf, not the things that were already wired.
 
@@ -14,12 +14,31 @@ import { setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave } from './persist.js';
 import { S } from './state.js';
+import { showRecord, recordLabel } from './record.js';
 
 const sheet = document.getElementById('held');
 const motionEl = document.getElementById('motion');
 const said = sheet.querySelector('.said');
 const paste = document.getElementById('paste');
 const box = document.getElementById('pastebox');
+const recordBtn = document.getElementById('recordbtn');
+const recordEl = document.getElementById('record');
+
+// The sheet's two pages. Every child carries `data-pane` -- the front, or the
+// record behind it -- and turning the page is hiding the one and showing the
+// other. The front carries the count on its button; the page behind carries
+// the list, written as the page is turned, because the record grows behind
+// your back. `hold` in input.js opens the sheet on the front every time: a
+// sheet that came up on whichever page it went down on would be a sheet whose
+// resume button is sometimes not there.
+export function showPane(name) {
+  for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = el.dataset.pane !== name;
+  paste.hidden = true;                          // folded; asked for again if wanted
+  recordBtn.textContent = recordLabel();
+  if (name === 'record') showRecord(recordEl);
+}
+recordBtn.addEventListener('click', () => showPane('record'));
+document.getElementById('recordback').addEventListener('click', () => showPane('main'));
 
 // The save, out of the browser and into your hand. The clipboard is not
 // allowed on every page; when it is not, the text is left where the console
@@ -130,7 +149,7 @@ document.getElementById('loadit').addEventListener('click', () => {
 
 document.getElementById('build').textContent = version();
 
-// The sheet is opened by two hands -- space in input.js, and the frame keeping
+// The sheet is opened by two hands -- escape in input.js, and the frame keeping
 // it in step with `S.paused` -- and neither of them knows about this file. So
 // it watches the sheet come up instead of being told, and puts it in order
 // each time: the switch reading what is in force now, and nothing left over

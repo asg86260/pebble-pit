@@ -10,15 +10,15 @@ import { S } from '../state.js';
 import { fatal } from '../crash.js';
 
 export const TESTS = [
-  // Space stops the clock. Not a flag every system checks -- the clock simply
+  // Escape stops the clock. Not a flag every system checks -- the clock simply
   // does not advance, so nothing in the yard can tell the difference.
-  ['space holds the whole yard still', async () => {
+  ['escape holds the whole yard still', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
     run(20);
     const before = state();
-    dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
     const held = state();
     // read now, not at the end: by then the test has pressed resume
     const sheetUp = !document.getElementById('held').hidden;
@@ -31,7 +31,7 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(held.paused && sheetUp,
-         'space holds it, and says so in the middle of the window',
+         'escape holds it, and says so in the middle of the window',
          `${held.paused}, ${sheetUp}`),
       ok(still.workerPos.join() === held.workerPos.join(),
          'and nobody moves a pixel while it is held'),
@@ -42,32 +42,44 @@ export const TESTS = [
     ];
   }],
 
-  // The record hangs on the held sheet: holding the game writes the list, reads
-  // it (the tick over the noticeboard comes down), and none of it is a button
-  // or lights up under the cursor -- it is a page, not a board.
-  ['the record is a list on the held sheet, read by holding', async () => {
+  // The record hangs on the held sheet, a page behind the front: holding the
+  // game reads it (the tick over the noticeboard comes down) and puts the
+  // count on the button, the button turns the page to the list, and none of
+  // the list is a button or lights up under the cursor -- it is a page, not a
+  // board. Back is the front again, resume and all.
+  ['the record is a page on the held sheet, read by holding', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(400);                       // the first pebble in the pit is noticed
     run(20);
     const before = state();
-    dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+    const btn = document.getElementById('recordbtn');
     const el = document.getElementById('record');
+    const counted = btn.textContent;
+    const frontFirst = !btn.hidden && el.hidden;
+    btn.click();
+    const turned = el.hidden === false && document.getElementById('resume').hidden;
     const lines = [...el.querySelectorAll('.line')];
     const buttons = el.querySelectorAll('button, [data-key]').length;
     const cursor = lines.length ? getComputedStyle(lines[0]).cursor : '';
     const read = state().wonUnread;
     const onBoard = [...document.getElementById('statsshop').querySelectorAll('[data-key]')]
       .some(r => r.dataset.key.startsWith('notice'));
+    document.getElementById('recordback').click();
+    const back = el.hidden && !document.getElementById('resume').hidden;
     document.getElementById('resume').click();
     window.__crew(0, 0);
     return [
       ok(before.wonUnread > 0, 'a notice has landed and is unread', `${before.wonUnread}`),
-      ok(!el.hidden && lines.length === state().won,
-         'holding the game lists the record, one line a notice',
+      ok(frontFirst && counted.startsWith(`the record \u00b7 ${state().won} of `),
+         'the sheet comes up on its front, with the count on the button', counted),
+      ok(turned && lines.length === state().won,
+         'the button turns the page to the list, one line a notice',
          `${lines.length} lines, ${state().won} won`),
-      ok(read === 0, 'and reads it', `${read} unread`),
+      ok(back, 'and back is the front again'),
+      ok(read === 0, 'and holding reads it', `${read} unread`),
       ok(buttons === 0 && cursor !== 'pointer', 'nothing on it is a row or a button',
          `${buttons} buttons, cursor ${cursor}`),
       ok(!onBoard, 'and the noticeboard\'s sheet no longer carries it')

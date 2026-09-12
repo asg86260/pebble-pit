@@ -7,8 +7,9 @@
 // board's rows answer to a cursor: they light up, they carry a note, they are
 // the shape of something you might buy, and nothing here is for sale. So it is
 // a plain list on the one sheet that is not the yard -- the held sheet, where
-// the settings already are -- written when the game is held, and it is read
-// there: holding the game is what brings the tick over the board down.
+// the settings already are -- on a page of its own behind a button on the
+// front. Holding the game is what reads it: the tick over the board comes down
+// when the sheet comes up, whether or not the page is turned.
 
 import { S } from './state.js';
 import { NOTICES, noticeCount, noticeTotal } from './notices.js';
@@ -37,17 +38,24 @@ export function recordList() {
   return newestFirst().map(n => ({ name: n.name, note: n.note }));
 }
 
-// Written into the sheet's own element: a heading with the count, then one
-// line a notice -- the name, and what you did to earn it. Nothing here is a
-// button and nothing has a hover; it is a page to read. See "Unearned notices
-// are not named" above for why the count is the only word about the rest.
+// The one line about the record on the sheet's front: the count, which is
+// the honest half of a locked list (see above). It is the button that turns
+// the page, so what you press to read the record is the number of it.
+export const recordLabel = () => `the record \u00b7 ${noticeCount()} of ${noticeTotal()}`;
+
+// Written into the sheet's own element: one line a notice -- the name, and
+// what you did to earn it. Nothing here is a button and nothing has a hover;
+// it is a page to read, behind the button that carries the count. An empty
+// record is a page with nothing on it yet, and says so.
 export function showRecord(el) {
   const rows = recordList();
   el.replaceChildren();
-  const head = document.createElement('div');
-  head.className = 'head';
-  head.textContent = `the record \u00b7 ${noticeCount()} of ${noticeTotal()}`;
-  el.appendChild(head);
+  if (rows.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'note';
+    none.textContent = 'nothing yet';
+    el.appendChild(none);
+  }
   for (const r of rows) {
     const line = document.createElement('div');
     line.className = 'line';
@@ -60,5 +68,4 @@ export function showRecord(el) {
     line.append(name, note);
     el.appendChild(line);
   }
-  el.hidden = rows.length === 0;
 }

@@ -14,10 +14,10 @@ import { version } from '../version.js';
 import { persist, exportSave } from '../persist.js';
 
 const held = () => document.getElementById('held');
-// space, and then a frame: the sheet puts itself in order when it sees itself
+// escape, and then a frame: the sheet puts itself in order when it sees itself
 // come up, which is a microtask after the key, not the same tick
 const press = async () => {
-  dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
+  dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
   await raf();
 };
 const resume = () => document.getElementById('resume').click();
@@ -26,15 +26,12 @@ const motion = () => document.getElementById('motion');
 
 // what a player reads, top to bottom: each child of the sheet that is showing,
 // as its text with the whitespace folded
-// The record is a list whose length is the yard's doing, so it is read as its
-// heading: what the check is about is that the line is there, in its place.
+// The record's button carries a count that is the yard's doing, so it is read
+// as its name: what the check is about is that the line is there, in its place.
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
-  .map(el => el.id === 'record' ? 'the record'
-           // the scenes, under everything: a block the dev build hangs on the
-           // sheet (scenesheet.js), read here as its heading the same way
-           : el.id === 'scenes' ? 'the scenes'
-                                : el.textContent.replace(/\s+/g, ' ').trim());
+  .map(el => el.id === 'recordbtn' ? 'the record'
+                                   : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
   ['the held sheet is the settings sheet', async () => {
@@ -49,16 +46,15 @@ export const TESTS = [
       'paused',
       'resume',
       '',                                     // the rule
-      'the record',                           // the list, when there is one -- see record.js
+      'the record',                           // the button to the page behind -- see record.js
       '',                                     // and its rule
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'sound: on',                            // the mute, which remembers -- see audio.js
       'save a copy load a save',
       'reset progress',
-      'space holds · ← → look about',
+      'esc holds · ← → look about',
       version(),
       'rocks keep coming. there is no finish line.',
-      'the scenes',
     ];
     const before = state();
     resume();
@@ -67,7 +63,7 @@ export const TESTS = [
     const after = state();
     window.__crew(0, 0);
     return [
-      ok(up, 'space puts the sheet up'),
+      ok(up, 'escape puts the sheet up'),
       ok(got.join('|') === want.join('|'), 'and every line is on it, in order',
          `got ${JSON.stringify(got)}`),
       ok(down && !after.paused, 'resume takes it down', `${down}, ${after.paused}`),

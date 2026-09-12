@@ -114,36 +114,43 @@
      out, the reset, the keys, the build -- hang under the word rather than on
      a second sheet or a corner button. See settings.js. -->
 <div id="held" class="held" hidden>
-  <div class="word">paused</div>
-  <button id="resume" type="button">resume</button>
-  <div class="rule"></div>
+  <!-- Two pages on one sheet, told apart by data-pane: the front, and the
+       record behind it. settings.js's showPane hides one and shows the other;
+       the sheet always comes up on the front. -->
+  <div class="word" data-pane="main">paused</div>
+  <button id="resume" type="button" data-pane="main">resume</button>
+  <div class="rule" data-pane="main"></div>
   <!-- The record: what the yard has done, newest first. A list and not a
        board -- nothing on it is for sale, nothing on it answers to a cursor
        -- and it hangs here rather than on the noticeboard because the
        noticeboard is the books, and the books are about what the yard is
-       earning now. See record.js. -->
-  <div id="record" class="record"></div>
-  <div class="rule"></div>
-  <button id="motion" type="button">motion: full</button>
+       earning now. It is a page of its own behind this button, which carries
+       the count. See record.js. -->
+  <button id="recordbtn" type="button" data-pane="main">the record</button>
+  <div class="word" data-pane="record" hidden>the record</div>
+  <div id="record" class="record" data-pane="record" hidden></div>
+  <button id="recordback" type="button" data-pane="record" hidden>back</button>
+  <div class="rule" data-pane="main"></div>
+  <button id="motion" type="button" data-pane="main">motion: full</button>
   <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
-  <button id="sound" type="button">sound: on</button>
-  <div class="pair">
+  <button id="sound" type="button" data-pane="main">sound: on</button>
+  <div class="pair" data-pane="main">
     <button id="savecopy" type="button">save a copy</button>
     <button id="loadsave" type="button">load a save</button>
   </div>
   <!-- the paste, folded away until load a save asks for it -->
-  <div id="paste" class="paste" hidden>
+  <div id="paste" class="paste" data-pane="main" hidden>
     <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
     <div class="pair">
       <button id="loadit" type="button">load it</button>
       <button id="nevermind" type="button">never mind</button>
     </div>
   </div>
-  <div class="said"></div>
-  <button id="reset" type="button">reset progress</button>
-  <div class="small">space holds &middot; &larr; &rarr; look about</div>
-  <div id="build" class="small"></div>
-  <div class="small">rocks keep coming. there is no finish line.</div>
+  <div class="said" data-pane="main"></div>
+  <button id="reset" type="button" data-pane="main">reset progress</button>
+  <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about</div>
+  <div id="build" class="small" data-pane="main"></div>
+  <div class="small" data-pane="main">rocks keep coming. there is no finish line.</div>
 </div>
 
 <!-- Stopped. The same sheet, for the game breaking rather than being held:

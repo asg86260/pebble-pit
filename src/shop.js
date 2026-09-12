@@ -131,13 +131,16 @@ const built = new WeakMap();
 let openList = null;
 let leaving = 0;                 // the wander-off timer, if one is running
 
+// Says whether there was one to shut: escape in input.js shuts a list before
+// it holds the yard, and only holds it when there was nothing to shut.
 export function shutOpts() {
   clearTimeout(leaving);
   leaving = 0;
-  if (!openList) return;
+  if (!openList) return false;
   openList.opts.hidden = true;
   openList.row?.classList.remove('open');
   openList = null;
+  return true;
 }
 
 // Whether a given list is the one standing open. The pot picker has to know
@@ -211,7 +214,7 @@ addEventListener('pointerdown', e => {
   if (openList.opts.contains(e.target) || openList.row?.contains(e.target)) return;
   shutOpts();
 }, true);
-addEventListener('keydown', e => { if (e.key === 'Escape') shutOpts(); });
+// Escape shuts it too, from input.js's one keyboard handler, ahead of the hold.
 
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +

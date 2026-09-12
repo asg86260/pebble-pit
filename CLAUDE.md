@@ -23,8 +23,8 @@ scenes, one for every part of the game — `crew`, `quarry`, `farm`, `rock`,
 is `SCENES` in `src/scenes.js`, grouped by the part each is about, and
 `node tools/look.mjs --list` prints it. Several can be named at once,
 comma-separated. It needs a dev server — pass `GAME=http://localhost:<port>/`.
-The same list is drawn as buttons on the held sheet (space) in a dev build, so
-a scene written once is a button and a shot the same day. Add a scene rather
+The same list is drawn as buttons on the dev panel's `scenes` tab (backtick) in
+a dev build, so a scene written once is a button and a shot the same day. Add a scene rather
 than hand-driving the same setup twice.
 
 Iterate against a shot, not against a suite. A four-minute run that cannot tell

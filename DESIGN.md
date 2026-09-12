@@ -457,9 +457,12 @@ The right button because the left one is the whole game — swinging, sweeping, 
 is eighteen pixels walking about on top of the dust you are trying to sweep. Anything competing for
 a left-press competes with the thing you do most; a press-and-hold is no better, because they walk.
 
-**Space holds the yard.** The clock stops advancing — nothing is saved and nothing is skipped, so
+**Escape holds the yard.** The clock stops advancing — nothing is saved and nothing is skipped, so
 it comes back exactly where it was left — and a small sheet appears in the middle of the window
-saying **paused**, with a **resume** button under it.
+saying **paused**, with a **resume** button under it. It was space for a long while; escape is the
+key every menu on every machine answers to, and a sheet in the middle of the window is a menu. A
+list standing open on a board answers to the same key first — one press shuts the list, the next
+holds the yard — so the key never does two things at once.
 
 The middle, rather than a corner: the thing it is about is the whole window, so it says so where
 you are already looking. It is the only overlay in the game; everything else is either drawn on
@@ -467,7 +470,7 @@ the ground or hangs off a building. Same ink, same type, same border as the boar
 a sheet like the others — just put somewhere else.
 
 Held, the canvas answers to nothing at all: no swinging, no sweeping, no picking anybody up. A
-paused game you can still mine is not paused. The button is there because space is not discoverable
+paused game you can still mine is not paused. The button is there because a key is not discoverable
 and somebody who came back to a stopped screen needs a way out of it that is visible.
 
 **There is one kind of body.** You hire a worker, and where it works is a separate question you
@@ -6527,7 +6530,7 @@ same day. The bargain in one paragraph, because the spec is a build document
 and this is the reasoning.
 
 Every board in this game is a place you walked to, and settings are not a
-place. The one surface that is already not the yard is the held sheet -- space
+place. The one surface that is already not the yard is the held sheet -- escape
 stops the clock and a white card in the middle of the window says so -- and
 it is reachable from the first second of a new game, before a bench exists.
 So the sheet grows rather than a second surface being added: under PAUSED and
@@ -6735,11 +6738,18 @@ slot and the world is no wider for it.
 read as one board with two moods. And the record's rows were built in a board's shape -- they lit
 up under the cursor, they carried a note in the price column, they were the shape of a thing you
 might buy -- for a list on which nothing is for sale. So the record is written on to the held
-sheet (the settings sheet, the one surface that is already not the yard) when the game is held:
-a heading with the count, one plain line a notice, name left and what earned it right, no hover
-and no button. Holding the game is what reads it -- the tick over the board comes down then. The
-noticeboard's own sheet is the books, and opens with the first grain banked. `record.js`,
-`showRecord`; `hold` in input.js.
+sheet (the settings sheet, the one surface that is already not the yard): one plain line a
+notice, name left and what earned it right, no hover and no button. Holding the game is what
+reads it -- the tick over the board comes down then. The noticeboard's own sheet is the books,
+and opens with the first grain banked. `record.js`, `showRecord`; `hold` in input.js.
+
+*Amended again:* the list is a page behind the front of the sheet rather than a block on it. On
+the front, where the list stood, is one button carrying the count -- `the record · 3 of 40`, the
+honest half of a locked list -- and pressing it turns the sheet over to the list with a `back`
+button under it. Forty lines of record between PAUSED and RESUME had made the sheet a page to
+scroll before it was a place to stop, and the count is the thing a player checks; the list is the
+thing they read once in a while. The sheet always comes up on its front (`showPane` in
+settings.js), so resume is always where it was.
 
 **The sprite is on the lattice.** The old slips were laid out at thirteen and a half pixels a
 column on a six-pixel grid, which put a hairline gutter between every pair and a lopsided bottom

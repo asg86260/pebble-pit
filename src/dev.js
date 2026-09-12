@@ -9,6 +9,12 @@
 // `import.meta.env.DEV`, so a build never sees this file at all. Backtick or
 // tilde -- the same key, shift or no shift -- opens and closes it; it starts
 // closed and remembers which you chose.
+//
+// It is four tabs, because one column of everything ran off the bottom of the
+// window once the sliders and the scenes were on it. `yard` is the things you
+// do to the yard, `dials` the numbers, `scenes` the places (scenesheet.js
+// hangs its block there), `frame` what the machine is doing about it. The tab
+// you were on is remembered with the open flag.
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
@@ -17,12 +23,43 @@ import { relayout, beat } from './main.js';
 import { JOB } from './jobs.js';
 
 const KEY = 'boulder-clicker/dev-open';
+const TAB_KEY = 'boulder-clicker/dev-tab';
 const el = document.createElement('div');
 el.id = 'dev';
 el.hidden = localStorage.getItem(KEY) !== '1';
 document.body.appendChild(el);
 
-const rows = [];
+// The tab strip, and one pane under it per tab. A pane is made the first time
+// it is asked for, in the order asked, so a module that hangs its own block on
+// a tab of its own (scenesheet.js) gets a tab without this file naming it.
+const strip = document.createElement('div');
+strip.className = 'devtabs';
+el.appendChild(strip);
+const panes = new Map();
+export function devPane(name) {
+  if (panes.has(name)) return panes.get(name);
+  const tab = document.createElement('button');
+  tab.type = 'button';
+  tab.textContent = name;
+  tab.dataset.tab = name;
+  tab.addEventListener('click', () => showTab(name));
+  strip.appendChild(tab);
+  const pane = document.createElement('div');
+  pane.className = 'devpane';
+  pane.dataset.pane = name;
+  pane.hidden = true;
+  el.appendChild(pane);
+  panes.set(name, pane);
+  if ((localStorage.getItem(TAB_KEY) || 'yard') === name) showTab(name);
+  return pane;
+}
+function showTab(name) {
+  for (const [k, pane] of panes) pane.hidden = k !== name;
+  for (const t of strip.children) t.classList.toggle('on', t.dataset.tab === name);
+  localStorage.setItem(TAB_KEY, name);
+}
+
+let into = null;                      // the pane the lines below go on
 const line = (label, build) => {
   const row = document.createElement('div');
   row.className = 'devrow';
@@ -33,7 +70,7 @@ const line = (label, build) => {
   box.className = 'devbox';
   build(box);
   row.appendChild(box);
-  el.appendChild(row);
+  into.appendChild(row);
   return row;
 };
 
@@ -45,6 +82,8 @@ const button = (box, text, fn) => {
   box.appendChild(b);
   return b;
 };
+
+into = devPane('yard');
 
 // how many of each job, straight off, with the same call the checks use
 const crew = [JOB.ROCK, JOB.HAUL, JOB.QUARRY, JOB.FARM];
@@ -124,10 +163,39 @@ line('run on', box => {
   for (const s of [1, 5, 30]) button(box, `${s}s`, () => window.__fast(s));
 });
 
+line('', box => {
+  // The whole thing, opening included, on a seed of its own: this is the
+  // player's "reset progress" and not the hook the scenes use, which skips
+  // the opening and keeps the run so a check can compare two halves.
+  button(box, 'reset the game', () => window.__reset(true, true));
+  // Your whole yard, on the clipboard. A report about something the yard is
+  // doing wrong is only as good as the yard it happened in, and "open the
+  // console and type this" is a thing to get wrong at the end of a sentence
+  // about something else. This is one button: press it, paste it, and whoever
+  // is looking has your game rather than a description of it.
+  button(box, 'copy save', async () => {
+    const raw = localStorage.getItem('boulder-clicker/v4') || '';
+    const say = n => { n.textContent = raw ? 'copied ' + Math.round(raw.length / 1024) + 'kb' : 'nothing saved yet'; };
+    try {
+      await navigator.clipboard.writeText(raw);
+      say(document.querySelector('[data-said]'));
+    } catch {
+      // Not every page is allowed the clipboard. Put it somewhere you can get
+      // at it by hand rather than failing silently.
+      window.__save = raw;
+      document.querySelector('[data-said]').textContent = 'in window.__save';
+    }
+  });
+  const said = document.createElement('b');
+  said.dataset.said = '1';
+  box.appendChild(said);
+});
+
 // The story's beats and the shields used to be rows of buttons here. They
-// are scenes now -- src/scenes.js, drawn on the held sheet by scenesheet.js
-// under "the story" and "the shields" -- because a scene is a place and the
-// sheet is where places are pressed; what stays on this panel is dials.
+// are scenes now -- src/scenes.js, drawn on the `scenes` tab by scenesheet.js
+// under "the story" and "the shields" -- because a scene is a place and a
+// place is pressed, not dialed; what stays on this tab is dials.
+into = devPane('dials');
 
 // the numbers themselves. Anything in TUNABLE turns up here without this file
 // being told about it, which is the point of the table living in config: a row
@@ -157,33 +225,10 @@ for (const t of TUNABLE) {
   });
 }
 
-line('', box => {
-  // The whole thing, opening included, on a seed of its own: this is the
-  // player's "reset progress" and not the hook the scenes above use, which
-  // skips the opening and keeps the run so a check can compare two halves.
-  button(box, 'reset the game', () => window.__reset(true, true));
-  // Your whole yard, on the clipboard. A report about something the yard is
-  // doing wrong is only as good as the yard it happened in, and "open the
-  // console and type this" is a thing to get wrong at the end of a sentence
-  // about something else. This is one button: press it, paste it, and whoever
-  // is looking has your game rather than a description of it.
-  button(box, 'copy save', async () => {
-    const raw = localStorage.getItem('boulder-clicker/v4') || '';
-    const say = n => { n.textContent = raw ? 'copied ' + Math.round(raw.length / 1024) + 'kb' : 'nothing saved yet'; };
-    try {
-      await navigator.clipboard.writeText(raw);
-      say(document.querySelector('[data-said]'));
-    } catch {
-      // Not every page is allowed the clipboard. Put it somewhere you can get
-      // at it by hand rather than failing silently.
-      window.__save = raw;
-      document.querySelector('[data-said]').textContent = 'in window.__save';
-    }
-  });
-  const said = document.createElement('b');
-  said.dataset.said = '1';
-  box.appendChild(said);
-});
+// The scenes' tab is made here so the strip reads yard, dials, scenes, frame
+// whichever order the two modules happen to load in; scenesheet.js fills it.
+devPane('scenes');
+into = devPane('frame');
 
 // Which run this is. Read-only on purpose: a seed is a fact about a whole run
 // and not a setting -- typing a new one into the yard already standing would

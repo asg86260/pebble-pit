@@ -694,16 +694,17 @@ canvas {
   text-transform: uppercase;
   color: #000;
 }
-/* The record, a page to read: lower case like a quotation, one line a notice
-   with the name on the left and what earned it on the right, and no hover on
-   any of it -- nothing here is pressed. Held to a screen's worth and scrolled
-   past that, so forty notices do not push the buttons off the window. */
+/* The record, a page to read behind the front of the sheet: lower case like a
+   quotation, one line a notice with the name on the left and what earned it on
+   the right, and no hover on any of it -- nothing here is pressed. Held to a
+   screen's worth and scrolled past that, so forty notices do not push the back
+   button off the window. */
 .held .record { display: flex; flex-direction: column; gap: 3px; width: 34em; max-width: 80vw;
-                max-height: 32vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
+                max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
                 font-size: 11px; }
-.held .record .head { letter-spacing: .14em; text-transform: uppercase; font-size: 10px; margin-bottom: 4px; }
 .held .record .line { display: flex; justify-content: space-between; gap: 2em; }
 .held .record .note { color: #666; text-align: right; }
+.held .record > .note { text-align: center; }   /* "nothing yet", on its own */
 .held .word { font-size: 17px; letter-spacing: .3em; }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn
@@ -920,6 +921,17 @@ canvas {
   text-transform: uppercase;
   color: #000;
 }
+/* The tab strip: one button a tab, the one you are on filled in, the way the
+   panel's other buttons fill under the cursor. Held to the top of the panel so
+   a long tab scrolls under it rather than taking it along. */
+#dev .devtabs {
+  position: sticky; top: 0;
+  display: flex; gap: 3px;
+  padding-bottom: 4px; margin-bottom: 3px;
+  background: #fff;
+  border-bottom: 1px solid #000;
+}
+#dev .devtabs button.on { color: #fff; background: #000; }
 #dev .devrow {
   display: grid;
   grid-template-columns: 8em 1fr;
