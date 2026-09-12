@@ -44,7 +44,7 @@ import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, commutePace, unitText } from './upgrades.js';
 import { registerRows } from './works.js';
-import { tierRows, cards } from './upgrades/tiers.js';
+import { tierRows, cards, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -108,7 +108,7 @@ export const TONICS = [
   { key: 'swift',  name: 'speed brew',      reagent: 'spore', kind: 'pace',
     base: TONIC_SWIFT_PACE,  unit: 'pace',  color: '#d9a441', short: 'speed',
     jobs: [JOB.HAUL] },                                                          // amber
-  { key: 'gleam',  name: 'gleam brew',      reagent: 'spark', kind: 'spark',
+  { key: 'gleam',  name: 'mana brew',      reagent: 'spark', kind: 'spark',
     base: TONIC_GLEAM_SPARK, unit: 'spark', color: '#e04848', short: 'gleam',
     jobs: [JOB.WIZARD] }                                                         // red
 ];
@@ -704,13 +704,12 @@ const brewLadder = ({ after = 0, ...o }) => tierRows({
 // The per-tonic potency ladders (item 14). One ladder a tonic, all in the hut's
 // own section: what you are buying is a deeper version of one recipe, which is a
 // fact about the craft rather than about any one pot. The cards are named for
-// the drink and then for what was done to it, so five ladders showing one card
-// each still read as five tonics.
+// the drink, with a numeral, so five ladders showing one card each still read
+// as five tonics.
 //
 // What each tonic's number is a number *of*, in the yard's own words: "stew 25
 // -> 32%" says nothing about what the drinker does more of.
 const DOES = { work: 'work', crit: 'crit', carry: 'carry', pace: 'walk', spark: 'sparks' };
-const STEEPS = ['steeped', 'twice boiled', 'distilled'];
 const potencyRows = t => brewLadder({
   level: () => potencyLevel(t.key),
   climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
@@ -723,8 +722,8 @@ const potencyRows = t => brewLadder({
   // No potency card at all until a first batch has landed (the grind pass):
   // the deeper craft is earned by brewing.
   after: 1,
-  bands: cards(`potency-${t.key}`).map((key, i) => ({
-    key, name: `${t.short}, ${STEEPS[i]}`,
+  bands: named(`potency-${t.key}`, t.name).map(card => ({
+    ...card,
     // A shard recipe the player cannot brew yet is a recipe worth no rung
     // either (item 24) -- the cards hide with the picker entry until the quarry
     // opens.
@@ -788,14 +787,11 @@ export const APOTHECARY_UPGRADES = [
 
   ...brewLadder({ field: 'lengthLevel', unit: 's', does: 'lasts', after: 3,
     value: lvl => Math.round(buffMs(lvl) / 1000),
-    bands: [{ key: 'bufflength',  name: 'fresh ingredients' },
-            { key: 'bufflength2', name: 'wax seals' },
-            { key: 'bufflength3', name: 'extended release' }] }),
+    bands: named('bufflength', 'brew concentration') }),
   ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
     value: lvl => dosesPer(lvl),
     // Two cards, not three: a dose a rung and one to seven is six rungs.
-    bands: [{ key: 'brewdoses',  name: 'bigger pot' },
-            { key: 'brewdoses2', name: 'second kettle' }] }),
+    bands: named('brewdoses', 'batch size', DOSES_CARDS) }),
   ...TONICS.flatMap(potencyRows)
 ];
 

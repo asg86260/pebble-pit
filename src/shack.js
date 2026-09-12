@@ -44,5 +44,5 @@ export const shackRows = () =>
 // only row group was the one no check could reach.
 // "the miners", to stand beside "the haulers" on the bench. The school still
 // says "rock miners", because there the word is telling four trades apart.
-export const SHACK_SECTIONS = [{ title: 'the diggers', keys: SHACK_GEAR }];
+export const SHACK_SECTIONS = [{ title: 'diggers', keys: SHACK_GEAR }];
 export const shackSections = () => SHACK_SECTIONS;

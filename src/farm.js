@@ -301,9 +301,9 @@ const FARM_YIELD = tierRows({
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [
-    { key: 'crop',    name: 'compost',     coins: [] },
-    { key: 'crop2',   name: 'fertilizer',  coins: ['spore'] },
-    { key: 'crop3',   name: 'hybrid seed', coins: ['spore', 'shard'] },
+    { key: 'crop',    name: 'crop yield',     coins: [] },
+    { key: 'crop2',   name: 'crop yield II',  coins: ['spore'] },
+    { key: 'crop3',   name: 'crop yield III', coins: ['spore', 'shard'] },
     { key: 'labcrop', name: 'astral GMOs',
       coins: ['shard', 'spore', 'core', 'spark'],
       // The last band is the research, and research waits on the yard having
@@ -321,9 +321,9 @@ const FARM_SPEED = tierRows({
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [
-    { key: 'tend',    name: 'hand tools',    coins: [] },
-    { key: 'tend2',   name: 'sprinklers',    coins: ['spore'] },
-    { key: 'tend3',   name: 'greenhouses',   coins: ['spore', 'shard'] },
+    { key: 'tend',    name: 'farming speed',     coins: [] },
+    { key: 'tend2',   name: 'farming speed II',  coins: ['spore'] },
+    { key: 'tend3',   name: 'farming speed III', coins: ['spore', 'shard'] },
     { key: 'labtend', name: "summer's aura",
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }

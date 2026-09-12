@@ -190,7 +190,8 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
   const lvl1 = S.critChanceLevel;
   const [d1, sh1, sp1] = purse();
 
-  // And the power rung, one card of three, in dust alone.
+  // And the damage rung, one card of three -- but priced in all three coins
+  // from its first rung, the one short ladder that is (see rows-luck.js).
   const mult0 = S.critMultLevel;
   const gotMult = buyBuilt('critmult');
   const [d2, sh2, sp2] = purse();
@@ -208,7 +209,7 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
     ok(d1 < d0, 'it took dust', `${d0} -> ${d1}`),
     ok(sh1 === sh0 && sp1 === sp0, 'and nothing else on the first card', `${sh0}->${sh1} shard, ${sp0}->${sp1} spore`),
     ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
-    ok(d2 < d1 && sh2 === sh1 && sp2 === sp1, 'in dust alone', `${d1}->${d2} dust`),
+    ok(d2 < d1 && sh2 < sh1 && sp2 < sp1, 'in dust, crops and ore together', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
     ok(got === 3 && secondCard, 'the first card finished and the second took its place', `${got}, ${secondCard}`),
     ok(coins('critchance2') === 'dust,spore', 'the second card asks dust and crops', coins('critchance2')),
     ok(coins('critchance3') === 'dust,shard,spore', 'and the third dust, crops and ore', coins('critchance3'))

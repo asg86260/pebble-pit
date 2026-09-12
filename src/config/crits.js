@@ -36,5 +36,9 @@ export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
 // bands (CLAUDE.md, "Decided"): the first card asks dust alone, at what the
 // old blue-and-green first rung was worth, and the crops and the ore come on
 // as the ladder climbs. The power ladder is three rungs and stays one card.
-export const CRIT_CHANCE_COST = 120;   // first rung of the chance ladder, dust
-export const CRIT_MULT_COST = 315;     // and of the power ladder, dust
+// Both crit ladders climb at twice a rung rather than the house 1.6 (the
+// Ladder Book, 2026-09-12): a crit reaches every station at once, so its
+// ladder is the one worth making a wall of.
+export const CRIT_CHANCE_COST = 500;   // first rung of the chance ladder, dust
+export const CRIT_MULT_COST = 1000;    // and of the damage ladder, dust
+export const CRIT_RATE = 2;

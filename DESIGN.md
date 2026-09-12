@@ -1766,11 +1766,11 @@ band it is on -- so the board is no longer than it is now, and the `potency`
 section still shows one card a tonic. The names, in the apothecary's own
 voice, each band the fantastical version of the one before it:
 
-| ladder | unit | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
-|---|---|---|---|---|
-| dose length | s | fresh ingredients | wax seals | extended release |
-| doses a brew | doses | bigger pot | second kettle | -- (two cards, 1 -> 7) |
-| potency, per tonic | % | steeped | twice boiled | distilled |
+| ladder | unit | cards |
+|---|---|---|
+| dose length | s | brew concentration, II, III |
+| doses a brew | doses | batch size, II (two cards, 1 -> 7) |
+| potency, per tonic | % | the tonic's own name, II, III -- "hearty stew II" |
 
 **Brew speed and the armful are cut (2026-09-12).** With doses a brew, brew
 speed, the armful and another pot all for sale, every rung the building sold
@@ -1809,16 +1809,29 @@ them), so band one keeps each ladder's existing key and bands two and three
 take the grounds' convention of `key2` / `key3`. Names are proposed; every one
 is the ladder's idea escalating, in the register of the board it sits on.
 
-| board | ladder | today | band 1 (dust) | band 2 (+spore) | band 3 (+shard) |
-|---|---|---|---|---|---|
-| bench | strength (your carry) | dust | bigger pocket | satchel | barrow |
-| bench | swing (your click) | dust | firmer grip | weighted haft | steel head |
-| bench | pickaxe (your bite) | shard+dust | sharper pick | forged pick | tempered pick |
-| bench | chance (crit) | shard+dust | lucky charm | rabbit's foot | found horseshoe |
-| bench | hauler carry | dust | hauler carry | hauler carry II | hauler carry III |
-| bench | hauler speed | dust | hauler speed | hauler speed II | hauler speed III |
-| shack | speed (rockhands) | dust | rhythm | work song | foreman |
-| scrub | the fan | shard | bigger fan | second blade | bellows |
+| board | ladder | cards |
+|---|---|---|
+| bench | your strength | carry amount, II, III |
+| bench | your swing | auto swing, II, III |
+| bench | your pickaxe | pick damage, II, III |
+| bench | crit chance | crit chance, II, III (2x a rung, 500 dust first) |
+| bench | crit damage | one card, dust + crops + ore, 2x a rung, 1000 dust first |
+| bench | hauler carry | hauler carry, II, III |
+| bench | hauler speed | hauler speed, II, III |
+| shack | diggers' swing | swing speed, II, III |
+| shack | diggers' pick | digger pick damage, one card |
+| scrub | the fan | fan power, II, III |
+| farm | yield / speed | crop yield, farming speed, II, III; research card keeps its name |
+| quarry | yield / speed | ore yield, mining speed, II, III; research card keeps its name |
+
+**Card names are the thing plus a numeral (2026-09-12).** The invented names
+-- compost, fertilizer, hybrid seed; lucky charm, rabbit's foot -- were
+reviewed on the Ladder Book and dropped: across thirty cards the words hid
+what each ladder was for, and a player reading "sprinklers" still had to read
+the gain line to learn it was speed. A card is a short, accurate description
+of what climbs, and the second and third cards are the same words with II and
+III. `named(key, name)` in `upgrades/tiers.js` builds a ladder's cards from
+one name, so the pattern is one call rather than a convention.
 
 **The harness and the boots are folded in (2026-09-12).** Load then a harness,
 pace then boots, were two ladders each over one number -- what a hauler

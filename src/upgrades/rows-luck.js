@@ -1,8 +1,8 @@
-import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_MULT_RUNGS } from '../config.js';
+import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_MULT_RUNGS, CRIT_RATE, BAND_COINS } from '../config.js';
 import { critChance, critMult } from '../crit.js';
 import { S } from '../state.js';
-import { rungCost } from '../upgrades.js';
-import { tierRows } from './tiers.js';
+import { rungCost, DUST_PER } from '../upgrades.js';
+import { tierRows, named } from './tiers.js';
 
 // The bench's luck rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -19,16 +19,12 @@ const CHANCE = tierRows({
   field: 'critChanceLevel',
   unit: '%', does: 'crit',
   value: lvl => Math.round(critChance(lvl) * 100),
-  first: CRIT_CHANCE_COST,
+  first: CRIT_CHANCE_COST, rate: CRIT_RATE,
   site: 'bench',
   // Once there is a crew to swing: the pair used to wait on both coins it was
   // priced in, and the first card is dust now.
   show: () => S.crew > 0,
-  bands: [
-    { key: 'critchance',  name: 'lucky charm' },
-    { key: 'critchance2', name: "rabbit's foot" },
-    { key: 'critchance3', name: 'found horseshoe' }
-  ]
+  bands: named('critchance', 'crit chance')
 });
 
 export const LUCK_ROWS = [
@@ -36,7 +32,7 @@ export const LUCK_ROWS = [
   {
     key: 'critmult',
     kind: 'rung', site: 'bench',
-    name: 'power',
+    name: 'crit damage',
     unit: 'x',
     does: 'crit',
     rung: () => S.critMultLevel,
@@ -45,7 +41,12 @@ export const LUCK_ROWS = [
     rungs: () => CRIT_MULT_RUNGS,
     from: () => critMult(S.critMultLevel),
     to: () => critMult(S.critMultLevel + 1),
-    cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel),
+    // The one three-rung ladder priced past dust: a whole unit of crit is the
+    // strongest rung on the bench, so it asks the third card's coins from its
+    // first (the Ladder Book, 2026-09-12).
+    bill: () => { const dust = rungCost(CRIT_MULT_COST, S.critMultLevel, CRIT_RATE);
+                  return [['dust', dust], ...BAND_COINS[2].map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])]; },
+    cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel, CRIT_RATE),
     buy: () => S.critMultLevel++,
     show: () => S.crew > 0
   }

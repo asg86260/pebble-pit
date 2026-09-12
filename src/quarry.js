@@ -917,9 +917,9 @@ const QUARRY_YIELD = tierRows({
   site: 'quarry', board: 'quarry',
   show: () => S.quarryOpen,
   bands: [
-    { key: 'seam',    name: 'sledges',       coins: [] },
-    { key: 'seam2',   name: 'black powder',  coins: ['shard'] },
-    { key: 'seam3',   name: 'dynamite',      coins: ['shard', 'spore'] },
+    { key: 'seam',    name: 'ore yield',     coins: [] },
+    { key: 'seam2',   name: 'ore yield II',  coins: ['shard'] },
+    { key: 'seam3',   name: 'ore yield III', coins: ['shard', 'spore'] },
     { key: 'labseam', name: 'enchanted TNT',
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }
@@ -934,9 +934,9 @@ const QUARRY_SPEED = tierRows({
   site: 'quarry', board: 'quarry',
   show: () => S.quarryOpen,
   bands: [
-    { key: 'quarrypace',  name: 'ramps',            coins: [] },
-    { key: 'quarrypace2', name: 'scaffolding',      coins: ['shard'] },
-    { key: 'quarrypace3', name: 'rail carts',       coins: ['shard', 'spore'] },
+    { key: 'quarrypace',  name: 'mining speed',     coins: [] },
+    { key: 'quarrypace2', name: 'mining speed II',  coins: ['shard'] },
+    { key: 'quarrypace3', name: 'mining speed III', coins: ['shard', 'spore'] },
     { key: 'labcave',     name: 'anti-gravity zone',
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }

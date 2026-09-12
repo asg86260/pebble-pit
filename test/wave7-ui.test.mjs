@@ -43,11 +43,12 @@ group('the pickaxe ladder is three whole-pixel rungs, bought like a player', asy
 // --- 2. crit power: no rung repeats a value ------------------------------------
 group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
   const out = [];
-  window.__give(50000);
-  // The pair is priced in the quarry's blue and the farm's green as well as in
-  // dust now, so the purse has to hold all three or the row is out of reach and
-  // the ladder reads as broken rather than as unaffordable.
-  window.__grant({ shards: 500, spores: 500 });
+  window.__give(500000);
+  // Crit damage is priced in the quarry's blue and the farm's green as well as
+  // in dust -- the one three-rung ladder that is, being the strongest rung on
+  // the bench -- so the purse has to hold all three or the row is out of reach
+  // and the ladder reads as broken rather than as unaffordable.
+  window.__grant({ shards: 5000, spores: 5000 });
   run(0.5);
 
   out.push(ok(critMult(0) === CRIT_MULT_MIN, 'the ladder starts at the minimum',

@@ -12,7 +12,7 @@
 
 import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
          FAN_COST } from './config.js';
-import { tierRows, cards } from './upgrades/tiers.js';
+import { tierRows, cards, named } from './upgrades/tiers.js';
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
@@ -105,11 +105,7 @@ const FAN = tierRows({
   first: FAN_COST,
   site: 'scrub',
   show: () => S.scrubOpen,
-  bands: [
-    { key: 'fan',  name: 'bigger fan' },
-    { key: 'fan2', name: 'second blade' },
-    { key: 'fan3', name: 'bellows' }
-  ]
+  bands: named('fan', 'fan power')
 });
 
 export const SCRUB_UPGRADES = [
