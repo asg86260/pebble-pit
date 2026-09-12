@@ -67,7 +67,7 @@ it is.
   the report's itch-HTML5-plus-Pages plan. → report §"6. Deploy it somewhere,
   on purpose" (the host argument changes; the "on purpose" does not)
 
-- [ ] **Audio.** A wave: design first, per the working agreement — the seed is
+- [x] **Audio.** (2026-09-12: `src/audio.js` and `src/config/sound.js`, the `sfx` calls at the yard's event sites, the `#sound` switch on the sheet remembering through `prefs.js`; on and quiet by default; `test/sound.test.mjs`, `test/sound-events.test.mjs`; nobody has listened yet -- the ear is the check) A wave: design first, per the working agreement — the seed is
   at `DESIGN.md:3482` (soft ticks, a low tone on a core bank, optional, off by
   default, WebAudio oscillators, no new runtime dependency). Done: a stated
   sound rule of the "black and white, flat shapes" kind lands in DESIGN.md and

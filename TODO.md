@@ -1,14 +1,32 @@
 # Still to do
 
-## The desk and the sound -- in flight (2026-09-11)
+## The desk and the sound -- BUILT (2026-09-12)
 
-The last open boxes on `docs/release-checklist.md`, built as one wave:
-`docs/wave-desk-sound.md` is the spec, canon for three tracks -- A the
-Electron shell, the save on disk, packaging and the version boundary; B the
-sound engine; C the yard's `sfx` calls. The three audio calls the design left
-open are made at the top of the spec: the sky is the score, on and quiet, the
-rift is the one pitched exception. `src/audio.js` is the seam, stubbed on the
-branch.
+The last open boxes on `docs/release-checklist.md`, built as one wave from
+`docs/wave-desk-sound.md`: the Electron shell with the save on disk
+(`electron/`, the store seam in `save.js`), packaging (`bun run desk:build`,
+the day as the version), the version boundary, the sound engine
+(`audio.js`) and the yard's `sfx` calls. Every box but touch tooltips is
+ticked. `Boulder Setup 2026.9.12.exe` and the portable built and ran.
+
+Left, in order:
+
+- **Nobody has listened.** The node tier holds the decision half; the mix,
+  the voices and the levels are an ear's job. `SND_*` on the dev panel.
+  Expect the belt (`loadBelt`, one call a grain) to be the first thing to
+  hit the drop ceiling on a busy yard.
+- **A second audio pass** for the sites left off on purpose: birds, the
+  dance, the balloon, the school, the apothecary, the wheel, the board, the
+  shields' cutscenes.
+- **Publishing** is `bun run publish` with `ITCH_TARGET=<user>/<game>` and
+  butler installed; it has not been run. No icon yet; mac and linux builds
+  need their own machine.
+- **A vite server watching the tree blocks the packager** (a handle on
+  `release/`); `vite.config.js` now ignores it, but a server started before
+  that change has to be restarted first.
+- The sheet's store lines (`broken`, `yielded`, `unsaved`) were being wiped
+  by the sheet's own observer before anybody saw them; fixed in passing by
+  track A, not yet looked at in a browser.
 
 ## The cutscenes, fleshed out (2026-09-11)
 

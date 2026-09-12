@@ -43,7 +43,11 @@ export default defineConfig(({ command }) => {
       // same wifi can reach it. Vite prints the Network: address to use.
       host: true,
       port: 5183,
-      strictPort: true
+      strictPort: true,
+      // The packager's output is not the game's source, and a watcher holding
+      // a handle on it is what stopped electron-builder renaming its own
+      // folder (EPERM on `win-unpacked.tmp` while a dev server was up).
+      watch: { ignored: ['**/release/**'] }
     },
     preview: {
       host: true,
