@@ -52,6 +52,7 @@ export const TESTS = [
       'the record',                           // the list, when there is one -- see record.js
       '',                                     // and its rule
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
+      'sound: on',                            // the mute, which remembers -- see audio.js
       'save a copy load a save',
       'reset progress',
       'space holds · ← → look about',
