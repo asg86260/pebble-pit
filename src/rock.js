@@ -24,6 +24,7 @@ import { pickCount, rockhandBite, rockhandMs } from './upgrades.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
+import { sfx } from './audio.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -194,6 +195,9 @@ export function landRock(gentle = false) {
   // `rockShape`. A rock set down by the dome does not splat: it is placed.
   S.landAt = gentle ? 0 : now();
   clearApron();
+  // The one sound the opening has: a rock the size of a house meeting the
+  // ground. Set down by the dome it is placed, not dropped, so no thump under it.
+  sfx('stone', { x: (rockEdge(-1) + rockEdge(1)) / 2, hard: 1, big: !gentle, cls: 'punct' });
   if (!gentle) {
     jolt();
     // and the yard takes the weight of it. A taller rock is a heavier one, so
@@ -618,14 +622,24 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   near.sort((a, b) => a.d - b.d);
 
   const took = Math.min(want, near.length);
+  // How deep the nearest cell still is, as a share of the rock's full thickness:
+  // the pick sounds lower and duller the more sheets are under it.
+  const hard = took ? S.boulder[near[0].y][near[0].x] / depthOf() : 0;
+  let through = null;                          // the first cell taken down to daylight
   for (const cell of near.slice(0, took)) {
     const left = S.boulder[cell.y][cell.x];
     const shade = depthShade(left, depthOf());   // how deep it looked, for colour
     S.boulder[cell.y][cell.x] = left - 1;
     const { px, py } = cellPos(cell.x, cell.y);
+    if (left === 1 && through === null) through = px;
     if (crit > 1) critToss(px, py, shade, 'rock', crit);
     else spawnSpoil(px, py, shade);
   }
+  // The pick meeting stone. Your own click is the one sound the mix never folds
+  // or ducks; a body's or the ram's swing folds with the rest of the yard.
+  if (took) sfx('stone', from === 'you' && !body ? { x: mx, hard, crit: crit > 1, cls: 'hand' } : { x: mx, hard });
+  // ...and the last sheet of a cell going: the band moves as the rock gives way.
+  if (through !== null) sfx('stone', { x: through, hard: 1 / depthOf() });
   // and it goes up from where it came off, not from a counter somewhere
   // Nothing. Taking rock apart does not dirty the sky, by anybody.
   //
