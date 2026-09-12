@@ -1007,6 +1007,15 @@ answer for all of them — so a single grain behind the crew turned the whole li
 it round again the moment the first of them reached it. Claiming is also what stops six workers
 queueing at one column while the rest of the yard sits there.
 
+**The fullest heap first, measured against its own limit.** A find is worth crossing the yard for
+and one body per ground goes for one; everybody else, while any heap is over three quarters, goes
+to the heap that is nearest to stopping its station — not to the nearest dust. The nearest dust to a
+body coming off the hole is always the rock's heap, so picked by distance the whole crew stood on it
+while the quarry's, a quarter the size and full to the line, kept the quarry stopped behind them.
+Fullness is a ratio because the limits differ by four to one: counted in grains the rock's heap
+wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
+whichever heap needs them without anybody being told which one that is.
+
 **A yard at rest is a yard at rest, not a yard switched off.** A body with nothing to fetch strolls:
 somewhere to go, a stand about when it gets there, then somewhere else. Three things stop that
 reading as insects rather than as people, and all three are the same trick every other job here

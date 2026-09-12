@@ -315,3 +315,44 @@ group('a jammed rock heap still lets each ground\'s finds be fetched', async () 
        JSON.stringify(got))
   ];
 });
+
+// ...and while a heap is jammed, the rest of the crew clear the heap that is
+// fullest against its own limit, not the one nearest the hole. The nearest
+// dust to a body coming off the hole is the rock's heap, so with the rock's
+// over the line every body not on a find stood on it -- and the quarry's heap,
+// a quarter the size and full to the limit, kept the quarry stopped behind
+// them. Rock at six hundred of seven hundred, quarry full, four carriers, two
+// minutes: the quarry's heap must come off the limit, and lose more than the
+// rock's does. (Measured: the old rule took 0 off the quarry and all of the
+// trips off the rock; this one the other way about.)
+group('the crew clear the fullest heap, not the nearest', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 4, 0);                    // four carriers, nobody producing
+  window.__clearFloor();
+  run(3);
+
+  const rock = state().piles.find(x => x.key === 'rock');
+  const quarry = state().piles.find(x => x.key === 'quarry');
+  for (let i = 0; i < 600; i++) window.__pile(rock.from + (i % 60) * 4, 1);
+  const cols = Math.floor((quarry.to - quarry.from) / P) - 2;
+  for (let i = 0; i < 186; i++) window.__toss('shard', quarry.from + 6 + (i % cols) * P);
+  run(2);
+  const start = state();
+  run(120);
+  const end = state();
+  const lost = k => start.pileCount[k] - end.pileCount[k];
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(start.pileFull.quarry && start.pileCount.rock >= start.pileLimit.rock * 0.75 &&
+       !start.pileFull.rock,
+       'the quarry heap is full and the rock heap is over the line but working',
+       `rock ${start.pileCount.rock}/${start.pileLimit.rock}, quarry ${start.pileCount.quarry}/${start.pileLimit.quarry}`),
+    ok(!end.pileFull.quarry, 'the quarry heap has come off its limit',
+       `${start.pileCount.quarry} -> ${end.pileCount.quarry}`),
+    ok(lost('quarry') > lost('rock'), 'and the quarry heap lost more than the rock heap did',
+       `quarry -${lost('quarry')}, rock -${lost('rock')}`)
+  ];
+});

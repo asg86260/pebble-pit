@@ -148,6 +148,43 @@ const backedUp = key =>
 // coming out to fetch should pick up.
 export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 
+// The fullest heap that is over the line, and the nearest thing on it that
+// nobody has set off for -- or -1 when no heap is backing up at all.
+//
+// Fullness is measured against the heap's own limit, not counted in grains,
+// because the limit is what stops the station: the rock's strip holds seven
+// hundred and the quarry's a hundred and eighty, so a quarry heap that has
+// stopped the quarry is a quarter the size of a rock heap that has not. Picked
+// by distance, or by count, the body coming out to fetch goes to the rock's
+// heap every time -- it stands nearest the hole and it is always the biggest --
+// and the quarry stays stopped behind a heap nobody thinks is worth a walk.
+// Measured against the limit, the heap that is closest to stopping its station
+// is the one everybody goes to, and as it comes down whichever is next fullest
+// takes over: the crew settle on to the heap that needs them without anybody
+// having been told which one that is.
+function fullestHeap(w, taken) {
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  let best = -1, bestR = -1;
+  for (const p of S.piles) {
+    const r = (S.pileCount[p.key] || 0) / (PILE_LIMIT[p.key] || Infinity);
+    if (r < BACKED_UP || r <= bestR) continue;
+    // The strip's columns, held to the ground the crew can stand on -- the same
+    // two bounds `nearestDust` keeps, for the same reason.
+    const lo = Math.max(first, colOf(floor, p.from));
+    const hi = Math.min(last, colOf(floor, p.to) - 1);
+    if (lo > hi) continue;
+    const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
+    for (let d = 0; d <= hi - lo && bestR < r; d++) {
+      for (const c of [from - d, from + d]) {
+        if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
+        best = c; bestR = r; break;
+      }
+    }
+  }
+  return best;
+}
+
 // Whether a column is one of the finds lying about, so a body that has gone for
 // one can be told apart from a body shifting grit.
 const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
@@ -363,10 +400,9 @@ export function haulerWork(w, c) {
       // Nothing at all is fetched without room for it -- a shard on the ground
       // with a full hole behind it is a shard that stays on the ground.
       if (bookRoom(w) > 0) {
-        // A find first, if there is one -- unless the heaps are backing up, and
-        // then the dust first, because that is the half of it that stops the
-        // yard working. Whichever is chosen, the other is the fallback: a body
-        // that came out to fetch goes back with something.
+        // Three answers, in order: a find, the fullest jammed heap, the nearest
+        // dust. Whichever is chosen, the others are the fallback -- a body that
+        // came out to fetch goes back with something.
         const dust = nearestDust(w.x, taken);
         // A find first -- but not by everybody at once while a heap is jammed.
         //
@@ -393,13 +429,21 @@ export function haulerWork(w, c) {
         // (docs/critics-2026-09-10.md, A3). One body per ground is what the
         // old argument actually claims: each ground's own drip is kept up
         // with. Everybody else shifts grit and the rock keeps working.
-        const jammed = backedUp('rock');
-        const served = jammed ? servedGrounds() : EMPTY;
-        // Whichever is chosen, the other is the fallback -- a served ground's
-        // find included, last: a body that came out to fetch goes back with
-        // something.
+        //
+        // And everybody else goes to the fullest heap, not the nearest dust.
+        // The nearest dust to a body coming off the hole is the rock's heap,
+        // whatever state it is in -- so the whole crew stood on the one heap
+        // while the quarry's, a quarter its size and full to the line, stopped
+        // the quarry behind them. `fullestHeap` measures each heap against
+        // its own limit and sends the body to whichever is nearest to stopping
+        // its station; the line is the same one, so nothing changes until
+        // something is backing up, and then it is the jammed heap that is
+        // cleared rather than the handy one.
+        const heap = fullestHeap(w, taken);
+        const served = heap >= 0 ? servedGrounds() : EMPTY;
+        // A served ground's find is the last fallback of all, not dropped.
         const mark = nearestMark(w, taken, served);
-        const pick = mark >= 0 ? mark : dust >= 0 ? dust : nearestMark(w, taken);
+        const pick = mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
         // And nothing further off than the hole is, once the hands are more
         // than half full.
         //
