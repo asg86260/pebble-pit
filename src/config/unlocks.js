@@ -32,9 +32,10 @@ export const QUARRY_CORES = 1;     // and the cut, once the plots are feeding it
 // rock never stops being worth digging. See DESIGN.md, "A rung costs the tier's
 // currency and dust, both."
 export const FARM_DUST = 600;      // the plots, and the first real bill
-// Four thousand, from six: the door sat shown-and-red for two and a half hours
-// of a greedy run (critics 2026-09-10, B9).
-export const QUARRY_DUST = 4000;   // the quarry
+// Two thousand, from six by way of four: the door sat shown-and-red for two and
+// a half hours of a greedy run at six (critics 2026-09-10, B9), and still too
+// long at four.
+export const QUARRY_DUST = 2000;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
 export const LAB_DUST = 12000;     // the lab
