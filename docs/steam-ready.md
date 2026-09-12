@@ -1,7 +1,15 @@
 # Getting ahead of the Steam review (2026-09-12)
 
 The plan is itch first, free and pay-what-you-want, and Steam at a few
-dollars only if itch shows a pull. This is the list of what a Steam review
+dollars only if itch shows a pull. On itch the game is the browser build
+(`bun run publish` pushes `dist/` to the `html` channel), with the Windows
+portable beside it; the Electron shell is for Steam. So on itch the
+installer complaints below do not arise at all -- they are here for the
+day the desk is the product. On itch the game is the browser build
+(`bun run publish` pushes `dist/` to the `html` channel), with the Windows
+portable beside it; the Electron shell is for Steam. So on itch the
+installer complaints below do not arise at all -- they are here for the
+day the desk is the product. This is the list of what a Steam review
 of a small Electron idle game says, written before anybody has said it, with
 what answers each one. Ticked means built; the rest say what they wait on.
 

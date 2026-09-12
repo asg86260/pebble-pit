@@ -168,8 +168,10 @@ shell against the dev server (any port; 5183 is the user's own game); `bun run
 desk` alone loads `dist/`, so `bun run build` first. `bun run desk:build`
 builds `dist/` and packages it into `release/` with electron-builder (the
 `build` block in package.json; `tools/desk-build.mjs` stamps the day as the
-version the tool insists on, since the project keeps no version number), and `tools/publish.mjs` pushes what is in
-`release/` to itch with butler -- it refuses to run without `ITCH_TARGET`.
+version the tool insists on, since the project keeps no version number), and
+`tools/publish.mjs` builds and pushes `dist/` to itch's `html` channel with
+butler (the game played on the page), or with `--desktop` the portable from
+`release/` -- it refuses to run without `ITCH_TARGET`.
 `dist/build.json` is written by `vite build` so `desk.version()` and the page's
 `__BUILD__` stamp are one build.
 

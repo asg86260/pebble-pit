@@ -1,8 +1,15 @@
 # The itch page
 
-Copy for the store page, in the game's own voice. Says the deliberate
-things up front -- no offline progress, no ending, an unsigned installer --
-so they are the description and not the complaint.
+Copy for the store page, in the game's own voice. The game is played in the
+browser on the page itself (the `html` channel -- `bun run publish`); the
+Windows portable is offered underneath for anybody who wants it as an app
+(`bun run publish -- --desktop`). Says the deliberate things up front -- no
+offline progress, no ending, where the save lives -- so they are the
+description and not the complaint.
+
+**Embed settings:** viewport 1280 x 800 (the boards want at least 960 x
+600), fullscreen button on, "mobile friendly" off, orientation landscape.
+Click into the frame once before keys work; that same click wakes the sound.
 
 ---
 
@@ -19,30 +26,37 @@ Black and white, six greys, everything on a six-pixel grid. Nothing
 teleports: every body walks to every job, and the whole thing is watchable
 cause and effect. There is no music -- you hear the yard, not the game.
 
-**Things to know before you download**
+**Things to know**
 
 - **Nothing happens while it's closed.** The yard runs while you watch it
   and stops when you don't. That's on purpose; it isn't a chore you check
   in on.
 - **There is no ending.** Rocks keep coming. You'll know when you're done.
-- **Your save is a file.** It autosaves to `%APPDATA%\Boulder\saves\` with
-  a backup beside it, and `save a copy` on the pause sheet (esc)
-  writes one wherever you like. Load it on another machine with `load a
-  save`.
+- **Your save lives in this browser.** It autosaves every second, and
+  `save a copy` on the pause sheet (esc) puts it on your clipboard -- do
+  that before you clear site data or switch machines, and `load a save`
+  takes it back. The desktop build below keeps its save as a file instead.
 - **Sound is on, and quiet.** The mute and a volume are on the same sheet
   and remember.
-- **The installer is unsigned.** Windows will show "Windows protected your
-  PC" the first time; "More info > Run anyway". Downloading through the
-  itch app skips that. The portable build needs no install at all.
-- **It's a 110 MB download for a 300 kB game.** The rest is the desktop
-  shell (Electron). Sorry about that.
+- **Click once to start.** Browsers allow no sound and no keys until you do.
+
+**The desktop build**
+
+The same game as a Windows app, if you'd rather have it on the taskbar:
+your save becomes a file with a backup beside it, the window remembers
+where you left it, and F11 goes full screen. It is unsigned -- Windows will
+show "Windows protected your PC" the first time; "More info > Run anyway".
+Downloading through the itch app skips that. It is 110 MB for a 300 kB
+game; the rest is the desktop shell (Electron). Sorry about that.
 
 Free. If you liked it, the tip jar is there.
 
 ---
 
-**Channels:** `windows` (installer), `windows-portable`. Mac and Linux when
-there is a machine to build them on.
+**Channels:** `html` (play in browser, the default), `windows-portable`
+(the app). No installer channel: the portable is the same thing with no
+SmartScreen fuss about an uninstaller. Mac and Linux when there is a
+reason and a machine.
 
 **Tags:** idle, clicker, incremental, pixel-art, black-and-white, singleplayer
 
