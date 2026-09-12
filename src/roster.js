@@ -281,34 +281,6 @@ export function rosterHit(x, y) {
   return false;
 }
 
-// What a roster says when the cursor is over it, in words (wave-critics, C4).
-// The buttons are the one control in the opening that nothing explained: the
-// newcomer read `- [] 1 +` under the rock with no tooltip, and clicking the
-// minus was the only thing that ever made the counter move. Each half says
-// what pressing it does, or why it cannot be pressed -- the same two facts the
-// buttons are drawn dead or live on. Null when the cursor is not on a roster;
-// otherwise the words and where to hang them -- under the roster, the way the
-// pile mark's tip hangs, so the tip never covers the buttons it is about.
-export function rosterSays(x, y) {
-  const spare = idle();
-  for (const p of posts()) {
-    if (p.fixed) continue;
-    const b = boxes(p);
-    const n = S[p.job];
-    const who = `${jobSaid(p.job)}: ${n}`;
-    const at = { x: b.badge.x + b.badge.w / 2, y: b.badge.y + b.badge.h };
-    let text = null;
-    if (inside(hit(b.less), x, y))
-      text = n > 0 ? `${who} · − sends one back to carrying` : `${who} · nobody to take off`;
-    else if (inside(hit(b.more), x, y))
-      text = spare > 0 && roomAt(p.job) > 0 ? `${who} · + puts a spare hand on`
-           : spare > 0 ? `${who} · no room for another` : `${who} · nobody spare to put on`;
-    else if (inside(b.badge, x, y) || inside(b.num, x, y)) text = who;
-    if (text) return { text, at };
-  }
-  return null;
-}
-
 // --- drawing -----------------------------------------------------------------
 // The badge and the buttons are world pixels on the cell grid, so they stay as
 // crisp as everything else. The count is the one thing drawn in screen pixels:
