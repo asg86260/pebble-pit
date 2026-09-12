@@ -273,8 +273,21 @@ export function wakeAudio() {
 export function muteAudio(on) {
   muted = !!on;
   if (!ctx) return;
-  nodes.master.gain.setTargetAtTime(muted ? 0 : SND_MASTER, ctx.currentTime, SND_MUTE_S / 3);
+  nodes.master.gain.setTargetAtTime(masterLevel(), ctx.currentTime, SND_MUTE_S / 3);
 }
+
+// The slider. SND_MASTER is the level the whole mix was pitched at -- quiet,
+// and satisfying at that -- and the slider is a share of it rather than a
+// second absolute: all the way up is still the designed level, not louder,
+// so nothing a player can reach turns the yard into the thing the mix law
+// refuses. Ramped like the mute, so a dragged slider is not a run of clicks.
+let volume = 1;
+export function setVolume(v) {
+  volume = Math.max(0, Math.min(1, +v || 0));
+  if (!ctx) return;
+  nodes.master.gain.setTargetAtTime(masterLevel(), ctx.currentTime, SND_MUTE_S / 3);
+}
+const masterLevel = () => muted ? 0 : SND_MASTER * volume;
 
 // The decision half, for the node tier.
 export function audioDecisions() { return decisions; }
@@ -293,7 +306,7 @@ function build() {
   const t = ctx.currentTime;
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, t);
-  master.gain.setTargetAtTime(muted ? 0 : SND_MASTER, t, SND_MUTE_S / 3);
+  master.gain.setTargetAtTime(masterLevel(), t, SND_MUTE_S / 3);
   master.connect(ctx.destination);
 
   const limiter = ctx.createDynamicsCompressor();

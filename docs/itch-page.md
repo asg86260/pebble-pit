@@ -29,10 +29,11 @@ cause and effect. There is no music -- you hear the yard, not the game.
   a backup beside it, and `save a copy` on the pause sheet (esc)
   writes one wherever you like. Load it on another machine with `load a
   save`.
-- **Sound is on, and quiet.** The mute is on the same sheet and remembers.
-- **The installer is unsigned.** Windows SmartScreen will say it doesn't
-  recognize the publisher; "More info > Run anyway". The portable build
-  needs no install at all.
+- **Sound is on, and quiet.** The mute and a volume are on the same sheet
+  and remember.
+- **The installer is unsigned.** Windows will show "Windows protected your
+  PC" the first time; "More info > Run anyway". Downloading through the
+  itch app skips that. The portable build needs no install at all.
 - **It's a 110 MB download for a 300 kB game.** The rest is the desktop
   shell (Electron). Sorry about that.
 

@@ -12,7 +12,8 @@ const KEY = 'boulder-clicker/prefs';
 
 const DEFAULTS = {
   motion: null,      // null = follow the system; true = less; false = full
-  muted: false,      // for the day there is sound (DESIGN.md, the sound of the yard)
+  muted: false,      // the mute (DESIGN.md, the sound of the yard)
+  volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
 };
 
 let prefs = { ...DEFAULTS };

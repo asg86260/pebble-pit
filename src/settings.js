@@ -194,7 +194,7 @@ sayMotion();
 // in force, the way the motion switch does, and is put in order on open by its
 // own observer, guarded like the one above.
 import { pref } from './prefs.js';
-import { wakeAudio, muteAudio } from './audio.js';
+import { wakeAudio, muteAudio, setVolume } from './audio.js';
 
 const soundEl = document.getElementById('sound');
 function saySound() {
@@ -206,8 +206,17 @@ soundEl.addEventListener('click', () => {
   saySound();
 });
 muteAudio(pref('muted'));
+// The slider writes the preference on every move and the level follows; it
+// reads the preference back when the sheet opens, the way the switches do.
+const volumeEl = document.getElementById('volume');
+volumeEl.addEventListener('input', () => {
+  setPref('volume', +volumeEl.value);
+  setVolume(pref('volume'));
+});
+setVolume(pref('volume'));
 window.addEventListener('pointerdown', wakeAudio, { once: true });
 if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
-  if (!sheet.hidden) saySound();
+  if (!sheet.hidden) { saySound(); volumeEl.value = pref('volume'); }
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 saySound();
+volumeEl.value = pref('volume');

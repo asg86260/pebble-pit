@@ -751,6 +751,25 @@ canvas {
   cursor: pointer;
 }
 .held button:hover { color: #fff; background: #000; }
+/* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
+   track and a square for the thumb, the same square everything else here is
+   made of. Both engines want the parts named separately. */
+.held input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 140px; height: 12px; margin: 0;
+  background: none; cursor: pointer;
+}
+.held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: #000; }
+.held input[type=range]::-moz-range-track { height: 1px; background: #000; }
+.held input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; margin-top: -6px;
+  background: #fff; border: 1px solid #000; border-radius: 0;
+}
+.held input[type=range]::-moz-range-thumb {
+  width: 12px; height: 12px;
+  background: #fff; border: 1px solid #000; border-radius: 0;
+}
 
 /* The crew board is the one list of rows that is not a shop. There is no price,
    no before and no after -- a name and where that body is standing, and the

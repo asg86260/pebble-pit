@@ -27,7 +27,9 @@ what answers each one. Ticked means built; the rest say what they wait on.
 
 ## Waits on you
 
-- [ ] **"It uses CPU minimized."** True: `backgroundThrottling: false`
+- [x] **"It uses CPU minimized."** Decided 2026-09-12: the yard keeps
+  running while minimized; closed is the only off. The cost stands and is
+  accepted. Originally: `backgroundThrottling: false`
   keeps rAF at sixty a second while minimized, and the page cannot tell it
   is hidden (Chromium reports `document.hidden` false under that flag), so
   the yard steps *and paints* for nobody. Two honest shapes, and the design
@@ -40,19 +42,27 @@ what answers each one. Ticked means built; the rest say what they wait on.
   the desk design as written. Your call; either is ten lines in
   `electron/main.cjs`.
 
-- [ ] **"Windows says it's a virus."** SmartScreen on an unsigned installer.
-  A code-signing certificate is the only real answer (Azure Trusted Signing
-  is about $10/month; an OV cert is a few hundred a year). Until then the
-  portable build plus a line on the page ("unsigned; SmartScreen will ask")
-  is what everybody else does. Your call and your money.
+- [x] **"Windows says it's a virus."** Decided 2026-09-12: not signing.
+  What that costs, so it is known rather than found out: every browser
+  download of the installer or the portable gets the blue "Windows
+  protected your PC" sheet (More info > Run anyway) until that exact file
+  has been run enough times to earn SmartScreen reputation -- and every new
+  build is a new file, so it starts over each release. Downloads through
+  the itch app carry no mark-of-the-web and get no sheet. Some antivirus
+  products flag unsigned Electron installers on sight; nothing to do but a
+  line on the page. A mac build would be worse: Gatekeeper refuses an
+  unsigned, unnotarized app outright ("damaged") and the workaround is a
+  terminal command, which is why there is no mac channel until there is a
+  reason for one. The page says all of this in one line.
 - [ ] **"Generic icon."** The taskbar and the installer show Electron's.
   Wants a 256px black-and-white icon in the game's register -- the rock, the
   square, the hole. More than one reasonable shape, so options as shots
   before one is drawn (`build.icon` in package.json takes a `.ico`/`.png`).
-- [ ] **"Sound is [too loud / grating / mute button only]."** Nobody has
-  listened. The `SND_*` knobs on the dev panel are for that afternoon. If a
-  volume control is wanted beside the mute, it is a new control with more
-  than one shape (a slider is not in the sheet's register of buttons).
+- [x] **"Mute button only."** A slider under the mute, 2026-09-12: a share
+  of the designed level, so all the way up is still the quiet the mix was
+  pitched at. `volume` in prefs.js, `setVolume` in audio.js.
+- [ ] **"Sound is [too loud / grating]."** Nobody has listened. The `SND_*`
+  knobs on the dev panel are for that afternoon.
 - [ ] **"No cloud saves."** Steam Cloud needs Steamworks; itch has none.
   A Steam wave if there is a Steam wave. Export/import covers moving a
   save between machines by hand.

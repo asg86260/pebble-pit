@@ -50,6 +50,7 @@ export const TESTS = [
       '',                                     // and its rule
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'sound: on',                            // the mute, which remembers -- see audio.js
+      '',                                     // the volume: a slider has no words
       'save a copy load a save',
       'reset progress',
       'esc holds · ← → look about',

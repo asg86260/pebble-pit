@@ -134,6 +134,8 @@
   <button id="motion" type="button" data-pane="main">motion: full</button>
   <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
   <button id="sound" type="button" data-pane="main">sound: on</button>
+  <!-- the volume: a share of the designed level, all the way up is still quiet -->
+  <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="main" aria-label="volume">
   <div class="pair" data-pane="main">
     <button id="savecopy" type="button">save a copy</button>
     <button id="loadsave" type="button">load a save</button>
