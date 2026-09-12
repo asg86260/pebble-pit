@@ -16,7 +16,7 @@
 import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
-import { busyBuilderSites, siteX, siteBox, handsAt, worksAt } from '../works.js';
+import { busyBuilderSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn } from '../route.js';
 import { commutePace } from '../upgrades.js';
 import { TYPE } from '../jobs.js';
@@ -44,10 +44,12 @@ export function newBuilder() {
 function siteFor(w) {
   const busy = busyBuilderSites();
   if (w.site && busy.includes(w.site)
-      && worksAt(w.site).some(x => x.key === w.workKey)) return w.site;
+      && onTheGo(w.site).some(x => x.key === w.workKey)) return w.site;
   let pick = null, pickKey = null, fewest = Infinity;
   for (const site of busy) {
-    for (const work of worksAt(site)) {
+    // Only what is being built: a work in line has nobody walking to it until
+    // it reaches the front (`stepWorks` in works.js).
+    for (const work of onTheGo(site)) {
       const n = S.workers.filter(o => o.type === TYPE.BUILD && o !== w
                                    && o.site === site && o.workKey === work.key).length;
       if (n < fewest) { fewest = n; pick = site; pickKey = work.key; }

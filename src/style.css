@@ -846,6 +846,55 @@ canvas {
 #crewshop button[data-key="crewlist"] .what::after { content: ' \203A'; opacity: .5; }
 #crewshop button[data-key="crewlist"]:hover .what::after { opacity: 1; }
 
+/* The queue card (queue.js): one name a line, top-right, in the boards' own
+   paper. Top-right because the boards stand bottom-left and on a short window
+   reach the top; and a layer UNDER them, so when one does reach the corner the
+   board you walked up to read is the thing on top. Its width is a fixed count of characters (`--queue-ch`, written on to
+   the root from QUEUE_CARD_CH by board.js) and a longer name is clipped, so
+   queueing more never resizes it -- a card that grew as you bought was the
+   resizing-boards bug over again. It fades rather than pops: `off` is the
+   faded state, and `hidden` only ever holds the very first frame. */
+.queue {
+  position: fixed;
+  right: 8px; top: 8px;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  width: calc(var(--queue-ch, 18) * 1ch + 12px);
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #000;
+  font: 12px/1.5 ui-monospace, "Courier New", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #000;
+  transition: opacity .25s;
+}
+.queue.off { opacity: 0; pointer-events: none; }
+.queue button {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 1px 6px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.queue button .name { overflow: hidden; text-overflow: ellipsis; }
+/* The front line is the thing being built: its pips are its bar, and it is
+   not a thing you can press. The lines behind it are the ones you can hand
+   back, and they invert on hover the way a board's rows do. */
+.queue button.front { cursor: default; }
+.queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
+.queue button.wait:hover { color: #fff; background: #000; }
+
 #tip {
   position: fixed;
   /* Above the menu, not under it. A note belongs to a row on a board, so the one

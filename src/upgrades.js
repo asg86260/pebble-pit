@@ -17,7 +17,7 @@ import { scrubCost } from './scrubhouse.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, apothecary, school, casino, scrub, tower, outhouse } from './state.js';
-import { spend, spendHeld, pitCapacity, payTo } from './pit.js';
+import { spend, spendHeld, pitCapacity, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY,
          APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
@@ -34,8 +34,8 @@ import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './mult.js';
 import { buildShop } from './shop.js';
-import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows,
-         busyBuilderSites, siteX, siteBox } from './works.js';
+import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
+         busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
 // The one row this file's owner does not hold: the house is track C's
 // building, and this is the one line of upgrades.js it edits. See C1 in
 // wave-feedback3.md.
@@ -970,11 +970,10 @@ export const openSections = () =>
 
 // something on the board you could buy this second
 //
-// ...and actually press. A row whose site is already putting something up is not
-// a thing you can do anything about, and a mark on the bench promising one is
-// the bench telling you to walk over for nothing.
+// ...and actually press. A row already bought and waiting its turn is not one:
+// pressing it hands it back, which is not what a mark on the bench promises.
 export const canAfford = () =>
-  UPGRADES.some(u => !u.job && u.show() && canPay(u) && !siteBusy(u));
+  UPGRADES.some(u => !u.job && u.show() && canPay(u) && !inLine(u));
 
 // a whole heading you have not seen yet -- worth more of a nudge than one more
 // row under a heading you have already read
@@ -1063,16 +1062,17 @@ export const billOf = u => {
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
-// Whether the yard is in the middle of building this row, and whether the site
-// it would be built at is busy with something else. The board reads both: the
-// first is "this one is under way", the second is "the cut is doing something
-// else first", and they are not the same row to a player.
+// Whether the yard has this row on the go -- being built, or bought and waiting
+// its turn at the site -- and, of those, whether it is the waiting kind. The
+// board reads both: "building" and "in line (n)" are not the same row to a
+// player, and only the second can be pressed again to hand it back. `siteBusy`
+// stood here while a site took one work at a time and greyed every other row
+// with it; a site takes a line now, so no row is refused for what its
+// neighbor is doing. See DESIGN.md, "The queue".
 export const building = u => takesTime(u) && !!workOn(u.key);
-// A row you cannot press because the place it would be built has nothing free.
-// `busyAt` was this question back when every site held one work; a lab with two
-// benches has room for a second piece while the first is still going, and the
-// number of benches is the lab's business rather than a rule in here.
-export const siteBusy = u => takesTime(u) && fullAt(u.site);
+export const inLine = u => takesTime(u) && waiting(u.site, u.key);
+// ...and where in the line, counting the one being built as the first.
+export const lineAt = u => placeOf(u.site, u.key);
 
 // A price, in the words that price is said in. Coins are counted in the same
 // short form as every other reading in the yard (`fmt`: 872, 1.3k, 14k); time is
@@ -1107,13 +1107,27 @@ export function buy(u) {
     // table, not a thing you take away, so the board stays up for the next hand.
     return false;
   }
+  // A row bought and waiting its turn: pressing it again hands it back. The
+  // bill comes back in full -- nobody has done anything for it yet -- and it
+  // arcs from where it was going to be built to the pile, the payment's own
+  // flight the other way. Not a purchase, so the board stays up.
+  if (inLine(u)) {
+    const box = siteBox(u.site, workOn(u.key));
+    const bill = billOf(u);
+    if (!pullOut(u.site, u.key)) return false;
+    const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
+    for (const [money, n] of bill) if (money !== 'time') refund(money, n, x, y);
+    S.dirty = true;
+    buildShop();
+    return false;
+  }
   // A row that is greyed out for a reason of its own -- the tower already has a
   // hat on the go -- takes nothing and does nothing. Without this the money went
   // and the row shrugged.
   if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return false;
-  // and not while the site is already putting something up. One work per site is
-  // the whole of what makes the waiting a decision -- see works.js.
-  if (siteBusy(u)) return false;
+  // A row the yard is already building is bought once. A site putting up
+  // something else is no refusal any more: the work goes in line behind it.
+  if (building(u)) return false;
   // Past the bench, paying does not buy the thing: it starts the yard building
   // it, and the row's own `buy` runs when somebody has finished the work. The
   // coin is taken either way and taken now -- what you are waiting on is the

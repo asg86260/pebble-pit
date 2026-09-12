@@ -7402,7 +7402,7 @@ duration. A yard with no spare carriers pays with its nearest producer
 instead, visibly, and gets it back. A one-body station is never stalled by
 its own upgrade, and no station gets its rungs for nothing.
 
-## The queue (design, not built)
+## The queue (built)
 
 **The owner's word (2026-09-12):** instead of every row at a busy site reading
 `busy`, a queue. Unbounded. Paid on press, as today. A queued row can be pulled
@@ -7465,30 +7465,36 @@ is spare, an empty cut building nothing. A queue does not staff itself.
 
 ### The card
 
-A floating card, top-left of the viewport (the board keeps the bottom, the
-dev panel the top-right), in the boards' paper -- the same `.panel` face, the
-same type -- and **absent when nothing is on the go anywhere**. It appears
-when the first work starts and goes when the last lands, by the board's own
-reveal rather than a pop.
+**Amended as built (2026-09-12).** The first draft was a line per site with
+the site's name, the clock and a `then` list. The owner wanted it smaller and
+more of a glance, and then settled it: one name a line, and the hover says
+the station.
 
-One line per site that has anything, in `SITES` order:
+A small card, top-right of the window, in the boards' own paper, **absent
+when nothing is building anywhere**. One name a line, across every site in
+`SITES` order, each site's run in the order it will land. The first line of a
+site's run is the work being built and carries its bar as five pips
+(`QUEUE_PIPS`, filled for the share done -- the same glyphs a row's ladder
+uses); the lines behind it are plain names. No site names, no clocks: the
+row on the board has the clock, and the card is where you watch names leave.
 
 ```
-the bench   strength ▸ 6 s     then swing, the boots
-the yard    the tiller ▸ 42 s  then the next bench
+●●●●○ strength
+hold to mine
+pickaxe
 ```
 
-The name at the front is the work on the go with its clock (`leftAt`, the
-same figure the row's price cell counts down); `then` and the in-line names
-after it. Each in-line name is a button: press it and it is pulled out and
-refunded, exactly as pressing its row would. A stalled site says nothing
-extra on the card -- the row on the go says `nobody on it`, and the card is
-not a second place to say it.
+Hover a name and the board's own tip names the station, under the card.
+A waiting name is a button: press it and the work is handed back, through
+the row's own `buy`, so the card and the board cannot disagree about what a
+press does. The front name is not a button.
 
-Width is `max-content` up to a cap in `config/board.js` (`QUEUE_CARD_W`), and
-a line past the cap is clipped with an ellipsis, never wrapped -- a card that
-grows as you queue is the resizing-boards bug again. The clocks tick through
-`shown` like every other number.
+It stands top-right and **under** the boards (`z-index` 9 to their 10): the
+boards keep the bottom-left and on a short window reach the top, and the board
+you walked up to read is the thing that should win the corner. Width is a
+fixed count of characters (`QUEUE_CARD_CH`); a longer name clips with an
+ellipsis rather than widening the card. It fades in and out (`.off`) rather
+than popping. Held (`S.paused`), it is faded with the rest.
 
 ### What it is not
 
@@ -7513,6 +7519,17 @@ grows as you queue is the resizing-boards bug again. The clocks tick through
   and the line behind the front is still at nought.
 
 `src/selftest/queue.js`, browser tier: the card is absent on a fresh game,
-present with one line after one press, reads `then` after two, and pressing
-the second name on it removes that name and refunds. The card's box is
-measured against the board's, never reasoned about, so they never overlap.
+present with one name after one press and two after two, the front line
+carrying its pips; pressing the waiting name removes it and refunds; and the
+card's layer stands under the boards', read off the computed style.
+
+**As built.** Everything above, with these findings: the fence tape stays on
+a yard building in line (its ground is reserved on the press, and a fenced
+empty plot with no bar and no body is what "waiting" looks like on the
+ground); the bars, the done-marks and the builders read `onTheGo(site)` and
+the fences and the report read `worksAt(site)`; the report grew a `line`
+field (every site's whole list) beside `works` (the front alone), so no
+older check changed meaning. The flag over a station now stays up through a
+build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
+in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
+tip -- with the payment's `S.paid` flight run the other way.

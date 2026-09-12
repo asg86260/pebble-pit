@@ -1,11 +1,11 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H, QUEUE_CARD_CH } from './config.js';
 import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
-import { UPGRADES, markSectionsSeen, canPay, maxed, siteBusy } from './upgrades.js';
+import { UPGRADES, markSectionsSeen, canPay, maxed, inLine } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
@@ -59,6 +59,8 @@ const pages = { bench: document.getElementById('board'),
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
+// ...and the queue card's width, for the same reason (queue.js, `.queue` in style.css).
+document.documentElement.style.setProperty?.('--queue-ch', String(QUEUE_CARD_CH));
 // Where you stand to read the books, and the record beside them: the
 // noticeboard, between the work bench and the front doors.
 //
@@ -189,12 +191,12 @@ export function hasOffer(which) {
   //
   // A row that moves bodies about spends nothing, and a ladder at the top of
   // itself cannot be bought however much you are holding: neither is something
-  // you would cross the yard for. Nor is a row whose site is already putting
-  // something up -- the press comes to nothing while it is busy, so a flag
-  // promising it is the station telling you to walk over for no reason.
+  // you would cross the yard for. Nor is a row already bought and waiting its
+  // turn -- a press there hands it back, and a flag promising that is the
+  // station telling you to walk over for no reason.
   return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
                                   !u.price && !maxed(u) && !u.dead?.() &&
-                                  canPay(u) && !siteBusy(u));
+                                  canPay(u) && !inLine(u));
 }
 
 // near enough to a thing on the ground to be interested in it

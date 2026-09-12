@@ -383,6 +383,11 @@ export const snapshot = () => ({
     ? { key: workAt(site).key, done: +workAt(site).done.toFixed(2), of: workAt(site).of,
         hands: handsAt(site) }
     : null]).filter(([, w]) => w)),
+  // ...and the whole of each site's line behind that, in the order it will be
+  // built. `works` above is the front alone, which is what every check written
+  // before there was a line reads; a check about the line reads this.
+  line: Object.fromEntries(SITES.map(site => [site, worksAt(site)
+    .map(w => ({ key: w.key, done: +w.done.toFixed(2), of: w.of }))]).filter(([, l]) => l.length)),
   builders: S.builders || 0,
   // The order the yard's own buildings were bought in -- see C7 in
   // wave-feedback3.md.

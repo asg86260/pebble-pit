@@ -1,15 +1,18 @@
 # Still to do
 
-## The queue (2026-09-12) -- designed, awaiting approval
+## The queue -- BUILT (2026-09-12)
 
-The owner asked for a queue in place of `busy` on every row at a working
-site, and a floating card that lists it. Design in `DESIGN.md` under "The
-queue": `S.works[site]` grows without bound, the front entry is on the go and
-the rest are in line at nought; paid on press; pulled out for a full refund
-by pressing the row (or its name on the card) until hands are on it. The
-card sits top-left of the viewport and is absent when nothing is building.
-Decided by the owner: pay on press, unbounded, refund on pull-out, a floating
-card. Not yet built.
+Every row at a working site read `busy`; a site takes a line now. `S.works[site]`
+grows past one, the front entry is on the go and the rest wait at nought; paid
+on press, handed back in full by pressing the row (or its name on the card)
+until hands are on it. The card is one name a line, top-right, under the
+boards, absent when nothing is building; hover names the station. Design and
+the as-built notes in `DESIGN.md`, "The queue". Checks: `test/queue.test.mjs`
+and the `queue card` browser groups; scene `queue`.
+
+Left: nobody has watched a refund's grains fly on a real window (the shot is
+still); and a big dust bill handed back is one `bankDust` a grain in one
+frame, which has not been timed.
 
 ## The desk and the sound -- BUILT (2026-09-12)
 

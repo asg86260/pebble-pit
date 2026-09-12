@@ -4,7 +4,7 @@
 import { WORKER, CORE_SIZE } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
-import { SITE_JOB, setHands, setHandsOn, setStaff, worksAt, builderManned } from '../works.js';
+import { SITE_JOB, setHands, setHandsOn, setStaff, onTheGo, builderManned } from '../works.js';
 import { JOB_OF, hats, rockhandMs, rebalance } from '../upgrades.js';
 import { KIT_JOBS } from '../kit.js';
 import { TYPE } from '../jobs.js';
@@ -85,7 +85,7 @@ setHands(site => {
   // A builder-manned site with several works on the go holds one pair of hands
   // PER WORK, because each body is at exactly one of them (see `handsOn`
   // below). Everywhere else the cap stays at one.
-  const cap = builderManned(site) ? Math.max(1, worksAt(site).length) : 1;
+  const cap = builderManned(site) ? Math.max(1, onTheGo(site).length) : 1;
   return Math.min(cap, there);
 });
 

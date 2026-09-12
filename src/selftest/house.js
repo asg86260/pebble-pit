@@ -229,7 +229,7 @@ export const TESTS = [
   // walk-up per rung on the table when it was decided.
   //
   // A press that buys NOTHING is the other half of the rule and the half worth
-  // guarding: no money, maxed out, a site already busy. The sheet has to stay
+  // guarding: no money, maxed out, a row already being built. The sheet has to stay
   // up for those, because a board that shuts on a bill you could not pay looks
   // exactly like a board that took your money.
   ['buying puts the board away; a press that buys nothing leaves it up', async () => {
@@ -256,15 +256,15 @@ export const TESTS = [
     };
 
     const bought = await press('carry');
-    // The bench works one thing at a time (`siteBusy` -- see works.js), so the
-    // very next rung is a press that cannot go through. That is the refusal
-    // this needs, and it is a truer one than an empty purse: the row is lit,
-    // the money is there, and the yard still says no.
+    // The row the yard is now building is committed (see DESIGN.md, "The
+    // queue"), so pressing it again is a press that cannot go through. That is
+    // the refusal this needs, and it is a truer one than an empty purse: the
+    // money is there, and the yard still says no.
     //
-    // It used to press `haulpace`, which is the crew's and is sold where the
-    // crew live now. What this wants is any second rung fitted AT THE BENCH,
-    // and `auto` is one. See DESIGN.md, "The bench is a catch-all".
-    const refused = await press('auto');
+    // It used to press `auto`, the next rung at the bench, which the bench
+    // refused while it was busy with the first. The bench takes a line now,
+    // so that press is a purchase.
+    const refused = await press('carry');
     const place = await press('unlockfarm');
 
     await hoverAway();
@@ -276,7 +276,7 @@ export const TESTS = [
          `${bought && bought.open}`),
       // Not `=== 0`: the crew are hauling while this runs, so the purse
       // creeps *up* under the press. What matters is that nothing was taken.
-      ok(!!refused && refused.spent <= 0, 'the next rung is refused, the bench being busy',
+      ok(!!refused && refused.spent <= 0, 'the rung being built is refused a second time',
          refused ? `${refused.spent} taken` : 'no row'),
       ok(!!refused && refused.open === true, 'and a press that bought nothing leaves the board up',
          `${refused && refused.open}`),

@@ -7,8 +7,8 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, siteBusy } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES, worksAt, rowFor } from './works.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
+import { takesTime, stalled, BUILDER_SITES } from './works.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -612,12 +612,14 @@ export function refresh(el, list, headcount) {
     // price cell is left standing rather than blanked: it is the one number you
     // came to the board to read.
     //
-    // And a row whose site is putting up something *else* is greyed with its
-    // ordinary price. One work per site is the rule -- see works.js -- and "the
-    // cut is busy" is not the same information as "you cannot afford it".
+    // A row bought and waiting its turn at a site that is building something
+    // else says where in the line it stands, with its ordinary price -- and it
+    // stays pressable, because pressing it again is how it is handed back.
+    // The site used to grey every other row on it while it built one thing;
+    // see DESIGN.md, "The queue", for why that went.
     if (takesTime(u)) {
       const mine = building(u);
-      if (mine || siteBusy(u)) {
+      if (mine) {
         say(what, u.name);
         // Nobody standing there is the one thing that stops it, and it is a
         // thing you can act on: an empty cut builds nothing however long you
@@ -625,42 +627,21 @@ export function refresh(el, list, headcount) {
         // ...except at a builders' site, where there is always somebody: the
         // nearest body is lent if nobody is spare, and while it is walking over
         // the row says so rather than claiming the yard has given up.
-        // A row greyed because its site is putting up something *else* says so,
-        // and says how much of it there is. A grey row with a price you can
-        // afford and no word of why reads as broken.
         //
-        // It used to name every work at the site, joined with commas, and that
-        // was the single worst thing on these boards for standing still. The
-        // yard holds several works at once, so this
-        // one cell could ask for any width it liked, and the sheet, being
-        // content-sized, handed it over: measured on the bench, two names took
-        // the board from 525 pixels wide to 731 and three took it to 1167, and
-        // it all snapped back when the build landed. The board is pinned now
-        // (see `pinWidth` in board.js), so a line this long would simply be
-        // clipped -- which is a truncated sentence rather than a fact.
-        //
-        // So the vocabulary is closed, and every word in it fits: "busy",
-        // "busy (7)", "building", "on the way", "nobody on it" -- the longest
-        // of them is 101 pixels, and the tightest cell one can land in across
-        // every board holds 102. What is *at* the site goes in the row's
-        // tooltip, which hangs over the board and cannot move it. The count is
-        // the part worth having on the face of the card anyway: how many are
-        // ahead of you is the thing you would act on, and which ones they are is
-        // written over the site itself, out in the yard.
-        // A status is about the whole card, and the gain's line -- which it
-        // takes over -- spans the card less the pips' corner (see `.gain` in
-        // style.css), so the longest of them, "nobody on it", fits on every
-        // board.
+        // The vocabulary is closed, and every word in it fits the tightest cell
+        // on any board (102 pixels; see `pinWidth` in board.js): "in line (7)",
+        // "building", "on the way", "nobody on it". A status is about the
+        // whole card, and the gain's line -- which it takes over -- spans the
+        // card less the pips' corner (see `.gain` in style.css).
         row.classList.add('waiting');
-        const queue = mine ? [] : worksAt(u.site).map(w => rowFor(w.key)?.name || w.key);
-        sayHTML(gain, !mine ? (queue.length > 1 ? `busy (${queue.length})` : 'busy') :
+        const queued = inLine(u);
+        sayHTML(gain, queued ? `in line (${lineAt(u)})` :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
-        // No tip about it. The card says 'busy' and that is enough: the
-        // browser's title was the wrong face, and a tip of the board's own was
-        // one hover too many (the owner's word).
         sayHTML(price, bill);
-        grey(row, true);
+        // Greyed while it is being built -- committed, nothing to press for --
+        // and live while it waits, so a press can pull it back out.
+        grey(row, !queued);
         continue;
       }
     }

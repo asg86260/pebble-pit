@@ -383,6 +383,12 @@ export const SCENES = {
   fitting: { about: 'the bench', say: 'a rung being fitted at the bench',
     run: () => { window.__reset(); window.__crew(0, 1); window.__grant({ dust: 9000 });
                  window.__fast(2); window.__buy('carry'); window.__fast(3); window.__look(st().benchX - 300); } },
+  // The queue card, top-left: three rungs bought at the bench in a row, the
+  // first being fitted with its pips, the two behind it waiting as plain names.
+  queue: { about: 'the bench', say: 'the queue card, with a line at the bench', page: true,
+    run: () => { window.__reset(); window.__crew(0, 1); window.__grant({ dust: 9000, shards: 60 });
+                 st(); window.__fast(2); window.__buy('carry'); window.__buy('auto'); window.__buy('pick');
+                 window.__fast(3); window.__look(st().benchX - 300); } },
   // A building going up: the lab half out of the ground, its barriers and tape
   // round it, and the builder hammering at it throwing grit off each blow.
   // Bought and then deliberately NOT finished -- `__finish` is what most scenes
