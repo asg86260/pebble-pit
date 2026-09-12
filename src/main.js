@@ -24,6 +24,8 @@ import { OWNER_KEY, TAB } from './save.js';
 import './input.js';           // the mouse, the wheel and the keyboard
 import { sayStore } from './settings.js';   // wave-release, track A: the held sheet's shelf
 import { tick } from './clock.js';
+import { stepAudio } from './audio.js';
+import { HELD_DT } from './config.js';
 
 // The window changed size: lay the world out again, and measure the board that
 // is standing in it. The layout is the game's; the measuring is the page's, and
@@ -77,6 +79,9 @@ function frame() {
     if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
     const t0 = mark();
     if (!S.paused) step();
+    // Held, the step does not run, but the sound has to be told so its beds
+    // can fade rather than freeze at whatever the yard was doing.
+    else stepAudio(HELD_DT);
     const t1 = mark();
     draw();
     const t2 = mark();

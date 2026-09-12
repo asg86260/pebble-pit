@@ -43,7 +43,7 @@ import { cubes as houseCubes } from './house.js';
 // Track F3 (wave5): the books over the pit, which measure what the yard earned.
 import { sampleBooks } from './stats.js';
 // wave-desk-sound, track B: the beds follow the yard, once a frame.
-import { stepAudio } from './audio.js';
+import { stepAudio, sfx } from './audio.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -408,9 +408,8 @@ function stepChips(now) {
         // either way, so it comes down on it exactly as it would on any other
         // ground: every pixel is worth one dust, the same rule the fill itself
         // keeps.
-        if (!addGrain(cut, ch.x, null, ch.s)) {
-          if (!addGrain(floor, ch.x, blocked, ch.s)) bankDust(ch.x, ch.s);
-        }
+        if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('stone', { x: ch.x });
+        else bankDust(ch.x, ch.s);
         S.chips.splice(i, 1);
         S.dirty = true;
       }
@@ -445,7 +444,10 @@ function stepChips(now) {
     if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
       // One rule for everything that lands: a shard keeps to the piles exactly as
       // a grain of dust does, because as far as the ground is concerned it is one.
-      if (!addGrain(floor, ch.x, blocked, ch.s)) bankDust(ch.x, ch.s);
+      // The yard's most common physical event: a grain coming to rest. The
+      // pit says its own when the grain goes to it instead.
+      if (addGrain(floor, ch.x, blocked, ch.s)) sfx('stone', { x: ch.x });
+      else bankDust(ch.x, ch.s);
       S.chips.splice(i, 1);
       S.dirty = true;
     }

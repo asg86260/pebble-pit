@@ -57,6 +57,9 @@ group('the wake wakes the decisions without a context', async () => {
 });
 
 group('forty grains in one frame are one sound', async () => {
+  // A yard with nobody in it: the hauler the fresh yard stands up paces, and
+  // every stride is a fold of its own, which would be a forty-first grain.
+  window.__crew(0);
   run(2);                                        // clear any window from before
   const before = snap();
   for (let i = 0; i < 40; i++) sfx('stone', { x: 200 + i });
@@ -180,6 +183,7 @@ group('the cap steals the oldest and quietest, and never the hand', async () => 
 });
 
 group('a cap full of gravel gives way to the next strike', async () => {
+  window.__crew(0);                              // nobody pacing, see above
   run(3);
   const before = snap();
   // Fold windows, one closed after another, until the cap is full of yard

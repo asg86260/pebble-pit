@@ -13,10 +13,6 @@
 import { S } from './state.js';
 import { SKY } from './smog.js';
 import { TUNABLE } from './config.js';
-// wave-desk-sound, track B: the sound's own rows. They are not strung into
-// TUNABLE -- config.js was additive-only that wave -- so the panel takes them
-// beside it; each row carries its own get/set pair, which is all a slider needs.
-import { SOUND_KNOBS } from './config/sound.js';
 import { relayout, beat } from './main.js';
 import { JOB } from './jobs.js';
 
@@ -137,7 +133,7 @@ line('run on', box => {
 // being told about it, which is the point of the table living in config: a row
 // carries its own label, its own ends, and its own way of reading the number,
 // so a slider is built out of the row and nothing here knows any knob by name.
-for (const t of [...TUNABLE, ...SOUND_KNOBS]) {
+for (const t of TUNABLE) {
   line(t.label, box => {
     const slider = document.createElement('input');
     slider.type = 'range';

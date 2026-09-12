@@ -82,11 +82,28 @@ export const setRngState = n => { state = n >>> 0; return state; };
 
 // The draw itself, in the shape everything already expects: a number in [0, 1).
 export function rand() {
-  state = (state + 0x6D2B79F5) | 0;
-  let t = state;
+  state = mix(state);
+  return draw(state);
+}
+
+// One step of mulberry32, and the number a word of it is worth.
+const mix = s => (s + 0x6D2B79F5) | 0;
+function draw(s) {
+  let t = s;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+// A stream of its own, seeded from the run but drawing from nobody else's
+// word. The audio's noise buffer wants a couple of hundred thousand numbers
+// on the first gesture; taken from `rand()` they would move every grain and
+// every roll in the browser off the node yard's stream, and a seeded run
+// would stop being the same run with the sound on. So a thing that needs a
+// lot of chance and must not spend the yard's gets one of these.
+export function stream(n) {
+  let s = n >>> 0;
+  return () => { s = mix(s); return draw(s); };
 }
 
 seedRng(entropy());

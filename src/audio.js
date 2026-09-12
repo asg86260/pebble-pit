@@ -37,7 +37,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          P, SMOG_CAP, RIFT_W0, RIFT_WMAX } from './config.js';
 import { S, rift } from './state.js';
 import { now } from './clock.js';
-import { rand } from './rng.js';
+import { rand, seed, stream } from './rng.js';
 import { gust } from './wind.js';
 import { MACHINES, machine } from './machines.js';
 
@@ -202,7 +202,9 @@ export function sfx(voice, opts = {}) {
 // until it gets up.
 function wants() {
   const w = decisions.wants;
-  if (S.intro === 'down') { w.water = w.air = w.rift = w.hum = 0; return; }
+  // Held, the yard is still drawn but nothing in it is happening, and a bed
+  // that hissed on under the sheet would be the game going on without you.
+  if (S.intro === 'down' || S.paused) { w.water = w.air = w.rift = w.hum = 0; return; }
   w.water = clamp((S.raining ? 1 : 0) + (S.drowned ? SND_DROWNED_LEVEL : 0));
   // The wind you can see is the wind you can hear: one number, `gust()`, and
   // the sky's dirt on top of it.
@@ -320,16 +322,20 @@ function build() {
   nodes.rift = riftBed();
 }
 
-// One buffer, a few seconds of pinkish noise out of the game's own `rand()`,
-// read from a different offset by every strike: an unlimited supply of
-// non-identical noise for nothing, and a seeded run has a seeded soundtrack.
+// One buffer, a few seconds of pinkish noise seeded from the run, read from a
+// different offset by every strike: an unlimited supply of non-identical noise
+// for nothing, and a seeded run has a seeded soundtrack. It is a stream of its
+// own rather than `rand()` because it draws two hundred thousand numbers at
+// once, and taking those from the yard's word would put the browser's run off
+// the node yard's from the first gesture on (see `stream` in rng.js).
 function makeNoise() {
   const n = Math.floor(SND_NOISE_S * ctx.sampleRate);
   const buf = ctx.createBuffer(1, n, ctx.sampleRate);
   const out = buf.getChannelData(0);
   const poles = SND_PINK.map(() => 0);
+  const noise = stream(seed());
   for (let i = 0; i < n; i++) {
-    const white = rand() * 2 - 1;
+    const white = noise() * 2 - 1;
     let pink = 0;
     for (let p = 0; p < poles.length; p++) {
       poles[p] = SND_PINK[p][0] * poles[p] + white * SND_PINK[p][1];

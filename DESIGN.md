@@ -3782,7 +3782,7 @@ came by. Nobody teleports and nobody is lost; `rebalance` counts the spare hand
 without being told.
 
 ## Open questions
-- Sound: answered. See "The sound of the yard (design, not built)" at the end of this file — the
+- Sound: answered. See "The sound of the yard (built)" at the end of this file — the
   seed was soft ticks on a hit and a low tone when a core banks, optional and off by default, and
   what it grew into is a rule rather than a list. Whether it ships off by default is still open,
   and is one of the three questions there.

@@ -176,10 +176,14 @@ export const SND_PINK = [
 export const SND_PINK_WHITE = 0.1848;
 export const SND_PINK_GAIN = 0.11;
 
+// What a held frame is worth to the beds' crossfade, in ms. The clock does not
+// advance while the game is held, so the fade needs a frame's worth handed to
+// it; a nominal sixtieth is close enough for a fade measured in seconds.
+export const HELD_DT = 1000 / 60;
+
 // The knobs. See the note over `TUNABLE` in config.js: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
-// `let` is. These rows are not strung into TUNABLE -- config.js is shared and
-// additive-only this wave -- so dev.js reaches for them by name.
+// `let` is.
 export const SOUND_KNOBS = [
   { key: 'SND_MASTER', label: 'sound', min: 0, max: 1, step: 0.01,
     get: () => SND_MASTER, set: v => { SND_MASTER = v; } },
