@@ -39,6 +39,7 @@ import { TESTS as sky } from './selftest/sky.js';
 import { TESTS as input } from './selftest/input.js';
 import { TESTS as settings } from './selftest/settings.js';   // wave-release: track A
 import { TESTS as scenes } from './selftest/scenes.js';
+import { TESTS as queue } from './selftest/queue.js';
 
 // Every group there is, in file order.
 const TESTS = [
@@ -59,6 +60,7 @@ const TESTS = [
   // wave-release: track A
   ...settings,
   ...scenes,
+  ...queue,
 ];
 
 // `__test('quarry')` runs only the groups whose name says quarry. The whole suite is

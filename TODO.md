@@ -12,6 +12,20 @@ the school's kit rows were left in shards on purpose. The rule is in
 CLAUDE.md "Decided". Worth a look on a real yard: the fan dust-first, and
 whether a 10 px pick at the top is too much rock.
 
+## The queue -- BUILT (2026-09-12)
+
+Every row at a working site read `busy`; a site takes a line now. `S.works[site]`
+grows past one, the front entry is on the go and the rest wait at nought; paid
+on press, handed back in full by pressing the row (or its name on the card)
+until hands are on it. The card is one name a line, top-right, under the
+boards, absent when nothing is building; hover names the station. Design and
+the as-built notes in `DESIGN.md`, "The queue". Checks: `test/queue.test.mjs`
+and the `queue card` browser groups; scene `queue`.
+
+Left: nobody has watched a refund's grains fly on a real window (the shot is
+still); and a big dust bill handed back is one `bankDust` a grain in one
+frame, which has not been timed.
+
 ## The desk and the sound -- BUILT (2026-09-12)
 
 The last open boxes on `docs/release-checklist.md`, built as one wave from

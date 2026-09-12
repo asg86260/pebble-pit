@@ -278,6 +278,41 @@ function throughRift(x, shade) {
   return true;
 }
 
+// A bill handed back: a work pulled out of a site's line before anybody had
+// hands on it (see `pullOut` in works.js and `buy` in upgrades.js).
+//
+// It is the payment undone, so it is the payment's own picture the other way.
+// `spend` moves the counter now and shows the grains crossing the yard after;
+// this puts the grains back in the hole now -- one `bankDust` each, the same
+// call a hauler's tip goes through, so the pile shows what you hold the moment
+// you hold it -- and shows the same stream of grains arcing from the station
+// back to the pile. `S.paid` carries them: the flight is the one `fly` in
+// game.js already steps, from a stamped start to a stamped end, and a grain
+// that starts at the station and ends at the pile is a payment in reverse.
+//
+// `x`, `y` is where it comes back from -- the site the work was to be built at.
+// A hole with no room turns the grain away exactly as it turns a hauler's
+// away, and what it will not take is not owed: you cannot be handed back more
+// than the yard has anywhere to put.
+const CELL_OF = { dust: 1, core: CORE_CELL, shard: SHARD_CELL, spore: SPORE_CELL, spark: SPARK_CELL };
+export function refund(money, n, x, y) {
+  const cell = CELL_OF[money];
+  if (!cell || !n) return 0;
+  let got = 0;
+  for (let i = 0; i < n; i++) {
+    const shade = money === 'dust' ? 1 + Math.floor(rand() * 4) : someFind(cell);
+    if (!bankDust(pit.x + rand() * Math.min(700, pit.w), shade)) break;
+    got++;
+    if (S.paid.length >= SHOWN) continue;
+    S.paid.push({ x0: x, y0: y, x, y,
+                  t: -rand() * 0.5, rate: 0.012 + rand() * 0.01,
+                  lift: 60 + rand() * 90,
+                  tx: pit.x + rand() * Math.min(700, pit.w), ty: S.groundY - P * 2,
+                  s: shade });
+  }
+  return got;
+}
+
 // The speed a grain enters the drain with: whatever it already had, plus a
 // sideways nudge.
 //

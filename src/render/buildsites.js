@@ -36,9 +36,9 @@ function drawBarrierPost(x, y, w, bands) {
 // of the ground, so barriers and tape round it would be fencing off thin air.
 // See #2, "Wave 3.1" in wave-feedback3.md.
 const risingKinds = new Set(['building', 'machine']);
-// wave7b-build: per WORK now, not per site -- the yard holds two builds at
-// once, and a queued one waiting for a builder stands fenced on its own ground
-// too, which is the whole of how the player is told it is waiting.
+// Per WORK, not per site: a build in line behind another stands fenced on its
+// own ground too, with no bar and no body, which is the whole of how the yard
+// says the ground is spoken for and the work is waiting.
 const construction = site =>
   worksAt(site).filter(w => risingKinds.has(rowFor(w.key)?.kind));
 

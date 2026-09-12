@@ -304,22 +304,35 @@ export function siteBox(site, which = null) {
 }
 
 // --- what is on the go --------------------------------------------------------
-// One work per site, and it is not a queue. The cut builds one thing at a time,
-// and so do the plots, the school, the scrubbing house and the tower: a queue
-// you fire and forget is not a decision, and the lab has had this rule since the
-// day it opened -- one piece per bench, and the second bench is a purchase.
-// Everything on the go at a site, oldest first. A list rather than the one work
-// it used to be, because a lab with two benches is two pieces at once and there
-// is nothing special about a lab: a site takes as many as it has room for.
+// One work per site at a time, and the rest wait in line. The cut builds one
+// thing at a time, and so do the plots, the school, the scrubbing house and the
+// tower -- but you may buy the next before this one lands. "One work per site,
+// and it is not a queue" stood here for a year, on the argument that waiting is
+// a decision; the decision was always the spend, and the wait was a board you
+// came back to on a timer. See DESIGN.md, "The queue".
+// Everything at a site, oldest first: the ones being built and the ones behind
+// them. The save, the report and the count on a card mean this whole list.
 export const worksAt = site => S.works?.[site] || [];
+// The front of it, being built now: as many as the site has room for -- one,
+// everywhere, unless a site says otherwise -- and these are the only ones that
+// get hands, a bar, a fence or a body walking over.
+export const onTheGo = site => worksAt(site).slice(0, roomAt(site));
+// ...and the rest, in the order they will be built, at nought until then.
+export const inLine = site => worksAt(site).slice(roomAt(site));
 // The one at the front of it. Every caller that asks about "the" work at a site
 // -- the rising building, the bar over the yard, the row on a board -- is asking
-// about a site with room for one, where this is the whole list.
+// about a site with room for one, where this is the whole of what is being built.
 export const workAt = site => worksAt(site)[0] || null;
 export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key) || null;
 export const busyAt = site => worksAt(site).length > 0;
-// ...and whether there is any room left, which is what a board has to ask before
-// it lets you press a row. `busyAt` was that question when every site held one.
+// Where a work stands in its site's list, counting the front as one -- so the
+// first behind it is 2, which is what "in line (2)" on its row means. Nought for
+// a work the site does not have.
+export const placeOf = (site, key) => worksAt(site).findIndex(w => w.key === key) + 1;
+// Whether a work is waiting rather than being built.
+export const waiting = (site, key) => placeOf(site, key) > roomAt(site);
+// Whether the site is building as much as it can. The board used to grey every
+// other row on this; now it is only what says where a new work goes.
 export const fullAt = site => worksAt(site).length >= roomAt(site);
 
 // how far along it is, 0..1 -- for a bar over the site
@@ -350,9 +363,8 @@ export const leftAt = (site, key = null) => {
 // and whether anybody is actually on it, for the row to say so
 export const stalled = site => busyAt(site) && handsAt(site) < 1;
 
-// Start one. Nothing happens if the site already has something on it -- the
-// board greys the row for that reason, but the board is not the only way in
-// here, and one guard at the door is cheaper than thirteen.
+// Start one -- or put it in line, if the site is already building as much as
+// it can. Either way it is paid for now and built in its turn.
 // A place claims its ground in the walk. Idempotent: a place already in the
 // order is left where it is, so the order is the order things were BOUGHT and
 // never shuffles under a yard that is standing.
@@ -364,7 +376,8 @@ function reserve(key) {
 }
 
 export function start(site, u, at) {
-  if (!site || fullAt(site)) return false;
+  if (!site) return false;
+  const was = fullAt(site);
   (S.works[site] ||= []).push({ key: u.key, done: 0, of: workFor(u), at: at ?? null });
   // The ground is spoken for the moment it is paid for, not when the thing
   // lands on it.
@@ -379,7 +392,23 @@ export function start(site, u, at) {
   // Reserved here, the zone and the finished building are the same ground by
   // construction, and there is nothing left to teleport.
   reserve(u.key);
-  SITE_SAYS[site]?.started?.();
+  // A site that was already building as much as it could has nothing new
+  // starting: the work is in line, and `started` is said for it when it reaches
+  // the front (see `stepWorks`). The staff hook is still asked, because a card
+  // has a name to add.
+  if (!was) SITE_SAYS[site]?.started?.();
+  staffHook();
+  S.dirty = true;
+  return true;
+}
+
+// Take a work out of the line, unbuilt. Only a waiting one: a work being built
+// has hands on it and a bar over it, and is committed. What is handed back for
+// it is the row's business (`buy` in upgrades.js), not this file's.
+export function pullOut(site, key) {
+  if (!waiting(site, key)) return false;
+  const list = worksAt(site);
+  list.splice(list.findIndex(w => w.key === key), 1);
   staffHook();
   S.dirty = true;
   return true;
@@ -417,11 +446,15 @@ export function stepWorks(dt) {
     const list = worksAt(site);
     if (!list.length) continue;
     const hands = handsAt(site);
+    // Only the front of the line is worked. The ones behind it stand at nought
+    // -- no share of the hands, however many there are -- until one lands and
+    // the next steps up.
+    const going = Math.min(list.length, roomAt(site));
     // The hands are shared out over what is on the go rather than every piece
     // getting the whole gang. Two benches with one scholar between them is one
     // scholar's work being done, spread over both -- which is what a person
     // moving between two benches looks like from outside.
-    const each = hands / list.length;
+    const each = hands / going;
     // wave7b-build: a builder-manned site does not spread its hands over the
     // queue -- a body is at ONE work (see `slotFor` in crew/builders.js), so
     // each work moves by the hands actually at it, and a queued build with
@@ -432,7 +465,7 @@ export function stepWorks(dt) {
     const effort = effortAt(site);
     // Backwards, because a finished work is spliced out of the list it is being
     // walked.
-    for (let i = list.length - 1; i >= 0; i--) {
+    for (let i = going - 1; i >= 0; i--) {
       const w = list[i];
       const own = manned ? handsOn(site, w.key) : null;
       const share = own != null ? Math.min(1, own) : each;
@@ -468,6 +501,11 @@ export function stepWorks(dt) {
       // site has a bar you were watching. Kept here so the announcing is the
       // works' business rather than each station's.
       doneHook(site, w.key);
+      // The next in line is on the go from this frame: it is told it has
+      // started, exactly as it would have been had it been bought into an empty
+      // site, and the builder this landing freed takes it (`siteFor` in
+      // crew/builders.js picks the emptiest work being built).
+      if (list.length >= roomAt(site)) SITE_SAYS[site]?.started?.();
       staffHook();
       S.dirty = true;
     }

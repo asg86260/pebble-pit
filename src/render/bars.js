@@ -4,7 +4,7 @@
 
 import { P, TOWER_SHAFT } from '../config.js';
 import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
-import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt } from '../works.js';
+import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { flagReach } from './aura.js';
@@ -125,7 +125,9 @@ export function barSpot(site, w = null) {
 
 export function drawWorkBars() {
   for (const site of SITES) {
-    const list = worksAt(site);
+    // A bar over what is being built, and none over what is in line behind it:
+    // a bar at nought with nobody under it is a promise the yard is not keeping.
+    const list = onTheGo(site);
     if (!list.length) continue;
     // One bar a work. On the yard each work stands on its own ground now, so
     // each bar hangs over its own thing -- two builds, two bars, two places --

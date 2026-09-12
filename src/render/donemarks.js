@@ -7,7 +7,7 @@
 import { now } from '../clock.js';
 import { P } from '../config.js';
 import { S } from '../state.js';
-import { worksAt } from '../works.js';
+import { onTheGo } from '../works.js';
 import { barSpot } from './bars.js';
 import { ctx } from './ctx.js';
 
@@ -55,7 +55,7 @@ export function drawDoneMarks() {
 export function doneMarkAt(site) {
   const at = barSpot(site);
   if (!at) return null;
-  const lift = worksAt(site).length * P * 5;
+  const lift = onTheGo(site).length * P * 5;
   return { x: Math.round(at.x / P) * P,
            y: Math.round(at.y / P) * P - lift - P * 4 };
 }

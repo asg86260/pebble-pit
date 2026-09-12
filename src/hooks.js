@@ -641,7 +641,9 @@ export const finishWorks = () => {
     w.done = w.of;
     }
   }
-  stepWorks(0);
+  // Only the front of each site's line lands in a step, and the next steps up
+  // behind it -- so it is stepped until nothing filled-in is left standing.
+  for (let guard = 0; guard < 99 && SITES.some(site => worksAt(site).some(w => w.done >= w.of)); guard++) stepWorks(0);
   buildShop(); S.dirty = true;
   return done;
 };

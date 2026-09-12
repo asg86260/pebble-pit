@@ -18,6 +18,7 @@ import { openingCamX, resize, clampCam } from './world.js';
 import { syncWorkers } from './crew.js';
 import { draw } from './render.js';
 import { hud, remeasure } from './board.js';
+import { fillQueue } from './queue.js';
 import { buildShop } from './shop.js';
 import { persist, restore, claimSave } from './persist.js';
 import { OWNER_KEY, TAB } from './save.js';
@@ -86,6 +87,7 @@ function frame() {
     draw();
     const t2 = mark();
     hud();
+    fillQueue();
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
   } catch (e) {
