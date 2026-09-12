@@ -164,7 +164,8 @@ Running it: `VITE_DEV_SERVER_URL=http://localhost:5183/ bun run desk` opens the
 shell against the dev server (any port; 5183 is the user's own game); `bun run
 desk` alone loads `dist/`, so `bun run build` first. `bun run desk:build`
 builds `dist/` and packages it into `release/` with electron-builder (the
-`build` block in package.json), and `tools/publish.mjs` pushes what is in
+`build` block in package.json; `tools/desk-build.mjs` stamps the day as the
+version the tool insists on, since the project keeps no version number), and `tools/publish.mjs` pushes what is in
 `release/` to itch with butler -- it refuses to run without `ITCH_TARGET`.
 `dist/build.json` is written by `vite build` so `desk.version()` and the page's
 `__BUILD__` stamp are one build.

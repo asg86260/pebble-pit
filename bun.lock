@@ -5,7 +5,7 @@
     "": {
       "name": "boulder-clicker",
       "devDependencies": {
-        "electron": "^44.3.0",
+        "electron": "44.3.0",
         "electron-builder": "^26.15.3",
         "vite": "^7.1.3",
       },
