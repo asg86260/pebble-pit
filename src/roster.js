@@ -61,40 +61,25 @@ export const POSTS = [
   { key: 'farmjob', job: JOB.FARM,
     at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: JOB.QUARRY,
-    // Over the shed beside the cut, like every other roster over its
-    // building: it stood in the sky over the mouth, exactly where the jaw's
-    // plume rises, and the plus and the count were in the cloud
-    // (critics 2026-09-10, C12).
-    at: () => { const s = quarryShed(); return s.x + s.w / 2; }, show: () => S.quarryOpen,
-    // the quarry is a hole: a roster under the ground line there would be a
-    // roster down the shaft, so it stands clear of the floor of it
-    // The quarry is a hole, so its roster used to stand below the floor of it --
-    // which walked off the bottom of the world as soon as the quarry was taken
-    // down a bench or two, taking the counter with it. It stands *over* the
-    // mouth instead: the one station whose own ground is not somewhere a
-    // roster can go, so it goes in the sky above it.
-    // High enough to clear the machine. The rig stands on the bridge deck, four
-    // cells up, and is seven more on top of that with a body standing on its
-    // roof above even that -- so the old thirteen cells put the headcount badge
-    // level with the operator's head, two white squares in a column, and you
-    // could not tell which of them was the man.
-    above: () => P * 18,
-    // ...and the machine's mark does not go up there with it. A count in the sky
-    // is only a number and can hang anywhere; the mark is a *picture of the jaw*,
-    // and hung under that count it landed in the middle of the jaw and the hoist
-    // -- a small drawing of the machine on top of the machine, which is the one
-    // place it cannot be read.
+    // Under the shed beside the cut, like every other roster under its
+    // building. It has been everywhere else first: under the hole's own floor,
+    // which walked off the bottom of the world as the quarry was taken down a
+    // bench or two; in the sky over the mouth, where the jaw's plume put the
+    // plus and the count in the cloud (critics 2026-09-10, C12); and in the
+    // sky over the shed, eighteen cells up to clear the rig and the man on its
+    // roof -- the one counter in the yard hung in the air, over a building
+    // whose ground is as solid as the farm's. The shed is that ground, and it
+    // stands clear of the mouth, so the ordinary depth under it is ordinary
+    // ground, and the machine's mark goes under the count with the rest of
+    // the strip instead of standing off the far rim on its own.
     //
-    // This outlived the reason it was written for. It was put here when the mark
-    // was a switch and the argument was that you walk up to a switch; the switch
-    // is gone and the placement is still right, because what was actually wrong
-    // was never the walking. It was two pictures of the same object in the same
-    // few cells.
-    //
-    // There is ordinary ground a few cells past the lip, so it stands on it.
-    // Off the quarry's own right edge, so it follows the hole when the hole is
-    // resited, and clear of the rim by the width of the strip itself.
-    runAt: () => quarry.x + quarry.w + WIDE / 2 + P * 3,
+    // Centered under the shed, but held clear of the mouth: the strip is three
+    // times as wide as the shed, and centered exactly its plus reaches into the
+    // hole's wall. A cell of bare ground between the two, so the count reads as
+    // under the shed rather than as something falling in.
+    at: () => { const s = quarryShed();
+                return Math.min(s.x + s.w / 2, quarry.x - WIDE / 2 - P); },
+    show: () => S.quarryOpen,
     kit: true },
   // The sky. Its roster stands on the ground under the meteor -- the work is a
   // long way over it, but the buttons belong where the body walks to, and a
@@ -129,8 +114,7 @@ export const POSTS = [
 // gone (offers fly a flag off the roof instead) and the triangle, at seven
 // cells down and 2.6 tall, is all the roster has to duck.
 export function postAt(p) {
-  const y = p.above ? S.groundY - p.above()
-                    : S.groundY + (p.below ? p.below() : P * 10);
+  const y = S.groundY + P * 10;
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -140,20 +124,13 @@ export function postAt(p) {
 // It sits under the headcount rather than beside it because it is a *part* of
 // that number, not another number: of the four on the rock, two are breakers.
 // Beside it, the two read as separate crews.
-// Where the machine's mark stands. Under the count, at the bottom of the strip,
-// on every post that keeps its roster on the ground -- and at the post's own
-// `runAt`, down at the ordinary roster depth, on one that does not.
-//
-// Written here rather than as a second case in the quarry, because "the mark
-// goes under the count unless the count is not somewhere a mark can go" is a
-// rule about rosters, and a rule about rosters lives with the rest of them.
+// Where the machine's mark stands: under the count, at the bottom of the strip.
+// The quarry's used to stand off the far rim on its own, back when its roster
+// hung in the sky and a mark up there would have been a picture of the jaw
+// drawn on top of the jaw; every roster is on the ground now, so there is one
+// rule.
 function runBox(p, left, y) {
   const h = BTN;
-  if (p.runAt) {
-    const x = Math.round(p.runAt() / P) * P;
-    return { x: Math.round((x - WIDE / 2) / P) * P,
-             y: Math.round((S.groundY + P * 10) / P) * P, w: WIDE, h };
-  }
   return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
 }
 
@@ -181,10 +158,6 @@ function boxes(p) {
     // is "is this station worked by hands or by the machine", which is the same
     // question the counter above it answers about *how many* hands, so it
     // belongs there: one strip per station, saying who is doing the work.
-    //
-    // Unless the post has said otherwise, which one of them has: a roster driven
-    // up into the sky by a hole in the ground takes its counts with it, and
-    // leaves its switch on ground somebody can stand on. See `runAt`.
     run: runBox(p, left, y)
   };
 }

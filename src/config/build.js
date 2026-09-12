@@ -47,6 +47,10 @@ export const QUARRY_SHED_W = P * 6;
 export const QUARRY_SHED_H = P * 7;
 // bare ground kept between a shed and the working ground it stands beside
 export const SHED_GAP = P * 3;
+// The quarry's shed keeps two cells more. Its working ground is not a furrow
+// but the mouth of a hole with the bridge's ramp climbing away from it, and at
+// three cells the shed stood on the slope with the ramp cutting under its legs.
+export const QUARRY_SHED_GAP = SHED_GAP + P * 2;
 
 // --- the builders' work jig ---------------------------------------------------
 // B2 in wave-feedback3.md, rewritten: a builder at a busy site swings a hammer.
