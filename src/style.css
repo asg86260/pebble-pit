@@ -387,6 +387,18 @@ canvas {
   padding-right: calc(5 * 1.22 * var(--pip-em, 1em));
   opacity: .75;
   min-width: 0;
+  /* And it has no say in how wide the card's two columns are. A cell that
+     spans both tracks still votes on them, and a grid hands a spanning cell's
+     whole minimum to the FLEXIBLE track it crosses -- which is the title's.
+     So the width of "3 -> 4 shovels" plus the pips' corner was written into
+     the title column as a floor, and the bill got what was left of the card:
+     eighty-six pixels, which is one coin, and a three-coin bill came out as a
+     stack of three lines with the gain pushed under it. Inline-size
+     containment sizes the tracks as if this cell were empty; it then takes
+     the width the tracks come to, and wraps inside it like any other run of
+     words. The bill keeps the first line, the title wraps under itself if it
+     must, which is the order the rules above promise. */
+  contain: inline-size;
 }
 /* The second line is a line whether or not there are words on it. A card with
    nothing to say about what it gives -- the row that opens the crew list, say --
