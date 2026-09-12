@@ -7401,3 +7401,118 @@ player does.
 duration. A yard with no spare carriers pays with its nearest producer
 instead, visibly, and gets it back. A one-body station is never stalled by
 its own upgrade, and no station gets its rungs for nothing.
+
+## The queue (design, not built)
+
+**The owner's word (2026-09-12):** instead of every row at a busy site reading
+`busy`, a queue. Unbounded. Paid on press, as today. A queued row can be pulled
+back out for a full refund until somebody has hands on it. And the queue is
+shown -- as a floating card in the viewport, not on a board and not on the
+held sheet.
+
+### What it overturns, and why
+
+"One work per site, and it is not a queue" has been works.js's opening line
+since the lab. The bargain it struck was that waiting is a decision: you buy
+strength, watch somebody fit it, *then* choose swing. The construction bench's
+queue was scrapped for the same reason ("nobody wanted the queue").
+
+The premise no longer holds, and it is worth saying which half. The decision
+was never the *wait*; it was the *spend*. With the coin taken on press, what
+you queue is coin you no longer have, and that is the whole of the choice --
+the same choice a one-at-a-time board offered, made once instead of every ten
+seconds. What one-at-a-time actually produced, on a yard with six sites and a
+purse that fills faster than a builder walks, is a board you come back to on a
+timer to press the next thing. That is a chore with a decision's costume on.
+
+The queue keeps the spend as the decision and drops the timer. Nothing about
+*who builds it* changes: one body per site's work, the nearest lent when nobody
+is spare, an empty cut building nothing. A queue does not staff itself.
+
+### The rule
+
+- `S.works[site]` is already a list, oldest first. It grows without bound. The
+  front `roomAt(site)` entries -- one, everywhere, since no site registers a
+  room -- are **on the go**; the rest are **in line**. That is the whole of the
+  data model: no second list, no new field on `S`, nothing new in `SAVED`.
+- A work in line is at nought. It has no bar, no fence tape, no builder walking
+  to it, no rising building. `stepWorks` shares hands over the on-the-go
+  entries only; `siteFor` (builders.js) and the `handsAt` cap (muster.js) see
+  the on-the-go entries only. Two helpers in works.js, `onTheGo(site)` and
+  `inLine(site)`, and every reader of `worksAt` asks for the one it means.
+  `worksAt` itself keeps meaning "everything at the site", because the save,
+  the report and the count on the card mean that.
+- **When a work lands, the next in line is on the go on the same frame**, and
+  everything that happens at a `start` -- `started`, the staff hook -- happens
+  to it then. The builder freed by the landing takes it the way it takes the
+  emptiest slot today. Nothing teleports: the ground is reserved when it is
+  paid for (`reserve` stays in `start`, so a queued yard building's patch is
+  spoken for from the press), and the walk is the walk.
+- `start` loses its `fullAt` guard; `siteBusy` is false for every row, and the
+  `busy` / `busy (n)` branch in shop.js goes with it. What is left is
+  `building` (mine, on the go) and one new word, **`in line (n)`** -- this
+  row's place, counting the work at the front as one, so the first behind it
+  reads `in line (2)`. The vocabulary stays closed and every word fits the
+  102-pixel cell.
+- **Pressing an in-line row again pulls it out**, and the bill comes back in
+  full: dust and coins put back into the pile the way `take` lifted them out.
+  The refund arcs *from* the site back to the bench -- `payTo` the other way,
+  the same dust and the same flight -- so what was paid is seen coming back. A
+  row on the go is committed, as today; its tooltip says so, once.
+- Duplicates: a rung row already in line cannot be pressed again (its next
+  rung is not for sale until this one lands); a repeatable row (a hat, a pot)
+  can be queued as many times as you can pay for, and the card counts them.
+
+### The card
+
+A floating card, top-left of the viewport (the board keeps the bottom, the
+dev panel the top-right), in the boards' paper -- the same `.panel` face, the
+same type -- and **absent when nothing is on the go anywhere**. It appears
+when the first work starts and goes when the last lands, by the board's own
+reveal rather than a pop.
+
+One line per site that has anything, in `SITES` order:
+
+```
+the bench   strength ▸ 6 s     then swing, the boots
+the yard    the tiller ▸ 42 s  then the next bench
+```
+
+The name at the front is the work on the go with its clock (`leftAt`, the
+same figure the row's price cell counts down); `then` and the in-line names
+after it. Each in-line name is a button: press it and it is pulled out and
+refunded, exactly as pressing its row would. A stalled site says nothing
+extra on the card -- the row on the go says `nobody on it`, and the card is
+not a second place to say it.
+
+Width is `max-content` up to a cap in `config/board.js` (`QUEUE_CARD_W`), and
+a line past the cap is clipped with an ellipsis, never wrapped -- a card that
+grows as you queue is the resizing-boards bug again. The clocks tick through
+`shown` like every other number.
+
+### What it is not
+
+- Not a way to staff a build. One body per site's work, as before.
+- Not on the casino, which has no works.
+- Not a plan across sites: each queue is one site's line, and there is no
+  cross-site ordering because sites do not share hands.
+
+### How it is checked
+
+`test/queue.test.mjs`, node tier, bought like a player through `__buy`:
+
+- Three rungs pressed at the bench: purse down by all three bills at once;
+  one work on the go, two in line; the on-the-go one has a builder, the two in
+  line have none and stand at nought; they land in the order bought.
+- A yard building queued behind another: its ground is reserved on the press
+  (`S.buildOrder`), nothing rises for it until the one in front lands.
+- Pull-out: press an in-line row, the bill is back in full to the grain, the
+  list is one shorter, the builder count is unchanged. Press the on-the-go
+  row: nothing happens.
+- A save written mid-queue comes back with the same list in the same order,
+  and the line behind the front is still at nought.
+
+`src/selftest/queue.js`, browser tier: the card is absent on a fresh game,
+present with one line after one press, reads `then` after two, and pressing
+the second name on it removes that name and refunds. The card's box is
+measured against the board's, never reasoned about, so they never overlap.
