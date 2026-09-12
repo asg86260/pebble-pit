@@ -1,7 +1,7 @@
 import { ROCKHAND_RUNGS, ROCKHAND_PICK_COST, ROCKHAND_SPEED_COST } from '../config.js';
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate, rungCost } from '../upgrades.js';
-import { tierRows } from './tiers.js';
+import { tierRows, named } from './tiers.js';
 
 // The rock's rows. Data only: upgrades.js strings the files together into
 // UPGRADES, in this order.
@@ -27,11 +27,7 @@ const SPEED = tierRows({
   first: ROCKHAND_SPEED_COST,
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
-  bands: [
-    { key: 'rockhandspeed',  name: 'rhythm' },
-    { key: 'rockhandspeed2', name: 'work song' },
-    { key: 'rockhandspeed3', name: 'foreman' }
-  ]
+  bands: named('rockhandspeed', 'swing speed')
 });
 
 export const ROCK_ROWS = [
@@ -41,7 +37,7 @@ export const ROCK_ROWS = [
     // What you are buying is the tool, not the number the tool moves. The row
     // said "rockhand bite", which is the effect described in the game's own jargon
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
-    name: 'pickaxe',
+    name: 'digger pick damage',
     unit: 'px',
     does: 'per swing',
     rung: () => S.rockhandPickLevel,

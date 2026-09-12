@@ -4,7 +4,7 @@ import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
 import { kitFull, mineRate, rebalance } from '../upgrades.js';
-import { tierRows } from './tiers.js';
+import { tierRows, named } from './tiers.js';
 
 // The bench's bench rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -30,11 +30,7 @@ const YOU_CARRY = tierRows({
   // that they could see (docs/critics-2026-09-10.md, C4). A row about a thing
   // you have done is a row you can read.
   show: () => S.seenDrag,
-  bands: [
-    { key: 'carry',  name: 'bigger pocket' },
-    { key: 'carry2', name: 'satchel' },
-    { key: 'carry3', name: 'barrow' }
-  ]
+  bands: named('carry', 'carry amount')
 });
 
 const YOU_SWING = tierRows({
@@ -47,11 +43,7 @@ const YOU_SWING = tierRows({
   // stays on the board once it is finished, saying so -- it used to vanish the
   // moment it reached the floor, which is a cap the game would not admit to.
   show: () => S.autoMine,
-  bands: [
-    { key: 'speed',  name: 'firmer grip' },
-    { key: 'speed2', name: 'weighted haft' },
-    { key: 'speed3', name: 'steel head' }
-  ]
+  bands: named('speed', 'auto swing')
 });
 
 // --- what a swing takes ---------------------------------------------------
@@ -73,11 +65,7 @@ const YOU_PICK = tierRows({
   // Beside the swing, once the swinging is automatic: it was gated on the
   // shard while the shard was its coin, and the coin has moved to the last card.
   show: () => S.autoMine,
-  bands: [
-    { key: 'pick',  name: 'sharper pick' },
-    { key: 'pick2', name: 'forged pick' },
-    { key: 'pick3', name: 'tempered pick' }
-  ]
+  bands: named('pick', 'pick damage')
 });
 
 export const BENCH_ROWS = [

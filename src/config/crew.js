@@ -218,7 +218,7 @@ export const HAUL_PACE_TOP = 3.75;      // at the top: four and three quarters t
 // Your own bench's three ladders, first rungs in dust. Yours come first and
 // cheap: they are the first rows on the first board, bought before there is a
 // crew to buy for.
-export const CARRY_COST = 8;            // your strength -- what a sweep picks up
+export const CARRY_COST = 10;           // your strength -- what a sweep picks up
 export const SWING_COST = 20;           // your swing
 export const PICK_COST = 240;           // your pickaxe
 // The house was 60 at 1.45x, and a full playthrough said bodies were the

@@ -53,6 +53,14 @@ export const tierLevel = (field, multKey, own = TIER_OWN) =>
 export const tierGain = (lvl, per) =>
   (1 + per * Math.min(TIER_OWN, lvl)) * Math.pow(STEP, Math.max(0, lvl - TIER_OWN));
 
+// The names of a ladder's cards, from one name: the thing it upgrades, then
+// the same with II and III. A card used to carry a name of its own (compost,
+// fertilizer, hybrid seed), and across thirty cards the invented words hid what
+// the ladder was for; a plain description with a numeral says it (2026-09-12).
+const NUMERAL = ['', ' II', ' III', ' IV'];
+export const named = (key, name, n = LADDER_BANDS) =>
+  Array.from({ length: n }, (_, i) => ({ key: i ? `${key}${i + 1}` : key, name: `${name}${NUMERAL[i]}` }));
+
 // The keys of an ordinary ladder's cards, from the first one's: `carry`,
 // `carry2`, `carry3`. The first keeps the name the ladder had when it was one
 // row -- keys are internal and never renamed, saves quote them -- and the
