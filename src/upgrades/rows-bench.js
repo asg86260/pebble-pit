@@ -1,37 +1,87 @@
-import { BELT_BILL, CAP_STEP, RAM_BILL, ROCKHAND_RUNGS, RUNGS } from '../config.js';
+import { BELT_BILL, CAP_BASE, CAP_STEP, RAM_BILL, ROCKHAND_RUNGS, LADDER,
+         CARRY_COST, SWING_COST, PICK_COST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
-import { capacity, kitFull, mineRate, pickCount, rebalance, rungCost } from '../upgrades.js';
+import { kitFull, mineRate, rebalance } from '../upgrades.js';
+import { tierRows } from './tiers.js';
 
 // The bench's bench rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
+// Your own three ladders, each in bands: dust for the first card, dust and
+// crops for the second, dust, crops and ore for the third (CLAUDE.md,
+// "Decided"). Strength and the pickaxe are a whole pixel a rung -- a sweep
+// picks up grains and a swing takes pixels, and neither comes in fractions --
+// so they are the two ladders that climb a little higher than they did at five
+// rungs; the swing is a rate and eases to the floor it always had.
+const YOU_CARRY = tierRows({
+  field: 'carryLevel',
+  // The same word the crew's row uses, because it is the same thing: how much
+  // a pair of hands lifts in one go. Yours were called "carry" and theirs
+  // "load", which is two names for one idea and a player having to learn both.
+  unit: 'px', does: 'hold',
+  value: lvl => CAP_BASE + lvl * CAP_STEP,
+  first: CARRY_COST,
+  site: 'bench',
+  // Once you have dragged. This is a rung on YOUR hands -- how many grains a
+  // sweep of the cursor picks up -- and it was the first-listed, cheapest row
+  // on the first board, so a newcomer bought it four times (74 dust, before a
+  // 60-dust house) for a mechanic nothing had shown them and nothing changed
+  // that they could see (docs/critics-2026-09-10.md, C4). A row about a thing
+  // you have done is a row you can read.
+  show: () => S.seenDrag,
+  bands: [
+    { key: 'carry',  name: 'a bigger pocket' },
+    { key: 'carry2', name: 'a satchel' },
+    { key: 'carry3', name: 'a barrow' }
+  ]
+});
+
+const YOU_SWING = tierRows({
+  field: 'speedLevel',
+  unit: 'px/s', pct: true, does: 'hit',
+  value: lvl => mineRate(lvl),
+  first: SWING_COST,
+  site: 'bench',
+  // faster swings only read as an upgrade once the swinging is automatic. It
+  // stays on the board once it is finished, saying so -- it used to vanish the
+  // moment it reached the floor, which is a cap the game would not admit to.
+  show: () => S.autoMine,
+  bands: [
+    { key: 'speed',  name: 'a firmer grip' },
+    { key: 'speed2', name: 'a weighted haft' },
+    { key: 'speed3', name: 'a steel head' }
+  ]
+});
+
+// --- what a swing takes ---------------------------------------------------
+// A core is a rock. There is one of them per rock for ever, and what they are
+// for is *opening places* -- the quarry, the plots, the lab, the table. Selling a
+// pick for one put a rate on the same shelf as a whole new part of the game,
+// and every core spent on a bigger bite was a core not spent on somewhere to
+// send anybody. So the picks are priced in what the ground gives up instead --
+// dust first, and the cut stone a tool is made of on the last card.
+const YOU_PICK = tierRows({
+  field: 'pickLevel',
+  // And the same again for the tool. What you swing and what a rockhand swings do
+  // exactly the same job, so they are the same row under two headings rather
+  // than "pick" here and "pickaxe" over there.
+  unit: 'px', does: 'per swing',
+  value: lvl => 1 + lvl,
+  first: PICK_COST,
+  site: 'bench',
+  // Beside the swing, once the swinging is automatic: it was gated on the
+  // shard while the shard was its coin, and the coin has moved to the last card.
+  show: () => S.autoMine,
+  bands: [
+    { key: 'pick',  name: 'a sharper pick' },
+    { key: 'pick2', name: 'a forged pick' },
+    { key: 'pick3', name: 'a tempered pick' }
+  ]
+});
+
 export const BENCH_ROWS = [
-  {
-    key: 'carry',
-    // Fitted at the bench, by whoever walks over to do it. The bench's own
-    // ladders were the one part of the game still had on the press; see "The
-    // bench takes time too" in DESIGN.md for why they are not any more.
-    kind: 'rung', site: 'bench',
-    // The same word the crew's row uses, because it is the same thing: how much
-    // a pair of hands lifts in one go. Yours were called "carry" and theirs
-    // "load", which is two names for one idea and a player having to learn both.
-    name: 'strength',
-    unit: 'px',
-    does: 'hold',
-    rung: () => S.carryLevel,
-    from: () => capacity(),
-    to: () => capacity() + CAP_STEP,
-    cost: () => rungCost(8, S.carryLevel),
-    buy: () => S.carryLevel++,
-    // Once you have dragged. This is a rung on YOUR hands -- how many grains a
-    // sweep of the cursor picks up -- and it was the first-listed, cheapest row
-    // on the first board, so a newcomer bought it four times (74 dust, before a
-    // 60-dust house) for a mechanic nothing had shown them and nothing changed
-    // that they could see (docs/critics-2026-09-10.md, C4). A row about a thing
-    // you have done is a row you can read.
-    show: () => S.seenDrag
-  },
+  ...YOU_CARRY,
   {
     // The rock's machine, sold at the rock like the other two are sold at
     // theirs. It was the odd one out for as long as the rock had no board of
@@ -42,7 +92,7 @@ export const BENCH_ROWS = [
     //
     // Its gate is those two rows bought right out. The cut has benches and the
     // plots have furrows; the rock has no floor plan to fill, so what stands for
-    // "everything hands can be given" here is its gear. `RUNGS` is read rather
+    // "everything hands can be given" here is its gear. `LADDER` is read rather
     // than written: a ladder that grew a sixth rung should move this gate with
     // it.
     key: 'ram',
@@ -53,10 +103,10 @@ export const BENCH_ROWS = [
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
-    // The pick ladder is shorter than the house RUNGS (wave 7 cut it to whole
+    // The pick ladder is shorter than the house LADDER (wave 7 cut it to whole
     // pixels), so the gate asks its own top, not the shared one -- a gate on a
     // rung nobody can buy is a machine that is never for sale.
-    show: () => canBuy('ram', () => S.rockhandPickLevel >= ROCKHAND_RUNGS && S.rockhandSpeedLevel >= RUNGS,
+    show: () => canBuy('ram', () => S.rockhandPickLevel >= ROCKHAND_RUNGS && S.rockhandSpeedLevel >= LADDER,
                        () => kitFull(JOB.ROCK))
   },
   {
@@ -88,8 +138,8 @@ export const BENCH_ROWS = [
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
     show: () => canBuy('belt',
-                       () => S.haulCarryLevel >= RUNGS && S.haulPaceLevel >= RUNGS
-                          && S.harnessLevel >= RUNGS && S.bootsLevel >= RUNGS,
+                       () => S.haulCarryLevel >= LADDER && S.haulPaceLevel >= LADDER
+                          && S.harnessLevel >= LADDER && S.bootsLevel >= LADDER,
                        () => kitFull(JOB.HAUL))
   },
   {
@@ -100,50 +150,6 @@ export const BENCH_ROWS = [
     buy: () => { S.autoMine = true; },
     show: () => !S.autoMine
   },
-  {
-    key: 'speed',
-    kind: 'rung', site: 'bench',
-    name: 'swing',
-    unit: 'px/s',
-    pct: true,
-    does: 'hit',
-    rung: () => S.speedLevel,
-    from: () => mineRate(S.speedLevel),
-    to: () => mineRate(S.speedLevel + 1),
-    cost: () => rungCost(20, S.speedLevel),
-    buy: () => S.speedLevel++,
-    // faster swings only read as an upgrade once the swinging is automatic. It
-    // stays on the board once it is finished, saying so -- it used to vanish the
-    // moment it reached the floor, which is a cap the game would not admit to.
-    show: () => S.autoMine
-  },
-  // --- what a swing takes ---------------------------------------------------
-  // A core is a rock. There is one of them per rock for ever, and what they are
-  // for is *opening places* -- the quarry, the plots, the lab, the table. Selling a
-  // pick for one put a rate on the same shelf as a whole new part of the game,
-  // and every core spent on a bigger bite was a core not spent on somewhere to
-  // send anybody. So the picks are priced in what the ground gives up instead,
-  // which is what the ground is for.
-  //
-  // Yours is a tool, and a tool is cut stone: shards.
-  {
-    key: 'pick',
-    kind: 'rung', site: 'bench',
-    // And the same again for the tool. What you swing and what a rockhand swings do
-    // exactly the same job, so they are the same row under two headings rather
-    // than "pick" here and "pickaxe" over there.
-    name: 'pickaxe',
-    unit: 'px',
-    does: 'per swing',
-    rung: () => S.pickLevel,
-    from: () => pickCount(),
-    to: () => pickCount() + 1,
-    // Its own tier's coin, and dust with it. The rock never stops giving dust,
-    // so every rung above the first tier is priced in both -- see "The ladder"
-    // in DESIGN.md. Digging stays worth doing for the whole run.
-    bill: () => [['shard', rungCost(20, S.pickLevel)], ['dust', rungCost(240, S.pickLevel)]],
-    cost: () => rungCost(240, S.pickLevel),
-    buy: () => S.pickLevel++,
-    show: () => S.seenShard
-  }
+  ...YOU_SWING,
+  ...YOU_PICK
 ];

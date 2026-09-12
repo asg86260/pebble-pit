@@ -118,3 +118,6 @@ export const ROCK_KNOBS = [
 // rung is a purchase you can see land, so there are fewer rungs and each is
 // dearer -- see rows-rock.js, where the bases are eight times what they were.
 export const ROCKHAND_RUNGS = 3;
+// And what its first rung costs, in dust. It was spore and dust from the first
+// rung; a three-rung ladder is one card and takes the first card's coin.
+export const ROCKHAND_PICK_COST = 2400;

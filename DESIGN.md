@@ -1663,7 +1663,7 @@ other coins, which at the top of a ladder is seven cores -- steep, and steep by
 the economy's own exchange rate rather than by a number picked for this row. It
 is the first thing to argue with on a yard.
 
-## Every ladder is sold in bands (design, not built)
+## Every ladder is sold in bands (built)
 
 The farm and the quarry sell their ladders as cards -- three rungs to a card,
 a bill that deepens card by card, a new name on each -- and nothing else in
@@ -1849,6 +1849,34 @@ three rungs, then two, then three, and says with a new card each time that the
 craft has moved on. That is more to read across a run and less to read at
 once, which is the trade the grounds already made and the one every other
 board is still waiting for.
+
+### Built (notes, 2026-09-12)
+
+What the build decided that the design did not:
+
+- **Whole-unit ladders climb a little higher.** Your strength (a grain a
+  rung), your pickaxe (a pixel a rung) and the haulers' load (a grain a rung)
+  cannot take fractional steps, so nine rungs of a whole unit is a higher top
+  than five were: your pick takes 10 px at the top where it took 6, a hauler
+  carries 10 where it carried 6. The harness went from two grains a rung to
+  one, so its top is 9 where it was 10. Every *rate* ladder -- the swing, the
+  gang's swing, pace, boots, the fan, the crits, every apothecary ladder --
+  eases to the floor or top it always had; `HAUL_PACE_TOP` and `BOOTS_TOP`
+  say the haulers' in config.
+- **The school is left alone.** Its kit rows are a count of hats with a
+  ceiling, not a ladder over a rate, and the carts beside them have no
+  ceiling at all; a board with hats in dust and carts in shards would be the
+  odd one out in the other direction. The shard is what the school is for.
+  One line to change if the rule should reach it anyway.
+- **The potency cards are named for the drink and then the step**: "stew,
+  steeped", "stew, twice boiled", "stew, distilled" -- five ladders showing
+  one card each have to read as five tonics.
+- **The crew's two multipliers** (`labswing`, `labhaul`) keep their five
+  shard rungs and now follow the third card of the ladder they multiply.
+- `cards(key)` in `upgrades/tiers.js` gives a ladder's three keys from its
+  first, and the boards' section lists spread it; `climb(key, n)` in
+  `test/helpers.mjs` buys a ladder through whichever card is showing, the way
+  a player does.
 
 ### Open
 

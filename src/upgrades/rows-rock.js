@@ -1,7 +1,7 @@
-import { ROCKHAND_RUNGS } from '../config.js';
+import { ROCKHAND_RUNGS, ROCKHAND_PICK_COST, ROCKHAND_SPEED_COST } from '../config.js';
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate, rungCost } from '../upgrades.js';
-import { ROCKHAND_SPEED_COST } from '../config.js';
+import { tierRows } from './tiers.js';
 
 // The rock's rows. Data only: upgrades.js strings the files together into
 // UPGRADES, in this order.
@@ -16,11 +16,25 @@ import { ROCKHAND_SPEED_COST } from '../config.js';
 // hauler off the dust -- to the hut for the duration, the bench's own rule
 // (`shack` in SITE_JOB, works.js). For a while it claimed one of the rock's
 // gang instead, and a gang capped at one by the ram had nobody to give.
+
+// The gang's swing, in bands (CLAUDE.md, "Decided"): what makes a crew of
+// miners hit faster is first a rhythm, then a song to keep it, then somebody
+// standing over them.
+const SPEED = tierRows({
+  field: 'rockhandSpeedLevel',
+  unit: 'px/s', pct: true, does: 'hit',
+  value: lvl => rockhandRate(lvl),
+  first: ROCKHAND_SPEED_COST,
+  site: 'shack', board: 'shack',
+  show: () => S.crew > 0,
+  bands: [
+    { key: 'rockhandspeed',  name: 'a rhythm' },
+    { key: 'rockhandspeed2', name: 'a work song' },
+    { key: 'rockhandspeed3', name: 'a foreman' }
+  ]
+});
+
 export const ROCK_ROWS = [
-  // And the crew's is what the crew are fed on. The plots grow the only thing in
-  // this yard anybody eats, so what a body can take out of the rock is bought in
-  // spores -- which also keeps the green from piling up unspent, and gives the
-  // two currencies a job each instead of one of them doing all the work.
   {
     key: 'rockhandpick',
     kind: 'rung', site: 'shack', board: 'shack',
@@ -32,31 +46,14 @@ export const ROCK_ROWS = [
     does: 'per swing',
     rung: () => S.rockhandPickLevel,
     // Its own short ladder: three rungs, each a whole pixel of bite (see
-    // rockhandBite), each eight times the old base -- fewer, dearer, and every
-    // one visible on the row. (feedback7, item 19)
+    // rockhandBite), fewer and dearer, and every one visible on the row
+    // (feedback7, item 19). Three rungs is one card, and a first card is dust.
     rungs: () => ROCKHAND_RUNGS,
     from: () => rockhandBite(),
     to: () => rockhandBite(S.rockhandPickLevel + 1),
-    bill: () => [['spore', rungCost(200, S.rockhandPickLevel)], ['dust', rungCost(2400, S.rockhandPickLevel)]],
-    cost: () => rungCost(2400, S.rockhandPickLevel),
+    cost: () => rungCost(ROCKHAND_PICK_COST, S.rockhandPickLevel),
     buy: () => S.rockhandPickLevel++,
-    show: () => S.seenSpore && S.crew > 0
-  },
-  {
-    key: 'rockhandspeed',
-    kind: 'rung', site: 'shack', board: 'shack',
-    // "speed", not "swing": the shard multiplier below this row is the one
-    // called swing now. Two rows on one board both named for the swing needed a
-    // mark to tell them apart, and the mark read as noise beside the price.
-    name: 'speed',
-    unit: 'px/s',
-    pct: true,
-    does: 'hit',
-    rung: () => S.rockhandSpeedLevel,
-    from: () => rockhandRate(),
-    to: () => rockhandRate(S.rockhandSpeedLevel + 1),
-    cost: () => rungCost(ROCKHAND_SPEED_COST, S.rockhandSpeedLevel),
-    buy: () => S.rockhandSpeedLevel++,
     show: () => S.crew > 0
-  }
+  },
+  ...SPEED
 ];

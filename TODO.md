@@ -1,21 +1,16 @@
 # Still to do
 
-## Every ladder sold in bands -- DESIGNED, awaiting approval (2026-09-12)
+## Every ladder sold in bands -- BUILT (2026-09-12)
 
-DESIGN.md "Every ladder is sold in bands (design, not built)". The grounds'
-card shape -- three rungs a card, the bill deepening dust / +spore / +shard,
-a new name a card -- becomes the shape of every ladder: the apothecary's
-four building ladders and five potency ladders first, then the bench's,
-the crew's, the shack's and the fan. Three bands, nine rungs, no fourth
-(spark) band; ladders already three rungs long stay one dust-only card;
-the tower's and the machines' spark ladders are out by decision. It is a
-standing rule now (CLAUDE.md "Decided"): every new ladder is built in bands.
-
-Build is `tierRows` generalized in three places (band count off the table,
-the multiplier band opt-in, `tierCost` over the ladder's own length), then
-each board's rows rewritten as a band table. No new state fields; the level
-fields keep their names and a saved level reads as rungs up the longer
-ladder. Blocker: sign-off on the card names and on the fan going dust-first.
+DESIGN.md "Every ladder is sold in bands (built)". `tierRows` generalized
+(band count off the table, multiplier band opt-in, `tierCost` over the
+ladder's own length); the apothecary's, bench's, crew's, shack's and fan's
+ladders rewritten as band tables; `LADDER` (nine) replaces `RUNGS` (five)
+everywhere but the crew multipliers and the tower. Whole-unit ladders (your
+strength and pick, the haulers' load) climb higher at the top than they did;
+the school's kit rows were left in shards on purpose. The rule is in
+CLAUDE.md "Decided". Worth a look on a real yard: the fan dust-first, and
+whether a 10 px pick at the top is too much rock.
 
 ## The desk and the sound -- BUILT (2026-09-12)
 

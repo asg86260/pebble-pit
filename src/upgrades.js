@@ -6,7 +6,7 @@
 // on the board.
 
 import {
-  P, CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
+  P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, BOOTS_TOP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
@@ -137,11 +137,13 @@ export const chained = rows => {
   return rows;
 };
 
-// Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
-// is this" is one question with one answer wherever it is asked.
-const mineGap = swing(MINE_BASE, MINE_FLOOR, RUNGS);
-const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, RUNGS);
-const scoopGap = swing(HAUL_MS, 30, RUNGS);
+// Nine rungs to every ladder in the game -- see LADDER -- so that "how far along
+// is this" is one question with one answer wherever it is asked. The floor is
+// where it was when the ladders were five: a longer ladder is finer steps to
+// the same top, not a faster yard.
+const mineGap = swing(MINE_BASE, MINE_FLOOR, LADDER);
+const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, LADDER);
+const scoopGap = swing(HAUL_MS, 30, LADDER);
 
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
 export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
@@ -150,9 +152,12 @@ export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lv
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
 // stone out of the quarry, because gear is what stone is for.
-export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lvl + gear * 2;
+// A grain a rung on either ladder: a hauler's load is a whole number of
+// grains, so these are the ladders that got a little longer at the top when
+// nine rungs replaced five (the harness was two a rung, and is one).
+export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lvl + gear;
 export const haulSpeed = (lvl = S.haulPaceLevel, gear = S.bootsLevel) =>
-  HAUL_BASE * (1 + 0.3 * lvl + 0.45 * gear) * mult('haul');
+  HAUL_BASE * (1 + HAUL_PACE_TOP * lvl / LADDER + BOOTS_TOP * gear / LADDER) * mult('haul');
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
 // A trip's pace, for anybody making one. It lived in crew.js, and the stations
 // could not reach it -- crew.js imports them -- so each grew a private walking
@@ -370,6 +375,7 @@ export const idle = () => spareHands();
 // trade is a fact about a hat.
 import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 import { JOB } from './jobs.js';
+import { cards } from './upgrades/tiers.js';
 import { BENCH_ROWS } from './upgrades/rows-bench.js';
 import { LUCK_ROWS } from './upgrades/rows-luck.js';
 import { ROCK_ROWS } from './upgrades/rows-rock.js';
@@ -691,7 +697,7 @@ export function rebalance() {
   for (const k of ['carryLevel', 'speedLevel', 'pickLevel',
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'harnessLevel', 'bootsLevel'])
-    S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
+    S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
   // Two ladders got shorter (feedback7 items 19 and 20), so their saved levels
   // clamp against their own tops rather than the shared RUNGS: a save at pick
   // level five reads as the new level three, not as two rungs past the ladder.
@@ -912,11 +918,11 @@ registerRows(UPGRADES);
 export const SECTIONS = [
   // "you", not "your gear": you are the cursor, and the heading under this one
   // is the one about gear.
-  { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
+  { title: 'you', keys: [...cards('carry'), 'auto', ...cards('speed'), ...cards('pick')] },
   // The crit rows apply to the whole yard, so the bench is their natural home.
   // "lucky swings" rather than the genre's "critical hits": a heading here is a
   // thing in the yard, not a term from another game's manual.
-  { title: 'lucky swings', keys: ['critchance', 'critmult'] },
+  { title: 'lucky swings', keys: [...cards('critchance'), 'critmult'] },
   // Everything a hauler is issued: what they carry, how fast they walk, the
   // multiplier over that, and the machine that carries without them. All of it
   // was sold at the house for a while, in two moves, and all of it has come
@@ -925,7 +931,8 @@ export const SECTIONS = [
   // first, the thing that climbs past it last, the way the shack orders the
   // rock's. Named for the job, the way the shack's is: "the haulers" beside
   // "the miners", and "crew" left to the house, where the crew live.
-  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'labhaul', 'belt', 'tunebelt'] },
+  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), ...cards('harness'), ...cards('boots'),
+                                 'labhaul', 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

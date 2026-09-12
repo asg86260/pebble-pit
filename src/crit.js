@@ -16,18 +16,18 @@
 import { S } from './state.js';
 import { rand } from './rng.js';
 import {
-  RUNGS, CRIT_CHANCE_MIN, CRIT_CHANCE_MAX, CRIT_MULT_MIN, CRIT_MULT_RUNGS,
+  LADDER, CRIT_CHANCE_MIN, CRIT_CHANCE_MAX, CRIT_MULT_MIN, CRIT_MULT_RUNGS,
 } from './config.js';
 
 // A level clamped to the ladder, the way lab.js clamps its own -- a save from
 // before this landed reads as level nought rather than as some rung nothing
 // agrees with.
-const rung = lvl => Math.max(0, Math.min(RUNGS, lvl | 0));
+const rung = lvl => Math.max(0, Math.min(LADDER, lvl | 0));
 
 // How often a swing crits, and how much it is worth when it does. Both ease
-// straight across the ladder from the base to the top over `RUNGS` rungs.
+// straight across the ladder from the base to the top over `LADDER` rungs.
 export const critChance = (lvl = S.critChanceLevel) =>
-  CRIT_CHANCE_MIN + (CRIT_CHANCE_MAX - CRIT_CHANCE_MIN) * (rung(lvl) / RUNGS);
+  CRIT_CHANCE_MIN + (CRIT_CHANCE_MAX - CRIT_CHANCE_MIN) * (rung(lvl) / LADDER);
 
 // A whole unit a rung, so no rung repeats a value: the eased five-rung ladder
 // rounded two neighbors to the same figure and the row read "4 -> 4". Its own

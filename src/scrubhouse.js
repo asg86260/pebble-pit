@@ -11,11 +11,12 @@
 // take back whenever you like -- the same bargain every other station makes.
 
 import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
-         FAN_COST, FAN_RATE, RUNGS } from './config.js';
+         FAN_COST } from './config.js';
+import { tierRows, cards } from './upgrades/tiers.js';
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
-import { idle, assign, rungCost } from './upgrades.js';
+import { idle, assign } from './upgrades.js';
 import { airRows, airSection } from './airboard.js';
 import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
@@ -93,28 +94,26 @@ export function stepPurifier(w) {
   w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
 }
 
+// The house's own ladder, in bands (CLAUDE.md, "Decided"). The house was built
+// to answer hand labour, and the machines out-dirty it several times over and
+// never stop. Without a ladder of its own it stops being an answer at exactly
+// the point the yard is worth having one.
+const FAN = tierRows({
+  field: 'fanLevel',
+  unit: 'motes/s', pct: true, does: 'scrub',
+  value: lvl => fanPull(lvl),
+  first: FAN_COST,
+  site: 'scrub',
+  show: () => S.scrubOpen,
+  bands: [
+    { key: 'fan',  name: 'a bigger fan' },
+    { key: 'fan2', name: 'a second blade' },
+    { key: 'fan3', name: 'a bellows' }
+  ]
+});
+
 export const SCRUB_UPGRADES = [
-  {
-    // The house was built to answer hand labour, and the machines out-dirty it
-    // several times over and never stop. Without a ladder of its own it stops
-    // being an answer at exactly the point the yard is worth having one.
-    key: 'fan',
-    kind: 'rung', site: 'scrub',
-    name: 'the fan',
-    unit: 'motes/s',
-    pct: true,
-    does: 'scrub',
-    rung: () => S.fanLevel,
-    from: () => fanPull(),
-    to: () => fanPull() * 1.25,
-    // On the ordinary rung curve. It climbed three quarters again a rung on its
-    // own steeper rate, which is the arithmetic of a row meant to be bought for
-    // ever on a ladder that ends at five.
-    cost: () => rungCost(FAN_COST, S.fanLevel),
-    currency: 'shard',
-    buy: () => { S.fanLevel++; },
-    show: () => S.scrubOpen && S.fanLevel < RUNGS
-  },
+  ...FAN,
 
   // Who is standing in it, on the board that belongs to it -- the same row the
   // lab has, for the same reason: you are here, and walking back to the bench to
@@ -148,7 +147,7 @@ export const SCRUB_UPGRADES = [
 
 export const SCRUB_SECTIONS = [
   airSection(),
-  { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
+  { title: 'equipment', keys: [...cards('fan'), 'balloon', 'recycler'] }
 ];
 
 // what it costs to put the place up at all

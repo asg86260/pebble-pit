@@ -14,14 +14,14 @@
 // the price or the wait.
 
 import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
-import { RUNGS } from '../src/config.js';
+import { LADDER } from '../src/config.js';
 
 // The swing multiplier is the one on the shack's board, beside the rung it
 // multiplies.
 group('a multiplier is bought at the thing it multiplies, and takes work', async () => {
   window.__reset();
   // `__fullSites` rather than `openSites`, which takes the ladders to their top:
-  // a multiplier already at `RUNGS` is clamped where it is read, so the level
+  // a multiplier already at `LADDER` is clamped where it is read, so the level
   // would go up and the rate would not, and the check would be measuring the
   // ceiling rather than the purchase.
   window.__fullSites();
@@ -67,7 +67,7 @@ group('no multiplier is for sale before there is a bench to work at', async () =
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
   // A multiplier is the top of the rung it multiplies, so the rung has to be
   // finished first -- this check is about the other gate. See ladder-chain.test.mjs.
-  window.__levels({ rockhandSpeedLevel: RUNGS });
+  window.__levels({ rockhandSpeedLevel: LADDER });
   const shut = window.__rows().filter(r => r.key === 'labswing')[0];
   window.__invest();
   const open = window.__rows().filter(r => r.key === 'labswing')[0];

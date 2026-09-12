@@ -18,11 +18,12 @@
 // `board: 'shack'`, which is also what takes it off the bench.
 
 import { UPGRADES } from './upgrades.js';
+import { cards } from './upgrades/tiers.js';
 
 // In the order the board reads them: what the gang swings, how often, the
 // multiplier over that, and then the machine that does the same job without
 // them -- the ladder first and the thing that climbs past it last.
-export const SHACK_GEAR = ['rockhandpick', 'rockhandspeed', 'labswing', 'ram', 'tuneram'];
+export const SHACK_GEAR = ['rockhandpick', ...cards('rockhandspeed'), 'labswing', 'ram', 'tuneram'];
 
 // Asked for when it is wanted, never gathered at load: upgrades.js reaches this
 // file's neighbors on the way to building UPGRADES, so a list gathered in this

@@ -12,7 +12,7 @@
 // nothing to click.
 
 import { group, ok, run, state, openSites } from './helpers.mjs';
-import { RUNGS } from '../src/config.js';
+import { LADDER } from '../src/config.js';
 
 // The row arrays themselves, for the grammar check at the foot of this file. It
 // reads the static shape of every row -- `kind`, `name`, `unit` -- so it takes
@@ -68,7 +68,7 @@ group('a row no section names is still drawn', async () => {
   window.__invest();
   window.__grant({ shards: 400, spores: 400, cores: 9 });
   window.__tip(20000);
-  window.__levels({ rockhandSpeedLevel: RUNGS });   // the rung its multiplier waits on
+  window.__levels({ rockhandSpeedLevel: LADDER });   // the rung its multiplier waits on
 
   // Take a row's key out of every section on its board and check it survives.
   const before = window.__rows().filter(r => r.shown).map(r => r.key);

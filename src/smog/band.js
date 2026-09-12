@@ -1,4 +1,4 @@
-import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SCRUB_PULL, SMOG_FLOOR, SMOG_TOP } from '../config.js';
+import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SCRUB_PULL, SMOG_FLOOR, SMOG_TOP, FAN_TOP, LADDER } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S, scrub } from '../state.js';
 import { colAt, muckCols } from './layer.js';
@@ -128,9 +128,10 @@ export function outletMuck() {
   for (let c = from; c <= to; c++) n += m[c] || 0;
   return n;
 }
-// What one body in the house is worth, with whatever fan has been fitted. A
-// quarter again a rung, the same step every ladder in this game takes.
-export const fanPull = () => SCRUB_PULL * Math.pow(1.25, S.fanLevel || 0);
+// What one body in the house is worth, with whatever fan has been fitted:
+// eased across the ladder to `FAN_TOP` of the bare pull.
+export const fanPull = (lvl = S.fanLevel || 0) =>
+  SCRUB_PULL * Math.pow(FAN_TOP, Math.max(0, Math.min(LADDER, lvl)) / LADDER);
 export const scrubRate = () => (S.scrubOpen ? inScrub() * fanPull() : 0);
 // Where the thread ends, and where the dust comes back out. Both are places on
 // the building rather than numbers near it: the head of the throat, which is the

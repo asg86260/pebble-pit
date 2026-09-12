@@ -32,7 +32,9 @@ export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
 // appends the dust line at the exchange rate, as it does for every row priced
 // in coins -- so the coins here are cut to about half the old dust price and
 // the total a rung asks for lands roughly where it did.
-export const CRIT_CHANCE_SHARD = 5;    // first rung, rungCost-shaped like the rest
-export const CRIT_CHANCE_SPORE = 20;
-export const CRIT_MULT_SHARD = 15;
-export const CRIT_MULT_SPORE = 45;
+// Those two coins are now the second and third cards of a ladder sold in
+// bands (CLAUDE.md, "Decided"): the first card asks dust alone, at what the
+// old blue-and-green first rung was worth, and the crops and the ore come on
+// as the ladder climbs. The power ladder is three rungs and stays one card.
+export const CRIT_CHANCE_COST = 120;   // first rung of the chance ladder, dust
+export const CRIT_MULT_COST = 315;     // and of the power ladder, dust

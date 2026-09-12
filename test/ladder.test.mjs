@@ -2,14 +2,15 @@
 //
 // What this is checking is the shape rather than the numbers: that a ladder
 // stops, that it stops where the game's own floor is rather than at some level
-// nobody wrote down, that nothing can be bought past the top, and that the rungs
-// above the first tier are priced in their own coin *and* in dust -- which is
-// what keeps the rock worth digging for the whole run. See "The ladder" in
+// nobody wrote down, that nothing can be bought past the top, and that a ladder
+// is sold in cards whose bill deepens -- dust, then dust and crops, then dust,
+// crops and ore -- which is what keeps the rock worth digging for the whole run
+// and the grounds worth working. See "Every ladder is sold in bands" in
 // DESIGN.md.
 
-import { group, ok, state, yard, openSites, buyBuilt } from './helpers.mjs';
+import { group, ok, state, yard, openSites, buyBuilt, climb } from './helpers.mjs';
 
-import { RUNGS, MINE_FLOOR } from '../src/config.js';
+import { LADDER, MINE_FLOOR } from '../src/config.js';
 import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
@@ -32,24 +33,18 @@ group('a ladder has an end, and says where you are on it', async () => {
   window.__give(2000000);
   window.__grant({ shards: 40000, spores: 40000 });
 
-  const strength = row('carry');
-  const start = strength.rung();
-  // buy it all the way up, one rung at a time
-  const seen = [];
-  for (let i = 0; i < 12; i++) {
-    seen.push(strength.rung());
-    buyBuilt('carry');
-  }
-  const top = strength.rung();
-  const cost0 = window.__upgrades().find(u => u.key === 'carry');
+  const start = state().carryLevel;
+  // Nine rungs over three cards, then three more presses that buy nothing:
+  // the ladder is climbed through whichever card is showing, as a player does.
+  const got = climb('carry', 12, buyBuilt);
+  const top = state().carryLevel;
+  const last = window.__upgrades().find(u => u.key === 'carry3');
 
   return [
     ok(start === 0, 'a new yard starts at the bottom of it', `${start}`),
-    ok(top === RUNGS, 'and twelve purchases get five rungs',
-       `${top} of ${RUNGS}`),
-    ok(seen.filter((v, i) => i && v === seen[i - 1]).length > 0,
-       'because the last few did nothing at all', JSON.stringify(seen)),
-    ok(maxed(cost0), 'and the row knows it is finished')
+    ok(top === LADDER, 'and twelve purchases get nine rungs', `${top} of ${LADDER}`),
+    ok(got === LADDER, 'because the last few did nothing at all', `${got} bought`),
+    ok(maxed(last), 'and the last card knows it is finished')
   ];
 });
 
@@ -62,7 +57,7 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
   // row above it on the same board
   buyBuilt('auto');
   const before = state().mineMs;
-  for (let i = 0; i < 10; i++) buyBuilt('speed');
+  climb('speed', LADDER + 1, buyBuilt);
   const after = state();
   return [
     ok(before > after.mineMs, 'the swing gets faster', `${before}ms -> ${after.mineMs}ms`),
@@ -74,26 +69,37 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
   ];
 });
 
-group('above the first tier a rung costs its own coin and dust', async () => {
+group('the first card is dust alone, and the cards after it add the coins the yard has learned', async () => {
   window.__reset();
   window.__crew(1, 0);
-  window.__grant({ shards: 500, spores: 500 });   // no dust at all
-  const poor = state();
-  const gotNothing = buyBuilt('pick');
-  const stillPoor = state();
+  window.__give(2000000);
+  buyBuilt('auto');
+  window.__grant({ shards: 5000, spores: 5000 });
+  const bill = key => window.__rows().find(r => r.key === key)?.bill || [];
+  const coins = key => bill(key).map(([c]) => c).filter(c => c !== 'time').sort().join();
 
-  window.__give(50000);
-  const gotIt = buyBuilt('pick');
-  const rich = state();
+  const poor = state();
+  // Up the first card of the pickaxe in dust alone: the coins stay put.
+  climb('pick', 3, buyBuilt);
+  const afterOne = state();
+  const secondShown = window.__rows().find(r => r.key === 'pick2')?.shown;
+  // And the second card takes crops with the dust, the third crops and ore.
+  climb('pick', 3, buyBuilt);
+  const afterTwo = state();
+  climb('pick', 3, buyBuilt);
+  const afterThree = state();
+
   return [
-    ok(poor.shards >= 100, 'there is blue to spend', `${poor.shards}`),
-    ok(stillPoor.pickLevel === poor.pickLevel,
-       'and blue on its own does not buy a rung',
-       `${poor.pickLevel} -> ${stillPoor.pickLevel}`),
-    ok(rich.pickLevel === poor.pickLevel + 1,
-       'blue and dust together do', `${stillPoor.pickLevel} -> ${rich.pickLevel}`),
-    ok(rich.shards < stillPoor.shards && rich.stored < 50000,
-       'and both were taken', `${stillPoor.shards}->${rich.shards} blue, ${rich.stored} dust`)
+    ok(afterOne.pickLevel === poor.pickLevel + 3, 'the first card climbs', `${poor.pickLevel} -> ${afterOne.pickLevel}`),
+    ok(afterOne.shards === poor.shards && afterOne.spores === poor.spores,
+       'in dust alone', `${poor.shards}->${afterOne.shards} blue, ${poor.spores}->${afterOne.spores} green`),
+    ok(secondShown, 'and the second card takes its place'),
+    ok(coins('pick2') === 'dust,spore', 'priced in dust and crops', coins('pick2')),
+    ok(afterTwo.pickLevel === afterOne.pickLevel + 3 && afterTwo.spores < afterOne.spores && afterTwo.shards === afterOne.shards,
+       'and the crops are taken with the dust', `${afterOne.spores}->${afterTwo.spores} green`),
+    ok(coins('pick3') === 'dust,shard,spore', 'the third in dust, crops and ore', coins('pick3')),
+    ok(afterThree.pickLevel === afterTwo.pickLevel + 3 && afterThree.shards < afterTwo.shards,
+       'and the ore is taken too', `${afterTwo.shards}->${afterThree.shards} blue`)
   ];
 });
 

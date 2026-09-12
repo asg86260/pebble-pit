@@ -81,7 +81,7 @@ export const SWING_MULT = ladder({
   does: 'hit',
   cost: () => rungCost(15, levelOf('swing')),
   currency: 'shard',
-  after: 'rockhandspeed',
+  after: 'rockhandspeed3',
   // The shack draws it, directly under the rung it multiplies. The bench used
   // to, on the argument that the rock had no board of its own and the bench
   // stood at its flank -- which is the sentence the shack was built to make
@@ -104,7 +104,7 @@ export const HAUL_MULT = ladder({
   does: 'walk',
   cost: () => rungCost(20, levelOf('haul')),
   currency: 'shard',
-  after: 'boots',
+  after: 'boots3',
   // The bench, directly under the pace rung it multiplies -- the same shelf
   // `swing` sits on at the shack, for the same reason. It was sold at the
   // house for a while, which put the multiplier a board away from its rung.

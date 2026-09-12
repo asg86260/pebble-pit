@@ -71,8 +71,16 @@ export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 // are three of them -- so a house that could only ever pull at the rate it was
 // built with is a house that stops being an answer the moment the yard is worth
 // having one. A bigger fan is what keeps it in the argument.
-export const FAN_COST = 90;          // shards for the first rung
-export const FAN_RATE = 1.75;        // and how much steeper each one gets
+// In bands like every ladder (CLAUDE.md, "Decided"): the first card asks dust
+// alone, at what its old shard price was worth, so a polluted early yard can
+// answer the sky in the coin it actually has; the crops and the ore come on
+// with the second and third cards. If the sky comes under control too early
+// on a real yard, this is the knob.
+export const FAN_COST = 1080;        // dust for the first rung (ninety shards' worth)
+// What a fitted fan is worth at the top of its ladder, as a factor on the
+// pull. A quarter again a rung over five was three times; the same three
+// times is spread over nine rungs now, so the top is where it was.
+export const FAN_TOP = Math.pow(1.25, 5);
 export const RECYCLE_SHARDS = 120;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one
 // And halved for the same reason: the recycler hands back the same dust a second

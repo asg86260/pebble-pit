@@ -7,7 +7,7 @@
 // never), and where a real roll is measured the levels are pinned and the run is
 // long, so the number is the mechanic rather than the seed.
 
-import { group, ok, state, run, haveRock, openSites, buyBuilt, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, haveRock, openSites, buyBuilt, climb, P, WORKER } from './helpers.mjs';
 import { S, floor } from '../src/state.js';
 import { findShards, seamShards } from '../src/quarry.js';
 import { critMult, critChance, critEV } from '../src/crit.js';
@@ -175,31 +175,42 @@ group('a crit throws real dust that is flagged, swells, and banks', async () => 
 // Bought through the row a player presses, because what is being asked is
 // whether the price is really taken out of those two purses -- a check that set
 // `S.critChanceLevel` would prove nothing about the bill at all.
-group('a crit rung is paid for in shards and spores', async () => {
+group('the crit ladders are dust first, and the chance ladder asks crops and ore as it climbs', async () => {
   window.__reset();
   window.__crew(1, 0);                       // a hand to walk it to the bench
-  window.__give(200000);
-  window.__grant({ shards: 500, spores: 500 });
+  window.__give(2000000);
+  window.__grant({ shards: 5000, spores: 5000 });
 
-  const purse = () => [state().shards, state().spores];
-  const [sh0, sp0] = purse();
+  const purse = () => [state().stored, state().shards, state().spores];
+  const [d0, sh0, sp0] = purse();
   const lvl0 = S.critChanceLevel;
   // Bought through the row a player presses, and built the way a bench row is
   // built -- a body walks over and fits it -- rather than by setting the level.
   const gotChance = buyBuilt('critchance');
-  const [sh1, sp1] = purse();
+  const lvl1 = S.critChanceLevel;
+  const [d1, sh1, sp1] = purse();
 
-  // And the power rung out of the same two, so neither row was left on dust.
+  // And the power rung, one card of three, in dust alone.
   const mult0 = S.critMultLevel;
   const gotMult = buyBuilt('critmult');
-  const [sh2, sp2] = purse();
+  const [d2, sh2, sp2] = purse();
+
+  // Three more up the chance ladder through whichever card is showing -- the
+  // rest of the first card and into the second, which takes crops with the
+  // dust; the third takes crops and ore.
+  const bill = key => window.__rows().find(r => r.key === key)?.bill || [];
+  const coins = key => bill(key).map(([c]) => c).filter(c => c !== 'time').sort().join();
+  const got = climb('critchance', 3, buyBuilt);
+  const secondCard = window.__rows().find(r => r.key === 'critchance2')?.shown;
 
   return [
-    ok(gotChance && S.critChanceLevel === lvl0 + 1, 'the chance rung was bought at the row'),
-    ok(sh1 < sh0, 'it took shards', `${sh0} -> ${sh1}`),
-    ok(sp1 < sp0, 'and spores', `${sp0} -> ${sp1}`),
+    ok(gotChance && lvl1 === lvl0 + 1, 'the chance rung was bought at the row', `${gotChance}, ${lvl0} -> ${lvl1}`),
+    ok(d1 < d0, 'it took dust', `${d0} -> ${d1}`),
+    ok(sh1 === sh0 && sp1 === sp0, 'and nothing else on the first card', `${sh0}->${sh1} shard, ${sp0}->${sp1} spore`),
     ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
-    ok(sh2 < sh1 && sp2 < sp1, 'out of the same two purses',
-       `${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
+    ok(d2 < d1 && sh2 === sh1 && sp2 === sp1, 'in dust alone', `${d1}->${d2} dust`),
+    ok(got === 3 && secondCard, 'the first card finished and the second took its place', `${got}, ${secondCard}`),
+    ok(coins('critchance2') === 'dust,spore', 'the second card asks dust and crops', coins('critchance2')),
+    ok(coins('critchance3') === 'dust,shard,spore', 'and the third dust, crops and ore', coins('critchance3'))
   ];
 });

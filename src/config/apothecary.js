@@ -36,8 +36,10 @@ export const BREW_BILL = {
   gleam:  [['spore', 8],  ['spark', 3]]
 };
 
-// The pot at level 0, and where each ladder takes it by its fifth rung. Every
-// one of these eases straight across `RUNGS` the way the crit ladders do.
+// The pot at level 0, and where each ladder takes it at the top. Every one of
+// these eases straight across `LADDER` the way the crit ladders do; the names
+// say five because that is how long the ladders were when the tops were set,
+// and the tops have not moved.
 export const BREW_MS0 = 30000;         // 30 s a batch at brew-speed 0...
 export const BREW_MS5 = 15000;         // ...and 15 s at the top: drain and coverage double
 export const BUFF_MS0 = 60000;         // a dose lasts a minute at buff-length 0...
@@ -70,18 +72,16 @@ export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
 export const TONIC_SWIFT_PACE = 0.25;  // +25% haul speed at potency 0
 export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
 
-// The ladders, priced spore + dust like every tier-two row (rockhandpick's
-// shape). `doses a brew` and `bodies a brew` are one rung here, not two: a dose
-// is one body, one buff -- a fresh dose refreshes the timer rather than stacking
-// -- so "more doses" and "more bodies reached" are the same sentence. See the
-// report and DESIGN.md "Open".
+// The ladders, in bands like every ladder in the yard (CLAUDE.md, "Decided"):
+// dust alone on the first card, dust and crops on the second, dust, crops and
+// ore on the third, the coins over the dust derived at `DUST_PER`. So this is
+// the one price the building's ladders carry -- what a first rung costs.
 // A first rung at the door's own price (900 dust), not a fortieth of it: a
 // board you can clear on the frame it opens is a list, not a set of choices.
 // The grind pass measured exactly that happening, and the idle veteran measured
 // it again at half the door -- every ladder bought inside a minute of the door
 // on every run (docs/critics-2026-09-10.md, B9).
-export const BREW_RUNG_SPORE = 120;    // first rung, spore, rungCost-shaped
-export const BREW_RUNG_DUST = 900;     // and the dust half, per the house rule
+export const BREW_RUNG_DUST = 900;
 
 // How many doses a stirrer takes out of the building in one trip, rung by rung.
 // One at level nought -- a body carrying a single vial, which is what it always
