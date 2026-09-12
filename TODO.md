@@ -1,5 +1,15 @@
 # Still to do
 
+## The desk and the sound -- in flight (2026-09-11)
+
+The last open boxes on `docs/release-checklist.md`, built as one wave:
+`docs/wave-desk-sound.md` is the spec, canon for three tracks -- A the
+Electron shell, the save on disk, packaging and the version boundary; B the
+sound engine; C the yard's `sfx` calls. The three audio calls the design left
+open are made at the top of the spec: the sky is the score, on and quiet, the
+rift is the one pitched exception. `src/audio.js` is the seam, stubbed on the
+branch.
+
 ## The cutscenes, fleshed out (2026-09-11)
 
 **Status:** built (DESIGN.md, "The cutscenes, fleshed out"). The opening
