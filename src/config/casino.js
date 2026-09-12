@@ -97,3 +97,21 @@ export const CASINO_PILE_BRIM = 700;  // and the most that ever lies there
 // wheel that stopped and told you nothing is a wheel you have to have been
 // watching, and the yard already has a mark for news you missed -- the lab's
 // tick. This is the same idea with two answers.
+
+// --- how a hand is felt ---------------------------------------------------------
+// A settled hand is the one moment in the game that is *news*, and a wheel that
+// stopped and then sat there read as a wheel that had not decided. So a win is
+// a burst: the sign's chase goes to a full strobe, the wheel flashes, and a
+// fountain of squares goes up out of it and rains down over the yard. A loss is
+// a dud: the sign goes dark and its bulbs come back one at a time, and the pot
+// lifts off the ground and fades, which it always did. Nothing pops.
+export const CASINO_WIN_MS = 2400;      // the strobe and the flash
+export const CASINO_FLASH_MS = 700;     // of which the wheel itself flashes
+export const CASINO_STROBE_MS = 70;     // a bulb on or off, this often
+export const CASINO_BURST = 70;         // squares in the fountain...
+export const CASINO_BURSTS = 3;         // ...and how many fountains, a beat apart
+export const CASINO_BURST_GAP_MS = 220;
+export const CASINO_BURST_UP = 3.2;     // how hard they go up, in pixels a frame
+export const CASINO_BURST_SIDE = 1.6;   // and how wide they spread
+export const CASINO_DARK_MS = 800;      // a loss: the sign goes dark for this long...
+export const CASINO_RELIGHT_MS = 90;    // ...then a bulb comes back this often

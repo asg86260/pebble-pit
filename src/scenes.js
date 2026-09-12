@@ -730,6 +730,28 @@ export const SCENES = {
     run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
                  window.__buy('stakedust'); window.__fast(3);
                  window.__look(st().casinoX - 380); } },
+  // A hand just settled, either way: the wheel is played until the wanted
+  // answer comes up, and the shot is a beat after the stop -- the sign on its
+  // strobe and the fountain in the air, or the sign dark and the pot lifting.
+  casinowin: { about: 'the casino', say: 'a win: the strobe and the fountain',
+    run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+                 for (let i = 0; i < 12; i++) {
+                   if (st().pot) { window.__buy('bank'); window.__fast(3); }
+                   window.__buy('stakedust');
+                   for (let f = 0; f < 600 && (st().pouring || st().spinning); f++) window.__fast(1 / 60);
+                   if (st().hand && st().hand.won) break;
+                 }
+                 window.__fast(0.1);
+                 window.__look(st().casinoX - 380); } },
+  casinoloss: { about: 'the casino', say: 'a loss: the sign goes dark and the pot lifts off',
+    run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+                 for (let i = 0; i < 12; i++) {
+                   if (st().pot) { window.__buy('bank'); window.__fast(3); }
+                   window.__buy('stakedust');
+                   for (let f = 0; f < 600 && (st().pouring || st().spinning); f++) window.__fast(1 / 60);
+                   if (st().hand && !st().hand.won) break;
+                 }
+                 window.__look(st().casinoX - 380); } },
 
   // --- the pit and the rift ---------------------------------------------------
   // The books over the pit: the measured rate for every currency the yard has

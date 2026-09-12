@@ -41,6 +41,7 @@ import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_T
          CASINO_WHEEL, CASINO_KNOCK,
          CASINO_WIN_KNOCK, TABLE_LIFE, TABLE_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM,
+         CASINO_BURST, CASINO_BURSTS, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
          P, SHADES, SHARD_CELL, SPORE_CELL, someFind, CASINO_BIG } from './config.js';
 import { S, pit, casino, table } from './state.js';
 import { noteHand } from './notices.js';
@@ -51,6 +52,7 @@ import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld, pitRoom } from './pit.js';
 import { buildShop } from './shop.js';
 import { rand } from './rng.js';
+import { sfx } from './audio.js';
 
 // What is on the table right now, and nothing about it moves on its own: a pot
 // is what the last spin left, until the next one.
@@ -540,12 +542,42 @@ export function stepCasino(dt) {
     // and it says which way it went, for a few seconds, over the building --
     // a wheel that stopped and told you nothing is a wheel you had to have been
     // watching, and you are usually somewhere else in the yard.
-    S.hand = { won: S.spinWon, n: S.spinWon ? pot() : 0, cur, at: now() };
+    S.hand = { won: S.spinWon, n: S.spinWon ? pot() : 0, cur, at: now(), bursts: 0 };
     noteHand(S.spinWon, S.hand.n || S.pot?.n || 0, CASINO_BIG);
+    // and it is felt: a fountain out of the wheel, or a dud
+    if (S.spinWon) sfx('metal', { x: casino.x + casino.w / 2, big: true, hard: 1, cls: 'punct' });
+    else sfx('wood', { x: casino.x + casino.w / 2, cls: 'hand' });   // and the sign goes out: see drawSign
     S.dirty = true;
     buildShop();
   }
+  // A win's fountains go up a beat apart rather than all at once: three bursts
+  // read as a celebration, one reads as a hiccup.
+  if (S.hand?.won && S.hand.bursts < CASINO_BURSTS &&
+      now() - S.hand.at >= S.hand.bursts * CASINO_BURST_GAP_MS) { burst(); S.hand.bursts++; }
   if (S.hand && now() - S.hand.at > CASINO_SAY_MS) { S.hand = null; S.dirty = true; }
+}
+
+// The middle of the wheel, which is where the news comes out of. The same
+// arithmetic the drawing uses, so the squares leave the hole and not the roof.
+const wheelAtXY = () => ({ x: casino.x + casino.w / 2, y: casino.y + casino.h * 0.62 });
+
+// A fountain of squares out of the wheel: up hard, out a little, and down
+// under gravity, fading as they go. They are scenery -- worth nothing, landing
+// nowhere -- in every shade the yard has, so they read as confetti against the
+// sky and against the block both.
+function burst() {
+  const { x, y } = wheelAtXY();
+  for (let i = 0; i < CASINO_BURST; i++) {
+    const a = (rand() - 0.5) * Math.PI * 0.9;            // a fan, mostly up
+    const v = CASINO_BURST_UP * (0.6 + rand() * 0.6);
+    S.tableAir.push({
+      x: x + (rand() - 0.5) * P * 4, y,
+      vx: Math.sin(a) * v * CASINO_BURST_SIDE, vy: -Math.cos(a) * v,
+      // two cells a square and mostly black: a one-cell grey square in the air
+      // is a mote, and the yard is full of those
+      fade: true, big: true, t: 0, s: rand() < 0.7 ? 1 : 1 + Math.floor(rand() * SHADES.length)
+    });
+  }
 }
 
 // what the yard should be showing over the building, if anything

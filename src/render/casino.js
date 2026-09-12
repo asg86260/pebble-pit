@@ -7,7 +7,8 @@
 
 import { potAt, sliceKeeps } from '../casino.js';
 import { now } from '../clock.js';
-import { CASINO_H, CASINO_KEEP, CASINO_LOSE, CASINO_SLICES, DOOR_H, DOOR_W, FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind } from '../config.js';
+import { CASINO_H, CASINO_KEEP, CASINO_LOSE, CASINO_SLICES, DOOR_H, DOOR_W, FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
+         CASINO_WIN_MS, CASINO_FLASH_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS } from '../config.js';
 import { S, casino, floor, table } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -121,9 +122,20 @@ function drawSign() {
 
   // and the lights, walking round the edge. A whole cell at a time, like
   // everything that moves in this game: a bulb is on or it is off.
+  //
+  // Unless a hand has just settled. A win puts every bulb on a strobe for a
+  // couple of seconds; a loss puts the whole board out and then brings the
+  // bulbs back one at a time round the ring, and the chase picks up among the
+  // ones that are back. See `CASINO_WIN_MS` and its neighbors in config.js.
   const step = Math.floor(now() / CHASE_MS);
-  ringCells(w, h).forEach(([cx, cy], i) => {
-    if ((i + step) % CHASE_EVERY) return;
+  const age = S.hand ? now() - S.hand.at : Infinity;
+  const strobe = S.hand?.won && age < CASINO_WIN_MS;
+  const lit = S.hand && !S.hand.won
+    ? Math.max(0, Math.floor((age - CASINO_DARK_MS) / CASINO_RELIGHT_MS)) : Infinity;
+  const ring = ringCells(w, h);
+  ring.forEach(([cx, cy], i) => {
+    if (strobe) { if (Math.floor(age / CASINO_STROBE_MS) % 2) return; }
+    else if (i >= lit || (i + step) % CHASE_EVERY) return;
     ctx.fillRect(x + cx * P, y + cy * P, P, P);
   });
 }
@@ -162,7 +174,8 @@ export function drawSparks() {
     // *leaving*, and it should look like it rather than blinking off.
     if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / TABLE_LIFE);
     ctx.fillStyle = find ? FIND_COLOR[find][k.s - find] : SHADES[Math.min(SHADES.length, k.s) - 1];
-    ctx.fillRect(Math.round(k.x), Math.round(k.y), P, P);
+    const d = k.big ? P * 2 : P;               // a hand's confetti is two cells a square
+    ctx.fillRect(Math.round(k.x), Math.round(k.y), d, d);
     ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
@@ -196,8 +209,13 @@ export function drawCasino() {
   ctx.beginPath();
   ctx.arc(cx, cy, r + P, 0, Math.PI * 2);
   ctx.fill();
+  // A win flashes the wheel: the slices swap sides a few times as it stops, so
+  // the thing that decided is the thing that shouts. Whole flips on the strobe's
+  // clock, never a blend.
+  const age = S.hand ? now() - S.hand.at : Infinity;
+  const flip = S.hand?.won && age < CASINO_FLASH_MS && Math.floor(age / CASINO_STROBE_MS) % 2;
   for (let i = 0; i < CASINO_SLICES; i++) {
-    ctx.fillStyle = sliceKeeps(i) ? CASINO_KEEP : CASINO_LOSE;
+    ctx.fillStyle = (sliceKeeps(i) !== !!flip) ? CASINO_KEEP : CASINO_LOSE;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, r, S.wheel + i * step, S.wheel + (i + 1) * step);
