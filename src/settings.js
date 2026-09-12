@@ -115,3 +115,29 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   said.textContent = '';
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
+
+// wave-desk-sound, track B: the mute. The one line outside audio.js that knows
+// a context exists is the wake on the first pointer gesture -- the browser
+// allows nothing before one, and audio.js queues nothing before it either.
+// The switch itself is a preference and not a fact about the run: it survives
+// a reset and does not travel with a save (prefs.js). The switch says what is
+// in force, the way the motion switch does, and is put in order on open by its
+// own observer, guarded like the one above.
+import { pref } from './prefs.js';
+import { wakeAudio, muteAudio } from './audio.js';
+
+const soundEl = document.getElementById('sound');
+function saySound() {
+  soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on';
+}
+soundEl.addEventListener('click', () => {
+  setPref('muted', !pref('muted'));
+  muteAudio(pref('muted'));
+  saySound();
+});
+muteAudio(pref('muted'));
+window.addEventListener('pointerdown', wakeAudio, { once: true });
+if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
+  if (!sheet.hidden) saySound();
+}).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
+saySound();

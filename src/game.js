@@ -42,6 +42,8 @@ import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
 import { cubes as houseCubes } from './house.js';
 // Track F3 (wave5): the books over the pit, which measure what the yard earned.
 import { sampleBooks } from './stats.js';
+// wave-desk-sound, track B: the beds follow the yard, once a frame.
+import { stepAudio } from './audio.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -288,6 +290,9 @@ export const STEPS = [
 export function step() {
   const c = { now: 0, dt: 0 };
   for (const s of STEPS) s.step(c);
+  // Last, so the beds read the frame the yard has just finished: what is
+  // raining, who is at a machine, how wide the rift is now.
+  stepAudio(c.dt);
 }
 
 // Everything in the air, one frame further along, and whatever it lands on.

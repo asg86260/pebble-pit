@@ -5857,7 +5857,27 @@ moves for a height that does.
 
 This is the page tier for both halves of the size question, because a sheet's
 width is a fact about layout and there is nothing in the yard that knows it.
-## The sound of the yard (design, not built)
+## The sound of the yard (built)
+
+*Built 2026-09-12 (docs/wave-desk-sound.md, track B): `src/audio.js`, `src/config/sound.js`,
+`test/sound.test.mjs`, the `#sound` switch on the held sheet. The three open questions at the end
+of this section were decided in the wave document, and are copied here so the section reads
+whole: **(1) music** -- (c), the sky is the only score: no drone, no music; the air and water beds
+swell and recede with the weather and that is the whole arc. **(2) default** -- on, and quiet,
+`SND_MASTER = 0.18`; the mute remembers through `prefs.js`'s `muted`, a preference rather than a
+state.js field, so it survives a reset and does not travel with a save. **(3) the tower and the
+rift** -- the rift is the one exception, two low sines beating; the tower is silent, and nothing
+else ever gets a pitched or sustained voice. Amendments the build made: a fold window's sound is
+*decided* when the window opens (that is when the counters move) and *emitted* when it closes, so
+everything inside the window is in it; `byClass` counts what the yard asked for and `firedBy` what
+got through; punctuation has a ceiling of its own (`SND_PUNCT_PER_S`), a guard against a burst
+nobody designed rather than a balance number; the machines' hum counts a machine while a tender is
+in reach (`mannedAt`, the belt's own reading), not while it is merely bought; the "one-pole"
+lowpass is a biquad at a low Q, which is the nearest thing Web Audio has; and the sound's knobs
+sit beside `TUNABLE` on the dev panel rather than in it, because `config.js` was additive-only
+that wave. None of it has been listened to yet -- the node tier holds the decisions, and the ear
+is the next pass.*
+
 
 The seed for this was one line under "Open questions": soft ticks on a hit, a low tone when a core
 banks, optional, off by default. That is a list of two sounds, and a list of sounds is exactly the

@@ -35,6 +35,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `air.js` | the dust hanging in the yard: three bands of it, at three distances, and its colour over each site | yes |
 | `roster.js` | the crew count and its two buttons under each station | yes |
 | `weather.js` | the clouds and the birds, far behind everything | yes |
+| `audio.js` | the sound: the only file that names an `AudioContext`. Modules say what happened (`sfx(voice, { x, hard, big, crit, cls })`) and it decides what survives the fold window, the ceiling and the voice cap; the beds (rain, wind, the rift, the machines) are set from `S` once a frame in `stepAudio`, never by event. The decision half runs with no context, which is what `test/sound.test.mjs` holds; every number is `SND_*` in `config/sound.js` | yes |
 | `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
