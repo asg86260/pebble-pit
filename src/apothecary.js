@@ -44,7 +44,7 @@ import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, commutePace, unitText } from './upgrades.js';
 import { registerRows } from './works.js';
-import { tierRows, cards, named } from './upgrades/tiers.js';
+import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -799,8 +799,8 @@ export const APOTHECARY_UPGRADES = [
 // and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
-  { title: 'brewing', keys: [...cards('bufflength'), ...cards('brewdoses')] },
-  { title: 'potency', keys: TONICS.flatMap(t => cards(`potency-${t.key}`)) }
+  { title: 'brewing', keys: ['bufflength', 'brewdoses'] },
+  { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
 ];
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is

@@ -918,8 +918,8 @@ const QUARRY_YIELD = tierRows({
   show: () => S.quarryOpen,
   bands: [
     { key: 'seam',    name: 'ore yield',     coins: [] },
-    { key: 'seam2',   name: 'ore yield II',  coins: ['shard'] },
-    { key: 'seam3',   name: 'ore yield III', coins: ['shard', 'spore'] },
+    { key: 'seam2',   name: 'ore yield',  coins: ['shard'] },
+    { key: 'seam3',   name: 'ore yield', coins: ['shard', 'spore'] },
     { key: 'labseam', name: 'enchanted TNT',
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }
@@ -935,8 +935,8 @@ const QUARRY_SPEED = tierRows({
   show: () => S.quarryOpen,
   bands: [
     { key: 'quarrypace',  name: 'mining speed',     coins: [] },
-    { key: 'quarrypace2', name: 'mining speed II',  coins: ['shard'] },
-    { key: 'quarrypace3', name: 'mining speed III', coins: ['shard', 'spore'] },
+    { key: 'quarrypace2', name: 'mining speed',  coins: ['shard'] },
+    { key: 'quarrypace3', name: 'mining speed', coins: ['shard', 'spore'] },
     { key: 'labcave',     name: 'anti-gravity zone',
       coins: ['shard', 'spore', 'core', 'spark'],
       gate: invested }
@@ -1001,8 +1001,8 @@ export const QUARRY_UPGRADES = [
 // one speed card.
 export const QUARRY_SECTIONS = [
   { title: 'the quarry', keys: ['quarrybench',
-                                'seam', 'seam2', 'seam3', 'labseam',
-                                'quarrypace', 'quarrypace2', 'quarrypace3', 'labcave',
+                                'seam', 'labseam',
+                                'quarrypace', 'labcave',
                                 'jaw', 'tunejaw'] }
 ];
 

@@ -3,6 +3,7 @@
 // 5 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
+import { CARRY_COST } from '../config.js';
 import { sleep, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUntil, haveRock,
   bankCore, buy } from './kit.js';
 
@@ -29,7 +30,7 @@ export const TESTS = [
     window.__give(500);
     await sleep(300);
     const filled = state();
-    const cost = 8;
+    const cost = CARRY_COST;                 // your strength's first rung
     const bought = await buy('carry');
     await sleep(300);
     const spent = state();

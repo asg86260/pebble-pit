@@ -370,7 +370,6 @@ export const idle = () => spareHands();
 // trade is a fact about a hat.
 import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 import { JOB } from './jobs.js';
-import { cards } from './upgrades/tiers.js';
 import { BENCH_ROWS } from './upgrades/rows-bench.js';
 import { LUCK_ROWS } from './upgrades/rows-luck.js';
 import { ROCK_ROWS } from './upgrades/rows-rock.js';
@@ -912,11 +911,11 @@ registerRows(UPGRADES);
 export const SECTIONS = [
   // "you", not "your gear": you are the cursor, and the heading under this one
   // is the one about gear.
-  { title: 'you', keys: [...cards('carry'), 'auto', ...cards('speed'), ...cards('pick')] },
+  { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   // The crit rows apply to the whole yard, so the bench is their natural home.
   // "lucky swings" rather than the genre's "critical hits": a heading here is a
   // thing in the yard, not a term from another game's manual.
-  { title: 'lucky swings', keys: [...cards('critchance'), 'critmult'] },
+  { title: 'lucky swings', keys: ['critchance', 'critmult'] },
   // Everything a hauler is issued: what they carry, how fast they walk, the
   // multiplier over that, and the machine that carries without them. All of it
   // was sold at the house for a while, in two moves, and all of it has come
@@ -925,7 +924,7 @@ export const SECTIONS = [
   // first, the thing that climbs past it last, the way the shack orders the
   // rock's. Named for the job, the way the shack's is: "the haulers" beside
   // "the miners", and "crew" left to the house, where the crew live.
-  { title: 'the haulers', keys: [...cards('haulcarry'), ...cards('haulpace'), 'belt', 'tunebelt'] },
+  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

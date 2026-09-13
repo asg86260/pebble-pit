@@ -35,36 +35,33 @@ const rich = () => window.__grant({ dust: 400000, shards: 9000, spores: 40000,
 const showing = keys => window.__rows().filter(r => keys.includes(r.key) && r.shown)
                               .map(r => r.key);
 
-group('a card is retired when its band is finished, and the next one takes its place', async () => {
+group('a ladder is one card, its pips in threes, and the bill deepens as they fill', async () => {
   window.__reset();
   openSites();
   rich();
   const cards = ['crop', 'crop2', 'crop3', 'labcrop'];
 
   const first = showing(cards);
-  // Three rungs, bought through the row each time -- the price, the band gate
-  // and the work all the way up.
+  const row0 = rowOf('crop');
+  const coins = () => rowOf('crop').bill().map(([m]) => m).filter(m => m !== 'time').sort().join();
+  const c0 = coins();
   const bought = [buyNow('crop'), buyNow('crop'), buyNow('crop')];
   const second = showing(cards);
-  // ...and the pips start again at nought on the new card, because a card is
-  // three rungs however far up the ladder it sits.
-  const row = rowOf('crop2');
+  const row = rowOf('crop');
 
   return [
-    ok(first.join() === 'crop', 'the ladder opens on its first card', first.join() || 'none'),
-    ok(bought.every(Boolean), 'and its three rungs can be bought', bought.join()),
-    ok(second.join() === 'crop2', 'which retires it and shows the next',
-       second.join() || 'none'),
-    ok(S.cropLevel === TIER_BAND, 'three rungs on the ladder', `${S.cropLevel}`),
-    ok(row && rungOf(row) === 0 && rungsOf(row) === TIER_BAND,
-       'and the new card is three fresh pips',
-       row ? `${rungOf(row)} of ${rungsOf(row)}` : 'no row')
+    ok(first.join() === 'crop', 'the ladder is its first key', first.join() || 'none'),
+    ok(row0 && rungsOf(row0) === TIER_OWN && row0.group === TIER_BAND,
+       'with nine pips in groups of three', row0 ? `${rungsOf(row0)} in ${row0.group}s` : 'no row'),
+    ok(bought.every(Boolean), 'and its first three rungs can be bought', bought.join()),
+    ok(second.join() === 'crop', 'on the same card', second.join() || 'none'),
+    ok(S.cropLevel === TIER_BAND && rungOf(row) === TIER_BAND, 'three rungs on the ladder',
+       `${S.cropLevel}, ${rungOf(row)} pips`),
+    ok(c0 === 'dust' && coins() === 'dust,spore', 'and the bill has deepened by a coin',
+       `${c0} -> ${coins()}`)
   ];
 });
 
-// The bill deepens by band: dust, then the ground's own coin, then the other
-// ground's, then everything the yard makes. Read off the rows rather than off
-// the table that built them.
 group('each band asks for one more coin than the last', async () => {
   window.__reset();
   openSites();
@@ -73,10 +70,13 @@ group('each band asks for one more coin than the last', async () => {
   const coins = key => window.__rows().filter(r => r.key === key)[0]
                              ?.bill.map(([m]) => m).filter(m => m !== 'time') ?? [];
   const seen = [];
-  for (const key of ['seam', 'seam2', 'seam3', 'labseam']) {
-    seen.push(coins(key));
-    for (let i = 0; i < TIER_BAND; i++) buyNow(key);
+  // One card for the ladder's own nine rungs, its bill deepening every three;
+  // then the research card.
+  for (let band = 0; band < 3; band++) {
+    seen.push(coins('seam'));
+    for (let i = 0; i < TIER_BAND; i++) buyNow('seam');
   }
+  seen.push(coins('labseam'));
   return [
     ok(seen[0].join() === 'dust', 'band one is dust and nothing else', seen[0].join()),
     ok(seen[1].sort().join() === 'dust,shard', "band two adds the cut's own coin",
@@ -101,9 +101,7 @@ group('the last band is a build that bodies have to finish', async () => {
 
   // Nine rungs of the ladder's own field first -- through the rows, band gates
   // and all -- so band four is the card on the board.
-  for (const key of ['tend', 'tend2', 'tend3']) {
-    for (let i = 0; i < TIER_BAND; i++) buyNow(key);
-  }
+  for (let i = 0; i < TIER_OWN; i++) buyNow('tend');
   const card = showing(['tend', 'tend2', 'tend3', 'labtend']);
 
   const was = S.mult.tend;
@@ -116,7 +114,7 @@ group('the last band is a build that bodies have to finish', async () => {
   window.__crew(0, 0);
   return [
     ok(S.tendLevel === TIER_OWN, 'nine rungs of its own field first', `${S.tendLevel}`),
-    ok(card.join() === 'labtend', 'and the last card is the one on the board',
+    ok(card.join() === 'tend,labtend', 'and the research card stands beside the finished ladder',
        card.join() || 'none'),
     ok(pressed, 'the row can be pressed'),
     ok(started, 'paying starts a piece of work rather than finishing it'),

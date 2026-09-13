@@ -114,6 +114,9 @@ export const TESTS = [
     if (gotBite) { bite.click(); window.__finish(); await sleep(150); }
     const mid = state();
     await hoverBench();
+    // Your pick waits on the swing being automatic -- it is beside the swing
+    // on the bench (see rows-bench.js) -- so the switch is bought first.
+    await buy('auto');
     const gotPick = await buy('pick');
     const after = state();
     window.__crew(0, 0);
