@@ -891,18 +891,22 @@ canvas {
    actually press hiding at the top of it. So the names come out beside the board
    when you ask for them, and the board stays the size of what you can do.
 
-   To the right, and bottom-aligned like everything else in the panel: the purse
-   already owns the left, and a list that opened downwards would have to grow
-   through the ground the board is standing on. Bottom-aligned means a list of
-   twenty grows upwards, so the board itself never moves when it comes out. */
-.panel .flyout { transform-origin: 0 100%; }
-/* Cut to its names rather than to the boards' one width: a list as wide as a
-   board beside a board is two boards, and on an ordinary window they would not
-   both fit. The floor is so a name changing under the cursor cannot walk it. */
-.panel .flyout { width: auto; min-width: 34ch; }
+   Over the board, not beside it. It stood to the right of the board once, as
+   a flex sibling, with a rule for flipping to the left when the right ran out
+   and a rule for going on a line of its own when neither side would take it --
+   and on any window narrower than about 1400 pixels neither side would, so
+   hovering the door threw the board into the top corner of the window to make
+   room. A list you opened by hovering a row should not move the row.
+   So it is out of the panel's flow altogether: seated on the board's own
+   bottom-right corner, the width of a board, so it lays exactly over the sheet
+   it came out of and grows upward into the sky if it is taller. Nothing the
+   panel measures includes it, so nothing about the board's seat changes when
+   it comes out. Leaving it puts it away again and the shop is underneath
+   where it was. */
+.panel .flyout { position: absolute; right: 0; bottom: 0; z-index: 1; transform-origin: 0 100%; }
 /* A settlement can get long. The names scroll inside the sheet rather than
-   pushing the panel taller than the window, which is the one thing that would
-   move the board out from under the cursor that opened this. */
+   growing off the top of the window -- `place` caps this further by the room
+   the board actually has above it. */
 #crewlist { max-height: 46vh; overflow-y: auto; }
 /* Two columns rather than three. Nothing on this sheet has a price, so the
    middle column -- what a purchase gives you -- is closed up, and where the body
@@ -1111,14 +1115,6 @@ canvas {
    thing that goes somewhere else. See `seatFlyout`. */
 .panel > * { flex-shrink: 0; }
 
-/* Where the submenu goes when there is no room on the right of the board. The
-   list is the last child, so `order` is what moves it to the other side, and
-   the panel wraps upward when neither side has room -- upward because the panel
-   is seated on its bottom edge, so a second line grows into the sky rather than
-   down through the station it belongs to. */
-.panel.flip #crewlist { order: -1; }
-.panel.stack { flex-wrap: wrap-reverse; justify-content: flex-start; }
-.panel.stack #crewlist { order: -1; }
 
 /* What you have to spend, off the left of the board.
    Every price on these boards is a mark and a number, and the only place you
@@ -1165,8 +1161,8 @@ canvas {
      that wraps at the bench should wrap at the same word at the cut.
      The number is the ceiling the full boards already reached, so nothing that
      fitted before wraps now; in `ch`, so it is a count of the sheet's own
-     characters rather than a pixel guess about the type. The flyout is left
-     out: it is a list of names beside a board, not a board.
+     characters rather than a pixel guess about the type. The crew list wears
+     the same width on purpose: it lays over the board, edge for edge.
      A phone overrides this with the width of the glass -- see the media rule. */
   width: 84ch;
   display: flex; flex-direction: column; gap: 6px;
@@ -1265,9 +1261,7 @@ canvas {
   .panel .sheet {
     padding: 8px 9px;
     /* The one width is the glass, less the panel's margins: the boards are
-       still all one size, it is just the phone's size. `min` rather than a
-       max-width over the fixed width, so the flyout's own `auto` is not
-       clamped by a rule meant for the boards. */
+       still all one size, it is just the phone's size. */
     width: min(84ch, 100vw - 16px);
     /* in landscape there may be less room above the bench than the board wants:
        it scrolls inside itself rather than running off the top */
@@ -1275,7 +1269,6 @@ canvas {
     overflow-y: auto;
     letter-spacing: .06em;
   }
-  .panel .flyout { width: auto; max-width: calc(100vw - 16px); }
   /* The same air between cards as on a desk. It was a single pixel between
      rows here, which is two card borders touching with a hairline of white
      between them -- a column of boxes rather than a set of cards. Four pixels
@@ -1290,11 +1283,6 @@ canvas {
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #hidedone { padding: 6px 8px; }
-  /* The panel stacks on a phone, so the submenu lands under the board it came
-     out of rather than beside it -- which is still a submenu, and is the only
-     way round that fits. Between the two of them they have one screen to share,
-     so the names get a shorter run of it before they start scrolling. */
-  #crewlist { max-height: 30vh; }
 }
 
 /* Narrow glass, whatever the height: one card across. Two columns on a sheet
