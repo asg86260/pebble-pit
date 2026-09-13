@@ -34,11 +34,24 @@ export let CASINO_BIG = 50000;
 // And what counts as a rock off in a hurry, in seconds.
 export let NOTICE_FAST_ROCK_S = 60;
 
+// --- the toast ----------------------------------------------------------------
+// How long a notice's card stays at the top of the window, in game
+// milliseconds, and the gap between two when several land at once. Long
+// enough to read a name and a note without hurrying; short enough that a rock
+// landing three of them is over before the next rock. See DESIGN.md, "a toast
+// when one lands".
+export let TOAST_MS = 4000;
+export let TOAST_GAP_MS = 400;
+
 export const NOTICE_KNOBS = [
   { key: 'CASINO_BIG', label: 'a big hand', min: 1000, max: 500000, step: 1000,
     get: () => CASINO_BIG, set: v => { CASINO_BIG = v; } },
   { key: 'NOTICE_FAST_ROCK_S', label: 'a quick rock', min: 10, max: 300, step: 5,
-    get: () => NOTICE_FAST_ROCK_S, set: v => { NOTICE_FAST_ROCK_S = v; } }
+    get: () => NOTICE_FAST_ROCK_S, set: v => { NOTICE_FAST_ROCK_S = v; } },
+  { key: 'TOAST_MS', label: 'toast stays', min: 1000, max: 10000, step: 250,
+    get: () => TOAST_MS, set: v => { TOAST_MS = v; } },
+  { key: 'TOAST_GAP_MS', label: 'toast gap', min: 0, max: 2000, step: 50,
+    get: () => TOAST_GAP_MS, set: v => { TOAST_GAP_MS = v; } }
 ];
 
 

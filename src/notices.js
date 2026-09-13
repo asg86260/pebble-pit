@@ -212,10 +212,18 @@ export function earn(key, quiet = false) {
   // two hours into the first (critics 2026-09-10, C14). A count only goes up.
   S.wonSeq = (S.wonSeq || 0) + 1;
   S.wonAt = { ...S.wonAt, [key]: S.wonSeq };
-  if (quiet) S.wonSeen = S.won.length;
+  if (quiet) { S.wonSeen = S.won.length; hushNotices(); }
   S.dirty = true;
   return true;
 }
+
+// Nothing earned so far is announced. The toast (toast.js) says every notice
+// whose place in the order is past `wonShown`, so moving that up to the end of
+// the record is how a save coming back, a yard starting over and the veteran
+// catch-up all stay quiet: what was earned before this sitting is on the
+// sheet, not in the air. Every one of those calls this rather than writing
+// the field, so there is one line that knows what silence is.
+export function hushNotices() { S.wonShown = S.wonSeq | 0; }
 
 // --- the sampler ----------------------------------------------------------------
 
@@ -234,7 +242,7 @@ export function stepNotices(t) {
 }
 
 // A yard that has been re-made, or a suite starting a fresh game.
-export function resetNotices() { asked = 0; }
+export function resetNotices() { asked = 0; hushNotices(); }
 
 // The first load of a save written before any of this existed. Forty rocks in,
 // thirty rules are true at once, and thirty ticks is a feature introducing

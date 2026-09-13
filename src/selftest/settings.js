@@ -6,12 +6,16 @@
 // which is why it is in this tier and not the node one; the preference store
 // itself is checked in test/settings.test.mjs.
 
-import { sleep, raf, newRun, settle, state, ok, run, board } from './kit.js';
+import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
+         boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion } from '../prefs.js';
 import { disarmReset } from '../input.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
 import { persist, exportSave } from '../persist.js';
+import { earn, noticeFor } from '../notices.js';
+import { toastUp, toastWaiting } from '../toast.js';
+import { TOAST_MS, TOAST_GAP_MS } from '../config.js';
 
 const held = () => document.getElementById('held');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
@@ -170,6 +174,149 @@ export const TESTS = [
       ok(!!btn, 'the sheet has it'),
       ok(armed && flagged, 'one click arms it and it asks', `${btn.textContent}`),
       ok(stoodDown, 'and it stands down without erasing anything'),
+    ];
+  }],
+
+  // --- the toast (DESIGN.md, "a toast when one lands") -------------------------
+  // The card is DOM and is stepped by the frame, not the sim: `run` turns the
+  // game's clock and one `raf` is the frame that reads it.
+
+  // The first notice, the way a player gets it: the rock clicked, the chips
+  // hauled into the hole. The crew and their pace are setup; the earning is
+  // the click and the walk.
+  ['a notice landing is said out loud, in the record\'s words', async () => {
+    newRun();
+    await settle();
+    haveRock();
+    window.__levels({ haulPaceLevel: 20, haulCarryLevel: 4 });
+    window.__crew(0, 3);
+    const b = boulderWorld();
+    const [x, y] = onScreen(b.x, b.y);
+    for (let i = 0; i < 12; i++) { point('pointerdown', x, y); point('pointerup', x, y); run(0.05); }
+    runUntil(() => state().chips === 0, 20);
+    const chipped = state().floor;
+    const banked = runUntil(() => S.banked > 0, 120);
+    run(1);                                     // the sampler asks twice a second
+    await raf();
+    const card = toastUp();
+    // The opening lands a notice or two of its own before the grain (the
+    // core the door throws, the first hire), so what is up is whichever
+    // landed first, and the grain's turn comes in the line.
+    const first = Object.entries(S.wonAt).sort((a, b) => a[1] - b[1])[0]?.[0];
+    const said = first && noticeFor(first);
+    run(TOAST_MS / 1000 + 0.1);
+    await raf();
+    const gone = toastUp();
+    let grain = null;
+    for (let i = 0; i < 6 && !grain; i++) {
+      run(TOAST_GAP_MS / 1000 + 0.1);           // the next goes up
+      await raf();
+      if (toastUp()?.key === 'firstgrain') grain = toastUp();
+      run(TOAST_MS / 1000 + 0.1);               // and comes down
+      await raf();
+    }
+    const want = noticeFor('firstgrain');
+    window.__crew(0, 0);
+    return [
+      ok(banked, 'a pebble reaches the hole', `floor ${chipped}, stored ${state().stored}, won ${S.won}`),
+      ok(!!card && !!said && card.key === first && card.name === said.name && card.note === said.note,
+         'and the card says the first to land, name and note', `${JSON.stringify(card)} vs ${first}`),
+      ok(!gone, 'and it is gone after its time', JSON.stringify(gone)),
+      ok(!!grain && grain.name === want.name && grain.note === want.note,
+         'and the grain gets its turn, in the record\'s words', JSON.stringify(grain)),
+    ];
+  }],
+
+  ['several landing at once are said one at a time', async () => {
+    newRun();
+    await settle();
+    // three in one frame, the way a rock coming off lands three
+    earn('rock0'); earn('ownhand'); earn('underminute');
+    run(TOAST_GAP_MS / 1000 + 0.1);             // a new run starts the clock over; no gap is owed
+    await raf();
+    const one = toastUp();
+    const waiting = toastWaiting();
+    run(TOAST_MS / 1000 + 0.1);
+    await raf();
+    const between = toastUp();
+    run(TOAST_GAP_MS / 1000 + 0.1);
+    await raf();
+    const two = toastUp();
+    run(TOAST_MS / 1000 + 0.1);
+    await raf();
+    run(TOAST_GAP_MS / 1000 + 0.1);
+    await raf();
+    const three = toastUp();
+    run(TOAST_MS / 1000 + 0.1);                 // and off, so the next group starts clean
+    await raf();
+    return [
+      ok(!!one && one.name === noticeFor('rock0').name, 'the first goes up first', JSON.stringify(one)),
+      ok(waiting === 2, 'and the other two wait', String(waiting)),
+      ok(!between, 'there is a gap between two', JSON.stringify(between)),
+      ok(!!two && two.name === noticeFor('ownhand').name, 'then the second', JSON.stringify(two)),
+      ok(!!three && three.name === noticeFor('underminute').name, 'then the third', JSON.stringify(three)),
+    ];
+  }],
+
+  ['pressing the card holds the game on the achievements page', async () => {
+    newRun();
+    await settle();
+    earn('rock0');
+    await raf();
+    document.getElementById('toast').click();
+    await raf();
+    const up = !held().hidden && S.paused;
+    const page = !document.getElementById('record').hidden
+      && document.getElementById('recordbtn').hidden;
+    const named = [...document.getElementById('record').querySelectorAll('.name')]
+      .some(n => n.textContent === noticeFor('rock0').name);
+    document.getElementById('recordback').click();
+    resume();
+    run(TOAST_MS / 1000 + 0.1);
+    await raf();
+    return [
+      ok(up, 'the sheet comes up and the game is held'),
+      ok(page, 'turned to the achievements page', String(page)),
+      ok(named, 'with the notice on it'),
+    ];
+  }],
+
+  // What was earned before this sitting is on the sheet, not in the air: a
+  // veteran save's catch-up and a save coming back both say nothing.
+  ['a record that was already written is not said again', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 2);
+    run(5);
+    S.dirty = true;
+    persist();
+    earn('rock0', true);                       // the catch-up's quiet pass
+    await raf();
+    const quiet = toastUp();
+    // the save out and back in, through the sheet, with a notice on it
+    await press();
+    const blob = exportSave();
+    resume();
+    run(TOAST_MS / 1000 + 0.1);
+    await raf();
+    newRun();
+    await settle();
+    await press();
+    document.getElementById('loadsave').click();
+    document.getElementById('pastebox').value = blob;
+    document.getElementById('loadit').click();
+    await sleep(100);
+    const loaded = said();
+    resume();
+    run(1);
+    await raf();
+    const back = toastUp();
+    const kept = S.won.includes('rock0');
+    window.__crew(0, 0);
+    return [
+      ok(!quiet, 'a quiet earn puts no card up', JSON.stringify(quiet)),
+      ok(kept, 'the save comes back with the notice on it', `${loaded}; ${S.won.join(',')}`),
+      ok(!back, 'and says nothing about it', JSON.stringify(back)),
     ];
   }],
 ];

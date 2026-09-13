@@ -423,7 +423,8 @@ export const S = {
   // whole feature hangs off.
   won: [],                // the notices earned, in the order they landed
   wonAt: {},              // and when each one did, so the sheet reads newest first
-  wonSeen: 0,             // how many have been looked at; the rest wear the tick
+  wonSeen: 0,             // how many have been looked at; the rest are unread
+  wonShown: 0,            // the last one the toast has said (toast.js); not saved
   noticeMigrated: false,  // the silent catch-up has been run on this save
   // What a notice needs remembered that the yard does not already know: who
   // has bitten this rock, and the stamp of the last one off. Cleared every
@@ -796,6 +797,9 @@ export const EPHEMERAL = [
   'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
   'shownStored',
+  // how far the toast has read through the record: what was earned before
+  // this sitting is on the sheet, not in the air, so a reload says nothing
+  'wonShown',
   // the tearing of the rift: an event, not a state -- and the cutscene
   // watching it, which is a camera, not a fact about the yard
   'riftGulp', 'riftShake', 'cine',

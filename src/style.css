@@ -729,6 +729,40 @@ canvas {
 .held .record .name { letter-spacing: .1em; text-transform: uppercase; }
 .held .record .note { color: #666; }
 .held .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
+/* The toast: the record's card, said out loud at the top edge as a notice
+   lands (toast.js). The same card as the achievements page -- name in the
+   boards' hand, what earned it under, the one-pixel edge -- so what slides in
+   is the thing you will later find on the sheet. Centered against the top,
+   the one strip no board or sheet claims; under the held sheet, over the
+   boards. It is a button: pressing it holds the game on the achievements
+   page. It comes down a few pixels as it appears and fades as it goes, and
+   under motion: less it appears and goes in place. */
+.toast {
+  position: fixed;
+  z-index: 11;
+  left: 50%; top: 10px;
+  transform: translate(-50%, -6px);
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 12px;
+  max-width: 80vw;
+  background: #fff;
+  border: 1px solid #000;
+  font: 11px ui-monospace, "Courier New", monospace;
+  color: #000;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1);
+}
+.toast.up { opacity: 1; transform: translate(-50%, 0); }
+.toast.still { transition: none; transform: translate(-50%, 0); }
+.toast:hover { color: #fff; background: #000; }
+.toast:hover .note { color: #fff; }
+.toast .name { letter-spacing: .1em; text-transform: uppercase; }
+.toast .note { color: #666; }
 .held .word { font-size: 17px; letter-spacing: .3em; }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn

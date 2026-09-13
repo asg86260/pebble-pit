@@ -30,7 +30,7 @@ import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } fr
 import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './stats.js';
-import { catchUpNotices, resetNotices } from './notices.js';
+import { catchUpNotices, resetNotices, hushNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { snapShown } from './tween.js';
@@ -949,6 +949,7 @@ export function restore() {
   // looked at as read -- closing the tab would quietly clear the board's tick.
   if (!(s && 'won' in s)) catchUpNotices();
   S.noticeMigrated = true;
+  hushNotices();               // what this save already earned is on the sheet, not in the air
   // A site with no gang of its own -- the yard, the bench -- that was busy when
   // the tab shut is busy again the moment it comes back: `S.works` is written
   // above, before the crew even exists. But nobody was sent to it, because the

@@ -113,6 +113,13 @@
      things a player needs a shelf for -- the motion switch, the save in and
      out, the reset, the keys, the build -- hang under the word rather than on
      a second sheet or a corner button. See settings.js. -->
+<!-- The toast: a notice said out loud as it lands, at the top edge, in the
+     record's own card. Pressing it holds the game on the achievements page.
+     See toast.js. -->
+<button id="toast" class="toast" type="button" hidden>
+  <div class="name"></div>
+  <div class="note"></div>
+</button>
 <div id="held" class="held" hidden>
   <!-- Two pages on one sheet, told apart by data-pane: the front, and the
        record behind it. settings.js's showPane hides one and shows the other;

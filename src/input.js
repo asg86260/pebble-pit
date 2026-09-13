@@ -709,9 +709,8 @@ export function hold(on) {
   document.getElementById('held').hidden = !on;   // now, not next frame
   // The sheet comes up on its front page, whichever page it went down on, and
   // the record is written as it opens: the count on the button now, the list
-  // when the button is pressed (settings.js). Opening it reads the record --
-  // the tick over the noticeboard comes down, and the next notice to land
-  // puts it back up.
+  // when the button is pressed (settings.js). Opening it reads the record:
+  // everything on it counts as looked at from here.
   if (on) { showPane('main'); markNoticesRead(); sayStore(); }
   S.dirty = true;
 }

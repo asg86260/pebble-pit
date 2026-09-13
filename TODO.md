@@ -1,21 +1,20 @@
 # Still to do
 
-## A toast when an achievement lands (2026-09-12)
+## A toast when an achievement lands -- BUILT (2026-09-12)
 
-**Designed, awaiting approval. Not built.** DESIGN.md, "The noticeboard, and
-the record on it" > "Amendment -- a toast when one lands". The original
-design's "no toast, no banner" is reversed for the record and for nothing
-else: one card, the record's own shape, centered at the top edge for
-`TOAST_MS`, queued one at a time in landing order, not a button. The tick and
-the walk stay and the toast marks nothing read. Silent for the veteran
-catch-up, on restore and reset, and while a cutscene has the camera.
-`src/toast.js` in the browser shell, driven off `S.wonSeq` against an
-`EPHEMERAL` `S.wonShown`; two `TUNABLE` numbers in `config/notices.js`;
-browser-tier checks in `src/selftest/settings.js`, earned through the click.
+DESIGN.md, "The noticeboard, and the record on it" > "Amendment -- a toast
+when one lands". The original design's "no toast, no banner" is reversed for
+the record and for nothing else: one card, the record's own shape, centered
+at the top edge for `TOAST_MS`, one at a time in landing order. Decided on
+the sheet: it is a button that holds the game on the achievements page, and
+the tick and the walk (designed, never built) are dropped for good. Silent
+for the veteran catch-up, on restore and reset (`hushNotices`), and while a
+cutscene has the camera. `src/toast.js`; `wonShown` in `EPHEMERAL`;
+`TOAST_MS` / `TOAST_GAP_MS` on the dev panel; four browser groups in
+`src/selftest/settings.js`.
 
-**Open before building:** whether the card should be a button that holds the
-game on the record page (the design says no); and the top edge against the
-bottom (the design says top -- the boards and the held sheet leave it free).
+Worth a look on a real yard: whether four seconds is right, and whether a
+card fading out over the tower's sky reads as a card or as smog.
 
 ## Every ladder sold in bands -- BUILT (2026-09-12)
 

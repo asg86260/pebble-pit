@@ -25,6 +25,7 @@ import { OWNER_KEY, TAB } from './save.js';
 import './input.js';           // the mouse, the wheel and the keyboard
 import { sayStore } from './settings.js';   // wave-release, track A: the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
+import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { tick } from './clock.js';
 import { stepAudio } from './audio.js';
 import { HELD_DT } from './config.js';
@@ -90,6 +91,7 @@ function frame() {
     const t2 = mark();
     hud();
     fillQueue();
+    stepToast();
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
   } catch (e) {
