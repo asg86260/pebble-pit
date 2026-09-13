@@ -1,5 +1,14 @@
 # Still to do
 
+## Play stats on the developer's own PC -- DESIGNED (2026-09-13)
+
+DESIGN.md, "The books kept at home". Opt-out, disclosed in one sentence on
+the sheet and the itch page; a client module `src/telemetry.js` that notes
+every notice earned, every row bought and the close of each sitting with a
+fixed summary off `snapshot()`, beaconed to a Bun + `bun:sqlite` receiver in
+`stats/` on the household tunnel at `stats.<domain>` with no Access wall.
+Report is a CLI. Awaiting sign-off; nothing built.
+
 ## A toast when an achievement lands -- BUILT (2026-09-12)
 
 DESIGN.md, "The noticeboard, and the record on it" > "Amendment -- a toast

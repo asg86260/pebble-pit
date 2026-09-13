@@ -7957,3 +7957,159 @@ older check changed meaning. The flag over a station now stays up through a
 build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
 in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
 tip -- with the payment's `S.paid` flight run the other way.
+
+## The books kept at home: play stats on the developer's own PC (design, not built)
+
+Since 2026-09-12 the game is on itch, and the only thing itch says about a
+player is that a page was opened. Nothing in the game says how long anyone
+stays, where they stall, or whether a machine has ever been bought by someone
+who was not told the bench existed. This is the plan for finding out.
+
+### The bargain
+
+Everything a player's browser sends goes to one computer: the developer's,
+behind the same Cloudflare tunnel the household's other services already use.
+No analytics vendor, no script from a third domain, no cookie, no address
+kept. The sentence on the sheet and on the itch page is the whole of the
+policy, and it is true: *"Anonymous play stats go to the developer's own
+computer. No third parties. Off here if you'd rather not."*
+
+That honesty is what buys the default. The switch is **on until turned off**
+-- opt-out -- because an opt-in switch answers for the five percent who find
+it, and a funnel drawn from five percent of a clicker's players is a funnel
+drawn from its most patient ones. What the player gives up is a short list
+of numbers about a yard nobody can trace to them; what the game gets is the
+one thing the design has never had, which is a reading of players who did
+not write in.
+
+What is sent is decided here, not left to whatever is handy:
+
+- **the sitting**: a random id for this install (drawn once, kept with the
+  preferences -- survives a reset, does not travel with an exported save,
+  which is what `prefs.js` is for), a random id for this page load, the
+  build (`version.js`), `web` or `desk`, the window's size in cells;
+- **the record**: every notice the moment it is earned. The catalog in
+  `notices.js` is already the list of moments the game thinks matter --
+  first grain, first hire, first ore, the rift, the drowning -- and it is
+  curated, twenty-eight long, and named. That *is* the funnel; a second
+  list of milestones would be the same list with worse names;
+- **the purse**: each row bought, by key, with the game-clock second it was
+  bought at. Prices are in `config.js`, so what was paid is derivable and
+  is not sent;
+- **the close**: when the page hides, how many seconds it was visible, and
+  a summary read off `snapshot()` -- crew by type, stations and machines
+  owned, coins earned and spent per kind, the rift's state, the pit's depth.
+  A fixed pick of fields, listed in the module, not the whole reading;
+- **a fall**: `window.onerror` and unhandled rejections, message and the
+  first line of the stack, with the same summary. This is the crash report
+  the game has never had.
+
+Not sent, and the module is written so it *cannot* be: clicks, pointer
+positions, anything typed, the save. The save is the fixture, and a folder
+of player saves would be the richest reading of all -- but it leaves the
+player's hands only by a **separate button on the sheet**, "send my save to
+the developer", which is opt-in every press and says what it does. Nothing
+else ever transmits it.
+
+### The shape
+
+**The client is one module, `src/telemetry.js`,** with one export the yard
+calls, `note(kind, key, value)`, and one it does not, `flush()`. It keeps a
+queue; the queue drains by `navigator.sendBeacon` when the page hides (the
+one call a browser promises to finish after the tab is gone) and every
+`STATS_FLUSH_S` otherwise, in batches of at most `STATS_MAX_BATCH`. The body
+is `text/plain`, on purpose: a `application/json` beacon is a preflighted
+request, and a beacon that needs a preflight at `pagehide` is a beacon that
+is dropped. The receiver parses it as JSON regardless. The module is a
+no-op -- returns before the queue is touched -- when `STATS_URL` is blank,
+in a dev build, and when the preference is off; every call site is one line
+and none of them knows whether anything is listening.
+
+The hooks are the ones already there: `earn()` in `notices.js` notes the
+notice, the shop's buy path notes the key, `main.js`'s visibility handler
+(the pause) notes the close. No new event stream; the game already announces
+its own moments, and the module listens at the three places it does.
+
+**The receiver is `stats/`, a Bun service in this repo,** because the schema
+and the fields the client sends are one thing and should be versioned as
+one. `bun:sqlite` is built in, so it has no dependencies -- the game's rule,
+kept on the server side too. Three files:
+
+- `stats/db.ts` -- the wrapper: opens `stats/data/stats.db` in WAL mode,
+  runs the schema on boot, and exposes the three writes (`openSitting`,
+  `noteEvent`, `closeSitting`) and the reads the report needs. Two tables:
+  `sittings` (one row a page load: install, sitting, build, platform,
+  started, ended, seconds visible, and the close summary as a JSON column
+  -- the columns you filter on are real columns, the picture you look at
+  is the blob) and `events` (sitting, sequence, game second, kind, key,
+  value). Indexed on `(install, started)` and `(kind, key)`, which are the
+  two questions -- retention and the funnel.
+- `stats/server.ts` -- `Bun.serve` on `STATS_PORT`, two routes:
+  `POST /v1/events` and `POST /v1/save`. Checks the origin against a fixed
+  list (`*.itch.zone`, the desk's `file://` null origin, the game's own
+  domain), refuses a body over 16 KB and more than sixty posts a minute from
+  one address, answers 204, and keeps the address for the rate limit in
+  memory only -- it is never written. Every other path is 404.
+- `stats/report.ts` -- the CLI: `bun stats/report.ts [days]` prints the
+  numbers worth having, which are sittings a day, install retention at one
+  and seven days, median and ninetieth-percentile seconds visible, the
+  funnel through the record in catalog order with the median game-second
+  each notice lands at, the most and least bought rows, and the last twenty
+  falls. A dashboard is a later thing, if ever; the report is what gets
+  read.
+
+**Deployment copies pirate-ship's shape exactly:** a `stats-app` Task
+Scheduler task at logon running `stats/run-app.ps1` (the mutex, the port
+free, the crash backoff, separate stdout and stderr logs), and a second
+hostname on the existing tunnel, `stats.<domain>`, routed to the Bun port.
+The one deliberate difference from pirate-ship: **no Cloudflare Access on
+this hostname**. Players' browsers post to it anonymously; a login wall
+would be a wall against the only visitors it has. It is public, which is
+why the routes are two, the body is capped and the rate is limited.
+
+**The sheet gets two rows** under the save's export and import: the switch,
+with the sentence above and a `what is sent` line that lists the five items
+in plain words, and the send-my-save button. The itch page gets the same
+sentence.
+
+### What it must not do
+
+- **Never send the save unasked.** No field of `S` beyond the fixed pick,
+  and the pick is a list in the module that a check reads.
+- **Never keep an address.** The rate limiter's map is the only place one
+  exists and it lives in memory.
+- **Never touch the frame.** `note()` pushes onto an array and returns; the
+  network happens on the page's own idle and hide events. A clicker that
+  stutters when its stats flush has traded the game for the graph.
+- **Never block the game on the receiver.** Down, slow or unreachable, the
+  queue caps at `STATS_MAX_QUEUE` and drops the oldest; nothing waits.
+- **Never change the yard.** The node tier's yard has no window and no
+  network; the module must import clean there and every call be a no-op.
+
+### How it is checked
+
+- `test/telemetry.test.mjs`, node tier: the queue with a fake sender --
+  batches at the cap, flushes on the interval, drops oldest past the queue
+  cap, sends nothing when the preference is off or the URL is blank, sends
+  a notice when one is earned through play (`__clickLever` to the first
+  grain, not `earn()` by hand -- buy it like a player), and the close summary
+  holds exactly the listed fields and nothing else.
+- `stats/db.test.ts`, `bun test` against `:memory:`: a sitting opens,
+  takes events, closes with its summary; the report's queries return the
+  known answers on a seeded db; a body over the cap and a bad origin are
+  refused.
+- A browser group in `src/selftest/settings.js`: the switch is on by
+  default, turning it off writes the preference, and the row's sentence is
+  the one above.
+
+### The calls
+
+1. **Opt-out**, decided above.
+2. **The receiver lives in this repo**, under `stats/`, not in pirate-ship
+   and not on its own. It is the game's, and it has the game's build in
+   every row.
+3. **No first-run interruption.** The sentence is on the sheet and the
+   itch page; the game does not stop to say it. A card at the door that
+   asks about data is the one thing on the sheet the opening is written to
+   avoid. If that turns out to be the wrong side of the line, it is one
+   line in the intro, not a redesign.
