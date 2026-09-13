@@ -439,6 +439,11 @@ canvas {
   opacity: .7;
   white-space: nowrap;
 }
+/* A card with no ladder has nothing in the top-right corner, so the clock
+   comes up to take it: the right-hand column is still "time", read from the
+   top, and a building's card does not hold its clock a line down for pips it
+   will never have. */
+.rows button:has(.ladder:empty) .time { grid-row: 1; align-self: center; }
 
 /* The row's description, on a fourth line under the bill rather than in a
    box on hover -- a menu you can read without a mouse and without waiting. It
