@@ -11,6 +11,11 @@ its blocker, so none of it has to be re-derived. `DESIGN.md` carries the
 reasoning behind each feature, with sections marked `(built)` or
 `(design, not built)`.
 
+**Every bug fix gets a line in `CHANGELOG.md`, under `Unreleased`, in the
+same commit as the fix** — what was wrong and what is true now, in the
+player's words. Never write a version number there; `npm run release` stamps
+the heading with the version and the date. Features do not go in it.
+
 ---
 
 ## The loop

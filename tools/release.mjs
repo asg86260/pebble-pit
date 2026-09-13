@@ -2,7 +2,8 @@
 //
 // One command from a clean main to a numbered build on the itch page:
 //
-//   1. bump `version` in package.json, commit it and tag `vX.Y.Z`;
+//   1. bump `version` in package.json, stamp the version and date on
+//      CHANGELOG.md's "Unreleased" heading, commit both and tag `vX.Y.Z`;
 //   2. build dist/ (the stamp now carries the new number, see src/version.js)
 //      and keep a zip of it as dist/pebble-pit-vX.Y.Z.zip, the same bytes the
 //      page got, for the upload form or for a bug report;
@@ -81,10 +82,21 @@ console.log(`release: ${pkg.version} -> ${next}${dry ? ' (dry run)' : ''}`);
 const stamped = raw.replace(`"version": "${pkg.version}"`, `"version": "${next}"`);
 if (stamped === raw) fail('could not find the version line in package.json');
 writeFileSync(pkgFile, stamped);
-const restore = () => writeFileSync(pkgFile, raw);
+
+// The changelog's "Unreleased" heading becomes this version's, dated, with a
+// fresh empty one above it for the next fixes. A release with nothing under
+// the heading gets no section, so the file does not fill with empty versions.
+const logFile = 'CHANGELOG.md';
+const rawLog = readFileSync(logFile, 'utf8');
+const today = new Date().toISOString().slice(0, 10);
+const unreleased = /^## Unreleased\r?\n+(?=- )/m;
+const stampedLog = rawLog.replace(unreleased, `## Unreleased\n\n## ${tag} — ${today}\n\n`);
+if (stampedLog === rawLog) console.log('release: nothing under Unreleased in CHANGELOG.md; no section added');
+writeFileSync(logFile, stampedLog);
+const restore = () => { writeFileSync(pkgFile, raw); writeFileSync(logFile, rawLog); };
 
 if (!dry) {
-  sh('git', ['add', pkgFile]);
+  sh('git', ['add', pkgFile, logFile]);
   sh('git', ['commit', '-q', '-m', `Release ${tag}`]);
   sh('git', ['tag', '-a', tag, '-m', tag]);
 }
