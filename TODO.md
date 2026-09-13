@@ -64,10 +64,11 @@ Left, in order:
   recipe landed there by ear ships as heard. **The mapping (2026-09-13):**
   every call site names its event (`rock-hit`, `footstep`, `boulder-land`,
   eighteen in all) and `SOUNDS` in `config/sound.js` says which class and
-  which recipe each plays; null is silent. The player's mapping is in: eight
-  events sound (the hit, the crit, the crew's and the ram's swing, the
-  boulder landing, a machine's beat, a grain into the pit, a core banked,
-  the sky summoned), ten are silent by choice. The loop for changes: pick voices per event on the
+  which recipe each plays; null is silent. The player's second mapping is
+  in (2026-09-13): twelve of twenty-three events sound -- the hit, the crit,
+  the crew's swing and crit, the boulder landing, a machine's beat, a grain
+  into the pit, a core banked, the sky summoned, a wizard's throw, strike
+  and crit -- and eleven are silent by choice. The loop for changes: pick voices per event on the
   bench, `copy mapping`, paste it on the dev panel's `sounds` tab (it
   applies live and is remembered), then hand the JSON over to be written
   into `RECIPES` and `SOUNDS`. `node tools/listen.mjs` renders the mapped
