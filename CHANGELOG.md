@@ -21,7 +21,7 @@ this file is for things that were broken.
 - Two janitors on the last patch of a mess no longer shove each other about.
 - A janitor with a shovel in its hands no longer reads as "on a break".
 - A laden carter sweeps home, taking everything it walks over, and never turns round.
-- A grain beside a laden carter is that carter's, even if one at the far end had set off for it.
+- A grain beside a laden carter is that carter's, unless the one that set off for it is nearer.
 - A fast carter no longer strides clean over a grain on a slow frame.
 - A carter asks the hole again before giving up on a heap.
 

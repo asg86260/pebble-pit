@@ -231,14 +231,20 @@ function firstPick(w, taken) {
 // same span `seek` scoops from, a cell either side of where it stands. -1 when
 // it is walking over bare ground.
 //
-// Claimed or not. A claim is a target, and a target is for empty hands setting
-// off across the yard -- it is what stops six bodies converging on one shard.
-// It is not a reservation against the body already stood over the column: a
-// grain the rock has just thrown down beside a laden body walking home was
-// claimed by an empty body at the far end of the yard, and the laden one
-// stepped over it and left it for a walk of eight hundred pixels. The body on
-// the spot takes it; the claimant sees its column bare on the same frame and
-// picks again, which is what it does whenever a target is gone.
+// Claimed or not -- unless the claimant is nearer to it than this body is. A
+// claim is a target, and a target is for empty hands setting off across the
+// yard: it is what stops six bodies converging on one shard. It is not a
+// reservation against the body already stood over the column: a grain the
+// rock had just thrown down beside a laden body walking home was claimed by an
+// empty body at the far end of the yard, and the laden one stepped over it and
+// left it for a walk of eight hundred pixels. So the body on the spot takes
+// it, and the claimant sees its column bare and picks again.
+//
+// But not out from under a claimant that is about to arrive. Taken at the last
+// stride, the claimant stops on a bare column, picks again and turns, and read
+// from across the yard that is a body hesitating. Whoever is nearer keeps it:
+// a claimant losing its target early has most of its walk still ahead and the
+// re-pick is a small course change; one losing it at the end has nothing.
 //
 // This is the whole of what a laden body decides. The trip's target was
 // picked with empty hands (`firstPick`) and it is not re-argued grain by grain:
@@ -258,7 +264,13 @@ function underfoot(w, ahead = 0) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
   const lo = Math.max(first, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER + ahead));
-  for (let c = lo; c <= hi; c++) if (at(floor, c, 0)) return c;
+  for (let c = lo; c <= hi; c++) {
+    if (!at(floor, c, 0)) continue;
+    const x = floor.x + c * P;
+    const owner = S.workers.find(o => o !== w && o.type === TYPE.HAUL && o.claim === c);
+    if (owner && Math.abs(owner.x - x) <= Math.abs(w.x - x)) continue;
+    return c;
+  }
   return -1;
 }
 

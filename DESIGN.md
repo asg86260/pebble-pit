@@ -1023,9 +1023,11 @@ whichever heap needs them without anybody being told which one that is.
 **That order decides where a trip starts; the rest of the trip is a sweep home.** Once a body has
 anything in its hands it goes for nothing else: it walks back toward the lip and takes everything it
 walks over until its hands are full, and it never turns round. What is behind it is the next trip's.
-A grain that lands ahead of it on the way is taken — claimed or not: a claim is a target for empty
-hands, so six bodies do not converge on one shard, not a reservation against the body already stood
-over the column, and the claimant sees its column bare and picks again. The step ends on the next
+A grain that lands ahead of it on the way is taken — claimed or not, unless the claimant is nearer
+to it: a claim is a target for empty hands, so six bodies do not converge on one shard, not a
+reservation against the body already stood over the column. Whoever is nearer keeps it; a claimant
+losing its target early has most of its walk ahead and the re-pick is a small course change, where
+one losing it at the last stride stops on bare ground and turns, which reads as hesitating. The step ends on the next
 column with something in it, so a fast body on a slow frame does not stride clean over a grain
 between two looks. This is what a person with a barrow does, and it is what makes a trip readable from across the
 yard: out to the thing it went for, back with everything on the way. It used to go for whatever was

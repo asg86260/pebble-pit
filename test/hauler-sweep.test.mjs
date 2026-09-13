@@ -213,3 +213,34 @@ group('the body on the spot takes a grain another has set off for', async () => 
        `${stuck} frames on a bare claim`)
   ];
 });
+
+// ...but not out from under a claimant that is already there. Whoever is
+// nearer keeps it: taken at the last stride, the claimant would stop on a bare
+// column, pick again and turn, which reads as a body hesitating.
+group('a claimant already at its column keeps it against a sweeper', async () => {
+  window.__reset();
+  window.__crew(0, 2);
+  quickCrew();
+  window.__clearFloor();
+  run(0.2);
+  const s0 = state();
+  const far = s0.pitX - 1000, next = far + P * 8;
+  window.__pile(far, 1);
+  window.__pile(next, 1);
+  run(1);
+  let c = -1;
+  for (let k = Math.floor((next - s0.floorX) / P) - 3; k <= Math.floor((next - s0.floorX) / P) + 3; k++) if (at(floor, k, 0)) c = k;
+  const [a, b] = yard.S.workers.filter(w => w.type === 'hauler');
+  a.x = far; a.claim = -1; a.goal = 'seek';
+  // stood on the second grain with a claim to it, and its scoop held off so
+  // the sweeper gets its chance to walk over
+  b.x = s0.floorX + c * P; b.claim = c; b.goal = 'seek'; b.next = Infinity;
+  const r = firstToss();
+  const kept = !!at(floor, c, 0) && b.claim === c;
+  window.__crew(0, 0);
+  return [
+    ok(r.tossed && r.took === 1, 'the sweeper tips only the grain it went for',
+       `${r.took} tipped`),
+    ok(kept, 'and the claimant stood on the other still has it')
+  ];
+});
