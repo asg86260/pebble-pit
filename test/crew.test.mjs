@@ -466,15 +466,17 @@ group('clearing a handful puts the crew back to work', async () => {
   ];
 });
 
-// A body with anything in its hands never sets off for a column.
+// A body with anything in its hands never sets off across the yard.
 //
-// A trip is out to a target and home along the ground. The target is picked
-// with empty hands -- a find, the fullest jammed heap, the nearest dust -- and
-// after that the body takes what it walks over on its way to the lip and
-// nothing else. It used to pick again at every column, so a body part-laden
-// at the quarry walked back past the rock's heap to the farm for a spore, and
-// a yard of single-grain finds had it turning round on every one.
-group('a laden body sweeps home rather than setting off again', async () => {
+// A trip is out to a target, along its heap, and home along the ground. The
+// target is picked with empty hands -- a find, the fullest jammed heap, the
+// nearest dust -- and after that the only column a laden body takes on is the
+// next one on the strip it is already working; the rest of the trip it takes
+// what it walks over on its way to the lip. It used to pick again at every
+// column, so a body part-laden at the quarry walked back past the rock's heap
+// to the farm for a spore, and a yard of single-grain finds had it turning
+// round on every one.
+group('a laden body works its heap and sweeps home rather than setting off again', async () => {
   window.__reset();
   openSites();
   window.__crew(2, 4, 0, 2);                  // two on the plots: green, at the far end
@@ -488,28 +490,34 @@ group('a laden body sweeps home rather than setting off again', async () => {
   // it -- read off the frame before, because a target already under the feet
   // is scooped from on the frame it is claimed, and the row then shows a new
   // claim and a grain in hand that was picked up *after* it.
-  let took = 0, laden = 0;
-  const had = new Map(), held = new Map();
+  let took = 0, laden = 0, off = 0;
+  const had = new Map(), held = new Map(), on = new Map();
+  const stripOf = col => s0.piles.find(p => s0.floorX + col * P >= p.from && s0.floorX + col * P < p.to)?.key || null;
   for (let i = 0; i < 7200; i++) {
     run(1 / 60);
     state().crewDetail.forEach((row, idx) => {
       const [type, , , c, k] = row.split('|');
       if (type !== 'h') return;
       const claim = Number(k.slice(1));
-      const before = had.get(idx), carried = held.get(idx) || 0;
+      const before = had.get(idx), carried = held.get(idx) || 0, was = on.get(idx);
       had.set(idx, claim);
       held.set(idx, Number(c.slice(1)));
+      if (claim >= 0) on.set(idx, stripOf(claim));
       if (!(claim >= 0) || before === claim) return;   // nothing newly taken on
       took++;
-      if (carried > 0) laden++;
+      if (carried > 0) {
+        laden++;
+        // laden, so it had better be the heap it was already on
+        if (!was || stripOf(claim) !== was) off++;
+      }
     });
   }
   const banked = state().pit - banked0;
   window.__reset();
   return [
     ok(took >= 10, 'columns are taken on often enough to judge', `${took} times`),
-    ok(laden === 0, 'and never by a body with anything already in hand',
-       `${laden} of ${took}`),
+    ok(off === 0, 'and a body with anything in hand only ever takes the next column of its own heap',
+       `${off} of ${laden} laden claims were off the heap`),
     ok(banked > 0, 'and the hole still fills', `${banked} grains`)
   ];
 });

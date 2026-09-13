@@ -6,9 +6,9 @@
 // books it holds room in, and the loose core nobody else will pick up.
 
 import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER, HOME_WALK,
-         PILE_LIMIT } from '../config.js';
+         PILE_LIMIT, HAUL_FIFO } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
-import { at, put, colOf } from '../grid.js';
+import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, yardLeft, pileAt } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
@@ -219,12 +219,28 @@ const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
 // something is backing up, and then it is the jammed heap that is cleared
 // rather than the handy one.
 function firstPick(w, taken) {
+  if (HAUL_FIFO) return oldestDust(taken);
   const dust = nearestDust(w.x, taken);
   const heap = fullestHeap(w, taken);
   const served = heap >= 0 ? servedGrounds() : EMPTY;
   // A served ground's find is the last fallback of all, not dropped.
   const mark = nearestMark(w, taken, served);
   return mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
+}
+
+// The experiment: the column whose bottom grain has lain longest, wherever it
+// is. First in, first out across the whole yard -- nothing is ever starved, at
+// the price of the walk, which is measured rather than argued (`HAUL_FIFO`).
+function oldestDust(taken) {
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  let best = -1, bestAge = Infinity;
+  for (let c = first; c <= last; c++) {
+    if (taken.has(c) || !at(floor, c, 0)) continue;
+    const a = ageAt(floor, c, 0);
+    if (a < bestAge) { bestAge = a; best = c; }
+  }
+  return best;
 }
 
 // The column with something in it under a body's feet, if there is one -- the
@@ -286,6 +302,26 @@ function scoop(w, c, now) {
   w.next = now + scoopMs();
   S.dirty = true;
   return true;
+}
+
+// The nearest column with something in it on the same strip as `bare`, the
+// column just emptied, that nobody else has set off for -- or -1 when `bare`
+// was not on a strip or the strip has nothing left. Held to the ground the
+// crew can stand on, the same two bounds `nearestDust` keeps.
+function nextOnStrip(w, bare, taken) {
+  const strip = pileAt(floor.x + bare * P);
+  if (!strip) return -1;
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  const lo = Math.max(first, colOf(floor, strip.from));
+  const hi = Math.min(last, colOf(floor, strip.to) - 1);
+  for (let d = 1; d <= hi - lo; d++) {
+    for (const c of [bare - d, bare + d]) {
+      if (c < lo || c > hi || taken.has(c)) continue;
+      if (at(floor, c, 0)) return c;
+    }
+  }
+  return -1;
 }
 
 // Taking a column on. Which ground it was a find on is remembered so the cap
@@ -501,13 +537,29 @@ export function haulerWork(w, c) {
     // It keeps the column it set off for until that column is bare. Picking
     // the nearest one afresh every frame is what made the crew swarm.
     if (w.claim >= 0 && !at(floor, w.claim, 0)) {
+      const bare = w.claim;
       taken.delete(w.claim); w.claim = -1; w.forMark = false;
+      // The target was a heap, not a column: a body sent to a jammed heap
+      // works along it until its hands are full or the heap is bare, and only
+      // then turns for home. Sent for one column, it took that column and
+      // filled the rest of its hands from the rock's heap on the sweep back --
+      // the rock's strip lies between the quarry's and the hole -- so the
+      // quarry's heap, the one the fullest-heap rule had sent it to, lost one
+      // column a trip and sat at full for the whole of a run (carters.mjs,
+      // quarry-jam: cleared exactly what landed, full 100% of the time). The
+      // next column is the nearest on the same strip, which is a shuffle along
+      // the heap and never a turn across the yard; a find off a strip has no
+      // heap to work and goes straight to the sweep.
+      if (w.carry && w.carry < load(w)) {
+        const next = nextOnStrip(w, bare, taken);
+        if (next >= 0) claim(w, next, taken);
+      }
     }
     // A target is picked with empty hands and only then. Once anything is in
-    // hand the trip has a shape -- out to the target, home along the ground --
-    // and its target being bare (taken by a body sweeping past, or all in hand
-    // already) is the turn for home, not a reason to pick again. The sweep
-    // home is in the `dump` branch below.
+    // hand the trip has a shape -- out to the target, along its heap, home
+    // along the ground -- and its target being bare (taken by a body sweeping
+    // past, or all in hand already) is the turn for home, not a reason to pick
+    // again. The sweep home is in the `dump` branch below.
     if (w.claim < 0 && w.carry) { w.goal = 'dump'; return; }
     if (w.claim < 0) {
       // Book the hole before picking a column, not after filling your hands.

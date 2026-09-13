@@ -4,7 +4,7 @@
 // crew.test.mjs holds the find-first and fullest-heap checks for that -- and
 // this file is about everything after.
 
-import { yard, group, ok, state, run, runUntil, quickCrew, P } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P } from './helpers.mjs';
 import { floor } from '../src/state.js';
 import { at } from '../src/grid.js';
 import { spend } from '../src/pit.js';
@@ -242,5 +242,43 @@ group('a claimant already at its column keeps it against a sweeper', async () =>
     ok(r.tossed && r.took === 1, 'the sweeper tips only the grain it went for',
        `${r.took} tipped`),
     ok(kept, 'and the claimant stood on the other still has it')
+  ];
+});
+
+// A body sent to a heap works the heap. Its target is a column, and when that
+// column is bare the next is the nearest on the same strip, until the hands
+// are full or the strip is -- and only then the sweep home. Sent for one
+// column it took that column and filled up from the rock's heap on the way
+// back, which lies between the quarry's and the hole, and the quarry's heap
+// -- the one it had been sent to because it was the fullest -- lost a column
+// a trip and sat at full for a whole run.
+group('a body sent to a heap fills its hands there before sweeping home', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(0, 0);                        // the heaps first, the carter after
+  quickCrew();
+  window.__levels({ haulCarryLevel: 4 });
+  window.__clearFloor();
+  run(0.3);
+  const q = state().piles.find(p => p.key === 'quarry');
+  const r = state().piles.find(p => p.key === 'rock');
+  // a full quarry heap, spread along its strip, and a modest rock heap
+  for (let i = 0; i < 40 && !state().pileFull.quarry; i++) {
+    window.__pile(q.from + P * 2 + (i % 12) * P, 8); run(1 / 60);
+  }
+  window.__pile(r.from + P * 4, 40);
+  run(1);
+  const q0 = state().pileCount.quarry, r0 = state().pileCount.rock;
+  const cap = state().haulCap;
+  window.__crew(0, 1);
+  window.__place('hauler', state().pitX - 60);
+  const t = firstToss(90);
+  const q1 = state().pileCount.quarry, r1 = state().pileCount.rock;
+  window.__crew(0, 0);
+  return [
+    ok(state().pileFull.quarry || q0 > 0, 'the quarry heap is the one over the line', `${q0}`),
+    ok(t.tossed && t.took === cap, 'a full load is tipped', `${t.took} of ${cap}`),
+    ok(q0 - q1 === cap, "all of it off the quarry's heap", `${q0 - q1} from the quarry`),
+    ok(r0 - r1 === 0, "and none off the rock's on the way home", `${r0 - r1} from the rock`)
   ];
 });

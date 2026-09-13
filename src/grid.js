@@ -140,8 +140,17 @@ export const resetSettleWork = () => { work = 0; };
 // missed: every one of those says so out loud (`recount`, or the reset in
 // `fillFlat` below), and verify.js rule 7 walks both grids once a second and
 // fails on the frame a ledger and its cells disagree.
+// When each cell was last written, in frames, for a grid that keeps one -- see
+// `resizeGrid`. A grain that rolls is re-stamped where it lands, so the age is
+// how long it has lain *there*; for a settled heap that is the same thing.
+// Read by the carters' first-in-first-out pick (`HAUL_FIFO`).
+let clock = 0;
+export const tickGrid = () => { clock++; };
+export const ageAt = (b, c, r) => b.age ? b.age[r * b.cols + c] : 0;
+
 export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
+  if (b.age) b.age[i] = v ? clock : 0;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
   // And the dust alone, beside it. The rift asks how much dust is in the hole
   // every frame it swallows, and `countDust` is a walk of forty thousand cells
@@ -400,6 +409,7 @@ export function resizeGrid(b) {
   wakeGrid(b);
   if (b.grid && b.grid.length === want) return;
   b.grid = new Uint8Array(want);
+  b.age = new Uint32Array(want);
   fillFlat(b, had);
   if (b.painter) b.painter.repaint();
 }

@@ -10,6 +10,7 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- A carter sent to a full heap fills its hands there instead of taking one column and filling up from the rock's on the way home.
 ## v0.1.10 — 2026-09-13
 
 - Quarriers no longer float up out of the cut and wander off across the

@@ -1020,9 +1020,14 @@ Fullness is a ratio because the limits differ by four to one: counted in grains 
 wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
 whichever heap needs them without anybody being told which one that is.
 
-**That order decides where a trip starts; the rest of the trip is a sweep home.** Once a body has
-anything in its hands it goes for nothing else: it walks back toward the lip and takes everything it
-walks over until its hands are full, and it never turns round. What is behind it is the next trip's.
+**That order decides where a trip starts; the body works that heap, and the rest of the trip is a
+sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
+same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column
+it took that column and filled up from the rock's heap on the way back — the rock's strip lies
+between the quarry's and the hole — so the quarry's heap, the one the fullest-heap rule had sent it
+to, lost a column a trip and sat at full for a whole run (`tools/node/carters.mjs`, quarry-jam).
+Then it goes for nothing else: it walks back toward the lip and takes everything it walks over until
+its hands are full, and it never turns round. What is behind it is the next trip's.
 A grain that lands ahead of it on the way is taken — claimed or not, unless the claimant is nearer
 to it: a claim is a target for empty hands, so six bodies do not converge on one shard, not a
 reservation against the body already stood over the column. Whoever is nearer keeps it; a claimant
@@ -1035,6 +1040,12 @@ nearest next, and on a yard of single-grain finds "nearest" flips direction ever
 a spark, turned for a crop, turned back for a spark, then walked to the hole past dust, and read as
 lost. Before that it re-ran the whole first-pick order at every column, and a body part-laden at the
 quarry walked back past the rock's heap to the farm for a spore.
+
+**Oldest-first was measured and turned down.** `HAUL_FIFO` sends a body to the grain that has lain
+longest anywhere in the yard. It banks more dust under a ram (960 a minute against 569) by camping
+on the oldest heap, and starves everything new: under the ram it fetched none of fourteen finds, and
+a heap filled last sat at full for a whole run. Under any feed the crew cannot outrun, oldest first
+means newest never. The knob stays for the bench to compare against.
 
 **A booking is topped up, not just spent.** A trip books room in the hole with the hands empty,
 against the room the hole has at that moment, and the walk out is long: a body booked for two

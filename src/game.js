@@ -21,7 +21,7 @@ import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
-import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
+import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
@@ -159,6 +159,7 @@ function startFrame(c) {
 // twice a second and the crew are told to stop or start on that.
 function countTick() {
   S.tick++;
+  tickGrid();
   // four times a second, not twice: this is what tells a station it has room
   // again, and waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();

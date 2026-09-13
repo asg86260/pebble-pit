@@ -1,6 +1,6 @@
 // How well the carters keep up, scenario by scenario.
 //
-//   node tools/node/carters.mjs [seconds] [--crew N] [--hands L] [--pace L] [--only name,name]
+//   node tools/node/carters.mjs [seconds] [--crew N] [--hands L] [--pace L] [--only name,name] [--fifo]
 //
 // A driven yard: nothing mines, nothing digs, nothing grows. Each scenario
 // feeds the strips itself -- dust onto the rock's, the quarry's and the farm's
@@ -28,6 +28,7 @@ const crew = +flag('--crew', 4);
 const hands = +flag('--hands', 4);
 const pace = +flag('--pace', 4);
 const only = flag('--only', null)?.split(',');
+const fifo = args.includes('--fifo');
 
 // Feed rates are grains a second onto a strip and finds a minute onto a
 // ground; `start` is how full each heap is when the crew arrive, as a share of
@@ -54,6 +55,7 @@ function measure(sc) {
   window.__meteor();                                 // the star stands, so sparks have a ground
   window.__crew(0, crew, 0, 0);
   window.__levels({ haulCarryLevel: hands, haulPaceLevel: pace });
+  window.__tune('HAUL_FIFO', fifo ? 1 : 0);
   window.__clearFloor();
   window.__fast(0.5);
 
@@ -147,6 +149,6 @@ for (const sc of SCENARIOS) {
   rows.push(measure(sc));
   process.stderr.write(`${sc.name}: ${((performance.now() - t0) / 1000).toFixed(0)}s\n`);
 }
-console.log(`carters: ${crew} bodies, hands L${hands}, pace L${pace}, ${seconds}s of game each`);
+console.log(`carters: ${crew} bodies, hands L${hands}, pace L${pace}, ${seconds}s of game each${fifo ? ', oldest first' : ''}`);
 console.table(rows);
 process.exit(0);
