@@ -37,6 +37,7 @@
     "icon": "build/icon.png",
     "directories": { "output": "release" },
     "win": { "target": ["nsis", "portable"] },
+    "portable": { "artifactName": "${productName} ${version} portable.exe" },
     "mac": { "target": ["dmg"] },
     "linux": { "target": ["AppImage"] }
   },
