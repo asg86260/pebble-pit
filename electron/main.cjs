@@ -97,7 +97,7 @@ function open() {
     ...(was ? { x: was.x, y: was.y, width: was.width, height: was.height } : {}),
     // White, so the first frame is not a flash of dark before the yard paints.
     backgroundColor: '#ffffff',
-    title: 'Boulder',
+    title: 'Pebble Pit',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -110,7 +110,7 @@ function open() {
     }
   });
   // The page's own <title> would otherwise take the window over; the shell
-  // is called Boulder and stays so.
+  // is called Pebble Pit and stays so.
   win.on('page-title-updated', e => e.preventDefault());
   if (was && was.maximized) win.maximize();
   if (was && was.fullscreen) win.setFullScreen(true);
