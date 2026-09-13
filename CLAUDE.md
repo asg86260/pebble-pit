@@ -72,8 +72,14 @@ behind `import.meta.env.DEV`, so none of it ships.
 
 | tier | what it covers | how |
 |---|---|---|
-| **node** (`test/*.test.mjs`) | everything about the yard | `node --test test/<file>.test.mjs` — ~100s for all of it |
+| **node** (`test/*.test.mjs`) | everything about the yard | `node --test test/<file>.test.mjs`; the whole tier is `npm test` — ~100s |
 | **browser** (`src/selftest/`) | only pointer, DOM, board and canvas | `node tools/headless.mjs --only <group>` — seconds |
+
+**Never run `node --test` on more than a few files without `--test-concurrency=4`.**
+Bare `node --test test/*.test.mjs` spawns one worker per file up to the core
+count — sixteen yards at once on this machine, and the CPU pinned at 100% for
+the user sitting at it. The npm scripts carry the cap; a hand-typed sweep must
+too. `tools/test.mjs` caps the browser shards itself.
 
 New checks about the yard go in the node tier, as their own feature file. Only
 checks that need a real pointer, board or canvas go in the browser one.
