@@ -1420,7 +1420,7 @@ export const TESTS = [
     // measured narrower than "nobody on it" before the status was given the
     // whole of the card's second line, and the margin on the tightest of them is
     // one pixel now. A number that close is not a thing to leave to a comment.
-    const SAYS = ['busy', 'busy (9)', 'building', 'on the way', 'nobody on it'];
+    const SAYS = ['queued up in 9', 'building', 'on the way', 'nobody on it'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
                          'outhouse', 'house']) {
@@ -1466,7 +1466,7 @@ export const TESTS = [
 
     return [
       ok(!!row, 'the bench has a row that takes time to build'),
-      ok(/busy|building|on the way|nobody on it/.test(status),
+      ok(/queued up|building|on the way|nobody on it/.test(status),
          'and pressing it puts a status where the gain was', status || 'nothing'),
       ok(seen.size === 1 && seen.has(before),
          'and the sheet is the same size on every frame the build runs',
