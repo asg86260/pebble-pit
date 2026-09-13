@@ -27,7 +27,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
          SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX,
          SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES, SND_RATE,
-         RECIPES, SOUNDS,
+         RECIPES, SOUNDS, RECIPE_DEFAULTS,
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL,
          SND_FOLD_MS, SND_FOLD_GAIN_DB, SND_FOLD_GAIN_MAX_DB, SND_FOLD_WIDEN,
@@ -123,11 +123,18 @@ function makeRoom() {
   }
 }
 
+// A recipe's field, or what a recipe that never set it has for it.
+const field = (spec, k) => spec[k] ?? RECIPE_DEFAULTS[k];
+
 // How long a recipe sounds, in seconds: its longest envelope run out, plus the
 // thump if it carries one.
 function ringOf(spec, o) {
-  const longest = Math.max(spec.decay, spec.noiseMs, spec.slideMs) / 1000;
-  return longest * SND_RELEASE_TAILS + (o.big ? SND_THUMP_S : 0);
+  const sub = field(spec, 'sub');
+  const longest = Math.max(spec.decay * SND_RELEASE_TAILS + field(spec, 'bodyHold'),
+                           spec.noiseMs * SND_RELEASE_TAILS + field(spec, 'noiseHold'),
+                           spec.slideMs,
+                           sub ? field(spec, 'subMs') * SND_RELEASE_TAILS : 0) / 1000;
+  return longest + (o.big ? SND_THUMP_S : 0);
 }
 
 // One decided strike: the level it will take, the room it needs, and -- where
@@ -348,21 +355,28 @@ function render(spec, o, { level, widen, detune }) {
   const len = Math.ceil(SR * (ringOf(spec, o) + 0.01));
   const out = new Float32Array(len);
   const bodyTau = spec.decay / 1000, noiseTau = spec.noiseMs / 1000, slideS = spec.slideMs / 1000;
+  const bodyHold = field(spec, 'bodyHold') / 1000, noiseHold = field(spec, 'noiseHold') / 1000;
+  const sub = field(spec, 'sub'), subHz = field(spec, 'subHz'), subDrop = field(spec, 'subDrop');
+  const subS = field(spec, 'subMs') / 1000;
+  const clickRaw = field(spec, 'clickRaw'), noiseSlide = field(spec, 'noiseSlide'), drive = field(spec, 'drive');
   const clickS = spec.clickMs / 1000;
   const noiseQ = Math.max(0.1, spec.noiseQ * (1 - hard * SND_HARD_DULL) / widen);
-  // the grit: a state-variable bandpass over white noise
+  // the grit: a state-variable bandpass over white noise, its center
+  // sweeping over the fall if the recipe asks
   const gritHz = spec.noiseHz * (1 - hard * SND_HARD_DROP);
-  const f = 2 * Math.sin(Math.PI * Math.min(gritHz, SR / 4) / SR), qq = 1 / noiseQ;
+  const coef = hz => 2 * Math.sin(Math.PI * Math.min(hz, SR / 4) / SR);
+  let f = coef(gritHz * noiseSlide); const qq = 1 / noiseQ;
   let lo = 0, bp = 0;
   // the front: a very short burst of noise through a one-pole highpass
   const hpA = Math.exp(-2 * Math.PI * spec.clickHz / SR);
   let hpY = 0, hpX = 0;
-  // the recipe's own lowpass, and the pixel stage's held sample
+  // the recipe's own lowpass, and the pixel stage's held samples -- the share
+  // of the front that skips the lowpass is held and quantized alongside
   const lpA = 1 - Math.exp(-2 * Math.PI * spec.cut / SR);
-  let lp = 0, held = 0;
+  let lp = 0, held = 0, heldRaw = 0;
   const steps = Math.pow(2, spec.bits - 1);
   const hold = Math.max(1, spec.hold | 0);
-  let ph = 0, phT = 0;
+  let ph = 0, phS = 0, phT = 0;
   const wave = ph => {
     switch (spec.wave) {
       case 'sine':   return Math.sin(ph * 2 * Math.PI);
@@ -371,23 +385,32 @@ function render(spec, o, { level, widen, detune }) {
       default:       return 2 * ph - 1;
     }
   };
+  // an envelope that sits at full for `hold` and then releases on `tau`
+  const env = (t, hold, tau) => t < hold ? 1 : Math.exp(-(t - hold) / tau);
   for (let i = 0; i < len; i++) {
     const t = i / SR;
     // the body: the pitch falls (or rises) from hz * slide to hz over slideMs
     const k = Math.min(1, t / slideS);
     const hz = spec.hz * pitch * Math.pow(spec.slide, 1 - k);
     ph += hz / SR; if (ph >= 1) ph -= 1;
-    const b = wave(ph) * spec.level * Math.exp(-t / bodyTau);
+    let b = wave(ph) * spec.level * env(t, bodyHold, bodyTau);
+    // the thump: a sine dropping from subHz * subDrop to subHz over subMs
+    if (sub) {
+      const ks = Math.min(1, t / subS);
+      phS += subHz * pitch * Math.pow(subDrop, 1 - ks) / SR; if (phS >= 1) phS -= 1;
+      b += Math.sin(phS * 2 * Math.PI) * sub * Math.exp(-t / subS);
+    }
     // the grit
     const w = noise() * 2 - 1;
+    if (noiseSlide !== 1) f = coef(gritHz * Math.pow(noiseSlide, 1 - k));
     lo += f * bp; const hi = w - lo - qq * bp; bp += f * hi;
-    const n = bp * spec.noise * Math.exp(-t / noiseTau) * 0.8;
+    const n = bp * spec.noise * env(t, noiseHold, noiseTau) * 0.8;
     // the front
     let c = 0;
     if (t < clickS) { hpY = hpA * (hpY + w - hpX); hpX = w; c = hpY * spec.click * (1 - t / clickS) * 1.6; }
-    let s = (b + n + c) * level;
+    let s = (b + n + c * (1 - clickRaw)) * level;
     // the thump under a big one: a sine that tunes down as it goes
-    if (o.big) {
+    if (o.big && SND_THUMP_LEVEL) {
       const fall = Math.min(1, t / SND_THUMP_S);
       const thz = SND_THUMP_HZ * pitch * Math.pow(SND_THUMP_FALL, fall);
       phT += thz / SR; if (phT >= 1) phT -= 1;
@@ -395,9 +418,12 @@ function render(spec, o, { level, widen, detune }) {
            Math.exp(-t / (SND_THUMP_S / SND_RELEASE_TAILS * 2));
     }
     // the pixel stage: quantize, then hold each sample for `hold` samples
-    if (i % hold === 0) held = Math.round(s * steps) / steps;
+    if (i % hold === 0) {
+      held = Math.round(s * steps) / steps;
+      heldRaw = Math.round(c * clickRaw * level * steps) / steps;
+    }
     lp += lpA * (held - lp);
-    out[i] = Math.tanh(lp * 1.4);
+    out[i] = Math.tanh((lp + heldRaw) * drive);
   }
   return out;
 }

@@ -27,11 +27,15 @@ export const SND_LOWPASS_Q = 0.5;      // a soft knee: the nearest a biquad gets
 // The soft limiter, which is there so the endgame yard at full tilt is the
 // same loudness as the opening yard rather than louder. Slow release, so it
 // leans on the whole mix rather than pumping on each hit.
-export const SND_LIMIT_DB = -6;
-export const SND_LIMIT_RATIO = 8;
-export const SND_LIMIT_RELEASE_S = 0.4;
-export const SND_LIMIT_ATTACK_S = 0.005;
-export const SND_LIMIT_KNEE_DB = 12;
+// A safety limiter and nothing more: it starts a decibel under full scale
+// and leaves everything under that alone, so a boulder is as much louder
+// than a click as the bench said. Punch is contrast; a limiter leaning on
+// the mix took the contrast out.
+export const SND_LIMIT_DB = -1;
+export const SND_LIMIT_RATIO = 20;
+export const SND_LIMIT_RELEASE_S = 0.1;
+export const SND_LIMIT_ATTACK_S = 0.001;
+export const SND_LIMIT_KNEE_DB = 0;
 // The mute ramps rather than cuts, both ways -- a gain that jumps is a click.
 export const SND_MUTE_S = 0.05;
 
@@ -81,6 +85,22 @@ export const SND_RATE = 44100;
 //   cut      a one-pole lowpass over the lot, Hz
 //   gain     the recipe's level into the mix
 //   vary     the share of SND_JITTER_* this voice scatters by, per hit
+//
+// And the knobs added for weight, each "off" in RECIPE_DEFAULTS so a recipe
+// written before it existed sounds exactly as it did:
+//
+//   bodyHold   ms the body sits at full before its decay starts
+//   sub        a sine thump under the body, at this level ...
+//   subHz      ... landing at this pitch ...
+//   subDrop    ... from this many times it ...
+//   subMs      ... over this long, which is also its decay constant
+//   clickRaw   share of the front that skips the recipe's lowpass
+//   noiseSlide the grit's center starts at this many times noiseHz and
+//              sweeps to it over slideMs
+//   noiseHold  ms the grit sits at full before its decay starts
+//   drive      gain into the soft clip
+export const RECIPE_DEFAULTS = { bodyHold: 0, sub: 0, subHz: 50, subDrop: 2, subMs: 80, clickRaw: 0,
+                                 noiseSlide: 1, noiseHold: 0, drive: 1.4 };
 //
 // Named as they were on the bench, and pasted in from it (2026-09-13).
 export const RECIPES = {
