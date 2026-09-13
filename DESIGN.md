@@ -7978,3 +7978,117 @@ older check changed meaning. The flag over a station now stays up through a
 build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
 in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
 tip -- with the payment's `S.paid` flight run the other way.
+
+## The cut is worked in pockets (design, not built)
+
+### What is wrong
+
+A quarrier's swing is not a thing you can see. `CUT_DIG_MS` says a cut is
+sixteen seconds of swinging at pace nought, and `cellMs` divides that by the
+cells in the cut -- about three hundred on a two-bench cut -- so one cell is
+fifty-odd milliseconds and the floor, `CUT_SWING_MIN`, is sixty. Then
+`paceShare` divides *that*: twelve milliseconds at rung nine, less on band
+four. A cell goes in one frame. The body's lunge (`QUARRY_SWING`, 620 ms) is
+still on its way down when the next cell goes, so the pick never lands on
+anything; and the walk, divided by the same share since the ladder moved
+under the gang's feet, crosses a face in a blink. What the player sees is a
+gang darting about the floor of the hole while the floor sinks -- the
+loading bar with people drawn on it that the seam rework took out of the
+*pay* and left in the *work*.
+
+The picker is not the problem. `nextQuarryCell` takes the shallowest course
+and one of the few nearest open cells on it, and a fresh yard dug by five
+quarriers -- or by the jaw, which asks the same function -- comes out as a
+flat-bottomed pit worked down in layers, at every depth and every rung (shot
+2026-09-13). But a body re-picks after *every* cell, and a cell is one
+frame, so it re-picks sixteen times a second: the scatter that was meant to
+be a pace or two of walk is a body that never stands still.
+
+### The rule
+
+**One swing takes a pocket, not a cell, and a body works a run.**
+
+- **The beat.** A swing is `CUT_BEAT_MS` at pace nought -- about a second,
+  the lunge and the recovery -- and the pace ladder shortens it through
+  `paceShare` down to a floor, `CUT_BEAT_MIN`, of about four hundred
+  milliseconds. The floor is the point: below it the pick does not visibly
+  land, and the whole change is for nothing. Past the floor the ladder buys
+  nothing on the beat and buys it on the pocket instead.
+- **The pocket.** Each swing takes `CUT_POCKET` cells off the body's course
+  -- three, the cell under the pick and its two neighbors on the same
+  layer, the way a crit's extra cells already go through `nearestUndug`. The
+  pocket's cells go together on one frame, which is what makes a swing look
+  like it did something. Where the ladder has hit the beat's floor, the
+  pocket widens by the share the beat could not take, so `pocket / beat`
+  climbs the same curve `1 / cellMs` climbs today.
+- **Throughput is unchanged, by construction.** `pocket × (1 / beat)` at
+  every rung equals `1 / cellMs` at that rung. `CUT_DIG_MS` still says how
+  long a cut takes; `cellMs` becomes the derived number the pocket and the
+  beat are solved from, not the clock a body runs on. `quarryRate` and the
+  row's gain line do not move, `findShards` deals the same scatter over the
+  same cells, and the jaw -- which takes one cell a tick on its own clock and
+  does not swing -- is not in this at all.
+- **The run.** A body picks a *run*, not a cell: the nearest `CUT_RUN`
+  pockets open on the current course, walked in order from the near end. It
+  re-picks when the run is done, when the course it is on runs out
+  (something shallower has opened -- silt came down, or a neighbor's run was
+  finished by someone else), or when its own cell is dug from under it.
+  `nextQuarryCell`'s claim set becomes a set of runs, so two bodies never
+  walk to one pocket. The walk is the same `CUT_STEP / paceShare()` it is
+  now; what changes is that it happens once a run instead of once a cell,
+  which is the "flying" gone without touching the number.
+- **The blaster's swing is the blast.** A trained quarrier's swing takes a
+  double pocket (`CUT_POCKET × 2` -- the same ground its current `/ 2` on
+  the swing time bought), and on landing it fires `shockAt(x, y, power,
+  'quarry')` at the pick -- the same ragged ring and speck burst a crit
+  leaves, at about a third of a crit's power -- and stands the beat out
+  before its next. The apprentice swings and the ground goes; the blaster
+  sets a charge and the ground *bursts*. This is the trade's bump, the
+  thing a player bought at the school being visible from across the yard. A
+  crit at the cut stays what it is -- more ground out at once, a full ring
+  -- and a blaster's crit is both.
+- **No puff for a plain swing.** Considered and dropped: a few specks on
+  every swing was a gang with five rings a second going in the hole, and
+  the crit's ring lost its meaning. A plain swing is the lunge landing and
+  three cells gone. That is enough to read.
+
+### What it costs
+
+Nothing on the balance sheet, on purpose: shards a minute, cut time, the
+ladder's gain line and the jaw's pace are identical at every rung. The only
+number that changes is how many times a second a body picks a cell.
+
+The walk is still nine tenths of a shift -- the pace ladder still buys the
+walk, which is what its rungs were named for -- and a run walked from the
+near end is a shorter walk than five re-picks across the same stretch.
+Measured on the same seeded scene before and after, a cut should finish in
+the same wall time or a shade sooner; if it comes out slower the run length
+is wrong, not the beat.
+
+### Numbers
+
+`config/quarry.js`, one block, all on `TUNABLE`: `CUT_BEAT_MS = 1000`,
+`CUT_BEAT_MIN = 400`, `CUT_POCKET = 3`, `CUT_RUN = 4`, `CUT_BLAST_POWER = 1`.
+`CUT_SWING_MIN` goes -- the beat's floor replaces it. `NEAR_CELLS` comes
+out of quarry.js and into config as `CUT_RUN` while the file is open; a
+magic number in a module is a bug here.
+
+### How it is checked
+
+`test/cut-pockets.test.mjs`, node tier, on the driven yard:
+
+- A body's dig frames: between one `digCell` and the next from the same body,
+  at least `CUT_BEAT_MIN` game-milliseconds pass, at pace nought and at rung
+  fifteen. (The thing the change is for.)
+- Throughput: a two-bench cut with one quarrier finishes within ten percent
+  of the same cut's time on main, at pace nought and rung nine, on the same
+  seed. (The thing the change must not move.)
+- Layers hold: at no frame does any column stand more than one pocket deeper
+  than the shallowest undug column on its course.
+- A blaster's dig fires one shock at the cut per swing and an apprentice's
+  fires none; a crit fires one either way and not two.
+- The run: a body's `x` between re-picks is monotonic -- it walks one way
+  along a run, never back.
+
+And the shot: a `cutgang` scene, five quarriers at pace nought and at rung
+fifteen, one blaster among them, held on the frame a blaster's swing lands.

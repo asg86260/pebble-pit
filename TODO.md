@@ -1,5 +1,24 @@
 # Still to do
 
+## The cut is worked in pockets (2026-09-13)
+
+**Designed, awaiting approval** -- "The cut is worked in pockets" in
+DESIGN.md. The player's report: quarriers fly back and forth on the floor
+of the cut, and the work is not readable as work. Measured: a cell is one
+frame (`CUT_SWING_MIN` = 60 ms at pace nought, `/ paceShare()` on top), the
+body re-picks a cell after every one, and the 620 ms lunge never lands. The
+fix keeps throughput to the rung -- one swing takes a three-cell pocket on a
+readable beat with a 400 ms floor, a body works a run of pockets along its
+course instead of re-picking per cell, and a *blaster's* swing is a double
+pocket that fires the crit's ring at a third power. Decided with the player
+2026-09-13: the blast is the trade's, not every swing's, and the balance
+sheet does not move.
+
+The same report named deep vertical shafts instead of layers. **Not
+reproduced**: five quarriers on a fresh yard at 20/60/200/500 s, and again
+at pace rung fifteen, all dig a flat-bottomed layered pit; the jaw asks the
+same picker. Wants the player's save before anything is changed there.
+
 ## A toast when an achievement lands -- BUILT (2026-09-12)
 
 DESIGN.md, "The noticeboard, and the record on it" > "Amendment -- a toast
