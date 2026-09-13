@@ -1,5 +1,6 @@
 // A count on its way (tween.js): the one thing every number in the yard --
-// the card, a purse, a roster, a price -- goes through before it is drawn.
+// the card, a purse, a roster -- goes through before it is drawn. A price does
+// not: it is a fact about the next rung, not a count that moved (shop.js).
 //
 // The clock is handed in rather than read, so a run here is a fact about the
 // curve and not about how fast the machine is.

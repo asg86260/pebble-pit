@@ -591,8 +591,15 @@ export function refresh(el, list, headcount) {
     // same information as "you are short of *this*": with the whole row dimmed
     // alike, a player with the stone and not the dust reads the same row as one
     // with neither, and has to go and count both piles to find out which.
+    //
+    // The price is not run through the tweener. A price only changes when the
+    // rung it was for has landed and the next one is up, and a number counting
+    // from the old bill to the new one read as the price of the thing you had
+    // just bought going up under you, rather than as a different card with its
+    // own price. A count runs because the thing it counts moved; a price is a
+    // fact about the next rung, and the next rung did not move.
     const said = ([money, n]) =>
-      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, Math.round(shown('price:' + u.key + ':' + money, n)))}</span>`;
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
     const full = billOf(u);
     const bill = full.filter(([m]) => m !== 'time').map(said).join('');
     const clock = full.filter(([m]) => m === 'time').map(said).join('');
