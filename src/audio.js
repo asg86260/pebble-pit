@@ -28,7 +28,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX,
          SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES, SND_RATE,
          SND_HAND_LEVEL, SND_FOLD_LEVEL, SND_PUNCT_LEVEL,
-         SND_STONE, SND_WOOD, SND_METAL, SND_RIFT,
+         SND_STONE,
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL, SND_CRIT_RATIO, SND_CRIT_SHARE,
          SND_FOLD_MS, SND_FOLD_GAIN_DB, SND_FOLD_GAIN_MAX_DB, SND_FOLD_WIDEN,
@@ -54,8 +54,9 @@ const decisions = {
 
 const CLASSES = new Set(['hand', 'fold', 'punct']);
 const CLASS_LEVEL = { hand: () => SND_HAND_LEVEL, fold: () => SND_FOLD_LEVEL, punct: () => SND_PUNCT_LEVEL };
-const SPEC = { stone: () => SND_STONE, wood: () => SND_WOOD, metal: () => SND_METAL,
-               rift: () => SND_RIFT };
+// The voices with a recipe. A voice named here by the yard and missing from
+// this table is decided and counted like any other and never sounds.
+const SPEC = { stone: () => SND_STONE };
 
 // An open fold window per voice: the one sound it will emit when it closes,
 // and everything folded into it so far, so the emission can stand for all of
@@ -135,7 +136,9 @@ function ringOf(spec, o) {
 // the node yard and the browser draw the same numbers whether or not anything
 // is rendered.
 function fire(voice, o, cls, t, n = 1, counted = false) {
-  let spec = (SPEC[voice] || SPEC.stone)();
+  if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
+  if (!SPEC[voice]) return;
+  let spec = SPEC[voice]();
   // A crit with a recipe of its own is that recipe; the octave-down body in
   // `render` is for the voices without one.
   if (o.crit && spec.crit) { spec = spec.crit; o = { ...o, crit: false }; }
@@ -147,7 +150,6 @@ function fire(voice, o, cls, t, n = 1, counted = false) {
   const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary;
   const ring = ringOf(spec, o);
   makeRoom();
-  if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
   active.push(v);
   // A class at nought is decided and counted like any other and never
@@ -156,7 +158,7 @@ function fire(voice, o, cls, t, n = 1, counted = false) {
 }
 
 // Something physically happened at world x. `voice` is one of stone, wood,
-// metal, rift; `opts` is { x, hard, big, crit, cls }, with cls one of 'hand'
+// metal, rift (only stone has a recipe today); `opts` is { x, hard, big, crit, cls }, with cls one of 'hand'
 // (never folded, never stolen), 'fold' (the default: a handful of gravel is
 // one sound, not forty) or 'punct' (rare by construction, with a ceiling of
 // its own). Before the first gesture it is a no-op and nothing is queued.

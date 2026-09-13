@@ -44,15 +44,7 @@ const strip = process.argv.includes('--strip');
 const GAP = 1.5;
 const STRIKES = [
   ['stone',        'stone', {}],
-  ['stone-hard',   'stone', { hard: 1 }],
-  ['stone-crit',   'stone', { crit: true }],
-  ['stone-big',    'stone', { big: true, hard: 1 }],
-  ['wood',         'wood',  {}],
-  ['wood-big',     'wood',  { big: true }],
-  ['metal',        'metal', {}],
-  ['metal-big',    'metal', { big: true, hard: 1 }],
-  ['rift',         'rift',  {}],
-  ['rift-punct',   'rift',  { cls: 'punct' }]
+  ['stone-crit',   'stone', { crit: true }]
 ];
 
 const PAGE = `(async () => {

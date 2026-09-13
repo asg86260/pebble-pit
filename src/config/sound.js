@@ -7,11 +7,10 @@
 // sound at once, which is the part that decides whether the game is bearable
 // at minute ninety.
 //
-// A voice is a *recipe*, the shape the hit bench renders (tools/hit-bench and
-// the `render` in audio.js are the same arithmetic): a body, a click on the
-// front, a puff of grit, and a pixel stage. The stone recipe was landed by ear
-// on the bench; the others are starting points and are tuned the same way --
-// copy the bench's JSON in here.
+// A voice is a *recipe*, the shape the hit bench renders (the Boulder Hit
+// Bench artifact and the `render` in audio.js are the same arithmetic): a
+// body, a click on the front, a puff of grit, and a pixel stage. Recipes are
+// landed by ear on the bench and the JSON is copied in here.
 
 // --- the mix -----------------------------------------------------------------
 // Quiet by default, and satisfying at that volume. The target is a laptop
@@ -50,15 +49,16 @@ export const SND_PAN_MAX = 0.3;
 // A voice stolen by the cap fades rather than stops.
 export const SND_STEAL_S = 0.02;
 // What each class is worth in the mix, as a share of the recipe's gain. The
-// player's own hand and the punctuation (the boulder landing, a building
-// coming down, a core banking) are the sounds; the yard's own work -- the
-// crew's picks, grain landing on a pile, chunks on the belt -- is the folding
-// class, and at nought it is silent: heard all day it is a background noise,
-// and the rule since the hits-only pass is that there is none. It is still
-// decided, folded and counted, so turning it up is one knob and nothing else.
+// player's own hand is the sound. The yard's own work -- the crew's picks,
+// grain landing on a pile, chunks on the belt -- is the folding class, and
+// the punctuation is the boulder landing, a building coming down, a core
+// banking; both at nought, so both are silent: heard all day the yard is a
+// background noise, and the rule since the hits-only pass is that there is
+// none. Everything is still decided, folded and counted, so turning either
+// up is one knob and nothing else.
 export let SND_HAND_LEVEL = 1;
 export let SND_FOLD_LEVEL = 0;
-export let SND_PUNCT_LEVEL = 1;
+export let SND_PUNCT_LEVEL = 0;
 // How many one-shots may sound at once. Past this the oldest and quietest is
 // taken, and the player's own hand is never the one taken.
 export let SND_VOICES = 16;
@@ -103,25 +103,15 @@ export let SND_STONE = { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10
                          noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
                          bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1,
                          crit: SND_STONE_CRIT };
-export let SND_WOOD  = { wave: 'tri', hz: 410, slide: 1.6, slideMs: 8, decay: 32, level: 0.8, duty: 0.5,
-                         click: 0.6, clickMs: 1.5, clickHz: 3200,
-                         noise: 0.3, noiseHz: 900, noiseQ: 3, noiseMs: 18,
-                         bits: 8, hold: 3, cut: 6000, gain: 0.8, vary: 0.5 };
-export let SND_METAL = { wave: 'square', hz: 660, slide: 1.15, slideMs: 6, decay: 120, level: 0.6, duty: 0.5,
-                         click: 0.8, clickMs: 1.5, clickHz: 5000,
-                         noise: 0.2, noiseHz: 2400, noiseQ: 6, noiseMs: 40,
-                         bits: 6, hold: 2, cut: 8000, gain: 0.7, vary: 0.3 };
-// The rift's one-shot is the tear: a very low body with a long fall, for the
-// moment a rung lands or the floor gives way.
-export let SND_RIFT  = { wave: 'sine', hz: 44, slide: 2.6, slideMs: 60, decay: 260, level: 1, duty: 0.5,
-                         click: 0.4, clickMs: 3, clickHz: 1400,
-                         noise: 0.7, noiseHz: 120, noiseQ: 0.7, noiseMs: 140,
-                         bits: 8, hold: 6, cut: 3000, gain: 1, vary: 0.2 };
-// `hard` in [0, 1] moves the body and the grit down and dulls the grit:
-// harder rock is lower and duller, not louder. A reward that is merely louder
-// is a slot machine.
-export const SND_HARD_DROP = 0.45;     // share of the pitch taken off at hard = 1
-export const SND_HARD_DULL = 0.5;      // share of the grit's q taken off at hard = 1
+// There are two sounds in the game right now, both the player's own swing:
+// the stone and its crit. Every other voice the yard names (`wood`, `metal`,
+// `rift`) has no recipe, is decided and counted like any other, and is never
+// rendered. A recipe for one is landed on the bench and added here.
+// `hard` in [0, 1] can move the body and the grit down and dull the grit --
+// harder rock lower and duller, not louder. Both at nought for now: the hit
+// on the rock is the recipe exactly as it was landed, at every depth.
+export const SND_HARD_DROP = 0;        // share of the pitch taken off at hard = 1
+export const SND_HARD_DULL = 0;        // share of the grit's q taken off at hard = 1
 // `big` puts a sine thump under the recipe that tunes down as it goes: the
 // boulder, a core banking, a building coming down onto its footprint.
 export const SND_THUMP_HZ = 70;

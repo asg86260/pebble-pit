@@ -158,13 +158,13 @@ group('the cap steals the oldest and quietest, and never the hand', async () => 
   const before = snap();
   // More strikes than the cap holds, each its own voice: hands are never
   // folded, so they are the way to fill the cap in one frame.
-  for (let i = 0; i < SND_VOICES; i++) sfx('metal', { x: 100, cls: 'hand' });
+  for (let i = 0; i < SND_VOICES; i++) sfx('stone', { x: 100, cls: 'hand' });
   const full = snap();
-  for (let i = 0; i < 3; i++) sfx('metal', { x: 100, cls: 'hand' });
+  for (let i = 0; i < 3; i++) sfx('stone', { x: 100, cls: 'hand' });
   const over = snap();
-  // Punctuation across three voices, none of them the hand: past the cap now,
-  // and something has to go -- and it cannot be one of the hands.
-  sfx('wood', { x: 100, cls: 'punct' });
+  // Punctuation, not the hand: past the cap now, and something has to go --
+  // and it cannot be one of the hands.
+  sfx('stone', { x: 100, big: true, cls: 'punct' });
   const took = snap();
   return [
     ok(full.fired - before.fired === SND_VOICES, 'the cap fills', `${full.fired - before.fired}`),
@@ -179,20 +179,24 @@ group('a cap full of gravel gives way to the next strike', async () => {
   run(3);
   const before = snap();
   // Fold windows, one closed after another, until the cap is full of yard
-  // noise -- then one more. The rift's strike rings longest, so it is the one
-  // still up when the last window closes.
+  // noise -- then one more. A strike rings for a fraction of a second and a
+  // window is eighty milliseconds, so the cap is brought down to what a
+  // couple of windows can fill, through its own knob, and put back after.
+  const voices = knob('SND_VOICES');
+  voices.set(2);
   let i = 0;
-  while (d().fired - before.fired < SND_VOICES) {
-    sfx('rift', { x: 100 });
+  while (d().fired - before.fired < 2) {
+    sfx('stone', { x: 100, big: true });
     run(SND_FOLD_MS / 1000 + FRAME);
     i++;
-    if (i > SND_VOICES * 4) break;
+    if (i > 8) break;
   }
   const full = snap();
-  sfx('rift', { x: 100, cls: 'punct' });
+  sfx('stone', { x: 100, big: true, cls: 'punct' });
   const after = snap();
+  voices.set(SND_VOICES);
   return [
-    ok(full.fired - before.fired >= SND_VOICES, 'the cap is full of the yard',
+    ok(full.fired - before.fired >= 2, 'the cap is full of the yard',
        `${full.fired - before.fired} up`),
     ok(after.stolen - full.stolen >= 1, 'and the next strike takes one',
        `${after.stolen - full.stolen} stolen`)
