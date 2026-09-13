@@ -65,6 +65,9 @@ group('the outhouse is bought at the bench, and its own board opens after', asyn
   const built = state();
 
   // and now the second cap, which is the shed's own board's to sell
+  // The second cap is priced in ore, so the quarry stands first: a row priced
+  // in a coin the yard has no source for is off the board (coinsOpen).
+  yard.S.quarryOpen = true;
   window.__grant({ shards: 30 });
   buildBoard('outhouse');
   const next = keysOn('looshop');
@@ -110,6 +113,9 @@ group('a yard part way up the janitor ladder survives a reload', async () => {
   window.__crew(3, 2);
   window.__loo(true);                          // the outhouse already up
   window.__give(20000);                        // every row is priced in dust as well
+  // The second cap is priced in ore, so the quarry stands first: a row priced
+  // in a coin the yard has no source for is off the board (coinsOpen).
+  yard.S.quarryOpen = true;
   window.__grant({ shards: 30 });
   window.__buy('loopost');
   window.__finish();

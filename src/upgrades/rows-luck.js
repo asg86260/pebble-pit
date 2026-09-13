@@ -1,7 +1,7 @@
 import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_MULT_RUNGS, CRIT_RATE, BAND_COINS } from '../config.js';
 import { critChance, critMult } from '../crit.js';
 import { S } from '../state.js';
-import { rungCost, DUST_PER } from '../upgrades.js';
+import { rungCost, DUST_PER, coinsOpen } from './price.js';
 import { tierRows, named } from './tiers.js';
 
 // The bench's luck rows. Data only: upgrades.js strings the files together
@@ -48,6 +48,8 @@ export const LUCK_ROWS = [
                   return [['dust', dust], ...BAND_COINS[2].map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])]; },
     cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel, CRIT_RATE),
     buy: () => S.critMultLevel++,
-    show: () => S.crew > 0
+    // ...and so it waits on the plots and the quarry, like any card priced
+    // in their coins (see coinsOpen).
+    show: () => S.crew > 0 && coinsOpen(BAND_COINS[2])
   }
 ];

@@ -27,7 +27,9 @@ export const OUTHOUSE_UPGRADES = [
     cost: () => LOOPOST_SHARDS,
     currency: 'shard',
     buy: () => { S.looPosts = 2; rebalance(); },
-    show: () => S.outhouseOpen && (S.looPosts ?? LOO_POSTS) < 2
+    // ...and not before the quarry stands: priced in ore, so it is off the
+    // board until there is somewhere to get ore from.
+    show: () => S.outhouseOpen && S.quarryOpen && (S.looPosts ?? LOO_POSTS) < 2
   }
 ];
 

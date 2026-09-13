@@ -58,6 +58,9 @@ group('the outhouse starts at one post, and loopost buys the second', async () =
   window.__reset();
   window.__loo(true);
   window.__crew(0, 2);                          // spare hands to build it
+  // The second cap is priced in ore, so the quarry stands first: a row priced
+  // in a coin the yard has no source for is off the board (coinsOpen).
+  yard.S.quarryOpen = true;
 
   const one = roster().find(r => r.job === 'janitors');
   const shownBefore = OUTHOUSE_UPGRADES.find(u => u.key === 'loopost').show();

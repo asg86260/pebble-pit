@@ -1711,9 +1711,14 @@ coins arrive in is fixed for the whole yard:
 Dust, then spore, then shard, because that is the order the run hands them
 out: the rock is there from the first click, the plots are the first thing a
 core buys (`FARM_DUST` 600), the quarry the second (`QUARRY_DUST` 2000). A
-card never asks for a coin the player has not yet seen a body carry, so a
-band-two card on a yard without plots is a card the player cannot read as a
-price at all -- and it is exactly the card that says "break the plots". The
+card never asks for a coin the yard has no source for: a ladder is **off the
+board** while the band it stands on bills a coin whose ground is not open
+(`coinsOpen` in upgrades/price.js -- spore is the plots, shard is the cut,
+spark the sky, core the first one banked). A band-two card on a yard without
+plots is a card the player cannot read as a price at all, so it goes rather
+than standing there priced in crops, and it comes back the moment the plots
+are broken. The same gate sits on the hand-written rows priced in ore (the
+janitor's second cap, the recycler, crit damage). The
 grounds' own tables already have this order (compost / fertilizer / hybrid
 seed is dust / +spore / +shard) and keep it; nothing there moves.
 

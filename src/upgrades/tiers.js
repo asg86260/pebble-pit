@@ -22,7 +22,7 @@
 
 import { S } from '../state.js';
 import { RUNGS, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP } from '../config.js';
-import { rungCost, DUST_PER } from './price.js';
+import { rungCost, DUST_PER, coinsOpen } from './price.js';
 import { STEP, levelOf, workFor, finish } from '../mult.js';
 
 // What a rung of a long ladder costs, from what the first one costs.
@@ -128,7 +128,13 @@ export function tierRows({ field, multKey, level: at, climb, unit, pct, does, va
     // What it asks of somebody's time, climbing with the ladder.
     work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, level())),
     buy: () => { step(); after?.(); },
-    show: () => show() && (ownBands[bandAt()].gate ? ownBands[bandAt()].gate() : true)
+    // ...and never while the band's bill names a coin the yard cannot yet get:
+    // a ladder three rungs up on a yard with no plots is off the board until
+    // the plots are broken, rather than standing there priced in crops. The
+    // whole card goes rather than the price, because a card you cannot read
+    // as a price is not a card (see `coinsOpen`).
+    show: () => show() && coinsOpen(coinsAt())
+              && (ownBands[bandAt()].gate ? ownBands[bandAt()].gate() : true)
   };
   if (!multKey) return [card];
 
@@ -152,7 +158,9 @@ export function tierRows({ field, multKey, level: at, climb, unit, pct, does, va
     },
     work: () => workFor(band.key),
     buy: () => finish(band.key),
-    show: () => show() && level() >= own && (band.gate ? band.gate() : true)
+    show: () => show() && level() >= own
+              && coinsOpen(band.coins || BAND_COINS[bands.length - 1] || [])
+              && (band.gate ? band.gate() : true)
   };
   return [card, research];
 }
