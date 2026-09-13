@@ -76,9 +76,15 @@ Left, in order:
 - **Events not yet in the table** (no `sfx` call at all): birds, the
   dance, the balloon, the school, the apothecary, the board, the shields'
   cutscenes. Each is one call and one `SOUNDS` row when wanted.
-- **Publishing** is `bun run publish` with `ITCH_TARGET=<user>/<game>` and
-  butler installed; it has not been run. No icon yet; mac and linux builds
-  need their own machine.
+- **Publishing** is `bun run publish`; the page is `config.itch` in
+  package.json. The `html`, `windows-portable` and `linux` channels are up
+  (2026-09-13). The AppImage is built in docker (`desk:build -- --linux`,
+  the electronuserland/builder image); it starts and writes its config on a
+  bare Linux box, nobody has played it there. No icon yet.
+- **No mac build.** A .dmg needs macOS (`hdiutil`, signing); the mac zip the
+  linux container can make carries a broken signature and reads as "damaged"
+  on a Mac. The route is a GitHub Actions workflow on a macos runner that
+  builds the dmg and pushes it with butler from a secret -- not written.
 - **A vite server watching the tree blocks the packager** (a handle on
   `release/`); `vite.config.js` now ignores it, but a server started before
   that change has to be restarted first.

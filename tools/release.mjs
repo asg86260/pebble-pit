@@ -93,7 +93,7 @@ if (!dry) {
 // tree is as clean as it was found.
 sh('vite', ['build']);
 const zip = zipDist(`dist/pebble-pit-${tag}.zip`);
-if (desktop) sh('node', ['tools/desk-build.mjs']);
+if (desktop) sh('node', ['tools/desk-build.mjs', '--linux']);
 if (dry) {
   restore();
   console.log(`release: dry run done -- ${zip} is what ${tag} would ship; nothing was tagged or pushed`);
