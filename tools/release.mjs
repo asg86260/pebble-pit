@@ -76,8 +76,13 @@ writeFileSync(pkgFile, stamped);
 const logFile = 'CHANGELOG.md';
 const rawLog = readFileSync(logFile, 'utf8');
 const today = new Date().toISOString().slice(0, 10);
-const unreleased = /^## Unreleased\r?\n+(?=- )/m;
-const stampedLog = rawLog.replace(unreleased, `## Unreleased\n\n## ${tag} — ${today}\n\n`);
+// Matched a line at a time: on a Windows checkout the file has CRLF endings
+// and a bare `\n+` stops at the `\r` of the blank line, so three releases
+// went out with their fixes still under Unreleased. The new heading is
+// written in whatever ending the file already uses.
+const unreleased = /^## Unreleased(?:\r?\n)+(?=- )/m;
+const eol = rawLog.includes('\r\n') ? '\r\n' : '\n';
+const stampedLog = rawLog.replace(unreleased, `## Unreleased${eol}${eol}## ${tag} — ${today}${eol}${eol}`);
 if (stampedLog === rawLog) console.log('release: nothing under Unreleased in CHANGELOG.md; no section added');
 writeFileSync(logFile, stampedLog);
 const restore = () => { writeFileSync(pkgFile, raw); writeFileSync(logFile, rawLog); };
