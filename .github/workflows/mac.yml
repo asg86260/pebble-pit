@@ -34,12 +34,16 @@ jobs:
       # unset secret is an empty string, and electron-builder reads an empty
       # CSC_LINK as a path to a certificate file that is not there.
       - name: Certificate
-        if: ${{ secrets.MAC_CERT_P12 != '' }}
+        env:
+          P12: ${{ secrets.MAC_CERT_P12 }}
+        if: ${{ env.P12 != '' }}
         run: |
           echo "CSC_LINK=${{ secrets.MAC_CERT_P12 }}" >> "$GITHUB_ENV"
           echo "CSC_KEY_PASSWORD=${{ secrets.MAC_CERT_PASS }}" >> "$GITHUB_ENV"
       - name: Apple ID
-        if: ${{ secrets.APPLE_ID != '' }}
+        env:
+          ID: ${{ secrets.APPLE_ID }}
+        if: ${{ env.ID != '' }}
         run: |
           echo "APPLE_ID=${{ secrets.APPLE_ID }}" >> "$GITHUB_ENV"
           echo "APPLE_APP_SPECIFIC_PASSWORD=${{ secrets.APPLE_APP_PASS }}" >> "$GITHUB_ENV"
@@ -49,7 +53,7 @@ jobs:
       - name: Package
         run: >
           bun run desk:build --mac dmg --universal
-          --config.mac.notarize=${{ secrets.APPLE_ID != '' }}
+          --config.mac.notarize=${{ env.APPLE_ID != '' }}
 
       - uses: actions/upload-artifact@v4
         with:
