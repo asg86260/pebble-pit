@@ -82,16 +82,32 @@ export const SND_RATE = 44100;
 //   gain     the recipe's level into the mix
 //   vary     the share of SND_JITTER_* this voice scatters by, per hit
 //
-// Named as they were on the bench, and pasted in from it.
+// Named as they were on the bench, and pasted in from it (2026-09-13).
 export const RECIPES = {
-  'stone':      { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
-                  click: 0.3, clickMs: 0.5, clickHz: 4900,
-                  noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
-                  bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
-  'stone crit': { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
-                  click: 0, clickMs: 0.5, clickHz: 500,
-                  noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
-                  bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 }
+  'stone':        { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+                    click: 0.03, clickMs: 0.5, clickHz: 500,
+                    noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
+                    bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
+  'stone crit':   { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+                    click: 0, clickMs: 0.5, clickHz: 500,
+                    noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
+                    bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
+  'stone hard':   { wave: 'sine', hz: 226, slide: 0.5, slideMs: 16, decay: 10, level: 0.1, duty: 0.05,
+                    click: 0, clickMs: 2.3, clickHz: 500,
+                    noise: 1, noiseHz: 1260, noiseQ: 0.3, noiseMs: 5,
+                    bits: 14, hold: 5, cut: 4000, gain: 0.8, vary: 0.4 },
+  'boulder-land': { wave: 'square', hz: 40, slide: 6, slideMs: 59, decay: 111, level: 0.45, duty: 0.5,
+                    click: 0, clickMs: 0.5, clickHz: 500,
+                    noise: 0, noiseHz: 60, noiseQ: 0.3, noiseMs: 5,
+                    bits: 16, hold: 1, cut: 800, gain: 0.96, vary: 1 },
+  'dust-gain':    { wave: 'tri', hz: 599, slide: 2.6, slideMs: 2, decay: 10, level: 0.11, duty: 0.05,
+                    click: 0, clickMs: 3, clickHz: 500,
+                    noise: 0, noiseHz: 60, noiseQ: 0.3, noiseMs: 5,
+                    bits: 16, hold: 1, cut: 2000, gain: 0.79, vary: 1 },
+  'sun summon':   { wave: 'sine', hz: 40, slide: 0.5, slideMs: 30, decay: 287, level: 0.46, duty: 0.2,
+                    click: 0.74, clickMs: 1.1, clickHz: 3600,
+                    noise: 1, noiseHz: 950, noiseQ: 1.8, noiseMs: 158,
+                    bits: 16, hold: 1, cut: 5800, gain: 0.55, vary: 1 }
 };
 
 // Every event in the yard that can make a sound, and what it plays. The key is
@@ -99,24 +115,25 @@ export const RECIPES = {
 // discipline it falls under -- 'hand' is never folded or stolen, 'fold' is
 // one sound per window, 'punct' has a ceiling of its own -- and the recipe is
 // a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
-// event is still decided and counted, and never rendered. Two are mapped
-// today, both the player's own swing. The dev panel's `sounds` tab takes the
-// bench's mapping JSON and lays it over this table live, and `applySounds` in
-// audio.js is what does the laying.
+// event is still decided and counted, and never rendered. The mapping is the
+// one the player made on the bench (2026-09-13): silence where it says
+// silence. The dev panel's `sounds` tab takes the bench's mapping JSON and
+// lays it over this table live, and `applySounds` in audio.js is what does
+// the laying.
 export const SOUNDS = {
   'rock-hit':     { label: 'you hit the rock',                          cls: 'hand',  recipe: 'stone' },
   'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone crit' },
-  'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: null },
+  'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: 'stone hard' },
   'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
-  'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: null },
+  'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
   'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
-  'machine-beat': { label: 'a beat of a machine (the ram gets the thump)', cls: 'fold', recipe: null },
+  'machine-beat': { label: 'a beat of a machine',                       cls: 'fold',  recipe: 'stone hard' },
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
-  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'fold',  recipe: null },
-  'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: null },
-  'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: null },
+  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'fold',  recipe: 'dust-gain' },
+  'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: 'stone crit' },
+  'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: 'sun summon' },
   'jackpot':      { label: 'the wheel pays out',                        cls: 'punct', recipe: null },
   'dud':          { label: 'the wheel comes up empty',                  cls: 'hand',  recipe: null },
   'work-land':    { label: 'a building comes down on its ground',       cls: 'punct', recipe: null },
@@ -129,12 +146,13 @@ export const SOUNDS = {
 // on the rock is the recipe exactly as it was landed, at every depth.
 export const SND_HARD_DROP = 0;        // share of the pitch taken off at hard = 1
 export const SND_HARD_DULL = 0;        // share of the grit's q taken off at hard = 1
-// `big` puts a sine thump under the recipe that tunes down as it goes: the
-// boulder, a core banking, a building coming down onto its footprint.
+// `big` can put a sine thump under the recipe that tunes down as it goes: the
+// boulder, a core banking, a building coming down onto its footprint. At
+// nought: the bench has no thump, so a recipe landed there plays without one.
 export const SND_THUMP_HZ = 70;
 export const SND_THUMP_FALL = 0.45;    // it ends at this share of where it began
 export const SND_THUMP_S = 0.22;
-export const SND_THUMP_LEVEL = 0.6;
+export const SND_THUMP_LEVEL = 0;
 // --- density -------------------------------------------------------------------
 // A handful of gravel is one sound, not forty. Events of the folding class
 // arriving inside a window neither queue nor each fire: they fold into the one

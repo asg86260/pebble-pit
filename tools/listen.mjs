@@ -43,8 +43,14 @@ const strip = process.argv.includes('--strip');
 // nothing is folded or stolen and each is heard whole.
 const GAP = 1.5;
 const STRIKES = [
-  ['rock-hit',   'rock-hit',  {}],
-  ['rock-crit',  'rock-crit', {}]
+  ['rock-hit',     'rock-hit',     {}],
+  ['rock-crit',    'rock-crit',    {}],
+  ['rock-swing',   'rock-swing',   {}],
+  ['boulder-land', 'boulder-land', { big: true }],
+  ['machine-beat', 'machine-beat', {}],
+  ['pit-land',     'pit-land',     {}],
+  ['core-bank',    'core-bank',    { big: true }],
+  ['meteor-call',  'meteor-call',  { big: true }]
 ];
 
 const PAGE = `(async () => {
