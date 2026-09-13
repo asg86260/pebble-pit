@@ -47,10 +47,16 @@ export const SND_MUTE_S = 0.05;
 export const SND_JITTER_CENTS = 100;
 export const SND_JITTER_DB = 2;
 export const SND_JITTER_MS = 8;
-// Nearly mono. The yard is drawn flat, so it is panned shallowly from world x
-// against the middle of the view and capped well short of hard; a hard-panned
-// yard is a yard you have to sit in the middle of.
-export const SND_PAN_MAX = 0.3;
+// Nearly mono on screen. The yard is drawn flat, so what you can see is panned
+// shallowly from world x against the middle of the view and capped well short
+// of hard; a hard-panned yard is a yard you have to sit in the middle of.
+export let SND_PAN_MAX = 0.3;
+// Off screen is another matter: a strike you cannot see is placed by its
+// direction alone, so past the view's edge the pan keeps going, reaching
+// SND_PAN_OFF at SND_PAN_REACH view widths beyond the edge and holding there.
+// Short of hard even so, so a far yard is still heard in both ears.
+export let SND_PAN_OFF = 0.85;
+export let SND_PAN_REACH = 0.5;
 // A voice stolen by the cap fades rather than stops.
 export const SND_STEAL_S = 0.02;
 // How many one-shots may sound at once. Past this the oldest and quietest is
@@ -234,6 +240,12 @@ export const SOUND_KNOBS = [
     get: () => SND_EACH_PER_S, set: v => { SND_EACH_PER_S = v; } },
   { key: 'SND_FOLD_MS', label: 'fold window', min: 20, max: 200, step: 5,
     get: () => SND_FOLD_MS, set: v => { SND_FOLD_MS = v; } },
+  { key: 'SND_PAN_MAX', label: 'pan on screen', min: 0, max: 1, step: 0.05,
+    get: () => SND_PAN_MAX, set: v => { SND_PAN_MAX = v; } },
+  { key: 'SND_PAN_OFF', label: 'pan off screen', min: 0, max: 1, step: 0.05,
+    get: () => SND_PAN_OFF, set: v => { SND_PAN_OFF = v; } },
+  { key: 'SND_PAN_REACH', label: 'pan reach', min: 0.1, max: 2, step: 0.1,
+    get: () => SND_PAN_REACH, set: v => { SND_PAN_REACH = v; } },
   { key: 'SND_VOICES', label: 'voices', min: 4, max: 32, step: 1,
     get: () => SND_VOICES, set: v => { SND_VOICES = v; } }
 ];

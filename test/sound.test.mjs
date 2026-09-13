@@ -14,9 +14,10 @@
 // being counted before the wake -- has to be first.
 
 import { group, ok, run, runUntil } from './helpers.mjs';
-import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions, applySounds } from '../src/audio.js';
+import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions, applySounds, panOf } from '../src/audio.js';
+import { S } from '../src/state.js';
 import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S, SND_VOICES,
-         SOUND_KNOBS, SOUNDS } from '../src/config/sound.js';
+         SND_PAN_MAX, SND_PAN_OFF, SND_PAN_REACH, SOUND_KNOBS, SOUNDS } from '../src/config/sound.js';
 
 const FRAME = 1 / 60;
 const d = () => audioDecisions();
@@ -227,5 +228,25 @@ group('a cap full of gravel gives way to the next strike', async () => {
        `${full.fired - before.fired} up`),
     ok(after.stolen - full.stolen >= 1, 'and the next strike takes one',
        `${after.stolen - full.stolen} stolen`)
+  ];
+});
+
+group('a strike off the edge of the screen is heard off that edge', async () => {
+  const near = 1e-9;
+  const was = { viewW: S.viewW, camX: S.camX };
+  S.viewW = 1000; S.camX = 2000;               // the view covers 2000..3000
+  const mid = panOf(2500), left = panOf(2000), right = panOf(3000);
+  const off = panOf(2000 - SND_PAN_REACH * 1000), farOff = panOf(-1e6);
+  const half = panOf(2000 - SND_PAN_REACH * 500), rightOff = panOf(1e6);
+  Object.assign(S, was);
+  return [
+    ok(Math.abs(mid) < near, 'the middle of the view is dead center', mid),
+    ok(Math.abs(left + SND_PAN_MAX) < near && Math.abs(right - SND_PAN_MAX) < near,
+       'the view edges sit at the shallow on-screen pan', `${left} ${right}`),
+    ok(half < left && half > -SND_PAN_OFF, 'past the edge the pan keeps deepening', half),
+    ok(Math.abs(off + SND_PAN_OFF) < near, 'a reach beyond the edge is the off-screen pan', off),
+    ok(Math.abs(farOff + SND_PAN_OFF) < near && Math.abs(rightOff - SND_PAN_OFF) < near,
+       'and it holds there, never hard, on either side', `${farOff} ${rightOff}`),
+    ok(panOf(undefined) === 0, 'a strike with no x is centered')
   ];
 });

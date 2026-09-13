@@ -25,7 +25,7 @@
 
 import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATIO,
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
-         SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX,
+         SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX, SND_PAN_OFF, SND_PAN_REACH,
          SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES, SND_RATE,
          RECIPES, SOUNDS, RECIPE_DEFAULTS,
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
@@ -332,11 +332,18 @@ function follow() {
   aim(nodes.lowpass.frequency, nodes, 'cornerSent', SND_LOWPASS_HZ, SND_MUTE_S, 1);
 }
 
-// Where a world x sits in the ear: shallow, against the middle of the view.
-function panOf(x) {
+// Where a world x sits in the ear. Shallow across the view, against its
+// middle; then, past either edge, deepening toward SND_PAN_OFF over
+// SND_PAN_REACH view widths, so a strike off the left of the screen is heard
+// off the left. Exported for the node yard, which has no context to hear it.
+export function panOf(x) {
   if (x == null || !S.viewW) return 0;
-  const mid = S.camX + S.viewW / 2;
-  return clamp((x - mid) / (S.viewW / 2), -1, 1) * SND_PAN_MAX;
+  const half = S.viewW / 2;
+  const d = (x - (S.camX + half)) / half;      // -1..1 across the view
+  const side = d < 0 ? -1 : 1, a = Math.abs(d);
+  if (a <= 1) return d * SND_PAN_MAX;
+  const beyond = clamp((a - 1) / (SND_PAN_REACH * 2));
+  return side * (SND_PAN_MAX + (SND_PAN_OFF - SND_PAN_MAX) * beyond);
 }
 
 // The grit's and the click's noise: a stream of its own rather than `rand()`,
