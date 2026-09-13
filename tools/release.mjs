@@ -42,6 +42,13 @@ const sh = (cmd, cmdArgs, opts = {}) => {
 const read = (cmd, cmdArgs) =>
   spawnSync(cmd, cmdArgs.map(quote), { encoding: 'utf8', shell }).stdout.trim();
 
+// Everything the push needs is checked before anything is committed, so a
+// missing tool fails here with a clean tree rather than after the tag is on.
+// butler is installed by hand (~/bin, on PATH) and a terminal opened before
+// it went on PATH does not see it.
+if (!dry && spawnSync('butler', ['-V'], { stdio: 'ignore', shell }).status !== 0)
+  fail('butler is not on PATH -- open a new terminal, or install it: https://itch.io/docs/butler/');
+
 // A release is a commit on main with nothing left over: a dirty tree would
 // mean the tag names a state nobody can check out again.
 const branch = read('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
