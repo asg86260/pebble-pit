@@ -18,7 +18,7 @@ this file is for things that were broken.
 - A janitor stands still between shovel swings and faces the mess.
 - Two janitors on the last patch of a mess no longer shove each other about.
 - A janitor with a shovel in its hands no longer reads as "on a break".
-- A laden carter goes for whichever is nearer, the next grain or the lip.
+- A laden carter sweeps home, taking everything it walks over, and never turns round.
 - A carter asks the hole again before giving up on a heap.
 
 ## v0.1.5 — 2026-09-13
