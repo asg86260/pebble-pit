@@ -8,7 +8,7 @@ What goes in each field of the itch project editor. Assets are in this folder.
 bun run build
 ```
 
-Zip the *contents* of `dist/` (so `index.html` is at the root of the zip), upload it, and
+Or `bun run zip`, which does both and writes `../boulder-clicker-web.zip`. By hand: zip the *contents* of `dist/` (so `index.html` is at the root of the zip), upload it, and
 tick **This file will be played in the browser**. The build already uses relative paths.
 
 ## Basic info

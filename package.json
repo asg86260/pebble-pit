@@ -20,6 +20,7 @@
     "test:all": "node --test test/*.test.mjs && node tools/headless.mjs",
     "watch": "node --test --watch",
     "look": "node tools/look.mjs",
+    "zip": "node tools/zip.mjs",
     "desk": "electron .",
     "desk:build": "node tools/desk-build.mjs",
     "publish": "node tools/publish.mjs"
