@@ -640,13 +640,14 @@ export function refresh(el, list, headcount) {
         // the row says so rather than claiming the yard has given up.
         //
         // The vocabulary is closed, and every word in it fits the tightest cell
-        // on any board (102 pixels; see `pinWidth` in board.js): "in line (7)",
-        // "building", "on the way", "nobody on it". A status is about the
+        // on any board (see `pinWidth` in board.js and the width check in
+        // selftest/boards.js): "queued up in 7", "building", "on the way",
+        // "nobody on it". A status is about the
         // whole card, and the gain's line -- which it takes over -- spans the
         // card less the pips' corner (see `.gain` in style.css).
         row.classList.add('waiting');
         const queued = inLine(u);
-        sayHTML(gain, queued ? `in line (${lineAt(u)})` :
+        sayHTML(gain, queued ? `queued up in ${lineAt(u)}` :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
         sayHTML(price, bill); sayHTML(time, clock);

@@ -7850,10 +7850,11 @@ is spare, an empty cut building nothing. A queue does not staff itself.
   spoken for from the press), and the walk is the walk.
 - `start` loses its `fullAt` guard; `siteBusy` is false for every row, and the
   `busy` / `busy (n)` branch in shop.js goes with it. What is left is
-  `building` (mine, on the go) and one new word, **`in line (n)`** -- this
-  row's place, counting the work at the front as one, so the first behind it
-  reads `in line (2)`. The vocabulary stays closed and every word fits the
-  102-pixel cell.
+  `building` (mine, on the go) and one new word, **`queued up in n`** (the
+  owner's wording, over `in line (n)`) -- this row's place, counting the work
+  at the front as one, so the first behind it reads `queued up in 2`. The
+  vocabulary stays closed and the width check in `selftest/boards.js` tries
+  every word on every card.
 - **Pressing an in-line row again pulls it out**, and the bill comes back in
   full: dust and coins put back into the pile the way `take` lifted them out.
   The refund arcs *from* the site back to the bench -- `payTo` the other way,
