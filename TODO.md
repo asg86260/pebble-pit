@@ -81,10 +81,17 @@ Left, in order:
   (2026-09-13). The AppImage is built in docker (`desk:build -- --linux`,
   the electronuserland/builder image); it starts and writes its config on a
   bare Linux box, nobody has played it there. No icon yet.
-- **No mac build.** A .dmg needs macOS (`hdiutil`, signing); the mac zip the
-  linux container can make carries a broken signature and reads as "damaged"
-  on a Mac. The route is a GitHub Actions workflow on a macos runner that
-  builds the dmg and pushes it with butler from a secret -- not written.
+- **The mac build is `.github/workflows/mac.yml`**: a macos runner builds a
+  universal dmg on every `v*` tag (so `bun run release` triggers it) and
+  pushes it to the `mac` channel with the `BUTLER_API_KEY` secret. Nobody has
+  opened it on a Mac. A .dmg cannot be made here or in docker (`hdiutil`).
+- **Nothing is signed.** Windows shows SmartScreen, mac the "unidentified
+  developer" sheet. Mac: an Apple Developer account ($99/yr), a Developer ID
+  Application cert as `MAC_CERT_P12`/`MAC_CERT_PASS` and an app-specific
+  password as `APPLE_ID`/`APPLE_APP_PASS`/`APPLE_TEAM_ID` -- the workflow
+  then signs and notarizes with no other change. Windows: Azure Trusted
+  Signing (`win.azureSignOptions`) is the cheap route; an OV cert on a token
+  still warns until SmartScreen learns the file.
 - **A vite server watching the tree blocks the packager** (a handle on
   `release/`); `vite.config.js` now ignores it, but a server started before
   that change has to be restarted first.

@@ -1,0 +1,60 @@
+# The mac build. A .dmg can only be made on macOS (hdiutil, codesign), so
+# this is the one build that does not happen on the dev machine: it runs on
+# a GitHub macos runner whenever `bun run release` pushes a version tag, and
+# pushes the result to the itch `mac` channel through the same publish.mjs
+# the other channels use. It can also be run by hand from the Actions tab.
+#
+# Secrets:
+#   BUTLER_API_KEY   required -- itch.io > settings > API keys.
+#   MAC_CERT_P12     optional -- a Developer ID Application certificate,
+#   MAC_CERT_PASS               base64 of the .p12 and its password.
+#   APPLE_ID         optional -- with the two below, the app is notarized
+#   APPLE_APP_PASS              so Gatekeeper opens it without a warning;
+#   APPLE_TEAM_ID               an app-specific password, not the account's.
+# Without the certificate electron-builder signs ad-hoc, which runs on Apple
+# silicon but shows the "unidentified developer" sheet. Without the Apple ID
+# notarization is skipped.
+
+name: mac
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      # One universal dmg: a single download whichever Mac they have.
+      - name: Package
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASS }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASS }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: >
+          node tools/desk-build.mjs --mac dmg --universal
+          --config.mac.notarize=${{ secrets.APPLE_ID != '' }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: release/*.dmg
+
+      - name: Install butler
+        run: |
+          curl -sL https://broth.itch.zone/butler/darwin-amd64/LATEST/archive/default -o butler.zip
+          unzip -q butler.zip -d "$HOME/butler"
+          chmod +x "$HOME/butler/butler"
+          echo "$HOME/butler" >> "$GITHUB_PATH"
+
+      - name: Push to itch
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: node tools/publish.mjs --desktop
