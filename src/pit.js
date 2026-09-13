@@ -257,7 +257,7 @@ function throughRift(x, shade) {
     S.riftOpen = true;
     S.riftGulp = RIFT_GULP;
     S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
-    sfx('rift', { x: pit.x + pit.w / 2, cls: 'punct' });
+    sfx('rift-tear', { x: pit.x + pit.w / 2 });
   }
   const held = riftHeld();
   S.riftAte = (S.riftAte || 0) + 1;   // fed at the mouth counts toward its growth
@@ -391,7 +391,7 @@ export function bankDust(x, shade = 1) {
   // brim is 37,566, and the number written down was fifty thousand, so the row
   // could not appear in a game that had done the exact thing it is about.
   if (!addGrain(pit, x, null, shade)) return throughRift(x, shade);
-  sfx('stone', { x });                       // it came down on the pile
+  sfx('pit-land', { x });
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left

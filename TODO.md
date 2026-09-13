@@ -61,17 +61,18 @@ Left, in order:
   hum, rift drone) and the duck are gone: nothing sounds between strikes.
   A strike is a recipe rendered sample by sample (`render` in `audio.js`),
   the arithmetic of the hit bench (the Boulder Hit Bench artifact), so a
-  recipe landed there by ear ships as heard. `SND_STONE` is the landed
-  hand-mining hit; **`SND_WOOD`, `SND_METAL` and `SND_RIFT` are bench
-  starting points nobody has chosen yet** -- tune them on the bench and paste
-  the JSON into `config/sound.js`. `node tools/listen.mjs` still renders
-  every voice to `shots/sound/`. The yard's own work -- the crew's picks,
-  grain on the piles, chunks on the belt (the `fold` class) -- is at
-  `SND_FOLD_LEVEL = 0`: heard all day it was the background noise the pass
-  had just removed. Your hand and the punctuation are the sound.
-- **A second audio pass** for the sites left off on purpose: birds, the
-  dance, the balloon, the school, the apothecary, the wheel, the board, the
-  shields' cutscenes.
+  recipe landed there by ear ships as heard. **The mapping (2026-09-13):**
+  every call site names its event (`rock-hit`, `footstep`, `boulder-land`,
+  eighteen in all) and `SOUNDS` in `config/sound.js` says which class and
+  which recipe each plays; null is silent. Two are mapped -- the hit on the
+  rock and its crit. The loop for the rest: pick voices per event on the
+  bench, `copy mapping`, paste it on the dev panel's `sounds` tab (it
+  applies live and is remembered), then hand the JSON over to be written
+  into `RECIPES` and `SOUNDS`. `node tools/listen.mjs` renders the mapped
+  events to `shots/sound/`.
+- **Events not yet in the table** (no `sfx` call at all): birds, the
+  dance, the balloon, the school, the apothecary, the board, the shields'
+  cutscenes. Each is one call and one `SOUNDS` row when wanted.
 - **Publishing** is `bun run publish` with `ITCH_TARGET=<user>/<game>` and
   butler installed; it has not been run. No icon yet; mac and linux builds
   need their own machine.

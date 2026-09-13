@@ -408,7 +408,7 @@ function stepChips(now) {
         // either way, so it comes down on it exactly as it would on any other
         // ground: every pixel is worth one dust, the same rule the fill itself
         // keeps.
-        if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('stone', { x: ch.x });
+        if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
         else bankDust(ch.x, ch.s);
         S.chips.splice(i, 1);
         S.dirty = true;
@@ -446,7 +446,7 @@ function stepChips(now) {
       // a grain of dust does, because as far as the ground is concerned it is one.
       // The yard's most common physical event: a grain coming to rest. The
       // pit says its own when the grain goes to it instead.
-      if (addGrain(floor, ch.x, blocked, ch.s)) sfx('stone', { x: ch.x });
+      if (addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
       else bankDust(ch.x, ch.s);
       S.chips.splice(i, 1);
       S.dirty = true;

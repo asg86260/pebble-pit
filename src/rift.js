@@ -155,7 +155,7 @@ export function stepRift(dt) {
     S.drowned = true;
     S.riftGulp = RIFT_GULP;
     S.riftShake = RIFT_SHAKE;
-    sfx('rift', { x: pit.x + pit.w / 2, cls: 'punct' });   // the floor gives way
+    sfx('rift-open', { x: pit.x + pit.w / 2 });
   }
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   const take = riftBite();

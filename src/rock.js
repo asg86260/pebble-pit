@@ -201,7 +201,7 @@ export function landRock(gentle = false) {
   clearApron();
   // The one sound the opening has: a rock the size of a house meeting the
   // ground. Set down by the dome it is placed, not dropped, so no thump under it.
-  sfx('stone', { x: (rockEdge(-1) + rockEdge(1)) / 2, hard: 1, big: !gentle, cls: 'punct' });
+  sfx('boulder-land', { x: (rockEdge(-1) + rockEdge(1)) / 2, hard: 1, big: !gentle });
   if (!gentle) {
     jolt();
     // and the yard takes the weight of it. A taller rock is a heavier one, so
@@ -639,11 +639,12 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
     if (crit > 1) critToss(px, py, shade, 'rock', crit);
     else spawnSpoil(px, py, shade);
   }
-  // The pick meeting stone. Your own click is the one sound the mix never folds
-  // or ducks; a body's or the ram's swing folds with the rest of the yard.
-  if (took) sfx('stone', from === 'you' && !body ? { x: mx, hard, crit: crit > 1, cls: 'hand' } : { x: mx, hard });
+  // The pick meeting stone. Your own click is the one sound the mix never
+  // folds, and a crit is an event of its own; a body's or the ram's swing
+  // folds with the rest of the yard.
+  if (took) sfx(from === 'you' && !body ? (crit > 1 ? 'rock-crit' : 'rock-hit') : 'rock-swing', { x: mx, hard });
   // ...and the last sheet of a cell going: the band moves as the rock gives way.
-  if (through !== null) sfx('stone', { x: through, hard: 1 / depthOf() });
+  if (through !== null) sfx('rock-through', { x: through, hard: 1 / depthOf() });
   // and it goes up from where it came off, not from a counter somewhere
   // Nothing. Taking rock apart does not dirty the sky, by anybody.
   //

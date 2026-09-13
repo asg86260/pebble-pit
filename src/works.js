@@ -481,7 +481,7 @@ export function stepWorks(dt) {
       // The thing comes down on its ground. Asked before the splice, because
       // where a yard work stands is read off the work itself.
       const box = siteBox(site, w);
-      sfx('wood', { x: box ? box.x + box.w / 2 : (w.at ?? S.cx), big: true, cls: 'punct' });
+      sfx('work-land', { x: box ? box.x + box.w / 2 : (w.at ?? S.cx), big: true });
       list.splice(i, 1);
       // The row's own `buy` is what a finished work does -- which for a row that
       // opens a place is the view gliding to the thing that has just been put

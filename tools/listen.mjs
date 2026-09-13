@@ -39,12 +39,12 @@ const PROFILE = `${process.env.TEMP}/boulder-listen`;
 const OUT = 'shots/sound';
 const strip = process.argv.includes('--strip');
 
-// What gets rendered, in order: `sfx(voice, opts)` with the hand's class, so
+// What gets rendered, in order: `sfx(event, opts)` with the hand's class, so
 // nothing is folded or stolen and each is heard whole.
 const GAP = 1.5;
 const STRIKES = [
-  ['stone',        'stone', {}],
-  ['stone-crit',   'stone', { crit: true }]
+  ['rock-hit',   'rock-hit',  {}],
+  ['rock-crit',  'rock-crit', {}]
 ];
 
 const PAGE = `(async () => {
@@ -62,9 +62,9 @@ const PAGE = `(async () => {
   if (!ctx) throw new Error('audio.js made no context');
   const marks = [];
   let t = 0.5;
-  for (const [name, voice, opts] of ${JSON.stringify(STRIKES)}) {
+  for (const [name, event, opts] of ${JSON.stringify(STRIKES)}) {
     fakeNow = t; marks.push({ name, at: t, len: ${GAP} });
-    A.sfx(voice, Object.assign({ cls: 'hand', x: null }, opts));
+    A.sfx(event, Object.assign({ cls: 'hand', x: null }, opts));
     t += ${GAP};
   }
   fakeNow = t; A.stepAudio();

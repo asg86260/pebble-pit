@@ -1065,6 +1065,13 @@ canvas {
 }
 #dev .devrow > span:first-child { opacity: .55; }
 #dev .devbox { display: flex; align-items: center; gap: 3px; }
+/* the sounds tab's paste box: the one thing on the panel that takes text */
+#dev textarea {
+  display: block; width: 100%; box-sizing: border-box;
+  font: inherit; text-transform: none; letter-spacing: 0;
+  color: #000; background: #fff; border: 1px solid #000;
+  margin: 2px 0 3px;
+}
 #dev button {
   font: inherit;
   text-transform: inherit;

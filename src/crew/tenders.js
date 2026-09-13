@@ -254,7 +254,7 @@ export function stepMachines(now) {
     // One beat of the machine, however many units it got through this frame:
     // the fold window is what turns a fast machine into a rattle rather than a
     // buzz. The ram's is a strike, and it gets the thump under it.
-    sfx('metal', { x: at, big: m.key === 'ram' });
+    sfx('machine-beat', { x: at, big: m.key === 'ram' });
     // It did a unit of work this beat, which is the one thing the stack is
     // allowed to read: a chimney smoking over a machine that is not getting
     // anything done would be the drawing claiming what the yard denies.

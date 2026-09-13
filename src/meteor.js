@@ -305,7 +305,7 @@ export function summon(hands, secs) {
     sparkle(sky.x, sky.y, Math.cos(a) * v, Math.sin(a) * v, 700 + rand() * 400);
   }
   shakeView(SUMMON_SHAKE);                  // and the ground feels it
-  sfx('stone', { x: sky.x, big: true, cls: 'punct' });
+  sfx('meteor-call', { x: sky.x, big: true });
   makeMeteor();
 }
 

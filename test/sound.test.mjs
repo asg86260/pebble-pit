@@ -14,9 +14,9 @@
 // being counted before the wake -- has to be first.
 
 import { group, ok, run, runUntil } from './helpers.mjs';
-import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions } from '../src/audio.js';
+import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions, applySounds } from '../src/audio.js';
 import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_VOICES,
-         SOUND_KNOBS } from '../src/config/sound.js';
+         SOUND_KNOBS, SOUNDS } from '../src/config/sound.js';
 
 const FRAME = 1 / 60;
 const d = () => audioDecisions();
@@ -29,8 +29,8 @@ const frame = () => run(FRAME);
 
 group('before the wake nothing is counted, and nothing is queued', async () => {
   const before = snap();
-  for (let i = 0; i < 10; i++) sfx('stone', { x: 100, cls: 'hand' });
-  sfx('wood', { cls: 'punct' });
+  for (let i = 0; i < 10; i++) sfx('rock-hit', { x: 100 });
+  sfx('work-land', {});
   stepAudio(16);
   run(1);
   const after = snap();
@@ -60,7 +60,7 @@ group('forty grains in one frame are one sound', async () => {
   window.__crew(0);
   run(2);                                        // clear any window from before
   const before = snap();
-  for (let i = 0; i < 40; i++) sfx('stone', { x: 200 + i });
+  for (let i = 0; i < 40; i++) sfx('grain-land', { x: 200 + i });
   const asked = snap();
   frame();
   const after = snap();
@@ -80,6 +80,7 @@ group('forty grains in one frame are one sound', async () => {
 });
 
 group('the ceiling drops rather than defers', async () => {
+  window.__crew(0);                              // nobody pacing: every event has its own ceiling now
   run(2);
   const ceiling = 4;
   const was = SND_FOLD_PER_S;
@@ -87,7 +88,7 @@ group('the ceiling drops rather than defers', async () => {
   const before = snap();
   // A grain on every frame for two seconds: sixty a second against a window
   // that admits one per SND_FOLD_MS and a ceiling of four a second.
-  for (let i = 0; i < 120; i++) { sfx('stone', { x: 300 }); frame(); }
+  for (let i = 0; i < 120; i++) { sfx('grain-land', { x: 300 }); frame(); }
   const under = snap();
   // Then silence for a window and a bit. A ceiling that deferred would still
   // be paying out the backlog here; this one has nothing to pay.
@@ -113,9 +114,9 @@ group('the ceiling drops rather than defers', async () => {
 group("the player's own hand always fires", async () => {
   run(2);
   const before = snap();
-  for (let i = 0; i < 40; i++) sfx('stone', { x: 200 });          // a window opens and fills
-  sfx('stone', { x: 200, cls: 'hand', hard: 0.5, crit: true });   // the click, same frame
-  sfx('stone', { x: 200, cls: 'hand' });                          // and another
+  for (let i = 0; i < 40; i++) sfx('rock-swing', { x: 200 });     // a window opens and fills
+  sfx('rock-crit', { x: 200, hard: 0.5 });                        // the click, same frame
+  sfx('rock-hit', { x: 200 });                                    // and another
   const asked = snap();
   frame();
   return [
@@ -130,8 +131,8 @@ group("the player's own hand always fires", async () => {
 group('punctuation is never folded', async () => {
   run(3);
   const before = snap();
-  sfx('wood', { x: 100, cls: 'punct', big: true });
-  sfx('wood', { x: 100, cls: 'punct', big: true });
+  sfx('work-land', { x: 100, big: true });
+  sfx('work-land', { x: 100, big: true });
   frame();
   const after = snap();
   return [
@@ -144,7 +145,7 @@ group('punctuation is never folded', async () => {
 group('punctuation has a ceiling of its own', async () => {
   run(3);
   const before = snap();
-  for (let i = 0; i < SND_PUNCT_PER_S + 3; i++) sfx('stone', { x: 100, cls: 'punct', big: true });
+  for (let i = 0; i < SND_PUNCT_PER_S + 3; i++) sfx('boulder-land', { x: 100, big: true });
   const after = snap();
   return [
     ok(after.firedBy.punct - before.firedBy.punct === SND_PUNCT_PER_S,
@@ -158,13 +159,13 @@ group('the cap steals the oldest and quietest, and never the hand', async () => 
   const before = snap();
   // More strikes than the cap holds, each its own voice: hands are never
   // folded, so they are the way to fill the cap in one frame.
-  for (let i = 0; i < SND_VOICES; i++) sfx('stone', { x: 100, cls: 'hand' });
+  for (let i = 0; i < SND_VOICES; i++) sfx('rock-hit', { x: 100 });
   const full = snap();
-  for (let i = 0; i < 3; i++) sfx('stone', { x: 100, cls: 'hand' });
+  for (let i = 0; i < 3; i++) sfx('rock-hit', { x: 100 });
   const over = snap();
   // Punctuation, not the hand: past the cap now, and something has to go --
   // and it cannot be one of the hands.
-  sfx('stone', { x: 100, big: true, cls: 'punct' });
+  sfx('boulder-land', { x: 100, big: true });
   const took = snap();
   return [
     ok(full.fired - before.fired === SND_VOICES, 'the cap fills', `${full.fired - before.fired}`),
@@ -182,20 +183,26 @@ group('a cap full of gravel gives way to the next strike', async () => {
   // noise -- then one more. A strike rings for a fraction of a second and a
   // window is eighty milliseconds, so the cap is brought down to what a
   // couple of windows can fill, through its own knob, and put back after.
+  // The grain is unmapped -- silent -- and a silent event takes no slot, so
+  // it is given the rock's recipe for the length of the group, through the
+  // same door the dev panel's paste goes through, and it is taken back after.
   const voices = knob('SND_VOICES');
   voices.set(2);
+  const laid = applySounds({ 'grain-land': 'stone', 'boulder-land': 'stone' });
   let i = 0;
   while (d().fired - before.fired < 2) {
-    sfx('stone', { x: 100, big: true });
+    sfx('grain-land', { x: 100, big: true });
     run(SND_FOLD_MS / 1000 + FRAME);
     i++;
     if (i > 8) break;
   }
   const full = snap();
-  sfx('stone', { x: 100, big: true, cls: 'punct' });
+  sfx('boulder-land', { x: 100, big: true });
   const after = snap();
   voices.set(SND_VOICES);
+  applySounds({ 'grain-land': null, 'boulder-land': null });
   return [
+    ok(laid === 2 && SOUNDS['grain-land'].recipe === null, 'a mapping lays over the table and comes off again'),
     ok(full.fired - before.fired >= 2, 'the cap is full of the yard',
        `${full.fired - before.fired} up`),
     ok(after.stolen - full.stolen >= 1, 'and the next strike takes one',

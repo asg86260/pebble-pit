@@ -10,15 +10,17 @@
 // tilde -- the same key, shift or no shift -- opens and closes it; it starts
 // closed and remembers which you chose.
 //
-// It is four tabs, because one column of everything ran off the bottom of the
+// It is five tabs, because one column of everything ran off the bottom of the
 // window once the sliders and the scenes were on it. `yard` is the things you
 // do to the yard, `dials` the numbers, `scenes` the places (scenesheet.js
-// hangs its block there), `frame` what the machine is doing about it. The tab
-// you were on is remembered with the open flag.
+// hangs its block there), `sounds` which event plays which recipe, `frame`
+// what the machine is doing about it. The tab you were on is remembered with
+// the open flag.
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
-import { TUNABLE } from './config.js';
+import { TUNABLE, SOUNDS } from './config.js';
+import { applySounds } from './audio.js';
 import { relayout, beat } from './main.js';
 import { JOB } from './jobs.js';
 
@@ -225,9 +227,67 @@ for (const t of TUNABLE) {
   });
 }
 
-// The scenes' tab is made here so the strip reads yard, dials, scenes, frame
-// whichever order the two modules happen to load in; scenesheet.js fills it.
+// The scenes' tab is made here so the strip reads yard, dials, scenes, sounds,
+// frame whichever order the two modules happen to load in; scenesheet.js
+// fills it.
 devPane('scenes');
+into = devPane('sounds');
+
+// The mapping: the bench's JSON -- `{ "rock-hit": { ...recipe }, "footstep":
+// null, ... }` -- pasted here is laid over SOUNDS live and kept in this
+// browser, so a sound is heard in place before it is written into config. The
+// list under the box is the table as it stands, one line an event, so what is
+// silent and what is not can be read off. `clear` drops the paste and puts the
+// shipped table back on the next load.
+const SOUNDS_KEY = 'boulder-clicker/sounds';
+const soundsBox = document.createElement('textarea');
+soundsBox.rows = 4;
+soundsBox.placeholder = 'paste the bench\'s mapping JSON';
+soundsBox.spellcheck = false;
+into.appendChild(soundsBox);
+const soundsList = document.createElement('div');
+const saySounds = () => {
+  soundsList.textContent = '';
+  for (const k in SOUNDS) {
+    const r = SOUNDS[k].recipe;
+    const row = document.createElement('div');
+    row.className = 'devrow';
+    const name = document.createElement('span');
+    name.textContent = k;
+    const what = document.createElement('span');
+    what.textContent = r === null ? '—' : typeof r === 'string' ? r : (r.name || 'pasted');
+    if (r === null) what.style.opacity = '.4';
+    row.appendChild(name); row.appendChild(what);
+    soundsList.appendChild(row);
+  }
+};
+const laySounds = raw => {
+  let map;
+  try { map = JSON.parse(raw); } catch { return null; }
+  const n = applySounds(map);
+  saySounds();
+  return n;
+};
+line('', box => {
+  button(box, 'apply', () => {
+    const n = laySounds(soundsBox.value);
+    if (n === null) { soundsBox.style.borderColor = '#c00'; return; }
+    soundsBox.style.borderColor = '';
+    localStorage.setItem(SOUNDS_KEY, soundsBox.value);
+  });
+  button(box, 'clear', () => {
+    localStorage.removeItem(SOUNDS_KEY);
+    soundsBox.value = '';
+    location.reload();
+  });
+});
+into.appendChild(soundsList);
+{
+  const kept = localStorage.getItem(SOUNDS_KEY);
+  if (kept) { soundsBox.value = kept; laySounds(kept); }
+}
+saySounds();
+
 into = devPane('frame');
 
 // Which run this is. Read-only on purpose: a seed is a fact about a whole run

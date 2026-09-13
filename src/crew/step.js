@@ -480,7 +480,7 @@ function faceTravel(was) {
     // covered, and a step sounds each time the feet cross a stride line. Not
     // for a body on the cursor or in the balloon -- nothing is walking there.
     if (d && !w.lifted && !w.aloft && Math.floor(x0 / WORKER) !== Math.floor(w.x / WORKER)) {
-      sfx('stone', { x: w.x, hard: 0 });
+      sfx('footstep', { x: w.x });
     }
   }
 }

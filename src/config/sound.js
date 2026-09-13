@@ -7,10 +7,11 @@
 // sound at once, which is the part that decides whether the game is bearable
 // at minute ninety.
 //
-// A voice is a *recipe*, the shape the hit bench renders (the Boulder Hit
+// A sound is a *recipe*, the shape the hit bench renders (the Boulder Hit
 // Bench artifact and the `render` in audio.js are the same arithmetic): a
 // body, a click on the front, a puff of grit, and a pixel stage. Recipes are
-// landed by ear on the bench and the JSON is copied in here.
+// landed by ear on the bench and the JSON is copied in here; which event in
+// the yard plays which is the SOUNDS table below.
 
 // --- the mix -----------------------------------------------------------------
 // Quiet by default, and satisfying at that volume. The target is a laptop
@@ -48,17 +49,6 @@ export const SND_JITTER_MS = 8;
 export const SND_PAN_MAX = 0.3;
 // A voice stolen by the cap fades rather than stops.
 export const SND_STEAL_S = 0.02;
-// What each class is worth in the mix, as a share of the recipe's gain. The
-// player's own hand is the sound. The yard's own work -- the crew's picks,
-// grain landing on a pile, chunks on the belt -- is the folding class, and
-// the punctuation is the boulder landing, a building coming down, a core
-// banking; both at nought, so both are silent: heard all day the yard is a
-// background noise, and the rule since the hits-only pass is that there is
-// none. Everything is still decided, folded and counted, so turning either
-// up is one knob and nothing else.
-export let SND_HAND_LEVEL = 1;
-export let SND_FOLD_LEVEL = 0;
-export let SND_PUNCT_LEVEL = 0;
 // How many one-shots may sound at once. Past this the oldest and quietest is
 // taken, and the player's own hand is never the one taken.
 export let SND_VOICES = 16;
@@ -69,8 +59,8 @@ export const SND_RELEASE_TAILS = 6;
 // The bench renders at this rate, so what was heard there is what ships.
 export const SND_RATE = 44100;
 
-// --- how each voice is made ----------------------------------------------------
-// One recipe, rendered sample by sample. The fields:
+// --- the recipes, and which event plays which ----------------------------------
+// A recipe, rendered sample by sample. The fields:
 //
 //   wave     sine | tri | square | saw -- the body
 //   hz       the body's pitch, where it lands
@@ -91,22 +81,49 @@ export const SND_RATE = 44100;
 //   cut      a one-pole lowpass over the lot, Hz
 //   gain     the recipe's level into the mix
 //   vary     the share of SND_JITTER_* this voice scatters by, per hit
-//   crit     optional: a whole recipe of its own for a crit, played in place
-//            of this one. Without it a crit is this recipe with a second
-//            body an octave down (SND_CRIT_RATIO below).
-export let SND_STONE_CRIT = { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
-                              click: 0, clickMs: 0.5, clickHz: 500,
-                              noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
-                              bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 };
-export let SND_STONE = { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
-                         click: 0.3, clickMs: 0.5, clickHz: 4900,
-                         noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
-                         bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1,
-                         crit: SND_STONE_CRIT };
-// There are two sounds in the game right now, both the player's own swing:
-// the stone and its crit. Every other voice the yard names (`wood`, `metal`,
-// `rift`) has no recipe, is decided and counted like any other, and is never
-// rendered. A recipe for one is landed on the bench and added here.
+//
+// Named as they were on the bench, and pasted in from it.
+export const RECIPES = {
+  'stone':      { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+                  click: 0.3, clickMs: 0.5, clickHz: 4900,
+                  noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
+                  bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
+  'stone crit': { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+                  click: 0, clickMs: 0.5, clickHz: 500,
+                  noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
+                  bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 }
+};
+
+// Every event in the yard that can make a sound, and what it plays. The key is
+// what the module says (`sfx('rock-hit', { x })`); the class is the mix
+// discipline it falls under -- 'hand' is never folded or stolen, 'fold' is
+// one sound per window, 'punct' has a ceiling of its own -- and the recipe is
+// a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
+// event is still decided and counted, and never rendered. Two are mapped
+// today, both the player's own swing. The dev panel's `sounds` tab takes the
+// bench's mapping JSON and lays it over this table live, and `applySounds` in
+// audio.js is what does the laying.
+export const SOUNDS = {
+  'rock-hit':     { label: 'you hit the rock',                          cls: 'hand',  recipe: 'stone' },
+  'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone crit' },
+  'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: null },
+  'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
+  'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: null },
+  'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
+  'machine-beat': { label: 'a beat of a machine (the ram gets the thump)', cls: 'fold', recipe: null },
+  'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
+  'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
+  'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
+  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'fold',  recipe: null },
+  'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: null },
+  'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: null },
+  'jackpot':      { label: 'the wheel pays out',                        cls: 'punct', recipe: null },
+  'dud':          { label: 'the wheel comes up empty',                  cls: 'hand',  recipe: null },
+  'work-land':    { label: 'a building comes down on its ground',       cls: 'punct', recipe: null },
+  'rift-tear':    { label: 'the pit floor tears',                       cls: 'punct', recipe: null },
+  'rift-open':    { label: 'the pit floor gives way',                   cls: 'punct', recipe: null }
+};
+
 // `hard` in [0, 1] can move the body and the grit down and dull the grit --
 // harder rock lower and duller, not louder. Both at nought for now: the hit
 // on the rock is the recipe exactly as it was landed, at every depth.
@@ -118,12 +135,6 @@ export const SND_THUMP_HZ = 70;
 export const SND_THUMP_FALL = 0.45;    // it ends at this share of where it began
 export const SND_THUMP_S = 0.22;
 export const SND_THUMP_LEVEL = 0.6;
-// `crit` on a recipe with no `crit` recipe of its own adds body, not level:
-// a second body an octave down, under the same envelope, so it is the same
-// voice with more under it rather than a louder one.
-export const SND_CRIT_RATIO = 0.5;
-export const SND_CRIT_SHARE = 0.7;
-
 // --- density -------------------------------------------------------------------
 // A handful of gravel is one sound, not forty. Events of the folding class
 // arriving inside a window neither queue nor each fire: they fold into the one
@@ -157,11 +168,5 @@ export const SOUND_KNOBS = [
   { key: 'SND_FOLD_MS', label: 'fold window', min: 20, max: 200, step: 5,
     get: () => SND_FOLD_MS, set: v => { SND_FOLD_MS = v; } },
   { key: 'SND_VOICES', label: 'voices', min: 4, max: 32, step: 1,
-    get: () => SND_VOICES, set: v => { SND_VOICES = v; } },
-  { key: 'SND_HAND_LEVEL', label: 'hand level', min: 0, max: 1, step: 0.01,
-    get: () => SND_HAND_LEVEL, set: v => { SND_HAND_LEVEL = v; } },
-  { key: 'SND_FOLD_LEVEL', label: 'yard level', min: 0, max: 1, step: 0.01,
-    get: () => SND_FOLD_LEVEL, set: v => { SND_FOLD_LEVEL = v; } },
-  { key: 'SND_PUNCT_LEVEL', label: 'punct level', min: 0, max: 1, step: 0.01,
-    get: () => SND_PUNCT_LEVEL, set: v => { SND_PUNCT_LEVEL = v; } }
+    get: () => SND_VOICES, set: v => { SND_VOICES = v; } }
 ];

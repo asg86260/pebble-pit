@@ -545,8 +545,8 @@ export function stepCasino(dt) {
     S.hand = { won: S.spinWon, n: S.spinWon ? pot() : 0, cur, at: now(), bursts: 0 };
     noteHand(S.spinWon, S.hand.n || S.pot?.n || 0, CASINO_BIG);
     // and it is felt: a fountain out of the wheel, or a dud
-    if (S.spinWon) sfx('metal', { x: casino.x + casino.w / 2, big: true, hard: 1, cls: 'punct' });
-    else sfx('wood', { x: casino.x + casino.w / 2, cls: 'hand' });   // and the sign goes out: see drawSign
+    if (S.spinWon) sfx('jackpot', { x: casino.x + casino.w / 2, big: true, hard: 1 });
+    else sfx('dud', { x: casino.x + casino.w / 2 });   // and the sign goes out: see drawSign
     S.dirty = true;
     buildShop();
   }
