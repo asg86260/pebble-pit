@@ -52,7 +52,7 @@ jobs:
       # One universal dmg: a single download whichever Mac they have.
       - name: Package
         run: >
-          bun run desk:build --mac dmg --universal
+          bun run desk:build --mac dmg --universal --publish never
           --config.mac.notarize=${{ env.APPLE_ID != '' }}
 
       - uses: actions/upload-artifact@v4
