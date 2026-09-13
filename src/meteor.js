@@ -66,6 +66,7 @@ export const orbitR = () => sky.r + WIZ_ORBIT;
 export function fire(fromX, fromY, cell, bite = 1) {
   if (!cell) return;
   BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY, c: cell.c, r: cell.r, bite });
+  sfx('bolt-throw', { x: fromX });
   // and the throw itself: a handful of specks off the hand it left, thrown the
   // way it went. A bolt that simply existed one frame and was gone the next had
   // nothing to say about where it came from.
@@ -107,6 +108,8 @@ function stepBolts() {
       if (!near) break;
       takeCell(near.c, near.r);
     }
+    // A bolt is one cell; a crit's bite is more than one, and it says so.
+    sfx(b.bite > 1 ? 'bolt-crit' : 'bolt-strike', { x: tx });
     BOLTS.splice(i, 1);
   }
 }
