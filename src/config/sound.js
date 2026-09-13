@@ -149,7 +149,8 @@ export const RECIPES = {
 // Every event in the yard that can make a sound, and what it plays. The key is
 // what the module says (`sfx('rock-hit', { x })`); the class is the mix
 // discipline it falls under -- 'hand' is never folded or stolen, 'fold' is
-// one sound per window, 'punct' has a ceiling of its own -- and the recipe is
+// one sound per window, 'punct' has a ceiling of its own, 'each' is a strike
+// per event under a ceiling of its own -- and the recipe is
 // a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
 // event is still decided and counted, and never rendered. The mapping is the
 // one the player made on the bench (2026-09-13): silence where it says
@@ -169,7 +170,7 @@ export const SOUNDS = {
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
-  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'fold',  recipe: 'dust-gain' },
+  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'each',  recipe: 'dust-gain' },
   'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: 'stone crit' },
   'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: 'sun summon' },
   'bolt-throw':   { label: 'a wizard throws a bolt at the star',        cls: 'fold',  recipe: 'bolt throw' },
@@ -211,6 +212,11 @@ export let SND_FOLD_PER_S = 12;
 // burst nobody designed -- three buildings landing on one frame -- rather
 // than a balance number.
 export let SND_PUNCT_PER_S = 4;
+// Every grain into the pit is a strike of its own, so a carter's tip is heard
+// as a stream rather than one handful. The ceiling is the burst guard: a
+// refund or a jackpot lands hundreds in one frame, and every strike is a
+// buffer rendered.
+export let SND_EACH_PER_S = 60;
 
 // The knobs. See the note over `TUNABLE` in config.js: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
@@ -224,6 +230,8 @@ export const SOUND_KNOBS = [
     get: () => SND_FOLD_PER_S, set: v => { SND_FOLD_PER_S = v; } },
   { key: 'SND_PUNCT_PER_S', label: 'punct ceiling', min: 1, max: 20, step: 1,
     get: () => SND_PUNCT_PER_S, set: v => { SND_PUNCT_PER_S = v; } },
+  { key: 'SND_EACH_PER_S', label: 'each ceiling', min: 1, max: 120, step: 1,
+    get: () => SND_EACH_PER_S, set: v => { SND_EACH_PER_S = v; } },
   { key: 'SND_FOLD_MS', label: 'fold window', min: 20, max: 200, step: 5,
     get: () => SND_FOLD_MS, set: v => { SND_FOLD_MS = v; } },
   { key: 'SND_VOICES', label: 'voices', min: 4, max: 32, step: 1,

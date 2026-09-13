@@ -15,7 +15,7 @@
 
 import { group, ok, run, runUntil } from './helpers.mjs';
 import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions, applySounds } from '../src/audio.js';
-import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_VOICES,
+import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S, SND_VOICES,
          SOUND_KNOBS, SOUNDS } from '../src/config/sound.js';
 
 const FRAME = 1 / 60;
@@ -151,6 +151,26 @@ group('punctuation has a ceiling of its own', async () => {
     ok(after.firedBy.punct - before.firedBy.punct === SND_PUNCT_PER_S,
        'a burst of punctuation fires the ceiling', `${after.firedBy.punct - before.firedBy.punct}`),
     ok(after.dropped - before.dropped === 3, 'and the rest is dropped', `${after.dropped - before.dropped}`)
+  ];
+});
+
+// Every grain into the pit is its own strike -- a tip is a stream, not a
+// handful -- so it is heard through the pit, not through sfx, and past the
+// ceiling a refund's burst is dropped rather than rendered.
+group('every grain into the pit is a strike of its own, up to the ceiling', async () => {
+  run(3);
+  const before = snap();
+  window.__tip(5);
+  const five = snap();
+  window.__tip(SND_EACH_PER_S);
+  const burst = snap();
+  return [
+    ok(five.firedBy.each - before.firedBy.each === 5, 'five grains tipped are five strikes',
+       `${five.firedBy.each - before.firedBy.each}`),
+    ok(five.folded === before.folded, 'and none of them fold'),
+    ok(burst.firedBy.each - before.firedBy.each === SND_EACH_PER_S,
+       'a burst fires the ceiling', `${burst.firedBy.each - before.firedBy.each}`),
+    ok(burst.dropped - before.dropped === 5, 'and the rest is dropped', `${burst.dropped - before.dropped}`)
   ];
 });
 

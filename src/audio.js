@@ -31,7 +31,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL,
          SND_FOLD_MS, SND_FOLD_GAIN_DB, SND_FOLD_GAIN_MAX_DB, SND_FOLD_WIDEN,
-         SND_FOLD_PER_S, SND_PUNCT_PER_S } from './config.js';
+         SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
 import { rand, seed, stream } from './rng.js';
@@ -47,11 +47,11 @@ let muted = false;
 // goes quiet.
 const decisions = {
   fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0,
-  byClass: { hand: 0, fold: 0, punct: 0 },
-  firedBy: { hand: 0, fold: 0, punct: 0 }
+  byClass: { hand: 0, fold: 0, punct: 0, each: 0 },
+  firedBy: { hand: 0, fold: 0, punct: 0, each: 0 }
 };
 
-const CLASSES = new Set(['hand', 'fold', 'punct']);
+const CLASSES = new Set(['hand', 'fold', 'punct', 'each']);
 
 // What an event plays: its entry's recipe, by name or whole, or nothing.
 function recipeOf(event) {
@@ -65,7 +65,7 @@ function recipeOf(event) {
 // average, big if any one of them was.
 const windows = new Map();
 // When each event last fired, per ceilinged class, for the last second.
-const recent = { fold: new Map(), punct: new Map() };
+const recent = { fold: new Map(), punct: new Map(), each: new Map() };
 // Every one-shot still sounding, for the cap. `env` is the context half's
 // handle on it, or null on a yard with no context.
 const active = [];
@@ -83,6 +83,7 @@ function clock() {
     active.length = 0;
     recent.fold.clear();
     recent.punct.clear();
+    recent.each.clear();
     decisions.pending = 0;
   }
   lastT = t;
@@ -164,7 +165,10 @@ function fire(event, o, cls, t, n = 1, counted = false) {
 // falls under and what, if anything, it plays. `opts` is { x, hard, big }
 // plus, for a check that wants to say so, a `cls` that overrides the table's.
 // 'hand' is never folded or stolen; 'fold' (the yard's own work) is one sound
-// per window; 'punct' is rare by construction, with a ceiling of its own.
+// per window; 'punct' is rare by construction, with a ceiling of its own;
+// 'each' is a strike per event, never folded, but stolen like the yard's work
+// and ceilinged, because a refund lands hundreds of grains in one frame and
+// every strike is a buffer rendered.
 // Before the first gesture it is a no-op and nothing is queued.
 export function sfx(event, opts = {}) {
   if (!awake) return;
@@ -172,8 +176,8 @@ export function sfx(event, opts = {}) {
   decisions.byClass[cls]++;
   const t = clock();
   if (cls === 'hand') { fire(event, opts, cls, t); return; }
-  if (cls === 'punct') {
-    if (over(event, cls, t, SND_PUNCT_PER_S)) { decisions.dropped++; return; }
+  if (cls === 'punct' || cls === 'each') {
+    if (over(event, cls, t, cls === 'punct' ? SND_PUNCT_PER_S : SND_EACH_PER_S)) { decisions.dropped++; return; }
     mark(event, cls, t);
     fire(event, opts, cls, t);
     return;
