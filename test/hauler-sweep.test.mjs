@@ -1,15 +1,19 @@
-// What a hauler with something already in its hands goes for next: whatever is
-// nearest, the hole included. Empty hands still decide where a trip starts --
-// crew.test.mjs holds the find-first and fullest-heap checks for that -- but
-// once a grain is in hand the only question is which is nearer, the next grain
-// or the lip.
+// A carter's trip is a sweep home: out to the thing it went for, then back
+// along the ground taking everything it walks over until its hands are full,
+// and never turning round. Empty hands still decide where a trip starts --
+// crew.test.mjs holds the find-first and fullest-heap checks for that -- and
+// this file is about everything after.
 
 import { group, ok, state, run, runUntil, quickCrew, P } from './helpers.mjs';
 import { floor } from '../src/state.js';
 import { spend } from '../src/pit.js';
 
 // One hauler, nothing mining, the floor bare: the only dust in the yard is what
-// the check puts there, and the only body is the one being watched.
+// the check puts there, and the only body is the one being watched. The grains
+// go on open ground left of the rock -- a thousand pixels short of the lip --
+// because `__pile` walks a grain aimed at barred ground (under the rock, which
+// spans the seven hundreds) to the nearest free column, and three grains
+// meant to be a stride apart all ended up in one.
 const oneHauler = () => {
   window.__reset();
   window.__crew(0, 1);
@@ -38,7 +42,7 @@ const firstToss = (limit = 60) => {
 
 group('a grain a stride away is taken before the walk to the hole', async () => {
   oneHauler();
-  const far = state().pitX - 700;
+  const far = state().pitX - 1000;
   // two grains, a few cells apart, both a long way from the lip
   window.__pile(far, 1);
   window.__pile(far + P * 6, 1);
@@ -55,22 +59,24 @@ group('a grain a stride away is taken before the walk to the hole', async () => 
   ];
 });
 
-group('a grain further off than the lip waits for the next trip', async () => {
+group('what lies behind the target is left for the next trip', async () => {
   oneHauler();
-  const near = state().pitX - 60, far = state().pitX - 700;
-  window.__pile(near, 1);
-  window.__pile(far, 1);
-  window.__place('hauler', near);
+  // the target, one grain a stride further out, and one a stride nearer home
+  const at = state().pitX - 1000;
+  window.__pile(at, 1);
+  window.__pile(at - P * 8, 1);
+  window.__pile(at + P * 8, 1);
+  window.__place('hauler', at);
   run(0.1);
   const r = firstToss();
-  // and then it does go for the other one: banking first is not forgetting it
+  // and then it does go back for it: leaving it is not forgetting it
   const second = runUntil(() => floor.n === 0, 90);
   window.__crew(0, 0);
   return [
-    ok(r.tossed, 'the near grain is tipped', `${r.took} grains`),
-    ok(r.took === 1 && r.left === 1, 'on its own, with the far one left where it lay',
+    ok(r.tossed, 'the load is tipped', `${r.took} grains`),
+    ok(r.took === 2 && r.left === 1, 'the target and the one on the way home, not the one behind',
        `${r.took} banked, ${r.left} still on the ground`),
-    ok(second, 'and the far one is fetched on the trip after')
+    ok(second, 'and the one behind is fetched on the trip after')
   ];
 });
 
@@ -78,7 +84,7 @@ group('a grain further off than the lip waits for the next trip', async () => {
 // on the way, so long as there is room in hand for it.
 group('a grain that lands ahead of a laden body is taken on the way', async () => {
   oneHauler();
-  const far = state().pitX - 700;
+  const far = state().pitX - 1000;
   window.__pile(far, 1);
   window.__place('hauler', far);
   // let it pick the grain up and turn for the hole
@@ -86,9 +92,8 @@ group('a grain that lands ahead of a laden body is taken on the way', async () =
     const [t, goal, , c] = d.split('|');
     return t === 'h' && goal === 'dump' && c === 'c1';
   }), 30);
-  const [, , x] = state().crewDetail.find(d => d[0] === 'h').split('|');
-  // then drop one between it and the lip
-  const ahead = (Number(x) + state().pitX) / 2;
+  // then drop one between it and the lip, on the open ground past the rock
+  const ahead = state().pitX - 300;
   window.__pile(ahead, 1);
   const r = firstToss();
   window.__crew(0, 0);
@@ -111,7 +116,7 @@ group('a spent booking asks the hole again before the body gives up', async () =
   // fill the hole to one grain short, so the trip out books exactly one
   window.__tip(s0.pitCapacity - 1);
   run(0.5);
-  const far = state().pitX - 700;
+  const far = state().pitX - 1000;
   window.__pile(far, 5);
   window.__place('hauler', far);
   const free0 = state().pitFree;

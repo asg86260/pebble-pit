@@ -1020,14 +1020,16 @@ Fullness is a ratio because the limits differ by four to one: counted in grains 
 wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
 whichever heap needs them without anybody being told which one that is.
 
-**That order decides where a trip starts; what is in hand decides the rest.** Once a body is
-carrying anything, the next thing it goes for is simply the nearest thing — and the hole is one of
-the things that can be nearest. The next column if it is nearer than the lip; the lip if the lip is
-nearer. A body walking to tip with room still in hand takes a grain that lands ahead of it, and a
-body a stride from the lip with one grain of room left tips rather than crossing the yard to fill
-it. It used to re-argue the whole first-pick order at every column, so a body part-laden at the
-quarry walked back past the rock's heap to the farm for a spore, and a half-load rule sent it to
-the hole with dust under its feet because the *find* was far.
+**That order decides where a trip starts; the rest of the trip is a sweep home.** Once a body has
+anything in its hands it goes for nothing else: it walks back toward the lip and takes everything it
+walks over until its hands are full, and it never turns round. What is behind it is the next trip's.
+A grain that lands ahead of it on the way is taken; a column another body has set off for is walked
+over. This is what a person with a barrow does, and it is what makes a trip readable from across the
+yard: out to the thing it went for, back with everything on the way. It used to go for whatever was
+nearest next, and on a yard of single-grain finds "nearest" flips direction every grain — a body took
+a spark, turned for a crop, turned back for a spark, then walked to the hole past dust, and read as
+lost. Before that it re-ran the whole first-pick order at every column, and a body part-laden at the
+quarry walked back past the rock's heap to the farm for a spore.
 
 **A booking is topped up, not just spent.** A trip books room in the hole with the hands empty,
 against the room the hole has at that moment, and the walk out is long: a body booked for two

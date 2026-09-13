@@ -227,27 +227,39 @@ function firstPick(w, taken) {
   return mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
 }
 
-// What a body with something already in its hands goes for next: whatever is
-// nearest, the hole included. The nearest column of anything if it is nearer
-// than the lip, and -1 -- bank what you have -- if the lip is nearer.
+// The column with something in it under a body's feet, if there is one -- the
+// same span `seek` scoops from, a cell either side of where it stands -- and
+// not one somebody else has set off for. -1 when it is walking over bare
+// ground.
 //
-// The trip's priorities were decided with empty hands (`firstPick`), and they
-// are not re-argued grain by grain: a body that has walked to the plots for a
-// spore and found a heap of dust beside it takes the dust, and a body a stride
-// from the lip with one grain of room left tips rather than crossing the yard
-// to fill it. What it used to do was re-run the whole first-pick order at every
-// column, so a body part-laden at the quarry walked back past the rock's heap
-// to the farm for a find, and a body with half a load and dust under its feet
-// went to the hole with it because the half-load rule said "far" once the
-// *find* was far.
-//
-// Nothing here books room: whether the hands may take one more is
-// `roomToTake`'s question, asked by the caller once there is something to take.
-function nextNearest(w, taken) {
-  const pick = nearestDust(w.x, taken);
-  if (pick < 0) return -1;
-  const lip = pit.x - WORKER;
-  return Math.abs(floor.x + pick * P - w.x) <= Math.abs(lip - w.x) ? pick : -1;
+// This is the whole of what a laden body decides. The trip's target was
+// picked with empty hands (`firstPick`) and it is not re-argued grain by grain:
+// from the target the body walks home and takes what it walks over, and that
+// is all. It used to go for whatever was nearest next, and on a yard of
+// single-grain finds "nearest" flips direction every grain: a body took a
+// spark, turned for a crop, turned back for a spark, and read as lost. A
+// sweep home never turns round, so what it does is legible from across the
+// yard: out to the thing it went for, back with everything on the way.
+function underfoot(w, taken) {
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  const lo = Math.max(first, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER));
+  for (let c = lo; c <= hi; c++) if (!taken.has(c) && at(floor, c, 0)) return c;
+  return -1;
+}
+
+// One grain off the top of a column and into the hands. Dust or find, the
+// same take; the booking has already said yes.
+function scoop(w, c, now) {
+  const r = topGrain(c);
+  if (r < 0) return false;
+  (w.load ||= []).push(at(floor, c, r));
+  put(floor, c, r, 0);
+  w.carry++;
+  tookOne(w);
+  w.next = now + scoopMs();
+  S.dirty = true;
+  return true;
 }
 
 // Taking a column on. Which ground it was a find on is remembered so the cap
@@ -465,24 +477,22 @@ export function haulerWork(w, c) {
     if (w.claim >= 0 && !at(floor, w.claim, 0)) {
       taken.delete(w.claim); w.claim = -1; w.forMark = false;
     }
+    // A target is picked with empty hands and only then. Once anything is in
+    // hand the trip has a shape -- out to the target, home along the ground --
+    // and its target being bare (taken by a body sweeping past, or all in hand
+    // already) is the turn for home, not a reason to pick again. The sweep
+    // home is in the `dump` branch below.
+    if (w.claim < 0 && w.carry) { w.goal = 'dump'; return; }
     if (w.claim < 0) {
       // Book the hole before picking a column, not after filling your hands.
       // Nothing at all is fetched without room for it -- a shard on the ground
       // with a full hole behind it is a shard that stays on the ground.
       if (roomToTake(w)) {
-        // Where a trip *starts* and what it picks up *on the way* are two
-        // different questions, and they get two different answers.
-        //
-        // Empty hands decide where the trip goes: a find, the fullest jammed
-        // heap, the nearest dust, in that order. Hands with something in them
-        // take whatever is nearest -- and the hole is one of the things that
-        // can be nearest. That second rule is `nextNearest`, below; the first
-        // is here.
-        const pick = w.carry ? nextNearest(w, taken) : firstPick(w, taken);
+        const pick = firstPick(w, taken);
         if (pick >= 0) claim(w, pick, taken);
       }
     }
-    if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; return; }
+    if (w.claim < 0) { w.goal = 'idle'; return; }
     const col = w.claim;
     const target = floor.x + col * P;
     // hands free, so it moves; a load is what slows it down
@@ -493,28 +503,19 @@ export function haulerWork(w, c) {
     // allowed to stand, so a worker that had to be standing on them stood at
     // the lip for ever with the dust a hand's width away.
     const under = target >= w.x - P && target <= w.x + WORKER;
-    if (under && now >= w.next) {
-      const r = topGrain(col);
-      if (r >= 0) {
-        // A grain is worth taking only if this trip booked room for it --
-        // otherwise it stays on the ground, which is somewhere, rather than in
-        // a pair of hands, which is not. Dust or find, it is the same rule.
-        // A spent booking asks the hole again before giving up: room a dig
-        // opened while this body was walking out is room it may take.
-        if (roomToTake(w)) {
-          (w.load ||= []).push(at(floor, col, r));
-          put(floor, col, r, 0);
-          w.carry++;
-          tookOne(w);
-          w.next = now + scoopMs();
-          S.dirty = true;
-        } else {
-          // the booking is used up: this trip is done
-          taken.delete(col);
-          w.claim = -1;
-          w.goal = w.carry ? 'dump' : 'idle';
-          return;
-        }
+    if (under && now >= w.next && topGrain(col) >= 0) {
+      // A grain is worth taking only if this trip booked room for it --
+      // otherwise it stays on the ground, which is somewhere, rather than in
+      // a pair of hands, which is not. Dust or find, it is the same rule.
+      // A spent booking asks the hole again before giving up: room a dig
+      // opened while this body was walking out is room it may take.
+      if (roomToTake(w)) scoop(w, col, now);
+      else {
+        // the booking is used up: this trip is done
+        taken.delete(col);
+        w.claim = -1;
+        w.goal = w.carry ? 'dump' : 'idle';
+        return;
       }
     }
     if (w.carry >= load(w)) {                  // a cart holds twice
@@ -522,22 +523,24 @@ export function haulerWork(w, c) {
       w.goal = 'dump';
     }
   } else if (w.goal === 'dump') {
-    // Something that lands nearer than the lip while there is still room in
-    // hand is picked up on the way. This is the same question `nextNearest`
-    // answered when the body turned for the hole, asked again because the
-    // ground has changed: a grain the rock has just thrown down between the
-    // body and the lip is one it walks over, and walking over a grain with
-    // room in hand is the thing this whole file is about not doing. It cannot
-    // turn a body round -- everything behind it gets further as the lip gets
-    // nearer -- so a body sent to bank stays sent unless something new lands
-    // ahead of it. A core is the one load that goes straight in.
+    // Home along the ground, and everything on the way comes too. A body with
+    // room in hand that is stood over a column with something in it stops and
+    // takes it, column by column, and walks on when the column is bare; one
+    // with full hands walks straight to the lip. Nothing here turns it round:
+    // what is behind it is the next trip's, and what is ahead of it is this
+    // one's -- which is what makes a trip readable as a trip rather than as a
+    // body changing its mind. A core is the one load that goes straight in,
+    // and a claimed column is somebody else's target, walked over.
     //
-    // The grain is found before the hole is asked: a booking made here is a
-    // booking held all the way to the lip, and a body walking to tip should
-    // not be holding room it will not use.
+    // The column is found before the hole is asked: a booking made here is a
+    // booking held to the lip, and a body walking to tip should not be
+    // holding room it will not use.
     if (!w.hasCore && w.carry < load(w)) {
-      const pick = nextNearest(w, taken);
-      if (pick >= 0 && roomToTake(w)) { claim(w, pick, taken); w.goal = 'seek'; return; }
+      const c = underfoot(w, taken);
+      if (c >= 0 && roomToTake(w)) {
+        if (now >= w.next) scoop(w, c, now);
+        return;                                // stood over it until it is bare
+      }
     }
     const target = pit.x - WORKER;                 // the lip, where they can stand
     w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));

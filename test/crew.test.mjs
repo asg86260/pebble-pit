@@ -466,16 +466,15 @@ group('clearing a handful puts the crew back to work', async () => {
   ];
 });
 
-// A body that is nearly full does not cross the yard for one more thing.
+// A body with anything in its hands never sets off for a column.
 //
-// A find is picked before dust however far off it lies, and that is right: a
-// green one is worth walking for. It stops being right when the hands doing the
-// walking have one grain of room left. That body goes the length of the world,
-// past the hole it could have emptied into on the way, to fetch one thing --
-// while an empty pair of hands behind it fetches dust from under its feet. The
-// work still gets done, by the wrong body, which is the only thing a hauler can
-// get wrong.
-group('a laden body banks what it has rather than crossing the yard', async () => {
+// A trip is out to a target and home along the ground. The target is picked
+// with empty hands -- a find, the fullest jammed heap, the nearest dust -- and
+// after that the body takes what it walks over on its way to the lip and
+// nothing else. It used to pick again at every column, so a body part-laden
+// at the quarry walked back past the rock's heap to the farm for a spore, and
+// a yard of single-grain finds had it turning round on every one.
+group('a laden body sweeps home rather than setting off again', async () => {
   window.__reset();
   openSites();
   window.__crew(2, 4, 0, 2);                  // two on the plots: green, at the far end
@@ -484,49 +483,29 @@ group('a laden body banks what it has rather than crossing the yard', async () =
   for (let x = s0.pitX - 900; x < s0.pitX - 60; x += P * 8) window.__pile(x, 6);
   run(20);                                    // let the plots come in
 
-  const cap = state().haulCap;
   const banked0 = state().pit;
-  // The rule itself rather than the shape of it: a share of the walking is a
-  // number that moves from run to run, and a threshold picked to sit between two
-  // of them is a check that fails on a quiet afternoon.
-  // At the moment of claiming, which is what the rule is about. A claim already
-  // held can drift out of reach as the body fills up at the column it is
-  // standing on, and giving that up would be giving up a column it is halfway
-  // through -- so what has to be true is that it never *sets off* on one.
-  let far = 0, took = 0;
+  // Every column newly taken on, and what the body was holding at the time.
+  let took = 0, laden = 0;
   const had = new Map();
-  // Two minutes rather than one. The event being counted -- a hauler that is
-  // already half laden taking on a new column -- got rarer when the crew's base
-  // pace went up, because a quicker hauler fills its hands and banks them sooner
-  // and so spends less of its time part-laden. The property under test did not
-  // change; the number of chances to observe it in a fixed window did, and the
-  // answer to a thin sample is a longer look rather than a lower bar.
   for (let i = 0; i < 7200; i++) {
     run(1 / 60);
-    const s = state();
-    s.crewDetail.forEach((row, idx) => {
-      const [type, , x, c, k] = row.split('|');
+    state().crewDetail.forEach((row, idx) => {
+      const [type, , , c, k] = row.split('|');
       if (type !== 'h') return;
       const claim = Number(k.slice(1));
       const before = had.get(idx);
       had.set(idx, claim);
       if (!(claim >= 0) || before === claim) return;   // nothing newly taken on
-      const carry = Number(c.slice(1)), px = Number(x);
-      if (carry < cap / 2) return;            // room to spare: it may go anywhere
       took++;
-      const to = s.floorX + claim * P;
-      if (Math.abs(to - px) > Math.abs(s.pitX - px)) far++;
+      if (Number(c.slice(1)) > 0) laden++;
     });
   }
-  const held = took;
   const banked = state().pit - banked0;
   window.__reset();
   return [
-    ok(cap >= 6, 'the hands are big enough for a part load to mean anything', `${cap}`),
-    ok(held >= 5, 'and laden hands did take a column on often enough to judge',
-       `${held} times`),
-    ok(far === 0, 'never one further off than the hole it could empty into first',
-       `${far} of ${held}`),
+    ok(took >= 10, 'columns are taken on often enough to judge', `${took} times`),
+    ok(laden === 0, 'and never by a body with anything already in hand',
+       `${laden} of ${took}`),
     ok(banked > 0, 'and the hole still fills', `${banked} grains`)
   ];
 });
