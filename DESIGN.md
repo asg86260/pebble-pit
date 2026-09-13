@@ -7073,6 +7073,74 @@ panel), each with a line or two of ink on it. Every edge is a whole cell; the pa
 cells wide because that is what three three-cell sheets with a cell around each come to, rather
 than the sheets squeezed into a panel sized first.
 
+### Amendment — a toast when one lands (design, not built)
+
+The original design said, in so many words, "no toast, no banner, no card sliding in over the
+yard": every other thing the game tells you, it tells you with a mark on the ground where the
+thing is, and asks you to walk over. That is still how the yard talks about the yard. But a
+notice is not about a station; it is about *you*, and the two announcements built for it -- the
+tick over the board and a body walking across to read it -- have both turned out to be signals
+you find later rather than hear now. A player earns "you're a wizard squarey" with the camera
+on the tower, and the first they know of it is a tick over a board on the far side of the map,
+some minutes on. The record is the one thing in the game written in words, and the moment it is
+written is the one moment worth saying out loud. So the rule stands for the yard and bends for
+the record, once, here.
+
+**One card, at the top of the window, for a few seconds.** The card is the record's own card --
+`name` on top in the boards' hand, `note` underneath in lower case, the same one-pixel edge --
+so what slides in is the thing you will later find on the held sheet, not a third design for
+the same fact. It sits centered against the top edge, over the yard and under nothing: the
+boards open at the pointer and the held sheet at the center, so the top edge is the one strip
+no other surface claims. It slides down a few pixels as it comes and fades as it goes; under
+`motion: less` it appears and disappears in place, the way the rest of the page already
+answers that switch.
+
+**One at a time, in the order they landed.** A single rock can land several notices in one
+frame (`ownhand`, `underminute`, a rung on the rock ladder). Three cards stacked is a pile, and
+a pile is read as noise. They queue, each shown for `TOAST_MS` with `TOAST_GAP_MS` between,
+and the queue plays through. It is never cut short: a notice that was announced and one that
+was not are different things to the player, and the queue is what makes every notice get its
+beat.
+
+**It is not a button.** Nothing on it is pressed; it is dismissed by time, and there is no
+close. The one thing a player might want from it -- "show me" -- is what the tick over the
+board and the held sheet already answer, and a control that appears for four seconds is a
+control you cannot learn where to find (board.js, same reasoning as the constant controls).
+
+**The tick and the walk stay.** The toast is what you hear if you are there; the tick is what
+waits for you if you were not; the body is the yard noticing. Three announcements sound like
+two too many, and are not: the toast does *not* mark anything read (`wonSeen` is untouched), so
+a notice you were looking away from in the toast's four seconds still wears its tick until you
+hold the game. Nothing that was true about the record before this is false after it.
+
+**When it is silent.** The veteran save's catch-up (`catchUpNotices`, `earn(key, quiet)`)
+never toasts -- thirty cards in a row is the feature introducing itself by shouting, which is
+the exact thing the quiet pass was built to avoid. A yard being reset or restored starts the
+queue empty: what was earned before this sitting is on the sheet, not in the air. While a
+cutscene has the camera (`cutsceneRunning`) the queue holds, and plays once the camera is
+given back, because a card over a cutscene is a card over the one thing the game has asked you
+to watch. Held, the sim does not step, so nothing can land; the queue simply resumes.
+
+**Where it lives.** `src/toast.js`, in the browser shell beside `record.js` and `settings.js`
+-- DOM, so nothing in the simulation frame knows it exists. It is driven off `S.wonSeq`, the
+count `earn` already keeps: the module remembers the last sequence number it announced
+(`S.wonShown`, `EPHEMERAL`, set to `S.wonSeq` on restore and reset so a reload announces
+nothing), and each frame announces every key whose `wonAt` is above it, in order. That is one
+read of state the record already keeps and no second place that knows how a notice is earned --
+the same seam `unreadNotices` uses for the tick. Called from `frame()` in `main.js`, after
+`hud()`. `TOAST_MS` and `TOAST_GAP_MS` in `config/notices.js`, both `TUNABLE`.
+
+**What it must not become.** Not a place for anything but the record. No "rock cleared", no
+"rung bought", no "a body came of age" -- every one of those has a mark in the yard already, and
+a toast for them is the spreadsheet with a picture on top that the whole game is built against.
+The bend is for the forty-two notices, and the file is named for them.
+
+**Checks.** Browser tier only -- it is DOM. In `src/selftest/settings.js` (the held sheet's
+file, where the record's checks are): *a pebble thrown into the pit puts `makin money` on the
+toast, in the record's words* -- earned like a player, through the click, not `earn()`; *it is
+gone after `TOAST_MS`*; *three landing in one frame play one at a time*; *a veteran save's
+catch-up shows none*.
+
 ### The original design
 
 

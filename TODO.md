@@ -1,5 +1,22 @@
 # Still to do
 
+## A toast when an achievement lands (2026-09-12)
+
+**Designed, awaiting approval. Not built.** DESIGN.md, "The noticeboard, and
+the record on it" > "Amendment -- a toast when one lands". The original
+design's "no toast, no banner" is reversed for the record and for nothing
+else: one card, the record's own shape, centered at the top edge for
+`TOAST_MS`, queued one at a time in landing order, not a button. The tick and
+the walk stay and the toast marks nothing read. Silent for the veteran
+catch-up, on restore and reset, and while a cutscene has the camera.
+`src/toast.js` in the browser shell, driven off `S.wonSeq` against an
+`EPHEMERAL` `S.wonShown`; two `TUNABLE` numbers in `config/notices.js`;
+browser-tier checks in `src/selftest/settings.js`, earned through the click.
+
+**Open before building:** whether the card should be a button that holds the
+game on the record page (the design says no); and the top edge against the
+bottom (the design says top -- the boards and the held sheet leave it free).
+
 ## Every ladder sold in bands -- BUILT (2026-09-12)
 
 DESIGN.md "Every ladder is sold in bands (built)". `tierRows` generalized
