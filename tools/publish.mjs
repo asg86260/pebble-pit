@@ -30,10 +30,15 @@ const desktop = process.argv.includes('--desktop');
 
 // Every push is labeled with the version, so the itch dashboard and the
 // settings sheet agree on what a build is called.
+// On Windows butler goes through a shell, and the shell splits an artifact
+// name with a space in it ("Pebble Pit 0.1.7 portable.exe") into four
+// arguments unless it is quoted by hand.
+const shell = process.platform === 'win32';
+const quote = a => (shell && /\s/.test(a) ? `"${a}"` : a);
 function push(file, channel) {
   console.log(`butler push ${file} ${target}:${channel} --userversion ${pkg.version}`);
-  const r = spawnSync('butler', ['push', file, `${target}:${channel}`, '--userversion', pkg.version],
-    { stdio: 'inherit', shell: process.platform === 'win32' });
+  const args = ['push', file, `${target}:${channel}`, '--userversion', pkg.version];
+  const r = spawnSync('butler', args.map(quote), { stdio: 'inherit', shell });
   if (r.status !== 0) console.error(`publish: ${file} did not push`);
   return r.status === 0;
 }
