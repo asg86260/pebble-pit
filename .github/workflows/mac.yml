@@ -30,14 +30,23 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
 
+      # The signing variables are only exported when the secrets exist: an
+      # unset secret is an empty string, and electron-builder reads an empty
+      # CSC_LINK as a path to a certificate file that is not there.
+      - name: Certificate
+        if: ${{ secrets.MAC_CERT_P12 != '' }}
+        run: |
+          echo "CSC_LINK=${{ secrets.MAC_CERT_P12 }}" >> "$GITHUB_ENV"
+          echo "CSC_KEY_PASSWORD=${{ secrets.MAC_CERT_PASS }}" >> "$GITHUB_ENV"
+      - name: Apple ID
+        if: ${{ secrets.APPLE_ID != '' }}
+        run: |
+          echo "APPLE_ID=${{ secrets.APPLE_ID }}" >> "$GITHUB_ENV"
+          echo "APPLE_APP_SPECIFIC_PASSWORD=${{ secrets.APPLE_APP_PASS }}" >> "$GITHUB_ENV"
+          echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> "$GITHUB_ENV"
+
       # One universal dmg: a single download whichever Mac they have.
       - name: Package
-        env:
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASS }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASS }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: >
           bun run desk:build --mac dmg --universal
           --config.mac.notarize=${{ secrets.APPLE_ID != '' }}
