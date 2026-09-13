@@ -17,27 +17,28 @@ standing about, and whether a blaster's ring at power 1 carries from the
 usual camera distance. Both are on the dev panel (`CUT_BEAT_MS`,
 `CUT_BLAST_POWER`).
 
-## Quarriers loiter after a refresh -- FIXED at the station, cause in the save still open (2026-09-13)
+## Quarriers float out of the cut after a refresh -- FIXED (2026-09-13)
 
-The player's description, once precise: after a refresh the gang appears on
-the far (right) bank of the cut, shuffles the whole top of it to the ladder,
-climbs down and starts again. The far bank is `restoreCrew`'s doing -- a
-body at ground height over the mouth is moved to ground that is there --
-which means the save had working quarriers at ground height over the mouth.
-**Not reproduced**: every synthetic save (`tools/node/cut-refresh.mjs`, and
-real page reloads under Playwright) has them on the floor. Why the player's
-does is still unknown; candidates are a save written on the frame the cut
-was refilled (`fillQuarry` stands everybody on the fresh ground) and a
-`groundY` that differs between the save and the layout at load.
+The player's save was the fixture (`test/fixtures/quarry-rim-refresh.json`,
+`test/quarry-rim.test.mjs`). The gang floated up out of the cut and walked
+off across the yard -- one clear to the far left -- before coming back.
 
-**Fixed regardless, in the station's logic** (`test/cut-station.test.mjs`):
-a working quarrier restored over the mouth is stood on the cut's floor under
-its own x; a quarrier already on the floor told `to` or `down` simply works
-(`inCut` in quarry.js -- feet on the floor, not on the ladder); and the
-approach along the top is a walk, not the shuffle (the `brisk` rule lost its
-three-hundred-pixel distance test). Whatever puts a quarrier at the top of
-its own quarry, it now walks to the ladder and gets on with it. If the
-player still sees the bank walk, the save is the fixture.
+The cause: `seat`, the spot in the cut a descending body is walking to, is a
+live target and is not in `KEEPS`, so it is not saved. A save that catches a
+quarrier mid-descent (`goal: 'down'`) restores it with the factory's
+`seat: 0` -- the left edge of the world -- and the down leg walked it there,
+the width of the yard, before anything corrected it. It never reproduced in
+my synthetic saves because those caught the gang already seated and digging
+(`goal: 'work'`), not on the way in; a nearly-finished deep cut like the
+player's spends much of its time climbing in and out, so a save is far more
+likely to land on a descent. The fix is one line: a seat outside the cut's
+walls is no seat, and the down leg derives a real one (`seatX`).
+
+Landed with it, from the same report: a working quarrier restored over the
+mouth stands on the cut's floor under its own x rather than on the bank;
+a body already on the floor told `to`/`down` just works (`inCut`); and the
+approach along the top is a walk, not the shuffle. Checks in
+`test/cut-station.test.mjs` and `test/quarry-rim.test.mjs`.
 
 ## A toast when an achievement lands -- BUILT (2026-09-12)
 

@@ -10,6 +10,9 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- Quarriers no longer float up out of the cut and wander off across the
+  yard after a refresh caught them climbing in; they resume digging.
+
 ## v0.1.9 — 2026-09-13
 
 - Quarriers come back from a refresh on the floor of the cut and keep

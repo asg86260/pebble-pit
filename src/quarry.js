@@ -466,6 +466,15 @@ export function stepQuarrier(w, now, ctx = null) {
 
   if (w.goal === 'down') {
     if (inCut(w)) { w.route = null; w.goal = 'work'; w.dugAt = now; return; }
+    // A seat is where in the cut this body is headed, and it is worked out on
+    // the way in ('to', above) -- but it is not written to the save (it is a
+    // live target, and the cut it points into may have moved since). A body
+    // restored mid-descent comes back with `goal: 'down'` and the factory's
+    // `seat: 0`, which is the left edge of the world: it walked out of the cut
+    // and clear across the yard toward x=0 on every refresh that caught the
+    // gang climbing in. So a seat outside the cut is no seat, and it gets a
+    // real one -- inside the walls, where `seatX` puts it.
+    if (!(w.seat >= quarry.x && w.seat <= quarry.x + quarry.w)) w.seat = seatX(w);
     if (!keepTo(w, w.seat, ways().cut)) { w.goal = 'to'; return; }
     // The dig-shuffle pace is for legs in the cut; a leg up in the open is a
     // commute. A quarrier carried across the yard by a shovelling errand used
