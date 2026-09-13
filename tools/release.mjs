@@ -29,13 +29,18 @@ const dry = flags.has('--dry');
 const desktop = flags.has('--desktop');
 
 const fail = msg => { console.error(`release: ${msg}`); process.exit(1); };
+// `vite` from node_modules is a .cmd shim on Windows, which only a shell can
+// start; with a shell in the way an argument with a space in it ("Release
+// v1.2.3") has to be quoted by hand.
+const shell = process.platform === 'win32';
+const quote = a => (shell && /\s/.test(a) ? `"${a}"` : a);
 const sh = (cmd, cmdArgs, opts = {}) => {
-  const r = spawnSync(cmd, cmdArgs, { stdio: 'inherit', shell: process.platform === 'win32', ...opts });
+  const r = spawnSync(cmd, cmdArgs.map(quote), { stdio: 'inherit', shell, ...opts });
   if (r.status !== 0) fail(`\`${cmd} ${cmdArgs.join(' ')}\` failed`);
   return r;
 };
 const read = (cmd, cmdArgs) =>
-  spawnSync(cmd, cmdArgs, { encoding: 'utf8', shell: process.platform === 'win32' }).stdout.trim();
+  spawnSync(cmd, cmdArgs.map(quote), { encoding: 'utf8', shell }).stdout.trim();
 
 // A release is a commit on main with nothing left over: a dirty tree would
 // mean the tag names a state nobody can check out again.
