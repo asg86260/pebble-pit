@@ -24,6 +24,7 @@ import { persist, restore, claimSave } from './persist.js';
 import { OWNER_KEY, TAB } from './save.js';
 import './input.js';           // the mouse, the wheel and the keyboard
 import { sayStore } from './settings.js';   // wave-release, track A: the held sheet's shelf
+import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { tick } from './clock.js';
 import { stepAudio } from './audio.js';
 import { HELD_DT } from './config.js';
@@ -78,6 +79,7 @@ function frame() {
   try {
     tick(S.paused);
     if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
+    syncEnding();
     const t0 = mark();
     if (!S.paused) step();
     // Held, the step does not run, but the sound has to be told so its beds

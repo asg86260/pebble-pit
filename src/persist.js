@@ -773,6 +773,10 @@ export function restore() {
   // A save from before the dome existed has plainly not got anybody out yet.
   S.rescued = !!s.rescued;
   if (S.rescued) S.buried = false;
+  // A save from before the ending sheet, with the rescue already behind it,
+  // has had its ending: the sheet is for the moment, not for a reload weeks
+  // later.
+  if (!('storyTold' in s)) S.storyTold = S.rescued;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // and whatever was being built. Only the sites this build knows about and only

@@ -271,6 +271,7 @@ export const snapshot = () => ({
   buriedVisible: buriedVisible(),
   buriedDug: S.buriedDug,
   rescued: S.rescued,
+  storyTold: S.storyTold,
 
   // The shields: what is standing over the landing spot, how much of it is up,
   // and whether it currently has a rock off the ground.

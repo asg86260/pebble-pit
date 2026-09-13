@@ -73,6 +73,7 @@ export const S = {
   pair: [],               // the two of them, before the rock
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
+  storyTold: false,       // and the sheet that says so has been read and put down
   rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
@@ -651,6 +652,10 @@ export const SAVED = [
   'wonSeen',
   'noticeMigrated',
   'tally',
+  // The end of the story, put down. Set by the ending sheet's one button
+  // (ending.js) and never by the sim, so a reload with the sheet still up
+  // brings it back rather than losing it.
+  'storyTold',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy

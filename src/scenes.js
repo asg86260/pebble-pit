@@ -830,6 +830,9 @@ export const SCENES = {
   // ...and the rock held while they are dug out from under it
   'rescue!': { about: 'the shields', say: 'the rock held on the dome, and the digging out under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(10); } },
+  // ...and, once they are out and one of the crew, the sheet that says so
+  saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
 
   // --- the endgame ------------------------------------------------------------
   // Everything at once, every machine running, for the shape of the whole thing.
