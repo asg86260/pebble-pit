@@ -9,7 +9,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, LEAN_HOLD } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -542,7 +542,12 @@ export function drawWorkers() {
     // builder's, whatever job the body came from, because it is digging.
     const look = ((w.onBuild && w.atShed) || w.dig ? LOOK.builder : LOOK[w.type]) || PLAIN;
     const throwOn = w.lunge || 0;
-    const x = Math.round(w.x + throwOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
+    // A lean is a pose and not an ease -- see `LEAN_HOLD`. Drawn off the
+    // eased lunge it was a half-cell kick and then a creep back a pixel at a
+    // time, on every swing: a janitor that never once stood still on its cell,
+    // which is the reported "janitor jittering while it cleans".
+    const leanOn = throwOn > LEAN_HOLD ? 1 : 0;
+    const x = Math.round(w.x + leanOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
     const y = Math.round(w.y + throwOn * look.lunge * P);
 
     // A cart is kit like any other, so it is drawn off what the body is holding

@@ -313,6 +313,13 @@ export const MUCK_SWING = Math.round(1000 / MUCK_SWEEP);
 // when it arrived. It is one number now, eased once a frame for everybody in
 // `updateWorkers`, so a swing settles wherever the body spends the next frame.
 export const LUNGE_EASE = 0.84;
+// How much of a swing is left while a body is still thrown into it. A lean is
+// drawn as a pose -- out for the first part of the swing, back on its cell for
+// the rest -- rather than eased pixel by pixel the way a stoop is: a stoop
+// easing up reads as a body straightening, but a body sliding back sideways a
+// pixel a frame, three and a half times a second, is a body vibrating. Above
+// this the lean is drawn at its full throw; below it, not at all.
+export const LEAN_HOLD = 0.5;
 
 // The scrubbing house: a place with nobody in it does nothing at all.
 // The front of the scrubbing house, in cells. These live here rather than in the

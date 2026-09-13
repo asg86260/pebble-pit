@@ -207,9 +207,13 @@ export function takeMess(w, c) {
   // walked up.
   if (w.type === TYPE.ROCK) {
     if (w.jigAt != null) { stopJig(w); w.say = null; }
-    w.resting = false;
     w.idleAt = null;
   }
+  // A shovel in hand is not a break, whoever is holding it. Only the rockhand
+  // said so; a janitor came off its loitering with `resting` still set and
+  // shovelled the whole mess "on a break" -- on its card, and to the break
+  // clock, which would light it a cigarette mid-swing.
+  w.resting = false;
   // Getting there, which is a route and not a walk.
   //
   // The mess is a place, and a place is on a way (see `wayOver` in route.js):
@@ -241,7 +245,16 @@ export function takeMess(w, c) {
   // `downTheHole` allows -- but only from the right way: standing at the mess's
   // x at the height of the yard, under a heap that is up on the hill, is being
   // there in one coordinate out of two.
-  if (Math.abs(at - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
+  //
+  // And once it is stood there, a body's width of slack rather than a couple
+  // of cells. The elbow below parts two shovellers until they are most of a
+  // body apart -- three cells -- and with two cells of slack the parted body
+  // was walked straight back into the one it had been parted from, to be
+  // pushed out again: a slow slide out and walk back, every couple of seconds,
+  // for as long as both stood at the last patch. The shovel reaches from
+  // wherever it stands, so nothing is lost by letting it stand where it was put.
+  const slack = w.route ? P * 2 : WORKER;
+  if (Math.abs(at - w.x) > slack || wayAt(w.x, w.y, all).key !== on.key) {
     // Nowhere a route reaches: it gives the patch up rather than standing there
     // holding a claim on it. `mess.back` puts the body back on its own goal and
     // it looks again next frame.
@@ -287,8 +300,26 @@ export function takeMess(w, c) {
   // Re-taken whenever the body is not already stood on its own spot, which is
   // every arrival: it has just walked here, and where it walked to is where it
   // means to stand.
-  if (w.shovelAt == null || Math.abs(w.shovelAt - w.x) > P) w.shovelAt = w.x;
-  w.x = Math.round(w.shovelAt / P) * P;
+  //
+  // And the snap is taken TOWARD the spot the body was walking to, never past
+  // it. Rounding to the nearest cell of the world sent a body that had arrived
+  // a fraction short of its spot back the other way to reach the cell behind
+  // it -- under a pixel, but `faceTravel` measures facing off any move at all,
+  // so the janitor turned round on the frame it arrived and stood shovelling
+  // with its back to the mess it had just walked to. Snapping toward `at` is
+  // a step in the direction it was already going; and it stays put under the
+  // elbow, since which side of `at` the fraction lies on cannot change without
+  // the fraction itself crossing it.
+  //
+  // "Not already stood on its own spot" is read off the SNAPPED spot, not off
+  // the fraction. The fraction sits up to a whole cell from the feet by
+  // construction, so a test on it against a cell was a test on floating-point
+  // noise: the elbow's push would reach the next cell, the fraction would be a
+  // hair over a cell from the feet, and it was thrown away and started again
+  // -- a body that could be pushed one cell and never a second one.
+  const spot = s => { const d = s - at; return at + Math.sign(d) * Math.floor(Math.abs(d) / P) * P; };
+  if (w.shovelAt == null || Math.abs(spot(w.shovelAt) - w.x) > P) w.shovelAt = w.x;
+  w.x = spot(w.shovelAt);
   w.y = climbTo(w, feetOn(on, w.x));
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);

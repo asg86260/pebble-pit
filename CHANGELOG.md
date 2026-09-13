@@ -15,6 +15,14 @@ Features go in DESIGN.md; this file is for things that were broken.
   rows folding themselves away. The card stays now, greyed, with its pips
   filled and "needs plots" or "needs a quarry" where the price was, until
   the ground is broken.
+- A janitor jittered while it shovelled: every swing kicked it half a cell
+  sideways and slid it back a pixel at a time, and on arriving at a mess it
+  turned to face away from it. The shovel push is a held pose now, thrown
+  toward the mess, and the body stands still on its cell between swings.
+- Two janitors on the last patch of a mess slid apart and walked back into
+  each other every couple of seconds. The one pushed aside stays where it
+  was put.
+- A janitor with a shovel in its hands read as "on a break" on its card.
 
 ## v0.1.5 — 2026-09-13
 
