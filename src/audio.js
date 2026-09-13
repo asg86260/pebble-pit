@@ -27,6 +27,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
          SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX,
          SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES, SND_RATE,
+         SND_HAND_LEVEL, SND_FOLD_LEVEL, SND_PUNCT_LEVEL,
          SND_STONE, SND_WOOD, SND_METAL, SND_RIFT,
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL, SND_CRIT_RATIO, SND_CRIT_SHARE,
@@ -52,6 +53,7 @@ const decisions = {
 };
 
 const CLASSES = new Set(['hand', 'fold', 'punct']);
+const CLASS_LEVEL = { hand: () => SND_HAND_LEVEL, fold: () => SND_FOLD_LEVEL, punct: () => SND_PUNCT_LEVEL };
 const SPEC = { stone: () => SND_STONE, wood: () => SND_WOOD, metal: () => SND_METAL,
                rift: () => SND_RIFT };
 
@@ -135,7 +137,8 @@ function ringOf(spec, o) {
 function fire(voice, o, cls, t, n = 1, counted = false) {
   const spec = (SPEC[voice] || SPEC.stone)();
   const foldDb = Math.min(SND_FOLD_GAIN_MAX_DB, SND_FOLD_GAIN_DB * Math.log2(n));
-  const level = spec.gain * db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);
+  const level = spec.gain * CLASS_LEVEL[cls]() *
+                db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);
   const widen = 1 + SND_FOLD_WIDEN * Math.log2(n);
   const delay = rand() * SND_JITTER_MS;
   const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary;
@@ -144,7 +147,9 @@ function fire(voice, o, cls, t, n = 1, counted = false) {
   if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
   active.push(v);
-  if (ctx) v.env = play(spec, o, { level, widen, delay, detune, ring });
+  // A class at nought is decided and counted like any other and never
+  // rendered: silence costs no buffer.
+  if (ctx && level > 0) v.env = play(spec, o, { level, widen, delay, detune, ring });
 }
 
 // Something physically happened at world x. `voice` is one of stone, wood,

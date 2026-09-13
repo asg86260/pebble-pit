@@ -49,6 +49,16 @@ export const SND_JITTER_MS = 8;
 export const SND_PAN_MAX = 0.3;
 // A voice stolen by the cap fades rather than stops.
 export const SND_STEAL_S = 0.02;
+// What each class is worth in the mix, as a share of the recipe's gain. The
+// player's own hand and the punctuation (the boulder landing, a building
+// coming down, a core banking) are the sounds; the yard's own work -- the
+// crew's picks, grain landing on a pile, chunks on the belt -- is the folding
+// class, and at nought it is silent: heard all day it is a background noise,
+// and the rule since the hits-only pass is that there is none. It is still
+// decided, folded and counted, so turning it up is one knob and nothing else.
+export let SND_HAND_LEVEL = 1;
+export let SND_FOLD_LEVEL = 0;
+export let SND_PUNCT_LEVEL = 1;
 // How many one-shots may sound at once. Past this the oldest and quietest is
 // taken, and the player's own hand is never the one taken.
 export let SND_VOICES = 16;
@@ -149,5 +159,11 @@ export const SOUND_KNOBS = [
   { key: 'SND_FOLD_MS', label: 'fold window', min: 20, max: 200, step: 5,
     get: () => SND_FOLD_MS, set: v => { SND_FOLD_MS = v; } },
   { key: 'SND_VOICES', label: 'voices', min: 4, max: 32, step: 1,
-    get: () => SND_VOICES, set: v => { SND_VOICES = v; } }
+    get: () => SND_VOICES, set: v => { SND_VOICES = v; } },
+  { key: 'SND_HAND_LEVEL', label: 'hand level', min: 0, max: 1, step: 0.01,
+    get: () => SND_HAND_LEVEL, set: v => { SND_HAND_LEVEL = v; } },
+  { key: 'SND_FOLD_LEVEL', label: 'yard level', min: 0, max: 1, step: 0.01,
+    get: () => SND_FOLD_LEVEL, set: v => { SND_FOLD_LEVEL = v; } },
+  { key: 'SND_PUNCT_LEVEL', label: 'punct level', min: 0, max: 1, step: 0.01,
+    get: () => SND_PUNCT_LEVEL, set: v => { SND_PUNCT_LEVEL = v; } }
 ];

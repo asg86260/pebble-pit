@@ -65,7 +65,10 @@ Left, in order:
   hand-mining hit; **`SND_WOOD`, `SND_METAL` and `SND_RIFT` are bench
   starting points nobody has chosen yet** -- tune them on the bench and paste
   the JSON into `config/sound.js`. `node tools/listen.mjs` still renders
-  every voice to `shots/sound/`.
+  every voice to `shots/sound/`. The yard's own work -- the crew's picks,
+  grain on the piles, chunks on the belt (the `fold` class) -- is at
+  `SND_FOLD_LEVEL = 0`: heard all day it was the background noise the pass
+  had just removed. Your hand and the punctuation are the sound.
 - **A second audio pass** for the sites left off on purpose: birds, the
   dance, the balloon, the school, the apothecary, the wheel, the board, the
   shields' cutscenes.
