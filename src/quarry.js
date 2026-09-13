@@ -606,9 +606,15 @@ export function stepQuarrier(w, now, ctx = null) {
   // crit is more ground out at once now, which is what makes it a crit.
   const crit = critRoll(critBoost(w));
   digCell(c);
+  // Each extra cell is a different column: without the `took` set, the nearest
+  // undug neighbor is the same one every time round (a cell off it leaves it
+  // still short of its mark), and a crit is a shaft next to the swing instead
+  // of a bite out of the course.
+  const took = new Set([c]);
   for (let k = 1; k < crit; k++) {
-    const n = nearestUndug(c);
+    const n = nearestUndug(c, took);
     if (n < 0) break;
+    took.add(n);
     digCell(n);
   }
   w.cell = null;                               // done with that one: it picks another
@@ -677,18 +683,20 @@ export function findShards(w, left, crit = critRoll(critBoost(w))) {
   S.dirty = true;
 }
 
-// The nearest column to `c` with ground still in it, for a crit's extra cells:
-// the cut is worked down in layers, so the neighbors on the same course go
-// first, and a column dug to its target is passed over.
-function nearestUndug(c) {
+// The column a crit's extra cell comes off: the shallowest ground still
+// standing, and the nearest such to `c` -- the same layer rule as
+// `nextQuarryCell`, so a crit is a wider bite out of the course being worked
+// and not a hole through it. Columns in `took` are the ones this swing has
+// already taken a cell from; a column dug to its target is passed over.
+function nearestUndug(c, took = new Set()) {
   const cells = quarryCells();
-  for (let d = 1; d < cells.length; d++) {
-    for (const i of [c - d, c + d]) {
-      if (i < 0 || i >= cells.length) continue;
-      if (cells[i] < quarryTarget(i)) return i;
-    }
+  let best = -1, depth = Infinity;
+  for (let i = 0; i < cells.length; i++) {
+    if (took.has(i) || cells[i] >= quarryTarget(i)) continue;
+    const d = cells[i];
+    if (d < depth || (d === depth && Math.abs(i - c) < Math.abs(best - c))) { best = i; depth = d; }
   }
-  return -1;
+  return best;
 }
 
 // nobody is out of sight any more: the whole point of a cut rather than a shaft
