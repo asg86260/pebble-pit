@@ -4,34 +4,20 @@ Every bug fixed, under the version it shipped in. A fix lands here in the same
 commit that fixes it, under **Unreleased**; `npm run release` turns that
 heading into the version number and the date, so nobody types a number by hand.
 
-One line per fix, in the player's words: what was wrong, and what is true now.
-Features go in DESIGN.md; this file is for things that were broken.
+One short line per fix, in the player's words. No account of how it looked
+or why it happened -- that belongs in the commit. Features go in DESIGN.md;
+this file is for things that were broken.
 
 ## Unreleased
 
 - Holding the button on the rock stops while the rock's pile is full.
-- A ladder vanished from its board the moment its first three rungs were
-  bought on a yard with no plots, and again after six with no quarry --
-  the rungs you had paid for went with it, which looked like the finished
-  rows folding themselves away. The card stays now, greyed, with its pips
-  filled and "needs plots" or "needs a quarry" where the price was, until
-  the ground is broken.
-- A janitor jittered while it shovelled: every swing kicked it half a cell
-  sideways and slid it back a pixel at a time, and on arriving at a mess it
-  turned to face away from it. The shovel push is a held pose now, thrown
-  toward the mess, and the body stands still on its cell between swings.
-- Two janitors on the last patch of a mess slid apart and walked back into
-  each other every couple of seconds. The one pushed aside stays where it
-  was put.
-- A janitor with a shovel in its hands read as "on a break" on its card.
-
-- A carter with room in its hands walked past dust to tip, or across the
-  whole yard for one more thing while the hole was a stride away. Once it is
-  carrying anything it now goes for whichever is nearer, the next grain or
-  the lip -- and picks up what lands in front of it on the way to tip.
-- A carter sent out for two grains because the hole only had room for two
-  took its two and tipped, even when a dig had made room for twenty while it
-  walked. It asks the hole again before giving up on a heap.
+- A ladder stays on its board, greyed, when its next rung needs plots or a
+  quarry the yard does not have yet.
+- A janitor stands still between shovel swings and faces the mess.
+- Two janitors on the last patch of a mess no longer shove each other about.
+- A janitor with a shovel in its hands no longer reads as "on a break".
+- A laden carter goes for whichever is nearer, the next grain or the lip.
+- A carter asks the hole again before giving up on a heap.
 
 ## v0.1.5 — 2026-09-13
 
