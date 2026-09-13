@@ -414,6 +414,15 @@ function tossOut(x, y, what = someFind(SHARD_CELL)) {
 }
 
 // one quarrier, one frame
+// Down the hole: between the walls, under the ground line, and with its feet
+// on the floor -- not still on the ladder's rungs above it, which is inside
+// the span too. A body this is true of is at its station, wherever its goal
+// says it was going.
+const inCut = w => S.quarryOpen
+  && w.x + WORKER > quarry.x && w.x < quarry.x + quarry.w
+  && w.y + WORKER > S.groundY + 1
+  && Math.abs(w.y + WORKER - cutTop(w.x + WORKER / 2)) <= P;
+
 export function stepQuarrier(w, now, ctx = null) {
   const rim = quarryFace();
 
@@ -444,6 +453,11 @@ export function stepQuarrier(w, now, ctx = null) {
     // finished dig, but the first hole of a session was never filled in by
     // anybody -- it has simply always been there -- so it is laid here.
     if (S.quarryOwed <= 0 && !dugShare()) S.quarryOwed = seamShards();
+    // Already down the hole -- a reload, a body put down there, a leg cut
+    // short -- is already at work. The seat and the walk to it are for a body
+    // arriving from the yard; sent round by the rim from the floor of the cut
+    // it climbed out, crossed the top and climbed back in.
+    if (inCut(w)) { w.goal = 'work'; w.route = null; return; }
     w.seat = seatX(w);
     w.goal = 'down';
     w.route = null;
@@ -451,6 +465,7 @@ export function stepQuarrier(w, now, ctx = null) {
   }
 
   if (w.goal === 'down') {
+    if (inCut(w)) { w.route = null; w.goal = 'work'; w.dugAt = now; return; }
     if (!keepTo(w, w.seat, ways().cut)) { w.goal = 'to'; return; }
     // The dig-shuffle pace is for legs in the cut; a leg up in the open is a
     // commute. A quarrier carried across the yard by a shovelling errand used
@@ -458,8 +473,10 @@ export function stepQuarrier(w, now, ctx = null) {
     // for however far the errand had taken it. Only up in the open: below the
     // ground line everything keeps the shuffle, so nothing about the ladder,
     // the descent or the fill-in behind the last body out moves by a frame.
+    // Up in the open means up in the open: a body on the deck over the mouth,
+    // or on the bank a few paces from the ladder's head, is walking, and it
+    // used to shuffle the last three hundred pixels of every approach.
     const brisk = w.y + WORKER <= S.groundY + 1
-      && Math.abs(w.x - quarryFace()) > P * 50
       && w.route && w.route[0] && w.route[0].along && w.route[0].along.key !== 'cut';
     if (stepRoute(w, brisk ? commutePace() : QUARRY_WALK)) return;
     w.route = null;

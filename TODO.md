@@ -17,18 +17,27 @@ standing about, and whether a blaster's ring at power 1 carries from the
 usual camera distance. Both are on the dev panel (`CUT_BEAT_MS`,
 `CUT_BLAST_POWER`).
 
-## Quarriers stop after a refresh (reported 2026-09-13)
+## Quarriers loiter after a refresh -- FIXED at the station, cause in the save still open (2026-09-13)
 
-**Not reproduced.** Save mid-dig, load in a fresh process the way the page
-does (`tools/node/cut-refresh.mjs save` / `load`): three at pace nought and
-five at rung nine both go on digging at the same rate after the load. Needs
-the player's save -- `localStorage.getItem('boulder-clicker/v4')` -- as
-`test/fixtures/`, then trace one body per hypothesis with `cut-trace.mjs`.
-Candidates from the code: a quarrier that was the jaw's tender, a body on
-the kit walk when the save was written (`fetching`, `kitOf` are kept;
-`wanting` is not), or a `goal: 'work'` restored onto a body whose `y` puts
-it outside the cut's span (the guard at the head of the work leg sends it
-back to `to`, which is fine, unless the route down cannot be had).
+The player's description, once precise: after a refresh the gang appears on
+the far (right) bank of the cut, shuffles the whole top of it to the ladder,
+climbs down and starts again. The far bank is `restoreCrew`'s doing -- a
+body at ground height over the mouth is moved to ground that is there --
+which means the save had working quarriers at ground height over the mouth.
+**Not reproduced**: every synthetic save (`tools/node/cut-refresh.mjs`, and
+real page reloads under Playwright) has them on the floor. Why the player's
+does is still unknown; candidates are a save written on the frame the cut
+was refilled (`fillQuarry` stands everybody on the fresh ground) and a
+`groundY` that differs between the save and the layout at load.
+
+**Fixed regardless, in the station's logic** (`test/cut-station.test.mjs`):
+a working quarrier restored over the mouth is stood on the cut's floor under
+its own x; a quarrier already on the floor told `to` or `down` simply works
+(`inCut` in quarry.js -- feet on the floor, not on the ladder); and the
+approach along the top is a walk, not the shuffle (the `brisk` rule lost its
+three-hundred-pixel distance test). Whatever puts a quarrier at the top of
+its own quarry, it now walks to the ladder and gets on with it. If the
+player still sees the bank walk, the save is the fixture.
 
 ## A toast when an achievement lands -- BUILT (2026-09-12)
 

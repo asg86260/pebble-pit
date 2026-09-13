@@ -14,7 +14,7 @@ import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
-import { resetCut, seamShards, dugShare } from './quarry.js';
+import { resetCut, seamShards, dugShare, cutTop } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
@@ -1149,10 +1149,21 @@ function restoreCrew(who) {
     // at or above the line) moved it ten cells sideways on every reload
     // (critics 2026-09-10, C14). The deck is a way, and a body on a way is
     // where it is.
+    //
+    // Unless it is a quarrier at work, in which case the mouth is exactly
+    // where it belongs. Put on the far bank it walked the whole top of the cut
+    // at the shuffle, climbed down and started again -- a gang that loitered
+    // for five seconds on every refresh (reported 2026-09-13). It stands on the
+    // cut's floor under its own x -- the same height the work leg would put it
+    // at on its first frame -- whatever the save said about its y.
     if (Number.isFinite(rec.x) && overCutMouth(rec.x)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
-      const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
-      rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
+      if (type === TYPE.QUARRY && rec.goal === 'work') {
+        rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };
+      } else {
+        const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
+        rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
+      }
     }
     S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
   }

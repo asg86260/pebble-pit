@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- Quarriers come back from a refresh on the floor of the cut and keep
+  digging, instead of on the far bank with a slow walk round to the ladder.
 - Quarriers work the cut in pockets on a swing you can see, along a stretch,
   and never dig one column into a slot; a blaster's swing bursts.
 - Holding the button on the rock stops while the rock's pile is full.
