@@ -374,6 +374,21 @@ function pinWidth() {
   sheet.style.width = `${sheet.offsetWidth}px`;      // border-box, so this is exact
 }
 
+// The crew list stands over the door that opens it, one card wide. Where the
+// door is and how wide a card is are both facts about the board's layout this
+// frame, so they are read off it here -- the door's own width plus the sheet's
+// border and padding, and the sheet's left edge in the panel -- rather than
+// restated in the stylesheet as numbers that would be wrong the day a padding
+// changed. Nothing to seat while no door is on the open board.
+function seatFlyout() {
+  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
+  const door = sheet && sheet.querySelector('.rows > button.door');
+  if (!door) return;
+  const rows = door.parentElement;
+  crewListEl.style.left = `${sheet.offsetLeft}px`;
+  crewListEl.style.width = `${door.offsetWidth + sheet.offsetWidth - rows.offsetWidth}px`;
+}
+
 // `repin: false` is for the one caller that knows the rows did not move -- a
 // hover rewriting a note, a price ticking over. Re-pinning there would hand the
 // width back to the words, which is the bug.
@@ -386,6 +401,7 @@ export function remeasure(repin = true) {
   // again, which is where a board that was rebuilt out of sight gets its size.
   if (panelEl.hidden) return;
   if (repin) pinWidth();
+  seatFlyout();
   full = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
   sized = { w: mainWidth(), h: full.h };
 }

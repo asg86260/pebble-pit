@@ -450,10 +450,10 @@ export const TESTS = [
   // which on an ordinary window was always, so hovering the door threw the
   // whole board into the top corner of the glass to make room. The row you
   // hovered should stay where it was. So the list is out of the panel's flow,
-  // seated on the board's top-right corner at the board's width, and the board
-  // is measured before and after to prove it has not moved an inch. The door
-  // is the top row of the board and spans it, so the names come out directly
-  // over the row that opened them rather than over the card beside it.
+  // stood on the board's top edge, and the board is measured before and after
+  // to prove it has not moved an inch. The door is the top-left card of the
+  // board on a line of its own, and the list is one card wide and stands
+  // directly over it, so the names come out over the row that opened them.
   ['the list opens above the board and the board stays put', async () => {
     newRun();
     await settle();
@@ -471,10 +471,14 @@ export const TESTS = [
     const rows = [...document.querySelectorAll('#crewshop button')].filter(b => b.offsetParent !== null);
     const panel = document.getElementById('panel');
     const still = Math.abs(after.left - before.left) < 1 && Math.abs(after.bottom - before.bottom) < 1;
-    const above = Math.abs(listed.right - after.right) < 1 && listed.bottom < after.top &&
-                  after.top - listed.bottom < 16 && Math.abs(listed.width - after.width) < 1;
+    const above = Math.abs(listed.left - after.left) < 1 && listed.bottom < after.top &&
+                  after.top - listed.bottom < 16;
+    // one card wide: the door's width, plus the sheet's border and padding on
+    // either side, which is the board's width less what its rows take
+    const sheetAir = after.width - document.getElementById('crewshop').getBoundingClientRect().width;
+    const cardWide = Math.abs(listed.width - (doorAt.width + sheetAir)) < 1;
     const topRow = rows.every(b => b === door || b.getBoundingClientRect().top >= doorAt.bottom);
-    const spans = doorAt.width > after.width * 0.8;
+    const spans = doorAt.width < after.width * 0.6 && Math.abs(doorAt.left - listed.left - sheetAir / 2) < 1;
     const unmoved = !panel.classList.contains('stack') && !panel.classList.contains('flip');
     await hoverAway();
     window.__crew(0, 0);
@@ -482,10 +486,11 @@ export const TESTS = [
       ok(listed.width > 60, 'the list opens with something on it', `${Math.round(listed.width)}px`),
       ok(still, 'and the board it came out of has not moved',
          `${Math.round(before.left)},${Math.round(before.bottom)} -> ${Math.round(after.left)},${Math.round(after.bottom)}`),
-      ok(above, 'because the list stands above it, at its width',
-         `list ${Math.round(listed.right)},${Math.round(listed.bottom)} ${Math.round(listed.width)}w; board ${Math.round(after.right)},${Math.round(after.top)} ${Math.round(after.width)}w`),
-      ok(topRow && spans, 'and the door is the top row of the board, across the whole of it',
-         `door ${Math.round(doorAt.width)}w of ${Math.round(after.width)}, top ${Math.round(doorAt.top)}`),
+      ok(above, 'because the list stands above it, on its left edge',
+         `list ${Math.round(listed.left)},${Math.round(listed.bottom)}; board ${Math.round(after.left)},${Math.round(after.top)}`),
+      ok(cardWide, 'one card wide', `list ${Math.round(listed.width)}w, door ${Math.round(doorAt.width)}w + ${Math.round(sheetAir)}`),
+      ok(topRow && spans, 'and the door is the top-left card of the board, on a line of its own',
+         `door ${Math.round(doorAt.width)}w of ${Math.round(after.width)} at ${Math.round(doorAt.left)}, top ${Math.round(doorAt.top)}`),
       ok(unmoved, 'with nothing in the panel re-seated to make room for it', panel.className)
     ];
   }],
