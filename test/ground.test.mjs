@@ -18,6 +18,9 @@ import { BIRDS, startle } from '../src/weather.js';
 import { yardLeft, bankCeiling, pastRock } from '../src/world.js';
 import { S, floor } from '../src/state.js';
 import { at, put } from '../src/grid.js';
+// The held button swings through the same door the crew's picks do, and the
+// check wants the same point over the rock a player's cursor would be at.
+import { topOfRock } from '../src/rock.js';
 import { LOOSE_DEEP, PILE_HOLDS, FIND_COLOR } from '../src/config.js';
 
 // How many grains are standing in a column, read straight off the grid. The
@@ -189,6 +192,46 @@ group('workers do not all go for the same grain', async () => {
        JSON.stringify(claims)),
     ok(busy.pace.empty > busy.pace.laden, 'and a worker moves quicker with its hands free',
        `${busy.pace.empty} empty, ${busy.pace.laden} laden`)
+  ];
+});
+
+// Holding the button is working the rock, and the rock hands stop working it
+// when their pile is full. The hold used to keep going: with nowhere on the
+// ground for the spoil, it rolled into the pit -- dust nobody carried.
+group('holding the button stops at a full pile, like the crew', async () => {
+  window.__crew(0, 0);
+  window.__clearFloor();
+  haveRock();
+  run(1);
+  const strip = () => state().piles.find(q => q.key === 'rock');
+  for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
+    const p = strip();
+    window.__pile(p.from + rand() * (p.to - p.from), 60);
+    run(0.2);
+  }
+  const full = state();
+  // the cursor on the top of the rock, the button down, and a yard that has
+  // unlocked holding
+  const top = topOfRock(S.cx);
+  S.mouse.x = top.x; S.mouse.y = top.y;
+  S.autoMine = true;
+  S.mining = true;
+  S.nextHit = 0;
+  const rockThen = state().rock;
+  run(4);
+  const held = state();
+  window.__clearFloor();
+  run(1);
+  const rockFreed = state().rock;
+  run(4);
+  const working = state();
+  S.mining = false;
+  return [
+    ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
+    ok(held.rock === rockThen, 'and the held button takes nothing off the rock while it is full',
+       `${rockThen} -> ${held.rock}`),
+    ok(!working.pileFull.rock && working.rock < rockFreed,
+       'and swings again once the pile is cleared', `${rockFreed} -> ${working.rock}`),
   ];
 });
 

@@ -9,6 +9,9 @@ Features go in DESIGN.md; this file is for things that were broken.
 
 ## Unreleased
 
+- Holding the button on the rock kept mining after the rock's pile was full,
+  and the spoil rolled off the heap into the pit. The hold stops where the
+  rock hands stop now, and starts again when a hauler makes room.
 - A ladder vanished from its board the moment its first three rungs were
   bought on a yard with no plots, and again after six with no quarry --
   the rungs you had paid for went with it, which looked like the finished

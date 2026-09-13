@@ -188,7 +188,13 @@ function holdToMine(now) {
     // A held swing takes the top off, at the nearest high point to where the
     // cursor is -- see `topOfRock`. You aim a click; holding the button is
     // working, and a rock is worked from the top down.
-    const at = overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
+    //
+    // And not while the rock's pile is full. The rock hands down tools at that
+    // mark (`ready` in rock.js); a held button that kept swinging put the spoil
+    // on ground that had no room for it, and from there it ran into the pit --
+    // dust nobody carried, which is the one thing the ground must never do. The
+    // hold waits, like the crew, and picks up the moment a hauler makes room.
+    const at = !S.pileFull.rock && overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
     if (at) knockOff(at.x, at.y, undefined, false);   // hold-to-mine is still your hands
     S.nextHit += mineMs();
   }
