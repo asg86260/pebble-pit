@@ -414,8 +414,12 @@ function build(el, list, sections, empty, heads) {
       // the title whatever the rest of the row is doing. As a cell of their own
       // they were placed after the price -- and a price of two coins is two
       // lines tall, which pushed the pips down past the words they belong to.
+      // Three lines, two columns: the name and the pips, the gain and the
+      // clock, the coins. The clock is a cell of its own rather than the last
+      // coin of the bill, so the bill is coins only and the right-hand column
+      // is the two facts about time -- see the card in style.css.
       b.innerHTML = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
-                    '<span class="gain"></span><span class="cost"></span>' +
+                    '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
                     (u.note && !inSubmenu ? '<span class="note"></span>' : '');
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
@@ -587,10 +591,12 @@ export function refresh(el, list, headcount) {
     // same information as "you are short of *this*": with the whole row dimmed
     // alike, a player with the stone and not the dust reads the same row as one
     // with neither, and has to go and count both piles to find out which.
-    const parts = billOf(u).map(([money, n]) =>
-      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, Math.round(shown('price:' + u.key + ':' + money, n)))}</span>`);
-    const bill = parts.join('');
-    const [name, gain, price] = row.children;
+    const said = ([money, n]) =>
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, Math.round(shown('price:' + u.key + ':' + money, n)))}</span>`;
+    const full = billOf(u);
+    const bill = full.filter(([m]) => m !== 'time').map(said).join('');
+    const clock = full.filter(([m]) => m === 'time').map(said).join('');
+    const [name, gain, time, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words
@@ -636,7 +642,7 @@ export function refresh(el, list, headcount) {
         sayHTML(gain, queued ? `in line (${lineAt(u)})` :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
-        sayHTML(price, bill);
+        sayHTML(price, bill); sayHTML(time, clock);
         // Greyed while it is being built -- committed, nothing to press for --
         // and live while it waits, so a press can pull it back out.
         grey(row, !queued);
@@ -672,8 +678,15 @@ export function refresh(el, list, headcount) {
       // rather than off the constant. See `rungsOf`.
       const at = u.rung ? rungOf(u) : 0;
       const of = rungsOf(u);
-      const want = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
-      if (ladder.textContent !== want) ladder.textContent = want;
+      const pips = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
+      // A ladder sold in bands asks for its pips in groups of three, one a
+      // band, each group in its band's coin (the stylesheet tints them): the
+      // pips are then the bill's legend as well as the count. Each group is an
+      // element so it can be colored; a ladder with no groups is one run.
+      const want = u.group && pips
+        ? pips.match(new RegExp(`.{1,${u.group}}`, 'g')).map(g => `<b>${g}</b>`).join(' ')
+        : pips;
+      if (ladder.innerHTML !== want) ladder.innerHTML = want;
       // No '3 of 5' on hover: the pips are the answer.
     }
     // A finished ladder has nothing left to say in the middle or on the right.
@@ -681,7 +694,7 @@ export function refresh(el, list, headcount) {
     // row that looks like you cannot afford it.
     if (maxed(u)) {
       sayHTML(gain, '');
-      sayHTML(price, 'done');
+      sayHTML(price, 'done'); sayHTML(time, '');
       grey(row, true);
       continue;
     }
@@ -689,7 +702,7 @@ export function refresh(el, list, headcount) {
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's two decisions are the only ones: neither costs anything, and
     // the number either of them is about is the one on the table.
-    sayHTML(price, u.price ? u.price() : bill);
+    sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
     grey(row, u.price ? !!u.dead?.() : !canPay(u));
   }
 }
@@ -803,6 +816,17 @@ export function buildBoard(which) {
 
 export function buildShop() {
   for (const which of Object.keys(BOARDS)) buildBoard(which);
+}
+
+// Draw a handful of rows into any element, with no yard behind them: the card
+// bench (cards.html) hands this plain row objects -- a name, a bill, a rung
+// count -- and gets back the real markup under the real stylesheet. It is to
+// the boards what preview.html is to the effects: the shot that used to cost a
+// yard, a crew and a walk to the bench costs a page load.
+export function mountRows(el, rows, title = 'the bench') {
+  const list = rows.map(u => ({ show: () => true, ...u }));
+  build(el, list, [{ title, keys: list.map(u => u.key) }], '', null);
+  refresh(el, list, null);
 }
 
 

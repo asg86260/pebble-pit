@@ -202,7 +202,7 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
   const bill = key => window.__rows().find(r => r.key === key)?.bill || [];
   const coins = key => bill(key).map(([c]) => c).filter(c => c !== 'time').sort().join();
   const got = climb('critchance', 3, buyBuilt);
-  const secondCard = window.__rows().find(r => r.key === 'critchance2')?.shown;
+  const secondCoins = coins('critchance');
 
   return [
     ok(gotChance && lvl1 === lvl0 + 1, 'the chance rung was bought at the row', `${gotChance}, ${lvl0} -> ${lvl1}`),
@@ -210,8 +210,6 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
     ok(sh1 === sh0 && sp1 === sp0, 'and nothing else on the first card', `${sh0}->${sh1} shard, ${sp0}->${sp1} spore`),
     ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
     ok(d2 < d1 && sh2 < sh1 && sp2 < sp1, 'in dust, crops and ore together', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
-    ok(got === 3 && secondCard, 'the first card finished and the second took its place', `${got}, ${secondCard}`),
-    ok(coins('critchance2') === 'dust,spore', 'the second card asks dust and crops', coins('critchance2')),
-    ok(coins('critchance3') === 'dust,shard,spore', 'and the third dust, crops and ore', coins('critchance3'))
+    ok(got === 3 && secondCoins === 'dust,spore', 'the first band finished and the second asks dust and crops', `${got}, ${secondCoins}`)
   ];
 });

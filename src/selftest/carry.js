@@ -55,7 +55,7 @@ export const TESTS = [
       // this second, and nothing else. The full lined-up column of tallies and
       // headings was cut on request -- the card answers "who is this and what
       // is it at", and the rest was a spreadsheet over a body's head.
-      ok(said.includes('mining the rock') && /^age\b/m.test(said) && /^doing\b/m.test(said),
+      ok(said.includes('digging the rock') && /^age\b/m.test(said) && /^doing\b/m.test(said),
          'hovering one says who it is and what it is doing',
          JSON.stringify(said)),
       ok(!/^(heading|mined|quarried|farmed|stored)\b/m.test(said),

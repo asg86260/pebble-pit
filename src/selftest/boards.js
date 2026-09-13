@@ -68,81 +68,48 @@ export const TESTS = [
     ];
   }],
 
-  // The trades are bought at a building of their own, not on the bench. The
-  // bench is the shop; this is a decision about people, and they read
-  // differently for standing in different places.
-  // Nothing on any board sits on top of anything else.
-  //
-  // Every board is a grid of three columns, and every time a name gets longer or
-  // a price grows a second currency the risk is the same: the text runs past its
-  // column and the next one starts underneath it. It has happened on the tower
-  // twice and on the scrubbing house once, and each time it was found by looking
-  // at a screenshot. This asks the page instead, on every board at once, so the
-  // next one is found by the suite.
-  // The check above says today's names fit. This one says the board would still
-  // fit a name nobody has written yet, which is the thing that kept breaking:
-  // for a long time every board carried a hand-cut column width, and a name
-  // longer than somebody's guess ran over the price.
-  //
-  // The answer used to be that the column measured itself and grew. It does not
-  // grow any more -- the sheet has a ceiling over it now, because with the bill
-  // up on the title's line an unbounded sheet answered a long name by getting
-  // wider and ran off the side of the window. So the title WRAPS instead, and
-  // what has to be true is the same thing it always was, said about a card: the
-  // words never leave their cell, and they never move the bill.
-  ['a longer name wraps instead of running out of its card', async () => {
+  // A name is one line, and a name too long for it is clipped inside its
+  // card rather than allowed to wrap or to widen anything. It used to wrap,
+  // taking the card a line taller; the card is three lines now, the same three
+  // on every card, and the name shares its line only with the pips (see the
+  // card in style.css). The words a board carries are short on purpose; this
+  // is the check that a long one cannot break the shape.
+  ['a longer name stays on its line and inside its card', async () => {
     newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 900, spores: 900 });
     window.__board('bench');
-    // The sheet scales in, and a width read through that transform is a width
-    // read mid-animation: it has to have arrived before any of this means
-    // anything.
     await sleep(400);
     const rows = () => [...document.querySelectorAll('#shop button')].filter(b => b.offsetParent);
     const sheetW = () => Math.round(
       document.querySelector('.panel .sheet').getBoundingClientRect().width);
-    // How far the ink in a cell reaches past the cell that is meant to hold it.
-    // A Range, because a grid cell's own rect is the track and says nothing
-    // about where the words inside it actually end.
-    const over = el => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return Math.round(range.getBoundingClientRect().right - el.getBoundingClientRect().right);
-    };
+    const inside = el => el.getBoundingClientRect().right <= el.closest('button').getBoundingClientRect().right + 1;
 
     const wasWide = sheetW();
     const victim = rows().find(b => b.querySelector('.what'));
     const what = victim.querySelector('.what');
     const said = what.textContent;
     const wasTall = Math.round(victim.getBoundingClientRect().height);
-    const billAt = Math.round(victim.querySelector('.cost').getBoundingClientRect().right);
+    const cardRight = Math.round(victim.getBoundingClientRect().right);
 
     what.textContent = said + ' of the everlasting stone';
     await raf();
     await raf();
     const nowWide = sheetW();
     const nowTall = Math.round(victim.getBoundingClientRect().height);
-    const billNow = Math.round(victim.querySelector('.cost').getBoundingClientRect().right);
-    const spilled = rows().filter(b => over(b.querySelector('.what')) > 1).length;
-
+    const cardRightNow = Math.round(victim.getBoundingClientRect().right);
+    const held = inside(what);
+    const oneLine = Math.round(what.getBoundingClientRect().height) <= Math.round(parseFloat(getComputedStyle(what).lineHeight) || 20) + 2;
     what.textContent = said;
     await raf();
-    const backWide = sheetW();
-    const backTall = Math.round(victim.getBoundingClientRect().height);
     window.__board(null);
     return [
-      ok(spilled === 0, 'none of the names run out of their card', `${spilled} spilled`),
-      ok(nowTall > wasTall, 'a longer name takes another line of the card',
-         `${wasTall}px -> ${nowTall}px`),
-      ok(nowWide === wasWide, 'and does not widen the sheet to do it',
-         `${wasWide}px -> ${nowWide}px`),
-      ok(Math.abs(billNow - billAt) <= 1, 'and the bill does not move for it',
-         `${billAt}px -> ${billNow}px`),
-      ok(Math.abs(backTall - wasTall) <= 1 && backWide === wasWide,
-         'and taking the words back takes the line back',
-         `${nowTall}px -> ${backTall}px, from ${wasTall}px`)
+      ok(held, 'a longer name stays inside its card'),
+      ok(oneLine, 'on one line', `${Math.round(what.getBoundingClientRect().height)}px tall`),
+      ok(Math.abs(nowTall - wasTall) <= 1, 'and the card is no taller for it', `${wasTall}px -> ${nowTall}px`),
+      ok(nowWide === wasWide && Math.abs(cardRightNow - cardRight) <= 1, 'nor wider, nor is the sheet',
+         `sheet ${wasWide}px -> ${nowWide}px, card right ${cardRight} -> ${cardRightNow}`)
     ];
   }],
 
@@ -197,7 +164,9 @@ export const TESTS = [
       // Named rather than counted: the card the defect was found on is the one
       // this check exists for, so a setup that stops putting it on the board
       // should fail here rather than quietly measure ten easy cards instead.
-      ok(seen.has('labcrop') && seen.size >= 12,
+      // Eight or more: a ladder is one card now, where it was up to three, so
+      // a board carries fewer gain lines than it did and the same deep bills.
+      ok(seen.has('labcrop') && seen.size >= 8,
          'the deep bills are on the boards to read',
          `${seen.size} lines${seen.has('labcrop') ? '' : ', no labcrop'}`),
       ok(bad.length === 0, 'and every one of them fits the cell it is in',
@@ -373,8 +342,11 @@ export const TESTS = [
     window.__board('tower');
     await sleep(500);
     const row = document.querySelector('#towershop button[data-key="wizard"]');
-    const coins = row && [...row.querySelectorAll('.cost i')].map(i => i.className);
-    const said = row && row.querySelector('.cost').textContent.trim();
+    // The coins are the bill and the clock is a cell of its own beside the
+    // gain (see the card in style.css): the waiting is priced with the rest,
+    // read across the two cells.
+    const coins = row && [...row.querySelectorAll('.cost i, .time i')].map(i => i.className);
+    const said = row && row.querySelector('.time').textContent.trim();
     const tall = row && Math.round(row.getBoundingClientRect().height);
     // A bill wraps inside its cell once it is longer than the card can hold --
     // the stylesheet says so, and names the wizard among the handful of rows
@@ -391,19 +363,19 @@ export const TESTS = [
     const box = cell && cell.getBoundingClientRect();
     const card = row && row.getBoundingClientRect();
     const spans = cell ? [...cell.querySelectorAll('span')].map(s => s.getBoundingClientRect()) : [];
-    const inside = !!box && spans.length === 4 && spans.every(r =>
+    const inside = !!box && spans.length === 3 && spans.every(r =>
       r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= card.bottom + 1);
     window.__board(null);
     return [
       ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
          'the tower trains a wizard', row && row.querySelector('.what').textContent),
-      ok(coins && coins.join() === 'dust,shard,spore,clock',
+      ok(coins && coins.slice().sort().join() === 'clock,dust,shard,spore',
          'and the waiting is the fourth thing it costs', String(coins)),
       ok(/[0-9]+ ?(min|s)$/i.test((said || '').trim()), 'said as a length of time, not a count of milliseconds',
          said),
       ok(!row?.dataset.note && !row?.title,
          'and the row keeps it all to itself: no sheet opens beside it'),
-      ok(inside, 'and the bill of four stays inside its own cell, wrapped or not',
+      ok(inside, 'and the bill of three coins stays inside its own cell, wrapped or not',
          spans.map(r => `${Math.round(r.left)}-${Math.round(r.right)}`).join(' ') + ` in ${Math.round(box?.left)}-${Math.round(box?.right)}`)
     ];
   }],
@@ -635,13 +607,11 @@ export const TESTS = [
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
     run(20);
-    // Two ladders to their tops, through whichever card of each is showing --
-    // a ladder is sold in bands, and the card left standing at the top is the
-    // last one. The pick waits on the swing being automatic.
+    // Two ladders to their tops, each one card pressed nine times. The pick
+    // waits on the swing being automatic.
     window.__buy('auto');
-    const card = key => window.__rows().find(r => r.shown && [key, `${key}2`, `${key}3`].includes(r.key))?.key;
     for (let i = 0; i < 12; i++) {
-      for (const key of ['carry', 'pick']) { const k = card(key); if (k) { window.__buy(k); window.__finish(); } }
+      for (const key of ['carry', 'pick']) { window.__buy(key); window.__finish(); }
     }
     window.__build();
     window.__board('bench');
@@ -662,7 +632,7 @@ export const TESTS = [
     const went = before.filter(k => !hidden.includes(k));
     return [
       ok(before.length > 0, 'there are rows on the bench', `${before.length}`),
-      ok(went.length === 2 && went.includes('carry3') && went.includes('pick3'),
+      ok(went.length === 2 && went.includes('carry') && went.includes('pick'),
          'and the two ladders at the top of themselves go when they are hidden',
          went.join(',') || 'none went'),
       ok(back.length === before.length, 'and come back when they are shown again',
@@ -1019,7 +989,8 @@ export const TESTS = [
       // Three columns: name, gain, price. The pips saying how far up the ladder a
       // row is live inside the name -- under the title rather than beside it --
       // so they are not a column at all.
-      ok(cells.length > 0 && cells.every(c => c.length === 3), 'rows are three columns',
+      // Name, gain, clock, bill: the four cells of a card.
+      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are four cells',
          JSON.stringify(cells[0])),
       // name, rung, gain, price -- so the two that must never be empty are the
       // first and the last
@@ -1186,7 +1157,7 @@ export const TESTS = [
       .map(r => r.dataset.key);
     // What the dust row says, off the sheet: a mark, a number and a clock.
     const dust = document.querySelector('#statsshop [data-key="ratedust"]');
-    const said = dust ? dust.children[2].innerHTML : '';
+    const said = dust ? dust.querySelector('.cost').innerHTML : '';
     // Away has to mean away, and which way is away has changed. These used to
     // stand at the pit mouth, off on their own, so the top-left corner of the
     // screen was away from everything -- which is what `hoverAway` points at.

@@ -12,7 +12,7 @@
 
 import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
          FAN_COST } from './config.js';
-import { tierRows, cards, named } from './upgrades/tiers.js';
+import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
@@ -143,7 +143,7 @@ export const SCRUB_UPGRADES = [
 
 export const SCRUB_SECTIONS = [
   airSection(),
-  { title: 'equipment', keys: [...cards('fan'), 'balloon', 'recycler'] }
+  { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
 ];
 
 // what it costs to put the place up at all

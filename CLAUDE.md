@@ -27,6 +27,12 @@ The same list is drawn as buttons on the dev panel's `scenes` tab (backtick) in
 a dev build, so a scene written once is a button and a shot the same day. Add a scene rather
 than hand-driving the same setup twice.
 
+For anything on a **board**, `cards.html` is the card bench: it draws rows
+from plain objects through the real builder and stylesheet, no yard behind
+them, so a card at its worst bill is a five-second shot
+(`GAME=http://localhost:<port>/cards.html node tools/headless.mjs --shot out.png 1`).
+Use it before `look.mjs` for any change to a card's shape.
+
 Iterate against a shot, not against a suite. A four-minute run that cannot tell
 you whether a hat is on straight is pure latency.
 

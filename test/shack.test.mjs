@@ -307,7 +307,7 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 
   window.__levels({ rockhandSpeedLevel: 6 });
-  const bought = window.__buy('rockhandspeed3');
+  const bought = window.__buy('rockhandspeed');
   const w = workAt('shack');
   const spot = w && barSpot('shack', w);
   const overHut = !!spot && spot.x >= shack.x && spot.x <= shack.x + shack.w && spot.y < shack.y;
@@ -320,7 +320,7 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
 
   return [
     ok(bought, 'the row is bought like a player buys it'),
-    ok(!!w && w.key === 'rockhandspeed3', "and the work is the shack's", w ? w.key : 'no work'),
+    ok(!!w && w.key === 'rockhandspeed', "and the work is the shack's", w ? w.key : 'no work'),
     ok(nowhereElse, "not the yard's or the bench's"),
     ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
     ok(arrived, 'a spare hand stands at the shack to fit it'),
