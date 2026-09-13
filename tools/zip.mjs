@@ -11,7 +11,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { rmSync } from 'node:fs';
+import { rmSync, readdirSync } from 'node:fs';
 import { build } from 'vite';
 
 const out = resolve(process.argv[2] || './dist/pebble-pit.zip');
@@ -23,9 +23,12 @@ const run = (cmd, args) => {
 
 await build();
 rmSync(out, { force: true });
-// PowerShell on Windows, zip everywhere else: neither needs installing.
+// Windows' own bsdtar, zip everywhere else: neither needs installing. Not
+// Compress-Archive: it names entries with backslashes (assets\index.js), which
+// itch unpacks as one oddly named file at the root, and the page then serves
+// its 404 -- text/html -- where the module should be.
 if (process.platform === 'win32')
-  run('powershell', ['-NoProfile', '-Command', `Compress-Archive -Path dist\\* -DestinationPath '${out}'`]);
+  run(`${process.env.SystemRoot}\\System32\\tar.exe`, ['-acf', out, '-C', 'dist', ...readdirSync('dist')]);
 else
   run('sh', ['-c', `cd dist && zip -qr '${out}' .`]);
 console.log(`wrote ${out}`);
