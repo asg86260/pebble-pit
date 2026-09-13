@@ -137,7 +137,8 @@ export const SCRUB_UPGRADES = [
     cost: () => RECYCLE_SHARDS,
     currency: 'shard',
     buy: () => { S.recycler = true; S.dirty = true; },
-    show: () => S.scrubOpen && !S.recycler
+    // Priced in ore, so not before the quarry stands.
+    show: () => S.scrubOpen && S.quarryOpen && !S.recycler
   }
 ];
 

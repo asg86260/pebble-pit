@@ -29,6 +29,7 @@ const row = key => window.__upgrades().find(u => u.key === key);
 
 group('a ladder has an end, and says where you are on it', async () => {
   window.__reset();
+  window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);
   window.__give(2000000);
   window.__grant({ shards: 40000, spores: 40000 });
@@ -50,6 +51,7 @@ group('a ladder has an end, and says where you are on it', async () => {
 
 group('a rate ladder ends exactly on the floor it always had', async () => {
   window.__reset();
+  window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);
   window.__give(2000000);
   window.__grant({ shards: 40000, spores: 40000 });
@@ -71,6 +73,7 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
 
 group('the first card is dust alone, and the cards after it add the coins the yard has learned', async () => {
   window.__reset();
+  window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);
   window.__give(2000000);
   buyBuilt('auto');

@@ -177,6 +177,7 @@ group('a crit throws real dust that is flagged, swells, and banks', async () => 
 // `S.critChanceLevel` would prove nothing about the bill at all.
 group('the crit ladders are dust first, and the chance ladder asks crops and ore as it climbs', async () => {
   window.__reset();
+  window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);                       // a hand to walk it to the bench
   window.__give(2000000);
   window.__grant({ shards: 5000, spores: 5000 });

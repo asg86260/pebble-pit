@@ -606,6 +606,7 @@ export const TESTS = [
     // TODO.md. A million is already far more than eighteen rungs cost.
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    window.__invest();                        // the grounds stand: rungs past three are priced in their coins
     run(20);
     // Two ladders to their tops, each one card pressed nine times. The pick
     // waits on the swing being automatic.
@@ -1117,7 +1118,7 @@ export const TESTS = [
   [`the outhouse carries the janitor's board, and walking up to it opens it`, async () => {
     newRun();
     await settle();
-    window.__crew(3, 2);
+    window.__crew(3, 2, 1);                     // a quarrier opens the cut: the second cap is priced in ore
     window.__loo();                             // the shed up, the player's way is the node tier's job
     window.__give(20000);
     await raf();

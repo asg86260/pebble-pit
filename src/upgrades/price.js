@@ -9,6 +9,7 @@
 // uninitialized. Two leaf definitions, re-exported from upgrades.js so nothing
 // that already imports them from there has to move.
 
+import { S } from '../state.js';
 import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE } from '../config.js';
 
 // What one rung costs, from what the first one costs.
@@ -28,3 +29,18 @@ export const rungCost = (first, lvl, rate = RUNG_RATE) => Math.round(first * Mat
 // hard the thing is to come by, and a core -- of which there are nine in the
 // game -- is worth the most of anything. See DUST_PER_SPARK in config.
 export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE };
+
+// Where each coin comes from, and whether that place exists yet. A card never
+// asks for a coin the yard has no source for: a bill in ore on a yard with no
+// quarry is not a price, it is a word the player has not met. Spore is the
+// plots and shard is the cut -- the two grounds' own flags rather than
+// `seenSpore`/`seenShard`, because a ground that stands and has not yielded
+// yet is still a place to go and get the coin from. Dust is always there.
+const COIN_FROM = {
+  spore: () => !!S.farmOpen,
+  shard: () => !!S.quarryOpen,
+  core:  () => !!S.seenCore,
+  spark: () => !!S.seenSpark
+};
+export const coinOpen = coin => !COIN_FROM[coin] || COIN_FROM[coin]();
+export const coinsOpen = coins => coins.every(coinOpen);
