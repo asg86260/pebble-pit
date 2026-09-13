@@ -39,7 +39,7 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASS }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: >
-          node tools/desk-build.mjs --mac dmg --universal
+          bun run desk:build --mac dmg --universal
           --config.mac.notarize=${{ secrets.APPLE_ID != '' }}
 
       - uses: actions/upload-artifact@v4
@@ -57,4 +57,4 @@ jobs:
       - name: Push to itch
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: node tools/publish.mjs --desktop
+        run: bun run publish --desktop
