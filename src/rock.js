@@ -124,6 +124,10 @@ export function topOfRock(fromX) {
 const TOP_BAND = 2;                // cells below the peak that still count as the top
 
 export function dropZone() {
+  // The rock the dome is holding for the rescue is not coming down on anybody:
+  // it waits overhead while somebody walks in under it to dig, and a footprint
+  // to be got out of would walk the digger straight back out. See `startRescue`.
+  if (S.intro === 'rescue') return null;
   if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
   if (boulderAlive()) return null;
   // and nothing is coming while a scene has the yard: the bare ground where the

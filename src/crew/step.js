@@ -88,6 +88,7 @@ import { commutePace } from '../upgrades.js';
 import { TYPE } from '../jobs.js';
 import { floatDown } from '../wizard.js';
 import { stopJig, celebrate, MOVE_KEYS } from './dance.js';
+import { stepDig } from '../intro.js';
 import { stepTender } from './tenders.js';
 import { outOfYard } from './records.js';
 import { dispossessed, stepKit } from './kitwalk.js';
@@ -231,8 +232,17 @@ const STAGES = [
     return true;
   },
 
-  // on its way to a job it has just been put on, and doing none of it yet
-  (w, c) => { if (!w.walking) return false; stepCommute(w, c.zone); return true; },
+  // on its way to a job it has just been put on, and doing none of it yet.
+  // Somebody sent to dig is walking *into* the footprint on purpose -- the one
+  // in the ground is in the middle of it -- so its walk is not told to keep out
+  // of it; the rock coming down is what sends it back out (`stepDig`).
+  (w, c) => { if (!w.walking) return false; stepCommute(w, w.dig ? null : c.zone); return true; },
+
+  // Digging at the one lodged in the ground -- see `stepDig` in intro.js.
+  // Under the walk, so it finishes getting there first; over the dance, so a
+  // digger digs while the rest of the yard celebrates, and nothing below can
+  // move it while it does.
+  (w, c) => stepDig(w, c),
 
   // and now and then a body has to stop, whatever it was doing
   (w, c) => relieve(w, c.now),

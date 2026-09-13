@@ -62,9 +62,13 @@ see-through, which is not something you can fix by drawing it differently, only 
 a size that does not exist.
 
 Everything after that is one body trying to get its mate out. That is what the crew is for, what
-the pit is for, and why the rocks keep coming: **the one underneath is still alive.** Every time
-the last of a rock goes you can see them down there, on the bare ground, saying the same dots.
-And every time, before anybody can get them out, the next one lands.
+the pit is for, and why the rocks keep coming: **the one underneath is still alive.** The first
+rock drove them into the ground to their middle, and there they are lodged. Every time the last
+of a rock goes you can see them down there, sunk in the ground line, saying the same dots;
+whoever is nearest runs over and digs, and they come up a little. And every time, before they
+are out, the next one lands and drives them back in. The dig is longer than any gap the rocks
+leave, on purpose: the yard is seen trying, and seen failing, all game — until something
+holds a rock off the spot long enough.
 
 It costs the game one thing: **you start with a body** rather than buying the first with a core.
 That is the story's price and it is worth paying — a game that opens on somebody you are digging
@@ -1347,11 +1351,12 @@ says so. On the bench, where every material the ground makes has now failed, the
 nothing and only wonders: *maybe the wizards would know?* — and pressing it walks your eye out
 to the tower, where the answer is sold by the people who will cast it. And the choreography is
 the opening played back the right way round: the last of the rock goes, the one underneath is
-stood there on the bare ground saying the same dots they have said all game, the next rock
-comes down the way it always has — **and this time it stops.** Held overhead on the dome, the
-first falling thing in the game to touch nothing, while the mate walks out from under its
-shadow. Two squares stand together on the ground passing dots back and forth, and every so
-often one of them says the other thing. Then the dome lets the rock down gently on the empty
+there in the ground saying the same dots they have said all game, the next rock comes down the
+way it always has — **and this time it stops.** Held overhead on the dome, the first falling
+thing in the game to touch nothing, and for the first time there is time: somebody runs in
+under its shadow and digs, the way somebody has dug at every gap all game, and no rock comes to
+stop them. The mate climbs out and walks clear. Two squares stand together on the ground
+passing dots back and forth, and every so often one of them says the other thing. Then the dome lets the rock down gently on the empty
 spot, and the yard goes back to work.
 
 Every rock after lands the same way — caught, held a breath, set down. The drumbeat is kept,

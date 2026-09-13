@@ -76,10 +76,9 @@ export const S = {
   rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
-  // wave7-sky (A4): the square's core errand -- where it has walked to (null
-  // means home) and which leg of the fetch-and-toss it is on. See intro.js.
-  buriedX: null,
-  buriedErrand: null,
+  // How far out of the ground it has been dug, nought to one. Every rock that
+  // lands on it puts it back to nought. See intro.js.
+  buriedDug: 0,
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
@@ -828,9 +827,9 @@ export const EPHEMERAL = [
   'placed', 'strips', 'introHeart',
   // housekeeping
   'dirty', 'fatal', 'lastFrame', 'settleAt',
-  // wave7-sky: the buried square's core errand is a moment, not a fact -- a
-  // reload finds the square at home and the core wherever the save left it
-  'buriedX', 'buriedErrand',
+  // how far out of the ground the one under the rock has been dug: a reload
+  // finds it packed in, the way every rock leaves it
+  'buriedDug',
 ];
 
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --

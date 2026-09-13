@@ -41,18 +41,22 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // bounces through the pair and nothing rises under the moving camera.
 export const MEET_CLEAR = 36;     // world pixels either side of the pair
 
-// wave7-sky (A4): the buried square and a stray core. Once cores exist, a core
-// that comes to rest within reach of the square's spot is fetched: the square
-// walks over, picks it up, holds it a beat, and tosses it toward the hole the
-// way the crew throw everything else. See `stepBuried` in intro.js.
-// The spec's P * 12 was measured from the square itself, and no core can ever
-// rest that close: `dropCore` throws every core clear of the footprint, and the
-// footprint's half-width alone is past two hundred pixels by mid-game. So the
-// reach is measured from the footprint's EDGE instead, and covers the throw
-// (three to eleven cells past the lip) plus the bounce that follows it.
-export const BURIED_REACH = 144;     // world pixels (P * 24) past the rock's edge
-export const BURIED_HOLD_MS = 450;   // the beat between picking up and throwing
-export const BURIED_TOSS_IN = 24;    // cells inside the pit's mouth the throw is aimed
+// The one under the rock is lodged in the ground -- driven in to its middle by
+// the first rock and not going anywhere on its own. Between rocks somebody
+// digs at it, and it comes up a little; then the next rock lands and drives it
+// back in. The dig is longer than any gap the rocks leave (the dance is five
+// seconds, the reunion little more), so nobody ever gets it out between rocks
+// -- which is the story -- and only a rock held overhead gives the time.
+// See `stepBuried` and `stepDig` in intro.js.
+export const BURIED_SUNK_C = 2;        // cells of the square under the ground line, of its three
+export const BURIED_DIG_S = 10;        // seconds of somebody digging before it can climb out
+export const BURIED_DIG_BEAT_MS = 420; // between swings; each one throws a cell of ground on to the heap
+export const BURIED_DIG_LONE = 0.5;    // and how fast it works itself loose if nobody can come, as a share of a digger
+// A digger is in the middle of the footprint, and a rock falls faster than a
+// body can walk out of one. So it downs tools while the dance still has the
+// length of its walk out left, plus this -- rather than digging until the
+// rock exists and being under it.
+export const BURIED_DIG_LEAD_MS = 400;
 
 // --- the casino ---------------------------------------------------------------
 // The last thing on the ground, out past the lab. It is the far end of the walk

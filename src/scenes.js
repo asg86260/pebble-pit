@@ -138,6 +138,10 @@ export const SCENES = {
   // the one beat after the first rock: it is mined out, and somebody goes over
   reunion: { about: 'the story', say: 'the first rock mined out, and somebody comes over',
     run: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); } },
+  // and every gap after: the one in the ground, and somebody at it with the
+  // dance running out -- the beat that never has enough time in it
+  digging: { about: 'the story', say: 'between rocks, somebody digging at the one in the ground',
+    run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__next(); window.__fast(1.2); window.__look(S.cx - S.viewW / 2); } },
   landing: { about: 'the story', say: 'the second rock coming down on a yard with a crew',
     run: () => { window.__reset(); window.__crew(2, 1); window.__next(); } },
   // wave-release, track B. The opening half a second into the one left
@@ -816,6 +820,9 @@ export const SCENES = {
   ])),
   rescue: { about: 'the shields', say: 'the dome up, a rock coming, somebody under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
+  // ...and the rock held while they are dug out from under it
+  'rescue!': { about: 'the shields', say: 'the rock held on the dome, and the digging out under it',
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(10); } },
 
   // --- the endgame ------------------------------------------------------------
   // Everything at once, every machine running, for the shape of the whole thing.
