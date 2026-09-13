@@ -891,19 +891,20 @@ canvas {
    actually press hiding at the top of it. So the names come out beside the board
    when you ask for them, and the board stays the size of what you can do.
 
-   Over the board, not beside it. It stood to the right of the board once, as
+   Above the board, not beside it. It stood to the right of the board once, as
    a flex sibling, with a rule for flipping to the left when the right ran out
    and a rule for going on a line of its own when neither side would take it --
    and on any window narrower than about 1400 pixels neither side would, so
    hovering the door threw the board into the top corner of the window to make
    room. A list you opened by hovering a row should not move the row.
-   So it is out of the panel's flow altogether: seated on the board's own
-   bottom-right corner, the width of a board, so it lays exactly over the sheet
-   it came out of and grows upward into the sky if it is taller. Nothing the
-   panel measures includes it, so nothing about the board's seat changes when
-   it comes out. Leaving it puts it away again and the shop is underneath
-   where it was. */
-.panel .flyout { position: absolute; right: 0; bottom: 0; z-index: 1; transform-origin: 0 100%; }
+   So it is out of the panel's flow altogether: seated on the board's top-right
+   corner, the width of a board, the panel's own gap above it, and growing
+   upward into the sky. The door is the top row of the board, so the names come
+   out directly over the row that opened them. Nothing the panel measures
+   includes the list, so nothing about the board's seat changes when it comes
+   out. The gap is the panel's gap, restated: `gap` has no length a child can
+   read. */
+.panel .flyout { position: absolute; right: 0; bottom: calc(100% + 8px); transform-origin: 0 100%; }
 /* A settlement can get long. The names scroll inside the sheet rather than
    growing off the top of the window -- `place` caps this further by the room
    the board actually has above it. */
@@ -913,13 +914,19 @@ canvas {
    is takes whatever room the longest answer needs: "at the scrubbing house" in
    the shop's 4.6em price column is a phrase running off the edge of the sheet. */
 
-/* The row that leads to it says so. Every other name on a board is a thing you
-   press and something happens; this one is a door, and the mark is the one every
-   menu in the world puts on a submenu. It rides inside the name so it goes black
-   with the words when the row is under the cursor, rather than sitting out in
-   the price column pretending to be a number. */
-#crewshop button[data-key="crewlist"] .what::after { content: ' \203A'; opacity: .5; }
-#crewshop button[data-key="crewlist"]:hover .what::after { opacity: 1; }
+/* A row that leads somewhere says so. Every other name on a board is a thing
+   you press and something happens; a door opens a sheet, and the mark is the
+   one every menu in the world puts on a submenu. It rides inside the name so
+   it goes black with the words when the row is under the cursor, rather than
+   sitting out in the price column pretending to be a number.
+   And it spans the sheet, on a line of its own: the cards beside it are things
+   to buy, and a door in among them was one more card to read -- side by side
+   with "another house" it read as a second purchase. The sheet it opens
+   stands over the board, so the door is the top row and the names come out
+   directly above it. The builder marks any row with something behind it. */
+.rows > button.door { grid-column: 1 / -1; }
+.rows button.door .what::after { content: ' \203A'; opacity: .5; }
+.rows button.door:hover .what::after { opacity: 1; }
 
 /* The queue card (queue.js): one name a line, top-left, in the boards' own
    paper, and a layer UNDER them: the boards stand bottom-left and on a short
@@ -1162,7 +1169,7 @@ canvas {
      The number is the ceiling the full boards already reached, so nothing that
      fitted before wraps now; in `ch`, so it is a count of the sheet's own
      characters rather than a pixel guess about the type. The crew list wears
-     the same width on purpose: it lays over the board, edge for edge.
+     the same width on purpose: it stands over the board, edge for edge.
      A phone overrides this with the width of the glass -- see the media rule. */
   width: 84ch;
   display: flex; flex-direction: column; gap: 6px;

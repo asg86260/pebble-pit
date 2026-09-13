@@ -443,16 +443,18 @@ export const TESTS = [
     ];
   }],
 
-  // The list lays over the board it came out of, and the board does not move.
+  // The list stands above the board it came out of, and the board does not move.
   //
   // It stood beside the board once, as a flex sibling, and went to the other
   // side or onto a line of its own when the window was too narrow for both --
   // which on an ordinary window was always, so hovering the door threw the
   // whole board into the top corner of the glass to make room. The row you
   // hovered should stay where it was. So the list is out of the panel's flow,
-  // seated on the board's bottom-right corner at the board's width, and the
-  // board is measured before and after to prove it has not moved an inch.
-  ['the list pops over the board and the board stays put', async () => {
+  // seated on the board's top-right corner at the board's width, and the board
+  // is measured before and after to prove it has not moved an inch. The door
+  // is the top row of the board and spans it, so the names come out directly
+  // over the row that opened them rather than over the card beside it.
+  ['the list opens above the board and the board stays put', async () => {
     newRun();
     await settle();
     window.__crew(3, 2);
@@ -461,14 +463,18 @@ export const TESTS = [
     const sheet = document.querySelector('#panel .sheet:not(.flyout)');
     const list = document.getElementById('crewlist');
     const before = sheet.getBoundingClientRect();
-    await openCrewList();
+    const door = await openCrewList();
     await sleep(80);
     const after = sheet.getBoundingClientRect();
     const listed = list.getBoundingClientRect();
+    const doorAt = door.getBoundingClientRect();
+    const rows = [...document.querySelectorAll('#crewshop button')].filter(b => b.offsetParent !== null);
     const panel = document.getElementById('panel');
     const still = Math.abs(after.left - before.left) < 1 && Math.abs(after.bottom - before.bottom) < 1;
-    const over = Math.abs(listed.right - after.right) < 1 && Math.abs(listed.bottom - after.bottom) < 1 &&
-                 Math.abs(listed.width - after.width) < 1;
+    const above = Math.abs(listed.right - after.right) < 1 && listed.bottom < after.top &&
+                  after.top - listed.bottom < 16 && Math.abs(listed.width - after.width) < 1;
+    const topRow = rows.every(b => b === door || b.getBoundingClientRect().top >= doorAt.bottom);
+    const spans = doorAt.width > after.width * 0.8;
     const unmoved = !panel.classList.contains('stack') && !panel.classList.contains('flip');
     await hoverAway();
     window.__crew(0, 0);
@@ -476,8 +482,10 @@ export const TESTS = [
       ok(listed.width > 60, 'the list opens with something on it', `${Math.round(listed.width)}px`),
       ok(still, 'and the board it came out of has not moved',
          `${Math.round(before.left)},${Math.round(before.bottom)} -> ${Math.round(after.left)},${Math.round(after.bottom)}`),
-      ok(over, 'because the list lays over it, edge for edge',
-         `list ${Math.round(listed.right)},${Math.round(listed.bottom)} ${Math.round(listed.width)}w; board ${Math.round(after.right)},${Math.round(after.bottom)} ${Math.round(after.width)}w`),
+      ok(above, 'because the list stands above it, at its width',
+         `list ${Math.round(listed.right)},${Math.round(listed.bottom)} ${Math.round(listed.width)}w; board ${Math.round(after.right)},${Math.round(after.top)} ${Math.round(after.width)}w`),
+      ok(topRow && spans, 'and the door is the top row of the board, across the whole of it',
+         `door ${Math.round(doorAt.width)}w of ${Math.round(after.width)}, top ${Math.round(doorAt.top)}`),
       ok(unmoved, 'with nothing in the panel re-seated to make room for it', panel.className)
     ];
   }],

@@ -458,7 +458,7 @@ function build(el, list, sections, empty, heads) {
       // answer to it. This same builder makes them, so without the exception
       // every name in the crew list carried an instruction to close the crew
       // list, and hovering a body to read it shut the sheet it was written on.
-      if (u.over) b.addEventListener('pointerenter', () => u.over());
+      if (u.over) { b.classList.add('door'); b.addEventListener('pointerenter', () => u.over()); }
       else if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
       // And the corner comes off the card you actually went and looked at.
       // Closing the board used to take every mark on it off at once, on the
