@@ -9,6 +9,13 @@ Features go in DESIGN.md; this file is for things that were broken.
 
 ## Unreleased
 
+- A ladder vanished from its board the moment its first three rungs were
+  bought on a yard with no plots, and again after six with no quarry --
+  the rungs you had paid for went with it, which looked like the finished
+  rows folding themselves away. The card stays now, greyed, with its pips
+  filled and "needs plots" or "needs a quarry" where the price was, until
+  the ground is broken.
+
 ## v0.1.5 — 2026-09-13
 
 - Tabbing away from the page reset the game. A store with no tab name in it

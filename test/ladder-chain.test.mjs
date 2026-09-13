@@ -59,28 +59,39 @@ group('the fourth card of a ground ladder waits on the three before it', async (
 
 // A card never asks for a coin the yard has no source for. Rung four of any
 // ladder is priced in crops and rung seven in ore, so a yard with no plots
-// stops seeing the card after three rungs, and a yard with plots and no quarry
-// after six -- and the card stands again the moment the ground is broken.
-// See coinsOpen in upgrades/price.js.
-group("a card is off the board while its bill names a coin the yard cannot get", async () => {
+// stops after three rungs, and a yard with plots and no quarry after six.
+//
+// The card *stays* while it waits. The ladder is one card with every rung on
+// it, and when this gate took the card off the board it took the three rungs
+// you had just bought with it -- a ladder that vanished the moment its first
+// band was done, which the player read as the board losing purchases. So the
+// card stands, says what it is waiting on where the price was, and sells
+// nothing until the ground is broken -- with the coin in the purse, since the
+// point is the source and not the balance. See coinNeeds in upgrades/price.js.
+group("a card waits, still on the board, while its bill names a coin the yard cannot get", async () => {
   window.__reset();
   window.__crew(1, 0);
   window.__grant({ dust: 900000, shards: 9000, spores: 9000 });
+  const says = () => window.__rows().find(r => r.key === "haulcarry")?.waits;
 
   const first = climb("haulcarry", 9);
-  const noPlots = shown("haulcarry");
+  const noPlots = shown("haulcarry"), saidPlots = says();
+  const pressed = climb("haulcarry", 1);
   S.farmOpen = true;
-  const withPlots = shown("haulcarry");
+  const withPlots = shown("haulcarry"), saidNothing = says();
   const second = climb("haulcarry", 9);
-  const noQuarry = shown("haulcarry");
+  const noQuarry = shown("haulcarry"), saidQuarry = says();
   S.quarryOpen = true;
   const withQuarry = shown("haulcarry");
   const third = climb("haulcarry", 9);
   window.__crew(0, 0);
 
   return [
-    ok(first === 3 && !noPlots, "three rungs in dust, then the card waits on the plots", first + " rungs, shown " + noPlots),
-    ok(withPlots && second === 3 && !noQuarry, "three more in crops, then it waits on the quarry", second + " rungs, shown " + noQuarry),
+    ok(first === 3 && noPlots && saidPlots === "needs plots",
+       "three rungs in dust, then the card stays and says it needs plots", first + " rungs, shown " + noPlots + ", says " + saidPlots),
+    ok(pressed === 0, "and a press with crops in the purse buys nothing", pressed + " bought"),
+    ok(withPlots && saidNothing === "" && second === 3 && noQuarry && saidQuarry === "needs a quarry",
+       "three more in crops, then it says it needs a quarry", second + " rungs, says " + saidQuarry),
     ok(withQuarry && third === 3, "and the last three once the quarry stands", third + " rungs")
   ];
 });

@@ -972,7 +972,7 @@ export const openSections = () =>
 // ...and actually press. A row already bought and waiting its turn is not one:
 // pressing it hands it back, which is not what a mark on the bench promises.
 export const canAfford = () =>
-  UPGRADES.some(u => !u.job && u.show() && canPay(u) && !inLine(u));
+  UPGRADES.some(u => !u.job && u.show() && !u.dead?.() && canPay(u) && !inLine(u));
 
 // a whole heading you have not seen yet -- worth more of a nudge than one more
 // row under a heading you have already read

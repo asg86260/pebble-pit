@@ -36,11 +36,22 @@ export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: D
 // plots and shard is the cut -- the two grounds' own flags rather than
 // `seenSpore`/`seenShard`, because a ground that stands and has not yielded
 // yet is still a place to go and get the coin from. Dust is always there.
+//
+// Each carries the words a card uses to say it is waiting on that place --
+// see `coinNeeds`. Kept beside the flag so the two cannot disagree about what
+// a coin's source is.
 const COIN_FROM = {
-  spore: () => !!S.farmOpen,
-  shard: () => !!S.quarryOpen,
-  core:  () => !!S.seenCore,
-  spark: () => !!S.seenSpark
+  spore: { open: () => !!S.farmOpen,   needs: 'needs plots' },
+  shard: { open: () => !!S.quarryOpen, needs: 'needs a quarry' },
+  core:  { open: () => !!S.seenCore,   needs: 'needs a core' },
+  spark: { open: () => !!S.seenSpark,  needs: 'needs a spark' }
 };
-export const coinOpen = coin => !COIN_FROM[coin] || COIN_FROM[coin]();
+export const coinOpen = coin => !COIN_FROM[coin] || COIN_FROM[coin].open();
 export const coinsOpen = coins => coins.every(coinOpen);
+
+// What a card is waiting on, in words, or nothing when every coin on its bill
+// has a source. A card that is a whole ladder cannot leave the board when its
+// bill reaches a coin the yard has not met -- the rungs already bought are on
+// it -- so it stands greyed and says this where its price would go (see
+// `tierRows`, and `fill` in shop.js).
+export const coinNeeds = coins => COIN_FROM[coins.find(c => !coinOpen(c))]?.needs || '';

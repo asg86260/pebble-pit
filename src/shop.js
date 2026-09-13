@@ -658,8 +658,10 @@ export function refresh(el, list, headcount) {
       }
     }
     // ...and the site is clear again, so the card goes back to a gain in a
-    // column and the note about what was on it goes.
-    if (row.classList.contains('waiting')) row.classList.remove('waiting');
+    // column and the note about what was on it goes -- unless the card is
+    // waiting on something of its own, below.
+    const waits = u.waits?.() || '';
+    if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
 
 
     // and a dot on anything that has not been on a board you have looked at
@@ -703,6 +705,18 @@ export function refresh(el, list, headcount) {
     if (maxed(u)) {
       sayHTML(gain, '');
       sayHTML(price, 'done'); sayHTML(time, '');
+      grey(row, true);
+      continue;
+    }
+    // A ladder whose next rung is priced in a coin the yard has no source for
+    // yet. The card stays -- the rungs bought are on it -- and says what it is
+    // waiting on in the status line, the way a card being built does, with no
+    // price: a bill in crops on a yard with no plots is not a price, it is a
+    // word the player has not met (see `coinNeeds`).
+    if (waits) {
+      row.classList.add('waiting');
+      sayHTML(gain, waits);
+      sayHTML(price, ''); sayHTML(time, '');
       grey(row, true);
       continue;
     }

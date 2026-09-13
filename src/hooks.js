@@ -715,6 +715,9 @@ export const allRows = () => everyRow().map(u => ({
   // What the row says it gives, as the board prints it -- so a check about the
   // board's words can read the board's words.
   gain: gainText(u),
+  // What the card says it is waiting on instead of a price -- a ladder whose
+  // next rung is in a coin the yard has no source for yet. See `coinNeeds`.
+  waits: u.waits?.() || '',
   // Not every row has a price. A job row moves bodies, a dial sets a number and
   // a payout row hands something over -- `billOf` would ask all three what they
   // cost and get an exception.

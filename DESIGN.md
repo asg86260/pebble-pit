@@ -1703,9 +1703,10 @@ school's carts, the machines' tune rows), and a place (`another pot`,
 
 ### The rule
 
-A ladder is **three bands of three rungs**, nine rungs in all, and each band
-is its own card. What deepens across the bands is the bill, and the order the
-coins arrive in is fixed for the whole yard:
+A ladder is **three bands of three rungs**, nine rungs in all, drawn as one
+card with its nine pips in three groups (each band was its own card until
+2026-09-12; see `tierRows`). What deepens across the bands is the bill, and
+the order the coins arrive in is fixed for the whole yard:
 
 | band | rungs | what it costs |
 |---|---|---|
@@ -1716,14 +1717,18 @@ coins arrive in is fixed for the whole yard:
 Dust, then spore, then shard, because that is the order the run hands them
 out: the rock is there from the first click, the plots are the first thing a
 core buys (`FARM_DUST` 600), the quarry the second (`QUARRY_DUST` 2000). A
-card never asks for a coin the yard has no source for: a ladder is **off the
-board** while the band it stands on bills a coin whose ground is not open
-(`coinsOpen` in upgrades/price.js -- spore is the plots, shard is the cut,
-spark the sky, core the first one banked). A band-two card on a yard without
-plots is a card the player cannot read as a price at all, so it goes rather
-than standing there priced in crops, and it comes back the moment the plots
-are broken. The same gate sits on the hand-written rows priced in ore (the
-janitor's second cap, the recycler, crit damage). The
+card never asks for a coin the yard has no source for (`coinsOpen` in
+upgrades/price.js -- spore is the plots, shard is the cut, spark the sky, core
+the first one banked). A bill in crops on a yard without plots is not a price
+the player can read, so it is not shown: the ladder's card **stays on the
+board, greyed, with "needs plots" where the price was** (`coinNeeds`) until
+the plots are broken, and then prices its next rung. It stays because the
+card is the whole ladder -- when each band was a card of its own the band-two
+card simply went, and once the bands became one card that same gate took the
+three rungs you had bought off the board with it. A card that is *only* a bill
+in a coin with no source -- the grounds' research card, the hand-written rows
+priced in ore (the janitor's second cap, the recycler, crit damage) -- still
+goes rather than standing there. The
 grounds' own tables already have this order (compost / fertilizer / hybrid
 seed is dust / +spore / +shard) and keep it; nothing there moves.
 

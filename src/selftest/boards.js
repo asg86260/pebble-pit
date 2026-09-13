@@ -1420,7 +1420,10 @@ export const TESTS = [
     // measured narrower than "nobody on it" before the status was given the
     // whole of the card's second line, and the margin on the tightest of them is
     // one pixel now. A number that close is not a thing to leave to a comment.
-    const SAYS = ['queued up in 9', 'building', 'on the way', 'nobody on it'];
+    // ...and the words a ladder says while its next rung is priced in a coin
+    // the yard has no source for yet (see coinNeeds in upgrades/price.js).
+    const SAYS = ['queued up in 9', 'building', 'on the way', 'nobody on it',
+                  'needs plots', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
                          'outhouse', 'house']) {
