@@ -505,6 +505,20 @@ export const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: { about: 'the cut', say: 'the cut, the jaw and the hoist',
     run: () => { rich(); window.__buy('jaw'); window.__finish(); window.__look(st().quarryX - 220); } },
+  // The cut worked by hand: five on the face, the school's blasters among them,
+  // a minute in so the gang is spread along a course and the pockets show.
+  // What this is for is the beat -- a body stood at its stretch, swinging, the
+  // ground going in pockets, and the blaster's ring when its swing lands
+  // (DESIGN.md, "The cut is worked in pockets").
+  cutgang: { about: 'the cut', say: 'five on the face by hand, blasters among them',
+    run: () => { window.__reset(); window.__crew(2, 0, 5, 0); window.__fullSites(); window.__tip(90000);
+                 window.__fast(60); window.__look(st().quarryX - 220); } },
+  // The same face up the pace ladder, where the beat is short and the pockets
+  // come quickly. Three bodies rather than five, and a minute in: five at this
+  // pace have the cut out before the opening has let go of the camera.
+  cutgangdeep: { about: 'the cut', say: 'three on the face, well up the pace ladder',
+    run: () => { window.__reset(); window.__crew(2, 0, 3, 0); window.__fullSites(); window.__tip(90000);
+                 window.__levels({ quarryPaceLevel: 12 }); window.__fast(60); window.__look(st().quarryX - 220); } },
   // The jaw's smoke, well into its climb: run the machine half a minute so
   // the plume has puffs at every age, then look at the air over the cut. What
   // this is for is the shape of the climb -- a cone that dissolves, not a

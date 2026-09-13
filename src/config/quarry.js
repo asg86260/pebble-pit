@@ -92,10 +92,29 @@ export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // plus the walking between cells, which is real and is meant to be: a cut is
 // worked by people crossing it, not by a number filling.
 export let CUT_DIG_MS = 16000;   // to get from the surface to the bottom, at pace 0
-// And the least a swing at one cell takes, at pace nought, whatever the cut's
-// size makes of the share above: a cell dug in no time is a body that never
-// visibly swung.
+// And the least one cell of that is worth, at pace nought, whatever the cut's
+// size makes of the share above. This is the jaw's clock and the rate the
+// pocket below is solved against, not a swing anybody sees.
 export const CUT_SWING_MIN = 60;
+
+// --- the pocket ---------------------------------------------------------------
+// A body's swing is a beat you can see, and it takes a pocket of the course
+// rather than a cell. One cell was fifty-odd milliseconds -- one frame -- and
+// the pace ladder divided that, so the pick never landed on anything and the
+// gang read as a blur over a sinking floor (DESIGN.md, "The cut is worked in
+// pockets"). The beat at pace nought, the ladder shortening it through
+// `paceShare` down to the floor, and past the floor the pocket widens instead
+// so the ground still comes out at the ladder's rate.
+export let CUT_BEAT_MS = 2600;
+export let CUT_BEAT_MIN = 400;
+// Cells a swing takes: the one under the pick and its neighbors on the same
+// course. A blaster's swing takes twice this.
+export let CUT_POCKET = 3;
+// Pockets a body works along its course before it looks for more ground.
+// Picking again after every cell was the darting about; a run is one walk.
+export let CUT_RUN = 4;
+// The blaster's swing fires a crit's ring at this power -- a third of a crit's.
+export let CUT_BLAST_POWER = 1;
 // Three, not two.
 //
 // Blue was the thing everybody waited on. A plot comes on by itself while you
@@ -136,6 +155,16 @@ export const QUARRY_KNOBS = [
     get: () => CUT_DIG_MS, set: v => { CUT_DIG_MS = v; } },
   { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05,
     get: () => CUT_STEP, set: v => { CUT_STEP = v; } },
+  { key: 'CUT_BEAT_MS', label: 'a swing, pace 0', min: 200, max: 3000, step: 50,
+    get: () => CUT_BEAT_MS, set: v => { CUT_BEAT_MS = v; } },
+  { key: 'CUT_BEAT_MIN', label: 'a swing, at least', min: 100, max: 1500, step: 50,
+    get: () => CUT_BEAT_MIN, set: v => { CUT_BEAT_MIN = v; } },
+  { key: 'CUT_POCKET', label: 'cells a swing', min: 1, max: 9, step: 1,
+    get: () => CUT_POCKET, set: v => { CUT_POCKET = v; } },
+  { key: 'CUT_RUN', label: 'pockets a run', min: 1, max: 12, step: 1,
+    get: () => CUT_RUN, set: v => { CUT_RUN = v; } },
+  { key: 'CUT_BLAST_POWER', label: 'a blaster\'s ring', min: 0, max: 3, step: 0.5,
+    get: () => CUT_BLAST_POWER, set: v => { CUT_BLAST_POWER = v; } },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200,
     get: () => QUARRY_BASE, set: v => { QUARRY_BASE = v; } },
   { key: 'SEAM_COST', label: 'seam rung 1', min: 60, max: 4000, step: 20,

@@ -7979,7 +7979,7 @@ build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
 in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
 tip -- with the payment's `S.paid` flight run the other way.
 
-## The cut is worked in pockets (design, not built)
+## The cut is worked in pockets (built)
 
 ### What is wrong
 
@@ -8092,3 +8092,37 @@ magic number in a module is a bug here.
 
 And the shot: a `cutgang` scene, five quarriers at pace nought and at rung
 fifteen, one blaster among them, held on the frame a blaster's swing lands.
+
+**As built (2026-09-13).** Everything above, with these findings:
+
+- **The beat is 2.6 s, not one.** The numbers above were guessed; the
+  measurement (`tools/node/cut-time.mjs`, five and one quarriers at pace
+  nought and rung nine on the suite's seed) put main at 108 / 436 / 31 /
+  94 s a cut, and a one-second beat with a three-cell pocket finished in
+  half that -- the run took more walking out than the beat put back. The
+  beat and the pocket are not solved from `cellMs` after all; `CUT_BEAT_MS`
+  is tuned against the measured cut time, and `test/cut-pockets.test.mjs`
+  pins it (110 / 31 s built, within a tenth). The floor of 400 ms is never
+  reached on the nine rungs (rung nine is 520 ms) and only bites on band
+  four. `CUT_SWING_MIN` stays, as the jaw's clock.
+- **The slots were real, and were the extra cells.** The picker was never
+  the problem. `nearestUndug`, asked once per extra cell, took the nearest
+  undug column at any depth -- and once a neighbor had been taken it was
+  still the nearest, one deeper -- so a crit's second and third cells went
+  down the same neighbor. On main that was a notch; with a blaster's pocket
+  it was a shaft five cells deep under a body standing beside it. A swing's
+  extra cells come off the course the cell under the pick was on, and stop
+  when the course is out.
+- **A claim is the pocket, not the run.** Booking the whole run put most of
+  the face behind one body -- a blaster's run is twenty-four of the cut's
+  twenty-six columns -- and a body grossed out for a second with its stretch
+  booked left the others two courses down at the far end. Only the cell in
+  front of a body and its two neighbors are claimed; the run is that body's
+  plan, and `runStands` drops what somebody else took.
+- The checks are five groups in `test/cut-pockets.test.mjs`; the layer
+  check is "no column more than a course under both its working neighbors"
+  (a finished neighbor is the bench wall) plus a floor spread of three
+  courses, since a body stood still with a stretch in front of it is a
+  course the others get ahead of. Two scenes, `cutgang` and `cutgangdeep`,
+  and two tools, `cut-time.mjs` and `cut-trace.mjs` (the profile and every
+  body's leg, cell and run, half a second at a time).

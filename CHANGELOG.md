@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- Quarriers work the cut in pockets on a swing you can see, along a stretch,
+  and never dig one column into a slot; a blaster's swing bursts.
 - Holding the button on the rock stops while the rock's pile is full.
 - A ladder stays on its board, greyed, when its next rung needs plots or a
   quarry the yard does not have yet.

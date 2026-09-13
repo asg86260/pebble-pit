@@ -1,23 +1,34 @@
 # Still to do
 
-## The cut is worked in pockets (2026-09-13)
+## The cut is worked in pockets -- BUILT (2026-09-13)
 
-**Designed, awaiting approval** -- "The cut is worked in pockets" in
-DESIGN.md. The player's report: quarriers fly back and forth on the floor
-of the cut, and the work is not readable as work. Measured: a cell is one
-frame (`CUT_SWING_MIN` = 60 ms at pace nought, `/ paceShare()` on top), the
-body re-picks a cell after every one, and the 620 ms lunge never lands. The
-fix keeps throughput to the rung -- one swing takes a three-cell pocket on a
-readable beat with a 400 ms floor, a body works a run of pockets along its
-course instead of re-picking per cell, and a *blaster's* swing is a double
-pocket that fires the crit's ring at a third power. Decided with the player
-2026-09-13: the blast is the trade's, not every swing's, and the balance
-sheet does not move.
+"The cut is worked in pockets" in DESIGN.md, with an as-built note. A swing
+takes a three-cell pocket on a 2.6 s beat at pace nought (the ladder
+shortens it to 520 ms at rung nine, floor 400 ms), a body works a run of
+pockets along its course, and a blaster's swing is a double pocket that
+fires the crit's ring. Cut time to the rung is unchanged and pinned by
+`test/cut-pockets.test.mjs`. The vertical shafts from the same report were
+real and are fixed in the same change: a swing's extra cells (a crit's on
+main, a pocket's here) were taken from the nearest undug column at any
+depth, which after the first was the same neighbor one deeper.
 
-The same report named deep vertical shafts instead of layers. **Not
-reproduced**: five quarriers on a fresh yard at 20/60/200/500 s, and again
-at pace rung fifteen, all dig a flat-bottomed layered pit; the jaw asks the
-same picker. Wants the player's save before anything is changed there.
+Worth a look on a real yard: whether 2.6 s reads as slow work or as
+standing about, and whether a blaster's ring at power 1 carries from the
+usual camera distance. Both are on the dev panel (`CUT_BEAT_MS`,
+`CUT_BLAST_POWER`).
+
+## Quarriers stop after a refresh (reported 2026-09-13)
+
+**Not reproduced.** Save mid-dig, load in a fresh process the way the page
+does (`tools/node/cut-refresh.mjs save` / `load`): three at pace nought and
+five at rung nine both go on digging at the same rate after the load. Needs
+the player's save -- `localStorage.getItem('boulder-clicker/v4')` -- as
+`test/fixtures/`, then trace one body per hypothesis with `cut-trace.mjs`.
+Candidates from the code: a quarrier that was the jaw's tender, a body on
+the kit walk when the save was written (`fetching`, `kitOf` are kept;
+`wanting` is not), or a `goal: 'work'` restored onto a body whose `y` puts
+it outside the cut's span (the guard at the head of the work leg sends it
+back to `to`, which is fine, unless the route down cannot be had).
 
 ## A toast when an achievement lands -- BUILT (2026-09-12)
 

@@ -10,7 +10,9 @@
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
-         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN } from './config.js';
+         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN,
+         CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
+import { shockAt } from './shock.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
@@ -73,7 +75,8 @@ export const quarryRate = (lvl = paceLadder()) => 60000 / quarryMs(lvl);   // tr
 
 // The ladder's share of a pace-nought dig: one at the foot, a fifth at the top
 // of the nine, and the band-four multiplier over that. It governs *both* halves
-// of a dig -- the swing at a cell (`cellMs`) and the shuffle between cells
+// of a dig -- the beat a swing comes round on (`beatMs`, and past its floor the
+// pocket a swing takes, `pocketOf`) and the shuffle between cells
 // (`stepQuarrier`) -- because measured, a quarrier spends nine tenths of its
 // shift walking: 3184 of 3600 frames on the floor of a two-bench cut. The
 // ladder used to shorten the swing alone, from under a 60 ms floor it had
@@ -542,10 +545,10 @@ export function stepQuarrier(w, now, ctx = null) {
       w.goal = 'up';
       w.route = null;
       w.resting = false;
-      w.next = now + cellMs();
+      w.next = now + beatMs();
       return;
     }
-    w.resting = true; w.next = now + cellMs(); return;
+    w.resting = true; w.next = now + beatMs(); return;
   }
   w.resting = false;
 
@@ -574,10 +577,15 @@ export function stepQuarrier(w, now, ctx = null) {
   // standing. It picks one, walks to it, and digs when it gets there -- which is
   // the same rule the muck follows, and the same rule everything in this yard
   // follows: nobody is ever put where they are needed.
+  //
+  // And it picks a *run* of them -- a stretch of its course, walked one way --
+  // rather than one at a time. Picking again after every cell, when a cell was
+  // one frame, was a body that never stood still: the pick never landed
+  // before the next cell was chosen somewhere else. A run is one walk.
   const cells = quarryCells();
-  if (w.cell == null || w.cell < 0 || cells[w.cell] >= quarryTarget(w.cell))
-    w.cell = nextQuarryCell(w.x + WORKER / 2, w);
-  if (w.cell == null || w.cell < 0) return;
+  if (!runStands(w)) w.run = nextQuarryRun(w.x + WORKER / 2, w);
+  if (!w.run || !w.run.length) { w.cell = null; return; }
+  w.cell = w.run[0];
 
   const to = quarry.x + w.cell * P + P / 2 - WORKER / 2;
   const d = to - w.x;
@@ -595,24 +603,39 @@ export function stepQuarrier(w, now, ctx = null) {
   if (now < w.next) return;
 
   const c = w.cell;
-  // What is still in the ground, counted before this swing takes a cell out of
-  // it, so the cell being dug is one of the ones the stone could be in.
-  const left = cellsLeft();
-  // Rolled once for the swing: a crit takes the cell and its neighbors, and
-  // the stone it turns up comes forward with it. A crit that only pulled the
-  // seam's shards forward changed nothing about when the dig finished --
-  // measured, a crit on every swing was worth one dig's stone landing earlier
-  // and not a shard a minute more (docs/critics-2026-09-10.md, B6) -- so a
-  // crit is more ground out at once now, which is what makes it a crit.
+  // One swing takes a pocket: the cell under the pick and its neighbors along
+  // the course, a blaster's twice as many. Rolled once for the swing: a crit
+  // takes more ground still, and the stone it turns up comes forward with it. A
+  // crit that only pulled the seam's shards forward changed nothing about when
+  // the dig finished -- measured, a crit on every swing was worth one dig's
+  // stone landing earlier and not a shard a minute more
+  // (docs/critics-2026-09-10.md, B6) -- so a crit is more ground out at once,
+  // which is what makes it a crit.
   const crit = critRoll(critBoost(w));
+  const take = pocketOf(w) + (crit - 1);
+  // Each cell is dealt its own share of the seam, counted before it comes out,
+  // so a pocket of three is three one-in-what-is-left chances exactly as three
+  // swings were, and the last cell of a cut is still certain. The crit's pull
+  // goes on the first.
+  const course = cells[c];
+  findShards(w, cellsLeft(), crit);
   digCell(c);
-  for (let k = 1; k < crit; k++) {
-    const n = nearestUndug(c);
+  w.run.shift();
+  for (let k = 1; k < take; k++) {
+    const n = nearestUndug(c, course);
     if (n < 0) break;
+    findShards(w, cellsLeft(), 1);
     digCell(n);
+    const i = w.run.indexOf(n);
+    if (i >= 0) w.run.splice(i, 1);          // a neighbor the run had coming
   }
-  w.cell = null;                               // done with that one: it picks another
-  findShards(w, left, crit);
+  // The blaster's swing is the blast: the same ragged ring and specks a crit
+  // leaves, at a third of the power. The apprentice swings and the ground goes;
+  // the blaster sets a charge and the ground bursts. That is what was bought
+  // at the school, seen from across the yard. `shockAt` keeps one ring per
+  // frame at one place of work, so a blaster's crit is one ring, not two.
+  if (w.trained && CUT_BLAST_POWER > 0)
+    shockAt(w.x + WORKER / 2, cutTop(w.x + WORKER / 2), CUT_BLAST_POWER, 'quarry');
   // Digging raises dust, and none of it reaches the sky. This used to foul once
   // per cell taken, on the argument that digging dirties the air whether or not
   // it turns up a shard -- which is true of dust and false of the rule the yard
@@ -621,9 +644,9 @@ export function stepQuarrier(w, now, ctx = null) {
   // dirt rather than trusting nobody else to ask.
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
-  // A hearty stew quickens this body's own digging -- the next cell comes round
-  // sooner for as long as the dose is worn. See apothecary.js.
-  w.next = now + cellMs() / (w.trained ? 2 : 1) / workBoost(w) * (0.85 + rand() * 0.3);
+  // A hearty stew quickens this body's own digging -- the next swing comes
+  // round sooner for as long as the dose is worn. See apothecary.js.
+  w.next = now + beatMs() / workBoost(w) * (0.85 + rand() * 0.3);
   S.dirty = true;
 
   if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out
@@ -677,15 +700,23 @@ export function findShards(w, left, crit = critRoll(critBoost(w))) {
   S.dirty = true;
 }
 
-// The nearest column to `c` with ground still in it, for a crit's extra cells:
-// the cut is worked down in layers, so the neighbors on the same course go
-// first, and a column dug to its target is passed over.
-function nearestUndug(c) {
+// The nearest column to `c` still standing at `course` -- the layer the cell
+// under the pick was on -- for the rest of a pocket. The cut is worked down in
+// layers, so a swing's extra cells come off the same course, and when the
+// course is out on both sides the swing has taken what it can.
+//
+// It used to be the nearest undug column at *any* depth, asked once per extra
+// cell. Once a neighbor had been taken it was still the nearest undug column,
+// one deeper, so a crit's second and third cells went down the same neighbor:
+// a notch under the body on the rock, and with a blaster's pocket a shaft
+// five cells deep -- the slots the player saw. The same-course rule cannot do
+// that, since a column taken once this swing is no longer on the course.
+function nearestUndug(c, course) {
   const cells = quarryCells();
   for (let d = 1; d < cells.length; d++) {
     for (const i of [c - d, c + d]) {
       if (i < 0 || i >= cells.length) continue;
-      if (cells[i] < quarryTarget(i)) return i;
+      if (cells[i] === course && cells[i] < quarryTarget(i)) return i;
     }
   }
   return -1;
@@ -735,10 +766,88 @@ export function quarryTarget(c) {
   return Math.round((g.deep - S.groundY) / P);
 }
 
-// How many of the open cells nearest a body it will choose between. Enough that
-// a gang scatters rather than queues, few enough that nobody crosses the face
-// for a cell that takes a moment to dig.
-const NEAR_CELLS = 5;
+// --- the beat and the pocket ---------------------------------------------------
+// A swing comes round on a beat you can see. The ladder shortens it through
+// `paceShare`, down to a floor: under the floor the pick never lands on
+// anything, which is the whole of what this is for.
+export function beatMs(lvl = paceLadder()) {
+  return Math.max(CUT_BEAT_MIN, CUT_BEAT_MS * paceShare(lvl));
+}
+
+// How many cells that swing takes. `CUT_POCKET` until the beat is at its
+// floor; past the floor the pocket widens by the share the beat could not
+// take, so the ground keeps coming out at the ladder's rate. A blaster takes
+// twice as many, which is what its swing at half the time was worth.
+export function pocketOf(w = null, lvl = paceLadder()) {
+  const want = CUT_BEAT_MS * paceShare(lvl);
+  const wide = want < CUT_BEAT_MIN ? CUT_BEAT_MIN / want : 1;
+  return Math.max(1, Math.round(CUT_POCKET * wide)) * (w && w.trained ? 2 : 1);
+}
+
+// Whether the run a body is on is still worth walking: it has one, it still
+// holds its claim (`cell` is what every leg that stands a body down clears),
+// the cells left in it are still standing, and they are still on the
+// shallowest course -- something shallower opening, silt coming down or a
+// neighbor finishing its stretch, is the moment to look again.
+function runStands(w) {
+  if (w.cell == null || w.cell < 0 || !w.run || !w.run.length) return false;
+  const cells = quarryCells();
+  w.run = w.run.filter(c => cells[c] < quarryTarget(c));
+  if (!w.run.length) return false;
+  let shallow = Infinity;
+  for (let c = 0; c < cells.length; c++)
+    if (cells[c] < quarryTarget(c)) shallow = Math.min(shallow, cells[c]);
+  return cells[w.run[0]] === shallow;
+}
+
+// Every column some other quarrier is about to swing at: its cell and the
+// neighbors its pocket will take. The rest of a body's run is its own plan,
+// not a claim -- a run is most of the face for a blaster, and a body held up
+// tidying or waiting on silt with the whole stretch booked left the others
+// digging the far end two courses down while its end stood.
+function claimedCells(self) {
+  const taken = new Set();
+  for (const o of S.workers) {
+    if (o === self || o.type !== TYPE.QUARRY || o.cell == null || o.cell < 0) continue;
+    taken.add(o.cell - 1); taken.add(o.cell); taken.add(o.cell + 1);
+  }
+  return taken;
+}
+
+// The stretch of course a body at x works next: the nearest open cell on the
+// shallowest course, and from there along the course one way, up to
+// `CUT_RUN` pockets' worth. One way, so the walk is one walk: a body that
+// picked the nearest cell after every one it dug was a body that doubled back
+// on itself a dozen times a second. It goes toward the side with more of the
+// course still standing, so a gang starting from the ladder fans out along
+// the face rather than queueing at its foot.
+export function nextQuarryRun(x, self = null) {
+  const cells = quarryCells();
+  const taken = claimedCells(self);
+  let shallow = Infinity;
+  for (let c = 0; c < cells.length; c++) {
+    if (cells[c] >= quarryTarget(c) || taken.has(c)) continue;
+    shallow = Math.min(shallow, cells[c]);
+  }
+  if (shallow === Infinity) return null;
+  const open = c => c >= 0 && c < cells.length && cells[c] === shallow
+    && cells[c] < quarryTarget(c) && !taken.has(c);
+  const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
+  let start = -1;
+  for (let d = 0; d < cells.length && start < 0; d++) {
+    if (open(home - d)) start = home - d;
+    else if (open(home + d)) start = home + d;
+  }
+  if (start < 0) return null;
+  let left = 0, right = 0;
+  for (let c = start - 1; open(c); c--) left++;
+  for (let c = start + 1; open(c); c++) right++;
+  const dir = right >= left ? 1 : -1;
+  const run = [];
+  const most = CUT_RUN * pocketOf(self);
+  for (let c = start; open(c) && run.length < most; c += dir) run.push(c);
+  return run;
+}
 
 export const dugAt = c => (quarryCells()[c] || 0);
 export const colOfX = x => Math.floor((x - quarry.x) / P);
@@ -774,53 +883,19 @@ export function dugShare() {
   return want ? have / want : 0;
 }
 
-// The column a body at x should take the next cell off.
-//
-// The shallowest ground first, and the nearest of those. A cut is worked *down*
-// in layers -- the whole floor comes off a course at a time and the hole opens
-// out as it deepens, which is what a quarry looks like. Working whichever column
-// you happen to be standing on until it is finished digs a slot: one cell wide,
-// straight down, and nothing like a cut.
-//
-// A column that has reached its mark is done: that is where the benched walls
-// and the uneven floor come from, since the marks differ across the width and
-// the shallow ones stop early while the middle keeps going.
+// The column a thing at x should take the next cell off -- the jaw's question,
+// which takes one cell a tick and does not walk. The shallowest ground first,
+// and the nearest of those: a cut is worked *down* in layers, the whole floor
+// coming off a course at a time and the hole opening out as it deepens, which
+// is what a quarry looks like. Working whichever column you happen to be over
+// until it is finished digs a slot: one cell wide, straight down, and nothing
+// like a cut. A column that has reached its mark is done: that is where the
+// benched walls and the uneven floor come from, since the marks differ across
+// the width and the shallow ones stop early while the middle keeps going.
+// Nobody else's cell, either: the gang's runs are claims (`claimedCells`).
 export function nextQuarryCell(x, self = null) {
-  const cells = quarryCells();
-
-  // Nobody else's cell. A body walks to the one it has picked, so two of them
-  // picking the same one is two bodies walking to the same spot and one of them
-  // arriving to find the work done.
-  const taken = new Set();
-  for (const o of S.workers)
-    if (o !== self && o.type === TYPE.QUARRY && o.cell != null && o.cell >= 0) taken.add(o.cell);
-
-  // The shallowest ground first: a cut is worked *down* in layers, the whole
-  // floor coming off a course at a time, and the hole opens out as it deepens.
-  let shallow = Infinity;
-  for (let c = 0; c < cells.length; c++) {
-    if (cells[c] >= quarryTarget(c) || taken.has(c)) continue;
-    shallow = Math.min(shallow, cells[c]);
-  }
-  if (shallow === Infinity) return -1;
-
-  // Then one of the nearest few of that layer, picked at random between them.
-  //
-  // Both halves matter. Always the *nearest* puts the whole gang on one spot
-  // working along in a queue -- one body digging and the rest walking after it.
-  // Anywhere in the layer is worse: a body walks to each cell now, and a cell
-  // takes a tenth of a second to dig against two seconds to cross the face for,
-  // so picking at random across the whole width is a gang that spends its shift
-  // walking. A handful of candidates is scatter you can see, on walks that cost
-  // about what the digging does.
-  const open = [];
-  for (let c = 0; c < cells.length; c++) {
-    if (cells[c] === shallow && cells[c] < quarryTarget(c) && !taken.has(c)) open.push(c);
-  }
-  if (!open.length) return -1;
-  const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
-  open.sort((a, b) => Math.abs(a - home) - Math.abs(b - home));
-  return open[Math.floor(rand() * Math.min(NEAR_CELLS, open.length))];
+  const run = nextQuarryRun(x, self);
+  return run && run.length ? run[0] : -1;
 }
 
 // and the ground fills back in behind them
