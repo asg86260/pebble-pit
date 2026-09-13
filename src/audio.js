@@ -135,7 +135,10 @@ function ringOf(spec, o) {
 // the node yard and the browser draw the same numbers whether or not anything
 // is rendered.
 function fire(voice, o, cls, t, n = 1, counted = false) {
-  const spec = (SPEC[voice] || SPEC.stone)();
+  let spec = (SPEC[voice] || SPEC.stone)();
+  // A crit with a recipe of its own is that recipe; the octave-down body in
+  // `render` is for the voices without one.
+  if (o.crit && spec.crit) { spec = spec.crit; o = { ...o, crit: false }; }
   const foldDb = Math.min(SND_FOLD_GAIN_MAX_DB, SND_FOLD_GAIN_DB * Math.log2(n));
   const level = spec.gain * CLASS_LEVEL[cls]() *
                 db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);

@@ -91,10 +91,18 @@ export const SND_RATE = 44100;
 //   cut      a one-pole lowpass over the lot, Hz
 //   gain     the recipe's level into the mix
 //   vary     the share of SND_JITTER_* this voice scatters by, per hit
+//   crit     optional: a whole recipe of its own for a crit, played in place
+//            of this one. Without it a crit is this recipe with a second
+//            body an octave down (SND_CRIT_RATIO below).
+export let SND_STONE_CRIT = { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+                              click: 0, clickMs: 0.5, clickHz: 500,
+                              noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
+                              bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 };
 export let SND_STONE = { wave: 'sine', hz: 40, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
                          click: 0.3, clickMs: 0.5, clickHz: 4900,
                          noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
-                         bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 };
+                         bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1,
+                         crit: SND_STONE_CRIT };
 export let SND_WOOD  = { wave: 'tri', hz: 410, slide: 1.6, slideMs: 8, decay: 32, level: 0.8, duty: 0.5,
                          click: 0.6, clickMs: 1.5, clickHz: 3200,
                          noise: 0.3, noiseHz: 900, noiseQ: 3, noiseMs: 18,
@@ -120,9 +128,9 @@ export const SND_THUMP_HZ = 70;
 export const SND_THUMP_FALL = 0.45;    // it ends at this share of where it began
 export const SND_THUMP_S = 0.22;
 export const SND_THUMP_LEVEL = 0.6;
-// `crit` adds body, not level: a second body an octave down, under the same
-// envelope, so it is the same voice with more under it rather than a louder
-// one.
+// `crit` on a recipe with no `crit` recipe of its own adds body, not level:
+// a second body an octave down, under the same envelope, so it is the same
+// voice with more under it rather than a louder one.
 export const SND_CRIT_RATIO = 0.5;
 export const SND_CRIT_SHARE = 0.7;
 
