@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 import { rmSync } from 'node:fs';
 import { build } from 'vite';
 
-const out = resolve(process.argv[2] || '../boulder-clicker-web.zip');
+const out = resolve(process.argv[2] || './dist/pebble-pit.zip');
 
 const run = (cmd, args) => {
   const r = spawnSync(cmd, args, { stdio: 'inherit' });
