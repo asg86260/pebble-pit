@@ -24,6 +24,14 @@ Features go in DESIGN.md; this file is for things that were broken.
   was put.
 - A janitor with a shovel in its hands read as "on a break" on its card.
 
+- A carter with room in its hands walked past dust to tip, or across the
+  whole yard for one more thing while the hole was a stride away. Once it is
+  carrying anything it now goes for whichever is nearer, the next grain or
+  the lip -- and picks up what lands in front of it on the way to tip.
+- A carter sent out for two grains because the hole only had room for two
+  took its two and tipped, even when a dig had made room for twenty while it
+  walked. It asks the hole again before giving up on a heap.
+
 ## v0.1.5 — 2026-09-13
 
 - Tabbing away from the page reset the game. A store with no tab name in it

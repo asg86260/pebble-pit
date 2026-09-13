@@ -23,7 +23,7 @@ import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 import { duck, stand, hireSpot } from './body.js';
 import { downTheHole, downTheCut, nearestCutDust, pitFree, load, roomOnBoard,
-         tookOne, bookRoom, unbook } from './hole.js';
+         roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, ROAM_PACE } from './idle.js';
 
@@ -116,9 +116,6 @@ const servedGrounds = () => {
   return s;
 };
 
-// How much more this trip will hold.
-const roomLeft = w => load(w) - (w.carry || 0);
-
 // Whether anything on the ground is backing up.
 //
 // A pile that fills stops the station behind it: the rock stops coming apart,
@@ -188,6 +185,79 @@ function fullestHeap(w, taken) {
 // Whether a column is one of the finds lying about, so a body that has gone for
 // one can be told apart from a body shifting grit.
 const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
+
+// Where a trip starts, decided with empty hands. Three answers, in order: a
+// find, the fullest jammed heap, the nearest dust. Whichever is chosen, the
+// others are the fallback -- a body that came out to fetch goes back with
+// something.
+//
+// A find first -- but not by everybody at once while a heap is jammed. This
+// was an all-or-nothing switch and both settings are wrong. "Any heap backing
+// up, fetch dust" is what it was, and the machines made that permanently true:
+// a ram fills the rock's pile in under a second and never empties it, so dust
+// won every time for the rest of the run and the crew stopped fetching the
+// other two grounds at all. Turning it off outright is worse in the other
+// direction -- measured, the rock then stands on its own heap 85% of a run,
+// because the stations keep dripping finds and a good share of the crew is
+// always off chasing one.
+//
+// So it is a *cap* rather than a switch -- and the cap is one body per ground
+// that has a find waiting, not one body for the yard. One for the yard took the
+// nearest find every time -- the farm's, which drips them beside the walk --
+// and the quarry's shards and the star's sparks lay on the ground for hours:
+// shard income read 0.0/min in every six-hour run and no machine was ever
+// bought (docs/critics-2026-09-10.md, A3). One body per ground is what the old
+// argument actually claims: each ground's own drip is kept up with. Everybody
+// else shifts grit and the rock keeps working.
+//
+// And everybody else goes to the fullest heap, not the nearest dust. The
+// nearest dust to a body coming off the hole is the rock's heap, whatever
+// state it is in -- so the whole crew stood on the one heap while the
+// quarry's, a quarter its size and full to the line, stopped the quarry behind
+// them. `fullestHeap` measures each heap against its own limit and sends the
+// body to whichever is nearest to stopping its station; nothing changes until
+// something is backing up, and then it is the jammed heap that is cleared
+// rather than the handy one.
+function firstPick(w, taken) {
+  const dust = nearestDust(w.x, taken);
+  const heap = fullestHeap(w, taken);
+  const served = heap >= 0 ? servedGrounds() : EMPTY;
+  // A served ground's find is the last fallback of all, not dropped.
+  const mark = nearestMark(w, taken, served);
+  return mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
+}
+
+// What a body with something already in its hands goes for next: whatever is
+// nearest, the hole included. The nearest column of anything if it is nearer
+// than the lip, and -1 -- bank what you have -- if the lip is nearer.
+//
+// The trip's priorities were decided with empty hands (`firstPick`), and they
+// are not re-argued grain by grain: a body that has walked to the plots for a
+// spore and found a heap of dust beside it takes the dust, and a body a stride
+// from the lip with one grain of room left tips rather than crossing the yard
+// to fill it. What it used to do was re-run the whole first-pick order at every
+// column, so a body part-laden at the quarry walked back past the rock's heap
+// to the farm for a find, and a body with half a load and dust under its feet
+// went to the hole with it because the half-load rule said "far" once the
+// *find* was far.
+//
+// Nothing here books room: whether the hands may take one more is
+// `roomToTake`'s question, asked by the caller once there is something to take.
+function nextNearest(w, taken) {
+  const pick = nearestDust(w.x, taken);
+  if (pick < 0) return -1;
+  const lip = pit.x - WORKER;
+  return Math.abs(floor.x + pick * P - w.x) <= Math.abs(lip - w.x) ? pick : -1;
+}
+
+// Taking a column on. Which ground it was a find on is remembered so the cap
+// in `firstPick` knows which grounds are being served. It is a fact about the
+// trip, not about the column: the column stops being a find the moment it is
+// picked up.
+function claim(w, c, taken) {
+  w.claim = c; taken.add(c);
+  w.forMark = isMark(c) ? groundOf(floor.x + c * P) : false;
+}
 
 // the columns already spoken for this frame
 export function claims() {
@@ -277,7 +347,7 @@ export function haulerWork(w, c) {
   // it on the way past.
   if (here.key === 'cut' || w.cutClaim != null) {
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-    const fetching = w.cutClaim != null && roomOnBoard(w) > 0 && (w.carry || 0) < load(w);
+    const fetching = w.cutClaim != null && roomToTake(w);
     w.goal = 'cut';
     downTheCut(w, fetching ? w.cutClaim : null);
     if (!fetching) {
@@ -399,72 +469,17 @@ export function haulerWork(w, c) {
       // Book the hole before picking a column, not after filling your hands.
       // Nothing at all is fetched without room for it -- a shard on the ground
       // with a full hole behind it is a shard that stays on the ground.
-      if (bookRoom(w) > 0) {
-        // Three answers, in order: a find, the fullest jammed heap, the nearest
-        // dust. Whichever is chosen, the others are the fallback -- a body that
-        // came out to fetch goes back with something.
-        const dust = nearestDust(w.x, taken);
-        // A find first -- but not by everybody at once while a heap is jammed.
+      if (roomToTake(w)) {
+        // Where a trip *starts* and what it picks up *on the way* are two
+        // different questions, and they get two different answers.
         //
-        // This was an all-or-nothing switch and both settings are wrong. "Any
-        // heap backing up, fetch dust" is what it was, and the machines made
-        // that permanently true: a ram fills the rock's pile in under a second
-        // and never empties it, so dust won every time for the rest of the run
-        // and the crew stopped fetching the other two grounds at all. Turning
-        // it off outright is worse in the other direction -- measured, the rock
-        // then stands on its own heap 85% of a run, because the stations keep
-        // dripping finds and a good share of the crew is always off chasing
-        // one.
-        //
-        // So it is a *cap* rather than a switch -- and the cap is one body per
-        // ground that has a find waiting, not one body for the yard. It was
-        // one for the yard, on the argument that a find is one grain worth a
-        // whole shard and one pair of hands keeps up; measured, it did not. A
-        // player who clicks keeps the rock's heap over the line for the whole
-        // run, so the one body served the farm, the quarry and the star
-        // between them, took the nearest find every time -- the farm's, which
-        // drips them beside the walk -- and the quarry's shards and the star's
-        // sparks lay on the ground for hours: shard income read 0.0/min in
-        // every six-hour run and no machine was ever bought
-        // (docs/critics-2026-09-10.md, A3). One body per ground is what the
-        // old argument actually claims: each ground's own drip is kept up
-        // with. Everybody else shifts grit and the rock keeps working.
-        //
-        // And everybody else goes to the fullest heap, not the nearest dust.
-        // The nearest dust to a body coming off the hole is the rock's heap,
-        // whatever state it is in -- so the whole crew stood on the one heap
-        // while the quarry's, a quarter its size and full to the line, stopped
-        // the quarry behind them. `fullestHeap` measures each heap against
-        // its own limit and sends the body to whichever is nearest to stopping
-        // its station; the line is the same one, so nothing changes until
-        // something is backing up, and then it is the jammed heap that is
-        // cleared rather than the handy one.
-        const heap = fullestHeap(w, taken);
-        const served = heap >= 0 ? servedGrounds() : EMPTY;
-        // A served ground's find is the last fallback of all, not dropped.
-        const mark = nearestMark(w, taken, served);
-        const pick = mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
-        // And nothing further off than the hole is, once the hands are more
-        // than half full.
-        //
-        // A find is taken before dust however far away it lies, which is right
-        // -- a green one is worth crossing the yard for. It is not right for a
-        // body with one grain of room left: it walks the length of the world,
-        // past the hole it could have emptied into on the way, to fetch one
-        // thing it can barely hold, while an empty pair of hands behind it
-        // fetches dust from under its feet. So the walk has to be worth the
-        // room: half a load or more free and it goes anywhere, and under that
-        // it takes what is nearer than the hole or banks what it has and comes
-        // back out empty, when the whole yard is open to it again.
-        const far = pick >= 0 &&
-          Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
-        if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
-          w.claim = pick; taken.add(pick);
-          // Remembered so the cap above knows which grounds are being served.
-          // It is a fact about the trip, not about the column: the column
-          // stops being a find the moment it is picked up.
-          w.forMark = isMark(pick) ? groundOf(floor.x + pick * P) : false;
-        }
+        // Empty hands decide where the trip goes: a find, the fullest jammed
+        // heap, the nearest dust, in that order. Hands with something in them
+        // take whatever is nearest -- and the hole is one of the things that
+        // can be nearest. That second rule is `nextNearest`, below; the first
+        // is here.
+        const pick = w.carry ? nextNearest(w, taken) : firstPick(w, taken);
+        if (pick >= 0) claim(w, pick, taken);
       }
     }
     if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; return; }
@@ -484,7 +499,9 @@ export function haulerWork(w, c) {
         // A grain is worth taking only if this trip booked room for it --
         // otherwise it stays on the ground, which is somewhere, rather than in
         // a pair of hands, which is not. Dust or find, it is the same rule.
-        if (roomOnBoard(w) > 0) {
+        // A spent booking asks the hole again before giving up: room a dig
+        // opened while this body was walking out is room it may take.
+        if (roomToTake(w)) {
           (w.load ||= []).push(at(floor, col, r));
           put(floor, col, r, 0);
           w.carry++;
@@ -505,6 +522,23 @@ export function haulerWork(w, c) {
       w.goal = 'dump';
     }
   } else if (w.goal === 'dump') {
+    // Something that lands nearer than the lip while there is still room in
+    // hand is picked up on the way. This is the same question `nextNearest`
+    // answered when the body turned for the hole, asked again because the
+    // ground has changed: a grain the rock has just thrown down between the
+    // body and the lip is one it walks over, and walking over a grain with
+    // room in hand is the thing this whole file is about not doing. It cannot
+    // turn a body round -- everything behind it gets further as the lip gets
+    // nearer -- so a body sent to bank stays sent unless something new lands
+    // ahead of it. A core is the one load that goes straight in.
+    //
+    // The grain is found before the hole is asked: a booking made here is a
+    // booking held all the way to the lip, and a body walking to tip should
+    // not be holding room it will not use.
+    if (!w.hasCore && w.carry < load(w)) {
+      const pick = nextNearest(w, taken);
+      if (pick >= 0 && roomToTake(w)) { claim(w, pick, taken); w.goal = 'seek'; return; }
+    }
     const target = pit.x - WORKER;                 // the lip, where they can stand
     w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P) {

@@ -98,7 +98,7 @@ export function downTheCut(w, col) {
   w.y = climbTo(w, feetOn(on, w.x));
   if (now() < (w.next || 0)) return;
   const r = topRow(cut, col);
-  if (r < 0 || !isDust(at(cut, col, r)) || roomOnBoard(w) < 1) { w.cutClaim = null; return; }
+  if (r < 0 || !isDust(at(cut, col, r)) || !roomToTake(w)) { w.cutClaim = null; return; }
   (w.load ||= []).push(at(cut, col, r));
   put(cut, col, r, 0);
   w.carry = (w.carry || 0) + 1;
@@ -176,6 +176,24 @@ export function bookRoom(w, want = load(w)) {
   if (roomOnBoard(w) < 1) w.booked = (w.took || 0) + Math.max(0, Math.min(want, pitFree()));
   return roomOnBoard(w);
 }
+
+// Whether this body may take one more, asking the hole again if it has to.
+//
+// A booking is made once, with the hands empty, against the room the hole had
+// at that moment -- and the walk out is long. A hole with room for two sent a
+// body out booked for two, and by the time it was stood over the heap a dig had
+// made room for twenty; the body took its two, walked past the rest with its
+// hands mostly empty, and tipped. What its hands hold is the ceiling; what the
+// hole has *now* is the other one; a spent booking is asked again against both,
+// and gets nothing when the hole is still full, which is the trip ending the
+// way it always did.
+//
+// Asked for what the hands have left rather than a whole load, because `took`
+// stays in the booking: a re-book for a full load on top of two already in hand
+// spoke for two grains of the hole that nothing was ever going to fill.
+export const roomToTake = w =>
+  (w.carry || 0) < load(w) &&
+  (roomOnBoard(w) > 0 || bookRoom(w, load(w) - (w.carry || 0)) > 0);
 
 // Hands empty and nothing owed: the trip is over, so the room goes back.
 export function unbook(w) {

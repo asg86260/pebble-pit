@@ -138,7 +138,11 @@ group('a core goes in through the rift like anything else', async () => {
 // find out, and eight workers stood at the brim holding a load each with
 // nowhere to put any of it and no way to put it back.
 group('a hauler books room in the hole before it fetches', async () => {
-    run(0.4);
+  // A hole of its own. The groups above tear the one they share open, and a
+  // torn hole never refuses -- see `pitFree` -- so bookings against it are
+  // unlimited and this would be a check of nothing.
+  window.__reset();
+  run(0.4);
   window.__crew(0, 8);
   window.__levels({ haulCarryLevel: 4 });
   // Most of the way full, and NOT collapsed: the booking is a promise that
@@ -151,15 +155,24 @@ group('a hauler books room in the hole before it fetches', async () => {
   run(2);
   const room = state().pitCapacity - state().pitDust;
   const rockX = state().rockX;
-  window.__pile(rockX + 200, 600);             // more on the ground than the hole can take
+  // More on the ground than the hole can take -- by six hundred, so what is
+  // left lying is left by the booking rule and not by how fast the crew walk.
+  // It was a flat six hundred, and the two per cent left in a big hole is more
+  // than that: the floor emptied on pace alone once the crew stopped walking
+  // past dust.
+  window.__pile(rockX + 200, room + 600);
   const before = state().stored;
-  runUntil(() => state().stored - before >= room, 60);
-  run(5);                                      // and a moment for one more, if one is coming
+  // Up to the tear, and no further. A hole this full gives way before it is
+  // full by count -- it heaps over the mouth and lets go -- and from then on
+  // it never refuses, so the room is the trip and not the hole. The booking
+  // rule is only a rule while the hole can still say no, and that is the
+  // stretch measured.
+  runUntil(() => state().stored - before >= room || state().riftOpen, 60);
   const some = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(!some.riftOpen || some.stored - before <= room + 1,
+    ok(some.stored - before <= room + 1,
        'a hole that has not collapsed takes what it has room for and no more',
        `${some.stored - before} banked into room for ${room}`),
     ok(some.floorGrains > 100, 'with plenty still on the ground',

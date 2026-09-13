@@ -1020,6 +1020,22 @@ Fullness is a ratio because the limits differ by four to one: counted in grains 
 wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
 whichever heap needs them without anybody being told which one that is.
 
+**That order decides where a trip starts; what is in hand decides the rest.** Once a body is
+carrying anything, the next thing it goes for is simply the nearest thing — and the hole is one of
+the things that can be nearest. The next column if it is nearer than the lip; the lip if the lip is
+nearer. A body walking to tip with room still in hand takes a grain that lands ahead of it, and a
+body a stride from the lip with one grain of room left tips rather than crossing the yard to fill
+it. It used to re-argue the whole first-pick order at every column, so a body part-laden at the
+quarry walked back past the rock's heap to the farm for a spore, and a half-load rule sent it to
+the hole with dust under its feet because the *find* was far.
+
+**A booking is topped up, not just spent.** A trip books room in the hole with the hands empty,
+against the room the hole has at that moment, and the walk out is long: a body booked for two
+because that was all the room there was stood over a heap of twenty with a dig's worth of new room
+behind it, took its two and tipped. A spent booking asks the hole again — for what the hands have
+left, no more — and gets nothing when the hole is still full, which is the trip ending the way it
+always did.
+
 **A yard at rest is a yard at rest, not a yard switched off.** A body with nothing to fetch strolls:
 somewhere to go, a stand about when it gets there, then somewhere else. Three things stop that
 reading as insects rather than as people, and all three are the same trick every other job here
