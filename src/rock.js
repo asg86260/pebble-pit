@@ -640,9 +640,12 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
     else spawnSpoil(px, py, shade);
   }
   // The pick meeting stone. Your own click is the one sound the mix never
-  // folds, and a crit is an event of its own; a body's or the ram's swing
-  // folds with the rest of the yard.
-  if (took) sfx(from === 'you' && !body ? (crit > 1 ? 'rock-crit' : 'rock-hit') : 'rock-swing', { x: mx, hard });
+  // folds, and a crit is an event of its own -- yours and a body's alike;
+  // a body's or the ram's swing folds with the rest of the yard.
+  if (took) {
+    const yours = from === 'you' && !body;
+    sfx(yours ? (crit > 1 ? 'rock-crit' : 'rock-hit') : (crit > 1 ? 'crew-crit' : 'rock-swing'), { x: mx, hard });
+  }
   // ...and the last sheet of a cell going: the band moves as the rock gives way.
   if (through !== null) sfx('rock-through', { x: through, hard: 1 / depthOf() });
   // and it goes up from where it came off, not from a counter somewhere

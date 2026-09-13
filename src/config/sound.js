@@ -124,6 +124,8 @@ export const SOUNDS = {
   'rock-hit':     { label: 'you hit the rock',                          cls: 'hand',  recipe: 'stone' },
   'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone crit' },
   'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: 'stone hard' },
+  'crew-crit':    { label: "a body's crit swing at the rock",           cls: 'fold',  recipe: null },
+  'bird-startle': { label: 'you knock a bird off its line',             cls: 'hand',  recipe: null },
   'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
   'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
   'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },

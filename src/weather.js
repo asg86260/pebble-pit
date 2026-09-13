@@ -21,6 +21,7 @@ import { frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 import { rand } from './rng.js';
+import { sfx } from './audio.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -231,6 +232,7 @@ export function startle(wx, wy) {
       other.beat *= BIRD_BOLT;
     }
     S.dirty = true;
+    sfx('bird-startle', { x: from });       // your click landed on it
     return BIRD_DUST;
   }
   return 0;
