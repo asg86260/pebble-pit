@@ -1,7 +1,7 @@
 {
   "name": "boulder-clicker",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A black-and-white pixel clicker about a rock, a hole and the people between them.",
   "author": "Andrew Graham",
   "type": "module",
@@ -23,7 +23,11 @@
     "zip": "node tools/zip.mjs",
     "desk": "electron .",
     "desk:build": "node tools/desk-build.mjs",
-    "publish": "node tools/publish.mjs"
+    "publish": "node tools/publish.mjs",
+    "release": "node tools/release.mjs"
+  },
+  "config": {
+    "itch": "cameldash/pebble-pit"
   },
   "build": {
     "appId": "com.boulderclicker.desk",

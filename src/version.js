@@ -1,12 +1,15 @@
 // Which build this is.
 //
-// There is no version number and there will not be one -- nothing here is
-// released in numbered steps, it is released as whatever main was that day. So
-// the build says the commit and the day, which is what a bug report needs and
-// what a player wants to compare against a devlog. Both are stamped in at build
-// time by `define` in vite.config.js; under `vite dev` they say so.
+// A release has a number -- `version` in package.json, bumped and tagged by
+// `bun run release` -- and every build carries it along with the commit and
+// the day it was made from. The number is what the itch page and a devlog
+// say; the hash and the day are what a bug report needs, since two builds of
+// one day can differ and a checkout between tags has no number of its own.
+// All three are stamped in at build time by `define` in vite.config.js; under
+// `vite dev` they say so.
 
-export const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : { hash: 'dev', date: '' };
+export const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : { version: '', hash: 'dev', date: '' };
 
-// "7b5da28 · 2026-09-09", or "dev" off the dev server
-export const version = () => BUILD.date ? `${BUILD.hash} · ${BUILD.date}` : BUILD.hash;
+// "v0.1.0 · 7b5da28 · 2026-09-12", or "dev" off the dev server
+export const version = () =>
+  BUILD.date ? `v${BUILD.version} · ${BUILD.hash} · ${BUILD.date}` : BUILD.hash;

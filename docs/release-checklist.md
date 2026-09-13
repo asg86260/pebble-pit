@@ -60,7 +60,7 @@ it is.
   shake — the motion that is punctuation — while the yard keeps walking.
   → report §"5. Reduced motion"
 
-- [x] **Packaging and release channel.** (2026-09-12: `base: './'` and `dist/build.json` in `vite.config.js`; the `build` block and `desk:build` in `package.json`; `tools/publish.mjs` for the itch channels -- not yet run) Done: `base: './'` is set in
+- [x] **Packaging and release channel.** (2026-09-12: `base: './'` and `dist/build.json` in `vite.config.js`; the `build` block and `desk:build` in `package.json`; `tools/publish.mjs` for the itch channels; 2026-09-12: first html push to cameldash/pebble-pit, and `bun run release -- patch|minor|major` in `tools/release.mjs` bumps, tags, zips and pushes) Done: `base: './'` is set in
   `vite.config.js` (still required — the shell loads over `file://`), the app
   is packaged with electron-builder or Forge into per-OS artifacts, and the
   builds are published on itch.io as the desktop-build channel. This replaces
@@ -74,7 +74,7 @@ it is.
   is approved before any code, then the layer is built to it with a mute that
   remembers. → report §"7. Audio, and a mute that remembers"
 
-- [x] **Version and the no-ending sentence.** (2026-09-09: `__BUILD__` via `define`, `src/version.js`, both lines on the sheet; the store-page half waits for a store page) Done: the git hash and build date
+- [x] **Version and the no-ending sentence.** (2026-09-09: `__BUILD__` via `define`, `src/version.js`, both lines on the sheet; the store-page half waits for a store page; 2026-09-12: `version` in package.json leads the line, v0.1.0 first) Done: the git hash and build date
   are injected via `define` in `vite.config.js` and shown on the settings
   sheet, and one honest sentence — rocks keep coming, there is no finish line —
   is somewhere a player will read it. → report §"10. Say the version"

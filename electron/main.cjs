@@ -33,7 +33,7 @@ const saveName = () => `boulder-${new Date().toISOString().slice(0, 10)}.json`;
 const FILTERS = [{ name: 'save', extensions: ['json'] }];
 
 let store = null;
-let build = { hash: 'dev', date: '' };
+let build = { version: '', hash: 'dev', date: '' };
 
 // Where the window was last left -- its bounds, and whether it was maximized
 // or full -- so it comes back there. A window that opens 1440x900 in the
