@@ -1,38 +1,32 @@
 // Cut a release -- `bun run release -- patch|minor|major|1.2.3`.
 //
-// One command from a clean main to a numbered build on the itch page:
+// One command from a clean main to a numbered build everywhere:
 //
 //   1. bump `version` in package.json, stamp the version and date on
 //      CHANGELOG.md's "Unreleased" heading, commit both and tag `vX.Y.Z`;
-//   2. build dist/ (the stamp now carries the new number, see src/version.js)
-//      and keep a zip of it as dist/pebble-pit-vX.Y.Z.zip, the same bytes the
-//      page got, for the upload form or for a bug report;
-//   3. push dist/ to the itch `html` channel labeled with the version;
-//   4. push the commit and the tag.
+//   2. push the commit and the tag.
 //
-// With `--desktop` it also packages the apps and pushes them to their
-// channels. With `--dry` it stops after the zip: nothing is committed, tagged
-// or pushed, and package.json is put back -- for seeing what a release would
+// The tag is the trigger: `.github/workflows/release.yml` builds the browser
+// game and the three desktop apps on GitHub's runners, pushes every itch
+// channel, and makes the GitHub release with this version's CHANGELOG
+// section as its notes. Nothing is built here, so the machine that cuts a
+// release needs git and nothing else -- no butler, no docker, no Mac.
+//
+// With `--dry` it stops before committing: nothing is committed, tagged or
+// pushed, and the two files are put back -- for seeing what a release would
 // look like without making one.
-//
-// Order matters: the tag goes on before the build so the build's hash is the
-// tagged commit, and git is pushed last so a failed itch push does not leave a
-// tag on the remote that no page ever saw -- the local tag is easy to move.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { zipDist } from './zip.mjs';
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--')));
 const bump = args.find(a => !a.startsWith('--')) || 'patch';
 const dry = flags.has('--dry');
-const desktop = flags.has('--desktop');
 
 const fail = msg => { console.error(`release: ${msg}`); process.exit(1); };
-// `vite` from node_modules is a .cmd shim on Windows, which only a shell can
-// start; with a shell in the way an argument with a space in it ("Release
-// v1.2.3") has to be quoted by hand.
+// With a shell in the way an argument with a space in it ("Release v1.2.3")
+// has to be quoted by hand.
 const shell = process.platform === 'win32';
 const quote = a => (shell && /\s/.test(a) ? `"${a}"` : a);
 const sh = (cmd, cmdArgs, opts = {}) => {
@@ -42,13 +36,6 @@ const sh = (cmd, cmdArgs, opts = {}) => {
 };
 const read = (cmd, cmdArgs) =>
   spawnSync(cmd, cmdArgs.map(quote), { encoding: 'utf8', shell }).stdout.trim();
-
-// Everything the push needs is checked before anything is committed, so a
-// missing tool fails here with a clean tree rather than after the tag is on.
-// butler is installed by hand (~/bin, on PATH) and a terminal opened before
-// it went on PATH does not see it.
-if (!dry && spawnSync('butler', ['-V'], { stdio: 'ignore', shell }).status !== 0)
-  fail('butler is not on PATH -- open a new terminal, or install it: https://itch.io/docs/butler/');
 
 // A release is a commit on main with nothing left over: a dirty tree would
 // mean the tag names a state nobody can check out again.
@@ -95,27 +82,20 @@ if (stampedLog === rawLog) console.log('release: nothing under Unreleased in CHA
 writeFileSync(logFile, stampedLog);
 const restore = () => { writeFileSync(pkgFile, raw); writeFileSync(logFile, rawLog); };
 
-if (!dry) {
-  sh('git', ['add', pkgFile, logFile]);
-  sh('git', ['commit', '-q', '-m', `Release ${tag}`]);
-  sh('git', ['tag', '-a', tag, '-m', tag]);
-}
-
-// Build and keep the zip. In a dry run the version goes back afterward so the
-// tree is as clean as it was found.
-sh('vite', ['build']);
-const zip = zipDist(`dist/pebble-pit-${tag}.zip`);
-if (desktop) sh('node', ['tools/desk-build.mjs', '--linux']);
 if (dry) {
   restore();
-  console.log(`release: dry run done -- ${zip} is what ${tag} would ship; nothing was tagged or pushed`);
+  console.log(`release: dry run done -- ${tag} would be tagged; nothing was committed or pushed`);
   process.exit(0);
 }
 
-// The page, then git. `publish` rebuilds dist/ itself -- a second, identical
-// build is cheaper than a flag that lets it push a stale one.
-sh('node', ['tools/publish.mjs']);
-if (desktop) sh('node', ['tools/publish.mjs', '--desktop']);
+// The tag goes to the remote last, so a failure before it leaves nothing
+// there -- the local tag is easy to move.
+sh('git', ['add', pkgFile, logFile]);
+sh('git', ['commit', '-q', '-m', `Release ${tag}`]);
+sh('git', ['tag', '-a', tag, '-m', tag]);
 sh('git', ['push', '-q', 'origin', 'main']);
 sh('git', ['push', '-q', 'origin', tag]);
-console.log(`release: ${tag} is on the page and on origin; the zip is ${zip}`);
+const repo = read('git', ['remote', 'get-url', 'origin'])
+  .replace(/\.git$/, '')
+  .replace(/^git@github\.com:/, 'https://github.com/');
+console.log(`release: ${tag} is on origin; the builds are at ${repo}/actions`);

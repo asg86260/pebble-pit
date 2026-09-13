@@ -76,15 +76,15 @@ Left, in order:
 - **Events not yet in the table** (no `sfx` call at all): birds, the
   dance, the balloon, the school, the apothecary, the board, the shields'
   cutscenes. Each is one call and one `SOUNDS` row when wanted.
-- **Publishing** is `bun run publish`; the page is `config.itch` in
-  package.json. The `html`, `windows-portable` and `linux` channels are up
-  (2026-09-13). The AppImage is built in docker (`desk:build -- --linux`,
-  the electronuserland/builder image); it starts and writes its config on a
-  bare Linux box, nobody has played it there. No icon yet.
-- **The mac build is `.github/workflows/mac.yml`**: a macos runner builds a
-  universal dmg on every `v*` tag (so `bun run release` triggers it) and
-  pushes it to the `mac` channel with the `BUTLER_API_KEY` secret. Nobody has
-  opened it on a Mac. A .dmg cannot be made here or in docker (`hdiutil`).
+- **A release is `bun run release -- patch`** and nothing else on this
+  machine: it bumps, stamps CHANGELOG.md, tags and pushes, and
+  `.github/workflows/release.yml` does the rest on GitHub's runners -- the
+  three desktop apps and the browser build, every itch channel, and a GitHub
+  release with the CHANGELOG section as notes. The repo is public
+  (2026-09-13), so the minutes are free. `bun run publish` still pushes one
+  channel by hand when wanted; `desk:build -- --linux` on Windows builds the
+  AppImage in docker. Nobody has opened the AppImage or the dmg on a real
+  machine. No icon yet.
 - **Nothing is signed.** Windows shows SmartScreen, mac the "unidentified
   developer" sheet. Mac: an Apple Developer account ($99/yr), a Developer ID
   Application cert as `MAC_CERT_P12`/`MAC_CERT_PASS` and an app-specific

@@ -1,0 +1,127 @@
+# The release. `bun run release` bumps the version, stamps CHANGELOG.md and
+# pushes a `vX.Y.Z` tag; everything after that happens here, on GitHub's
+# runners, so the machine that cuts a release needs nothing installed:
+#
+#   build   one leg per OS. Each packages its own desktop app and pushes it
+#           to its itch channel through tools/publish.mjs; the linux leg also
+#           builds the browser game and pushes the `html` channel, which is
+#           the page itself.
+#   release the GitHub release for the tag, with this version's CHANGELOG
+#           section as its notes and every build attached.
+#
+# The legs are independent (fail-fast off): a mac hiccup does not stop the
+# windows exe reaching the page. A failed leg is re-run from the Actions tab.
+# "Run workflow" by hand builds and pushes without making a GitHub release.
+#
+# Secrets:
+#   BUTLER_API_KEY   required -- itch.io > settings > API keys.
+#   MAC_CERT_P12     optional -- a Developer ID Application certificate,
+#   MAC_CERT_PASS               base64 of the .p12 and its password.
+#   APPLE_ID         optional -- with the two below, the mac app is notarized
+#   APPLE_APP_PASS              so Gatekeeper opens it without a warning;
+#   APPLE_TEAM_ID               an app-specific password, not the account's.
+# Without the certificate electron-builder signs ad-hoc, which runs on Apple
+# silicon but shows the "unidentified developer" sheet. Without the Apple ID
+# notarization is skipped. The Windows build is not signed (TODO.md).
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build: --linux AppImage
+            butler: linux-amd64
+          - os: windows-latest
+            build: --win portable
+            butler: windows-amd64
+          - os: macos-latest
+            build: --mac dmg --universal
+            butler: darwin-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      # The signing variables are only exported when the secrets exist: an
+      # unset secret is an empty string, and electron-builder reads an empty
+      # CSC_LINK as a path to a certificate file that is not there.
+      - name: Certificate
+        if: runner.os == 'macOS' && env.P12 != ''
+        env:
+          P12: ${{ secrets.MAC_CERT_P12 }}
+        run: |
+          echo "CSC_LINK=${{ secrets.MAC_CERT_P12 }}" >> "$GITHUB_ENV"
+          echo "CSC_KEY_PASSWORD=${{ secrets.MAC_CERT_PASS }}" >> "$GITHUB_ENV"
+      - name: Apple ID
+        if: runner.os == 'macOS' && env.ID != ''
+        env:
+          ID: ${{ secrets.APPLE_ID }}
+        run: |
+          echo "APPLE_ID=${{ secrets.APPLE_ID }}" >> "$GITHUB_ENV"
+          echo "APPLE_APP_SPECIFIC_PASSWORD=${{ secrets.APPLE_APP_PASS }}" >> "$GITHUB_ENV"
+          echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> "$GITHUB_ENV"
+
+      - name: Package
+        shell: bash
+        run: bun run desk:build ${{ matrix.build }} --config.mac.notarize=${{ env.APPLE_ID != '' }}
+
+      # The browser game, zipped the way itch's upload form wants it, so the
+      # release carries the same bytes the page serves.
+      - name: Browser build
+        if: runner.os == 'Linux'
+        run: bun run zip release/pebble-pit-html.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.AppImage
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+      - name: Install butler
+        shell: bash
+        run: |
+          curl -sL "https://broth.itch.zone/butler/${{ matrix.butler }}/LATEST/archive/default" -o butler.zip
+          mkdir -p butler && unzip -q butler.zip -d butler && chmod +x butler/butler*
+          echo "${{ github.workspace }}/butler" >> "$GITHUB_PATH"
+
+      - name: Push to itch
+        shell: bash
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          bun run publish --desktop
+          if [ "$RUNNER_OS" = Linux ]; then bun run publish; fi
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: builds
+          merge-multiple: true
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node tools/notes.mjs "$GITHUB_REF_NAME" > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md builds/*

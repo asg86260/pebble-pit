@@ -1,11 +1,11 @@
 # The itch page
 
 Copy for the store page, in the game's own voice. The game is played in the
-browser on the page itself (the `html` channel -- `bun run publish`); the
-Windows portable is offered underneath for anybody who wants it as an app
-(`bun run publish -- --desktop`). Says the deliberate things up front -- no
-offline progress, no ending, where the save lives -- so they are the
-description and not the complaint.
+browser on the page itself (the `html` channel); the Windows, mac and linux
+apps are offered underneath for anybody who wants it as an app (all four
+built and pushed by `bun run release`, on GitHub's runners). Says the
+deliberate things up front -- no offline progress, no ending, where the save
+lives -- so they are the description and not the complaint.
 
 **Embed settings:** viewport 1280 x 800 (the boards want at least 960 x
 600), fullscreen button on, "mobile friendly" off, orientation landscape.

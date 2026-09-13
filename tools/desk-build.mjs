@@ -2,16 +2,18 @@
 //
 // electron-builder reads `version` from package.json, the same number the
 // page and the itch channel carry (see src/version.js); `bun run release` is
-// what bumps it. Nothing to work out here beyond passing the flags through.
+// what bumps it. The flags pass through, plus `--publish never`: itch is the
+// store and the GitHub release is release.yml's to make, so electron-builder
+// must not go looking for a token to publish with on its own.
 //
-// `--linux` is the exception: the AppImage is built inside the
-// electronuserland/builder docker image, because the packager on Windows
-// cannot make one, and because the Windows node_modules carry Windows-only
-// binaries (esbuild, electron) that a Linux build cannot use -- the container
-// installs its own into a named volume, which it keeps between runs. It
-// leaves the AppImage in release/ next to the exe so `publish --desktop`
-// finds both. There is no such trick for mac: a .dmg can only be made on a
-// Mac, so that channel waits for one (TODO.md).
+// `--linux` on a Windows machine is the exception: the AppImage is built
+// inside the electronuserland/builder docker image, because the packager on
+// Windows cannot make one, and because the Windows node_modules carry
+// Windows-only binaries (esbuild, electron) that a Linux build cannot use --
+// the container installs its own into a named volume, which it keeps between
+// runs. It leaves the AppImage in release/ next to the exe so
+// `publish --desktop` finds both. On Linux itself (the release workflow's
+// ubuntu leg) `--linux` is just electron-builder's own flag.
 
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -21,7 +23,7 @@ const run = (cmd, opts) => execSync(cmd, { stdio: 'inherit', ...opts });
 
 run('vite build');
 
-if (args.includes('--linux')) {
+if (args.includes('--linux') && process.platform !== 'linux') {
   // Paths are handed to docker in Windows form; under Git Bash the
   // MSYS_NO_PATHCONV guard stops it turning `/project` into a Program Files
   // path. Docker needs forward slashes on every platform.
@@ -30,7 +32,7 @@ if (args.includes('--linux')) {
   const inside = [
     'npm install --no-package-lock --no-audit --no-fund --loglevel=error',
     'npx vite build',
-    'npx electron-builder --linux AppImage --config.directories.output=/out',
+    'npx electron-builder --linux AppImage --publish never --config.directories.output=/out',
   ].join(' && ');
   run(
     `docker run --rm -v "${here}:/project" -v pebble-pit-nm:/project/node_modules ` +
@@ -41,4 +43,4 @@ if (args.includes('--linux')) {
   if (!args.length) process.exit(0);
 }
 
-run(`electron-builder ${args.join(' ')}`);
+run(`electron-builder ${args.join(' ')} --publish never`);
