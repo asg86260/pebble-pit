@@ -205,3 +205,33 @@ group('a page overtaken by another tab stops writing', async () => {
     ok(yielded, 'and knows it has been overtaken')
   ];
 });
+
+// The tab check read "no name beside the save" as "someone else's name". A
+// store that cannot be read at all -- itch's iframe on a browser that blocks
+// third-party storage -- has no name in it, so the page yielded, and a page
+// that has yielded reloads when it is next looked at: tabbing away and back
+// lost the whole yard. A page that finds no name keeps its own.
+group('a page whose claim cannot be read is not overtaken', async () => {
+  localStorage.setItem(KEY, player());
+  yard.restore();
+  const { persist, claimSave } = await import('../src/persist.js');
+  claimSave();
+  const getItem = localStorage.getItem;
+  localStorage.getItem = () => { throw new Error('blocked'); };   // as a blocked iframe throws
+  run(2);
+  yard.S.dirty = true; persist();
+  const yielded = yard.S.yielded;
+  localStorage.getItem = getItem;
+  localStorage.removeItem(OWNER_KEY);                              // and as a cleared store reads
+  run(2);
+  yard.S.dirty = true; persist();
+  const yieldedEmpty = yard.S.yielded;
+  const wrote = localStorage.getItem(KEY);
+
+  localStorage.setItem(OWNER_KEY, TAB);
+  return [
+    ok(!yielded, 'a store that will not read is not another tab'),
+    ok(!yieldedEmpty, 'nor is a store with no name in it'),
+    ok(wrote !== null && JSON.parse(wrote).stored === state().stored, 'and the page goes on writing')
+  ];
+});

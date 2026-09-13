@@ -255,8 +255,14 @@ export function persist() {
   // hour-old yard over the hour just played in the other. It stops writing and
   // says so on the held sheet; main.js reloads it when it is next looked at.
   // Only a page that has made a claim can be overtaken -- the node yard never
-  // claims and never yields.
-  if (S.yielded || (claimed && tabOwner() !== TAB)) { S.yielded = true; return; }
+  // claims and never yields. And only another page's name counts: no name at
+  // all means the store cannot be read (a third-party iframe on a browser
+  // that blocks its storage, a store cleared under a running page), not that
+  // anyone else is writing. That case once yielded too, and a page that has
+  // yielded is reloaded the next time it is looked at -- onto a store that
+  // held nothing -- so tabbing away and back reset the game.
+  const owner = claimed ? tabOwner() : TAB;
+  if (S.yielded || (owner !== null && owner !== TAB)) { S.yielded = true; return; }
   S.dirty = false;
   lastBlob = JSON.stringify(blob());
   // ...and whether the store took it. A private window, a quota or an eviction
