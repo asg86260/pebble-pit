@@ -41,6 +41,8 @@ export const S = {
   // --- where things stand ---
   cx: 0, cy: 0,           // the middle of the rock
   groundY: 0,             // the ground line: everything stands on it
+  placed: null,           // where each building was put, by key, and
+  strips: null,           // the strips beside them -- `placeSites` in world.js, laid out again with the world
 
   // --- the rock ---
   boulder: [],            // rows of ints: 0 empty, else the rock still stacked there
@@ -69,6 +71,7 @@ export const S = {
   // core.js can ask without either of them having to know that scenes exist.
   sceneHolds: false,
   introAt: 0,
+  introHeart: 0,          // when the opening's heart last beat (intro.js)
   introSaid: 0,
   pair: [],               // the two of them, before the rock
   buried: false,          // somebody is under it, and still alive
@@ -132,6 +135,9 @@ export const S = {
   // pointed at a one-time event, never a pause and never saved -- a reload
   // mid-scene comes back to a yard that has already had it. See cutscene.js.
   cine: null,
+  // ...and the one owed: set when a scene starts and cleared when it has been
+  // seen through, so a reload mid-scene plays it once from the top.
+  cineOwed: null,
   // The tearing, while it is happening: seconds of the gulp left to run, and a
   // knock waiting to be spent on the view. Neither is saved -- an event is a
   // moment, not a state, and a save reloaded halfway through one should come
@@ -423,6 +429,7 @@ export const S = {
   // whole feature hangs off.
   won: [],                // the notices earned, in the order they landed
   wonAt: {},              // and when each one did, so the sheet reads newest first
+  wonSeq: 0,              // the stamp the last one took; `wonAt` holds one per notice
   wonSeen: 0,             // how many have been looked at; the rest are unread
   wonShown: 0,            // the last one the toast has said (toast.js); not saved
   noticeMigrated: false,  // the silent catch-up has been run on this save
@@ -450,6 +457,7 @@ export const S = {
   introThrew: 0,          // when the opening's one throw was let go of
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
+  scrubMuck: 0,           // and part of a clod of muck, on its way out of the spout
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
   recycled: 0,            // and how many whole ones it has given back
   seenAir: false,         // the lab has been told to watch the sky
@@ -458,6 +466,7 @@ export const S = {
   // The layer is the whole record: what is buried, what is in the way and what
   // there is to shift are all read off it.
   muck: [],
+  poop: [],               // what `muck` was before it had kinds; the save still carries it, nothing reads it
   dragging: false,
   nextHit: 0,
   // The bench is not there until there is something on it worth buying, and it
@@ -794,7 +803,7 @@ export const EPHEMERAL = [
   // fact and is saved; this is the walk, and a reload has no walk in progress.
   'rescueTo',
   // dust in the air: a grain mid-flight has no beginning to come back to
-  'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
+  'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
   // the counter chasing the real number
   'shownStored',
   // how far the toast has read through the record: what was earned before
@@ -826,13 +835,8 @@ export const EPHEMERAL = [
   // open it is a hired post like any job, and a hired post survives a reload.)
   'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
-  'raining', 'rainFor', 'scrubBank', 'pumpAt',
+  'raining', 'rainFor', 'scrubBank', 'scrubMuck', 'pumpAt',
   'stormFor',                              // wave6-sky: weather in flight is not saved
-  // Three that are hung on S by their own modules rather than declared above --
-  // where the buildings were put and the strips beside them (`placeSites` in
-  // world.js, worked out again every time the world is laid out) and the beat
-  // the opening's heart is on (intro.js). Named here so that the list is
-  // complete; declaring them above would be better, and is somebody's tidy-up.
   'placed', 'strips', 'introHeart',
   // housekeeping
   'dirty', 'fatal', 'lastFrame', 'settleAt',

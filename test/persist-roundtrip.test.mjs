@@ -16,6 +16,9 @@
 
 import { group, ok, yard } from './helpers.mjs';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL } from '../src/state.js';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // A value that is plainly not the default, made from what the declaration in
 // state.js says the field is. Two of them, so the check can put one in, save,
@@ -120,10 +123,59 @@ group('every field on S is accounted for', async () => {
     // grids, the sky, the chance, the craft, and the two leftovers the format
     // still carries. Named here so a typo cannot hide among them.
     ...Object.entries(lists).map(([name, list]) => {
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
-                       'poop', 'falling'];
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })
+  ];
+});
+
+// The group above reads the keys `S` has at the moment it runs, and a field a
+// module hangs on `S` the first time it is needed is not among them: the
+// house's part-clod (`scrubMuck`) was written by craft.js for a month with no
+// declaration, no list and no blank, so a reset kept it and a reload lost it,
+// and nothing here went red. So the source is read as well as the object:
+// every name assigned through `S.` anywhere under src/ has to be declared.
+group('every field a module writes on S is declared in state.js', async () => {
+  const files = [];
+  const walk = dir => {
+    for (const f of readdirSync(dir)) {
+      const p = join(dir, f);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (f.endsWith('.js') && f !== 'state.js') files.push(p);
+    }
+  };
+  walk(fileURLToPath(new URL('../src', import.meta.url)));
+  const written = new Map();
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/\bS\.([A-Za-z_]\w*)\s*(?:[-+*/|&]?=(?!=)|\+\+|--)/g)) {
+      if (!written.has(m[1])) written.set(m[1], f);
+    }
+  }
+  const undeclared = [...written].filter(([k]) => !(k in BLANK));
+  return [
+    ok(written.size > 100, 'the sweep found the writes', `${written.size} names`),
+    ok(undeclared.length === 0,
+       'and every one of them is a field state.js declares',
+       undeclared.map(([k, f]) => `${k} (${f})`).join(', '))
+  ];
+});
+
+// A reset is the one time a running yard is put down in place, and it used to
+// name what it put down. What it did not name stood: the quarry's running
+// total (and so the "a thousand ore" notice, landing on a yard that had dug
+// none), the house's part-clod, a wheel mid-spin, a cutscene half played. It
+// clears the session's fields off the declaration now; this plants a value in
+// each of the ones that leaked and looks for it afterward.
+group('a reset puts down what the save throws away', async () => {
+  const planted = { quarryTotal: 1234, scrubMuck: 5, wheel: 42, cine: { name: 'tear', at: 1 },
+                    riftGulp: 1.8, rescueTo: 5088, smoke: [{ x: 1, y: 1 }], spinWon: true,
+                    hand: { won: true }, restaff: { at: 1 } };
+  Object.assign(S, planted);
+  window.__reset();
+  const kept = Object.keys(planted).filter(k => JSON.stringify(S[k]) === JSON.stringify(planted[k]));
+  return [
+    ok(kept.length === 0, 'nothing of the old yard stands through a reset', kept.join(', '))
   ];
 });

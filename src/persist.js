@@ -12,7 +12,7 @@ import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, BLANK, SAVED, SAVED_BY_HAND, floor, pit, cut, sky, quarry } from './state.js';
+import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
@@ -213,6 +213,26 @@ const BUILT = new Set(['runSeed', 'camX', 'floor', 'boulder', 'gw', 'gh', 'bould
                        'machines', 'workers']);
 function blankByHand() {
   for (const k of SAVED_BY_HAND) if (!BUILT.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
+}
+
+// The session's fields, for a yard that is starting over. A reset used to name
+// the ones it cleared -- the chips in the air, the belt, the weather -- and,
+// like the two by-hand lists before it, the naming was where the leaks were: a
+// casino wheel mid-spin, a cutscene half played, the quarry's running total
+// and the muck the house was partway through all stood through a reset because
+// nobody had thought to write them down. So the answer is the declaration
+// again, less the few that are not the yard's at all: what was measured off
+// the window at boot, where the camera is, what the pointer is doing, what the
+// store said about this page, and the housekeeping the loop itself keeps.
+// A reload does none of this because a reload starts from a page with nothing
+// on it; only a reset has a running yard to put down.
+const PAGES = new Set(['W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'worldW', 'worldH',
+                       'cx', 'cy', 'groundY', 'camY', 'camTo', 'camWas', 'camLockY', 'follow',
+                       'mouse', 'unsaved', 'yielded', 'broken', 'fellBack', 'newerSave',
+                       'staged', 'build', 'tick', 'lastFrame', 'dirty', 'fatal',
+                       'placed', 'strips']);
+function blankEphemeral() {
+  for (const k of EPHEMERAL) if (!PAGES.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
 }
 
 // The last blob this page built, written or not. SAVE A COPY hands this over
@@ -1155,75 +1175,26 @@ export function reset(fresh = true) {
   // is what let a new game start with the last game's quarry in it.
   readSaved({});
   blankByHand();
+  // ...and everything the save throws away, for the same reason: what was in
+  // the air, on the belt, on the wheel or on the camera is the old yard's too.
+  blankEphemeral();
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;
   S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
-  S.paused = false;                // a new game is not a held one
   showPanel(null, true);           // nor one with the last game's board still up
-  // the curtains are somebody's, and there is nobody here now
-  S.shutters = [];
-  S.shutterAt = 0;
-  S.chips = [];
-  S.belt = [];                       // and what was riding the belt, for the same reason
-  S.paid = [];
-  S.gulped = [];
-  S.ripples = [];
-  S.banked = 0;
-  S.shownStored = 0; snapShown();
-  S.held = 0;
+  snapShown();
   S.crew = 0;
-  S.seenCore = false;
   setPitGrain();
-  S.coreItem = null;
-  S.heldCore = false;
-  S.rockhands = 0;
-  S.haulers = 0;
-  S.rockhandSpeedLevel = 0;
-  S.rockhandPickLevel = 0;
-  S.seenShard = false;
-  S.quarryOpen = false;
-  S.quarriers = 0;
-  S.quarryPaceLevel = 0;
-  S.benchLevel = 0;
-  S.quarryCells = null;
   S.machines = freshMachines();     // a new yard has no machines in it
-  S.seenSpore = false;
-  S.scholars = 0;
-  S.plotLevel = 0;
-  S.apothBoardOpen = false;
-  S.labBoardOpen = false;
   S.looPosts = LOO_POSTS;
-  S.summon = 0;
-  S.flashAt = 0;
-  S.seenSpark = false;
-  S.wizards = 0;
-  S.teachers = 0;
   S.works = {};
-  S.buildOrder = [];
-  S.lent = [];
-  S.builders = 0;
   sky.cells = null;
   sky.n = 0;
-  S.purifiers = 0;
   clearCraft();
-  S.introThrew = 0;
-  S.haze = 0;
-  S.raining = false;
-  S.rainFor = 0;
-  S.scrubBank = 0;
-  S.poop = [];
   S.rockSand = null;
   seedSmog();
-  S.casinoBoardOpen = false;
-  S.pot = null;
-  S.pouring = false;
-  S.spinUntil = 0;
-  S.tableAir = [];
-  S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
-  S.plots = [];
-  S.plotTone = [];
   syncWorkers();
   resetRates();
   resetNotices();
@@ -1235,17 +1206,10 @@ export function reset(fresh = true) {
   pit.painter.repaint();
   resetCut();                              // fresh rock, nought dug, nothing lying in it
   S.boulderNo = 1;
-  S.introDone = false;
-  S.reunionDone = false;
-  S.buried = false;
-  S.rescued = false;
   S.shield = null;
-  S.shieldsDone = [];
-  S.rockHeld = false;
   makeBoulder();
   settleShack();                   // beside rock one, not sliding in from where it stood
   clearBoulder();
-  S.coreBuried = false;
   startIntro();                    // a reset is a game that has never been played
   buildShop();
   S.dirty = true;
