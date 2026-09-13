@@ -228,9 +228,17 @@ function firstPick(w, taken) {
 }
 
 // The column with something in it under a body's feet, if there is one -- the
-// same span `seek` scoops from, a cell either side of where it stands -- and
-// not one somebody else has set off for. -1 when it is walking over bare
-// ground.
+// same span `seek` scoops from, a cell either side of where it stands. -1 when
+// it is walking over bare ground.
+//
+// Claimed or not. A claim is a target, and a target is for empty hands setting
+// off across the yard -- it is what stops six bodies converging on one shard.
+// It is not a reservation against the body already stood over the column: a
+// grain the rock has just thrown down beside a laden body walking home was
+// claimed by an empty body at the far end of the yard, and the laden one
+// stepped over it and left it for a walk of eight hundred pixels. The body on
+// the spot takes it; the claimant sees its column bare on the same frame and
+// picks again, which is what it does whenever a target is gone.
 //
 // This is the whole of what a laden body decides. The trip's target was
 // picked with empty hands (`firstPick`) and it is not re-argued grain by grain:
@@ -240,11 +248,17 @@ function firstPick(w, taken) {
 // spark, turned for a crop, turned back for a spark, and read as lost. A
 // sweep home never turns round, so what it does is legible from across the
 // yard: out to the thing it went for, back with everything on the way.
-function underfoot(w, taken) {
+//
+// `ahead` widens the look by that many pixels toward the lip, for the stride
+// the body is about to take: a step is `frames()` long, so on a slow frame or
+// under a swift brew one stride is wider than the span under the feet, and a
+// column could be crossed between two looks. Found within the stride, the
+// step is shortened to land on it -- see the walk home.
+function underfoot(w, ahead = 0) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const lo = Math.max(first, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER));
-  for (let c = lo; c <= hi; c++) if (!taken.has(c) && at(floor, c, 0)) return c;
+  const lo = Math.max(first, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER + ahead));
+  for (let c = lo; c <= hi; c++) if (at(floor, c, 0)) return c;
   return -1;
 }
 
@@ -529,21 +543,25 @@ export function haulerWork(w, c) {
     // with full hands walks straight to the lip. Nothing here turns it round:
     // what is behind it is the next trip's, and what is ahead of it is this
     // one's -- which is what makes a trip readable as a trip rather than as a
-    // body changing its mind. A core is the one load that goes straight in,
-    // and a claimed column is somebody else's target, walked over.
+    // body changing its mind. A core is the one load that goes straight in.
     //
     // The column is found before the hole is asked: a booking made here is a
     // booking held to the lip, and a body walking to tip should not be
     // holding room it will not use.
+    const target = pit.x - WORKER;                 // the lip, where they can stand
+    let stride = Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));
     if (!w.hasCore && w.carry < load(w)) {
-      const c = underfoot(w, taken);
-      if (c >= 0 && roomToTake(w)) {
+      const c = underfoot(w, stride);
+      const under = c >= 0 && floor.x + c * P <= w.x + WORKER;
+      if (under && roomToTake(w)) {
         if (now >= w.next) scoop(w, c, now);
         return;                                // stood over it until it is bare
       }
+      // Within the stride but not under the feet yet: the step ends on it,
+      // so nothing is walked over between one look and the next.
+      if (c >= 0) stride = Math.min(stride, Math.max(0, floor.x + c * P - w.x));
     }
-    const target = pit.x - WORKER;                 // the lip, where they can stand
-    w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));
+    w.x += Math.sign(target - w.x) * stride;
     if (Math.abs(target - w.x) < P) {
       // A proper toss off the lip, so it arcs out over the edge -- and it is
       // aimed at the hole, the same way spoil is aimed at a pile. It used to

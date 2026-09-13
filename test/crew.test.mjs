@@ -484,20 +484,24 @@ group('a laden body sweeps home rather than setting off again', async () => {
   run(20);                                    // let the plots come in
 
   const banked0 = state().pit;
-  // Every column newly taken on, and what the body was holding at the time.
+  // Every column newly taken on, and what the body was holding when it took
+  // it -- read off the frame before, because a target already under the feet
+  // is scooped from on the frame it is claimed, and the row then shows a new
+  // claim and a grain in hand that was picked up *after* it.
   let took = 0, laden = 0;
-  const had = new Map();
+  const had = new Map(), held = new Map();
   for (let i = 0; i < 7200; i++) {
     run(1 / 60);
     state().crewDetail.forEach((row, idx) => {
       const [type, , , c, k] = row.split('|');
       if (type !== 'h') return;
       const claim = Number(k.slice(1));
-      const before = had.get(idx);
+      const before = had.get(idx), carried = held.get(idx) || 0;
       had.set(idx, claim);
+      held.set(idx, Number(c.slice(1)));
       if (!(claim >= 0) || before === claim) return;   // nothing newly taken on
       took++;
-      if (Number(c.slice(1)) > 0) laden++;
+      if (carried > 0) laden++;
     });
   }
   const banked = state().pit - banked0;

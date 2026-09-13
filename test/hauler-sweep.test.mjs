@@ -4,8 +4,9 @@
 // crew.test.mjs holds the find-first and fullest-heap checks for that -- and
 // this file is about everything after.
 
-import { group, ok, state, run, runUntil, quickCrew, P } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, P } from './helpers.mjs';
 import { floor } from '../src/state.js';
+import { at } from '../src/grid.js';
 import { spend } from '../src/pit.js';
 
 // One hauler, nothing mining, the floor bare: the only dust in the yard is what
@@ -136,5 +137,79 @@ group('a spent booking asks the hole again before the body gives up', async () =
     ok(free1 > 1, 'room is made while the body stands over the heap', `${free1}`),
     ok(r.tossed && r.took > 1, 'and it fills its hands from the heap before tipping',
        `${r.took} tipped, ${r.left} left on the ground`)
+  ];
+});
+
+// A stride is `frames()` wide, so on a slow frame or under a swift brew it is
+// wider than the span under the feet. The walk home used to look only under
+// the feet, and a body that fast stepped clean over single grains between two
+// looks -- the exact thing a sweep is for. The step ends on the next column
+// with something in it instead.
+group('a fast body steps on to the next grain, never over it', async () => {
+  oneHauler();
+  window.__levels({ haulCarryLevel: 9 });
+  window.__tune('HAUL_BASE', 40);            // a stride many columns wide
+  const s0 = state();
+  const spots = [];
+  for (let x = s0.pitX - 1000; x < s0.pitX - 100; x += P * 7) spots.push(x);
+  for (const x of spots) window.__pile(x, 1);
+  run(1);                                    // and let them settle: a grain still rolling is not on the ground
+  window.__place('hauler', spots[0]);
+  run(0.1);
+  const cap = state().haulCap;
+  const r = firstToss();
+  window.__tune('HAUL_BASE', 1.8);
+  window.__crew(0, 0);
+  const want = Math.min(cap, spots.length);
+  return [
+    ok(r.tossed, 'the load is tipped', `${r.took} grains`),
+    ok(r.took === want, 'with every grain on the way home in it',
+       `${r.took} of ${want} (${r.left} left, hands hold ${cap})`)
+  ];
+});
+
+// A grain beside a laden body walking home is that body's, whoever claimed it.
+//
+// A claim is a target for empty hands, so six bodies do not converge on one
+// shard. It was also honored by the sweep, and that put a grain the rock had
+// just thrown down beside a laden body in the hands of an empty one at the far
+// end of the yard: the body on the spot stepped over it and the other walked
+// the length of the world for it. The body on the spot takes it; the claimant
+// sees its column bare and picks again.
+group('the body on the spot takes a grain another has set off for', async () => {
+  window.__reset();
+  window.__crew(0, 2);
+  quickCrew();
+  window.__clearFloor();
+  run(0.2);
+  const s0 = state();
+  const far = s0.pitX - 1000, next = far + P * 8;
+  window.__pile(far, 1);
+  window.__pile(next, 1);
+  run(1);
+  // where the second grain actually came to rest -- a grain settles a column
+  // or so from where it was dropped
+  let c = -1;
+  for (let k = Math.floor((next - s0.floorX) / P) - 3; k <= Math.floor((next - s0.floorX) / P) + 3; k++) if (at(floor, k, 0)) c = k;
+  const [a, b] = yard.S.workers.filter(w => w.type === 'hauler');
+  a.x = far; a.claim = -1; a.goal = 'seek';        // stood on its target
+  b.x = s0.pitX - 100; b.claim = -1; b.goal = 'seek';   // at the lip end, empty, and it will claim `next`
+  // Watched frame by frame: which body takes the second grain, and whether the
+  // other one ever stood on a claim to a bare column.
+  let byA = false, byB = false, bClaimed = false, stuck = 0;
+  for (let i = 0; i < 20 * 60 && !(byA || byB); i++) {
+    run(1 / 60);
+    if (b.claim === c) bClaimed = true;
+    if (b.claim === c && b.carry > 0) byB = true;
+    if (a.carry >= 2) byA = true;
+    if (b.claim >= 0 && !at(floor, b.claim, 0)) stuck++;
+  }
+  window.__crew(0, 0);
+  return [
+    ok(bClaimed, 'the far body sets off for the second grain'),
+    ok(byA, 'but the body already beside it takes it on its way home'),
+    ok(!byB, 'not the one that set off for it from the far end'),
+    ok(stuck <= 1, 'and that one drops the claim the frame the column goes bare',
+       `${stuck} frames on a bare claim`)
   ];
 });
