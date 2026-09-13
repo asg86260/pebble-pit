@@ -81,6 +81,11 @@ group('a full hole does not send the crew home any more', async () => {
   window.__levels({ rockhandSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
   window.__give(999999);                     // far more than the hole holds
   runUntil(() => state().riftOpen, 30);
+  // And more on the ground than forty seconds of carrying can shift, so what
+  // is left lying at the end is a fact about supply and not about pace. Three
+  // miners' worth used to be enough; a crew that no longer walks past dust
+  // cleared it to the last grain.
+  window.__pile(state().rockX + 200, 3000);
   const before = state();
   run(40);                                   // long enough for a stopped yard to empty
   const after = state();
