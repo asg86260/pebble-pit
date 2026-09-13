@@ -17,7 +17,7 @@ window.__seed(seed); window.__crew(0, 0, n, 0); window.__fullSites(); window.__t
 if (lvl) window.__levels({ quarryPaceLevel: lvl });
 const col = w => q.colOfX(w.x + 6);
 const who = () => S.workers.filter(w => w.type === 'quarrier').map(w =>
-  `${w.goal}${w.resting ? '~' : ''}@${col(w)} cell=${w.cell} run=${(w.run || []).join('/')} in=${Math.round((w.next || 0) - yard.clock.now())}${w.route ? ' R' : ''}${w.onBuild ? ' B' : ''}${w.wanting ? ' K' : ''}${w.trained ? ' T' : ''}${w.holding ? ' H' : ''}`).join(' | ') + ' muck=' + smog.quarryMuck();
+  `${w.goal}${w.resting ? '~' : ''}@${col(w)} cell=${w.cell} run=${(w.run || []).join('/')} in=${Math.round((w.next || 0) - yard.clock.now())}${w.route ? ' R:' + (w.route[0] && w.route[0].along ? w.route[0].along.key : '?') + '@' + Math.round(w.y) : ''}${w.onBuild ? ' B' : ''}${w.wanting ? ' K' : ''}${w.trained ? ' T' : ''}${w.holding ? ' H' : ''}`).join(' | ') + ' muck=' + smog.quarryMuck();
 const dt = +(process.env.DT || 0.5);
 for (let t = 0; t < secs; t += dt) {
   window.__fast(dt);

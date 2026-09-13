@@ -11,10 +11,22 @@ const file = new URL('../../shots/cut-refresh.json', import.meta.url);
 const who = () => S.workers.filter(w => w.type === 'quarrier')
   .map(w => `${w.goal}@${Math.round(w.x)},${Math.round(w.y)} cell=${w.cell} route=${w.route ? 'y' : '-'} rest=${!!w.resting}`);
 if (process.argv[2] === 'load') {
-  localStorage.setItem('boulder-clicker/v4', readFileSync(file, 'utf8'));
+  const raw = JSON.parse(readFileSync(file, 'utf8'));
+  // CREW=-1 loads the save with its headcount one short of its people, the
+  // disagreement the stuck-yard fixture carried.
+  if (process.env.CREW) raw.crew += +process.env.CREW;
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
   yard.restore();
+  // The walk is laid out partway through the restore; if a fact read after
+  // that moves it, the cut is somewhere else on the next frame and every body
+  // saved down it is standing in solid ground.
+  const { quarry } = await import('../../src/state.js');
+  const x0 = quarry.x;
+  yard.world.resite();
+  console.log('quarry.x after restore', x0, 'after a second resite', quarry.x, 'crew', S.crew, 'bodies', S.workers.length);
   console.log('loaded    ', S.quarryTotal, S.quarryOpen, who());
-  for (let i = 1; i <= 6; i++) { window.__fast(10); console.log(`+${i * 10}s`, S.quarryTotal, who()); }
+  const step = +(process.env.STEP || 10), n = +(process.env.N || 6);
+  for (let i = 1; i <= n; i++) { window.__fast(step); console.log(`+${(i * step).toFixed(1)}s`, S.quarryTotal, who()); }
 } else {
   const secs = +process.argv[3] || 40, n = +process.argv[4] || 3, lvl = +process.argv[5] || 0;
   window.__seed(20250830); window.__crew(0, 0, n, 0); window.__fullSites(); window.__tip(90000);
