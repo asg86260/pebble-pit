@@ -13,7 +13,7 @@
 // save's against. This file stamps one before the yard loads -- a dynamic
 // import, so the stamp is there when version.js reads it -- and the version
 // boundary check below has something to be newer than.
-globalThis.__BUILD__ = { hash: 'test000', date: '2026-09-12' };
+globalThis.__BUILD__ = { version: '0.0.0', hash: 'test000', date: '2026-09-12' };
 const { group, ok, state, run, yard } = await import('./helpers.mjs');
 
 const { persist, restore, exportSave, importSave, bootYard } = await import('../src/persist.js');

@@ -1,16 +1,17 @@
 import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// The build is named after the commit it was made from, and the day. See
-// src/version.js for who reads it. A checkout with no git behind it -- a
-// tarball, a zip somebody was handed -- builds as "unknown" rather than not at
-// all.
+// The build is named after the version in package.json, the commit it was
+// made from, and the day. See src/version.js for who reads it. A checkout
+// with no git behind it -- a tarball, a zip somebody was handed -- builds as
+// "unknown" rather than not at all.
 function build() {
   let hash = 'unknown';
   try { hash = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
-  return { hash, date: new Date().toISOString().slice(0, 10) };
+  const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+  return { version, hash, date: new Date().toISOString().slice(0, 10) };
 }
 
 // The same stamp, as a file beside index.html, for the desk (wave-desk-sound,
@@ -27,7 +28,7 @@ function stampFile(stamp) {
 }
 
 export default defineConfig(({ command }) => {
-  const stamp = command === 'build' ? build() : { hash: 'dev', date: '' };
+  const stamp = command === 'build' ? build() : { version: '', hash: 'dev', date: '' };
   return {
     // Relative, because the desk loads dist/ over file:// and an absolute
     // /assets path is the root of the disk there.

@@ -7,28 +7,33 @@
 // it instead pushes whatever `bun run desk:build` left in release/, one
 // artifact per channel by shape, for the people who want it as an app.
 //
-// It refuses to do anything at all without ITCH_TARGET (`user/game`) in the
-// environment, so a stray run can never publish to somebody's page by
-// accident. Butler itself is installed and logged in by hand; this only calls
-// it.
+// The page it pushes to is `config.itch` in package.json -- this game's own
+// page, so a plain run goes where it should; ITCH_TARGET in the environment
+// overrides it for a test page. Butler itself is installed and logged in by
+// hand; this only calls it. `bun run release` is the front door -- it bumps
+// the version and tags before coming through here.
 //
-//   ITCH_TARGET=somebody/boulder bun run publish              # the browser build
-//   ITCH_TARGET=somebody/boulder bun run publish -- --desktop # the packaged apps
+//   bun run publish              # the browser build
+//   bun run publish -- --desktop # the packaged apps
 
-import { readdirSync, statSync, existsSync } from 'node:fs';
+import { readdirSync, statSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const target = process.env.ITCH_TARGET;
+const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+const target = process.env.ITCH_TARGET || pkg.config?.itch;
 if (!target) {
-  console.error('publish: set ITCH_TARGET=user/game first; nothing was pushed');
+  console.error('publish: no page to push to -- set config.itch in package.json or ITCH_TARGET');
   process.exit(2);
 }
 const desktop = process.argv.includes('--desktop');
 
+// Every push is labeled with the version, so the itch dashboard and the
+// settings sheet agree on what a build is called.
 function push(file, channel) {
-  console.log(`butler push ${file} ${target}:${channel}`);
-  const r = spawnSync('butler', ['push', file, `${target}:${channel}`], { stdio: 'inherit' });
+  console.log(`butler push ${file} ${target}:${channel} --userversion ${pkg.version}`);
+  const r = spawnSync('butler', ['push', file, `${target}:${channel}`, '--userversion', pkg.version],
+    { stdio: 'inherit', shell: process.platform === 'win32' });
   if (r.status !== 0) console.error(`publish: ${file} did not push`);
   return r.status === 0;
 }
