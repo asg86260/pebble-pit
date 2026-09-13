@@ -186,10 +186,37 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
 
-// wave-desk-sound, track B, stood down: the sound is switched off for now.
-// The yard's audio (audio.js) is never woken -- `wakeAudio` is not hung on
-// the first pointer gesture, so every `sfx` call returns before it makes a
-// sound -- and the sheet carries no switch or slider for it. The preferences
-// (`muted`, `volume`) stay in prefs.js so a save written under the old sheet
-// still reads, and the module and its tests stay whole for when the sounds
-// are worth hearing again.
+// wave-desk-sound, track B: the mute. The one line outside audio.js that knows
+// a context exists is the wake on the first pointer gesture -- the browser
+// allows nothing before one, and audio.js queues nothing before it either.
+// The switch itself is a preference and not a fact about the run: it survives
+// a reset and does not travel with a save (prefs.js). The switch says what is
+// in force, the way the motion switch does, and is put in order on open by its
+// own observer, guarded like the one above.
+import { pref } from './prefs.js';
+import { wakeAudio, muteAudio, setVolume } from './audio.js';
+
+const soundEl = document.getElementById('sound');
+function saySound() {
+  soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on';
+}
+soundEl.addEventListener('click', () => {
+  setPref('muted', !pref('muted'));
+  muteAudio(pref('muted'));
+  saySound();
+});
+muteAudio(pref('muted'));
+// The slider writes the preference on every move and the level follows; it
+// reads the preference back when the sheet opens, the way the switches do.
+const volumeEl = document.getElementById('volume');
+volumeEl.addEventListener('input', () => {
+  setPref('volume', +volumeEl.value);
+  setVolume(pref('volume'));
+});
+setVolume(pref('volume'));
+window.addEventListener('pointerdown', wakeAudio, { once: true });
+if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
+  if (!sheet.hidden) { saySound(); volumeEl.value = pref('volume'); }
+}).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
+saySound();
+volumeEl.value = pref('volume');

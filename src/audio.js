@@ -4,66 +4,56 @@
 // (DESIGN.md, "The sound of the yard"). Modules never build a node; they say
 // what happened -- `sfx('stone', { x, hard })` at the spot where a pick met
 // rock -- and this file alone decides whether that survives the window and the
-// ceiling, and what it sounds like if it does. The beds (rain, wind, the
-// machines, the rift) are not events at all: `stepAudio` reads the yard once a
-// frame and sets their targets, so a bed cannot be left stuck on by an edge
-// case that forgot to send its stop.
+// ceiling, and what it sounds like if it does. There is no bed: nothing hums,
+// hisses or drones between the strikes, so a still yard is silent.
 //
 // It is the only file in the repo that has heard of an AudioContext, and it is
 // written in two halves that never mix. The **decision half** -- the fold
-// windows, the ceilings, the voice cap, the bed targets, the counters -- runs
-// on the game's clock and needs no context at all, which is what lets the node
-// yard assert it: given forty grains in one frame, how many voices fire. The
-// **context half** turns a decision into nodes, and is skipped wholesale where
-// there is no context, which is every check and every page before the first
-// gesture. Nothing is queued before that gesture: a yard that coughed up its
-// whole first second the moment the browser allowed it would not be the yard.
+// windows, the ceilings, the voice cap, the counters -- runs on the game's
+// clock and needs no context at all, which is what lets the node yard assert
+// it: given forty grains in one frame, how many voices fire. The **context
+// half** turns a decision into a sound, and is skipped wholesale where there is
+// no context, which is every check and every page before the first gesture.
+// Nothing is queued before that gesture: a yard that coughed up its whole
+// first second the moment the browser allowed it would not be the yard.
+//
+// A strike is not a node graph. It is a recipe (`SND_STONE` and the rest, in
+// config/sound.js) rendered sample by sample into a buffer -- the sfxr way,
+// and the same arithmetic the hit bench runs -- so the pixel stage (a bit
+// depth and a sample-rate divide) is a line of arithmetic, and a recipe landed
+// by ear on the bench ships as it was heard.
 
 import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATIO,
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
-         SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX, SND_ATTACK_S,
-         SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES,
-         SND_STONE, SND_WOOD, SND_METAL, SND_WATER_SHOT, SND_AIR_SHOT, SND_RIFT_SHOT,
+         SND_JITTER_CENTS, SND_JITTER_DB, SND_JITTER_MS, SND_PAN_MAX,
+         SND_RELEASE_TAILS, SND_STEAL_S, SND_VOICES, SND_RATE,
+         SND_STONE, SND_WOOD, SND_METAL, SND_RIFT,
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL, SND_CRIT_RATIO, SND_CRIT_SHARE,
          SND_FOLD_MS, SND_FOLD_GAIN_DB, SND_FOLD_GAIN_MAX_DB, SND_FOLD_WIDEN,
-         SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_DUCK_DB, SND_DUCK_S, SND_DUCK_IN_S,
-         SND_DUCK_OUT_S, SND_BED_S, SND_BED_FOLLOW_S, SND_BED_STEP,
-         SND_WATER_LEVEL, SND_WATER_HZ, SND_WATER_WANDER, SND_WATER_WANDER_S,
-         SND_DROWNED_LEVEL, SND_AIR_LEVEL, SND_AIR_FLOOR, SND_AIR_SMOG, SND_AIR_HZ_LO,
-         SND_AIR_HZ_HI, SND_AIR_FOLLOW_S, SND_RIFT_LEVEL, SND_RIFT_HZ,
-         SND_RIFT_BEAT_CENTS, SND_RIFT_FLOOR, SND_HUM_LEVEL, SND_HUM_HZ, SND_HUM_Q,
-         SND_MANNED_MS, SND_NOISE_S, SND_PINK, SND_PINK_WHITE, SND_PINK_GAIN,
-         P, SMOG_CAP, RIFT_W0, RIFT_WMAX } from './config.js';
-import { S, rift } from './state.js';
+         SND_FOLD_PER_S, SND_PUNCT_PER_S } from './config.js';
+import { S } from './state.js';
 import { now } from './clock.js';
 import { rand, seed, stream } from './rng.js';
-import { gust } from './wind.js';
-import { MACHINES, machine } from './machines.js';
 
 // --- the decision half ---------------------------------------------------------
 
 let awake = false;
 let muted = false;
 
-// What has been decided since wake, and where each bed stands. `byClass` is
-// what the yard *asked for*, by class -- the same reading the stub gave, so a
-// check written against it keeps its meaning -- and `firedBy` is what got
-// through. `beds` is the level each bed is being held at this frame, which
-// eases toward what the yard says over SND_BED_S; `wants` is what the yard
-// says. `pending` is open fold windows, which is the backlog, and is meant to
-// read as nought a window after the yard goes quiet.
+// What has been decided since wake. `byClass` is what the yard *asked for*, by
+// class, and `firedBy` is what got through. `pending` is open fold windows,
+// which is the backlog, and is meant to read as nought a window after the yard
+// goes quiet.
 const decisions = {
-  fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0, ducked: false,
+  fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0,
   byClass: { hand: 0, fold: 0, punct: 0 },
-  firedBy: { hand: 0, fold: 0, punct: 0 },
-  beds:  { water: 0, air: 0, rift: 0, hum: 0 },
-  wants: { water: 0, air: 0, rift: 0, hum: 0 }
+  firedBy: { hand: 0, fold: 0, punct: 0 }
 };
 
 const CLASSES = new Set(['hand', 'fold', 'punct']);
 const SPEC = { stone: () => SND_STONE, wood: () => SND_WOOD, metal: () => SND_METAL,
-               water: () => SND_WATER_SHOT, air: () => SND_AIR_SHOT, rift: () => SND_RIFT_SHOT };
+               rift: () => SND_RIFT };
 
 // An open fold window per voice: the one sound it will emit when it closes,
 // and everything folded into it so far, so the emission can stand for all of
@@ -75,13 +65,12 @@ const recent = { fold: new Map(), punct: new Map() };
 // Every one-shot still sounding, for the cap. `env` is the context half's
 // handle on it, or null on a yard with no context.
 const active = [];
-let duckUntil = -Infinity;
 let lastT = -Infinity;
 
 // The game's clock is turned back by a new game or a reseeded yard, and
 // everything here is a time on that clock: a window due, a strike ringing, a
-// fire in the last second, a duck coming off. All of it belonged to the yard
-// that is gone, so it goes with it -- fading, where there is anything to fade.
+// fire in the last second. All of it belonged to the yard that is gone, so it
+// goes with it -- fading, where there is anything to fade.
 function clock() {
   const t = now();
   if (t < lastT) {
@@ -90,7 +79,6 @@ function clock() {
     active.length = 0;
     recent.fold.clear();
     recent.punct.clear();
-    duckUntil = -Infinity;
     decisions.pending = 0;
   }
   lastT = t;
@@ -131,32 +119,39 @@ function makeRoom() {
   }
 }
 
+// How long a recipe sounds, in seconds: its longest envelope run out, plus the
+// thump if it carries one.
+function ringOf(spec, o) {
+  const longest = Math.max(spec.decay, spec.noiseMs, spec.slideMs) / 1000;
+  return longest * SND_RELEASE_TAILS + (o.big ? SND_THUMP_S : 0);
+}
+
 // One decided strike: the level it will take, the room it needs, and -- where
-// there is a context -- the nodes. `n` is how many events this one stands for,
+// there is a context -- the sound. `n` is how many events this one stands for,
 // and a folded strike was counted when its window opened, which is when the
-// decision was made.
+// decision was made. The jitter is drawn here, from the yard's own word, so
+// the node yard and the browser draw the same numbers whether or not anything
+// is rendered.
 function fire(voice, o, cls, t, n = 1, counted = false) {
   const spec = (SPEC[voice] || SPEC.stone)();
   const foldDb = Math.min(SND_FOLD_GAIN_MAX_DB, SND_FOLD_GAIN_DB * Math.log2(n));
-  const level = spec.level * db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB);
+  const level = spec.gain * db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);
   const widen = 1 + SND_FOLD_WIDEN * Math.log2(n);
   const delay = rand() * SND_JITTER_MS;
-  const detune = (rand() * 2 - 1) * SND_JITTER_CENTS;
-  const ring = SND_ATTACK_S + spec.decay * SND_RELEASE_TAILS +
-               (o.big ? SND_THUMP_S : 0);
+  const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary;
+  const ring = ringOf(spec, o);
   makeRoom();
   if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
   active.push(v);
-  if (ctx) v.env = play(voice, spec, o, { level, widen, delay, detune, ring });
+  if (ctx) v.env = play(spec, o, { level, widen, delay, detune, ring });
 }
 
 // Something physically happened at world x. `voice` is one of stone, wood,
-// metal, water, air, rift; `opts` is { x, hard, big, crit, cls }, with cls one
-// of 'hand' (never folded, never stolen, never ducked), 'fold' (the default:
-// a handful of gravel is one sound, not forty) or 'punct' (rare by
-// construction, and allowed to duck the beds). Before the first gesture it is
-// a no-op and nothing is queued.
+// metal, rift; `opts` is { x, hard, big, crit, cls }, with cls one of 'hand'
+// (never folded, never stolen), 'fold' (the default: a handful of gravel is
+// one sound, not forty) or 'punct' (rare by construction, with a ceiling of
+// its own). Before the first gesture it is a no-op and nothing is queued.
 export function sfx(voice, opts = {}) {
   if (!awake) return;
   const cls = CLASSES.has(opts.cls) ? opts.cls : 'fold';
@@ -167,7 +162,6 @@ export function sfx(voice, opts = {}) {
     if (over(voice, cls, t, SND_PUNCT_PER_S)) { decisions.dropped++; return; }
     mark(voice, cls, t);
     fire(voice, opts, cls, t);
-    duckUntil = t + SND_DUCK_S * 1000;
     return;
   }
   const w = windows.get(voice);
@@ -196,45 +190,9 @@ export function sfx(voice, opts = {}) {
   decisions.pending = windows.size;
 }
 
-// What the yard says each bed should be, in [0, 1], read fresh every frame.
-// The one silence in the game is honored literally here: while the body lies
-// flat after the boulder lands, every bed wants nought -- not even wind --
-// until it gets up.
-function wants() {
-  const w = decisions.wants;
-  // Held, the yard is still drawn but nothing in it is happening, and a bed
-  // that hissed on under the sheet would be the game going on without you.
-  if (S.intro === 'down' || S.paused) { w.water = w.air = w.rift = w.hum = 0; return; }
-  w.water = clamp((S.raining ? 1 : 0) + (S.drowned ? SND_DROWNED_LEVEL : 0));
-  // The wind you can see is the wind you can hear: one number, `gust()`, and
-  // the sky's dirt on top of it.
-  const blow = Math.abs(gust());
-  const dirt = clamp((S.haze || 0) / SMOG_CAP);
-  w.air = clamp(SND_AIR_FLOOR + (1 - SND_AIR_FLOOR) * blow + SND_AIR_SMOG * dirt);
-  // The rift grows from the day it tears to the day the hole gives way, and
-  // the abyss standing in the pit after that is the whole of it.
-  if (!S.riftOpen) w.rift = 0;
-  else if (S.drowned) w.rift = 1;
-  else {
-    const grown = clamp((rift.w / P - RIFT_W0) / Math.max(1, RIFT_WMAX - RIFT_W0));
-    w.rift = SND_RIFT_FLOOR + (1 - SND_RIFT_FLOOR) * grown;
-  }
-  // A machine hums while somebody is standing at it, which is the rule every
-  // machine already runs by: an unmanned one produces nothing and smokes
-  // nothing, so it says nothing either.
-  let manned = 0;
-  const t = now();
-  for (const m of MACHINES) {
-    const r = machine(m.key);
-    if (r && r.bought && t - (r.mannedAt || 0) <= SND_MANNED_MS) manned++;
-  }
-  w.hum = MACHINES.length ? manned / MACHINES.length : 0;
-}
-
-// Once a frame: the windows that have closed, the voices that have finished,
-// the beds moving toward what the yard says, and the duck coming off. `dt` is
-// the frame in milliseconds, the same number every other step gets.
-export function stepAudio(dt) {
+// Once a frame: the windows that have closed and the voices that have
+// finished. With no bed there is nothing here that needs the frame's length.
+export function stepAudio() {
   if (!awake) return;
   const t = clock();
   for (const [voice, w] of windows) {
@@ -244,16 +202,7 @@ export function stepAudio(dt) {
   }
   decisions.pending = windows.size;
   for (let i = active.length - 1; i >= 0; i--) if (t >= active[i].until) active.splice(i, 1);
-  wants();
-  // A linear crossfade over SND_BED_S, whatever the frame rate: the bed moves
-  // by the frame's share of the crossfade and no more.
-  const rate = dt / (SND_BED_S * 1000);
-  const b = decisions.beds, w = decisions.wants;
-  for (const k in b) b[k] += clamp(w[k] - b[k], -rate, rate);
-  const ducked = t < duckUntil;
-  const wasDucked = decisions.ducked;
-  decisions.ducked = ducked;
-  if (ctx) follow(ducked, wasDucked);
+  if (ctx) follow();
 }
 
 // The first real pointer gesture; until then the browser allows nothing, and
@@ -276,11 +225,11 @@ export function muteAudio(on) {
   nodes.master.gain.setTargetAtTime(masterLevel(), ctx.currentTime, SND_MUTE_S / 3);
 }
 
-// The slider. SND_MASTER is the level the whole mix was pitched at -- quiet,
-// and satisfying at that -- and the slider is a share of it rather than a
-// second absolute: all the way up is still the designed level, not louder,
-// so nothing a player can reach turns the yard into the thing the mix law
-// refuses. Ramped like the mute, so a dragged slider is not a run of clicks.
+// The slider. SND_MASTER is the level the whole mix was pitched at and the
+// slider is a share of it rather than a second absolute: all the way up is
+// still the designed level, not louder, so nothing a player can reach turns
+// the yard into the thing the mix law refuses. Ramped like the mute, so a
+// dragged slider is not a run of clicks.
 let volume = 1;
 export function setVolume(v) {
   volume = Math.max(0, Math.min(1, +v || 0));
@@ -292,6 +241,13 @@ const masterLevel = () => muted ? 0 : SND_MASTER * volume;
 // The decision half, for the node tier.
 export function audioDecisions() { return decisions; }
 
+// The renderer, for the bench and tools/listen.mjs: a recipe to samples, with
+// no context and no jitter. What the game plays is this with the jitter drawn
+// by `fire`.
+export function renderStrike(spec, o = {}, shape = { level: spec.gain, widen: 1, detune: 0 }) {
+  return render(spec, o, shape);
+}
+
 // --- the context half ------------------------------------------------------------
 // Nothing below runs without a context, and nothing above depends on it.
 
@@ -300,8 +256,7 @@ const nodes = {};
 
 // Master chain, in order: yard bus -> the lowpass that is the palette -> the
 // limiter that makes the endgame yard the same loudness as the opening one ->
-// master gain. The beds sit on their own bus under the yard's, which is what
-// punctuation ducks.
+// master gain.
 function build() {
   const t = ctx.currentTime;
   const master = ctx.createGain();
@@ -325,84 +280,10 @@ function build() {
 
   const yard = ctx.createGain();
   yard.connect(lowpass);
-  const beds = ctx.createGain();
-  beds.connect(yard);
-
-  Object.assign(nodes, { master, limiter, lowpass, yard, beds, noise: makeNoise() });
-  nodes.water = bed('lowpass', SND_WATER_HZ, 1);
-  nodes.air = bed('lowpass', SND_AIR_HZ_LO, 1);
-  nodes.hum = bed('bandpass', SND_HUM_HZ, SND_HUM_Q);
-  nodes.rift = riftBed();
+  Object.assign(nodes, { master, limiter, lowpass, yard });
 }
 
-// One buffer, a few seconds of pinkish noise seeded from the run, read from a
-// different offset by every strike: an unlimited supply of non-identical noise
-// for nothing, and a seeded run has a seeded soundtrack. It is a stream of its
-// own rather than `rand()` because it draws two hundred thousand numbers at
-// once, and taking those from the yard's word would put the browser's run off
-// the node yard's from the first gesture on (see `stream` in rng.js).
-function makeNoise() {
-  const n = Math.floor(SND_NOISE_S * ctx.sampleRate);
-  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
-  const out = buf.getChannelData(0);
-  const poles = SND_PINK.map(() => 0);
-  const noise = stream(seed());
-  for (let i = 0; i < n; i++) {
-    const white = noise() * 2 - 1;
-    let pink = 0;
-    for (let p = 0; p < poles.length; p++) {
-      poles[p] = SND_PINK[p][0] * poles[p] + white * SND_PINK[p][1];
-      pink += poles[p];
-    }
-    out[i] = (pink + white * SND_PINK_WHITE) * SND_PINK_GAIN;
-  }
-  return buf;
-}
-
-// A looping read of the noise, starting somewhere in it.
-function noiseSource(loop) {
-  const src = ctx.createBufferSource();
-  src.buffer = nodes.noise;
-  src.loop = loop;
-  return src;
-}
-
-// A bed made of the noise: source -> filter -> gain, held at nought until the
-// yard says otherwise. Started once and left running; its gain is the whole of
-// whether it is there.
-function bed(type, hz, q) {
-  const src = noiseSource(true);
-  const filter = ctx.createBiquadFilter();
-  filter.type = type;
-  filter.frequency.value = hz;
-  filter.Q.value = q;
-  const gain = ctx.createGain();
-  gain.gain.value = 0;
-  src.connect(filter); filter.connect(gain); gain.connect(nodes.beds);
-  src.start(ctx.currentTime, rand() * SND_NOISE_S);
-  return { src, filter, gain, sent: 0 };
-}
-
-// The one voice that is not struck: two very low sines a few cents apart,
-// beating slowly. The beat is the flowing interference the pit already draws.
-function riftBed() {
-  const gain = ctx.createGain();
-  gain.gain.value = 0;
-  gain.connect(nodes.beds);
-  const oscs = [SND_RIFT_HZ, SND_RIFT_HZ * cents(SND_RIFT_BEAT_CENTS)].map(hz => {
-    const o = ctx.createOscillator();
-    o.type = 'sine';
-    o.frequency.value = hz;
-    o.connect(gain);
-    o.start();
-    return o;
-  });
-  return { oscs, gain, sent: 0 };
-}
-
-// A parameter told where to go, and only when where to go has moved: the
-// crossfade is the node's to do with a time constant, not the frame's to do a
-// step at a time.
+// A parameter told where to go, and only when where to go has moved.
 function aim(param, holder, key, value, tau, step) {
   const last = holder[key];
   if (last !== undefined && Math.abs(value - last) < step) return;
@@ -410,30 +291,9 @@ function aim(param, holder, key, value, tau, step) {
   param.setTargetAtTime(value, ctx.currentTime, tau);
 }
 
-// The beds and the master follow the decisions, once a frame.
-function follow(ducked, wasDucked) {
-  const b = decisions.beds;
-  const tau = SND_BED_FOLLOW_S;
-  aim(nodes.water.gain.gain, nodes.water, 'sent', b.water * SND_WATER_LEVEL, tau, SND_BED_STEP);
-  aim(nodes.air.gain.gain, nodes.air, 'sent', b.air * SND_AIR_LEVEL, tau, SND_BED_STEP);
-  aim(nodes.hum.gain.gain, nodes.hum, 'sent', b.hum * SND_HUM_LEVEL, tau, SND_BED_STEP);
-  aim(nodes.rift.gain.gain, nodes.rift, 'sent', b.rift * SND_RIFT_LEVEL, tau, SND_BED_STEP);
-  // The rain's lowpass wanders, so it is a band that opens and closes rather
-  // than a fixed hiss; the wind's follows the gust, so a lull is dull and a
-  // gust is bright, within the palette.
-  const t = now() / 1000;
-  const wander = SND_WATER_HZ * (1 + SND_WATER_WANDER * Math.sin(t * 2 * Math.PI / SND_WATER_WANDER_S));
-  aim(nodes.water.filter.frequency, nodes.water, 'hz', wander, SND_WATER_WANDER_S / 4, SND_BED_STEP * SND_WATER_HZ);
-  const blow = Math.abs(gust());
-  aim(nodes.air.filter.frequency, nodes.air, 'hz', SND_AIR_HZ_LO + (SND_AIR_HZ_HI - SND_AIR_HZ_LO) * blow,
-      SND_AIR_FOLLOW_S, SND_BED_STEP * (SND_AIR_HZ_HI - SND_AIR_HZ_LO));
-  // The duck: quick in, gentle out.
-  if (ducked !== wasDucked) {
-    nodes.beds.gain.setTargetAtTime(ducked ? db(-SND_DUCK_DB) : 1, ctx.currentTime,
-                                    ducked ? SND_DUCK_IN_S : SND_DUCK_OUT_S);
-  }
-  // And the two knobs on the panel, live.
-  aim(nodes.master.gain, nodes, 'masterSent', muted ? 0 : SND_MASTER, SND_MUTE_S / 3, SND_BED_STEP);
+// The two knobs on the panel, live, once a frame.
+function follow() {
+  aim(nodes.master.gain, nodes, 'masterSent', masterLevel(), SND_MUTE_S / 3, 0.01);
   aim(nodes.lowpass.frequency, nodes, 'cornerSent', SND_LOWPASS_HZ, SND_MUTE_S, 1);
 }
 
@@ -444,36 +304,98 @@ function panOf(x) {
   return clamp((x - mid) / (S.viewW / 2), -1, 1) * SND_PAN_MAX;
 }
 
-// A bandpass over the noise at hz, into `to`, at `share` of the level.
-function band(hz, q, to, share, at, stop) {
-  const src = noiseSource(false);
-  const f = ctx.createBiquadFilter();
-  f.type = 'bandpass';
-  f.frequency.value = hz;
-  f.Q.value = q;
-  let tail = f;
-  if (share !== 1) { tail = ctx.createGain(); tail.gain.value = share; f.connect(tail); }
-  src.connect(f); tail.connect(to);
-  src.start(at, rand() * (SND_NOISE_S - 1));
-  src.stop(stop);
-  return src;
+// The grit's and the click's noise: a stream of its own rather than `rand()`,
+// because a strike draws thousands of numbers and taking those from the
+// yard's word would put the browser's run off the node yard's from the first
+// gesture on (see `stream` in rng.js). Seeded from the run, so a seeded run
+// has a seeded soundtrack.
+let noise = null;
+
+// A recipe rendered to samples at SND_RATE. The bench's `render`, line for
+// line, with the yard's meanings laid over it: `hard` moves the body and the
+// grit down and dulls the grit; `crit` adds a second body an octave down;
+// `big` puts the thump under it; a fold's `widen` opens the grit's band and
+// its `level` carries the fold gain. Everything is one pass over the buffer,
+// then the pixel stage, then the recipe's own lowpass and a soft clip.
+function render(spec, o, { level, widen, detune }) {
+  if (!noise) noise = stream(seed());
+  const SR = SND_RATE;
+  const hard = clamp(o.hard || 0);
+  const pitch = cents(detune) * (1 - hard * SND_HARD_DROP);
+  const len = Math.ceil(SR * (ringOf(spec, o) + 0.01));
+  const out = new Float32Array(len);
+  const bodyTau = spec.decay / 1000, noiseTau = spec.noiseMs / 1000, slideS = spec.slideMs / 1000;
+  const clickS = spec.clickMs / 1000;
+  const noiseQ = Math.max(0.1, spec.noiseQ * (1 - hard * SND_HARD_DULL) / widen);
+  // the grit: a state-variable bandpass over white noise
+  const gritHz = spec.noiseHz * (1 - hard * SND_HARD_DROP);
+  const f = 2 * Math.sin(Math.PI * Math.min(gritHz, SR / 4) / SR), qq = 1 / noiseQ;
+  let lo = 0, bp = 0;
+  // the front: a very short burst of noise through a one-pole highpass
+  const hpA = Math.exp(-2 * Math.PI * spec.clickHz / SR);
+  let hpY = 0, hpX = 0;
+  // the recipe's own lowpass, and the pixel stage's held sample
+  const lpA = 1 - Math.exp(-2 * Math.PI * spec.cut / SR);
+  let lp = 0, held = 0;
+  const steps = Math.pow(2, spec.bits - 1);
+  const hold = Math.max(1, spec.hold | 0);
+  let ph = 0, ph2 = 0, phT = 0;
+  const wave = ph => {
+    switch (spec.wave) {
+      case 'sine':   return Math.sin(ph * 2 * Math.PI);
+      case 'tri':    return 1 - 4 * Math.abs(ph - 0.5);
+      case 'square': return ph < spec.duty ? 1 : -1;
+      default:       return 2 * ph - 1;
+    }
+  };
+  for (let i = 0; i < len; i++) {
+    const t = i / SR;
+    // the body: the pitch falls (or rises) from hz * slide to hz over slideMs
+    const k = Math.min(1, t / slideS);
+    const hz = spec.hz * pitch * Math.pow(spec.slide, 1 - k);
+    ph += hz / SR; if (ph >= 1) ph -= 1;
+    const env = spec.level * Math.exp(-t / bodyTau);
+    let b = wave(ph) * env;
+    if (o.crit) {
+      ph2 += hz * SND_CRIT_RATIO / SR; if (ph2 >= 1) ph2 -= 1;
+      b += wave(ph2) * env * SND_CRIT_SHARE;
+    }
+    // the grit
+    const w = noise() * 2 - 1;
+    lo += f * bp; const hi = w - lo - qq * bp; bp += f * hi;
+    const n = bp * spec.noise * Math.exp(-t / noiseTau) * 0.8;
+    // the front
+    let c = 0;
+    if (t < clickS) { hpY = hpA * (hpY + w - hpX); hpX = w; c = hpY * spec.click * (1 - t / clickS) * 1.6; }
+    let s = (b + n + c) * level;
+    // the thump under a big one: a sine that tunes down as it goes
+    if (o.big) {
+      const fall = Math.min(1, t / SND_THUMP_S);
+      const thz = SND_THUMP_HZ * pitch * Math.pow(SND_THUMP_FALL, fall);
+      phT += thz / SR; if (phT >= 1) phT -= 1;
+      s += Math.sin(phT * 2 * Math.PI) * level * SND_THUMP_LEVEL *
+           Math.exp(-t / (SND_THUMP_S / SND_RELEASE_TAILS * 2));
+    }
+    // the pixel stage: quantize, then hold each sample for `hold` samples
+    if (i % hold === 0) held = Math.round(s * steps) / steps;
+    lp += lpA * (held - lp);
+    out[i] = Math.tanh(lp * 1.4);
+  }
+  return out;
 }
 
-// One strike, as nodes: source -> bandpass -> envelope -> pan -> the yard bus.
-// `hard` moves the band down and dulls it; `big` puts the sine thump under it;
-// `crit` adds an octave-down band under the same envelope -- body, not level.
-// Returns the envelope, which is the handle the cap fades if it takes this one.
-function play(voice, spec, o, { level, widen, delay, detune, ring }) {
-  const at = ctx.currentTime + delay / 1000;
-  const stop = at + ring;
-  const hard = clamp(o.hard || 0);
-  const hz = spec.hz * (1 - hard * SND_HARD_DROP) * cents(detune);
-  const q = Math.max(0.1, spec.q * (1 - hard * SND_HARD_DULL) / widen);
-
+// One strike, played: rendered, put in a buffer, panned to where it happened
+// and started `delay` from now. Returns the gain the cap fades if it takes
+// this one.
+function play(spec, o, { level, widen, delay, detune }) {
+  const data = render(spec, o, { level, widen, detune });
+  const buf = ctx.createBuffer(1, data.length, SND_RATE);
+  buf.copyToChannel(data, 0);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
   const env = ctx.createGain();
-  env.gain.setValueAtTime(0, at);
-  env.gain.linearRampToValueAtTime(level, at + SND_ATTACK_S);
-  env.gain.setTargetAtTime(0, at + SND_ATTACK_S, spec.decay);
+  env.gain.value = 1;
+  src.connect(env);
   let out = env;
   if (ctx.createStereoPanner) {
     const pan = ctx.createStereoPanner();
@@ -482,41 +404,8 @@ function play(voice, spec, o, { level, widen, delay, detune, ring }) {
     out = pan;
   }
   out.connect(nodes.yard);
-
-  const sources = [];
-  if (spec.q > 0) {
-    sources.push(band(hz, q, env, 1, at, stop));
-    if (spec.second) sources.push(band(hz * spec.second[0], q, env, spec.second[1], at, stop));
-    if (o.crit) sources.push(band(hz * SND_CRIT_RATIO, q, env, SND_CRIT_SHARE, at, stop));
-  } else {
-    // The rift's strike: the bed's two sines, struck.
-    for (const f of [hz, hz * cents(SND_RIFT_BEAT_CENTS)]) {
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = f;
-      osc.connect(env);
-      osc.start(at);
-      osc.stop(stop);
-      sources.push(osc);
-    }
-  }
-  if (o.big) {
-    // The thump: a sine that tunes down as it goes, under its own envelope,
-    // panned with the strike it sits under.
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(SND_THUMP_HZ * cents(detune), at);
-    osc.frequency.exponentialRampToValueAtTime(SND_THUMP_HZ * SND_THUMP_FALL, at + SND_THUMP_S);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(level * SND_THUMP_LEVEL, at + SND_ATTACK_S);
-    g.gain.setTargetAtTime(0, at + SND_ATTACK_S, SND_THUMP_S / SND_RELEASE_TAILS);
-    osc.connect(g); g.connect(out);
-    osc.start(at);
-    osc.stop(stop);
-    sources.push(osc);
-  }
-  return { env, sources };
+  src.start(ctx.currentTime + delay / 1000);
+  return { env, sources: [src] };
 }
 
 // A voice the cap took: a fade over a few milliseconds, never a stop.

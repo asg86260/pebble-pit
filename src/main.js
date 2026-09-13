@@ -27,8 +27,6 @@ import { sayStore } from './settings.js';   // wave-release, track A: the held s
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { tick } from './clock.js';
-import { stepAudio } from './audio.js';
-import { HELD_DT } from './config.js';
 
 // The window changed size: lay the world out again, and measure the board that
 // is standing in it. The layout is the game's; the measuring is the page's, and
@@ -83,9 +81,6 @@ function frame() {
     syncEnding();
     const t0 = mark();
     if (!S.paused) step();
-    // Held, the step does not run, but the sound has to be told so its beds
-    // can fade rather than freeze at whatever the yard was doing.
-    else stepAudio(HELD_DT);
     const t1 = mark();
     draw();
     const t2 = mark();

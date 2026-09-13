@@ -5,17 +5,17 @@
 // is the decision half of audio.js, which is written to run on the game's
 // clock with no AudioContext at all: given forty grains in one frame, how many
 // voices does it decide to fire; does the ceiling drop rather than defer; does
-// the player's own hand always get through; does a bed's level follow the
-// storm and come down over the crossfade rather than on a frame. There is no
+// the player's own hand always get through. There is no bed to follow anything
+// since the hits-only pass, so every group here is about strikes. There is no
 // AudioContext on this yard, and `wakeAudio` wakes the decisions without one.
 //
 // The counters are since wake and the module is one per process, so the
 // groups here read differences, and the first group -- which is about nothing
 // being counted before the wake -- has to be first.
 
-import { group, ok, state, run, runUntil, makeItRain, openSites, yard } from './helpers.mjs';
+import { group, ok, run, runUntil } from './helpers.mjs';
 import { sfx, stepAudio, wakeAudio, muteAudio, audioDecisions } from '../src/audio.js';
-import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_BED_S, SND_VOICES,
+import { SND_FOLD_MS, SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_VOICES,
          SOUND_KNOBS } from '../src/config/sound.js';
 
 const FRAME = 1 / 60;
@@ -38,21 +38,19 @@ group('before the wake nothing is counted, and nothing is queued', async () => {
     ok(typeof AudioContext === 'undefined', 'there is no AudioContext on this yard'),
     ok(after.fired === 0 && after.byClass.hand === 0 && after.byClass.punct === 0,
        'nothing asked for before the wake is counted', JSON.stringify(after.byClass)),
-    ok(after.pending === 0 && before.pending === 0, 'and nothing is waiting to fire'),
-    ok(after.beds.water === 0 && after.beds.air === 0, 'and no bed has moved',
-       JSON.stringify(after.beds))
+    ok(after.pending === 0 && before.pending === 0, 'and nothing is waiting to fire')
   ];
 });
 
-group('the wake wakes the decisions without a context', async () => {
+group('the wake wakes the decisions without a context, and a still yard asks for nothing', async () => {
   wakeAudio();
   muteAudio(false);
+  const before = snap();
   run(1);                                        // a second of yard, awake
   const a = snap();
   return [
-    ok(a.beds.air > 0, 'the air bed is up once the yard is awake: there is always wind',
-       `air ${a.beds.air.toFixed(3)}`),
-    ok(a.wants.water === 0, 'and no rain wanted on a dry yard')
+    ok(a.byClass.hand === before.byClass.hand, 'nobody has swung: no hand asked for'),
+    ok(a.pending === 0, 'and nothing is waiting to fire')
   ];
 });
 
@@ -129,25 +127,19 @@ group("the player's own hand always fires", async () => {
   ];
 });
 
-group('punctuation ducks the beds for about a second and is never folded', async () => {
+group('punctuation is never folded', async () => {
   run(3);
   const before = snap();
   sfx('wood', { x: 100, cls: 'punct', big: true });
   sfx('wood', { x: 100, cls: 'punct', big: true });
   frame();
-  const ducked = snap();
-  run(SND_DUCK_S_plus());
-  const later = snap();
+  const after = snap();
   return [
-    ok(ducked.firedBy.punct - before.firedBy.punct === 2, 'two landings are two sounds, not one',
-       `${ducked.firedBy.punct - before.firedBy.punct}`),
-    ok(ducked.folded === before.folded, 'nothing about them is folded'),
-    ok(ducked.ducked === true, 'the beds are ducked under it'),
-    ok(later.ducked === false, 'and back up after SND_DUCK_S')
+    ok(after.firedBy.punct - before.firedBy.punct === 2, 'two landings are two sounds, not one',
+       `${after.firedBy.punct - before.firedBy.punct}`),
+    ok(after.folded === before.folded, 'nothing about them is folded')
   ];
 });
-// the duck's second, and a frame past it
-function SND_DUCK_S_plus() { return 1 + FRAME * 2; }
 
 group('punctuation has a ceiling of its own', async () => {
   run(3);
@@ -204,91 +196,5 @@ group('a cap full of gravel gives way to the next strike', async () => {
        `${full.fired - before.fired} up`),
     ok(after.stolen - full.stolen >= 1, 'and the next strike takes one',
        `${after.stolen - full.stolen} stolen`)
-  ];
-});
-
-group('the water bed follows a storm and comes down over the crossfade', async () => {
-  window.__reset();
-  window.__crew(0, 0);
-  wakeAudio();
-  run(3);
-  const dry = snap();
-  const rained = makeItRain();
-  runUntil(() => d().beds.water > 0.9, 10);
-  const wet = snap();
-  // The sky emptied: the rain has nothing left to come down as, and the bed
-  // wants nought -- but it is at nought only after SND_BED_S, not this frame.
-  window.__air({ haze: 0 });
-  for (let i = 0; i < 600 && state().smog.raining; i++) frame();
-  frame();
-  const justOff = snap();
-  run(SND_BED_S / 2);
-  const halfway = snap();
-  run(SND_BED_S / 2 + FRAME * 2);
-  const down = snap();
-  return [
-    ok(rained, 'a storm comes through the yard\'s own hooks'),
-    ok(dry.beds.water === 0, 'the water bed is down on a dry yard', `${dry.beds.water}`),
-    ok(wet.wants.water === 1 && wet.beds.water > 0.9, 'and up under the rain',
-       `wants ${wet.wants.water}, at ${wet.beds.water.toFixed(2)}`),
-    ok(justOff.wants.water === 0, 'the rain stops and the bed wants nought'),
-    ok(justOff.beds.water > 0.9, 'but is still up on that frame', `${justOff.beds.water.toFixed(2)}`),
-    ok(halfway.beds.water > 0.3 && halfway.beds.water < 0.7, 'half the crossfade on it is about half down',
-       `${halfway.beds.water.toFixed(2)}`),
-    ok(down.beds.water === 0, 'and down after SND_BED_S', `${down.beds.water}`)
-  ];
-});
-
-group('the hum follows the machines and the rift bed follows the tear', async () => {
-  window.__reset();
-  wakeAudio();
-  run(1);
-  const bare = snap();
-  // A machine hums only with somebody standing at it: the ram is bought and a
-  // body walks over to tend it, and the hum is up once it has started biting.
-  openSites();
-  window.__fullSites();
-  window.__crew(1, 0);
-  window.__machine('ram', { bought: true });
-  window.__clearFloor();
-  window.__jump(3);
-  const unmanned = snap();
-  const bit = runUntil(() => (state().machines.ram.workedAt | 0) > 0, 40);
-  run(SND_BED_S + FRAME * 2);
-  const manned = snap();
-  window.__tear(0);                              // torn, the day it tears
-  run(SND_BED_S + FRAME * 2);
-  const torn = snap();
-  window.__rift();                               // and drowned
-  run(SND_BED_S + FRAME * 2);
-  const drowned = snap();
-  return [
-    ok(bare.wants.hum === 0 && bare.wants.rift === 0, 'a bare yard has no hum and no rift',
-       JSON.stringify(bare.wants)),
-    ok(unmanned.wants.hum === 0, 'a machine bought and not yet tended is silent'),
-    ok(bit && manned.wants.hum > 0 && manned.beds.hum > 0, 'and hums once a body is at it',
-       `wants ${manned.wants.hum.toFixed(2)}, at ${manned.beds.hum.toFixed(2)}`),
-    ok(torn.wants.rift > 0 && torn.wants.rift < 1 && torn.beds.rift > 0,
-       'the rift bed comes up once the hole has torn, and not all the way',
-       `wants ${torn.wants.rift.toFixed(2)}, at ${torn.beds.rift.toFixed(2)}`),
-    ok(drowned.wants.rift === 1 && drowned.wants.water > 0,
-       'and the abyss is the whole of it, with the water bed under it',
-       JSON.stringify(drowned.wants))
-  ];
-});
-
-group('the opening\'s silence: every bed wants nought while the body is flat', async () => {
-  window.__reset();
-  wakeAudio();
-  run(1);
-  const talking = snap();
-  yard.S.intro = 'down';
-  frame();
-  const flat = snap();
-  yard.S.intro = null;
-  return [
-    ok(talking.wants.air > 0, 'there is wind before the boulder', `${talking.wants.air.toFixed(2)}`),
-    ok(flat.wants.air === 0 && flat.wants.water === 0 && flat.wants.rift === 0 && flat.wants.hum === 0,
-       'and nothing at all while the body lies there', JSON.stringify(flat.wants))
   ];
 });

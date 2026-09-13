@@ -6404,7 +6404,17 @@ in the node tier as its own file. Everything downstream of the decision is a lis
    single deliberate exception — the only sustained, pitched, non-percussive voice in the game —
    which would make magic legible by contrast the moment you first heard it. Taking that exception
    once is a design. Taking it twice is the start of a soundtrack.
-### The ear pass (design, not built)
+### The ear pass (built, as hits only)
+
+*Amendment, 2026-09-12. The call below was made a third way: neither A nor B, and no beds at all.
+The player's word was "no ambiance or background noise, just hits" and "super clean, indie, pixel
+art". So every bed and the duck were removed -- a still yard is silent -- and a strike became a
+recipe rendered sample by sample, sfxr-fashion: a body (a wave with a pitch fall), a click on the
+front, a resonant band of grit, and a pixel stage (bit depth and a sample-rate divide), through the
+recipe's own lowpass and a soft clip. The recipes were landed by ear on a bench page that runs the
+same arithmetic; `SND_STONE` is the one landed so far. `hard`, `crit`, `big` and the fold's widening
+keep the meanings given below. The measurement and the two proposals stand as the record of why.*
+
 
 *2026-09-12. The first listen, done with `tools/listen.mjs`: every voice rendered through the real
 `audio.js` into an offline context, written to `shots/sound/*.wav`, and measured. Nothing in

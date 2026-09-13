@@ -1,7 +1,7 @@
 // Hear the yard without ears: render every voice through the real audio.js
 // into an offline context, write the result to `shots/sound/`, and measure it.
 //
-//   node tools/listen.mjs                 # every voice and every bed, one wav each
+//   node tools/listen.mjs                 # every voice, one wav each
 //   node tools/listen.mjs --strip         # and one strip of all of them in a row
 //
 // It is `look.mjs` for the other sense. The node tier can hold the decisions
@@ -28,7 +28,7 @@
 // wakes, and its clock is a variable this script moves, so each voice is
 // scheduled at its own second and the whole run renders faster than real time.
 // The import carries a query so it is a second instance of audio.js: the page's
-// own must stay asleep, or its frame loop would keep moving the beds under us.
+// own must stay asleep, or its frame loop would close our fold windows under us.
 
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync, readdirSync } from 'node:fs';
@@ -38,14 +38,10 @@ const PORT = +(process.env.CDP_PORT || 9353);
 const PROFILE = `${process.env.TEMP}/boulder-listen`;
 const OUT = 'shots/sound';
 const strip = process.argv.includes('--strip');
-// `--proto` renders the candidate strikes in PROTO below instead of audio.js's:
-// standalone nodes through the same lowpass and master, so the numbers compare.
-const proto = process.argv.includes('--proto');
 
-// What gets rendered, in order. A strike is `sfx(voice, opts)` with the hand's
-// class, so nothing is folded, stolen or ducked and each is heard whole; a bed
-// is the decision half's level for that bed, set by hand and held for a while.
-const GAP = 1.5, BED_S = 3;
+// What gets rendered, in order: `sfx(voice, opts)` with the hand's class, so
+// nothing is folded or stolen and each is heard whole.
+const GAP = 1.5;
 const STRIKES = [
   ['stone',        'stone', {}],
   ['stone-hard',   'stone', { hard: 1 }],
@@ -55,21 +51,12 @@ const STRIKES = [
   ['wood-big',     'wood',  { big: true }],
   ['metal',        'metal', {}],
   ['metal-big',    'metal', { big: true, hard: 1 }],
-  ['water',        'water', {}],
-  ['air',          'air',   {}],
-  ['rift',         'rift',  {}]
-];
-const BEDS = [
-  ['bed-still', { air: 0.25 }],                // a dead lull: the wind floor alone
-  ['bed-wind',  { air: 1 }],
-  ['bed-rain',  { water: 1, air: 0.25 }],
-  ['bed-hum',   { hum: 1 }],
-  ['bed-rift',  { rift: 1 }],
-  ['bed-abyss', { rift: 1, water: 0.4 }]
+  ['rift',         'rift',  {}],
+  ['rift-punct',   'rift',  { cls: 'punct' }]
 ];
 
 const PAGE = `(async () => {
-  const SR = 44100, LEN = ${(STRIKES.length * GAP + BEDS.length * BED_S + 2).toFixed(1)};
+  const SR = 44100, LEN = ${(STRIKES.length * GAP + 2).toFixed(1)};
   let fakeNow = 0;
   class Off extends OfflineAudioContext {
     constructor() { super(1, Math.ceil(SR * LEN), SR); globalThis.__off = this; }
@@ -88,90 +75,13 @@ const PAGE = `(async () => {
     A.sfx(voice, Object.assign({ cls: 'hand', x: null }, opts));
     t += ${GAP};
   }
-  const d = A.audioDecisions();
-  const quiet = { water: 0, air: 0, rift: 0, hum: 0 };
-  for (const [name, levels] of ${JSON.stringify(BEDS)}) {
-    fakeNow = t; marks.push({ name, at: t, len: ${BED_S} });
-    Object.assign(d.beds, quiet, levels);
-    A.stepAudio(1e-6);
-    t += ${BED_S};
-  }
-  fakeNow = t; Object.assign(d.beds, quiet); A.stepAudio(1e-6);
+  fakeNow = t; A.stepAudio();
   const buf = await ctx.startRendering();
   globalThis.__listen = { marks, sr: SR, pcm: buf.getChannelData(0) };
   return { marks, sr: SR };
 })()`;
 
 
-// The candidates. Two directions for a strike, each on three materials, at a
-// level a hand can hear. A: a struck body -- a sine that falls in pitch over a
-// few milliseconds, the thump the boulder already has, scaled to the material
-// -- under a two-millisecond click. B: the noise design as built, done at
-// level, with the ring cut to a third and the same click on the front. Both
-// keep the law: nothing is a note, nothing outlasts a footstep.
-const PROTO_PAGE = `(async () => {
-  const SR = 44100, GAP = ${GAP};
-  const NAMES = ['A-stone','A-stone-hard','A-wood','A-metal','B-stone','B-stone-hard','B-wood','B-metal'];
-  const LEN = NAMES.length * GAP + 1;
-  const ctx = new OfflineAudioContext(1, Math.ceil(SR * LEN), SR);
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5000; lp.Q.value = 0.5;
-  const master = ctx.createGain(); master.gain.value = 0.18;
-  lp.connect(master); master.connect(ctx.destination);
-  // pink noise, as makeNoise makes it
-  const n = 4 * SR, nb = ctx.createBuffer(1, n, SR), o = nb.getChannelData(0);
-  const poles = [0, 0, 0], K = [[0.99765, 0.0990460], [0.96300, 0.2965164], [0.57000, 1.0526913]];
-  let sd = 12345;
-  const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < n; i++) {
-    const w = rnd() * 2 - 1; let p = 0;
-    for (let k = 0; k < 3; k++) { poles[k] = K[k][0] * poles[k] + w * K[k][1]; p += poles[k]; }
-    o[i] = (p + w * 0.1848) * 0.11;
-  }
-  const noise = (hz, q, gain, tau, at, hold = 0) => {
-    const src = ctx.createBufferSource(); src.buffer = nb;
-    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = hz; f.Q.value = q;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.002);
-    g.gain.setValueAtTime(gain, at + 0.002 + hold);
-    g.gain.setTargetAtTime(0, at + 0.002 + hold, tau);
-    src.connect(f); f.connect(g); g.connect(lp);
-    src.start(at, 0.1 + rnd() * 3); src.stop(at + 0.002 + hold + tau * 6);
-  };
-  const body = (hz, drop, dropS, gain, tau, at, type = 'sine') => {
-    const osc = ctx.createOscillator(); osc.type = type;
-    osc.frequency.setValueAtTime(hz * drop, at);
-    osc.frequency.exponentialRampToValueAtTime(hz, at + dropS);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.002);
-    g.gain.setTargetAtTime(0, at + 0.002, tau);
-    osc.connect(g); g.connect(lp);
-    osc.start(at); osc.stop(at + 0.002 + tau * 6);
-  };
-  const click = (hz, gain, at) => noise(hz, 1.5, gain, 0.003, at);
-  const A = {
-    stone:      at => { click(2400, 0.9, at); body(140, 2.2, 0.014, 1.4, 0.03, at); noise(220, 1.0, 0.5, 0.02, at); },
-    'stone-hard': at => { click(1600, 0.7, at); body(85, 2.0, 0.018, 1.5, 0.045, at); noise(140, 0.8, 0.5, 0.03, at); },
-    wood:       at => { click(3200, 0.8, at); body(390, 1.6, 0.008, 1.0, 0.018, at, 'triangle'); body(1050, 1.3, 0.006, 0.3, 0.012, at); },
-    metal:      at => { click(4200, 0.6, at); body(620, 1.05, 0.004, 0.55, 0.07, at); body(645, 1.05, 0.004, 0.45, 0.06, at); noise(640, 6, 0.8, 0.04, at); }
-  };
-  const B = {
-    stone:      at => { click(2400, 0.9, at); noise(180, 1.2, 10, 0.02, at, 0.006); },
-    'stone-hard': at => { click(1600, 0.7, at); noise(100, 0.6, 11, 0.025, at, 0.008); },
-    wood:       at => { click(3200, 0.8, at); noise(420, 4, 14, 0.012, at); noise(1130, 4, 3.5, 0.012, at); },
-    metal:      at => { click(4200, 0.6, at); noise(640, 9, 16, 0.04, at); noise(666, 9, 14, 0.04, at); }
-  };
-  const marks = [];
-  let t = 0.5;
-  for (const name of NAMES) {
-    const [set, ...rest] = name.split('-');
-    (set === 'A' ? A : B)[rest.join('-')](t);
-    marks.push({ name, at: t, len: GAP });
-    t += GAP;
-  }
-  const buf = await ctx.startRendering();
-  globalThis.__listen = { marks, sr: SR, pcm: buf.getChannelData(0) };
-  return { marks, sr: SR };
-})()`;
 
 // One segment of the render, as 16-bit little-endian base64. The whole render is
 // megabytes, and a Runtime.evaluate result that size never comes back; a
@@ -229,7 +139,7 @@ for (let i = 0; i < 100; i++) {
   if (probe.result?.result?.value === 'function') break;
   await new Promise(r => setTimeout(r, 100));
 }
-const out = await send('Runtime.evaluate', { expression: proto ? PROTO_PAGE : PAGE, awaitPromise: true, returnByValue: true });
+const out = await send('Runtime.evaluate', { expression: PAGE, awaitPromise: true, returnByValue: true });
 const res = out.result?.result?.value;
 if (!res) {
   console.error('no render:', JSON.stringify(out.result?.exceptionDetails || out, null, 1));
@@ -355,7 +265,7 @@ for (const m of marks) {
   console.log(`${m.name.padEnd(12)} ${pad(r.peak.toFixed(1), 7)} ${pad(r.length.toFixed(0) + 'ms', 8)} ` +
               `${pad(r.centroid.toFixed(0) + 'Hz', 9)} ${pad(r.flat.toFixed(2), 6)} ${pad(r.tone.toFixed(2), 6)}`);
 }
-if (strip) writeFileSync(`${OUT}/${proto ? 'proto' : 'all'}.wav`, wav(all));
+if (strip) writeFileSync(`${OUT}/all.wav`, wav(all));
 console.log(`wrote ${marks.length}${strip ? ' + all' : ''} wav to ${OUT}/`);
 if (logs.length) console.log(['--- console ---', ...logs].join('\n'));
 process.exit(0);
