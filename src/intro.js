@@ -17,9 +17,13 @@
 //
 // Everything after that is one body trying to get its mate out. That is what the
 // crew is for, what the pit is for, and why the rocks keep coming: **the one
-// underneath is still alive.** Every time the last of a rock goes you can see
-// them down there, and every time, before anybody can get them out, the next one
-// lands. The game does not end and neither does that.
+// underneath is still alive.** The first rock drove them into the ground to
+// their middle, and there they are lodged: every time the last of a rock goes
+// you can see them down there, somebody runs over and digs, they come up a
+// little -- and every time, before they are out, the next one lands and drives
+// them back in. The game does not end and neither does that. Only a rock held
+// overhead gives the digging the time it needs, and that is what the shields
+// are for.
 //
 // It costs the game one thing: you start with a body rather than buying the
 // first with a core. That is what the story costs and it is worth paying.
@@ -28,16 +32,19 @@ import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
-         CORE_SIZE, DUCK_PACE, COMMUTE_PACE, ROCK_CLEAR,
-         BURIED_REACH, BURIED_HOLD_MS, BURIED_TOSS_IN } from './config.js';
+         COMMUTE_PACE, ROCK_CLEAR,
+         BURIED_DIG_S, BURIED_DIG_BEAT_MS, BURIED_DIG_LONE, BURIED_DIG_LEAD_MS, DUCK_PACE } from './config.js';
 import { S, pit } from './state.js';
 import { now, frames } from './clock.js';
-import { makeBoulder, boulderAlive } from './rock.js';
-import { spawnChip, aim } from './dust.js';
+import { makeBoulder, boulderAlive, dropZone } from './rock.js';
+import { spawnChip, spawnSpoil, aim } from './dust.js';
+import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { syncWorkers } from './crew.js';
+import { wayAt, ways, feetOn, climbTo } from './route.js';
+import { stopJig, MOVE_KEYS } from './crew/dance.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
 import { doorAt } from './house.js';
@@ -124,10 +131,11 @@ export function stepIntro(t) {
 }
 
 // --- the second act -----------------------------------------------------------
-// The first rock comes off and, for a moment, you did it: the one underneath is
-// out on the bare ground, the one who has been digging is stood over it, and
-// whoever else you have hired is hopping about round the pair of them. Then the
-// next rock comes down and it was all for nothing, which is the game.
+// The first rock comes off and, for a moment, you can see them: the one
+// underneath is there in the ground, the one who has been digging runs over and
+// digs at them, and whoever else you have hired stands and watches. They come
+// up a little. Then the next rock comes down and it was all for nothing, which
+// is the game.
 //
 // Once. After the first rock and never again -- a beat you are shown twice is a
 // beat, a beat you are shown every time is a loading screen. What it buys is the
@@ -141,37 +149,26 @@ export function maybeReunion(t) {
   S.introSaid = 0;
   S.introHeart = 0;
 
-  // and whoever has been digging goes over. It is not scripted people: it is one
-  // of the crew, sent on the same walk the roster sends anybody on, and it stops
-  // beside the one it dug out rather than on top of them. Everybody else stays
-  // where they are and hops, which is the dance they already do when a rock is
-  // finished -- so the yard celebrates with its own legs.
-  const at = buriedAt();
-  let who = null, near = Infinity;
-  for (const w of S.workers) {
-    if (w.inside || w.walking) continue;
-    const d = Math.abs(w.x - at.x);
-    if (d < near) { near = d; who = w; }
-  }
-  if (who) {
-    who.walkTo = at.x + (who.x > at.x ? WORKER * 1.7 : -WORKER * 1.7);
-    who.leg = 'back';                          // it never left its job
-    who.walking = true;
-    who.met = true;
-  }
+  // and whoever has been digging goes over and digs. It is not scripted people:
+  // it is one of the crew, sent on the same walk the roster sends anybody on,
+  // stopping beside the one in the ground rather than on top of them, and
+  // swinging at the ground the way it swings at everything -- see `sendDigger`.
+  sendDigger();
   S.dirty = true;
 }
 
 // --- and, once, somebody gets out ---------------------------------------------
 // The beat the whole game has been owed, and the only one that ever pays the
 // opening back. The dome catches a rock and holds it there -- and while it is
-// held, the person who has been under every rock in this yard walks out from
-// under the shadow of one.
+// held, for the first time, there is time: somebody runs in under the shadow of
+// it and digs, the way somebody has dug at every gap all game, and this time no
+// rock comes to stop them. The one who has been in the ground under every rock
+// in this yard climbs out and walks clear.
 //
 // It is the opening played back the right way round. There, two squares stood
 // talking and a rock came down on one of them; here a rock comes down and does
 // not, and the two of them stand talking again. Nothing about it is new
-// vocabulary: the same square, the same dots, the same heart.
+// vocabulary: the same square, the same dig, the same dots, the same heart.
 //
 // They do not vanish into a cutscene afterwards -- they join the crew, because
 // what this game is about is the people in the yard and there is one more of
@@ -179,8 +176,19 @@ export function maybeReunion(t) {
 // number: every rock after this is dug out by somebody who was under one.
 export function startRescue(t) {
   if (S.rescued || !S.buried) return;
-  const at = buriedAt();
   S.intro = 'rescue';
+  S.introAt = t;
+  S.introSaid = 0;
+  S.rescueTo = 0;                              // nobody walks anywhere until it is dug out
+  sendDigger();
+  S.dirty = true;
+}
+
+// Dug out, and up out of the ground. What used to be the whole of the rescue
+// -- the walk out from under, and the two of them -- starts here, once the
+// digging is done.
+function getOut(t) {
+  const at = buriedAt();
   S.introAt = t;
   S.introSaid = 0;
   // Out from under, and clear of the footprint the rock is going to be set
@@ -207,15 +215,21 @@ export function startRescue(t) {
   S.rescued = true;
   S.pair = [{ x: at.x, y: at.y, say: null }];
 
-  // and somebody comes to meet them, the same way somebody did after the first
-  // rock -- one of the crew, sent on an ordinary walk, stopping beside them
-  let who = null, near = Infinity;
-  for (const w of S.workers) {
-    if (w.inside || w.inPit || w.aloft || w.walking) continue;
-    const d = Math.abs(w.x - S.rescueTo);
-    if (d < near) { near = d; who = w; }
+  // and whoever dug them out goes with them -- or, if nobody could come and
+  // they got themselves loose, whoever is nearest comes to meet them, the same
+  // way somebody did after the first rock: an ordinary walk, stopping beside
+  let who = S.workers.find(w => w.met) || null;
+  if (!who) {
+    let near = Infinity;
+    for (const w of S.workers) {
+      if (w.inside || w.inPit || w.aloft || w.walking) continue;
+      const d = Math.abs(w.x - S.rescueTo);
+      if (d < near) { near = d; who = w; }
+    }
   }
   if (who) {
+    who.dig = false;
+    who.lunge = 0;
     who.walkTo = S.rescueTo - WORKER * 1.7;
     who.leg = 'back';                          // it never left its job
     who.walking = true;
@@ -224,8 +238,19 @@ export function startRescue(t) {
   S.dirty = true;
 }
 
-// One frame of it: the walk out, then the two of them, then back to work.
+// One frame of it: the digging, the walk out, then the two of them, then back
+// to work.
 function rescue(t) {
+  // Still in the ground, and the rock waits overhead while somebody digs. If
+  // nobody can come -- the whole crew aloft, or through a door -- it works
+  // itself loose, slower, rather than hanging the rock there forever.
+  if (S.buried) {
+    if (!sendDigger())
+      S.buriedDug = Math.min(1, buriedOut() + (frames() / 60) * BURIED_DIG_LONE / BURIED_DIG_S);
+    if (buriedOut() < 1) { S.introAt = t; return; }
+    getOut(t);
+    return;
+  }
   const b = S.pair[0];
   if (!b) { S.intro = null; return; }
   const d = S.rescueTo - b.x;
@@ -260,10 +285,10 @@ function rescue(t) {
   S.dirty = true;
 }
 
-// Together, and the yard celebrating it. Nothing here is scripted people: the
-// crew do their own five-second dance -- the one they already do when a rock is
-// finished -- and the two of them are the buried square, which is drawn anyway,
-// and whoever is nearest to it.
+// Together, and digging. Nothing here is scripted people: the two of them are
+// the square in the ground, which is drawn anyway, and whoever was nearest to
+// it, digging the way it digs at anything (`stepDig`); the rest of the crew
+// step clear and watch.
 function meet(t) {
   // Held to the end of the meeting, and said once rather than a frame at a time.
   // The dance reads this to know when the yard stops watching -- a body only
@@ -272,16 +297,15 @@ function meet(t) {
   // hop against: the whole crew stayed on the floor for the whole scene. The
   // meeting has a length, so the hold is that length.
   S.danceUntil = S.introAt + MEET_MS;
+  // The one in the ground says the other thing; the one digging has its hands
+  // full and says nothing, which is the whole of what it has to say.
   if (t >= (S.introSaid || 0)) {
     S.introSaid = t + INTRO_BEAT * 1.4;
     S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
-    // and the same back, from whoever walked over
-    const who = S.workers.find(w => w.met);
-    if (who && !who.walking) who.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
   }
   if (t - S.introAt < MEET_MS) return;
 
-  // and the sky opens again
+  // and the sky opens again, on somebody half dug out
   S.intro = 'part';
   S.introAt = t;
   S.buriedSay = null;
@@ -636,7 +660,9 @@ function finish() {
 // --- the one underneath -------------------------------------------------------
 // Whenever the rock is off the ground -- the moment the last of it goes, right
 // through the crew's five seconds on the bare ground -- they are down there, and
-// you can see them. Then the next one lands on them.
+// you can see them: lodged in the ground to their middle, where the first rock
+// drove them, and not going anywhere on their own. Then the next one lands on
+// them.
 //
 // It is the same square as everybody else, and it says the same dots, because
 // the point is that it is a person and not a prize.
@@ -649,116 +675,134 @@ export const buriedVisible = () =>
   S.buried && (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
 
 // Where the square lives: the middle of the yard, the spot every rock lands on.
-const buriedHome = () => Math.round((S.cx - WORKER / 2) / P) * P;
-
-// Where it is right now -- home, unless the core errand has walked it somewhere
-// (wave7-sky, A4). The drawing reads this, so the walk is the picture.
+// It does not move -- it cannot -- so this is the whole of where it is.
 export function buriedAt() {
-  const x = S.buriedX ?? buriedHome();
+  const x = Math.round((S.cx - WORKER / 2) / P) * P;
   return { x, y: walkY(x + WORKER / 2) };
 }
 
-// and every so often, while it is in sight, it says something
+// How far out of the ground it is: nought is packed in to its middle, one is
+// stood on the ground. Dug up a little between rocks by whoever gets there,
+// and driven all the way back in by the next rock landing on it.
+export const buriedOut = () => Math.max(0, Math.min(1, S.buriedDug || 0));
+
+// Somebody goes to dig. The nearest free body on the ground, sent on the same
+// walk the roster sends anybody on, stopping beside the square rather than on
+// top of it -- and marked `dig`, which is the stage in crew/step.js that has it
+// swing at the ground once it is there. Nothing scripted: it is one of the
+// crew, and it goes back to its job when the rock takes the ground away. True
+// if somebody is on it, already or from now.
+export function sendDigger() {
+  if (S.workers.some(w => w.dig)) return true;
+  const at = buriedAt();
+  let who = null, near = Infinity;
+  for (const w of S.workers) {
+    if (w.inside || w.inPit || w.aloft || w.walking || w.craft) continue;
+    // ...and on the floor of the yard. Under the dome the rockhands are stood on
+    // the rock it is holding, and a body that came down off that to dig would be
+    // climbing through the air under a hill for as long as the climb took: the
+    // digger is somebody with the ground under it already.
+    if (wayAt(w.x, w.y).key !== 'yard') continue;
+    const d = Math.abs(w.x - at.x);
+    if (d < near) { near = d; who = w; }
+  }
+  if (!who) return false;
+  // Its own short walk along the floor, not a commute. A commute routes a body
+  // to a spot under the hill's footprint *over the hill* -- and under the dome
+  // the hill is a rock held up in the sky, so the digger climbed that and came
+  // down three hundred pixels through the air to the spot. The spot is on the
+  // yard and so is the digger; `stepDig` walks it there at the commute's pace.
+  who.digTo = at.x + (who.x > at.x ? WORKER * 1.7 : -WORKER * 1.7);
+  who.met = true;
+  who.dig = true;
+  who.digAt = 0;
+  S.dirty = true;
+  return true;
+}
+
+// Whether there is still time to dig. The next rock comes when the dance ends,
+// and it falls in a fraction of a second -- far faster than a body walks out of
+// a footprint -- so a digger that waited for the rock to exist would be under
+// it. The yard is told the footprint for the whole of the dance (`dropZone`);
+// the digger digs while what is left of the dance is more than its walk to the
+// nearer edge needs, and downs tools then. A scene has no dance and holds the
+// rock itself; a held rock is not coming.
+function timeToDig(x, t, zone = dropZone()) {
+  if (S.intro) return true;
+  if (!zone) return t < S.danceUntil;
+  const out = Math.min(x + WORKER - zone.from, zone.to - x) + WORKER;
+  const need = (out / DUCK_PACE) * (1000 / 60) + BURIED_DIG_LEAD_MS;
+  return S.danceUntil - t > need;
+}
+
+// One frame of somebody digging: true while it is the whole of the body's
+// frame. It swings at the ground beside the square on a beat, the way a shovel
+// does; a cell of the ground goes out along the heap with every swing, the way
+// every spoil in this yard goes; and the square comes up a little. It stops
+// when a rock is coming down on the ground it is digging in -- which is what
+// ends every dig in this game but one -- and then the body is the crew's
+// again: it ducks with everybody else, and goes back to work.
+export function stepDig(w, c) {
+  if (!w.dig) return false;
+  const coming = S.rockFall > 0 && !(S.rockHeld && S.intro === 'rescue');
+  if (coming || !buriedVisible() || buriedOut() >= 1 || !timeToDig(w.x, c.now, c.zone)) {
+    w.dig = false;
+    w.lunge = 0;
+    // and it is nobody's digger any more, unless the rescue is about to walk
+    // it out with the one it dug up -- that one is found by this mark
+    if (buriedOut() < 1) w.met = false;
+    return false;
+  }
+  // On its feet, on the floor of the yard -- asked for by name. A digger is
+  // picked out of a dance, and a body mid-hop under the span of a held rock
+  // reads as being on the hill, whose surface is the crest of that rock up in
+  // the sky: `stand` would have carried it up there. The dance is put away and
+  // the feet keep to the ground at the pace any body takes a slope.
+  if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
+  w.y = climbTo(w, feetOn(ways().yard, w.x));
+  // Getting there: its own legs, at the pace anybody crosses the yard at.
+  const d = w.digTo - w.x;
+  if (Math.abs(d) > 1) {
+    w.x += Math.sign(d) * Math.min(COMMUTE_PACE * frames(), Math.abs(d));
+    w.face = Math.sign(d);
+    return true;
+  }
+  const at = buriedAt();
+  w.face = w.x > at.x ? -1 : 1;
+  if (c.now >= (w.digAt || 0)) {
+    w.digAt = c.now + BURIED_DIG_BEAT_MS;
+    w.lunge = 1;                               // it puts its back into it
+    // Thrown along the heap like every other spoil, never dropped where it is:
+    // dropped here it would lie in the footprint under the next rock.
+    spawnSpoil(at.x + rand() * WORKER, at.y + WORKER - P, shadeNear(3), 'rock');
+  }
+  S.buriedDug = Math.min(1, buriedOut() + c.dt / 1000 / BURIED_DIG_S);
+  S.dirty = true;
+  return true;
+}
+
+// and every so often, while it is in sight, it says something -- and somebody
+// comes to dig
 export function stepBuried(t) {
   if (!buriedVisible()) {
-    // Out of sight, so the errand ends. If the rock came down mid-hold the core
-    // in its arms goes back on the ground where it stood -- a core is never
-    // lost -- and if that ground is under the new rock, core.js's own re-launch
-    // throws it clear, which is exactly what that rule is for.
-    if (S.buriedErrand && S.buriedErrand.phase === 'hold' && !S.coreItem) {
-      const at = buriedAt();
-      S.coreItem = { x: at.x + WORKER / 2 - CORE_SIZE / 2, y: at.y, vx: 0, vy: 0, rest: false };
-    }
-    S.buriedSay = null; S.buriedErrand = null; S.buriedX = null;
+    // Out of sight is under a rock, and a rock landing on it drives it back in
+    // as far as it ever was. Whatever was dug between rocks is undone by the
+    // rock, which is the whole of why nobody has got it out.
+    S.buriedDug = 0;
+    S.buriedSay = null;
     return;
   }
-  stepBuriedToss(t);
+  // Whoever is nearest goes to dig, every time, not only the once the reunion
+  // makes a scene of. The scenes send their own (`maybeReunion`, `startRescue`);
+  // this covers every ordinary gap between one rock and the next, so the yard
+  // is seen trying, and seen failing, all game. While there is a dance to dig
+  // in, and while the dance has the dig's walk out left in it (`timeToDig`):
+  // with nobody dancing the next rock is made the moment the ground is clear,
+  // and a body sent then would be walking into a footprint with a rock already
+  // on its way down on it.
+  if (!S.intro && !S.rockFall && timeToDig(buriedAt().x, t)) sendDigger();
   if (S.buriedSay && t < S.buriedSay.until) return;
   S.buriedSay = t < (S.buriedSayAt || 0) ? null
     : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
   if (S.buriedSay) S.buriedSayAt = t + INTRO_BEAT * 1.6;
-}
-
-// --- the square and a stray core (wave7-sky, A4) --------------------------------
-// The one under the rock helps the only way it can: a core that comes to rest
-// near its spot gets carried toward the hole. It walks over -- it is a position,
-// never a pop -- picks the thing up, holds it a beat, and tosses it into the
-// pit's mouth on the same arc everything else thrown in this yard flies. If the
-// pit is full, `bankCore` refuses, core.js throws the core back out by the lip
-// -- well past this square's reach -- and the `tossed` mark keeps the square
-// from fetching the same core twice, so a full pit is one throw and done, not a
-// loop of two systems lobbing one core at each other.
-
-// One step of a walk, at the duck's pace: true while it is still moving.
-function walkBuried(to) {
-  const at = S.buriedX ?? buriedHome();
-  const d = to - at;
-  const step = DUCK_PACE * frames();
-  if (Math.abs(d) <= step) { S.buriedX = to; return false; }
-  S.buriedX = at + Math.sign(d) * step;
-  return true;
-}
-
-function stepBuriedToss(t) {
-  // Not during any scene: while the opening or the reunion owns the yard the
-  // square is part of the story, not on an errand.
-  if (S.intro) return;
-  const k = S.coreItem;
-  const e = S.buriedErrand;
-
-  if (!e) {
-    // Nothing to do: drift home, if an interrupted errand left it out.
-    if (S.buriedX != null && !walkBuried(buriedHome())) S.buriedX = null;
-    if (S.coreBuried || S.boulderNo <= 1) return;
-    // Only a RESTING core. One still flying belongs to its arc, and one the
-    // rock's own re-launch (core.js) is about to move is not at rest either --
-    // reacting to `rest` alone is what keeps the two systems out of each
-    // other's hands.
-    if (!k || !k.rest || k.tossed) return;
-    // Within reach -- measured past the rock's own footprint, not from the
-    // square itself. A core is always thrown clear of the footprint when it
-    // drops (`dropCore`), and the footprint alone is wider than any bare
-    // distance a square would sensibly walk, so "near the square" means "just
-    // past the edge of where the rock stood": the ground a dropped core
-    // actually comes to rest on.
-    const at = buriedAt();
-    const half = (S.gw * P) / 2;
-    if (Math.abs(k.x + CORE_SIZE / 2 - (at.x + WORKER / 2)) - half > BURIED_REACH) return;
-    S.buriedErrand = { phase: 'walk' };
-    return;
-  }
-
-  if (e.phase === 'walk') {
-    // Gone mid-walk -- picked up by the player, re-launched clear of the rock,
-    // rolled off. The errand is over; home is the errand now.
-    if (!k || !k.rest) { S.buriedErrand = null; return; }
-    if (walkBuried(k.x + CORE_SIZE / 2 - WORKER / 2)) return;
-    // Arrived: pick it up. The core leaves the world for the length of the
-    // hold -- it is in the square's arms -- and the throw puts it back.
-    S.coreItem = null;
-    e.phase = 'hold';
-    e.until = t + BURIED_HOLD_MS;
-    S.buriedSay = { mark: 'heart', until: t + BURIED_HOLD_MS + INTRO_BEAT };
-    S.buriedSayAt = t + BURIED_HOLD_MS + INTRO_BEAT * 1.6;
-    S.dirty = true;
-    return;
-  }
-
-  if (e.phase === 'hold') {
-    if (t < e.until) return;
-    // The toss: from its hands, into the mouth of the pit -- well inside the
-    // lip, the way the opening's own demonstration throws (see `show`), so the
-    // arc's spread still lands it in the hole. Landing in the pit banks it
-    // through the same physics every core lands by (`stepCore`).
-    const at = buriedAt();
-    const fx = at.x + WORKER / 2, fy = at.y;
-    const v = aim(fx, fy, pit.x + P * BURIED_TOSS_IN, CORE_SIZE);
-    S.coreItem = { x: fx - CORE_SIZE / 2, y: fy, vx: v.vx, vy: v.vy, rest: false, tossed: true };
-    e.phase = 'home';
-    S.dirty = true;
-    return;
-  }
-
-  // and back to its spot, which is where it lives
-  if (!walkBuried(buriedHome())) { S.buriedX = null; S.buriedErrand = null; }
 }

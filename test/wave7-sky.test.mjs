@@ -1,5 +1,6 @@
-// Wave 7, track A: the sky's plume, the reunion, the pit gang's spacing and
-// the buried square's core errand. One group per item, each from a fresh game.
+// Wave 7, track A: the sky's plume, the reunion and the pit gang's spacing. One
+// group per item, each from a fresh game. (A4, the buried square's core errand,
+// went with the square being lodged in the ground: it cannot walk anywhere.)
 
 import { group, ok, run, runUntil, state, yard, P, WORKER } from './helpers.mjs';
 
@@ -14,7 +15,6 @@ const { nearestMuck, muckCols, MUCK_ELBOW, colAt } = await import('../src/smog/l
 // genuinely hovering over open yard still answers with the floor, so the fault
 // this is here to catch is caught as squarely as it ever was.
 const { surfaceUnder } = await import('../src/crew/body.js');
-const { CORE_SIZE, DUCK_PACE } = await import('../src/config.js');
 
 // --- A1: motes fade in, and the plume is born wide -----------------------------
 group('wave7 A1: a mote is born at nothing and comes up to weight', () => {
@@ -148,81 +148,5 @@ group('wave7 A3: a rained-on yard never doubles a claim (the player\'s route)', 
     if (new Set(claims).size !== claims.length) doubled = `frame ${i}: ${claims.join(', ')}`;
   }
   checks.push(ok(!doubled, 'no two shovelling bodies ever hold one column', doubled || ''));
-  return checks;
-});
-
-// --- A4: the buried square tosses a stray core ---------------------------------
-group('wave7 A4: the square walks to a resting core and tosses it into the pit', () => {
-  const checks = [];
-  // Nobody carrying: a hauler fetches a loose core, and the errand under
-  // watch here is the square's own. The dev yard hands over one hauler since
-  // the opening was put right (critics 2026-09-10, A2), so it is said.
-  window.__crew(1, 0);
-  // The first rock with a core in it, worked off, so the core drops the way it
-  // always does and comes to rest just past the rock's edge.
-  window.__jump(5);
-  window.__next();
-  const rested = runUntil(() => state().coreItem?.rest, 30);
-  checks.push(ok(rested, 'the core drops and comes to rest'));
-
-  // Hold the next rock off while we watch the errand: the errand is the
-  // subject; the yard's schedule is not.
-  yard.S.danceUntil = Number.MAX_SAFE_INTEGER / 4;
-
-  const before = yard.S.cores;
-  // The walk: buriedX moves continuously -- never more than a duck's pace over
-  // a tenth of a second -- and the core is picked up, thrown, and banked by
-  // the pit's own physics. Sampled in small steps so a jump would show.
-  let popped = null, held = false, tossed = false, banked = false;
-  let lastX = null;
-  for (let i = 0; i < 400 && !banked; i++) {
-    run(0.1);
-    const bx = yard.S.buriedX;
-    if (bx != null && lastX != null && Math.abs(bx - lastX) > DUCK_PACE * 6 + 2)
-      popped = `buriedX jumped ${Math.abs(bx - lastX).toFixed(1)}px in a tenth of a second`;
-    lastX = bx;
-    if (yard.S.buriedErrand?.phase === 'hold') held = true;
-    if (yard.S.coreItem?.tossed) tossed = true;
-    if (yard.S.cores > before) banked = true;
-  }
-  checks.push(ok(held, 'the square picks the core up and holds it a beat'));
-  checks.push(ok(tossed, 'then tosses it -- a throw, not a delivery'));
-  checks.push(ok(banked, 'and the pit banks it', `cores ${yard.S.cores} vs ${before}`));
-  checks.push(ok(!popped, 'the square never pops -- it walks every pixel', popped || ''));
-
-  // And it goes home: the square ends back on its spot.
-  const home = runUntil(() => yard.S.buriedX == null && !yard.S.buriedErrand, 20);
-  checks.push(ok(home, 'the square walks back to its spot'));
-  return checks;
-});
-
-group('wave7 A4: a tossed core is never fetched twice', () => {
-  const checks = [];
-  // The give-up: when the pit refuses a throw, core.js lands the core back by
-  // the lip carrying its `tossed` mark, and the square must not fetch the same
-  // core again -- two systems must not lob one core at each other forever. The
-  // mark is the whole of the rule, so the mark is what is checked: a resting,
-  // already-tossed core in easy reach starts no errand.
-  window.__jump(5);
-  window.__next();
-  runUntil(() => state().coreItem?.rest || yard.S.cores > 0, 40);
-  yard.S.danceUntil = Number.MAX_SAFE_INTEGER / 4;
-  // The exact after-refusal picture, laid by hand: the square at home with no
-  // errand, and a resting core in easy reach that already wears the mark.
-  yard.S.buriedErrand = null;
-  yard.S.buriedX = null;
-  const edge = yard.S.cx + (yard.S.gw * P) / 2;
-  yard.S.coreItem = { x: edge + P * 5, y: yard.S.groundY - CORE_SIZE,
-                     vx: 0, vy: 0, rest: true, tossed: true };
-  // Sampled through the run rather than read at the end: the crew are free to
-  // fetch the core themselves (that is the yard's own business); what may never
-  // happen is the square starting a second errand for it.
-  let went = null;
-  for (let i = 0; i < 80; i++) {
-    run(0.1);
-    if (yard.S.buriedErrand || yard.S.buriedX != null)
-      went = `errand ${JSON.stringify(yard.S.buriedErrand)} at ${yard.S.buriedX}`;
-  }
-  checks.push(ok(!went, 'the square never goes for a core it already threw', went || ''));
   return checks;
 });

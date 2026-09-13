@@ -269,6 +269,7 @@ export const snapshot = () => ({
   doorX: Math.round(doorAt().x),
   buried: S.buried,
   buriedVisible: buriedVisible(),
+  buriedDug: S.buriedDug,
   rescued: S.rescued,
 
   // The shields: what is standing over the landing spot, how much of it is up,

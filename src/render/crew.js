@@ -9,9 +9,9 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C } from '../config.js';
 import { atHome } from '../crew.js';
-import { buriedAt, buriedVisible } from '../intro.js';
+import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
@@ -448,8 +448,27 @@ export function drawIntro() {
 
   if (!buriedVisible()) return;
   const at = buriedAt();
-  drawBody(at.x, at.y);
-  if (S.buriedSay) drawSaying(at.x, at.y, S.buriedSay);
+  const depth = drawLodged(at.x, at.y, buriedOut());
+  if (S.buriedSay) drawSaying(at.x, at.y + depth, S.buriedSay);
+}
+
+// The one in the ground. It is the same square as everybody else, stood with
+// its feet where anybody's feet would be and then sunk by however much of it
+// is still lodged -- two cells of its three to start, less as it is dug, a
+// whole cell at a time because that is the grid. The ground is already drawn
+// under it, so the part below the ground line is simply not drawn: a square
+// with no bottom edge is a square going into the ground, and nothing else in
+// this alphabet is needed to say so. Returns how far down it is, so whatever
+// it says can sit over the part of it that shows.
+function drawLodged(x, y, out) {
+  const depth = Math.round(BURIED_SUNK_C * (1 - out)) * P;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x - P, y - P * 8, WORKER + P * 2, WORKER + P * 8);  // down to the ground line
+  ctx.clip();
+  drawBody(x, y + depth);
+  ctx.restore();
+  return depth;
 }
 
 // How each kind of body is drawn, as a row rather than as a branch.
@@ -519,7 +538,9 @@ export function drawWorkers() {
     // drawn doing it: the hammer's lunge (`workJig`) is thrown away by its own
     // row -- a rockhand's swing is a blur on the face, not a stoop -- and a
     // hop with no drive at the bottom of it reads as a body bouncing.
-    const look = (w.onBuild && w.atShed ? LOOK.builder : LOOK[w.type]) || PLAIN;
+    // ...and so is somebody digging at the one in the ground: the stoop is a
+    // builder's, whatever job the body came from, because it is digging.
+    const look = ((w.onBuild && w.atShed) || w.dig ? LOOK.builder : LOOK[w.type]) || PLAIN;
     const throwOn = w.lunge || 0;
     const x = Math.round(w.x + throwOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
     const y = Math.round(w.y + throwOn * look.lunge * P);
