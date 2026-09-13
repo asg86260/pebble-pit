@@ -167,6 +167,282 @@ export const TESTS = [
     ];
   }],
 
+  // A row's note is readable, which means it is not underneath the board the row
+  // is on. It sat at a lower layer than the menu, so a note with nowhere to
+  // stand did not overlap the board -- it disappeared into it, and the row
+  // looked like it had something to say and said nothing.
+  // Getting to the names is possible with a hand rather than with a ruler.
+  //
+  // The path from the door on the house board to a body's row in the list beside
+  // it crosses a strip of bare canvas -- and a real pointer does not cross it in
+  // a straight line: it dips under the sheet, overshoots the gap, cuts the
+  // corner. Every one of those is a frame spent a little outside the panel, and
+  // the board used to shut on it and take the list with it, which made the
+  // submenu impossible to reach.
+  // Reading a name does not put the names away.
+  //
+  // Hovering a row on a *board* closes whatever submenu the last row opened --
+  // one row at a time is the row you are reading. The rows inside the submenu
+  // are made by the same builder, and without an exception every name in the
+  // crew list carried an instruction to close the crew list: hovering a body to
+  // read it shut the sheet the body was written on. Which made the list
+  // unusable, since reading it is the only thing it is for.
+  // Picking a name is the end of reading the list.
+  ['picking a name takes the view to them and folds the list away', async () => {
+    newRun();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(60);
+    await hoverHouse();
+    await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    const before = state();
+    rows[rows.length - 1].click();
+    await sleep(120);
+    const after = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length > 1, 'there is a list of them to pick from', `${rows.length}`),
+      ok(!after.crewListOpen, 'picking one folds the list away',
+         `${before.crewListOpen} -> ${after.crewListOpen}`),
+      ok(!!after.follows, 'and the view goes to whoever it was', `${after.follows}`)
+    ];
+  }],
+
+  // Buying leaves the board up, rung or place. It put the board away for a
+  // while (feedback8 item 1) so what you bought could be watched in the yard
+  // the sheet covers; a site takes a line now (DESIGN.md, "The queue") and the
+  // point of a line is pressing the next row without walking back up.
+  //
+  // A press that buys NOTHING leaves it up too -- no money, maxed out, a row
+  // already being built -- and that half is still worth guarding: the two
+  // cases must look the same from the board and different from the purse.
+  ['buying leaves the board up, and so does a press that buys nothing', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 2);
+    window.__give(200000);
+    // ...and rocks finished, because a place is bought with one now as well as
+    // with dust.
+    window.__grant({ cores: 5 });
+    run(20);
+    // Each press reports what it cost as well as what the board did, because
+    // the rule is about the pair: up either way, and the purse the only tell.
+    const press = async key => {
+      await hoverBench();                    // stand at the bench (still there after a press)
+      await sleep(250);
+      const b = document.querySelector(`#shop button[data-key="${key}"]`);
+      if (!b) return null;
+      const before = state().stored;
+      b.click();
+      await sleep(200);
+      return { open: state().boardOpen, spent: before - state().stored };
+    };
+
+    const bought = await press('carry');
+    // The row the yard is now building is committed (see DESIGN.md, "The
+    // queue"), so pressing it again is a press that cannot go through. That is
+    // the refusal this needs, and it is a truer one than an empty purse: the
+    // money is there, and the yard still says no.
+    //
+    // It used to press `auto`, the next rung at the bench, which the bench
+    // refused while it was busy with the first. The bench takes a line now,
+    // so that press is a purchase.
+    const refused = await press('carry');
+    const place = await press('unlockfarm');
+
+    await hoverAway();
+    newRun();
+    return [
+      ok(!!bought && bought.spent > 0, 'a rung takes the money',
+         bought ? `${bought.spent}` : 'no row'),
+      ok(!!bought && bought.open === true, 'and the board stays up for the next press',
+         `${bought && bought.open}`),
+      // Not `=== 0`: the crew are hauling while this runs, so the purse
+      // creeps *up* under the press. What matters is that nothing was taken.
+      ok(!!refused && refused.spent <= 0, 'the rung being built is refused a second time',
+         refused ? `${refused.spent} taken` : 'no row'),
+      ok(!!refused && refused.open === true, 'and a press that bought nothing leaves the board up',
+         `${refused && refused.open}`),
+      ok(!!place && place.open === true, 'and ordering a place leaves it up as well',
+         `${place && place.open}`)
+    ];
+  }],
+
+  // The board comes out above the house and the cursor comes up from the house,
+  // so the bottom row of the sheet is the one it walks through -- and while that
+  // was the door to the settlement, going to put another block up threw the list
+  // of names open every single time, which is a sheet doubling in width under a
+  // cursor that was aiming at something else.
+  ['walking up to the block does not open the settlement on the way', async () => {
+    newRun();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9 });
+    window.__crew(6, 3);
+    run(20);
+    // stood at the house, which is what puts the board up in the first place --
+    // the walk has to start from where a hand actually starts
+    const from = await hoverHouse();
+    await sleep(400);
+    const buy = document.querySelector('#crewshop button[data-key="house"]');
+    const rows = [...document.querySelectorAll('#crewshop button')];
+    const box = buy.getBoundingClientRect();
+    const x = Math.round(box.left + box.width / 2);
+    let opened = false;
+    // Up from the house, a few pixels at a time, the way a hand moves -- and
+    // crossing into a row has to *say* so. A synthetic pointermove raises no
+    // enter and no leave of its own, and a row opens its list on being entered,
+    // so a walk that only moves is a walk that can never trip the thing this is
+    // looking for.
+    let was = null;
+    for (let y = Math.round(from.y); y >= Math.round(box.top + 8); y -= 6) {
+      const el = document.elementFromPoint(x, y) || document.querySelector('canvas');
+      const at = { clientX: x, clientY: y, bubbles: true };
+      if (el !== was) {
+        if (was) was.dispatchEvent(new PointerEvent('pointerleave', { ...at, bubbles: false }));
+        el.dispatchEvent(new PointerEvent('pointerenter', { ...at, bubbles: false }));
+        was = el;
+      }
+      el.dispatchEvent(new PointerEvent('pointermove', at));
+      await sleep(16);
+      if (state().crewListOpen) opened = true;
+    }
+    const arrived = state();
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      // The rule, stated directly rather than as a row count: whatever the
+      // cursor crosses first coming in off the yard must not be the door
+      // through to the settlement, because that one opens on hover and would
+      // throw the sheet open sideways on every walk up to the block. The board
+      // used to be two rows, so "the last one is `house`" said the same thing;
+      // it carries the crew's gear now and the count no longer describes it.
+      ok(rows.length > 0 && rows[rows.length - 1].dataset.key !== 'crewlist',
+         'the row nearest the yard is not the one that opens the settlement',
+         rows.map(r => r.dataset.key).join(' then ')),
+      ok(!opened, 'and reaching it never puts the settlement up'),
+      ok(arrived.houseBoardOpen, 'and the board is still there when you get there')
+    ];
+  }],
+
+  ['hovering a name does not close the list it is on', async () => {
+    newRun();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(30);
+    await hoverHouse();
+    await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    let stayed = true;
+    for (const b of rows.slice(0, 4)) {
+      const r = b.getBoundingClientRect();
+      b.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.left + 8, clientY: r.top + 4, bubbles: true }));
+      await sleep(40);
+      if (!state().crewListOpen) stayed = false;
+    }
+    const at = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length >= 4, 'there are names on the sheet', `${rows.length}`),
+      ok(stayed, 'and hovering one leaves the sheet up'),
+      ok(at.crewListOpen && at.houseBoardOpen,
+         'and the board underneath it too', `${at.crewListOpen}, ${at.houseBoardOpen}`)
+    ];
+  }],
+
+  ['you can get to the names without a ruler', async () => {
+    newRun();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(30);
+    await hoverHouse();
+    const door = await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    const dr = door.getBoundingClientRect();
+    const target = rows[0].getBoundingClientRect();
+
+    // the ugliest crossing there is: out of the bottom of the board, along the
+    // bottom edge of the panel, and up into the list. Along the edge and not
+    // eighteen pixels under it: the house board sits deeper since the bar rode
+    // the rising roof, and the ground that far below it is the bench's own
+    // stand -- where a station under the pointer takes the board every time, by
+    // design ("an arrival, not a journey", input.js). The wedge protects the
+    // crossing between a board and its list, not a stroll over the neighbors.
+    const dip = document.getElementById('panel').getBoundingClientRect().bottom - 10;
+    const path = [
+      [dr.right - 6, dr.bottom - 2],
+      [dr.right + 10, dip],
+      [(dr.right + target.left) / 2, dip],
+      [target.left + 20, dip],
+      [target.left + 20, target.top + 6]
+    ];
+    let openThroughout = true;
+    for (const [x, y] of path) {
+      point('pointermove', x, y, 0);          // to the canvas: the game's own ears
+      await sleep(50);
+      if (!state().houseBoardOpen || !state().crewListOpen) openThroughout = false;
+    }
+    const at = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length > 0, 'there are names to walk to', `${rows.length} of them`),
+      ok(openThroughout, 'and the board and its list survive the crossing'),
+      ok(at.houseBoardOpen && at.crewListOpen, 'and are still up at the far end of it',
+         `${at.houseBoardOpen}, ${at.crewListOpen}`)
+    ];
+  }],
+
+  ['a row wears its description inline, not on a hover', async () => {
+    // A board row that has something to say now says it in its own line under
+    // the row, not in a sheet that opens on hover -- so the menu reads without a
+    // mouse and without waiting. The crew submenu is the one exception (a roster
+    // of a dozen bodies keeps the hover; see shop.js), and this is a board.
+    newRun();
+    await settle();
+    window.__crew(4, 2);
+    window.__give(40000);
+    window.__grant({ shards: 400, spores: 1300, cores: 9 });
+    // The ground up, so the rows that carry a note are on the bench: the tower
+    // is one of them and it is the last thing the chain offers now.
+    window.__crew(0, 0, 1, 1);
+    window.__invest();
+    window.__crew(4, 2);
+    run(30);
+    window.__board('bench');
+    await sleep(200);
+
+    const tip = document.getElementById('tip');
+    let described = 0, hoverTip = 0;
+    for (const b of shop().querySelectorAll('button')) {
+      const note = b.querySelector('.note');
+      if (note && note.textContent.trim()) described++;
+      const r = b.getBoundingClientRect();
+      b.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.right - 4, clientY: r.top + 4, bubbles: true }));
+      await sleep(30);
+      if (!tip.hidden) hoverTip++;
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(described > 0, 'a row with something to say carries it in its own line',
+         `${described} described`),
+      ok(hoverTip === 0, 'and hovering a board row opens no sheet beside it',
+         `${hoverTip} rows still popped a tip`)
+    ];
+  }],
+
   // The list lays over the board it came out of, and the board does not move.
   //
   // It stood beside the board once, as a flex sibling, and went to the other
