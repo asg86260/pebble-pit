@@ -188,16 +188,32 @@ group('a bigger fan is a bigger draught, not a bigger number', async () => {
 group('the house takes what it is rated at', async () => {
   fromTheField(2, []);
   run(20);                                  // past the first mote and into the steady state
-  const rated = scrubRate() * SMOG_PER_MOTE; // haze a second, the board's unit
-  const before = state().smog.haze;
-  run(30);
-  const s = state().smog;
-  const took = (before - s.haze) / 30;      // nothing rains at this haze
+  // Through `dryStretch`, like every other rate in this file. This one read
+  // `rains` off the same snapshot twice and called that "nothing rained" --
+  // and a storm rolled before the stretch pours inside it with the counter
+  // never moving, so the shower read as the house taking eight times its
+  // rating. Whether that storm rolls before or after the window is the seeded
+  // generator's business, and a change anywhere in the crew moves it.
+  //
+  // And the rating is summed second by second rather than read once at the
+  // top: the house is rated at what the body IN it can take, and the body
+  // steps out -- a loo break, a stretch -- whenever its own clock says, which
+  // a single reading before the window cannot see either.
+  const { took, rated, s, dry } = dryStretch(30, secs => {
+    const before = state().smog.haze;
+    let rated = 0;
+    for (let i = 0; i < secs; i++) {
+      rated += scrubRate() * SMOG_PER_MOTE;    // haze a second, the board's unit
+      run(1);
+    }
+    const s = state().smog;
+    return { took: (before - s.haze) / secs, rated: rated / secs, s };
+  }, () => window.__air({ haze: 1800 }));
   return [
-    ok(s.rains === state().smog.rains && s.haze < 3200,
+    ok(dry && s.haze < 3200,
        'the sky stays under the line, so nothing here is the weather',
-       `${Math.round(s.haze)} haze`),
-    ok(took > rated * 0.7 && took < rated * 1.3,
+       `${Math.round(s.haze)} haze, dry ${dry}`),
+    ok(rated > 0 && took > rated * 0.7 && took < rated * 1.3,
        'what comes out of the sky is what the fan is rated to take',
        `rated ${rated.toFixed(1)}, took ${took.toFixed(1)} haze/s`)
   ];
