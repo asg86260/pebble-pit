@@ -844,11 +844,6 @@ canvas {
    reading against the right edge like every other number on these boards. */
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
-/* Rows with a bill rather than a price. The cost column is sized for one mark
-   and a number, so these get the rest of the row instead -- what they buy is a
-   thing rather than a rate, so the gain column had nothing to put in it. */
-#shop button[data-key="unlocktower"] .gain { display: none; }
-
 /* The bill wraps inside its own cell, right-aligned, filling from the right.
    It used to be counted and then stacked one coin to a line past four of them,
    because the price COLUMN was a track shared by the whole sheet and a bill
@@ -868,16 +863,14 @@ canvas {
   gap: 0 1.1em;
 }
 
-/* The tower's rows are bills too, and longer ones: three currencies for a hat
-   and two for a meteor, against a cost column sized for one mark and a number.
-   They ran off the right-hand edge of the sheet.
-
-   The whole row goes to the price, the same as the row that buys the tower
-   itself. Nothing is lost by it, on one condition: every row on this board
-   says what it buys in the note under the name -- the two rungs (tower.js,
-   `wizspeed` and `wizpower`) put the number the column would have shown into
-   theirs, because for a while they had no note and so said nothing at all. */
-#towershop button .gain { display: none; }
+/* The tower's gain cell used to be hidden here, and `build the tower`'s with
+   it: their bills are three coins long, and against a price column sized for
+   one mark and a number they ran off the sheet, so the whole row went to the
+   price. That column was a track shared by the sheet; a card owns its own
+   tracks now and a long bill wraps inside it (see `.cost` above), so the
+   premise is gone -- and the rule it left behind was hiding the one thing the
+   cell says while a work is on the go: `building`, `in line (n)`, `nobody on
+   it`. The tower's rows read like every other board's. */
 
 /* A row that is a reading rather than a purchase. It sits on a board of things
    you press, so the only way to say it is not one of them is to take away
