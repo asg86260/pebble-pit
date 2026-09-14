@@ -545,6 +545,10 @@ export const BLANK = JSON.parse(JSON.stringify(S));
 // they say why a field is worth keeping, which is the part that is not obvious.
 export const SAVED = [
   'stored',               // dust in the hole: the whole point
+  // a spin in flight: where the wheel is, where it is going and what it will
+  // say when it stops. A refresh mid-spin used to leave the stake on the table
+  // with a wheel that never came to rest. The moments are by hand (`spinLeft`).
+  'wheel', 'spinFrom', 'spinTo', 'spinWon',
   'carryLevel',
   'speedLevel',
   'autoMine',
@@ -697,6 +701,7 @@ export const SAVED_BY_HAND = [
   // the celebration for the last rock and the backstop for the next: moments
   // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
   'danceUntil', 'nextBoulderAt',
+  'spinUntil',            // as `spinLeft`: how much of the spin is left; `spinAt` is worked back from it
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
@@ -830,7 +835,8 @@ export const EPHEMERAL = [
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',
   // the wheel, and a hand that settled before you closed the tab
-  'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',
+  // the stake still in the air, and a hand that settled before you closed the tab
+  'tableAir', 'hand', 'spinAt',
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing

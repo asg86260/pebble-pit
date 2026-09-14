@@ -110,7 +110,19 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       // and whether it is there (crew/shedhand.js). Dropped,
                       // a refresh handed the claim to whoever was next and
                       // that body started the walk from wherever it stood.
-                      'onBuild', 'atShed'];
+                      'onBuild', 'atShed',
+                      // and whether it is in the air on its own account -- a
+                      // wizard climbing to the ring, or coming down under a
+                      // brolly -- and the spot it took off from. A wizard saved
+                      // three hundred pixels up came back with `aloft` off,
+                      // fell to the ground and started the climb again, on
+                      // every refresh; a star was never worked.
+                      'aloft', 'floating', 'brolly', 'spot',
+                      // and which craft it is aboard (balloon.js: "who is
+                      // aboard is a fact about the body", and it was not written),
+                      // and the berth a purifier was dealt -- the house, or a
+                      // craft -- which is what puts it back in the same basket
+                      'craft', 'berth'];
 
 // Moments on a body's clock -- when its next break comes round, when it has
 // stood about long enough to knock off -- kept the way doses are (below):

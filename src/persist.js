@@ -6,7 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER, ROCK_SINK } from './config.js';
+         ABYSS_AT, WORKER, LADDER, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
@@ -240,6 +240,16 @@ function blankEphemeral() {
 // page whose writes were failing was the save from before the evening's play.
 let lastBlob = null;
 
+// What the hole is still owed by the casino: the pot being paid out, plus
+// every grain already in the air toward it. See `paying` in the save below.
+function payingOwed() {
+  const arcs = (S.tableAir || []).filter(k => k.arc);
+  const inAir = arcs.reduce((n, k) => n + (k.worth || 0), 0);
+  if (S.paying) return { cur: S.paying.cur, left: S.paying.left + inAir, grains: S.paying.grains + arcs.length };
+  if (!arcs.length) return null;
+  return { cur: 'dust', left: inAir, grains: arcs.length };
+}
+
 export function persist() {
   // A yard that has thrown is not written down. The loop stops on a throw, but
   // the interval that calls this does not, and once a second it would put the
@@ -337,6 +347,7 @@ function blob() {
     // (the same turn doses and a body's moments take, crew/records.js).
     danceLeft: Math.max(0, Math.round(S.danceUntil - clockNow())),
     nextBoulderIn: Math.max(0, Math.round(S.nextBoulderAt - clockNow())),
+    spinLeft: Math.max(0, Math.round(S.spinUntil - clockNow())),
     // The crew itself, not just how many of them there are. A body has a name
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
@@ -452,11 +463,14 @@ function blob() {
     // grain in flight is a grain the hole has not counted. It comes back the way
     // `pouring` does -- the sand flies again out of an empty table, and the hole
     // is paid the same pot it was always going to be paid.
-    paying: S.paying && {
-      cur: S.paying.cur,
-      left: S.paying.left + (S.tableAir || []).reduce((n, k) => n + (k.arc ? (k.worth || 0) : 0), 0),
-      grains: S.paying.grains + (S.tableAir || []).filter(k => k.arc).length
-    },
+    //
+    // ...and the last grains of a pot count too. `paying` is put down the
+    // moment the last grain leaves the heap, a second and a half before it
+    // lands, so a save in that window wrote `paying: null` over money still in
+    // the air and the hole came up short by exactly that (the reload harness
+    // found 136 of a 2,000 pot). The arcs alone are owed then, in dust, which
+    // is what an arc lands as.
+    paying: payingOwed(),
     mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
     plotTone: [...S.plotTone],
@@ -690,6 +704,12 @@ export function restore() {
   S.coreTaker = null;
   S.danceUntil = Number.isFinite(s.danceLeft) && s.danceLeft > 0 ? clockNow() + s.danceLeft : 0;
   S.nextBoulderAt = Number.isFinite(s.nextBoulderIn) && s.nextBoulderIn > 0 ? clockNow() + s.nextBoulderIn : 0;
+  // A spin picks up where it was: the wheel carries on to the mark it was
+  // already turning toward, and stops when it would have.
+  if (Number.isFinite(s.spinLeft) && s.spinLeft > 0) {
+    S.spinUntil = clockNow() + s.spinLeft;
+    S.spinAt = S.spinUntil - CASINO_SPIN_MS;
+  } else { S.spinUntil = 0; S.spinAt = 0; }
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -951,7 +971,7 @@ export function restore() {
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.
   S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
-  S.spinUntil = 0;
+  // (`spinUntil` is read back above, from `spinLeft`: a spin in flight goes on.)
   S.tableAir = [];
   // A pot you have already taken comes back still owed to you.
   //

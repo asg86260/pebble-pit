@@ -120,6 +120,8 @@ group('the tower waits for its wizard to arrive', async () => {
   const s0 = state();
   // the length of the yard away, and walking
   window.__place('wizard', s0.rockLeftX);
+  // By name across the long wait: a reload (test/helpers.mjs) builds the crew again.
+  const wName = yard.S.workers.find(o => o.type === 'wizard').name;
   const w = yard.S.workers.find(o => o.type === 'wizard');
   w.walking = true; w.aloft = false;
   const bought = window.__buy('wizspeed');
@@ -127,13 +129,14 @@ group('the tower waits for its wizard to arrive', async () => {
   const early = state().works.tower?.done ?? -1;
   const far = Math.abs(w.x - s0.towerX) > 600;
   const landed = runUntil(() => !state().works.tower, 240);
-  const near = Math.abs(w.x - s0.towerX) < 200 || w.aloft;
+  const w2 = yard.S.workers.find(o => o.name === wName) || w;
+  const near = Math.abs(w2.x - s0.towerX) < 200 || w2.aloft;
 
   window.__crew(0, 0);
   return [
     ok(bought, 'the rung is bought'),
     ok(far && early === 0, 'and the bar does not move while its wizard is still crossing the yard',
        `done ${early} with the wizard ${Math.round(Math.abs(w.x - s0.towerX))} px off`),
-    ok(landed && near, 'and lands once it is there', `${landed}, ${Math.round(w.x)} vs tower ${s0.towerX}`)
+    ok(landed && near, 'and lands once it is there', `${landed}, ${Math.round(w2.x)} vs tower ${s0.towerX}`)
   ];
 });

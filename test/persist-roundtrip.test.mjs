@@ -105,7 +105,8 @@ group('every field on S is accounted for', async () => {
   // ...and the two moments of the beat between rocks, written as distances
   // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
   const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
-                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
+                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt',
+                  spinLeft: 'spinUntil' };
   S.dirty = true;
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
