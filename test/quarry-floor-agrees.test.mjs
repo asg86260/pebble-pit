@@ -53,3 +53,37 @@ group('a save whose rock sits above the counted floor comes back squared, and th
        feet.map(g => g.toFixed(2)).join(' ')),
   ];
 });
+
+// The finished floor is jagged on purpose. A body digging it stands on the
+// column under its middle; a body walking it -- out to the ladder when the
+// cut is done, in to its seat -- stood on the highest of the three columns
+// under it, a course up over every dip. One floor, one rule: see `feetOn`.
+group('the gang walks the finished floor out to the ladder on it, not a course above it', async () => {
+  window.__crew(0, 0, 5, 0); window.__fullSites(); window.__tip(90000);
+  const deepest = Math.max(...columns().map(quarryTarget));
+  window.__digCut(deepest - 1);
+  runUntil(() => quarriers().some(w => w.goal === 'work'), 60);
+  // Through the last course and the walk out, frame by frame: every frame a
+  // body is on the floor leg of a route, its feet against the floor under
+  // its middle.
+  // A step down a course is eased over a frame or two (`climbTo`); a stand a
+  // course up is a streak. Before the fix a body was up for most of its walk.
+  let walked = 0, up = 0, streak = 0;
+  for (let f = 0; f < 60 * 120 && walked < 40; f++) {
+    run(1 / 60);
+    for (const w of quarriers()) {
+      const leg = w.route && w.route[0] && w.route[0].along;
+      if (!leg || leg.key !== 'cut' || w.y + WORKER <= S.groundY + 2) { w.upFor = 0; continue; }
+      walked++;
+      const gap = (dugTopY(w.x + WORKER / 2) - (w.y + WORKER)) / P;
+      w.upFor = gap > 0.6 ? (w.upFor || 0) + 1 : 0;
+      if (gap > 0.6) up++;
+      streak = Math.max(streak, w.upFor);
+    }
+  }
+  return [
+    ok(walked >= 40, 'bodies walked the floor', `${walked} body-frames`),
+    ok(streak <= 3, 'and never stood a course above the floor under their middle',
+       `${up} of ${walked} frames up, longest ${streak} frames running`),
+  ];
+});

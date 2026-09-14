@@ -198,7 +198,15 @@ export function standTop(leftX, at = groundTop, width = WORKER) {
 }
 
 // Where a body's top edge goes when it is standing at x, on a given way.
-export const feetOn = (way, leftX) => standTop(leftX, way.at) - WORKER;
+//
+// A way may say otherwise (`stand`): the floor of the cut is worked in
+// courses and finishes jagged on purpose, and a body digging it has always
+// stood on the column under its middle (`stepQuarrier`). Walking the same
+// floor on the highest-of-three rule above, a body stood a course up over
+// every dip -- the whole gang floating out along the finished floor to the
+// ladder (reported 2026-09-14). One floor, one rule.
+export const feetOn = (way, leftX) =>
+  (way.stand ? way.stand(leftX) : standTop(leftX, way.at)) - WORKER;
 
 // --- the ways -----------------------------------------------------------------
 // A way is a stretch of surface a body can walk from one end to the other
@@ -245,7 +253,8 @@ function buildWays(span) {
   // ground and it is not joined to the yard anywhere except at the ladder --
   // which is the whole reason a quarrier cannot climb out of the side of it.
   if (S.quarryOpen)
-    out.cut = { key: 'cut', from: quarry.x, to: quarry.x + quarry.w, at: cutTop };
+    out.cut = { key: 'cut', from: quarry.x, to: quarry.x + quarry.w, at: cutTop,
+                stand: leftX => cutTop(leftX + WORKER / 2) };   // the column under its middle, as the dig does
 
   // and the floor of the hole, which is the same shape of thing: a surface below
   // the ground with ladders at both ends.

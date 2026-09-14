@@ -11,6 +11,7 @@ this file is for things that were broken.
 ## Unreleased
 
 - Quarriers stand on the floor of the cut after a reload instead of a course above it, working the air.
+- Quarriers walking the finished floor of the cut walk on it, instead of floating a course above its dips.
 
 ## v0.1.15 — 2026-09-14
 
