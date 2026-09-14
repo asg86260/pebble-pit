@@ -1,5 +1,15 @@
 # Still to do
 
+## The shields are the spine -- DESIGNED, awaiting approval (2026-09-14)
+
+"The shields are the spine" in DESIGN.md. Each failed shield opens the next
+station -- props the farm, net the quarry, arch the tower, then the dome --
+so the arc is the tree rather than a section on the bench; the jack is cut.
+The shield on offer is drawn as a goal card at the top of the bench, and any
+card can be pinned to the top-right corner of the game (`S.pinned`), the
+goal pinning itself when the corner is empty. Three stages, each leaving the
+game playable; the shield prices are the first thing to play afterward.
+
 ## The landing page -- BUILT (2026-09-14)
 
 "The landing page" in DESIGN.md, with an as-built note. `index.html` is the

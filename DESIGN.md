@@ -1402,6 +1402,106 @@ because the drumbeat is the income; the threat is retired, because the story is 
 how the first line of this document and the section above it are both true at once: **the
 story ends on purpose. The yard does not.**
 
+## The shields are the spine (design, not built)
+
+The shields as built are a side story. Each is bought, fails, and hands you the next one;
+nothing else in the yard knows a shield has been through. The four rows sit in a section
+halfway down the bench that reads like any other section, so the one arc the game has is the
+easiest thing on the board to scroll past — and a player who buys none of them loses nothing
+but a beat they never saw. The fix is not a bigger cutscene. It is to make the arc the thing
+the rest of the tree hangs off, and to put it where the eye already is.
+
+### What a failure opens
+
+**Each shield that fails opens the next station.** The lesson is not a line of dialogue; it is
+a door.
+
+| shield | coin | fails, and the yard learns | which opens |
+|---|---|---|---|
+| the props | dust | timber does not slow it; you need a better coin than dust | **the farm** |
+| the net | spores | rope catches and does not hold; you need something harder than the ground grows | **the quarry** |
+| the arch | shards | rock cannot hold rock; nothing of the ground will | **the tower** |
+| the dome | everything | holds | — the ending |
+
+So the run is one chain: props → farm → net → quarry → arch → tower → a wizard → dome. Every
+link is already in the game; what changes is that the three `build the …` rows gate on the
+shield before them instead of on a core landing (`unlockfarm`: `shieldDone('props')` beside
+its `seenACore`; `unlockquarry`: `shieldDone('net')` in place of `farmOpen`; `unlocktower`:
+`shieldDone('arch')` in place of `seenCore`), and the dome gates on the arch. The gates are
+**hard**: a station's row does not exist until its shield has failed. A player who will not
+try to stop the rock does not get the farm, which is the bargain the arc now strikes — the
+story is not optional, because the story is the tree. The apothecary, casino, school, shack,
+outhouse and scrubbing house keep their own gates; they hang off the stations, not off the
+shields.
+
+Each shield stays priced in the coin of the station before it, because that is the only coin
+the player has at that point, and the price is a *toll* now rather than a sting: it should be
+the cost of a rung or two of the ladder that coin's station sells, never a save-up. Props
+`PROP_COST` 400 dust (a first-band rung of the crit ladder); net `NET_COST` 300 spores (three
+plots' worth); arch `ARCH_COST` 400 shards (above the tiller). All three are tunables and
+this is the first thing to play. The dome keeps its bill: the arc's ending is the one thing
+in the yard you save for, and with the jack gone it is the only long goal on any board.
+
+**The jack is cut.** Four failures before the hold was one too many once each failure had to
+open a station — there is no fifth station for steel to open, and a shield that opens
+nothing is the problem this section exists to fix. The ram, the drill, the belt and the
+tiller are still the machines' story, told at the machines. Everything the jack owned goes:
+its `KINDS` entry in shield.js, the row, the `JACK_*` block in `config/shields.js`, the
+scene, its two check groups. A save with `'jack'` in `shieldsDone` loads clean — the list
+is a set of kinds answered, and an extra name in it is nothing. The bench's last row, *maybe
+the wizards would know?*, now follows the arch, and says what it said.
+
+### The goal card
+
+The current shield is not one row among thirty. It is drawn as **the goal card** at the top
+of the bench, above *you*, in its own frame: a double rule around it, the heading *the sky*
+over it, the story line (`note`) set as its text and the price under that, the way every
+card carries its price. The section *the shields* goes — there is one shield on offer at a
+time, so a heading over one row was never telling you anything. A goal card is the same row
+object as before, drawn by the same builder; what is different is one class on the section
+(`.goal`) and the rule that the goal section is always first. That is the whole of the
+change to the board: the row's words, its price, its press and its dead state are what they
+were.
+
+The alternative considered was a sign of its own beside the bench, nailed up the way the
+tower's rows are. It was not taken because it is a second sheet for one row, and because the
+bench is already where a player goes to be told what to do next — a goal that is not on the
+bench is a goal in a place you have to know to look.
+
+### Pinning
+
+**Any card can be pinned, and the pinned card is drawn at the top right of the game.** A
+small nail-head mark in the card's corner; press it and the card is pinned, press it again
+and it is not. One pin at a time — pinning a second card takes the first down. The pinned
+card is the same row through the same builder (`mountRows` onto a `#pin` element), so it
+carries a live price, goes dashed when you cannot afford it, and buys when pressed: you can
+watch the number climb toward it and press it from the yard without opening a board. It comes
+down by itself when the row retires — bought, maxed, or gone from the board — and the corner
+is empty until you pin something else.
+
+`S.pinned` is the row's key or `null`, on the `SAVED` list, so the pin survives a reload and
+a row that no longer exists in a newer build reads as nothing pinned.
+
+**The goal pins itself.** When a shield row is first offered and nothing is pinned, it is
+pinned. That is what puts the arc on the screen for a player who has not opened the bench in
+ten minutes: the next shield is in the corner with its price, and the yard's income is
+visibly for something. The player can pin over it — the pin is theirs, not the story's — and
+the next shield will pin itself again only if the corner is empty when it arrives.
+
+What the pin is not: a second board. The corner shows one card, the card is not a menu, and
+nothing in the game reads `S.pinned` but the corner and the mark.
+
+### Order of work
+
+1. The jack out; the three build rows and the dome regated; `scenes.js`'s `SHIELD_ORDER` and
+   the shield and cutscene checks brought to four kinds. One check per station that the
+   `build the …` row is absent until its shield has failed and present after, bought the
+   player's way (`__buy` on the shield, a rock let fall on it).
+2. The goal card: `.goal` on the shield section, the section first, the frame in
+   `style.css`. A card-bench shot (`cards.html`) is the check.
+3. The pin: the mark, `S.pinned`, the `#pin` corner, self-pin on a shield's arrival, a
+   browser-tier check that the pinned card buys.
+
 ## Dust is carried to the site (design, not built)
 
 When you buy a rung, the dust that pays for it leaves the pile and arcs across
