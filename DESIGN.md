@@ -8033,6 +8033,28 @@ the size of the hand rather than how many of them went your way, and a run of
 small wins is not a story. The 50,000 is a placeholder like every other
 threshold here.
 
+**Things you do with your hands** (built, 2026-09-14) -- seven more, for the
+toys: the things the cursor can do that no board sells and no counter reads.
+Every one of these is a moment with a place in the code where it happens, so
+six are event hooks and only the rain is a predicate.
+
+| notice | note | reads |
+|---|---|---|
+| get off my land | startle a bird | `startle` lands on one |
+| not one of you | startle every bird in one lot | the lot's birds carry a shared count; the last one startled |
+| juggler | throw a full hand of dust and catch every grain | witness: a full hand's grains are stamped with the throw, and every stamp is caught |
+| come here you | pick a worker up | `lift` |
+| turn out your pockets | shake a full load out of a worker | the body came up carrying `load(w)` and `shedLoad` empties it |
+| hats off | shake the hat off a worker | `flingHat` |
+| it never rains but it pours | stand through a muck rain | `rains >= 1` |
+
+The whole-lot notice was asked for as *five birds from one group*, and a lot
+is two to four birds (`BIRD_FLOCK`), so the number cannot happen. The whole
+lot is the same feat -- the rest bolt when the first is startled, so getting
+every one of them is the hard part -- without a threshold that outruns the
+sky. The juggler's witness is the one tally that outlives a rock landing: a
+throw is not about the rock.
+
 ### What the ten cuts did to the cost
 
 Striking off ten notices took most of the bookkeeping with them, which is worth

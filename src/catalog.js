@@ -66,5 +66,14 @@ export const CATALOG = [
   { key: 'underminute', name: 'a rock off in under a minute', note: 'clear a boulder in under a minute' },
   { key: 'everyjob', name: 'every job staffed at once', note: 'put at least one body on every job at once' },
   { key: 'tablebeaten', name: "we're so back", note: 'win 50k in a single spin at the casino' },
-  { key: 'tableruin', name: 'time to get a loan', note: 'lose a 50k stake in a single spin at the casino' }
+  { key: 'tableruin', name: 'time to get a loan', note: 'lose a 50k stake in a single spin at the casino' },
+
+  // --- things you do with your hands ---------------------------------------------
+  { key: 'bird', name: 'get off my land', note: 'startle a bird' },
+  { key: 'wholelot', name: 'not one of you', note: 'startle every bird in one lot' },
+  { key: 'catchall', name: 'juggler', note: 'throw a full hand of dust and catch every grain' },
+  { key: 'lifted', name: 'come here you', note: 'pick a worker up' },
+  { key: 'shookload', name: 'turn out your pockets', note: 'shake a full load out of a worker' },
+  { key: 'hatoff', name: 'hats off', note: 'shake the hat off a worker' },
+  { key: 'muckrain', name: 'it never rains but it pours', note: 'stand through a muck rain' }
 ];

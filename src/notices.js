@@ -1,7 +1,7 @@
 // The record: what the yard has done, and what it says about it.
 //
 // The yard has counted its own rocks, pebbles and bodies since the first frame
-// and never said any of it back. This is the forty-two things it now says. See
+// and never said any of it back. This is the forty-nine things it now says. See
 // DESIGN.md, "The noticeboard, and the record on it", which is the approved
 // catalog and where every one of these names was argued over.
 //
@@ -14,7 +14,7 @@
 // being recognized rather than a style:
 //
 //   a standing fact   `when` is a predicate over S, asked twice a second.
-//                     Thirty of the forty-two. Nothing is remembered for these
+//                     Thirty-one of the forty-nine. Nothing is remembered for these
 //                     because the yard already remembers it.
 //   an event hook     no `when`. Something that happens calls `earn(key)` where
 //                     it happens -- a hand settling, a rock coming off. The
@@ -22,8 +22,8 @@
 //                     further to keep.
 //   a witness         a per-rock flag or a stamp in `S.tally`, because the
 //                     question is about a stretch of time rather than a moment.
-//                     Three of them, all about the same event, all cleared when
-//                     a rock lands.
+//                     Three of them about the rock, cleared when a rock lands,
+//                     and one about the last hand thrown, cleared by the next.
 //
 // The rule that keeps this file from growing a counter per notice: a witness is
 // a KEY in the one `S.tally` object, bumped at the one place the event happens.
@@ -43,10 +43,11 @@ import { JOB } from './jobs.js';
 // --- the catalog ---------------------------------------------------------------
 // The names and notes are catalog.js's -- data a page with no yard can read
 // (the landing page's record). What is here is how each is earned: a
-// predicate by key, joined to the catalog below. The four feats and the two
-// casino notices carry no `when`: they are moments, and the moment calls
-// `earn` where it happens. `every job staffed` is the one feat that is simply
-// true or not true at any instant, so it is a predicate.
+// predicate by key, joined to the catalog below. The four feats, the two
+// casino notices and six of the seven things done by hand carry no `when`:
+// they are moments, and the moment calls `earn` where it happens. `every job
+// staffed` is the one feat that is simply true or not true at any instant, so
+// it is a predicate, and so is a rain: the yard counts its rains already.
 
 // The ladders' thresholds, from the same tables the catalog names them from.
 const ladder = (prefix, list, fact) =>
@@ -109,7 +110,8 @@ const WHEN = {
   rift1e6: () => (S.riftAte || 0) >= NOTICE_RIFT,
   brew100: () => (S.brews || 0) >= NOTICE_BREWS,
   lived1h: () => eldest() >= NOTICE_LIVED_MS,
-  everyjob: everyJobStaffed
+  everyjob: everyJobStaffed,
+  muckrain: () => (S.rains | 0) >= 1
 };
 
 export const NOTICES = CATALOG.map(n => (WHEN[n.key] ? { ...n, when: WHEN[n.key] } : { ...n }));
@@ -224,7 +226,10 @@ export function noteRockCleared() {
   if (!t.rockYou && (t.rockCrew || t.rockMachine)) earn('nevertouched');
   if (t.rockAt && now() - t.rockAt < NOTICE_FAST_ROCK_S * 1000) earn('underminute');
 
-  S.tally = { rockAt: now() };
+  // The hand's witness is the one thing not spent here: a throw is not about
+  // the rock, and a full hand caught across the moment a rock comes off is
+  // still a full hand caught.
+  S.tally = { rockAt: now(), throwNo: t.throwNo | 0, throwOf: t.throwOf | 0, caught: t.caught | 0 };
   S.dirty = true;
 }
 
@@ -233,4 +238,29 @@ export function noteRockCleared() {
 export function noteHand(won, n, big) {
   if (n < big) return;
   earn(won ? 'tablebeaten' : 'tableruin');
+}
+
+// A full hand has been thrown. Every grain of it is stamped with this throw's
+// number so a catch can tell which throw it came out of: the notice is about
+// catching *all of one throw*, and a cursor that caught the tail of one and
+// the head of the next has done something else. Only a full hand is stamped;
+// a smaller throw is not the feat and leaves nothing to count.
+export function noteThrow(chips, full) {
+  const t = S.tally;
+  t.throwNo = (t.throwNo | 0) + 1;
+  if (!full) { t.throwOf = 0; t.caught = 0; return; }
+  for (const ch of chips) ch.thrown = t.throwNo;
+  t.throwOf = chips.length;
+  t.caught = 0;
+  S.dirty = true;
+}
+
+// A grain has been caught out of the air. Only the current throw's grains
+// count; one that has been lying about since an earlier hand, or that came off
+// a bird, carries no stamp and is just dust in the hand.
+export function noteCatch(ch) {
+  const t = S.tally;
+  if (!t.throwOf || ch.thrown !== t.throwNo) return;
+  t.caught = (t.caught | 0) + 1;
+  if (t.caught >= t.throwOf) { t.throwOf = 0; earn('catchall'); }
 }

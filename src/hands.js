@@ -11,6 +11,7 @@ import { capacity } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
+import { noteThrow, noteCatch } from './notices.js';
 
 // in config.js now, so they can be turned while the game is running -- see the
 // note there about what the clock did to them
@@ -42,6 +43,7 @@ export function catchAir(mx, my) {
     S.chips.splice(i, 1);
     S.held++;
     room--;
+    noteCatch(ch);
     S.motes.push({
       s: ch.s,
       a: rand() * Math.PI * 2,
@@ -117,12 +119,15 @@ export function release(x, y) {
     S.dirty = true;
   }
   if (!S.held) return;
+  const full = S.held >= capacity();      // the whole hand, for the record's sake
+  const from = S.chips.length;
   for (let i = 0; i < S.held; i++) {
     spawnChip(x + (rand() - 0.5) * P * 6, y + (rand() - 0.5) * P * 6,
               vx + (rand() - 0.5) * 1.4,
               vy + (rand() - 0.5) * 1.4,
               S.motes[i]?.s || 1);
   }
+  noteThrow(S.chips.slice(from), full);
   S.held = 0;
   S.motes = [];
   S.dirty = true;

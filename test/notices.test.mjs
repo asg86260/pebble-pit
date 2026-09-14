@@ -6,11 +6,16 @@
 // hour of yard (a hundred rocks, a big hand at the table) go through the one
 // event hook that the real code calls, with the real arguments.
 
-import { group, ok, state, run, runUntil, yard, haveRock, quickCrew } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, haveRock, quickCrew, makeItRain } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { NOTICES, hasNotice, unreadNotices, markNoticesRead,
          noteHand, noteRockCleared, noteBite, catchUpNotices } from '../src/notices.js';
-import { CASINO_BIG } from '../src/config.js';
+import { CASINO_BIG, P, SHAKE_TURNS } from '../src/config.js';
+import { BIRDS, startle } from '../src/weather.js';
+import { release, catchAir } from '../src/hands.js';
+import { capacity } from '../src/upgrades.js';
+import { lift, shakeHeld, drop } from '../src/crew.js';
+import { load } from '../src/crew/hole.js';
 
 const keys = () => S.won.slice();
 
@@ -35,13 +40,13 @@ group('the catalog is what the design approved', async () => {
   const hooks = NOTICES.filter(n => !n.when).map(n => n.key);
 
   return [
-    ok(NOTICES.length === 42, 'forty-two notices, as approved', String(NOTICES.length)),
+    ok(NOTICES.length === 49, 'forty-nine notices, as approved', String(NOTICES.length)),
     ok(!dupes.length, 'every key is its own', dupes.map(n => n.key).join(',')),
     ok(!noName.length, 'every notice has a name', noName.map(n => n.key).join(',')),
     // The note says what you did. A blank one is the one failure mode that
     // reads as finished on the board and tells the player nothing.
     ok(!noNote.length, 'and a note saying what you did', noNote.map(n => n.key).join(',')),
-    ok(hooks.length === 6, 'six are earned by an event rather than a fact', hooks.join(','))
+    ok(hooks.length === 12, 'twelve are earned by an event rather than a fact', hooks.join(','))
   ];
 });
 
@@ -226,5 +231,110 @@ group('the record survives a save and a load', async () => {
     ok(S.wonSeen === seen, 'and so does how much of it had been read',
        `${seen} -> ${S.wonSeen}`),
     ok(typeof S.tally === 'object' && S.tally !== null, 'and the witnesses are an object')
+  ];
+});
+
+// Where a bird is, in the world, the way `startle` asks it: the sky's own x
+// with the parallax put back on (`skyX` in weather.js, which is not exported).
+const birdAt = b => ({ x: Math.round((b.x + S.camX * (1 - b.far)) / P) * P, y: b.y });
+
+group('one bird startled is a notice; the whole lot is another', async () => {
+  window.__birds();
+  const lot = BIRDS.length;
+  // The first click, on the first of them.
+  let b = birdAt(BIRDS[0]);
+  startle(b.x, b.y);
+  const one = hasNotice('bird'), notYet = !hasNotice('wholelot');
+  // And then every other bird of the same lot, wherever it has bolted to.
+  while (BIRDS.length) { b = birdAt(BIRDS[0]); startle(b.x, b.y); }
+  return [
+    ok(lot >= 2, 'a lot is at least two birds', String(lot)),
+    ok(one, 'the first bird startled is noticed'),
+    ok(notYet, 'one bird is not the whole lot'),
+    ok(hasNotice('wholelot'), 'every bird of the lot startled is')
+  ];
+});
+
+group('a full hand thrown and caught, every grain, is a notice; a short hand is not', async () => {
+  haveRock();
+  await run(1);
+  // A hand that holds more than one grain, or a hand one short of full is no
+  // hand at all. The ladder is the setup here, not the thing under test.
+  S.carryLevel = 3;
+  const x = S.camX + S.viewW / 2, y = 60;
+  // A hand short of full, thrown and caught whole: no stamp, nothing to count.
+  S.held = Math.max(1, capacity() - 1);
+  release(x, y);
+  catchAir(x, y);
+  const short = hasNotice('catchall');
+  S.held = 0; S.motes = [];
+  // A full hand, thrown, and only some of it caught.
+  S.held = capacity();
+  release(x, y);
+  const thrown = S.chips.filter(c => c.thrown).length;
+  S.chips.splice(S.chips.findIndex(c => c.thrown), 1);   // one grain gets away
+  catchAir(x, y);
+  const most = hasNotice('catchall');
+  S.held = 0; S.motes = [];
+  // And the whole of a full hand, caught out of the air where it was thrown.
+  S.held = capacity();
+  release(x, y);
+  catchAir(x, y);
+  return [
+    ok(!short, 'a hand short of full caught whole is not the feat'),
+    ok(thrown === capacity(), 'every grain of a full hand carries the throw', `${thrown} of ${capacity()}`),
+    ok(!most, 'and one that got away is not either'),
+    ok(hasNotice('catchall'), 'every grain of a full hand caught is'),
+    ok(S.held === capacity(), 'and the hand is full again', String(S.held))
+  ];
+});
+
+group('picking a worker up, shaking its load out and its hat off', async () => {
+  quickCrew();
+  window.__crew(2, 2);
+  await run(1);
+  const w = S.workers.find(o => o.type === 'hauler') || S.workers[0];
+  // Arms full and a hat on: what is being tested is the shaking, not the walk
+  // to the heap or the school.
+  w.trained = true; w.kitOf = 'hauler';
+  w.carry = load(w); w.load = [];                // a trained body carries more
+  lift(w);
+  const picked = hasNotice('lifted');
+  // Turned about until everything has come out of it, one change of direction
+  // at a time, the way a cursor does it.
+  for (let i = 0; i < SHAKE_TURNS * 20 && w.carry > 0; i++) shakeHeld(w, i % 2 ? 6 : -6);
+  const emptied = w.carry === 0;
+  drop(w);
+  return [
+    ok(picked, 'a body in your hand is noticed'),
+    ok(emptied, 'the load came all the way out', String(w.carry)),
+    ok(hasNotice('shookload'), 'and a full load shaken out is noticed'),
+    ok(hasNotice('hatoff'), 'and so is the hat coming off')
+  ];
+});
+
+group('a load that was not full when it came up is not the feat', async () => {
+  quickCrew();
+  window.__crew(2, 2);
+  await run(1);
+  const w = S.workers.find(o => o.type === 'hauler') || S.workers[0];
+  w.carry = Math.max(1, load(w) - 1); w.load = [];
+  lift(w);
+  for (let i = 0; i < SHAKE_TURNS * 20 && w.carry > 0; i++) shakeHeld(w, i % 2 ? 6 : -6);
+  drop(w);
+  return [
+    ok(w.carry === 0, 'it was shaken empty', String(w.carry)),
+    ok(!hasNotice('shookload'), 'but a part load is not a full one')
+  ];
+});
+
+group('the first muck rain is noticed', async () => {
+  const before = hasNotice('muckrain');
+  const rained = await makeItRain();
+  await run(1);
+  return [
+    ok(!before, 'a dry yard has not stood through one'),
+    ok(rained, 'the sky broke'),
+    ok(hasNotice('muckrain'), 'and the rain is on the record')
   ];
 });

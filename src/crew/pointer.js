@@ -14,6 +14,8 @@ import { inHouse } from '../scrubhouse.js';
 import { S } from '../state.js';
 import { unbook } from '../crew.js';
 import { assignDrop } from './assign.js';   // wave7b-assign
+import { load } from './hole.js';
+import { earn } from '../notices.js';
 
 // --- picking somebody up ------------------------------------------------------
 // You can pick a body up and put it down somewhere else, and that is all it
@@ -59,6 +61,10 @@ export function lift(w) {
   if (!w) return false;
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
+  earn('lifted');
+  // Whether it came up with its arms full, read now: a load shaken all the
+  // way out is only the feat if there was a whole load to shake.
+  w.liftedFull = w.carry > 0 && w.carry >= load(w);
   // An errand it was in the middle of is dropped, and the lever it was walking
   // to goes back into the pile of things wanting doing. Without this, picking up
   // the one body on its way to a lever would leave the ask claimed for ever by a
@@ -190,6 +196,7 @@ function shedLoad(w, dx) {
               -SHAKE_LIFT + bell() * 0.4, shade);
   }
   w.carry -= out;
+  if (w.liftedFull && w.carry <= 0) earn('shookload');
   S.dirty = true;
 }
 
@@ -210,6 +217,7 @@ function flingHat(w, dx) {
                vx: Math.max(-HURL_MAX, Math.min(HURL_MAX, dx * SHAKE_FLING * 2 + bell())),
                vy: -SHAKE_LIFT * 1.4 + bell() * 0.4 };
   w.trained = false;
+  earn('hatoff');
   S.dirty = true;
 }
 export function shakeHeld(w, dx) {

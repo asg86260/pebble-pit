@@ -22,6 +22,7 @@ import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
+import { earn } from './notices.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -160,8 +161,14 @@ export function sendBirds() {
   const speed = BIRD_SPEED * (0.7 + rand() * 0.6) * dir;
   const from = dir > 0 ? -P * 8 : S.viewW + P * 8;
   const n = 2 + Math.floor(rand() * (BIRD_FLOCK - 1));
+  // The lot they came in as, shared by all of them: how many there were, and
+  // how many have been startled. It is what says whether you got the whole
+  // lot, and it is on the birds rather than in the save because the sky's
+  // birds are not saved either -- a lot that flies off is forgotten with them.
+  const lot = { n, hit: 0 };
   for (let i = 0; i < n; i++) {
     BIRDS.push({
+      lot,
       x: S.camX * far + from - dir * i * (P * 6 + rand() * P * 8),
       y: y + (rand() - 0.5) * P * 6,
       vx: speed,
@@ -226,6 +233,8 @@ export function startle(wx, wy) {
     }
 
     BIRDS.splice(i, 1);
+    earn('bird');
+    if (b.lot && ++b.lot.hit >= b.lot.n) earn('wholelot');
     for (const other of BIRDS) {
       if (Math.abs(other.y - b.y) > P * 30) continue;    // the ones it was flying with
       other.vx *= BIRD_BOLT;
