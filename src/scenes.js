@@ -33,7 +33,9 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, LADDER, TIER_OWN } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, LADDER, TIER_OWN, LAND_HOP_MS } from './config.js';
+import { dropMs } from './rock.js';
+import { now } from './clock.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -162,6 +164,25 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__next(); window.__fast(1.2); window.__look(S.cx - S.viewW / 2); } },
   landing: { about: 'the story', say: 'the second rock coming down on a yard with a crew',
     run: () => { window.__reset(); window.__crew(2, 1); window.__next(); } },
+  // ...and a rock down, caught at the top of the hop it knocks the crew into
+  // (wave-polish, track C). Not the setup above: that one clears rock one out
+  // of the sky, and the first rock's landing hops nobody -- the opening owns
+  // that beat (`landRock`). So rock two is stood and cleared, the crew dance,
+  // and rock three comes down on them. The shot tool runs a second of yard
+  // after a scene, and the whole fall is shorter than that, so this one stops
+  // before the rock is let go: the next rock comes the frame the dance is
+  // over, and the dance is left with a second, less half a hop, less the fall
+  // (`dropMs`, the rock's own reckoning) still to run. The frame shot is the
+  // one with every body at the peak. Against the same scene with `LAND_HOP_H`
+  // dialed to nothing, a body here is the hop higher.
+  'landing^': { about: 'the story', say: 'a rock down on a yard with a crew, caught at the top of the hop',
+    run: () => {
+      window.__reset(); window.__crew(2, 1); window.__jump(2); window.__next();
+      // the dance is called on the frame after the rock goes, so one frame first
+      for (let i = 0; i < 60 && !(S.danceUntil > now()); i++) window.__fast(1 / 60);
+      const lead = 1000 - LAND_HOP_MS / 2 - dropMs();
+      for (let i = 0; i < 600 && S.rockFall <= 0 && S.danceUntil - now() > lead; i++) window.__fast(1 / 60);
+    } },
   // wave-release, track B. The opening half a second into the one left
   // standing getting up -- the beat the view eases back out over. With the
   // full picture the view is still close and on its way; under reduced motion
