@@ -35,29 +35,22 @@ import {
   NOTICE_RIFT, NOTICE_BREWS, NOTICE_LIVED_MS, NOTICE_FAST_ROCK_S
 } from './config.js';
 import { S, pit } from './state.js';
+import { CATALOG } from './catalog.js';
 import { pitCapacity } from './pit.js';
 import { now } from './clock.js';
 import { JOB } from './jobs.js';
 
 // --- the catalog ---------------------------------------------------------------
-// Name, note, and how it is earned. The note says WHAT YOU DID -- the plain
-// requirement, in the words the yard would use -- and never a remark about it.
-// See DESIGN.md: a record that comments on itself is a record you read twice.
+// The names and notes are catalog.js's -- data a page with no yard can read
+// (the landing page's record). What is here is how each is earned: a
+// predicate by key, joined to the catalog below. The four feats and the two
+// casino notices carry no `when`: they are moments, and the moment calls
+// `earn` where it happens. `every job staffed` is the one feat that is simply
+// true or not true at any instant, so it is a predicate.
 
-// The ladders are built from their tables rather than written out, so the count
-// on the board and the thresholds in config.js cannot drift apart.
-const ladder = (prefix, list, name, note, fact) =>
-  list.map((n, i) => ({
-    key: prefix + i,
-    name: name(n, i),
-    note: note(n, i),
-    when: () => fact() >= n
-  }));
-
-const SAY = ['ten', 'twenty-five', 'fifty', 'a hundred'];
-const PEBBLE_SAY = ['ten thousand', 'a hundred thousand', 'a million',
-                    'ten million', 'a hundred million'];
-const CREW_SAY = ['five', 'ten', 'twenty five', 'fifty'];
+// The ladders' thresholds, from the same tables the catalog names them from.
+const ladder = (prefix, list, fact) =>
+  Object.fromEntries(list.map((n, i) => [prefix + i, () => fact() >= n]));
 
 // every trade taught to everybody doing that job, with somebody in each
 const allTrades = () =>
@@ -89,93 +82,38 @@ const everyJobStaffed = () =>
 // the longest anybody has been on the payroll
 const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
 
-export const NOTICES = [
-  // --- what happens on its own -------------------------------------------------
-  { key: 'firstgrain', name: "makin' money",
-    note: 'throw a pebble into the pit', when: () => S.banked > 0 },
-  { key: 'firstrock', name: 'better keep digging',
-    note: 'clear the first rock', when: () => S.boulderNo >= 2 },
-  { key: 'gotout', name: 'you saved your sqwife',
-    note: 'no more rocks, you did it.', when: () => S.rescued },
-  { key: 'firstcore', name: 'something was inside it',
-    note: 'bank a core out of a broken rock', when: () => S.seenCore },
-  { key: 'firsthire', name: "you've constructed additional pylons",
-    note: 'build another house', when: () => S.crew >= 2 },
-  { key: 'firstshard', name: 'the first ore',
-    note: 'bring ore up out of the quarry', when: () => S.seenShard },
-  { key: 'firstspore', name: 'cultivation',
-    note: 'grow your first crop', when: () => S.seenSpore },
-  { key: 'firstspark', name: 'magic in the air',
-    note: 'earn your first spark', when: () => S.seenSpark },
+const WHEN = {
+  firstgrain: () => S.banked > 0,
+  firstrock: () => S.boulderNo >= 2,
+  gotout: () => S.rescued,
+  firstcore: () => S.seenCore,
+  firsthire: () => S.crew >= 2,
+  firstshard: () => S.seenShard,
+  firstspore: () => S.seenSpore,
+  firstspark: () => S.seenSpark,
   // Nine tenths full, not full: the first grain the hole cannot take is the
   // tear, so 'full' and 'torn' landed on the same frame with two notes for one
   // act (critics 2026-09-10, C15). This one lands as the hole is about to.
-  { key: 'holefull', name: 'the pit is full',
-    note: 'fill the pit to the brim', when: () => S.seenFullPit || pit.n >= pitCapacity() * 0.9 },
-  { key: 'rifttorn', name: 'the rift torn, storage is solved',
-    note: 'fill the pit causing an inter-dimensional rift', when: () => S.riftOpen },
-  { key: 'drowned', name: 'the rift has gotten bigger',
-    note: 'a whole ocean of inter-dimensional storage.', when: () => S.drowned },
-  { key: 'star', name: 'conjure a star',
-    note: 'call a star down from the tower', when: () => S.meteorOpen },
-  { key: 'firsthat', name: "you're a wizard squarey",
-    note: 'finish a wizard hat at the tower', when: () => S.wizardHats >= 1 },
-  { key: 'firstbrew', name: 'hello, potion seller',
-    note: 'brew a batch at the apothecary', when: () => S.brews >= 1 },
-  { key: 'firsttrade', name: 'first day of school',
-    note: 'buy the first hat at the training grounds',
-    when: () => S.breakers + S.carters + S.blasters + S.growers >= 1 },
-  { key: 'alltrades', name: 'educating the masses',
-    note: 'stock every station with its hat', when: allTrades },
-  { key: 'allbuilt', name: 'building complete',
-    note: 'you built everything', when: allBuilt },
+  holefull: () => S.seenFullPit || pit.n >= pitCapacity() * 0.9,
+  rifttorn: () => S.riftOpen,
+  drowned: () => S.drowned,
+  star: () => S.meteorOpen,
+  firsthat: () => S.wizardHats >= 1,
+  firstbrew: () => S.brews >= 1,
+  firsttrade: () => S.breakers + S.carters + S.blasters + S.growers >= 1,
+  alltrades: allTrades,
+  allbuilt: allBuilt,
+  ...ladder('rock', NOTICE_ROCKS, () => S.boulderNo),
+  ...ladder('pebble', NOTICE_PEBBLES, () => S.banked),
+  ...ladder('crew', NOTICE_CREW, () => S.crew),
+  ...ladder('ore', NOTICE_ORE, () => S.quarryTotal),
+  rift1e6: () => (S.riftAte || 0) >= NOTICE_RIFT,
+  brew100: () => (S.brews || 0) >= NOTICE_BREWS,
+  lived1h: () => eldest() >= NOTICE_LIVED_MS,
+  everyjob: everyJobStaffed
+};
 
-  // --- numbers, for the long tail ----------------------------------------------
-  ...ladder('rock', NOTICE_ROCKS,
-            (n, i) => `${SAY[i]} rocks`,
-            (n, i) => `clear ${SAY[i]} boulders` +
-                      (i === SAY.length - 1 ? ", that's a lot of rocks" : ''),
-            () => S.boulderNo),
-  ...ladder('pebble', NOTICE_PEBBLES,
-            (n, i) => `${PEBBLE_SAY[i]} pebbles`,
-            (n, i) => `bank ${PEBBLE_SAY[i]} pebbles`,
-            () => S.banked),
-  ...ladder('crew', NOTICE_CREW,
-            (n, i) => `${CREW_SAY[i]} squares`,
-            (n, i) => `hire a crew of ${CREW_SAY[i]}`,
-            () => S.crew),
-  ...ladder('ore', NOTICE_ORE,
-            (n, i) => i === 0 ? 'a thousand ore out of the cut' : 'ten thousand ore',
-            (n, i) => `dig ${i === 0 ? 'a thousand' : 'ten thousand'} ore out of the quarry`,
-            () => S.quarryTotal),
-  { key: 'rift1e6', name: 'a million through the rift',
-    note: 'send a million pebbles through the rift',
-    when: () => (S.riftAte || 0) >= NOTICE_RIFT },
-  { key: 'brew100', name: 'a hundred batches',
-    note: 'brew a hundred batches', when: () => (S.brews || 0) >= NOTICE_BREWS },
-  { key: 'lived1h', name: 'an hour on one clock',
-    note: 'keep one body on the payroll for an hour',
-    when: () => eldest() >= NOTICE_LIVED_MS },
-
-  // --- feats you would have to set out for --------------------------------------
-  // The first four and the last two carry no `when`: they are moments, and the
-  // moment calls `earn` where it happens. `every job staffed` is the one feat
-  // that is simply true or not true at any instant, so it is a predicate.
-  { key: 'nobodyhired', name: 'nobody hired',
-    note: 'clear a whole boulder with nobody on the payroll' },
-  { key: 'ownhand', name: 'your own hand alone',
-    note: 'clear a boulder without a single worker touching it' },
-  { key: 'nevertouched', name: 'never touched it',
-    note: 'clear a boulder without swinging at it once yourself' },
-  { key: 'underminute', name: 'a rock off in under a minute',
-    note: 'clear a boulder in under a minute' },
-  { key: 'everyjob', name: 'every job staffed at once',
-    note: 'put at least one body on every job at once', when: everyJobStaffed },
-  { key: 'tablebeaten', name: "we're so back",
-    note: 'win 50k in a single spin at the casino' },
-  { key: 'tableruin', name: 'time to get a loan',
-    note: 'lose a 50k stake in a single spin at the casino' }
-];
+export const NOTICES = CATALOG.map(n => (WHEN[n.key] ? { ...n, when: WHEN[n.key] } : { ...n }));
 
 const BY_KEY = new Map(NOTICES.map(n => [n.key, n]));
 export const noticeFor = key => BY_KEY.get(key) || null;

@@ -18,7 +18,10 @@
 import { spawn } from 'node:child_process';
 import { writeFileSync, readdirSync } from 'node:fs';
 
-const URL_ = process.env.GAME || 'http://localhost:5184/';
+// The game is `play.html` (index.html is the landing page); a GAME that names
+// only the server gets it appended, and one naming a page is taken as is.
+const base = process.env.GAME || 'http://localhost:5184/';
+const URL_ = base.endsWith('/') ? base + 'play.html' : base;
 const shot = process.argv[2] === '--shot' ? process.argv[3] : null;
 // `--only casino` runs just the groups whose name contains that, which is how
 // you check one corner without paying for the whole suite

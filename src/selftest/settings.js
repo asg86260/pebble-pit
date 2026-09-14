@@ -9,8 +9,8 @@
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion } from '../prefs.js';
-import { disarmReset, hold } from '../input.js';
-import { setSlot, storeSettled, clear } from '../save.js';
+import { disarmReset } from '../input.js';
+import { setSlot, storeSettled, clear, slotRaw } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
 import { persist, exportSave, claimSave } from '../persist.js';
@@ -43,43 +43,54 @@ const lines = () => [...held().children]
            : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
-  // --- the title page (DESIGN.md, "Save slots and the title page") ------------
-  // The boot itself is the one thing `newRun` cannot show -- it lets the hold
-  // go -- so the title front is reached the way `title page` reaches it, and
-  // what the boot does is `hold(true, 'title')`, the same call.
-  ['the title page is the sheet\'s other front', async () => {
+  // --- the landing page (DESIGN.md, "The landing page") ----------------------
+  // index.html in a frame, the player's way: the labels read off the store,
+  // and `play` takes the frame to play.html with the yard running. The demo
+  // yard the page shows in its own frame boots too, staged, and writes
+  // nothing -- the slot's blob is the same before and after.
+  ['the landing page reads the store and play opens the game', async () => {
     newRun();
     await settle();
-    hold(true, 'title');
-    await raf();
-    const got = lines();
-    const want = ['pebble pit', 'play', '', 'saves', 'achievements', 'settings',
-                  'esc holds · ← → look about', version(), 'rocks keep coming. there is no finish line.'];
-    const before = state();
-    run(2);
-    const held2 = state().workerPos.join() === before.workerPos.join();
-    document.getElementById('play').click();
-    const down = held().hidden && !S.paused;
-    run(2);
-    const ran = state().workerPos.join() !== before.workerPos.join();
-    await press();
-    const front = lines()[0];
-    document.getElementById('titlebtn').click();
-    const back = lines()[0];
-    const stillHeld = S.paused && !held().hidden;
-    document.getElementById('settingsbtn').click();
-    const onSettings = !motion().hidden && document.getElementById('play').hidden;
-    document.getElementById('settingsback').click();
-    const returned = lines()[0];
-    document.getElementById('play').click();
+    window.__crew(2, 2);
+    run(5);
+    S.dirty = true;
+    persist();
+    await storeSettled();
+    const blob = exportSave();
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
+    const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
+    document.body.appendChild(f);
+    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0;
+    try {
+      f.src = 'index.html';
+      await loaded();
+      const d = f.contentDocument;
+      // the page's own boot is a prime of the store, awaited at its top level
+      for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
+      landed = !!d.getElementById('play');
+      label = d.getElementById('playlabel').textContent;
+      record = d.getElementById('recordbtn').textContent;
+      d.getElementById('slotsbtn').click();
+      rows = [...d.querySelectorAll('.slot')].map(b => b.textContent);
+      d.getElementById('slotsback').click();
+      d.getElementById('play').click();
+      await loaded();
+      arrived = /play\.html$/.test(f.contentWindow.location.pathname);
+      for (let i = 0; i < 60 && !f.contentWindow.__state; i++) await sleep(50);
+      crewThere = f.contentWindow.__state ? f.contentWindow.__state().crew : -1;
+    } finally {
+      f.remove();
+    }
+    const after = slotRaw(1);
     return [
-      ok(got.join('|') === want.join('|'), 'the title front reads pebble pit, play, and the shelf',
-         `got ${JSON.stringify(got)}`),
-      ok(held2, 'and the yard stands still behind it'),
-      ok(down && ran, 'play lets it go and the yard runs', `${down}, ${ran}`),
-      ok(front === 'paused', 'escape holds on the paused front', front),
-      ok(back === 'pebble pit' && stillHeld, 'title page turns it back with the yard still held', back),
-      ok(onSettings && returned === 'pebble pit', 'and back from the settings is the front you came from', returned),
+      ok(landed, 'index.html is the landing page'),
+      ok(/^rock \d+ · 4 crew · just now$/.test(label), 'play says what it opens, without a yard number', label),
+      ok(rows.length === 3 && /^1 · rock \d+ · 4 crew/.test(rows[0]) && rows[1] === '2 · empty',
+         'the saves rows read the slots', JSON.stringify(rows)),
+      ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
+      ok(arrived && crewThere === 4, 'play opens play.html with the yard', `${arrived}, ${crewThere} crew`),
+      ok(after === blob, 'and nothing the landing page did wrote the slot'),
     ];
   }],
 
@@ -128,7 +139,7 @@ export const TESTS = [
          `${fresh.crew} crew, ${saidNew}`),
       ok(rows2[1].endsWith('playing') && /^1 · rock \d+ · \d+ crew · just now$/.test(rows2[0]),
          'the page reads the swap', JSON.stringify(rows2)),
-      ok(backAgain.crew === crew && saidBack === 'yard 1', 'and the first yard comes back',
+      ok(backAgain.crew === crew && saidBack === 'loaded', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
     ];
   }],

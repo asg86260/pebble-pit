@@ -12,7 +12,11 @@
 // when the sheet comes up, whether or not the page is turned.
 
 import { S } from './state.js';
-import { NOTICES, noticeCount, noticeTotal } from './notices.js';
+// The catalog and not notices.js: the names are data, and this file is read
+// on the landing page too, where there is no yard for notices.js to reach.
+import { CATALOG as NOTICES } from './catalog.js';
+const noticeCount = () => S.won.length;
+const noticeTotal = () => NOTICES.length;
 
 // **Unearned notices are not named.** This is the rule the whole game already
 // follows -- the books show only currencies you have seen, the counter names
@@ -38,6 +42,15 @@ export function recordList() {
   return newestFirst().map(n => ({ name: n.name, note: n.note }));
 }
 
+// The same list off a save that is not standing -- the landing page reads
+// the open slot's blob, with no yard booted -- and its count.
+export function recordListOf(won = [], wonAt = {}) {
+  return NOTICES.filter(n => won.includes(n.key))
+    .sort((a, b) => (wonAt[b.key] || 0) - (wonAt[a.key] || 0))
+    .map(n => ({ name: n.name, note: n.note }));
+}
+export const recordLabelOf = (won = []) => `achievements \u00b7 ${won.length} of ${noticeTotal()}`;
+
 // The one line about the achievements on the sheet's front: the count, which
 // is the honest half of a locked list (see above). It is the button that turns
 // the page, so what you press to read them is the number of them. "The record"
@@ -50,8 +63,7 @@ export const recordLabel = () => `achievements \u00b7 ${noticeCount()} of ${noti
 // two across, because an achievement is a thing you hold rather than a line
 // in a ledger. Nothing here is a button and nothing has a hover; it is a page
 // to read, behind the button that carries the count. An empty page says so.
-export function showRecord(el) {
-  const rows = recordList();
+export function showRecord(el, rows = recordList()) {
   el.replaceChildren();
   if (rows.length === 0) {
     const none = document.createElement('div');

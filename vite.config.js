@@ -33,6 +33,8 @@ export default defineConfig(({ command }) => {
     // Relative, because the desk loads dist/ over file:// and an absolute
     // /assets path is the root of the disk there.
     base: './',
+    // two pages: the landing page and the game (DESIGN.md, "The landing page")
+    build: { rollupOptions: { input: { index: 'index.html', play: 'play.html' } } },
     plugins: command === 'build' ? [stampFile(stamp)] : [],
     define: {
       // Off the dev server the page says "dev": a stamp that changed on every

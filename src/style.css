@@ -717,18 +717,18 @@ canvas {
    border is the same one-pixel edge a bought card has. Held to a screen's
    worth and scrolled past that, so forty cards do not push the back button
    off the window. */
-.held .record { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 36em; max-width: 80vw;
+.record { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 36em; max-width: 80vw;
                 max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
                 font-size: 11px; }
 /* The name sits at the top of the card and what earned it at the bottom, with
    the slack between them: a row's cards are stretched to the tallest, so a
    two-line name beside a one-line name would otherwise leave the two notes at
    different heights, and a row of cards reads as a row when its notes line up. */
-.held .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
+.record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
                       padding: 5px 8px; border: 1px solid #000; }
-.held .record .name { letter-spacing: .1em; text-transform: uppercase; }
-.held .record .note { color: #666; }
-.held .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
+.record .name { letter-spacing: .1em; text-transform: uppercase; }
+.record .note { color: #666; }
+.record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
    lands (toast.js). The same card as the achievements page -- name in the
    boards' hand, what earned it under, the one-pixel edge -- so what slides in
@@ -1033,8 +1033,11 @@ canvas {
 .held .slot { min-width: 22em; text-align: left; }
 .held .slot.open { opacity: .7; }
 .held .slot.armed { color: #fff; background: #000; }
-/* the title's word: the game's name, a size up from "paused" */
-.held .word.title { font-size: 22px; }
+/* The landing page's picture (main.js, `demo`): the game with nothing but
+   the canvas showing -- no boards, no sheet, no toast, no call to build -- and
+   nothing under the pointer. The frame it sits in is the title's. */
+body.demo > :not(canvas) { display: none !important; }
+body.demo canvas { cursor: default; pointer-events: none; }
 /* the switch reads as thrown when it is thrown */
 #hidedone.on { opacity: 1; border-style: solid; }
 

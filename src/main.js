@@ -16,11 +16,14 @@ import { step, settleIntoWorld } from './game.js';
 import { at } from './grid.js';
 import { openingCamX, resize, clampCam } from './world.js';
 import { syncWorkers } from './crew.js';
-import { draw } from './render.js';
+import { draw, asPicture } from './render.js';
 import { hud, remeasure } from './board.js';
 import { fillQueue } from './queue.js';
 import { buildShop } from './shop.js';
-import { persist, restore, claimSave } from './persist.js';
+import { persist, restore, claimSave, reset } from './persist.js';
+import { crew as hire, fast } from './hooks.js';
+import { reducedMotion } from './prefs.js';
+import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
 import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // wave-release, track A: the held sheet's shelf
@@ -80,7 +83,7 @@ function frame() {
     if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
     syncEnding();
     const t0 = mark();
-    if (!S.paused) step();
+    if (!S.paused && !(demo && reducedMotion())) step();
     const t1 = mark();
     draw();
     const t2 = mark();
@@ -111,23 +114,41 @@ await primeStore();
 // player away for a month is exactly that. Silent in Chrome, a prompt in
 // Firefox, ignored where unsupported; the answer changes nothing here.
 try { navigator.storage?.persist?.(); } catch {}
-restore();
-buildShop();
-syncWorkers();
-// The title page (DESIGN.md, "Save slots and the title page"): the game
-// opens held, on the sheet's title front, with the yard standing still
-// behind it as the picture. `play` lets it go. What the store has to say on
-// boot -- the desk's fallback, a save from a newer build -- is said here,
-// where the boot now stops. A first visit's intro is on the yard's clock and
-// waits under the hold with everything else.
-hold(true, 'title');
-
-// Where the view opens: where you left it, or -- on a game that has never been
-// played, or a save from before the view was written down -- on the rock.
-// `clampCam` is what makes a remembered spot safe on a window that has changed
-// size or a world that has since grown or shrunk.
-S.camX = S.camWas ?? openingCamX();
-clampCam();
+// The landing page's picture (DESIGN.md, "The landing page"): `play.html?demo`
+// is this same page inside the title's frame, standing a staged yard nobody
+// owns -- a fresh game with the intro skipped and a small crew hired straight
+// off -- with every piece of chrome hidden and the camera composed so the
+// menu column on the left has clear sky and ground under it. Staged means
+// never written down: no slot is read, cleared or claimed, and the interval
+// below writes nothing. Under `motion: less` the yard stands still.
+const demo = new URLSearchParams(location.search).has('demo');
+if (demo) {
+  document.body.classList.add('demo');
+  asPicture(true);
+  S.staged = true;
+  reset(false);
+  hire(3, 2);
+  fast(DEMO_HEAD_START_S);
+  // the opening view, pushed right by the width of the menu column so the
+  // column stands over empty ground and the bench, the rock and the crew
+  // are in the clear
+  S.camX = openingCamX() - TITLE_COLUMN;
+  clampCam();
+} else {
+  restore();
+  buildShop();
+  syncWorkers();
+  // The desk's fallback (wave-desk-sound, track A): the save that would not
+  // read has been put aside and the one before it is standing. Offered, not
+  // silent -- the game opens held, with the sheet saying so.
+  if (S.fellBack) hold(true);
+  // Where the view opens: where you left it, or -- on a game that has never
+  // been played, or a save from before the view was written down -- on the
+  // rock. `clampCam` is what makes a remembered spot safe on a window that has
+  // changed size or a world that has since grown or shrunk.
+  S.camX = S.camWas ?? openingCamX();
+  clampCam();
+}
 // the window changing shape, and getting the game written down
 addEventListener('resize', relayout);
 addEventListener('load', relayout);
@@ -145,8 +166,8 @@ setInterval(persist, 1000);
 // at it reloads -- the store is the yard now, and this page's is the stale
 // one. The user switching back is the moment it would otherwise have written
 // an hour-old yard over the hour just played.
-claimSave();
-addEventListener('storage', e => { if (e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
+if (!demo) claimSave();
+addEventListener('storage', e => { if (!demo && e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
 document.addEventListener('visibilitychange', () => {
   if (S.yielded && document.visibilityState === 'visible') location.reload();
 });

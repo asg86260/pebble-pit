@@ -96,6 +96,13 @@ export const OPENING_ROCK_AT = 0.4;
 // edge, with the same air past the rock's far side before the edge counts as
 // reached. Ten cells: enough that the bench is not flush against the frame.
 export const OPENING_MARGIN = P * 10;
+// The landing page's menu column, in screen pixels: the demo yard behind it
+// (main.js, `demo`) is the opening view pushed right by this much, so the
+// column stands over empty ground. title.css draws the column this wide.
+export const TITLE_COLUMN = 320;
+// and how far the demo is run before its first frame: the rock down, the
+// crew across the yard and swinging, so the page never opens on an empty one
+export const DEMO_HEAD_START_S = 45;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is

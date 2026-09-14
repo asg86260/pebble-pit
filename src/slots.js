@@ -11,7 +11,6 @@
 
 import { S } from './state.js';
 import { SLOTS, openSlot, slotRaw } from './save.js';
-import { switchSlot } from './persist.js';
 
 // The coarse kind of time, since the page is read at a glance: how long ago
 // is what matters, and the exact minute is not.
@@ -29,7 +28,10 @@ export function since(then, now = Date.now()) {
 // game, it is the fallback and the broken-save line, and the row should not
 // promise otherwise. The open slot is `playing` whatever its blob says --
 // the yard standing is the truth, and the store is a second behind it.
-export function slotLabels(now = Date.now()) {
+// `playing` is whether a yard is standing on the page: on the held sheet the
+// open slot is the yard running behind it and says so; on the landing page
+// nothing is running, and the open slot reads like the others.
+export function slotLabels(now = Date.now(), playing = true) {
   const rows = [];
   for (let n = 1; n <= SLOTS; n++) {
     const raw = slotRaw(n);
@@ -37,7 +39,7 @@ export function slotLabels(now = Date.now()) {
     let s = null;
     if (raw) { try { s = JSON.parse(raw); } catch {} }
     const parts = [String(n)];
-    if (open) {
+    if (open && playing) {
       parts.push(`rock ${S.boulderNo}`, `${S.crew} crew`, 'playing');
     } else if (!raw) {
       parts.push('empty');
@@ -52,9 +54,17 @@ export function slotLabels(now = Date.now()) {
   return rows;
 }
 
-// The one line on the front: which yard this is, so the button that turns
-// the page says the thing you came to check.
-export const slotsLabel = () => `saves · yard ${openSlot()}`;
+// What the open slot holds, as the landing page says it under `play`: the
+// row's words without the slot's number -- no yard is "yard 1" to the
+// player, it is the yard -- or `a new yard` for an empty one.
+export function playLabel(now = Date.now()) {
+  const row = slotLabels(now, false).find(r => r.open);
+  if (!row || row.empty) return 'a new yard';
+  return row.text.replace(/^\d+ · /, '');
+}
+
+// The line on the fronts: how many of the three are yards.
+export const slotsLabel = () => `saves · ${slotLabels(Date.now(), false).filter(r => !r.empty).length} of ${SLOTS}`;
 
 // Written into the sheet's own element: one button a slot, the open one inert.
 // Pressing another row switches the yard behind the sheet and says so. An
@@ -62,7 +72,9 @@ export const slotsLabel = () => `saves · yard ${openSlot()}`;
 // the reset is -- because it is the one press on the page that begins an
 // intro, and a slip here would be a new game under a player who wanted the
 // list. `say` is the sheet's own line, handed in so this file does not reach
-// for settings.js's elements.
+// for settings.js's elements, and `pick` is what opening a slot means where
+// the page is: `switchSlot` on the held sheet, where a yard is running and
+// has to be swapped; the pointer alone on the landing page, where none is.
 let armed = 0;
 let armedRow = null;
 function disarm() {
@@ -71,10 +83,10 @@ function disarm() {
   if (armedRow) { armedRow.classList.remove('armed'); armedRow.textContent = armedRow.dataset.text; }
   armedRow = null;
 }
-export function showSlots(el, say) {
+export function showSlots(el, say, pick, playing = true) {
   disarm();
   el.replaceChildren();
-  for (const row of slotLabels()) {
+  for (const row of slotLabels(Date.now(), playing)) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'slot' + (row.open ? ' open' : '');
@@ -92,9 +104,9 @@ export function showSlots(el, say) {
         return;
       }
       disarm();
-      switchSlot(row.slot);
-      say(row.empty ? 'a new yard' : `yard ${row.slot}`);
-      showSlots(el, say);
+      pick(row.slot, row.empty);
+      say(row.empty ? 'a new yard' : 'loaded');
+      showSlots(el, say, pick, playing);
     });
     el.appendChild(b);
   }

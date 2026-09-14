@@ -12,11 +12,13 @@
 
 import { setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
-import { exportSave, importSave } from './persist.js';
+import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
-import { storeTrouble } from './save.js';
+import { storeTrouble, storeSettled } from './save.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
+import { copyOut } from './copyout.js';
+export { copyOut };
 
 const sheet = document.getElementById('held');
 const motionEl = document.getElementById('motion');
@@ -40,44 +42,30 @@ const slotsEl = document.getElementById('slots');
 // opens the sheet on a front every time: a sheet that came up on whichever
 // page it went down on would be a sheet whose resume button is sometimes
 // not there.
-let front = 'main';
 export function showPane(name) {
-  if (name === 'title' || name === 'main') front = name;
   for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
   slotsBtn.textContent = slotsLabel();
   if (name === 'record') showRecord(recordEl);
-  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; });
+  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; }, switchSlot);
 }
-export const onFront = () => front;
-const back = () => showPane(front);
+const back = () => showPane('main');
 recordBtn.addEventListener('click', () => showPane('record'));
 document.getElementById('recordback').addEventListener('click', back);
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
 document.getElementById('settingsback').addEventListener('click', back);
-// The way back out of a yard: the sheet turns to the title front and nothing
-// else happens -- the yard stays held behind it, and play is resume by
-// another name.
-document.getElementById('titlebtn').addEventListener('click', () => showPane('title'));
-
-// The save, out of the browser and into your hand. The clipboard is not
-// allowed on every page; when it is not, the text is left where the console
-// can reach it, and the sheet says so. Shared with the crashed sheet, which
-// hands over the same blob for a worse reason -- one copy of the fallback,
-// so the two sheets cannot answer differently.
-export async function copyOut(raw, sayEl) {
-  if (!raw) { sayEl.textContent = 'nothing saved yet'; return; }
-  try {
-    await navigator.clipboard.writeText(raw);
-    sayEl.textContent = 'copied ' + Math.round(raw.length / 1024) + 'kb';
-  } catch {
-    window.__save = raw;
-    sayEl.textContent = 'in window.__save';
-  }
-}
+// The way out of a yard: the landing page. The store is written behind
+// (save.js), so the last write is waited for before the page goes -- a
+// navigation that did not wait could lose the last second of play.
+document.getElementById('titlebtn').addEventListener('click', async () => {
+  S.dirty = true;
+  persist();
+  await storeSettled();
+  location.href = 'index.html';
+});
 
 // The switch says what is in force, not what was pressed: a player whose
 // system asked for less motion reads "less" before ever touching it, and
@@ -193,7 +181,7 @@ document.getElementById('build').textContent = version();
 // a browser tab has its own way out.
 const quitEl = document.getElementById('quit');
 if (window.desk) {
-  quitEl.dataset.pane = 'title main';
+  quitEl.dataset.pane = 'main';
   quitEl.hidden = false;
   quitEl.addEventListener('click', () => window.close());
 }

@@ -1,16 +1,16 @@
 # Still to do
 
-## The landing page -- DESIGNED, NOT BUILT (2026-09-14)
+## The landing page -- BUILT (2026-09-14)
 
-"The landing page" in DESIGN.md. The title leaves the held sheet and becomes
-`index.html`, with the game at `play.html`: a left column (name, tagline,
-play with the open yard's label, saves / achievements / settings opening in
-the column, quit on the desk, the version and links in the footer) over a
-live, staged demo yard drawn by the game's own renderer with the camera
-composed to leave the column clear. Mock: `docs/mocks/landing-2026-09-14.png`
-(the static html beside it, shot at 800x600). Blocker: sign-off on the shape, and two
-calls in it -- two documents rather than a full-window screen in one, and
-the demo yard live rather than a still.
+"The landing page" in DESIGN.md, with an as-built note. `index.html` is the
+landing page and `play.html` the game; the picture is `play.html?demo` in a
+frame (a staged yard, chrome hidden, reading layers off, camera pushed
+right by `TITLE_COLUMN`); the column reads the store directly, and the
+record's names moved to `catalog.js` so it can. Worth a look on a real
+window: the demo yard at 1440x900 and wider (the crew is small, and the
+house sits at the column's edge), and whether the desk's `quit` on the
+landing page wants to be `play`-sized. The Electron shell has not been
+launched on the new entry page.
 
 ## Save slots and the title page -- BUILT (2026-09-13)
 

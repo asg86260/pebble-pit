@@ -1188,7 +1188,10 @@ function restoreCrew(who) {
 // through here with `fresh` false and keeps the number it was given: reseeding
 // under it would throw the seed away in the act of honoring it.
 export function reset(fresh = true) {
-  clear();
+  // A staged yard is nobody's (scenesheet.js, the landing page's demo): it
+  // is never written down, and clearing the slot under it would erase the
+  // player's yard to make room for a picture.
+  if (!S.staged) clear();
   S.runSeed = fresh ? reseed() : seed();
   // Including what the hole had been pressed to. This is not the same field as
   // the grain it is *at* -- the grain follows from the pile being rebuilt, and

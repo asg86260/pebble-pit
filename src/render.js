@@ -222,8 +222,19 @@ const LAYERS = [
 
 export { LAYERS };
 
+// The landing page's picture (main.js, `demo`) is the yard to be looked at
+// and not read: the layers that are counts, marks, cursors and controls --
+// the things a player reads off the picture -- are left out of it. Named
+// here, beside the list they are entries of.
+const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
+                         'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
+                         'stock count', 'pot labels', 'counter']);
+let picture = false;
+export const asPicture = on => { picture = on; };
+
 export function draw() {
   for (const layer of LAYERS) {
+    if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
     layer.draw();
   }

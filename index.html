@@ -3,165 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boulder Clicker</title>
+<title>Pebble Pit</title>
 <link rel="icon" href="./icon.png">
-<link rel="stylesheet" href="/src/style.css">
+<link rel="stylesheet" href="./src/style.css">
+<link rel="stylesheet" href="./src/title.css">
 </head>
-<body>
-<!-- One menu, not two. It walks along the ground from the bench to the lab and
-     shows whichever of them you are standing at. -->
-<div id="panel" class="panel" hidden>
-  <!-- what you have to spend, floated off the left of whichever board is open -->
-  <div id="purse" class="purse"></div>
-  <div class="sheet">
-  <div id="board" class="page" hidden>
-    <div class="title">the bench</div>
-    <div id="shop" class="rows"></div>
-  </div>
-  <div id="lab" class="page" hidden>
-    <div class="title">the lab</div>
-    <div id="labshop" class="rows"></div>
-  </div>
-  <div id="school" class="page" hidden>
-    <div class="title">the training grounds</div>
-    <div id="schoolshop" class="rows"></div>
-  </div>
-  <div id="house" class="page" hidden>
-    <div class="title">the house</div>
-    <div id="crewshop" class="rows"></div>
-  </div>
-  <div id="towerboard" class="page" hidden>
-    <div class="title">the tower</div>
-    <div id="towershop" class="rows"></div>
-  </div>
-  <div id="quarryboard" class="page" hidden>
-    <div class="title">the quarry</div>
-    <div id="quarryshop" class="rows"></div>
-  </div>
-  <div id="farmboard" class="page" hidden>
-    <div class="title">the farm</div>
-    <div id="farmshop" class="rows"></div>
-  </div>
-  <div id="scrub" class="page" hidden>
-    <div class="title">the scrubbing house</div>
-    <div id="scrubshop" class="rows"></div>
-  </div>
-  <div id="apothboard" class="page" hidden>
-    <div class="title">the apothecary</div>
-    <div id="apothshop" class="rows"></div>
-  </div>
-  <!-- The shack: the rockhands' hut off the rock's flank, and the rock's own
-       board. The row that puts it up is on the bench, like every other row that
-       opens a place. -->
-  <div id="shackboard" class="page" hidden>
-    <div class="title">the shack</div>
-    <div id="shackshop" class="rows"></div>
-  </div>
-  <!-- The outhouse: the janitor's one building, and its board carries the
-       job's rungs. The row that puts the shed up is on the bench, because a
-       row that opens a place cannot live on the board of the place it opens. -->
-  <div id="looboard" class="page" hidden>
-    <div class="title">the janitor's closet</div>
-    <div id="looshop" class="rows"></div>
-  </div>
-  <!-- The books. It hangs over the pit rather than at a building, because the
-       pit is the yard's bank: the counter floating above it says what you have,
-       and this says how fast it is arriving. Nothing on it is for sale. -->
-  <div id="statsboard" class="page" hidden>
-    <div class="title">the books</div>
-    <div id="statsshop" class="rows"></div>
-  </div>
-  <div id="casino" class="page" hidden>
-    <div class="title">the casino</div>
-    <div id="casinoshop" class="rows"></div>
-  </div>
-  <!-- A ladder that is finished stays on the board saying so, because seeing
-       that you are done is the point of a ladder having an end. Once there are
-       a dozen of them that is a column of things you cannot buy, so this puts
-       them away -- a preference rather than a rule, since both readings are
-       true at different points in a game.
+<body class="title">
+<!-- The landing page (DESIGN.md, "The landing page"). The picture is the
+     game itself, in a frame, standing a staged yard nobody owns with every
+     piece of chrome hidden (main.js, `demo`); nothing under the pointer.
+     The menu is the column on the left, and each button opens in the column:
+     one place, and the yard keeps moving behind it. -->
+<iframe id="yard" class="yard" src="./play.html?demo" title="" tabindex="-1"></iframe>
+<div class="col">
+  <div class="gamename">pebble<br>pit</div>
+  <div class="line">a rock. a hole. a few people between them.</div>
 
-       It stands under the pages rather than on one of them, because the
-       preference is not the bench's: every board in the yard grows ladders and
-       finishes them, and the switch that folds them was reachable from exactly
-       one of the nine. Out here it belongs to whichever board is open, and the
-       next board added gets it without knowing it exists. -->
-  <button id="hidedone" type="button">finished: shown</button>
-  </div>
-  <!-- The house board's submenu: the people, on a sheet of their own above
-       it. It is inside the panel so that it moves with the board, fades with
-       the board, and -- the part that matters -- counts as part of the board
-       to everything that asks whether the cursor is still on the menu. -->
-  <div id="crewlist" class="sheet flyout" hidden>
-    <!-- No title of its own: every other sheet here is a place you walked up to
-         and says which one, and this is not a place -- it is the heading on the
-         board next to it, opened out. So the heading it came from is the only
-         thing written at the top of it, in the smaller of the two hands the
-         boards use, because it belongs to that board rather than standing
-         alongside it. -->
-    <div id="crewlistrows" class="rows"></div>
-  </div>
-</div>
+  <!-- the front -->
+  <button id="play" type="button" class="play" data-pane="main">play</button>
+  <div id="playlabel" class="sub" data-pane="main"></div>
+  <button id="slotsbtn" type="button" data-pane="main">saves</button>
+  <button id="recordbtn" type="button" data-pane="main">achievements</button>
+  <button id="settingsbtn" type="button" data-pane="main">settings</button>
+  <!-- the desk only: title.js gives it a pane when window.desk exists -->
+  <button id="quit" type="button" hidden>quit</button>
 
-<!-- Held. In the middle of the window, because a game that has stopped should
-     say so where you are already looking, not in a corner you have to find.
-
-     It is also the settings sheet, because settings are not a place: every
-     board in the yard is somewhere you walked to, and this is the one surface
-     that already is not the yard and already says the game is stopped. So the
-     things a player needs a shelf for -- the motion switch, the save in and
-     out, the reset, the keys, the build -- hang under the word rather than on
-     a second sheet or a corner button. See settings.js. -->
-<!-- The toast: a notice said out loud as it lands, at the top edge, in the
-     record's own card. Pressing it holds the game on the achievements page.
-     See toast.js. -->
-<button id="toast" class="toast" type="button" hidden>
-  <div class="name"></div>
-  <div class="note"></div>
-</button>
-<div id="held" class="held" hidden>
-  <!-- One sheet, several pages, told apart by data-pane: a space-separated
-       list of the pages an element is on. settings.js's showPane shows the
-       elements whose list holds the page's name and hides the rest. Two
-       fronts share everything under the rule: the title page (the boot stops
-       here; DESIGN.md, "Save slots and the title page") and the held front
-       escape brings up. Behind them: the saves, the achievements and the
-       settings, each with its own back. -->
-  <div class="word title" data-pane="title">pebble pit</div>
-  <button id="play" type="button" data-pane="title">play</button>
-  <div class="word" data-pane="main">paused</div>
-  <button id="resume" type="button" data-pane="main">resume</button>
-  <div class="rule" data-pane="title main"></div>
-  <!-- The saves: three yards, one open at a time. A page of its own behind
-       this button, which says which yard this is. See slots.js. -->
-  <button id="slotsbtn" type="button" data-pane="title main">saves</button>
+  <!-- the saves: three rows, the open one marked; picking one opens it, and
+       nothing else happens here because no yard is running -->
   <div class="word" data-pane="slots" hidden>saves</div>
   <div id="slots" class="slots" data-pane="slots" hidden></div>
   <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
-  <!-- The record: what the yard has done, newest first. A list and not a
-       board -- nothing on it is for sale, nothing on it answers to a cursor
-       -- and it hangs here rather than on the noticeboard because the
-       noticeboard is the books, and the books are about what the yard is
-       earning now. It is a page of its own behind this button, which carries
-       the count. See record.js. -->
-  <button id="recordbtn" type="button" data-pane="title main">achievements</button>
+
+  <!-- the record of the open yard, off its save -->
   <div class="word" data-pane="record" hidden>achievements</div>
   <div id="record" class="record" data-pane="record" hidden></div>
   <button id="recordback" type="button" data-pane="record" hidden>back</button>
-  <!-- The settings, behind one word: a title page with a volume slider on it
-       is not a title page. -->
-  <button id="settingsbtn" type="button" data-pane="title main">settings</button>
+
+  <!-- the settings, as on the held sheet; the save going out and coming in
+       acts on the open slot's blob -->
   <div class="word" data-pane="settings" hidden>settings</div>
   <button id="motion" type="button" data-pane="settings" hidden>motion: full</button>
-  <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
-  <!-- the volume: a share of the designed level, all the way up is still quiet -->
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
   <div class="pair" data-pane="settings" hidden>
     <button id="savecopy" type="button">save a copy</button>
     <button id="loadsave" type="button">load a save</button>
   </div>
-  <!-- the paste, folded away until load a save asks for it -->
   <div id="paste" class="paste" data-pane="settings" hidden>
     <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
     <div class="pair">
@@ -169,63 +56,15 @@
       <button id="nevermind" type="button">never mind</button>
     </div>
   </div>
-  <!-- the reset erases the open slot only; starting another yard is the
-       saves page's business -->
   <button id="reset" type="button" data-pane="settings" hidden>reset progress</button>
-  <!-- the sheet's one-line reply, on every page that has something to say -->
-  <div class="said" data-pane="title main slots settings"></div>
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
-  <!-- the way back out of a yard that is not the desk's quit: the sheet turns
-       to the title front and the yard stays held behind it -->
-  <button id="titlebtn" type="button" data-pane="main">title page</button>
-  <!-- the desk only: a window with no menu bar needs a way out that is not a
-       key combination. settings.js gives it both fronts when window.desk
-       exists; without one the page-turn never shows it. -->
-  <button id="quit" type="button" hidden>quit</button>
-  <div class="small" data-pane="title main">esc holds &middot; &larr; &rarr; look about</div>
-  <div id="build" class="small" data-pane="title main settings"></div>
-  <div class="small" data-pane="title">rocks keep coming. there is no finish line.</div>
+
+  <div id="said" class="said" data-pane="main slots settings"></div>
 </div>
-
-<!-- Stopped. The same sheet, for the game breaking rather than being held:
-     the word, the one line of what broke, and the one thing left worth doing,
-     which is taking the save with you. See crash.js. -->
-<div id="crashed" class="held" hidden>
-  <div class="word">stopped</div>
-  <div class="why"></div>
-  <div class="rule"></div>
-  <button id="copysave" type="button">copy save</button>
-  <div class="said"></div>
+<div class="foot">
+  <span id="build"></span>
+  <span id="links"><a href="https://cameldash.itch.io/pebble-pit" target="_blank" rel="noopener">itch</a> &middot; <a href="https://github.com/asg86260/pebble-pit" target="_blank" rel="noopener">github</a></span>
 </div>
-
-<!-- The end of the story. The same sheet a third time, for the one beat the
-     whole arc was built to reach: the one under the rock is out and standing
-     with the crew. It says so, and that there is no more story -- the yard
-     goes on behind it, because nothing here stops for a rock -- and the one
-     button puts it down. See ending.js. -->
-<div id="saved" class="held" hidden>
-  <div class="word">you did it</div>
-  <div class="why">you saved your sqwife.</div>
-  <div class="rule"></div>
-  <div class="why">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
-  <div class="why">thank you!</div>
-  <button id="keepplaying" type="button">keep playing</button>
-</div>
-
-<!-- The queue card: what is building and what waits behind it, one name a
-     line, top-left. Filled by queue.js; absent when nothing is on the go. -->
-<div id="queue" class="queue off" hidden></div>
-<div id="tip" hidden></div>
-
-<!-- The call to build the bench: the one thing you can press that is not on a
-     board and not drawn on the ground. It stands over the bare patch the bench
-     will go on until it is pressed, and then the fence, the tape and the bar
-     over the site are the announcement, the same as for every other build.
-     See raise.js for why the bench is built at all, and `seatCall` in board.js
-     for how it is put where the bench is. -->
-<button id="raise" type="button" hidden>build the bench</button>
-
-<canvas id="c"></canvas>
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="./src/title.js"></script>
 </body>
 </html>

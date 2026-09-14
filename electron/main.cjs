@@ -127,7 +127,7 @@ function open() {
   });
   const dev = process.env.VITE_DEV_SERVER_URL;
   if (dev) win.loadURL(dev);
-  else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));   // the landing page; play.html is the game
 }
 
 Menu.setApplicationMenu(null);

@@ -441,9 +441,8 @@ export const abandon = () => { abandonAt('lab'); buildShop(); S.dirty = true; };
 export const newGame = (intro = false, fresh = false) => {
   resetGame(fresh);
   if (!intro) skipIntro();
-  // The title page holds the boot (main.js), and `fast` does nothing held.
-  // Every check and every scene starts here, so this is where the hold is
-  // let go: the frame turns the flag into the sheet going down.
+  // A yard the last group left held would stall this one: `fast` does
+  // nothing held, and every check and every scene starts here.
   S.paused = false;
 };
 

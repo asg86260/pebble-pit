@@ -6911,7 +6911,7 @@ A hidden window is a pause. The clock may not leap on return, because a
 leap is every timed thing you paid for resolving at once, which is the one
 punishment for walking away that pillar 2 forbids.
 
-## The landing page (design, not built)
+## The landing page (built)
 
 The title front on the held sheet was the cheap version: a pause screen with
 a different word on it, over the yard you were already in. A landing page is
@@ -7000,14 +7000,52 @@ v0.1.12      rocks keep coming. there is no finish line.      itch · github
 - The desk loads `dist/index.html` (the title) and `desk.version()` fills
   the footer. `vite.config.js` gets two inputs.
 
+### As built (2026-09-14)
+
+Built as written, with four things the design did not say:
+
+- **The picture is the game page in a frame, not the renderer on the title
+  page.** `index.html` holds an `<iframe src="play.html?demo">` with the
+  pointer off, and `main.js` in `demo` stands the staged yard (a reset with
+  the intro skipped, a small crew hired straight off, `DEMO_HEAD_START_S`
+  of it run before the first frame so the rock is down and the crew at it),
+  hides every piece of chrome (`body.demo`), leaves the reading layers out
+  of the picture (`asPicture` in render.js: counts, marks, cursors,
+  controls) and composes the camera as the opening view pushed right by
+  `TITLE_COLUMN`. Why a frame: the game's modules reach the boards' DOM as
+  they load (board.js), so a title page that imported the renderer would
+  have needed every board's element or a rewrite of every load-time touch;
+  the frame is the whole game, unchanged, which is also what makes the
+  picture the game and never a copy of it.
+- **The record's names are data now.** `catalog.js` holds key, name and
+  note; `notices.js` joins its `when` predicates by key. `record.js` reads
+  the catalog, so the landing page can read a save's record without the
+  game behind it (`recordListOf`, `recordLabelOf`).
+- **`reset` no longer clears the store under a staged yard** -- the demo's
+  reset would otherwise have erased the open slot to make a picture.
+  `showSlots` takes what picking a row means (`switchSlot` on the sheet,
+  the pointer on the title), so slots.js needs no yard.
+- **No yard is "yard 1".** The label under `play` and the saves rows say
+  what a slot holds -- `rock 12 · 7 crew · 4 min ago` -- and the number is
+  the row's, not a name; the fronts say `saves · 2 of 3`; opening one says
+  `loaded`. The one honest sentence is not on the landing page.
+
+`copyOut` moved to `copyout.js`, shared by the settings sheet, the crashed
+sheet and the landing page. The held sheet's `title page` button is a real
+exit: `persist`, `storeSettled`, then `index.html`. The `title` front on
+the held sheet is gone, and the game page opens playing again.
+
 ### Checks
 
-- `test/title.test.mjs` (node): the label under `play` for an open, empty
-  and unreadable slot; the record off a blob; picking a row moves the
-  pointer and nothing is written.
-- Browser: `GAME=.../index.html node tools/headless.mjs --shot title.png 1`
-  is the look; one group in a new `src/selftest/title.js`, run against
-  `index.html`, presses `play` and finds `play.html` with the yard running.
+- `test/title.test.mjs` (node): the label under `play` for a played, empty
+  and unreadable slot; `saves` counts the yards; the record off a blob,
+  newest first, named from the catalog; picking a slot moves the pointer
+  and writes nothing.
+- Browser, `src/selftest/settings.js`, group `the landing page reads the
+  store and play opens the game`: `index.html` in a frame, the labels read,
+  the rows read, `play` pressed, the frame landing on `play.html` with the
+  yard, and the slot's blob unchanged by any of it. The look is
+  `WINDOW=1280,800 GAME=http://localhost:<port>/index.html node tools/headless.mjs --shot landing.png "new Promise(r => setTimeout(r, 3000))"`.
 
 ## The save is in IndexedDB (built)
 
@@ -7223,7 +7261,7 @@ screenshot at 1440x900 and at the minimum size.
   for the console, but `S.broken` stays false: `save a copy` hands over the
   yard that is standing, not the blob that would not read.
 
-## Save slots and the title page (built)
+## Save slots and the title page (built; the title front since replaced)
 
 The game has one yard and one autosave. A player who wants to start over
 without losing the yard they have -- to try the other opening, to show a
@@ -7336,6 +7374,9 @@ by another name; `save a copy` / `load a save` do it by hand and the sheet
 stays small), and deleting a slot from the list (switch in, reset).
 
 ### The title page
+
+*Superseded by "The landing page": the title is a page of its own now, and
+the held sheet has one front again. Kept as the reasoning it grew out of.*
 
 The game opens playing. There is no front door: the page loads, the yard
 is running, and the sheet with the settings on it is somewhere behind

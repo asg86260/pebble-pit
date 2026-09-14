@@ -37,6 +37,8 @@ For anything on a **board**, `cards.html` is the card bench: it draws rows
 from plain objects through the real builder and stylesheet, no yard behind
 them, so a card at its worst bill is a five-second shot
 (`GAME=http://localhost:<port>/cards.html node tools/headless.mjs --shot out.png 1`).
+The game itself is `play.html` (`index.html` is the landing page); a `GAME`
+naming only the server gets `play.html` appended by the tools.
 Use it before `look.mjs` for any change to a card's shape.
 
 Iterate against a shot, not against a suite. A four-minute run that cannot tell

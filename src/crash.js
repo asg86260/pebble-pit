@@ -38,14 +38,14 @@ export function fatal(err) {
 // The save, out of the browser and into your hand. It is the save that was
 // written *before* the throw -- nothing has been written since, which is the
 // whole point -- so what you paste back in is a yard that was still standing.
-// The copying itself is the settings sheet's `copyOut`, so the two sheets hand
+// The copying itself is copyout.js's `copyOut`, so the two sheets hand
 // over the same blob the same way, and the blob is the store's (`loadRaw`,
 // wherever the save is kept -- it read localStorage by hand once, and handed
 // over nothing the day the save moved). Both are fetched at the click rather
 // than imported at the top: this file has to be the first thing evaluated,
 // before any of the game, and either import pulls the whole yard in behind it.
 document.getElementById('copysave').addEventListener('click', async () => {
-  const { copyOut } = await import('./settings.js');
+  const { copyOut } = await import('./copyout.js');
   const { loadRaw } = await import('./save.js');
   let raw = '';
   try { raw = loadRaw() || ''; } catch {}
