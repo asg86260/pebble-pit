@@ -8748,3 +8748,109 @@ fifteen, one blaster among them, held on the frame a blaster's swing lands.
   course the others get ahead of. Two scenes, `cutgang` and `cutgangdeep`,
   and two tools, `cut-time.mjs` and `cut-trace.mjs` (the profile and every
   body's leg, cell and run, half a second at a time).
+
+## A ladder is six rungs, and its length is one number (design, not built)
+
+A tester: *having the option to repeatedly upgrade the same thing would be
+great, as it gets a little tedious having to wait at the upgrade menu to
+upgrade the same thing repeatedly.* The suggestion is refused -- an upgrade
+bought nine times in one press is nine bodies' work done by a button, and
+"nothing teleports" -- but the complaint underneath it is real and has two
+halves, and this section is about the second.
+
+The first half is that the wait is *attended*: a rung in flight refuses the
+next press (`building(u)` in `buy`), so a nine-rung ladder is nine trips to
+the board with a builder to watch between each. That is made worse by the
+builders themselves, who were measured doing useful work 37% of the time once
+several works queue ("The one bench carries two ladders' worth of waiting").
+That stays its own job; nothing here touches it.
+
+The second half is that **nine rungs is too many trips for what a rung is
+worth.** Each rung is a small step at a small price, so the player can afford
+the next one the moment the last one lands, and the only thing between them
+and the top is the builder's clock. The ladders were five rungs until the
+bands landed; nine was "finer steps to the same top", and finer steps are
+more presses. Raising the price step instead (back toward the 1.9 the ladders
+came down from) would make the purse the gate again, but only early -- late
+income outruns any exponent -- and it reverses a decision `price.js` records
+the reason for. Fewer, bigger rungs do both things at once: fewer trips, and
+a dearer bill on each so the purse gates more often, without changing the
+rate.
+
+### The rule
+
+**A rung has a size; a ladder has a length; the length is one number.** The
+number is `TIER_BAND` in `config/tiers.js`, and it goes from three to **two**:
+two rungs to a card, three cards to an ordinary ladder (six rungs), four to
+the grounds' (eight, six of them the ladder's own and two the multiplier).
+Five was the first figure named and is refused for one reason: it does not
+divide into three cards, and the cards are the rule ("Every ladder is sold in
+bands"). Six is the nearest figure that does.
+
+For the length to be one number, every ladder has to say what a rung is
+worth in a way that does not quietly assume nine. They already do, in one of
+two shapes, and the shapes are kept:
+
+| shape | ladders | what a rung is | what moves when the length does |
+|---|---|---|---|
+| **a rate eases to its top** | your swing, the rockhand's swing, tending, the quarry's pace, the haulers' walk, the fan, both crit ladders, the tonics' four dials | a share of the way from the base to a named top (`swing`, `ease`, `fanPull`) | nothing at the ends; each step is bigger |
+| **a count is a whole unit a rung** | what you carry, your pick, the haulers' load, a cut's spores, a dig's share, doses a batch, and the ×1.25 multiplier band | one pixel, one grain, one spore, one dose, one ×1.25 | the top: it is `base + unit × length` |
+
+The second row is the precedent, not a new call: when the ladders went from
+five to nine, "strength and the pickaxe are a whole pixel a rung ... so they
+are the two ladders that climb a little higher" (`rows-bench.js`). A count
+that eased to a fixed top over six rungs would gain a pixel and a half a
+rung, and the row would read `3 -> 4` then `4 -> 6`; a rung the player can
+watch land is worth more than a top that holds. So the counts come down with
+the length, to between where they were at five and where they are at nine:
+
+| count | at five | at nine (today) | at six |
+|---|---|---|---|
+| carry, pick (px) | 6 | 10 | 7 |
+| hauler load (grains) | 11 | 19 | 13 |
+| spores a cut | 6 | 10 | 7 |
+| shards a dig (share) | ×2.25 | ×3.25 | ×2.5 |
+| doses a batch | -- | 7 (two cards) | 5 |
+| the grounds' multiplier | -- | ×1.95 (three rungs) | ×1.56 (two) |
+
+That is the one balance shift in this section, and it is downward at the top
+end of six ladders. It is accepted: nine was the outlier, and the counts were
+tuned at five.
+
+**The price already has this shape.** `tierCost` maps a ladder of any length
+onto the five-rung curve (`rungCost(first, (RUNGS - 1) × lvl / (rungs - 1))`),
+so the first rung and the last cost what they do today and the four between
+are spaced wider. That is the "bump the price" half of the complaint, arrived
+at by grouping rather than by touching `RUNG_RATE`.
+
+**The work is a rung's, and the ladder's total falls.** A rung's work is
+`WORK_BASE.rung × WORK_STEP^level`, per rung, and it stays that way: six
+rungs is about 72 worker-seconds a ladder against 199 for nine. Less waiting
+on construction is the point of the exercise, so this is not re-based to hold
+the total; it is the largest single effect of the change and it is wanted.
+
+### What changes
+
+- `TIER_BAND` 3 -> 2. `TIER_RUNGS`, `TIER_OWN`, `LADDER` and `MULT_MAX`
+  follow, because they are written in terms of it.
+- Anything that says *nine*, *twelve* or *three* about a ladder where it
+  should say `LADDER`, `TIER_RUNGS` or `TIER_BAND` -- in code, in a check, or
+  in a comment. The survey is part of the build; the count ladders' tables
+  in DESIGN.md are left as history.
+- A save from a nine-rung yard reads its levels clamped (`tierLevel`,
+  `haulCap`, the `rung` clamps) -- a field at 9 is a finished ladder, and
+  nothing is refunded or lost. A work in flight is keyed by its band
+  (`carry3`) and the band keys do not change.
+
+### What does not
+
+`RUNG_RATE`, `WORK_BASE`, `WORK_STEP`, every ladder's `first`, every named
+top and every unit a rung. The crew's two `RUNGS` multipliers, the tower's
+spark ladders and the rockhand's three-pixel pick are outside the band rule
+by decision and keep their length. The builders' 37% is a separate job.
+
+### How it is checked
+
+`test/ladders.test.mjs` and `test/ladder-chain.test.mjs` already walk the
+ladders through `__buy`; they assert lengths and are re-based to the
+constants rather than to nine. A shot of `cards.html` for the six-pip card.
