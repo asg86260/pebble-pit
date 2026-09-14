@@ -337,14 +337,20 @@ group('the dome holds, and sets every rock down after it', async () => {
 // Asserted against every row on every board rather than against a number typed
 // in here: a new machine or a raised price anywhere is what would make this
 // wrong, and this is where it would be caught. Each of the dome's coins stands
-// above the biggest ask of that coin on any other row, and the whole bill,
-// in dust, stands above every other bill in dust.
+// above the biggest ask of that coin on any other row *at any rung* -- the
+// ladders are climbed first, because a ladder's dearest rung is its last and
+// the check used to read its first -- and the whole bill, in dust, stands
+// above every other bill in dust.
 group('the dome is priced in every coin and is the dearest thing on any board', async () => {
   window.__reset();
   const inDust = bill => bill.reduce((d, [money, n]) =>
     d + (money === 'time' ? 0 : money === 'dust' ? n : (DUST_PER[money] || 0) * n), 0);
-  const rows = window.__rows().filter(r => r.key !== 'dome' && r.bill.length);
   const dome = window.__rows().find(r => r.key === 'dome');
+  // every bill every other row will ever ask, one entry a rung
+  const rows = window.__climbed().filter(r => r.key !== 'dome')
+    .flatMap(r => r.bills.map((bill, i) =>
+      ({ key: r.bills.length > 1 ? `${r.key}@${i + 1}` : r.key, bill })));
+  window.__reset();
   const coins = ['core', 'dust', 'shard', 'spore', 'spark'];
   const domeLine = money => (dome.bill.find(([m]) => m === money) || [money, 0])[1];
   const topOf = money => rows.reduce((best, r) => {

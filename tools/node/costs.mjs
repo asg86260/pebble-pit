@@ -19,8 +19,7 @@ import { writeFileSync } from 'node:fs';
 import { newYard } from './yard.mjs';
 
 const yard = await newYard();
-const { S } = yard;
-const { UPGRADES, SECTIONS, HOUSE_ROW, rungOf, rungsOf, maxed, gainText } = await import('../../src/upgrades.js');
+const { UPGRADES, SECTIONS, HOUSE_ROW, rungsOf, gainText } = await import('../../src/upgrades.js');
 const { workFor, takesTime } = await import('../../src/works.js');
 const { shackRows, shackSections } = await import('../../src/shack.js');
 const { crewSections } = await import('../../src/crewboard.js');
@@ -74,23 +73,12 @@ const billText = b => b.filter(([, n]) => n > 0).map(([c, n]) => `${fmt(n)} ${c}
 const fromTo = u => { try { return gainText(u) || ''; } catch { return ''; } };
 
 // The rungs of one row: the price now, and after every buy until it is done.
-// A row with no rung is one line. The house has no rung and climbs on the
-// crew count, so it is walked the way the yard walks it -- a room at a time.
-const STEPS_MAX = 40;
+// The walk itself is `climbRow` in hooks.js, which the dome's price check
+// climbs the same ladders with -- one climb, so the page and the check agree.
 function climb(u) {
   const out = [];
-  const one = (n) => { try { out.push({ n, bill: bill(u), work: seconds(u), range: fromTo(u) }); return true; } catch (e) { out.push({ n, err: String(e.message || e) }); return false; } };
-  if (u.key === 'house') {
-    for (let i = 0; i < 16; i++) { if (!one(S.crew)) break; S.crew++; }
-    return out;
-  }
-  if (!u.rung) { one(0); return out; }
-  for (let i = 0; i < STEPS_MAX && !maxed(u); i++) {
-    const at = rungOf(u);
-    if (!one(at + 1)) break;
-    try { u.buy(); } catch (e) { out.push({ n: at + 1, err: `buy: ${e.message || e}` }); break; }
-    if (rungOf(u) === at) break;   // a buy that did not climb -- a decision, not a rung
-  }
+  try { yard.climbRow(u, n => out.push({ n, bill: bill(u), work: seconds(u), range: fromTo(u) })); }
+  catch (e) { out.push({ n: out.length + 1, err: String(e.message || e) }); }
   return out;
 }
 

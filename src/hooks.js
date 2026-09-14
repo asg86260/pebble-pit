@@ -755,6 +755,34 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         // could not buy the way a player does.
                         HOUSE_ROW];
 
+// Every bill a row will ever ask, by climbing it: the price now, then the
+// price after each rung is taken outright (`u.buy()`, the finish, not the
+// work) until the row says it is done. A ladder's dearest rung is its ninth,
+// and a check about "the biggest ask in this coin" that read rung one was
+// answering a different question -- the dome was the dearest thing in the
+// game at the foot of every ladder and outbid at the top. The house has no
+// rung and climbs on the crew count, so it is walked a room at a time. Rows
+// with no price -- dials, readings, doors -- come back empty. The bills are
+// as the row states them, clock left off. Dev only, and it leaves the yard
+// climbed: reset after.
+export const climbRow = (u, read, limit = 40) => {
+  if (!(u.bill || u.cost)) return;
+  if (u.key === 'house') { for (let i = 0; i < 16; i++) { read(S.crew); S.crew++; } return; }
+  if (!u.rung) { read(0); return; }
+  for (let i = 0; i < limit && !maxed(u); i++) {
+    const at = rungOf(u);
+    read(at + 1);
+    u.buy();
+    if (rungOf(u) === at) break;     // a buy that did not climb: a decision, not a rung
+  }
+};
+export const climbedBills = () => everyRow().map(u => {
+  const bills = [];
+  try { climbRow(u, () => bills.push(billOf(u).filter(([money]) => money !== 'time'))); }
+  catch (e) { bills.push([['error', String(e.message || e)]]); }
+  return { key: u.key, bills };
+});
+
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);
   if (!u) return false;
@@ -1043,7 +1071,7 @@ export const HANDLES = {
   __slot: switchSlot,
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
-  __rows: allRows, __boards: boards, __unsection: unsection,
+  __rows: allRows, __climbed: climbedBills, __boards: boards, __unsection: unsection,
   __invest: invest, __research: finishResearch, __grant: grant, __dose: dose,
   __spend: spendDust,
   // Pay a price in any coin, through the very function every row's bill goes

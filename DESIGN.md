@@ -1372,11 +1372,15 @@ shields.
 
 **The dome.** The fifth try is the wizards', and it is the first shield not made out of the
 thing it is stopping. Sold on the tower's board and priced in everything — cores, dust, shard,
-spore and sparks at once, every line above the biggest ask of that coin anywhere else, so it is
-the dearest thing in the game (`DOME_BILL`; `test/shield.test.mjs` holds it against every row on
-every board). It was four cores alone, which made the end of the argument cheaper than the
-machine that had just lost it; the last shield is the whole works' answer to the sky, and its
-bill says so. And it is not built, it is *summoned*: the wizards fly over from the star and ring the
+spore and sparks at once, every line well above the biggest ask of that coin anywhere else at
+any rung, and the whole bill about a third of everything else on every board put together, so
+it is the dearest thing in the game by a distance (`DOME_BILL`; `test/shield.test.mjs` climbs
+every ladder and holds it against every rung). It was four cores alone, which made the end of
+the argument cheaper than the machine that had just lost it, and then a bill a climbed ladder
+or two could outbid; the last shield is the whole works' answer to the sky, and its bill says
+so. The four that fail are priced like a real rung of the station whose coin they spend, each
+dearer than the last (`NET_COST`, `ARCH_COST`, `JACK_COST`) -- enough to sting, never enough
+to stall the yard that has to keep digging under them. And it is not built, it is *summoned*: the wizards fly over from the star and ring the
 landing spot the way they ring an empty sky, and pour — the same act, aimed at the ground, in
 the same purple, sharing the same clock across however many of them are in the ring. The four
 shields before it were labor by somebody standing at the spot; this one is the only labor in
