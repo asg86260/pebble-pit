@@ -141,6 +141,9 @@ group('a ripe plot shows its spore before it is cut', async () => {
   const spores = showing.finds.filter(f => f === 'spore').length;
   run(0.3);
   const stillThere = state();
+  // The cut itself, read the moment it happens: a hand at the top of its
+  // ladder has the plot ripe again before the spore has finished flying.
+  const cut = runUntil(() => state().plots[i] < 1, 20);
   // wait for it rather than guessing how long the quarry and the throw take
   const landed = runUntil(
     () => state().finds.filter(f => f === 'spore').length > spores, 20);
@@ -151,7 +154,7 @@ group('a ripe plot shows its spore before it is cut', async () => {
     ok(tone > 0, 'and a spore forms on it', `tone ${tone}`),
     ok(stillThere.plots[i] >= 1, 'which stays there to be looked at',
        `${stillThere.plots[i]}`),
-    ok(after.plots[i] < 1, 'until the farmhand takes it off', `${after.plots[i]}`),
+    ok(cut, 'until the farmhand takes it off'),
     ok(landed, 'and then it is lying in the farm pile',
        `${spores} -> ${after.finds.filter(f => f === 'spore').length}`)
   ];

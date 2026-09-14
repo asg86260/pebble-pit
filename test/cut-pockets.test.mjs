@@ -6,7 +6,7 @@
 
 import { group, ok, state, run, runUntil, openSites } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { CUT_BEAT_MIN } from '../src/config.js';
+import { CUT_BEAT_MIN, TIER_OWN, TIER_RUNGS, SPARK_GAIN } from '../src/config.js';
 import { quarryCells, quarryTarget, cellsLeft, beatMs } from '../src/quarry.js';
 import { now } from '../src/clock.js';
 
@@ -63,9 +63,12 @@ group('a swing comes round on the beat, at pace nought and at the top of the lad
   ];
 });
 
-group('a cut takes the time it took before the pockets, at pace nought and at rung nine', async () => {
+group('a cut takes the time it took before the pockets, at pace nought and at the floor of its ladder', async () => {
   // Measured on main at 4ea4675 with tools/node/cut-time.mjs, this seed: five
-  // quarriers dig the cut out in 108 s at pace nought and 31 s at rung nine.
+  // quarriers dig the cut out in 108 s at pace nought and 31 s at the floor
+  // of the swing -- the top of the ladder before the spark rung, which since
+  // the fold (DESIGN.md, "The spark band is the top of the ladder") sits on
+  // the same card and takes the cut half again as quick on top of that.
   // The pocket and the beat are solved to hold those; a tenth either way is
   // the tolerance, and a tune of the beat that breaks it has moved the
   // quarry's economy, which is the thing this file is here to notice.
@@ -79,11 +82,15 @@ group('a cut takes the time it took before the pockets, at pace nought and at ru
   gang(5);
   const p0 = time();
   window.__seed(20250830); window.__verify(true);
-  gang(5, 9);
+  gang(5, TIER_OWN);
   const p9 = time();
+  window.__seed(20250830); window.__verify(true);
+  gang(5, TIER_RUNGS);
+  const p4 = time();
   return [
     ok(Math.abs(p0 - WAS_P0) <= WAS_P0 * 0.12, 'five at pace nought finish in the time they did', `${p0.toFixed(1)} s vs ${WAS_P0}`),
-    ok(Math.abs(p9 - WAS_P9) <= WAS_P9 * 0.12, 'and five at rung nine', `${p9.toFixed(1)} s vs ${WAS_P9}`)
+    ok(Math.abs(p9 - WAS_P9) <= WAS_P9 * 0.12, 'and five at the floor of the ladder', `${p9.toFixed(1)} s vs ${WAS_P9}`),
+    ok(Math.abs(p4 - WAS_P9 / SPARK_GAIN) <= WAS_P9 * 0.12, 'and the spark rung takes the cut half again as quick', `${p4.toFixed(1)} s vs ${(WAS_P9 / SPARK_GAIN).toFixed(1)}`)
   ];
 });
 
