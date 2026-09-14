@@ -289,8 +289,15 @@ export const TESTS = [
   ['a bill you can half afford says which half', async () => {
     newRun();
     await settle();
-    window.__give(3000);                       // dust enough, stone not
-    window.__grant({ cores: 1, shards: 2, spores: 0 });
+    // The farm's door is the two-coin row on an early bench (a core and dust),
+    // and it is offered once the props have fallen and a core has been seen.
+    // Dust enough, the core not: the training grounds' shard-and-dust bill
+    // used to be the row here, and the grounds is gone.
+    window.__give(3000);
+    const St = (await import('/src/state.js')).S;
+    St.shieldsDone = ['props'];
+    St.seenCore = true;
+    window.__grant({ cores: 0, shards: 2, spores: 0 });
     window.__crew(2, 2);
     run(20);
     window.__board('bench');
@@ -986,8 +993,10 @@ export const TESTS = [
     // A row's description, when it has one, is a line under the row and spans
     // the whole card (`.rows .note`, style.css) -- it is not a column, and the
     // shack's door is the one row on a fresh bench that carries one.
+    // ...and the pin in the card's corner is a control, not a cell.
     const cells = rows.filter(el => !el.dataset.sect)
-                      .map(el => [...el.children].filter(sp => !sp.classList.contains('note'))
+                      .map(el => [...el.children].filter(sp => !sp.classList.contains('note') &&
+                                                               !sp.classList.contains('pinmark'))
                                                  .map(sp => sp.textContent));
     return [
       ok(!b.hidden, 'board opens when the cursor nears the bench'),
