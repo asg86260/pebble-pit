@@ -812,38 +812,54 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
    lands (toast.js). The same card as the achievements page -- name in the
-   boards' hand, what earned it under, the one-pixel edge -- so what slides in
-   is the thing you will later find on the sheet. Centered against the top,
-   the one strip no board or sheet claims; under the held sheet, over the
-   boards. It is a button: pressing it holds the game on the achievements
-   page. It comes down a few pixels as it appears and fades as it goes, and
-   under motion: less it appears and goes in place. */
+   boards' hand, what earned it under, the one-pixel edge -- but inverted and
+   a size up: the page's cards are white on a white sheet you are already
+   reading, and this one has to be seen over a yard you are watching, so it is
+   the one black card on the page and its name is the largest type in the
+   hand. Centered against the top, the one strip no board or sheet claims;
+   under the held sheet, over the boards. It is a button: pressing it holds
+   the game on the achievements page. It comes down a card's height as it
+   appears and fades slowly as it goes; a ring pulses out from its edge as it
+   lands, once, so the eye is pulled up to it. Under motion: less it appears
+   and goes in place, with no ring. */
 .toast {
   position: fixed;
   z-index: 11;
-  left: 50%; top: 10px;
-  transform: translate(-50%, -6px);
+  left: 50%; top: 12px;
+  transform: translate(-50%, -24px);
   opacity: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 5px 12px;
+  gap: 4px;
+  padding: 9px 20px 8px;
   max-width: 80vw;
-  background: #fff;
-  border: 1px solid #000;
-  font: 11px ui-monospace, "Courier New", monospace;
-  color: #000;
+  background: #000;
+  border: 1px solid #fff;
+  outline: 1px solid #000;
+  font: 12px ui-monospace, "Courier New", monospace;
+  color: #fff;
   text-align: center;
   cursor: pointer;
-  transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1);
+  /* going: a slow fade, so it lingers rather than blinks off */
+  transition: opacity .6s linear, transform .3s ease-in;
 }
-.toast.up { opacity: 1; transform: translate(-50%, 0); }
+/* coming: quick, so it lands rather than seeps in */
+.toast.up { opacity: 1; transform: translate(-50%, 0);
+            transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
 .toast.still { transition: none; transform: translate(-50%, 0); }
-.toast:hover { color: #fff; background: #000; }
-.toast:hover .note { color: #fff; }
-.toast .name { letter-spacing: .1em; text-transform: uppercase; }
-.toast .note { color: #666; }
+.toast:hover { color: #000; background: #fff; border-color: #000; outline-color: #fff; }
+.toast:hover .note { color: #000; }
+.toast .name { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
+.toast .note { color: #aaa; }
+/* the ring: a one-pixel edge that starts on the card's own and swells out as
+   it fades. The card leaves the tree between two notices, so the animation
+   starts fresh every time it goes up. */
+.toast::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                border: 2px solid #000; outline: 1px solid #fff; opacity: 0; }
+@keyframes toastring { from { inset: 0; opacity: 1; } 50% { opacity: .8; } to { inset: -26px; opacity: 0; } }
+.toast.up::after { animation: toastring .8s ease-out .1s; }
+.toast.still::after { animation: none; }
 .held .word { font-size: 17px; letter-spacing: .3em; }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn

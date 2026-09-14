@@ -490,6 +490,12 @@ export const SCENES = {
   notices2: { about: 'the bench', say: 'the noticeboard on a yard that has done a lot',
     run: () => { window.__reset(); window.__crew(1); window.__jump(30); window.__tip(90000); window.__fast(6);
                  window.__look(st().noticesX - 440); window.__fast(6); } },
+  // The toast: a notice's card at the top of the window, the moment it lands.
+  // The opening lands a core and a hire within its first seconds, so a yard
+  // just started has one up by the time the shot is taken. What to look for:
+  // it stands out over the yard, the ring has gone, the name is legible.
+  toast: { about: 'the bench', say: "a notice's card said out loud at the top edge",
+    run: () => { window.__reset(); window.__crew(1); window.__fast(2); } },
   // A board, open, with everything on it.
   boards: { about: 'the bench', say: 'a board open with everything on it',
     run: () => { rich(); window.__board('tower'); } },

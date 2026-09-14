@@ -12,6 +12,7 @@ this file is for things that were broken.
 
 - The machines are heard at a worker's pace instead of hammering, and the ram no longer sounds twice a strike.
 - Rain falls at one speed and leans with the wind, instead of dropping straight down and speeding up.
+- An achievement landing is hard to miss: the card is black, bigger, rings as it lands and stays longer.
 
 ## v0.1.12 — 2026-09-14
 

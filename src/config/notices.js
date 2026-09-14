@@ -37,10 +37,11 @@ export let NOTICE_FAST_ROCK_S = 60;
 // --- the toast ----------------------------------------------------------------
 // How long a notice's card stays at the top of the window, in game
 // milliseconds, and the gap between two when several land at once. Long
-// enough to read a name and a note without hurrying; short enough that a rock
-// landing three of them is over before the next rock. See DESIGN.md, "a toast
-// when one lands".
-export let TOAST_MS = 4000;
+// enough to catch out of the corner of the eye and then read the name and the
+// note without hurrying -- four seconds came and went unnoticed under a busy
+// yard; short enough that a rock landing three of them is over before the
+// next rock. See DESIGN.md, "a toast when one lands".
+export let TOAST_MS = 6500;
 export let TOAST_GAP_MS = 400;
 
 export const NOTICE_KNOBS = [
