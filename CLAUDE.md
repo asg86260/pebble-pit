@@ -324,13 +324,17 @@ Two harness facts, each of which cost a full launch cycle:
   fully-invested yard that goes permanently clean. An upgrade that quietly
   cleaned the sky would be a number you buy once and never think about again;
   the sky is meant to stay a live decision.
-- **A ladder is sold in bands, on every board.** Three rungs to a card, the
-  bill deepening card by card in the order the yard hands out its coins:
+- **A ladder is sold in bands, on every board.** `TIER_BAND` rungs to a card
+  (two, since 2026-09-14 -- six to a ladder; never write the number, write the
+  constant), the bill deepening card by card in the order the yard hands out
+  its coins:
   **dust only, then dust and crops, then dust, crops and ore.** The first card
   is cheap and dust-only so an early yard can buy it; the ladder gets dear in
   the coins the station has started spending. The grounds' fourth (spark/core)
-  band is theirs alone. A ladder already three rungs long is one dust-only
-  card. The tower's and the machines' spark ladders are outside this rule by
+  band is theirs alone. A ladder no longer than a band is one dust-only
+  card. A rate ladder eases to a named top over `LADDER`; a count ladder is a
+  whole unit a rung and its top moves with the length (DESIGN.md, "A ladder
+  is six rungs"). The tower's and the machines' spark ladders are outside this rule by
   the decision above. Build every new ladder through `tierRows`; a flat
   five-pip row with one bill from rung one is the old shape and a bug. See
   DESIGN.md, "Every ladder is sold in bands".
