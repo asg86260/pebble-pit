@@ -11,7 +11,7 @@ import { group, ok, state, run, haveRock, openSites, buyBuilt, climb, P, WORKER 
 import { S, floor } from '../src/state.js';
 import { findShards, seamShards } from '../src/quarry.js';
 import { critMult, critChance, critEV } from '../src/crit.js';
-import { TIER_BAND, CUT_POCKET, CRIT_MULT_MIN } from '../src/config.js';
+import { TIER_BAND, CUT_POCKET, CRIT_MULT } from '../src/config.js';
 
 // The dust in the world that a crit's fountain ends up as: what is banked on the
 // floor, what is down the hole, and what is still in the air. A crit throws real
@@ -92,7 +92,7 @@ group('a crit at the cut takes more ground out at once', async () => {
   const per = r => r.cells / Math.max(1, r.swings);
   // A pocket and the crit's extra, less the swings at the end of a course that
   // find fewer neighbors than the pocket wants.
-  const want = (CUT_POCKET + CRIT_MULT_MIN - 1) / CUT_POCKET;
+  const want = (CUT_POCKET + CRIT_MULT[0] - 1) / CUT_POCKET;
   return [
     ok(plain.swings > 50 && plain.cells > 0, 'the gang swings and the cut comes out with crits off',
        `${plain.swings} swings, ${plain.cells} cells`),
@@ -210,8 +210,8 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
   const lvl1 = S.critChanceLevel;
   const [d1, sh1, sp1] = purse();
 
-  // And the damage rung, one card of three -- but priced in all three coins
-  // from its first rung, the one short ladder that is (see rows-luck.js).
+  // And the damage rung: a band ladder like every other since the lists, so its
+  // first rung is dust alone (it asked all three coins from rung one once).
   const mult0 = S.critMultLevel;
   const gotMult = buyBuilt('critmult');
   const [d2, sh2, sp2] = purse();
@@ -228,7 +228,7 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
     ok(d1 < d0, 'it took dust', `${d0} -> ${d1}`),
     ok(sh1 === sh0 && sp1 === sp0, 'and nothing else on the first card', `${sh0}->${sh1} shard, ${sp0}->${sp1} spore`),
     ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
-    ok(d2 < d1 && sh2 < sh1 && sp2 < sp1, 'in dust, crops and ore together', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
+    ok(d2 < d1 && sh2 === sh1 && sp2 === sp1, 'in dust alone on its first rung', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
     ok(got === TIER_BAND - 1 && secondCoins === 'dust,spore', 'the first band finished and the second asks dust and crops', `${got}, ${secondCoins}`)
   ];
 });

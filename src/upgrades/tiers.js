@@ -24,7 +24,7 @@
 // sell" and "Every ladder is sold in bands".
 
 import { S } from '../state.js';
-import { RUNGS, TIER_BAND, TIER_OWN, TIER_RUNGS, SPARK_GAIN, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP } from '../config.js';
+import { RUNGS, TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP } from '../config.js';
 import { rungCost, DUST_PER, coinsOpen, coinNeeds } from './price.js';
 
 // What a rung of a long ladder costs, from what the first one costs.
@@ -44,14 +44,6 @@ export const tierCost = (first, lvl, rungs = TIER_RUNGS, rate) =>
 // longer may hold any level at all, and it reads as a finished ladder rather
 // than as a rung nothing on the board can draw.
 export const tierLevel = (field, top = TIER_RUNGS) => Math.min(top, S[field] || 0);
-
-// What a rung of a ground's count is worth, as a factor: `per` again of itself
-// for each rung before the spark's, and the spark rung's gain over the top of
-// that. Both grounds' yields climb through this, so the farm's extra spores a
-// cut and the quarry's bigger handful a dig are the same arithmetic over
-// different bases rather than two rules that have to be kept in step.
-export const tierGain = (lvl, per) =>
-  (1 + per * Math.min(TIER_OWN, lvl)) * Math.pow(SPARK_GAIN, Math.max(0, lvl - TIER_OWN));
 
 // A ladder's bands, from one name: the thing it upgrades. A band used to carry
 // a name of its own (compost, fertilizer, hybrid seed), and across thirty

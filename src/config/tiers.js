@@ -27,8 +27,12 @@ export const TIER_OWN = TIER_RUNGS - TIER_BAND;
 // than what one of its rungs did -- no ladder's top came down for the fold.
 export const SPARK_GAIN = 1.5625;
 
-// And every other ladder in the yard: the same card, three groups.
-export const LADDER_BANDS = 3;                    // groups on an ordinary ladder
-export const LADDER = TIER_BAND * LADDER_BANDS;    // three rungs, all told
+// And every other ladder in the yard: the same card, the same four groups. The
+// bench's fourth rung asks the spark too (2026-09-14): every ladder is a rung
+// a coin, and the coins are the same four everywhere.
+export const LADDER_BANDS = 4;                    // groups on an ordinary ladder
+export const LADDER = TIER_BAND * LADDER_BANDS;    // four rungs, all told
 // The coins each group adds to the dust, first to last.
-export const BAND_COINS = [[], ['spore'], ['spore', 'shard']];
+// Not the core: nine exist in the game and they open places, and a fourth rung
+// on every ladder priced in them was thirty-two cores for one rung of crit.
+export const BAND_COINS = [[], ['spore'], ['spore', 'shard'], ['spore', 'shard', 'spark']];

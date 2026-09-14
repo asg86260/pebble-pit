@@ -9,7 +9,7 @@
 // cores is shown until one is banked.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo, plant } from './route.js';
-import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
+import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_SHARE, rungValue,
          QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN, SPARK_GAIN,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
 import { shockAt } from './shock.js';
@@ -24,7 +24,7 @@ import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
-import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
+import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -1036,7 +1036,7 @@ export function fillQuarry() {
 // a dig are two different rows, and this is the one that stays true however deep
 // the hole goes. It is what the row's own gain line reads, in shards a dig.
 export const seamDig = (lvl = seamLadder()) =>
-  Math.max(1, Math.round(benches() * CUT_SEAM * tierGain(lvl, SEAM_PER_RUNG)));
+  Math.max(1, Math.round(benches() * CUT_SEAM * rungValue(SEAM_SHARE, lvl)));
 
 // And what actually goes into the ground when a cut is laid, which is that with
 // the luck spell over it.
@@ -1095,7 +1095,7 @@ const QUARRY_YIELD = tierRows({
     // The spark rung. It was `labseam`, the lab's multiplier, sold as a card
     // of its own behind `invested`; the bill's own coins gate it now, later
     // than that flag ever did. `restore` still knows the old key.
-    { key: 'seam4',   name: 'ore yield', coins: ['shard', 'spore', 'core', 'spark'] }
+    { key: 'seam4',   name: 'ore yield', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
@@ -1110,7 +1110,7 @@ const QUARRY_SPEED = tierRows({
     { key: 'quarrypace',  name: 'mining speed',     coins: [] },
     { key: 'quarrypace2', name: 'mining speed',  coins: ['shard'] },
     { key: 'quarrypace3', name: 'mining speed', coins: ['shard', 'spore'] },
-    { key: 'quarrypace4', name: 'mining speed', coins: ['shard', 'spore', 'core', 'spark'] }
+    { key: 'quarrypace4', name: 'mining speed', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 

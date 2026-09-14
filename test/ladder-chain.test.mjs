@@ -58,7 +58,7 @@ group("a ground ladder's spark rung is the top of the one card", async () => {
 
   return [
     ok(own === TIER_OWN, 'the rungs before the spark one climb', `${own}`),
-    ok(asks === 'dust,shard,spore,core,spark', 'then the same card asks every coin the yard makes', asks),
+    ok(asks === 'dust,shard,spore,spark', 'then the same card asks every coin the yard makes', asks),
     ok(noCard, 'and no research card stands beside it'),
     ok(last === TIER_BAND && S.tendLevel === TIER_OWN + TIER_BAND,
        'and the spark rung climbs the same field', `${last}, ${S.tendLevel}`)

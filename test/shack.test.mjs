@@ -302,7 +302,7 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
   window.__reset();
   window.__fullSites();
   window.__invest();
-  window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
+  window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9, sparks: 900 });   // the last rung is the spark's
   window.__crew(2, 2);
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 

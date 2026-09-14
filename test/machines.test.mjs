@@ -58,7 +58,7 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
     ok(full.plots === 7, 'and the whole plot is broken', `${full.plots}`),
     // The pick ladder is three whole-pixel rungs since wave 7; speed is the
     // house ladder, nine rungs in three cards.
-    ok(full.pick === 3 && full.speed === LADDER, "and the rock's kit is bought out",
+    ok(full.pick === LADDER && full.speed === LADDER, "and the rock's kit is bought out",
        `pick ${full.pick}, speed ${full.speed}`),
     ok(quarry && quarry.cap === 5, 'so the cut has five places to stand',
        `cap ${quarry && quarry.cap}`),

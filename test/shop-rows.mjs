@@ -70,7 +70,7 @@ export const ROWS = [
   { key: 'speed', part: 1, reach: S => { S.autoMine = true; } },
   { key: 'pick', part: 1, reach: S => { S.autoMine = true; } },
   { key: 'critchance', fresh: true, part: 1 },
-  { key: 'critmult', part: 1, reach: sites },
+  { key: 'critmult', fresh: true, part: 1 },
   { key: 'haulcarry', fresh: true, part: 1 },
   { key: 'haulpace', fresh: true, part: 1 },
   { key: 'house', fresh: true, part: 1 },

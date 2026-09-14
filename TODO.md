@@ -1,14 +1,15 @@
 # Still to do
 
-## A rung is a step up, not a step along -- DESIGNED, awaiting approval (2026-09-14)
+## A rung is a step up, not a step along -- BUILT (2026-09-14)
 
-"A rung is a step up, not a step along" at the end of DESIGN.md. The player
-wants the count ladders to climb faster each rung (carry 1, 2, 4, 6, 10; pick
-1, 2, 4, 8) rather than a unit a rung; the rates already do. Proposed: a
-written list a count ladder in config, `LADDER` long, read by `value`, with
-a knob a rung in the ladder book; the six unit constants retire. Open: lists
-or one ratio knob a ladder, and whether the bench wants a fourth rung.
-Blocker: sign-off.
+"A rung is a step up, not a step along" at the end of DESIGN.md, with an
+as-built note. Every ladder is four rungs, dust → +spore → +shard → +spark
+(never the core); every count reads a written list in `config/rungs.js`,
+a knob a rung in the ladder book. The lists shipped with first guesses
+(`CARRY_PX` 1, 2, 4, 6, 10; `PICK_PX` 1, 2, 4, 8, 12; …) and the fourth
+rung's bills are steep in spores at the top of the price curve -- both are
+the ladder book's to settle on a played yard. The builders' 37% and the
+attended wait are untouched and still open.
 
 ## A ladder is a rung a coin, the spark rung on the card -- BUILT (2026-09-14)
 

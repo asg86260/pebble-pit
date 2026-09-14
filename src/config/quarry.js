@@ -48,11 +48,8 @@ export const BENCH_RATE = 1.7;     // and how much steeper each one gets
 // left open, so both are dials rather than constants.
 export let QUARRY_PACE_COST = 720; // dust for the first rung of the speed ladder
 export let SEAM_COST = 720;        // and for the first rung of the yield one
-// What one more rung of the yield ladder puts on a dig, as a share of the plain
-// handful `seamShards` deals out. A quarter a rung, against the farm's whole
-// spore, because the base here is already a handful a bench rather than one
-// -- a half since a band became a rung, which is what a band used to add.
-export let SEAM_PER_RUNG = 0.5;
+// What a dig is worth at each rung, as a share of the handful, is SEAM_SHARE in
+// config/rungs.js.
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a
@@ -184,8 +181,6 @@ export const QUARRY_KNOBS = [
     get: () => SEAM_COST, set: v => { SEAM_COST = v; } },
   { key: 'QUARRY_PACE_COST', label: 'dig pace rung 1', min: 60, max: 4000, step: 20,
     get: () => QUARRY_PACE_COST, set: v => { QUARRY_PACE_COST = v; } },
-  { key: 'SEAM_PER_RUNG', label: 'a dig, a rung', min: 0.05, max: 2, step: 0.05,
-    get: () => SEAM_PER_RUNG, set: v => { SEAM_PER_RUNG = v; } },
   { key: 'CUT_SEAM', label: 'shards a bench', min: 1, max: 60, step: 1,
     get: () => CUT_SEAM, set: v => { CUT_SEAM = v; } }
 ];

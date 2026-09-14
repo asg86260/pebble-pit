@@ -1,6 +1,6 @@
-import { ROCKHAND_RUNGS, ROCKHAND_PICK_COST, ROCKHAND_SPEED_COST } from '../config.js';
+import { ROCKHAND_PICK_COST, ROCKHAND_SPEED_COST } from '../config.js';
 import { S } from '../state.js';
-import { rockhandBite, rockhandRate, rungCost } from '../upgrades.js';
+import { rockhandBite, rockhandRate } from '../upgrades.js';
 import { tierRows, named } from './tiers.js';
 
 // The rock's rows. Data only: upgrades.js strings the files together into
@@ -30,26 +30,23 @@ const SPEED = tierRows({
   bands: named('rockhandspeed', 'swing speed')
 });
 
+// And the gang's bite: whole pixels off its list (ROCKHAND_PX, config/rungs.js),
+// in bands like every other ladder. It was a flat three-rung row with one dust
+// bill, the last of that shape on any board. What you are buying is the tool,
+// not the number the tool moves: the row said "rockhand bite", which is the
+// effect in the game's own jargon, and a player reads "pick" as a thing you
+// can hold.
+const BITE = tierRows({
+  field: 'rockhandPickLevel',
+  unit: 'px', does: 'per swing',
+  value: lvl => rockhandBite(lvl),
+  first: ROCKHAND_PICK_COST,
+  site: 'shack', board: 'shack',
+  show: () => S.crew > 0,
+  bands: named('rockhandpick', 'digger pick damage')
+});
+
 export const ROCK_ROWS = [
-  {
-    key: 'rockhandpick',
-    kind: 'rung', site: 'shack', board: 'shack',
-    // What you are buying is the tool, not the number the tool moves. The row
-    // said "rockhand bite", which is the effect described in the game's own jargon
-    // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
-    name: 'digger pick damage',
-    unit: 'px',
-    does: 'per swing',
-    rung: () => S.rockhandPickLevel,
-    // Its own short ladder: three rungs, each a whole pixel of bite (see
-    // rockhandBite), fewer and dearer, and every one visible on the row
-    // (feedback7, item 19). Three rungs is one card, and a first card is dust.
-    rungs: () => ROCKHAND_RUNGS,
-    from: () => rockhandBite(),
-    to: () => rockhandBite(S.rockhandPickLevel + 1),
-    cost: () => rungCost(ROCKHAND_PICK_COST, S.rockhandPickLevel),
-    buy: () => S.rockhandPickLevel++,
-    show: () => S.crew > 0
-  },
+  ...BITE,
   ...SPEED
 ];

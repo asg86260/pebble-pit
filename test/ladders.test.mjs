@@ -16,8 +16,9 @@
 
 import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER, SPARK_GAIN,
-         QUARRY_BASE, QUARRY_FLOOR, DOSES_CARDS } from '../src/config.js';
+import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER,
+         QUARRY_BASE, QUARRY_FLOOR,
+         CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT } from '../src/config.js';
 import { rungOf, rungsOf, capacity, pickCount, haulCap } from '../src/upgrades.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
 import { cellMs, seamDig, QUARRY_UPGRADES } from '../src/quarry.js';
@@ -78,7 +79,7 @@ group('each rung asks for one more coin than the last, on the one card', async (
     ok(seen[0] === 'dust', 'rung one is dust and nothing else', seen[0]),
     ok(seen[1] === 'dust,shard', "rung two adds the cut's own coin", seen[1]),
     ok(seen[2] === 'dust,shard,spore', "rung three adds the farm's", seen[2]),
-    ok(seen[3] === 'core,dust,shard,spark,spore',
+    ok(seen[3] === 'dust,shard,spark,spore',
        'and rung four asks for everything the yard makes', seen[3]),
     ok(noCard && S.seamLevel === TIER_RUNGS, 'all on the one card, to the top',
        `${S.seamLevel} of ${TIER_RUNGS}`)
@@ -86,9 +87,9 @@ group('each rung asks for one more coin than the last, on the one card', async (
 });
 
 // The spark rung was the lab's multiplier, a card of its own that climbed
-// `S.mult`. It is a rung of the same field now, and it is worth what the whole
-// band was: the ladder's top did not come down for the fold.
-group('the spark rung climbs the same field and is worth what the multiplier was', async () => {
+// `S.mult`. It is a rung of the same field now, reading the last entry of the
+// yield's list like any other rung.
+group('the spark rung climbs the same field and reads the top of its list', async () => {
   window.__reset();
   openSites();
   window.__invest();
@@ -98,7 +99,7 @@ group('the spark rung climbs the same field and is worth what the multiplier was
   const pressed = buyNow('crop');
   return [
     ok(S.cropLevel === TIER_OWN + 1 && pressed, 'the spark rung is one more of the field', `${S.cropLevel}`),
-    ok(cropYield() === Math.round(before * SPARK_GAIN), 'and it multiplies the yield by the old band\'s gain',
+    ok(cropYield() === CROP_SPORES[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
        `${before} -> ${cropYield()}`)
   ];
 });
@@ -219,26 +220,36 @@ group('the speed ladders end where they always ended', async () => {
   ];
 });
 
-// No ladder's top came down when a band became a rung. These are the figures
-// the count ladders reached at six rungs, written as numbers on purpose: a
-// unit is one constant, and a change to one is a change to this line.
-group("no ladder's top came down with the band", async () => {
+// Every count ladder reads a written list -- what it is worth at the foot and
+// at each rung (config/rungs.js) -- and the lists are what make the length one
+// number: each is exactly a value for the foot and one a rung, whole where a
+// count is whole, and every rung worth more than the last. A list a rung short
+// is a red line here rather than a ladder that quietly stops early; the counts
+// are read through their own functions so the wiring is checked as well as
+// the table.
+group('every count ladder reads a list a value a rung, each worth more than the last', async () => {
   window.__reset();
   openSites();
+  const LISTS = { CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT };
+  const short = Object.entries(LISTS).filter(([, l]) => l.length !== LADDER + 1).map(([k, l]) => `${k}: ${l.length}`);
+  const flat = Object.entries(LISTS).filter(([, l]) => l.some((v, i) => i && !(v > l[i - 1]))).map(([k]) => k);
+  const broken = Object.entries(LISTS).filter(([k, l]) => k !== 'SEAM_SHARE' && l.some(v => !Number.isInteger(v))).map(([k]) => k);
   const at = (field, lvl, read) => { const was = S[field]; S[field] = lvl; const v = read(); S[field] = was; return v; };
-  const carryTop = at('carryLevel', LADDER, capacity);
-  const cropOwn = at('cropLevel', TIER_OWN, cropYield);
-  const cropTop = at('cropLevel', TIER_RUNGS, cropYield);
-  const dig0 = at('seamLevel', 0, seamDig), digOwn = at('seamLevel', TIER_OWN, seamDig);
+  const reads = [
+    ['carry', at('carryLevel', LADDER, capacity), CARRY_PX[LADDER]],
+    ['pick', pickCount(LADDER), PICK_PX[LADDER]],
+    ['hauler load', haulCap(LADDER), HAUL_LOAD[LADDER]],
+    ['a cut', at('cropLevel', LADDER, cropYield), CROP_SPORES[LADDER]],
+    ['doses', dosesPer(LADDER), DOSES[LADDER]]
+  ].filter(([, got, want]) => got !== want).map(([k, got, want]) => `${k}: ${got} not ${want}`);
+  const dig0 = at('seamLevel', 0, seamDig), digTop = at('seamLevel', LADDER, seamDig);
   return [
-    ok(carryTop === 7, 'what you carry tops at seven pixels', `${carryTop}`),
-    ok(pickCount(LADDER) === 7, 'and so does your pick', `${pickCount(LADDER)}`),
-    ok(haulCap(LADDER) === 13, 'a hauler carries thirteen at the top', `${haulCap(LADDER)}`),
-    ok(cropOwn === 7 && cropTop === 11, 'a cut is seven spores before the spark rung and eleven after',
-       `${cropOwn}, ${cropTop}`),
-    ok(Math.abs(digOwn / dig0 - 2.5) < 0.05, 'a dig is two and a half times its base before the spark rung',
-       `${(digOwn / dig0).toFixed(2)}`),
-    ok(dosesPer(DOSES_CARDS * TIER_BAND) === 5, 'and a batch tops at five doses', `${dosesPer(DOSES_CARDS * TIER_BAND)}`)
+    ok(short.length === 0, 'every list is a value for the foot and one a rung', short.join(', ')),
+    ok(flat.length === 0, 'and every rung is worth more than the last', flat.join(', ')),
+    ok(broken.length === 0, 'and a count is whole at every rung', broken.join(', ')),
+    ok(reads.length === 0, 'and each count reads the top of its own list at the top', reads.join('; ')),
+    ok(Math.abs(digTop / dig0 - SEAM_SHARE[LADDER]) < 0.05, 'and a dig at the top is its list\'s share of the base',
+       `${(digTop / dig0).toFixed(2)} vs ${SEAM_SHARE[LADDER]}`)
   ];
 });
 

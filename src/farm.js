@@ -9,7 +9,7 @@
 // plot takes, however many plots that is spread across.
 
 import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, CROP_COST, TEND_COST,
-         CROP_PER_RUNG, TIER_OWN, SPARK_GAIN } from './config.js';
+         CROP_SPORES, rungValue, TIER_OWN, SPARK_GAIN } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -23,7 +23,7 @@ import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
-import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
+import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -51,12 +51,12 @@ export const tendMs = (lvl = tendLadder()) =>
 
 export const tendRate = (lvl = tendLadder()) => 60000 / tendMs(lvl);   // plots a minute
 
-// What one cut off a ripe plot is worth. One spore is what it always was and
-// what the ladder starts from; every rung puts two more on it, and the spark
-// rung multiplies the lot. A count rather than a fraction, because a cut
-// drops spores and half a spore is not a thing the yard can draw.
+// What one cut off a ripe plot is worth: whole spores off its list (CROP_SPORES,
+// config/rungs.js), the last entry the spark rung's. A count rather than a
+// fraction, because a cut drops spores and half a spore is not a thing the
+// yard can draw.
 export const cropYield = (lvl = cropLadder()) =>
-  Math.max(1, Math.round(tierGain(lvl, CROP_PER_RUNG)));
+  Math.max(1, Math.round(rungValue(CROP_SPORES, lvl)));
 
 export const plotX = i => farm.x + i * FARM_GAP;
 export const plotTop = i => S.groundY - FARM_H * S.plots[i];
@@ -300,7 +300,7 @@ const FARM_YIELD = tierRows({
     // The spark rung. It was `labcrop`, the lab's multiplier, sold as a card
     // of its own behind `invested`; the bill's own coins gate it now, later
     // than that flag ever did. `restore` still knows the old key.
-    { key: 'crop4',   name: 'crop yield', coins: ['shard', 'spore', 'core', 'spark'] }
+    { key: 'crop4',   name: 'crop yield', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
@@ -315,7 +315,7 @@ const FARM_SPEED = tierRows({
     { key: 'tend',    name: 'farming speed',     coins: [] },
     { key: 'tend2',   name: 'farming speed',  coins: ['spore'] },
     { key: 'tend3',   name: 'farming speed', coins: ['spore', 'shard'] },
-    { key: 'tend4',   name: 'farming speed', coins: ['shard', 'spore', 'core', 'spark'] }
+    { key: 'tend4',   name: 'farming speed', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 

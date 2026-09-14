@@ -48,14 +48,9 @@ export const BREW_BILL = {
 export const BREW_MS = 30000;          // a batch, always
 export const BUFF_MS0 = 60000;         // a dose lasts a minute at dose-length 0...
 export const BUFF_MS5 = 180000;        // ...three minutes at the top
-// Doses a brew: a whole dose a rung, so every rung on the card lands. It eased
-// 3 -> 8 over the ladder and rounded, which put two rungs on the board that
-// read "5 -> 5". One dose to begin with -- a first batch is one vial for one
-// body -- and two cards of `TIER_BAND`, two doses a rung since a band became a
-// rung, so the top is where it was: five.
-export const DOSES0 = 1;               // bodies a brew reaches at doses 0
-export const DOSES_CARDS = 2;          // cards on the ladder
-export const DOSE_STEP = 2;            // doses a rung
+// Doses a brew at each rung is DOSES in config/rungs.js: whole doses, so every
+// rung on the card lands (it eased 3 -> 8 and rounded once, and two rungs read
+// "5 -> 5").
 // Buff strength: the fraction a level-0 dose is worth, and at the top. The stew
 // is +25% at level 0 -- the lab's own STEP, one familiar size -- and +60% maxed.
 // This ladder is climbed one tonic at a time now (item 14): a rung deepens the

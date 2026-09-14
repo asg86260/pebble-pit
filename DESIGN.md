@@ -9268,7 +9268,7 @@ Four small things asked for together on 2026-09-14; the spec is
   `LAND_HOP_MS`. Render-time only: `w.y` is untouched, so the walk and the
   falls see nothing. A gentle set-down (the dome's) hops nobody.
 
-## A rung is a step up, not a step along (design, not built)
+## A rung is a step up, not a step along (built)
 
 The player: *I kind of want some exponential-type growth instead of linear
 updates -- carry 1 → 2 → 4 → 6 → 10, not quite double; auto swing 1, 2, 3, 4 a
@@ -9352,3 +9352,35 @@ Once decided, the build is `config`: one list a count ladder, the six unit
 constants retired, `value` reading the list, the checks reading the lists, and
 the book's knobs. Nothing about saves: a level is a rung, and a rung reads its
 value off the list whatever the list says.
+
+**Decided (2026-09-14): lists, and every ladder gets a rung for every coin.**
+The second call went the long way: not "the list is one longer than the
+ladder" but "every ladder is four rungs" -- the bench's ladders have the spark
+rung the grounds had.
+
+### As built
+
+- `LADDER_BANDS` is four, so `LADDER` is `TIER_RUNGS` and the grounds' ladders
+  and the bench's are the same ladder: dust, then spore, then shard, then
+  spore, shard and spark. **Not the core.** The grounds' fourth band listed it
+  from the lab's research bill; on every ladder it came to thirty-two cores
+  for one rung of crit damage, in a game with nine. `BAND_COINS[3]` and the
+  grounds' fourth bands ask `spore, shard, spark`.
+- `config/rungs.js` holds the lists -- `CARRY_PX`, `PICK_PX`, `ROCKHAND_PX`,
+  `HAUL_LOAD`, `CROP_SPORES`, `SEAM_SHARE`, `DOSES`, `CRIT_MULT` -- each five
+  values, the foot and four rungs, and `rungValue(list, lvl)` clamps a level to
+  the list on read. `RUNG_KNOBS` hands `TUNABLE` a knob a rung, so every entry
+  is a dial in the ladder book and on the dev panel.
+- Retired: `CAP_BASE/CAP_STEP`, `PICK_BASE/PICK_STEP`, `HAUL_CARRY_STEP`,
+  `CROP_PER_RUNG`, `SEAM_PER_RUNG`, `DOSES0/DOSE_STEP/DOSES_CARDS`,
+  `CRIT_MULT_MIN/MAX/RUNGS`, `ROCKHAND_RUNGS`, `tierGain`. The grounds' spark
+  rung reads its list's last entry like any other; `SPARK_GAIN` stays for the
+  two ground rates (`tendMs`, `quarryMs`), which ease to their tops over
+  `TIER_OWN` and take the spark rung on top.
+- The last two flat rows -- `critmult` and `rockhandpick` -- are `tierRows`
+  ladders now, dust alone on the first rung like every other; the hauler's two
+  hand-written three-band tables went onto `named`. Every other rate keeps
+  its curve and eases to the same top over the four rungs.
+- `test/ladders.test.mjs` asserts the lists: each `LADDER + 1` long, whole
+  where the count is whole, every rung worth more than the last, and each
+  count reading the top of its own list at the top.

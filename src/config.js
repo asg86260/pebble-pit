@@ -39,6 +39,7 @@ export * from './config/view.js';
 export * from './config/dust.js';
 export * from './config/crew.js';
 export * from './config/tiers.js';
+export * from './config/rungs.js';
 export * from './config/rocks.js';
 export * from './config/quarry.js';
 export * from './config/machines.js';
@@ -115,12 +116,13 @@ import { EFFECT_KNOBS } from './config/effects.js';   // F4
 import { RIFT_KNOBS } from './config/rift.js';
 import { NOTICE_KNOBS } from './config/notices.js';
 import { SOUND_KNOBS } from './config/sound.js';
+import { RUNG_KNOBS } from './config/rungs.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
-  ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS
+  ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS
 ];
 
 // The rows, by key. Asking for a knob that has no row is worth hearing about:

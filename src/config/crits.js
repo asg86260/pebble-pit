@@ -11,14 +11,8 @@
 // arrive free -- the ladder is where the chance comes from. (wave6-sim, item 10)
 export const CRIT_CHANCE_MIN = 0.04;
 export const CRIT_CHANCE_MAX = 0.25;   // and one in four at the top of the ladder
-export const CRIT_MULT_MIN = 3;        // worth three units of work at level 0
-export const CRIT_MULT_MAX = 6;        // and six at the top
-// One rung, one whole unit. The ladder used to ease MIN..MAX over the shared
-// five rungs and round, so two neighboring rungs could round to the same figure
-// and the row read "4 -> 4" -- a purchase that buys nothing it can name. Three
-// rungs walk 3, 4, 5, 6 with no repeats, and each rung costs double to make up
-// for there being fewer of them. (feedback7, item 20)
-export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
+// What a crit is worth is CRIT_MULT in config/rungs.js: a whole unit a rung,
+// written down, so no two rungs round to one figure (feedback7, item 20).
 // The strongest per-rung buy on the board was also its cheapest; the grind pass
 // (DESIGN.md) prices the pair against the crew-backed income that actually
 // reaches them, not the solo clicking that sees them first. The mult rung

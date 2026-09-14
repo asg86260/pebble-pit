@@ -133,11 +133,8 @@ export const ROCK_KNOBS = [
 ];
 
 // --- wave7-ui -----------------------------------------------------------------
-// The pickaxe ladder: three rungs, each worth a whole pixel of bite. The eased
-// fractional curve read as noise on the row ("1.4 -> 1.7 px"); a whole pixel a
-// rung is a purchase you can see land, so there are fewer rungs and each is
-// dearer -- see rows-rock.js, where the bases are eight times what they were.
-export const ROCKHAND_RUNGS = 3;
-// And what its first rung costs, in dust. It was spore and dust from the first
-// rung; a three-rung ladder is one card and takes the first card's coin.
+// The pickaxe ladder reads whole pixels off ROCKHAND_PX (config/rungs.js). The
+// eased fractional curve it replaced read as noise on the row ("1.4 -> 1.7 px").
+// What its first rung costs, in dust: a band ladder like every other, dust
+// only on the first rung.
 export const ROCKHAND_PICK_COST = 2400;
