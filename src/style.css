@@ -116,6 +116,23 @@ canvas {
 }
 .rows .sect:first-child { margin-top: 0; }
 
+/* The goal: the bench's shield on offer, above everything for sale. One card
+   across the whole sheet in a double rule, under a heading with no rule of its
+   own -- the frame is the rule. Every other card on the board is one of a pair
+   in a single line; this is the one thing the yard is working toward, and it
+   should read as a notice rather than as a row. The story line (`.note`) is
+   its text, so the card is a name, a sentence and a price. */
+.rows .sect.goal { border-bottom: 0; margin-bottom: -2px; }
+.rows button.goal {
+  grid-column: 1 / -1;
+  border: 3px double #000;
+  padding: 8px 10px;
+}
+.rows button.goal .note { margin-bottom: 2px; }
+/* A shield has no gain line -- it is a thing you try, not a number that climbs
+   -- so the empty cell does not hold a line open between the name and the price. */
+.rows button.goal .gain:empty { display: none; }
+
 /* Whose board this is. One menu walks along the ground from station to station
    and shows whichever of them you are standing at, which is a nice thing to
    watch and a bad thing to read: three boards that slide into the same spot and

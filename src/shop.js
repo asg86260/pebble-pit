@@ -319,7 +319,10 @@ function build(el, list, sections, empty, heads) {
 
     if (!(lone && sect.title === title)) {
       const head = document.createElement('div');
-      head.className = 'sect';
+      // The goal section -- the bench's shield on offer -- is the one heading
+      // drawn differently, and its cards are drawn across the sheet in a frame
+      // of their own; see `.goal` in style.css and `SECTIONS` in upgrades.js.
+      head.className = sect.goal ? 'sect goal' : 'sect';
       head.dataset.sect = sect.title;
       el.appendChild(head);
     }
@@ -426,6 +429,7 @@ function build(el, list, sections, empty, heads) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (u.read) b.classList.add('stat');
+      if (sect.goal) b.classList.add('goal');
       // A purchase leaves the board up. It put the board away for a while
       // (feedback8 item 1): buying is a thing you do to the yard, and the
       // sheet got out of the light so you could see the dust arc and the gang

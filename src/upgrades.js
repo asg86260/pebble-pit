@@ -909,6 +909,15 @@ registerRows(UPGRADES);
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
+  // The goal, first. What the yard puts between itself and the sky, one at a
+  // time, and each failure is what opens the next station (DESIGN.md, "The
+  // shields are the spine") -- so the shield on offer is the one thing on the
+  // bench that says what the yard is for right now, and it is drawn as the
+  // goal card: its own frame, across the sheet, above everything for sale.
+  // `goal` is the whole of what the board does differently with it; the row
+  // is the row it always was. The dome is the tower's and is on the tower's
+  // board.
+  { title: 'the sky', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
   // "you", not "your gear": you are the cursor, and the heading under this one
   // is the one about gear.
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
@@ -929,9 +938,6 @@ export const SECTIONS = [
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no
   // station because you are the cursor.
-  // What the yard puts between itself and the sky, in the order it thinks of
-  // them. The dome is the tower's and is on the tower's board.
-  { title: 'the shields', keys: ['props', 'net', 'arch', 'askwizards'] },
   // Everything the yard has not built yet, under one heading.
   //
   // These were ten headings, each carrying a single row -- "the quarry" over
