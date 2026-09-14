@@ -61,8 +61,6 @@ const staked = (S, run) => {
   }
 };
 
-// The ladder's own rungs climbed, so the research card after them shows.
-const own = field => () => { sites(); window.__invest(); window.__levels({ [field]: 99 }); };
 
 export const ROWS = [
   // --- the bench --------------------------------------------------------------
@@ -125,18 +123,14 @@ export const ROWS = [
 
   // --- the quarry -------------------------------------------------------------
   { key: 'seam', part: 2, reach: sites },
-  { key: 'labseam', part: 2, reach: own('seamLevel') },
   { key: 'quarrypace', part: 2, reach: sites },
-  { key: 'labcave', part: 2, reach: own('quarryPaceLevel') },
   { key: 'quarrybench', part: 2, reach: () => { window.__invest(); crew(); grantAll(); } },
   { key: 'jaw', part: 2, reach: () => { sites(); window.__kit({ blasters: 3 }); } },
   { key: 'tunejaw', part: 2, reach: () => { sites(); window.__machine('jaw', { bought: true }); } },
 
   // --- the farm ---------------------------------------------------------------
   { key: 'crop', part: 2, reach: sites },
-  { key: 'labcrop', part: 2, reach: own('cropLevel') },
   { key: 'tend', part: 2, reach: sites },
-  { key: 'labtend', part: 2, reach: own('tendLevel') },
   { key: 'farmplot', part: 2, reach: () => { window.__invest(); crew(); grantAll(); } },
   { key: 'tiller', part: 2, reach: () => { sites(); window.__kit({ growers: 3 }); } },
   { key: 'tunetiller', part: 2, reach: () => { sites(); window.__machine('tiller', { bought: true }); } },

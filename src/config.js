@@ -109,7 +109,7 @@ import { QUARRY_KNOBS } from './config/quarry.js';
 import { MACHINE_KNOBS } from './config/machines.js';
 import { FARM_KNOBS } from './config/farm.js';
 import { WEATHER_KNOBS } from './config/weather.js';
-import { LAB_KNOBS } from './config/lab.js';
+
 import { ROCK_KNOBS } from './config/rocks.js';
 import { EFFECT_KNOBS } from './config/effects.js';   // F4
 import { RIFT_KNOBS } from './config/rift.js';
@@ -119,7 +119,7 @@ import { SOUND_KNOBS } from './config/sound.js';
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...QUARRY_KNOBS,
-  ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS, ...LAB_KNOBS,
+  ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS
 ];
 

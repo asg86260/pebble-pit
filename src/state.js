@@ -278,9 +278,10 @@ export const S = {
   // research calls exactly these back, so the game undoing its own tidying is
   // not a chore it hands to you.
   labLeft: 0,
-  // Six of them: the crew's two, and the last band of each of the four ladders
-  // the two grounds sell. `crop` and `seam` are the yield ones and are the only
-  // multipliers here that were never the lab's.
+  // The multipliers a save may still carry, and nothing reads: the crew's two
+  // went with their rows, and the four grounds' are the spark rung of their
+  // ladders now, folded in by `restore` (DESIGN.md, "The spark band is the
+  // top of the ladder"). Kept so an old save round-trips; always nought here.
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -720,7 +721,7 @@ export const SAVED_BY_HAND = [
   'pot',                  // the casino: what is on the table...
   'pouring',              // ...whether its stake is still raining down...
   'paying',               // ...and what a taken pot still owes the hole
-  'mult',                 // the lab's multipliers; its quarry one answered to `cave`
+  'mult',                 // legacy: folded into the ladders on read, written as noughts
   'plots',                // how far along each plot is, as hundredths
   'plotTone',             // and the spore standing ripe on it
   'boulder',              // the rock, as a run-length string...

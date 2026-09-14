@@ -50,8 +50,9 @@ export let QUARRY_PACE_COST = 720; // dust for the first rung of the speed ladde
 export let SEAM_COST = 720;        // and for the first rung of the yield one
 // What one more rung of the yield ladder puts on a dig, as a share of the plain
 // handful `seamShards` deals out. A quarter a rung, against the farm's whole
-// spore, because the base here is already a handful a bench rather than one.
-export let SEAM_PER_RUNG = 0.25;
+// spore, because the base here is already a handful a bench rather than one
+// -- a half since a band became a rung, which is what a band used to add.
+export let SEAM_PER_RUNG = 0.5;
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a

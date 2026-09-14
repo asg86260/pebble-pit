@@ -9,14 +9,13 @@
 // plot takes, however many plots that is spread across.
 
 import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, CROP_COST, TEND_COST,
-         CROP_PER_RUNG, TIER_OWN } from './config.js';
+         CROP_PER_RUNG, TIER_OWN, SPARK_GAIN } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
-import { invested } from './upgrades/site.js';
 import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
@@ -24,7 +23,6 @@ import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
-import { STEP as MULT_STEP } from './mult.js';
 import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
@@ -35,28 +33,27 @@ import { rand } from './rng.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 
-// Where the two farm ladders stand: the level field's own rungs, then a band
-// of the multiplier over it. Everything that asks what the farm is worth asks in
-// these terms, so a rung and the multiplier over it are one number rather than
-// two that have to be combined at each call.
-export const tendLadder = () => tierLevel('tendLevel', 'tend');
-export const cropLadder = () => tierLevel('cropLevel', 'crop');
+// Where the two farm ladders stand, clamped to their length. Everything that
+// asks what the farm is worth asks in these terms.
+export const tendLadder = () => tierLevel('tendLevel');
+export const cropLadder = () => tierLevel('cropLevel');
 
 // how long one plot takes to come on, at this level of tending
-// From the base to the floor over the ladder's own rungs, the last rung being
-// the floor itself -- the same climb it always made, in `TIER_OWN` steps. It
-// ran over `RUNGS` when the speed ladder was five rungs and the multiplier was a
-// rival row beside it; the ends have not moved.
+// From the base to the floor over the rungs before the spark's, the last of
+// them being the floor itself -- the same climb it always made, in `TIER_OWN`
+// steps -- and the spark rung's gain over that. It ran over `RUNGS` when the
+// speed ladder was five rungs and the multiplier was a rival row beside it;
+// the ends have not moved.
 // Built when it is read, for the two reasons `quarryMs` sets out.
 const tendGap = lvl => swing(TEND_BASE, TEND_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
 export const tendMs = (lvl = tendLadder()) =>
-  Math.max(400, Math.round(tendGap(lvl) / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN))));
+  Math.max(400, Math.round(tendGap(lvl) / Math.pow(SPARK_GAIN, Math.max(0, lvl - TIER_OWN))));
 
 export const tendRate = (lvl = tendLadder()) => 60000 / tendMs(lvl);   // plots a minute
 
 // What one cut off a ripe plot is worth. One spore is what it always was and
-// what the ladder starts from; every rung puts another whole one on it, and the
-// last band multiplies the lot. A count rather than a fraction, because a cut
+// what the ladder starts from; every rung puts two more on it, and the spark
+// rung multiplies the lot. A count rather than a fraction, because a cut
 // drops spores and half a spore is not a thing the yard can draw.
 export const cropYield = (lvl = cropLadder()) =>
   Math.max(1, Math.round(tierGain(lvl, CROP_PER_RUNG)));
@@ -284,17 +281,13 @@ export function stepFarmhand(w, now, dt, c = null) {
 // The same move the quarry made, for the same reason: you break the next bit of
 // ground standing on the ground you are breaking. The row that opens the farm
 // stays on the bench, because there is nowhere to walk to until it is bought.
-// The plots' two ladders, twelve rungs each in four cards of three. What they
+// The plots' two ladders, a rung a coin, the last one the spark's. What they
 // sell is the two questions a ground can answer -- what one go is worth, and how
 // often a go happens -- and the second of them used to be sold twice over, as a
 // `speed` rung and a `speed x` beside it. See DESIGN.md, "What the two grounds
-// sell".
-//
-// Band four is the multiplier, and it keeps the key `labtend` it had as the
-// lab's row: a piece of research in flight in somebody's save quotes it, and a
-// key is never renamed. See the note at the top of upgrades/rows-mult.js.
+// sell" and "The spark band is the top of the ladder".
 const FARM_YIELD = tierRows({
-  field: 'cropLevel', multKey: 'crop',
+  field: 'cropLevel',
   unit: 'spores/cut',
   value: lvl => cropYield(lvl),
   first: CROP_COST,
@@ -304,17 +297,15 @@ const FARM_YIELD = tierRows({
     { key: 'crop',    name: 'crop yield',     coins: [] },
     { key: 'crop2',   name: 'crop yield',  coins: ['spore'] },
     { key: 'crop3',   name: 'crop yield', coins: ['spore', 'shard'] },
-    { key: 'labcrop', name: 'astral GMOs',
-      coins: ['shard', 'spore', 'core', 'spark'],
-      // The last band is the research, and research waits on the yard having
-      // been invested in -- see `invested`, which is what the trestle's flag
-      // was standing in for.
-      gate: invested }
+    // The spark rung. It was `labcrop`, the lab's multiplier, sold as a card
+    // of its own behind `invested`; the bill's own coins gate it now, later
+    // than that flag ever did. `restore` still knows the old key.
+    { key: 'crop4',   name: 'crop yield', coins: ['shard', 'spore', 'core', 'spark'] }
   ]
 });
 
 const FARM_SPEED = tierRows({
-  field: 'tendLevel', multKey: 'tend',
+  field: 'tendLevel',
   unit: 'plots/min', pct: true, does: 'tend',
   value: lvl => tendRate(lvl),
   first: TEND_COST,
@@ -324,9 +315,7 @@ const FARM_SPEED = tierRows({
     { key: 'tend',    name: 'farming speed',     coins: [] },
     { key: 'tend2',   name: 'farming speed',  coins: ['spore'] },
     { key: 'tend3',   name: 'farming speed', coins: ['spore', 'shard'] },
-    { key: 'labtend', name: "summer's aura",
-      coins: ['shard', 'spore', 'core', 'spark'],
-      gate: invested }
+    { key: 'tend4',   name: 'farming speed', coins: ['shard', 'spore', 'core', 'spark'] }
   ]
 });
 
@@ -384,8 +373,8 @@ export const FARM_UPGRADES = [
 // lodges here -- see `lodgers`.
 export const FARM_SECTIONS = [
   { title: 'the farm', keys: ['farmplot',
-                              'crop', 'labcrop',
-                              'tend', 'labtend',
+                              'crop',
+                              'tend',
                               'grower', 'tiller', 'tunetiller'] }
 ];
 

@@ -63,8 +63,9 @@ export let CROP_COST = 720;    // dust for the first rung of the yield ladder
 export let TEND_COST = 720;    // and for the first rung of the speed one
 // What one more rung of the yield ladder puts on a cut, as a share of the plain
 // one-spore cut. A whole spore a rung, so the gain line is a count going up by
-// one rather than a rounded fraction that reads as nothing on half the rungs.
-export let CROP_PER_RUNG = 1;
+// one rather than a rounded fraction that reads as nothing on half the rungs
+// -- two, since a band became a rung and a rung is what a band used to add.
+export let CROP_PER_RUNG = 2;
 // A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.

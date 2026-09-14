@@ -1,4 +1,4 @@
-import { BELT_BILL, CAP_BASE, CAP_STEP, RAM_BILL, ROCKHAND_RUNGS, LADDER,
+import { BELT_BILL, CAP_BASE, CAP_STEP, PICK_BASE, PICK_STEP, RAM_BILL, ROCKHAND_RUNGS, LADDER,
          CARRY_COST, SWING_COST, PICK_COST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
@@ -59,7 +59,7 @@ const YOU_PICK = tierRows({
   // exactly the same job, so they are the same row under two headings rather
   // than "pick" here and "pickaxe" over there.
   unit: 'px', does: 'per swing',
-  value: lvl => 1 + lvl,
+  value: lvl => PICK_BASE + PICK_STEP * lvl,
   first: PICK_COST,
   site: 'bench',
   // Beside the swing, once the swinging is automatic: it was gated on the

@@ -225,9 +225,7 @@ group('the save keeps what matters', async () => {
     ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
     ok(Array.isArray(raw.plots), 'and how far along every plot is'),
     ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
-    ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
     ok(raw.scholars === s.scholars, 'who is in the lab', `${raw?.scholars} vs ${s.scholars}`),
-    ok(!raw.research === !s.research, 'and whatever it is working on'),
     ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
        'the rock is saved cell by cell')
   ];

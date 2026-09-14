@@ -324,17 +324,20 @@ Two harness facts, each of which cost a full launch cycle:
   fully-invested yard that goes permanently clean. An upgrade that quietly
   cleaned the sky would be a number you buy once and never think about again;
   the sky is meant to stay a live decision.
-- **A ladder is sold in bands, on every board.** `TIER_BAND` rungs to a card
-  (two, since 2026-09-14 -- six to a ladder; never write the number, write the
-  constant), the bill deepening card by card in the order the yard hands out
-  its coins:
-  **dust only, then dust and crops, then dust, crops and ore.** The first card
+- **A ladder is a rung a coin, on every board.** One card; `TIER_BAND` rungs
+  to a band (one, since 2026-09-14 -- three to a ladder; never write the
+  number, write the constant), the bill deepening rung by rung in the order
+  the yard hands out its coins:
+  **dust only, then dust and crops, then dust, crops and ore.** The first rung
   is cheap and dust-only so an early yard can buy it; the ladder gets dear in
-  the coins the station has started spending. The grounds' fourth (spark/core)
-  band is theirs alone. A ladder no longer than a band is one dust-only
-  card. A rate ladder eases to a named top over `LADDER`; a count ladder is a
-  whole unit a rung and its top moves with the length (DESIGN.md, "A ladder
-  is six rungs"). The tower's and the machines' spark ladders are outside this rule by
-  the decision above. Build every new ladder through `tierRows`; a flat
-  five-pip row with one bill from rung one is the old shape and a bug. See
-  DESIGN.md, "Every ladder is sold in bands".
+  the coins the station has started spending. The grounds' ladders have a
+  fourth rung, the spark's, asking everything the yard makes -- on the same
+  card, climbing the same field, never a card of its own. A rate ladder eases
+  to a named top over the rungs before the spark's; a count ladder is a whole
+  unit a rung, and the unit is what keeps its top where it was when the band
+  was wider -- no top comes down when the length does (DESIGN.md, "A ladder
+  is six rungs" and "The spark band is the top of the ladder"). The tower's
+  and the machines' spark ladders are outside this rule by the decision above.
+  Build every new ladder through `tierRows`; a flat five-pip row with one bill
+  from rung one is the old shape and a bug. See DESIGN.md, "Every ladder is
+  sold in bands".

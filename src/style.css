@@ -223,8 +223,8 @@ canvas {
      line is clipped with an ellipsis rather than allowed to shove the card
      wider than its column; the bill spans both tracks and never lived in this
      one. The right is as wide as the pips. Settled on the card bench
-     (cards.html) against the deepest bill in the game, the grounds' six-coin
-     research card. */
+     (cards.html) against the deepest bill in the game, a ground ladder's
+     spark rung. */
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto auto auto;
   gap: var(--card-gap);

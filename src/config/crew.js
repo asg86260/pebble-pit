@@ -41,7 +41,11 @@ export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
 export let MINE_BASE = 460;    // gap between held hits at speed level 0
 export const MINE_FLOOR = 75;    // fastest the pick will ever swing (13.3 px/s)
 export const CAP_BASE = 1;       // pixels you can carry at level 0
-export const CAP_STEP = 1;       // extra capacity per upgrade
+// Two a rung rather than one since a band became a rung (2026-09-14): what
+// a whole band used to add, so the top of the ladder is where it was.
+export const CAP_STEP = 2;       // extra capacity per upgrade
+export const PICK_BASE = 1;      // pixels your own swing takes at level 0
+export const PICK_STEP = 2;      // and this many more a rung, for the same reason
 // How many rungs there are on every ladder in the game.
 //
 // One number, because "how far along is this" should be one question with one
@@ -213,7 +217,8 @@ export const ROCKHAND_SPEED_COST = 210; // the diggers' swing, dust
 // the two together reached: a hauler carries this many more grains a rung
 // (nineteen at the top, where load and harness had 1 + 9 + 9), and walks this
 // much again of the base at the top of its ladder (pace's 1.5 and boots' 2.25).
-export const HAUL_CARRY_STEP = 2;       // grains a rung
+// Doubled when a band became a rung (2026-09-14), so the top is still thirteen.
+export const HAUL_CARRY_STEP = 4;       // grains a rung
 export const HAUL_PACE_TOP = 3.75;      // at the top: four and three quarters times the base
 // Your own bench's three ladders, first rungs in dust. Yours come first and
 // cheap: they are the first rows on the first board, bought before there is a

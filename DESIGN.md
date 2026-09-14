@@ -9063,7 +9063,7 @@ is the check working. The board shots (`shackboard`, `quarryboard`,
 the three shields for a check that buys a hat. `first day of school` on the
 record is `first hat`.
 
-## The spark band is the top of the ladder, not a card beside it (design, not built)
+## The spark band is the top of the ladder, not a card beside it (built)
 
 The grounds' four ladders each end in a research card -- `labseam`, `labcave`,
 `labcrop`, `labtend` -- that stands on its own after the ladder's six rungs
@@ -9134,7 +9134,44 @@ cost, and each is one constant (`CAP_STEP`, `HAUL_CARRY_STEP`,
 lifting to make a shorter ladder worth what a longer one was. Either way it
 is the one number, and it can be flipped on a played yard.
 
-**Decided, once the fold is built:** open. Recommendation: one, with the
-counts' units revisited on a yard rather than on paper -- a three-press
-ladder whose every press is a new coin is the shape the bands rule was
-reaching for.
+**Decided (2026-09-14): one, and no top comes down.** Both halves built
+together, with one amendment to the text above: the table of falling tops was
+refused. A rung is worth what the band it replaces was worth -- "take the
+last value in each band and make that the rung" -- so every ladder ends
+exactly where it ended at six.
+
+### As built
+
+- `TIER_BAND` is one. `TIER_RUNGS` four, `LADDER` three, `TIER_OWN` three
+  (the rungs before the spark's), all written in terms of it.
+- **The spark rung is a rung of the field**, on the same card as its fourth
+  group of pips, its bill `shard, spore, core, spark` over the dust. The
+  research cards `labseam`, `labcave`, `labcrop`, `labtend` are gone; the
+  band keys are `seam4`, `quarrypace4`, `crop4`, `tend4`. `tierRows` has no
+  `multKey` and builds one card; `tierLevel` clamps a field to its length.
+- **The multiplier's worth is kept, not its mechanism.** The old band was two
+  rungs of ×1.25 over the field's top, ×1.5625 together; the spark rung is
+  worth that: `SPARK_GAIN` in `config/tiers.js`, applied by `tierGain` to the
+  counts and by `tendMs`/`quarryMs` to the rates, the same place `MULT_STEP`
+  was. `mult.js` keeps only `STEP` for the wizards' ladders; `MULT_MAX`,
+  `levelOf`, `FIELD`, `workFor`, `finish`, `rows-mult.js`, `LAB_WORK`, the
+  `__research` hook and the report's `research` fields are gone.
+- **The counts' units doubled** so no ladder's top moved: `CAP_STEP` 2,
+  `PICK_STEP` 2 (new; the pick's unit was a bare `1 + lvl` in two places),
+  `HAUL_CARRY_STEP` 4, `CROP_PER_RUNG` 2, `SEAM_PER_RUNG` 0.5, `DOSE_STEP` 2
+  (new). Carry and pick top at 7 px, a hauler at 13, a cut at 7 spores then
+  11 on the spark rung, a dig at ×2.5 then ×3.9, a batch at 5 doses -- the
+  figures at six, asserted by name in `test/ladders.test.mjs`. The rates ease
+  to their same tops in three steps.
+- **Saves.** A field from a longer ladder clamps to the top on read, which
+  only ever rounds a player up. Any `S.mult` level for one of the four grounds
+  sets that field to `TIER_RUNGS` -- the ladder under it was necessarily
+  finished -- and a `lab*` work still in flight in `works`, `research` or
+  `research2` does the same, since the sparks were paid and there is no row
+  left to finish it. `S.mult` is then noughts; it stays on `SAVED_BY_HAND` so
+  an old save round-trips. The player fixture had `mult.quarry: 5` past the
+  old cap, which the old code silently read as no gain at all (the field was
+  short of its top, so the mult rungs counted as own rungs); it reads as the
+  spark rung now and the gang is half again as quick.
+- The `invested` gate on the last band is gone; the bill's own coins gate it
+  later than that flag ever did.

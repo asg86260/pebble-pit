@@ -6,7 +6,7 @@
 // on the board.
 
 import {
-  P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, HAUL_CARRY_STEP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
+  P, CAP_BASE, CAP_STEP, PICK_BASE, PICK_STEP, RUNGS, LADDER, HAUL_PACE_TOP, HAUL_CARRY_STEP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
@@ -32,7 +32,6 @@ import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
-import { mult } from './mult.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
          busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
@@ -166,7 +165,7 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
-export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
+export const pickCount = (lvl = S.pickLevel) => PICK_BASE + PICK_STEP * lvl;   // pixels your own swing takes
 // What a rockhand takes: a whole pixel a rung, over the pickaxe's own short
 // ladder. The eased curve this replaces bought fractions of a pixel per rung --
 // numbers the row could only show as noise ("1.4 -> 1.7 px") -- so the ladder
@@ -384,7 +383,6 @@ import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
-import { MULT_ROWS } from './upgrades/rows-mult.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
 
@@ -890,7 +888,6 @@ export const UPGRADES = chained([
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
   ...SHACK_ROWS,
-  ...MULT_ROWS,
   ...SHIELD_ROWS
 ]);
 

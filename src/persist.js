@@ -6,7 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER } from './config.js';
+         ABYSS_AT, WORKER, LADDER, TIER_RUNGS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
@@ -943,8 +943,25 @@ export function restore() {
   // owed. A pot that had already been spun for comes back a pot and nothing more.
   S.pouring = S.casinoOpen && !!S.pot && !!s.pouring;
   S.hand = null;                // a hand that settled before you closed the tab is old news
-  // the lab's quarry multiplier answered to `cave` before the place was renamed
-  if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
+  // The grounds' multipliers, folded into their ladders. The last band of each
+  // ground's ladder was `S.mult.<key>`, the lab's quarter-again over the top of
+  // the field's own rungs; it is the ladder's spark rung now (DESIGN.md, "The
+  // spark band is the top of the ladder"). A save with any of one had climbed
+  // the whole ladder under it, so the field goes to the top -- and a `lab*`
+  // work still in flight when the save was written lands the same way, since
+  // there is no row left to finish it and the sparks were paid. Nothing is
+  // ever lowered: a field from a longer ladder clamps to the top on read, and
+  // a rung the old ladder had is a rung the new one has. The quarry's answered
+  // to `cave` before the place was renamed.
+  const FOLD = { crop: 'cropLevel', seam: 'seamLevel', tend: 'tendLevel', quarry: 'quarryPaceLevel' };
+  const LAB = { labcrop: 'crop', labseam: 'seam', labtend: 'tend', labcave: 'quarry' };
+  const flying = new Set([...Object.values(s.works || {}).flatMap(w => Array.isArray(w) ? w : w ? [w] : []),
+                          s.research, s.research2].map(w => w?.key && LAB[w.key]).filter(Boolean));
+  for (const [k, field] of Object.entries(FOLD)) {
+    const had = +(s.mult?.[k] ?? (k === 'quarry' ? s.mult?.cave : 0)) || 0;
+    if (had > 0 || flying.has(k)) S[field] = TIER_RUNGS;
+  }
+  for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   if (Array.isArray(s.plots)) S.plots = s.plots.map(b => (+b || 0) / 100);
   // a ripe plot keeps the spore that grew on it, tone and all
   if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
