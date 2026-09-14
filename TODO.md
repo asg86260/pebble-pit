@@ -1,5 +1,15 @@
 # Still to do
 
+## A rung is a step up, not a step along -- DESIGNED, awaiting approval (2026-09-14)
+
+"A rung is a step up, not a step along" at the end of DESIGN.md. The player
+wants the count ladders to climb faster each rung (carry 1, 2, 4, 6, 10; pick
+1, 2, 4, 8) rather than a unit a rung; the rates already do. Proposed: a
+written list a count ladder in config, `LADDER` long, read by `value`, with
+a knob a rung in the ladder book; the six unit constants retire. Open: lists
+or one ratio knob a ladder, and whether the bench wants a fourth rung.
+Blocker: sign-off.
+
 ## A ladder is a rung a coin, the spark rung on the card -- BUILT (2026-09-14)
 
 "The spark band is the top of the ladder, not a card beside it" at the end

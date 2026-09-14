@@ -9258,3 +9258,88 @@ Four small things asked for together on 2026-09-14; the spec is
   `drawWorkers` lifts it one parabola of `LAND_HOP_H * hopK` cells over
   `LAND_HOP_MS`. Render-time only: `w.y` is untouched, so the walk and the
   falls see nothing. A gentle set-down (the dome's) hops nobody.
+
+## A rung is a step up, not a step along (design, not built)
+
+The player: *I kind of want some exponential-type growth instead of linear
+updates -- carry 1 → 2 → 4 → 6 → 10, not quite double; auto swing 1, 2, 3, 4 a
+second; your pick 1, 2, 4, 8. I don't know if there's one formula for
+everything.*
+
+Today every count ladder is a straight line -- a fixed unit a rung (`CAP_STEP`,
+`PICK_STEP`, `HAUL_CARRY_STEP`, `CROP_PER_RUNG`, `SEAM_PER_RUNG`, `DOSE_STEP`)
+-- and every rate eases along one curve from its base to a named top
+(`swing`, `ease`). What the ladders read now, rung by rung, off the ladder book:
+
+| ladder | rung 0 → 1 → 2 → 3 (→ 4) | shape |
+|---|---|---|
+| carry (px) | 1 → 3 → 5 → 7 | a line, +2 |
+| your pick (px) | 1 → 3 → 5 → 7 | a line, +2 |
+| hauler load (grains) | 1 → 5 → 9 → 13 | a line, +4 |
+| a cut (spores) | 1 → 3 → 5 → 7 → 11 | a line, +2, then ×1.56 |
+| a dig (share) | 1 → 1.5 → 2 → 2.5 → 3.9 | a line, +½, then ×1.56 |
+| a batch (doses) | 1 → 3 → 5 | a line, +2 |
+| auto swing (px/s) | 2.2 → 3.6 → 7.1 → 13.3 | eased to a top: +67%, +96%, +88% |
+| tending, the cut's pace | eased to a top | +62%, +83%, +69%, then +56% |
+
+The rates already climb the way the player is asking for -- each step is
+bigger than the last, because they are measured in milliseconds and read in
+per-second -- and the request there ("1, 2, 3, 4 a second") is in fact
+*flatter* than what stands. The counts are the linear ones, and they are what
+the request is about.
+
+### There is not one formula, and that is fine
+
+The three examples are three different curves: the pick doubles (×2), the carry
+does not quite (1, 2, 4, 6, 10 -- the *differences* double every two rungs),
+and the swing is a straight line in the rate. A geometric formula
+`base × ratio^rung` rounded to whole units gives the pick exactly and the carry
+nothing the player named: at ratio 1.7 the carry reads 1, 2, 3, 5; at 1.8 it
+reads 1, 2, 3, 6; the small integers round the shape away. Three or four rungs
+is too short a ladder for a curve to be told apart from a list.
+
+So the honest form is **a list a ladder**: the values a count reads at each
+rung, written down, in config.
+
+```
+CARRY_PX  = [1, 2, 4, 6, 10]   // what you carry
+PICK_PX   = [1, 2, 4, 8]       // your pick
+HAUL_LOAD = [1, 3, 6, 13]      // a hauler's load
+...
+```
+
+A row's `value(lvl)` is `LIST[Math.min(lvl, LIST.length - 1)]`; the last entry
+is the top. A rate keeps its curve (it is already the shape asked for) and its
+two ends stay the knobs they are. The grounds' spark rung stays a multiplier
+over the top of the list (`SPARK_GAIN`), because that is the one rung that is
+about the coin rather than the ladder.
+
+**What this costs the rules.** "A count is a whole unit a rung" (the six-rungs
+section) goes; it was the rule that made the length one number, and the length
+is one number still -- **every list is `LADDER` long, or `TIER_OWN` long at
+the grounds, and `test/ladders.test.mjs` says so**, so a list that is a rung
+short is a red check rather than a ladder that stops early. The tops in the
+"no top came down" check move to whatever the lists say and are read off them.
+The ladder book gains a knob a rung for each list, which is the page the
+request was really for: the curve of a ladder is settled by looking at the
+column of numbers, not by choosing an exponent.
+
+**The other road**, for the record: one geometric formula with a ratio knob a
+ladder (`CARRY_RATIO = 1.7`). Fewer numbers, one shape, and the reason to
+refuse it is above -- it cannot say 1, 2, 4, 6, 10, and a knob the player
+cannot dial to the numbers in their head is a knob that argues.
+
+### The two calls
+
+1. **Lists, or one ratio?** Recommendation: lists, for the reasons above.
+2. **The bench's fourth value.** The carry example has five values, which is
+   four rungs; the bench's ladders have three. Either the example is one
+   longer than the ladder and the list is `[1, 2, 4, 8]`-shaped, or the
+   bench's ladders want a fourth rung -- which, by the bands rule, would be a
+   fourth coin, and the bench has none to add short of the spark. Assumed:
+   three rungs, four values; the fourth is where a list ends.
+
+Once decided, the build is `config`: one list a count ladder, the six unit
+constants retired, `value` reading the list, the checks reading the lists, and
+the book's knobs. Nothing about saves: a level is a rung, and a rung reads its
+value off the list whatever the list says.
