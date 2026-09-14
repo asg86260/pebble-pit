@@ -24,6 +24,16 @@ import { persist, restore, claimSave, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
 import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
+
+// The veil comes off once the first frame is on the canvas -- one frame
+// later, so the frame is painted under it before it starts to go. The
+// demo in the landing page's frame has nothing to come up out of: its veil
+// goes at once.
+const veil = document.getElementById('veil');
+function unveil() {
+  if (reducedMotion()) document.body.classList.add('still');
+  requestAnimationFrame(() => veil.classList.remove('up'));
+}
 import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // wave-release, track A: the held sheet's shelf
@@ -77,10 +87,12 @@ function record(t0, t1, t2, t3) {
 // the picture stays where it stopped, and the yard is marked fatal so nothing
 // below writes the state that threw over the save. See crash.js.
 const heldSheet = document.getElementById('held');
+const scrim = document.getElementById('scrim');
 function frame() {
   try {
     tick(S.paused);
     if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
+    if (scrim.hidden === S.paused) scrim.hidden = !S.paused;
     syncEnding();
     const t0 = mark();
     if (!S.paused && !(demo && reducedMotion())) step();
@@ -124,6 +136,7 @@ try { navigator.storage?.persist?.(); } catch {}
 const demo = new URLSearchParams(location.search).has('demo');
 if (demo) {
   document.body.classList.add('demo');
+  veil.remove();
   asPicture(true);
   S.staged = true;
   reset(false);
@@ -183,3 +196,4 @@ if (import.meta.env.DEV) {
 }
 
 requestAnimationFrame(frame);
+if (!demo) unveil();

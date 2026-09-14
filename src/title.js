@@ -14,6 +14,7 @@ import { recordListOf, recordLabelOf, showRecord } from './record.js';
 import { pref, setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
+import { VEIL_MS } from './config.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -59,9 +60,18 @@ document.getElementById('settingsbtn').addEventListener('click', () => showPane(
 for (const id of ['slotsback', 'recordback', 'settingsback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
 
 // Play: the store has taken every write made here (the pointer, an import,
-// a reset) before the page goes.
+// a reset) before the page goes, and the page goes to white first -- the
+// veil over everything, and play.html comes up out of the same white (its
+// own veil, main.js) -- so the load between the two documents is the middle
+// of one fade rather than a cut to a blank page. Under motion: less the
+// veil is put up without the fade.
+let leaving = false;
 async function play() {
-  await storeSettled();
+  if (leaving) return;
+  leaving = true;
+  const veil = document.getElementById('veil');
+  veil.classList.add('up');
+  await Promise.all([storeSettled(), new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS))]);
   location.href = 'play.html';
 }
 document.getElementById('play').addEventListener('click', play);
@@ -129,6 +139,7 @@ document.getElementById('build').textContent = version();
 // The picture: the frame is the game, and under motion: less it is asked to
 // stand still (main.js reads the preference as it boots).
 const yard = document.getElementById('yard');
+if (reducedMotion()) document.body.classList.add('still');
 
 // Boot: the store read once, then the front written off it.
 await primeStore();

@@ -103,6 +103,10 @@ export const TITLE_COLUMN = 320;
 // and how far the demo is run before its first frame: the rock down, the
 // crew across the yard and swinging, so the page never opens on an empty one
 export const DEMO_HEAD_START_S = 45;
+// How long the landing page takes to go white on play, in ms, before it
+// asks for the game page; the game page's own veil (style.css) lifts in
+// about the same. Two fades either side of a load, not a cut.
+export const VEIL_MS = 350;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is

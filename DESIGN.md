@@ -7031,9 +7031,21 @@ Built as written, with four things the design did not say:
   `loaded`. The one honest sentence is not on the landing page.
 
 `copyOut` moved to `copyout.js`, shared by the settings sheet, the crashed
-sheet and the landing page. The held sheet's `title page` button is a real
-exit: `persist`, `storeSettled`, then `index.html`. The `title` front on
-the held sheet is gone, and the game page opens playing again.
+sheet and the landing page. The held sheet's `return to title` button is a
+real exit: `persist`, `storeSettled`, then `index.html`; on the desk both
+pages carry `exit to desktop`. The `title` front on the held sheet is gone,
+and the game page opens playing again.
+
+**The way in, and the sheet's wash (same day).** Two documents meet in a
+load, and a load is a blank page: so `play` puts a white veil over the
+landing page (`VEIL_MS`), asks for `play.html` from behind it, and the
+game page boots under a veil of its own that lifts one frame after the
+first is drawn -- the middle of one fade rather than a cut. Under `motion:
+less` both veils go at once. And the held sheet stands on a wash now: white
+at two thirds over the yard with a stipple of single dark cells on the
+six-pixel grid (`#scrim`, kept in step with the sheet by the frame), so it
+reads as over the yard rather than pasted on it; every button on it is the
+sheet's width, since a column of one width reads as a menu.
 
 ### Checks
 

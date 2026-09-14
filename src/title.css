@@ -50,6 +50,10 @@ body.title { overflow: hidden; }
 .col #reset:hover, .col #reset.armed { opacity: 1; }
 .col #reset.armed { color: #fff; background: #000; border-style: solid; }
 .col input[type=range] { width: 21em; }
+/* the veil: white, over everything, up on play (title.js) */
+.veil { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
+.veil.up { opacity: 1; pointer-events: auto; }
+body.still .veil { transition: none; }
 .foot {
   position: fixed; left: 36px; right: 18px; bottom: 14px;
   display: flex; justify-content: space-between;

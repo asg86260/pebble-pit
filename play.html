@@ -119,6 +119,10 @@
   <div class="name"></div>
   <div class="note"></div>
 </button>
+<!-- the wash behind the held sheet: the yard, dimmed and stippled, so the
+     sheet reads as over something rather than pasted on it. The frame keeps
+     it in step with the sheet (main.js). -->
+<div id="scrim" class="scrim" hidden></div>
 <div id="held" class="held" hidden>
   <!-- One sheet, several pages, told apart by data-pane: a space-separated
        list of the pages an element is on. settings.js's showPane shows the
@@ -174,11 +178,11 @@
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
   <!-- the way out of a yard that is not the desk's quit: the landing page,
        once the store has taken the last write -->
-  <button id="titlebtn" type="button" data-pane="main">title page</button>
+  <button id="titlebtn" type="button" data-pane="main">return to title</button>
   <!-- the desk only: a window with no menu bar needs a way out that is not a
        key combination. settings.js gives it both fronts when window.desk
        exists; without one the page-turn never shows it. -->
-  <button id="quit" type="button" hidden>quit</button>
+  <button id="quit" type="button" hidden>exit to desktop</button>
   <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about</div>
   <div id="build" class="small" data-pane="main settings"></div>
 </div>
@@ -222,6 +226,10 @@
 <button id="raise" type="button" hidden>build the bench</button>
 
 <canvas id="c"></canvas>
+<!-- the way in: white over the yard as the page boots, taken away once the
+     first frame has been drawn (main.js), so the game comes up out of the
+     white the landing page went to rather than appearing -->
+<div id="veil" class="veil up"></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

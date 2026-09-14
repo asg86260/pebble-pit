@@ -203,7 +203,7 @@ export const TESTS = [
       'saves',                                // the three yards -- see slots.js
       'achievements',                         // the button to the page behind -- see record.js
       'settings',                             // and the settings, behind one word
-      'title page',
+      'return to title',
       'esc holds · ← → look about',
       version(),
     ];
