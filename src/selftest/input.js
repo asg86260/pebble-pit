@@ -7,6 +7,7 @@
 import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
          runUntil, haveBench } from './kit.js';
 import { S } from '../state.js';
+import { SHEET_FADE_MS } from '../config.js';
 import { fatal } from '../crash.js';
 
 export const TESTS = [
@@ -25,6 +26,7 @@ export const TESTS = [
     run(30);
     const still = state();
     document.getElementById('resume').click();
+    await sleep(SHEET_FADE_MS + 60);            // it goes down as a fade (fade.js)
     const sheetGone = document.getElementById('held').hidden;
     run(20);
     const after = state();

@@ -48,6 +48,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
 | `title.js` | the landing page (`index.html`): the menu column over `play.html?demo` in a frame; reads the store, never boots a yard | rarely |
 | `catalog.js` | the notices' names and notes, data with no reach into the yard; `notices.js` joins the predicates by key | with a notice |
+| `fade.js` | a sheet up and down as a fade with `hidden` still the truth; the frame and `hold` call it every frame | never |
 | `copyout.js` | the save onto the clipboard, shared by three sheets | never |
 | `save.js` | the store seam: IndexedDB on a page (read once before the boot, `primeStore`), `window.desk` in the shell, localStorage as the way in and the fallback; the guard, fallback and migration over all of it; every key follows the open slot | rarely |
 | `idb.js` | IndexedDB as four promises over one key-value store; null wherever it is not to be had | rarely |

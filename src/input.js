@@ -20,6 +20,7 @@ import { nearBench, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, ne
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
+import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
@@ -706,7 +707,7 @@ addEventListener('keydown', e => {
 // clears the flag (a reset, say) clears the sheet without knowing it exists.
 export function hold(on) {
   S.paused = on;
-  document.getElementById('held').hidden = !on;   // now, not next frame
+  (on ? fadeIn : fadeOut)(document.getElementById('held'));   // now, not next frame
   // The sheet comes up on its front page, whichever page it went down on, and
   // the record is written as it opens: the count on the button now, the list
   // when the button is pressed (settings.js). Opening it reads the record:

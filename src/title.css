@@ -53,7 +53,7 @@ body.title { overflow: hidden; }
 /* the veil: white, over everything, up on play (title.js) */
 .veil { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
 .veil.up { opacity: 1; pointer-events: auto; }
-body.still .veil { transition: none; }
+body.still .veil { transition: none; }   /* motion: less: see style.css */
 .foot {
   position: fixed; left: 36px; right: 18px; bottom: 14px;
   display: flex; justify-content: space-between;

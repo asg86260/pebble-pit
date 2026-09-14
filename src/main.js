@@ -24,6 +24,7 @@ import { persist, restore, claimSave, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
 import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
+import { fadeIn, fadeOut } from './fade.js';
 
 // The veil comes off once the first frame is on the canvas -- one frame
 // later, so the frame is painted under it before it starts to go. The
@@ -31,9 +32,13 @@ import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
 // goes at once.
 const veil = document.getElementById('veil');
 function unveil() {
-  if (reducedMotion()) document.body.classList.add('still');
   requestAnimationFrame(() => veil.classList.remove('up'));
 }
+// motion: less is a class on the body, so every fade in style.css can be
+// nought in one rule; read at boot and again when the switch is pressed
+// (settings.js).
+document.body.classList.toggle('still', reducedMotion());
+
 import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // wave-release, track A: the held sheet's shelf
@@ -91,8 +96,9 @@ const scrim = document.getElementById('scrim');
 function frame() {
   try {
     tick(S.paused);
-    if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
-    if (scrim.hidden === S.paused) scrim.hidden = !S.paused;
+    // the sheet and its wash, kept in step with the flag as fades
+    (S.paused ? fadeIn : fadeOut)(heldSheet);
+    (S.paused ? fadeIn : fadeOut)(scrim);
     syncEnding();
     const t0 = mark();
     if (!S.paused && !(demo && reducedMotion())) step();

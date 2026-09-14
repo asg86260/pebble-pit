@@ -107,6 +107,9 @@ export const DEMO_HEAD_START_S = 45;
 // asks for the game page; the game page's own veil (style.css) lifts in
 // about the same. Two fades either side of a load, not a cut.
 export const VEIL_MS = 350;
+// and how long the held sheet and its wash take to come up and go down
+// (fade.js; style.css fades #held and #scrim in the same time)
+export const SHEET_FADE_MS = 180;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is

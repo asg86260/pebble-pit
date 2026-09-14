@@ -86,7 +86,12 @@ const soundEl = document.getElementById('sound');
 const volumeEl = document.getElementById('volume');
 const sayMotion = () => { motionEl.textContent = reducedMotion() ? 'motion: less' : 'motion: full'; };
 const saySound = () => { soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on'; };
-motionEl.addEventListener('click', () => { setPref('motion', !reducedMotion()); sayMotion(); yard.contentWindow?.location.reload(); });
+motionEl.addEventListener('click', () => {
+  setPref('motion', !reducedMotion());
+  sayMotion();
+  document.body.classList.toggle('still', reducedMotion());
+  yard.contentWindow?.location.reload();
+});
 soundEl.addEventListener('click', () => { setPref('muted', !pref('muted')); saySound(); });
 volumeEl.addEventListener('input', () => setPref('volume', +volumeEl.value));
 
@@ -131,7 +136,11 @@ resetEl.addEventListener('click', () => {
 const quitEl = document.getElementById('quit');
 if (window.desk) {
   quitEl.dataset.pane = 'main';
-  quitEl.addEventListener('click', () => window.close());
+  quitEl.addEventListener('click', async () => {
+    document.getElementById('veil').classList.add('up');
+    await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
+    window.close();
+  });
   document.getElementById('links').hidden = true;   // the shell opens no browser
 }
 document.getElementById('build').textContent = version();
@@ -141,6 +150,9 @@ document.getElementById('build').textContent = version();
 const yard = document.getElementById('yard');
 if (reducedMotion()) document.body.classList.add('still');
 
-// Boot: the store read once, then the front written off it.
+// Boot: the store read once, the front written off it, and the veil the
+// page came up under lifted a frame later -- the way in from the game,
+// run backwards.
 await primeStore();
 showPane('main');
+requestAnimationFrame(() => document.getElementById('veil').classList.remove('up'));

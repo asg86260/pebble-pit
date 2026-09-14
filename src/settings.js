@@ -15,6 +15,7 @@ import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
 import { storeTrouble, storeSettled } from './save.js';
+import { VEIL_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { copyOut } from './copyout.js';
@@ -60,12 +61,21 @@ document.getElementById('settingsback').addEventListener('click', back);
 // The way out of a yard: the landing page. The store is written behind
 // (save.js), so the last write is waited for before the page goes -- a
 // navigation that did not wait could lose the last second of play.
-document.getElementById('titlebtn').addEventListener('click', async () => {
+document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
+
+// Leaving the page -- for the landing page, or the desk's exit -- is the
+// veil going up over everything and the store taking the last write, and
+// only then the page going: the way in, run backwards.
+let leaving = false;
+async function leave(to) {
+  if (leaving) return;
+  leaving = true;
   S.dirty = true;
   persist();
-  await storeSettled();
-  location.href = 'index.html';
-});
+  document.getElementById('veil').classList.add('up');
+  await Promise.all([storeSettled(), new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS))]);
+  if (to) location.href = to; else window.close();
+}
 
 // The switch says what is in force, not what was pressed: a player whose
 // system asked for less motion reads "less" before ever touching it, and
@@ -77,6 +87,7 @@ function sayMotion() {
 motionEl.addEventListener('click', () => {
   setPref('motion', !reducedMotion());
   sayMotion();
+  document.body.classList.toggle('still', reducedMotion());
 });
 
 // The desk (wave-desk-sound, track A): in the Electron shell the save goes
@@ -183,7 +194,7 @@ const quitEl = document.getElementById('quit');
 if (window.desk) {
   quitEl.dataset.pane = 'main';
   quitEl.hidden = false;
-  quitEl.addEventListener('click', () => window.close());
+  quitEl.addEventListener('click', () => leave(null));
 }
 
 // The sheet is opened by two hands -- escape in input.js, and the frame keeping

@@ -7047,6 +7047,19 @@ six-pixel grid (`#scrim`, kept in step with the sheet by the frame), so it
 reads as over the yard rather than pasted on it; every button on it is the
 sheet's width, since a column of one width reads as a menu.
 
+**Every screen meets the next as a fade (same day).** The way in was one
+fade; now they all are. `return to title` and `exit to desktop` put the
+veil up and let the store take the last write before the page goes; the
+landing page boots under its veil and lifts it a frame after its front is
+written; the held sheet and its wash come up and go down as fades
+(`fade.js`, `SHEET_FADE_MS`) with `hidden` still the truth -- put on after
+the element shows, taken off ahead of the hide, so every check and observer
+reading `hidden` reads what is there; and a page turned, on the sheet or in
+the landing page's column, comes in as a short fade, which is nothing but a
+keyframe on elements going from hidden to shown. Under `motion: less`
+(`body.still`, kept in step by the motion switch on both pages) every one
+of them is nought.
+
 ### Checks
 
 - `test/title.test.mjs` (node): the label under `play` for a played, empty

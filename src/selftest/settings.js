@@ -16,7 +16,7 @@ import { version } from '../version.js';
 import { persist, exportSave, claimSave } from '../persist.js';
 import { earn, noticeFor } from '../notices.js';
 import { toastUp, toastWaiting } from '../toast.js';
-import { TOAST_MS, TOAST_GAP_MS } from '../config.js';
+import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
 
 const held = () => document.getElementById('held');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
@@ -61,7 +61,7 @@ export const TESTS = [
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
     document.body.appendChild(f);
-    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0;
+    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false;
     try {
       f.src = 'index.html';
       await loaded();
@@ -74,6 +74,7 @@ export const TESTS = [
       d.getElementById('slotsbtn').click();
       rows = [...d.querySelectorAll('.slot')].map(b => b.textContent);
       d.getElementById('slotsback').click();
+      untouched = slotRaw(1) === blob;          // before play: the game itself writes the slot
       d.getElementById('play').click();
       await loaded();
       arrived = /play\.html$/.test(f.contentWindow.location.pathname);
@@ -82,7 +83,6 @@ export const TESTS = [
     } finally {
       f.remove();
     }
-    const after = slotRaw(1);
     return [
       ok(landed, 'index.html is the landing page'),
       ok(/^rock \d+ · 4 crew · just now$/.test(label), 'play says what it opens, without a yard number', label),
@@ -90,7 +90,7 @@ export const TESTS = [
          'the saves rows read the slots', JSON.stringify(rows)),
       ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
       ok(arrived && crewThere === 4, 'play opens play.html with the yard', `${arrived}, ${crewThere} crew`),
-      ok(after === blob, 'and nothing the landing page did wrote the slot'),
+      ok(untouched, 'and nothing the landing page did wrote the slot'),
     ];
   }],
 
@@ -222,6 +222,7 @@ export const TESTS = [
     document.getElementById('settingsback').click();
     const before = state();
     resume();
+    await sleep(SHEET_FADE_MS + 60);            // it goes down as a fade (fade.js)
     const down = held().hidden;
     run(2);
     const after = state();
