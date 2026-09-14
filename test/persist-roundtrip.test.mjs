@@ -102,7 +102,10 @@ group('every field on S is accounted for', async () => {
 
   // The three keys a save spells differently from the field it holds. Every
   // other name in the two saved lists is the field's own.
-  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem' };
+  // ...and the two moments of the beat between rocks, written as distances
+  // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
+  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
+                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
   S.dirty = true;
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));

@@ -6,7 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER } from './config.js';
+         ABYSS_AT, WORKER, LADDER, ROCK_SINK } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
@@ -332,6 +332,11 @@ function blob() {
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
     crew: S.crew,
+    // The beat between rocks, as how far off its two moments are -- the clock
+    // starts again with the page, so a moment on it is written as a distance
+    // (the same turn doses and a body's moments take, crew/records.js).
+    danceLeft: Math.max(0, Math.round(S.danceUntil - clockNow())),
+    nextBoulderIn: Math.max(0, Math.round(S.nextBoulderAt - clockNow())),
     // The crew itself, not just how many of them there are. A body has a name
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
@@ -683,6 +688,8 @@ export function restore() {
   // the core (`haulerWork` defers to the taker), and it lay there for good.
   // A page load starts at null; a restore in a running page has to say so.
   S.coreTaker = null;
+  S.danceUntil = Number.isFinite(s.danceLeft) && s.danceLeft > 0 ? clockNow() + s.danceLeft : 0;
+  S.nextBoulderAt = Number.isFinite(s.nextBoulderIn) && s.nextBoulderIn > 0 ? clockNow() + s.nextBoulderIn : 0;
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -780,9 +787,8 @@ export function restore() {
   // and a save from before the second act existed has plainly had its first rock
   S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
   // A save from before the shields existed has plainly not raised one. The
-  // catch is not restored: a rock held in the air is a beat a few seconds
-  // long, and a save reloaded into the middle of it would come back to a rock
-  // resting on nothing if anything about the arch had changed. It falls.
+  // catch is taken again below, once the rock's fall has been read: a rock
+  // that was in the shield's hands comes back in them, from where it is.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
                           laid: s.shield.laid || 0, caught: 0, held: 0,
@@ -797,6 +803,31 @@ export function restore() {
   }
   S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
   S.rockHeld = false;
+  // A rock that was in the shield's hands is in them still. The rock's fall
+  // is saved now (`rockFall`), and the catch was not: so the frame after a
+  // load the rock fell the rest of the way on its own, landed inside the
+  // net without the net ever giving up, and the net stood for good with the
+  // rock on the ground under it -- `shieldsDone` never got the word, and the
+  // arch was never offered. The catch is taken again here, from where the
+  // rock is: the rope pays out from this height, the arch cracks after its
+  // beat, the dome holds. Only a finished shield of a kind that catches --
+  // an unfinished one, or the props, is what the rock goes through anyway.
+  if (S.shield && S.rockFall > 0) {
+    const k = KINDS[S.shield.kind];
+    if (S.shield.laid >= k.pieces && k.answer !== 'through') {
+      S.shield.caught = clockNow();
+      // Where the shield took hold of it: the height at which a falling
+      // rock's foot meets the shield's top (the catch in `stepShield`), or
+      // lower if the rope has already paid out that far. A rock above that
+      // is one the dome sprang back up, and it comes down again on the
+      // speed it was saved with rather than hanging at the top of its arc.
+      const catchAt = (S.shield.h + 1) * P + ROCK_SINK;
+      S.shield.held = Math.min(S.rockFall, catchAt);
+      if (k.answer === 'hold' && S.rockFall > S.shield.held) S.shield.rising = true;
+      else S.rockFallV = 0;
+      S.rockHeld = true;
+    }
+  }
   S.intro = null;
   S.camLockY = null;
   S.pair = [];

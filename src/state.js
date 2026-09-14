@@ -645,6 +645,10 @@ export const SAVED = [
   // a refresh mid-storm used to clear the sky. The bolt is a flash and stays
   // ephemeral; the sky's motes are re-marked as this storm's on the way in.
   'raining', 'rainFor', 'stormFor',
+  // ...and a rock on its way down, for the same reason: a refresh under a
+  // falling rock had it land at once, and one in the beat between rocks
+  // skipped the beat
+  'rockFall', 'rockFallV',
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
@@ -690,6 +694,9 @@ export const SAVED_BY_HAND = [
   'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
+  // the celebration for the last rock and the backstop for the next: moments
+  // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
+  'danceUntil', 'nextBoulderAt',
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
@@ -795,8 +802,6 @@ export const EPHEMERAL = [
   // the opening, while it is running
   'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
   'introThrew',
-  // a rock on its way down, and the celebration for the last one
-  'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
   // ...and when the last one hit, which is only read for the spread it does on
   // arriving: a reload has no arrival to be moments after.
   'landAt',
