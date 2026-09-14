@@ -110,6 +110,10 @@ export const VEIL_MS = 350;
 // and how long the held sheet and its wash take to come up and go down
 // (fade.js; style.css fades #held and #scrim in the same time)
 export const SHEET_FADE_MS = 180;
+// The most the landing page waits for its picture (the demo frame's load)
+// before lifting its veil regardless: a frame that will not come must not
+// hold the page white.
+export const PICTURE_WAIT_MS = 4000;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is

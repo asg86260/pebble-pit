@@ -14,7 +14,7 @@ import { recordListOf, recordLabelOf, showRecord } from './record.js';
 import { pref, setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
-import { VEIL_MS } from './config.js';
+import { VEIL_MS, PICTURE_WAIT_MS } from './config.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -151,8 +151,16 @@ const yard = document.getElementById('yard');
 if (reducedMotion()) document.body.classList.add('still');
 
 // Boot: the store read once, the front written off it, and the veil the
-// page came up under lifted a frame later -- the way in from the game,
-// run backwards.
+// page came up under lifted once the picture is there too -- the frame's
+// load, which waits on the game page's own boot, plus a frame for its
+// first draw. A veil lifted on the store alone showed the menu and then
+// the yard popping in behind it. A frame that never loads (blocked, slow)
+// must not hold the page white, so the wait has a ceiling.
+const pictureUp = new Promise(r => {
+  yard.addEventListener('load', () => setTimeout(r, 60), { once: true });
+  setTimeout(r, PICTURE_WAIT_MS);
+});
 await primeStore();
 showPane('main');
+await pictureUp;
 requestAnimationFrame(() => document.getElementById('veil').classList.remove('up'));
