@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+## v0.1.12 — 2026-09-14
+
 - On itch.io the save no longer fails when other games have filled the browser's storage for the site.
 - When saving fails, the sheet says whether the browser blocked storage or the site's storage is full, and how full.
 - A page that could not write its name beside the save no longer stands aside for a tab that is not there.
