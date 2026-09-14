@@ -23,7 +23,7 @@ heading with the version and the date. Features do not go in it.
 
 **Look first.** Most changes here are *drawing*, and neither test tier can see a
 drawing. `node tools/look.mjs <scene> --zoom 4` sets the yard up, runs a second
-of it and writes a png to `shots/` in about fifteen seconds. There are ninety
+of it and writes a png to `shots/` in a few seconds. There are ninety
 scenes, one for every part of the game — `crew`, `quarry`, `farm`, `rock`,
 `yard`, `boards`, `belt`, `rift`, `endgame`, `scrubbing` and the rest; the list
 is `SCENES` in `src/scenes.js`, grouped by the part each is about, and

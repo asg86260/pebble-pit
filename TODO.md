@@ -1,5 +1,20 @@
 # Still to do
 
+## The hole's count and its pile disagree by a few cells (2026-09-14)
+
+`capacityAt` (pit.js) says the hole holds 37,566; the pile's own search
+(`addGrain`) refuses the 37,556th grain. Eleven cells the count credits that no
+column ever gets -- `heapCeiling` hands out fractional ceilings and the count
+takes `Math.ceil` of them, while `roomFor` asks `r < ceiling`, so a ceiling of
+47.0000001 is a row on the books and not in the ground. Small, but it is the
+"physically full one grain before the counter agreed" class of bug pit.js
+already documents once: `pitFull()` is the count, so the lip can stand throwing
+dust at a hole the search has already refused. Found because `__grant` sized
+its handout by the count and the last grains tore the rift (the hook now drops
+the tear it starts; the count is still wrong). Fix is one rounding rule shared
+by both: settle whether a fractional ceiling rounds up or down, and have the
+count and `roomFor` both say it.
+
 ## The school comes down: kit is sold where it is worn -- BUILT (2026-09-14)
 
 "The school comes down" in DESIGN.md, with an as-built note. The training

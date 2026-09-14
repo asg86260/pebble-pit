@@ -147,7 +147,8 @@ field in none of them, which is the warning persist.js used to owe you.
 from the `__` handles, keyed by name, each saying which part it is about
 (`ABOUT`) and why it is set up the way it is. Two things read it and neither
 keeps a list of its own: `tools/look.mjs` shoots one by name through
-`window.__scene`, and `scenesheet.js` -- imported from main.js's dev block,
+`window.__scene` (every scene of a run in one tab -- `tools/cdp.mjs` is the
+browser driving both it and `headless.mjs` share), and `scenesheet.js` -- imported from main.js's dev block,
 beside `dev.js` -- draws a button per scene under a heading per part on the
 dev panel's `scenes` tab (`devPane` in dev.js hands out a tab by name; the
 panel is `yard`, `dials`, `scenes`, `frame`). A scene never touches the
@@ -205,6 +206,7 @@ a build drops the import, the file, and the whole tunable list with it. Checked:
 ```
 node tools/unresolved.mjs     # names a module uses but cannot see
 node tools/headless.mjs       # runs __test() in a headless browser, no install
+node tools/look.mjs a,b,c     # the scenes named, one tab for the run, a png each
 node tools/headless.mjs "window.__test('quarry')"    # one group, seconds not minutes
 node tools/listen.mjs         # every voice through audio.js to shots/sound/*.wav, measured
 ```

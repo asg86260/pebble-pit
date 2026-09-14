@@ -21,7 +21,7 @@ import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
-         pitCapacity, inHole, seedPitCores } from './pit.js';
+         pitRoom, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
 import { SKY, fillSky, forceStrike, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
@@ -630,8 +630,20 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
     // Only as many grains as the hole could possibly take are offered to it:
     // `give` banks one at a time, so handing it a million is a million tries for
     // a hole that stopped taking any after thirty-seven thousand.
-    const room = Math.max(0, pitCapacity() - inHole());
+    //
+    // Room in the *pile*, not in the dust account: a core granted a moment ago
+    // sits in the hole taking a cell and is not dust. And the pile's own answer
+    // is the last word: the count credits a few cells the search cannot fill
+    // (a ceiling of 47.0000001 rounds to a row the column never gets), so the
+    // last grains offered can still be refused, and a refusal tears the rift
+    // for real -- the gulp, the shake, and the tearing's cutscene over every
+    // scene that stood on a rich yard. A grant is a handout and the tear is an
+    // event, so the event is dropped the way a save drops it (persist.js): the
+    // rift a grant opens is simply open.
+    const room = pitRoom();
+    const gulp = S.riftGulp || 0;
     const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
+    if ((S.riftGulp || 0) > gulp) { S.riftGulp = gulp; S.riftShake = 0; }
     const over = o.dust - got;
     if (over > 0) { S.riftOpen = true; S.rift = (S.rift || 0) + over; S.stored += over; }
   }

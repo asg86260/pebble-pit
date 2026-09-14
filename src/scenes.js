@@ -46,9 +46,18 @@ const st = () => window.__state();
 
 // A yard that can afford anything, with every site full: what most of the
 // scenes about a machine or a board stand on.
+//
+// The dust is granted, not tipped. `__tip` is a carter's tip -- one grain at
+// the lip, and each one past the first few thousand walking the whole heap to
+// find room -- so ninety thousand of them was most of a scene's cost. And the
+// hole holds thirty-seven thousand: the rest tore the rift for real, with the
+// tearing's own cutscene over the top of whatever the scene was about. A grant
+// fills the hole spread out and pours the rest through a rift that is simply
+// open, the way a save loaded after the tear comes back.
+const RICH_DUST = 90000;
 const rich = () => {
   window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 }); window.__tip(90000);
+  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: RICH_DUST });
 };
 
 // The lip bought out: every rung of the crew's own gear and a cart for every
@@ -497,7 +506,7 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(1); window.__give(400); window.__fast(4);
                  window.__look(st().noticesX - 440); window.__fast(6); } },
   notices2: { about: 'the bench', say: 'the noticeboard on a yard that has done a lot',
-    run: () => { window.__reset(); window.__crew(1); window.__jump(30); window.__tip(90000); window.__fast(6);
+    run: () => { window.__reset(); window.__crew(1); window.__jump(30); window.__grant({ dust: RICH_DUST }); window.__fast(6);
                  window.__look(st().noticesX - 440); window.__fast(6); } },
   // The toast: a notice's card at the top of the window, the moment it lands.
   // The opening lands a core and a hire within its first seconds, so a yard
@@ -511,7 +520,7 @@ export const SCENES = {
   // The bench part way up every ladder, so the deepest cards -- dust, crops and
   // ore on one bill -- stand beside the pips. A picture of the card's width.
   benchdeep: { about: 'the bench', say: 'the bench with its ladders on their third cards',
-    run: () => { rich(); window.__grant({ shards: 99999, spores: 99999 }); window.__tip(9000000);
+    run: () => { rich(); window.__grant({ shards: 99999, spores: 99999, dust: 9000000 });
                  window.__levels({ carryLevel: 7, speedLevel: 4, pickLevel: 8, critChanceLevel: 7,
                                    haulCarryLevel: 6, haulPaceLevel: 8 });
                  window.__buy('auto'); window.__board('bench'); } },
@@ -526,13 +535,13 @@ export const SCENES = {
   // ground going in pockets, and the blaster's ring when its swing lands
   // (DESIGN.md, "The cut is worked in pockets").
   cutgang: { about: 'the cut', say: 'five on the face by hand, blasters among them',
-    run: () => { window.__reset(); window.__crew(2, 0, 5, 0); window.__fullSites(); window.__tip(90000);
+    run: () => { window.__reset(); window.__crew(2, 0, 5, 0); window.__fullSites(); window.__grant({ dust: RICH_DUST });
                  window.__fast(60); window.__look(st().quarryX - 220); } },
   // The same face up the pace ladder, where the beat is short and the pockets
   // come quickly. Three bodies rather than five, and a minute in: five at this
   // pace have the cut out before the opening has let go of the camera.
   cutgangdeep: { about: 'the cut', say: 'three on the face, well up the pace ladder',
-    run: () => { window.__reset(); window.__crew(2, 0, 3, 0); window.__fullSites(); window.__tip(90000);
+    run: () => { window.__reset(); window.__crew(2, 0, 3, 0); window.__fullSites(); window.__grant({ dust: RICH_DUST });
                  window.__levels({ quarryPaceLevel: TIER_OWN }); window.__fast(60); window.__look(st().quarryX - 220); } },
   // The jaw's smoke, well into its climb: run the machine half a minute so
   // the plume has puffs at every age, then look at the air over the cut. What
@@ -824,9 +833,9 @@ export const SCENES = {
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
   // The tearing: a hole filled past the brim gives way, and everything in it
   // goes at once. Half a second in, which lands this one in the middle of the
-  // gulp, which is the part worth looking at. Not `rich()`: its `__tip` fills
-  // the hole and tears it during the setup, so the scene would open on a yard
-  // that had already had the moment.
+  // gulp, which is the part worth looking at. Not `rich()`: its grant fills
+  // the hole and opens the rift during the setup, so the scene would open on a
+  // yard that had already had the moment.
   tear: { about: 'the pit and the rift', say: 'the hole giving way',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
