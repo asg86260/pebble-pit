@@ -126,7 +126,8 @@ const STAGES = [
     // The bar sits above every deliberate jump in the yard -- the dance's hop
     // is three cells, the swings and bobs less -- and a dancing body is let
     // alone entirely: its height IS the animation. What is left above five
-    // cells of nothing is ground that genuinely is not there.
+    // cells of nothing is ground that genuinely is not there. (Four cells
+    // since 2026-09-14; see the seat note below.)
     // And only under the open sky. A body down a working stands on its way's
     // own floor, which `fall` knows nothing about -- its landing is the yard's
     // surface, so a quarrier tripped mid-dig was yanked UP through the wall
@@ -151,11 +152,18 @@ const STAGES = [
     // written by the one climber in the game, so a body genuinely dropped --
     // ground mined out from under it, a ledge walked off -- has no stamp and
     // falls exactly as it did.
+    // ...nor a body in a machine's seat, which stamps `aboardAt` the same
+    // way. The bar was five cells and the seats sat at exactly five, so a
+    // seated tender never fell -- and neither did one that had *left* the
+    // seat: it hung over the deck at the seat's height until something else
+    // moved it (the reliability freeze found it, 2026-09-14). Four cells now,
+    // still over the dance's hop, and the seat says so for itself.
     if (!w.falling && !w.lifted && !w.aloft && !w.floating && !w.inside &&
         w.jigAt == null && onYard(w) &&
         !(w.route && w.route[0] && w.route[0].climb) &&
         S.tick - (w.scaleAt ?? -9) > 2 &&
-        surfaceUnder(w) - w.y > P * 5) {
+        S.tick - (w.aboardAt ?? -9) > 1 &&
+        surfaceUnder(w) - w.y > P * 4) {
       w.falling = true;
       w.vy = 0;
       w.vx = 0;

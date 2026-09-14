@@ -8,7 +8,8 @@
 // a full localStorage no longer cost the save. The last group is the bug:
 // the same store refusing, and the sheet's line saying which way.
 
-const { group, ok, state, run, yard } = await import('./helpers.mjs');
+const { group, ok, state, run, yard, storeChecks } = await import('./helpers.mjs');
+storeChecks();          // this file is about the store itself: no reload harness
 const { persist, restore, bootYard, exportSave, claimSave } = await import('../src/persist.js');
 const { primeStore, storeSettled, storeTrouble, claimTab } = await import('../src/save.js');
 const KEY = 'boulder-clicker/v4';

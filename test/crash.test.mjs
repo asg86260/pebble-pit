@@ -5,7 +5,8 @@
 // a run: the autosave carrying on after the throw and writing the broken state
 // over the last save that was whole, once a second, until the tab closed.
 
-import { group, ok, state, run, yard } from './helpers.mjs';
+import { group, ok, state, run, yard, storeChecks } from './helpers.mjs';
+storeChecks();          // this file is about the store itself: no reload harness
 
 const { persist } = await import('../src/persist.js');
 const KEY = 'boulder-clicker/v4';

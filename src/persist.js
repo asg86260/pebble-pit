@@ -886,12 +886,12 @@ export function restore() {
   craftLoad(s.craft);
   S.haze = s.haze || 0;
   S.scrubBank = 0;
-  // The rain itself is not saved. It is nine seconds long and it is weather:
-  // coming back to a shower that started before you closed the tab is a shower
-  // with no beginning. What it left behind is saved, because that is the part
-  // that is somebody's job.
-  S.raining = false;
-  S.rainFor = 0;
+  // The weather in flight comes back with the sky (decided 2026-09-14, the
+  // reliability freeze). It used to be dropped -- "a shower with no beginning
+  // is not a shower" -- and every refresh mid-storm cleared the sky: eleven
+  // checks about rain went red the day every check became a reload check.
+  // `raining`, `rainFor` and `stormFor` are plain saved fields now; the bolt is
+  // a flash of a few frames and is not.
   S.bolt = null;
   S.poop =Array.isArray(s.poop) ? s.poop.slice() : [];
   // A save from before the rock was something dust could lie on has none, and

@@ -41,7 +41,7 @@ import { DROPS, GOING, SKY, bandLow, bandTop, climbing, clogged, fanPull,
          outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
 import { foul, reckon, stepPuffs } from './smog/vents.js';
 import { stirSmoke } from './smog/draught.js';
-import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave } from './smog/sky.js';
+import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
 import { pullCraft } from './smog/craft.js';
 import { breaks, dryTime, forceStrike, markStorm, pour, rainOdds, settled, stepBolt, stepDrops, stepEmbers, EMBERS,
@@ -54,10 +54,24 @@ import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
 import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
+// A save coming back, under whatever weather it was saved under. The band is
+// rebuilt out of the haze (see sky.js); if a storm was brewing or pouring
+// when the save was written, the rebuilt sky is marked as that storm's --
+// "everything settled up there belongs to this storm", the same rule the
+// roll applies -- so the shower goes on coming down rather than finding no
+// mote it is allowed to drop and calling itself over.
+export function skyFromSave() {
+  rebuildSky();
+  if (!(S.raining || S.stormFor >= 0)) return;
+  let marked = 0;
+  for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
+  markStorm(marked);
+}
+
 export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
          foul, stirSmoke,
-         moteX, moteY, clearSky, fillSky, skyFromSave, cloudR,
+         moteX, moteY, clearSky, fillSky, cloudR,
          DRAUGHT, rainOdds, dryTime, forceStrike, EMBERS,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,

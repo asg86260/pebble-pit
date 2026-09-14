@@ -641,6 +641,10 @@ export const SAVED = [
   'recycler',
   'seenAir',
   'rains',
+  // ...and the weather in flight, since the reliability freeze (2026-09-14):
+  // a refresh mid-storm used to clear the sky. The bolt is a flash and stays
+  // ephemeral; the sky's motes are re-marked as this storm's on the way in.
+  'raining', 'rainFor', 'stormFor',
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
@@ -685,6 +689,7 @@ export const SAVED_BY_HAND = [
   'coreItem',             // a core loose in the world: a spot, or the fact of one
   'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
+  'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
@@ -835,8 +840,7 @@ export const EPHEMERAL = [
   // open it is a hired post like any job, and a hired post survives a reload.)
   'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
-  'raining', 'rainFor', 'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
-  'stormFor',                              // wave6-sky: weather in flight is not saved
+  'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
   'placed', 'strips', 'introHeart',
   // housekeeping
   'dirty', 'fatal', 'lastFrame', 'settleAt',

@@ -40,6 +40,14 @@ export const state = () => yard.state();
 const RELOAD = process.env.RELOAD !== '0';
 const RELOAD_EVERY = 5;
 let sinceReload = 0;
+let reloading = true;                // this group's say, see `group`
+let fileReloads = true;              // and the file's, see `storeChecks`
+
+// A file about the store itself -- a write refused, a tab overtaken, a blob
+// that will not parse -- mocks the save, and a harness that saves and loads
+// through the mock every five seconds is testing the mock. Said once at the
+// top of such a file; nowhere else.
+export const storeChecks = () => { fileReloads = false; };
 
 export function reloadCheck() {
   const S = yard.S;
@@ -73,7 +81,7 @@ export function reloadCheck() {
 // or not a reload falls in the middle of one call.
 export const run = seconds => {
   let frames = Math.max(1, Math.round(seconds * 60));
-  if (!RELOAD) return yard.fast(frames / 60);
+  if (!RELOAD || !reloading) return yard.fast(frames / 60);
   while (frames > 0) {
     const chunk = Math.min(frames, RELOAD_EVERY * 60 - sinceReload);
     yard.fast(chunk / 60);
@@ -118,9 +126,18 @@ export const SEED = 20250830;
 // standing gives a run that is half one seed and half another and cannot be had
 // again. So the group starts from the seed, and the seed is where the run
 // starts.
-export function group(name, fn, seed = SEED) {
+// The third argument is a seed, or `{ seed, reload }`. `reload: false` keeps
+// the reload harness out of one group, and it is for exactly one kind of
+// check: one that follows a *particular* thing -- this speck, that drop --
+// across more than five seconds, when a save writes the thing down as a count
+// and a load makes a fresh one. Everything else about a reload is the game's
+// to get right, so a group that goes red under it is fixed in the game, not
+// opted out; say in a comment which thing the group is following.
+export function group(name, fn, opts = SEED) {
+  const { seed = SEED, reload = fileReloads } = typeof opts === 'object' ? opts : { seed: opts };
   test(name, async () => {
     window.__seed(seed);
+    reloading = reload;
     // And the rules are watched for the whole of it. Every group in this tier
     // now checks every invariant in src/verify.js on every frame it runs,
     // whatever the group itself was written to look at -- so a body that goes
