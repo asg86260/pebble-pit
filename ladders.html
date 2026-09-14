@@ -21,6 +21,9 @@
   td.dust { color: #111; } td.spore { color: #2e9e4b; } td.shard { color: #2f5fd0; }
   td.core { color: #444; } td.spark { color: #d93a25; } td.time { color: #777; }
   tr.spark-rung td { background: #fff4f2; }
+  td.step, td.pct { color: #555; }
+  td.eq { color: #333; } td.per { color: #7a4b00; }
+  input.rung { width: 4.5em; font: inherit; text-align: right; padding: 0 2px; border: 1px solid #bbb; }
   tr.total td { border-top: 1px solid #ddd; color: #555; }
   .knobs { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto;
            border-left: 1px solid #ddd; padding-left: 16px; }
@@ -52,10 +55,12 @@
      A ladder's shape (how many rungs, which coins a band adds) is not a knob:
      that is TIER_BAND and the bands tables, and it is a design change. -->
 <h1>the ladder book</h1>
-<p class="note">Every ladder, climbed. <b>dust / spore / shard / core / spark</b> are the rung's bill;
-  <b>work</b> is what it asks of the builders in worker-seconds; <b>value</b> is what the row reads
-  before the rung and after it. Move a knob on the right and every table re-reads. Ladders outside
-  the bands rule (the tower's, the kit, the machines' tuning) are listed too, so they can be compared.</p>
+<p class="note">Every ladder, climbed. <b>value</b> is what the row reads before the rung and after
+  it -- on a count ladder the after is a box: type a figure and the list changes; <b>step</b> and
+  <b>gain</b> are what the rung adds; <b>dust / spore / shard / core / spark</b> are its bill and
+  <b>work</b> the builders' seconds; <b>≈dust</b> is the whole bill at the coins' dust rates,
+  <b>per +1%</b> that over the gain (the number to compare down a ladder and across them), and
+  <b>so far</b> the ladder's spend to here. Knobs on the right move first costs and the rest.</p>
 <div class="wrap">
   <div class="book" id="book"></div>
   <div class="knobs">
@@ -81,6 +86,15 @@ import { QUARRY_UPGRADES } from './src/quarry.js';
 import { FARM_UPGRADES } from './src/farm.js';
 import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
 import { APOTHECARY_UPGRADES } from './src/apothecary.js';
+import { DUST_PER } from './src/upgrades/price.js';
+import { CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT } from './src/config.js';
+
+// The count ladders read a written list (config/rungs.js), so their value
+// cells are boxes: a rung is edited where it is read. A rate's value is its
+// curve's and is moved from the knobs.
+const LIST_OF = { carry: ['CARRY_PX', CARRY_PX], pick: ['PICK_PX', PICK_PX], rockhandpick: ['ROCKHAND_PX', ROCKHAND_PX],
+                  haulcarry: ['HAUL_LOAD', HAUL_LOAD], crop: ['CROP_SPORES', CROP_SPORES], seam: ['SEAM_SHARE', SEAM_SHARE],
+                  brewdoses: ['DOSES', DOSES], critmult: ['CRIT_MULT', CRIT_MULT] };
 
 // A yard with every place open and every coin met, so no card is greyed for
 // want of a source and every band's bill is the one it will ask.
@@ -147,9 +161,27 @@ function climb(u) {
 }
 
 const fmt = n => n == null ? '' : Number.isInteger(n) ? String(n) : (+n).toFixed(2).replace(/\.?0+$/, '');
-const value = (r, u) => r.from == null ? '' :
-  `${fmt(r.from)} → ${fmt(r.to)}${u.unit ? ' ' + u.unit : ''}${u.pct && r.from ? `  (+${Math.round((r.to / r.from - 1) * 100)}%)` : ''}`;
-
+// What a rung is worth against what it costs. The bill in dust-equivalent is
+// every coin at the rate the price rule converts it by (DUST_PER), so a rung
+// in spores and a rung in sparks can be read on one scale; the price of a
+// percent is that over the step, which is the number to compare down a
+// ladder and across ladders -- a rung that costs three times the last for the
+// same step is the one to look at.
+const dustEq = bill => Object.entries(bill).reduce((n, [c, v]) => c === 'time' ? n : n + v * (DUST_PER[c] || 1), 0);
+const pctOf = r => r.from ? (r.to / r.from - 1) * 100 : null;
+const cell = (r, u, list) => {
+  if (r.from == null) return '<td class="val"></td><td></td><td></td>';
+  const unit = u.unit ? ' ' + u.unit : '';
+  // A list ladder's next value is a box over the list's entry for this rung.
+  // For the seam the list is a share of the handful, so the box holds the
+  // share and the words beside it say the shards it comes to.
+  const to = list
+    ? `<input class="rung" data-list="${list[0]}" data-i="${r.rung}" value="${fmt(list[1][r.rung])}" step="${list[0] === 'SEAM_SHARE' ? 0.25 : 1}">${list[0] === 'SEAM_SHARE' ? ' = ' + fmt(r.to) : ''}`
+    : fmt(r.to);
+  const pct = pctOf(r);
+  return `<td class="val">${fmt(r.from)} → ${to}${unit}</td>` +
+         `<td class="step">+${fmt(r.to - r.from)}</td><td class="pct">${pct == null ? '' : '+' + Math.round(pct) + '%'}</td>`;
+};
 function render() {
   const book = document.getElementById('book');
   book.innerHTML = '';
@@ -160,16 +192,20 @@ function render() {
     const rungs = Number.isFinite(rungsOf(u)) ? `${rungsOf(u)} rungs` : 'endless';
     el.innerHTML = `<h2>${u.name} <small>${u.key} · ${board} · ${rungs}${u.group ? ` · bands of ${u.group}` : ''}</small></h2>`;
     const t = document.createElement('table');
-    t.innerHTML = `<tr><th>rung</th><th>value</th>${COINS.map(c => `<th>${c}</th>`).join('')}<th>work s</th></tr>`;
+    const list = LIST_OF[u.key] || null;
+    t.innerHTML = `<tr><th>rung</th><th>value</th><th>step</th><th>gain</th>${COINS.map(c => `<th>${c}</th>`).join('')}<th>work s</th><th>≈dust</th><th>per +1%</th><th>so far</th></tr>`;
     const total = Object.fromEntries(COINS.map(c => [c, 0]));
-    let work = 0;
+    let work = 0, spent = 0;
     for (const r of rows) {
       const tr = document.createElement('tr');
-      if (r.error) { tr.innerHTML = `<td colspan="8" style="color:#d93a25">${r.error}</td>`; t.appendChild(tr); continue; }
+      if (r.error) { tr.innerHTML = `<td colspan="13" style="color:#d93a25">${r.error}</td>`; t.appendChild(tr); continue; }
       if (r.bill.spark) tr.className = 'spark-rung';
-      tr.innerHTML = `<td>${r.rung}</td><td class="val">${value(r, u)}</td>` +
+      const eq = dustEq(r.bill), pct = pctOf(r);
+      spent += eq;
+      tr.innerHTML = `<td>${r.rung}</td>` + cell(r, u, list) +
         COINS.map(c => `<td class="${c}">${r.bill[c] != null ? fmt(r.bill[c]) : ''}</td>`).join('') +
-        `<td class="time">${r.work != null ? fmt(r.work) : ''}</td>`;
+        `<td class="time">${r.work != null ? fmt(r.work) : ''}</td>` +
+        `<td class="eq">${fmt(Math.round(eq))}</td><td class="per">${pct ? fmt(Math.round(eq / pct)) : ''}</td><td class="eq">${fmt(Math.round(spent))}</td>`;
       for (const c of COINS) total[c] += r.bill[c] || 0;
       work += r.work || 0;
       t.appendChild(tr);
@@ -177,11 +213,26 @@ function render() {
     if (rows.length > 1) {
       const tr = document.createElement('tr');
       tr.className = 'total';
-      tr.innerHTML = `<td>all</td><td></td>` + COINS.map(c => `<td class="${c}">${total[c] ? fmt(total[c]) : ''}</td>`).join('') + `<td class="time">${fmt(work)}</td>`;
+      const first = rows.find(r => r.from != null), last = [...rows].reverse().find(r => r.to != null);
+      const whole = first && last && first.from ? Math.round((last.to / first.from - 1) * 100) : null;
+      tr.innerHTML = `<td>all</td><td class="val">${first && last ? `${fmt(first.from)} → ${fmt(last.to)}` : ''}</td><td class="step">${first && last ? '+' + fmt(last.to - first.from) : ''}</td><td class="pct">${whole == null ? '' : '+' + whole + '%'}</td>` +
+        COINS.map(c => `<td class="${c}">${total[c] ? fmt(total[c]) : ''}</td>`).join('') +
+        `<td class="time">${fmt(work)}</td><td class="eq">${fmt(Math.round(spent))}</td><td class="per">${whole ? fmt(Math.round(spent / whole)) : ''}</td><td></td>`;
       t.appendChild(tr);
     }
     el.appendChild(t);
     book.appendChild(el);
+  }
+  for (const box of book.querySelectorAll('input.rung')) {
+    box.addEventListener('change', e => {
+      const list = LIST_OF[Object.keys(LIST_OF).find(k => LIST_OF[k][0] === box.dataset.list)][1];
+      const v = +e.target.value;
+      if (!Number.isFinite(v)) return;
+      list[+box.dataset.i] = v;
+      render();
+      knobs(document.getElementById('filter').value);
+      lines();
+    });
   }
 }
 
