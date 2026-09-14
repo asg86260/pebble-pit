@@ -1,85 +1,131 @@
-# Boulder Clicker
+# Pebble Pit
 
-Black-and-white pixel clicker. Vite + vanilla JS, canvas.
+A black-and-white pixel clicker about a rock, a hole and the people between
+them.
 
-- Each boulder is thicker than the last: boulder 2 is two sheets deep, boulder 3 is three, up to six. A hit takes one sheet off the front, so you dig **into** the rock. Shade shows what is left — dark where it is thick, pale where it is worn thin, white where you have gone right through. Dust keeps the shade of the sheet it came off.
-- The rock is a **hill sitting on the ground**, right of the workbench: a rough crest, thickest at its base and through the middle. Click it to knock a pixel off at the cursor. Spoil is **aimed**, not scattered: each chip goes off whichever side of the rock it was struck from, on the one arc that lands it on clear ground past the foot. The rock keeps a bare apron either side, so the two banks stand off it instead of stacking up its flanks, and they heap up to whatever height the sand finds on its own.
-- Drag to sweep: on the ground it lifts dust off the pile, in the air below the rock it catches pixels still falling. Swinging at the rock never collects its own spray. Flick and let go to throw what you are carrying. Anything past the ledge falls into the pit on the right. The pit floor sits on the bottom of the window and the ground never moves. The pit is always the same size; a bigger window is just more sky and more ground either side. Scroll sideways with the wheel or arrow keys to see the whole pit. Scroll with the wheel or arrow keys, shift-wheel or up/down to look along the pit's depth.
-- The cursor starts able to carry one pixel; the brush shows FULL when loaded.
-- **Who works where is written under the place they work**: a count and a less/more under each station, with the badge of the body that does the job. Carrying has a count and no buttons -- it is what a body does when it is on nothing, so it is read, not set.
-- The shop is a **workbench** standing on the ground off the rock's left flank, between it and the quarry. Move the cursor near it and its board opens; move away and it closes. There is nothing to click — the ground around it sweeps like anywhere else. Rows are grouped by who the upgrade is for (you / haulers / miners), with core costs marked ◆.
-- Spend pit dust there on: carry capacity, unlocking hold-to-mine, your mining speed, hiring workers, and each worker's own speed and load. Where a body works is not bought, so it is not on the bench: that is the roster under each station.
-- The hole is both the goal (one million) and the money: buying an upgrade lifts dust back out of it, and you watch it fly across to the bench. Spend to get there faster, or hoard and wait.
-- Dust heaped against the ledge four cells deep topples into the pit by itself.
-- Workers are **hollow squares** -- every one of them, whatever job it is on. Where somebody is standing says what they are doing: on the rock they take it off in layers, down the quarry they come back with shards, at a bed they bring it on, and on the ground they scoop dust and toss it off the lip. A load rides over the head of whoever is carrying it, drawn grain by grain as whatever each grain is.
-- Every boulder has a **core** (a white circle) buried at its centre, hidden by the rock until you dig down to it. Strip the rock down to nothing and the core comes loose. It rolls out from the foot of the hill before it settles — the next rock stands where the last one did, so a core left in its shadow would be one you could not pick up — and then a new rock takes its place. Pick the core up by dragging over it and throw it in the pit to bank it — or leave it, and a hauler will fetch it for you — where it joins the pile and gets buried as more dust comes in.
-- Nothing about cores is shown until you bank your first one — no counter, no shop rows.
-- Cores buy the fundamental unlocks, not numbers: **first miner** (1 core, which hires one for you), **first hauler** (2 cores, likewise), and the **pick**, one more pixel a swing each time (2 cores, then 3, 4...). Everything else — carry, mining speed, hiring and upgrading workers — is bought with dust.
-- **The pile in the pit is the dust, not a picture of it.** One grain is one dust, drawn the same size as dust anywhere else, and the pile always shows as much of the hole as will fit in it. Past the brim the counter keeps going and the pile stays put. If the ground bed ever fills, extra dust rolls into the pit.
-- **The air over a place is the colour of what comes out of it**: grey over the yard, the shard's blue over the quarry, the spore's green over the beds -- so the far end of the world says what is out there before you can make out anything standing in it.
-- **A piece of research shows as a bar over the lab**, not as a number in a menu: it fills a cell at a time, and it does not move at all while the lab is empty.
-- **Four more places open up, out to the left.** The **cave** is a shaft; spelunkers go down it and come back with shards △. The **farm** is a row of beds that only grow while a farmhand is standing at one, and are cut for spores ◇. The **lab** spends both on multipliers — pace, never yield, because a pixel is always worth one dust — and keeps the books: dust, shards and spores a minute. The **star** hangs in the sky once the tower calls one down — a little sun with a corona that breathes, out past the tower at the far end of the walk. The whole of it is worth sparks ✚, the game's only red — the crust one apiece and the fire three — and the corona brightens as the crust comes off it. Nobody on the ground can reach it: a wizard is a hat the tower spends dust, stone and crop making over a couple of minutes, and it is the one body here whose feet leave the ground. They ride a ring round the star and throw purple bolts at it — magic is purple here and the stuff it moves is red — and the cell comes off where the bolt lands; and when it is worked out they summon the next one, pouring light into the empty spot until a star is there. More of them make it quicker; none of them and the sky stays empty. Each is unlocked with cores, and the view glides over to show you what you bought.
-- **Rocks never stop coming.** Each is a little bigger than the last until they plateau, and each holds one core. There is no ending and nothing is ever taken away to make you start again.
-- Everything saves to localStorage — boulder damage, ground dust, pit contents, upgrades, crew. Reset with the button under the shop (click twice to confirm). The `r` key does it
-outright, with nothing to confirm, so it is a dev-build shortcut only.
+**[Play it in the browser](https://cameldash.itch.io/pebble-pit)** · [Desktop
+builds](https://github.com/asg86260/pebble-pit/releases/latest) · [What
+changed](CHANGELOG.md)
 
-```
+<p align="center"><img src="itch/cover.png" alt="Three workers on a half-dug rock, spoil heaped to one side" width="630"></p>
+
+Click the rock. Throw what comes off it into the hole. Hire somebody to do that
+for you, then somebody to feed them, then somebody to sweep up after the
+machines. Watch the sky get worse. Decide whether to do anything about it.
+
+Black and white, six grays, everything on a six-pixel grid. **Nothing
+teleports**: every body walks to every job, every number on a board is a body
+you can watch cross the yard, and the whole thing is cause and effect you can
+see. There is no music — you hear the yard, not the game.
+
+<p align="center"><img src="docs/readme/scrubbing.png" alt="The scrubbing house under a sky full of smog" width="800"></p>
+
+## Things to know
+
+- **Nothing happens while it's closed.** The yard runs while you watch it and
+  stops when you don't. That is on purpose; it is not a chore you check in on.
+- **There is no ending.** Rocks keep coming, each a little bigger than the
+  last. You'll know when you're done.
+- **Your save lives where you play.** In the browser it autosaves every second
+  to that browser; `save a copy` on the pause sheet (`esc`) puts it on your
+  clipboard and `load a save` takes it back. The desktop build keeps it as a
+  file, with a backup beside it.
+- **Sound is on, and quiet.** Mute and volume are on the same sheet and
+  remember.
+- **Click once to start.** Browsers allow no sound and no keys until you do.
+
+### Controls
+
+| | |
+|---|---|
+| click the rock | knock a pixel off at the cursor |
+| drag on the ground | sweep up dust; drag under the rock to catch it falling |
+| flick and let go | throw what you are carrying — past the ledge is the pit |
+| move near a board | it opens; move away and it closes |
+| wheel, `←` `→` | look along the yard |
+| `esc` | the pause sheet: settings, save a copy, load a save, the version |
+| phone | tap mines, drag sweeps, two fingers pan, tap a board to open it |
+
+### The desktop build
+
+The same game as a Windows app from the
+[releases page](https://github.com/asg86260/pebble-pit/releases/latest):
+your save becomes a file, the window remembers where you left it, `F11` goes
+full screen. It is unsigned, so Windows shows "Windows protected your PC" the
+first time — *More info → Run anyway*. Downloading through the itch app skips
+that. It is 110 MB for a 300 kB game; the rest is Electron. Sorry about that.
+
+## Running it from source
+
+Vite and vanilla ES modules on one canvas. No framework, no runtime
+dependencies.
+
+```sh
 bun install
-bun run dev
+bun run dev          # http://localhost:5183 — pinned, so the phone on the wifi keeps its address
+bun run build        # dist/
+bun run desk         # the Electron shell over the dev server
 ```
 
-The dev server listens on every interface, so a phone on the same wifi can reach it: use the
-**Network** address Vite prints. The port is pinned to 5183 so that address stays the same,
-which means starting a second server needs an explicit port (`bun run dev --port 5184`).
+`index.html` is the landing page; the game itself is `play.html`. In a dev
+build, **`` ` ``** (backtick) opens the dev panel: crew by job, every currency,
+the clock, sliders for every number worth arguing with, and a button for each
+of the hundred-odd scenes in `src/scenes.js`. None of it ships.
 
-On a phone: a tap on the rock mines it, a drag sweeps dust and flicks it, **two fingers drag
-the view**, and a **tap on the bench** opens the shop — there is no hovering, so hovering
-cannot be how it opens. It draws at the screen's real resolution rather than a capped one,
-and a cell is always a whole number of device pixels, which is both what keeps the seams out
-and what lets a narrow screen find a scale that fits the whole works on.
+### Where things live
 
-## The code
+| | |
+|---|---|
+| `ARCHITECTURE.md` | which file owns what, and where a new upgrade, job or station goes |
+| `DESIGN.md` | the reasoning behind every feature, marked `(built)` or `(design, not built)` |
+| `TODO.md` | open work, each item with its diagnosis and its blocker |
+| `CHANGELOG.md` | every bug fixed, in the player's words |
+| `PERF.md` | where the frame goes |
+| `CLAUDE.md` | the working agreement for anyone — or anything — changing the code |
+| `src/` | the game: `config.js` owns every number, `state.js` every fact that changes, modules own behavior |
+| `src/render.js` | the `LAYERS` list — painting order as data; its order is the picture |
+| `tools/` | the headless shell, the scene shooter, the release script |
+| `test/` | the node tier |
+| `src/selftest/` | the browser tier |
 
-One canvas, twenty small modules, no framework. **ARCHITECTURE.md** says which file owns
-what and where a new upgrade, worker, bed of sand or site goes. The short version: modules
-own behaviour, `state.js` owns every fact that changes, `config.js` owns every number that
-decides how it plays.
+### Testing
 
+Two tiers. The **node** tier (`test/*.test.mjs`) runs the whole simulation with
+no DOM and covers everything about the yard. The **browser** tier
+(`src/selftest/`) runs in Chrome's headless shell and covers only what needs a
+real pointer, board or canvas.
+
+```sh
+bun run test                              # the node tier, ~100 s
+bun run dev:test                          # a second server on 5184, so your own save is left alone
+node tools/headless.mjs                   # the browser tier, against 5184
+node tools/headless.mjs --only <group>    # one group
+node tools/headless.mjs "__state().gw"    # one expression, against the live game
 ```
-node tools/unresolved.mjs     # names a module uses but cannot see
+
+Most changes here are drawing, and no test can see a drawing. The check for
+those is a picture:
+
+```sh
+node tools/look.mjs --list                # every scene, by the part of the game it is about
+node tools/look.mjs crew,quarry --zoom 4  # set the yard up, run a second, write shots/*.png
 ```
 
-## While you are working on it
+`cards.html` is the card bench for anything on a board: rows drawn from plain
+objects through the real builder and stylesheet, no yard behind them.
 
-Press **`** for a dev panel: crew by job, currencies, sites, which boulder,
-running the clock on, and sliders for the numbers most worth arguing with — the
-zoom, the slope of a pile, what a pile holds, every pace in the game. It moves
-them while the game runs, because that is how they were found. It is loaded only
-by `bun run dev` and a build has none of it in it.
+### Releasing
 
-## Testing
-
-```
-bun run dev:test    # a second server on 5184, so the game you are playing keeps its save
-bun run test        # the whole suite, headless, in another terminal
+```sh
+bun run release -- patch                  # or minor, major, 1.2.3; --dry to see without doing
 ```
 
-`bun run test` runs the same suite in Chrome's headless shell over the debugging protocol --
-nothing to install, and it prints the failures and the console. One expression instead of the
-suite: `node tools/headless.mjs "__state().gw"`, and `--shot yard.png "expr"` sets the game up
-and takes a picture of it. It talks to 5184 by default; `GAME=http://localhost:5183/` points it
-somewhere else, which will reset that origin's save.
+One command from a clean `main`: it bumps the version, stamps the `Unreleased`
+heading in `CHANGELOG.md`, commits, tags, and pushes. The tag is the trigger —
+GitHub Actions builds the browser game and the Windows, mac and Linux apps,
+pushes every itch channel, and makes the GitHub release with that version's
+changelog as its notes. Nothing is built on the machine that cuts it.
 
-Or open the game and run `__test()` in the browser console. It drives the game through the same
-hooks the console has and checks the things that have broken before: the canvas covering the
-window, the ground pinned to the bottom, the pit's fixed size, the shop board opening at the bench
-and sitting above the canvas, mining, throwing, spending, the counter easing, cores banking, and
-miners and workers doing their jobs. It resets the save first, so run it on a game you do not mind
-losing.
+## Credits
 
-Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n dust, `__drop()`
-releases a core, `__jump(n)` swaps in rock n, `__pile(x, n)` heaps dust on the ground,
-`__crew(miners, workers, spelunkers, farmhands)` hires a crew outright, `__next()` finishes the
-rock, `__grant({shards, spores, sparks, cores})` and `__levels({...})` set up a plausible game,
-`__lab()` and `__meteor()` open those, `__wizardHat(n)` puts hats on the tower's stand, `__brew()` starts one,
-`__spend(n)` takes n dust back out of the pit, `__reset()` starts a new game.
+Made by Andrew Graham. Free; the tip jar is on itch.
