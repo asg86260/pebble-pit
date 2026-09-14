@@ -11,7 +11,7 @@
 import { group, ok, openSites, climb } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { maxed } from '../src/upgrades.js';
-import { LADDER } from '../src/config.js';
+import { LADDER, TIER_OWN, TIER_BAND } from '../src/config.js';
 
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);
 // Sparks too: the research card is priced in them, and a card is off the board
@@ -47,7 +47,7 @@ group('the fourth card of a ground ladder waits on the three before it', async (
   window.__crew(1, 0);
 
   const mult0 = shown('labtend');
-  climb('tend', 9);
+  climb('tend', TIER_OWN);
   const mult1 = shown('labtend');
   window.__crew(0, 0);
 
@@ -74,24 +74,24 @@ group("a card waits, still on the board, while its bill names a coin the yard ca
   window.__grant({ dust: 900000, shards: 9000, spores: 9000 });
   const says = () => window.__rows().find(r => r.key === "haulcarry")?.waits;
 
-  const first = climb("haulcarry", 9);
+  const first = climb("haulcarry", LADDER);
   const noPlots = shown("haulcarry"), saidPlots = says();
   const pressed = climb("haulcarry", 1);
   S.farmOpen = true;
   const withPlots = shown("haulcarry"), saidNothing = says();
-  const second = climb("haulcarry", 9);
+  const second = climb("haulcarry", LADDER);
   const noQuarry = shown("haulcarry"), saidQuarry = says();
   S.quarryOpen = true;
   const withQuarry = shown("haulcarry");
-  const third = climb("haulcarry", 9);
+  const third = climb("haulcarry", LADDER);
   window.__crew(0, 0);
 
   return [
-    ok(first === 3 && noPlots && saidPlots === "needs plots",
-       "three rungs in dust, then the card stays and says it needs plots", first + " rungs, shown " + noPlots + ", says " + saidPlots),
+    ok(first === TIER_BAND && noPlots && saidPlots === "needs plots",
+       "a card in dust, then the card stays and says it needs plots", first + " rungs, shown " + noPlots + ", says " + saidPlots),
     ok(pressed === 0, "and a press with crops in the purse buys nothing", pressed + " bought"),
-    ok(withPlots && saidNothing === "" && second === 3 && noQuarry && saidQuarry === "needs a quarry",
-       "three more in crops, then it says it needs a quarry", second + " rungs, says " + saidQuarry),
-    ok(withQuarry && third === 3, "and the last three once the quarry stands", third + " rungs")
+    ok(withPlots && saidNothing === "" && second === TIER_BAND && noQuarry && saidQuarry === "needs a quarry",
+       "a card more in crops, then it says it needs a quarry", second + " rungs, says " + saidQuarry),
+    ok(withQuarry && third === TIER_BAND, "and the last card once the quarry stands", third + " rungs")
   ];
 });

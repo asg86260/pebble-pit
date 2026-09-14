@@ -8749,7 +8749,7 @@ fifteen, one blaster among them, held on the frame a blaster's swing lands.
   and two tools, `cut-time.mjs` and `cut-trace.mjs` (the profile and every
   body's leg, cell and run, half a second at a time).
 
-## A ladder is six rungs, and its length is one number (design, not built)
+## A ladder is six rungs, and its length is one number (built)
 
 A tester: *having the option to repeatedly upgrade the same thing would be
 great, as it gets a little tedious having to wait at the upgrade menu to
@@ -8854,3 +8854,15 @@ by decision and keep their length. The builders' 37% is a separate job.
 `test/ladders.test.mjs` and `test/ladder-chain.test.mjs` already walk the
 ladders through `__buy`; they assert lengths and are re-based to the
 constants rather than to nine. A shot of `cards.html` for the six-pip card.
+
+### As built (2026-09-14)
+
+One constant and no logic: `TIER_BAND` 3 -> 2, and every ladder followed
+because every ladder was already written against the constants. What the
+survey found written against *nine*: four checks (re-based to `TIER_BAND`,
+`TIER_OWN` and `LADDER`), the card bench's fixture rows in `cards.html`
+(now built off the same constants, so the bench cannot drift from the
+game again), two dev scenes, and a dozen comments. Nothing decided beyond
+the design; the count tops landed where the table says. Looked at on the
+bench and on the plots' board deep on both ladders (`laddersdeep`): six
+pips in three tinted pairs, and the grounds' multiplier as a two-pip card.

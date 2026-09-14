@@ -51,10 +51,9 @@ export const BUFF_MS5 = 180000;        // ...three minutes at the top
 // Doses a brew: a whole dose a rung, so every rung on the card lands. It eased
 // 3 -> 8 over the ladder and rounded, which put two rungs on the board that
 // read "5 -> 5". One dose to begin with -- a first batch is one vial for one
-// body -- and two cards of three, because seven whole steps is what one to
-// eight is and a card is three rungs.
+// body -- and two cards of `TIER_BAND`, so the top is one plus the rungs.
 export const DOSES0 = 1;               // bodies a brew reaches at doses 0
-export const DOSES_CARDS = 2;          // cards on the ladder: six rungs, one to seven
+export const DOSES_CARDS = 2;          // cards on the ladder: four rungs, one to five
 // Buff strength: the fraction a level-0 dose is worth, and at the top. The stew
 // is +25% at level 0 -- the lab's own STEP, one familiar size -- and +60% maxed.
 // This ladder is climbed one tonic at a time now (item 14): a rung deepens the

@@ -79,7 +79,7 @@ export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 export const FAN_COST = 1080;        // dust for the first rung (ninety shards' worth)
 // What a fitted fan is worth at the top of its ladder, as a factor on the
 // pull. A quarter again a rung over five was three times; the same three
-// times is spread over nine rungs now, so the top is where it was.
+// times is spread over `LADDER` rungs now, so the top is where it was.
 export const FAN_TOP = Math.pow(1.25, 5);
 export const RECYCLE_SHARDS = 120;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one

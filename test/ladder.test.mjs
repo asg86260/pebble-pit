@@ -10,7 +10,7 @@
 
 import { group, ok, state, yard, openSites, buyBuilt, climb } from './helpers.mjs';
 
-import { LADDER, MINE_FLOOR } from '../src/config.js';
+import { LADDER, TIER_BAND, MINE_FLOOR } from '../src/config.js';
 import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
@@ -35,9 +35,10 @@ group('a ladder has an end, and says where you are on it', async () => {
   window.__grant({ shards: 40000, spores: 40000 });
 
   const start = state().carryLevel;
-  // Nine rungs over three cards, then three more presses that buy nothing:
-  // the ladder is climbed through whichever card is showing, as a player does.
-  const got = climb('carry', 12, buyBuilt);
+  // The whole ladder over three cards, then a card's worth of presses that
+  // buy nothing: the ladder is climbed through whichever card is showing, as a
+  // player does.
+  const got = climb('carry', LADDER + TIER_BAND, buyBuilt);
   const top = state().carryLevel;
   const last = window.__upgrades().find(u => u.key === 'carry');
 
@@ -83,25 +84,25 @@ group('the first card is dust alone, and the cards after it add the coins the ya
 
   const poor = state();
   // Up the first band of the pickaxe in dust alone: the coins stay put.
-  climb('pick', 3, buyBuilt);
+  climb('pick', TIER_BAND, buyBuilt);
   const afterOne = state();
   const secondCoins = coins('pick');
   // And the second band takes crops with the dust, the third crops and ore.
-  climb('pick', 3, buyBuilt);
+  climb('pick', TIER_BAND, buyBuilt);
   const afterTwo = state();
   const thirdCoins = coins('pick');
-  climb('pick', 3, buyBuilt);
+  climb('pick', TIER_BAND, buyBuilt);
   const afterThree = state();
 
   return [
-    ok(afterOne.pickLevel === poor.pickLevel + 3, 'the first card climbs', `${poor.pickLevel} -> ${afterOne.pickLevel}`),
+    ok(afterOne.pickLevel === poor.pickLevel + TIER_BAND, 'the first card climbs', `${poor.pickLevel} -> ${afterOne.pickLevel}`),
     ok(afterOne.shards === poor.shards && afterOne.spores === poor.spores,
        'in dust alone', `${poor.shards}->${afterOne.shards} blue, ${poor.spores}->${afterOne.spores} green`),
     ok(secondCoins === 'dust,spore', 'and the second band is priced in dust and crops', secondCoins),
-    ok(afterTwo.pickLevel === afterOne.pickLevel + 3 && afterTwo.spores < afterOne.spores && afterTwo.shards === afterOne.shards,
+    ok(afterTwo.pickLevel === afterOne.pickLevel + TIER_BAND && afterTwo.spores < afterOne.spores && afterTwo.shards === afterOne.shards,
        'and the crops are taken with the dust', `${afterOne.spores}->${afterTwo.spores} green`),
     ok(thirdCoins === 'dust,shard,spore', 'the third in dust, crops and ore', thirdCoins),
-    ok(afterThree.pickLevel === afterTwo.pickLevel + 3 && afterThree.shards < afterTwo.shards,
+    ok(afterThree.pickLevel === afterTwo.pickLevel + TIER_BAND && afterThree.shards < afterTwo.shards,
        'and the ore is taken too', `${afterTwo.shards}->${afterThree.shards} blue`)
   ];
 });

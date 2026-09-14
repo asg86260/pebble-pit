@@ -8,8 +8,8 @@
 // ladder is one call and a table of a few lines, and a new band is a line in
 // the table.
 //
-// Every other ladder in the yard is the same shape a card shorter: three bands,
-// nine rungs, dust only on the first card, dust and crops on the second, dust,
+// Every other ladder in the yard is the same shape a card shorter: three bands
+// (`LADDER` rungs), dust only on the first card, dust and crops on the second, dust,
 // crops and ore on the third, and no multiplier over it. That is the house
 // rule now (CLAUDE.md, "Decided"), so a ladder here names its bands and says
 // nothing about coins unless it has a reason to: `BAND_COINS` is the default.
@@ -97,8 +97,8 @@ export function tierRows({ field, multKey, level: at, climb, unit, pct, does, va
   // The ladder's own bands, as one card. It used to be a card a band, the
   // name changing as you climbed -- compost, then fertilizer, then hybrid seed
   // -- and a numeral did the same job once the names became descriptions:
-  // "hauler speed II" over three pips is two counters for one position on a
-  // nine-rung ladder. One card, nine pips in three groups, the bill deepening
+  // "hauler speed II" over a band's pips is two counters for one position on
+  // the ladder. One card, its pips in a group a band, the bill deepening
   // as the groups fill: the whole ladder in a glance, and the groups ARE the
   // bands (the card bench, cards.html, is where this was settled).
   const ownBands = multKey ? bands.slice(0, -1) : bands;

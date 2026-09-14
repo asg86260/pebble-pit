@@ -710,7 +710,7 @@ export function refresh(el, list, headcount) {
       const at = u.rung ? rungOf(u) : 0;
       const of = rungsOf(u);
       const pips = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
-      // A ladder sold in bands asks for its pips in groups of three, one a
+      // A ladder sold in bands asks for its pips in groups of a band, one a
       // band, each group in its band's coin (the stylesheet tints them): the
       // pips are then the bill's legend as well as the count. Each group is an
       // element so it can be colored; a ladder with no groups is one run.

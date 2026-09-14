@@ -37,28 +37,30 @@
 <script type="module">
 import { mountRows } from './src/shop.js';
 import { S } from './src/state.js';
+import { LADDER, TIER_BAND } from './src/config.js';
 Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, cores: 1 });
 
 const pips = (at, of) => ({ rung: () => at, rungs: () => of });
 
-// A ladder in bands at a level: nine pips in threes, the bill its band
-// carries, and the work in seconds -- `billOf` turns that into the clock.
+// A ladder in bands at a level: `LADDER` pips in groups of `TIER_BAND`, the
+// bill its band carries, and the work in seconds -- `billOf` turns that into
+// the clock.
 const ladder = (key, name, level, unit, does, from, to, bill, pct, work = 30) =>
   ({ key, name, unit, does, pct, kind: 'rung', from: () => from, to: () => to,
-     bill: () => bill, work: () => work, ...pips(level, 9), group: 3 });
+     bill: () => bill, work: () => work, ...pips(level, LADDER), group: TIER_BAND });
 
 const rows = [
-  ladder('carry', 'carry amount', 7, 'px', 'hold', 8, 9, [['dust', 52], ['spore', 17], ['shard', 4]]),
+  ladder('carry', 'carry amount', 5, 'px', 'hold', 8, 9, [['dust', 52], ['spore', 17], ['shard', 4]]),
   { key: 'auto', kind: 'rung', name: 'hold to mine', cost: () => 25, work: () => 5 },
-  ladder('critchance', 'crit chance', 7, '%', 'crit', 20, 23, [['dust', 5700], ['spore', 1900], ['shard', 471]]),
+  ladder('critchance', 'crit chance', 5, '%', 'crit', 20, 23, [['dust', 5700], ['spore', 1900], ['shard', 471]]),
   { key: 'critmult', kind: 'rung', name: 'crit damage', unit: 'x', does: 'crit', from: () => 3, to: () => 4,
     bill: () => [['dust', 1000], ['spore', 333], ['shard', 83]], work: () => 5, ...pips(0, 3) },
-  ladder('haulcarry', 'hauler carry', 6, 'px', 'carry', 13, 15, [['dust', 614], ['spore', 205], ['shard', 51]]),
-  ladder('haulpace', 'hauler speed', 8, 'px/s', 'walk', 108, 118, [['dust', 1200], ['spore', 393], ['shard', 98]], true),
-  ladder('fan', 'fan power', 4, 'motes/s', 'scrub', 40, 45, [['dust', 3300], ['spore', 1100]], true),
+  ladder('haulcarry', 'hauler carry', 4, 'px', 'carry', 13, 15, [['dust', 614], ['spore', 205], ['shard', 51]]),
+  ladder('haulpace', 'hauler speed', 5, 'px/s', 'walk', 108, 118, [['dust', 1200], ['spore', 393], ['shard', 98]], true),
+  ladder('fan', 'fan power', 3, 'motes/s', 'scrub', 40, 45, [['dust', 3300], ['spore', 1100]], true),
   ladder('bufflength', 'brew concentration', 2, 's', 'lasts', 73, 87, [['dust', 1440]]),
   { key: 'labcrop', kind: 'rung', name: 'astral GMOs', unit: 'spores/cut', from: () => 10, to: () => 13,
-    bill: () => [['dust', 23000], ['shard', 1900], ['spore', 7700], ['core', 7], ['spark', 1150]], work: () => 120, ...pips(1, 3) },
+    bill: () => [['dust', 23000], ['shard', 1900], ['spore', 7700], ['core', 7], ['spark', 1150]], work: () => 120, ...pips(1, TIER_BAND) },
 ];
 
 const out = document.getElementById('out');

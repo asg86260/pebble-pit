@@ -132,10 +132,10 @@ export const chained = rows => {
   return rows;
 };
 
-// Nine rungs to every ladder in the game -- see LADDER -- so that "how far along
-// is this" is one question with one answer wherever it is asked. The floor is
-// where it was when the ladders were five: a longer ladder is finer steps to
-// the same top, not a faster yard.
+// One length to every ladder in the game -- see LADDER -- so that "how far
+// along is this" is one question with one answer wherever it is asked. The
+// floor is where it was when the ladders were five: the length decides how
+// many steps it takes to reach the same top, not how fast the yard gets.
 const mineGap = swing(MINE_BASE, MINE_FLOOR, LADDER);
 const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, LADDER);
 const scoopGap = swing(HAUL_MS, 30, LADDER);

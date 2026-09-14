@@ -141,7 +141,7 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 //
 // They are still most of a dig -- nine tenths of a quarrier's frames, measured
 // -- which is why the pace ladder divides this (see `paceShare` in quarry.js):
-// at the top of its nine rungs a body shuffles five times as fast as this, and
+// at the top of its ladder a body shuffles five times as fast as this, and
 // the band-four multiplier goes over that. Ramps, scaffolding and rail carts
 // are what the rungs are called.
 export let CUT_STEP = 0.6;

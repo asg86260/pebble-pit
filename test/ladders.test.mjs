@@ -45,17 +45,17 @@ group('a ladder is one card, its pips in threes, and the bill deepens as they fi
   const row0 = rowOf('crop');
   const coins = () => rowOf('crop').bill().map(([m]) => m).filter(m => m !== 'time').sort().join();
   const c0 = coins();
-  const bought = [buyNow('crop'), buyNow('crop'), buyNow('crop')];
+  const bought = Array.from({ length: TIER_BAND }, () => buyNow('crop'));
   const second = showing(cards);
   const row = rowOf('crop');
 
   return [
     ok(first.join() === 'crop', 'the ladder is its first key', first.join() || 'none'),
     ok(row0 && rungsOf(row0) === TIER_OWN && row0.group === TIER_BAND,
-       'with nine pips in groups of three', row0 ? `${rungsOf(row0)} in ${row0.group}s` : 'no row'),
-    ok(bought.every(Boolean), 'and its first three rungs can be bought', bought.join()),
+       'with its pips in groups of a band', row0 ? `${rungsOf(row0)} in ${row0.group}s` : 'no row'),
+    ok(bought.every(Boolean), 'and its first card can be bought', bought.join()),
     ok(second.join() === 'crop', 'on the same card', second.join() || 'none'),
-    ok(S.cropLevel === TIER_BAND && rungOf(row) === TIER_BAND, 'three rungs on the ladder',
+    ok(S.cropLevel === TIER_BAND && rungOf(row) === TIER_BAND, 'a card of rungs on the ladder',
        `${S.cropLevel}, ${rungOf(row)} pips`),
     ok(c0 === 'dust' && coins() === 'dust,spore', 'and the bill has deepened by a coin',
        `${c0} -> ${coins()}`)
@@ -196,7 +196,7 @@ group('the speed ladders end where they always ended', async () => {
     ok(Math.abs(cellTop / cell0 - QUARRY_FLOOR / QUARRY_BASE) < 1e-9,
        'and a cell of the cut ends at the same fifth the row sells',
        `${(cellTop / cell0).toFixed(6)} vs ${(QUARRY_FLOOR / QUARRY_BASE).toFixed(6)}`),
-    ok(TIER_RUNGS === 12 && TIER_OWN === 9, 'twelve rungs, nine of them the field',
+    ok(TIER_RUNGS === TIER_BAND * 4 && TIER_OWN === TIER_RUNGS - TIER_BAND, 'four cards, the last of them the multiplier',
        `${TIER_RUNGS}/${TIER_OWN}`)
   ];
 });

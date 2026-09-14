@@ -35,16 +35,16 @@ import { rand } from './rng.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 
-// Where the two farm ladders stand: nine rungs of the level field, then three of
-// the multiplier over it. Everything that asks what the farm is worth asks in
+// Where the two farm ladders stand: the level field's own rungs, then a band
+// of the multiplier over it. Everything that asks what the farm is worth asks in
 // these terms, so a rung and the multiplier over it are one number rather than
 // two that have to be combined at each call.
 export const tendLadder = () => tierLevel('tendLevel', 'tend');
 export const cropLadder = () => tierLevel('cropLevel', 'crop');
 
 // how long one plot takes to come on, at this level of tending
-// From the base to the floor over the ladder's own nine rungs, the ninth rung
-// being the floor itself -- the same climb it always made, in finer steps. It
+// From the base to the floor over the ladder's own rungs, the last rung being
+// the floor itself -- the same climb it always made, in `TIER_OWN` steps. It
 // ran over `RUNGS` when the speed ladder was five rungs and the multiplier was a
 // rival row beside it; the ends have not moved.
 // Built when it is read, for the two reasons `quarryMs` sets out.

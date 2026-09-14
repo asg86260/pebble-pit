@@ -1,15 +1,17 @@
 # Still to do
 
-## A ladder is six rungs -- DESIGNED, building (2026-09-14)
+## A ladder is six rungs -- BUILT (2026-09-14)
 
 "A ladder is six rungs, and its length is one number" at the end of
 DESIGN.md. A tester found nine trips to the board per ladder tedious; the
 fix is `TIER_BAND` 3 -> 2 (six rungs, two a card), with rates easing to the
 same tops and counts keeping a whole unit a rung, so the count ladders' tops
-come down to between their five-rung and nine-rung figures. Blocker: none;
-the survey of anything hard-coded to nine is the build. The builders' 37%
-utilization ("The builder-throughput tuning pass") is untouched and still
-open.
+come down to between their five-rung and nine-rung figures. Built as one
+constant; see the as-built note. Worth a real play to feel whether six is
+right, since the per-ladder build total fell by about two thirds. The
+builders' 37% utilization ("The builder-throughput tuning pass") is
+untouched and still open, and the attended wait (a rung in flight refuses
+the next press) is a separate, smaller question the design names.
 
 ## The shields are the spine -- BUILT (2026-09-14)
 

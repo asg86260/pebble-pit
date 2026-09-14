@@ -33,7 +33,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, LADDER } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, LADDER, TIER_OWN } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -524,7 +524,7 @@ export const SCENES = {
   // pace have the cut out before the opening has let go of the camera.
   cutgangdeep: { about: 'the cut', say: 'three on the face, well up the pace ladder',
     run: () => { window.__reset(); window.__crew(2, 0, 3, 0); window.__fullSites(); window.__tip(90000);
-                 window.__levels({ quarryPaceLevel: 12 }); window.__fast(60); window.__look(st().quarryX - 220); } },
+                 window.__levels({ quarryPaceLevel: TIER_OWN }); window.__fast(60); window.__look(st().quarryX - 220); } },
   // The jaw's smoke, well into its climb: run the machine half a minute so
   // the plume has puffs at every age, then look at the air over the cut. What
   // this is for is the shape of the climb -- a cone that dissolves, not a
@@ -549,7 +549,7 @@ export const SCENES = {
   // interesting: band four asks for every coin the yard makes and band two for
   // two of them, so this is the shot for a deep bill fitting in a row.
   laddersdeep: { about: 'the plots', say: "the plots' board, deep on both ladders",
-    run: () => { rich(); window.__invest(); window.__levels({ cropLevel: 9, tendLevel: 4 }); window.__board('farm'); } },
+    run: () => { rich(); window.__invest(); window.__levels({ cropLevel: TIER_OWN, tendLevel: 4 }); window.__board('farm'); } },
   // One hand on the whole row. This is the shot the row is *for*: a single
   // body stooping over one plot with the other six visibly coming on behind
   // it, rather than one stalk and six patches of bare dirt.

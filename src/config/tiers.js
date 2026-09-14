@@ -1,18 +1,22 @@
 import { RUNGS } from './crew.js';
 
 // --- a ladder sold as four cards ----------------------------------------------
-// The farm and the quarry each sell two twelve-rung ladders, and a twelve-pip
-// row is a row nobody reads. So a ladder is broken into bands of three, each
-// band its own card with its own name: the card you can see is the band you are
-// on, and finishing one retires it and shows the next. See DESIGN.md, "What the
-// two grounds sell".
+// The farm and the quarry each sell two ladders as four cards, and a card is
+// a band of the ladder with its own bill: the pips you can see are grouped by
+// band, and the bill deepens as the groups fill. See DESIGN.md, "What the two
+// grounds sell" and "Every ladder is sold in bands".
 //
-// Three and four rather than any other pair, and they are here rather than
+// Two and four rather than any other pair, and they are here rather than
 // written into the helper because the shape of a ladder is a number about the
-// game, not a fact about the code that builds one.
-export const TIER_BAND = 3;                       // rungs to a card
+// game, not a fact about the code that builds one. The band was three, and a
+// nine-rung ladder was nine trips to the board with a builder to watch between
+// each; a rung has a size, a ladder has a length, and the length is this one
+// number (DESIGN.md, "A ladder is six rungs"). Rates ease to the same tops
+// over whatever the length is; counts keep a whole unit a rung and their tops
+// move with it.
+export const TIER_BAND = 2;                       // rungs to a card
 export const TIER_BANDS = 4;                      // cards to a ladder
-export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // twelve, all told
+export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // eight, all told
 // The last band is the multiplier over the ladder rather than more of the
 // ladder's own field, so the field itself only ever climbs this far.
 export const TIER_OWN = TIER_RUNGS - TIER_BAND;
@@ -25,7 +29,7 @@ export const TIER_OWN = TIER_RUNGS - TIER_BAND;
 // is left to the two crew multipliers and the tower's spark ladders, which are
 // outside that rule by decision.
 export const LADDER_BANDS = 3;                    // cards to an ordinary ladder
-export const LADDER = TIER_BAND * LADDER_BANDS;    // nine rungs, all told
+export const LADDER = TIER_BAND * LADDER_BANDS;    // six rungs, all told
 // The coins each card adds to the dust, first card to last.
 export const BAND_COINS = [[], ['spore'], ['spore', 'shard']];
 

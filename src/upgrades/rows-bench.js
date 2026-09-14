@@ -12,8 +12,8 @@ import { tierRows, named } from './tiers.js';
 // crops for the second, dust, crops and ore for the third (CLAUDE.md,
 // "Decided"). Strength and the pickaxe are a whole pixel a rung -- a sweep
 // picks up grains and a swing takes pixels, and neither comes in fractions --
-// so they are the two ladders that climb a little higher than they did at five
-// rungs; the swing is a rate and eases to the floor it always had.
+// so their tops move with the ladder's length (a pixel a rung, six rungs);
+// the swing is a rate and eases to the floor it always had.
 const YOU_CARRY = tierRows({
   field: 'carryLevel',
   // The same word the crew's row uses, because it is the same thing: how much

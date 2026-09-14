@@ -51,7 +51,7 @@ import { JOB, TYPE } from './jobs.js';
 // --- the pot's dials, level by level ------------------------------------------
 // Each eases straight across the ladder from its level-0 value to the top over
 // `LADDER`, the way the crit ladders do. The top is where it was when the
-// ladders were five rungs; nine is finer steps to it, not a better pot. A save
+// ladders were five rungs; the length is steps to it, not a better pot. A save
 // from before this landed reads as level nought rather than as some rung
 // nothing agrees with.
 const rung = lvl => Math.max(0, Math.min(LADDER, lvl | 0));

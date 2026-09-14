@@ -58,13 +58,13 @@ import { JOB, TYPE } from './jobs.js';
 // answering with the number the game started with -- and upgrades.js imports
 // this file, so a `swing(...)` run while this module's body is being evaluated
 // can be reached before upgrades.js has finished defining it.
-// Where the two quarry ladders stand: nine rungs of the level field, then three
-// of the multiplier over it. See `tierLevel`.
+// Where the two quarry ladders stand: the level field's own rungs, then a
+// band of the multiplier over it. See `tierLevel`.
 export const paceLadder = () => tierLevel('quarryPaceLevel', 'quarry');
 export const seamLadder = () => tierLevel('seamLevel', 'seam');
 
-// From the base to the floor over the ladder's own nine rungs, the ninth rung
-// being the floor itself. It ran over `RUNGS` when the speed ladder was five
+// From the base to the floor over the ladder's own rungs, the last rung being
+// the floor itself. It ran over `RUNGS` when the speed ladder was five
 // rungs and the multiplier was a rival row beside it; the ends have not moved,
 // only the number of steps between them.
 const quarryGap = lvl => swing(QUARRY_BASE, QUARRY_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
