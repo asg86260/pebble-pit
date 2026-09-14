@@ -22,8 +22,12 @@ Object.assign(window, {
   ...hooks.HANDLES,
   __placeBoard: seatBoard, __boardFit: boardFit,
   // dev: open a board without walking to the building and tapping it, for a
-  // check or a look at how a sheet lays out
-  __board: showPanel
+  // check or a look at how a sheet lays out. Now, both ways: a hook asking a
+  // board to go is an answer, not a pointer drifting off a station, so it
+  // gets no linger -- a check that put the board away and hovered a pot found
+  // the board still up for a tenth of a second and the picker refusing to open
+  // under it.
+  __board: which => showPanel(which, true)
 });
 
 // What the checks read. The yard's own account of itself comes from report.js,
