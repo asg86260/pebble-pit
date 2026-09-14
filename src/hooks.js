@@ -51,6 +51,7 @@ import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
 import { CASINO_UPGRADES, pickChip } from './casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
+import { holdSkip, skipScene } from './skip.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
@@ -1106,6 +1107,9 @@ export const HANDLES = {
   // instant later is really testing the skip. This ends the scene the way its
   // own clock would, so the press that follows is the press the check meant.
   __nocine: skipCutscene,
+  // The space bar, for the checks: held down or let go, and the skip it ends
+  // in, on its own.
+  __holdSkip: holdSkip, __skip: skipScene,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,

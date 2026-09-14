@@ -1,13 +1,13 @@
 // The keyboard and the cursor: holding the yard still, and what a shape says a
 // press will do.
 //
-// 4 groups, in the order they have always run in --
+// 5 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
          runUntil, haveBench } from './kit.js';
 import { S } from '../state.js';
-import { SHEET_FADE_MS } from '../config.js';
+import { SHEET_FADE_MS, SKIP_HOLD_MS } from '../config.js';
 import { fatal } from '../crash.js';
 
 export const TESTS = [
@@ -41,6 +41,37 @@ export const TESTS = [
          `${after.paused}, ${sheetGone}`),
       ok(after.workerPos.join() !== still.workerPos.join(),
          'and everybody carries on from exactly where they stopped')
+    ];
+  }],
+
+  // Space, held, skips the scene that has the yard -- through the key itself,
+  // since the node tier can only hold it through the hook. The hint under it
+  // is up while the opening runs and down once it is over.
+  ['space held skips the opening, and a tap does not', async () => {
+    newRun();
+    window.__reset(true);                      // the opening, playing
+    run(1);
+    const key = type => dispatchEvent(new KeyboardEvent(type, { key: ' ', code: 'Space', bubbles: true }));
+    await sleep(SHEET_FADE_MS + 60);
+    const hintUp = document.getElementById('skip').classList.contains('on');
+    key('keydown');
+    run(SKIP_HOLD_MS / 2000);
+    key('keyup');
+    run(1);
+    const tapped = state();
+    key('keydown');
+    key('keydown');                            // the browser's repeat, which must not restart the count
+    run(SKIP_HOLD_MS / 1000 + 0.1);
+    key('keyup');
+    const cut = state();
+    await sleep(SHEET_FADE_MS + 60);
+    const hintDown = !document.getElementById('skip').classList.contains('on');
+    window.__reset();
+    return [
+      ok(hintUp, 'the hint is up while the opening runs'),
+      ok(tapped.intro && !tapped.introDone, 'a tap of the key changes nothing', `${tapped.intro}`),
+      ok(!cut.intro && cut.introDone, 'held through, the opening is over', `${cut.intro}`),
+      ok(hintDown, 'and the hint goes with it'),
     ];
   }],
 

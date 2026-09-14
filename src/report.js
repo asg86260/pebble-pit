@@ -505,6 +505,7 @@ export const snapshot = () => ({
   riftCells: riftCells(),
   drowned: !!S.drowned,
   cine: S.cine ? S.cine.name : null,
+  cineOut: !!(S.cine && S.cine.out),        // let go, and on its way out
   // and the coins through it, which the counters do not distinguish: what you
   // own is what is in the hole plus what is in here
   riftHeld: { ...(S.riftHeld || {}) },

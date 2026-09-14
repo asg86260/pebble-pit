@@ -450,6 +450,11 @@ export const S = {
   // boots to walk in. Their own counts rather than more rungs on the first two
   // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
   introThrew: 0,          // when the opening's one throw was let go of
+  // Skipping (skip.js): when the space bar went down, on the game's clock, or
+  // 0; and whether the scene running was cut short, so a rescue cut mid-walk
+  // finishes its walk without its ceremony.
+  skipHeldAt: 0,
+  introCut: false,
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
   scrubMuck: 0,           // and part of a clod of muck, on its way out of the spout
@@ -790,7 +795,7 @@ export const EPHEMERAL = [
   'peakRow',
   // the opening, while it is running
   'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
-  'introThrew',
+  'introThrew', 'skipHeldAt', 'introCut',
   // a rock on its way down, and the celebration for the last one
   'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
   // ...and when the last one hit, which is only read for the spread it does on

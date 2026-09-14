@@ -66,6 +66,7 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
+import { stepSkip } from './skip.js';
 import { mineMs, restaff, staffSheds, take } from './upgrades.js';
 // The bench is built rather than delivered, and the row it is finished under is
 // registered by this file being loaded. Imported here rather than by the page,
@@ -262,6 +263,7 @@ export const STEPS = [
   { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
   { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
   { name: 'intro',        step: c => stepIntro(c.now) },  // and, once and once only, the two of them
+  { name: 'skip',         step: c => stepSkip(c.now) },   // the space bar, held through any of them
   { name: 'buried',       step: c => stepBuried(c.now) }, // and whoever is under the rock, when they can be seen
   { name: 'house',        step: c => stepHouse(c.now) },  // and the crew's own hearth, now and then
   { name: 'core',         step: stepCore },

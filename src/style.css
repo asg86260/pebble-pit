@@ -1459,3 +1459,30 @@ body.demo canvas { cursor: default; pointer-events: none; }
 @media (max-width: 560px) {
   .rows { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* The skip hint (skiphint.js): a strip at the bottom edge, in the held
+   sheet's small hand, the one black card on the page while a scene runs --
+   the yard's floor is white, and the toast's strip at the top is spoken for.
+   Under the held sheet's wash and over the boards, like the toast. The bar
+   is its own layer under the words, filling left to right for as long as
+   space is held; the words invert over it, so they stay legible on either. */
+.skip {
+  position: fixed;
+  z-index: 11;
+  left: 50%; bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px 5px;
+  background: #000;
+  border: 1px solid #fff;
+  outline: 1px solid #000;
+  font: 10px ui-monospace, "Courier New", monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s linear;   /* SHEET_FADE_MS in config/view.js */
+}
+.skip.on { opacity: 1; }
+.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; }
+.skip .say { position: relative; mix-blend-mode: difference; }

@@ -9175,3 +9175,57 @@ exactly where it ended at six.
   spark rung now and the gang is half again as quick.
 - The `invested` gate on the last band is gone; the bill's own coins gate it
   later than that flag ever did.
+
+## Skipping a scene (built)
+
+Four things take the yard away from the player for a while: the opening,
+the reunion after the first rock, the rescue under the dome, and the camera
+scenes. Each had its own idea about being skipped -- the camera scenes on any
+click, the opening through a dev hook, the other two not at all -- and the
+opening is twenty seconds long on every new yard, which is twenty seconds a
+player on their third yard has already seen.
+
+**One key, held.** Space, held for `SKIP_HOLD_MS`, ends whichever of them is
+running; a tap does nothing. Held rather than pressed because every one of
+these plays once, and a hand resting on the keyboard is not a decision. A
+hint at the bottom edge -- "hold space to skip", in the held sheet's small
+hand, the one black card on the page -- is up while a scene has the yard,
+with a bar filling under the words for as long as the key is down, so the
+hold is seen counting from the first frame and a hold let go early has lost
+nothing. The count is on the game's clock, so it does not run down under the
+held sheet. One hold is one skip: a key held through the end of a scene does
+not eat the start of the next. The camera scenes keep their click.
+
+**What a skip is, scene by scene.** `src/skip.js` only knows that a scene is
+running and that the key has been down long enough; what ending early means
+is each scene's own business (`cutIntro` in intro.js, `skipCutscene`):
+
+- The opening goes straight to the yard as it stands after all of it -- the
+  same `skipIntro` the checks use -- with one difference kept: the body. The
+  square the player was watching is the square that carries on, stood where
+  it stood, the bargain `begin` strikes when the opening plays out. And the
+  player has still not dragged anything, so the bench's row that waits for a
+  drag goes on waiting; the dev skip marks the yard played-from, this does
+  not.
+- The reunion goes straight to where it was going: the rock coming down
+  again. From the meeting, the parting is started and ended in one frame; the
+  rock falls out of the sky as it would have, the crew scatter, the view lets
+  go.
+- The rescue finishes its dig and keeps its walk. The one underneath is out
+  of the ground at once, but it walks clear at its own pace whatever the
+  player holds -- a square under the rock one frame and stood clear the next
+  is the one thing this game never shows. What is cut is the ceremony: the
+  hearts, and the wait on them before it joins the crew. A rescue already cut
+  is finishing its walk and is nobody's to hurry, so the hint goes down with
+  the hold.
+- A camera scene is let go the way a click lets it go: the camera eases back,
+  the moment plays on in the yard.
+
+**Where it lives.** `skip.js` in the simulation frame -- `skippable`,
+`holdSkip`, `stepSkip` in `STEPS` after the intro's -- and `skiphint.js` in
+the browser shell beside the toast; `input.js` turns the key into `holdSkip`
+on and off, ignoring the browser's repeats and a key pressed in the settings
+sheet's paste box, and a window losing focus lets go. `S.skipHeldAt` and
+`S.introCut` are ephemeral. Hooks `__holdSkip` and `__skip`;
+`test/skip.test.mjs` holds the key through all four the player's way, and
+the browser tier's `input.js` presses the real key.
