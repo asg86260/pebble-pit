@@ -108,24 +108,24 @@ export const SND_RATE = 44100;
 export const RECIPE_DEFAULTS = { bodyHold: 0, sub: 0, subHz: 50, subDrop: 2, subMs: 80, clickRaw: 0,
                                  noiseSlide: 1, noiseHold: 0, drive: 1.4 };
 //
-// Named as they were on the bench, and pasted in from it (2026-09-13, third
+// Named as they were on the bench, and pasted in from it (2026-09-13, fourth
 // mapping). A knob left at its RECIPE_DEFAULTS value is not written.
 export const RECIPES = {
-  'stone':        { wave: 'sine', hz: 145, slide: 0.5, slideMs: 120, decay: 10, level: 0.23, duty: 0.05,
+  'stone':        { wave: 'sine', hz: 266, slide: 0.5, slideMs: 120, decay: 10, level: 0.23, duty: 0.05,
                     click: 0.03, clickMs: 0.5, clickHz: 500,
                     noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
                     bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
-  'stone 2':      { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 0.24, duty: 0.05,
-                    click: 0, clickMs: 0.5, clickHz: 500,
-                    noise: 0.51, noiseHz: 720, noiseQ: 1.7, noiseMs: 5,
-                    bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
-  'worker mine':  { wave: 'sine', hz: 110, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05,
-                    click: 0, clickMs: 2.3, clickHz: 500,
+  'stone 2':      { wave: 'sine', hz: 359, slide: 0.5, slideMs: 72, decay: 10, level: 0.24, duty: 0.05, bodyHold: 13,
+                    click: 0, clickMs: 0.9, clickHz: 500,
+                    noise: 1, noiseHz: 320, noiseQ: 0.3, noiseMs: 34,
+                    bits: 16, hold: 1, cut: 1500, drive: 2.1, gain: 0.67, vary: 1 },
+  'worker mine':  { wave: 'sine', hz: 110, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05, bodyHold: 9,
+                    click: 0.03, clickMs: 1.3, clickHz: 500,
                     noise: 1, noiseHz: 60, noiseQ: 0.3, noiseMs: 5,
-                    bits: 14, hold: 1, cut: 2500, gain: 0.8, vary: 1 },
-  'worker crit':  { wave: 'sine', hz: 110, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05,
+                    bits: 14, hold: 1, cut: 3400, drive: 1.7, gain: 0.74, vary: 1 },
+  'worker crit':  { wave: 'sine', hz: 231, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05, bodyHold: 16,
                     click: 0.1, clickMs: 2.3, clickHz: 500,
-                    noise: 1, noiseHz: 240, noiseQ: 2.4, noiseMs: 5,
+                    noise: 1, noiseHz: 240, noiseQ: 1.8, noiseMs: 31,
                     bits: 16, hold: 1, cut: 1300, gain: 0.8, vary: 1 },
   'boulder-land': { wave: 'sine', hz: 20, slide: 0.25, slideMs: 1, decay: 10, level: 1, duty: 0.05,
                     click: 1, clickMs: 0.5, clickHz: 8000,
@@ -155,7 +155,7 @@ export const RECIPES = {
 // per event under a ceiling of its own -- and the recipe is
 // a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
 // event is still decided and counted, and never rendered. The mapping is the
-// one the player made on the bench (2026-09-13, third mapping): silence where it says
+// one the player made on the bench (2026-09-13, fourth mapping): silence where it says
 // silence. The dev panel's `sounds` tab takes the bench's mapping JSON and
 // lays it over this table live, and `applySounds` in audio.js is what does
 // the laying.
