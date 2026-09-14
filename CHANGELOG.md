@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+## v0.1.16 — 2026-09-14
+
 - Quarriers stand on the floor of the cut after a reload instead of a course above it, working the air.
 - Quarriers walking the finished floor of the cut walk on it, instead of floating a course above its dips.
 - When a cut is finished the gang walks out from the floor, instead of standing up in a line above it and sliding down.
