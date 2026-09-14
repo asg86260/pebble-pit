@@ -1,6 +1,6 @@
 // The core buried in each rock: how it comes loose, and how it is banked.
 
-import { P, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM } from './config.js';
 import { S, pit } from './state.js';
 import { noteRockCleared } from './notices.js';
 import { addGrain } from './grid.js';
@@ -10,7 +10,8 @@ import { buildShop } from './shop.js';
 import { GRAV } from './config.js';
 import { floor } from './state.js';
 import { at, colOf, surfaceY } from './grid.js';
-import { boulderAlive, makeBoulder } from './rock.js';
+import { boulderAlive, makeBoulder, dropZone } from './rock.js';
+import { onYard } from './crew/body.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { introHolds } from './intro.js';
@@ -64,6 +65,20 @@ export function pileTop(col) {
   return surfaceY(floor, Math.max(0, Math.min(floor.cols - 1, col))) + P;
 }
 
+// Nobody is standing on the ground the next rock is coming down on. The crew
+// step out of the footprint the moment the last rock dies (the drop-zone stage
+// in crew/step.js), and the rock waits in the sky for them: a gang stood in the
+// middle of a rock cannot cross half of it in the time a fall takes, and the
+// dance that used to buy them that time is gone from every rock but the first.
+// A body in your hand or seeing stars over the footprint cannot step out of it,
+// so `nextBoulderAt` still brings the rock down rather than hold the yard on
+// one body for ever.
+const footprintClear = () => {
+  const zone = dropZone();
+  if (!zone) return true;
+  return !S.workers.some(w => onYard(w) && w.x + WORKER > zone.from && w.x < zone.to);
+};
+
 export function stepCore() {
   // Nothing rolls in while a scene owns the yard. The opening is deliberately
   // empty for those few seconds -- two squares and bare ground -- and the second
@@ -71,6 +86,18 @@ export function stepCore() {
   // below, that a bare yard gets a rock, is exactly the rule that would spoil
   // both.
   if (introHolds()) return;
+
+  // The second dance, after the sqwife is saved. It starts when the player
+  // puts the `#saved` sheet down (`storyTold`, set only by the sheet's button
+  // in ending.js), not while the sheet still hides the yard -- a party nobody
+  // can see is not one. Kept as a saved fact so it plays once: a yard that has
+  // danced this already does not dance again on reload, and a save written
+  // before the field existed loads with it already marked (persist.js).
+  if (S.storyTold && !S.storyDanced) {
+    S.storyDanced = true;
+    if (S.rockhands > 0) S.danceUntil = now() + DANCE_MS;
+    S.dirty = true;
+  }
 
   // The moment the last pixel goes the rock is done with. If there was a core in
   // it, it is loose now and falls from the middle; if there was not -- the first
@@ -82,9 +109,13 @@ export function stepCore() {
   if (S.coreBuried && !boulderAlive()) {
     if (S.boulderNo >= CORE_FROM) dropCore();
     else S.coreBuried = false;
-    // No dancers, no dance: on a game with nobody hired yet this would be five
-    // seconds of standing about, and that is most of the early game.
-    S.danceUntil = S.rockhands > 0 ? now() + DANCE_MS : 0;
+    // The dance is for the first rock only. Every rock used to get one, and
+    // five seconds plus a fall on every rock is a wait the player sat through
+    // for weeks; the rocks that earn a celebration are the first one and the
+    // rescue (below). After any other rock the crew go straight back to work.
+    // No dancers, no dance either: on a game with nobody hired yet this would
+    // be five seconds of standing about, and that is most of the early game.
+    S.danceUntil = S.boulderNo === 1 && S.rockhands > 0 ? now() + DANCE_MS : 0;
     S.nextBoulderAt = now() + 2500;      // backstop if it never falls clear
     S.dirty = true;
   }
@@ -104,9 +135,10 @@ export function stepCore() {
   // the next rock rolls in once the core has dropped out of its way
   if (!S.coreBuried && !boulderAlive()) {
     const clear = !S.coreItem || S.heldCore || S.coreItem.rest;   // it has rolled clear
-    // Nothing lands on top of the celebration. The next rock waits for the
-    // crew to finish, then comes down out of the sky on to the bare ground.
-    if ((clear || now() > S.nextBoulderAt) && now() >= S.danceUntil) {
+    // Nothing lands on top of the celebration, or on top of anybody. The next
+    // rock waits for the crew to finish and to step clear of its footprint,
+    // then comes down out of the sky on to the bare ground.
+    if (((clear && footprintClear()) || now() > S.nextBoulderAt) && now() >= S.danceUntil) {
       noteRockCleared();   // what the one just finished was like
       S.boulderNo++;
       makeBoulder(true);

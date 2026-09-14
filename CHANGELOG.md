@@ -10,6 +10,7 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- The crew only dance after the first rock and after the rescue; every other rock they get straight back to work.
 - The quarry's ore yield rungs stay bought across a reload.
 
 ## v0.1.16 — 2026-09-14

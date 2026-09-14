@@ -158,7 +158,10 @@ group('the crew get out from under the next rock', async () => {
 group('the crew dance rather than vibrate while the next rock falls', async () => {
   window.__crew(4, 0);
   quickCrew();
-  window.__jump(4);
+  // Rock one, because it is the only rock that gets a dance now (wave polish,
+  // A1) -- and with the reunion already behind it, since the first rock's
+  // finish is otherwise the meeting, which is a beat and not a party.
+  S.reunionDone = true;
   haveRock();
   run(6);
   window.__next();
