@@ -8,7 +8,7 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
+import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo, plant } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
          QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
@@ -603,7 +603,18 @@ export function stepQuarrier(w, now, ctx = null) {
   // bottom of the column it has dug, or the top of whatever dust has fallen in
   // on top of that -- see `cutTop`. The body goes down with its own work and
   // rides up on anything that piles up under its feet.
-  w.y = cutTop(w.x + WORKER / 2) - WORKER + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
+  //
+  // Planted, not written: the feet go through `plant` so the climber's memory
+  // (`w.foot`, route.js) goes down with them. Written as a position, the body
+  // went down the cut course by course with its feet, on the climber's books,
+  // still on the course its last route had ended on. The first route after
+  // that -- the walk out when the cut is done, or in after a reload -- eased
+  // from that stale height: the whole gang stood up in a line a course or
+  // more above the floor and slid down to it a cell a frame (the picture the
+  // player sent, 2026-09-14). The sway is then a sway on top of the feet,
+  // as the dance's jump is, and not a position the climber is asked to trust.
+  plant(w, cutTop(w.x + WORKER / 2) - WORKER);
+  w.y += Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
 
   // Nowhere to put a seam, so nothing to do but stand on the dirt. See break.js.
   //

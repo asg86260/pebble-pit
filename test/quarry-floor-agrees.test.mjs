@@ -12,7 +12,7 @@ import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { persist } from '../src/persist.js';
 import { S, cut, quarry } from '../src/state.js';
 import { P, WORKER, ROCK_CELL } from '../src/config.js';
-import { quarryCells, quarryTarget, dugTopY, cutTop } from '../src/quarry.js';
+import { quarryCells, quarryTarget, dugTopY, cutTop, cellsLeft, quarryDone } from '../src/quarry.js';
 import { at, put } from '../src/grid.js';
 
 const quarriers = () => S.workers.filter(w => w.type === 'quarrier');
@@ -85,5 +85,44 @@ group('the gang walks the finished floor out to the ladder on it, not a course a
     ok(walked >= 40, 'bodies walked the floor', `${walked} body-frames`),
     ok(streak <= 3, 'and never stood a course above the floor under their middle',
        `${up} of ${walked} frames up, longest ${streak} frames running`),
+  ];
+});
+
+// The gang comes in near the top and digs its way down, course by course. The
+// dig used to write the body's height as a position, leaving the climber's
+// memory (`w.foot`) on the course the descent had ended on -- so the first
+// route after the dig, the walk out when the cut was done, eased from up
+// there: the whole gang stood up in a line a course or more above the floor
+// and slid down to it. The picture the player sent, 2026-09-14.
+group('when the cut is done the gang walks out from the floor, not from the course it came in on', async () => {
+  window.__crew(0, 6, 5, 0); window.__fullSites(); window.__tip(90000);
+  runUntil(() => quarriers().some(w => w.goal === 'work'), 60);
+  // Let them arrive and dig a while, so the climber's memory is well above
+  // the floor they end on; then take the cut down to its last courses and
+  // wait for the whole gang to be down there working them.
+  run(10);
+  const deepest = Math.max(...columns().map(quarryTarget));
+  window.__digCut(deepest - 4);
+  runUntil(() => quarriers().every(w => w.goal === 'work' && w.y + WORKER > S.groundY + P * 10), 120);
+  const deep = quarriers().filter(w => w.y + WORKER > S.groundY + P * 10).length;
+  // The frame each body's walk out begins on: its feet against the floor
+  // under its middle. Before the fix that frame put a body up to seventeen
+  // courses above the floor, from where it slid down a cell a frame. (Later
+  // in the walk a body stepping off a wall bench eases down the face at the
+  // climber's pace, which is the climber's own business and not this.)
+  const starts = [], seen = new Set();
+  for (let f = 0; f < 60 * 240 && starts.length < 5; f++) {
+    run(1 / 60);
+    for (const w of quarriers()) {
+      if (w.goal !== 'up' || !w.route || seen.has(w)) continue;
+      seen.add(w);
+      starts.push((dugTopY(w.x + WORKER / 2) - (w.y + WORKER)) / P);
+    }
+  }
+  return [
+    ok(deep === 5, 'the whole gang was down on the last courses', `${deep} of 5`),
+    ok(starts.length === 5 && quarryDone(), 'the gang dug them out and every body set off for the ladder', `${starts.length} of 5`),
+    ok(starts.every(g => Math.abs(g) < 1.2), 'each from the floor it was standing on, not from the course it came in on',
+       starts.map(g => g.toFixed(1)).join(' ') + ' cells up'),
   ];
 });
