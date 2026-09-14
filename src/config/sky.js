@@ -299,7 +299,7 @@ export const BOLT_KINK = 0.35;      // the chance a segment changes its jog, els
 // off each cell with EMBER_PER_CELL odds -- thrown out sideways a little,
 // rising at EMBER_RISE pixels a frame and slowing as they go, carried by the
 // wind like the rain, and fading out over EMBER_LIFE_S.
-export const EMBER_PER_CELL = 0.6;
+export const EMBER_PER_CELL = 0.3;
 export const EMBER_RISE = 0.9;
 export const EMBER_SCATTER = 0.7;   // sideways throw either way, pixels a frame
 export const EMBER_EASE = 1.4;      // how fast the throw and the rise die off, a share a second

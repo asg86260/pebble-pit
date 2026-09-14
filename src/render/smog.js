@@ -360,11 +360,9 @@ export function drawBolt() {
     ctx.fill();
     ctx.globalAlpha = 1;
   }
-  // and the embers off it: a white cell in a black rim, so a spark reads on
-  // the white sky and on a black heap alike -- black alone vanished into the
-  // ground it was thrown off. On the cell grid, thinning as it goes, bucketed
-  // by weight like the haze is so a burst is a handful of fills and not one
-  // fill per speck.
+  // and the embers off it: black cells on the grid, thinning as they go,
+  // bucketed by weight like the haze is so a burst is a handful of fills and
+  // not one fill per speck.
   if (!EMBERS.length) return;
   const runs = new Map();
   for (const e of EMBERS) {
@@ -376,13 +374,9 @@ export function drawBolt() {
     if (!run) runs.set(a, run = []);
     run.push(Math.round(e.x / P) * P, Math.round(e.y / P) * P);
   }
+  ctx.fillStyle = '#000';
   for (const [a, at] of runs) {
     ctx.globalAlpha = a;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    for (let i = 0; i < at.length; i += 2) ctx.rect(at[i] - 1, at[i + 1] - 1, P + 2, P + 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
     ctx.beginPath();
     for (let i = 0; i < at.length; i += 2) ctx.rect(at[i], at[i + 1], P, P);
     ctx.fill();
