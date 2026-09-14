@@ -4,7 +4,7 @@
 // module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
-import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -325,13 +325,18 @@ export function drawRain() {
   // vertical dash nudged over by the gust was still a vertical dash -- rain in
   // a wind comes down slanted, the whole sheet at one angle.
   const lean = gust() * RAIN_LEAN;
+  // The dash is as long as the drop is fast: its place in the speed range,
+  // spread over the lengths. Slow far flecks, long near strokes.
+  const slowest = RAIN_FALL - RAIN_FALL_GIVE / 2;
+  const cellsPer = (RAIN_DASH_MAX - RAIN_DASH_MIN + 1) / (RAIN_FALL_GIVE || 1);
   ctx.fillStyle = MUCK_GREY;
   ctx.beginPath();
   for (const d of DROPS) {
     if (!onScreen(d.x)) continue;
     const x = Math.round(d.x), y = Math.round(d.y);
     const step = lean / d.vy * P;             // sideways per cell of fall
-    for (let k = 0; k < RAIN_DASH; k++)
+    const len = Math.min(RAIN_DASH_MAX, RAIN_DASH_MIN + Math.floor((d.vy - slowest) * cellsPer));
+    for (let k = 0; k < len; k++)
       ctx.rect(x - Math.round(k * step), y - k * P, P, P);
   }
   ctx.fill();

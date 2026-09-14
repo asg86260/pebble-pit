@@ -264,16 +264,23 @@ export const RAIN_TAPER_FLOOR = 0.1; // and never below this share of the rate
 // went on gaining speed all the way down the window -- and these did, under a
 // gravity constant, from a walk at the top to a dive at the ground -- read as
 // something being dropped rather than as rain. The give is how much one drop
-// may differ from the next; a shower where every drop kept exact pace was a
-// curtain sliding down.
-export let RAIN_FALL = 4.5;
-export const RAIN_FALL_GIVE = 1.5;
+// may differ from the next, either way about the middle; a shower where every
+// drop kept exact pace was a curtain sliding down. It is wide, because the
+// speed is also the depth -- see RAIN_DASH_MIN.
+export let RAIN_FALL = 6.5;
+export let RAIN_FALL_GIVE = 4;
 // How far the wind carries a drop sideways at a full gust. A drop is light and
 // goes where the air goes, so the whole sheet leans together and swings with
 // the gust; the dash is drawn along the way its drop is actually going --
 // straight down in a lull, slanted in a blow.
 export let RAIN_LEAN = 2.2;
-export const RAIN_DASH = 3;         // cells in a dash, head and trail
+// How long a dash is, in cells, from the slowest drop to the fastest. A streak
+// is how far a drop goes while the eye holds it, so the fast ones are the long
+// ones -- and since the fast ones are the near ones, the shower gets a depth
+// to it: short flecks far off, long strokes close in. Every dash one length
+// was a stencil.
+export const RAIN_DASH_MIN = 2;
+export const RAIN_DASH_MAX = 5;
 // The share of what lands that leaves a mark. The whole sky falls either way --
 // every mote is a drop you can watch come down -- and this is how much of it is
 // filth rather than water.
@@ -363,6 +370,8 @@ export const SKY_KNOBS = [
     get: () => RAIN_RISE_S, set: v => { RAIN_RISE_S = v; } },
   { key: 'RAIN_FALL', label: 'rain speed', min: 1, max: 12, step: 0.25,
     get: () => RAIN_FALL, set: v => { RAIN_FALL = v; } },
+  { key: 'RAIN_FALL_GIVE', label: 'rain spread', min: 0, max: 8, step: 0.25,
+    get: () => RAIN_FALL_GIVE, set: v => { RAIN_FALL_GIVE = v; } },
   { key: 'RAIN_LEAN', label: 'rain lean', min: 0, max: 6, step: 0.1,
     get: () => RAIN_LEAN, set: v => { RAIN_LEAN = v; } },
   // wave7-sky
