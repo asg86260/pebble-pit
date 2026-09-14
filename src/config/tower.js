@@ -118,6 +118,17 @@ export const TOWER_WAVE_N = 3;       // and how many are on their way at once
 export const TOWER_WAVE_R = 96;      // how far one gets before it is spent
 export const WIZ_RISE = 1.4;         // pixels a frame it floats, up or down
 export const WIZ_BOB = 2.2;          // and how far it drifts as it hangs there
+// The flight to the dome is a different thing from the climb to the star. The
+// climb is four hundred feet straight up and slow on purpose; the dome is the
+// whole width of the yard away, and at a climbing pace a wizard called off
+// the star took most of a minute to get there, drifting over the houses with
+// nothing to do. So it flies: at full tilt across the yard, easing off over
+// the last stretch so it arrives at the ring rather than hitting it.
+export const WIZ_DASH = 12;          // pixels a frame, flat out
+export const WIZ_DASH_EASE = 12;     // pixels of run-in per pixel a frame of pace
+// And it starts pouring as it comes in, from about this far out, so the beam
+// reaches the dome as the body does rather than a beat after it has stopped.
+export const WIZ_REACH = 220;
 
 // --- what the star looks like ---------------------------------------------------
 // It is a star, not a stone. The crust is black and dead and the core under it is

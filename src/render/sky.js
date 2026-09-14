@@ -9,6 +9,7 @@ import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { domeRising, domeSpot, domeAt } from '../shield.js';
+import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
 
 // The thing in the sky is a star, and a small one: a dead black crust with fire
@@ -27,6 +28,12 @@ import { cell } from './marks.js';
 export function drawSky() {
   if (!S.skyShown && !S.meteorOpen) return;
   drawTrail();
+  // A dome being cast is the wizards' other summoning, and it goes on whether
+  // or not there is a star up: they are called off it. So its beams are drawn
+  // here, before the sky decides what else it is showing -- they used to live
+  // inside the empty-sky branch, and with a star still burning the wizards
+  // hung over the dome pouring nothing anybody could see.
+  if (domeRising()) drawBeams(true, domeAt(), domeSpot());
   // Being made. The ring is pouring into the middle of an empty sky, so what is
   // there is whatever they have poured so far -- see `drawSummon`.
   if (S.meteorOpen && (!sky.cells || !sky.n)) { drawSummon(); return; }
@@ -105,6 +112,58 @@ function drawCorona(hot) {
   ctx.fillStyle = '#000';
 }
 
+// The beams: one steady line of cells from each body that is pouring, and a
+// bead of light running down it, from the ring to whatever is being made --
+// the star coming into an empty sky, or the dome, which is the same act aimed
+// at the ground. The brightness rides the making's own progress. Every cell
+// used to flicker on its own clock, which is not a beam -- it is a shower of
+// confetti in the rough shape of one. A quiet line says where the magic is
+// going; the bead says it is going.
+function drawBeams(dome, at, mid) {
+  const t = now() / 1000;
+  for (const w of S.workers) {
+    if (!w.channel || !w.aloft) continue;
+    const fx = w.x + WORKER / 2, fy = w.y + WORKER / 2;
+    // A star is poured into its middle. A dome is poured on to its growing
+    // edges -- both horns, from every body -- so the beams land on the thing
+    // being made and climb the shell with it. Both rather than the nearer,
+    // because the ring turns: a beam that picked a side would jump to the
+    // other horn every time its body crossed the middle.
+    const ends = dome ? [domeEdge(-1), domeEdge(1)] : [mid];
+    for (const end of ends) {
+      const dx = end.x - fx, dy = end.y - fy;
+      const len = Math.hypot(dx, dy) || 1;
+      const from = P * 2, to = len - P * 2;
+
+      // The dome's beam starts strong: it is landing on a thing already there,
+      // and a beam that had to wait for the pour to be visible was a wizard
+      // hanging over the yard doing nothing anybody could see.
+      ctx.globalAlpha = dome ? 0.5 + at * 0.3 : 0.2 + at * 0.35;
+      ctx.fillStyle = MAGIC_TONES[2];
+      ctx.beginPath();
+      for (let d = from; d < to; d += P) {
+        ctx.rect(Math.round((fx + dx * (d / len)) / P) * P,
+                 Math.round((fy + dy * (d / len)) / P) * P, P, P);
+      }
+      ctx.fill();
+
+      // and the bead: two cells, running inward, on this body's own phase so a
+      // ring of them is not one flash repeated
+      ctx.globalAlpha = 0.55 + at * 0.45;
+      ctx.fillStyle = MAGIC_TONES[0];
+      const k = (t * 0.55 + (w.ph || 0) / (Math.PI * 2)) % 1;
+      for (const off of [0, P]) {
+        const d = from + (to - from) * k + off;
+        if (d < from || d > to) continue;
+        ctx.fillRect(Math.round((fx + dx * (d / len)) / P) * P,
+                     Math.round((fy + dy * (d / len)) / P) * P, P, P);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
 // A star being made.
 //
 // Every body in the ring pours into the middle of the empty spot, and what is
@@ -118,56 +177,15 @@ function drawCorona(hot) {
 // knot is the same red the core is drawn in, and the flash is a ring of cells
 // going out.
 function drawSummon() {
-  // The beams point at whatever is being made: nearly always the star coming
-  // into an empty sky -- and, once in a game, the dome, which is the same act
-  // aimed at the ground. The brightness rides the making's own progress.
-  const dome = domeRising();
-  const at = dome ? domeAt() : summonAt();
-  const mid = dome ? domeSpot() : { x: sky.x, y: sky.y };
+  const at = summonAt();
+  const mid = { x: sky.x, y: sky.y };
   const tones = FIND_COLOR[SPARK_CELL];
-  const t = now() / 1000;
 
   drawFlash();
-  if (at <= 0 && !S.workers.some(w => w.channel)) return;
-
-  // The beams: one steady line of cells from each body that is pouring, and a
-  // bead of light running down it. Every cell used to flicker on its own clock,
-  // which is not a beam -- it is a shower of confetti in the rough shape of one.
-  // A quiet line says where the magic is going; the bead says it is going.
-  for (const w of S.workers) {
-    if (!w.channel || !w.aloft) continue;
-    const fx = w.x + WORKER / 2, fy = w.y + WORKER / 2;
-    const dx = mid.x - fx, dy = mid.y - fy;
-    const len = Math.hypot(dx, dy) || 1;
-    const from = P * 2, to = len - P * 2;
-
-    ctx.globalAlpha = 0.2 + at * 0.35;
-    ctx.fillStyle = MAGIC_TONES[2];
-    ctx.beginPath();
-    for (let d = from; d < to; d += P) {
-      ctx.rect(Math.round((fx + dx * (d / len)) / P) * P,
-               Math.round((fy + dy * (d / len)) / P) * P, P, P);
-    }
-    ctx.fill();
-
-    // and the bead: two cells, running inward, on this body's own phase so a
-    // ring of them is not one flash repeated
-    ctx.globalAlpha = 0.55 + at * 0.45;
-    ctx.fillStyle = MAGIC_TONES[0];
-    const k = (t * 0.55 + (w.ph || 0) / (Math.PI * 2)) % 1;
-    for (const off of [0, P]) {
-      const d = from + (to - from) * k + off;
-      if (d < from || d > to) continue;
-      ctx.fillRect(Math.round((fx + dx * (d / len)) / P) * P,
-                   Math.round((fy + dy * (d / len)) / P) * P, P, P);
-    }
-  }
-  ctx.globalAlpha = 1;
-
-  // No knot for the dome: the thing being made is the dome itself, already on
-  // screen and already growing -- a second red disc at the crown would be the
-  // picture arguing with itself, and red is the star's color, not the ring's.
-  if (dome) { ctx.fillStyle = '#000'; return; }
+  // While the dome is rising the ring is over the dome and its beams are
+  // already drawn; what is left here is whatever star they had poured so far.
+  if (at <= 0 && (domeRising() || !S.workers.some(w => w.channel))) return;
+  if (!domeRising()) drawBeams(false, at, mid);
 
   // And the knot in the middle: a solid disc of the star's own fire, opening out
   // as it takes. Its edge is an edge -- it was fraying cell by cell on its own

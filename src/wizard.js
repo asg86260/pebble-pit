@@ -18,8 +18,8 @@
 // the four hundred pixels back down to the yard, where the haulers deal with it
 // like anything else lying about.
 
-import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
-         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, BROLLY_FALL } from './config.js';
+import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN, WIZ_DASH, WIZ_DASH_EASE,
+         WIZ_REACH, WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, BROLLY_FALL } from './config.js';
 import { frames } from './clock.js';
 import { S, sky } from './state.js';
 import { STEP } from './mult.js';
@@ -116,7 +116,11 @@ function spaceOut(w, secs) {
 // scatters are the same magic.
 function trail(w, now) {
   if (now < (w.trailAt || 0)) return;
-  w.trailAt = now + WIZ_TRAIL_MS * (0.7 + rand() * 0.6);
+  // Specks by the pixel rather than by the clock: a body flat out across the
+  // yard sheds as many per pixel as one climbing, which makes its trail a
+  // streak instead of a row of dots forty pixels apart.
+  const gait = Math.max(1, (w.pace || WIZ_RISE) / WIZ_RISE);
+  w.trailAt = now + WIZ_TRAIL_MS / gait * (0.7 + rand() * 0.6);
   sparkle(w.x + WORKER / 2 + (rand() - 0.5) * P * 2, w.y + WORKER - P / 2,
           (rand() - 0.5) * 0.3,
           0.15 + rand() * 0.25,      // it sinks: it is falling out of the spell
@@ -186,9 +190,15 @@ export function stepWizard(w, now) {
   // Out to under it first, on the ground, before any of the going up. A wizard
   // that rose from wherever it happened to be standing would be a wizard
   // crossing the yard at four hundred feet, over the rock and the houses.
+  //
+  // The dome is the exception, because the dome is a call: it lifts off where
+  // it stands and flies there. The ring over a dome hangs a few cells above
+  // the crown, so the flight is low and the body is watched the whole way --
+  // and a wizard that walked the width of the yard to it at a tradesman's pace
+  // arrived after the rock did.
   if (!w.aloft) {
-    const d = (domeRising() ? domeSpot().x - WORKER / 2 : (w.spot ?? underMeteor())) - w.x;
-    if (Math.abs(d) > 1) {
+    const d = (w.spot ?? underMeteor()) - w.x;
+    if (!domeRising() && Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.6, Math.abs(d));
       w.y = walkY(w.x + WORKER / 2);
       return;
@@ -226,8 +236,17 @@ export function stepWizard(w, now) {
     const tx = mid.x + (mx - mid.x) * want - WORKER / 2;
     const ty = mid.y + (my - mid.y) * want - WORKER / 2;
     const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy) || 1;
-    w.x += (dx / d) * Math.min(WIZ_RISE, d);
-    w.y += (dy / d) * Math.min(WIZ_RISE, d);
+    // The climb to the star is a pixel and a bit a frame, on purpose. The
+    // flight to the dome is flat out, easing off over the last stretch so it
+    // settles on to the ring instead of overshooting it -- see WIZ_DASH.
+    const pace = (domeRising() ? Math.min(WIZ_DASH, Math.max(WIZ_RISE, d / WIZ_DASH_EASE))
+                               : WIZ_RISE) * frames();
+    w.pace = pace / frames();
+    w.x += (dx / d) * Math.min(pace, d);
+    w.y += (dy / d) * Math.min(pace, d);
+    // Pouring starts on the way in, once the dome is within reach: the beam
+    // lands as the body arrives rather than a beat after it has stopped.
+    w.channel = domeRising() && d < WIZ_REACH;
     w.next = Math.max(w.next, now + wizMs() / 2);   // no throwing while travelling
     // and it takes its place on the ring from where it got there, so there is
     // nothing to travel round to
@@ -235,6 +254,7 @@ export function stepWizard(w, now) {
     return;
   }
   if (w.orb0 == null) w.orb0 = Math.atan2(my - mid.y, mx - mid.x) - now / 1000 * WIZ_SPIN;
+  w.pace = 0;
   spaceOut(w, 1 / 60);
 
   const to = ringSpot(w, now);
@@ -243,8 +263,9 @@ export function stepWizard(w, now) {
   const d = Math.hypot(dx, dy);
   if (d > WIZ_RISE) {
     // along the ring to its own place on it, never through the middle
-    w.x += (dx / d) * Math.min(WIZ_RISE, d);
-    w.y += (dy / d) * Math.min(WIZ_RISE, d);
+    const pace = WIZ_RISE * frames();
+    w.x += (dx / d) * Math.min(pace, d);
+    w.y += (dy / d) * Math.min(pace, d);
     return;
   }
 

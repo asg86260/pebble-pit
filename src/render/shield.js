@@ -10,13 +10,15 @@
 import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES } from '../config.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
-import { KINDS, risingShield } from '../shield.js';
+import { KINDS, risingShield, domeAt } from '../shield.js';
 import { ctx } from './ctx.js';
 
 export function drawShield() {
   let s = S.shield;
   let done;
-  if (s) done = Math.min(1, s.laid / KINDS[s.kind].pieces);
+  // The dome's progress is read off the pour rather than the ring count, so
+  // it creeps rather than steps -- see `domeAt`.
+  if (s) done = KINDS[s.kind].cast ? domeAt() : Math.min(1, s.laid / KINDS[s.kind].pieces);
   else {
     // Nothing standing -- but something may be going up. A shield under
     // construction is a work in works.js, hammered at under the yard's own
@@ -144,13 +146,33 @@ function drawNet(s, done, topY, cols) {
 // deepest -- so the band reads as brighter and dimmer round its length instead
 // of as a stripe traveling along a solid object. That is the difference between
 // a rope light and a charged surface.
+// The shell's geometry this instant, shared with the beams that are making
+// it: half the span in cells, the radius (breathing), and the angle a whole
+// quarter-shell closes through.
+function domeShell(s) {
+  const a = s.w / P / 2;
+  // the shell breathes: the whole radius swells and settles by a cell
+  const R = a - 1 + Math.sin(now() / 1000 * 1.7) * 0.9;
+  return { a, R, total: Math.PI / 2 };
+}
+
+// Where the dome is being made this instant: the tip of the horn on one side
+// (`side` -1 for the left, 1 for the right), in world pixels. The beams land
+// here rather than on the crown, because the crown is empty air until the
+// last of the pour, and a beam poured into nothing is a beam pointed at the
+// wrong place.
+export function domeEdge(side) {
+  const s = S.shield;
+  const { a, R, total } = domeShell(s);
+  const ang = domeAt() * total;
+  return { x: s.x + (a + Math.cos(ang) * R * side) * P,
+           y: S.groundY - (Math.sin(ang) * R + 0.5) * P };
+}
+
 function drawDome(s, done, topY, cols) {
   const t = now() / 1000;
-  const a = cols / 2;
+  const { a, R, total } = domeShell(s);
   const T = 2;
-  const total = Math.PI / 2;
-  // the shell breathes: the whole radius swells and settles by a cell
-  const R = a - 1 + Math.sin(t * 1.7) * 0.9;
   for (let c = 0; c < cols; c++) {
     const dx = Math.abs(c + 0.5 - a);
     for (let r = 0; r < s.h; r++) {

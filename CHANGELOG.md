@@ -17,6 +17,9 @@ this file is for things that were broken.
 - The end-of-story sheet and the next shield's card wait until a cutscene has let go, instead of landing on top of it.
 - A cutscene eases in instead of jumping closer and then panning.
 - The net no longer trembles and sheds at full strength from the moment it catches; it strains as it pays out.
+- The wizards' beams show while they cast the dome, even with a star still up, and land on the dome's growing edges.
+- A wizard called to the dome flies there flat out instead of drifting across the yard for most of a minute.
+- The dome's shell grows smoothly as it is poured instead of jumping a ring at a time.
 
 ## v0.1.12 — 2026-09-14
 

@@ -293,8 +293,17 @@ export function domeSpot() {
   return { x: s.x + s.w / 2, y: S.groundY - (s.h + 4) * P };
 }
 export const domeOrbitR = () => P * 7;
-export const domeAt = () =>
-  S.shield ? Math.min(1, S.shield.laid / KINDS[S.shield.kind].pieces) : 0;
+// How far along the dome is, for the drawing: off the pour itself rather than
+// off the count of rings, so the shell creeps up as they pour instead of
+// jumping a ring every couple of seconds. The count is what the game plays
+// against; the pour is what the eye sees.
+export const domeAt = () => {
+  const s = S.shield;
+  if (!s) return 0;
+  const k = KINDS[s.kind];
+  if (!k.cast) return Math.min(1, s.laid / k.pieces);
+  return Math.min(1, s.laid >= k.pieces ? 1 : (s.poured || 0) / k.work);
+};
 
 export function pourDome(hands, secs) {
   const s = S.shield;

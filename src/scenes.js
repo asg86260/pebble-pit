@@ -114,6 +114,15 @@ const shieldYard = () => {
     else window.__grant({ [money + 's']: n * 3 });
   }
 };
+// The dome mid-cast, `secs` after it was bought: a hatted wizard up at the
+// star, then the dome bought out from under it.
+const domeCast = secs => {
+  shieldYard();
+  S.shieldsDone = SHIELD_ORDER.slice(0, 3);
+  S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
+  window.__wizardHat(); window.__fast(30);
+  window.__buy('dome'); window.__fast(secs);
+};
 const shieldBuilt = kind => {
   shieldYard();
   S.shieldsDone = SHIELD_ORDER.slice(0, SHIELD_ORDER.indexOf(kind));
@@ -856,6 +865,13 @@ export const SCENES = {
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
                 run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }]
   ])),
+  // ...and the dome being cast: the wizard called off the star and flying
+  // over (`dome+`), then over the dome and pouring (`dome~`). The star is
+  // left up so the shot proves the beams draw with one burning.
+  'dome+': { about: 'the shields', say: 'the wizard called off the star, flat out for the dome',
+    run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },
+  'dome~': { about: 'the shields', say: 'the dome being cast: the wizard over it, pouring',
+    run: () => { domeCast(6); window.__look(st().shield.x - 260); } },
   rescue: { about: 'the shields', say: 'the dome up, a rock coming, somebody under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
   // ...and the rock held while they are dug out from under it

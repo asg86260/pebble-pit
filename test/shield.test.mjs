@@ -347,6 +347,38 @@ group('the dome holds, and sets every rock down after it', async () => {
   ];
 });
 
+// --- the dome is a call ------------------------------------------------------
+// A wizard up at the star is called off it when the dome is bought, and it
+// flies there flat out: the star is the whole width of the yard away, and at
+// its climbing pace the wizard drifted over the houses for most of a minute
+// before the first of the pour. The pour starts within seconds now, and it
+// is the wizard's own pouring that it starts on -- nothing else moves it.
+group('a wizard at the star is called to the dome, and gets there fast', async () => {
+  ready();
+  openSites();
+  window.__crew(2, 1);
+  through('props');
+  through('net');
+  window.__wizardHat();                    // a hat, and a star to fly up to
+  fundDome();
+  through('arch');
+  window.__crew(2, 1, 0, 0, 0, 1);
+  runUntil(() => state().aloft > 0, 120);  // up at the star, ring or climb
+  run(20);
+  const starY = state().wizardY[0];
+  const bought = window.__buy('dome');
+  const far = Math.abs(state().meteorX - (state().shield.x + state().shield.w / 2));
+  const poured = runUntil(() => state().shield && state().shield.laid > 0, 12);
+  const y = state().wizardY[0];
+  window.__reset();
+  return [
+    ok(bought, 'the dome is bought out from under a wizard at the star'),
+    ok(far > 2000, 'which is the far side of the yard', `${far}px`),
+    ok(poured, 'and the pour starts within seconds of the buy, not most of a minute'),
+    ok(y > starY + 100, 'the body having come down to the ring over the crown', `${starY} -> ${y}`)
+  ];
+});
+
 // --- the dome is the dearest thing in the game --------------------------------
 // Asserted against every row on every board rather than against a number typed
 // in here: a new machine or a raised price anywhere is what would make this
