@@ -10,6 +10,10 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- On itch.io the save no longer fails when other games have filled the browser's storage for the site.
+- When saving fails, the sheet says whether the browser blocked storage or the site's storage is full, and how full.
+- A page that could not write its name beside the save no longer stands aside for a tab that is not there.
+
 ## v0.1.11 — 2026-09-14
 
 - A carter sent to a full heap fills its hands there instead of taking one column and filling up from the rock's on the way home.

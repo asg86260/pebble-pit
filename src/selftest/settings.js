@@ -10,7 +10,7 @@ import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion } from '../prefs.js';
 import { disarmReset, hold } from '../input.js';
-import { setSlot } from '../save.js';
+import { setSlot, storeSettled } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
 import { persist, exportSave } from '../persist.js';
@@ -123,6 +123,50 @@ export const TESTS = [
          'the page reads the swap', JSON.stringify(rows2)),
       ok(backAgain.crew === crew && saidBack === 'yard 1', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
+    ];
+  }],
+
+  // --- the save in IndexedDB (DESIGN.md, "The save is in IndexedDB") --------
+  // The one check that runs against the real database: the blob the autosave
+  // wrote is in it, and a localStorage that refuses -- filled to its cap, the
+  // way a shared origin gets -- does not cost the save. The line the sheet
+  // says when the *store* refuses is read off a forced refusal, since a real
+  // one cannot be arranged against IndexedDB.
+  ['the save is in the database, and a full localStorage does not cost it', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 2);
+    run(5);
+    S.dirty = true;
+    persist();
+    const blob = exportSave();
+    await storeSettled();
+    const fromDb = await new Promise((ok, no) => {
+      const req = indexedDB.open('boulder-clicker', 1);
+      req.onsuccess = () => {
+        const g = req.result.transaction('kv', 'readonly').objectStore('kv').get('boulder-clicker/v4');
+        g.onsuccess = () => { req.result.close(); ok(g.result); };
+        g.onerror = () => no(g.error);
+      };
+      req.onerror = () => no(req.error);
+    });
+    // fill localStorage until it refuses, as a shared origin does
+    const junk = 'x'.repeat(1 << 18);
+    let n = 0, threw = null;
+    try { for (; n < 200; n++) localStorage.setItem('junk/' + n, junk); } catch (e) { threw = e.name; }
+    run(3);
+    S.dirty = true;
+    persist();
+    const after = exportSave();
+    await storeSettled();
+    S.dirty = true;
+    persist();                                  // one write behind: this one reports the last
+    const unsaved = S.unsaved;
+    for (let i = 0; i < n; i++) localStorage.removeItem('junk/' + i);
+    return [
+      ok(fromDb === blob, 'the autosave is in IndexedDB', `${(fromDb || '').length} vs ${blob.length} chars`),
+      ok(threw != null, 'localStorage was filled until it refused', `${n} x 512kb, ${threw}`),
+      ok(!unsaved && after !== blob, 'and the yard kept saving through it', `unsaved ${unsaved}`),
     ];
   }],
 

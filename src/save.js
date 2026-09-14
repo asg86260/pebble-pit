@@ -1,4 +1,5 @@
 import { S } from './state.js';
+import { openKv } from './idb.js';
 
 // --- the slots (DESIGN.md, "Save slots and the title page") -------------------
 //
@@ -12,26 +13,132 @@ export const SLOTS = 3;
 const SLOT_KEY = 'boulder-clicker/slot';
 const BASE = 'boulder-clicker/v4';
 let slot = 1;
-try { const n = +localStorage.getItem(SLOT_KEY); if (n >= 1 && n <= SLOTS) slot = n; } catch {}
 export const openSlot = () => slot;
 export function setSlot(n) {
   if (!(n >= 1 && n <= SLOTS)) return;
   slot = n;
-  try { localStorage.setItem(SLOT_KEY, String(n)); } catch {}
+  web.set(SLOT_KEY, String(n));
 }
 const keyOf = (n, suffix = '') => (n === 1 ? BASE : BASE + '/' + n) + suffix;
 const KEY = () => keyOf(slot);
 
+// --- the web store: IndexedDB, with localStorage as the way in and the way out
+//
+// The page's store is IndexedDB (idb.js says why), and the yard treats the
+// store as synchronous, so every key of ours is read once, before the boot,
+// into `cache`, and answered from there after. A write goes to the cache now
+// and to the database behind it; whether the database took it is the answer
+// the *next* write gives -- one write behind, the shape the desk adapter
+// below already has, and never silent. localStorage is where the save was
+// until now, so a key the database has not got and localStorage has is
+// carried across once and let go of there, which also hands back the shared
+// quota it was sitting in. And localStorage is the store when IndexedDB is
+// not to be had -- the node yard, a browser refusing it -- exactly as before.
+//
+// `primeStore` is the one read. main.js awaits it before `restore`; a page
+// that never calls it (a check, the node yard) is on localStorage.
+let kv = null;              // the database, or null for localStorage
+const cache = new Map();    // every key of ours, as the database has them
+let dbTook = true;          // what the database said about the last write that has answered
+let pending = Promise.resolve();
+const OURS = () => {
+  const keys = [SLOT_KEY];
+  for (let n = 1; n <= SLOTS; n++) keys.push(keyOf(n), keyOf(n, '.prev'), keyOf(n, '.broken'));
+  return keys;
+};
+export async function primeStore(open = openKv) {
+  cache.clear();
+  kv = null;
+  dbTook = true;
+  try { kv = await open(); } catch { kv = null; }
+  if (kv) {
+    let all;
+    try { all = await kv.all(); } catch { kv = null; }
+    if (kv) {
+      for (const k of OURS()) {
+        if (all.has(k)) { cache.set(k, all.get(k)); continue; }
+        let was = null;
+        try { was = localStorage.getItem(k); } catch {}
+        if (was == null) continue;
+        cache.set(k, was);
+        try {
+          await kv.set(k, was);
+          try { localStorage.removeItem(k); } catch {}
+        } catch {}
+      }
+    }
+  }
+  const n = +web.get(SLOT_KEY);
+  slot = n >= 1 && n <= SLOTS ? n : 1;
+}
+// For a check: the database write behind the last `set`, settled.
+export const storeSettled = () => pending;
+
+// What went wrong the last time the store refused, so the sheet can say which
+// (settings.js). `blocked` is the browser denying the page any storage at all
+// -- third-party storage turned off, and every read throws too; `full` is
+// the origin's quota, which on a shared host is mostly other sites' doing.
+let trouble = null;
+function refused(err) {
+  const name = err?.name || String(err);
+  const kind = name === 'SecurityError' ? 'blocked'
+             : /Quota|NS_ERROR_DOM_QUOTA/.test(name) || err?.code === 22 || err?.code === 1014 ? 'full'
+             : 'other';
+  trouble = { kind, name };
+}
+export function storeTrouble() {
+  if (!trouble) return null;
+  // How much of the origin's localStorage there is, and how much is ours,
+  // in bytes -- two per character, which is how the cap is counted.
+  let used = 0, ours = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      const n = (k.length + (localStorage.getItem(k) || '').length) * 2;
+      used += n;
+      if (k.startsWith('boulder-clicker')) ours += n;
+    }
+  } catch {}
+  return { ...trouble, used, ours };
+}
+
+const web = {
+  get(k) {
+    if (kv) return cache.has(k) ? cache.get(k) : null;
+    try { return localStorage.getItem(k); } catch (err) { refused(err); return null; }
+  },
+  set(k, raw) {
+    if (kv) {
+      cache.set(k, raw);
+      const took = dbTook;
+      pending = kv.set(k, raw).then(() => { dbTook = true; trouble = null; },
+                                    err => { dbTook = false; refused(err); });
+      return took;
+    }
+    try { localStorage.setItem(k, raw); trouble = null; return true; } catch (err) { refused(err); return false; }
+  },
+  remove(k) {
+    if (kv) {
+      cache.delete(k);
+      pending = kv.del(k).catch(() => {});
+      return;
+    }
+    try { localStorage.removeItem(k); } catch {}
+  }
+};
+
 // --- the store seam (wave-desk-sound, track A) --------------------------------
 //
 // Where the save is kept is the one thing the desk changes about the page. On
-// a web page it is localStorage under KEY; in the Electron shell it is a file,
-// reached through the five functions of `window.desk` (electron/preload.cjs).
-// Everything below that reads or writes the save goes through this object and
-// nothing else in src/ ever reaches `window.desk` except settings.js's two
-// dialog branches. The other keys -- the previous save, a broken one, which
-// tab is writing -- stay in localStorage in both modes: localStorage exists in
-// the shell, and those are facts about the page rather than the save.
+// a web page it is the web store above, under KEY; in the Electron shell it is
+// a file, reached through the five functions of `window.desk`
+// (electron/preload.cjs). Everything below that reads or writes the save goes
+// through this object and nothing else in src/ ever reaches `window.desk`
+// except settings.js's two dialog branches. The other keys -- the previous
+// save, a broken one -- go through the web store in both modes: it exists in
+// the shell, and those are facts about the page rather than the save. Which
+// tab is writing stays in localStorage on its own, because the `storage`
+// event that tells a tab it has been overtaken fires for nothing else.
 //
 // The desk's write is a promise and its read is synchronous, and the yard
 // treats the store as synchronous everywhere -- an import writes the blob and
@@ -59,7 +166,7 @@ function readDesk(n = slot) {
 const store = {
   get() {
     const d = desk();
-    if (!d) { try { return localStorage.getItem(KEY()); } catch { return null; } }
+    if (!d) return web.get(KEY());
     if (slot in held) return held[slot];
     const c = readDesk().current;
     return c == null ? null : c;
@@ -77,7 +184,7 @@ const store = {
   // the next -- one write behind, but never silent.
   set(raw) {
     const d = desk();
-    if (!d) { try { localStorage.setItem(KEY(), raw); return true; } catch { return false; } }
+    if (!d) return web.set(KEY(), raw);
     held[slot] = raw;
     try {
       Promise.resolve(d.write(slot, raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
@@ -89,7 +196,7 @@ const store = {
   // migration below does not bring the browser's copy back over a reset.
   remove() {
     const d = desk();
-    if (!d) { try { localStorage.removeItem(KEY()); } catch {} return; }
+    if (!d) { web.remove(KEY()); return; }
     store.set('');
   }
 };
@@ -99,7 +206,7 @@ const store = {
 // desk the open slot answers from the copy in hand, as `get` does.
 export function slotRaw(n) {
   const d = desk();
-  if (!d) { try { return localStorage.getItem(keyOf(n)) || null; } catch { return null; } }
+  if (!d) return web.get(keyOf(n)) || null;
   if (n === slot && slot in held) return held[slot] || null;
   return readDesk(n).current || null;
 }
@@ -171,9 +278,8 @@ export function load() {
   // Slot 1 only: the browser's one save is slot 1's, and an empty slot 2 on
   // the desk is empty, not a store that has never been migrated.
   if (d && slot === 1 && raw == null && store.lastGood() == null) {
-    let web = null;
-    try { web = localStorage.getItem(KEY()); } catch {}
-    if (web) { store.set(web); raw = web; }
+    const page = web.get(KEY());
+    if (page) { store.set(page); raw = page; }
   }
   if (!raw) return null;
   const s = readSave(raw);
@@ -191,13 +297,13 @@ export function load() {
 }
 
 function stash(raw) {
-  try { if (raw) localStorage.setItem(BROKEN_KEY(), raw); } catch {}
+  if (raw) web.set(BROKEN_KEY(), raw);
 }
 export function loadBroken() {
-  try { return localStorage.getItem(BROKEN_KEY()); } catch { return null; }
+  return web.get(BROKEN_KEY());
 }
 export function clearBroken() {
-  try { localStorage.removeItem(BROKEN_KEY()); } catch {}
+  web.remove(BROKEN_KEY());
 }
 
 // Whether it was written. Storage full or blocked (a private window, a quota,
@@ -212,7 +318,7 @@ export function save(state) {
 // holds no claim and defers to nobody: only a name that is not its own is
 // another page.
 export function claimTab() {
-  try { localStorage.setItem(OWNER_KEY(), TAB); } catch {}
+  try { localStorage.setItem(OWNER_KEY(), TAB); return true; } catch { return false; }
 }
 export function tabOwner() {
   try { return localStorage.getItem(OWNER_KEY()); } catch { return null; }
@@ -237,12 +343,10 @@ export function saveRaw(raw) {
 // from an older run would be a save nobody asked for waiting to come back --
 // so nothing is written as nothing.
 export function savePrev(raw) {
-  try {
-    if (raw == null) localStorage.removeItem(PREV_KEY());
-    else localStorage.setItem(PREV_KEY(), raw);
-  } catch {}
+  if (raw == null) web.remove(PREV_KEY());
+  else web.set(PREV_KEY(), raw);
 }
 
 export function loadPrev() {
-  try { return localStorage.getItem(PREV_KEY()); } catch { return null; }
+  return web.get(PREV_KEY());
 }

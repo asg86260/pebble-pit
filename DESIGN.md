@@ -6911,6 +6911,73 @@ A hidden window is a pause. The clock may not leap on return, because a
 leap is every timed thing you paid for resolving at once, which is the one
 punishment for walking away that pillar 2 forbids.
 
+## The save is in IndexedDB (built)
+
+A player on itch.io, in plain Chrome, saw `not saving: storage is blocked or
+full` while every other itch game they played kept saving. The other games
+were the clue. itch serves every HTML game from one origin,
+`html-classic.itch.zone`, in an iframe on the game's page, and Chrome's
+localStorage cap -- about five megabytes -- is one cap for that whole origin,
+shared by every game a player has ever run there. Most engines save to
+IndexedDB and never touch it; the games that do use localStorage mostly write
+a high score. A player with a nearly full one keeps those working, because a
+high score still fits, and loses ours, because eighteen kilobytes of yard does
+not. The save was in the one store on that origin with a small, hard, shared
+wall, and nothing about our writes -- ~10 kb fresh, ~18 kb busy, one key --
+was the problem.
+
+### The bargain
+
+**The save moves to IndexedDB; localStorage is the way in and the way out.**
+IndexedDB has its own quota on the same origin, in the hundreds of megabytes,
+and exactly localStorage's partitioning and blocking rules, so the save is out
+of the shared wall and no worse off anywhere. What it costs: IndexedDB only
+answers in its own time, and the yard reads the store as if it did not -- an
+import writes the blob and reads it straight back through `restore`. The desk
+adapter had already solved that shape for a file (the copy in hand is the
+truth, the store is only ever behind it), so the page borrows it: **every key
+of ours is read once, before the boot, into memory, and answered from there
+after** (`primeStore`, awaited at the top of `main.js` before `restore`); a
+write goes to memory now and to the database behind it, and whether the
+database took it is the answer the *next* write gives -- one write behind,
+never silent, `S.unsaved` reading it as before.
+
+A save the database has not got and localStorage has is carried across once
+on the first prime and then removed from localStorage, which also hands the
+shared quota back. Where IndexedDB is not to be had -- the node yard, a
+browser refusing it -- `openKv` answers null and the save stays in
+localStorage exactly as it was. The tab-owner key stays in localStorage on
+its own: the `storage` event that tells a page it has been overtaken fires
+for nothing else.
+
+**Blocked and full are told apart.** They want different things of the
+player. `SecurityError` on a read or write is the browser denying the page
+any storage (third-party storage turned off): the sheet says so and that
+the game in its own tab is the way round it. `QuotaExceededError` on a write
+is the origin's quota, and the sheet says how full and how little of it is
+ours -- `this site's storage is full (4.9 mb used, 19 kb of it ours)` -- so a
+player reads that it is not the game that filled it. Anything else names
+the error.
+
+**A claim that could not be written is no claim.** With localStorage full,
+the page's name beside the save could not be written, the name there was
+some earlier page's, and the page took it for another tab: it stood aside,
+reloaded when looked at, and stood aside again -- a loop with no save in
+it. `claimTab` now says whether the claim took, and a page whose claim did
+not is unguarded against a second tab rather than guarded against a ghost.
+
+### Checks
+
+`test/idb-store.test.mjs` (node, a fake database): the autosave goes to the
+database and not localStorage, and a boot reads it back; a localStorage save
+comes across once and leaves localStorage; a full localStorage does not cost
+the save; a refusing database reads as an unsaved yard and says `full`;
+blocked and full are told apart and a write that takes clears it; a claim
+that did not take does not yield. `src/selftest/settings.js`, group
+`the save is in the database`: in real Chrome, the autosave is read back out
+of IndexedDB by hand, localStorage is filled until it throws, and the yard
+keeps saving.
+
 ## The desk: an Electron shell (built)
 
 The target is a desktop app, not a hosted page. This is the project's first

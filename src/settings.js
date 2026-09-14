@@ -14,6 +14,7 @@ import { setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave } from './persist.js';
 import { S } from './state.js';
+import { storeTrouble } from './save.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 
@@ -114,10 +115,24 @@ export function sayStore() {
   if (S.fellBack) said.textContent = 'the last save would not load; this is the one before it';
   else if (S.broken) said.textContent = 'your last save could not be read. save a copy hands it over';
   else if (S.yielded) said.textContent = 'this yard is open in another tab; that one is being saved';
-  else if (S.unsaved) said.textContent = 'not saving: storage is blocked or full. save a copy still works';
+  else if (S.unsaved) said.textContent = unsavedLine();
   // A save from a build newer than this one is loaded, not refused, and said
   // once: the sheet's observer below clears it when the sheet goes down.
   else if (S.newerSave) said.textContent = 'this save is from a newer build (' + S.newerSave + ')';
+}
+
+// Which of the two things "not saving" is, because they want different things
+// of the player. Blocked is the browser: third-party storage turned off, and
+// the fix is a setting or the game in its own tab. Full is the origin's
+// quota, and on a shared host like itch.io that is mostly other games' data
+// -- the number says so, and that ours is a sliver of it.
+const mb = n => (n / 1048576).toFixed(1) + ' mb';
+const kb = n => Math.ceil(n / 1024) + ' kb';
+export function unsavedLine() {
+  const t = storeTrouble();
+  if (t?.kind === 'blocked') return 'not saving: your browser blocks storage inside this page. save a copy still works';
+  if (t?.kind === 'full') return `not saving: this site's storage is full (${mb(t.used)} used, ${kb(t.ours)} of it ours). save a copy still works`;
+  return 'not saving: storage refused the save' + (t ? ' (' + t.name + ')' : '') + '. save a copy still works';
 }
 
 // The paste is asked for rather than always there: six rows of empty box on a

@@ -21,7 +21,7 @@ import { hud, remeasure } from './board.js';
 import { fillQueue } from './queue.js';
 import { buildShop } from './shop.js';
 import { persist, restore, claimSave } from './persist.js';
-import { OWNER_KEY, TAB } from './save.js';
+import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // wave-release, track A: the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
@@ -102,6 +102,10 @@ function frame() {
 // here, and a frame that runs before it has nothing to fall through. Then the
 // save, then the shop rows it decides, then anybody the counts say is missing.
 relayout();
+// The store is read once, before the boot, and answered from memory after
+// (save.js, `primeStore`): the save is in IndexedDB now, which only answers
+// in its own time, and the yard reads the store as if it did not.
+await primeStore();
 restore();
 buildShop();
 syncWorkers();

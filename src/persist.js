@@ -273,8 +273,13 @@ export function persist() {
 
 // Whether this page has put its name beside the save. main.js does, once, at
 // boot; nothing else ever does.
+// A claim that could not be written -- localStorage full or refused -- is no
+// claim: the name left there is some earlier page's, and a page that treated
+// it as another tab's would stand aside for nobody, reload when looked at,
+// and stand aside again. Such a page is unguarded against a second tab, and
+// that is the smaller loss.
 let claimed = false;
-export function claimSave() { claimTab(); claimed = true; }
+export function claimSave() { claimed = claimTab(); }
 
 // Everything a save is, as one object. `persist` writes it; `exportSave` hands
 // it over as it stands.

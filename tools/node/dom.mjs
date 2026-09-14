@@ -123,7 +123,11 @@ const localStorage = {
   getItem: k => (store.has(k) ? store.get(k) : null),
   setItem: (k, v) => store.set(k, String(v)),
   removeItem: k => store.delete(k),
-  clear: () => store.clear()
+  clear: () => store.clear(),
+  // the two the real one has for walking every key, which is how the sheet
+  // measures how full the origin is (save.js, `storeTrouble`)
+  key: i => [...store.keys()][i] ?? null,
+  get length() { return store.size; }
 };
 
 export function installDom({ W = 800, H = 600, dpr = 1 } = {}) {
