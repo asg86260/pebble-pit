@@ -428,7 +428,7 @@ function build(el, list, sections, empty, heads) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (sect.goal) b.classList.add('goal');
-      // The pin: a nail head in the card's corner, and pressing it puts this
+      // The pin: a pushpin in the card's corner, and pressing it puts this
       // card in the top-right corner of the game (`fillPin`) -- or takes it
       // down again, if it is the one there. It is not a press on the card, so
       // the press is stopped here; and it is on every card that is a purchase,

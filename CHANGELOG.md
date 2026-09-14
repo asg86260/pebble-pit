@@ -11,6 +11,7 @@ this file is for things that were broken.
 ## Unreleased
 
 - The juggler notice needs your hands at the top of their ladder; a one-grain hand no longer earns it.
+- The pin on a card is a pushpin in the bottom-right corner, not a ring at the bottom-left.
 - The machines are heard at a worker's pace instead of hammering, and the ram no longer sounds twice a strike.
 - Rain falls at one speed and leans with the wind, instead of dropping straight down and speeding up.
 - An achievement landing is hard to miss: the card is black, bigger, rings as it lands and stays longer.

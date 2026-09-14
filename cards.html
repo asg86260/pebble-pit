@@ -38,7 +38,7 @@
 import { mountRows } from './src/shop.js';
 import { S } from './src/state.js';
 import { LADDER, TIER_BAND } from './src/config.js';
-Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, cores: 1 });
+Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, cores: 1, pinned: 'critchance' });
 
 const pips = (at, of) => ({ rung: () => at, rungs: () => of });
 

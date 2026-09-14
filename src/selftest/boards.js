@@ -1517,7 +1517,7 @@ export const TESTS = [
     ];
   }],
 
-  // The pin: one card in the top-right corner, chosen by its nail head, drawn
+  // The pin: one card in the top-right corner, chosen by its pushpin, drawn
   // by the same builder as the board's, buying when pressed and coming down
   // when the row retires. The shield on offer pins itself while it is news,
   // and the player's pin wins over it. DESIGN.md, "The shields are the spine".
@@ -1536,7 +1536,7 @@ export const TESTS = [
     const goalUp = !corner().hidden && card()?.dataset.key === 'props';
     const short = !!card()?.querySelector('.cost .short');
 
-    // Pin over it from the bench: the nail head on a card puts that card in the
+    // Pin over it from the bench: the pushpin on a card puts that card in the
     // corner and takes the goal down, and the bench's own card wears the mark.
     await hoverBench();
     const carry = shop().querySelector('button[data-key="carry"]');
@@ -1544,7 +1544,7 @@ export const TESTS = [
     await settle(0.2);
     const overGoal = card()?.dataset.key === 'carry' && state().pinned === 'carry';
     const marked = carry?.classList.contains('pinned');
-    // ...and the press on the nail head was not a press on the card
+    // ...and the press on the pin was not a press on the card
     const notBought = state().carryLevel === 0;
 
     // The corner buys: the card is the row, so pressing it is the purchase.
@@ -1566,11 +1566,11 @@ export const TESTS = [
     return [
       ok(goalUp, 'the shield on offer pins itself into the corner', card()?.dataset.key),
       ok(short, 'and reads short of what it costs'),
-      ok(overGoal && marked, 'a nail head on the bench pins that card over it', state().pinned),
+      ok(overGoal && marked, 'a pushpin on the bench pins that card over it', state().pinned),
       ok(notBought, 'without buying it'),
       ok(solid && bought, 'the corner card buys when it can be paid for'),
       ok(stayed, 'a ladder stays pinned for its next rung'),
-      ok(down, 'and its nail head takes it down again, leaving the corner empty')
+      ok(down, 'and its pushpin takes it down again, leaving the corner empty')
     ];
   }],
 ];
