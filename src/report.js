@@ -195,6 +195,7 @@ export const snapshot = () => ({
   shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)],
   dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()),
   dancing: clockNow() < S.danceUntil,
+  waves: S.shocks.filter(s => s.ms).length,     // rings in the air that are not a crit's: a shield's fanfare
   // How many bodies are actually in the dance -- holding a mark. `dancing` is
   // the yard's mood; this is who has joined in, and a fall where it stays at
   // nought is a crew grinding at the zone's wall instead of celebrating.

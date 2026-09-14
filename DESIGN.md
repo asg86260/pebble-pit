@@ -1406,6 +1406,20 @@ because the drumbeat is the income; the threat is retired, because the story is 
 how the first line of this document and the section above it are both true at once: **the
 story ends on purpose. The yard does not.**
 
+### The moment it stands (built)
+
+A shield is the dearest thing on the board when it is bought and goes up a plank at a
+time, so the frame the last one is in gets a fanfare: **one wave off the crown, and the
+crew cheer under it.** The wave is the crit's ring (`shockAt`, shock.js) given a size and a
+pace of its own -- `SHIELD_WAVE_MS` to run out, a reach measured off the span
+(`SHIELD_WAVE_SPAN` of it, so a wider shield throws a wider wave) and a burst of specks
+with it; black for the three that are things, purple for the dome because magic is. The
+cheer is the dance the crew do for a finished rock, cut to `SHIELD_CHEER_MS`, through the
+same `danceUntil` -- so the next rock waits for it the way it waits for the dance. The three
+carried shields fire it from `raiseShield`, which is the frame their work lands; the dome
+from `pourDome`, on the frame its last ring is poured. Nothing is a new mechanism: a ring
+that already existed with a size, and a celebration that already existed with a length.
+
 ## The shields are the spine (built)
 
 The shields as built are a side story. Each is bought, fails, and hands you the next one;

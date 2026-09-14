@@ -64,6 +64,16 @@ export const DOME_WORK = 45;
 export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
 export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second
 
+// The fanfare when a shield stands finished: one wave off its crown, out past
+// the span, and the crew cheer under it for a moment. The wave's reach is
+// measured off the span rather than set -- a wider shield throws a wider one
+// -- so it is a share of the span, plus how long it runs; the cheer is the
+// dance the crew do for a finished rock, cut short.
+export const SHIELD_WAVE_MS = 1000;     // how long the wave takes to run out
+export const SHIELD_WAVE_SPAN = 0.8;   // how far it reaches, as a share of the span
+export const SHIELD_WAVE_POWER = 5;    // the specks thrown with it, in a crit's units
+export const SHIELD_CHEER_MS = 2500;   // and how long the crew cheer
+
 // How long a landed rock spends spreading and settling back into its own
 // shape. Long enough to see it happen, short enough that it is over before you
 // could reach for it -- an impact, not an animation. It lives beside the

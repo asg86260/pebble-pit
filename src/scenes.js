@@ -33,7 +33,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, LADDER, TIER_OWN } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, LADDER, TIER_OWN } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -862,6 +862,26 @@ export const SCENES = {
   // shield with the cutscene's camera on it rather than the dance before it.
   ...Object.fromEntries(SHIELD_ORDER.flatMap(k => [
     [k, { about: 'the shields', say: `the ${k}, built`, run: () => shieldBuilt(k) }],
+    // The moment it stands: the fanfare a fifth of a second in, wave and cheer.
+    // Built through once so the yard is right, then finished a second time
+    // by hand -- the dome's last ring set back and poured again, the others'
+    // work run through -- because the built loop steps by whole seconds and
+    // a wave is gone in less than one.
+    [`${k}^`, { about: 'the shields', say: `the ${k} standing finished, the fanfare on it`,
+                run: () => {
+                  shieldBuilt(k);
+                  if (k === 'dome') {
+                    S.shield.laid = DOME_RINGS - 1;
+                    S.shield.poured = DOME_WORK * (S.shield.laid / DOME_RINGS);
+                    for (let i = 0; i < 1200 && S.shield.laid < DOME_RINGS; i++) window.__fast(1 / 60);
+                  } else {
+                    S.shield = null;
+                    window.__buy(k);
+                    window.__finish();
+                  }
+                  window.__fast(0.15);
+                  window.__look(S.shield.x + S.shield.w / 2 - S.viewW / 2);
+                } }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
                 run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }]
   ])),

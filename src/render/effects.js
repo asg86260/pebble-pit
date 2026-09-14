@@ -77,7 +77,10 @@ export function drawDoseMote(g, x, y, color, k, v = 0.5) {
 // spoke gets a hashed roll that drops about a third of the cells and shoves the
 // rest a little in or out, and the roll is reseeded a couple of dozen times over
 // the ring's life so the gaps crackle rather than sit still.
-export function drawShockRing(g, x, y, r, k) {
+//
+// Black, unless told otherwise: the one ring that is not is the dome's, and
+// the dome is purple because magic is.
+export function drawShockRing(g, x, y, r, k, color = '#000') {
   // One cell per cell of arc, and never the same cell twice: a ring drawn at an
   // even angle doubles up on the diagonals, and a cell painted twice at half
   // alpha is a cell at full alpha. An EVEN number of spokes, always, so every
@@ -90,7 +93,7 @@ export function drawShockRing(g, x, y, r, k) {
   // the time it is wide enough to read, which drew a grey smudge round the body
   // instead of a wave leaving it.
   g.globalAlpha = 1 - k;
-  g.fillStyle = '#000';
+  g.fillStyle = color;
   // The reseed clock for the crackle: a leaf module has no rng, so the "roll"
   // is a sine hash of the spoke and this tick.
   const tick = Math.floor(k * 24);
@@ -120,8 +123,8 @@ export function drawShockRing(g, x, y, r, k) {
 // A whole cell at full ink for most of its life, half a cell for the last
 // part, gone: two sizes and no alpha, the way everything else here fades
 // (critics 2026-09-10, C12).
-export function drawShockMote(g, x, y, k) {
+export function drawShockMote(g, x, y, k, color = '#000') {
   const size = k < 0.6 ? P : Math.max(1, P / 2);
-  g.fillStyle = '#000';
+  g.fillStyle = color;
   g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
 }

@@ -19,7 +19,8 @@ import {
   PROP_FROM, PROP_COST, PROP_PLANKS,
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
-  DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
+  DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE,
+  SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
@@ -29,6 +30,7 @@ import { now, frames } from './clock.js';
 import { startRescue } from './intro.js';
 import { shakeView } from './world.js';
 import { sfx } from './audio.js';
+import { shockAt } from './shock.js';
 
 // What each shield is, and the whole of what makes it different from the
 // others: what it is made of, what it costs, and how it answers a rock. A new
@@ -93,6 +95,20 @@ export function shieldPlan(kind) {
   return { kind, x, w, h, rise };
 }
 
+// It stands. A thing this dear going up a plank at a time earned a moment
+// when the last one is in: a wave goes out from the crown -- the crit's ring,
+// sized to the span, and purple for the dome because magic is -- and the
+// crew cheer under it, the dance they do for a finished rock, kept short. The
+// dome's comes from `pourDome` on the frame its last ring is poured; the
+// other three arrive finished, so theirs is here.
+function fanfare(s) {
+  const magic = !!KINDS[s.kind].cast;
+  shockAt(s.x + s.w / 2, shieldTopY(s), SHIELD_WAVE_POWER, s.kind,
+          { ms: SHIELD_WAVE_MS, r: s.w * SHIELD_WAVE_SPAN,
+            color: magic ? MAGIC_TONES[0] : undefined });
+  S.danceUntil = Math.max(S.danceUntil, now() + SHIELD_CHEER_MS);
+}
+
 export function raiseShield(kind) {
   // A built shield arrives finished, because the building already happened: it
   // is a work like any other now (works.js) -- paid for, fenced, hammered at
@@ -102,6 +118,7 @@ export function raiseShield(kind) {
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
   S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
                sag: 0, setting: false };
+  if (laid >= KINDS[kind].pieces) fanfare(S.shield);
   S.dirty = true;
 }
 
@@ -321,5 +338,9 @@ export function pourDome(hands, secs) {
   s.poured = (s.poured || 0) + hands * secs;
   const laid = Math.min(KINDS.dome.pieces,
                         Math.floor(KINDS.dome.pieces * s.poured / KINDS.dome.work));
-  if (laid !== s.laid) { s.laid = laid; S.dirty = true; }
+  if (laid !== s.laid) {
+    s.laid = laid;
+    if (laid >= KINDS.dome.pieces) fanfare(s);
+    S.dirty = true;
+  }
 }

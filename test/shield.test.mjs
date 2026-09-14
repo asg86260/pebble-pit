@@ -94,6 +94,30 @@ group('the props are built by somebody standing at them, and the next rock comes
   ];
 });
 
+// The moment it stands gets a fanfare: a wave off the crown and the crew
+// cheering under it (shield.js, `fanfare`). Reached the way a player reaches
+// it -- bought, built by somebody, and watched a frame at a time over the
+// last stretch, because the wave is gone inside a second and a sample a
+// game-second would step clean over it.
+group('a shield standing finished throws a wave, and the crew cheer', async () => {
+  ready();
+  window.__buy('props');
+  const quiet = state();
+  runUntil(() => { const w = state().works.yard; return !!w && w.of && w.done / w.of > 0.9; }, 400);
+  let seen = null;
+  for (let f = 0; f < 60 * 120 && !seen; f++) {
+    run(1 / 60);
+    if (state().shield) seen = state();
+  }
+  window.__reset();
+  return [
+    ok(!quiet.waves && !quiet.dancing, 'nothing is going on while it is going up'),
+    ok(!!seen, 'it stands'),
+    ok(seen && seen.waves > 0, 'and a wave goes out from it the frame it does', seen && `${seen.waves} waves`),
+    ok(seen && seen.dancing, 'and the crew cheer'),
+  ];
+});
+
 // A half-built shield is a work the yard is in the middle of, so it has to
 // survive being put down and picked up -- which works.js already promises for
 // every work; this holds it to that promise for a shield in particular.

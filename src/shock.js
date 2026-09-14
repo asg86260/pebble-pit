@@ -47,11 +47,17 @@ import { rand } from './rng.js';
 // between them. That is a shape nobody can see the join in, and it is the right
 // side to err on: a ring per grain was a stack of six rings drawn on top of each
 // other, which is one thick ring that outstays every other.
-export function shockAt(x, y, power = 3, where = '') {
+//
+// `wave` is for a ring that is not a crit's: a shield finishing throws one
+// from its crown (shield.js, `fanfare`), and what makes it not a crit is its
+// size and its pace -- `ms` how long it runs, `r` how far it reaches, `color`
+// for the dome, whose magic is purple all game. Left off, it is the crit's
+// ring, measured in the crit's power, as it always was.
+export function shockAt(x, y, power = 3, where = '', wave = null) {
   const at = now();
   const last = S.shocks[S.shocks.length - 1];
   if (last && last.at === at && last.where === where) return;
-  S.shocks.push({ x, y, at, power, where, t: 0 });
+  S.shocks.push({ x, y, at, power, where, t: 0, ...(wave || {}) });
   for (let i = 0; i < Math.round(CRIT_MOTES * power); i++) {
     // Out in every direction, on its own speed. Spread by the loop rather than
     // by chance, so a burst is always a ring of specks instead of occasionally
@@ -61,7 +67,7 @@ export function shockAt(x, y, power = 3, where = '') {
     S.shockMotes.push({
       x: x + Math.cos(a) * P, y: y + Math.sin(a) * P,
       vx: Math.cos(a) * v, vy: Math.sin(a) * v,
-      t: 0, life: CRIT_MOTE_LIFE * (0.7 + rand() * 0.6)
+      t: 0, life: CRIT_MOTE_LIFE * (0.7 + rand() * 0.6), color: wave && wave.color
     });
   }
   S.dirty = true;
@@ -77,7 +83,7 @@ export function stepShocks(dt) {
   for (let i = S.shocks.length - 1; i >= 0; i--) {
     const s = S.shocks[i];
     s.t += secs;
-    if (s.t * 1000 >= CRIT_RING_MS) S.shocks.splice(i, 1);
+    if (s.t * 1000 >= (s.ms || CRIT_RING_MS)) S.shocks.splice(i, 1);
   }
   for (let i = S.shockMotes.length - 1; i >= 0; i--) {
     const m = S.shockMotes[i];
@@ -100,7 +106,7 @@ export function stepShocks(dt) {
 
 // How far through its run a ring is, nought to one -- what the drawing is a
 // function of, and the only thing outside this file needs to know about one.
-export const shockAge = s => Math.min(1, (s.t * 1000) / CRIT_RING_MS);
+export const shockAge = s => Math.min(1, (s.t * 1000) / (s.ms || CRIT_RING_MS));
 
 // And how far it has got, in world pixels: the reach is per point of the crit's
 // multiplier, so the ring says how big the thing that happened was. Eased out
@@ -109,5 +115,5 @@ export const shockAge = s => Math.min(1, (s.t * 1000) / CRIT_RING_MS);
 // a slam.
 export const shockReach = s => {
   const k = shockAge(s);
-  return CRIT_RING_R * s.power * (1 - Math.pow(1 - k, 3));
+  return (s.r || CRIT_RING_R * s.power) * (1 - Math.pow(1 - k, 3));
 };

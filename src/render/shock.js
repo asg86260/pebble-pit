@@ -11,9 +11,9 @@ import { ctx } from './ctx.js';
 import { drawShockMote, drawShockRing } from './effects.js';
 
 export function drawShocks() {
-  for (const m of S.shockMotes) drawShockMote(ctx, m.x, m.y, Math.min(1, m.t / m.life));
+  for (const m of S.shockMotes) drawShockMote(ctx, m.x, m.y, Math.min(1, m.t / m.life), m.color);
   // The rings over the specks: a ring is the outline of the same blow the specks
   // came out of, and it should read as the leading edge of it.
-  for (const s of S.shocks) drawShockRing(ctx, s.x, s.y, shockReach(s), shockAge(s));
+  for (const s of S.shocks) drawShockRing(ctx, s.x, s.y, shockReach(s), shockAge(s), s.color);
   ctx.fillStyle = '#000';
 }
