@@ -9136,3 +9136,38 @@ bug that has been in the game all along.
 It checks itself: every group in the node tier, and the scenes files in
 particular. The rules are checked the way the others are, by the groups
 that happen to break them.
+
+### As built (2026-09-14)
+
+The first full run under the harness went 540/608; the harness and the
+two rules between them found some thirty reload and floating defects, each
+fixed at its mechanism and listed in CHANGELOG.md with the check that
+would go red again. Three decisions were made on the way and hold:
+
+**Transient state is saved, not declared ephemeral.** The question came
+up on the first run -- weather, the beat between rocks, breaks, a spin, a
+flight, a plume -- and the answer was to save it. Anything a player would
+see reset by a refresh is a fact of the yard. What stays ephemeral is a
+moment with no duration (a flash, a ring, a shake), a reference to a body
+(rebuilt from the crew), or a thing worked out again from what is saved
+(the layout, the rock tops, the strips).
+
+**A moment is written as a distance.** The clock starts again with the
+page, so a field that names a moment on it is written as how far off the
+moment is and read back the other way: doses were already kept so, and
+now a body's `MOMENTS` (crew/records.js), the beat between rocks, a spin
+and a machine's clock are too. A new moment on a body is one name in that
+list; a new one on `S` is two lines in persist.js and an alias in the
+roundtrip check.
+
+**The opt-out is for following a particular thing.** `group(name, fn,
+{ reload: false })` exists, and is used by nine groups: five that hold a
+body on the cursor or by reference across a load, three that follow one
+speck or one grain the rebuild would replace, and one that measures a
+cost. A group that goes red for any other reason is a bug in the game.
+`storeChecks()` at the top of a file about the store itself keeps the
+harness off its mocks.
+
+Still open, found by the harness and not fixed: a hat knocked off and
+lying on the ground is not saved (`hatOff`), and a body sent to pick it up
+after a refresh finds nothing there.

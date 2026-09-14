@@ -1,13 +1,14 @@
 # Still to do
 
-## The reliability freeze (2026-09-14)
+## The reliability freeze -- BUILT (2026-09-14)
 
-Approved. No features and no one-off fixes until: (A) `run()` in
-`test/helpers.mjs` reloads the yard every few game seconds of every group
-and asserts nothing teleported; (B) `verify.js` has the two floating rules;
-(D) a changelog line names its check. Then one full run on main, fix what it
-turns up, and hold until it is green twice running. Reasoning in DESIGN.md,
-"The reliability freeze". The release gate was dropped by decision.
+"The reliability freeze" in DESIGN.md, with an as-built note. The reload
+harness and the two floating rules are in; the first run under them went
+540/608 and the fixes are in CHANGELOG.md, each with its check. Still to
+hold: a full run green twice running on main, and then the freeze lifts.
+Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
+saved, so a body sent to pick it up after a refresh finds nothing there --
+save it as a fact of the yard, the way a loose core is.
 
 ## The hole's count and its pile disagree by a few cells (2026-09-14)
 
