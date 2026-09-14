@@ -108,16 +108,16 @@ export const SND_RATE = 44100;
 export const RECIPE_DEFAULTS = { bodyHold: 0, sub: 0, subHz: 50, subDrop: 2, subMs: 80, clickRaw: 0,
                                  noiseSlide: 1, noiseHold: 0, drive: 1.4 };
 //
-// Named as they were on the bench, and pasted in from it (2026-09-13, second
+// Named as they were on the bench, and pasted in from it (2026-09-13, third
 // mapping). A knob left at its RECIPE_DEFAULTS value is not written.
 export const RECIPES = {
-  'stone':        { wave: 'sine', hz: 145, slide: 0.5, slideMs: 120, decay: 10, level: 1, duty: 0.05,
+  'stone':        { wave: 'sine', hz: 145, slide: 0.5, slideMs: 120, decay: 10, level: 0.23, duty: 0.05,
                     click: 0.03, clickMs: 0.5, clickHz: 500,
                     noise: 0.51, noiseHz: 60, noiseQ: 5.8, noiseMs: 5,
                     bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
-  'stone crit':   { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 1, duty: 0.05,
+  'stone 2':      { wave: 'sine', hz: 63, slide: 0.5, slideMs: 2, decay: 10, level: 0.24, duty: 0.05,
                     click: 0, clickMs: 0.5, clickHz: 500,
-                    noise: 0.51, noiseHz: 720, noiseQ: 5.8, noiseMs: 5,
+                    noise: 0.51, noiseHz: 720, noiseQ: 1.7, noiseMs: 5,
                     bits: 16, hold: 1, cut: 800, gain: 1.5, vary: 1 },
   'worker mine':  { wave: 'sine', hz: 110, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05,
                     click: 0, clickMs: 2.3, clickHz: 500,
@@ -132,10 +132,6 @@ export const RECIPES = {
                     noise: 1, noiseHz: 60, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 5,
                     sub: 1, subHz: 44, subDrop: 3.1, subMs: 67,
                     bits: 16, hold: 1, cut: 1300, drive: 4.3, gain: 0.44, vary: 1 },
-  'stone hard':   { wave: 'tri', hz: 92, slide: 2, slideMs: 16, decay: 70, level: 1, duty: 0.5,
-                    click: 0.5, clickMs: 2, clickHz: 1800,
-                    noise: 0.45, noiseHz: 180, noiseQ: 0.9, noiseMs: 32,
-                    bits: 8, hold: 5, cut: 4000, gain: 0.8, vary: 0.4 },
   'dust-gain':    { wave: 'sine', hz: 1600, slide: 1.3, slideMs: 1, decay: 10, level: 0.37, duty: 0.05,
                     click: 0, clickMs: 0.5, clickHz: 500,
                     noise: 1, noiseHz: 60, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 5,
@@ -159,26 +155,26 @@ export const RECIPES = {
 // per event under a ceiling of its own -- and the recipe is
 // a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
 // event is still decided and counted, and never rendered. The mapping is the
-// one the player made on the bench (2026-09-13): silence where it says
+// one the player made on the bench (2026-09-13, third mapping): silence where it says
 // silence. The dev panel's `sounds` tab takes the bench's mapping JSON and
 // lays it over this table live, and `applySounds` in audio.js is what does
 // the laying.
 export const SOUNDS = {
   'rock-hit':     { label: 'you hit the rock',                          cls: 'hand',  recipe: 'stone' },
-  'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone crit' },
+  'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone 2' },
   'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: 'worker mine' },
   'crew-crit':    { label: "a body's crit swing at the rock",           cls: 'fold',  recipe: 'worker crit' },
   'bird-startle': { label: 'you knock a bird off its line',             cls: 'hand',  recipe: null },
   'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
   'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
   'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
-  'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: 'stone hard' },
+  'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: null },
   'drill-beat':   { label: 'a beat of the drill',                       cls: 'fold',  recipe: null },
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
   'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'each',  recipe: 'dust-gain' },
-  'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: 'stone crit' },
+  'core-bank':    { label: 'a core is banked',                          cls: 'punct', recipe: 'stone 2' },
   'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: 'sun summon' },
   'bolt-throw':   { label: 'a wizard throws a bolt at the star',        cls: 'fold',  recipe: 'bolt throw' },
   'bolt-strike':  { label: 'a bolt lands on the star',                  cls: 'fold',  recipe: 'worker mine' },
