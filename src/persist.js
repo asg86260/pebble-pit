@@ -336,6 +336,9 @@ function blob() {
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
     who: S.workers.map(keepOf),
+    // and where the mouth of the cut was under them, so a load can tell a
+    // layout that moved from one that did not -- see `restoreCrew`
+    mouth: S.quarryOpen ? quarry.x : null,
     rockhands: S.rockhands,
     // Haulers are whoever is spare, so this is worked out again on the way in
     // rather than read -- it is written down for the sake of a save being
@@ -949,7 +952,9 @@ export function restore() {
   // a ripe plot keeps the spore that grew on it, tone and all
   if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
   resite();                    // the quarry is as deep and the plot as wide as it was
-  restoreCrew(s.who);          // the same people, where they were, with what they have done
+  // ...on the ground they were saved on, if the mouth of the cut is where the
+  // save says it was: then a body over it is over it on purpose.
+  restoreCrew(s.who, Number.isFinite(s.mouth) && s.mouth === quarry.x);
   // A body written down is a body in the yard.
   //
   // The headcount and the list of people are two records of the same thing, and
@@ -1107,7 +1112,7 @@ const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
 const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.HAUL, scholars: JOB.HAUL,
                   scrubbers: JOB.PURIFY };
 
-function restoreCrew(who) {
+function restoreCrew(who, sameGround = false) {
   S.workers = [];
   if (!Array.isArray(who)) return;
   for (const k of who) {
@@ -1166,7 +1171,16 @@ function restoreCrew(who) {
     // for five seconds on every refresh (reported 2026-09-13). It stands on the
     // cut's floor under its own x -- the same height the work leg would put it
     // at on its first frame -- whatever the save said about its y.
-    if (Number.isFinite(rec.x) && overCutMouth(rec.x)
+    //
+    // And none of it when the mouth is where the save left it. The whole
+    // premise here is a layout that moved under the crew between one build and
+    // the next; on the same layout a body at ground height over the mouth is
+    // at the head of the ladder, mid-stride, and is there on purpose. Moved
+    // anyway, a quarrier stepping on to the ladder hopped eight cells back on
+    // every refresh, and one stepping off it was dropped a course into the
+    // cut -- the reload harness in test/helpers.mjs named both, and this is
+    // the third patch on the same spot. The save says where the mouth was.
+    if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
       if (type === TYPE.QUARRY && rec.goal === 'work') {
         rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };

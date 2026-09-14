@@ -83,6 +83,14 @@ export const newRecord = () => ({
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
+                      // and the doses in a stirrer's arms, and which tonic
+                      // they are. A stirrer saved out on a round came back
+                      // with `goal: 'out'` and empty hands: the doses were
+                      // gone -- not dealt, not shelved -- and the body stood
+                      // in the yard with a goal nothing steps. Who it was
+                      // walking to is a body, not a fact, and is picked again
+                      // (the round already copes with a target that has gone).
+                      'holding', 'carryTonic',
                       // and whether it was in the air, and how it was moving:
                       // a body saved mid-arc came back at its saved height and
                       // was stood on the ground in one frame, two hundred

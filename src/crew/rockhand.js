@@ -80,7 +80,7 @@ export function rockhandWork(w, c) {
   // Back to it. The dance leaves its ground and its move behind, so the next
   // rock is celebrated somewhere else -- and the say goes with it, or a body
   // walks back up the hill still shouting about the last one.
-  if (w.jigAt != null) { stopJig(w); w.say = null; }
+  if (w.jigAt != null) stopJig(w);
 
   // The crew climb the hill and work it from the top down. Each one keeps a
   // stretch of the crest to itself, stands on whatever rock is left there and

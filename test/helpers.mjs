@@ -16,8 +16,77 @@ import { newYard } from '../tools/node/yard.mjs';
 export const yard = await newYard();
 
 export const state = () => yard.state();
-export const run = seconds => yard.fast(seconds);
-export const runUntil = (done, limit = 60) => yard.until(done, limit);
+
+// --- every run is a reload run ---------------------------------------------------
+// Six of the fixes in two days were "after a refresh, the quarriers..." -- the
+// same dig caught at a different frame each time, and each one found by a
+// player, because reload was covered by seven hand-built scenarios and nothing
+// else. So the yard is saved and read back every RELOAD_EVERY game seconds of
+// every group, from inside `run`, the one door a check turns the clock through
+// -- the same trick `verify.js` pulled, for the same reason: the scenario a
+// group builds is the input, and reload is checked against whatever it builds.
+//
+// What is asserted is that nothing teleported. A save writes every body down
+// and a load stands it back up, and the body that comes back is the same
+// body, at the same job, within a cell of where it stood. The rules in
+// verify.js are asked on the first frame after, by `fast` as ever. Anything
+// else about a reload -- the books, the pot, the seam -- is a check of its own
+// (reload.test.mjs), because it is about a thing and not about every thing.
+//
+// `RELOAD=0` turns it off, for a run that is measuring something a save in the
+// middle would spoil (the perf gate). The interval is game seconds, so a
+// group's reloads land on the same frames every run and a failure can be had
+// again.
+const RELOAD = process.env.RELOAD !== '0';
+const RELOAD_EVERY = 5;
+let sinceReload = 0;
+
+export function reloadCheck() {
+  const S = yard.S;
+  // Not during the opening, or a scene. Neither is written down: a refresh in
+  // the opening starts it again from the door (nothing has been earned yet),
+  // and a refresh in a scene drops the scene (`S.intro = null` on the way in).
+  // Both are the game's decision, and a check about the opening's beats would
+  // only ever be measuring the restart.
+  if (S.intro || !S.introDone) return;
+  const before = S.workers.map(w => ({ name: w.name, type: w.type, x: w.x, y: w.y }));
+  window.__reload();
+  // Matched by place in the list, not by name: the save writes the crew in
+  // order and the load stands them up in order, and two of a big crew can
+  // share a name.
+  if (S.workers.length !== before.length)
+    throw new Error(`a reload changed the crew: ${before.length} before, ${S.workers.length} after  [frame ${S.tick}]`);
+  before.forEach((b, i) => {
+    const w = S.workers[i];
+    if (w.name !== b.name)
+      throw new Error(`a reload swapped ${b.name} (${b.type}) for ${w.name} (${w.type})  [frame ${S.tick}]`);
+    if (w.type !== b.type)
+      throw new Error(`a reload changed ${b.name}'s job from ${b.type} to ${w.type}  [frame ${S.tick}]`);
+    const dx = Math.abs(w.x - b.x), dy = Math.abs(w.y - b.y);
+    if (dx > P || dy > P)
+      throw new Error(`a reload moved ${b.name} (${b.type}) from ${Math.round(b.x)},${Math.round(b.y)} `
+        + `to ${Math.round(w.x)},${Math.round(w.y)}  [frame ${S.tick}]`);
+  });
+}
+
+// Run in whole frames, so the frames a group runs are the same frames whether
+// or not a reload falls in the middle of one call.
+export const run = seconds => {
+  let frames = Math.max(1, Math.round(seconds * 60));
+  if (!RELOAD) return yard.fast(frames / 60);
+  while (frames > 0) {
+    const chunk = Math.min(frames, RELOAD_EVERY * 60 - sinceReload);
+    yard.fast(chunk / 60);
+    frames -= chunk;
+    sinceReload += chunk;
+    if (sinceReload >= RELOAD_EVERY * 60) { reloadCheck(); sinceReload = 0; }
+  }
+  return Math.round(seconds * 60);
+};
+export const runUntil = (done, limit = 60) => {
+  for (let i = 0; i < limit; i++) { run(1); if (done()) return true; }
+  return false;
+};
 
 // A check: what it is called, and what to say when it is not true. The same
 // shape the browser suite uses, so a group carries its words across unchanged.
@@ -63,6 +132,7 @@ export function group(name, fn, seed = SEED) {
     // property of the run and not of what the run is about, so no group has to
     // remember to ask for it.
     window.__verify(true);
+    sinceReload = 0;
     const checks = (await fn()) || [];
     const bad = checks.filter(c => !c.pass);
     assert.equal(bad.length, 0,

@@ -318,7 +318,8 @@ export function verifyWorld() {
     // which is back on the ground at every whole beat: the slack in frames is
     // longer than any beat, so only a body that *stays* up there is reported.
     const top = standTop(w.x, way.at);
-    if (!(w.route && w.route.length) && !w.floating && w.jigAt == null && top - feet > FLOAT) {
+    const aboard = S.tick - (w.aboardAt ?? -9) <= 1;   // in a machine's seat, see stepTender
+    if (!(w.route && w.route.length) && !w.floating && !aboard && w.jigAt == null && top - feet > FLOAT) {
       const since = floatSince.get(w) ?? S.tick;
       floatSince.set(w, since);
       if (S.tick - since > FLOAT_FRAMES)

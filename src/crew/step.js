@@ -230,6 +230,12 @@ const STAGES = [
   (w, c) => {
     if (!(w.pauseUntil > c.now) || dancing(c)) return false;
     w.say = { mark: '?', until: w.pauseUntil };
+    // Standing, on whatever is under it now. A hold that only returns true
+    // leaves the body at the height it had when the hold began, and the
+    // ground does not wait: the gang take the columns under a gagging mate
+    // and it hangs there, under the fall rule's five cells, until the hold
+    // lets go. The dizzy hold below stands its body every frame; so do these.
+    w.y = stand(w);
     return true;
   },
 
@@ -257,7 +263,7 @@ const STAGES = [
   // a fouled yard does not gridlock.
   (w, c) => {
     if (w.grossUntil) {
-      if (c.now < w.grossUntil) { w.lunge = 0; return true; }
+      if (c.now < w.grossUntil) { w.lunge = 0; w.y = stand(w); return true; }   // and standing, see the pause
       // done gagging: around it, one clear column past the fouled one
       w.x += (w.face || 1) * P * 2;
       w.grossUntil = 0;
@@ -307,7 +313,7 @@ const STAGES = [
       // body every frame it was not celebrating -- which is every frame -- and
       // no builder ever swung. The move says which animation this is; the job
       // does not, and a second work jig later would be caught by the same test.
-      if (w.jigAt != null && MOVE_KEYS.includes(w.move)) { stopJig(w); w.say = null; }
+      if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
       return false;
     }
     // ...and a body that belongs to a craft: aloft in it, or on its way to the

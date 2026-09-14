@@ -438,7 +438,7 @@ export function haulerWork(w, c) {
   // The rock has landed and this one was dancing while it came down. Put the
   // dance away before it walks off, or it carries the hop and the shout on to
   // the next thing it does -- the same tidy-up the gang on the rock do.
-  if (w.jigAt != null && S.rockFall <= 0) { stopJig(w); w.say = null; }
+  if (w.jigAt != null && S.rockFall <= 0) stopJig(w);
 
   // fetch a loose core if there is one, else scoop dust, then tip it all
   // over the ledge

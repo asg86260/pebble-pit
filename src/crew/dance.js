@@ -351,7 +351,7 @@ function jig(w, now, zone, endsAt) {
     // and something over its head, now and then rather than every time: five
     // bodies all shouting at once is noise
     if (rand() < 0.5)
-      w.say = { mark: rand() < 0.5 ? 'note' : 'burst', until: now + 900 };
+      w.say = { mark: rand() < 0.5 ? 'note' : 'burst', until: now + 900, of: 'dance' };
   }
   if (w.say && now >= w.say.until) w.say = null;
 
@@ -364,6 +364,13 @@ function jig(w, now, zone, endsAt) {
 
 // wiped when the dance ends, so the next one picks fresh ground
 export function stopJig(w) {
+  // And what it was shouting, if the shouting was the dance's. Five callers
+  // used to wipe `say` outright on the way out of a jig, and one of them was
+  // the rockhand's first frame back at work -- which, after a refresh in the
+  // beat between rocks, is the very frame the next rock lands and puts its own
+  // mark over everybody's head. The landing said nothing. A say names what
+  // made it, and the dance takes back only its own.
+  if (w.say && w.say.of === 'dance') w.say = null;
   w.jigAt = null;
   w.move = null;
   w.moveFrom = null;

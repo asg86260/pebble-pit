@@ -9,7 +9,7 @@
 // `page` want a real pointer, a button, a frame or a field the node snapshot
 // has not got, and are the shot tool's.
 
-import { yard, group, ok, run } from './helpers.mjs';
+import { yard, group, ok, run, reloadCheck } from './helpers.mjs';
 import { SCENES } from '../src/scenes.js';
 
 const S = yard.S;
@@ -24,6 +24,11 @@ export function standing(parts) {
         sc.run();
         run(1);
         if (!(S.boulderNo >= 1)) fell.push(`${name}: no yard`);
+        // ...and survives a refresh a second in, and a second after. Every
+        // part of the game has a scene, so every part of the game has a
+        // reload check, without anybody writing one.
+        reloadCheck();
+        run(1);
       } catch (e) {
         fell.push(`${name}: ${e.message}`);
       }
