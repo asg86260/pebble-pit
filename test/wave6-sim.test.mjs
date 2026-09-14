@@ -1,4 +1,4 @@
-// Wave 6, Track A: the teacher, the shed-built upgrade, the belt's box and the
+// Wave 6, Track A: the shed-built upgrade, the belt's box and the
 // wizard's base numbers. Each group reaches its feature the way a player does
 // -- the row is bought with `__buy`, the body assigned through the roster's
 // own `assign` -- and the hooks only set up what the group is not about.
@@ -12,57 +12,6 @@ import { beltFrom, beltReach } from '../src/dust.js';
 import { wizMs } from '../src/wizard.js';
 import { critChance } from '../src/crit.js';
 import { TYPE } from '../src/jobs.js';
-
-// --- A1: the training grounds has a teacher -----------------------------------
-//
-// The school's works used to be done by whoever was spare, which left the one
-// station with no post on the boards and nothing standing in it. Now a teacher
-// is assigned like any other body, and the trades taught in there accrue only
-// while it is actually through the door -- never off the assigned count.
-group('a trade is taught only while the teacher is through the door', async () => {
-  window.__grant({ shards: 500 });
-  window.__give(50000);
-  // The school bought like a player buys it, and built the way every building
-  // is: the yard's spare hands. The building is not what this group is about,
-  // so the worker-seconds are handed over.
-  const bought = window.__buy('unlockschool');
-  window.__finish();
-  const open = state().schoolOpen;
-
-  // Two bodies: one to teach, one on the rock so nobody is left spare -- a
-  // spare hand would be lent to the empty school (the tower's-first-hat rule)
-  // and this group is about the teacher, not the lending.
-  window.__crew(1, 1);
-  const assigned = window.__assign('teachers', 1) !== false && S.teachers === 1;
-
-  // Start a trade with the teacher still crossing the yard: no progress until
-  // it is through the door. The count says one teacher; the door says nobody.
-  // The door wins -- sampled every frame up to the frame it steps in.
-  const started = window.__buy('breaker');
-  const w0 = workAt('school');
-  let doneWhileWalking = 0;
-  const arrived = runUntil(() => {
-    const t = S.workers.find(w => w.type === TYPE.TEACH);
-    if (!t || t.goal === 'in') return !!t;
-    doneWhileWalking = Math.max(doneWhileWalking, workAt('school')?.done ?? 0);
-    return false;
-  }, 60);
-  const before = workAt('school')?.done ?? -1;
-  run(4);
-  const after = workAt('school')?.done ?? before + 999;
-
-  return [
-    ok(bought && open, 'the training grounds is bought and stands'),
-    ok(assigned, 'a teacher is put on it through the roster', `${S.teachers}`),
-    ok(started && !!w0, 'a trade can be started there'),
-    ok(doneWhileWalking === 0,
-       'no teaching happens while the teacher is still crossing the yard',
-       `${doneWhileWalking}`),
-    ok(arrived, 'the teacher gets through the door'),
-    ok(after > before, 'and only then does the trade accrue',
-       `${before} -> ${after}`)
-  ];
-});
 
 // --- A2: a quarry upgrade pulls one of the gang to the shed --------------------
 //
@@ -126,7 +75,7 @@ group('a belt being built is boxed rock-to-lip, not at its tail', async () => {
   window.__fullSites();
   // the belt's own gates: every rung of the lip's gear, and a full set of carts
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
-  window.__school({ carters: 9 });
+  window.__kit({ carters: 9 });
   window.__grant({ shards: 5000, spores: 5000, sparks: 5000 });
   window.__give(200000);
   const bought = window.__buy('belt');

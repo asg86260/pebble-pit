@@ -142,7 +142,7 @@ group("a blaster's swing fires the ring, an apprentice's does not, and a crit is
   const critRings = count(15);
   const critSwings = watch(15).swings;
   window.__crit(null);
-  // And a blaster: the school's hat on, no crits, a ring a swing.
+  // And a blaster: the lamp on, no crits, a ring a swing.
   window.__seed(20250830); window.__verify(true);
   gang(1); window.__crit(false);
   runUntil(() => digging() && quarriers()[0].trained, 120);

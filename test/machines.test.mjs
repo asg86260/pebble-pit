@@ -1005,12 +1005,12 @@ group('a machine waits for the specialists, and then beats them', async () => {
 
   const kitted = offered();
   // and now take the hats away again
-  window.__school({ blasters: 0, growers: 0, breakers: 0 });
+  window.__kit({ blasters: 0, growers: 0, breakers: 0 });
   const bare = offered();
   // half a set is not a set -- and a set is three now, so half of it is two
-  window.__school({ blasters: 2 });
+  window.__kit({ blasters: 2 });
   const half = offered();
-  window.__school({ blasters: 3, growers: 3, breakers: 3 });
+  window.__kit({ blasters: 3, growers: 3, breakers: 3 });
   const back = offered();
 
   return [
@@ -1155,7 +1155,7 @@ group('a belt comes back bought', async () => {
   window.__fullSites();
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 20000 });
-  window.__school({ carters: 6 });
+  window.__kit({ carters: 6 });
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   // B1 (wave-feedback3.md): one builder, not three, so the belt's 180
   // worker-seconds are no longer split three ways.
@@ -1358,7 +1358,7 @@ group('the belt waits for the whole of the lip to be bought out', async () => {
   const bare = shown();
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   const geared = shown();
-  window.__school({ carters: 6 });
+  window.__kit({ carters: 6 });
   const kitted = shown();
   return [
     ok(!bare.includes('belt'), 'not offered on a lip with its gear unbought'),
@@ -1371,11 +1371,11 @@ group('the belt waits for the whole of the lip to be bought out', async () => {
 // The ladder ends at the machine, and the board says so.
 //
 // The set of hats is the last thing bought before the machine and the machine
-// takes it, so a training grounds still selling a fourth breaker after the ram
+// takes it, so a shack still selling a fourth breaker after the ram
 // is up is a row selling a helmet for a face nobody stands at. Checked through
 // the board's own rows rather than the flag underneath, because what is claimed
 // here is what the player can see and press.
-group('the school stops selling kit for a station a machine has taken', async () => {
+group('a board stops selling kit for a station a machine has taken', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -1383,7 +1383,7 @@ group('the school stops selling kit for a station a machine has taken', async ()
   window.__fullSites();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
-  window.__school({ open: true, breakers: 6, carters: 6, blasters: 6, growers: 6 });
+  window.__kit({ breakers: 6, carters: 6, blasters: 6, growers: 6 });
   const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
 
   const before = shown();
@@ -1412,7 +1412,7 @@ group('the carters outlast the belt', async () => {
   window.__fullSites();
   window.__crew(0, 3);
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
-  window.__school({ open: true, carters: 6 });
+  window.__kit({ carters: 6 });
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__tip(20000);
   const had = state().carters;

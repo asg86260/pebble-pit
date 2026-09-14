@@ -2,14 +2,13 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
-import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse, shack } from './state.js';
+import { S, bench, lab, apothecary, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
-import { UPGRADES, markSectionsSeen, canPay, maxed, inLine } from './upgrades.js';
+import { UPGRADES, lodgers, markSectionsSeen, canPay, maxed, inLine } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
-import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
@@ -25,7 +24,6 @@ import { now } from './clock.js';
 import { shown } from './tween.js';
 
 const shopEl = document.getElementById('shop');
-const schoolShopEl = document.getElementById('schoolshop');
 const casinoShopEl = document.getElementById('casinoshop');
 const crewShopEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlist');
@@ -41,7 +39,7 @@ const shackShopEl = document.getElementById('shackshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'),
-                school: document.getElementById('school'), casino: document.getElementById('casino'),
+                casino: document.getElementById('casino'),
                 house: document.getElementById('house'),
                 scrub: document.getElementById('scrub'),
                 quarry: document.getElementById('quarryboard'),
@@ -81,7 +79,7 @@ const booksRect = () => S.noticeboard;
 // it. That read wrong -- the shed is what looks like the sign, so it is what
 // the hand goes to. It is the whole answer now: the hover target, the click
 // target, and the anchor the board hangs from, for both of them.
-const standAt = { bench, lab, school, casino, scrub, tower, shack,
+const standAt = { bench, lab, casino, scrub, tower, shack,
                   // The hut is the station (item 17): the whole plot is 408px of
                   // hut, shelves and pots, and a board centered over all of it
                   // hangs off the window on a narrow view. Hover, click and the
@@ -109,11 +107,12 @@ const listFor = which =>
   // it belongs to and the bench takes the rest, which is what every row used to
   // be -- see `SHACK_GEAR` in shack.js for a board that reads its rows out.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
-  which === 'school' ? SCHOOL_UPGRADES :
   which === 'casino' ? CASINO_UPGRADES :
   which === 'scrub' ? SCRUB_UPGRADES :
-  which === 'quarry' ? QUARRY_UPGRADES :
-  which === 'farm' ? FARM_UPGRADES :
+  // The cut's and the plots' own rows, and the kit row that moved in with
+  // each -- see `lodgers`.
+  which === 'quarry' ? [...QUARRY_UPGRADES, ...lodgers('quarry')] :
+  which === 'farm' ? [...FARM_UPGRADES, ...lodgers('farm')] :
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
   which === 'stats' ? STATS_UPGRADES :
@@ -125,14 +124,13 @@ const listFor = which =>
 // Every station that has a board. One list, so that a thing which is true of all
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
-export const STATIONS = ['bench', 'school', 'casino', 'scrub', 'quarry',
+export const STATIONS = ['bench', 'casino', 'scrub', 'quarry',
                          'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
                          'shack'];
 
 // whether a station is there at all yet
 const standing = which =>
   which === 'bench' ? S.seenBench :
-  which === 'school' ? S.schoolOpen :
   which === 'casino' ? S.casinoOpen :
   which === 'scrub' ? S.scrubOpen :
   which === 'quarry' ? S.quarryOpen :
@@ -202,7 +200,6 @@ const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
                           y > r.y - P * 8 && y < r.y + r.h + P * 4;
 
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
-export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
 // The hut, not the plot: the plot runs hut, shelves and four pots, and a pot
@@ -884,7 +881,6 @@ function settle(want) {
   const wasAt = at;
   at = want;
   S.boardOpen = want === 'bench';
-  S.schoolBoardOpen = want === 'school';
   S.casinoBoardOpen = want === 'casino';
   S.houseBoardOpen = want === 'house';
   S.scrubBoardOpen = want === 'scrub';
@@ -931,7 +927,7 @@ function settle(want) {
   // board has *gone* does not.
   //
   // What decides it is whether there is anything on the screen to slide. A box
-  // standing at the lab that jumps to the school is the jank; a box that has
+  // standing at the lab that jumps to the casino is the jank; a box that has
   // already faded out has no place any more, and sliding it means an invisible
   // sheet travelling the length of the yard and fading up somewhere along the
   // way -- the board arrives late and from the wrong direction, which reads
@@ -1011,13 +1007,10 @@ function fill(which) {
   // finished or you walked over because of the mark
   markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  // and the school's headings count kit rather than bodies: what is on the
-  // stand there is the thing you are deciding about
-  if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, kitCount);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
-  if (which === 'quarry') refresh(quarryShopEl, QUARRY_UPGRADES, null);
-  if (which === 'farm') refresh(farmShopEl, FARM_UPGRADES, null);
+  if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), null);
+  if (which === 'farm') refresh(farmShopEl, listFor('farm'), null);
   if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
   // The books are written every frame they are open, the same as the crew list
@@ -1086,7 +1079,7 @@ function fillPurse() {
 // about is whichever board is open, and that is this file's one piece of
 // knowledge. It used to be a button on the bench's page, which made a preference
 // that folds rows on all nine boards reachable from exactly one of them: the
-// lab, the school and the rest hid their finished ladders only if you walked
+// lab, the quarry and the rest hid their finished ladders only if you walked
 // back to the bench first and knew the switch standing there meant them too.
 const hideEl = document.getElementById('hidedone');
 

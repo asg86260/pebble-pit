@@ -1,11 +1,10 @@
-// The two indoor stations and the smoke that says one is being worked: the
-// school, the lab, and the lab's chimney smoke. Extracted verbatim from
-// render.js; behavior unchanged. Owns drawSmoke, drawSchool and drawLab. The
+// The lab and the smoke that says it is being worked. Extracted verbatim from
+// render.js; behavior unchanged. Owns drawSmoke and drawLab. The
 // shared primitives (ctx, withRise, risingPlace) come from ./ctx.js and
 // ./rise.js.
 
 import { DOOR_H, DOOR_W, LAB_FLUE, P, SMOKE_LIFE } from '../config.js';
-import { S, lab, school } from '../state.js';
+import { S, lab } from '../state.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 import { drawDoseMote } from './effects.js';
@@ -42,32 +41,7 @@ export function drawSmoke() {
   ctx.fillStyle = '#000';
 }
 
-export function drawSchool() {
-  const rising = risingAt('school') && 'school';
-  if (!S.schoolOpen && !rising) return;
-  const { x, y, w, h } = school;
-  withRise(rising, x, S.groundY, w, h, () => {
-    const c = (n) => x + P * n;                             // cell n across the front
-    ctx.fillStyle = '#000';
-    ctx.fillRect(c(9), y, P * 2, P * 3);                    // the belfry
-    ctx.fillRect(x, y + P * 3, w, h - P * 3);               // and the block under it
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(c(9), y + P, P * 2, P);                    // the opening it rings out of
-    // Tall and narrow, and there are a lot of them: a row of standing windows is
-    // the one thing a building can do that says people are in there in numbers.
-    for (const n of [2, 4, 6, 13, 15, 17]) ctx.fillRect(c(n), y + P * 4, P, P * 2);
-    // The way in, standing open. Two cells by three before, which was the smallest
-    // door in the yard on the widest building in it -- a twenty-cell front with a
-    // slot in it, and a body three cells across walking up to a hole three cells
-    // tall. It is DOOR_W by DOOR_H now like every other way in, and it is centred
-    // on the same column the belfry is, so the one thing standing out of the roof
-    // and the one thing cut into the wall are on one axis.
-    ctx.fillRect(c(10 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
-    ctx.fillStyle = '#000';
-  });
-}
-
-// The lab: a tall body with one chimney, read against the school's long block and
+// The lab: a tall body with one chimney, read against the casino's block and
 // against the stack of one-cell rooms the crew live in.
 //
 // It was the one building in the yard with no way in. Everything else on the

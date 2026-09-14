@@ -99,7 +99,7 @@ group('a body walks to its new work instead of appearing at it', async () => {
   };
   // No kit anywhere: a body sent on an errand for a lamp is a body doing
   // something else, and what this check is watching is the commute itself.
-  window.__school({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
+  window.__kit({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
   window.__crew(0, 0, 1);                     // one body, and it goes down the quarry
   // Down the wall and working the floor. However long the walk out there takes:
   // where a body starts from is not what this check is about, and a fixed ten
@@ -253,7 +253,7 @@ group('a hat is walked to, put on, and walked back', async () => {
     run(0.4);
   window.__crew(2, 1);
   window.__clearFloor();
-  window.__school({ breakers: 2 });
+  window.__kit({ breakers: 2 });
   const bought = state();
   run(20);
   const on = state();
@@ -263,7 +263,7 @@ group('a hat is walked to, put on, and walked back', async () => {
   run(20);
   const back = state();
   window.__crew(0, 0);
-  window.__school({ breakers: 0 });
+  window.__kit({ breakers: 0 });
   run(20);
   window.__clearFloor();
   const rock = r => r.roster.find(x => x.job === 'rockhands');

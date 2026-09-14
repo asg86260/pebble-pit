@@ -115,7 +115,7 @@ group("the janitor's building is sold and titled as the janitor's closet", async
 group('the trade line stands a clear cell under the counter, and the janitor has no bare body', async () => {
   window.__crew(3, 2);
   window.__loo(true);                           // the shed up; buying it is the group above
-  window.__school({ breakers: 2 });             // so the rock post has a trade line
+  window.__kit({ breakers: 2 });             // so the rock post has a trade line
   run(1);
   const report = rosterReport();
   const rock = report.find(r => r.key === 'mine');

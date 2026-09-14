@@ -4,7 +4,7 @@ import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
-import { LAB_W, SCHOOL_W } from './school.js';
+import { LAB_W } from './lab.js';
 import { SCRUB_W } from './scrub.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
@@ -145,7 +145,6 @@ export const SITES = [
     furniture: () => BOARD_W },
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,
     hang: () => kitHang('outhouse') },
-  { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
   { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry',
     hang: () => kitHang('quarry') },
   { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm',

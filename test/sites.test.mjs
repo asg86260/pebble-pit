@@ -113,7 +113,7 @@ group('the farm grows spores when it is tended', async () => {
 // at the tip of the stalk the moment the plot is ripe and sits there until the
 // farmhand takes it off -- from exactly where it grew, in the tone it grew in.
 group('a ripe plot shows its spore before it is cut', async () => {
-  window.__school({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
+  window.__kit({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
   window.__crew(0, 0, 0, 1);
   quickCrew();
   window.__clearFloor();

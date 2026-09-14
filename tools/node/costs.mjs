@@ -30,7 +30,6 @@ const { FARM_UPGRADES, FARM_SECTIONS } = await import('../../src/farm.js');
 const { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } = await import('../../src/apothecary.js');
 const { TOWER_UPGRADES, TOWER_SECTIONS } = await import('../../src/tower.js');
 const { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } = await import('../../src/outhouse.js');
-const { SCHOOL_UPGRADES, SCHOOL_SECTIONS } = await import('../../src/school.js');
 
 // The boards in the order the yard opens them, each the same triple `BOARDS`
 // in shop.js hands `build`.
@@ -44,7 +43,6 @@ const BOARDS = [
   ['the casino', CASINO_UPGRADES, CASINO_SECTIONS],
   ['the outhouse', OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS],
   ['the tower', TOWER_UPGRADES, TOWER_SECTIONS],
-  ['the school', SCHOOL_UPGRADES, SCHOOL_SECTIONS],
   ['the scrubbing house', SCRUB_UPGRADES, SCRUB_SECTIONS]
 ];
 

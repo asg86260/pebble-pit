@@ -16,7 +16,7 @@ export const TESTS = [
   // A decision about a place is made at the place. The quarry and the plots used to
   // be sold from the bench, under headings naming a hole and a field on the far
   // side of the yard: you bought a bench you could not see, priced in a currency
-  // that comes out of ground you were not standing on. The lab and the school
+  // that comes out of ground you were not standing on. The lab and the casino
   // are buildings you walk to for exactly this reason.
   ['the quarry and the plots are bought where they are', async () => {
     newRun();
@@ -73,42 +73,9 @@ export const TESTS = [
     ];
   }],
 
-  ['the training grounds count the kit on each stand', async () => {
-    window.__crew(2, 2, 2, 2);
-    window.__grant({ shards: 60 });
-    window.__school({ open: true, breakers: 3, carters: 1, blasters: 0, growers: 0 });
-    const s = state();
-
-    // standing at it is what fills its board, the same as the bench
-    await hoverStation('school');
-
-    const heads = [...document.getElementById('schoolshop').children]
-      .filter(el => el.dataset.sect);
-    const badge = title => {
-      const h = heads.find(el => el.dataset.sect === title);
-      return h && h.querySelector('.badge');
-    };
-    const rock = badge('diggers'), dust = badge('pebble carters'), quarry = badge('miners');
-
-    await hoverAway();
-    window.__look(state().openCamX);
-    window.__crew(0, 0);
-    window.__school({ open: false, breakers: 0, carters: 0 });
-    return [
-      ok(rock && rock.textContent === '3',
-         'a stand with kit on it says how much', rock && rock.textContent),
-      ok(dust && dust.textContent === '1',
-         'each trade counts its own, not the whole school', dust && dust.textContent),
-      ok(!quarry, 'a trade you own none of carries no badge, the way an empty section does not'),
-      ok(rock && rock.parentElement.firstChild.nodeValue === 'diggers',
-         'and the heading keeps its own title as plain text',
-         rock && rock.parentElement.firstChild.nodeValue)
-    ];
-  }],
-
   // Three boards slide into the same spot and differ only in their rows, so
   // each one says whose it is. And a board with nothing on it says that too:
-  // the school runs out of trades on purpose, and an empty sheet is a bug you
+  // the quarry runs out of benches on purpose, and an empty sheet is a bug you
   // have to rule out before you can believe it.
   ['every board says whose it is, even an empty one', async () => {
     // Counted apart, so a page that grew without a title is a missing name
@@ -118,21 +85,22 @@ export const TESTS = [
 
     window.__crew(2, 2);
     window.__grant({ shards: 40 });
-    // The school sells kit and there is no ceiling on kit, so the way to a board
-    // with nothing on it is a board whose rows are not open yet. What is being
-    // checked is the sheet, not the school: a board that renders blank is a bug
-    // you have to rule out before you can believe it.
-    window.__school({ open: false });
+    // The way to a board with nothing on it is a board whose rows are not open
+    // yet: the quarry's, before the quarry is dug. What is being checked is
+    // the sheet, not the quarry: a board that renders blank is a bug you have
+    // to rule out before you can believe it.
+    const St = (await import('/src/state.js')).S;
+    St.quarryOpen = false;
     buildShopFromTest();
-    const empty = document.getElementById('schoolshop');
+    const empty = document.getElementById('quarryshop');
     const emptyText = empty.textContent;
     const emptyRows = empty.querySelectorAll('[data-key]').length;
 
-    window.__school({ open: true });
+    St.quarryOpen = true;
     buildShopFromTest();
-    const back = document.getElementById('schoolshop').querySelectorAll('[data-key]').length;
+    const back = document.getElementById('quarryshop').querySelectorAll('[data-key]').length;
     window.__crew(0, 0);
-    window.__school({ open: false });
+    St.quarryOpen = false;
     return [
       // The rule, not the roll-call.
       //

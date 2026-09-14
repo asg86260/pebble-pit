@@ -149,7 +149,7 @@ export function holes() {
     // could not fit through is the fastest way to make a building read as a model
     // of a building. This one was the yard's only honest door for a long while
     // and the rest have been brought to it: DOOR_W by DOOR_H is what it always
-    // was, named in config.js now so the school, the lab, the casino and the
+    // was, named in config.js now so the outhouse, the lab, the casino and the
     // scrubbing house are the same way in.
     ? { x: r.x + P, y: r.y + C - P * DOOR_H, w: P * DOOR_W, h: P * DOOR_H, door: true, i: r.i }
     : { x: r.x + P * 2, y: r.y + P * 2, w: P * 2, h: P * 2, i: r.i });

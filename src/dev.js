@@ -119,12 +119,11 @@ line('give', box => {
 });
 
 // Every building, not the three that happened to be here first. The quarry and the
-// plots carry their own boards now, and the school, the house and the table are
+// plots carry their own boards now, and the casino, the house and the table are
 // all places you walk to -- so all of them open from one line.
 line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
   button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
-  button(box, 'school', () => window.__school({ open: !S.schoolOpen }));
 });
 
 line('open too', box => {
@@ -133,8 +132,8 @@ line('open too', box => {
   button(box, 'tower', () => { S.towerOpen = !S.towerOpen; S.seenCore = true; });
   button(box, 'meteor', () => window.__meteor());
   button(box, 'wizard hat', () => window.__wizardHat(1));
-  button(box, 'kit', () => window.__school({ open: true, breakers: 3, carters: 3,
-                                             blasters: 3, growers: 3 }));
+  button(box, 'kit', () => window.__kit({ breakers: 3, carters: 3,
+                                          blasters: 3, growers: 3 }));
   button(box, 'sky', () => { S.skyShown = !S.skyShown; });
 });
 

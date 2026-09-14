@@ -109,7 +109,7 @@ export const HATS = {
   ],
   // A janitor's flat cap: a low crown with the peak out front. It is the only
   // hat that is not a trade -- a janitor buys no kit and wears nothing the
-  // school sells -- so it is the one that has to be told apart by shape alone,
+  // kit rows sell -- so it is the one that has to be told apart by shape alone,
   // which is why it is lopsided where the others are symmetrical.
   cap: [
     '###',

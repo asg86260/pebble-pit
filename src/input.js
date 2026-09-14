@@ -15,7 +15,7 @@ import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
-import { nearBench, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
+import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
@@ -96,7 +96,7 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // Standing at any station at all. The click handler and the move handler ask the
 // same question of the same list, so a station that answers one answers both.
 const atStation = (x, y) =>
-  nearShack(x, y) || nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
+  nearShack(x, y) || nearBench(x, y) || nearCasino(x, y) ||
   nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearApothecary(x, y) || nearTower(x, y) ||
   nearHouse(x, y) || nearStats(x, y) || nearOuthouse(x, y);
 
@@ -229,8 +229,7 @@ canvas.addEventListener('pointermove', e => {
     // it; the house is a block that grows a room per body, and its patch reaches
     // the bench. Whoever you are actually standing at should win, and next to a
     // wall of rooms that is the smaller thing, not the bigger one.
-    const want = nearSchool(S.mouse.x, S.mouse.y) ? 'school'
-               : nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
+    const want = nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
                : nearScrub(S.mouse.x, S.mouse.y) ? 'scrub'
                : nearQuarry(S.mouse.x, S.mouse.y) ? 'quarry'
                : nearFarm(S.mouse.x, S.mouse.y) ? 'farm'
@@ -304,7 +303,6 @@ export function endDrag(e) {
     const p = pos(e);
     if (nearShack(p.x, p.y)) showPanel(S.shackBoardOpen ? null : 'shack', true);
     else if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
-    else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school', true);
     else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino', true);
     else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub', true);
     else if (nearQuarry(p.x, p.y)) showPanel(S.quarryBoardOpen ? null : 'quarry', true);
@@ -398,7 +396,7 @@ function cellLabel(v) {
 // hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
 const BUILDING_NAME = {
   shack: 'the shack',
-  bench: 'the bench', lab: 'the lab', school: 'the training grounds', casino: 'the casino',
+  bench: 'the bench', lab: 'the lab', casino: 'the casino',
   scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
 };
 
@@ -619,7 +617,7 @@ const CURSORS = [
   [(x, y) => overCore(x, y), 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
-  [(x, y) => nearShack(x, y) || nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
+  [(x, y) => nearShack(x, y) || nearBench(x, y) || nearCasino(x, y) ||
              nearHouse(x, y) || nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) ||
              nearApothecary(x, y) || nearTower(x, y) || nearStats(x, y) ||
              nearOuthouse(x, y), 'pointer'],

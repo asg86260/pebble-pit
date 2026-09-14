@@ -22,7 +22,9 @@ import { UPGRADES } from './upgrades.js';
 // In the order the board reads them: what the gang swings, how often, the
 // multiplier over that, and then the machine that does the same job without
 // them -- the ladder first and the thing that climbs past it last.
-export const SHACK_GEAR = ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'];
+// The breaker's helmets sit between the ladder and the ram they are the price
+// of: kit is sold where it is worn (upgrades/rows-kit.js).
+export const SHACK_GEAR = ['rockhandpick', 'rockhandspeed', 'breaker', 'ram', 'tuneram'];
 
 // Asked for when it is wanted, never gathered at load: upgrades.js reaches this
 // file's neighbors on the way to building UPGRADES, so a list gathered in this
@@ -41,7 +43,5 @@ export const shackRows = () =>
 // row by taking its key out of the section that names it. Handed a fresh array
 // on every call it edited a copy nothing would ever read again, so the shack's
 // only row group was the one no check could reach.
-// "the miners", to stand beside "the haulers" on the bench. The school still
-// says "rock miners", because there the word is telling four trades apart.
 export const SHACK_SECTIONS = [{ title: 'diggers', keys: SHACK_GEAR }];
 export const shackSections = () => SHACK_SECTIONS;

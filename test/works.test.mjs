@@ -407,10 +407,10 @@ group('a loan is a body, and the roster ends where the player put it', async () 
     window.__tip(200000);
     run(2);
   };
-  const land = () => runUntil(() => !on('unlockschool'), 180);
+  const land = () => runUntil(() => !on('unlockshack'), 180);
 
   start();
-  window.__buy('unlockschool');
+  window.__buy('unlockshack');
   run(4);
   const lent = state();
   window.__assign('rockhands', 1);               // ...and the player fills the gap
@@ -419,7 +419,7 @@ group('a loan is a body, and the roster ends where the player put it', async () 
   const up = state();
 
   start();
-  window.__buy('unlockschool');
+  window.__buy('unlockshack');
   run(4);
   window.__assign('rockhands', -1);              // ...or takes another one off
   const landedDown = land();
@@ -455,12 +455,12 @@ group('a loan comes back with the body that owes it', async () => {
   window.__tip(200000);
   run(2);
 
-  window.__buy('unlockschool');
+  window.__buy('unlockshack');
   run(4);
   window.__reload();
   const back = state();
   window.__assign('rockhands', 1);
-  const landed = runUntil(() => !on('unlockschool'), 180);
+  const landed = runUntil(() => !on('unlockshack'), 180);
   run(2);
   const after = state();
 
@@ -468,7 +468,7 @@ group('a loan comes back with the body that owes it', async () => {
     ok(back.lent.length === 1 && back.rockhands === 2,
        'the yard comes back still owing the rock a body',
        `${back.rockhands} rockhands, owed ${JSON.stringify(back.lent)}`),
-    ok(landed, 'and the school still goes up'),
+    ok(landed, 'and the shack still goes up'),
     ok(after.rockhands === 3 && after.rockhands <= after.crew,
        'and the rock ends with the crew it was set to, not one more',
        `${after.rockhands} rockhands out of ${after.crew}`)

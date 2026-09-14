@@ -38,9 +38,8 @@ import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW, gainText } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW, gainText } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
-import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
@@ -99,7 +98,6 @@ export const fullSites = () => {
   S.breakers = Math.max(S.breakers, kitCap(JOB.ROCK));
   S.blasters = Math.max(S.blasters, kitCap(JOB.QUARRY));
   S.growers = Math.max(S.growers, kitCap(JOB.FARM));
-  S.schoolOpen = true;
   // The shack too: the rock's own rows are sold there now, so a yard with every
   // other door open and no hut is a yard missing a board rather than a building.
   S.shackOpen = true;
@@ -267,11 +265,19 @@ export const wizardHat = (n = 1) => {
   S.dirty = true;
 };
 
-// dev: build the school and hand out trades without paying for them
-export const school = (o = {}) => {
-  S.schoolOpen = o.open ?? true;
+// dev: hand the stations their kit without paying for it. The counts are the
+// hats on the stands; `stepKit` walks the bodies over to wear them. `learned`
+// answers the three shields that open the kit rows (rows-kit.js), for a check
+// that wants to buy a hat the player's way without raising a shield first.
+export const kit = (o = {}) => {
+  if (typeof o !== 'object') o = {};
   for (const k of ['breakers', 'carters', 'blasters', 'growers'])
     if (o[k] != null) S[k] = o[k];
+  if (o.learned) {
+    for (const k of ['props', 'net', 'arch'])
+      if (!S.shieldsDone.includes(k)) S.shieldsDone.push(k);
+    S.seenShard = true;
+  }
   rebalance(); syncWorkers(); buildShop(); S.dirty = true;
 };
 
@@ -678,7 +684,7 @@ export const upgrades = () => UPGRADES;
 // `null` puts them all back. Only a check ever calls this.
 let unsectioned = null;
 export const unsection = key => {
-  const all = [SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
+  const all = [SECTIONS, TOWER_SECTIONS,
                SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS,
                SHACK_SECTIONS];
   if (unsectioned) {
@@ -708,10 +714,10 @@ export const boards = () => [
                                                           sections: SECTIONS.map(x => x.keys) },
   { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
-  { name: 'school', keys: SCHOOL_UPGRADES.map(u => u.key), sections: SCHOOL_SECTIONS.map(x => x.keys) },
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
-  { name: 'quarry', keys: QUARRY_UPGRADES.map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
-  { name: 'farm',   keys: FARM_UPGRADES.map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
+  // ...and the kit row lodging on each -- see `lodgers` in upgrades.js.
+  { name: 'quarry', keys: [...QUARRY_UPGRADES, ...lodgers('quarry')].map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
+  { name: 'farm',   keys: [...FARM_UPGRADES, ...lodgers('farm')].map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
   { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) },
   // The rock's board. Its rows are the same objects the bench used to draw, so
   // they are already in UPGRADES above -- what is checked here is that they are
@@ -757,7 +763,7 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         // check that buys a janitor the player's way goes
                         // quietly false.
                         ...OUTHOUSE_UPGRADES,
-                        ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
+                        ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
                         ...CASINO_UPGRADES,
@@ -1070,7 +1076,7 @@ export const waysNow = () => {
 export const HANDLES = {
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
   __preview: preview, __next: next, __drop: drop,
-  __birds: birds, __crew: crew, __school: school,
+  __birds: birds, __crew: crew, __kit: kit,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
   __strike: forceStrike,

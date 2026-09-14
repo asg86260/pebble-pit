@@ -6,7 +6,7 @@
 // of them is standing right now, and what each of them has done since the day
 // they were taken on.
 //
-// It is built out of the same rows as the shop for the same reason the school is:
+// It is built out of the same rows as the shop for the same reason the casino is:
 // a row with a name on the left, a word on the right and something to say when
 // you hover it is a shape this game already has, and a second one invented for
 // this would read as a different game's menu.

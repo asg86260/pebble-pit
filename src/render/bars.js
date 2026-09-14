@@ -3,7 +3,7 @@
 // from ./ctx.js.
 
 import { P, TOWER_SHAFT } from '../config.js';
-import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
+import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -78,7 +78,7 @@ const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
 // the way risingPlace names them. The rects stand in the layout before the
 // place opens, so they are readable mid-build; the house is the one that grows,
 // and siteBox already answers with the rooms the build will have.
-const RISING_BOX = { lab: () => lab, scrub: () => scrub, school: () => school,
+const RISING_BOX = { lab: () => lab, scrub: () => scrub,
                      casino: () => casino, outhouse: () => outhouse,
                      tower: towerSpireBox,
                      apothecary: () => apothHut(),

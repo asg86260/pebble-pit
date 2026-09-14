@@ -164,9 +164,9 @@ canvas {
   color: #000;
 }
 
-/* A board with nothing on it. It happens at the school, which sells one trade
-   per job and runs out of them: an empty sheet is a bug you have to rule out,
-   and a line saying so is the board still talking to you. */
+/* A board with nothing on it. It happens at the quarry, which runs out of
+   benches: an empty sheet is a bug you have to rule out, and a line saying so
+   is the board still talking to you. */
 .page .empty {
   padding: 2px 0;
   color: rgba(0, 0, 0, .45);

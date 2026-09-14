@@ -22,7 +22,6 @@ import { LADDER } from '../src/config.js';
 // already reaches for `src/quarry.js` this way.
 import { UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
@@ -95,7 +94,7 @@ group('a row no section names is still drawn', async () => {
 // It reads the static shape, not a running yard: no seed, no frames. `group`
 // still wraps it so a fistful of violations reports as a fistful.
 group('the shop keeps to one grammar per kind', async () => {
-  const rows = [...UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
+  const rows = [...UPGRADES, ...TOWER_UPGRADES,
                 ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                 ...APOTHECARY_UPGRADES];
 

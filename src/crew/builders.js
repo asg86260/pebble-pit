@@ -3,7 +3,7 @@
 //
 // Four of the five sites have a gang of their own and their own work is theirs
 // -- the quarriers take out the next bench, the farmhands break the next furrow.
-// The school and everything on the bench have nobody, because the thing being
+// The shack and everything on the bench have nobody, because the thing being
 // built is not standing there yet, so the yard's idle hands walk over and do it.
 //
 // It is not a job on the roster and never will be. You do not decide to have
@@ -30,7 +30,7 @@ export function newBuilder() {
 }
 
 // Which site a builder is on. Three places can want one at once -- the bench,
-// the yard and the school -- and a body is at exactly one of them, so each
+// the yard and the shack -- and a body is at exactly one of them, so each
 // builder is given a site and counted there. It keeps the one it has while
 // that site is busy; when the work lands it takes the busiest-short site next,
 // or is stood down by `rebalance` if there is none.

@@ -45,7 +45,7 @@ function watch(hands, mins) {
 group('one farmhand keeps the whole farm, slowly', async () => {
   window.__reset();
   openSites();
-  window.__school({ growers: 0 });
+  window.__kit({ growers: 0 });
   const one = watch(1, 3);
   const all = watch(7, 3);
   window.__crew(0, 0, 0);

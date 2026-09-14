@@ -19,7 +19,7 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school, shack } from './state.js';
+import { S, bench, quarry, farm, lab, scrub, tower, apothecary, shack } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
@@ -33,7 +33,7 @@ import { sfx } from './audio.js';
 // while it does, which is the same bargain every other decision in this game
 // makes.
 //
-// The school and everything on the bench have no gang, because the thing being
+// The shack and everything on the bench have no gang, because the thing being
 // built is not standing there yet. Those go to the yard, and the yard's spare
 // hands walk over and put it up. See `builders` in crew.js.
 export const SITE_JOB = {
@@ -45,14 +45,6 @@ export const SITE_JOB = {
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.
   bench: JOB.BUILD,
-  // The school's training, taught by the teacher. It was `JOB.BUILD` -- taught
-  // by whoever was spare -- which left the training grounds the one station
-  // with no post on the boards and no body of its own through the door. The
-  // school *building* is still put up by the yard's spare hands: `unlockschool`
-  // is a yard row, so this line was never about the construction. And a school
-  // with no teacher assigned is still lent a spare hand, the same as the
-  // tower's first hat -- see `busyBuilderSites`. (wave6-sim, item 1)
-  school: JOB.TEACH,
   // And the lab, which used to run a building site of its own behind the same
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
@@ -108,7 +100,7 @@ export const SITES = Object.keys(SITE_JOB);
 // work on the yard is actually raising -- see #3, "Wave 3.1".
 export const OPENS_PLACE = {
   unlockshack: 'shack',
-  unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlockouthouse: 'outhouse',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
   unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
   unlockapothecary: 'apothecary'
@@ -245,7 +237,7 @@ export const takesTime = u => !!u.kind && workFor(u) > 0;
 // A station IS its own box. The yard's slot is whatever is being put up there,
 // which the row itself names.
 const YARD_ROW_SITE = {
-  house: 'house', unlockshack: 'shack', unlockouthouse: 'outhouse', unlockschool: 'school',
+  house: 'house', unlockshack: 'shack', unlockouthouse: 'outhouse',
   unlockquarry: 'quarry', unlockfarm: 'farm',
   unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
   unlockapothecary: 'apothecary'
@@ -254,7 +246,7 @@ const YARD_ROW_SITE = {
 // The shack is in it so its bar has a roof to hang over: `barSpot` reads the
 // site's box, and a site missing here answered null -- so the rock's rows were
 // worked at the hut with no bar anywhere while they were.
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school, shack };
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, shack };
 
 // Every room the settlement will have once the one going up lands -- one more
 // than today's count, the same way `nextHouseAt` in house.js asks.
@@ -305,7 +297,7 @@ export function siteBox(site, which = null) {
 
 // --- what is on the go --------------------------------------------------------
 // One work per site at a time, and the rest wait in line. The cut builds one
-// thing at a time, and so do the plots, the school, the scrubbing house and the
+// thing at a time, and so do the plots, the shack, the scrubbing house and the
 // tower -- but you may buy the next before this one lands. "One work per site,
 // and it is not a queue" stood here for a year, on the argument that waiting is
 // a decision; the decision was always the spend, and the wait was a board you

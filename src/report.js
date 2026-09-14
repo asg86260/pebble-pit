@@ -15,7 +15,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table , tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
@@ -328,7 +328,6 @@ export const snapshot = () => ({
   // open it.
   boardOpen: S.boardOpen,
   labBoardOpen: S.labBoardOpen,
-  schoolBoardOpen: S.schoolBoardOpen,
   houseBoardOpen: S.houseBoardOpen,
   crewListOpen: S.crewListOpen,
   scrubBoardOpen: S.scrubBoardOpen,
@@ -337,6 +336,7 @@ export const snapshot = () => ({
   towerBoardOpen: S.towerBoardOpen,
   statsBoardOpen: S.statsBoardOpen,       // Track F3 (wave5): the books over the pit
   looBoardOpen: S.looBoardOpen,
+  shackBoardOpen: S.shackBoardOpen,
   towerOpen: S.towerOpen,
   towerX: Math.round(tower.x),
   outhouseOpen: S.outhouseOpen,
@@ -631,9 +631,7 @@ export const snapshot = () => ({
   pileFull: { ...S.pileFull },
   pileLimit: { ...PILE_LIMIT },
 
-  // The school, and who has been trained.
-  schoolOpen: S.schoolOpen,
-  schoolX: Math.round(school.x),
+  // The kit each station owns, and who is wearing it.
   breakers: S.breakers,
   carters: S.carters,
   blasters: S.blasters,

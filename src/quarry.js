@@ -658,7 +658,7 @@ export function stepQuarrier(w, now, ctx = null) {
   // The blaster's swing is the blast: the same ragged ring and specks a crit
   // leaves, at a third of the power. The apprentice swings and the ground goes;
   // the blaster sets a charge and the ground bursts. That is what was bought
-  // at the school, seen from across the yard. `shockAt` keeps one ring per
+  // with the lamp, seen from across the yard. `shockAt` keeps one ring per
   // frame at one place of work, so a blaster's crit is one ring, not two.
   if (w.trained && CUT_BLAST_POWER > 0)
     shockAt(w.x + WORKER / 2, cutTop(w.x + WORKER / 2), CUT_BLAST_POWER, 'quarry');
@@ -998,7 +998,7 @@ export function cellMs(lvl = paceLadder()) {
 // bench under a heading called "the quarry", which is the shop describing a hole
 // on the other side of the yard: you bought a bench you could not see, priced in
 // a currency that comes out of the ground you were not standing on. The lab and
-// the school are buildings you walk to for exactly this reason, and the quarry is
+// the casino are buildings you walk to for exactly this reason, and the quarry is
 // as much a place as either.
 //
 // The row that *opens* it stays on the bench, because you cannot walk up to a
@@ -1100,11 +1100,14 @@ export const QUARRY_UPGRADES = [
 // Every card of both ladders is named here; only the band you are on answers
 // `true` to `show`, so what the board draws is a place row, one yield card and
 // one speed card.
+// The blaster's lamps are on it too, before the drill they are the price of:
+// kit is sold where it is worn. The row itself lives in upgrades/rows-kit.js
+// and lodges here -- see `lodgers`.
 export const QUARRY_SECTIONS = [
   { title: 'the quarry', keys: ['quarrybench',
                                 'seam', 'labseam',
                                 'quarrypace', 'labcave',
-                                'jaw', 'tunejaw'] }
+                                'blaster', 'jaw', 'tunejaw'] }
 ];
 
 

@@ -39,19 +39,19 @@ group('the kit table is the only list of hats there is', async () => {
        'and says where its hats come from, exactly once -- a trade or a stock',
        sources.join(' ')),
     // Every row is fetched: a hat is somewhere and a body walks to it. That is
-    // NOT the same list as the hats the school sells, and it used to be -- the
+    // NOT the same list as the hats the kit rows sell, and it used to be -- the
     // janitor's cap was worn rather than fetched, so the two questions had one
     // answer and one of them was being asked in the other's name.
     ok(fetched.join() === jobs.slice().sort().join(),
        'every hat in the table is one somebody walks over and picks up',
        `${fetched.join(' ')} against ${jobs.join(' ')}`),
     ok(traded.join() === jobs.filter(j => j !== 'janitors').sort().join(),
-       'and the ones the school sells are all of them but the cap',
+       'and the ones the kit rows sell are all of them but the cap',
        traded.join(' ')),
     // The cap: the same table, the same errand, the same stand -- and no trade,
     // because the outhouse has them rather than sells them.
     ok(!!KIT.janitors && !boughtKit('janitors') && typeof KIT.janitors.stock === 'function',
-       'the cap is stock the outhouse keeps, not a trade the school sells',
+       'the cap is stock the outhouse keeps, not a trade a kit row sells',
        JSON.stringify(Object.keys(KIT.janitors)))
   ];
 });
@@ -59,7 +59,7 @@ group('the kit table is the only list of hats there is', async () => {
 group('a hat is counted where it actually is', async () => {
   window.__reset();
   window.__crew(3, 3, 0, 0);
-  window.__school({ breakers: 3 });
+  window.__kit({ breakers: 3 });
   run(10);
 
   const wearing = () => detail().filter(b => b.kit !== '-');
@@ -96,7 +96,7 @@ group('a hat is counted where it actually is', async () => {
 group('kit finds its way home however the walk is interrupted', async () => {
   window.__reset();
   window.__crew(3, 3, 0, 0);
-  window.__school({ breakers: 3, growers: 2 });
+  window.__kit({ breakers: 3, growers: 2 });
   window.__fullSites();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   run(12);
@@ -135,7 +135,7 @@ group('kit finds its way home however the walk is interrupted', async () => {
 group('a dropped body keeps the hat it is wearing', async () => {
   window.__reset();
   window.__crew(2, 0, 0, 0);
-  window.__school({ breakers: 2 });
+  window.__kit({ breakers: 2 });
   run(10);                                   // hats fetched, gang at work
 
   // Pick a trained rockhand up and put it down a long way from the rock -- the
@@ -257,7 +257,7 @@ group('the outhouse keeps the caps, and a janitor walks over for one', async () 
 group('a knocked-off hat is up for grabs while its owner sees stars', async () => {
   window.__reset();
   window.__crew(2, 0);                        // two on the rock...
-  window.__school({ breakers: 1 });           // ...and one helmet between them
+  window.__kit({ breakers: 1 });           // ...and one helmet between them
   run(8);
 
   const S = yard.S;
@@ -310,7 +310,7 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
   // trip for the whole of the window. A second pair of hands means the race
   // no longer hangs on one body's phase.
   window.__crew(1, 2);                        // one on the rock, two carrying
-  window.__school({ breakers: 1 });
+  window.__kit({ breakers: 1 });
   run(8);
 
   const S = yard.S;
@@ -397,9 +397,9 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
 group('the carts have no ceiling, and the helmets do', async () => {
   window.__reset();
   window.__grant({ shards: 100000, dust: 40000 });
-  window.__school({ open: true });
-  // Somebody to teach them. A hat past the bench is a thing the yard's spare
-  // hands see to, and a yard with nobody spare teaches nobody. See works.js.
+  window.__kit({ learned: true });
+  // Somebody to make them. A hat is a thing the yard's spare hands see to,
+  // and a yard with nobody spare makes nothing. See works.js.
   window.__crew(0, 3);
 
   for (let i = 0; i < 6; i++) buyBuilt('carter');
@@ -414,34 +414,34 @@ group('the carts have no ceiling, and the helmets do', async () => {
   ];
 });
 
-// A hat the school makes is carried to its station, not put there. It used to
-// land on the rock's stand a thousand pixels from the school the frame the
-// trade was taught, with nothing walking it (critics 2026-09-10, A8). It lands
-// on the shelf outside the school now, a spare hauler walks over for it and
-// carries it to the stand, and the stand counts it only once it is put down.
-group('a taught hat waits on the school\'s shelf until somebody carries it to the stand', async () => {
+// A hat is made where it lands. It used to be made at the school and appear
+// on the rock's stand a thousand pixels away (critics 2026-09-10, A8), then
+// wait on a shelf for a carrier. The row is worked at the station now -- a
+// spare hand walks to the shack and works under a bar -- so when the work is
+// in the hat is on the rock's stand with the body standing beside it, and a
+// rockhand fetches it from there like any hat. No shelf, no carrier.
+group('a hat is made at its own station, by a body that walked there', async () => {
   window.__reset();
   window.__grant({ shards: 100000, dust: 40000 });
-  window.__school({ open: true });
+  window.__kit({ learned: true });
   window.__crew(2, 3);
   run(5);
-  const { shelved, spareKit, carried } = await import('../src/upgrades.js');
+  const { spareKit } = await import('../src/upgrades.js');
+  const { workAt, handsAt } = await import('../src/works.js');
   const { JOB } = await import('../src/jobs.js');
   const rock = JOB.ROCK;
 
   const bought = window.__buy('breaker');
-  // The hat's whole journey, sampled every tenth of a second: when it is first
-  // on the shelf, first in a carrier's hands, first on the stand, first on a
-  // head -- and whether it was ever on two of those at once.
-  const first = { shelf: null, hand: null, stand: null, head: null };
-  let twice = false;
+  const site = workAt('shack') ? 'shack' : Object.keys(yard.S.works).find(k => workAt(k)) || 'nowhere';
+  // The hat's whole journey, sampled every tenth of a second: when a body is
+  // first at the work, when the hat is first on the stand, first on a head.
+  const first = { hand: null, stand: null, head: null };
   const onHead = () => yard.S.workers.filter(w => w.trained && w.kitOf === rock).length;
   for (let i = 0; i < 2400; i++) {
     run(0.1);
     const t = i / 10;
-    const at = { shelf: shelved(rock), hand: carried(rock), stand: spareKit(rock), head: onHead() };
+    const at = { hand: workAt('shack') ? handsAt('shack') : 0, stand: spareKit(rock), head: onHead() };
     for (const k of Object.keys(at)) if (at[k] > 0 && first[k] === null) first[k] = t;
-    if (at.shelf + at.hand + at.stand + at.head > 1) twice = true;
     if (first.head !== null) break;
   }
 
@@ -449,13 +449,11 @@ group('a taught hat waits on the school\'s shelf until somebody carries it to th
   const f = k => first[k] === null ? 'never' : `${first[k]}s`;
   return [
     ok(bought, 'the trade is bought through the row'),
-    ok(first.shelf !== null, 'the hat lands on the shelf outside the school', f('shelf')),
-    ok(first.hand !== null && first.hand >= first.shelf, 'a spare hand walks to the shelf and takes it',
-       `shelf ${f('shelf')}, in hand ${f('hand')}`),
-    ok(first.stand !== null && first.stand > first.hand, 'and puts it on the stand, which counts it only then',
-       `in hand ${f('hand')}, on the stand ${f('stand')}`),
+    ok(site === 'shack', 'and the work is at the shack, where the helmet belongs', site),
+    ok(first.hand !== null, 'a spare hand walks there and works it', f('hand')),
+    ok(first.stand !== null && first.stand > first.hand, 'and the hat is on the stand when the work is in',
+       `at work ${f('hand')}, on the stand ${f('stand')}`),
     ok(first.head !== null && first.head > first.stand, 'and a rockhand then fetches it, as for any hat',
-       `on the stand ${f('stand')}, worn ${f('head')}`),
-    ok(!twice, 'and it is never in two places at once')
+       `on the stand ${f('stand')}, worn ${f('head')}`)
   ];
 });

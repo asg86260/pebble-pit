@@ -42,7 +42,7 @@ group('a shaken body sheds its load while you shake it', async () => {
 group('a shaken body drops its hat, and goes back for it', async () => {
   window.__reset();
   window.__crew(2, 2);
-  window.__school({ breakers: 2 });         // so somebody has a hat to lose
+  window.__kit({ breakers: 2 });         // so somebody has a hat to lose
   run(6);                                    // and has gone and put it on
 
   const wore = state().trained.length;

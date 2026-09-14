@@ -160,15 +160,13 @@ export const S = {
   coreTaker: null,        // the worker that has claimed a loose one
 
   // --- what you have bought ---
-  // Bodies that cannot be moved. A job is a count, not a purchase -- except for
-  // these: a body sent to the school comes back knowing one trade and only that
-  // trade, and what the shards bought is the fact that it stays.
-  schoolOpen: false,      // the school is built and the trades can be learnt
-  schoolBoardOpen: false, // and you are standing at it
-  breakers: 0,            // of the rockhands, this many are nailed to the rock
-  carters: 0,             // of the haulers, to the dust
-  growers: 0,             // of the farmhands, to the plots
-  blasters: 0,            // of the quarriers, to the face
+  // The kit each station owns. A job is a count, not a purchase, and so is a
+  // hat: it belongs to the station, and whoever is standing there wears it --
+  // see upgrades/rows-kit.js.
+  breakers: 0,            // helmets the rock owns
+  carters: 0,             // carts the lip owns
+  growers: 0,             // brims the plots own
+  blasters: 0,            // lamps the cut owns
 
   carryLevel: 0,
   speedLevel: 0,
@@ -284,11 +282,6 @@ export const S = {
   // the two grounds sell. `crop` and `seam` are the yield ones and are the only
   // multipliers here that were never the lab's.
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
-  // Hats the school has made and nobody has carried to their stand yet, by
-  // job. A taught trade lands here, outside the school, and a spare hand walks
-  // it to the station -- see `stepKit` in crew/kitwalk.js. (critics A8)
-  hatShelf: {},
-
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
   // of how many are on it, and carrying dust is what the rest do: `haulers` is
@@ -510,9 +503,6 @@ export const S = {
   lastFrame: 0,         // for the length of the last frame
   settleAt: 0,            // the column the pit settler got to last frame
 
-  // wave6-sim: the training grounds' own body. See crew/teacher.js.
-  teachers: 0,            // bodies put on the school; the works there stall without one
-
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
 
@@ -574,9 +564,7 @@ export const SAVED = [
   'pickLevel',
   'critChanceLevel',
   'critMultLevel',
-  'schoolOpen',
-  // the four trades that are nailed on. `rebalance` clamps them on the way in
-  // to what is actually standing there
+  // the kit each station owns
   'breakers',
   'carters',
   'blasters',
@@ -650,8 +638,6 @@ export const SAVED = [
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
-  // wave6-sim
-  JOB.TEACH,
   // The record's rect is reseated by the layout at boot, so saving it costs
   // nothing and keeps the list honest about a field the roundtrip test can see.
   'noticeboard',
@@ -722,7 +708,6 @@ export const SAVED_BY_HAND = [
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
   'belt',                 // what is riding the belt, as [x, shade] pairs
-  'hatShelf',             // hats made at the school and not yet carried to their stand, carriers' included
   'lent',                 // the jobs the builders were borrowed from
   JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
@@ -834,7 +819,7 @@ export const EPHEMERAL = [
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing
-  'boardOpen', 'schoolBoardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
+  'boardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
@@ -873,7 +858,6 @@ export const EPHEMERAL = [
 // "how much dust is lying about" is a field read rather than a walk of a hundred
 // and twenty thousand cells four times a second. See grid.js `put`.
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
-export const school = { x: 0, y: 0, w: 0, h: 0 };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The sand in the quarry: dust that fell down the cut and has not been carried
 // out of it yet. A plot like the pit's, and laid out the same way -- `y` is the

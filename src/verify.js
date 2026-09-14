@@ -67,7 +67,6 @@ const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUAR
                         farmhand: JOB.FARM, scholar: JOB.SCHOLAR,
                         purifier: JOB.PURIFY, stirrer: JOB.STIR,
                         janitor: JOB.JANITOR, wizard: JOB.WIZARD,
-                        teacher: JOB.TEACH,     // wave6-sim: the school's body
                         // Building is not on the roster -- nobody is put on it --
                         // but it is a count `syncWorkers` builds bodies from, and
                         // a count this list leaves out is bodies in the yard the
@@ -123,7 +122,7 @@ function deepest(leftX, at) {
 //
 // `worn <= hats` is not quite an invariant, and the reason is that hats can be
 // taken *away* from a station while they are still on heads. A machine spends
-// them (see `buy` in machines.js), the school's count can be set back by a dev
+// them (see `buy` in machines.js), a station's count can be set back by a dev
 // hook, a save from another shape of the game arrives that way, and a station
 // whose kit is a stock rather than a purchase loses the lot the moment the
 // building is shut (`__loo(false)`, and the caps are on two heads). In all of them

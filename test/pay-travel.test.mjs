@@ -62,9 +62,10 @@ group('a new building pays to the ground it is going up on', async () => {
   window.__tip(90000);
   const benchX = centre(yard.bench);
   yard.S.paid = [];
-  const pressed = window.__buy('unlockschool');    // a yard row: a building, not a rung
+  yard.S.seenMess = true;
+  const pressed = window.__buy('unlockouthouse');    // a yard row: a building, not a rung
   const grains = yard.S.paid;
-  const zone = yard.S.placed?.school;
+  const zone = yard.S.placed?.outhouse;
   const zoneX = zone ? zone.x + zone.w / 2 : null;
   return [
     ok(pressed, 'the row is bought the way a player buys it', `${pressed}`),

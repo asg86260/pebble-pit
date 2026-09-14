@@ -13,11 +13,11 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, school, shack } from './state.js';
-import { groundAt, kitX, shelfX, quarryShed } from './world.js';
+import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, shack } from './state.js';
+import { groundAt, kitX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
-import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf, shelved } from './upgrades.js';
+import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 import { KIT_MARK, TRADE_OF } from './kit.js';
 import { JOB, jobSaid } from './jobs.js';
 import { shown } from './tween.js';
@@ -50,10 +50,6 @@ export const POSTS = [
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
-  // One teacher, through the school's door, or the trades on its board stall.
-  // (wave6-sim, item 1)
-  { key: 'teachjob', job: JOB.TEACH,
-    at: () => school.x + school.w / 2, show: () => S.schoolOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: JOB.JANITOR,
@@ -189,17 +185,6 @@ export function kitStands() {
     if (n < 1) continue;
     const x = Math.round(kitX(p.job) / P) * P;
     out.push({ job: p.job, mark: KIT_MARK[p.job], n, x, y: Math.round(groundAt(x) / P) * P });
-  }
-  // and the shelf outside the school: a stand per trade with a hat waiting on
-  // it, in a row off the door, until somebody carries it to its station
-  if (S.schoolOpen) {
-    let i = 0;
-    for (const job of Object.keys(TRADE_OF)) {
-      const n = shelved(job);
-      if (n < 1) continue;
-      const x = Math.round((shelfX() + i++ * P * 5) / P) * P;
-      out.push({ job, mark: KIT_MARK[job], n, x, y: Math.round(groundAt(x) / P) * P, shelf: true });
-    }
   }
   return out;
 }

@@ -61,7 +61,6 @@ import { newFarmhand, stepFarmhand } from '../farm.js';
 import { newPurifier, stepPurifier } from '../scrubhouse.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
-import { newTeacher, stepTeacher } from './teacher.js';
 import { stepShedwork } from './shedhand.js';
 import { quarryMuck, plotMuck } from '../smog.js';
 
@@ -154,15 +153,6 @@ export const JOBS = {
     factory: newStirrer,
     want: () => S.stirrers,
     step: { work: w => stepShedwork(w) || stepStirrer(w), shutIn: w => w.goal === 'in' }
-  },
-
-  // A teacher behind the school's door is behind a door like a scholar: the
-  // trades taught in there are works at the school, and they run only while
-  // somebody is actually in there to teach them. See `ARRIVED` in muster.js.
-  [TYPE.TEACH]: {
-    factory: newTeacher,
-    want: () => S.teachers,
-    step: { work: stepTeacher, shutIn: w => w.goal === 'in' }
   },
 
   [TYPE.JANITOR]: {

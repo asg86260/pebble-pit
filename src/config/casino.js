@@ -115,3 +115,4 @@ export const CASINO_BURST_UP = 3.2;     // how hard they go up, in pixels a fram
 export const CASINO_BURST_SIDE = 1.6;   // and how wide they spread
 export const CASINO_DARK_MS = 800;      // a loss: the sign goes dark for this long...
 export const CASINO_RELIGHT_MS = 90;    // ...then a bulb comes back this often
+export const CASINO_SAY_MS = 4000;      // how long the table's last word stands

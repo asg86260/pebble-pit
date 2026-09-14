@@ -28,43 +28,49 @@ const flagInk = which => {
 };
 
 export const TESTS = [
-  ['the school is a place you walk to', async () => {
+  // Kit is sold where it is worn: each hat's row is on the board of the
+  // station that wears it, and the shields open them. Read off the sheets
+  // themselves rather than the row list, because what is claimed is where a
+  // player finds the row.
+  ['each hat is sold on its own station\'s board', async () => {
     window.__crew(2, 2, 2, 2);
-    // Dust as well as stone: every row in the game is priced in both now -- see
-    // `billOf` in upgrades.js -- and the training grounds was the one row that
-    // used to ask for stone alone.
-    const { SCHOOL_COST } = await import('../config.js');
-    window.__grant({ shards: SCHOOL_COST + 10, dust: 5000 });
-    const shut = state();
-    const row = [...shop().querySelectorAll('[data-key]')]
-      .find(r => r.dataset.key === 'unlockschool');
-    row?.click();
-    window.__finish();      // the school is a building, and the yard puts it up
-    const open = state();
-    const rows = [...document.getElementById('schoolshop').querySelectorAll('[data-key]')]
-      .map(r => r.dataset.key);
-
-    // standing at it opens its board, the same as the bench and the lab
-    await hoverStation('school');
-    const standing = state().schoolBoardOpen;
-    await hoverAway();
-    window.__look(state().openCamX);             // and leave the view where it was
+    window.__grant({ shards: 200, dust: 5000 });
+    window.__shack();
+    const St = (await import('/src/state.js')).S;
+    St.quarryOpen = true;
+    St.farmOpen = true;
+    // before any shield has fallen, nobody sells a hat
+    window.__build();
+    const before = {};
+    for (const [name, sel] of Object.entries({ shack: '#shackshop', quarry: '#quarryshop',
+                                               farm: '#farmshop', bench: '#shop' })) {
+      window.__board(name);
+      await sleep(120);
+      before[name] = [...document.querySelector(sel).querySelectorAll('[data-key]')]
+        .filter(b => b.offsetParent).map(r => r.dataset.key);
+    }
+    // ...and once they have, each row is on its own board and no other
+    window.__kit({ learned: true });
+    const after = {};
+    for (const [name, sel] of Object.entries({ shack: '#shackshop', quarry: '#quarryshop',
+                                               farm: '#farmshop', bench: '#shop' })) {
+      window.__board(name);
+      await sleep(120);
+      after[name] = [...document.querySelector(sel).querySelectorAll('[data-key]')]
+        .filter(b => b.offsetParent).map(r => r.dataset.key);
+    }
+    window.__board(null);
     window.__crew(0, 0);
+    const hats = ['breaker', 'carter', 'blaster', 'grower'];
+    const where = k => Object.keys(after).filter(n => after[n].includes(k)).join(',');
     return [
-      ok(!shut.schoolOpen && !!row, 'the bench sells it, and it is not there to start with'),
-      ok(open.schoolOpen && open.shards === shut.shards - SCHOOL_COST,
-         'shards build it', `${shut.shards} -> ${open.shards}`),
-      // Against the two things it is actually between, not against the pixels
-      // they happened to sit at: the town is laid out as offsets back from the
-      // rock, so widening the ground on the left moves every one of these at
-      // once and a check written in world coordinates fails for no reason.
-      ok(open.schoolX > open.quarryX + open.quarryW &&
-         open.schoolX + 120 < (open.houses.left ?? open.benchX),
-         'it stands clear of the quarry spoil and of where the crew live',
-         `${open.quarryX + open.quarryW} < ${open.schoolX}..${open.schoolX + 120} < ${open.houses.left ?? open.benchX}`),
-      ok(rows.join(',') === 'breaker,carter,blaster,grower',
-         'and it sells the four trades', rows.join(',')),
-      ok(standing, 'walking up to it opens its board')
+      ok(Object.values(before).every(rows => !rows.some(k => hats.includes(k))),
+         'no hat is for sale before the sky has taught the trade',
+         JSON.stringify(before)),
+      ok(where('breaker') === 'shack', 'the breaker is on the shack\'s board', where('breaker')),
+      ok(where('blaster') === 'quarry', 'the blaster on the quarry\'s', where('blaster')),
+      ok(where('grower') === 'farm', 'the grower on the farm\'s', where('grower')),
+      ok(where('carter') === 'bench', 'and the carter on the bench', where('carter'))
     ];
   }],
 
@@ -140,7 +146,7 @@ export const TESTS = [
     run(20);
     const bad = [];
     const seen = new Set();
-    for (const name of ['bench', 'house', 'quarry', 'farm', 'school', 'scrub',
+    for (const name of ['bench', 'house', 'quarry', 'farm', 'scrub',
                         'tower', 'casino', 'outhouse']) {
       window.__board(name);
       await sleep(320);                        // the sheet scales in; let it land
@@ -205,7 +211,7 @@ export const TESTS = [
     // written about; a note card's rhythm is a call still to be made.
     window.__shack();
     run(20);
-    const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'school', 'scrub',
+    const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'scrub',
                     'tower', 'casino'];
     const bad = [];
     let seen = 0;
@@ -392,9 +398,10 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(3, 2, 1, 1);
-    window.__school(true);
+    window.__shack();
+    window.__kit({ learned: true });
     run(20);
-    window.__look(state().stands.school.x - 400);   // it has to be on the screen
+    window.__look(state().stands.shack.x - 400);   // it has to be on the screen
     await sleep(200);
     await hoverAway();
     await sleep(200);
@@ -403,8 +410,8 @@ export const TESTS = [
     // pennant on it. Ink is counted in the band of sky over the station --
     // where nothing else black stands -- rather than under it, where the old
     // diamond hung.
-    // nothing in the purse: the school sells kit and cannot sell you any
-    const broke = { has: state().offers.includes('school'), ink: flagInk('school') };
+    // nothing in the purse: the shack sells gear and kit and cannot sell you any
+    const broke = { has: state().offers.includes('shack'), ink: flagInk('shack') };
     // Stone AND dust. Every row in the game is priced in both -- see `billOf` in
     // upgrades.js -- so "money in the purse" stopped meaning one coin, and a
     // check that filled only half the purse was still a check about a yard that
@@ -415,12 +422,12 @@ export const TESTS = [
     // clock past the whole raise, then give the page a beat to paint it.
     run(2);
     await sleep(300);
-    const rich = { has: state().offers.includes('school'), ink: flagInk('school') };
+    const rich = { has: state().offers.includes('shack'), ink: flagInk('shack') };
 
     // and standing at it changes nothing: what the arrow says is still true
-    await hoverStation('school');
+    await hoverStation('shack');
     await sleep(300);
-    const there = flagInk('school');
+    const there = flagInk('shack');
     await hoverAway();
     await sleep(300);
 
@@ -563,24 +570,24 @@ export const TESTS = [
     window.__give(999999);
     window.__grant({ cores: 9 });
     window.__crew(3, 2, 1, 1);
-    window.__school(true);
+    window.__shack();
     run(20);
-    await hoverStation('school');
-    const open = state().schoolBoardOpen;
+    await hoverStation('shack');
+    const open = state().shackBoardOpen;
 
     // bare ground, well clear of anything that is a station
     const s = state();
-    const [x, y] = onScreen(s.stands.school.x - 260, s.groundY - 60);
+    const [x, y] = onScreen(s.stands.shack.x - 260, s.groundY - 60);
     canvas().dispatchEvent(new PointerEvent('pointerdown',
       { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0,
         buttons: 1, bubbles: true }));
     await sleep(300);
-    const shut = state().schoolBoardOpen;
+    const shut = state().shackBoardOpen;
 
     // and standing at it again still opens it: this closes boards, it does not
     // put them out of reach
-    await hoverStation('school');
-    const again = state().schoolBoardOpen;
+    await hoverStation('shack');
+    const again = state().shackBoardOpen;
     await hoverAway();
     window.__crew(0, 0);
     return [
@@ -651,14 +658,15 @@ export const TESTS = [
   // The reason it stays is the board's own: every row in this game says what
   // buying it *gives* you and never what you have, which leaves this row as the
   // only place to read how many helmets are on the rock -- and that is the whole
-  // question at the school. Folding it away deletes the fact at the moment the
+  // question of a kit row. Folding it away deletes the fact at the moment the
   // fact becomes final.
   ['a finished kit row stays on the board when the finished rows are hidden', async () => {
     newRun();
     await settle();
     window.__grant({ shards: 9000, dust: 60000 });
-    window.__school({ open: true });
-    window.__board('school');
+    window.__shack();
+    window.__kit({ learned: true });
+    window.__board('shack');
     await sleep(400);
 
     // Bought the way a player buys it: the row is pressed until it will not be
@@ -668,11 +676,11 @@ export const TESTS = [
     // The board is re-opened before each press. It used to be put away by the
     // purchase (feedback8 item 1) and stays up now (DESIGN.md, "The queue");
     // opening it again either way is what keeps the loop about the press.
-    const row = () => [...document.querySelectorAll('#schoolshop button[data-key]')]
+    const row = () => [...document.querySelectorAll('#shackshop button[data-key]')]
       .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
     let presses = 0;
     for (let i = 0; i < 6; i++) {
-      window.__board('school');
+      window.__board('shack');
       await sleep(120);
       const b = row();
       if (!b || b.disabled) break;
@@ -685,7 +693,7 @@ export const TESTS = [
       await sleep(120);
     }
     const bought = state().breakers;
-    window.__board('school');                  // and back up to read the finished row
+    window.__board('shack');                  // and back up to read the finished row
     await sleep(200);
 
     const hide = document.getElementById('hidedone');
@@ -857,7 +865,8 @@ export const TESTS = [
     window.__crew(4, 3);
     window.__grant({ cores: 6, shards: 4000, spores: 4000, sparks: 400 });
     window.__invest();
-    window.__school({ open: true });
+    window.__shack();
+    window.__kit({ learned: true });
     window.__loo(true);
     window.__air({ open: true, purifiers: 1 });
     window.__meteor();
@@ -871,7 +880,7 @@ export const TESTS = [
     window.__build();
     run(20);
 
-    const boards = { bench: '#shop', lab: '#labshop', school: '#schoolshop',
+    const boards = { bench: '#shop', lab: '#labshop', shack: '#shackshop',
                      casino: '#casinoshop', scrub: '#scrubshop', quarry: '#quarryshop',
                      farm: '#farmshop', tower: '#towershop', house: '#crewshop' };
     const bad = [];
@@ -1387,6 +1396,7 @@ export const TESTS = [
   ['a board holds its size while a build is running', async () => {
     window.__crew(3, 2, 0, 0, 2);
     window.__grant({ shards: 60, dust: 20000, cores: 6 });
+    (await import('/src/state.js')).S.seenMess = true;
     window.__board('bench');
     await settle(1);
     const sheet = document.querySelector('#panel > .sheet:not(.flyout)');
@@ -1398,13 +1408,13 @@ export const TESTS = [
     // is about the board being seated afresh over a build, so it is asked for
     // anew rather than relied on).
     const row = [...shop().querySelectorAll('[data-key]')]
-      .find(r => r.dataset.key === 'unlockschool');
+      .find(r => r.dataset.key === 'unlockouthouse');
     row?.click();
     await settle(1);
     window.__board('bench');
     await settle(1);
     const back = [...shop().querySelectorAll('[data-key]')]
-      .find(r => r.dataset.key === 'unlockschool');
+      .find(r => r.dataset.key === 'unlockouthouse');
     const status = back?.querySelector('.gain')?.textContent || '';
     // Sampled across the build rather than looked at once: the status is
     // rewritten every frame -- the clock in the bill is counting down -- so the

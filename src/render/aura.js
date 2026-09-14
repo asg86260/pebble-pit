@@ -23,7 +23,7 @@ import {
 import { now } from '../clock.js';
 import { give, wind } from '../wind.js';
 import { chimneyAt } from '../house.js';
-import { S, bench, lab, school, tower } from '../state.js';
+import { S, bench, lab, tower } from '../state.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
@@ -86,7 +86,6 @@ function roofPeak(rect) {
 const SPOT = {
   house: () => { const f = chimneyAt(); return f && { x: f.x + P / 2, y: f.y - P * 4 }; },
   bench: () => ({ x: bench.x + P * 4.5, y: bench.y - P * 2 }),  // the clamped block
-  school: () => ({ x: school.x + P * 9.5, y: school.y }),       // the belfry
   lab: () => ({ x: lab.x + P * 3, y: lab.y }),                  // the chimney
   // The tower's stand box is the shaft plus the turret hung off its right side,
   // so the middle of the box is the spire's right shoulder -- two and a half

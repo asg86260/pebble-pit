@@ -15,7 +15,7 @@ import { ctx } from './ctx.js';
 // The footprint of a *station* -- the quarry, the farm, the scrub house, the
 // tower, the bench -- is simply its own rect. The yard is the odd one: it is
 // one slot shared by every building that has no gang of its own (the house,
-// the outhouse, the school, the lab, the casino, the tower's own unlock), and
+// the outhouse, the casino, the lab, the casino, the tower's own unlock), and
 // what is going up there is named by the *row*, not by the site. The ground a
 // site's work is on comes from works.js now -- one answer for the tape round
 // it, the bar over it and the patch the builder works across. See `siteBox`

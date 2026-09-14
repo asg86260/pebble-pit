@@ -51,7 +51,7 @@ export const MACHINES = [
   // on nothing, and it goes on everywhere the belt does not reach: the weather's
   // muck, the far heaps, everything the yard drops away from the run between the
   // rock and the hole. So the carts stay bought, they stay useful, and the
-  // school goes on selling them -- see `kitDisplaced`, which is what tells the
+  // kit row goes on selling them -- see `kitDisplaced`, which is what tells the
   // training grounds which rows to take down.
   { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false }
 ];
@@ -62,7 +62,7 @@ export const JOB_MACHINE = Object.fromEntries(MACHINES.map(m => [m.job, m.key]))
 
 // Whether the machine standing in for a job took that station's kit with it.
 //
-// Which is the same question as whether the school should still sell it: kit for
+// Which is the same question as whether the kit row should still sell it: kit for
 // a face a machine now works is kit with no head to go under, and a row offering
 // it is a row selling nothing. Everything but the belt says yes -- see the note
 // on `takesKit` in the table above for why carrying is the exception.

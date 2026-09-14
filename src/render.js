@@ -48,7 +48,7 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawSchool, drawSmoke } from './render/stations.js';
+import { drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
@@ -76,7 +76,7 @@ export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } f
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';   // wave7-ui
-export { drawSchool, drawSmoke } from './render/stations.js';
+export { drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
          drawPointed, drawSays, drawWorkers } from './render/crew.js';
@@ -129,7 +129,6 @@ const LAYERS = [
   { name: 'outhouse', draw: drawOuthouse },
   { name: 'pot pile', draw: drawPotPile },       // what is on the table, as a heap on the ground
   { name: 'sparks', draw: drawSparks },          // and whatever the last spin threw out of it
-  { name: 'school', draw: drawSchool },
   { name: 'smoke', draw: drawSmoke },
 
   { name: 'rock', draw: drawRock },

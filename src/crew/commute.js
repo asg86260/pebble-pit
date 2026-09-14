@@ -19,7 +19,6 @@ import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
 import { scrubDoor } from '../scrubhouse.js';
-import { schoolDoor } from './teacher.js';
 import { apothecaryDoor } from '../apothecary.js';
 import { underMeteor } from '../wizard.js';
 import { outhouse } from '../state.js';
@@ -53,7 +52,6 @@ function handStationX(type) {
   if (type === TYPE.QUARRY) return quarryFace();
   if (type === TYPE.FARM) return plotX(0);
   if (type === TYPE.PURIFY) return scrubDoor() - WORKER / 2;
-  if (type === TYPE.TEACH) return schoolDoor() - WORKER / 2;
   if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;
   if (type === TYPE.JANITOR) return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
@@ -163,20 +161,10 @@ function arrive(w) {
   // travels with it, because what a body is wearing is a fact about the kit and
   // not about the job it happens to be on this second
   if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
-  // Off the shelf outside the school and into its hands, and on to the stand
-  // at the other end -- the hat is counted on the stand from the moment it is
-  // put down there (`spareKit`), and not before. If the shelf is bare by the
-  // time it arrives -- the school's count set back -- it carries nothing.
-  if (w.leg === 'take') {
-    const job = w.fetching;
-    if (job && S.hatShelf && S.hatShelf[job] > 0) { S.hatShelf[job]--; w.shelfHat = job; }
-    else { w.legs = w.legs ? w.legs.filter(l => l.do !== 'put') : null; }
-  }
-  if (w.leg === 'put') { w.shelfHat = null; w.fetching = null; }
   // ...and only if there is still one lying there to pick up. A walk to a stand
   // is a walk, and the yard can change while it is being made: the station's
   // count can go to nought behind a body already half way there -- a machine
-  // spending the hats, the school's number set back -- and this line used to put
+  // spending the hats, the station's number set back -- and this line used to put
   // one on its head anyway. A helmet out of nothing, worn for the two seconds it
   // took `stepKit` to notice and send the body back with it. Nobody would ever
   // have seen it; verify.js saw it on the frame, twice, in two unrelated groups.

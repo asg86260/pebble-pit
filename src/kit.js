@@ -17,13 +17,13 @@
 // has to be told twice.
 //
 //   mark    which picture it is, in sprites.js
-//   trade   the count on S that owns them -- a hat the school sells, one at a
+//   trade   the count on S that owns them -- a hat a kit row sells, one at a
 //           time, so the count is what you have bought
 //   stock   or: how many the station simply has, for a hat that comes with the
 //           building rather than off a shelf. See the janitor's cap.
 //   set     and, for a trade, what counts as a *full set* of it -- the number a
 //           machine waits for before it will stand at the station. `KIT_MAX` for
-//           all four the school sells.
+//           all four the kit rows sell.
 //   max     and how many of it the station will ever own, which is usually the
 //           same number and is the ceiling the board draws pips against. Absent
 //           means no ceiling: the wizard's point, because it is a licence to fly
@@ -137,7 +137,7 @@ export const TRADE_OF = Object.fromEntries(
 // This used to be the traded rows and nothing else, because the cap was worn
 // rather than fetched. It is the whole table again -- but it asks the question
 // it means (has this job kit?) rather than the question that happened to give
-// the same answer (does the school sell it?), so the next hat that comes with a
+// the same answer (does a kit row sell it?), so the next hat that comes with a
 // building is fetched without a line being changed here.
 export const KIT_JOBS = Object.keys(KIT).filter(hasKit);
 
@@ -166,7 +166,7 @@ export function wearing(w) {
   return KIT[w.kitOf]?.mark || null;
 }
 
-// Whether a hat is one the school sells. Not "is this one fetched" -- they all
+// Whether a hat is one a kit row sells. Not "is this one fetched" -- they all
 // are -- but "is there a row on the shop board for it", which is the one
 // question left that the two kinds of row answer differently.
 export const boughtKit = job => !!(KIT[job] && KIT[job].trade);

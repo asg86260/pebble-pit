@@ -154,7 +154,7 @@ export const TOWER_UPGRADES = [
     //
     // A rung, not a building: a hat is made inside a tower that already stands,
     // so nothing rises out of the ground and no tape goes round it -- the same
-    // reasoning as the school's trades. The clock comes from `work` below.
+    // reasoning as the kit rows. The clock comes from `work` below.
     kind: 'rung', site: 'tower',
     // Its own figure rather than the table's, because a hat has always taken a
     // minute and a half and this is not the moment to change what it costs.

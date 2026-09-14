@@ -156,15 +156,3 @@ export function overPileMark(key, mx, my) {
 // else that stands on this ground. (Its own note is over drawLab.)
 
 
-// The school. A long block with a belfry over the door and a row of tall narrow
-// windows -- read against the lab, which is a tall body with one chimney, and
-// against the crew's own place, which is a stack of one-cell rooms. One of them
-// is where something is cooked up out of sight, one is where people sleep, and
-// this is the one people walk into and come out of again. The silhouettes have
-// to say which is which from across the yard, because that is all you can see of
-// any of them.
-//
-// Every edge is a whole cell. It was laid out in fractions of the building's
-// width at first, which put the door and the belfry slot a third of a pixel off
-// the lattice and drew them with a grey fringe -- the same hairline the whole
-// game is arranged to avoid.

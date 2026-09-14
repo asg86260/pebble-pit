@@ -6,7 +6,7 @@ import { BUILD_SHAKE, HOUSE_CUBE } from '../config.js';
 import { cubes as houseCubes } from '../house.js';
 import { puff } from '../puff.js';
 import { farmShed, quarryShed, shakeView } from '../world.js';
-import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
+import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { rising as risingAt } from './rise.js';
 
 // The frame a rising place lands, the yard feels it -- a puff over the middle
@@ -14,14 +14,14 @@ import { rising as risingAt } from './rise.js';
 // `BUILD_SHAKE`). Watched here rather than from `stepWorks` in works.js, which
 // has no idea where any of these places actually stand: the drawing side draws
 // every one of them and so is the one place that already knows.
-const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse',
+const RISE_PLACES = ['lab', 'tower', 'casino', 'scrub', 'outhouse',
                      'quarry', 'farm', 'house'];
 const wasRising = {};
 export function stepRiseLandings() {
   for (const place of RISE_PLACES) {
     const rising = risingAt(place);
     if (wasRising[place] && !rising) {
-      const rect = place === 'school' ? school : place === 'lab' ? lab
+      const rect = place === 'lab' ? lab
                  : place === 'tower' ? tower : place === 'casino' ? casino
                  : place === 'scrub' ? scrub : place === 'outhouse' ? outhouse
                  : place === 'quarry' ? quarryShed() : place === 'farm' ? farmShed()

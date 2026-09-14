@@ -9,8 +9,8 @@
 
 import { KIT_JOBS, TYPE_OF } from '../kit.js';
 import { S } from '../state.js';
-import { JOB_OF, hats, rebalance, roomAt, spareKit, worn, shelved } from '../upgrades.js';
-import { shelfX, kitX } from '../world.js';
+import { JOB_OF, hats, rebalance, roomAt, spareKit, worn } from '../upgrades.js';
+import { kitX } from '../world.js';
 import { errand, nextLeg, retask, stationX, syncWorkers } from '../crew.js';
 import { JOB, TYPE } from '../jobs.js';
 
@@ -236,25 +236,6 @@ export function stepKit() {
   holdClaims();
   for (const job of KIT_JOBS) {
     if (S.workers.some(o => o.walking && o.fetching === job)) continue;   // one errand a station
-
-    // A hat on the shelf outside the school, and a spare pair of hands to carry
-    // it to the station's stand: the nearest bare hauler. Nothing else may be
-    // sent for it -- a hauler is what carries things -- and while nobody is
-    // free the hat waits on the shelf where it can be seen. See `shelved`.
-    if (shelved(job) > 0 && !S.workers.some(o => o.shelfHat === job)) {
-      let best = null;
-      for (const o of S.workers) {
-        if (o.type !== TYPE.HAUL || o.trained || !canRun(o)) continue;
-        if (!best || Math.abs(o.x - shelfX()) < Math.abs(best.x - shelfX())) best = o;
-      }
-      if (best) {
-        best.fetching = job;
-        best.legs = [{ to: shelfX(), do: 'take' }, { to: kitX(job), do: 'put' },
-                     { to: best.x, do: 'back' }];
-        nextLeg(best);
-        continue;
-      }
-    }
 
     // Kit that has walked off the job it belongs to. A body moved from the rock
     // to carrying is still in the rock's helmet, and it takes it off the way it

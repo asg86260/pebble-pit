@@ -115,7 +115,7 @@ group('a builder on the yard hammers, and it reads as work', async () => {
 // #5 -- reproduced first: farm and quarry cannot actually be bought out of
 // order (`unlockquarry`'s own `show` requires `S.farmOpen`), so that pair
 // can never show the bug either way it is recorded. Two independently-gated
-// places -- the school and the outhouse -- stand in for them: both orders are
+// places -- the shack and the outhouse -- stand in for them: both orders are
 // bought for real, through the row, and `S.buildOrder` is checked after each.
 // It already comes out right in both directions, because everything past the
 // bench builds on one shared site (`site: 'yard'`) and `siteBusy` refuses a
@@ -129,7 +129,6 @@ group('two independently-gated buildings land in the order they were bought', as
     window.__reset();
     window.__crew(2, 2);
     window.__grant({ dust: 500000, shards: 900 });
-    yard.S.seenShard = true;      // the school's own gate
     yard.S.seenMess = true;       // the outhouse's
     run(1);
     for (const key of order) {
@@ -141,19 +140,19 @@ group('two independently-gated buildings land in the order they were bought', as
     return { ok: true, buildOrder: state().buildOrder };
   };
 
-  const forward = await bothOrders(['unlockschool', 'unlockouthouse']);
-  const backward = await bothOrders(['unlockouthouse', 'unlockschool']);
+  const forward = await bothOrders(['unlockshack', 'unlockouthouse']);
+  const backward = await bothOrders(['unlockouthouse', 'unlockshack']);
 
   return [
-    ok(forward.ok, 'school then outhouse: both are bought and built',
+    ok(forward.ok, 'shack then outhouse: both are bought and built',
        JSON.stringify(forward)),
-    ok(forward.ok && forward.buildOrder.indexOf('school') <
+    ok(forward.ok && forward.buildOrder.indexOf('shack') <
        forward.buildOrder.indexOf('outhouse'),
        'and land in that order', JSON.stringify(forward.buildOrder)),
-    ok(backward.ok, 'outhouse then school: both are bought and built',
+    ok(backward.ok, 'outhouse then shack: both are bought and built',
        JSON.stringify(backward)),
     ok(backward.ok && backward.buildOrder.indexOf('outhouse') <
-       backward.buildOrder.indexOf('school'),
+       backward.buildOrder.indexOf('shack'),
        'and land in that order too', JSON.stringify(backward.buildOrder))
   ];
 });

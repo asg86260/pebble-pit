@@ -9,15 +9,15 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
-        SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
-        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
+        SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT,
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table , tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -115,12 +115,6 @@ export function atStation(job, x) {
   return true;                     // carrying is done wherever the dust is
 }
 
-// The shelf outside the school where a taught hat waits to be carried to its
-// station: clear to the right of the front, off the doorway, the way every
-// stand stands off its building. One spot for every trade; the marks on it
-// stand in a row (see `kitStands`).
-export const shelfX = () => school.x + school.w + P * 3;
-
 export const kitX = job =>
   // The gang's, outside the shack, which is where their helmets come from -- the
   // hut keeps them the way the shed keeps the caps and the tower keeps the
@@ -176,7 +170,7 @@ let laid = null;
 // never *seen*: `S.buildOrder` grew in the right order, `placeSites` read it
 // and handed back the right x for everybody, and nothing ever asked, because
 // the ground had already been laid under the old order and the key had not
-// changed. Buying the lab before the school put the lab exactly where buying
+// changed. Buying the lab before the casino put the lab exactly where buying
 // it second would have.
 //
 // The star's own position used to be in here, from when it was a place the
@@ -198,7 +192,7 @@ export function layPiles() {
   laid = now;
   // The strips AND the buildings. `refreshPiles` lays the ground each heap
   // lies on; the boxes the buildings are drawn from are seated in `relayout`,
-  // and a site that has moved has to move both or the yard draws a school
+  // and a site that has moved has to move both or the yard draws a casino
   // standing on the lab's ground.
   refreshPiles();
   seatSites();
@@ -772,8 +766,6 @@ export function seatSites() {
   sky.y = S.groundY - SKY_UP;
   sky.r = SKY_R;
 
-  // The school stands on the bare ground between the quarry's spoil and the
-  // crew's front doors: where you go to learn a trade is on the way to work.
   // how deep the quarry has been taken and how many plots have been broken:
   // facts about the two boxes above, and read straight after they are placed.
   resite();
@@ -785,8 +777,6 @@ export function seatSites() {
   // nearer, off the rock that is actually there -- see `shackSpot`.
   seat(shack, 'shack', SHACK_H);
   settleShack();
-
-  seat(school, 'school', SCHOOL_H);
 
   // The lab is not seated any more: it is deleted, and a deleted building must
   // not go on holding ground. Left in, it kept a station's width and a
@@ -813,8 +803,8 @@ export function seatSites() {
   // than the last, and the one place that makes nothing is the longest walk.
   seat(casino, 'casino', CASINO_H);
 
-  // The outhouse, on the bare strip between the school and the rooms: no pile
-  // claims that ground and it is where the crew already are.
+  // The outhouse, on the bare strip between the quarry's spoil and the rooms:
+  // no pile claims that ground and it is where the crew already are.
   seat(outhouse, 'outhouse', OUTHOUSE_H);
 
   // The far end of everything. It is tall rather than wide, because it is the one

@@ -109,9 +109,10 @@ group('a builder works across the whole zone it is fencing', async () => {
   quickCrew();
   window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
   window.__tip(90000);
-  window.__buy('unlockschool');
-  const placed = S.placed && S.placed.school;
-  if (!placed) return [ok(false, 'the school has ground to stand on', 'no placement')];
+  S.seenMess = true;
+  window.__buy('unlockouthouse');
+  const placed = S.placed && S.placed.outhouse;
+  if (!placed) return [ok(false, 'the outhouse has ground to stand on', 'no placement')];
 
   // Let a body get there and settle into its bursts, then watch the whole patch
   // it works: a burst is a few blows in one place and a step along, so a single
@@ -156,7 +157,8 @@ group('a builder walks between its patches rather than appearing at them', async
   quickCrew();
   window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
   window.__tip(90000);
-  window.__buy('unlockschool');
+  S.seenMess = true;
+  window.__buy('unlockouthouse');
   runUntil(() => (S.workers || []).some(w => w.type === 'builder' && w.goal === 'at'), 60);
 
   // The largest single frame of travel any builder makes, over a long enough

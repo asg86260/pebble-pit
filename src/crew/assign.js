@@ -27,7 +27,7 @@ import { lifted } from './pointer.js';
 // thrown at a building, which is today's throw.
 const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, scrub: JOB.PURIFY,
                  tower: JOB.WIZARD, apothecary: JOB.STIR,
-                 outhouse: JOB.JANITOR, school: JOB.TEACH };
+                 outhouse: JOB.JANITOR };
 
 // Every place a held body can be dropped to mean something, as {key, job, rect}.
 //

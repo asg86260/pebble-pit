@@ -38,7 +38,7 @@ import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, LADDER, TIER_OWN } from './c
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
   'the story', 'the rock', 'the crew', 'the bench', 'the cut', 'the plots',
-  'the apothecary', 'the school', 'the house and the sky', 'the tower',
+  'the apothecary', 'the kit', 'the house and the sky', 'the tower',
   'the casino', 'the pit and the rift', 'the shields', 'the endgame'
 ];
 
@@ -56,7 +56,7 @@ const rich = () => {
 // same for the cut, the field and the rock, but carrying has no site to fill.
 const lip = () => {
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
-  window.__school({ carters: 6 });
+  window.__kit({ carters: 6 });
 };
 
 // A sky to look at, at whatever level the scene sets. The camera on the middle
@@ -170,7 +170,7 @@ export const SCENES = {
   // on, because the clearance between the hut's wall and a parked ram at a big
   // boulder is the one thing about this layout that arithmetic cannot settle.
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',
-    run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__buy('ram');
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
   // The shack against the rock, at both ends of the rock's growth: the walk
   // leaves it exactly the room `rockSize` needs off its flank and no more, so
@@ -179,17 +179,17 @@ export const SCENES = {
   // falling and nine cores tearing the rift, and neither of those is a flank to
   // stand a hut against.
   shackrock: { about: 'the rock', say: 'the shack against rock one',
-    run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__jump(1);
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__jump(1);
                  window.__fast(6); window.__look(st().shackX - 200); } },
   shackrockbig: { about: 'the rock', say: 'the shack against the biggest rock',
-    run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__jump(30);
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__jump(30);
                  window.__fast(6); window.__look(st().shackX - 200); } },
   shackboard: { about: 'the rock', say: "the shack's board",
-    run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__board('shack'); } },
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__board('shack'); } },
   // The swing multiplier on the go: a spare hand at the hut, the bar over its
   // roof, nobody standing in the middle of the boulder.
   shackwork: { about: 'the rock', say: 'a rung being fitted at the shack',
-    run: () => { rich(); window.__school({ breakers: 3 }); window.__shack(); window.__invest();
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__invest();
                  window.__buy('rockhandspeed'); window.__fast(6); window.__look(st().shackX - 400); } },
   // The rock's own flank: the hill, the hut beside it and the bench beyond,
   // with the ground between them. A picture of spacing, so the camera sits on
@@ -254,10 +254,10 @@ export const SCENES = {
                  window.__next(); window.__fast(1.2); window.__look(st().rockLeftX - 300); } },
 
   // --- the crew ---------------------------------------------------------------
-  // Bodies, wearing everything the school sells, standing where you can see them.
+  // Bodies, wearing every hat there is, standing where you can see them.
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
-                 window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
+                 window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
                  window.__look(st().rockLeftX - 420); } },
   // The settlement at a size where it has gone up several storeys: a crew of
@@ -275,7 +275,7 @@ export const SCENES = {
   // the shot -- and the body would have walked out from under it besides.
   asking: { about: 'the crew', say: 'a body hovered, saying its question mark', page: true,
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
-                 window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
+                 window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__fast(20);
                  requestAnimationFrame(() => {
                    const d = st().crewDetail[0].split('|');
@@ -344,7 +344,7 @@ export const SCENES = {
   // Two bodies under a tonic each, standing with the crew.
   apothbuff: { about: 'the crew', say: 'bodies under tonics, standing',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
-                 window.__school({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
+                 window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
                  window.__dose(TYPE.ROCK, 'brace'); window.__dose(TYPE.JANITOR, 'strong');
                  window.__look(st().rockLeftX - 420); } },
@@ -511,7 +511,7 @@ export const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: { about: 'the cut', say: 'the cut, the jaw and the hoist',
     run: () => { rich(); window.__buy('jaw'); window.__finish(); window.__look(st().quarryX - 220); } },
-  // The cut worked by hand: five on the face, the school's blasters among them,
+  // The cut worked by hand: five on the face, the blasters among them,
   // a minute in so the gang is spread along a course and the pockets show.
   // What this is for is the beat -- a body stood at its stretch, swinging, the
   // ground going in pockets, and the blaster's ring when its swing lands
@@ -663,29 +663,34 @@ export const SCENES = {
                  window.__look(st().apothecaryX - 200);
                  const b = window.__potSpot(1); hover(b.x + b.w / 2, b.y + b.h / 2); } },
 
-  // --- the school -------------------------------------------------------------
-  // A trade mid-teaching: the school with its own bar over it, and a body at
-  // it. The one site that had no bar at all while its rows were the yard's.
-  schoolbar: { about: 'the school', say: 'a trade being taught, the bar over the school',
-    run: () => { window.__reset(); window.__crew(3, 3);
-                 window.__grant({ dust: 99999, shards: 99, cores: 9 });
-                 window.__buy('unlockschool'); window.__finish();
-                 window.__buy('breaker'); window.__fast(4); window.__look(st().schoolX - 300); } },
-  schoolboard: { about: 'the school', say: "the school's board",
-    run: () => { rich(); window.__school({ breakers: 3, carters: 1 }); window.__board('school'); } },
-  // The shelf outside the school: a taught hat waiting to be carried to its
-  // stand, with nobody free to carry it. (critics A8)
-  shelf: { about: 'the school', say: 'a taught hat waiting on the shelf', page: true,
-    run: () => { window.__reset(); window.__crew(2, 1); window.__give(100); window.__fast(2);
-                 document.getElementById('raise').click(); window.__fast(20);
-                 window.__grant({ shards: 100000, dust: 40000 }); window.__school({ open: true });
-                 window.__crew(2, 0); window.__buy('breaker'); window.__finish(); window.__fast(2);
-                 window.__look(st().schoolX - 400); } },
+  // --- the kit ----------------------------------------------------------------
+  // A hat being made where it lands: the shack with its bar over it, a spare
+  // hand at it, and the helmet on the rock's stand when the work is in. The
+  // props have fallen, which is what opens the rock's kit.
+  hatbar: { about: 'the kit', say: 'a helmet being made, the bar over the shack',
+    run: () => { window.__reset(); window.__crew(3, 3); window.__jump(PROP_FROM);
+                 window.__give(3000); window.__grant({ shards: 99, cores: 9 });
+                 S.shieldsDone = ['props']; window.__shack();
+                 window.__buy('breaker'); window.__fast(4); window.__look(st().shackX - 200); } },
+  // The four boards the kit is sold on, each with its row beside the machine
+  // that ends the ladder.
+  kitshack: { about: 'the kit', say: "the breaker on the shack's board",
+    run: () => { rich(); S.shieldsDone = ['props']; window.__kit({ breakers: 1 }); window.__shack();
+                 window.__board('shack'); } },
+  kitquarry: { about: 'the kit', say: "the blaster on the cut's board",
+    run: () => { rich(); S.shieldsDone = ['props', 'net', 'arch']; window.__kit({ blasters: 1 });
+                 window.__board('quarry'); } },
+  kitfarm: { about: 'the kit', say: "the grower on the plots' board",
+    run: () => { rich(); S.shieldsDone = ['props', 'net']; window.__kit({ growers: 1 });
+                 window.__board('farm'); } },
+  kitbench: { about: 'the kit', say: 'the carter on the bench, beside the belt',
+    run: () => { rich(); S.shieldsDone = ['props']; window.__kit({ carters: 2 });
+                 window.__board('bench'); } },
   // Every trade's hat on a body, at the kit stand.
-  kit: { about: 'the school', say: 'every hat the school sells, worn',
+  kit: { about: 'the kit', say: 'every hat there is, worn',
     run: () => { window.__reset(); window.__crew(3, 3, 3, 3);
-                 window.__school({ open: true, breakers: 3, carters: 3, blasters: 3, growers: 3 });
-                 window.__fast(20); window.__look(st().schoolX - 300); } },
+                 window.__kit({ breakers: 3, carters: 3, blasters: 3, growers: 3 });
+                 window.__fast(20); window.__look(st().shackX - 300); } },
 
   // --- the house and the sky --------------------------------------------------
   // The house working: a filthy sky over it, a body inside, and no river of

@@ -670,7 +670,11 @@ never collects its own spray. To catch, press below the rock and swipe through t
 pixels in flight that pass near the cursor land on it instead of the floor. The rock takes a swing
 anywhere in its footprint, so clicking its general area stays easy.
 
-## The school
+## The school (removed 2026-09-14)
+
+> The building is gone; its four rows are sold on the stations' own boards and
+> the shields open them. See "The school comes down", below. What follows is
+> kept for the kit rules, which still hold.
 
 **A job is a count, not a purchase.** You buy a body once and put it where you like; every one of
 them can be taken back the moment you want the dust moving again. That makes an assignment free,
@@ -8867,7 +8871,7 @@ the design; the count tops landed where the table says. Looked at on the
 bench and on the plots' board deep on both ladders (`laddersdeep`): six
 pips in three tinted pairs, and the grounds' multiplier as a two-pip card.
 
-## The school comes down: kit is sold where it is worn (design, not built)
+## The school comes down: kit is sold where it is worn (built)
 
 **The training grounds is a building that exists to sell four rows, and the
 four rows each belong somewhere else.** A breaker's helmet is about the rock,
@@ -8980,3 +8984,22 @@ a teacher loads with the hat on the stand and the body carrying.
 `persist-roundtrip` goes red until the four fields are off the lists, which
 is the check working. The board shots (`shackboard`, `quarryboard`,
 `farmboard`, the bench) are the check on the rows themselves.
+
+**As built (2026-09-14).** As designed, with three things decided on the way:
+
+- The rows live in `upgrades/rows-kit.js` and are on `UPGRADES` like the
+  rock's; the shack reads its by key (`SHACK_GEAR`), and the quarry and the
+  farm boards pick theirs up through `lodgers(board)` in upgrades.js -- the
+  general form of "a row names its sheet", so a third station's row is a
+  `board:` field and a key in its section.
+- The blaster is worked by the quarriers and the grower by the farmhands, not
+  by a spare hand: `SITE_JOB` already says a station's works are its gang's,
+  and a station with nobody in it is lent a hand as ever. The breaker and
+  the carter are the spare hands' (the shack and the yard have no gang).
+- The site table no longer lists the school, so the ground it stood on is
+  handed to the walk rather than left as a hole -- the stations past it
+  stand one slot nearer the rock. Nothing else moves.
+
+`__school` is `__kit` in both tiers, and `__kit({ learned: true })` answers
+the three shields for a check that buys a hat. `first day of school` on the
+record is `first hat`.

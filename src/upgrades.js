@@ -7,7 +7,7 @@
 
 import {
   P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, HAUL_CARRY_STEP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
-  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
+  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST, ROCKHAND_RUNGS, CRIT_MULT_RUNGS
@@ -16,7 +16,7 @@ import { fmt } from './board.js';
 import { scrubCost } from './scrubhouse.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
-import { S, pit, quarry, farm, lab, apothecary, school, casino, scrub, tower, outhouse } from './state.js';
+import { S, pit, quarry, farm, lab, apothecary, casino, scrub, tower, outhouse } from './state.js';
 import { spend, spendHeld, pitCapacity, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY,
@@ -92,11 +92,11 @@ export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
 // have taken to its floor has nothing left to say and is in the way of the rows
 // that do. A kit row is the exception and says so with `keep`.
 //
-// The argument is the school board's own, and it was written down long before
+// The argument was the school board's own, and it was written down long before
 // there was a switch that could take it away: a row in this game says what
 // buying it *gives* you and what it costs, and never what you already have --
 // which leaves the kit rows as the only place in the game to read how many
-// helmets are on the rock, and that is the whole question at the school. Fold a
+// helmets are on the rock, and that is the whole question of a kit row. Fold a
 // finished kit row away and the board loses the fact it exists to carry, right
 // at the moment the fact becomes final.
 //
@@ -339,10 +339,10 @@ const gainAmount = u => {
 // Hiring and putting to work are two different things now. You buy a body once
 // — a core for the first, dust for the next — and it carries dust until you put
 // it on something else. A job is a count, not a purchase, so every one of them
-// can be taken back the moment you want the dust moving again -- except a body
-// that has been to the school, which is the deliberate exception and the reason
-// the rule is worth stating out loud. See school.js.
-export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD, JOB.TEACH];
+// can be taken back the moment you want the dust moving again. What a body is
+// twice as good at is its hat, and the hat stays at the station -- see
+// upgrades/rows-kit.js.
+export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -353,7 +353,7 @@ export const spareHands = () =>
 export const idle = () => spareHands();
 
 // --- the kit ----------------------------------------------------------------
-// What the school sells is not a person, it is a hat -- and a hat belongs to the
+// What a kit row sells is not a person, it is a hat -- and a hat belongs to the
 // station, not to the head that happens to be under it. Buying one used to
 // upgrade a body and nail it to the post for good, which is a decision you make
 // once and then live with for the rest of the run: thirteen carters is thirteen
@@ -375,7 +375,7 @@ import { LUCK_ROWS } from './upgrades/rows-luck.js';
 import { ROCK_ROWS } from './upgrades/rows-rock.js';
 import { CREW_ROWS } from './upgrades/rows-crew.js';
 import { FARM_ROWS } from './upgrades/rows-farm.js';
-import { SCHOOL_ROWS } from './upgrades/rows-school.js';
+import { KIT_ROWS } from './upgrades/rows-kit.js';
 import { SCRUB_ROWS } from './upgrades/rows-scrub.js';
 import { TOWER_ROWS } from './upgrades/rows-tower.js';
 import { CASINO_ROWS } from './upgrades/rows-casino.js';
@@ -412,14 +412,11 @@ export const worn = job => S.workers.filter(w => w.trained && w.kitOf === job).l
 // empty stand, and when the first recovered its real cart the books read one
 // too many and marched it straight back.
 export const loose = job => S.workers.filter(w => w.hatOff && w.hatOff.of === job).length;
-// ...and neither is a hat still on the shelf outside the school, or in the
-// hands of the body carrying it over. The school makes the station's hats; it
-// does not put them on the station's stand, a thousand pixels off, out of
-// nothing -- which is what it did (critics 2026-09-10, A8). A taught trade is
-// a hat on the shelf until somebody has walked it to the stand.
-export const shelved = job => (S.hatShelf && S.hatShelf[job]) || 0;
-export const carried = job => S.workers.filter(w => w.shelfHat === job).length;
-export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job) - shelved(job) - carried(job));
+// A hat is made at its own station's stand -- the body that does the work is
+// standing there when it lands (upgrades/rows-kit.js) -- so a bought hat is
+// spare from the frame it is bought, and there is no shelf and no carrier to
+// subtract.
+export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 
 // How many bodies a station has room for. Two of them have a floor plan: a cut
 // holds one body per bench and a plot holds one per plot, and there is nowhere
@@ -478,11 +475,6 @@ const capOfBare = job =>
   // you build: there is as much room in the sky as there are people who can get
   // to it.
   job === JOB.WIZARD ? S.wizardHats :
-  // One teacher, once the training grounds stand: it is a room with a lectern
-  // in it, the scrubbing house's argument word for word -- a second body in
-  // there is a queue, not a second class. Nought before it is built, because a
-  // teacher with no school is a body with nowhere to go. (wave6-sim, item 1)
-  job === JOB.TEACH ? (S.schoolOpen ? 1 : 0) :
   // Building is not a job you assign at all. The yard derives its builders from
   // whoever is spare when something is going up (see `rebalance`), so there is
   // no room to put anybody in -- and a save written while the construction
@@ -540,7 +532,7 @@ export const handsOf = job =>
 
 
 // What a full set of a station's kit is: its trade's own set (`KIT_MAX`, for the
-// four the school sells), or its whole complement if it holds fewer hands than
+// four kit rows), or its whole complement if it holds fewer hands than
 // that. The second half is what keeps a small station honest -- the outhouse's two
 // posts are fully kitted at two, and asking it for a third cap would be asking
 // for a cap with no head to go under.
@@ -705,7 +697,7 @@ export function rebalance() {
   // Never the whole yard: a build that swallowed every idle body would stop the
   // dust moving altogether, and what this is meant to be is a share of the
   // yard's attention rather than all of it. One a site (the old BUILD_GANG),
-  // because the bench, the yard and the school are three places and a body at
+  // because the bench, the yard and the shack are three places and a body at
   // one of them is not at the other two.
   const sites = busyBuilderSites();
   const gang = sites.length;
@@ -889,7 +881,7 @@ export const UPGRADES = chained([
   ...ROCK_ROWS,
   ...CREW_ROWS,
   ...FARM_ROWS,
-  ...SCHOOL_ROWS,
+  ...KIT_ROWS,
   ...SCRUB_ROWS,
   ...TOWER_ROWS,
   ...CASINO_ROWS,
@@ -905,6 +897,13 @@ export const UPGRADES = chained([
 // and the yard is told what these rows are, so a work coming back out of a save
 // knows which one it belongs to. See `registerRows`.
 registerRows(UPGRADES);
+
+// The rows on this list that another station's sheet draws. A row names its
+// board and the bench takes the rest (`listFor`, board.js); this is the other
+// half of that question, so a station whose own rows are a list of its own --
+// the quarry, the plots -- can pick up the kit row that moved in with it. The
+// shack reads its rows the same way, by key: see shack.js.
+export const lodgers = board => UPGRADES.filter(u => u.board === board);
 
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
@@ -933,7 +932,10 @@ export const SECTIONS = [
   // first, the thing that climbs past it last, the way the shack orders the
   // rock's. Named for the job, the way the shack's is: "the haulers" beside
   // "the miners", and "crew" left to the house, where the crew live.
-  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'belt', 'tunebelt'] },
+  // The cart is theirs too: kit is sold where it is worn, and the lip has no
+  // board of its own, so the carter stands here beside the belt that ends its
+  // ladder -- see upgrades/rows-kit.js.
+  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'belt', 'tunebelt'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no
@@ -957,7 +959,7 @@ export const SECTIONS = [
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
-    'unlockshack', 'unlockouthouse', 'unlocktower', 'unlockschool',
+    'unlockshack', 'unlockouthouse', 'unlocktower',
     'unlockscrub'
   ] }
 ];

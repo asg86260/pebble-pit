@@ -12,7 +12,6 @@
 import { group, ok, state, run, yard } from './helpers.mjs';
 import { gainText, unitText, MARK, UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
@@ -20,7 +19,7 @@ import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 import { bookRate, bookSpan } from '../src/stats.js';
 import { showPanel, hud } from '../src/board.js';
 
-const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
+const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES,
                   ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                   ...APOTHECARY_UPGRADES];
 

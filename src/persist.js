@@ -405,11 +405,6 @@ function blob() {
     // wave-feedback3.md. `placeSites` reads this on the way back in, which is
     // the only time this ever matters: nothing already standing moves for
     // buying something else later in the same session.
-    // ...and a hat in a carrier's hands is on the shelf in the save: bodies
-    // are rebuilt from the counts, so the carrier comes back a plain hauler
-    // and the walk is made again from the school.
-    hatShelf: Object.fromEntries(Object.keys({ ...(S.hatShelf || {}) }).map(job =>
-      [job, (S.hatShelf[job] || 0) + S.workers.filter(w => w.shelfHat === job).length])),
     // What is riding the belt: a fast belt holds ninety-odd grains at a time
     // and every reload used to eat them, the defect the crew's hands were
     // cured of (critics C14). Position and shade; the band's height is the
@@ -636,7 +631,6 @@ export function restore() {
     S.pouring = false;
     S.quarryOwed = 0;
     S.buildOrder = [];
-    S.hatShelf = {};
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
     S.plotTone = [];
@@ -837,26 +831,31 @@ export function restore() {
   S.belt = Array.isArray(s.belt)
     ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
     : [];
-  // the shelf outside the school: counts by job, or nothing for a save from
-  // before there was one
-  S.hatShelf = s.hatShelf && typeof s.hatShelf === 'object'
-    ? Object.fromEntries(Object.entries(s.hatShelf).filter(([, n]) => Number.isFinite(n) && n > 0)) : {};
+  // A save from when there was a shelf outside the school (`hatShelf`) is not
+  // read: the hats on it were already in the station's count, and with no
+  // shelf to wait on they are on the stand from the frame the yard comes back
+  // -- the one pop-in, once, for a building that no longer stands. A teacher
+  // in such a save is a job the roster no longer has, and comes back carrying.
   // A list a site now, because a site takes as many works as it has room for --
   // one everywhere, two at a lab with a second bench. A save written before that
   // holds one object a site, so it is read as a list of one: a yard mid-build
   // that came back with nothing on the go would have taken the money and left
   // nothing being built.
+  // Walked by the save's own keys rather than today's `SITES`, because a site
+  // can stop existing between builds (the school) and the work filed under it
+  // is re-homed below rather than dropped.
   S.works = {};
-  for (const site of SITES) {
-    const was = s.works?.[site];
+  for (const site of Object.keys(s.works || {})) {
+    const was = s.works[site];
     const list = Array.isArray(was) ? was : was ? [was] : [];
     for (const w of list) {
       if (!(w && w.key && rowFor(w.key) && w.of > 0)) continue;
       // Under the site the row says today, not the site the save filed it
       // under: a work is re-homed when a row moves sites between builds (the
-      // school's trades were the yard's for a while), so a saved mid-training
-      // does not come back blocking the wrong site's queue.
+      // kit rows were the school's, and the yard's before that), so a saved
+      // half-made hat does not come back blocking a site that is not there.
       const home = rowFor(w.key).site || site;
+      if (!SITES.includes(home)) continue;
       (S.works[home] ||= []).push({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
                                     of: w.of, at: w.at ?? null });
     }

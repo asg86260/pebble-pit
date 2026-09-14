@@ -49,58 +49,61 @@ function build(key) {
 //    yard where a door did not actually open reads as a crash rather than as a
 //    failure. Both readings are checked for before anything is compared.
 //
-// On a blank yard with a crew and a purse, exactly two unlock rows are on the
-// board: `unlockfarm` and `unlockschool`. Both are gated on nothing but a coin,
-// neither is pinned by `siteOrder`, and neither is the bench. So it is those.
+// On a blank yard with a crew and a purse, two unlock rows are on the board
+// that are gated on nothing but a coin (and, for the outhouse, a mess having
+// been seen): `unlockfarm` and `unlockouthouse`. Neither is pinned by
+// `siteOrder`, and neither is the bench. So it is those. (It was the school
+// and the farm until the school came down.)
 function yardWith(first, second) {
   window.__seed(SEED);
   window.__crew(3, 3);
   window.__grant({ cores: 40, shards: 9999, spores: 9999, dust: 400000 });
+  yard.S.seenMess = true;      // the outhouse's own gate
   build(first);
   build(second);
   const s = state();
   return { order: s.buildOrder, stands: s.stands,
-           school: s.stands.school && Math.round(s.stands.school.x),
+           outhouse: s.stands.outhouse && Math.round(s.stands.outhouse.x),
            farm: s.stands.farm && Math.round(s.stands.farm.x) };
 }
 
 group('a building stands where it was bought, not where the table lists it', async () => {
-  const schoolFirst = yardWith('unlockschool', 'unlockfarm');
-  const farmFirst = yardWith('unlockfarm', 'unlockschool');
+  const looFirst = yardWith('unlockouthouse', 'unlockfarm');
+  const farmFirst = yardWith('unlockfarm', 'unlockouthouse');
 
   return [
     // Both doors really opened, in both yards. Without this the comparisons
     // below read `undefined !== undefined` and say nothing at all.
-    ok(schoolFirst.school != null && schoolFirst.farm != null,
-       'both buildings went up when the school was bought first',
-       Object.keys(schoolFirst.stands).join()),
-    ok(farmFirst.school != null && farmFirst.farm != null,
+    ok(looFirst.outhouse != null && looFirst.farm != null,
+       'both buildings went up when the outhouse was bought first',
+       Object.keys(looFirst.stands).join()),
+    ok(farmFirst.outhouse != null && farmFirst.farm != null,
        'and both when the plots were broken first',
        Object.keys(farmFirst.stands).join()),
 
-    ok(schoolFirst.order.join() === 'school,farm',
-       'the order is recorded as they are bought', schoolFirst.order.join()),
-    ok(farmFirst.order.join() === 'farm,school',
+    ok(looFirst.order.join() === 'outhouse,farm',
+       'the order is recorded as they are bought', looFirst.order.join()),
+    ok(farmFirst.order.join() === 'farm,outhouse',
        'and the other way round when they are bought the other way round',
        farmFirst.order.join()),
 
     // The whole of the bug: both of the above were already true, and the yard
     // looked identical either way.
-    ok(schoolFirst.school !== farmFirst.school,
-       'the school stands somewhere else for having been bought first',
-       `${schoolFirst.school} against ${farmFirst.school}`),
-    ok(schoolFirst.farm !== farmFirst.farm,
+    ok(looFirst.outhouse !== farmFirst.outhouse,
+       'the outhouse stands somewhere else for having been bought first',
+       `${looFirst.outhouse} against ${farmFirst.outhouse}`),
+    ok(looFirst.farm !== farmFirst.farm,
        'and so do the plots',
-       `${schoolFirst.farm} against ${farmFirst.farm}`),
+       `${looFirst.farm} against ${farmFirst.farm}`),
 
     // And the one bought first is the one nearer the rock: the walk starts
     // there and hands out ground as it goes.
-    ok(schoolFirst.school > schoolFirst.farm,
+    ok(looFirst.outhouse > looFirst.farm,
        'bought first is placed first',
-       `${schoolFirst.school} then ${schoolFirst.farm}`),
-    ok(farmFirst.farm > farmFirst.school,
+       `${looFirst.outhouse} then ${looFirst.farm}`),
+    ok(farmFirst.farm > farmFirst.outhouse,
        'whichever one it was',
-       `${farmFirst.farm} then ${farmFirst.school}`)
+       `${farmFirst.farm} then ${farmFirst.outhouse}`)
   ];
 });
 

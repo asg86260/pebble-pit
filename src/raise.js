@@ -41,7 +41,7 @@ const RAISE_BENCH = {
   // render/rise.js, which asks a row what it raises.
   kind: 'building',
   // ...but a bench's worth of work rather than a building's. `WORK_BASE.building`
-  // is forty-five worker-seconds and was written for the lab and the school;
+  // is forty-five worker-seconds and was written for the lab and the casino;
   // `place` is the figure for "a bench in the cut, a furrow, a hat off the
   // stand", and a work bench is that size of job. It is also the one number in
   // the table that runs while there is one body in the yard and nothing else to

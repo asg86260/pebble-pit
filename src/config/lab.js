@@ -1,3 +1,5 @@
+import { P } from './yard.js';
+
 // --- the lab ----------------------------------------------------------------
 // Research is not bought, it is *worked*. Paying for it starts it; what finishes
 // it is bodies standing in the lab, and nothing else -- an empty lab makes no
@@ -5,6 +7,15 @@
 // with the rock, the quarry and the plots, which is the only real question this
 // game asks.
 export const LAB_EFFORT = 1;      // a worker does one second of work a second
+// Its footprint. It had no numbers of its own once: two literals in world.js
+// and a handful of fractions of them in the drawing. Sixteen across and twelve
+// down, and it was fourteen by ten -- the smallest thing on the ground by both
+// measures, reading as a shed beside the casino. It keeps the casino's height,
+// which is what makes the two of them the same building at different jobs.
+// Even across, so the way in centers on the lattice.
+export const LAB_W = P * 16;
+export const LAB_H = P * 12;
+export const LAB_FLUE = 4;       // courses of it standing against the sky, above the body
 export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
 // The two spore-priced multipliers that were here -- the cut's and the plots' --
 // are the last band of the two grounds' own ladders now, and are priced off

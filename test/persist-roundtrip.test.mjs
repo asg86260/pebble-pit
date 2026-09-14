@@ -47,8 +47,6 @@ function sentinel(blank, n) {
 // cannot.
 const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                'stirrers', 'janitors',
-               // wave6-sim: clamped to the school's one lectern on the way in
-               'teachers',
                // wave7b-build: derived before the bench is open (which this
                // check's nonsense flags may or may not say), clamped to its
                // posts after -- either way rebalance's answer, not the save's

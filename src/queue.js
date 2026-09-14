@@ -34,7 +34,7 @@ const el = document.getElementById('queue');
 // the yard answers with when you point at the building (`BUILDING_NAME` in
 // input.js), because a name on the card is that building's work.
 const SITE_NAME = {
-  yard: 'the yard', bench: 'the bench', school: 'the training grounds',
+  yard: 'the yard', bench: 'the bench',
   quarry: 'the quarry', farm: 'the farm', scrub: 'the scrubbing house',
   tower: 'the tower', lab: 'the lab', apothecary: 'the apothecary',
   shack: 'the shack'

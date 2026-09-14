@@ -9,7 +9,7 @@ group('every trade doubles the work it is for', async () => {
   // further down expect those headings to be there
   window.__levels({ quarryPaceLevel: 6, tendLevel: 6 });
   window.__crew(0, 0, 3, 3);                   // the quarry and the plots
-  window.__school({ blasters: 0, growers: 0 });
+  window.__kit({ blasters: 0, growers: 0 });
   window.__clearFloor();
   // What the sites *do* in a fixed stretch of yard. The plots are measured by
   // what lands in their pile; the quarry is measured by how far down it gets,
@@ -25,7 +25,7 @@ group('every trade doubles the work it is for', async () => {
   run(90);
   const plain = { ...state().pileCount, dug: dug() - p0 };
 
-  window.__school({ blasters: 3, growers: 3 });
+  window.__kit({ blasters: 3, growers: 3 });
   window.__clearFloor();
   const t0 = dug();
   run(90);
@@ -44,12 +44,12 @@ group('every trade doubles the work it is for', async () => {
 });
 
 // A job is a count and a body is whichever body happens to be doing it, and
-// what the school sells is not a person at all: it is a hat, and the hat
+// what a kit row sells is not a person at all: it is a hat, and the hat
 // belongs to the station. Take everybody off the rock and the helmets stay on
 // it; send somebody back and they pick one up. Nobody is ever nailed down.
 group('a trade is a hat the station keeps', async () => {
   window.__crew(3, 0);
-  window.__school({ breakers: 2 });
+  window.__kit({ breakers: 2 });
   const s = state();
   window.__assign('rockhands', -1);
   const one = state();
@@ -62,7 +62,7 @@ group('a trade is a hat the station keeps', async () => {
   const two = state();
   // The same body count, twice as hard on the rock -- both halves off a fresh
   // rock and a swept yard, or the pair are not being compared on the same job.
-  window.__crew(2, 0); window.__school({ breakers: 0 });
+  window.__crew(2, 0); window.__kit({ breakers: 0 });
   run(15);                                   // any helmet still on a head goes back
   window.__jump(1);
   window.__clearFloor();
@@ -70,7 +70,7 @@ group('a trade is a hat the station keeps', async () => {
   run(20);
   const plain = plainBefore - state().rock;
   window.__jump(1);
-  window.__crew(2, 0); window.__school({ breakers: 2 });
+  window.__crew(2, 0); window.__kit({ breakers: 2 });
   run(15);                                   // helmets fetched before the clock starts
   window.__jump(1);                          // on the same rock the plain pair had
   window.__clearFloor();
@@ -100,14 +100,14 @@ group('a trade is a hat the station keeps', async () => {
 // thirteen bodies that could never work a plot again.
 group('a cart belongs to the lip, not to the carter', async () => {
   window.__crew(0, 4);
-  window.__school({ carters: 2 });
+  window.__kit({ carters: 2 });
   const s = state();
   window.__assign('rockhands', 1);
   window.__assign('rockhands', 1);
   window.__assign('rockhands', 1);
   run(20);                     // the carts are walked back to the lip and put down
   const after = state();
-  window.__crew(0, 0); window.__school({ carters: 0 });
+  window.__crew(0, 0); window.__kit({ carters: 0 });
   return [
     ok(s.haulers === 4 && s.carters === 2, 'the lip has two carts and four bodies',
        `${s.carters} of ${s.haulers}`),
@@ -123,9 +123,9 @@ group('a cart belongs to the lip, not to the carter', async () => {
 
 group('the roster says how many of them have the trade', async () => {
   window.__crew(4, 3);
-  window.__school({ breakers: 0, carters: 0 });
+  window.__kit({ breakers: 0, carters: 0 });
   const none = state().roster.find(r => r.job === 'rockhands');
-  window.__school({ breakers: 2, carters: 1 });
+  window.__kit({ breakers: 2, carters: 1 });
   const some = state().roster;
   const rock = some.find(r => r.job === 'rockhands');
   const carry = some.find(r => r.job === 'haulers');
@@ -157,13 +157,13 @@ group('a hat is still on after a reload', async () => {
     run(0.4);
   window.__crew(2, 1);
   window.__clearFloor();
-  window.__school({ breakers: 2, carters: 1 });
+  window.__kit({ breakers: 2, carters: 1 });
   run(25);
   const before = state();
   window.__reload();
   const after = state();
   window.__crew(0, 0);
-  window.__school({ breakers: 0, carters: 0 });
+  window.__kit({ breakers: 0, carters: 0 });
   run(20);
   window.__clearFloor();
   const at = (s, job) => s.roster.find(r => r.job === job);

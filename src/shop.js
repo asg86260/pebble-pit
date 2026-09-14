@@ -7,11 +7,10 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
 import { closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
-import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
@@ -26,7 +25,6 @@ import { shown } from './tween.js';
 
 const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');
-const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlistrows');
@@ -804,8 +802,11 @@ const BOARDS = {
   scrub:  () => [scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit'],
   // The quarry and the plots run out: there is only so far down and only so much
   // ground. A board with nothing left on it says so rather than standing blank.
-  quarry: () => [quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
-  farm:   () => [farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken'],
+  //
+  // Each draws the kit row that moved in with it -- the blaster's lamps, the
+  // grower's brims -- beside its own: see `lodgers` in upgrades.js.
+  quarry: () => [quarryEl, [...QUARRY_UPGRADES, ...lodgers('quarry')], QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
+  farm:   () => [farmEl, [...FARM_UPGRADES, ...lodgers('farm')], FARM_SECTIONS, 'the ground is all broken'],
   apothecary: () => [apothEl, APOTHECARY_UPGRADES, APOTHECARY_SECTIONS, 'the pot stands cold'],
   tower:  () => [towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet'],
   // The books. Nothing on them is for sale, and a currency you have never seen
@@ -828,10 +829,7 @@ const BOARDS = {
   // so no heading to hang the rockhands on, and a crew you can see swinging
   // with no number anywhere is the one count in the yard you would have to
   // take by eye. It rides the title -- see `build`.
-  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands],
-  // The school runs out on purpose: one trade per job, and once everybody doing
-  // a job has it there is nobody left to send.
-  school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']
+  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands]
 };
 
 // One board, rebuilt if the set of rows on it has moved. The frame loop calls
@@ -918,4 +916,4 @@ export function fillPin() {
 
 
 
-export { UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };
+export { UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };

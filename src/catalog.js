@@ -37,7 +37,7 @@ export const CATALOG = [
   { key: 'star', name: 'conjure a star', note: 'call a star down from the tower' },
   { key: 'firsthat', name: "you're a wizard squarey", note: 'finish a wizard hat at the tower' },
   { key: 'firstbrew', name: 'hello, potion seller', note: 'brew a batch at the apothecary' },
-  { key: 'firsttrade', name: 'first day of school', note: 'buy the first hat at the training grounds' },
+  { key: 'firsttrade', name: 'first hat', note: 'buy a station its first hat' },
   { key: 'alltrades', name: 'educating the masses', note: 'stock every station with its hat' },
   { key: 'allbuilt', name: 'building complete', note: 'you built everything' },
 

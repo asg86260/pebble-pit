@@ -14,7 +14,7 @@
 // The grouping, in the order they are strung together below: the yard's own
 // measurements, the opening, the sky and what fouls it, the scrubbing house,
 // the buildings' boxes, what the yard is bought with, the balloon, the tower,
-// the casino, the school, where the sites stand, the pit, the rift, how a cell
+// the casino, the kit, where the sites stand, the pit, the rift, how a cell
 // is drawn, dust in flight, the crew, the rock and the dance between rocks, the
 // quarry, the machines, the farm, the lab, the weather, the air, the crew's
 // houses, the walk to work, the piles, building a thing, crits, and the
@@ -30,7 +30,7 @@ export * from './config/notices.js';
 export * from './config/balloon.js';
 export * from './config/tower.js';
 export * from './config/casino.js';
-export * from './config/school.js';
+export * from './config/kit.js';
 export * from './config/sites.js';
 export * from './config/pit.js';
 export * from './config/rift.js';
@@ -104,7 +104,7 @@ import { AIR_KNOBS } from './config/air.js';
 import { SKY_KNOBS } from './config/sky.js';
 import { SCRUB_KNOBS } from './config/scrub.js';
 import { CREW_KNOBS } from './config/crew.js';
-import { SCHOOL_KNOBS } from './config/school.js';
+import { KIT_KNOBS } from './config/kit.js';
 import { QUARRY_KNOBS } from './config/quarry.js';
 import { MACHINE_KNOBS } from './config/machines.js';
 import { FARM_KNOBS } from './config/farm.js';
@@ -118,7 +118,7 @@ import { SOUND_KNOBS } from './config/sound.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
-  ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...SCHOOL_KNOBS, ...QUARRY_KNOBS,
+  ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS, ...LAB_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS
 ];
