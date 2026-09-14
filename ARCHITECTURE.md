@@ -139,7 +139,13 @@ change, not a tidy-up; a new feature adds its entry at the right depth.
 **Every new field on `S` goes in one of state.js's three lists** — `SAVED`
 (a plain copy), `SAVED_BY_HAND` (its code in `persist.js`), or `EPHEMERAL`
 (thrown away on purpose). `test/persist-roundtrip.test.mjs` goes red for a
-field in none of them, which is the warning persist.js used to owe you.
+field in none of them, and for a by-hand name `persist()` never writes, which
+is the warning persist.js used to owe you.
+
+**Every new row on any board gets a line in `test/shop-rows.mjs`** — how a
+player reaches it. The two `shop-coverage-*.test.mjs` files walk the table:
+hidden before the gate, shown after, bought through `__buy`, and every board
+reading the same after a cold reload. A row with no line is a red check.
 
 ## The scenes
 
