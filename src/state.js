@@ -582,6 +582,12 @@ export const SAVED = [
   'labLeft',
   'tendLevel',
   'cropLevel',            // and what one cut off a plot is worth
+  // The quarry's yield ladder, the farm's twin. It sat on the by-hand list
+  // below from the day the grounds got their ladders, with no line in
+  // `persist()` behind it, so every rung of it was lost on reload -- and
+  // nothing went red, because a by-hand name was only ever checked for being
+  // a field, never for being written. It is a plain number; it belongs here.
+  'seamLevel',
   // The apothecary: the building, its crew, and the pot's standing order. A
   // save from before it existed comes back with the pot idle and one pot to a
   // building, which is what a fresh apothecary is.
@@ -691,7 +697,6 @@ export const SAVED_BY_HAND = [
   'quarryOpen',           // renamed from the cave, along with the three below
   JOB.QUARRY,
   'quarryPaceLevel',
-  'seamLevel',            // and what one dig turns up
   'benchLevel',           // grandfathered up to the crew already standing in it
   'quarryCells',          // how deep each column has been dug
   'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save

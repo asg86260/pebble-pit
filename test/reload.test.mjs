@@ -282,3 +282,30 @@ group("a refresh does not drink the crew's tonic", async () => {
        `${Math.round(leftBefore)}ms -> ${after[0] ? Math.round(doseLeftMs(after[0])) : 0}ms`)
   ];
 });
+
+// The quarry's yield ladder was on the by-hand save list with no hand behind
+// it, so every rung bought came back nought on the next load and the player
+// bought "ore yield" again after every refresh. Bought the way a player does,
+// off the quarry's board, and read the way a fresh page does -- the field
+// blanked before the save is read -- so a save that forgot it is a red line
+// here rather than a bug report.
+group('a refresh keeps the ore yield you bought', async () => {
+  const S = yard.S;
+  window.__reset();
+  window.__crew(0, 0, 3, 0);
+  window.__grant({ dust: 1e7, shards: 1e5, spores: 1e5 });
+  run(1);
+  const bought = window.__buy('seam'); window.__finish();
+  run(1);
+  const before = S.seamLevel;
+
+  S.dirty = true;
+  window.__reload();
+  S.seamLevel = 0;                             // what a freshly loaded page has
+  yard.restore();
+
+  return [
+    ok(bought && before > 0, 'a rung of ore yield was bought off the board', `${before}`),
+    ok(S.seamLevel === before, 'and it is still bought after the refresh', `${before} -> ${S.seamLevel}`)
+  ];
+});

@@ -107,6 +107,14 @@ group('every field on S is accounted for', async () => {
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
   const unlisted = written.filter(k => !seen.has(ALIAS[k] || k));
+  // ...and the other way round. A name on the by-hand list is a promise that
+  // `persist()` writes it in a line of its own, and for a month the quarry's
+  // yield ladder was on the list with no line behind it: the game ran, the save
+  // was valid, and every rung came back nought. The plain list cannot lose a
+  // field this way because one loop writes all of it; the by-hand one can, so
+  // every name on it has to be found among the keys the save actually has.
+  const spelled = new Set(written.map(k => ALIAS[k] || k));
+  const unwritten = SAVED_BY_HAND.filter(k => !spelled.has(k));
 
   return [
     ok(missing.length === 0,
@@ -116,6 +124,9 @@ group('every field on S is accounted for', async () => {
     ok(unlisted.length === 0,
        'and everything persist() writes is named in one of the two saved lists',
        unlisted.join(', ')),
+    ok(unwritten.length === 0,
+       'and everything on SAVED_BY_HAND is actually written by persist()',
+       unwritten.join(', ')),
     // The lists are about S, so a name on one of them that is not a field is
     // either a typo or one of the six that belong to another module -- the
     // grids, the sky, the chance, the craft, and the two leftovers the format
