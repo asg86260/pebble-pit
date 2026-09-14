@@ -87,16 +87,20 @@ group('a machine is stopped by taking its tender off', async () => {
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
   buyBuilt('jaw');
-  window.__fast(12);
+  // The heap swept between readings: nobody here is carting, and a jaw fills
+  // the quarry's heap in eight seconds and stops for that -- which is the
+  // pile-full rule doing its job, and not what this check is about.
+  const spell = s => { window.__clearFloor(); window.__fast(s); };
+  spell(12);
   const running = state();
 
   // Off, through the roster's own button and not a hook that reaches past it.
   window.__assign('quarriers', -1);
-  window.__fast(10);
+  spell(10);
   const off = state();
 
   window.__assign('quarriers', 1);
-  window.__fast(10);
+  spell(10);
   const back = state();
   window.__crew(0, 0, 0);
   return [
