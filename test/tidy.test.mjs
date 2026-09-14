@@ -41,6 +41,19 @@ function farmGround() {
   return n;
 }
 
+// Grains standing on the quarry's strip or within a cell of its edge.
+const onQuarryHeap = () => {
+  const strip = S.piles.find(p => p.key === 'quarry');
+  if (!strip) return 0;
+  let n = 0;
+  for (let c = 0; c < floor.cols; c++) {
+    const x = floor.x + c * P;
+    if (x < strip.from - P || x >= strip.to + P) continue;
+    for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+  }
+  return n;
+};
+
 group('a quarrier throws the cut\'s stray dust up onto the quarry\'s pile', async () => {
   openSites();
   window.__crew(0, 0, 2);                      // two down the cut, nobody carrying
@@ -63,9 +76,12 @@ group('a quarrier throws the cut\'s stray dust up onto the quarry\'s pile', asyn
     ok(after.cutDust === 0, 'and the floor of the cut comes clean', `${after.cutDust}`),
     ok(tidied() >= laid, 'every grain of it was picked up by hand between digs',
        `${tidied()} tidied, ${laid} laid`),
-    ok((after.pileCount.quarry || 0) - (before.pileCount.quarry || 0) >= laid,
+    // The strip, and the one cell either side of it: sand stands at an angle,
+    // so a heap thrown to the strip's edge can rest a grain at its foot, and a
+    // grain at the foot of the quarry's heap is the quarry's.
+    ok(onQuarryHeap() - (before.pileCount.quarry || 0) >= laid,
        "and it all went onto the quarry's own pile",
-       `${before.pileCount.quarry || 0} -> ${after.pileCount.quarry || 0}`),
+       `${before.pileCount.quarry || 0} -> ${after.pileCount.quarry || 0} on the strip, ${onQuarryHeap()} with its foot`),
     ok(after.quarryTotal > dug0, 'and the digging carried on while it happened',
        `${dug0} -> ${after.quarryTotal} cells`)
   ];
