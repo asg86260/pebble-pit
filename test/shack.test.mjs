@@ -16,7 +16,7 @@ import { buildBoard } from '../src/shop.js';
 import { kitX } from '../src/world.js';
 import { JOB } from '../src/jobs.js';
 import { rockSize, rockWidthAt } from '../src/rock.js';
-import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_SCOOT, RAM_CLEAR } from '../src/config.js';
+import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_SCOOT, RAM_CLEAR, LADDER, TIER_BAND } from '../src/config.js';
 import { RAM_REACH } from '../src/rock.js';
 import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
@@ -306,7 +306,7 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
   window.__crew(2, 2);
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 
-  window.__levels({ rockhandSpeedLevel: 6 });
+  window.__levels({ rockhandSpeedLevel: LADDER - 1 });
   const bought = window.__buy('rockhandspeed');
   const w = workAt('shack');
   const spot = w && barSpot('shack', w);
@@ -324,7 +324,7 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
     ok(nowhereElse, "not the yard's or the bench's"),
     ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
     ok(arrived, 'a spare hand stands at the shack to fit it'),
-    ok(landed && level === 7, 'and it lands', `${level}`)
+    ok(landed && level === LADDER, 'and it lands', `${level}`)
   ];
 });
 
@@ -413,7 +413,7 @@ group('every shack rung lands, not just one per rockhand', async () => {
   runUntil(() => S.workers.filter(w => w.type === TYPE.ROCK && w.goal !== 'to').length === 2, 90);
 
   const landed = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < TIER_BAND; i++) {
     const bought = window.__buy('rockhandspeed');
     const done = runUntil(() => !workAt('shack'), 120);
     landed.push(bought && done);
@@ -422,8 +422,8 @@ group('every shack rung lands, not just one per rockhand', async () => {
   const stuck = S.workers.filter(w => w.type === TYPE.ROCK && w.goal === 'to').length;
 
   return [
-    ok(landed.every(Boolean), 'three rungs bought in a row each land', JSON.stringify(landed)),
-    ok(level === 3, 'and the ladder reads three', `${level}`),
+    ok(landed.every(Boolean), 'a card of rungs bought in a row each land', JSON.stringify(landed)),
+    ok(level === TIER_BAND, 'and the ladder reads a card', `${level}`),
     ok(stuck === 0, 'no rockhand is left walking to a post it has no goal for', `${stuck}`)
   ];
 });

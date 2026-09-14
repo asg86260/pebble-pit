@@ -8,6 +8,7 @@ import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P } from '
 import { floor } from '../src/state.js';
 import { at } from '../src/grid.js';
 import { spend } from '../src/pit.js';
+import { LADDER } from '../src/config.js';
 
 // One hauler, nothing mining, the floor bare: the only dust in the yard is what
 // the check puts there, and the only body is the one being watched. The grains
@@ -147,13 +148,16 @@ group('a spent booking asks the hole again before the body gives up', async () =
 // with something in it instead.
 group('a fast body steps on to the next grain, never over it', async () => {
   oneHauler();
-  window.__levels({ haulCarryLevel: 9 });
-  window.__tune('HAUL_BASE', 40);            // a stride many columns wide
+  window.__levels({ haulCarryLevel: LADDER });
   const s0 = state();
   const spots = [];
   for (let x = s0.pitX - 1000; x < s0.pitX - 100; x += P * 7) spots.push(x);
   for (const x of spots) window.__pile(x, 1);
   run(1);                                    // and let them settle: a grain still rolling is not on the ground
+  // The stride is widened only now: a body this fast sweeps a hand's worth
+  // off the line during the settle itself, and the trip being watched is the
+  // one that starts at the far end with nothing in hand.
+  window.__tune('HAUL_BASE', 40);            // a stride many columns wide
   window.__place('hauler', spots[0]);
   run(0.1);
   const cap = state().haulCap;
