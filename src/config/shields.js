@@ -63,6 +63,15 @@ export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run 
 export const DOME_WORK = 45;
 export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
 export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second
+// A held rock is not stopped dead: it springs back up off the dome by this
+// much, in cells, and settles again under its own weight before the hold
+// begins. The shell gives, the way the light it is made of ought to.
+export const DOME_BOUNCE_C = 5;
+// While somebody is still in the ground under it -- or walking out from
+// under -- the rock creeps down with the digging but keeps this many courses
+// of daylight over their head, so the walk out is from under a rock and not
+// through one.
+export const DOME_FLOOR_C = 8;
 
 // The fanfare when a shield stands finished: one wave off its crown, out past
 // the span, and the crew cheer under it for a moment. The wave's reach is

@@ -9,12 +9,14 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, LEAN_HOLD } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
+import { hash } from './flicker.js';
+import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
 import { inHouse } from '../scrubhouse.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
@@ -461,14 +463,38 @@ export function drawIntro() {
 // this alphabet is needed to say so. Returns how far down it is, so whatever
 // it says can sit over the part of it that shows.
 function drawLodged(x, y, out) {
-  const depth = Math.round(BURIED_SUNK_C * (1 - out)) * P;
+  const sunk = Math.round(BURIED_SUNK_C * (1 - out));
+  const depth = sunk * P;
   ctx.save();
   ctx.beginPath();
   ctx.rect(x - P, y - P * 8, WORKER + P * 2, WORKER + P * 8);  // down to the ground line
   ctx.clip();
   drawBody(x, y + depth);
   ctx.restore();
+  drawDirt(x, y + WORKER, sunk);
   return depth;
+}
+
+// The ground it is in. A square with no bottom edge says "going into the
+// ground", but on a bare white floor it said it quietly; the dirt says it out
+// loud. A small heap banked against each side of it, as many cells high as
+// the square is deep and stepping down a cell a column outward -- the ground
+// that was shoved up when it went in, which is the ground the digger throws
+// on to the heap, so it shrinks as the dig goes and is gone when they are out.
+// Each cell keeps its own tone, off its position rather than the frame, so the
+// heap is mottled like every other pile in the yard and does not strobe.
+function drawDirt(x, groundY, sunk) {
+  for (let side = -1; side <= 1; side += 2) {
+    for (let i = 0; i < sunk; i++) {
+      const cx = side < 0 ? x - P * (i + 1) : x + WORKER + P * i;
+      for (let j = 0; j < sunk - i; j++) {
+        const cy = groundY - P * (j + 1);
+        ctx.fillStyle = shadeOf(BURIED_DIRT_TONE + Math.round(hash(cx * 7.1 + cy * 3.7) * 2 - 1));
+        ctx.fillRect(cx, cy, P, P);
+      }
+    }
+  }
+  ctx.fillStyle = '#000';
 }
 
 // How each kind of body is drawn, as a row rather than as a branch.

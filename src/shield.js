@@ -20,6 +20,7 @@ import {
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
   DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE,
+  DOME_BOUNCE_C, DOME_FLOOR_C, DROP_GRAV, WORKER,
   SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
@@ -27,8 +28,8 @@ import { workOn } from './works.js';
 import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
-import { startRescue } from './intro.js';
-import { shakeView } from './world.js';
+import { startRescue, buriedOut } from './intro.js';
+import { shakeView, rockEdge } from './world.js';
 import { sfx } from './audio.js';
 import { shockAt } from './shock.js';
 
@@ -117,7 +118,7 @@ export function raiseShield(kind) {
   // hammered and nobody is lent, the tower pours it on its own clock.
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
   S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
-               sag: 0, setting: false };
+               sag: 0, rising: false, rested: 0, setting: false };
   if (laid >= KINDS[kind].pieces) fanfare(S.shield);
   S.dirty = true;
 }
@@ -210,6 +211,15 @@ function lookUp(ms) {
   }
 }
 
+// Whether the one dug out is still under the rock's footprint on its walk
+// clear (intro.js, `getOut`). It is a scripted square rather than a worker,
+// so `dropZone` cannot move it; the rock waits on it instead.
+const underneath = () => {
+  if (S.intro !== 'rescue') return false;
+  const b = S.pair[0];
+  return !!b && b.x + WORKER > rockEdge(-1) && b.x < rockEdge(1);
+};
+
 // What a shield does once it has hold of a rock. One frame of it, and the only
 // place the kinds differ in behavior rather than in looks.
 function answer(s, kind) {
@@ -232,32 +242,54 @@ function answer(s, kind) {
     if (S.rockFall <= 0) { breakShield(); landRock(); }
     return;
   }
-  // The dome. It holds the rock overhead for a beat and then lets it down --
+  // The dome. It gives under the rock -- the rock springs back up off it and
+  // settles again -- then holds it overhead for a beat and lets it down:
   // gently, which is the one arrival in this game with no shake and no shout
   // in it. The dome is still standing afterwards, ready for the next one, so
   // its own state is put back rather than thrown away.
   if (kind.answer === 'hold') {
-    if (!s.setting) {
-      // And the first time it holds one, whoever is under that spot walks out
-      // from under it -- which is the beat this whole arc was built to reach,
-      // so the rock waits overhead until they are clear. See `startRescue`.
-      if (S.buried && !S.rescued) { startRescue(now()); return; }
-      // It waits overhead only while somebody is still in the ground under
-      // it. The moment they are up and walking it starts down -- the walk out
-      // from under is half a second and the descent is six, so the two of
-      // them have their beat under a rock coming down beside them rather than
-      // stood about waiting for it. It used to wait for the whole beat, and
-      // the scene was two things in a row that should have been one.
-      if (S.intro === 'rescue' && S.buried) return;
-      if (now() - s.caught >= kind.holds) { s.setting = true; S.dirty = true; }
+    // The first time it holds one, whoever is under that spot is dug out and
+    // walks clear -- the beat this whole arc was built to reach. `startRescue`
+    // sends the digger; the rock's part is below, in where it lets itself down to.
+    if (S.buried && !S.rescued && S.intro !== 'rescue') startRescue(now());
+    // The spring. It is the fall run backward: the catch turned the rock's
+    // speed into a rise, and the same gravity brings it back on to the shell,
+    // where it is settled by hand so a rounding error cannot leave it a hair
+    // above or below where it was caught. The hold's beat starts from there.
+    if (s.rising) {
+      const f = frames();
+      S.rockFallV += DROP_GRAV * f;
+      S.rockFall -= S.rockFallV * f;
+      if (S.rockFall <= s.held) {
+        S.rockFall = s.held;
+        S.rockFallV = 0;
+        s.rising = false;
+        s.rested = now();
+      }
       return;
     }
-    S.rockFall = Math.max(0, S.rockFall - kind.rate * dt);
+    if (!s.setting) {
+      if (now() - (s.rested || s.caught) < kind.holds) return;
+      s.setting = true;
+      S.dirty = true;
+    }
+    // Where it is allowed to come down to. Nothing while nobody is under it;
+    // otherwise it follows the digging -- as far down as the dig is far along,
+    // so the two of them happen together rather than one after the other --
+    // and never below a few courses over the head of whoever is still in the
+    // ground or still walking out from under. It only ever moves at the set
+    // rate, so a dig already half done when the rock was caught is a rock that
+    // creeps to where it should be rather than jumping there.
+    const floor = DOME_FLOOR_C * P;
+    const want = S.buried ? floor + (s.held - floor) * (1 - buriedOut())
+               : underneath() ? floor : 0;
+    S.rockFall = Math.max(want, S.rockFall - kind.rate * dt);
     if (S.rockFall <= 0) {
       landRock(true);
       S.rockHeld = false;
       s.setting = false;
       s.caught = 0;
+      s.rested = 0;
       S.dirty = true;
     }
     return;
@@ -297,6 +329,12 @@ export function stepShield() {
     if (kind.answer === 'crack') {
       shakeView(ARCH_CATCH_SHAKE);
       sfx('arch-catch', { x: s.x + s.w / 2, hard: 1, big: true });
+    }
+    // The dome gives: the rock is sent back up with the speed a fall of
+    // DOME_BOUNCE_C cells would have given it, and gravity does the rest.
+    if (kind.answer === 'hold') {
+      s.rising = true;
+      S.rockFallV = -Math.sqrt(2 * DROP_GRAV * DOME_BOUNCE_C * P);
     }
     lookUp(kind.holds || 1200);
     S.dirty = true;

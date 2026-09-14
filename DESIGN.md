@@ -64,8 +64,9 @@ a size that does not exist.
 Everything after that is one body trying to get its mate out. That is what the crew is for, what
 the pit is for, and why the rocks keep coming: **the one underneath is still alive.** The first
 rock drove them into the ground to their middle, and there they are lodged. Every time the last
-of a rock goes you can see them down there, sunk in the ground line, saying the same dots;
-whoever is nearest runs over and digs, and they come up a little. And every time, before they
+of a rock goes you can see them down there, sunk in the ground line with the ground heaped
+against either side of them, saying the same dots; whoever is nearest runs over and digs, and
+they come up a little and the heaps go down with them. And every time, before they
 are out, the next one lands and drives them back in. The dig is longer than any gap the rocks
 leave, on purpose: the yard is seen trying, and seen failing, all game — until something
 holds a rock off the spot long enough.
@@ -8248,12 +8249,17 @@ beat (`CUT_SHIELD_TAIL_S`, ~1.5 s, so the wreck is seen flying out along the
 heap) after `S.shield` is gone, or, for the dome, after the rock has been set
 down (`S.rockFall === 0 && !S.rockHeld`) *and* the two of them have had their
 beat (`S.intro !== 'rescue'`) -- whichever finishes second. The rock does not
-wait for the beat: it waits overhead only while somebody is in the ground
-under it, and starts down the moment they are up and walking (the walk out is
-half a second, the descent six), so the meeting happens under a rock being
-set down beside them rather than stood about waiting for it. Played as two
-things in a row it was a beat and then a wait. A ceiling (`CUT_SHIELD_MAX_S`,
-~30 s) is a safety, never the design.
+wait for the beat. The dome gives when it takes the rock -- the rock springs
+back up off it (`DOME_BOUNCE_C`) and settles under its own weight -- and
+after the hold's beat it comes down *with* the digging: as far down as the
+dig is far along, at the set rate, never below `DOME_FLOOR_C` courses over
+the head of whoever is still in the ground or still walking out from under.
+So the whole dig happens under a rock creeping in through the dome toward
+them, and the last few courses come down as they walk clear, so the meeting
+happens under a rock being set down beside them rather than stood about
+waiting for it. It used to wait overhead, still, for the whole dig and then
+come six seconds down: played as two things in a row it was a beat and then
+a wait. A ceiling (`CUT_SHIELD_MAX_S`, ~30 s) is a safety, never the design.
 
 **Nothing lands on the scene.** The end-of-story sheet (`ending.js`) and the
 shield on offer pinning itself into the corner (`fillPin`, shop.js) both wait

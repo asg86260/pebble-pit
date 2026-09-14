@@ -49,6 +49,7 @@ export const MEET_CLEAR = 36;     // world pixels either side of the pair
 // -- which is the story -- and only a rock held overhead gives the time.
 // See `stepBuried` and `stepDig` in intro.js.
 export const BURIED_SUNK_C = 2;        // cells of the square under the ground line, of its three
+export const BURIED_DIRT_TONE = 2;     // the shade the ground heaped against it centers on, in SHADES
 export const BURIED_DIG_S = 10;        // seconds of somebody digging before it can climb out
 export const BURIED_DIG_BEAT_MS = 420; // between swings; each one throws a cell of ground on to the heap
 export const BURIED_DIG_LONE = 0.5;    // and how fast it works itself loose if nobody can come, as a share of a digger

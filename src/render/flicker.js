@@ -11,7 +11,10 @@
 // nearly the same value, and a row of columns reading nearly the same value one
 // step apart is a travelling wave -- the fire looked like it was sliding
 // sideways. Far apart, they are uncorrelated and flicker where they stand.
-const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+// The hash on its own is for anything drawn that wants a fixed, arbitrary
+// value per cell -- a tone that varies across a heap but never changes
+// frame to frame, since the alternative is `rand()`, which strobes.
+export const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
 
 // 0..1, smooth
 export const vnoise = x => {

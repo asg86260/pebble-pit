@@ -892,6 +892,11 @@ export const SCENES = {
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },
   'dome~': { about: 'the shields', say: 'the dome being cast: the wizard over it, pouring',
     run: () => { domeCast(6); window.__look(st().shield.x - 260); } },
+  // ...somebody in the ground, packed in to the middle with the dirt heaped
+  // against it. The crew dig at it between rocks, so the dig is put back to
+  // nought once the rock is in the air and nobody can.
+  buried: { about: 'the shields', say: 'somebody in the ground, packed in, before anybody digs',
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); S.buriedDug = 0; } },
   rescue: { about: 'the shields', say: 'the dome up, a rock coming, somebody under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
   // ...and the rock held while they are dug out from under it

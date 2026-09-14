@@ -5,7 +5,7 @@
 import { group, ok, state, run, runUntil, openSites, yard, buyBuilt } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         DOME_BILL } from '../src/config.js';
+         DOME_BILL, DOME_FLOOR_C, P } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { DUST_PER } from '../src/upgrades.js';
 
@@ -290,17 +290,33 @@ group('under the dome, the one underneath walks out', async () => {
   }, 200);
 
   window.__next();
-  const caught = runUntil(() => state().rockHeld, 240);
-  // the rock waits overhead while they are dug out...
+  // Frame by frame, because the fall, the catch and the spring off the dome
+  // are over inside a second -- read straight off the yard, since a snapshot
+  // a frame for a minute of frames is the slow part of the file.
+  const S = yard.S;
+  let caught = false, held = 0, sprang = false, settled = false;
+  for (let i = 0; i < 60 * 240 && !settled; i++) {
+    run(1 / 60);
+    if (!caught) { if (S.rockHeld) { caught = true; held = S.rockFall; } continue; }
+    // the dome gives: the rock springs back up off it and settles where it was caught...
+    if (S.rockFall > held) sprang = true;
+    if (sprang && !S.shield.rising) settled = S.rockFall === held;
+  }
   const walking = runUntil(() => state().intro === 'rescue', 30);
-  const heldFor = state().rockHeld;
-  run(2);
-  const stillUp = state().buried && state().rockHeld && !state().shield.setting;
-  const dug = runUntil(() => !state().buried, 60);
-  // ...and starts down the moment they are up, while the beat is still on:
+  // ...then comes down with the digging, but never on to whoever is still in
+  // the ground: it keeps its courses of daylight over them the whole dig
+  const floor = DOME_FLOOR_C * P;
+  let lowest = Infinity, crept = false;
+  const dug = runUntil(() => {
+    const s = state();
+    lowest = Math.min(lowest, s.rockFall);
+    if (s.buried && s.shield.setting && s.rockFall < held) crept = true;
+    return !s.buried;
+  }, 60);
+  const over = lowest >= floor;
+  // ...and finishes the way down as they walk out, while the beat is still on:
   // the two of them meet under a rock coming down beside them, not after it
-  const coming = runUntil(() => state().shield.setting, 5);
-  const during = state().intro === 'rescue' && state().rescued;
+  const during = state().intro === 'rescue' && state().rescued && state().shield.setting;
   const out = runUntil(() => state().rescued && !state().intro, 60);
   const after = state();
   const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
@@ -309,9 +325,12 @@ group('under the dome, the one underneath walks out', async () => {
   return [
     ok(before.buried, 'somebody has been under every rock until now'),
     ok(caught && walking, 'the dome holds one and the beat starts', `intro ${state().intro}`),
-    ok(heldFor && dug && stillUp, 'the rock is still up there while they are dug out'),
-    ok(coming && during, 'and starts down as they walk out, before the beat is over',
-       `setting ${coming}, intro ${during}`),
+    ok(sprang && settled, 'the rock springs back up off the dome and settles',
+       `held ${held}, sprang ${sprang}, settled ${settled}`),
+    ok(dug && crept, 'and comes down with the digging while they are dug out'),
+    ok(over, 'but keeps its daylight over them the whole dig', `lowest ${lowest} floor ${floor}`),
+    ok(during, 'and is still on its way down as they walk out, before the beat is over',
+       `intro ${state().intro}`),
     ok(out, 'they get out'),
     ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
     ok(after.crew > before.crew, 'they join the crew',
