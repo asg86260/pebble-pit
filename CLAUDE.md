@@ -13,9 +13,13 @@ reasoning behind each feature, with sections marked `(built)` or
 
 **Every bug fix gets a line in `CHANGELOG.md`, under `Unreleased`, in the
 same commit as the fix** -- one short sentence, in the player's words, naming
-what is fixed. No symptom story, no mechanism; that goes in the commit
-message. Never write a version number there; `npm run release` stamps the
-heading with the version and the date. Features do not go in it.
+what is fixed, **ending with the check that would go red again, in
+parentheses** -- `(test/reload.test.mjs)`. No symptom story, no mechanism;
+that goes in the commit message. Never write a version number there;
+`npm run release` stamps the heading with the version and the date.
+Features do not go in it. A fix with no check to name is a fix that will
+be reported again; a player's save goes in `test/fixtures/` and the check
+goes red before the fix is written (see "The save is the fixture").
 
 ---
 
@@ -91,6 +95,15 @@ too. `tools/test.mjs` caps the browser shards itself.
 
 New checks about the yard go in the node tier, as their own feature file. Only
 checks that need a real pointer, board or canvas go in the browser one.
+
+Every group in the node tier is also a reload check and a rules check
+without saying so: `run()` saves and reads the yard back every five game
+seconds and asserts nothing teleported (`reloadCheck` in `test/helpers.mjs`),
+and `fast` asks every rule in `src/verify.js` after every frame. A check
+that goes red on a frame it never mentions is one of those two speaking,
+and the fix is in the game, not the check. A run that a mid-run save would
+spoil sets `RELOAD=0`. The rules are cheap to add — a rule is the way to
+say "this must never be possible", and it is watched by every group at once.
 
 Every group in both tiers starts from a fresh game — never write one that
 depends on its neighbor. Never `await sleep()` to wait for the game: turn its
