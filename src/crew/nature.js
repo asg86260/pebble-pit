@@ -21,6 +21,7 @@ import { inWorking } from '../route.js';
 import { dropMuckAt, cleanSpotNear } from '../smog.js';
 import { rand } from '../rng.js';
 import { MOVE_KEYS } from './dance.js';
+import { stand } from './body.js';
 
 export function relieve(w, now) {
   // Its own hour -- and it starts somewhere *inside* the cycle rather than a
@@ -41,7 +42,10 @@ export function relieve(w, now) {
   if (w.looAt > now + LOO_EVERY) w.looAt = now + LOO_EVERY * rand();
 
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
-    if (now < w.looUntil) { w.lunge = 0; return true; }
+    // Standing on whatever is under it meanwhile, as every hold does (see
+    // the pause in step.js): the gang took the columns under a squatting
+    // mate and it hung in the air until it was done.
+    if (now < w.looUntil) { w.lunge = 0; w.y = stand(w); return true; }
     // What it leaves, where it was standing, for a janitor to come and clear.
     dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
     w.looUntil = 0;

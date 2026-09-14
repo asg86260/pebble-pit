@@ -39,7 +39,14 @@
 import { S } from './state.js';
 import { DROPS, GOING, SKY, bandLow, bandTop, climbing, clogged, fanPull,
          outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
-import { foul, reckon, stepPuffs } from './smog/vents.js';
+import { foul, look, reckon, stepPuffs } from './smog/vents.js';
+
+// What the band is made of, by kind, for the save. See `skyFromSave`.
+export function skyKindCounts() {
+  const kinds = {};
+  for (const m of SKY) { const k = m.kind || 'dust'; kinds[k] = (kinds[k] || 0) + 1; }
+  return kinds;
+}
 import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
@@ -60,8 +67,24 @@ import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
 // "everything settled up there belongs to this storm", the same rule the
 // roll applies -- so the shower goes on coming down rather than finding no
 // mote it is allowed to drop and calling itself over.
-export function skyFromSave() {
+export function skyFromSave(kinds = null) {
   rebuildSky();
+  // ...of the kinds it was made of. The rebuild makes dust; the save says
+  // how much of the band was soot, spore and the rest, and that share of
+  // the rebuilt motes is relabelled, look and all, so the readout that
+  // says which part of the works dirtied the sky says the same thing after
+  // a refresh as before it.
+  if (kinds && SKY.length) {
+    const total = Object.values(kinds).reduce((n, v) => n + (+v || 0), 0);
+    if (total > 0) {
+      let i = 0;
+      for (const [kind, n] of Object.entries(kinds)) {
+        if (kind === 'dust') continue;
+        const want = Math.round(SKY.length * (+n || 0) / total);
+        for (let k = 0; k < want && i < SKY.length; k++, i++) Object.assign(SKY[i], { kind }, look(kind));
+      }
+    }
+  }
   if (!(S.raining || S.stormFor >= 0)) return;
   let marked = 0;
   for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }

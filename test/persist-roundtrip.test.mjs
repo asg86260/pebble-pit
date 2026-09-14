@@ -138,7 +138,7 @@ group('every field on S is accounted for', async () => {
     ...Object.entries(lists).map(([name, list]) => {
       // ...and `mouth`, where the cut's mouth was: a fact about the layout the
       // crew were saved on, read by `restoreCrew` and kept by nothing.
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth'];
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })

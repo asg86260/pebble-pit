@@ -653,6 +653,9 @@ export const SAVED = [
   // falling rock had it land at once, and one in the beat between rocks
   // skipped the beat
   'rockFall', 'rockFallV',
+  // how many cells the cut has ever given up: the ore notices climb on it and
+  // the stats board reads it, and a refresh used to set it back to nought
+  'quarryTotal',
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
@@ -698,6 +701,7 @@ export const SAVED_BY_HAND = [
   'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
+  'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
   // the celebration for the last rock and the backstop for the next: moments
   // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
   'danceUntil', 'nextBoulderAt',
@@ -850,7 +854,7 @@ export const EPHEMERAL = [
   // worked out again from the counts, or only true for a few lines of a frame.
   // (wave7b-build: `builders` moved to SAVED -- once the construction bench is
   // open it is a hired post like any job, and a hired post survives a reload.)
-  'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
   'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
   'placed', 'strips', 'introHeart',

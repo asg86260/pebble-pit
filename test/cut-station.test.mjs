@@ -27,6 +27,10 @@ const loadWithGangAtGroundHeight = () => {
   persist();
   const save = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
   for (const w of save.who) if (w.type === 'quarrier') w.y = save.groundY - WORKER;
+  // The shape of the reported save: written by a build that did not yet say
+  // where the mouth was. On a save that does, and where the mouth is still
+  // there, a body over it is over it on purpose and is left alone.
+  delete save.mouth;
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   const xs = save.who.filter(w => w.type === 'quarrier').map(w => w.x);
   yard.restore();

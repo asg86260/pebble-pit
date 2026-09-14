@@ -9,7 +9,7 @@ import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
          ABYSS_AT, WORKER, LADDER, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
-import { seedSmog, skyFromSave } from './smog.js';
+import { seedSmog, skyFromSave, skyKindCounts } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
@@ -443,6 +443,11 @@ function blob() {
     // lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
     haze: Math.round(S.haze),
+    // ...and what the haze is made of, by kind. The band is rebuilt out of
+    // the number on the way in, and rebuilt all as dust it told the readout
+    // that nothing but hand work had fouled it -- every stack's soot read as
+    // dust after a refresh. Counts, not motes: the readout is a proportion.
+    skyKinds: skyKindCounts(),
     poop: S.poop || [],
     // and what is lying on top of the rock, which is a layer like the muck and
     // belongs to the rock the save already writes down. Column by column,
@@ -976,7 +981,7 @@ export function restore() {
   // This is exactly the case `skyFromSave` is for: a sky being restored rather
   // than made. Safe here because the world is laid out before the save is read
   // (see the boot order in main.js), so there is a width to spread it across.
-  skyFromSave();
+  skyFromSave(s.skyKinds);
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.

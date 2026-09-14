@@ -126,7 +126,13 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // and the plot a farmhand is working along the row. It
                       // came back on plot nought every time, so the far end of
                       // a long row was never reached between refreshes.
-                      'plot'];
+                      'plot',
+                      // and the commute it is on: where it is walking to and
+                      // why, and the legs still to go (crew/commute.js). Dropped,
+                      // a body retasked mid-walk finished the walk at its
+                      // station's amble, a quarter of the commute's pace, and
+                      // one sent for a hat came back without one.
+                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching'];
 
 // Moments on a body's clock -- when its next break comes round, when it has
 // stood about long enough to knock off -- kept the way doses are (below):
@@ -134,7 +140,11 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
 // refresh used to start every one of them over, so a yard refreshed now and
 // then never took a break and never went home. The name is the field's, the
 // value written is `field - now()`, and the way back in is the reverse.
-const MOMENTS = ['brkAt', 'idleSince', 'looAt'];
+// ...and the clocks of the work itself: the next swing, stoop, cut and
+// stroke. Without them every refresh handed every body a free swing -- five
+// quarriers dug a cut a sixth faster under a refresh every five seconds.
+const MOMENTS = ['brkAt', 'idleSince', 'looAt',
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext'];
 const momentsOf = w => {
   const out = {};
   for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());
