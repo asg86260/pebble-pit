@@ -115,16 +115,21 @@ export let CUT_POCKET = 3;
 export let CUT_RUN = 4;
 // The blaster's swing fires a crit's ring at this power -- a third of a crit's.
 export let CUT_BLAST_POWER = 1;
-// Three, not two.
+// Six, up from three, up from two.
 //
 // Blue was the thing everybody waited on. A plot comes on by itself while you
 // watch and a dig has to be worked out end to end for its handful, so green
 // arrived in a steady trickle and blue in lumps that were a long way apart -- and
 // with the two grounds now paying for each other (the cut is deepened with
 // spores and the plots are broken with shards) the slower of the two sets the
-// pace of both. Half again per bench is the smallest change that fixes it
-// without touching what a dig *is*.
-export const CUT_SEAM = 3;         // shards in the ground, per bench of depth
+// pace of both. Half again per bench was the first answer, and it was judged
+// against a cut whose crits paid the whole seam out in the first few layers,
+// so the first minute of every dig looked richer than the dig was. With the
+// stone spread down the cut where it belongs (see `findShards`), three a bench
+// is a five-bench cut worth fifteen shards for a dig of some minutes, which
+// is the "crazy slow" the players reported. Doubled, and a dial, because the
+// right figure is one to find by playing.
+export let CUT_SEAM = 6;           // shards in the ground, per bench of depth
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // And how fast it steps between the cells of its own face, which is a different
@@ -172,5 +177,7 @@ export const QUARRY_KNOBS = [
   { key: 'QUARRY_PACE_COST', label: 'dig pace rung 1', min: 60, max: 4000, step: 20,
     get: () => QUARRY_PACE_COST, set: v => { QUARRY_PACE_COST = v; } },
   { key: 'SEAM_PER_RUNG', label: 'a dig, a rung', min: 0.05, max: 2, step: 0.05,
-    get: () => SEAM_PER_RUNG, set: v => { SEAM_PER_RUNG = v; } }
+    get: () => SEAM_PER_RUNG, set: v => { SEAM_PER_RUNG = v; } },
+  { key: 'CUT_SEAM', label: 'shards a bench', min: 1, max: 30, step: 1,
+    get: () => CUT_SEAM, set: v => { CUT_SEAM = v; } }
 ];
