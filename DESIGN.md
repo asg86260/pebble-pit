@@ -1402,7 +1402,7 @@ because the drumbeat is the income; the threat is retired, because the story is 
 how the first line of this document and the section above it are both true at once: **the
 story ends on purpose. The yard does not.**
 
-## The shields are the spine (design, not built)
+## The shields are the spine (built)
 
 The shields as built are a side story. Each is bought, fails, and hands you the next one;
 nothing else in the yard knows a shield has been through. The four rows sit in a section

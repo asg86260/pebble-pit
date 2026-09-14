@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES } from './works.js';
+import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
 import { closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -25,6 +25,7 @@ import { crewRows, crewSections, crewList, crewListSections } from './crewboard.
 import { shown } from './tween.js';
 
 const shopEl = document.getElementById('shop');
+const pinEl = document.getElementById('pin');
 const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
@@ -428,8 +429,23 @@ function build(el, list, sections, empty, heads) {
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
-      if (u.read) b.classList.add('stat');
       if (sect.goal) b.classList.add('goal');
+      // The pin: a nail head in the card's corner, and pressing it puts this
+      // card in the top-right corner of the game (`fillPin`) -- or takes it
+      // down again, if it is the one there. It is not a press on the card, so
+      // the press is stopped here; and it is on every card that is a purchase,
+      // because what you are saving for is yours to say. A readout has nothing
+      // to wait for and a signpost has no price, so neither carries one.
+      if (!u.read && !u.sign && !inSubmenu) {
+        const pin = document.createElement('i');
+        pin.className = 'pinmark';
+        pin.title = 'pin this card to the corner';
+        const press = e => { e.stopPropagation(); e.preventDefault(); togglePin(u.key); };
+        pin.addEventListener('pointerdown', press);
+        pin.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
+        b.appendChild(pin);
+      }
+      if (u.read) b.classList.add('stat');
       // A purchase leaves the board up. It put the board away for a while
       // (feedback8 item 1): buying is a thing you do to the yard, and the
       // sheet got out of the light so you could see the dust arc and the gang
@@ -578,6 +594,7 @@ export function refresh(el, list, headcount) {
     }
     const u = list.find(x => x.key === row.dataset.key);
     if (!u) continue;
+    row.classList.toggle('pinned', S.pinned === u.key);
     sayNote(row, u);
     // What it costs, as a mark and a number for each currency in the bill. Most
     // rows are priced in a single thing, and reading every price the same way is
@@ -853,6 +870,50 @@ export function mountRows(el, rows, title = 'the bench') {
   const list = rows.map(u => ({ show: () => true, ...u }));
   build(el, list, [{ title, keys: list.map(u => u.key) }], '', null);
   refresh(el, list, null);
+}
+
+// --- the pin ------------------------------------------------------------------
+// One card, in the top-right corner of the game, that you chose: the thing you
+// are saving for, with its live price, dashed when you are short and pressable
+// when you are not, so you can watch the number climb toward it and buy it from
+// the yard without opening a board. It is the same row through the same
+// builder as the board's, so the corner and the board cannot disagree.
+//
+// One at a time -- pinning a second takes the first down -- and it comes down
+// by itself when the row retires: bought, finished, or gone from every board.
+// `S.pinned` is the key, saved, so the pin survives a reload; a key no build
+// knows any more reads as nothing pinned.
+//
+// The goal pins itself. When a shield row arrives and the corner is empty, it
+// goes up there -- which is what puts the story on the screen for a player who
+// has not opened the bench in ten minutes. Once: going up in the corner is
+// being seen (`markRowSeen`, the same fact hovering it on the bench records),
+// and a shield you have seen does not climb back into a corner you emptied.
+// The player's pin always wins over the story's.
+export const togglePin = key => {
+  S.pinned = S.pinned === key ? null : key;
+  S.dirty = true;
+};
+
+const goalRow = () => {
+  const goal = SECTIONS.find(s => s.goal);
+  if (!goal) return null;
+  return UPGRADES.find(u => goal.keys.includes(u.key) && !u.sign && revealed(u)
+                            && !S.seenRows.includes(u.key)) || null;
+};
+
+export function fillPin() {
+  if (!pinEl) return;
+  let u = S.pinned ? rowFor(S.pinned) : null;
+  if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; S.dirty = true; }
+  if (!u) {
+    u = goalRow();
+    if (u) { S.pinned = u.key; markRowSeen(u); S.dirty = true; }
+  }
+  pinEl.hidden = !u;
+  if (!u) { built.delete(pinEl); return; }
+  build(pinEl, [u], [{ title: '', keys: [u.key] }], '', null);
+  refresh(pinEl, [u], null);
 }
 
 

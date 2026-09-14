@@ -482,6 +482,10 @@ export const S = {
   // spend, and a house that appeared because a machine was running does not go
   // away when the machine stops. See `revealed` in shop.js.
   shownRows: [],
+  // The card pinned to the top-right corner of the game: a row's key, or
+  // null. One at a time; the shield on offer pins itself while it is news.
+  // See `fillPin` in shop.js and DESIGN.md, "The shields are the spine".
+  pinned: null,
   boardOpen: false,       // the workbench board is showing
   resetArmed: 0,          // the reset button wants a second click
 
@@ -559,6 +563,7 @@ export const SAVED = [
   'seenSects',
   'seenRows',
   'shownRows',
+  'pinned',
   // The rift, and whether the hole has ever turned a grain away. What is
   // actually *through* it is `rift`/`riftHeld`, which are clamped on the way in
   // and so are hand-read -- see persist.js.

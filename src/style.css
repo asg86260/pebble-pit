@@ -280,7 +280,7 @@ canvas {
    card is new and un-wraps when it stops being -- and it is the same ink as the
    words, so it inverts under the cursor and pales with a card you cannot pay
    for, exactly as the dot did. */
-.rows button.new { position: relative; }
+.rows button { position: relative; }
 .rows button.new::before {
   content: '';
   position: absolute;
@@ -293,6 +293,44 @@ canvas {
   border-top: 10px solid currentColor;
   border-right: 10px solid transparent;
 }
+
+/* The pin. A nail head in the top-right corner of every card that is a
+   purchase: a hollow ring until it is pressed, filled while the card is the one
+   in the corner of the game. Made of the card the way the new-corner is, so it
+   inverts under the cursor with the rest and takes no room from the title. It
+   is faint until the card is hovered -- a mark on every card at full ink is a
+   second pip on the sheet -- and stays up on the pinned one. */
+.rows button .pinmark {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 5px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: .35;
+  cursor: pointer;
+}
+.rows button:hover .pinmark, .rows button.pinned .pinmark { opacity: 1; }
+.rows button.pinned .pinmark { background: currentColor; }
+.rows button .pinmark:hover { transform: scale(1.4); }
+
+/* The corner: the one pinned card, top-right, drawn by the same builder as
+   the boards and in the same frame as the goal card, because that is what it
+   usually is. One card wide -- as wide as its own words -- and no heading:
+   the pin is the heading. Under the dev panel's corner, which is dev only. */
+.pin {
+  position: fixed;
+  right: 8px; top: 8px;
+  z-index: 9;
+  display: block;
+  width: 240px;
+  max-width: calc(100vw - 16px);
+  background: #fff;
+}
+.pin .sect { display: none; }
+.pin button { width: 100%; border: 3px double #000; }
+.pin button .gain:empty { display: none; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching

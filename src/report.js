@@ -282,6 +282,7 @@ export const snapshot = () => ({
                         sag: +(S.shield.sag || 0).toFixed(2),
                         strain: +(S.shield.strain || 0).toFixed(2) },
   shieldsDone: [...S.shieldsDone],
+  pinned: S.pinned,                 // the card in the corner, or null
   rockHeld: S.rockHeld,
 
   // The casino: the stake, the spin, and the pot.

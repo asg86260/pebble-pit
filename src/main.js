@@ -19,7 +19,7 @@ import { syncWorkers } from './crew.js';
 import { draw, asPicture } from './render.js';
 import { hud, remeasure } from './board.js';
 import { fillQueue } from './queue.js';
-import { buildShop } from './shop.js';
+import { buildShop, fillPin } from './shop.js';
 import { persist, restore, claimSave, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
@@ -107,6 +107,7 @@ function frame() {
     const t2 = mark();
     hud();
     fillQueue();
+    fillPin();
     stepToast();
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);

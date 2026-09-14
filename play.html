@@ -215,6 +215,9 @@
 <!-- The queue card: what is building and what waits behind it, one name a
      line, top-left. Filled by queue.js; absent when nothing is on the go. -->
 <div id="queue" class="queue off" hidden></div>
+<!-- The pin: the one card you chose to keep in the corner, top-right, with its
+     live price. Filled by `fillPin` in shop.js; absent when nothing is pinned. -->
+<div id="pin" class="pin rows" hidden></div>
 <div id="tip" hidden></div>
 
 <!-- The call to build the bench: the one thing you can press that is not on a

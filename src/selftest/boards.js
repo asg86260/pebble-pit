@@ -1,10 +1,10 @@
 // The boards: what a row is, how wide a column goes, what a price says, and
 // where a board seats itself.
 //
-// 14 groups, in the order they have always run in --
+// 15 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
-import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen,
+import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
 
 // The ink standing in the band of sky over a station -- where nothing else
@@ -1495,6 +1495,63 @@ export const TESTS = [
       ok(rowsNow === rowsThen - 1,
          'the row leaves when the build lands, and that is the one thing that may resize it',
          `${rowsThen} rows -> ${rowsNow}`)
+    ];
+  }],
+
+  // The pin: one card in the top-right corner, chosen by its nail head, drawn
+  // by the same builder as the board's, buying when pressed and coming down
+  // when the row retires. The shield on offer pins itself while it is news,
+  // and the player's pin wins over it. DESIGN.md, "The shields are the spine".
+  ['a pinned card stands in the corner, buys, and comes down when the row goes', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(4);                           // the timber is on offer from the fourth rock
+    window.__give(200);
+    window.__build();
+    const corner = () => document.getElementById('pin');
+    const card = () => corner().querySelector('button[data-key]');
+    await settle(0.2);
+    // The story pins itself: nothing was pinned, so the goal is in the corner,
+    // dashed, because two hundred is not four hundred.
+    const goalUp = !corner().hidden && card()?.dataset.key === 'props';
+    const short = !!card()?.querySelector('.cost .short');
+
+    // Pin over it from the bench: the nail head on a card puts that card in the
+    // corner and takes the goal down, and the bench's own card wears the mark.
+    await hoverBench();
+    const carry = shop().querySelector('button[data-key="carry"]');
+    carry?.querySelector('.pinmark')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await settle(0.2);
+    const overGoal = card()?.dataset.key === 'carry' && state().pinned === 'carry';
+    const marked = carry?.classList.contains('pinned');
+    // ...and the press on the nail head was not a press on the card
+    const notBought = state().carryLevel === 0;
+
+    // The corner buys: the card is the row, so pressing it is the purchase.
+    await hoverAway();
+    window.__give(400);
+    await settle(0.2);
+    const solid = !card()?.querySelector('.cost .short');
+    card()?.click();
+    const bought = runUntil(() => state().carryLevel > 0, 30);
+    // A ladder's card stays -- there is a next rung -- so it is still pinned;
+    // pinning it again takes it down and the corner empties, and the goal
+    // does not come back into it, because it has been looked at.
+    await settle(0.2);
+    const stayed = state().pinned === 'carry' && !corner().hidden;
+    card()?.querySelector('.pinmark')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await settle(0.2);
+    const down = state().pinned === null && corner().hidden;
+
+    return [
+      ok(goalUp, 'the shield on offer pins itself into the corner', card()?.dataset.key),
+      ok(short, 'and reads short of what it costs'),
+      ok(overGoal && marked, 'a nail head on the bench pins that card over it', state().pinned),
+      ok(notBought, 'without buying it'),
+      ok(solid && bought, 'the corner card buys when it can be paid for'),
+      ok(stayed, 'a ladder stays pinned for its next rung'),
+      ok(down, 'and its nail head takes it down again, leaving the corner empty')
     ];
   }],
 ];
