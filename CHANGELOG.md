@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- The drill is silent; the ram and the tiller still beat.
+
 ## v0.1.12 — 2026-09-14
 
 - On itch.io the save no longer fails when other games have filled the browser's storage for the site.
