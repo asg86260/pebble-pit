@@ -154,23 +154,33 @@ group('a speed rung makes the cut give up shards faster', async () => {
   window.__crew(0, 6, 3);
   window.__clearFloor();
   run(5);
-  const dug = () => state().shards + state().finds.filter(f => f === 'shard').length;
-  const a0 = dug();
-  run(240);
-  const slow = dug() - a0;
+  // Measured in ground, with the heap swept clear as it goes. The stone is a
+  // figure per dig, so the ground rate is the stone rate and the ground is
+  // what the ladder is about; and the gang stands down at a full heap, which
+  // a fast gang at a rich seam reaches inside this window -- haulers fetch
+  // finds one at a time -- so left to fill it is the carting being measured
+  // and not the ladder.
+  const dug = () => S.quarryTotal || 0;
+  const stone = () => state().shards + state().finds.filter(f => f === 'shard').length;
+  const swept = seconds => { for (let i = 0; i < seconds; i++) { run(1); window.__clearFloor(); } };
+  const a0 = dug(), s0 = stone();
+  swept(240);
+  const slow = dug() - a0, slowStone = stone() - s0;
 
   for (let i = 0; i < 6; i++) buyNow(showing(['quarrypace', 'quarrypace2'])[0]);
   const lvl = S.quarryPaceLevel;
   window.__clearFloor();
   run(5);
-  const b0 = dug();
-  run(240);
-  const fast = dug() - b0;
+  const b0 = dug(), t0 = stone();
+  swept(240);
+  const fast = dug() - b0, fastStone = stone() - t0;
 
   return [
     ok(lvl === 6, 'six rungs bought through the rows', `${lvl}`),
-    ok(fast > slow * 1.8, 'and the cut gives up shards a good deal faster for them',
-       `${slow} -> ${fast} in four minutes`)
+    ok(fast > slow * 1.8, 'and the cut comes out a good deal faster for them',
+       `${slow} -> ${fast} cells in four minutes`),
+    ok(fastStone > slowStone, 'and so gives up more shards',
+       `${slowStone} -> ${fastStone} in four minutes`)
   ];
 });
 
