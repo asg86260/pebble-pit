@@ -426,7 +426,10 @@ group('a wizard at the star is called to the dome, and gets there fast', async (
     ok(bought, 'the dome is bought out from under a wizard at the star'),
     ok(far > 2000, 'which is the far side of the yard', `${far}px`),
     ok(poured, 'and the pour starts within seconds of the buy, not most of a minute'),
-    ok(y > starY + 100, 'the body having come down to the ring over the crown', `${starY} -> ${y}`)
+    // Lower than the star's ring by a few cells: the two rings are a hundred
+    // pixels apart give or take, and before the flight was saved across a
+    // reload the body measured here had not left the ground at all.
+    ok(y > starY + P * 4, 'the body having come down to the ring over the crown', `${starY} -> ${y}`)
   ];
 });
 
