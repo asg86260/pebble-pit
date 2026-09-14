@@ -1,6 +1,7 @@
 import { frames } from '../clock.js';
-import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_ENTER, RAIN_ENTER_GIVE, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
+import { gust } from '../wind.js';
 import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
 import { colAt, muckCols, muckFloor } from './layer.js';
@@ -105,7 +106,7 @@ export function pour(secs) {
     // leaves the sky, and the rain comes down over everything from above the
     // view. The accounting is unchanged -- one mote taken is one drop down.
     DROPS.push({ x: moteX(m), y: S.camY - P,
-                 vy: RAIN_ENTER + rand() * RAIN_ENTER_GIVE });
+                 vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
     if (GOING.length < GOING_CAP)
       GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind, tone: m.tone,
                    ink: m.ink, t: 1, vx: 0, vy: 0 });
@@ -184,10 +185,14 @@ export function stepGoing(secs) {
 export function stepDrops() {
   const m = muckCols();
   const f = frames();
+  // Every drop is carried by this instant's wind. A drop has no momentum of
+  // its own worth keeping, so the sheet leans as one and swings with the gust
+  // rather than each drop remembering the air it was born into.
+  const lean = gust() * RAIN_LEAN;
   for (let i = DROPS.length - 1; i >= 0; i--) {
     const d = DROPS[i];
-    // rain falls at pixels a frame, so it falls by however long the frame was
-    d.vy += RAIN_GRAV * f;
+    // pixels a frame, so it moves by however long the frame was
+    d.x += lean * f;
     d.y += d.vy * f;
     const c = colAt(d.x);
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }

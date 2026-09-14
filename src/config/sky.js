@@ -259,15 +259,21 @@ export let RAIN_DRIZZLE_S = 6;      // seconds of drizzle before the pour comes 
 export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full takes
 export const RAIN_TAPER_AT = 0.25;  // taper once this share of the marked sky is left
 export const RAIN_TAPER_FLOOR = 0.1; // and never below this share of the rate
-export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
-// How fast a drop is already going when it enters over the top of the window,
-// in pixels a frame, and how much one may differ from the next. A drop born at
-// the window's edge is not starting its fall there -- it has been falling from
-// a sky you cannot see -- so it arrives at speed instead of easing up from a
-// standstill in plain view. Roughly what a drop used to carry by the time it
-// had crossed half the window under RAIN_GRAV alone.
-export const RAIN_ENTER = 3.6;
-export const RAIN_ENTER_GIVE = 1.2;
+// How a drop moves, in pixels a frame. It falls at one speed: rain is at its
+// terminal velocity long before it is anywhere you can see it, so a drop that
+// went on gaining speed all the way down the window -- and these did, under a
+// gravity constant, from a walk at the top to a dive at the ground -- read as
+// something being dropped rather than as rain. The give is how much one drop
+// may differ from the next; a shower where every drop kept exact pace was a
+// curtain sliding down.
+export let RAIN_FALL = 4.5;
+export const RAIN_FALL_GIVE = 1.5;
+// How far the wind carries a drop sideways at a full gust. A drop is light and
+// goes where the air goes, so the whole sheet leans together and swings with
+// the gust; the dash is drawn along the way its drop is actually going --
+// straight down in a lull, slanted in a blow.
+export let RAIN_LEAN = 2.2;
+export const RAIN_DASH = 3;         // cells in a dash, head and trail
 // The share of what lands that leaves a mark. The whole sky falls either way --
 // every mote is a drop you can watch come down -- and this is how much of it is
 // filth rather than water.
@@ -355,6 +361,10 @@ export const SKY_KNOBS = [
     get: () => RAIN_DRIZZLE_S, set: v => { RAIN_DRIZZLE_S = v; } },
   { key: 'RAIN_RISE_S', label: 'rain rise', min: 0.5, max: 20, step: 0.5,
     get: () => RAIN_RISE_S, set: v => { RAIN_RISE_S = v; } },
+  { key: 'RAIN_FALL', label: 'rain speed', min: 1, max: 12, step: 0.25,
+    get: () => RAIN_FALL, set: v => { RAIN_FALL = v; } },
+  { key: 'RAIN_LEAN', label: 'rain lean', min: 0, max: 6, step: 0.1,
+    get: () => RAIN_LEAN, set: v => { RAIN_LEAN = v; } },
   // wave7-sky
   { key: 'PUFF_WANDER', label: 'puff wander', min: 0, max: 40, step: 1,
     get: () => PUFF_WANDER, set: v => { PUFF_WANDER = v; } }

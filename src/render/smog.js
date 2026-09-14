@@ -4,7 +4,7 @@
 // module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
-import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -317,14 +317,23 @@ export function drawRain() {
   // One path for the whole shower: four thousand drops is four thousand calls
   // into the canvas otherwise, and they are all the same square in the same
   // colour. See `drawSmog` -- the same trick, for the same reason.
-  // A drop is a dash three cells tall, leaned by the gust -- the smog is a
-  // square and a shower drawn in squares was a dirtier sky, not a storm:
-  // nothing in a still frame said falling (critics 2026-09-10, C12).
-  const lean = Math.round(gust() * P);
+  // A drop is a dash of cells drawn along the way it is going: the head where
+  // the drop is, the rest trailing back up its path, each cell stepped
+  // sideways by however far the wind carries it in one cell of fall. The smog
+  // is a square and a shower drawn in squares was a dirtier sky, not a storm:
+  // nothing in a still frame said falling (critics 2026-09-10, C12). And a
+  // vertical dash nudged over by the gust was still a vertical dash -- rain in
+  // a wind comes down slanted, the whole sheet at one angle.
+  const lean = gust() * RAIN_LEAN;
   ctx.fillStyle = MUCK_GREY;
   ctx.beginPath();
-  for (const d of DROPS)
-    if (onScreen(d.x)) ctx.rect(Math.round(d.x) + lean, Math.round(d.y), P, P * 3);
+  for (const d of DROPS) {
+    if (!onScreen(d.x)) continue;
+    const x = Math.round(d.x), y = Math.round(d.y);
+    const step = lean / d.vy * P;             // sideways per cell of fall
+    for (let k = 0; k < RAIN_DASH; k++)
+      ctx.rect(x - Math.round(k * step), y - k * P, P, P);
+  }
   ctx.fill();
   // Nothing is drawn going the other way any more. What the house takes is the
   // sky itself, dragged in by the draught and drawn by `drawSmog` all the way to
