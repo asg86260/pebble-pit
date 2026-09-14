@@ -451,11 +451,28 @@ export function stepQuarrier(w, now, ctx = null) {
   if (w.goal === 'to') {
     // Stood at the head of the ladder until the seam fills back in: there is
     // nothing down an emptied hole to go down for.
-    if (S.quarrySpent) {
-      if (!keepTo(w, rim)) return;
-      if (stepRoute(w, QUARRY_WALK)) return;
-      w.route = null;
-      return;
+    //
+    // Asked of the ground as well as of the flag. `quarrySpent` is not saved
+    // (it is worked out again from the counts, says state.js -- and nothing
+    // worked it out), so a refresh that caught the gang climbing out of a
+    // finished cut brought them back to a cut that was dug out and a flag
+    // that said it was not: each body reached the rim, went back down, found
+    // nothing to dig, climbed out again -- and since somebody was always
+    // still below, nobody was ever the last one out who fills the hole. Up
+    // and down the ladder for as long as the page stayed open (reported
+    // 2026-09-14). And the fill is asked for here too, by whoever is stood at
+    // the rim with nobody left below, because the frame the last one out
+    // would have filled it on is exactly the frame a refresh can lose.
+    if (S.quarrySpent || quarryDone()) {
+      if (!S.workers.some(o => o.type === TYPE.QUARRY && o.y > S.groundY)) {
+        fillQuarry();
+        S.quarrySpent = false;
+      } else {
+        if (!keepTo(w, rim)) return;
+        if (stepRoute(w, QUARRY_WALK)) return;
+        w.route = null;
+        return;
+      }
     }
     // Ground nobody has broken into yet. `fillQuarry` lays the stone in behind a
     // finished dig, but the first hole of a session was never filled in by
