@@ -287,7 +287,8 @@ export const RAIN_DASH_MAX = 5;
 // never flashes and the full pour does about every BOLT_EVERY_S seconds.
 export let BOLT_EVERY_S = 9;        // mean seconds between strikes at full pour
 export const BOLT_LIFE_S = 0.3;     // how long the bolt hangs in the sky, fading out
-export const BOLT_FLASH_S = 0.05;   // and for how much of that the whole window inverts
+export const BOLT_FLASH_S = 0.05;   // and for how much of that the window goes dark
+export let BOLT_FLASH_INK = 0.55;   // and how dark: the pane's opacity over the frame
 // The bolt's shape, in cells: it comes down BOLT_STEP cells a segment and jogs
 // up to BOLT_JOG cells sideways each one, with a shorter fork off it somewhere
 // between the two shares of its length, running BOLT_FORK_LEN segments.
@@ -391,6 +392,8 @@ export const SKY_KNOBS = [
     get: () => RAIN_LEAN, set: v => { RAIN_LEAN = v; } },
   { key: 'BOLT_EVERY_S', label: 'lightning every', min: 1, max: 60, step: 1,
     get: () => BOLT_EVERY_S, set: v => { BOLT_EVERY_S = v; } },
+  { key: 'BOLT_FLASH_INK', label: 'flash ink', min: 0, max: 1, step: 0.05,
+    get: () => BOLT_FLASH_INK, set: v => { BOLT_FLASH_INK = v; } },
   // wave7-sky
   { key: 'PUFF_WANDER', label: 'puff wander', min: 0, max: 40, step: 1,
     get: () => PUFF_WANDER, set: v => { PUFF_WANDER = v; } }

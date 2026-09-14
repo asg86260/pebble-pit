@@ -3854,11 +3854,13 @@ a run of cells from over the top of the window down to whatever that column
 has for a floor — the ground, the rock, the dug quarry — jogging sideways with
 momentum (`BOLT_KINK` is the chance a segment changes its lean; the rest keep
 going, which is the difference between a bolt and a worm) with one fork off it
-partway down. For its first instant (`BOLT_FLASH_S`) the whole finished frame
-is inverted: the page is already white, so the only way it can flash is to go
-dark, and a white bolt on a black sky is the picture everyone has of one. Then
-the bolt hangs black over the shower for `BOLT_LIFE_S`, fading through its
-second half.
+partway down. For its first instant (`BOLT_FLASH_S`) a dark pane drops over
+the whole finished frame (`BOLT_FLASH_INK`) with the bolt drawn white on top:
+the page is already white, so the only way it can flash is to go dark. It
+inverted the window at first, and that was a blow to the eye rather than a
+flash; dimmed, the yard stays the right way round and the bolt is the one
+bright thing in it. Then the bolt hangs black over the shower for
+`BOLT_LIFE_S`, fading through its second half.
 
 `S.bolt` is ephemeral, like the rain it came with. Scenes `lightning` and
 `lightningflash` hold either frame; `__strike(hold, flash)` is the hook under
