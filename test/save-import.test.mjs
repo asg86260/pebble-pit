@@ -68,7 +68,7 @@ group('a blob that is not a save is refused and costs nothing', async () => {
     ok(after === before, 'and the save is byte for byte what it was'),
     ok(S.stored === stored, 'and the yard is untouched', `${stored} -> ${S.stored}`),
     // whatever an earlier import left one step back is still what is there
-    ok(localStorage.getItem(PREV_KEY) === prev, 'and nothing was written one step back either')
+    ok(localStorage.getItem(PREV_KEY()) === prev, 'and nothing was written one step back either')
   ];
 });
 
@@ -132,15 +132,15 @@ group('a save that will not read is kept, and is what save a copy hands over', a
   const cut = good.slice(0, Math.floor(good.length * 0.6));
   window.__reset(true);                          // nobody standing from the last group
   localStorage.setItem(KEY, cut);
-  localStorage.removeItem(BROKEN_KEY);
+  localStorage.removeItem(BROKEN_KEY());
   yard.restore();
   const fresh = state();
   run(3);                                        // the interval would have written by now
-  const stashed = localStorage.getItem(BROKEN_KEY);
+  const stashed = localStorage.getItem(BROKEN_KEY());
   const handed = exportSave();
   const said = yard.S.broken;
 
-  localStorage.removeItem(BROKEN_KEY);
+  localStorage.removeItem(BROKEN_KEY());
   yard.S.broken = false;
   return [
     ok(fresh.crew === 0 && fresh.intro, 'the page boots a fresh game, as it must', `${fresh.crew} crew`),
@@ -190,14 +190,14 @@ group('a page overtaken by another tab stops writing', async () => {
   run(2);
   yard.S.dirty = true; persist();
   const mine = localStorage.getItem(KEY);
-  localStorage.setItem(OWNER_KEY, 'someothertab');   // ...and another page writes
+  localStorage.setItem(OWNER_KEY(), 'someothertab');   // ...and another page writes
   run(2);
   yard.S.dirty = true; persist();
   const after = localStorage.getItem(KEY);
   const yielded = yard.S.yielded;
 
   yard.S.yielded = false;
-  localStorage.setItem(OWNER_KEY, TAB);
+  localStorage.setItem(OWNER_KEY(), TAB);
   return [
     ok(mine !== null && JSON.parse(mine).stored === JSON.parse(mine).stored, 'this page was writing'),
     ok(after === mine, 'and writes nothing once another page has the save',
@@ -222,13 +222,13 @@ group('a page whose claim cannot be read is not overtaken', async () => {
   yard.S.dirty = true; persist();
   const yielded = yard.S.yielded;
   localStorage.getItem = getItem;
-  localStorage.removeItem(OWNER_KEY);                              // and as a cleared store reads
+  localStorage.removeItem(OWNER_KEY());                              // and as a cleared store reads
   run(2);
   yard.S.dirty = true; persist();
   const yieldedEmpty = yard.S.yielded;
   const wrote = localStorage.getItem(KEY);
 
-  localStorage.setItem(OWNER_KEY, TAB);
+  localStorage.setItem(OWNER_KEY(), TAB);
   return [
     ok(!yielded, 'a store that will not read is not another tab'),
     ok(!yieldedEmpty, 'nor is a store with no name in it'),

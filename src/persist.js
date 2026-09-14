@@ -8,7 +8,7 @@
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
          ABYSS_AT, WORKER, LADDER } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
-         claimTab, tabOwner, TAB } from './save.js';
+         claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
@@ -286,6 +286,9 @@ function blob() {
     // was read out of. A save is compared against the app that opens it, and
     // the comparison only means something if every save says who wrote it.
     build: BUILD,
+    // When, for the saves page to say how long ago a yard was last played.
+    // Read by nothing that boots a yard.
+    savedAt: Date.now(),
     // Which run this is, and how far into it the chance has got. The seed alone
     // would start the stream over on every reload -- the same run's name on a
     // different run -- so the generator's one word of state goes with it. See
@@ -655,6 +658,7 @@ export function restore() {
   // the first time it is opened. Dates compare as strings because they are
   // written as YYYY-MM-DD; a dev build has no date and never says anything.
   S.build = s.build && typeof s.build === 'object' ? { hash: String(s.build.hash ?? ''), date: String(s.build.date ?? '') } : null;
+  S.savedAt = Number.isFinite(s.savedAt) ? s.savedAt : null;
   S.newerSave = S.build?.date && BUILD.date && S.build.date > BUILD.date ? S.build.date : null;
   S.banked = s.banked || s.stored || 0;
   S.shownStored = S.stored; snapShown();
@@ -1307,6 +1311,26 @@ export function importSave(raw) {
   S.dirty = true;
   persist();
   return true;
+}
+
+// Another slot (DESIGN.md, "Save slots and the title page"): the yard standing
+// is written to its own slot, the other is opened, and it is booted the way
+// an import boots -- `restore` reads the store and the store now knows its
+// slot. An empty slot is the new game, and goes through `reset` rather than
+// the no-save arm of `restore`: that arm is written for a page that has just
+// loaded, and starts the intro over whatever the last yard left in the fields
+// the save does not carry -- `introDone` among them, so the intro never came.
+// `reset` blanks all of it first, which is what a new game is. The yard you
+// left is untouched under its own key either way, and the new slot is written
+// the instant it is entered so a page reloaded a moment later comes up on it.
+export function switchSlot(n) {
+  persist();
+  setSlot(n);
+  if (!loadRaw()) { reset(); return; }
+  restore();
+  bootYard();
+  S.dirty = true;
+  persist();
 }
 
 // The rest of what main.js does after `restore`, so a yard that came in

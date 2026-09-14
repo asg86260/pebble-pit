@@ -51,7 +51,7 @@ import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { CASINO_UPGRADES, pickChip } from './casino.js';
-import { persist, restore, reset as resetGame } from './persist.js';
+import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
@@ -441,6 +441,10 @@ export const abandon = () => { abandonAt('lab'); buildShop(); S.dirty = true; };
 export const newGame = (intro = false, fresh = false) => {
   resetGame(fresh);
   if (!intro) skipIntro();
+  // The title page holds the boot (main.js), and `fast` does nothing held.
+  // Every check and every scene starts here, so this is where the hold is
+  // let go: the frame turns the flag into the sheet going down.
+  S.paused = false;
 };
 
 // Say which run this is, and start it.
@@ -1037,6 +1041,7 @@ export const HANDLES = {
   __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
+  __slot: switchSlot,
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection,

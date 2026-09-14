@@ -1,8 +1,8 @@
 # Still to do
 
-## Save slots -- DESIGNED, NOT BUILT (2026-09-13)
+## Save slots and the title page -- BUILT (2026-09-13)
 
-"Save slots and the title page" in DESIGN.md. Three numbered
+"Save slots and the title page" in DESIGN.md, with an as-built note. Three numbered
 slots, each its own autosaving yard (profiles, not snapshots -- decided);
 slot 1 is every existing save under its existing key, so nothing migrates.
 A `saves` page on the held sheet lists them by what they hold (`rock 12 ·
@@ -13,7 +13,13 @@ reset erases only the slot you are in. Keys, the tab owner, `.prev` and
 second front (`pebble pit`, `play`, then saves / achievements / settings /
 quit); the settings move behind one word; achievements are per yard
 because `S.won` is in the save. `__reset`/`__seed` let the hold go so no
-check or scene stalls. Blocker: the design wants sign-off before code.
+check or scene stalls.
+
+Worth a look on a real yard: the title over a played yard at full window
+size, and whether `title page` on the held front earns its place or is one
+button too many. The desk has not been run with the slot argument threaded
+through the bridge -- the store and the adapter are checked in node, the
+IPC seam is not.
 
 ## The cut is worked in pockets -- BUILT (2026-09-13)
 

@@ -46,7 +46,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
 | `persist.js` | reading and writing the game; plain fields come off `SAVED` in state.js in one loop, hand-encoded ones stay here | a field in no list is a red test |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
-| `save.js` | the store seam: localStorage on a page, `window.desk` in the shell, and the guard, fallback and migration over both | rarely |
+| `save.js` | the store seam: localStorage on a page, `window.desk` in the shell, and the guard, fallback and migration over both; every key follows the open slot | rarely |
+| `slots.js` | the saves page: three yards, one open at a time, labelled off their own blobs | rarely |
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
@@ -156,7 +157,7 @@ build, unchanged, plus one adapter: nothing under `electron/` imports from
 `src/`, and nothing in `src/` reaches the shell except `save.js` (the store
 seam) and `settings.js` (the two dialog branches). `main.cjs` opens one window
 and answers five IPC calls; `preload.cjs` puts those five on `window.desk` --
-`read`, `write`, `exportTo`, `importFrom`, `version` -- and nothing else
+`read(slot)`, `write(slot, raw)`, `exportTo`, `importFrom`, `version` -- and nothing else
 crosses, no path included; `store.cjs` is the save on disk, plain Node so
 `test/desk-store.test.mjs` can point it at a temp directory. It keeps
 `current.json` beside `last-good.json` under `userData/saves/`: a write goes to

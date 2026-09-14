@@ -25,26 +25,26 @@ test('a write lands, and the second write keeps the first as last-good', () => {
   const store = openStore(dir);
   assert.deepEqual(store.read(), { current: null, lastGood: null });
 
-  assert.equal(store.write(blob(1)), true);
+  assert.equal(store.write(1, blob(1)), true);
   assert.deepEqual(store.read(), { current: blob(1), lastGood: null },
     'one write: nothing before it to keep');
   assert.deepEqual(files(dir), ['current.json'], 'no temp file is left behind');
 
-  assert.equal(store.write(blob(2)), true);
+  assert.equal(store.write(1, blob(2)), true);
   assert.deepEqual(store.read(), { current: blob(2), lastGood: blob(1) },
     'last-good is the blob before the last write');
   assert.deepEqual(files(dir), ['current.json', 'last-good.json']);
 
-  assert.equal(store.write(blob(3)), true);
+  assert.equal(store.write(1, blob(3)), true);
   assert.deepEqual(store.read(), { current: blob(3), lastGood: blob(2) }, 'and it rolls');
 });
 
 test('a blob that is not JSON is refused and nothing on disk moves', () => {
   const dir = fresh();
   const store = openStore(dir);
-  store.write(blob(1));
-  store.write(blob(2));
-  assert.equal(store.write('{not json'), false);
+  store.write(1, blob(1));
+  store.write(1, blob(2));
+  assert.equal(store.write(1, '{not json'), false);
   assert.deepEqual(store.read(), { current: blob(2), lastGood: blob(1) });
   assert.deepEqual(files(dir), ['current.json', 'last-good.json']);
 });
@@ -52,8 +52,8 @@ test('a blob that is not JSON is refused and nothing on disk moves', () => {
 test('a rename that throws leaves the old file whole, never a torn one', () => {
   const dir = fresh();
   const store = openStore(dir);
-  store.write(blob(1));
-  store.write(blob(2));
+  store.write(1, blob(1));
+  store.write(1, blob(2));
 
   // The write is torn at the one step that could tear it: the rename over
   // current.json throws once, as a full disk or a locked file would.
@@ -64,7 +64,7 @@ test('a rename that throws leaves the old file whole, never a torn one', () => {
     return real(...a);
   };
   let took;
-  try { took = store.write(blob(3)); } finally { fs.renameSync = real; }
+  try { took = store.write(1, blob(3)); } finally { fs.renameSync = real; }
 
   assert.equal(thrown, true, 'the rename was reached');
   assert.equal(took, false, 'and the write says it did not take');
@@ -73,15 +73,15 @@ test('a rename that throws leaves the old file whole, never a torn one', () => {
   assert.deepEqual(files(dir), ['current.json', 'last-good.json'], 'and the temp is cleaned up');
 
   // The store is not broken by the throw: the next write lands as usual.
-  assert.equal(store.write(blob(4)), true);
+  assert.equal(store.write(1, blob(4)), true);
   assert.deepEqual(store.read(), { current: blob(4), lastGood: blob(2) });
 });
 
 test('a rename that throws on the way to last-good leaves last-good alone', () => {
   const dir = fresh();
   const store = openStore(dir);
-  store.write(blob(1));
-  store.write(blob(2));
+  store.write(1, blob(1));
+  store.write(1, blob(2));
   const real = fs.renameSync;
   let n = 0;
   fs.renameSync = (...a) => {
@@ -90,7 +90,7 @@ test('a rename that throws on the way to last-good leaves last-good alone', () =
     return real(...a);
   };
   let took;
-  try { took = store.write(blob(3)); } finally { fs.renameSync = real; }
+  try { took = store.write(1, blob(3)); } finally { fs.renameSync = real; }
   assert.equal(took, false);
   const r = store.read();
   assert.equal(r.current, blob(3), 'current is the new blob, whole');
@@ -101,19 +101,36 @@ test('a rename that throws on the way to last-good leaves last-good alone', () =
 test('the empty string clears current, and the yard that was there is kept', () => {
   const dir = fresh();
   const store = openStore(dir);
-  store.write(blob(1));
-  store.write(blob(2));
-  assert.equal(store.write(''), true);
+  store.write(1, blob(1));
+  store.write(1, blob(2));
+  assert.equal(store.write(1, ''), true);
   assert.deepEqual(store.read(), { current: '', lastGood: blob(2) });
   // and nothing empty is ever promoted: the next save keeps the reset's
   // last-good, not the blank
-  assert.equal(store.write(blob(3)), true);
+  assert.equal(store.write(1, blob(3)), true);
   assert.deepEqual(store.read(), { current: blob(3), lastGood: blob(2) });
 });
 
 test('the write refuses anything that is not a string', () => {
   const store = openStore(fresh());
-  assert.equal(store.write(null), false);
-  assert.equal(store.write({ stored: 1 }), false);
+  assert.equal(store.write(1, null), false);
+  assert.equal(store.write(1, { stored: 1 }), false);
   assert.deepEqual(store.read(), { current: null, lastGood: null });
+});
+
+test('a slot is the same pair of files under another name, beside slot 1', () => {
+  const dir = fresh();
+  const store = openStore(dir);
+  store.write(1, blob(1));
+  assert.deepEqual(store.read(2), { current: null, lastGood: null }, 'a fresh slot holds nothing');
+
+  assert.equal(store.write(2, blob(10)), true);
+  assert.equal(store.write(2, blob(11)), true);
+  assert.deepEqual(store.read(2), { current: blob(11), lastGood: blob(10) }, 'and it rolls like slot 1');
+  assert.deepEqual(store.read(1), { current: blob(1), lastGood: null }, 'slot 1 was not touched');
+  assert.deepEqual(files(dir), ['current.json', 'slot-2.json', 'slot-2.last-good.json']);
+
+  assert.equal(store.write(2, ''), true);
+  assert.deepEqual(store.read(2), { current: '', lastGood: blob(11) }, 'a reset in a slot clears that slot');
+  assert.deepEqual(store.read(1).current, blob(1));
 });

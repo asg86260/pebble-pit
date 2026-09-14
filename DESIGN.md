@@ -7058,7 +7058,7 @@ screenshot at 1440x900 and at the minimum size.
   for the console, but `S.broken` stays false: `save a copy` hands over the
   yard that is standing, not the blob that would not read.
 
-## Save slots and the title page (design, not built)
+## Save slots and the title page (built)
 
 The game has one yard and one autosave. A player who wants to start over
 without losing the yard they have -- to try the other opening, to show a
@@ -7255,6 +7255,25 @@ page is held with the sheet reading `pebble pit`; `play` takes it down and
 shows the motion switch and the front does not; `saves` from the title,
 row 2, `back`, `play` -- and the intro is standing. Node tier: `__reset`
 leaves the game unpaused (the harness door), in `test/slots.test.mjs`.
+
+### As built (2026-09-13)
+
+Built as written, with two things the design did not say:
+
+- **An empty slot boots through `reset`, not `restore`'s no-save arm.** That
+  arm is written for a page that has just loaded and starts the intro over
+  whatever the last yard left in the fields a save does not carry --
+  `introDone` among them -- so stepping from a played yard into an empty slot
+  never started the intro. `reset` blanks all of it first, which is what a
+  new game is; `switchSlot` reads the slot and takes one door or the other.
+- **The desk's migration is slot 1's only.** It keyed off "no file yet",
+  which on the desk is also what an empty slot 2 looks like; it now runs only
+  for slot 1, whose save the browser's was.
+
+`hold(on, front)` in input.js takes the front to open on; the boot passes
+`'title'`. The `title` and `saves page` groups are in
+`src/selftest/settings.js`, the rest in `test/slots.test.mjs`,
+`test/desk-store.test.mjs` and `test/desk-adapter.test.mjs`.
 
 ### Checks
 

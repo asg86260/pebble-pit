@@ -1027,6 +1027,14 @@ canvas {
 #reset { border-style: dashed; opacity: .7; }
 #reset:hover { opacity: 1; }
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
+/* The saves page: one row a yard, the open one inert and said so. An empty
+   row is armed like the reset before it starts a yard. */
+.held .slots { display: flex; flex-direction: column; gap: 6px; }
+.held .slot { min-width: 22em; text-align: left; }
+.held .slot.open { opacity: .7; }
+.held .slot.armed { color: #fff; background: #000; }
+/* the title's word: the game's name, a size up from "paused" */
+.held .word.title { font-size: 22px; }
 /* the switch reads as thrown when it is thrown */
 #hidedone.on { opacity: 1; border-style: solid; }
 

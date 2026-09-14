@@ -9,7 +9,8 @@
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion } from '../prefs.js';
-import { disarmReset } from '../input.js';
+import { disarmReset, hold } from '../input.js';
+import { setSlot } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
 import { persist, exportSave } from '../persist.js';
@@ -25,19 +26,106 @@ const press = async () => {
   await raf();
 };
 const resume = () => document.getElementById('resume').click();
+// the settings are a page behind the front now: one press to turn to it
+const settingsPage = () => document.getElementById('settingsbtn').click();
 const said = () => held().querySelector('.said').textContent;
 const motion = () => document.getElementById('motion');
 
 // what a player reads, top to bottom: each child of the sheet that is showing,
 // as its text with the whitespace folded
-// The record's button carries a count that is the yard's doing, so it is read
-// as its name: what the check is about is that the line is there, in its place.
+// The record's button carries a count that is the yard's doing, and the saves
+// button which yard, so each is read as its name: what the check is about is
+// that the line is there, in its place.
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
   .map(el => el.id === 'recordbtn' ? 'achievements'
-                                   : el.textContent.replace(/\s+/g, ' ').trim());
+           : el.id === 'slotsbtn' ? 'saves'
+           : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
+  // --- the title page (DESIGN.md, "Save slots and the title page") ------------
+  // The boot itself is the one thing `newRun` cannot show -- it lets the hold
+  // go -- so the title front is reached the way `title page` reaches it, and
+  // what the boot does is `hold(true, 'title')`, the same call.
+  ['the title page is the sheet\'s other front', async () => {
+    newRun();
+    await settle();
+    hold(true, 'title');
+    await raf();
+    const got = lines();
+    const want = ['pebble pit', 'play', '', 'saves', 'achievements', 'settings',
+                  'esc holds · ← → look about', version(), 'rocks keep coming. there is no finish line.'];
+    const before = state();
+    run(2);
+    const held2 = state().workerPos.join() === before.workerPos.join();
+    document.getElementById('play').click();
+    const down = held().hidden && !S.paused;
+    run(2);
+    const ran = state().workerPos.join() !== before.workerPos.join();
+    await press();
+    const front = lines()[0];
+    document.getElementById('titlebtn').click();
+    const back = lines()[0];
+    const stillHeld = S.paused && !held().hidden;
+    document.getElementById('settingsbtn').click();
+    const onSettings = !motion().hidden && document.getElementById('play').hidden;
+    document.getElementById('settingsback').click();
+    const returned = lines()[0];
+    document.getElementById('play').click();
+    return [
+      ok(got.join('|') === want.join('|'), 'the title front reads pebble pit, play, and the shelf',
+         `got ${JSON.stringify(got)}`),
+      ok(held2, 'and the yard stands still behind it'),
+      ok(down && ran, 'play lets it go and the yard runs', `${down}, ${ran}`),
+      ok(front === 'paused', 'escape holds on the paused front', front),
+      ok(back === 'pebble pit' && stillHeld, 'title page turns it back with the yard still held', back),
+      ok(onSettings && returned === 'pebble pit', 'and back from the settings is the front you came from', returned),
+    ];
+  }],
+
+  // The saves page, the player's way: the row for an empty slot, pressed
+  // twice, is the new game with the first yard kept; the first row brings
+  // it back.
+  ['the saves page switches yards', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 2);
+    run(5);
+    S.dirty = true;
+    persist();
+    const crew = state().crew;
+    await press();
+    document.getElementById('slotsbtn').click();
+    const rows = () => [...document.getElementById('slots').querySelectorAll('.slot')];
+    const listed = rows().map(b => b.textContent);
+    const row2 = rows()[1];
+    row2.click();
+    const asked = row2.textContent;
+    row2.click();
+    const fresh = state();
+    const saidNew = said();
+    const rows2 = rows().map(b => b.textContent);
+    rows()[0].click();
+    const backAgain = state();
+    const saidBack = said();
+    document.getElementById('slotsback').click();
+    resume();
+    setSlot(1);
+    localStorage.removeItem('boulder-clicker/v4/2');
+    localStorage.removeItem('boulder-clicker/v4/2.tab');
+    return [
+      ok(listed[0].endsWith('playing') && listed[1] === '2 · empty' && listed[2] === '3 · empty',
+         'three rows, the open one playing', JSON.stringify(listed)),
+      ok(asked === '2 · start a new yard?', 'an empty row asks first', asked),
+      ok(fresh.crew === 0 && fresh.intro && saidNew === 'a new yard', 'and the second press is the new game',
+         `${fresh.crew} crew, ${saidNew}`),
+      ok(rows2[1].endsWith('playing') && /^1 · rock \d+ · \d+ crew · just now$/.test(rows2[0]),
+         'the page reads the swap', JSON.stringify(rows2)),
+      ok(backAgain.crew === crew && saidBack === 'yard 1', 'and the first yard comes back',
+         `${backAgain.crew} vs ${crew}, ${saidBack}`),
+    ];
+  }],
+
   ['the held sheet is the settings sheet', async () => {
     newRun();
     await settle();
@@ -50,17 +138,26 @@ export const TESTS = [
       'paused',
       'resume',
       '',                                     // the rule
+      'saves',                                // the three yards -- see slots.js
       'achievements',                         // the button to the page behind -- see record.js
-      '',                                     // and its rule
+      'settings',                             // and the settings, behind one word
+      'title page',
+      'esc holds · ← → look about',
+      version(),
+    ];
+    settingsPage();
+    const page = lines();
+    const wantPage = [
+      'settings',
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
       'save a copy load a save',
       'reset progress',
-      'esc holds · ← → look about',
+      'back',
       version(),
-      'rocks keep coming. there is no finish line.',
     ];
+    document.getElementById('settingsback').click();
     const before = state();
     resume();
     const down = held().hidden;
@@ -71,6 +168,8 @@ export const TESTS = [
       ok(up, 'escape puts the sheet up'),
       ok(got.join('|') === want.join('|'), 'and every line is on it, in order',
          `got ${JSON.stringify(got)}`),
+      ok(page.join('|') === wantPage.join('|'), 'and the settings page has the rest',
+         `got ${JSON.stringify(page)}`),
       ok(down && !after.paused, 'resume takes it down', `${down}, ${after.paused}`),
       ok(after.workerPos.join() !== before.workerPos.join(), 'and the game runs on'),
     ];
@@ -81,6 +180,7 @@ export const TESTS = [
     await settle();
     setPref('motion', null);
     await press();
+    settingsPage();
     const was = reducedMotion();
     const readBefore = motion().textContent;
     motion().click();
@@ -91,6 +191,7 @@ export const TESTS = [
     newRun();
     await settle();
     await press();
+    settingsPage();
     const kept = pref('motion');
     const readKept = motion().textContent;
     resume();
@@ -117,6 +218,7 @@ export const TESTS = [
     S.dirty = true;
     persist();                                  // so there is a save to copy
     await press();
+    settingsPage();
     document.getElementById('savecopy').click();
     await sleep(100);
     const copied = said();
@@ -163,6 +265,7 @@ export const TESTS = [
     const onBench = board().querySelector('#reset');
     const btn = held().querySelector('#reset');
     await press();
+    settingsPage();
     btn.click();
     const armed = btn.classList.contains('armed') && btn.textContent === 'erase everything?';
     const flagged = !!S.resetArmed;

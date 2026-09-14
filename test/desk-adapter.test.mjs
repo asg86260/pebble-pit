@@ -28,8 +28,10 @@ function fakeDesk({ current = null, lastGood = null } = {}) {
   const d = {
     reads: 0, writes: 0, written: [],
     disk: { current, lastGood },
-    read() { d.reads++; return { current: d.disk.current, lastGood: d.disk.lastGood }; },
-    write(raw) { d.writes++; d.written.push(raw); d.disk.current = raw; return Promise.resolve(true); },
+    // one slot's disk: the adapter names the slot on every call, and slot 1
+    // is the only one these groups play in
+    read(slot) { d.reads++; return slot === 1 ? { current: d.disk.current, lastGood: d.disk.lastGood } : {}; },
+    write(slot, raw) { d.writes++; d.written.push(raw); if (slot === 1) d.disk.current = raw; return Promise.resolve(true); },
     exportTo: () => Promise.resolve(true),
     importFrom: () => Promise.resolve(null),
     version: () => ({ hash: 'test', date: '' })
@@ -82,8 +84,9 @@ group('the blob is the same blob either way', async () => {
     const desk = exportSave();
     const took = importSave(desk);
     return [
-      ok(desk === web, 'exportSave on the desk is byte for byte the web one',
-         `${desk.length} vs ${web.length} chars`),
+      // but for the stamp of when, which is the one field the two writes differ in
+      ok(desk.replace(/"savedAt":\d+/, '') === web.replace(/"savedAt":\d+/, ''),
+         'exportSave on the desk is byte for byte the web one', `${desk.length} vs ${web.length} chars`),
       ok(took === true, 'importSave takes it on the desk'),
       ok(d.written.includes(desk), 'and the import wrote it through the desk'),
       ok(state().stored === JSON.parse(desk).stored, 'and the yard is the one in the blob')
@@ -101,7 +104,7 @@ group('a current that will not read falls back to last-good, and says so', async
     const fell = yard.S.fellBack;
     const stored = state().stored;
     const who = yard.S.workers.length;
-    const broken = localStorage.getItem(BROKEN_KEY);
+    const broken = localStorage.getItem(BROKEN_KEY());
     return [
       ok(fell === true, 'S.fellBack is set'),
       ok(stored === JSON.parse(good).stored, 'and the yard is the last-good one',

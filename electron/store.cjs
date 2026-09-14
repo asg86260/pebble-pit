@@ -13,8 +13,10 @@
 // build writing a shape the reader refuses) still has the one before it
 // standing beside it. One write behind, by design: that is what a backup is.
 //
-// Named slots are not built; the directory is laid out so they can be, as
-// `<name>.json` beside `current.json`. See DESIGN.md, "The desk".
+// The slots (DESIGN.md, "Save slots and the title page"): slot 1 is
+// `current.json` / `last-good.json` exactly as before, so no save moves; slot
+// n is `slot-n.json` / `slot-n.last-good.json` beside them, the same pair
+// with the same promises.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -46,10 +48,15 @@ function writeAtomic(file, raw) {
 
 function openStore(dir) {
   fs.mkdirSync(dir, { recursive: true });
-  const current = path.join(dir, CURRENT);
-  const lastGood = path.join(dir, LAST_GOOD);
+  const filesOf = slot => {
+    const n = Number(slot) || 1;
+    return n === 1
+      ? [path.join(dir, CURRENT), path.join(dir, LAST_GOOD)]
+      : [path.join(dir, `slot-${n}.json`), path.join(dir, `slot-${n}.last-good.json`)];
+  };
   return {
-    read() {
+    read(slot = 1) {
+      const [current, lastGood] = filesOf(slot);
       return { current: readOr(current), lastGood: readOr(lastGood) };
     },
     // Whether the blob is now `current.json` and has been read back whole. A
@@ -59,8 +66,9 @@ function openStore(dir) {
     // `last-good.json` like any other save being written over, because the
     // save before the reset is exactly the thing a player who pressed the
     // wrong button wants back. Nothing empty is ever promoted.
-    write(raw) {
+    write(slot, raw) {
       if (typeof raw !== 'string') return false;
+      const [current, lastGood] = filesOf(slot);
       try {
         if (raw !== '') JSON.parse(raw);
         const was = readOr(current);

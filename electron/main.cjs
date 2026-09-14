@@ -73,9 +73,9 @@ function rememberWindow(win) {
 }
 
 function wire() {
-  ipcMain.on('desk:read', e => { e.returnValue = store.read(); });
+  ipcMain.on('desk:read', (e, slot) => { e.returnValue = store.read(slot); });
   ipcMain.on('desk:version', e => { e.returnValue = build; });
-  ipcMain.handle('desk:write', (e, raw) => store.write(raw));
+  ipcMain.handle('desk:write', (e, slot, raw) => store.write(slot, raw));
   ipcMain.handle('desk:exportTo', async (e, raw) => {
     const win = BrowserWindow.fromWebContents(e.sender);
     const r = await dialog.showSaveDialog(win, { defaultPath: saveName(), filters: FILTERS });

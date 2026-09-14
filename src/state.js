@@ -499,6 +499,7 @@ export const S = {
   staged: false,          // stood at a scene, the player's save kept aside (scenesheet.js)
   // wave-desk-sound, track A: the desk's store, and the version boundary.
   build: null,            // { hash, date } of the build that wrote this save; null for a yard with no save behind it
+  savedAt: null,          // when the save this yard was read out of was written; null for a yard with none
   fellBack: false,        // the desk's current save would not read; this is the one before it
   newerSave: null,        // the date of a save written by a build newer than this one, until the sheet has said so
   lastFrame: 0,         // for the length of the last frame
@@ -761,6 +762,9 @@ export const SAVED_BY_HAND = [
   // page's own stamp rather than copied off S, and read back into `S.build`
   // with a default -- see the version boundary in persist.js.
   'build',
+  // When it was written, for the saves page's "5 days ago" (slots.js). The
+  // page's own clock on the way out, like `build`.
+  'savedAt',
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
 ];

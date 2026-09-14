@@ -120,49 +120,71 @@
   <div class="note"></div>
 </button>
 <div id="held" class="held" hidden>
-  <!-- Two pages on one sheet, told apart by data-pane: the front, and the
-       record behind it. settings.js's showPane hides one and shows the other;
-       the sheet always comes up on the front. -->
+  <!-- One sheet, several pages, told apart by data-pane: a space-separated
+       list of the pages an element is on. settings.js's showPane shows the
+       elements whose list holds the page's name and hides the rest. Two
+       fronts share everything under the rule: the title page (the boot stops
+       here; DESIGN.md, "Save slots and the title page") and the held front
+       escape brings up. Behind them: the saves, the achievements and the
+       settings, each with its own back. -->
+  <div class="word title" data-pane="title">pebble pit</div>
+  <button id="play" type="button" data-pane="title">play</button>
   <div class="word" data-pane="main">paused</div>
   <button id="resume" type="button" data-pane="main">resume</button>
-  <div class="rule" data-pane="main"></div>
+  <div class="rule" data-pane="title main"></div>
+  <!-- The saves: three yards, one open at a time. A page of its own behind
+       this button, which says which yard this is. See slots.js. -->
+  <button id="slotsbtn" type="button" data-pane="title main">saves</button>
+  <div class="word" data-pane="slots" hidden>saves</div>
+  <div id="slots" class="slots" data-pane="slots" hidden></div>
+  <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
   <!-- The record: what the yard has done, newest first. A list and not a
        board -- nothing on it is for sale, nothing on it answers to a cursor
        -- and it hangs here rather than on the noticeboard because the
        noticeboard is the books, and the books are about what the yard is
        earning now. It is a page of its own behind this button, which carries
        the count. See record.js. -->
-  <button id="recordbtn" type="button" data-pane="main">achievements</button>
+  <button id="recordbtn" type="button" data-pane="title main">achievements</button>
   <div class="word" data-pane="record" hidden>achievements</div>
   <div id="record" class="record" data-pane="record" hidden></div>
   <button id="recordback" type="button" data-pane="record" hidden>back</button>
-  <div class="rule" data-pane="main"></div>
-  <button id="motion" type="button" data-pane="main">motion: full</button>
+  <!-- The settings, behind one word: a title page with a volume slider on it
+       is not a title page. -->
+  <button id="settingsbtn" type="button" data-pane="title main">settings</button>
+  <div class="word" data-pane="settings" hidden>settings</div>
+  <button id="motion" type="button" data-pane="settings" hidden>motion: full</button>
   <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
-  <button id="sound" type="button" data-pane="main">sound: on</button>
+  <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <!-- the volume: a share of the designed level, all the way up is still quiet -->
-  <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="main" aria-label="volume">
-  <div class="pair" data-pane="main">
+  <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
+  <div class="pair" data-pane="settings" hidden>
     <button id="savecopy" type="button">save a copy</button>
     <button id="loadsave" type="button">load a save</button>
   </div>
   <!-- the paste, folded away until load a save asks for it -->
-  <div id="paste" class="paste" data-pane="main" hidden>
+  <div id="paste" class="paste" data-pane="settings" hidden>
     <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
     <div class="pair">
       <button id="loadit" type="button">load it</button>
       <button id="nevermind" type="button">never mind</button>
     </div>
   </div>
-  <div class="said" data-pane="main"></div>
-  <button id="reset" type="button" data-pane="main">reset progress</button>
+  <!-- the reset erases the open slot only; starting another yard is the
+       saves page's business -->
+  <button id="reset" type="button" data-pane="settings" hidden>reset progress</button>
+  <!-- the sheet's one-line reply, on every page that has something to say -->
+  <div class="said" data-pane="title main slots settings"></div>
+  <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
+  <!-- the way back out of a yard that is not the desk's quit: the sheet turns
+       to the title front and the yard stays held behind it -->
+  <button id="titlebtn" type="button" data-pane="main">title page</button>
   <!-- the desk only: a window with no menu bar needs a way out that is not a
-       key combination. settings.js gives it a pane when window.desk exists;
-       without one the page-turn never shows it. -->
+       key combination. settings.js gives it both fronts when window.desk
+       exists; without one the page-turn never shows it. -->
   <button id="quit" type="button" hidden>quit</button>
-  <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about</div>
-  <div id="build" class="small" data-pane="main"></div>
-  <div class="small" data-pane="main">rocks keep coming. there is no finish line.</div>
+  <div class="small" data-pane="title main">esc holds &middot; &larr; &rarr; look about</div>
+  <div id="build" class="small" data-pane="title main settings"></div>
+  <div class="small" data-pane="title">rocks keep coming. there is no finish line.</div>
 </div>
 
 <!-- Stopped. The same sheet, for the game breaking rather than being held:

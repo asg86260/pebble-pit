@@ -22,8 +22,8 @@ import { fillQueue } from './queue.js';
 import { buildShop } from './shop.js';
 import { persist, restore, claimSave } from './persist.js';
 import { OWNER_KEY, TAB } from './save.js';
-import './input.js';           // the mouse, the wheel and the keyboard
-import { sayStore } from './settings.js';   // wave-release, track A: the held sheet's shelf
+import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
+import './settings.js';              // wave-release, track A: the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { tick } from './clock.js';
@@ -105,10 +105,13 @@ relayout();
 restore();
 buildShop();
 syncWorkers();
-// The desk's fallback (wave-desk-sound, track A): the save that would not
-// read has been put aside and the one before it is standing. Offered, not
-// silent -- the game opens held, with the sheet saying so.
-if (S.fellBack) { S.paused = true; sayStore(); }
+// The title page (DESIGN.md, "Save slots and the title page"): the game
+// opens held, on the sheet's title front, with the yard standing still
+// behind it as the picture. `play` lets it go. What the store has to say on
+// boot -- the desk's fallback, a save from a newer build -- is said here,
+// where the boot now stops. A first visit's intro is on the yard's clock and
+// waits under the hold with everything else.
+hold(true, 'title');
 
 // Where the view opens: where you left it, or -- on a game that has never been
 // played, or a save from before the view was written down -- on the rock.
@@ -134,7 +137,7 @@ setInterval(persist, 1000);
 // one. The user switching back is the moment it would otherwise have written
 // an hour-old yard over the hour just played.
 claimSave();
-addEventListener('storage', e => { if (e.key === OWNER_KEY && e.newValue && e.newValue !== TAB) S.yielded = true; });
+addEventListener('storage', e => { if (e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
 document.addEventListener('visibilitychange', () => {
   if (S.yielded && document.visibilityState === 'visible') location.reload();
 });

@@ -1,6 +1,26 @@
 import { S } from './state.js';
 
-const KEY = 'boulder-clicker/v4';
+// --- the slots (DESIGN.md, "Save slots and the title page") -------------------
+//
+// Three yards, one open at a time. Every key below is a function of which
+// slot is open: slot 1 is exactly the keys the game has always used, so no
+// existing save moves; slot n is the same keys under `/n`. Which slot is open
+// is a fact about the page and not about any yard -- it is never on `S` and
+// never in a save -- so it lives beside the prefs, read once as the module
+// loads and written by `openSlot`.
+export const SLOTS = 3;
+const SLOT_KEY = 'boulder-clicker/slot';
+const BASE = 'boulder-clicker/v4';
+let slot = 1;
+try { const n = +localStorage.getItem(SLOT_KEY); if (n >= 1 && n <= SLOTS) slot = n; } catch {}
+export const openSlot = () => slot;
+export function setSlot(n) {
+  if (!(n >= 1 && n <= SLOTS)) return;
+  slot = n;
+  try { localStorage.setItem(SLOT_KEY, String(n)); } catch {}
+}
+const keyOf = (n, suffix = '') => (n === 1 ? BASE : BASE + '/' + n) + suffix;
+const KEY = () => keyOf(slot);
 
 // --- the store seam (wave-desk-sound, track A) --------------------------------
 //
@@ -19,12 +39,12 @@ const KEY = 'boulder-clicker/v4';
 // it wrote and answers with that, and the disk is only read when this page
 // has not written yet. This page is the only writer, so the copy in hand is
 // the truth and the file is only ever behind it, never ahead.
-let held;             // the last blob written this session, or '' for none; undefined before the first write
+let held = {};        // per slot: the last blob written this session, or '' for none; absent before the first write
 let heldFor = null;   // ...and which desk it was written through: a new desk is a new store
 let diskTook = true;  // what the disk said about the last write that has answered
 function desk() {
   const d = (typeof window !== 'undefined' && window.desk) || null;
-  if (d !== heldFor) { heldFor = d; held = undefined; diskTook = true; }
+  if (d !== heldFor) { heldFor = d; held = {}; diskTook = true; }
   return d;
 }
 
@@ -32,15 +52,15 @@ function desk() {
 // exactly as the store has it -- '' is a save that was cleared on purpose and
 // null is a store that has never held one, and `load` needs the difference
 // for the migration.
-function readDesk() {
-  try { return desk().read() || {}; } catch { return {}; }
+function readDesk(n = slot) {
+  try { return desk().read(n) || {}; } catch { return {}; }
 }
 
 const store = {
   get() {
     const d = desk();
-    if (!d) { try { return localStorage.getItem(KEY); } catch { return null; } }
-    if (held !== undefined) return held;
+    if (!d) { try { return localStorage.getItem(KEY()); } catch { return null; } }
+    if (slot in held) return held[slot];
     const c = readDesk().current;
     return c == null ? null : c;
   },
@@ -57,10 +77,10 @@ const store = {
   // the next -- one write behind, but never silent.
   set(raw) {
     const d = desk();
-    if (!d) { try { localStorage.setItem(KEY, raw); return true; } catch { return false; } }
-    held = raw;
+    if (!d) { try { localStorage.setItem(KEY(), raw); return true; } catch { return false; } }
+    held[slot] = raw;
     try {
-      Promise.resolve(d.write(raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
+      Promise.resolve(d.write(slot, raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
     } catch { diskTook = false; }
     return diskTook;
   },
@@ -69,10 +89,20 @@ const store = {
   // migration below does not bring the browser's copy back over a reset.
   remove() {
     const d = desk();
-    if (!d) { try { localStorage.removeItem(KEY); } catch {} return; }
+    if (!d) { try { localStorage.removeItem(KEY()); } catch {} return; }
     store.set('');
   }
 };
+
+// Any slot's blob, read without opening it -- what the saves page reads its
+// labels off. Null for a slot that has never held one or was cleared. On the
+// desk the open slot answers from the copy in hand, as `get` does.
+export function slotRaw(n) {
+  const d = desk();
+  if (!d) { try { return localStorage.getItem(keyOf(n)) || null; } catch { return null; } }
+  if (n === slot && slot in held) return held[slot] || null;
+  return readDesk(n).current || null;
+}
 
 // The save before the last import (wave-release, track C).
 //
@@ -82,7 +112,7 @@ const store = {
 // that takes, never rolled, never read by play. On the desk the store keeps
 // its own `last-good.json` beside the save (electron/store.cjs); this key is
 // still the one step of undo an import has, in both modes.
-export const PREV_KEY = 'boulder-clicker/v4.prev';
+export const PREV_KEY = () => keyOf(slot, '.prev');
 
 // What a blob has to be before it is believed to be a save. `load` and
 // `importSave` both ask this one question, so a blob refused at the door of
@@ -105,7 +135,7 @@ export function isSave(s) {
 // store, or any shape a later `isSave` refuses, cost the run without a word.
 // So a blob that will not read is put here before null is answered, and the
 // sheet's SAVE A COPY hands it over while `S.broken` says there is one.
-export const BROKEN_KEY = 'boulder-clicker/v4.broken';
+export const BROKEN_KEY = () => keyOf(slot, '.broken');
 
 // Which page last wrote the save (wave-critics, A10). Two tabs on one origin
 // share the store, and each wrote its own yard over the other's once a second:
@@ -113,7 +143,9 @@ export const BROKEN_KEY = 'boulder-clicker/v4.broken';
 // background, was clicked. Every page names itself once, writes its name
 // beside the save, and a page that finds another name there yields -- see
 // `persist`, and the `storage` listener in main.js.
-export const OWNER_KEY = 'boulder-clicker/v4.tab';
+// The name follows the slot: two tabs on two different slots are two yards,
+// and neither yields to the other.
+export const OWNER_KEY = () => keyOf(slot, '.tab');
 export const TAB = Math.random().toString(36).slice(2, 10);
 
 // The blob as a save, or null when it is not one -- with the raw put aside
@@ -136,9 +168,11 @@ export function load() {
   // neither file there, as against a `current` that was cleared on purpose --
   // takes the browser's copy, once. The localStorage copy is left where it
   // is; it is never read again while the file exists, because the file exists.
-  if (d && raw == null && store.lastGood() == null) {
+  // Slot 1 only: the browser's one save is slot 1's, and an empty slot 2 on
+  // the desk is empty, not a store that has never been migrated.
+  if (d && slot === 1 && raw == null && store.lastGood() == null) {
     let web = null;
-    try { web = localStorage.getItem(KEY); } catch {}
+    try { web = localStorage.getItem(KEY()); } catch {}
     if (web) { store.set(web); raw = web; }
   }
   if (!raw) return null;
@@ -157,13 +191,13 @@ export function load() {
 }
 
 function stash(raw) {
-  try { if (raw) localStorage.setItem(BROKEN_KEY, raw); } catch {}
+  try { if (raw) localStorage.setItem(BROKEN_KEY(), raw); } catch {}
 }
 export function loadBroken() {
-  try { return localStorage.getItem(BROKEN_KEY); } catch { return null; }
+  try { return localStorage.getItem(BROKEN_KEY()); } catch { return null; }
 }
 export function clearBroken() {
-  try { localStorage.removeItem(BROKEN_KEY); } catch {}
+  try { localStorage.removeItem(BROKEN_KEY()); } catch {}
 }
 
 // Whether it was written. Storage full or blocked (a private window, a quota,
@@ -178,10 +212,10 @@ export function save(state) {
 // holds no claim and defers to nobody: only a name that is not its own is
 // another page.
 export function claimTab() {
-  try { localStorage.setItem(OWNER_KEY, TAB); } catch {}
+  try { localStorage.setItem(OWNER_KEY(), TAB); } catch {}
 }
 export function tabOwner() {
-  try { return localStorage.getItem(OWNER_KEY); } catch { return null; }
+  try { return localStorage.getItem(OWNER_KEY()); } catch { return null; }
 }
 
 export function clear() {
@@ -204,11 +238,11 @@ export function saveRaw(raw) {
 // so nothing is written as nothing.
 export function savePrev(raw) {
   try {
-    if (raw == null) localStorage.removeItem(PREV_KEY);
-    else localStorage.setItem(PREV_KEY, raw);
+    if (raw == null) localStorage.removeItem(PREV_KEY());
+    else localStorage.setItem(PREV_KEY(), raw);
   } catch {}
 }
 
 export function loadPrev() {
-  try { return localStorage.getItem(PREV_KEY); } catch { return null; }
+  try { return localStorage.getItem(PREV_KEY()); } catch { return null; }
 }

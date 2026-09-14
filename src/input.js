@@ -704,14 +704,16 @@ addEventListener('keydown', e => {
 // One flag, set here and read everywhere. The sheet that says so is not set
 // here at all -- the frame keeps it in step with the flag, so anything that
 // clears the flag (a reset, say) clears the sheet without knowing it exists.
-export function hold(on) {
+export function hold(on, front = 'main') {
   S.paused = on;
   document.getElementById('held').hidden = !on;   // now, not next frame
-  // The sheet comes up on its front page, whichever page it went down on, and
-  // the record is written as it opens: the count on the button now, the list
-  // when the button is pressed (settings.js). Opening it reads the record:
-  // everything on it counts as looked at from here.
-  if (on) { showPane('main'); markNoticesRead(); sayStore(); }
+  // The sheet comes up on a front page, whichever page it went down on --
+  // `main` for escape, `title` for the boot (main.js) -- and the record is
+  // written as it opens: the count on the button now, the list when the
+  // button is pressed (settings.js). Opening it reads the record: everything
+  // on it counts as looked at from here.
+  if (on) { showPane(front); markNoticesRead(); sayStore(); }
   S.dirty = true;
 }
 document.getElementById('resume').addEventListener('click', () => hold(false));
+document.getElementById('play').addEventListener('click', () => hold(false));

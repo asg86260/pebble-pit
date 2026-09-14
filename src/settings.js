@@ -15,6 +15,7 @@ import { version } from './version.js';
 import { exportSave, importSave } from './persist.js';
 import { S } from './state.js';
 import { showRecord, recordLabel } from './record.js';
+import { showSlots, slotsLabel } from './slots.js';
 
 const sheet = document.getElementById('held');
 const motionEl = document.getElementById('motion');
@@ -23,22 +24,43 @@ const paste = document.getElementById('paste');
 const box = document.getElementById('pastebox');
 const recordBtn = document.getElementById('recordbtn');
 const recordEl = document.getElementById('record');
+const slotsBtn = document.getElementById('slotsbtn');
+const slotsEl = document.getElementById('slots');
 
-// The sheet's two pages. Every child carries `data-pane` -- the front, or the
-// record behind it -- and turning the page is hiding the one and showing the
-// other. The front carries the count on its button; the page behind carries
-// the list, written as the page is turned, because the record grows behind
-// your back. `hold` in input.js opens the sheet on the front every time: a
-// sheet that came up on whichever page it went down on would be a sheet whose
-// resume button is sometimes not there.
+// The sheet's pages. Every child carries `data-pane`, a space-separated list
+// of the pages it is on, and turning the page is showing the elements whose
+// list holds the name and hiding the rest. Two fronts -- `title`, where the
+// boot stops, and `main`, which escape brings up -- share everything under
+// the rule; behind them are `record`, `slots` and `settings`, each with a
+// back that returns to whichever front the sheet was opened on. The fronts
+// carry the count and the yard number on their buttons; the pages behind
+// carry the lists, written as the page is turned, because the record grows
+// behind your back and the saves page reads the store. `hold` in input.js
+// opens the sheet on a front every time: a sheet that came up on whichever
+// page it went down on would be a sheet whose resume button is sometimes
+// not there.
+let front = 'main';
 export function showPane(name) {
-  for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = el.dataset.pane !== name;
+  if (name === 'title' || name === 'main') front = name;
+  for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
+  slotsBtn.textContent = slotsLabel();
   if (name === 'record') showRecord(recordEl);
+  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; });
 }
+export const onFront = () => front;
+const back = () => showPane(front);
 recordBtn.addEventListener('click', () => showPane('record'));
-document.getElementById('recordback').addEventListener('click', () => showPane('main'));
+document.getElementById('recordback').addEventListener('click', back);
+slotsBtn.addEventListener('click', () => showPane('slots'));
+document.getElementById('slotsback').addEventListener('click', back);
+document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
+document.getElementById('settingsback').addEventListener('click', back);
+// The way back out of a yard: the sheet turns to the title front and nothing
+// else happens -- the yard stays held behind it, and play is resume by
+// another name.
+document.getElementById('titlebtn').addEventListener('click', () => showPane('title'));
 
 // The save, out of the browser and into your hand. The clipboard is not
 // allowed on every page; when it is not, the text is left where the console
@@ -156,7 +178,7 @@ document.getElementById('build').textContent = version();
 // a browser tab has its own way out.
 const quitEl = document.getElementById('quit');
 if (window.desk) {
-  quitEl.dataset.pane = 'main';
+  quitEl.dataset.pane = 'title main';
   quitEl.hidden = false;
   quitEl.addEventListener('click', () => window.close());
 }
