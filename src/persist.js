@@ -677,6 +677,12 @@ export function restore() {
   // by nobody now, and the pile it wrote at three pixels or two will not fit
   // this plot. `rehomeDust` below is what puts that dust back where it goes.
   setPitGrain();
+  // Nobody has claimed the loose core yet. `coreTaker` is a body, and the
+  // bodies are about to be built again from the save: a claim left standing
+  // pointed at a body that was no longer in the yard, nobody else could take
+  // the core (`haulerWork` defers to the taker), and it lay there for good.
+  // A page load starts at null; a restore in a running page has to say so.
+  S.coreTaker = null;
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }

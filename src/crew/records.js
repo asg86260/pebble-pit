@@ -91,6 +91,13 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       // walking to is a body, not a fact, and is picked again
                       // (the round already copes with a target that has gone).
                       'holding', 'carryTonic',
+                      // and the room a carter has booked in the hole and how
+                      // much of it it has taken (crew/hole.js). The hole's
+                      // book is the sum over the bodies, so a load that
+                      // forgot them came back with a full armful and no
+                      // booking behind it -- more carried than was spoken
+                      // for, into a hole that had counted on the number.
+                      'booked', 'took',
                       // and whether it was in the air, and how it was moving:
                       // a body saved mid-arc came back at its saved height and
                       // was stood on the ground in one frame, two hundred

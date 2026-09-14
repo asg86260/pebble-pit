@@ -401,6 +401,11 @@ export function resetCut() {
   cut.grid.fill(0);
   cut.n = 0;
   cut.rock = 0;
+  // And the dust ledger, which only exists once a save has been read
+  // (`recount` in persist.js makes it). Left standing, a new game after a
+  // load carried the last yard's count of dust in the cut over an empty
+  // grid, and rule 7 in verify.js said so a second into the next group.
+  if (cut.d != null) cut.d = 0;
   wakeGrid(cut);
   layCut();
 }
