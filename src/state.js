@@ -702,6 +702,8 @@ export const SAVED_BY_HAND = [
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
   'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
+  'drops',                // and the rain in the air, [x, y, vy] a drop; the same
+  'puffs',                // and the plume still climbing, a speck a row; the same
   // the celebration for the last rock and the backstop for the next: moments
   // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
   'danceUntil', 'nextBoulderAt',

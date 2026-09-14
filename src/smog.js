@@ -37,9 +37,11 @@
 // run in, which is the only thing about them that is not local to one of them.
 
 import { S } from './state.js';
+import { RAIN_FALL, PUFF_UP, SMOG_PER_MOTE } from './config.js';
 import { DROPS, GOING, SKY, bandLow, bandTop, climbing, clogged, fanPull,
          outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
-import { foul, look, reckon, stepPuffs } from './smog/vents.js';
+import { foul, look, reckon, skyMote, stepPuffs } from './smog/vents.js';
+import { enter } from './smog/sky.js';
 
 // What the band is made of, by kind, for the save. See `skyFromSave`.
 export function skyKindCounts() {
@@ -67,8 +69,29 @@ import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
 // "everything settled up there belongs to this storm", the same rule the
 // roll applies -- so the shower goes on coming down rather than finding no
 // mote it is allowed to drop and calling itself over.
-export function skyFromSave(kinds = null) {
+export function skyFromSave(kinds = null, drops = null, puffs = null) {
+  // The band is filled to the haze, and the haze counts the plume too, so
+  // what the plume will put back is taken off first and the count is
+  // reckoned again once it is up.
+  const climbing = Array.isArray(puffs) ? puffs.filter(q => Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1])) : [];
+  S.haze = Math.max(0, S.haze - climbing.length * SMOG_PER_MOTE);
   rebuildSky();
+  for (const q of climbing) {
+    const p = skyMote(q[0], Number.isFinite(q[4]) ? q[4] : q[1], q[2] || 'dust');
+    p.up = true;
+    p.y = q[1];
+    p.vy = Number.isFinite(q[3]) && q[3] < 0 ? q[3] : -PUFF_UP;
+    p.lean = Number.isFinite(q[5]) ? q[5] : 0;
+    p.fade = Number.isFinite(q[6]) ? q[6] : 0;
+    p.age = Number.isFinite(q[7]) ? q[7] : 0;
+    enter(p);
+  }
+  reckon();
+  // The rain already falling, where it was. See `drops` in persist.js.
+  if (Array.isArray(drops))
+    for (const d of drops)
+      if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1]))
+        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL });
   // ...of the kinds it was made of. The rebuild makes dust; the save says
   // how much of the band was soot, spore and the rest, and that share of
   // the rebuilt motes is relabelled, look and all, so the readout that

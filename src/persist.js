@@ -9,7 +9,7 @@ import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
          ABYSS_AT, WORKER, LADDER, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
-import { seedSmog, skyFromSave, skyKindCounts } from './smog.js';
+import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
@@ -403,7 +403,13 @@ function blob() {
     machines: Object.fromEntries(MACHINES.map(m => {
       const r = (S.machines && S.machines[m.key]) || {};
       return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit,
-                       tune: r.tune || 0 }];
+                       tune: r.tune || 0,
+                       // and its clock, as distances: when its next unit of
+                       // work is due, and how long since it last worked. A
+                       // refresh used to hand every machine a free unit, and
+                       // read a working one as never having worked.
+                       beatIn: r.beatAt ? Math.max(0, Math.round(r.beatAt - clockNow())) : null,
+                       workedAgo: r.workedAt ? Math.max(0, Math.round(clockNow() - r.workedAt)) : null }];
     })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
@@ -448,6 +454,15 @@ function blob() {
     // that nothing but hand work had fouled it -- every stack's soot read as
     // dust after a refresh. Counts, not motes: the readout is a proportion.
     skyKinds: skyKindCounts(),
+    // ...and the rain that is in the air, three numbers a drop. A shower goes
+    // on across a refresh now (`raining`, `rainFor`); the drops already
+    // falling are the muck it was about to leave, and were being dropped.
+    drops: DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2)]),
+    // ...and the plume: every speck still on its way up, with its climb. A
+    // refresh emptied the sky of smoke that was mid-air and the band was
+    // rebuilt as if it had all arrived.
+    puffs: SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
+                                          Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]),
     poop: S.poop || [],
     // and what is lying on top of the rock, which is a layer like the muck and
     // belongs to the rock the save already writes down. Column by column,
@@ -790,6 +805,8 @@ export function restore() {
     // stand every frame under a row that is still selling carts.
     rec.tookKit = rec.bought && kitDisplaced(m.job)
       ? (r.tookKit == null ? true : !!r.tookKit) : false;
+    if (Number.isFinite(r.beatIn)) rec.beatAt = clockNow() + r.beatIn;
+    if (Number.isFinite(r.workedAgo)) rec.workedAt = clockNow() - r.workedAgo;
   }
   rebalance();
   // The harness and the boots were ladders of their own over what a hauler
@@ -981,7 +998,7 @@ export function restore() {
   // This is exactly the case `skyFromSave` is for: a sky being restored rather
   // than made. Safe here because the world is laid out before the save is read
   // (see the boot order in main.js), so there is a width to spread it across.
-  skyFromSave(s.skyKinds);
+  skyFromSave(s.skyKinds, s.drops, s.puffs);
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.

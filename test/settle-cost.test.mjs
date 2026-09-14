@@ -40,6 +40,10 @@ const profile = () => {
   return tops;
 };
 
+// No reload harness: this group measures the cost of settling a quiet plot,
+// and a load writes the whole plot back and wakes every column of it, which
+// is right and is not the cost being measured (the perf gate opts out the
+// same way, with RELOAD=0).
 group('a yard where nothing is happening costs nothing to settle', async () => {
   window.__crew(0, 0);
   window.__clearFloor();
@@ -71,7 +75,7 @@ group('a yard where nothing is happening costs nothing to settle', async () => {
        `${one} columns walked`),
     ok(quiet === 0, 'after which the plot is quiet again', `${quiet} columns walked`)
   ];
-});
+}, { reload: false });
 
 // The saving is only worth having if the sand is still sand. A column that has
 // gone to sleep must wake the moment anything lands on it or beside it, or a
