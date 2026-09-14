@@ -3,7 +3,7 @@
 // Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
 // anything still in the air can be caught on the way past.
 
-import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX } from './config.js';
+import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
@@ -119,7 +119,10 @@ export function release(x, y) {
     S.dirty = true;
   }
   if (!S.held) return;
-  const full = S.held >= capacity();      // the whole hand, for the record's sake
+  // The whole hand, for the record's sake -- and only a hand at the top of
+  // its ladder. A level-0 hand is one grain, and throwing one grain and
+  // catching it is not juggling; the notice is for the biggest hand there is.
+  const full = S.carryLevel >= LADDER && S.held >= capacity();
   const from = S.chips.length;
   for (let i = 0; i < S.held; i++) {
     spawnChip(x + (rand() - 0.5) * P * 6, y + (rand() - 0.5) * P * 6,

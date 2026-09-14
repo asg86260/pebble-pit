@@ -8042,7 +8042,7 @@ six are event hooks and only the rain is a predicate.
 |---|---|---|
 | get off my land | startle a bird | `startle` lands on one |
 | not one of you | startle every bird in one lot | the lot's birds carry a shared count; the last one startled |
-| juggler | throw a full hand of dust and catch every grain | witness: a full hand's grains are stamped with the throw, and every stamp is caught |
+| juggler | throw a full hand of dust, at its biggest, and catch every grain | witness: with the carry ladder topped out, a full hand's grains are stamped with the throw, and every stamp is caught |
 | come here you | pick a worker up | `lift` |
 | turn out your pockets | shake a full load out of a worker | the body came up carrying `load(w)` and `shedLoad` empties it |
 | hats off | shake the hat off a worker | `flingHat` |

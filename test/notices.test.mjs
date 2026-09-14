@@ -10,7 +10,7 @@ import { group, ok, state, run, runUntil, yard, haveRock, quickCrew, makeItRain 
 import { S } from '../src/state.js';
 import { NOTICES, hasNotice, unreadNotices, markNoticesRead,
          noteHand, noteRockCleared, noteBite, catchUpNotices } from '../src/notices.js';
-import { CASINO_BIG, P, SHAKE_TURNS } from '../src/config.js';
+import { CASINO_BIG, LADDER, P, SHAKE_TURNS } from '../src/config.js';
 import { BIRDS, startle } from '../src/weather.js';
 import { release, catchAir } from '../src/hands.js';
 import { capacity } from '../src/upgrades.js';
@@ -258,10 +258,17 @@ group('one bird startled is a notice; the whole lot is another', async () => {
 group('a full hand thrown and caught, every grain, is a notice; a short hand is not', async () => {
   haveRock();
   await run(1);
-  // A hand that holds more than one grain, or a hand one short of full is no
-  // hand at all. The ladder is the setup here, not the thing under test.
-  S.carryLevel = 3;
   const x = S.camX + S.viewW / 2, y = 60;
+  // A full hand partway up the ladder is one grain at level 0, and one grain
+  // thrown and caught is not juggling: the feat wants the biggest hand there is.
+  S.carryLevel = LADDER - 1;
+  S.held = capacity();
+  release(x, y);
+  catchAir(x, y);
+  const small = hasNotice('catchall');
+  S.held = 0; S.motes = [];
+  // From here the ladder is the setup, not the thing under test.
+  S.carryLevel = LADDER;
   // A hand short of full, thrown and caught whole: no stamp, nothing to count.
   S.held = Math.max(1, capacity() - 1);
   release(x, y);
@@ -281,6 +288,7 @@ group('a full hand thrown and caught, every grain, is a notice; a short hand is 
   release(x, y);
   catchAir(x, y);
   return [
+    ok(!small, 'a full hand below the top of its ladder is not the feat'),
     ok(!short, 'a hand short of full caught whole is not the feat'),
     ok(thrown === capacity(), 'every grain of a full hand carries the throw', `${thrown} of ${capacity()}`),
     ok(!most, 'and one that got away is not either'),
