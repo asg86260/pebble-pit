@@ -9062,3 +9062,79 @@ is the check working. The board shots (`shackboard`, `quarryboard`,
 `__school` is `__kit` in both tiers, and `__kit({ learned: true })` answers
 the three shields for a check that buys a hat. `first day of school` on the
 record is `first hat`.
+
+## The spark band is the top of the ladder, not a card beside it (design, not built)
+
+The grounds' four ladders each end in a research card -- `labseam`, `labcave`,
+`labcrop`, `labtend` -- that stands on its own after the ladder's six rungs
+are climbed, gated on the yard being invested, costing every coin the yard
+makes, and climbing a multiplier (`S.mult`) rather than the ladder's own field.
+That was the lab's row grafted onto the top of the ladder when the lab came
+down, and the graft shows: the player finishes a card, and a second card with
+a different name appears in its place asking for sparks. It was meant to be
+the fourth band of the same ladder ("A ladder is four cards, not one"), and
+since the ladder became one card with its bands drawn as groups of pips, the
+research card is the one band still sold as a card of its own.
+
+**It joins the card.** A ground's ladder is one card of four groups, the last
+group's bill adding the core and the spark to the shard and the spore, exactly
+as the third group added the other ground's coin to the first's. Nothing about
+the fourth group is special: it is drawn by the same `group`, greyed by the
+same `waits`/`dead` until the yard has met the coins it asks (which is later
+than `invested` ever was, so that gate goes), and bought as a rung of the same
+field. The names `enchanted TNT`, `anti-gravity zone`, `astral GMOs` and
+`summer's aura` go with the cards they were on; the card is called what the
+ladder does, once, and the bill says the rest.
+
+**The multiplier goes with it.** The last band climbed `S.mult.<key>` by a
+quarter again a rung because that was the lab's arithmetic. Folded in, a rung
+is a rung: a count keeps its whole unit (a dig's share, a cut's spores), and a
+rate eases to the same top over the whole length. That is the rule "the
+length is one number" applied to the last two rungs as it already is to the
+first six -- `tierLevel`, `tierGain`, `TIER_OWN` and the four station keys in
+`MULT_MAX` lose their reason to exist, and `S.mult` is left holding nothing a
+row sells. A save carrying a mult level for one of the four folds it into the
+field on load, one rung a rung and clamped to the top, the way the harness
+and boots folded into the haulers' ladders; a save with a `lab*` work in
+flight lands it as a rung of the field the day it loads, and the key is kept
+in the fold so the save can name it.
+
+**What it costs the player:** the top of a count ladder is one unit higher
+per rung the band adds and the ×1.56 multiplier is gone -- a dig's share
+tops at ×3 instead of ×2.5 × 1.56, a cut's spores at 9 instead of 7 × 1.56.
+The rates' tops do not move. Sparks still buy the top of every ground's
+ladder; what changes is that the ask is a rung of the card the player has
+been climbing, not a second card.
+
+### One rung a band?
+
+With the spark band folded in, every ladder in the yard is the same
+statement: *a rung a coin*. An ordinary ladder is dust, then dust and crops,
+then dust, crops and ore; a ground's adds everything the yard makes. The
+question is whether `TIER_BAND` should be **one** -- a three-rung ladder on
+the bench and a four-rung one at the grounds, each press a new coin -- rather
+than two. The case for it is the one that took the ladders from nine to six
+this morning, taken to its end: each rung is a real decision because each
+rung is a new bill, and there is no second press that asks the same coins
+for a smaller step. The case against is the count ladders' tops, which keep a
+whole unit a rung and so fall with the length:
+
+| count | at six (today) | at three, four at the grounds |
+|---|---|---|
+| carry, pick (px) | 7 | 4 |
+| hauler load (grains) | 13 | 7 |
+| spores a cut | 7 | 5 |
+| shards a dig (share) | ×2.5 | ×2.0 |
+| doses a batch | 5 | 3 |
+
+Every rate holds its top; the price curve's ends hold and the steps between
+are the five-rung curve's rungs 1, 3 and 5. The counts' tops are the whole
+cost, and each is one constant (`CAP_STEP`, `HAUL_CARRY_STEP`,
+`CROP_PER_RUNG`, `SEAM_PER_RUNG`, the doses' unit) if any of them needs
+lifting to make a shorter ladder worth what a longer one was. Either way it
+is the one number, and it can be flipped on a played yard.
+
+**Decided, once the fold is built:** open. Recommendation: one, with the
+counts' units revisited on a yard rather than on paper -- a three-press
+ladder whose every press is a new coin is the shape the bands rule was
+reaching for.

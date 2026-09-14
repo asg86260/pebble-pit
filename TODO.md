@@ -1,5 +1,15 @@
 # Still to do
 
+## The spark band joins the ladder's card -- DESIGNED, awaiting approval (2026-09-14)
+
+"The spark band is the top of the ladder, not a card beside it" at the end
+of DESIGN.md. The grounds' research cards (`labseam`, `labcave`, `labcrop`,
+`labtend`) were the lab's multiplier grafted on after the ladder; they become
+the ladder's fourth group of pips on the one card, climbing the same field,
+with `S.mult`'s four station keys folded into the fields on load. Open with
+it: whether `TIER_BAND` goes to one -- a rung a coin -- with the count
+ladders' tops as the cost (table in the section). Blocker: sign-off on both.
+
 ## The hole's count and its pile disagree by a few cells (2026-09-14)
 
 `capacityAt` (pit.js) says the hole holds 37,566; the pile's own search
