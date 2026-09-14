@@ -960,7 +960,7 @@ export function restore() {
   resite();                    // the quarry is as deep and the plot as wide as it was
   // ...on the ground they were saved on, if the mouth of the cut is where the
   // save says it was: then a body over it is over it on purpose.
-  restoreCrew(s.who, Number.isFinite(s.mouth) && s.mouth === quarry.x);
+  restoreCrew(s.who, Number.isFinite(s.mouth) ? s.mouth : null);
   // A body written down is a body in the yard.
   //
   // The headcount and the list of people are two records of the same thing, and
@@ -1118,7 +1118,13 @@ const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
 const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.HAUL, scholars: JOB.HAUL,
                   scrubbers: JOB.PURIFY };
 
-function restoreCrew(who, sameGround = false) {
+function restoreCrew(who, mouth = null) {
+  // Whether the ground under the crew is the ground they were saved on, and
+  // if the cut has moved, by how much. The yard re-walks when a station grows
+  // (a second pot; see DRAWN_W in world.js), and a save from before the walk
+  // carries every body at the x it stood at on the old one.
+  const sameGround = mouth != null && mouth === quarry.x;
+  const cutShift = mouth != null && S.quarryOpen ? quarry.x - mouth : 0;
   S.workers = [];
   if (!Array.isArray(who)) return;
   for (const k of who) {
@@ -1186,6 +1192,16 @@ function restoreCrew(who, sameGround = false) {
     // every refresh, and one stepping off it was dropped a course into the
     // cut -- the reload harness in test/helpers.mjs named both, and this is
     // the third patch on the same spot. The save says where the mouth was.
+    // A body down IN the cut when the cut moved goes with the cut: the same
+    // seat on the same floor, shifted by what the mouth shifted. Left at its
+    // old x it came back under the yard, in solid ground, with no working
+    // under it -- verify.js rule 1, the frame after a load that followed a
+    // second pot being bought.
+    if (cutShift && Number.isFinite(rec.x) && Number.isFinite(rec.y)
+        && rec.y + WORKER > S.groundY + 1
+        && rec.x + WORKER > mouth && rec.x < mouth + quarry.w) {
+      rec = { ...rec, x: rec.x + cutShift };
+    }
     if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
       if (type === TYPE.QUARRY && rec.goal === 'work') {

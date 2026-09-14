@@ -102,7 +102,28 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       // a body saved mid-arc came back at its saved height and
                       // was stood on the ground in one frame, two hundred
                       // pixels in a sixtieth of a second (critics C14)
-                      'falling', 'vx', 'vy'];
+                      'falling', 'vx', 'vy',
+                      // and whether it is behind a door. A body that had
+                      // knocked off came back standing at the doorstep.
+                      'inside',
+                      // and the shed it has been claimed to for an upgrade,
+                      // and whether it is there (crew/shedhand.js). Dropped,
+                      // a refresh handed the claim to whoever was next and
+                      // that body started the walk from wherever it stood.
+                      'onBuild', 'atShed'];
+
+// Moments on a body's clock -- when its next break comes round, when it has
+// stood about long enough to knock off -- kept the way doses are (below):
+// as how far off they are, because the clock starts again with the page. A
+// refresh used to start every one of them over, so a yard refreshed now and
+// then never took a break and never went home. The name is the field's, the
+// value written is `field - now()`, and the way back in is the reverse.
+const MOMENTS = ['brkAt', 'idleSince', 'looAt'];
+const momentsOf = w => {
+  const out = {};
+  for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());
+  return out;
+};
 
 // Live doses are kept too, and they are the one thing on a body that cannot be
 // written down as they stand. A dose's `until` is a moment on the clock, and the
@@ -123,6 +144,8 @@ export function keepOf(w) {
   for (const k of KEEPS) if (w[k] != null) out[k] = w[k];
   const doses = doseKeep(w);
   if (doses.length) out.doses = doses;
+  const moments = momentsOf(w);
+  if (Object.keys(moments).length) out.moments = moments;
   return out;
 }
 
@@ -146,6 +169,8 @@ export function wearRecord(w, from) {
   const on = had.filter(d => d && d.left > 0)
                 .map(d => ({ tonic: d.tonic, until: now() + d.left }));
   if (on.length) w.doses = on;
+  // and its moments, the same way round: what was written is how far off
+  if (from.moments) for (const k of MOMENTS) if (Number.isFinite(from.moments[k])) w[k] = now() + from.moments[k];
   if (!w.at) w.at = {};
   return w;
 }

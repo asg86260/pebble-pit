@@ -737,9 +737,28 @@ export function seatSites() {
   // with its reserved ground somewhere else entirely.
   //
   // Seating a site is one job and it is this function's.
+  // The cut moves with the walk, and the gang down in it move with the cut.
+  // The yard re-walks when a station grows -- a second pot -- and the cut
+  // can go a hundred pixels along; a quarrier on its floor was left at its
+  // old x, in solid ground with no working under it (verify.js rule 1), and
+  // walked out through the wall to the ladder. It is the same hole drawn
+  // somewhere else, so whoever was in it is in it still, at the same seat.
+  // Only a body below the ground line inside the old span: anyone up top is
+  // on the yard, and the yard did not move.
+  const wasX = quarry.x;
   quarry.w = S.placed.quarry.w;
   quarry.x = S.placed.quarry.x;
   quarry.y = S.groundY;                 // a hole hangs below the line, not on it
+  if (S.quarryOpen && Number.isFinite(wasX) && wasX !== quarry.x) {
+    for (const w of S.workers) {
+      if (!(w.y + WORKER > S.groundY + 1)) continue;
+      if (w.x + WORKER > wasX && w.x < wasX + quarry.w) {
+        w.x += quarry.x - wasX;
+        if (Number.isFinite(w.footAt)) w.footAt += quarry.x - wasX;
+        if (Number.isFinite(w.jigAt)) w.jigAt += quarry.x - wasX;
+      }
+    }
+  }
 
   farm.h = FARM_H;
   // The farm's *reservation* is its widest future self -- see SITES -- while its

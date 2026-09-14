@@ -199,6 +199,8 @@ group('a janitor on his break smokes, every time', async () => {
 // arriving by a road the fix did not cover. A body carried across the yard did
 // nothing for the whole trip and was charged for every second of it, so putting
 // one down set it straight off to the outhouse.
+// No reload harness: this group holds one body (`w`) by reference across
+// ten seconds and reads its clock, and a load builds the crew again.
 group('a body held on the cursor is not owing the yard an hour', async () => {
   window.__reset();
   window.__crew(2, 0);
@@ -236,4 +238,4 @@ group('a body held on the cursor is not owing the yard an hour', async () => {
        'and neither does the fall and the wobble at the end of it',
        `${Math.round((after0 - after) / 1000)}s lost`)
   ];
-});
+}, { reload: false });

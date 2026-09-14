@@ -299,6 +299,9 @@ group('a knocked-off hat is up for grabs while its owner sees stars', async () =
   ];
 });
 
+// No reload harness: the group lifts one body (`owner`) on to the cursor and
+// holds it by reference for twenty seconds; a refresh drops what is on the
+// cursor by design, and a load builds the crew again.
 group('a hauler that picks the helmet up is a rockhand, and the swap is one body', async () => {
   window.__reset();
   // Two on carrying rather than one. The owner races whichever hauler claims
@@ -384,7 +387,7 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
     ok(rock.worn === 1 && rock.hats === 1, 'and the one helmet is on one head',
        `${rock.worn}/${rock.hats}`)
   ];
-});
+}, { reload: false });
 
 // The one ladder with no end on it.
 //
