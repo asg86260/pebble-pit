@@ -4,7 +4,7 @@
 // module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -372,7 +372,8 @@ export function drawFlash() {
   const b = S.bolt;
   if (!b || b.flash <= 0) return;
   ctx.fillStyle = '#000';
-  ctx.globalAlpha = BOLT_FLASH_INK;
+  // fading off from the first frame, not held and cut: a held pane is a blink
+  ctx.globalAlpha = BOLT_FLASH_INK * Math.min(1, b.flash / BOLT_FLASH_S);
   ctx.fillRect(0, 0, S.W, S.H);
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#fff';

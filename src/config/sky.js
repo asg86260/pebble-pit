@@ -286,9 +286,9 @@ export const RAIN_DASH_MAX = 5;
 // second scale with the square of the storm envelope, so a drizzle almost
 // never flashes and the full pour does about every BOLT_EVERY_S seconds.
 export let BOLT_EVERY_S = 9;        // mean seconds between strikes at full pour
-export const BOLT_LIFE_S = 0.3;     // how long the bolt hangs in the sky, fading out
-export const BOLT_FLASH_S = 0.05;   // and for how much of that the window goes dark
-export let BOLT_FLASH_INK = 0.3;    // and how dark: the pane's opacity over the frame
+export const BOLT_LIFE_S = 0.6;     // how long the bolt hangs in the sky, fading out
+export const BOLT_FLASH_S = 0.12;   // and for how long the pane takes to fade off it
+export let BOLT_FLASH_INK = 0.2;    // and how dark it starts: the pane fades from this to nothing
 // The bolt's shape, in cells: it comes down BOLT_STEP cells a segment and jogs
 // up to BOLT_JOG cells sideways each one, with a shorter fork off it somewhere
 // between the two shares of its length, running BOLT_FORK_LEN segments.
