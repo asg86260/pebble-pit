@@ -46,9 +46,9 @@ const SCENES = {
   tear:  { s: CUT_TEAR_S, zoom: CUT_TEAR_ZOOM, spot: () => rift.x + rift.w / 2 },
   drown: { s: CUT_DROWN_S, zoom: CUT_DROWN_ZOOM, spot: () => pit.x + Math.min(700, pit.w) / 2 },
 };
-// A shield's answer has no length of its own: the net pays out for as long as
-// its rate takes, the jack holds and then shoves, the dome's first hold waits
-// on somebody's walk out from under. So the scene ends on the fact -- the
+// A shield's answer has no length of its own: the net pays out for as long as its
+// rate takes, the dome's first hold waits on somebody's walk out from under. So
+// the scene ends on the fact -- the
 // shield gone, or a held rock set down on the ground -- and a tail after it
 // to see the wreck fly out along the heap. The ceiling is a safety.
 //
@@ -61,8 +61,8 @@ const SHIELD = {
   zoom: () => {
     const s = S.shield;
     if (!s) return 1;
-    // the rock over the span -- and, for the jack, as far up as the rams shove it
-    const over = S.gh + (KINDS[s.kind].push || 0) / P + 4;
+    // the rock over the span, and a little sky
+    const over = S.gh + 4;
     return Math.min(CUT_SHIELD_ZOOM, S.H * CUT_SHIELD_FILL / ((s.h + over) * P));
   },
   over: c => {

@@ -33,7 +33,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, JACK_COST, DOME_BILL, LADDER } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, LADDER } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -92,20 +92,20 @@ const hover = (x, y) => {
 
 // The shields, beat by beat: the row on the bench, the thing going up a piece
 // at a time, and the rock reaching the finished one. Each is a fresh yard with
-// the coin for that shield already in hand. The five run one per coin, so a
-// scene about any of them needs all five in hand -- there is no point standing
-// the yard at the jack with no sparks in the hole. The story is a chain -- each
+// the coin for that shield already in hand. The four run one per coin, so a
+// scene about any of them needs all of them in hand -- there is no point
+// standing the yard at the arch with no shards in the hole. The story is a chain -- each
 // row is offered only once the one before has failed -- so a scene about the
-// fourth shield stands the yard where the first three have already been
+// last shield stands the yard where the first three have already been
 // through. Nothing is skipped that a player would see; what is skipped is the
 // waiting.
-const SHIELD_ORDER = ['props', 'net', 'arch', 'jack', 'dome'];
+const SHIELD_ORDER = ['props', 'net', 'arch', 'dome'];
 const shieldYard = () => {
   window.__reset();
   window.__crew(2, 1, 0, 0, 0, 1);   // and one who can fly, for the dome
   window.__jump(PROP_FROM);
   window.__give(60000);
-  window.__grant({ shards: ARCH_COST * 3, spores: NET_COST * 3, sparks: JACK_COST * 3 });
+  window.__grant({ shards: ARCH_COST * 3, spores: NET_COST * 3 });
   // ...and the dome's whole bill, three times over, which is the dearest ask
   // in the game and is priced in everything: the dust through the pit, the
   // rest through the grant.

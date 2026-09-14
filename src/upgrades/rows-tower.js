@@ -1,7 +1,7 @@
 import { TOWER_CORES, TOWER_DUST } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
-import { invested } from './site.js';
+import { shieldDone } from '../shield.js';
 
 // The bench's tower rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -39,12 +39,13 @@ export const TOWER_ROWS = [
     //
     // Each of the three earns the next -- see the doors above -- and this is the
     // end of that chain rather than a fourth thing competing with it.
-    show: () => !S.towerOpen && S.seenCore
-              // The last thing the chain offers, so it waits on the places
-              // before it -- and on the same investment beat the multipliers
-              // wait on. It used to name the lab, and then the trestle; both
-              // are gone, and a gate on a flag nothing can set any more is a
-              // building that never comes up for sale, which is what that was.
-              && S.farmOpen && invested()
+    //
+    // What the arch's failure opens: rock cannot hold rock, nothing of the
+    // ground will, and the tower is the first thing in the yard not of the
+    // ground (DESIGN.md, "The shields are the spine"). The arch needs the
+    // quarry and the quarry the farm, so the places before it are still
+    // before it; the gate names the shield rather than the places because the
+    // shield is the reason.
+    show: () => !S.towerOpen && S.seenCore && shieldDone('arch')
   }
 ];

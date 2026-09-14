@@ -23,6 +23,7 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     window.__grant({ cores: 30, shards: 900, spores: 900 });
+    window.__answered('props', 'net');          // the shields that open the two doors
     window.__give(500000);
     buildShopFromTest();
     shop().querySelector('[data-key="unlockfarm"]')?.click();

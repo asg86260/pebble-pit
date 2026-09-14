@@ -186,10 +186,10 @@ export const TOWER_UPGRADES = [
     bill: () => [...DOME_BILL.map(l => [...l]), ['time', DOME_WORK * 1000]],
     cost: () => DOME_BILL.find(([m]) => m === 'dust')[1],
     buy: () => raiseShield('dome'),
-    // The four before it have all been through, and there is somebody who can
+    // The three before it have all been through, and there is somebody who can
     // fly to cast it. It leaves the board the moment it is bought, because
     // unlike the hat there is only ever one of them.
-    show: () => !S.shield && shieldDone('jack') && S.towerOpen &&
+    show: () => !S.shield && shieldDone('arch') && S.towerOpen &&
                 (S.wizards > 0 || S.wizardHats > 0)
   }
 ];

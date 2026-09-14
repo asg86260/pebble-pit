@@ -10,8 +10,8 @@ export const CUT_TEAR_ZOOM = 1.5;    // pulled in on a small hole being born
 export const CUT_DROWN_S = 8;        // the drowning runs longer than its gulp
 export const CUT_DROWN_ZOOM = 1;     // and is framed wide: the whole mouth goes
 // A shield's answer has no length of its own to give: the net pays out for
-// as long as its rate takes, the jack holds and then shoves, the dome's first
-// hold waits on somebody's walk. So the scene ends on the fact -- the shield
+// as long as its rate takes, the dome's first hold waits on somebody's walk. So
+// the scene ends on the fact -- the shield
 // gone, or the rock set down -- plus a tail to see the wreck fly, under a
 // ceiling that is a safety and never the design.
 export const CUT_SHIELD_ZOOM = 1.5;  // pulled in on the span, the tearing's step, at most

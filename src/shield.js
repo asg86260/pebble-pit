@@ -19,7 +19,6 @@ import {
   PROP_FROM, PROP_COST, PROP_PLANKS,
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS,
-  JACK_COST, JACK_PARTS, JACK_HOLD_MS, JACK_PUSH, JACK_PUSH_RATE,
   DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
@@ -34,10 +33,13 @@ import { startRescue } from './intro.js';
 // one is an entry here and a case in the drawing -- nothing below asks which
 // kind it is holding.
 //
-// The five run dust, spore, shard, spark, core: every coin the yard makes,
-// spent once each on the same question. And the answers escalate, which is
-// what keeps four failures from being one failure told four times -- not
-// noticed, slowed, stopped, shoved back, held.
+// The four run dust, spore, shard, then everything: each is bought in the coin
+// of the station before it, and each failure opens the station after it --
+// DESIGN.md, "The shields are the spine". And the answers escalate, which is
+// what keeps three failures from being one failure told three times -- not
+// noticed, slowed, stopped, held. There was a jack once, steel on rams,
+// between the arch and the dome; it was cut when the failures became doors,
+// because there was no station for steel to open.
 export const KINDS = {
   // Timber. It does not even slow the rock down.
   props: { pieces: PROP_PLANKS, cost: PROP_COST, money: 'dust', answer: 'through' },
@@ -48,10 +50,6 @@ export const KINDS = {
   // and then the crack runs and it comes down with the rock on top of it.
   arch: { pieces: ARCH_BLOCKS, cost: ARCH_COST, money: 'shard',
           answer: 'crack', holds: ARCH_HOLD_MS },
-  // A machine, so it is bought with what machines are bought with. The only
-  // shield that gives ground back before it loses it.
-  jack: { pieces: JACK_PARTS, cost: JACK_COST, money: 'spark', answer: 'buckle',
-          holds: JACK_HOLD_MS, push: JACK_PUSH, rate: JACK_PUSH_RATE },
   // Magic, and the end of the argument. Cast rather than carried: the wizards
   // fly over and pour it, the way they pour a star into an empty sky, and its
   // progress is their pouring -- see `pourDome`.
@@ -101,7 +99,7 @@ export function raiseShield(kind) {
   // hammered and nobody is lent, the tower pours it on its own clock.
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
   S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
-               sag: 0, shove: 0, setting: false };
+               sag: 0, setting: false };
   S.dirty = true;
 }
 
@@ -150,7 +148,7 @@ export function breakShield() {
 
 // What a thing under a load it cannot take does before it goes: it shakes, and
 // it sheds. A cell of itself comes loose every so often and falls -- grit off
-// the arch's crown, dust off the jack's welds -- and `strain` climbs from
+// the arch's crown -- and `strain` climbs from
 // nought to one across the hold, so all of it gets worse the closer the thing
 // is to failing. The drawing reads `strain` for the shake; this is where the
 // shedding happens, because a falling cell is a chip and chips belong to the
@@ -208,21 +206,6 @@ function answer(s, kind) {
     if (S.rockFall <= 0) { breakShield(); landRock(); }
     return;
   }
-  // The machine. Braced under the weight for a moment, then the rams drive the
-  // rock back up -- the closest the yard comes to winning -- and then they give
-  // out all at once.
-  if (kind.answer === 'buckle') {
-    if (now() - s.caught < kind.holds) return;
-    if (s.shove < kind.push) {
-      const by = Math.min(kind.rate * dt, kind.push - s.shove);
-      s.shove += by;
-      S.rockFall += by;
-      S.dirty = true;
-      return;
-    }
-    breakShield();
-    return;
-  }
   // The dome. It holds the rock overhead for a beat and then lets it down --
   // gently, which is the one arrival in this game with no shake and no shout
   // in it. The dome is still standing afterwards, ready for the next one, so
@@ -273,7 +256,6 @@ export function stepShield() {
     // Everything else gets hold of it, and the yard stops and looks up: the
     // first time in this game that the thing overhead has not simply arrived.
     s.caught = now();
-    s.shove = 0;
     s.held = S.rockFall;         // where it was when this took hold of it
     S.rockHeld = true;
     lookUp(kind.holds || 1200);

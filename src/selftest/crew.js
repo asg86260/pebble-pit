@@ -146,6 +146,7 @@ export const TESTS = [
     await settle();
     window.__give(999999);
     window.__grant({ cores: 3, shards: 2000, spores: 2000 });
+    window.__answered('props', 'net', 'arch');  // the shields that open every door below
     buildShopFromTest();
     // The price cells are written by the board's own refresh, not by building the
     // rows, so they are empty until something fills them in.

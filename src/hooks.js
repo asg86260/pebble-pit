@@ -190,6 +190,17 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   syncWorkers(); buildShop(); S.dirty = true;
 };
 
+// dev: the story put past a shield without raising it. Each failed shield is
+// what opens the next station (DESIGN.md, "The shields are the spine"), so a
+// check about buying the quarry or the tower the player's way stands its yard
+// here first -- the setup it is not about -- and a check about a shield
+// never touches this, or it asserts nothing about the row.
+export const answered = (...kinds) => {
+  for (const k of kinds) if (!S.shieldsDone.includes(k)) S.shieldsDone.push(k);
+  buildShop(); S.dirty = true;
+  return [...S.shieldsDone];
+};
+
 // dev: the tower's own two, without paying for either. `openMeteor` is what the
 // row does -- the sky is opened and something is put in it -- and `wizardHat`
 // is the tower finishing one this instant rather than in two minutes.
@@ -1095,7 +1106,7 @@ export const HANDLES = {
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
-  __meteor: openMeteor, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
+  __meteor: openMeteor, __answered: answered, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
   // the chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up
   __chip: (d = 1) => pickChip(d),

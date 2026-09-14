@@ -17,17 +17,27 @@ export const TESTS = [
     // Dust opens the places now, not cores -- a core buys the tower and nothing
     // else. A door shows once you are within half its price of affording it, so
     // what reveals the quarry is having most of what it costs.
-    window.__give(400);
+    window.__give(600);                      // the plots' own price, past the reveal's seven tenths
     // And a rock finished, because a place costs one. The plots are not offered
     // on a pile of dust alone any more: until a core has been seen at all, the
     // price is in a currency you have no idea exists.
     window.__grant({ cores: 3 });
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
+    // ...and not until the timber has failed, either: each shield's failure is
+    // what opens the next place (DESIGN.md, "The shields are the spine"), so
+    // the dust and the core alone offer nothing, and the props answered offer
+    // the plots.
+    const withDustOnly = { farm: has('unlockfarm') };
+    window.__answered('props');
+    await sleep(150);
     const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
                        casino: has('unlockcasino') };
 
     window.__crew(1, 1, 0, 1);               // the plots broken
+    await sleep(150);
+    const withPlotsOnly = { quarry: has('unlockquarry') };
+    window.__answered('net');                // and the rope has failed
     await sleep(150);
     const withPlots = { quarry: has('unlockquarry'), casino: has('unlockcasino') };
 
@@ -44,10 +54,12 @@ export const TESTS = [
     return [
       ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
+      ok(!withDustOnly.farm, 'a rock and a pile of dust offer nothing until the timber has failed'),
       ok(withDust.farm && !withDust.quarry && !withDust.casino,
-         'a rock and a pile of dust offer the plots, and only the plots',
+         'and then the plots, and only the plots',
          JSON.stringify(withDust)),
-      ok(withPlots.quarry && !withPlots.casino, 'breaking the ground offers the quarry'),
+      ok(!withPlotsOnly.quarry, 'breaking the ground offers nothing until the rope has failed'),
+      ok(withPlots.quarry && !withPlots.casino, 'and then the quarry'),
       ok(withRock.casino, 'and an invested yard offers the casino')
     ];
   }],

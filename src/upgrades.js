@@ -931,7 +931,7 @@ export const SECTIONS = [
   // station because you are the cursor.
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
-  { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
+  { title: 'the shields', keys: ['props', 'net', 'arch', 'askwizards'] },
   // Everything the yard has not built yet, under one heading.
   //
   // These were ten headings, each carrying a single row -- "the quarry" over

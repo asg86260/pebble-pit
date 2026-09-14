@@ -1,6 +1,7 @@
 import { FARM_CORES, FARM_DUST } from '../config.js';
 import { S, farm } from '../state.js';
 import { nearly, seenACore, site } from './site.js';
+import { shieldDone } from '../shield.js';
 
 const FARM = site({
   key: 'unlockfarm', name: 'build the farm',
@@ -11,7 +12,11 @@ const FARM = site({
   // `nearly` reads the dust in the hole, so before this was split the door came
   // and went every time you spent, which walked the whole bench board sideways
   // for a reason that had nothing to do with the farm. See `revealed` in shop.js.
-  once: () => seenACore() && nearly(FARM_DUST),
+  //
+  // And not before the timber has failed: the farm is what the props open --
+  // the first shield's lesson is that dust is not enough, and the green coin
+  // is the answer (DESIGN.md, "The shields are the spine").
+  once: () => shieldDone('props') && seenACore() && nearly(FARM_DUST),
   show: () => !S.farmOpen
 });
 

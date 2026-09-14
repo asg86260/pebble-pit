@@ -5,7 +5,7 @@
 // that the yard never stops for it, and that it lets go once the answer is
 // over. DESIGN.md, "The cutscenes, fleshed out".
 import { group, ok, state, run, runUntil, openSites } from './helpers.mjs';
-import { PROP_FROM, NET_COST, ARCH_COST, JACK_COST, DOME_BILL } from '../src/config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL } from '../src/config.js';
 
 const fundDome = () => {
   for (const [money, n] of DOME_BILL) {
@@ -22,7 +22,7 @@ const ready = () => {
   window.__crew(2, 1);
   window.__jump(PROP_FROM);
   window.__give(40000);
-  window.__grant({ shards: ARCH_COST * 2, spores: NET_COST * 2, sparks: JACK_COST * 2 });
+  window.__grant({ shards: ARCH_COST * 2, spores: NET_COST * 2 });
   run(1);
 };
 const through = (kind) => {
@@ -32,18 +32,16 @@ const through = (kind) => {
   runUntil(() => state().shieldsDone.includes(kind), 240);
   runUntil(() => state().rock > 0 && !state().rockFall && state().chips === 0, 240);
 };
-const ORDER = ['props', 'net', 'arch', 'jack'];
+const ORDER = ['props', 'net', 'arch'];
 const standAt = (kind) => {
   ready();
   openSites();                             // which stands the crew down; back on
   window.__crew(2, 1);
   for (const k of ORDER) {
     if (k === kind) break;
-    if (k === 'jack') { window.__meteor(); window.__grant({ sparks: JACK_COST * 2 }); }
     through(k);
   }
-  if (kind === 'jack') { window.__meteor(); window.__grant({ sparks: JACK_COST * 2 }); }
-  if (kind === 'dome') { window.__meteor(); window.__grant({ sparks: JACK_COST * 2 }); through('jack');
+  if (kind === 'dome') { window.__meteor();
                          fundDome(); window.__crew(2, 1, 0, 0, 0, 1); }
   window.__buy(kind);
   runUntil(() => { const sh = state().shield; return sh && sh.laid >= sh.pieces; }, 400);
@@ -78,7 +76,7 @@ const watch = (kind) => {
   return { started, onSpan, walked, ended, seat, zoom0, spanX, camAfter: state().camX + state().viewW / 2 };
 };
 
-for (const kind of ['props', 'net', 'arch', 'jack']) {
+for (const kind of ['props', 'net', 'arch']) {
   group(`the ${kind}'s answer is watched, and the camera comes back`, async () => {
     standAt(kind);
     const w = watch(kind);

@@ -328,6 +328,7 @@ export const TESTS = [
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    window.__answered('props', 'net', 'arch');  // the shields that open the doors below
     // The ground first. The tower is the end of the chain now -- it is what a
     // finished yard buys -- so its row does not appear until the plots, the cut
     // and the lab are all standing.

@@ -2,10 +2,10 @@
 // yard's way: paying starts a work (works.js), a spare body is lent and stands
 // at the landing spot putting the labor in under a bar, and the shield stands
 // when the last of it is in. Then the next rock answers it.
-import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, openSites, yard, buyBuilt } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         JACK_COST, JACK_PARTS, JACK_PUSH, DOME_BILL } from '../src/config.js';
+         DOME_BILL } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { DUST_PER } from '../src/upgrades.js';
 
@@ -28,7 +28,7 @@ const ready = () => {
   // (DUST_PER in config/machines.js), so a shield priced in shards is also
   // priced in dust. The fixture funds all of it rather than the coin alone.
   window.__give(40000);
-  window.__grant({ shards: ARCH_COST * 2, spores: NET_COST * 2, sparks: JACK_COST * 2 });
+  window.__grant({ shards: ARCH_COST * 2, spores: NET_COST * 2 });
   run(1);
 };
 
@@ -141,6 +141,7 @@ group('the arch catches one, and then the crack runs', async () => {
   const cracked = state();
   const landed = runUntil(() => state().rock > 0 && !state().rockFall && state().chips === 0, 180);
   const after = state();
+  const wonders = !!window.__upgrades().find(u => u.key === 'askwizards')?.show();
 
   window.__reset();
   return [
@@ -153,7 +154,8 @@ group('the arch catches one, and then the crack runs', async () => {
     ok(cracked.shieldsDone.includes('arch') && !cracked.shield,
        'and the arch comes down with it'),
     ok(landed && after.rock > 0, 'the rock finishes its fall and is minable'),
-    ok(!arch()?.show(), 'and the row never comes back')
+    ok(!arch()?.show(), 'and the row never comes back'),
+    ok(wonders, 'and the bench wonders about the wizards')
   ];
 });
 
@@ -187,45 +189,46 @@ group('the net slows the rock and lets it through anyway', async () => {
   ];
 });
 
-group('the jack pushes the rock back up before it buckles', async () => {
+// The spine: each shield's failure is what opens the next station (DESIGN.md,
+// "The shields are the spine"). Read off the boards the way a player reads
+// them -- `shown` is the board's own reveal, not the row's `show` -- with
+// every coin already in hand, so the only thing standing between the yard
+// and each door is the shield before it. Nothing here opens a place by hand:
+// the farm, the quarry and the tower are bought through their rows, and the
+// shields are raised and answered.
+group('each shield that fails opens the next station', async () => {
   ready();
-  openSites();
-  window.__crew(2, 1);
+  window.__grant({ cores: 12 });
+  run(1);
+  const shown = key => !!window.__rows().find(r => r.key === key)?.shown;
+  const build = key => buyBuilt(key, 200);
+
+  const farmEarly = shown('unlockfarm');
   through('props');
+  const farmAfter = shown('unlockfarm');
+  const farmUp = build('unlockfarm');
+
+  const quarryEarly = shown('unlockquarry');
   through('net');
+  const quarryAfter = shown('unlockquarry');
+  const quarryUp = build('unlockquarry');
+
+  const towerEarly = shown('unlocktower');
   through('arch');
-
-  window.__meteor();                       // sparks come off the star
-  window.__grant({ sparks: JACK_COST * 2 });
-  const offered = !!window.__upgrades().find(u => u.key === 'jack')?.show();
-  const { bought, up } = raise('jack');
-
-  // Watched rather than sampled. The whole shove is under three seconds, so a
-  // check that looks once a game-second can land either side of it -- what has
-  // to be true is that the rock ends up *higher* than where it was caught, so
-  // the peak is the thing to watch for and a fixed window is not.
-  window.__next();
-  const caught = runUntil(() => state().rockHeld, 240);
-  const low = state().rockFall;
-  let high = low;
-  for (let i = 0; i < 120 && !state().shieldsDone.includes('jack'); i++) {
-    run(1 / 20);
-    if (state().rockHeld) high = Math.max(high, state().rockFall);
-  }
-  const shoved = high >= low + JACK_PUSH * 0.6;
-  const gave = state().shieldsDone.includes('jack');
-  const landed = runUntil(() => state().rock > 0 && !state().rockFall, 120);
-  const wonders = !!window.__upgrades().find(u => u.key === 'askwizards')?.show();
+  const towerAfter = shown('unlocktower');
+  const towerUp = build('unlocktower');
 
   window.__reset();
   return [
-    ok(offered, 'the jack is offered once the stone has failed'),
-    ok(bought && up, 'somebody builds it and it stands'),
-    ok(caught, 'it catches the rock'),
-    ok(shoved && high > low, 'and drives it back up', `${low} -> ${high}`),
-    ok(gave, 'then the rams give out'),
-    ok(landed, 'and the rock comes down on the wreck'),
-    ok(wonders, 'and the bench wonders about the wizards')
+    ok(!farmEarly && farmAfter, 'the farm is offered only once the timber has failed',
+       `${farmEarly} -> ${farmAfter}`),
+    ok(farmUp, 'and it builds'),
+    ok(!quarryEarly && quarryAfter, 'the quarry only once the rope has failed',
+       `${quarryEarly} -> ${quarryAfter}`),
+    ok(quarryUp, 'and it builds'),
+    ok(!towerEarly && towerAfter, 'the tower only once the stone has failed',
+       `${towerEarly} -> ${towerAfter}`),
+    ok(towerUp, 'and it builds')
   ];
 });
 
@@ -240,9 +243,7 @@ group('under the dome, the one underneath walks out', async () => {
   through('props');
   through('net');
   through('arch');
-  window.__meteor();
-  window.__grant({ sparks: JACK_COST * 2 });
-  through('jack');
+  window.__meteor();                       // which also raises the tower
   fundDome();
   window.__crew(2, 1, 0, 0, 0, 1);         // and somebody who can fly
 
@@ -281,16 +282,14 @@ group('the dome holds, and sets every rock down after it', async () => {
   window.__crew(2, 1);
   through('props');
   through('net');
-  through('arch');
   window.__meteor();                       // which also raises the tower
-  window.__grant({ sparks: JACK_COST * 2 });
   fundDome();
 
   // The dome is the tower's row, cast rather than carried, and `__upgrades()`
   // is the bench's board -- so it is asked for where it actually lives.
   const dome = () => TOWER_UPGRADES.find(u => u.key === 'dome');
-  const before = !!dome()?.show();         // the machine has not failed yet
-  through('jack');
+  const before = !!dome()?.show();         // the stone has not failed yet
+  through('arch');
   const noFlyers = !!dome()?.show();       // nobody who can fly yet, either
   window.__crew(2, 1, 0, 0, 0, 1);
   const offered = !!dome()?.show();

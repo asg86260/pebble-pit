@@ -360,6 +360,7 @@ group('a row that lands rebuilds the board it is on', async () => {
   window.__crew(4, 0);
   window.__grant({ shards: 900, spores: 900, cores: 9 });
   window.__tip(200000);
+  window.__answered('props');                // the farm is what the timber opens
 
   const shopEl = document.getElementById('shop');
   const drawn = () => shopEl.children.filter(c => c.dataset.key).map(c => c.dataset.key);
@@ -382,7 +383,9 @@ group('a row that lands rebuilds the board it is on', async () => {
     // The other half of it: what the finished row unlocked is drawn without
     // anybody pressing anything, which is the case no amount of remembering to
     // call the builder on a press would ever have covered.
-    ok(after.includes('unlockquarry'),
+    // What a finished farm opens is the net -- the shield priced in its coin,
+    // whose failure in turn opens the quarry.
+    ok(after.includes('net'),
        'and what it opened up is drawn in its place', after.join(','))
   ];
 });

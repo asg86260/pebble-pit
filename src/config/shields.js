@@ -1,10 +1,10 @@
 // The shields, and the shape a rock is in while it is arriving.
 //
-// DESIGN.md, "The shields": five tries at stopping the next rock, of which the
-// first four fail -- the rocks are the game's income, and a wall that worked
-// in the mid-game would starve the yard that built it. What every shield
-// shares is here; what one kind does differently is a field in KINDS
-// (shield.js). A shield's width and height are derived from the rock it stands
+// DESIGN.md, "The shields" and "The shields are the spine": four tries at stopping
+// the next rock, of which the first three fail -- the rocks are the game's income,
+// and a wall that worked in the mid-game would starve the yard that built it --
+// and each failure opens the next station. What every shield shares is here;
+// what one kind does differently is a field in KINDS (shield.js). A shield's width and height are derived from the rock it stands
 // over, so only the story's own numbers live in this file.
 
 export const SHIELD_LEG_W = 2;       // cells across a leg or a pier
@@ -14,12 +14,11 @@ export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most 
 
 // What each one costs in labor, in worker-seconds at the site (works.js).
 // They climb with the material: timber goes up in half a minute, rope is quick,
-// stone and steel are most of the yard's afternoon. The dome has no figure here
+// stone is most of the yard's afternoon. The dome has no figure here
 // because nobody works on it -- the tower pours it on its own clock.
 export const PROP_WORK = 30;
 export const NET_WORK = 20;
 export const ARCH_WORK = 70;
-export const JACK_WORK = 85;
 
 // The props: timber, and the rock does not even slow down for it.
 export const PROP_FROM = 4;         // rocks fallen before the yard thinks to look up
@@ -38,15 +37,6 @@ export const NET_SLOW = 26;         // world pixels a second the rock sinks thro
 export const ARCH_COST = 400;       // shards: more than the tiller, a real cut of the quarry
 export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
 export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs
-
-// The jack: a steel plate on rams, and the only shield that pushes back. The
-// shove is the beat -- it is the closest the yard comes to winning -- so it is
-// slow enough to read as effort rather than as a bounce.
-export const JACK_COST = 450;       // sparks: above the drill, under the ram
-export const JACK_PARTS = 14;
-export const JACK_HOLD_MS = 1200;   // braced under the weight before it starts to lift
-export const JACK_PUSH = 48;        // world pixels it drives the rock back up
-export const JACK_PUSH_RATE = 22;   // and how fast, so the shove is visibly hard work
 
 // The dome: the tower's, and the only one that holds. It is cast rather than
 // carried: the wizards fly over and pour it the way they pour a star into an

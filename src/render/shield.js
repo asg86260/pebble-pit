@@ -48,7 +48,6 @@ export function drawShield() {
 function drawShieldOf(s, done, topY, cols) {
   if (s.kind === 'arch') return drawArch(s, done, topY, cols);
   if (s.kind === 'net') return drawNet(s, done, topY, cols);
-  if (s.kind === 'jack') return drawJack(s, done, topY, cols);
   if (s.kind === 'dome') return drawDome(s, done, topY, cols);
 
   // The props: two braced timber legs and a sagging lid. The legs rise through
@@ -123,54 +122,6 @@ function drawNet(s, done, topY, cols) {
       ctx.fillRect(s.x + c * P, topY + (off + k) * P, P, P);
     }
   }
-}
-
-// The jack: one enormous ram under a steel plate. Everything else in this arc
-// is a *structure* -- legs, ropes, piers -- and structures wait for the rock.
-// This does not wait, so it is not drawn like one: a bedplate bolted to the
-// ground, a cylinder standing on it, a rod telescoping out of that, and the
-// plate across the top. Read bottom to top it is a diagram of a push.
-//
-// The rod is the whole point. It is drawn from the cylinder's mouth up to
-// whatever height the plate has reached, so when `s.shove` drives the plate up
-// the rod *lengthens* to meet it -- the machine visibly extends rather than
-// the whole assembly sliding upward, which is what the last one did and what
-// made it read as furniture on stilts.
-function drawJack(s, done, topY, cols) {
-  const lift = Math.round((s.shove || 0) / P) * P;
-  const cell = (cx, cy, w, h) => ctx.fillRect(cx, S.groundY - (cy + h) * P, w * P, h * P);
-  // Assembled from the ground up -- beds, then cylinders, then the platen --
-  // and the part that does the work is the part that arrives last.
-  const step = (from, to) => Math.max(0, Math.min(1, (done - from) / (to - from)));
-  // The rams stand at the ends, outside the footprint, for the same reason the
-  // props' legs do: the middle of this span is where the rock goes. A ram
-  // under the center would be standing inside the boulder.
-  const feet = [s.x, s.x + s.w - 6 * P];
-  const cylH = Math.max(2, Math.round((s.h - 5) * 0.5));
-  const top = s.h - 3 + Math.round(lift / P);
-
-  const bed = step(0, 0.25);
-  for (const x of feet) if (bed > 0) cell(x, 0, 6, Math.max(1, Math.round(2 * bed)));
-
-  const cyl = step(0.25, 0.6);
-  for (const x of feet) {
-    if (cyl <= 0) continue;
-    cell(x + P, 2, 4, Math.round(cylH * cyl));   // the cylinder
-    // the collar at its mouth, which is the thing a rod comes out of
-    if (cyl >= 1) cell(x, 2 + cylH, 6, 1);
-  }
-
-  const plate = step(0.6, 1);
-  if (plate <= 0) return;
-  // The rods are the whole point: drawn from each collar up to the underside
-  // of the platen, so when the shove drives the platen up they *lengthen* to
-  // meet it. The machine extends. The last one slid its legs up with the top,
-  // which is furniture on stilts and not a press.
-  for (const x of feet) cell(x + 2 * P, 3 + cylH, 2, Math.max(0, top - 3 - cylH));
-  const w = Math.round(plate * cols);
-  cell(s.x + Math.round((cols - w) / 2) * P, top, w, 3);
-  // and the ribs under it, which is what says this face is meant to take a load
-  if (plate >= 1) for (let c = 3; c < cols - 3; c += 5) cell(s.x + c * P, top - 1, 1, 1);
 }
 
 // The dome: the only shield that is not black, because it is the only one that

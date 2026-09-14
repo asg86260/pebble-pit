@@ -151,6 +151,7 @@ group('a place costs a core, not dust alone', async () => {
   // claim was never about any one of them. The quarry's own gate is the plots
   // being broken, which is the whole of the setup.
   window.__crew(1, 1, 0, 1);
+  window.__answered('props', 'net');      // the shields that open the farm and the quarry
   const before = state().cores;
   const built = buyBuilt('unlockquarry');
   const after = state().cores;

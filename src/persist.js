@@ -783,7 +783,7 @@ export function restore() {
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
                           laid: s.shield.laid || 0, caught: 0, held: 0,
-                          strain: 0, sag: 0, shove: 0,
+                          strain: 0, sag: 0,
                           setting: false, poured: 0 } : null;
   // A pour picks up where it left off rather than starting again: what is
   // woven is the fact, so the wizard-seconds behind it are worked back out of

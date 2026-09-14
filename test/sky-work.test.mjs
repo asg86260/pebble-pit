@@ -467,6 +467,7 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // B1 (wave-feedback3.md, Track B): BUILD_GANG is one body now, not three,
   // so a 90-worker-second building plus the walk over needs more than the
   // default limit, which was sized for a gang of three.
+  window.__answered('props', 'net', 'arch'); // the tower is what the arch opens
   const raised = buyBuilt('unlocktower', 180);
   const tower = state();
 

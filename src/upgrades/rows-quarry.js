@@ -3,6 +3,7 @@ import { JOB } from '../jobs.js';
 import { S, quarry } from '../state.js';
 import { assign } from '../upgrades.js';
 import { site } from './site.js';
+import { shieldDone } from '../shield.js';
 
 // One place at a time. Banking a single core used to reveal every site in the
 // game at once, which spoils the whole chain: each one is a surprise that the
@@ -16,7 +17,11 @@ const CAVE = site({
   note: () => 'a cut dug for ore, the blue coin: gear, hats and the wizard are paid in it',
   cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
-  show: () => S.farmOpen && !S.quarryOpen,
+  //
+  // And the net's failure is what opens it: rope catches and does not hold,
+  // so the yard reaches for something harder than the ground grows. The net
+  // needs the farm, so the plots still come first.
+  show: () => shieldDone('net') && !S.quarryOpen,
   // The cut opens with one body already sent over -- through the same assign
   // the board's + button uses, so it walks there like anybody retrained. A
   // quarry bought and then standing empty read as a purchase that did nothing.

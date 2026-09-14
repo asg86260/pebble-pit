@@ -228,6 +228,7 @@ export const TESTS = [
     // ...and rocks finished, because a place is bought with one now as well as
     // with dust.
     window.__grant({ cores: 5 });
+    window.__answered('props');                 // the shield that opens the plots
     run(20);
     // Each press reports what it cost as well as what the board did, because
     // the rule is about the pair: up either way, and the purse the only tell.
