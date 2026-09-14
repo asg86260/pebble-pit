@@ -9229,3 +9229,32 @@ sheet's paste box, and a window losing focus lets go. `S.skipHeldAt` and
 `S.introCut` are ephemeral. Hooks `__holdSkip` and `__skip`;
 `test/skip.test.mjs` holds the key through all four the player's way, and
 the browser tier's `input.js` presses the real key.
+## The dance is for two rocks, the dome retires, every shield fits, the crew hop (built)
+
+Four small things asked for together on 2026-09-14; the spec is
+`docs/wave-polish.md`, and this is what stands.
+
+- **Two dances.** The crew dance after the first rock and once more when the
+  "you saved your sqwife" sheet is put down (`storyDanced`, saved, so it is
+  once). Every other rock they get straight back to work. No fall is ever
+  danced: the fall-dance did two jobs -- keeping bodies out of the footprint
+  and off the rock -- and a stage of its own does both now (`crew/step.js`,
+  the duck-and-wait stage). The gang wait on *a rock being in the air*, not
+  on the drop zone, because a scene that holds the yard takes the zone away
+  while the dome holds a rock overhead. The next rock is not made until the
+  footprint is clear, backstopped by `nextBoulderAt`.
+- **The dome comes down.** Its job is one hold, the rescue. Once `rescued`
+  and the rescue walk is over, a standing dome fades over `DOME_FADE_MS` and
+  is gone; `'dome'` joins `shieldsDone`, the row reads done. Magic, so a fade
+  and not a walk-off -- the one exception to "every body walks", because
+  there is no body.
+- **Every shield fits.** `shieldPlan` plans for the rock that will reach it
+  (the one in the air if one is, else the next), and `makeBoulder` refits any
+  standing shield to the rock it just made (`refitShield`). The arch and the
+  dome are arcs the rock perches on, so they stand `ARCH_SPAN` / `DOME_SPAN`
+  times the rock's width, capped at the rock's flank clearance; the props and
+  net keep their margin.
+- **The hop.** A hard landing gives every grounded body `hopAt`/`hopK`, and
+  `drawWorkers` lifts it one parabola of `LAND_HOP_H * hopK` cells over
+  `LAND_HOP_MS`. Render-time only: `w.y` is untouched, so the walk and the
+  falls see nothing. A gentle set-down (the dome's) hops nobody.

@@ -77,6 +77,7 @@ export const S = {
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   storyTold: false,       // and the sheet that says so has been read and put down
+  storyDanced: false,     // and the crew have had their dance about it (core.js)
   rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
@@ -671,6 +672,9 @@ export const SAVED = [
   // (ending.js) and never by the sim, so a reload with the sheet still up
   // brings it back rather than losing it.
   'storyTold',
+  // The dance after it, played once. Saved so a reload does not throw a
+  // second party; a save from before the field loads with `storyTold`'s value.
+  'storyDanced',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy

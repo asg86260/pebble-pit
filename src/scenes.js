@@ -33,7 +33,9 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, LADDER, TIER_OWN } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, LAND_HOP_MS } from './config.js';
+import { dropMs } from './rock.js';
+import { now } from './clock.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -162,6 +164,25 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__next(); window.__fast(1.2); window.__look(S.cx - S.viewW / 2); } },
   landing: { about: 'the story', say: 'the second rock coming down on a yard with a crew',
     run: () => { window.__reset(); window.__crew(2, 1); window.__next(); } },
+  // ...and a rock down, caught at the top of the hop it knocks the crew into
+  // (wave-polish, track C). Not the setup above: that one clears rock one out
+  // of the sky, and the first rock's landing hops nobody -- the opening owns
+  // that beat (`landRock`). So rock two is stood and cleared, the crew dance,
+  // and rock three comes down on them. The shot tool runs a second of yard
+  // after a scene, and the whole fall is shorter than that, so this one stops
+  // before the rock is let go: the next rock comes the frame the dance is
+  // over, and the dance is left with a second, less half a hop, less the fall
+  // (`dropMs`, the rock's own reckoning) still to run. The frame shot is the
+  // one with every body at the peak. Against the same scene with `LAND_HOP_H`
+  // dialed to nothing, a body here is the hop higher.
+  'landing^': { about: 'the story', say: 'a rock down on a yard with a crew, caught at the top of the hop',
+    run: () => {
+      window.__reset(); window.__crew(2, 1); window.__jump(2); window.__next();
+      // the dance is called on the frame after the rock goes, so one frame first
+      for (let i = 0; i < 60 && !(S.danceUntil > now()); i++) window.__fast(1 / 60);
+      const lead = 1000 - LAND_HOP_MS / 2 - dropMs();
+      for (let i = 0; i < 600 && S.rockFall <= 0 && S.danceUntil - now() > lead; i++) window.__fast(1 / 60);
+    } },
   // wave-release, track B. The opening half a second into the one left
   // standing getting up -- the beat the view eases back out over. With the
   // full picture the view is still close and on its way; under reduced motion
@@ -901,6 +922,19 @@ export const SCENES = {
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },
   'dome~': { about: 'the shields', say: 'the dome being cast: the wizard over it, pouring',
     run: () => { domeCast(6); window.__look(st().shield.x - 260); } },
+  // ...and the dome met by a rock ten rocks bigger than the one it was cast
+  // for, to prove it is refit for the rock that actually reaches it
+  // (`refitShield`, called from `makeBoulder`) rather than sized once at the
+  // pour and outgrown.
+  'dome!!': { about: 'the shields', say: 'the dome met by a rock ten rocks later, refit for it',
+    run: () => { shieldBuilt('dome'); S.boulderNo += 10; window.__next(); window.__fast(4.5); } },
+  // ...and the dome on its way out: the rescue done and the rock set down, the
+  // shell half a fade into thin air. Frame by frame to the first frame of the
+  // fade, because the set-down is slow and the fade is short.
+  'dome-': { about: 'the shields', say: 'the dome fading out after the rescue, halfway gone',
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next();
+                 for (let i = 0; i < 60 * 120 && !(S.shield && S.shield.fading); i++) window.__fast(1 / 60);
+                 window.__fast(DOME_FADE_MS / 2000); } },
   // ...somebody in the ground, packed in to the middle with the dirt heaped
   // against it. The crew dig at it between rocks, so the dig is put back to
   // nought once the rock is in the air and nobody can.

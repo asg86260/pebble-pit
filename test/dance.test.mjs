@@ -46,6 +46,11 @@ group('the dance joins up instead of teleporting', async () => {
   localStorage.setItem('boulder-clicker/v4',
     readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
   yard.restore();
+  // Back on rock one, which is the only rock that gets a dance now (wave
+  // polish, A1); the gang on the crest of rock forty-two come down to it, and
+  // are given a moment to land before the beat starts.
+  window.__jump(1);
+  run(2);
   window.__next();                             // the rock goes; the beat starts
   run(1 / 60);                                 // one frame for the yard to notice
   const found = state().dancing;
@@ -163,7 +168,9 @@ group('the gang on the floor of the cut dance too', async () => {
   window.__reset();
   window.__crew(2, 4, 4);
   window.__fullSites();
-  window.__jump(3);                            // past the first rock: its finish is the reunion, not a dance
+  // Rock one is the only rock that gets a dance now (wave polish, A1), and its
+  // finish is the reunion unless the reunion is behind it already.
+  yard.S.reunionDone = true;
   const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
   const floorOf = () => gang().filter(w => w.y + WORKER > yard.S.groundY + 1);
   const down = runUntil(() => floorOf().length === 4, 120);
