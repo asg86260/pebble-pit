@@ -174,6 +174,8 @@ export function smogReport() {
            caught: drawnIn(), clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
+           // a strike in the sky: how many cells it is, or 0 for none
+           bolt: S.bolt ? S.bolt.cells.length : 0,
            // the storm's front and its wash, so a check can watch a brew-up
            brewing: S.stormFor >= 0, stormFor: S.stormFor,
            purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,

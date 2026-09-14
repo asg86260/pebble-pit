@@ -890,7 +890,8 @@ export function restore() {
   // that is somebody's job.
   S.raining = false;
   S.rainFor = 0;
-  S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
+  S.bolt = null;
+  S.poop =Array.isArray(s.poop) ? s.poop.slice() : [];
   // A save from before the rock was something dust could lie on has none, and
   // comes back to a bare hill.
   S.rockSand = Array.isArray(s.rockSand)

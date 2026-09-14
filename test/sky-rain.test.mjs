@@ -85,3 +85,25 @@ group('a minute of dry between one shower and the next', async () => {
     ok(dry < 90, 'and not much longer than that once it is owed one', `${dry}s`)
   ];
 });
+
+// Lightning comes with the pour. It is weather only -- nothing in the yard
+// changes for it -- so what there is to check is that a real storm throws one
+// without being asked, that the bolt reaches from over the window to the
+// ground, and that it is gone again in well under a second.
+group('a storm throws a bolt', async () => {
+  run(0.4);
+  window.__crew(0, 0);
+  const came = makeItRain();
+  // past the drizzle and into the full pour, then wait on a strike
+  run(12);
+  const struck = runUntil(() => state().smog.bolt > 0, 60);
+  const cells = state().smog.bolt;
+  const gone = runUntil(() => state().smog.bolt === 0, 2);
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(came, 'it rains'),
+    ok(struck, 'and a strike comes during the pour, unasked'),
+    ok(cells > 20, 'and the bolt reaches from over the window to the ground', `${cells} cells`),
+    ok(gone, 'and it is gone again inside a second')
+  ];
+});

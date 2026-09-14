@@ -24,7 +24,7 @@ import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
          pitCapacity, inHole, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
-import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
+import { SKY, fillSky, forceStrike, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -1062,6 +1062,7 @@ export const HANDLES = {
   __birds: birds, __crew: crew, __school: school,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
+  __strike: forceStrike,
   // Force the crit roll for a check: true always crits, false never, null rolls
   // for real. A crit is a chance, and a chance a check cannot pin down is a check
   // that passes or fails on the seed -- see src/crit.js.

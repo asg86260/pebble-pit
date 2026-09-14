@@ -3839,6 +3839,31 @@ line at all. The clog was written to stop the house spraying its own walk with i
 own filters, so counting the sky's muck in it is arguably wrong; but changing that
 is a balance decision rather than a fix. See TODO.
 
+### Lightning (built)
+
+A strike is the storm being *seen*, and nothing else: it costs the yard
+nothing, touches no body and moves no number. The bargain is that the weather
+already has a price — the muck the shower leaves — and a second one hung on a
+flash would be a cost you could not see coming. So it is drawn and it is
+gone.
+
+It comes with the pour, not the drizzle: the odds a second are the square of
+the storm envelope over `BOLT_EVERY_S`, so a full pour strikes about every nine
+seconds and the front and the tail almost never do. One at a time. The bolt is
+a run of cells from over the top of the window down to whatever that column
+has for a floor — the ground, the rock, the dug quarry — jogging sideways with
+momentum (`BOLT_KINK` is the chance a segment changes its lean; the rest keep
+going, which is the difference between a bolt and a worm) with one fork off it
+partway down. For its first instant (`BOLT_FLASH_S`) the whole finished frame
+is inverted: the page is already white, so the only way it can flash is to go
+dark, and a white bolt on a black sky is the picture everyone has of one. Then
+the bolt hangs black over the shower for `BOLT_LIFE_S`, fading through its
+second half.
+
+`S.bolt` is ephemeral, like the rain it came with. Scenes `lightning` and
+`lightningflash` hold either frame; `__strike(hold, flash)` is the hook under
+them.
+
 ## The endgame pass (built)
 
 Five things go wrong together once the ram is fully driven, and they are one

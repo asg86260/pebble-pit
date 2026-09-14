@@ -44,7 +44,7 @@ import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
 import { pullCraft } from './smog/craft.js';
-import { breaks, dryTime, markStorm, pour, rainOdds, settled, stepDrops,
+import { breaks, dryTime, forceStrike, markStorm, pour, rainOdds, settled, stepBolt, stepDrops,
          stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck,
@@ -58,7 +58,7 @@ export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
          foul, stirSmoke,
          moteX, moteY, clearSky, fillSky, skyFromSave, cloudR,
-         DRAUGHT, rainOdds, dryTime,
+         DRAUGHT, rainOdds, dryTime, forceStrike,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,
          nearestMuck, rockMuck, quarryMuck, plotMuck, buried, retally,
@@ -113,4 +113,5 @@ export function stepSmog(dt) {
   place(secs);
   stepGoing(secs);
   stepDrops();
+  stepBolt(secs);
 }

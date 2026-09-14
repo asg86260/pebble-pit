@@ -47,7 +47,7 @@ import { drawScrub } from './render/scrub.js';
 import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
-import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
+import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 import { drawSchool, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
@@ -200,6 +200,7 @@ const LAYERS = [
   { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
   { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
+  { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
   { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name
   { name: 'cursor', draw: drawCursor },
   { name: 'world:done', draw: leaveWorld },
@@ -216,6 +217,8 @@ const LAYERS = [
   { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
+
+  { name: 'flash', draw: drawFlash },            // a strike's instant: the whole finished frame, inverted
 
   { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
 ];

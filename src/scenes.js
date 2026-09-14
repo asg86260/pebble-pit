@@ -719,6 +719,12 @@ export const SCENES = {
     run: () => { skyAt(4200); untilRaining(); window.__fast(2); } },
   rain: { about: 'the house and the sky', say: 'the full pour',
     run: () => { skyAt(4200); untilRaining(); window.__fast(18); } },
+  // A strike, held: the bolt hanging over the pour, and the instant of the
+  // flash with the whole window inverted.
+  lightning: { about: 'the house and the sky', say: 'a bolt over the pour',
+    run: () => { skyAt(4200); untilRaining(); window.__fast(14); window.__strike(9, 0); } },
+  lightningflash: { about: 'the house and the sky', say: 'the flash of a strike',
+    run: () => { skyAt(4200); untilRaining(); window.__fast(14); window.__strike(9, 9); } },
   raintaper: { about: 'the house and the sky', say: 'the taper at the end of the storm',
     run: () => { skyAt(4200); untilRaining();
                  for (let i = 0; i < 90 && st().smog.haze > 700; i++) window.__fast(1); } },

@@ -444,6 +444,7 @@ export const S = {
   haze: 0,                // motes in the sky, waiting to come back down
   raining: false,         // and whether it is coming back down right now
   rainFor: 0,             // seconds into this shower, which is how hard it is coming down
+  bolt: null,             // a strike in the sky: its cells and how long it has left, or null
   // wave6-sky: the storm's front. A break rolls a brew-up now, not a shower.
   stormFor: -1,           // seconds since the roll, or -1 for no storm on the way
   rains: 0,               // how many times they have
@@ -839,7 +840,7 @@ export const EPHEMERAL = [
   // open it is a hired post like any job, and a hired post survives a reload.)
   'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
-  'raining', 'rainFor', 'scrubBank', 'scrubMuck', 'pumpAt',
+  'raining', 'rainFor', 'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
   'stormFor',                              // wave6-sky: weather in flight is not saved
   'placed', 'strips', 'introHeart',
   // housekeeping

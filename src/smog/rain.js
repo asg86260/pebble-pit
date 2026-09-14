@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -68,6 +68,10 @@ export function pour(secs) {
   const t = S.rainFor;
   const env = 0.2 + 0.8 * smooth((t - RAIN_DRIZZLE_S) / RAIN_RISE_S);
   let n = RAIN_PER_S * secs * env;
+  // And now and then, at the height of it, a strike. Squared on the envelope
+  // so the drizzle and the taper hardly ever flash; one at a time, because a
+  // second bolt over the first is a fizz rather than a storm.
+  if (!S.bolt && rand() < secs * env * env / BOLT_EVERY_S) S.bolt = strike();
 
   // Which ones may fall, as places in the sky rather than as motes: a settled
   // sky is thousands of specks and this runs every frame of a downpour, so a
@@ -180,6 +184,58 @@ export function stepGoing(secs) {
     if (g.t <= 0) GOING.splice(i, 1);
   }
   if (GOING.length) S.dirty = true;
+}
+
+// --- lightning ----------------------------------------------------------------
+// A bolt is a list of cells, made once when it strikes and drawn as it fades.
+// It comes down from over the top of the window, somewhere across the view,
+// jogging sideways a little each segment, and stops at whatever that column
+// has for a floor -- the ground, the rock, the dug quarry -- with one fork
+// off it partway down that goes the other way and gives up before the ground.
+// Weather only: it is the storm being seen, and it changes nothing.
+function strike() {
+  const cells = [];
+  const jog = () => Math.round((rand() * 2 - 1) * BOLT_JOG) * P;
+  // one run of segments from (x, y) downward, for at most `max` of them. The
+  // jog is kept from one segment to the next more often than not, so the
+  // bolt runs straight for a stretch and then kinks -- re-rolled every
+  // segment it was a wiggle, and a wiggle is a worm rather than a bolt.
+  const run = (x, y, max, lean) => {
+    let dx = jog() + lean;
+    for (let s = 0; s < max; s++) {
+      const floorY = muckFloor(colAt(x));
+      if (y >= floorY) return;
+      if (rand() < BOLT_KINK) dx = jog() + lean;
+      for (let k = 0; k < BOLT_STEP && y + k * P < floorY; k++)
+        cells.push([x + Math.round(k * dx / BOLT_STEP / P) * P, y + k * P]);
+      x += dx; y += BOLT_STEP * P;
+    }
+  };
+  const x0 = Math.round((S.camX + rand() * S.viewW) / P) * P;
+  const y0 = S.camY - P;
+  // the main bolt, then the fork off one of its cells in the middle stretch,
+  // leaning the way the main bolt was not
+  run(x0, y0, 1e3, 0);
+  const [lo, hi] = BOLT_FORK_AT;
+  const at = cells[Math.floor(cells.length * (lo + rand() * (hi - lo)))];
+  const way = at[0] < x0 ? 1 : -1;
+  run(at[0], at[1], BOLT_FORK_LEN, way * BOLT_JOG * P);
+  return { cells, x: x0, left: BOLT_LIFE_S, flash: BOLT_FLASH_S };
+}
+
+// dev: a strike now, held for `hold` seconds with the flash on for `flash` of
+// them, so a scene can stand at either frame of one.
+export function forceStrike(hold = BOLT_LIFE_S, flash = BOLT_FLASH_S) {
+  S.bolt = strike();
+  S.bolt.left = hold;
+  S.bolt.flash = flash;
+}
+
+export function stepBolt(secs) {
+  if (!S.bolt) return;
+  S.bolt.left -= secs;
+  S.bolt.flash -= secs;
+  if (S.bolt.left <= 0) S.bolt = null;
 }
 
 export function stepDrops() {

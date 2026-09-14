@@ -281,6 +281,21 @@ export let RAIN_LEAN = 2.2;
 // was a stencil.
 export const RAIN_DASH_MIN = 2;
 export const RAIN_DASH_MAX = 5;
+// Lightning. Weather only: a strike costs the yard nothing and touches no
+// body, it is the storm being seen. It comes with the pour -- the odds a
+// second scale with the square of the storm envelope, so a drizzle almost
+// never flashes and the full pour does about every BOLT_EVERY_S seconds.
+export let BOLT_EVERY_S = 9;        // mean seconds between strikes at full pour
+export const BOLT_LIFE_S = 0.3;     // how long the bolt hangs in the sky, fading out
+export const BOLT_FLASH_S = 0.05;   // and for how much of that the whole window inverts
+// The bolt's shape, in cells: it comes down BOLT_STEP cells a segment and jogs
+// up to BOLT_JOG cells sideways each one, with a shorter fork off it somewhere
+// between the two shares of its length, running BOLT_FORK_LEN segments.
+export const BOLT_STEP = 2;
+export const BOLT_JOG = 2;
+export const BOLT_KINK = 0.35;      // the chance a segment changes its jog, else it keeps going
+export const BOLT_FORK_AT = [0.3, 0.6];
+export const BOLT_FORK_LEN = 4;
 // The share of what lands that leaves a mark. The whole sky falls either way --
 // every mote is a drop you can watch come down -- and this is how much of it is
 // filth rather than water.
@@ -374,6 +389,8 @@ export const SKY_KNOBS = [
     get: () => RAIN_FALL_GIVE, set: v => { RAIN_FALL_GIVE = v; } },
   { key: 'RAIN_LEAN', label: 'rain lean', min: 0, max: 6, step: 0.1,
     get: () => RAIN_LEAN, set: v => { RAIN_LEAN = v; } },
+  { key: 'BOLT_EVERY_S', label: 'lightning every', min: 1, max: 60, step: 1,
+    get: () => BOLT_EVERY_S, set: v => { BOLT_EVERY_S = v; } },
   // wave7-sky
   { key: 'PUFF_WANDER', label: 'puff wander', min: 0, max: 40, step: 1,
     get: () => PUFF_WANDER, set: v => { PUFF_WANDER = v; } }

@@ -4,7 +4,7 @@
 // module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
-import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -344,4 +344,32 @@ export function drawRain() {
   // sky itself, dragged in by the draught and drawn by `drawSmog` all the way to
   // the mouth -- there is no separate thread of specks on an errand, because
   // there is no errand.
+}
+
+// The bolt: its cells in black, full for the first half of its life and
+// fading through the second. It is drawn black even through the flash, and
+// the flash is what turns it white -- see `drawFlash`.
+export function drawBolt() {
+  const b = S.bolt;
+  if (!b) return;
+  ctx.fillStyle = '#000';
+  ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
+  ctx.beginPath();
+  for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// The flash: for the first instant of a strike the whole window is inverted,
+// black page and white yard, and the bolt with it. Over the finished frame in
+// screen space, so it covers the lot. An inversion rather than a white pane
+// because the page is already white: the only way a white page can flash is
+// to go dark, and a bolt over a black sky is the picture everybody has of one.
+export function drawFlash() {
+  const b = S.bolt;
+  if (!b || b.flash <= 0) return;
+  ctx.globalCompositeOperation = 'difference';
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, S.W, S.H);
+  ctx.globalCompositeOperation = 'source-over';
 }
