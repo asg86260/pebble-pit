@@ -11,6 +11,8 @@ this file is for things that were broken.
 ## Unreleased
 
 - The quarry's ore yield rungs stay bought across a reload.
+- The dome comes down once the rescue is over, so later rocks land without being held.
+- Every barrier is built wide enough for the rock that reaches it.
 
 ## v0.1.16 — 2026-09-14
 

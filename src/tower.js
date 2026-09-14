@@ -188,8 +188,10 @@ export const TOWER_UPGRADES = [
     buy: () => raiseShield('dome'),
     // The three before it have all been through, and there is somebody who can
     // fly to cast it. It leaves the board the moment it is bought, because
-    // unlike the hat there is only ever one of them.
-    show: () => !S.shield && shieldDone('arch') && S.towerOpen &&
+    // unlike the hat there is only ever one of them -- and it stays gone once
+    // the dome has done its work and faded (shield.js, `stepShield`), the same
+    // way the three that broke never come back.
+    show: () => !S.shield && shieldDone('arch') && !shieldDone('dome') && S.towerOpen &&
                 (S.wizards > 0 || S.wizardHats > 0)
   }
 ];

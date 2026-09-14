@@ -33,7 +33,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, LADDER, TIER_OWN } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -901,6 +901,19 @@ export const SCENES = {
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },
   'dome~': { about: 'the shields', say: 'the dome being cast: the wizard over it, pouring',
     run: () => { domeCast(6); window.__look(st().shield.x - 260); } },
+  // ...and the dome met by a rock ten rocks bigger than the one it was cast
+  // for, to prove it is refit for the rock that actually reaches it
+  // (`refitShield`, called from `makeBoulder`) rather than sized once at the
+  // pour and outgrown.
+  'dome!!': { about: 'the shields', say: 'the dome met by a rock ten rocks later, refit for it',
+    run: () => { shieldBuilt('dome'); S.boulderNo += 10; window.__next(); window.__fast(4.5); } },
+  // ...and the dome on its way out: the rescue done and the rock set down, the
+  // shell half a fade into thin air. Frame by frame to the first frame of the
+  // fade, because the set-down is slow and the fade is short.
+  'dome-': { about: 'the shields', say: 'the dome fading out after the rescue, halfway gone',
+    run: () => { shieldBuilt('dome'); S.buried = true; window.__next();
+                 for (let i = 0; i < 60 * 120 && !(S.shield && S.shield.fading); i++) window.__fast(1 / 60);
+                 window.__fast(DOME_FADE_MS / 2000); } },
   // ...somebody in the ground, packed in to the middle with the dirt heaped
   // against it. The crew dig at it between rocks, so the dig is put back to
   // nought once the rock is in the air and nobody can.

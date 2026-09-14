@@ -778,7 +778,7 @@ export function restore() {
                           h: s.shield.h, rise: s.shield.rise || 0,
                           laid: s.shield.laid || 0, caught: 0, held: 0,
                           strain: 0, sag: 0,
-                          setting: false, poured: 0 } : null;
+                          setting: false, poured: 0, fading: 0 } : null;
   // A pour picks up where it left off rather than starting again: what is
   // woven is the fact, so the wizard-seconds behind it are worked back out of
   // it and the ring carries on from there.
