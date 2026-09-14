@@ -5,6 +5,20 @@ html, body {
   /* on a phone: no rubber-banding or pull-to-refresh behind the game */
   overscroll-behavior: none;
   font: 12px/1.4 ui-monospace, "Courier New", monospace;
+  /* The shape of a board, written once. A sheet is this wide (border and all),
+     with this much border and side padding, and this much air between its two
+     columns of cards -- and a card is what is left, halved. The pinned card in
+     the corner is drawn by the same builder as a board's, so it has to come
+     out the same width, and it did not: it wore a width of its own (240px),
+     forty-odd pixels short of a card, and the name ran into the pips. Kept as
+     variables so there is one answer to "how wide is a card" rather than a
+     sum copied to the corner. */
+  --sheet-w: 84ch;
+  --sheet-border: 2px;
+  --sheet-pad-x: 12px;
+  --rows-gap: 4px;
+  --card-w: calc((var(--sheet-w) - 2 * var(--sheet-border) - 2 * var(--sheet-pad-x)
+                  - var(--rows-gap)) / 2);
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -73,7 +87,7 @@ canvas {
      evenly and the sheet is as wide as the widest card needs. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
-  gap: 4px;
+  gap: var(--rows-gap);
   /* The air inside a card, set once here for every kind of card on the sheet.
      Until this existed the cells of a card sat edge to edge, so a title long
      enough to fill its track ran straight into the price beside it and the two
@@ -329,14 +343,15 @@ canvas {
 
 /* The corner: the one pinned card, top-right, drawn by the same builder as
    the boards and in the same frame as the goal card, because that is what it
-   usually is. One card wide -- as wide as its own words -- and no heading:
-   the pin is the heading. Under the dev panel's corner, which is dev only. */
+   usually is. One card wide -- a board's card, to the pixel, so the words wrap
+   where they do on the sheet -- and no heading: the pin is the heading. Under
+   the dev panel's corner, which is dev only. */
 .pin {
   position: fixed;
   right: 8px; top: 8px;
   z-index: 9;
   display: block;
-  width: 240px;
+  width: var(--card-w);
   max-width: calc(100vw - 16px);
   background: #fff;
 }
@@ -1307,11 +1322,11 @@ body.demo canvas { cursor: default; pointer-events: none; }
      characters rather than a pixel guess about the type. The crew list wears
      the same width on purpose: it stands over the board, edge for edge.
      A phone overrides this with the width of the glass -- see the media rule. */
-  width: 84ch;
+  width: var(--sheet-w);
   display: flex; flex-direction: column; gap: 6px;
-  padding: 10px 12px;
+  padding: 10px var(--sheet-pad-x);
   background: #fff;
-  border: 2px solid #000;
+  border: var(--sheet-border) solid #000;
   letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1389,6 +1404,11 @@ body.demo canvas { cursor: default; pointer-events: none; }
    bench rather than by hovering, because there is no hovering.
    A phone held sideways is a wide, short window, so short counts as small too. */
 @media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
+  /* The board's shape on a phone, so the corner card follows it. */
+  html, body {
+    --sheet-w: min(84ch, 100vw - 16px);
+    --sheet-pad-x: 9px;
+  }
   /* No room beside it on a phone, so the purse goes above the board instead and
      lies along it: four marks in a row is one line, and one line is cheaper than
      the width of a column the screen has not got. */
@@ -1402,10 +1422,10 @@ body.demo canvas { cursor: default; pointer-events: none; }
   .purse .coin { gap: 4px; }
   .purse .coin b { min-width: 0; }
   .panel .sheet {
-    padding: 8px 9px;
+    padding: 8px var(--sheet-pad-x);
     /* The one width is the glass, less the panel's margins: the boards are
        still all one size, it is just the phone's size. */
-    width: min(84ch, 100vw - 16px);
+    width: var(--sheet-w);
     /* in landscape there may be less room above the bench than the board wants:
        it scrolls inside itself rather than running off the top */
     max-height: calc(100vh - 16px);
@@ -1416,7 +1436,7 @@ body.demo canvas { cursor: default; pointer-events: none; }
      rows here, which is two card borders touching with a hairline of white
      between them -- a column of boxes rather than a set of cards. Four pixels
      is the cost of one extra row on a long board, and the cards read as cards. */
-  .rows { gap: 4px; }
+  .rows { gap: var(--rows-gap); }
   .rows button {
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
