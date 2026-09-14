@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+## v0.1.13 — 2026-09-14
+
 - The juggler notice needs your hands at the top of their ladder; a one-grain hand no longer earns it.
 - The pin on a card is a pushpin in the bottom-right corner, not a ring at the bottom-left.
 - The pinned card in the corner is as wide as the card on its board, so its name no longer runs into its pips.
