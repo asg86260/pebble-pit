@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+## v0.1.15 — 2026-09-14
+
 - Quarriers no longer climb up and down the ladder for ever after a refresh caught them leaving a finished cut; the ground comes back in and they dig.
 
 ## v0.1.14 — 2026-09-14
