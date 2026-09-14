@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
+import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
          ABYSS_AT, WORKER, LADDER } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
@@ -14,7 +14,7 @@ import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
-import { resetCut, seamShards, dugShare, cutTop } from './quarry.js';
+import { resetCut, squareCut, seamShards, dugShare, cutTop } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
@@ -1044,9 +1044,10 @@ export function restore() {
   resetCut();
   if (cut.grid && s.cut && s.cut.cols === cut.cols && s.cut.rows === cut.rows &&
       gridFill(cut, s.cut.cells)) {
+    // The save's grid brings what was lying loose, and nothing about the rock:
+    // that is the count's to say. See `squareCut`.
+    squareCut();
     recount(cut);
-    cut.rock = 0;
-    for (const v of cut.grid) if (v === ROCK_CELL) cut.rock++;
     if (cut.painter) cut.painter.repaint();
   }
   // What the seam still owes. It is read after the cut, because an old save that

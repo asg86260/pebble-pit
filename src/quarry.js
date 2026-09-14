@@ -285,6 +285,32 @@ export function layCut() {
   }
 }
 
+// Make the grid's rock agree with the count. Two records of one floor: the
+// count says how far each column has been dug and is what the outline is
+// drawn from; the grid's rock is what a body's feet stand on (`cutTop`). Live
+// play keeps them together -- `digCell` takes a cell out of both -- but a
+// save's grid is laid over the fresh rock whole on the way back in, rock and
+// all, so a grid that ever disagreed with its count stays disagreeing for
+// the life of the yard: `digCell` only takes the counted row, so rock left
+// above it is never dug, and the gang stands on it a course above the floor
+// the outline draws (reported 2026-09-14). The count is the dig; the grid's
+// rock is derived from it. Rock above the counted line goes; anything but
+// rock at or under it becomes rock. What is lying loose above stays.
+export function squareCut() {
+  if (!cut.grid) return;
+  const cells = quarryCells();
+  for (let c = 0; c < cut.cols; c++) {
+    const top = cut.rows - 1 - (cells[c] || 0);
+    for (let r = 0; r < cut.rows; r++) {
+      const v = at(cut, c, r);
+      if (r <= top && v !== ROCK_CELL) put(cut, c, r, ROCK_CELL);
+      else if (r > top && v === ROCK_CELL) put(cut, c, r, 0);
+    }
+  }
+  cut.rock = 0;
+  for (const v of cut.grid) if (v === ROCK_CELL) cut.rock++;
+}
+
 // Take one cell of rock out of column c, the shallowest one still standing --
 // which is exactly the cell `dugTopY` moves past. Whatever dust is sitting
 // above it is not touched here at all: it simply has nothing under it on the

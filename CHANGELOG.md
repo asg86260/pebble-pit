@@ -10,6 +10,8 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- Quarriers stand on the floor of the cut after a reload instead of a course above it, working the air.
+
 ## v0.1.15 — 2026-09-14
 
 - Quarriers no longer climb up and down the ladder for ever after a refresh caught them leaving a finished cut; the ground comes back in and they dig.
