@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ladders</title>
+<style>
+  body { background: #fff; color: #111; margin: 0; padding: 12px 16px;
+         font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  h1 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
+  .note { color: #555; max-width: 72em; margin: 0 0 12px; }
+  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+  .book { min-width: 0; overflow-x: auto; }
+  .ladder { margin: 0 0 18px; }
+  .ladder h2 { font-size: 12px; margin: 0 0 4px; letter-spacing: .08em; text-transform: uppercase; }
+  .ladder h2 small { color: #777; letter-spacing: 0; text-transform: none; margin-left: 1em; }
+  table { border-collapse: collapse; }
+  th, td { padding: 1px 10px 1px 0; text-align: right; white-space: nowrap; }
+  th { color: #777; font-weight: normal; border-bottom: 1px solid #ddd; }
+  td:first-child, th:first-child { text-align: left; }
+  td.val { text-align: left; }
+  td.dust { color: #111; } td.spore { color: #2e9e4b; } td.shard { color: #2f5fd0; }
+  td.core { color: #444; } td.spark { color: #d93a25; } td.time { color: #777; }
+  tr.spark-rung td { background: #fff4f2; }
+  tr.total td { border-top: 1px solid #ddd; color: #555; }
+  .knobs { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto;
+           border-left: 1px solid #ddd; padding-left: 16px; }
+  .knobs h2 { font-size: 12px; margin: 0 0 6px; letter-spacing: .08em; text-transform: uppercase; }
+  .knobs input[type=search] { width: 100%; box-sizing: border-box; font: inherit; margin-bottom: 8px; }
+  .knob { display: grid; grid-template-columns: 1fr 72px; gap: 8px; align-items: center; margin: 2px 0; }
+  .knob label { color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .knob label small { color: #999; display: block; }
+  .knob input { font: inherit; width: 100%; box-sizing: border-box; text-align: right; }
+  .knob.changed label { color: #d93a25; }
+  .out { margin-top: 12px; }
+  .out button { font: inherit; }
+  .out textarea { width: 100%; box-sizing: border-box; height: 8em; font: inherit; margin-top: 6px; }
+</style>
+</head>
+<body>
+<!-- The ladder book: every ladder on every board, rung by rung, with the knobs
+     that shape them beside it. Open it at /ladders.html.
+
+     Each table is read off the real rows, not off the constants: the row is
+     climbed with its own `buy` (the finish, not the work) and at each rung the
+     bill, the work and the from/to are read the way a board reads them. So a
+     change to how a ladder is priced or what a rung is worth shows here
+     without this page being told. The knobs are `TUNABLE` in config.js -- the
+     same dials the dev panel has -- so a first cost or a unit a rung can be
+     moved and every table re-reads at once. Nothing here is saved: what you
+     settle on is copied out below as the lines to put in config.
+
+     A ladder's shape (how many rungs, which coins a band adds) is not a knob:
+     that is TIER_BAND and the bands tables, and it is a design change. -->
+<h1>the ladder book</h1>
+<p class="note">Every ladder, climbed. <b>dust / spore / shard / core / spark</b> are the rung's bill;
+  <b>work</b> is what it asks of the builders in worker-seconds; <b>value</b> is what the row reads
+  before the rung and after it. Move a knob on the right and every table re-reads. Ladders outside
+  the bands rule (the tower's, the kit, the machines' tuning) are listed too, so they can be compared.</p>
+<div class="wrap">
+  <div class="book" id="book"></div>
+  <div class="knobs">
+    <h2>knobs</h2>
+    <input type="search" id="filter" value="rung cost work seam crop tend" placeholder="filter knobs: any of the words (clear for all)">
+    <div id="knobs"></div>
+    <div class="out">
+      <button id="copy">copy what changed as config lines</button>
+      <textarea id="lines" readonly placeholder="nothing changed yet"></textarea>
+    </div>
+  </div>
+</div>
+<!-- The ids board.js and shop.js take hold of at load, so the row modules can
+     be imported here. Nothing in them is drawn. -->
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="scrub"></div><div id="scrubshop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<script type="module">
+import { S } from './src/state.js';
+import { TUNABLE } from './src/config.js';
+import { UPGRADES, HOUSE_ROW, billOf, rungOf, rungsOf, maxed } from './src/upgrades.js';
+import { TOWER_UPGRADES } from './src/tower.js';
+import { SCRUB_UPGRADES } from './src/scrubhouse.js';
+import { QUARRY_UPGRADES } from './src/quarry.js';
+import { FARM_UPGRADES } from './src/farm.js';
+import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
+import { APOTHECARY_UPGRADES } from './src/apothecary.js';
+
+// A yard with every place open and every coin met, so no card is greyed for
+// want of a source and every band's bill is the one it will ask.
+Object.assign(S, {
+  crew: 8, farmOpen: true, quarryOpen: true, apothecaryOpen: true, scrubOpen: true,
+  towerOpen: true, shackOpen: true, outhouseOpen: true, casinoOpen: true,
+  seenShard: true, seenSpore: true, seenCore: true, seenSpark: true, seenAir: true,
+  brews: 9, autoMine: true, boulderNo: 3, introDone: true
+});
+
+const ROWS = [
+  ...UPGRADES.map(u => ({ u, board: 'bench' })),
+  ...TOWER_UPGRADES.map(u => ({ u, board: 'tower' })),
+  ...OUTHOUSE_UPGRADES.map(u => ({ u, board: 'outhouse' })),
+  ...SCRUB_UPGRADES.map(u => ({ u, board: 'scrub' })),
+  ...QUARRY_UPGRADES.map(u => ({ u, board: 'quarry' })),
+  ...FARM_UPGRADES.map(u => ({ u, board: 'farm' })),
+  ...APOTHECARY_UPGRADES.map(u => ({ u, board: 'apothecary' })),
+  { u: HOUSE_ROW, board: 'crew' }
+].filter(({ u }) => u.rung && (u.bill || u.cost));
+
+const COINS = ['dust', 'spore', 'shard', 'core', 'spark'];
+
+// Everything on S a climb might move, kept and put back: the level fields are
+// plain numbers, the potions' potency and the multipliers are objects of
+// numbers, and the machines' tune sits on each machine. Read once here rather
+// than named per ladder, so a new field is covered without this knowing it.
+function keep() {
+  const nums = {};
+  for (const k of Object.keys(S)) if (typeof S[k] === 'number') nums[k] = S[k];
+  const objs = {};
+  for (const k of ['potency', 'mult']) if (S[k] && typeof S[k] === 'object') objs[k] = JSON.stringify(S[k]);
+  const tunes = S.machines ? Object.fromEntries(Object.entries(S.machines).map(([k, m]) => [k, m.tune || 0])) : {};
+  return { nums, objs, tunes, spells: [...(S.spells || [])] };
+}
+function restore(k) {
+  Object.assign(S, k.nums);
+  for (const key of Object.keys(k.objs)) S[key] = JSON.parse(k.objs[key]);
+  if (S.machines) for (const key of Object.keys(k.tunes)) if (S.machines[key]) S.machines[key].tune = k.tunes[key];
+  S.spells = k.spells;
+}
+
+// One ladder climbed: at each rung, what it reads. The endless ones (the
+// machines' tuning, the rift) are shown to `LIMIT` rungs.
+const LIMIT = 8;
+function climb(u) {
+  const rows = [];
+  const was = keep();
+  try {
+    const top = Number.isFinite(rungsOf(u)) ? rungsOf(u) : LIMIT;
+    for (let i = 0; i < Math.min(top, 40) && !maxed(u); i++) {
+      const at = rungOf(u);
+      const bill = Object.fromEntries(billOf(u));
+      rows.push({ rung: at + 1, from: u.from ? u.from() : null, to: u.to ? u.to() : null,
+                  bill, work: bill.time != null ? bill.time / 1000 : (u.work ? u.work() : null) });
+      u.buy();
+      if (rungOf(u) === at) break;
+    }
+  } catch (e) {
+    rows.push({ error: String(e.message || e) });
+  }
+  restore(was);
+  return rows;
+}
+
+const fmt = n => n == null ? '' : Number.isInteger(n) ? String(n) : (+n).toFixed(2).replace(/\.?0+$/, '');
+const value = (r, u) => r.from == null ? '' :
+  `${fmt(r.from)} → ${fmt(r.to)}${u.unit ? ' ' + u.unit : ''}${u.pct && r.from ? `  (+${Math.round((r.to / r.from - 1) * 100)}%)` : ''}`;
+
+function render() {
+  const book = document.getElementById('book');
+  book.innerHTML = '';
+  for (const { u, board } of ROWS) {
+    const rows = climb(u);
+    const el = document.createElement('div');
+    el.className = 'ladder';
+    const rungs = Number.isFinite(rungsOf(u)) ? `${rungsOf(u)} rungs` : 'endless';
+    el.innerHTML = `<h2>${u.name} <small>${u.key} · ${board} · ${rungs}${u.group ? ` · bands of ${u.group}` : ''}</small></h2>`;
+    const t = document.createElement('table');
+    t.innerHTML = `<tr><th>rung</th><th>value</th>${COINS.map(c => `<th>${c}</th>`).join('')}<th>work s</th></tr>`;
+    const total = Object.fromEntries(COINS.map(c => [c, 0]));
+    let work = 0;
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      if (r.error) { tr.innerHTML = `<td colspan="8" style="color:#d93a25">${r.error}</td>`; t.appendChild(tr); continue; }
+      if (r.bill.spark) tr.className = 'spark-rung';
+      tr.innerHTML = `<td>${r.rung}</td><td class="val">${value(r, u)}</td>` +
+        COINS.map(c => `<td class="${c}">${r.bill[c] != null ? fmt(r.bill[c]) : ''}</td>`).join('') +
+        `<td class="time">${r.work != null ? fmt(r.work) : ''}</td>`;
+      for (const c of COINS) total[c] += r.bill[c] || 0;
+      work += r.work || 0;
+      t.appendChild(tr);
+    }
+    if (rows.length > 1) {
+      const tr = document.createElement('tr');
+      tr.className = 'total';
+      tr.innerHTML = `<td>all</td><td></td>` + COINS.map(c => `<td class="${c}">${total[c] ? fmt(total[c]) : ''}</td>`).join('') + `<td class="time">${fmt(work)}</td>`;
+      t.appendChild(tr);
+    }
+    el.appendChild(t);
+    book.appendChild(el);
+  }
+}
+
+// The knobs: every TUNABLE row, a number box each, the changed ones marked and
+// copied out as config lines. The dev panel draws the same rows as sliders;
+// a box is the shape for typing a figure and reading it back.
+const first = new Map(TUNABLE.map(t => [t.key, t.get()]));
+function knobs(filter = '') {
+  const box = document.getElementById('knobs');
+  box.innerHTML = '';
+  // Any of the words: the box opens on the knobs a ladder is made of and
+  // clears to the whole panel.
+  const words = filter.toLowerCase().split(/\s+/).filter(Boolean);
+  for (const t of TUNABLE) {
+    const hay = (t.key + ' ' + t.label).toLowerCase();
+    if (words.length && !words.some(w => hay.includes(w))) continue;
+    const row = document.createElement('div');
+    row.className = 'knob' + (t.get() !== first.get(t.key) ? ' changed' : '');
+    row.innerHTML = `<label title="${t.key}">${t.label}<small>${t.key}</small></label><input type="number" step="${t.step}" min="${t.min}" max="${t.max}" value="${t.get()}">`;
+    row.querySelector('input').addEventListener('change', e => {
+      const v = +e.target.value;
+      if (!Number.isFinite(v)) return;
+      t.set(v);
+      row.classList.toggle('changed', t.get() !== first.get(t.key));
+      render();
+      lines();
+    });
+    box.appendChild(row);
+  }
+}
+function lines() {
+  const out = TUNABLE.filter(t => t.get() !== first.get(t.key)).map(t => `${t.key} = ${t.get()};   // was ${first.get(t.key)}`);
+  document.getElementById('lines').value = out.join('\n');
+}
+document.getElementById('filter').addEventListener('input', e => knobs(e.target.value));
+document.getElementById('copy').addEventListener('click', () => {
+  lines();
+  navigator.clipboard?.writeText(document.getElementById('lines').value);
+});
+
+render();
+knobs(document.getElementById('filter').value);
+</script>
+</body>
+</html>

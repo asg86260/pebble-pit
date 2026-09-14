@@ -41,6 +41,12 @@ The game itself is `play.html` (`index.html` is the landing page); a `GAME`
 naming only the server gets `play.html` appended by the tools.
 Use it before `look.mjs` for any change to a card's shape.
 
+For anything about what a **ladder** costs or is worth, `ladders.html` is the
+ladder book: every ladder on every board climbed rung by rung -- bill, work,
+from/to -- read off the real rows, with the `TUNABLE` knobs beside it so a first
+cost or a unit a rung can be moved and every table re-reads. It copies out what
+you changed as config lines.
+
 Iterate against a shot, not against a suite. A four-minute run that cannot tell
 you whether a hat is on straight is pure latency.
 
