@@ -7058,6 +7058,135 @@ screenshot at 1440x900 and at the minimum size.
   for the console, but `S.broken` stays false: `save a copy` hands over the
   yard that is standing, not the blob that would not read.
 
+## Save slots: three yards, one at a time (design, not built)
+
+The game has one yard and one autosave. A player who wants to start over
+without losing the yard they have -- to try the other opening, to show a
+friend the first minute, to keep a drowned pit and go and build another --
+has nothing but `save a copy` to a file and `load a save` back from one, and
+that is a bug report's tool, not a player's. The desk store was laid out for
+slots (`<name>.json` beside `current.json`) and stopped there. This is the
+rest of it.
+
+### The bargain
+
+**A slot is a yard, not a snapshot.** Three of them, numbered, and one is
+the yard you are playing. The autosave writes to the one you are in and no
+other; switching slots is switching which yard the page is running. That
+is the "profiles" model rather than the "save here / load" model, and it
+was chosen on purpose: a snapshot slot is a copy of a yard the player has
+to remember to take, and a copy taken once and played past is a copy that
+lies. A yard that is always its own save cannot lie, because nothing is
+ever copied -- the same autosave that already keeps the one yard keeps
+each of the three.
+
+What it costs the player: nothing they had. Every existing save is slot 1,
+under the key it has always had; slots 2 and 3 are empty until stepped into.
+What it costs the code: the key the store reads and writes becomes a
+function of which slot is open, and one more page on the held sheet. The
+guarantees the desk wave bought -- an atomic write, a last-good beside every
+save, nothing overwriting a blob that has not parsed back -- hold per slot,
+because each slot is the same pair of files under a different name.
+
+**Nothing is named by the player.** The game has no text field but the paste
+box and does not want one on a sheet whose other lines are one word each.
+A slot says what it holds instead, read off the save itself: `1 · rock 12 ·
+7 crew · playing`, `2 · rock 3 · 2 crew · 5 days ago`, `3 · empty`. That is
+more than a name would tell you and it cannot go stale.
+
+**Stepping into an empty slot is the new game.** It starts the intro, the
+way a first visit does, without touching the yard you left. The reset
+button stays as it is and erases only the slot you are in: with slots
+there are two different wishes -- "start another" and "wipe this one" --
+and they get two different buttons, neither of which can do the other's
+harm.
+
+### What is on the sheet
+
+A `saves` button on the held sheet's front, beside `achievements`, turning
+the page to a list of three rows and a `back` -- the record's shape, because
+it is the record's kind of thing: a page to read, behind the one surface
+that is not the yard. Each row is a button:
+
+```
+1 · rock 12 · 7 crew · playing
+2 · rock 3 · 2 crew · 5 days ago
+3 · empty
+```
+
+The row you are in is inert and says `playing`. Pressing another row saves
+the yard you are in, opens that slot, and boots it -- `restore` and
+`bootYard`, the same boot an import does -- with the sheet still up and the
+`said` line reading `yard 2` (or `a new yard` for an empty slot). No reload:
+the page is already up and the player is looking. Pressing an empty row is
+the two-click arming the reset uses (`start a new yard?` for four seconds),
+because it is the one press on the page that begins an intro.
+
+The time is the coarse kind -- `just now`, `4 min ago`, `3 h ago`, `5 days
+ago` -- and comes from a `savedAt` stamp `blob()` starts writing. A save
+from before the stamp shows no time and nothing else changes.
+
+### What moves, file by file
+
+- **`save.js` keys by slot.** `KEY`, `PREV_KEY` and `BROKEN_KEY` become
+  functions of the open slot: slot 1 is exactly the keys of today
+  (`boulder-clicker/v4`, `.prev`, `.broken`), so no existing save moves;
+  slot *n* is `boulder-clicker/v4/n` with the same suffixes. Which slot is
+  open is a page fact, not a save fact -- it lives beside the prefs under
+  `boulder-clicker/slot` and is never on `S` -- read once at module load
+  and written by `openSlot(n)`. The desk adapter's held blob becomes one per
+  slot. `slotRaw(n)` reads any slot's blob without opening it, for the labels.
+- **The tab owner is per slot.** `OWNER_KEY` follows the slot too, so two
+  tabs on two different slots are two yards and neither yields to the other;
+  two tabs on one slot behave exactly as today. The `storage` listener in
+  main.js compares against the open slot's owner key. (A page that yields
+  and reloads boots into whatever slot is written under `boulder-clicker/slot`
+  at that moment, which the other tab may have changed -- the store is the
+  yard now, as the yield already says.)
+- **`persist.js` gains `switchSlot(n)`:** `persist()` the yard standing,
+  `openSlot(n)`, then `restore()` and `bootYard()`, then `S.dirty = true;
+  persist()` so the new slot has a blob the instant it is entered. `reset`
+  and `importSave` need no change: `clear`, `loadRaw` and `saveRaw` already
+  go through the store and the store now knows its slot. `blob()` writes
+  `savedAt`.
+- **`src/slots.js`** is `record.js`'s twin: `slotLabels()` (parse each
+  slot's blob for `boulderNo`, `crew`, `savedAt`; a blob that will not parse
+  is `unreadable`; none is `empty`), `showSlots(el)` writing the rows, and
+  the click wiring including the two-click arm on an empty row.
+- **`settings.js`** adds the `saves` pane to `showPane`, the way `record`
+  is there; **`index.html`** the button, the page and its `back`;
+  **`style.css`** the rows (`.held .slots`, one column, the record's card
+  shape).
+- **The desk.** `store.cjs`'s `read(slot)` and `write(slot, raw)`: slot 1 is
+  `current.json` / `last-good.json` exactly as today; slot *n* is
+  `slot-n.json` / `slot-n.last-good.json`. `preload.cjs` and `main.cjs`
+  thread the slot through `desk:read` and `desk:write`; `exportTo`,
+  `importFrom` and `version` do not change. The migration from the browser
+  runs for slot 1 only, exactly as now -- slots 2 and 3 never had a browser
+  copy to bring over.
+- **`hooks.js`:** `__slot(n)` for the node tier, which is `switchSlot`.
+
+Not built with this: copying a yard from one slot to another (a snapshot
+by another name; `save a copy` / `load a save` do it by hand and the sheet
+stays small), and deleting a slot from the list (switch in, reset).
+
+### Checks
+
+- `test/slots.test.mjs` (node): play a yard in slot 1, `__slot(2)` starts
+  the intro with slot 1's blob untouched under its key; play, `__slot(1)`
+  brings the first yard back with its rock number and crew; `slotLabels()`
+  reads `rock`, `crew` and `empty` right; a reset in slot 2 leaves slot 1
+  standing; an import lands in the open slot only.
+- `test/desk-store.test.mjs`: `write(2, raw)` lands in `slot-2.json` and
+  promotes to `slot-2.last-good.json`, and `current.json` is not touched;
+  `read(2)` on a fresh directory is two nulls.
+- `test/desk-adapter.test.mjs`: the fake desk grows the slot argument; the
+  migration runs for slot 1 and never for slot 2.
+- The browser tier, group `slots` in `src/selftest/settings.js`: hold the
+  game, press `saves`, press row 2 -- the player's way -- and the intro is
+  standing; press `back`, resume, hold again, and row 1 reads `rock` and
+  row 2 reads `playing`.
+
 ## What the five resources are called (built)
 
 Player-facing, they are **pebbles**, **cores**, **ore**, **crops** and

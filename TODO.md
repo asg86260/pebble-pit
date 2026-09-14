@@ -1,5 +1,16 @@
 # Still to do
 
+## Save slots -- DESIGNED, NOT BUILT (2026-09-13)
+
+"Save slots: three yards, one at a time" in DESIGN.md. Three numbered
+slots, each its own autosaving yard (profiles, not snapshots -- decided);
+slot 1 is every existing save under its existing key, so nothing migrates.
+A `saves` page on the held sheet lists them by what they hold (`rock 12 ·
+7 crew · 5 days ago`); stepping into an empty one is the new game, the
+reset erases only the slot you are in. Keys, the tab owner, `.prev` and
+`.broken` all follow the slot; the desk gets `slot-n.json` beside
+`current.json`. Blocker: the design wants sign-off before code.
+
 ## The cut is worked in pockets -- BUILT (2026-09-13)
 
 "The cut is worked in pockets" in DESIGN.md, with an as-built note. A swing
