@@ -15,8 +15,6 @@
 
 import { S } from './state.js';
 
-const KEY = 'boulder-clicker/v4';
-
 const sheet = document.getElementById('crashed');
 const why = sheet.querySelector('.why');
 const said = sheet.querySelector('.said');
@@ -41,13 +39,16 @@ export function fatal(err) {
 // written *before* the throw -- nothing has been written since, which is the
 // whole point -- so what you paste back in is a yard that was still standing.
 // The copying itself is the settings sheet's `copyOut`, so the two sheets hand
-// over the same blob the same way. It is fetched at the click rather than
-// imported at the top: this file has to be the first thing evaluated, before
-// any of the game, and settings.js pulls the whole yard in behind it.
+// over the same blob the same way, and the blob is the store's (`loadRaw`,
+// wherever the save is kept -- it read localStorage by hand once, and handed
+// over nothing the day the save moved). Both are fetched at the click rather
+// than imported at the top: this file has to be the first thing evaluated,
+// before any of the game, and either import pulls the whole yard in behind it.
 document.getElementById('copysave').addEventListener('click', async () => {
-  let raw = '';
-  try { raw = localStorage.getItem(KEY) || ''; } catch {}
   const { copyOut } = await import('./settings.js');
+  const { loadRaw } = await import('./save.js');
+  let raw = '';
+  try { raw = loadRaw() || ''; } catch {}
   await copyOut(raw, said);
 });
 

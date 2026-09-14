@@ -106,6 +106,11 @@ relayout();
 // (save.js, `primeStore`): the save is in IndexedDB now, which only answers
 // in its own time, and the yard reads the store as if it did not.
 await primeStore();
+// ...and asked to be kept: a browser short of disk evicts the storage of
+// origins nobody asked it to keep, least recently used first, and an itch
+// player away for a month is exactly that. Silent in Chrome, a prompt in
+// Firefox, ignored where unsupported; the answer changes nothing here.
+try { navigator.storage?.persist?.(); } catch {}
 restore();
 buildShop();
 syncWorkers();

@@ -117,7 +117,9 @@ way, the purchase raised a lever-ask nothing could answer.
 
 **The save is the fixture.** When the user reports emergent misbehavior
 ("workers are stuck"), ask for their save before building synthetic repros —
-`localStorage.getItem('boulder-clicker/v4')`. The stuck-yard bug was seven
+`save a copy` on the settings sheet (the save lives in IndexedDB on the web,
+so `localStorage.getItem('boulder-clicker/v4')` is empty there; in the node
+yard it is still that key). The stuck-yard bug was seven
 defects stacked; hours of synthetic scenarios reproduced none of them and the
 save reproduced all of them in one load. Load it in the node yard with
 `localStorage.setItem('boulder-clicker/v4', raw); yard.restore()`, keep it as
