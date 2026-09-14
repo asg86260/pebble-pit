@@ -9242,7 +9242,16 @@ Four small things asked for together on 2026-09-14; the spec is
   the duck-and-wait stage). The gang wait on *a rock being in the air*, not
   on the drop zone, because a scene that holds the yard takes the zone away
   while the dome holds a rock overhead. The next rock is not made until the
-  footprint is clear, backstopped by `nextBoulderAt`.
+  footprint is clear, backstopped by `ROCK_GAP_MS` (a second); the crew run
+  out of a footprint at `DUCK_PACE`, so rock N+1 is in the air about half a
+  second after rock N dies and down 0.7 s later. The between-rocks dig at
+  the buried one went with the dance that gave it time; the dig happens
+  under the dome, which is the one place a player was ever going to finish it.
+- **A rockhand's shovel stays on its rock.** Surfaced by the change above:
+  `rockhandMess` gated the shovel on muck being on the rock, but the pick
+  (`nearestMuck`) handed out the nearest column of anything, so a gang with
+  a few grains left on the face followed the yard's drift to the far wall.
+  The pick is kept to the rock's own columns unless the pile is full.
 - **The dome comes down.** Its job is one hold, the rescue. Once `rescued`
   and the rescue walk is over, a standing dome fades over `DOME_FADE_MS` and
   is gone; `'dome'` joins `shieldsDone`, the row reads done. Magic, so a fade
