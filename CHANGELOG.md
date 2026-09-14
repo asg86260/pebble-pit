@@ -13,6 +13,7 @@ this file is for things that were broken.
 - The quarry's ore yield rungs stay bought across a reload.
 - A half-dug cut no longer fills itself back in when the last quarrier climbs out to clear the yard.
 - Quarriers down the cut move with it when a new pot shoves the quarry along, instead of being left standing in solid ground.
+- A quarrier called away to build an upgrade gives up its column, so the rest of the gang dig it instead of leaving a spike.
 
 ## v0.1.16 — 2026-09-14
 
