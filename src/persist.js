@@ -1331,6 +1331,13 @@ export function importSave(raw) {
 export function switchSlot(n) {
   persist();
   setSlot(n);
+  // The claim is per slot (save.js, OWNER_KEY), and the boot made it for the
+  // slot open then: the new slot's key holds whichever page last wrote there,
+  // and a page that did not claim it would take that name for another tab's
+  // and yield every write from here on -- a yard switched into and never
+  // saved. So the switch claims, the way the boot does.
+  claimSave();
+  S.yielded = false;
   if (!loadRaw()) { reset(); return; }
   restore();
   bootYard();

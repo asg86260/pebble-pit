@@ -7,7 +7,7 @@
 // `switchSlot` the saves page presses; the page itself is the browser tier's.
 
 const { group, ok, state, run, yard } = await import('./helpers.mjs');
-const { persist, exportSave, importSave } = await import('../src/persist.js');
+const { persist, exportSave, importSave, claimSave } = await import('../src/persist.js');
 const { openSlot, setSlot, slotRaw } = await import('../src/save.js');
 const { slotLabels, since } = await import('../src/slots.js');
 const KEY = 'boulder-clicker/v4';
@@ -98,6 +98,28 @@ group('an import lands in the open slot only', async () => {
     ok(took && state().crew === 3, 'the imported yard is standing in slot 2', `${state().crew} crew`),
     ok(localStorage.getItem(KEY) === first, 'slot 1 is as it was'),
     ok(openSlot() === 2, 'and slot 2 is still the open one')
+  ];
+});
+
+// The tab-owner key follows the slot, and the boot claimed the slot it
+// opened in. A switch that did not claim the new slot found some earlier
+// page's name there, took it for another tab, and yielded every write: the
+// yard was switched into and never saved.
+group('switching slots claims the new slot, so its autosave is not yielded to a ghost', async () => {
+  clean();
+  claimSave();                                   // as the boot does: this page is the writer
+  played(2);
+  localStorage.setItem(KEY + '/2.tab', 'someoldpage');
+  window.__slot(2);
+  window.__crew(1);
+  run(5);
+  yard.S.dirty = true;
+  persist();
+  const blob = slotRaw(2);
+  const crew = blob ? JSON.parse(blob).crew : null;
+  return [
+    ok(!yard.S.yielded, 'the page did not stand aside', String(yard.S.yielded)),
+    ok(crew === 1, 'and slot 2 holds the yard played in it', `${crew} crew`)
   ];
 });
 

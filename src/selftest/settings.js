@@ -10,10 +10,10 @@ import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion } from '../prefs.js';
 import { disarmReset, hold } from '../input.js';
-import { setSlot, storeSettled } from '../save.js';
+import { setSlot, storeSettled, clear } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
-import { persist, exportSave } from '../persist.js';
+import { persist, exportSave, claimSave } from '../persist.js';
 import { earn, noticeFor } from '../notices.js';
 import { toastUp, toastWaiting } from '../toast.js';
 import { TOAST_MS, TOAST_GAP_MS } from '../config.js';
@@ -87,8 +87,16 @@ export const TESTS = [
   // twice, is the new game with the first yard kept; the first row brings
   // it back.
   ['the saves page switches yards', async () => {
+    // slot 2 empty before and after, through the store: the save is in
+    // IndexedDB, and a key removed from localStorage by hand left a run's
+    // yard standing there for the next run to find. Setting the slot by hand
+    // skips the claim `switchSlot` makes, so the claim is made here too, and
+    // the database is waited for at the end so the pointer lands before the
+    // harness closes the page.
+    const emptySlot2 = async () => { setSlot(2); clear(); setSlot(1); claimSave(); S.yielded = false; await storeSettled(); };
     newRun();
     await settle();
+    await emptySlot2();
     window.__crew(2, 2);
     run(5);
     S.dirty = true;
@@ -110,8 +118,7 @@ export const TESTS = [
     const saidBack = said();
     document.getElementById('slotsback').click();
     resume();
-    setSlot(1);
-    localStorage.removeItem('boulder-clicker/v4/2');
+    await emptySlot2();
     localStorage.removeItem('boulder-clicker/v4/2.tab');
     return [
       ok(listed[0].endsWith('playing') && listed[1] === '2 · empty' && listed[2] === '3 · empty',
