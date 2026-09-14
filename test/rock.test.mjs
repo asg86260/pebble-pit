@@ -16,6 +16,14 @@ import { sweep } from '../src/hands.js';
 group('a finished rock is worth a moment', async () => {
   window.__crew(3, 0);
   haveRock();
+  // The first rock's finish is the reunion, and the reunion is not a party
+  // (see `celebrate`): nobody jumps. So the first one goes and the next one
+  // comes down before the dance this check is about. Before this, the check
+  // was passing on the reunion -- the "hopping" it measured was three fresh
+  // bodies easing down out of the sky to the ground they were made above.
+  window.__next();
+  runUntil(() => S.reunionDone && !S.intro, 60);
+  haveRock();
   window.__next();                          // the last of it goes
   run(0.5);
   const partying = state();

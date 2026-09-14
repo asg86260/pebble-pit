@@ -44,7 +44,8 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut } from './state.js';
 import { P } from './config.js';
-import { ways, wayAt, WORKINGS } from './route.js';
+import { ways, wayAt, standTop, WORKINGS } from './route.js';
+import { cutTop } from './quarry.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
 import { count, countDust } from './grid.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
@@ -96,6 +97,21 @@ const BURIED_FRAMES = 60;
 // debug counter has no business travelling with it, and one that did would have
 // to be remembered by every path that makes a body.
 const sunkSince = new WeakMap();
+
+// How far above the highest thing under it a body may be, and for how long,
+// before it is standing on nothing (rule 9). A body's height, because a hop in
+// a dance clears more than a cell at its top and the feet ease *down* to a cut
+// floor the same way they ease up to a step. The frames are the buried rule's:
+// a dance is on the ground at every beat, and a climb down is done in eight.
+const FLOAT = WORKER;
+const FLOAT_FRAMES = BURIED_FRAMES;
+const floatSince = new WeakMap();
+
+// How far off the column under its middle a body in the cut may stand (rule 10).
+// A course of the floor is a cell, and a course was the whole of the 2026-09-14
+// bug, so the slack has to be less than one.
+const COURSE = P / 2;
+const offFloorSince = new WeakMap();
 
 // The *lowest* thing under a body, rather than the highest.
 //
@@ -291,6 +307,48 @@ export function verifyWorld() {
              `${who(w)} is ${Math.round(feet - surf)}px into the ${way.key} `
              + `and has been under it for ${S.tick - since} frames`);
     } else sunkSince.delete(w);
+
+    // --- rule 9: nothing floats --------------------------------------------------
+    // The mirror of the buried rule, and the one that was missing when the gang
+    // stood a course above the finished floor of the cut and walked out on air
+    // (2026-09-14, three fixes in two releases). A body's feet belong on the
+    // highest column under any part of it; feet held up over even that are on
+    // nothing at all. A body walking a route is excused -- down a ladder, over
+    // the heap, it is between surfaces on purpose -- and so is a hop in a dance,
+    // which is back on the ground at every whole beat: the slack in frames is
+    // longer than any beat, so only a body that *stays* up there is reported.
+    const top = standTop(w.x, way.at);
+    if (!(w.route && w.route.length) && !w.floating && w.jigAt == null && top - feet > FLOAT) {
+      const since = floatSince.get(w) ?? S.tick;
+      floatSince.set(w, since);
+      if (S.tick - since > FLOAT_FRAMES)
+        fail('a body is standing on nothing',
+             `${who(w)} has its feet ${Math.round(top - feet)}px over the ${way.key} `
+             + `and has been up there for ${S.tick - since} frames`);
+    } else floatSince.delete(w);
+
+    // --- rule 10: the cut is worked from its floor ------------------------------
+    // The floor of the cut is jagged on purpose, and a body standing on it stands
+    // on the column under its middle -- the dig's rule (`stepQuarrier`), and since
+    // 2026-09-14 the walk's too (`feetOn`). Before that the walk used the
+    // highest-of-three rule the yard uses, and over every dip the two disagreed
+    // by a course: the whole gang floating out along the floor to the ladder,
+    // inside rule 9's slack because a course is less than a body. So the rule is
+    // asked to the cell, against `cutTop` itself rather than through `feetOn`,
+    // because a check that reads the answer off the code it is checking is not
+    // a check. Same shape of slack as the others: feet ease to the floor over a
+    // few frames after a column under them is cut away.
+    if (way.key === 'cut' && !(w.route && w.route.length)) {
+      const floorY = cutTop(w.x + WORKER / 2);
+      if (Math.abs(feet - floorY) > COURSE) {
+        const since = offFloorSince.get(w) ?? S.tick;
+        offFloorSince.set(w, since);
+        if (S.tick - since > FLOAT_FRAMES)
+          fail('a body in the cut is not on the column under its middle',
+               `${who(w)} has its feet ${Math.round(feet - floorY)}px off the floor `
+               + `at ${Math.round(floorY)} and has been for ${S.tick - since} frames`);
+      } else offFloorSince.delete(w);
+    } else offFloorSince.delete(w);
   }
 
   // --- rule 4: the counts are the crew ------------------------------------------

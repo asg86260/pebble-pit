@@ -33,6 +33,7 @@
 import { S } from '../state.js';
 import { TYPE } from '../jobs.js';
 import { rand } from '../rng.js';
+import { wayOver, feetOn } from '../route.js';
 
 // `step`, and the three answers the stages want from a row:
 //
@@ -226,8 +227,20 @@ export const wanted = () => {
 // it *after* calling this, and spreading the result of calling `undefined` throws
 // before the guard is ever reached. An old save should cost you one body, not the
 // whole load.
-export const FACTORY = type => ({
-  ph: rand() * Math.PI * 2,
-  sp: 0.5 + rand() * 0.9,
-  ...(JOBS[type]?.factory() || {})
-});
+export const FACTORY = type => {
+  const made = {
+    ph: rand() * Math.PI * 2,
+    sp: 0.5 + rand() * 0.9,
+    ...(JOBS[type]?.factory() || {})
+  };
+  // And its feet on the ground under it, for the same reason. Four of the
+  // factories put a body at `y: 0` and one at the middle of the rock, and left
+  // the climb to bring it down: a cell a frame, so a farmhand made at the top
+  // of the world sank for five seconds through the sky to the plots. In play a
+  // fresh body is nearly always a carter, which stood itself right; a save
+  // missing a body, a dev hook and a scene did not, and the "nothing floats"
+  // rule (verify.js, rule 9) named every one. So the ground is asked here, once,
+  // and no factory has to know what is under the spot it picked.
+  if (Number.isFinite(made.x)) made.y = feetOn(wayOver(made.x), made.x);
+  return made;
+};

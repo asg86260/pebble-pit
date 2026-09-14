@@ -132,11 +132,12 @@ const STAGES = [
     // surface, so a quarrier tripped mid-dig was yanked UP through the wall
     // onto the bridge. The reported float is bodies over the yard and the
     // hill; the holes keep their ladders and their eases.
-    // And not in its first moments. A fresh body is born at its station's own
-    // height -- a rockhand at the heart of the rock -- and eases onto the surface
-    // as it comes into the world; treating that settling-in as a fall dropped
-    // newborns out of the sky with their velocities zeroed, and a warm-up's
-    // worth of hat errands never happened.
+    // A fresh body used to be excused for its first four seconds, because it
+    // was born at its station's own height -- a rockhand at the heart of the
+    // rock, a farmhand at the top of the world -- and eased down onto the
+    // surface as it came into the world. `FACTORY` stands every body on the
+    // ground under it now (crew/jobs.js), so there is nothing to excuse, and
+    // a newborn that walks off a ledge drops like anybody else.
     // ...and not a body scaling a face. `climbTo`'s wall rule holds a body at
     // the foot of anything steeper than a walk and leads it up by the feet, and
     // for the length of that climb the surface under it really is a long way
@@ -151,7 +152,7 @@ const STAGES = [
     // ground mined out from under it, a ledge walked off -- has no stamp and
     // falls exactly as it did.
     if (!w.falling && !w.lifted && !w.aloft && !w.floating && !w.inside &&
-        w.jigAt == null && onYard(w) && (w.lived || 0) > 4000 &&
+        w.jigAt == null && onYard(w) &&
         !(w.route && w.route[0] && w.route[0].climb) &&
         S.tick - (w.scaleAt ?? -9) > 2 &&
         surfaceUnder(w) - w.y > P * 5) {
