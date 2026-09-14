@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>mock b</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; color: #000; overflow: hidden;
+    font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  .yard { position: fixed; inset: 0; background: #fff url(../../shots/house.png) 92% 55% / cover no-repeat; }
+  .yard::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 60px; background: #fff; }
+  .yard::after { content: ""; position: absolute; right: 0; bottom: 0; width: 60px; height: 60px; background: #fff; }
+  .col { gap: 7px !important; position: fixed; left: 0; top: 0; bottom: 0; width: 300px; padding: 34px 0 0 36px; box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 10px;  }
+  .name { font-size: 34px; letter-spacing: .34em; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
+  .line { letter-spacing: .1em; color: #333; margin-bottom: 14px; max-width: 20em; }
+  .col button { font: inherit; letter-spacing: .14em; text-transform: uppercase; color: #000; background: none;
+    border: 1px solid #000; padding: 5px 14px; cursor: pointer; text-align: left; width: 21em; }
+  .col button.play { color: #fff; background: #000; }
+  .col .sub { font-size: 10px; color: #333; letter-spacing: .1em; margin: -6px 0 0 15px; }
+  .foot { position: absolute; bottom: 14px; left: 36px; right: 18px; display: flex; justify-content: space-between;
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #333; }
+</style>
+<div class="yard"></div>
+<div class="col">
+  <div class="name">pebble<br>pit</div>
+  <div class="line">a rock. a hole. a few people between them.</div>
+  <button class="play">play</button>
+  <div class="sub">yard 1 &middot; rock 12 &middot; 7 crew</div>
+  <button>saves &middot; 2 of 3 yards</button>
+  <button>achievements &middot; 11 of 42</button>
+  <button>settings</button>
+  <button>quit</button>
+</div>
+<div class="foot"><span>v0.1.12</span><span>rocks keep coming. there is no finish line.</span><span>itch &middot; github</span></div>

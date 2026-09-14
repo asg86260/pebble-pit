@@ -6911,6 +6911,104 @@ A hidden window is a pause. The clock may not leap on return, because a
 leap is every timed thing you paid for resolving at once, which is the one
 punishment for walking away that pillar 2 forbids.
 
+## The landing page (design, not built)
+
+The title front on the held sheet was the cheap version: a pause screen with
+a different word on it, over the yard you were already in. A landing page is
+where a game *begins* -- the name, the picture, the menu -- and it is the one
+place a player is not yet in a yard, which is what makes choosing one there
+feel natural rather than like a settings row. So the title becomes a page of
+its own, and the game page goes back to opening playing.
+
+### The bargain
+
+**Two documents.** `index.html` is the landing page and `play.html` is the
+game. The itch embed, the desk, a bookmark all land on the title; `play`
+opens the game. The cost is one document load between the two -- about a
+second, the yard's own boot -- and every tool that drives the game names
+`play.html` (`GAME` in headless.mjs gets it appended once). What it buys is
+a page with nothing of the game's DOM in it: no boards, no HUD, no toast, no
+pointer over a yard, and a menu that is the page rather than a sheet.
+
+**The picture is the yard, live.** Not a still. The page runs the game's own
+renderer on a demo yard -- a scene from `scenes.js`, so it is the same code
+and never goes stale -- with the camera composed so the left third is empty
+sky and ground under the menu, and the sim running: the pair step out of the
+house, a small crew swings at a rock, motes drift. A scene is staged
+(`S.staged`), which is exactly what a demo yard needs: never written to any
+slot. Under `motion: less` it stands still. The rule of the whole game --
+watchable cause and effect -- is the first thing on the page.
+
+**Nothing is a sheet.** The menu is a column on the left, in the sheet's
+hand (the boards' monospace, tracked capitals, one-pixel borders), and each
+button opens *in the column*: `saves` swaps the buttons for the three rows
+and a `back`; `achievements` for the record's cards; `settings` for the
+switches. One place, and the yard keeps moving behind it.
+
+### The page
+
+```
+PEBBLE                         .  .     .        .
+PIT                                 .        .
+a rock. a hole. a few people
+between them.                          ▄▄▄▄
+                                   ▄▄▄▄████▄▄▄▄
+[ PLAY                    ]        ████████████      □ □
+  yard 1 · rock 12 · 7 crew · 4 min ago
+[ SAVES · 2 of 3 yards    ]  ─────────────────────────────
+[ ACHIEVEMENTS · 11 of 42 ]
+[ SETTINGS                ]
+[ QUIT                    ]  (desk only)
+
+v0.1.12      rocks keep coming. there is no finish line.      itch · github
+```
+
+- **The name** in two lines, 34 px, tracked wide -- the sheet's `.word` a
+  size up -- and under it the one line the itch page opens with.
+- **`play`** is the one filled button. Under it, what it will open: the open
+  slot's label as the saves page writes it (`yard 1 · rock 12 · 7 crew ·
+  4 min ago`), or `a new yard` when the slot is empty. Enter and space are
+  `play` too.
+- **`saves · n of 3 yards`** turns the column into the three rows. Picking a
+  row opens that slot (the pointer, `setSlot`) and nothing else happens --
+  the label under `play`, the count on `achievements` follow -- because no
+  yard is running here to switch. An empty row is armed as on the sheet.
+- **`achievements · x of y`** is the open slot's record, read off its blob
+  (`won`, `wonAt`), the record's cards in the column, two across. Per yard by
+  construction, as before.
+- **`settings`** is the sheet's settings page in the column: motion, sound,
+  volume, `save a copy` / `load a save` acting on the open slot's blob
+  through save.js (no yard needed: export is `slotRaw`, import validates and
+  writes the slot), `reset progress` armed, erasing the open slot.
+- **`quit`** on the desk only. The footer: the version, the one honest
+  sentence, and `itch · github` links on the web.
+
+### What changes in the game page
+
+- `play.html` boots playing again -- no hold, no title front. The held sheet
+  keeps its `saves`, `achievements` and `settings` pages (esc while playing
+  should not mean leaving the yard); its `title page` button becomes a real
+  exit: `persist()`, `await storeSettled()`, then `location.href =
+  'index.html'`. The store is written behind, and a navigation that did not
+  wait could lose the last write.
+- `main.js`'s boot: `hold(true, 'title')` goes; the harness door in
+  `newGame` stays and is harmless.
+- `index.html`'s script is `src/title.js`: `primeStore`, the labels off
+  `slotLabels`, the record off the blob, the demo scene through the renderer
+  with the camera composed. It shares `save.js`, `slots.js`, `record.js`,
+  `prefs.js`, `settings.js`'s `copyOut`; it never imports `main.js`.
+- The desk loads `dist/index.html` (the title) and `desk.version()` fills
+  the footer. `vite.config.js` gets two inputs.
+
+### Checks
+
+- `test/title.test.mjs` (node): the label under `play` for an open, empty
+  and unreadable slot; the record off a blob; picking a row moves the
+  pointer and nothing is written.
+- Browser: `GAME=.../index.html node tools/headless.mjs --shot title.png 1`
+  is the look; one group in a new `src/selftest/title.js`, run against
+  `index.html`, presses `play` and finds `play.html` with the yard running.
+
 ## The save is in IndexedDB (built)
 
 A player on itch.io, in plain Chrome, saw `not saving: storage is blocked or
