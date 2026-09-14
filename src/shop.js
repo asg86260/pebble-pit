@@ -904,7 +904,11 @@ export function fillPin() {
   if (!pinEl) return;
   let u = S.pinned ? rowFor(S.pinned) : null;
   if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; S.dirty = true; }
-  if (!u) {
+  // ...but not while a scene has the camera: the next shield's row arrives on
+  // the frame the last one breaks, which is the middle of its cutscene, and a
+  // card in the corner of that is a card over the thing being watched. It
+  // goes up once the scene has let go all the way.
+  if (!u && !S.cine) {
     u = goalRow();
     if (u) { S.pinned = u.key; markRowSeen(u); S.dirty = true; }
   }

@@ -159,8 +159,15 @@ export function breakShield() {
 // the shield telling you what is about to happen, in the only vocabulary this
 // game has, which is stuff coming off things.
 function strainOn(s, kind) {
-  const held = kind.holds || 1;
-  s.strain = Math.max(0, Math.min(1, (now() - s.caught) / held));
+  // How near it is to going: for a thing that holds and then cracks, how much
+  // of its hold is spent; for the rope, which never holds and only pays out,
+  // how far down its payout the rock has ridden. The rope used to be read off
+  // a hold it does not have, which put it at one on the frame it caught -- the
+  // whole payout at full tremble, shedding as hard as an arch a beat from
+  // cracking.
+  s.strain = kind.holds ? (now() - s.caught) / kind.holds
+           : s.held > 0 ? (s.held - S.rockFall) / s.held : 1;
+  s.strain = Math.max(0, Math.min(1, s.strain));
   // more of it, and faster, the nearer it is to going
   if (Math.random() > 0.08 + s.strain * 0.5) return;
   const top = shieldTopY(s) + (s.sag || 0) * P;
@@ -216,7 +223,13 @@ function answer(s, kind) {
       // from under it -- which is the beat this whole arc was built to reach,
       // so the rock waits overhead until they are clear. See `startRescue`.
       if (S.buried && !S.rescued) { startRescue(now()); return; }
-      if (S.intro === 'rescue') return;
+      // It waits overhead only while somebody is still in the ground under
+      // it. The moment they are up and walking it starts down -- the walk out
+      // from under is half a second and the descent is six, so the two of
+      // them have their beat under a rock coming down beside them rather than
+      // stood about waiting for it. It used to wait for the whole beat, and
+      // the scene was two things in a row that should have been one.
+      if (S.intro === 'rescue' && S.buried) return;
       if (now() - s.caught >= kind.holds) { s.setting = true; S.dirty = true; }
       return;
     }

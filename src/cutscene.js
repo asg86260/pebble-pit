@@ -27,7 +27,7 @@
 
 import { P, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
-         CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_OUT_S, CUT_GLIDE } from './config.js';
+         CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE } from './config.js';
 import { S, rift, pit } from './state.js';
 import { setZoom, clampCam } from './world.js';
 import { reducedMotion } from './prefs.js';
@@ -68,7 +68,10 @@ const SHIELD = {
   over: c => {
     if (!S.shield) return true;                  // it broke: the four that fail
     if (S.rockHeld) c.held = true;               // it has hold of it
-    return !!c.held && !S.rockHeld && S.rockFall <= 0;   // and has let it down
+    // ...and has let it down, and the two of them have had their beat under
+    // it: the rock is set down while they stand there (shield.js, `answer`),
+    // so whichever finishes second is the end of the scene.
+    return !!c.held && !S.rockHeld && S.rockFall <= 0 && S.intro !== 'rescue';
   }
 };
 const sceneOf = name => SCENES[name] || SHIELD;
@@ -91,7 +94,7 @@ let sawFall = false;
 const play = name => {
   const sc = sceneOf(name);
   const zoom = typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
-  S.cine = { name, at: 0, s: sc.s, zoom,
+  S.cine = { name, at: 0, s: sc.s, zoom, from: S.zoom,
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
   S.cineOwed = name;               // until it has been seen through: see `release`
   S.dirty = true;
@@ -158,12 +161,22 @@ export function stepCutscene(t) {
   const out = !c.out ? 0
             : reducedMotion() ? 1
             : ease(Math.min(1, (t - c.outAt) / (CUT_OUT_S * 1000)));
+  // And how far in it is: the zoom and the ground line walk from the yard's
+  // own to the scene's over CUT_IN_S, alongside the seat's glide, for the
+  // same reason the way out is a stretch -- the first cut of this put the
+  // zoom on in one frame while the seat was still sliding over, and a
+  // picture that jumps closer and then pans is two moves where one was
+  // meant. Under reduced motion it is the cut it was.
+  const into = reducedMotion() ? 1
+             : ease(Math.min(1, (t - c.at) / (CUT_IN_S * 1000)));
   // The seat's center is what is kept across a zoom change, not its left
   // edge: the view widens as it pulls out, and holding `camX` would slide the
   // event off to the right of the frame.
   const center = S.camX + S.viewW / 2;
   S.camLockY = null;
-  setZoom(c.zoom + (1 - c.zoom) * out);
+  const from = c.from ?? 1;
+  const zoom = from + (c.zoom - from) * into;
+  setZoom(zoom + (1 - zoom) * out);
   // The disc grows under the tearing and its center creeps with it. Under
   // reduced motion the framing is taken on the scene's first frame and kept,
   // so the one thing that moves is the hole.
@@ -185,7 +198,7 @@ export function stepCutscene(t) {
   // difference in one frame is a hitch you feel.
   const close = S.groundY - S.viewH * (sc.ground || 0.62);
   const rest = S.worldH - S.viewH;
-  S.camLockY = close + (rest - close) * out;
+  S.camLockY = rest + (close - rest) * into * (1 - out);
   clampCam();
   if (out >= 1) {
     S.cine = null;

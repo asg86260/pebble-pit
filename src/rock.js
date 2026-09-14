@@ -127,7 +127,9 @@ export function dropZone() {
   // The rock the dome is holding for the rescue is not coming down on anybody:
   // it waits overhead while somebody walks in under it to dig, and a footprint
   // to be got out of would walk the digger straight back out. See `startRescue`.
-  if (S.intro === 'rescue') return null;
+  // Once they are out it is coming down (shield.js, `answer`), and the
+  // footprint is ground to be clear of again.
+  if (S.intro === 'rescue' && S.buried) return null;
   if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
   if (boulderAlive()) return null;
   // and nothing is coming while a scene has the yard: the bare ground where the

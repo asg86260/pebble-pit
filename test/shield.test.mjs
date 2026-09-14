@@ -173,8 +173,12 @@ group('the net slows the rock and lets it through anyway', async () => {
   window.__next();
   const caught = runUntil(() => state().rockHeld, 240);
   const high = state().rockFall;
+  // The strain is the payout: a rope that has just caught is not about to go,
+  // and one nearly at the ground is. It read as one from the first frame once.
+  const fresh = state().shield.strain;
   const sank = runUntil(() => state().rockHeld && state().rockFall < high - 12, 30);
   const low = state().rockFall;
+  const partway = state().shield.strain;
   const gone = runUntil(() => state().shieldsDone.includes('net'), 60);
   const landed = runUntil(() => state().rock > 0 && !state().rockFall, 120);
 
@@ -184,6 +188,8 @@ group('the net slows the rock and lets it through anyway', async () => {
     ok(bought && up, 'somebody builds it and it stands'),
     ok(caught, 'it takes hold of the rock'),
     ok(sank && low < high, 'and the rock keeps sinking through it', `${high} -> ${low}`),
+    ok(fresh < 0.2 && partway > fresh && partway < 1,
+       'straining harder the further it has paid out', `${fresh} -> ${partway}`),
     ok(gone, 'the rope pays out and gives up'),
     ok(landed, 'and the rock arrives after all')
   ];
@@ -256,9 +262,16 @@ group('under the dome, the one underneath walks out', async () => {
 
   window.__next();
   const caught = runUntil(() => state().rockHeld, 240);
-  // the rock waits overhead while they get clear
+  // the rock waits overhead while they are dug out...
   const walking = runUntil(() => state().intro === 'rescue', 30);
   const heldFor = state().rockHeld;
+  run(2);
+  const stillUp = state().buried && state().rockHeld && !state().shield.setting;
+  const dug = runUntil(() => !state().buried, 60);
+  // ...and starts down the moment they are up, while the beat is still on:
+  // the two of them meet under a rock coming down beside them, not after it
+  const coming = runUntil(() => state().shield.setting, 5);
+  const during = state().intro === 'rescue' && state().rescued;
   const out = runUntil(() => state().rescued && !state().intro, 60);
   const after = state();
   const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
@@ -267,12 +280,14 @@ group('under the dome, the one underneath walks out', async () => {
   return [
     ok(before.buried, 'somebody has been under every rock until now'),
     ok(caught && walking, 'the dome holds one and the beat starts', `intro ${state().intro}`),
-    ok(heldFor, 'the rock is still up there while they walk out'),
+    ok(heldFor && dug && stillUp, 'the rock is still up there while they are dug out'),
+    ok(coming && during, 'and starts down as they walk out, before the beat is over',
+       `setting ${coming}, intro ${during}`),
     ok(out, 'they get out'),
     ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
     ok(after.crew > before.crew, 'they join the crew',
        `${before.crew} -> ${after.crew}`),
-    ok(set, 'and only then is the rock set down')
+    ok(set, 'and the rock is set down')
   ];
 });
 

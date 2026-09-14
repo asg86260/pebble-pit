@@ -13,6 +13,10 @@ this file is for things that were broken.
 - The machines are heard at a worker's pace instead of hammering, and the ram no longer sounds twice a strike.
 - Rain falls at one speed and leans with the wind, instead of dropping straight down and speeding up.
 - An achievement landing is hard to miss: the card is black, bigger, rings as it lands and stays longer.
+- Under the dome, the rock comes down while the two of them meet, instead of after.
+- The end-of-story sheet and the next shield's card wait until a cutscene has let go, instead of landing on top of it.
+- A cutscene eases in instead of jumping closer and then panning.
+- The net no longer trembles and sheds at full strength from the moment it catches; it strains as it pays out.
 
 ## v0.1.12 — 2026-09-14
 

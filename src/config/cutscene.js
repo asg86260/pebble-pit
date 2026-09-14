@@ -31,3 +31,8 @@ export const CUT_SHIELD_MAX_S = 30;  // and never longer than this, whatever the
 // spot the seat covers each frame, going in and coming out alike.
 export const CUT_OUT_S = 1.5;
 export const CUT_GLIDE = 0.12;
+// Going in is a stretch too, a shorter one: the seat glides, and the zoom
+// and the ground line walk in beside it over this, so the pull-in is one
+// move rather than a jump closer and then a pan. Short because the thing
+// being watched is already under way -- a rock is down in under a second.
+export const CUT_IN_S = 0.5;

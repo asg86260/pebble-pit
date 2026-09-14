@@ -18,13 +18,18 @@
 // that sets `storyTold`. A reload with the sheet up brings it back; a reset
 // clears it with everything else; the held sheet coming up over it puts it
 // away until the yard is resumed, so two sheets never stand on one spot.
+//
+// And it waits for the camera. The rescue is a cutscene (cutscene.js) and the
+// rock is still being set down as the beat ends; a card over that is a card
+// over the one thing the game has asked you to watch, so the sheet comes up
+// once the scene has let go all the way -- the same rule the notices keep.
 
 import { S } from './state.js';
 
 const sheet = document.getElementById('saved');
 
 const due = () =>
-  S.rescued && S.intro !== 'rescue' && !S.storyTold && !S.paused && !S.fatal;
+  S.rescued && S.intro !== 'rescue' && !S.cine && !S.storyTold && !S.paused && !S.fatal;
 
 export function syncEnding() {
   const up = due();

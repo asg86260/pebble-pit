@@ -8232,8 +8232,25 @@ dome's first hold waits on somebody's walk. So `cutscene.js` gains a scene
 kind whose end is a fact rather than a duration: a shield scene releases a
 beat (`CUT_SHIELD_TAIL_S`, ~1.5 s, so the wreck is seen flying out along the
 heap) after `S.shield` is gone, or, for the dome, after the rock has been set
-down (`S.rockFall === 0 && !S.rockHeld`). A ceiling (`CUT_SHIELD_MAX_S`,
+down (`S.rockFall === 0 && !S.rockHeld`) *and* the two of them have had their
+beat (`S.intro !== 'rescue'`) -- whichever finishes second. The rock does not
+wait for the beat: it waits overhead only while somebody is in the ground
+under it, and starts down the moment they are up and walking (the walk out is
+half a second, the descent six), so the meeting happens under a rock being
+set down beside them rather than stood about waiting for it. Played as two
+things in a row it was a beat and then a wait. A ceiling (`CUT_SHIELD_MAX_S`,
 ~30 s) is a safety, never the design.
+
+**Nothing lands on the scene.** The end-of-story sheet (`ending.js`) and the
+shield on offer pinning itself into the corner (`fillPin`, shop.js) both wait
+until the scene has let go all the way (`!S.cine`), the rule the notice line
+already keeps: the next shield's row arrives on the frame the last one
+breaks, which is the middle of its own cutscene.
+
+**The way in is a stretch too**, a short one (`CUT_IN_S`): the zoom and the
+ground line walk from the yard's own to the scene's beside the seat's glide,
+so the pull-in is one move rather than a jump closer and then a pan. Short,
+because the thing being watched is already under way.
 
 **The framing** is one rule for all five: centered on the shield's span
 (`S.shield.x + S.shield.w / 2`), with the ground line low in the frame
