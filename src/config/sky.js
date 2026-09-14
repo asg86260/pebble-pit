@@ -295,6 +295,16 @@ export let BOLT_FLASH_INK = 0.2;    // and how dark it starts: the pane fades fr
 export const BOLT_STEP = 2;
 export const BOLT_JOG = 2;
 export const BOLT_KINK = 0.35;      // the chance a segment changes its jog, else it keeps going
+// What comes off a strike: embers, along the whole length of the bolt -- one
+// off each cell with EMBER_PER_CELL odds -- thrown out sideways a little,
+// rising at EMBER_RISE pixels a frame and slowing as they go, carried by the
+// wind like the rain, and fading out over EMBER_LIFE_S.
+export const EMBER_PER_CELL = 0.6;
+export const EMBER_RISE = 0.9;
+export const EMBER_SCATTER = 0.7;   // sideways throw either way, pixels a frame
+export const EMBER_EASE = 1.4;      // how fast the throw and the rise die off, a share a second
+export const EMBER_LIFE_S = 1.4;
+export const EMBER_LEAN = 0.6;      // share of the rain's lean the wind gives an ember
 export const BOLT_FORK_AT = [0.3, 0.6];
 export const BOLT_FORK_LEN = 4;
 // The share of what lands that leaves a mark. The whole sky falls either way --

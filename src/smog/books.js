@@ -3,7 +3,7 @@ import { S } from '../state.js';
 import { DROPS, SKY, climbing, drift, intake, raining, resetDrift, scrubbing } from './band.js';
 import { gullet, resetGullet } from './house.js';
 import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
-import { dryFor, rainOdds, resetRain } from './rain.js';
+import { EMBERS, dryFor, rainOdds, resetRain } from './rain.js';
 import { clearSky, cloudR, moteX, moteY } from './sky.js';
 import { spread } from './vents.js';
 
@@ -175,7 +175,7 @@ export function smogReport() {
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
            // a strike in the sky: how many cells it is, or 0 for none
-           bolt: S.bolt ? S.bolt.cells.length : 0,
+           bolt: S.bolt ? S.bolt.cells.length : 0, embers: EMBERS.length,
            // the storm's front and its wash, so a check can watch a brew-up
            brewing: S.stormFor >= 0, stormFor: S.stormFor,
            purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,
@@ -205,5 +205,7 @@ export function seedSmog() {
   // a fact about a run, like the clock and the seed.
   resetDrift();
   DROPS.length = 0;
+  EMBERS.length = 0;
+  S.bolt = null;
   S.muck = [];
 }

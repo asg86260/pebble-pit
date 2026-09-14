@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -220,15 +220,54 @@ function strike() {
   const at = cells[Math.floor(cells.length * (lo + rand() * (hi - lo)))];
   const way = at[0] < x0 ? 1 : -1;
   run(at[0], at[1], BOLT_FORK_LEN, way * BOLT_JOG * P);
+  // and what it throws off: embers along the whole of it, not a burst at the
+  // foot -- the bolt is the hot thing, all the way down
+  for (const [x, y] of cells) if (rand() < EMBER_PER_CELL) ember(x, y);
   return { cells, x: x0, left: BOLT_LIFE_S, flash: BOLT_FLASH_S };
+}
+
+// --- embers ------------------------------------------------------------------
+// The specks a strike throws off, all along it. Each is thrown out sideways a little and
+// upward, and both die away as it goes, so it rises, hangs and fades where it
+// got to rather than sailing off the top of the window. Black, and drawn on
+// the cell grid like everything else in the air. The wind has them the way it
+// has the rain, at a share -- they are lighter than a drop but they are not
+// nothing.
+export const EMBERS = [];
+function ember(x, y) {
+  const life = EMBER_LIFE_S * (0.6 + 0.4 * rand());
+  EMBERS.push({ x: x + rand() * P, y,
+                vx: (rand() * 2 - 1) * EMBER_SCATTER,
+                vy: -EMBER_RISE * (0.5 + rand()),
+                t: life, life });
+}
+
+export function stepEmbers(secs) {
+  if (!EMBERS.length) return;
+  const f = secs * 60;
+  const slow = Math.max(0, 1 - EMBER_EASE * secs);
+  const lean = gust() * RAIN_LEAN * EMBER_LEAN;
+  for (let i = EMBERS.length - 1; i >= 0; i--) {
+    const e = EMBERS[i];
+    e.x += (e.vx + lean) * f;
+    e.y += e.vy * f;
+    e.vx *= slow;
+    e.vy *= slow;
+    e.t -= secs;
+    if (e.t <= 0) EMBERS.splice(i, 1);
+  }
 }
 
 // dev: a strike now, held for `hold` seconds with the flash on for `flash` of
 // them, so a scene can stand at either frame of one.
 export function forceStrike(hold = BOLT_LIFE_S, flash = BOLT_FLASH_S) {
+  const had = EMBERS.length;
   S.bolt = strike();
   S.bolt.left = hold;
   S.bolt.flash = flash;
+  // and the embers it threw are held with it, at full weight, where they
+  // come to rest -- a shot a second later still has them
+  for (let i = had; i < EMBERS.length; i++) EMBERS[i].t = EMBERS[i].life = Math.max(EMBERS[i].life, hold);
 }
 
 export function stepBolt(secs) {
@@ -237,6 +276,7 @@ export function stepBolt(secs) {
   S.bolt.flash -= secs;
   if (S.bolt.left <= 0) S.bolt = null;
 }
+
 
 export function stepDrops() {
   const m = muckCols();

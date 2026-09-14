@@ -3962,7 +3962,14 @@ flash; dimmed, the yard stays the right way round and the bolt is the one
 bright thing in it. Then the bolt hangs black over the shower for
 `BOLT_LIFE_S`, fading through its second half.
 
-`S.bolt` is ephemeral, like the rain it came with. Scenes `lightning` and
+It throws embers, all along its length: a white cell in a black rim off
+most cells of the bolt (`EMBER_PER_CELL`), thrown out a little, rising and
+slowing, leaning with the wind at a share of what the rain takes, full weight
+for half a life and thinning through the rest. White in a rim rather than
+black, because black vanished into the heap a bolt had struck.
+
+`S.bolt` is ephemeral, like the rain it came with; the embers are a list in
+`rain.js`, cleared with the sky. Scenes `lightning` and
 `lightningflash` hold either frame; `__strike(hold, flash)` is the hook under
 them.
 

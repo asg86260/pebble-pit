@@ -98,12 +98,14 @@ group('a storm throws a bolt', async () => {
   run(12);
   const struck = runUntil(() => state().smog.bolt > 0, 60);
   const cells = state().smog.bolt;
+  const embers = state().smog.embers;
   const gone = runUntil(() => state().smog.bolt === 0, 2);
   window.__air({ haze: 0, muck: 0 });
   return [
     ok(came, 'it rains'),
     ok(struck, 'and a strike comes during the pour, unasked'),
     ok(cells > 20, 'and the bolt reaches from over the window to the ground', `${cells} cells`),
+    ok(embers > 5, 'and it throws embers off its length', `${embers}`),
     ok(gone, 'and it is gone again inside a second')
   ];
 });

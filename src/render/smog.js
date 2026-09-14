@@ -6,7 +6,7 @@
 import { now } from '../clock.js';
 import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
-import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
+import { DRAUGHT, DROPS, EMBERS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
@@ -352,12 +352,41 @@ export function drawRain() {
 // the flash is what turns it white -- see `drawFlash`.
 export function drawBolt() {
   const b = S.bolt;
-  if (!b) return;
-  ctx.fillStyle = '#000';
-  ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
-  ctx.beginPath();
-  for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
-  ctx.fill();
+  if (b) {
+    ctx.fillStyle = '#000';
+    ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
+    ctx.beginPath();
+    for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // and the embers off it: a white cell in a black rim, so a spark reads on
+  // the white sky and on a black heap alike -- black alone vanished into the
+  // ground it was thrown off. On the cell grid, thinning as it goes, bucketed
+  // by weight like the haze is so a burst is a handful of fills and not one
+  // fill per speck.
+  if (!EMBERS.length) return;
+  const runs = new Map();
+  for (const e of EMBERS) {
+    if (!onScreen(e.x)) continue;
+    // full weight for the first half of its life, thinning through the second
+    const a = Math.round(Math.min(1, 2 * e.t / e.life) * 10) / 10;
+    if (!a) continue;
+    let run = runs.get(a);
+    if (!run) runs.set(a, run = []);
+    run.push(Math.round(e.x / P) * P, Math.round(e.y / P) * P);
+  }
+  for (const [a, at] of runs) {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    for (let i = 0; i < at.length; i += 2) ctx.rect(at[i] - 1, at[i + 1] - 1, P + 2, P + 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    for (let i = 0; i < at.length; i += 2) ctx.rect(at[i], at[i + 1], P, P);
+    ctx.fill();
+  }
   ctx.globalAlpha = 1;
 }
 
