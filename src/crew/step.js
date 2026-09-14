@@ -102,13 +102,15 @@ import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
 import { sfx } from '../audio.js';
 
-// The yard is celebrating: a rock has just come off and earned a dance, or the
-// rock after a celebrated one is on its way down. Only the fall after a dance is
-// danced through -- the wind-down in dance.js plans its last hop against the
-// landing, so a party that stopped at the clock left bodies in the air -- and an
-// ordinary fall is not a party at all: `danceUntil` is nought after a rock that
-// earned no dance (core.js), and the crew get straight back to work.
-const dancing = c => c.now < S.danceUntil || (S.rockFall > 0 && S.danceUntil > 0);
+// The yard is celebrating: a rock has just come off and earned a dance, the
+// rescue is done, or a shield has just stood up. The dance ends at the clock and
+// nowhere else. A fall is never a party: every fall used to be danced through
+// so that the bodies were kept clear of the footprint and off the rock, and
+// the stage below does both of those now. Reading a fall as a dance by
+// `danceUntil > 0` was wrong twice over -- the deadline goes stale-positive
+// after any fanfare, so every fall after a shield stood was danced, and a body
+// dancing under a rock the dome is holding was jigged up onto its top.
+const dancing = c => c.now < S.danceUntil;
 
 // --- the stages -------------------------------------------------------------------
 // The list from the top of this file, in order, as code. Each one is handed
@@ -344,9 +346,15 @@ const STAGES = [
   // footprint is clear (core.js), and this is the stage that clears it. A
   // rock made the frame its predecessor died gave a gang stood in the middle
   // of the footprint a fall's length to cross half a rock, and they lost.
+  //
+  // The gang wait on the rock being in the air, not on the zone: a scene that
+  // has the yard takes the zone away (`dropZone`) while the dome holds a rock
+  // overhead, and a rockhand let go there climbed the held rock and swung at it.
   (w, c) => {
-    if (!c.zone || outOfYard(w) || w.craft || !onYard(w)) return false;
-    if (duck(w, c.zone)) w.ducked = true;
+    if (outOfYard(w) || w.craft || !onYard(w)) return false;
+    const coming = S.rockFall > 0;
+    if (!c.zone && !(coming && w.type === TYPE.ROCK)) return false;
+    if (c.zone && duck(w, c.zone)) w.ducked = true;
     else if (w.type !== TYPE.ROCK && !w.ducked) return false;
     w.lunge = 0;
     w.y = stand(w);

@@ -406,9 +406,6 @@ export function makeBoulder(fromSky = false) {
   const size = rockSize();
   S.gw = size.w;
   S.gh = size.h;
-  // A shield standing over the yard was planned for whichever rock was next
-  // when it was raised; this is that rock now, so it is re-planned to fit.
-  refitShield();
   const deep = depthOf();
   const seed = [rand() * 6, rand() * 6, rand() * 6,
                 rand() < 0.5 ? -1 : 1];
@@ -446,6 +443,10 @@ export function makeBoulder(fromSky = false) {
   // the air.
   S.rockFall = fromSky ? dropHeight() : 0;
   S.rockFallV = 0;
+  // A shield standing over the yard was planned for whichever rock was next
+  // when it was raised; this is that rock now, so it is re-planned to fit.
+  // After the fall is set, so the plan reads this rock as the one in the air.
+  refitShield();
   refreshPiles();            // a wider rock is a narrower pile beside it
   placeRock();
   refreshRockTops();

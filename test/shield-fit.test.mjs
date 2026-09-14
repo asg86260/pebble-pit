@@ -100,7 +100,7 @@ group('the arch and the dome stand wider than the rock, the props and the net ke
 // the air, not the one after it. It always planned for the next number, which
 // under a falling rock is a rock too big -- the one already coming was the one
 // it would meet. And a standing shield is refit for whatever rock is made next
-// (`refitShield`, called when the new rock is made), so one outgrown by the
+// (`refitShield`, called by `makeBoulder`), so one outgrown by the
 // rocks is widened for the one that reaches it.
 group('a shield bought while a rock is falling is planned for the falling rock', async () => {
   window.__reset();
@@ -124,8 +124,8 @@ group('a shield bought while a rock is falling is planned for the falling rock',
   const stood = S.shield && { ...S.shield };
   S.boulderNo += 3;
   const again = fall();
-  const staleFor = S.shield && misfit(S.shield, rockSize()).length > 0;
-  refitShield();
+  // Making the rock is what refits the shield, so it is never stale for a
+  // frame: the moment the bigger rock is in the air the plan already fits it.
   const fits = S.shield && misfit(S.shield, rockSize()).length === 0;
   const want = shieldPlan('props');
   const asPlanned = S.shield && S.shield.w === want.w && S.shield.x === want.x && S.shield.h === want.h;
@@ -138,8 +138,8 @@ group('a shield bought while a rock is falling is planned for the falling rock',
     ok(!!rising, 'and the buy starts the build'),
     ok(forThis, 'planned for the rock in the air', rising && `w ${rising.w}`),
     ok(notNext, 'and not for the one after it'),
-    ok(!!stood && again && staleFor, 'it stands, and a bigger rock than it was planned for comes', detail),
-    ok(fits && asPlanned && grew, 'and the refit widens it to fit that rock', detail),
+    ok(!!stood && again, 'it stands, and a bigger rock than it was planned for comes', detail),
+    ok(fits && asPlanned && grew, 'and making that rock widens it to fit', detail),
     ok(kept, 'keeping what has been laid')
   ];
 });
