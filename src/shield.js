@@ -18,7 +18,7 @@ import {
   SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST,
   PROP_FROM, PROP_COST, PROP_PLANKS,
   NET_COST, NET_ROPES, NET_SLOW,
-  ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS,
+  ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
   DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
@@ -27,6 +27,8 @@ import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
 import { startRescue } from './intro.js';
+import { shakeView } from './world.js';
+import { sfx } from './audio.js';
 
 // What each shield is, and the whole of what makes it different from the
 // others: what it is made of, what it costs, and how it answers a rock. A new
@@ -271,6 +273,14 @@ export function stepShield() {
     s.caught = now();
     s.held = S.rockFall;         // where it was when this took hold of it
     S.rockHeld = true;
+    // Stone stops it dead, and a rock stopping dead is an arrival: the view
+    // takes the knock and the yard hears it, smaller than the ground's. The
+    // rope only slows it and the dome holds it, and neither of those is a
+    // landing.
+    if (kind.answer === 'crack') {
+      shakeView(ARCH_CATCH_SHAKE);
+      sfx('arch-catch', { x: s.x + s.w / 2, hard: 1, big: true });
+    }
     lookUp(kind.holds || 1200);
     S.dirty = true;
     return;

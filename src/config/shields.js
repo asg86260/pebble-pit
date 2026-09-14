@@ -37,6 +37,10 @@ export const NET_SLOW = 26;         // world pixels a second the rock sinks thro
 export const ARCH_COST = 400;       // shards: more than the tiller, a real cut of the quarry
 export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
 export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs
+// A rock stopping on stone is an arrival, and the yard feels it: a knock,
+// smaller than the ground's because the arch takes the weight before the
+// ground does, and a lighter thump for the same reason.
+export const ARCH_CATCH_SHAKE = 6;  // world pixels the catch throws the view
 
 // The dome: the tower's, and the only one that holds. It is cast rather than
 // carried: the wizards fly over and pour it the way they pour a star into an

@@ -134,9 +134,13 @@ group('the arch catches one, and then the crack runs', async () => {
   // The catch: the rock stops in the air and is held there. It is a couple of
   // seconds, so it is watched frame by frame rather than sampled once a second.
   window.__next();
-  const caught = runUntil(() => state().rockHeld, 180);
+  // Frame by frame to the catch itself: the knock it lands with has died away
+  // inside a second, so a second's stride would step over it.
+  let caught = false;
+  for (let i = 0; i < 180 * 60 && !caught; i++) { window.__fast(1 / 60); caught = state().rockHeld; }
   const held = state();
   const restY = held.rockFall;
+  const knocked = held.shake > 0;          // the catch is felt, the frame it happens
   const stayed = runUntil(() => !state().rockHeld, 30) && caught;
   const cracked = state();
   const landed = runUntil(() => state().rock > 0 && !state().rockFall && state().chips === 0, 180);
@@ -150,6 +154,7 @@ group('the arch catches one, and then the crack runs', async () => {
     ok(bought && up, 'somebody builds it and it stands'),
     ok(caught && held.shield?.caught, 'it catches the rock in the air'),
     ok(restY > 0, 'and the rock rests above the ground while it holds', `${restY}px up`),
+    ok(knocked, 'and the yard feels the catch', `shake ${held.shake}`),
     ok(stayed, 'then the crack runs'),
     ok(cracked.shieldsDone.includes('arch') && !cracked.shield,
        'and the arch comes down with it'),

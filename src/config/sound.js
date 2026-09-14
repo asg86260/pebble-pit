@@ -132,6 +132,13 @@ export const RECIPES = {
                     noise: 1, noiseHz: 60, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 5,
                     sub: 1, subHz: 44, subDrop: 3.1, subMs: 67,
                     bits: 16, hold: 1, cut: 1300, drive: 4.3, gain: 0.44, vary: 1 },
+  // The boulder's landing, lighter: it is stone meeting stone in the air
+  // rather than the ground taking a house.
+  'arch-catch':   { wave: 'sine', hz: 32, slide: 0.25, slideMs: 1, decay: 10, level: 1, duty: 0.05,
+                    click: 0.7, clickMs: 0.5, clickHz: 8000,
+                    noise: 0.8, noiseHz: 90, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 5,
+                    sub: 0.6, subHz: 60, subDrop: 2.4, subMs: 45,
+                    bits: 16, hold: 1, cut: 1300, drive: 2.6, gain: 0.3, vary: 1 },
   'dust-gain':    { wave: 'sine', hz: 1600, slide: 1.3, slideMs: 1, decay: 10, level: 0.37, duty: 0.05,
                     click: 0, clickMs: 0.5, clickHz: 500,
                     noise: 1, noiseHz: 60, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 5,
@@ -167,6 +174,7 @@ export const SOUNDS = {
   'bird-startle': { label: 'you knock a bird off its line',             cls: 'hand',  recipe: null },
   'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
   'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
+  'arch-catch':   { label: 'the boulder lands on the arch',             cls: 'punct', recipe: 'arch-catch' },
   'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
   // The machines strike as the workers do, and as quietly: a machine is a
   // body's work done faster, not a louder body.
