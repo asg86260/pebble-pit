@@ -2,14 +2,18 @@
 
 ## Save slots -- DESIGNED, NOT BUILT (2026-09-13)
 
-"Save slots: three yards, one at a time" in DESIGN.md. Three numbered
+"Save slots and the title page" in DESIGN.md. Three numbered
 slots, each its own autosaving yard (profiles, not snapshots -- decided);
 slot 1 is every existing save under its existing key, so nothing migrates.
 A `saves` page on the held sheet lists them by what they hold (`rock 12 ·
 7 crew · 5 days ago`); stepping into an empty one is the new game, the
 reset erases only the slot you are in. Keys, the tab owner, `.prev` and
 `.broken` all follow the slot; the desk gets `slot-n.json` beside
-`current.json`. Blocker: the design wants sign-off before code.
+`current.json`. And a title page: the game opens held on the sheet's
+second front (`pebble pit`, `play`, then saves / achievements / settings /
+quit); the settings move behind one word; achievements are per yard
+because `S.won` is in the save. `__reset`/`__seed` let the hold go so no
+check or scene stalls. Blocker: the design wants sign-off before code.
 
 ## The cut is worked in pockets -- BUILT (2026-09-13)
 

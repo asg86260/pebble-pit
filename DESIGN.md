@@ -7058,7 +7058,7 @@ screenshot at 1440x900 and at the minimum size.
   for the console, but `S.broken` stays false: `save a copy` hands over the
   yard that is standing, not the blob that would not read.
 
-## Save slots: three yards, one at a time (design, not built)
+## Save slots and the title page (design, not built)
 
 The game has one yard and one autosave. A player who wants to start over
 without losing the yard they have -- to try the other opening, to show a
@@ -7169,6 +7169,92 @@ from before the stamp shows no time and nothing else changes.
 Not built with this: copying a yard from one slot to another (a snapshot
 by another name; `save a copy` / `load a save` do it by hand and the sheet
 stays small), and deleting a slot from the list (switch in, reset).
+
+### The title page
+
+The game opens playing. There is no front door: the page loads, the yard
+is running, and the sheet with the settings on it is somewhere behind
+escape. With three yards that is no longer good enough -- the first thing
+a player with slots wants to know is *which one is this* -- and a title
+page is the answer that every other game gives. So the game opens held,
+on the sheet, and the sheet's front says `pebble pit`.
+
+**The title is the held sheet's other front.** The sheet already has a
+front (`paused`, `resume`) and pages behind it; the title is a second front
+on the same sheet, sharing every button below the fold. What differs is
+the word and the top button: `pebble pit` and `play` on the title, `paused`
+and `resume` when held. Behind the sheet is the yard, standing still --
+the player's own yard, or the two figures of the opening for a new one --
+which is the title's picture, and a better one than anything drawn for
+the purpose: it is the thing you are about to play.
+
+```
+        pebble pit                          paused
+          play                              resume
+        --------                          --------
+   saves · yard 2                     saves · yard 2
+   achievements · 3 of 40             achievements · 3 of 40
+   settings                           settings
+   quit                               title page
+                                      quit
+```
+
+- **`play`** is `hold(false)`; escape at the title does the same, because
+  escape already toggles the hold and a title you cannot get past with the
+  key that got you there would be a trap.
+- **`saves`** is the slots page above, and carries which yard is open.
+  Picking a row switches the yard behind the sheet, on either front.
+- **`achievements`** is the record, as today. It is per yard by
+  construction: the record reads `S.won`, `S.won` is in the save, and the
+  save is the slot's -- picking another yard on the `saves` page is what
+  changes the count on this button. Nothing is kept across yards; a notice
+  earned in one is not earned in another.
+- **`settings`** becomes a page of its own: motion, sound, the volume, `save
+  a copy` / `load a save` with the paste, `reset progress`, the keys and
+  the build. They were the front page's whole body; a title page with a
+  volume slider on it is not a title page, so they go behind one word.
+  `reset progress` stays on the settings page, not the front, and erases
+  the open slot only.
+- **`title page`**, on the held front only, is the way back out of a yard
+  that is not the desk's `quit`: it turns the sheet to the title front and
+  nothing else -- the yard stays held behind it, so `play` is `resume` by
+  another name. On the desk **`quit`** stands on both fronts; on the web
+  it has no pane, as now.
+- The `said` line sits under the fold on both fronts, so what the store has
+  to say on boot -- the desk's fallback, a save from a newer build, a
+  yielded tab -- is said on the title, where the boot now stops.
+- The one honest sentence (`rocks keep coming. there is no finish line.`)
+  stays on the title front and only there.
+
+**Boot.** `main.js` boots the yard as today, then `hold(true)` on the title
+front instead of running. A first visit's intro is started by `restore`
+and waits under the hold -- the intro is on the yard's clock, and the clock
+does not run held -- so a new player's first beat is the first beat after
+`play`, not a cutscene under a sheet. The desk's fallback used to be the
+one thing that held the boot; it is now a line on the title.
+
+**The harness.** `fast()` in hooks.js skips frames while `S.paused`, so a
+title that holds the boot would hold every check and every scene shot.
+Every check and every scene starts from a fresh game through `__reset` /
+`__seed` (`newGame`, `seedGame` in hooks.js), and that door lets the hold
+go: one line, `S.paused = false`, which the frame turns into the sheet
+going down. `tools/look.mjs` and `headless.mjs` go through the same door
+and need nothing of their own. A check about the title itself is the one
+that must not use it, and boots the page to look.
+
+**`showPane` learns membership.** `data-pane` becomes a space-separated
+list (`data-pane="title main"` for the buttons both fronts share), and an
+element is shown when the list holds the page's name. Today's one-name
+elements are a list of one and do not change. This is the system fix over
+duplicating the shared buttons on each front and wiring each twice.
+
+Checks, browser tier, group `title` in `src/selftest/settings.js`: a booted
+page is held with the sheet reading `pebble pit`; `play` takes it down and
+`fast(1)` moves the clock; escape holds and the front reads `paused`;
+`title page` turns it to `pebble pit` with the yard still held; `settings`
+shows the motion switch and the front does not; `saves` from the title,
+row 2, `back`, `play` -- and the intro is standing. Node tier: `__reset`
+leaves the game unpaused (the harness door), in `test/slots.test.mjs`.
 
 ### Checks
 
