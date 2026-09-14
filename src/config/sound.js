@@ -168,8 +168,10 @@ export const SOUNDS = {
   'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
   'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
   'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
-  'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: null },
-  'drill-beat':   { label: 'a beat of the drill',                       cls: 'fold',  recipe: null },
+  // The machines strike as the workers do, and as quietly: a machine is a
+  // body's work done faster, not a louder body.
+  'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: 'worker mine' },
+  'drill-beat':   { label: 'a beat of the drill',                       cls: 'fold',  recipe: 'worker mine' },
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
