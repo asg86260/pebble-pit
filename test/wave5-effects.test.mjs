@@ -171,10 +171,11 @@ group('a crit leaves one shock, however many grains it threw', async () => {
 group('the celebration is jumping, and nothing but jumping', async () => {
   window.__reset();
   window.__crew(3, 3);
-  // Past the first rock: its send-off is the reunion, where by design (wave 7,
-  // item 5) nobody jumps -- the pair meets and everyone else steps clear. The
-  // dance this check is about belongs to every ordinary rock after it.
-  window.__jump(2);
+  // The first rock, because it is the only rock that gets a dance now (wave
+  // polish, 2026-09-14, Track A) -- and with the reunion already behind it,
+  // since the first rock's finish is otherwise the meeting, where by design
+  // (wave 7, item 5) nobody jumps.
+  S.reunionDone = true;
   run(2);
   window.__next();                           // the rock goes off; the yard dances
   run(1 / 60);

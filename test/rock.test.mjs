@@ -103,17 +103,21 @@ group('the crew get out from under the next rock', async () => {
   // about the commute.
   run(6);
   window.__next();
-  const inZone = s => !s.dropZone ? [] : s.workerPos.filter(w => {
+  const inZone = (s, edge = WORKER) => !s.dropZone ? [] : s.workerPos.filter(w => {
     const x = +w.split(':')[1].split(',')[0];
-    return x + WORKER > s.dropZone[0] && x < s.dropZone[1];
+    return x + edge > s.dropZone[0] && x + WORKER - edge < s.dropZone[1];
   });
   let told = false, late = 0, landed = null;
   for (let i = 0; i < 900 && landed === null; i++) {
     run(1 / 60);
     const s = state();
     if (s.dropZone) told = true;
-    // the last of the fall is when it matters: by then the ground is spoken for
-    if (s.rockFall > 0 && s.rockFall < 200 && inZone(s).length) late++;
+    // the last of the fall is when it matters: by then the ground is spoken for.
+    // By the body's middle: the rock is made the moment the footprint is empty
+    // now, and a body idling at the line can put an elbow back over it for the
+    // one frame before the duck has it again. An elbow is not in the way; a
+    // body is.
+    if (s.rockFall > 0 && s.rockFall < 200 && inZone(s, WORKER / 2).length) late++;
     if (s.rock > 0 && !s.rockFall && told) landed = s;
   }
   const under = landed ? inZone({ ...landed, dropZone: landed.dropZone }) : ['no rock'];

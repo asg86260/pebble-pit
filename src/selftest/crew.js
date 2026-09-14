@@ -358,19 +358,18 @@ export const TESTS = [
   }],
 
   // A rock in the air stops anybody who would have to walk under it, and that is
-  // right. Standing dead still for the whole ten seconds of it is not: five
-  // haulers that were walking in step all stop on the same pixel, and what you
-  // see is one body twitching rather than a crew waiting for a rock to land.
-  ['a rock in the air is danced through, not stood through', async () => {
+  // right. What it must not do is leave anybody under it, or stand a body in
+  // the air where the rock used to be. Every fall used to be danced through;
+  // no fall is a dance now (wave polish, 2026-09-14) -- the crew step clear of
+  // the footprint and stand where they stepped to until the rock is down, then
+  // walk back to work.
+  ['a rock in the air is stood clear of, and nobody is left under it', async () => {
     newRun();
     await settle();
     window.__crew(2, 5);
     window.__clearFloor();
     const p = state().piles.find(q => q.key === 'rock');
     for (let x = p.from + 8; x < p.to - 8; x += 8) window.__pile(x, 30);
-    // On the second rock, not the first: the first rock's send-off is the
-    // reunion now, and the reunion is not a party (wave7-sky, A2) -- nobody
-    // dances through it. This group is about the ordinary celebration.
     window.__jump(2);
     // ...and settled on it: the jump moves the rock, so the gang re-post first
     // -- a body mid-commute ducks and walks through the fall, rightly, and
@@ -382,84 +381,37 @@ export const TESTS = [
     // reports a yard that was never held up at all.
     let falling = false;
     for (let i = 0; i < 3600 && !falling; i++) { run(1 / 60); falling = state().rockFall > 0; }
-
-    // Sampled right through the fall rather than off the front of it, on an odd
-    // number of frames and not a round one: the jump is a sine on the beat, so
-    // sampled every twenty frames it is read at the same point of it every time
-    // and a body jumping steadily reads as a body standing still.
-    // ...and only while it is in the air. The celebration comes BEFORE the
-    // fall now -- the next rock waits for the crew to finish -- so the moment
-    // it lands the gang walk back to work, and a window that runs past the
-    // landing reads that walk-off as the dance wandering.
+    // Sampled right through the fall, and only while it is in the air: the
+    // moment it lands the gang walk back to work, and a window that runs past
+    // the landing reads that walk-off as wandering.
     const shots = [];
-    // The last quarter second is the wind-down -- a body one beat from the
-    // landing is allowed to step off toward its work -- so the window stops
-    // short of it.
-    for (let i = 0; i < 14 && state().rockFall > 250; i++) { run(7 / 60); shots.push(state()); }
+    for (let i = 0; i < 14 && state().rockFall > 100; i++) { run(5 / 60); shots.push(state()); }
     const hauls = s => s.workerPos.filter(d => d[0] === 'h');
     const xs = s => hauls(s).map(d => d.split(':')[1].split(',')[0]);
     const ys = s => hauls(s).map(d => d.split(':')[1].split(',')[1]);
-    // How many different heights the gang are at within one frame. This is what
-    // says a stack of bodies still reads as a gang: every body rolls its own
-    // tempo (`jigRate`), so they are never all at the top of the beat together.
-    const apart = shots.map(s => new Set(ys(s)).size);
-    // and that not one of them slid off its own spot while it did it.
-    // A body mid-walk is exempt: a walker finishes its walk before it joins
-    // the dance now (wave7-sky, A2), so a hauler that set off on a fetch as
-    // the rock cleared walks through the fall -- rightly. What must hold its
-    // ground is everybody who was standing.
-    const walkersAt = s => new Set(s.commuting.filter(d => d[0] === 'h')
-                                              .map(d => d.split('|')[1].split('>')[0]));
-    const still = shots.map(s => xs(s).filter(x => !walkersAt(s).has(x)));
-    const held = new Set(still.flat()).size <= new Set(xs(shots[0])).size;
+    // Nobody is asked to hold still: a body with ground to work on away from
+    // the footprint carries on through the fall, and only the ones that had to
+    // step out of it wait. What must be true of all of them is where they are.
     const finite = shots.every(s => ys(s).every(y => Number.isFinite(+y)));
-    const hopped = new Set(shots.flatMap(s => ys(s))).size > 1;
     const zone = shots[0].dropZone;
     const clear = !zone || shots.every(s => xs(s).every(x => +x + 18 <= zone[0] || +x >= zone[1]));
+    // and on the ground: the rock that was under them is gone, and a body stood
+    // where its top was is a body standing in the air.
+    const ground = shots[0].groundY;
+    const grounded = shots.every(s => ys(s).every(y => Math.abs(+y - ground) < 12 * 3));
 
-    // and it is put away again on the far side.
-    //
-    // Waited out to the end of the CELEBRATION, not just of the fall. The two
-    // used to come to the same thing for these bodies -- a hauler with dust to
-    // fetch went back to work the moment the rock was down -- and they no
-    // longer do: the whole yard dances now, for as long as the yard is
-    // celebrating, which outlasts the landing by the rest of the five seconds.
-    // A body still dancing is not a body left standing in the air, which is
-    // what this asks.
-    for (let i = 0; i < 3600 && (state().dancing || state().rockFall > 0); i++) run(1 / 60);
+    for (let i = 0; i < 3600 && state().rockFall > 0; i++) run(1 / 60);
     run(1);
     const after = state();
     window.__crew(0, 0);
     window.__clearFloor();
     return [
       ok(falling, 'a rock comes down to be held up by'),
-      ok(finite, 'a body that has never been on the rock can still dance',
-         ys(shots[0]).join(' ')),
-      // This used to be "they do not all wait it out on the same pixel",
-      // counting the different x's among them -- and that was the right question
-      // while a celebration was three moves, two of which crossed the ground:
-      // the gang were spread by walking, so a row of bodies on one x meant the
-      // dance had degenerated into the standing about it replaced.
-      //
-      // A celebration is jumping now (item 21, feedback5) and a dancing body
-      // covers no ground at all, so that count is nought or one whatever the
-      // yard is doing -- and what it was reading was never the dance anyway.
-      // These five haulers share a pixel BEFORE the rock comes off, because five
-      // idle bodies share one post; the old dance walked them apart for five
-      // seconds and they stacked up again the moment it ended.
-      //
-      // What survives is the thing the count was standing in for: a gang has to
-      // read as several bodies rather than as one. It does that on the BEAT now
-      // -- every body rolls its own tempo, so they are never all at the top of
-      // the jump together, and a stack of five is five heights.
-      ok(Math.max(...apart) > 1, 'they do not all wait it out on the same beat',
-         apart.join('/')),
-      ok(hopped, 'and they are jumping rather than standing', [...new Set(shots.flatMap(ys))].join(' ')),
-      // ...and the other half of the same change, said outright: nobody shuffles.
-      ok(held, 'none of them wanders off its own spot to do it',
-         [...new Set(shots.map(s => xs(s).join(',')))].join(' | ')),
-      ok(clear, 'without any of them wandering under the rock',
+      ok(finite, 'every body has a height', ys(shots[0]).join(' ')),
+      ok(clear, 'and none of them is under the rock',
          `${xs(shots[0]).join(' ')} against ${JSON.stringify(zone)}`),
+      ok(grounded, 'and they wait on the ground, not where the last rock was',
+         [...new Set(shots.flatMap(ys))].join(' ')),
       ok(new Set(hauls(after).map(d => d.split(',')[1])).size === 1,
          'and once the rock is down they are all back on their feet',
          hauls(after).join(' '))

@@ -1,6 +1,6 @@
 // The core buried in each rock: how it comes loose, and how it is banked.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM, ROCK_GAP_MS } from './config.js';
 import { S, pit } from './state.js';
 import { noteRockCleared } from './notices.js';
 import { addGrain } from './grid.js';
@@ -116,7 +116,7 @@ export function stepCore() {
     // No dancers, no dance either: on a game with nobody hired yet this would
     // be five seconds of standing about, and that is most of the early game.
     S.danceUntil = S.boulderNo === 1 && S.rockhands > 0 ? now() + DANCE_MS : 0;
-    S.nextBoulderAt = now() + 2500;      // backstop if it never falls clear
+    S.nextBoulderAt = now() + ROCK_GAP_MS;   // backstop if it never falls clear
     S.dirty = true;
   }
 

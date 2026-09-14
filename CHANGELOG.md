@@ -18,6 +18,8 @@ this file is for things that were broken.
 - The crew get knocked off their feet for a beat when a rock lands.
 - The dome comes down once the rescue is over, so later rocks land without being held.
 - Every barrier is built wide enough for the rock that reaches it.
+- After the first rock, the next one is down within about a second of the last cell going; the crew run clear instead of standing about.
+- Rockhands clear the muck on their own rock instead of following the yard's drift to the far wall.
 
 ## v0.1.16 — 2026-09-14
 

@@ -7,9 +7,14 @@ import { group, ok, run, runUntil, state, yard } from './helpers.mjs';
 
 const { BURIED_DIG_S, DANCE_MS, MEET_MS } = await import('../src/config.js');
 
-// The gap between rocks is never long enough: whoever is nearest goes and digs,
-// the square rises, and the rock lands on somebody half dug out.
-group('between rocks somebody digs, and there is never enough time', () => {
+// There is no gap between rocks to dig in any more: after the first rock the
+// next one is on its way the moment the footprint is empty (core.js,
+// `ROCK_GAP_MS`), and `timeToDig` says so -- nobody so much as sets off. The
+// one under the rock stays where it is, in sight for the second the ground is
+// bare, until a rock is held overhead. (Wave polish, 2026-09-14: the between-
+// rocks dig used to run under the dance, and the dance is gone from every rock
+// but the first.)
+group('between rocks nobody digs: there is no time to', () => {
   const checks = [];
   window.__crew(3, 1);
   window.__jump(3);                            // past the first rock, whose finish is the reunion
@@ -19,34 +24,35 @@ group('between rocks somebody digs, and there is never enough time', () => {
   const seen = runUntil(() => state().buriedVisible, 10);
   checks.push(ok(seen, 'and there they are'));
 
-  // Somebody walks over and digs -- one of the crew, marked for it, and the
-  // square comes up while they do.
-  const dug = runUntil(() => yard.S.workers.some(w => w.dig) && state().buriedDug > 0, 20);
-  checks.push(ok(dug, 'one of the crew goes over and digs', `dug ${state().buriedDug}`));
-  const diggers = yard.S.workers.filter(w => w.dig).length;
-  checks.push(ok(diggers === 1, 'one digger, not a crowd', `${diggers}`));
-
-  // The next rock lands before the dig is done, and undoes it.
-  let most = 0;
-  const landed = runUntil(() => {
-    most = Math.max(most, state().buriedDug);
-    return !state().buriedVisible;
-  }, 40);
-  checks.push(ok(landed, 'the next rock lands on them'));
-  checks.push(ok(most > 0 && most < 1, 'with the dig begun and not finished', `got to ${most.toFixed(2)}`));
-  checks.push(ok(state().buriedDug === 0, 'and the rock drives them back in', `dug ${state().buriedDug}`));
-  checks.push(ok(!yard.S.workers.some(w => w.dig), 'and nobody is left digging under it'));
-  checks.push(ok(state().buried, 'they are still under there'));
+  // Frame by frame through the gap and the fall: nobody is sent, and the next
+  // rock is down inside a couple of seconds.
+  let dug = false, sent = false, frames = 0;
+  while (state().buriedVisible && frames < 60 * 10) {
+    run(1 / 60);
+    frames++;
+    if (yard.S.workers.some(w => w.dig)) sent = true;
+    if (state().buriedDug > 0) dug = true;
+  }
+  checks.push(ok(!state().buriedVisible, 'the next rock lands on them', `${frames} frames`));
+  checks.push(ok(frames < 60 * 3, 'inside a few seconds', `${(frames / 60).toFixed(1)}s`));
+  checks.push(ok(!sent && !dug, 'and nobody went to dig in that time', `sent ${sent}, dug ${dug}`));
+  checks.push(ok(state().buriedDug === 0 && state().buried, 'they are still under there'));
   return checks;
 });
 
-// Nobody dances through it: the digger is at the ground beside the square, not
-// hopping, for as long as it digs.
+// Given time -- the one thing the between-rocks gap no longer has -- somebody
+// goes and digs, and nobody dances through it: the digger is at the ground
+// beside the square, not hopping, for as long as it digs. The time is lent by
+// hand here (a celebration on the clock, the way the first rock's finish has
+// one); the dome's hold is the place a player sees it, and shield.test.mjs
+// covers that.
 group('a digger digs; it does not dance', () => {
   const checks = [];
   window.__crew(4, 2);
   window.__jump(3);
   window.__next();
+  run(1 / 60);                                 // the frame the rock dies zeroes the clock (core.js)
+  yard.S.danceUntil = yard.clock.now() + DANCE_MS * 3;
   runUntil(() => yard.S.workers.some(w => w.dig && !w.walking), 20);
   const who = yard.S.workers.find(w => w.dig && !w.walking);
   checks.push(ok(!!who, 'somebody is at it'));
@@ -60,6 +66,7 @@ group('a digger digs; it does not dance', () => {
   }
   checks.push(ok(moved < 2, 'it stands where it stopped', `drifted ${moved.toFixed(1)}px`));
   checks.push(ok(swung, 'and swings'));
+  yard.S.danceUntil = 0;
   return checks;
 });
 

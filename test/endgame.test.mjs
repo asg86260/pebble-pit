@@ -56,8 +56,12 @@ group('the ram does not strike a rock that is still coming down', async () => {
     if ((ram.workedAt || 0) > workedAtStart) struck++;
   }
   const landedAt = yard.S.boulderNo;
-  // And once it is down, the ram goes back to work.
-  const worked = runUntil(() => (ram.workedAt || 0) > workedAtStart, 20);
+  // And once it is down, the ram goes back to work. Generously: `ready` also
+  // waits for room on the rock's heap, and with the gang straight back on the
+  // face after a landing (no dance after rock one, wave polish 2026-09-14) the
+  // heap stays full longer than it did while they danced. How long the haulers
+  // take to make room is a fact about the heap, not about the ram's rule.
+  const worked = runUntil(() => (ram.workedAt || 0) > workedAtStart, 60);
 
   return [
     ok(before.rock > 0 && ram.bought, 'the ram is standing at a rock', `bought ${ram.bought}`),

@@ -69,10 +69,16 @@ export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
 // never leave a body somewhere it did not walk to.
 export let LAND_HOP_MS = 240;    // how long a body is off its feet after a landing
 export let LAND_HOP_H = 1.5;     // cells the hop peaks at, for a first-sized rock
-// Nothing is standing under it when it lands. The crew get out of the footprint
-// while the last rock's celebration is on, and a body still in it once the rock
-// is in the air walks out at a pace nobody walks anywhere else.
-export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
+// Nothing is standing under it when it lands. Only the first rock's finish is
+// celebrated; after every other one the next rock is on its way the moment the
+// footprint is empty, so the crew *run* out of it -- a pace nobody moves at
+// anywhere else, because nowhere else is a rock coming down on them.
+export const DUCK_PACE = 6;      // pixels a frame out from under a falling rock
+// ...and how long the yard waits for them before the rock comes anyway. The
+// rock is made the frame the footprint is clear; this is the backstop for a
+// body that cannot get out, kept short because everything between one rock
+// and the next is dead air to the player.
+export const ROCK_GAP_MS = 1000;
 // A stopped crew is not a frozen crew. When the pile is full the rock hands stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
 // is a hop a second and goes places.
