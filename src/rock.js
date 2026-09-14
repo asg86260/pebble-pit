@@ -641,8 +641,11 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   }
   // The pick meeting stone. Your own click is the one sound the mix never
   // folds, and a crit is an event of its own -- yours and a body's alike;
-  // a body's or the ram's swing folds with the rest of the yard.
-  if (took) {
+  // a body's swing folds with the rest of the yard. The ram is not heard
+  // here: its strike is the machine's beat, sounded by `stepMachines` at a
+  // body's pace, and a second sound per strike from this end made it twice
+  // as loud as anything else at the rock.
+  if (took && from !== 'machine') {
     const yours = from === 'you' && !body;
     sfx(yours ? (crit > 1 ? 'rock-crit' : 'rock-hit') : (crit > 1 ? 'crew-crit' : 'rock-swing'), { x: mx, hard });
   }

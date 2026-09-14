@@ -251,12 +251,18 @@ export function stepMachines(now) {
     }
     S.machineWorking = false;
     if (!did) continue;
-    // One beat of the machine, however many units it got through this frame:
-    // the fold window is what turns a fast machine into a rattle rather than a
-    // buzz. The ram's is a strike, and it gets the thump under it. The drill
-    // beats every frame it runs, so its event is its own: a rattle for a whole
-    // afternoon is the one sound in the yard that has to be able to be silence.
-    sfx(m.key === 'jaw' ? 'drill-beat' : 'machine-beat', { x: at, big: m.key === 'ram' });
+    // The machine is heard at a body's pace, not its own. It is worth several
+    // bodies and beats that many times faster, but it is *one* thing standing
+    // there, and one thing at a bench strikes as often as a body at that bench
+    // does -- `ms(1)` is the station's own clock, the pace of one pair of
+    // hands. Sounded per beat instead, the ram was eight strikes a second and
+    // the drill a rattle for the whole afternoon, and no recipe is subtle at
+    // that rate. The ram's is a strike, so it gets the thump under it; the
+    // drill's event is its own, so the bench can silence it alone.
+    if (now >= (r.soundAt || 0)) {
+      r.soundAt = now + spec.ms(1);
+      sfx(m.key === 'jaw' ? 'drill-beat' : 'machine-beat', { x: at, big: m.key === 'ram' });
+    }
     // It did a unit of work this beat, which is the one thing the stack is
     // allowed to read: a chimney smoking over a machine that is not getting
     // anything done would be the drawing claiming what the yard denies.

@@ -93,6 +93,7 @@ const fresh = () => ({
   beatAt: 0,             // when its next unit of work is due
   phase: 0,              // where it is in its own animation, 0..1
   puffAt: 0,             // and when the stack is next due to puff
+  soundAt: 0,            // and when it is next heard: a body's pace, not its own
   // Declared, and false, and unused until a star's core can be turned into a
   // heart. When that lands it multiplies exactly one number -- see `machineRate`
   // -- rather than arriving as a second feature wearing this one's coat.

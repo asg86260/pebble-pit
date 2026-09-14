@@ -10,7 +10,7 @@ this file is for things that were broken.
 
 ## Unreleased
 
-- The drill is silent; the ram and the tiller still beat.
+- The machines are heard at a worker's pace instead of hammering, and the ram no longer sounds twice a strike.
 
 ## v0.1.12 — 2026-09-14
 

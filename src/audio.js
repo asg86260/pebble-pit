@@ -44,11 +44,13 @@ let muted = false;
 // What has been decided since wake. `byClass` is what the yard *asked for*, by
 // class, and `firedBy` is what got through. `pending` is open fold windows,
 // which is the backlog, and is meant to read as nought a window after the yard
-// goes quiet.
+// goes quiet. `byEvent` is what the yard asked for, by event, so a check can
+// say how often one thing in the yard is heard.
 const decisions = {
   fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0,
   byClass: { hand: 0, fold: 0, punct: 0, each: 0 },
-  firedBy: { hand: 0, fold: 0, punct: 0, each: 0 }
+  firedBy: { hand: 0, fold: 0, punct: 0, each: 0 },
+  byEvent: {}
 };
 
 const CLASSES = new Set(['hand', 'fold', 'punct', 'each']);
@@ -174,6 +176,7 @@ export function sfx(event, opts = {}) {
   if (!awake) return;
   const cls = CLASSES.has(opts.cls) ? opts.cls : (SOUNDS[event] ? SOUNDS[event].cls : 'fold');
   decisions.byClass[cls]++;
+  decisions.byEvent[event] = (decisions.byEvent[event] || 0) + 1;
   const t = clock();
   if (cls === 'hand') { fire(event, opts, cls, t); return; }
   if (cls === 'punct' || cls === 'each') {

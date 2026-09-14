@@ -10,7 +10,8 @@
 //
 // The counters run since wake and never reset, so every group takes a delta.
 
-import { group, ok, state, run, runUntil, haveRock, quickCrew } from './helpers.mjs';
+import { group, ok, state, run, runUntil, haveRock, quickCrew, openSites } from './helpers.mjs';
+import { rockhandMs } from '../src/upgrades.js';
 import { wakeAudio, audioDecisions } from '../src/audio.js';
 
 const snap = () => {
@@ -82,5 +83,37 @@ group('a crewed yard folds more than an empty one', async () => {
     ok(crewed.fold > 0, 'and a working crew is heard at all', `${crewed.fold} fold`),
     ok(crewed.hand === 0, 'none of it is in the hand class: nobody clicked',
        `${crewed.hand} hand`)
+  ];
+});
+
+// A machine is heard at a body's pace, not its own. The ram beats several
+// times a second and used to sound on every beat, and then again from
+// `knockOff` for the same strike; now it is one strike per rockhand's swing,
+// from the machine's end alone.
+group("the ram is heard at a rockhand's pace, once per strike", async () => {
+  window.__reset();
+  wakeAudio();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0);                       // one body, which is all it holds
+  window.__machine('ram', { bought: true });
+  window.__clearFloor();
+  window.__jump(3);
+  runUntil(() => (state().machines.ram.workedAt | 0) > 0, 40);
+  const ev = () => ({ ...audioDecisions().byEvent });
+  const before = ev();
+  const secs = 6;
+  for (let i = 0; i < secs * 4; i++) { run(0.25); window.__clearFloor(); }
+  const after = ev();
+  const beats = (after['machine-beat'] || 0) - (before['machine-beat'] || 0);
+  const swings = (after['rock-swing'] || 0) - (before['rock-swing'] || 0);
+  const pace = secs * 1000 / rockhandMs();
+  window.__crew(0, 0);
+  return [
+    ok(beats > 0, 'the working ram is heard at all', `${beats} beats`),
+    ok(beats <= Math.ceil(pace) + 1, 'and no oftener than a rockhand swings',
+       `${beats} beats in ${secs}s, a rockhand would swing ${pace.toFixed(1)} times`),
+    ok(swings === 0, 'and its strike is not heard a second time from the rock',
+       `${swings} rock-swing`)
   ];
 });
