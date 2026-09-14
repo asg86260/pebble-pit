@@ -1,5 +1,14 @@
 # Still to do
 
+## The reliability freeze (2026-09-14)
+
+Approved. No features and no one-off fixes until: (A) `run()` in
+`test/helpers.mjs` reloads the yard every few game seconds of every group
+and asserts nothing teleported; (B) `verify.js` has the two floating rules;
+(D) a changelog line names its check. Then one full run on main, fix what it
+turns up, and hold until it is green twice running. Reasoning in DESIGN.md,
+"The reliability freeze". The release gate was dropped by decision.
+
 ## The hole's count and its pile disagree by a few cells (2026-09-14)
 
 `capacityAt` (pit.js) says the hole holds 37,566; the pile's own search
