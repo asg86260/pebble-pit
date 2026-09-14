@@ -10,6 +10,10 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- Ore comes up from the whole depth of a dig, not only its top layers.
+- A shard that falls back into the quarry is picked up and thrown out again, instead of lying there and being buried.
+- A quarrier's crit rings whether or not the swing turned up a shard.
+
 ## v0.1.13 — 2026-09-14
 
 - The juggler notice needs your hands at the top of their ladder; a one-grain hand no longer earns it.

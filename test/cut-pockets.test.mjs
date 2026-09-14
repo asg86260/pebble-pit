@@ -120,34 +120,34 @@ for (const seed of [20250830, 3]) {
 
 group("a blaster's swing fires the ring, an apprentice's does not, and a crit is one ring either way", async () => {
   // Rings age out of `S.shocks`, so count them as they come, by the stamp each
-  // is born with.
+  // is born with -- and count the swings over the same frames, since a ring a
+  // swing is a claim about one window, not about two windows laid side by side.
   const count = seconds => {
-    let n = 0, mark = now();
+    let rings = 0, swings = 0, mark = now();
     for (let f = 0; f < seconds * 60; f++) {
+      const nexts = quarriers().map(w => w.next);
       run(1 / 60);
       const fresh = S.shocks.filter(s => s.where === 'quarry' && s.at > mark);
-      n += fresh.length;
+      rings += fresh.length;
       for (const s of fresh) mark = Math.max(mark, s.at);
+      quarriers().forEach((w, i) => { if (w.goal === 'work' && w.next > nexts[i]) swings++; });
     }
-    return n;
+    return { rings, swings };
   };
   // No hats: one plain quarrier, no crits.
   openSites();
   window.__crew(0, 0, 1, 0); window.__tip(90000); window.__crit(false);
   runUntil(digging, 60);
-  const plain = count(20);
-  const plainSwings = watch(20).swings;
+  const { rings: plain, swings: plainSwings } = count(20);
   // A crit on every swing: one ring a swing, not two.
   window.__crit(true);
-  const critRings = count(15);
-  const critSwings = watch(15).swings;
+  const { rings: critRings, swings: critSwings } = count(15);
   window.__crit(null);
   // And a blaster: the lamp on, no crits, a ring a swing.
   window.__seed(20250830); window.__verify(true);
   gang(1); window.__crit(false);
   runUntil(() => digging() && quarriers()[0].trained, 120);
-  const blastRings = count(20);
-  const blastSwings = watch(20).swings;
+  const { rings: blastRings, swings: blastSwings } = count(20);
   window.__crit(null);
   return [
     ok(plainSwings > 3 && plain === 0, "a plain swing leaves no ring", `${plain} rings over ${plainSwings} swings`),

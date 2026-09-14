@@ -19,14 +19,14 @@ import { TIER_BAND } from '../src/config.js';
 const dustAbout = () =>
   (floor.n || 0) + state().stored + S.chips.length;
 
-// --- 1. the bounded job: a dig pulls forward, it does not add ------------------
+// --- 1. the bounded job: a dig never adds -------------------------------------
 //
 // The whole point of crits being allowed at the cut: a dig is worth
-// `seamShards()` and a crit takes several of the shards already owed in one
-// swing, so it finishes sooner and yields not a shard more. `findShards` is the
-// one place the dig turns stone up, and it is driven directly here -- one seam,
-// swung out with every swing critting -- because the invariant is about the
-// accounting and nothing else.
+// `seamShards()`, and a crit -- which takes more ground, and so more of the
+// cells the stone is scattered through -- turns it up sooner and yields not a
+// shard more. `findShards` is the one place the dig turns stone up, and it is
+// driven directly here -- one seam, swung out with every swing critting --
+// because the invariant is about the accounting and nothing else.
 group('a dig with crits forced on yields exactly the seam, never a shard more', async () => {
   openSites();
   window.__crit(true);                       // every swing a crit
@@ -44,23 +44,27 @@ group('a dig with crits forced on yields exactly the seam, never a shard more', 
 
   const seam = seamShards();
   const gotSeam = digOut(seam);              // a full dig, sized to the real seam
-  const gotFat = digOut(47);                 // and a fat one, so pull-forward is exercised hard
+  const gotFat = digOut(47);                 // and a fat one, so the cap is exercised hard
 
   window.__crit(null);
   return [
     ok(gotSeam === seam, 'the crit dig yields exactly seamShards()', `${gotSeam} vs ${seam}`),
     ok(S.quarryOwed === 0, 'and the seam owes nothing after', `${S.quarryOwed}`),
-    ok(gotFat === 47, 'a fat seam is pulled forward whole, not overshot', `${gotFat} vs 47`),
+    ok(gotFat === 47, 'a fat seam comes out whole, not overshot', `${gotFat} vs 47`),
   ];
 });
 
-// ...and a crit at the cut takes GROUND, not only stone. Pulling the seam's
-// shards forward changed nothing about when a dig finished, so a crit rung
-// bought at the quarry was worth nothing a minute (critics 2026-09-10, B6): a
-// crit swing takes the cell and its neighbors now, and a gang whose every
-// swing crits gets through a dig -- and so through a seam -- a good deal
-// sooner. Measured 49 -> 117 shards in ten minutes; two and a half is well
-// clear of the noise.
+// ...and a crit at the cut takes GROUND, not stone. Pulling the seam's shards
+// forward changed nothing about when a dig finished, so a crit rung bought at
+// the quarry was worth nothing a minute (critics 2026-09-10, B6): a crit swing
+// takes the cell and its neighbors now, and a gang whose every swing crits
+// gets through a dig -- and so through a seam -- sooner. Measured in ground,
+// because the stone over a window this short is mostly which dig the window
+// cut off where: 1436 -> 2023 cells in five minutes, with a quarter kept clear
+// of the noise. (Counted in stone, this check used to pass on the front-loading
+// it was blind to -- a crit pulling whole shards forward paid the truncated
+// last dig out early, and the players saw the ore come up only out of the top
+// of the cut. See `findShards`.)
 group('a crit at the cut takes more ground out at once, so the digs come sooner', async () => {
   const dug = force => {
     window.__reset();
@@ -71,16 +75,20 @@ group('a crit at the cut takes more ground out at once, so the digs come sooner'
     window.__crit(force);
     run(5);
     const a = state().shards + state().finds.filter(f => f === 'shard').length;
+    const ca = S.quarryTotal || 0;
     run(300);
-    return state().shards + state().finds.filter(f => f === 'shard').length - a;
+    return { stone: state().shards + state().finds.filter(f => f === 'shard').length - a,
+             cells: (S.quarryTotal || 0) - ca };
   };
   const plain = dug(false);
   const critted = dug(true);
   window.__crit(false);
   return [
-    ok(plain > 0, 'the cut gives up stone with crits off', `${plain} in five minutes`),
-    ok(critted > plain * 1.6, 'and a gang critting every swing gets a good deal more of it',
-       `${plain} -> ${critted} in five minutes`)
+    ok(plain.stone > 0, 'the cut gives up stone with crits off', `${plain.stone} in five minutes`),
+    ok(critted.cells > plain.cells * 1.25, 'and a gang critting every swing takes a good deal more ground',
+       `${plain.cells} -> ${critted.cells} cells in five minutes`),
+    ok(critted.stone > plain.stone, 'and so turns up more stone',
+       `${plain.stone} -> ${critted.stone} in five minutes`)
   ];
 });
 

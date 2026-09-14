@@ -404,8 +404,16 @@ function stepChips(now) {
     // there was no cut for it to land in.
     if (overCutMouth(ch.x) && ch.y + P >= S.groundY) {
       const cc = Math.max(0, Math.min(cut.cols - 1, colOf(cut, ch.x)));
-      if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; ch.vx = 0; }
-      if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; ch.vx = 0; }
+      // The walls stop a grain coming down inside the cut, as the pit's do. A
+      // grain still on its way UP is a shard thrown at the rim from the floor,
+      // and from the columns under the far wall it meets the face before it
+      // clears the ground line; stopped dead there it fell straight back to
+      // the floor, was picked up and thrown from the same column, and met the
+      // face again -- the ore that lay in the quarry and never came out. Held
+      // against the wall with its throw intact, it rides up the face and goes
+      // on over the rim.
+      if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; if (ch.vy >= 0) ch.vx = 0; }
+      if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; if (ch.vy >= 0) ch.vx = 0; }
       if (ch.vy > 0 && ch.y >= surfaceY(cut, cc)) {
         // Almost always room: the cut is a working plot, not a bank, and the
         // grid is mostly open air above whatever rock is left. The one time it

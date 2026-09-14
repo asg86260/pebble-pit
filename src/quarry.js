@@ -15,7 +15,7 @@ import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
 import { shockAt } from './shock.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
-         CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
+         CLIMB_PACE, SHARD_CELL, someFind, findKind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
@@ -302,6 +302,14 @@ export function digCell(c) {
   S.quarryTotal = (S.quarryTotal || 0) + 1;
 }
 
+// What is lying loose on the floor of the cut: dust that rained or was dropped
+// in, and a shard that was thrown at the rim and came down short of it. Asked
+// instead of `isDust` because a shard is a find, not dust, and the floor's rules
+// used to see only dust -- so a shard that fell back in lay there through every
+// tidy and the refill buried it. Never the rock the cut is dug out of, which is
+// the one other thing a cell can hold.
+const loose = v => isDust(v) || findKind(v) > 0;
+
 // Whatever fell down the cut comes back up with the ground, thrown out at the
 // mouth exactly the way a shard is: every pixel is worth one dust, and closing
 // the fill over it instead would be a hole that destroys what a dig did not
@@ -312,7 +320,7 @@ function tipCut() {
   for (let c = 0; c < cut.cols; c++) {
     for (let r = cut.rows - 1; r >= 0; r--) {
       const v = at(cut, c, r);
-      if (!v || !isDust(v)) continue;
+      if (!loose(v)) continue;
       put(cut, c, r, 0);
       const x = cut.x + c * P + P / 2;
       const y = cut.y + (cut.rows - 1 - r) * P;
@@ -347,10 +355,10 @@ export const cutPatch = () => ({
   cols: cut.cols,
   colOf: x => colOf(cut, x),
   xOf: c => cut.x + c * P + P / 2,
-  peek: c => { const r = topRow(cut, c); return r >= 0 && isDust(at(cut, c, r)) ? at(cut, c, r) : 0; },
+  peek: c => { const r = topRow(cut, c); return r >= 0 && loose(at(cut, c, r)) ? at(cut, c, r) : 0; },
   take: c => {
     const r = topRow(cut, c);
-    if (r < 0 || !isDust(at(cut, c, r))) return 0;
+    if (r < 0 || !loose(at(cut, c, r))) return 0;
     const v = at(cut, c, r);
     put(cut, c, r, 0);
     return v;
@@ -641,8 +649,8 @@ export function stepQuarrier(w, now, ctx = null) {
   const take = pocketOf(w) + (crit - 1);
   // Each cell is dealt its own share of the seam, counted before it comes out,
   // so a pocket of three is three one-in-what-is-left chances exactly as three
-  // swings were, and the last cell of a cut is still certain. The crit's pull
-  // goes on the first.
+  // swings were, and the last cell of a cut is still certain. The crit's
+  // fountain goes on the first.
   const course = cells[c];
   findShards(w, cellsLeft(), crit);
   digCell(c);
@@ -660,7 +668,13 @@ export function stepQuarrier(w, now, ctx = null) {
   // the blaster sets a charge and the ground bursts. That is what was bought
   // with the lamp, seen from across the yard. `shockAt` keeps one ring per
   // frame at one place of work, so a blaster's crit is one ring, not two.
-  if (w.trained && CUT_BLAST_POWER > 0)
+  //
+  // And a crit's ring is the swing's, not the stone's: a crit at the cut is
+  // more ground out at once, and that is what bursts, whether or not any of it
+  // held a shard. It used to ride on the fountain the stone went up in, back
+  // when a crit always turned stone up.
+  if (crit > 1) shockAt(w.x + WORKER / 2, cutTop(w.x + WORKER / 2), crit, 'quarry');
+  else if (w.trained && CUT_BLAST_POWER > 0)
     shockAt(w.x + WORKER / 2, cutTop(w.x + WORKER / 2), CUT_BLAST_POWER, 'quarry');
   // Digging raises dust, and none of it reaches the sky. This used to foul once
   // per cell taken, on the argument that digging dirties the air whether or not
@@ -704,14 +718,15 @@ export function findShards(w, left, crit = critRoll(critBoost(w))) {
   if (S.quarryOwed <= 0 || left <= 0) return;
   let found = 0;
   for (let n = 0; n < S.quarryOwed; n++) if (rand() * left < 1) found++;
-  // The dig is a bounded job, so a crit PULLS FORWARD rather than adds: it takes
-  // several of the shards *already owed* in one swing -- a lump, not a trickle --
-  // so the dig finishes sooner and the total never moves. This is the whole of
-  // why the cut can have crits at all: `S.quarryOwed` starts at `seamShards()`
-  // and only ever comes down, so a dig with every swing critting still yields
-  // exactly `seamShards()`, not a shard more. The crit does not put extra stone
-  // in the ground; it brings forward stone that was going to come up anyway.
-  if (crit > 1) found = Math.min(S.quarryOwed, Math.max(found, crit));
+  // A crit is not more stone from this cell. A crit at the cut is more ground
+  // out at once -- the swing takes `crit - 1` cells more, and each of those is
+  // dealt its own share above (docs/critics-2026-09-10.md, B6) -- so it turns
+  // up more by taking more. It used to pull `crit` whole shards forward here as
+  // well, from before B6, when pulling stone forward was all a crit could do.
+  // The two stacked: three to six shards a crit against a seam of six to
+  // fifteen, so a couple of crits in the first layers emptied the ground and
+  // the ore only ever came up out of the top of the cut. `crit` now says only
+  // how the stone leaves: a lump goes up as a fountain.
   if (!found) return;
   S.quarryOwed -= found;
   w.quarried = (w.quarried || 0) + found;
