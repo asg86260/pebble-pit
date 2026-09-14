@@ -80,7 +80,7 @@ export const newRecord = () => ({
 // yard reloaded mid-build came back owing a debt that no worker in it was
 // carrying, and the two could only ever drift further apart. See `rebalance` in
 // upgrades.js.
-export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
+export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
                       // and the doses in a stirrer's arms, and which tonic
@@ -122,7 +122,11 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       // aboard is a fact about the body", and it was not written),
                       // and the berth a purifier was dealt -- the house, or a
                       // craft -- which is what puts it back in the same basket
-                      'craft', 'berth'];
+                      'craft', 'berth',
+                      // and the plot a farmhand is working along the row. It
+                      // came back on plot nought every time, so the far end of
+                      // a long row was never reached between refreshes.
+                      'plot'];
 
 // Moments on a body's clock -- when its next break comes round, when it has
 // stood about long enough to knock off -- kept the way doses are (below):

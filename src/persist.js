@@ -429,6 +429,12 @@ function blob() {
     // cured of (critics C14). Position and shade; the band's height is the
     // world's to answer on the way back in.
     belt: (S.belt || []).map(b => [Math.round(b.x), b.s]),
+    // ...and every grain in the air: a chip off a swing, a shovelful on its
+    // arc to a heap. Five numbers apiece, a few dozen at a time. They were
+    // not saved -- "a grain mid-flight has no beginning" -- and every refresh
+    // destroyed whatever was up, which is the one thing the yard promises it
+    // never does. A tidy check lost two of twelve grains to it.
+    chips: (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]),
     buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
@@ -888,6 +894,10 @@ export function restore() {
     S.wonAt = Object.fromEntries(stamps.map(([k], i) => [k, i + 1]));
     S.wonSeq = stamps.length;
   }
+  S.chips = Array.isArray(s.chips)
+    ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
+        .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
+    : [];
   S.belt = Array.isArray(s.belt)
     ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
     : [];

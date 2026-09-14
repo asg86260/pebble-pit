@@ -37,6 +37,9 @@ group('a star is a rock like any other', async () => {
   ];
 });
 
+// No reload harness: the group makes a state the roster never would -- a
+// wizard on the books with no hat for it -- and a load puts the roster right,
+// standing that body down to carrying. The check is about the bare body.
 group('no hat, no flying', async () => {
   window.__meteor();
   // A body on the job with nothing on its head. The tower has made no hats, so
@@ -76,7 +79,7 @@ group('no hat, no flying', async () => {
        `${up.wizardY.join()} against a ground line at ${up.groundY}`),
     ok(worked, 'and takes the meteor apart', `${state().meteor} cells left`)
   ];
-});
+}, { reload: false });
 
 group('a wizard walks and climbs, and never simply appears at the sky', async () => {
   window.__meteor();

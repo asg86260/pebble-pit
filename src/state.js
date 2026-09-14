@@ -730,6 +730,7 @@ export const SAVED_BY_HAND = [
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
   'belt',                 // what is riding the belt, as [x, shade] pairs
+  'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
   JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
@@ -818,7 +819,7 @@ export const EPHEMERAL = [
   // fact and is saved; this is the walk, and a reload has no walk in progress.
   'rescueTo',
   // dust in the air: a grain mid-flight has no beginning to come back to
-  'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
+  'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
   // the counter chasing the real number
   'shownStored',
   // how far the toast has read through the record: what was earned before

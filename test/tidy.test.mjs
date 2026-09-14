@@ -56,7 +56,9 @@ const onQuarryHeap = () => {
 
 group('a quarrier throws the cut\'s stray dust up onto the quarry\'s pile', async () => {
   openSites();
-  window.__crew(0, 0, 2);                      // two down the cut, nobody carrying
+  // The gang is hired after the dust is laid: a fresh body stands on its
+  // ground now (crew/jobs.js) and reaches the cut in a couple of seconds, and
+  // hired first it had thrown a third of the dust out before "before".
   window.__digCut(4);                          // room in the hole for dust to lie in
   run(0.5);
   const laid = 14;
@@ -66,6 +68,7 @@ group('a quarrier throws the cut\'s stray dust up onto the quarry\'s pile', asyn
   }
   run(1);
   const before = state();
+  window.__crew(0, 0, 2);                      // two down the cut, nobody carrying
   const dug0 = before.quarryTotal;
   run(30);
   const after = state();
