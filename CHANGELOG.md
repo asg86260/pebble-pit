@@ -12,6 +12,7 @@ this file is for things that were broken.
 
 - The crew only dance after the first rock and after the rescue; every other rock they get straight back to work.
 - The quarry's ore yield rungs stay bought across a reload.
+- The crew get knocked off their feet for a beat when a rock lands.
 
 ## v0.1.16 — 2026-09-14
 

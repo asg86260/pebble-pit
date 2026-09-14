@@ -59,6 +59,16 @@ export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 export let SHAKE_LAND = 15;      // world pixels the landing throws the view
 export const SHAKE_RATE = 0.9;   // radians a frame it rocks through
 export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
+// And so is the crew. The view rocked and a mark went up over every head, but
+// no body moved, and a yard that says "that was heavy" with a caption while
+// everybody stands like furniture reads as a caption. The hop is one parabola,
+// up and back down, over the beat below; the height is in cells and is scaled
+// by the same rock-size factor the shake is, so a big rock throws them higher.
+// It is drawn, not simulated -- `w.y` never moves, so the walk, the falls and
+// the drop zone see nothing -- which is why a hop can be this short and still
+// never leave a body somewhere it did not walk to.
+export let LAND_HOP_MS = 240;    // how long a body is off its feet after a landing
+export let LAND_HOP_H = 1.5;     // cells the hop peaks at, for a first-sized rock
 // Nothing is standing under it when it lands. The crew get out of the footprint
 // while the last rock's celebration is on, and a body still in it once the rock
 // is in the air walks out at a pace nobody walks anywhere else.
@@ -109,7 +119,11 @@ export const ROCK_KNOBS = [
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250,
     get: () => DANCE_MS, set: v => { DANCE_MS = v; } },
   { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1,
-    get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } }
+    get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } },
+  { key: 'LAND_HOP_MS', label: 'landing hop', min: 0, max: 1000, step: 20,
+    get: () => LAND_HOP_MS, set: v => { LAND_HOP_MS = v; } },
+  { key: 'LAND_HOP_H', label: 'landing hop height', min: 0, max: 4, step: 0.25,
+    get: () => LAND_HOP_H, set: v => { LAND_HOP_H = v; } }
 ];
 
 // --- wave7-ui -----------------------------------------------------------------
