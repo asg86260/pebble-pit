@@ -1,0 +1,2023 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>upgrade costs</title>
+<style>
+  body { background: #fff; color: #000; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0; padding: 24px; max-width: 960px; }
+  h1 { font-size: 16px; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 4px; }
+  h2 { font-size: 14px; letter-spacing: .1em; text-transform: uppercase; margin: 32px 0 8px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+  h3 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #555; margin: 16px 0 4px; }
+  nav { margin-bottom: 8px; color: #555; }
+  a { color: #000; }
+  table { border-collapse: collapse; width: 100%; }
+  th { text-align: left; font-weight: normal; color: #555; border-bottom: 1px solid #000; padding: 2px 8px 2px 0; }
+  td { padding: 1px 8px 1px 0; vertical-align: top; white-space: nowrap; }
+  td.n { text-align: right; }
+  td.name { font-weight: bold; }
+  tr.first td { border-top: 1px solid #ddd; }
+  em { color: #a00; font-style: normal; }
+  .note { color: #555; margin-bottom: 16px; }
+</style></head><body>
+<h1>upgrade costs</h1>
+<div class="note">every row on every board, priced by climbing it in the node yard. generated 2026-09-14 by <code>node tools/node/costs.mjs</code>. work is one pair of hands, in seconds.</div>
+<nav><a href="#the-bench">the bench</a> · <a href="#the-house">the house</a> · <a href="#the-shack">the shack</a> · <a href="#the-quarry">the quarry</a> · <a href="#the-farm">the farm</a> · <a href="#the-apothecary">the apothecary</a> · <a href="#the-casino">the casino</a> · <a href="#the-outhouse">the outhouse</a> · <a href="#the-tower">the tower</a> · <a href="#the-school">the school</a> · <a href="#the-scrubbing-house">the scrubbing house</a></nav>
+
+  <h2 id="the-bench">the bench</h2>
+  <h3>you</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">carry amount</td>
+        <td class="n">1/9</td>
+        <td>hold 1 → 2 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">10 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>hold 2 → 3 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">13 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>hold 3 → 4 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">16 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>hold 4 → 5 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">20 dust · 7 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>hold 5 → 6 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">26 dust · 9 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>hold 6 → 7 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">32 dust · 11 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>hold 7 → 8 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">41 dust · 14 spore · 3 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>hold 8 → 9 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">52 dust · 17 spore · 4 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>hold 9 → 10 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">66 dust · 22 spore · 6 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">hold to mine</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">25 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">auto swing</td>
+        <td class="n">1/9</td>
+        <td>hit +17%</td>
+        <td class="bill">20 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>hit +18%</td>
+        <td class="bill">25 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>hit +21%</td>
+        <td class="bill">32 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>hit +23%</td>
+        <td class="bill">40 dust · 13 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>hit +25%</td>
+        <td class="bill">51 dust · 17 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>hit +28%</td>
+        <td class="bill">65 dust · 22 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>hit +28%</td>
+        <td class="bill">82 dust · 27 spore · 7 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>hit +28%</td>
+        <td class="bill">104 dust · 35 spore · 9 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>hit +15%</td>
+        <td class="bill">131 dust · 44 spore · 11 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">pick damage</td>
+        <td class="n">1/9</td>
+        <td>per swing 1 → 2 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">240 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>per swing 2 → 3 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">304 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>per swing 3 → 4 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">384 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>per swing 4 → 5 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">486 dust · 162 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>per swing 5 → 6 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">614 dust · 205 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>per swing 6 → 7 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">777 dust · 259 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>per swing 7 → 8 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">983 dust · 328 spore · 82 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>per swing 8 → 9 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">1,243 dust · 414 spore · 104 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>per swing 9 → 10 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">1,573 dust · 524 spore · 131 shard</td>
+        <td class="n">55s</td>
+      </tr></tbody>
+  </table>
+  <h3>lucky swings</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">crit chance</td>
+        <td class="n">1/9</td>
+        <td>crit 4 → 6%</td>
+        <td class="bill">500 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>crit 6 → 9%</td>
+        <td class="bill">707 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>crit 9 → 11%</td>
+        <td class="bill">1,000 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>crit 11 → 13%</td>
+        <td class="bill">1,414 dust · 471 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>crit 13 → 16%</td>
+        <td class="bill">2,000 dust · 667 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>crit 16 → 18%</td>
+        <td class="bill">2,828 dust · 943 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>crit 18 → 20%</td>
+        <td class="bill">4,000 dust · 1,333 spore · 333 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>crit 20 → 23%</td>
+        <td class="bill">5,657 dust · 1,886 spore · 471 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>crit 23 → 25%</td>
+        <td class="bill">8,000 dust · 2,667 spore · 667 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">crit damage</td>
+        <td class="n">1/3</td>
+        <td>crit 3 → 4x</td>
+        <td class="bill">1,000 dust · 333 spore · 83 shard</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>crit 4 → 5x</td>
+        <td class="bill">2,000 dust · 667 spore · 167 shard</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>crit 5 → 6x</td>
+        <td class="bill">4,000 dust · 1,333 spore · 333 shard</td>
+        <td class="n">9s</td>
+      </tr></tbody>
+  </table>
+  <h3>the haulers</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">hauler carry</td>
+        <td class="n">1/9</td>
+        <td>carry 1 → 3 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">150 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>carry 3 → 5 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">190 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>carry 5 → 7 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">240 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>carry 7 → 9 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">304 dust · 101 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>carry 9 → 11 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">384 dust · 128 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>carry 11 → 13 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">486 dust · 162 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>carry 13 → 15 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">614 dust · 205 spore · 51 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>carry 15 → 17 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">777 dust · 259 spore · 65 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>carry 17 → 19 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">983 dust · 328 spore · 82 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">hauler speed</td>
+        <td class="n">1/9</td>
+        <td>walk +42%</td>
+        <td class="bill">180 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>walk +29%</td>
+        <td class="bill">228 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>walk +23%</td>
+        <td class="bill">288 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>walk +19%</td>
+        <td class="bill">364 dust · 121 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>walk +16%</td>
+        <td class="bill">461 dust · 154 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>walk +14%</td>
+        <td class="bill">583 dust · 194 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>walk +12%</td>
+        <td class="bill">737 dust · 246 spore · 61 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>walk +11%</td>
+        <td class="bill">933 dust · 311 spore · 78 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>walk +10%</td>
+        <td class="bill">1,180 dust · 393 spore · 98 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the belt</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">480 spark · 9,600 dust · 600 shard · 600 spore</td>
+        <td class="n">90s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">tune the belt</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">360 spark · 7,200 dust</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h3>the shields</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">wooden barrier</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">400 dust</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the net</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">60 spore</td>
+        <td class="n">20s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">cut the arch</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">100 shard</td>
+        <td class="n">70s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the jack</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">90 spark</td>
+        <td class="n">85s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">maybe the wizards would know?</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill"></td>
+        <td class="n"></td>
+      </tr></tbody>
+  </table>
+  <h3>build</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">build the quarry</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">1 core · 2,000 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the farm</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">1 core · 600 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the apothecary</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">1 core · 900 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the casino</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">15,000 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the shack</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">150 dust</td>
+        <td class="n">15s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the janitor's closet</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">900 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the tower</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">1 core · 1,000 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the training grounds</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">20 shard · 300 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">build the scrubbing house</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">3,500 dust</td>
+        <td class="n">45s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-house">the house</h2>
+  <h3>the crew</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">another house</td>
+        <td class="n"></td>
+        <td>1 → 2</td>
+        <td class="bill">45 dust</td>
+        <td class="n">8s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>2 → 3</td>
+        <td class="bill">59 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>3 → 4</td>
+        <td class="bill">76 dust</td>
+        <td class="n">11s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>4 → 5</td>
+        <td class="bill">99 dust</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>5 → 6</td>
+        <td class="bill">129 dust</td>
+        <td class="n">14s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>6 → 7</td>
+        <td class="bill">167 dust</td>
+        <td class="n">16s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>7 → 8</td>
+        <td class="bill">217 dust</td>
+        <td class="n">19s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>8 → 9</td>
+        <td class="bill">282 dust</td>
+        <td class="n">21s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>9 → 10</td>
+        <td class="bill">367 dust</td>
+        <td class="n">24s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>10 → 11</td>
+        <td class="bill">477 dust</td>
+        <td class="n">28s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>11 → 12</td>
+        <td class="bill">620 dust</td>
+        <td class="n">32s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>12 → 13</td>
+        <td class="bill">806 dust</td>
+        <td class="n">37s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>13 → 14</td>
+        <td class="bill">1,048 dust</td>
+        <td class="n">43s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>14 → 15</td>
+        <td class="bill">1,363 dust</td>
+        <td class="n">49s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>15 → 16</td>
+        <td class="bill">1,772 dust</td>
+        <td class="n">57s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n"></td>
+        <td>16 → 17</td>
+        <td class="bill">2,303 dust</td>
+        <td class="n">65s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-shack">the shack</h2>
+  <h3>diggers</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">digger pick damage</td>
+        <td class="n">1/3</td>
+        <td>per swing 1 → 2 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">2,400 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>per swing 2 → 3 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">3,840 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>per swing 3 → 4 &lt;i class="dust"&gt;&lt;/i&gt;</td>
+        <td class="bill">6,144 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">swing speed</td>
+        <td class="n">1/9</td>
+        <td>hit +15%</td>
+        <td class="bill">210 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>hit +16%</td>
+        <td class="bill">266 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>hit +18%</td>
+        <td class="bill">336 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>hit +19%</td>
+        <td class="bill">425 dust · 142 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>hit +20%</td>
+        <td class="bill">538 dust · 179 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>hit +21%</td>
+        <td class="bill">680 dust · 227 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>hit +21%</td>
+        <td class="bill">860 dust · 287 spore · 72 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>hit +18%</td>
+        <td class="bill">1,088 dust · 363 spore · 91 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>hit +10%</td>
+        <td class="bill">1,376 dust · 459 spore · 115 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the ram</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">600 spark · 12,000 dust · 800 shard · 600 spore</td>
+        <td class="n">90s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">tune the ram</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">360 spark · 7,200 dust</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-quarry">the quarry</h2>
+  <h3>the quarry</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">another shovel</td>
+        <td class="n"></td>
+        <td>2 → 3 shovels</td>
+        <td class="bill">100 spore</td>
+        <td class="n">18s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">ore yield</td>
+        <td class="n">1/9</td>
+        <td>6 → 8 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">720 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>8 → 9 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">854 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>9 → 11 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">1,013 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>11 → 12 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">1,202 dust · 100 shard</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>12 → 14 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">1,426 dust · 119 shard</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>14 → 15 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">1,692 dust · 141 shard</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>15 → 17 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">2,008 dust · 167 shard · 669 spore</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>17 → 18 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">2,382 dust · 199 shard · 794 spore</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>18 → 20 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">2,826 dust · 236 shard · 942 spore</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">enchanted TNT</td>
+        <td class="n">1/3</td>
+        <td>20 → 24 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">3,352 dust · 279 shard · 1,117 spore · 7 core · 168 spark</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>24 → 30 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">3,977 dust · 331 shard · 1,326 spore · 8 core · 199 spark</td>
+        <td class="n">61s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>30 → 38 &lt;i class="shard"&gt;&lt;/i&gt;/dig</td>
+        <td class="bill">4,719 dust · 393 shard · 1,573 spore · 9 core · 236 spark</td>
+        <td class="n">82s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">mining speed</td>
+        <td class="n">1/9</td>
+        <td>dig +16%</td>
+        <td class="bill">720 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>dig +17%</td>
+        <td class="bill">854 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>dig +19%</td>
+        <td class="bill">1,013 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>dig +21%</td>
+        <td class="bill">1,202 dust · 100 shard</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>dig +22%</td>
+        <td class="bill">1,426 dust · 119 shard</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>dig +24%</td>
+        <td class="bill">1,692 dust · 141 shard</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>dig +24%</td>
+        <td class="bill">2,008 dust · 167 shard · 669 spore</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>dig +22%</td>
+        <td class="bill">2,382 dust · 199 shard · 794 spore</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>dig +12%</td>
+        <td class="bill">2,826 dust · 236 shard · 942 spore</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">anti-gravity zone</td>
+        <td class="n">1/3</td>
+        <td>dig +25%</td>
+        <td class="bill">3,352 dust · 279 shard · 1,117 spore · 7 core · 168 spark</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>dig +25%</td>
+        <td class="bill">3,977 dust · 331 shard · 1,326 spore · 8 core · 199 spark</td>
+        <td class="n">61s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>dig +25%</td>
+        <td class="bill">4,719 dust · 393 shard · 1,573 spore · 9 core · 236 spark</td>
+        <td class="n">82s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the drill</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">360 spark · 7,200 dust · 500 spore</td>
+        <td class="n">90s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">tune the drill</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">360 spark · 7,200 dust</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-farm">the farm</h2>
+  <h3>the farm</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">another plot</td>
+        <td class="n"></td>
+        <td>1 → 2 plots</td>
+        <td class="bill">520 dust</td>
+        <td class="n">18s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">crop yield</td>
+        <td class="n">1/9</td>
+        <td>1 → 2 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">720 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>2 → 3 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">854 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>3 → 4 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">1,013 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>4 → 5 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">1,202 dust · 401 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>5 → 6 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">1,426 dust · 475 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>6 → 7 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">1,692 dust · 564 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>7 → 8 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">2,008 dust · 669 spore · 167 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>8 → 9 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">2,382 dust · 794 spore · 199 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>9 → 10 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">2,826 dust · 942 spore · 236 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">astral GMOs</td>
+        <td class="n">1/3</td>
+        <td>10 → 13 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">3,352 dust · 279 shard · 1,117 spore · 7 core · 168 spark</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>13 → 16 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">3,977 dust · 331 shard · 1,326 spore · 8 core · 199 spark</td>
+        <td class="n">61s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>16 → 20 &lt;i class="spore"&gt;&lt;/i&gt;/harvest</td>
+        <td class="bill">4,719 dust · 393 shard · 1,573 spore · 9 core · 236 spark</td>
+        <td class="n">82s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">farming speed</td>
+        <td class="n">1/9</td>
+        <td>tend +16%</td>
+        <td class="bill">720 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>tend +17%</td>
+        <td class="bill">854 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>tend +19%</td>
+        <td class="bill">1,013 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>tend +21%</td>
+        <td class="bill">1,202 dust · 401 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>tend +22%</td>
+        <td class="bill">1,426 dust · 475 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>tend +24%</td>
+        <td class="bill">1,692 dust · 564 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>tend +24%</td>
+        <td class="bill">2,008 dust · 669 spore · 167 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>tend +22%</td>
+        <td class="bill">2,382 dust · 794 spore · 199 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>tend +12%</td>
+        <td class="bill">2,826 dust · 942 spore · 236 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">summer's aura</td>
+        <td class="n">1/3</td>
+        <td>tend +25%</td>
+        <td class="bill">3,352 dust · 279 shard · 1,117 spore · 7 core · 168 spark</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>tend +25%</td>
+        <td class="bill">3,977 dust · 331 shard · 1,326 spore · 8 core · 199 spark</td>
+        <td class="n">61s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>tend +25%</td>
+        <td class="bill">4,719 dust · 393 shard · 1,573 spore · 9 core · 236 spark</td>
+        <td class="n">82s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the tiller</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">240 spark · 4,800 dust · 360 shard</td>
+        <td class="n">90s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">tune the tiller</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">360 spark · 7,200 dust</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-apothecary">the apothecary</h2>
+  <h3>the pot</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">another pot</td>
+        <td class="n"></td>
+        <td>1 → 2 pots</td>
+        <td class="bill">700 dust</td>
+        <td class="n">18s</td>
+      </tr></tbody>
+  </table>
+  <h3>brewing</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">brew concentration</td>
+        <td class="n">1/9</td>
+        <td>lasts 60 → 73 s</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>lasts 73 → 87 s</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>lasts 87 → 100 s</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>lasts 100 → 113 s</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>lasts 113 → 127 s</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>lasts 127 → 140 s</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>lasts 140 → 153 s</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>lasts 153 → 167 s</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>lasts 167 → 180 s</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">batch size</td>
+        <td class="n">1/6</td>
+        <td>1 → 2 doses</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/6</td>
+        <td>2 → 3 doses</td>
+        <td class="bill">1,311 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/6</td>
+        <td>3 → 4 doses</td>
+        <td class="bill">1,909 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/6</td>
+        <td>4 → 5 doses</td>
+        <td class="bill">2,781 dust · 927 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/6</td>
+        <td>5 → 6 doses</td>
+        <td class="bill">4,050 dust · 1,350 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/6</td>
+        <td>6 → 7 doses</td>
+        <td class="bill">5,898 dust · 1,966 spore</td>
+        <td class="n">22s</td>
+      </tr></tbody>
+  </table>
+  <h3>potency</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">hearty stew</td>
+        <td class="n">1/9</td>
+        <td>work 25 → 29%</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>work 29 → 33%</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>work 33 → 37%</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>work 37 → 41%</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>work 41 → 44%</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>work 44 → 48%</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>work 48 → 52%</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>work 52 → 56%</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>work 56 → 60%</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">bracing tonic</td>
+        <td class="n">1/9</td>
+        <td>crit 8 → 9%</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>crit 9 → 10%</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>crit 10 → 12%</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>crit 12 → 13%</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>crit 13 → 14%</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>crit 14 → 15%</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>crit 15 → 17%</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>crit 17 → 18%</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>crit 18 → 19%</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">strong brew</td>
+        <td class="n">1/9</td>
+        <td>carry 50 → 58%</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>carry 58 → 66%</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>carry 66 → 73%</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>carry 73 → 81%</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>carry 81 → 89%</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>carry 89 → 97%</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>carry 97 → 104%</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>carry 104 → 112%</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>carry 112 → 120%</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">speed brew</td>
+        <td class="n">1/9</td>
+        <td>walk 25 → 29%</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>walk 29 → 33%</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>walk 33 → 37%</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>walk 37 → 41%</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>walk 41 → 44%</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>walk 44 → 48%</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>walk 48 → 52%</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>walk 52 → 56%</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>walk 56 → 60%</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">mana brew</td>
+        <td class="n">1/9</td>
+        <td>sparks 20 → 23%</td>
+        <td class="bill">900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>sparks 23 → 26%</td>
+        <td class="bill">1,138 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>sparks 26 → 29%</td>
+        <td class="bill">1,440 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>sparks 29 → 32%</td>
+        <td class="bill">1,821 dust · 607 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>sparks 32 → 36%</td>
+        <td class="bill">2,304 dust · 768 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>sparks 36 → 39%</td>
+        <td class="bill">2,914 dust · 971 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>sparks 39 → 42%</td>
+        <td class="bill">3,686 dust · 1,229 spore · 307 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>sparks 42 → 45%</td>
+        <td class="bill">4,663 dust · 1,554 spore · 389 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>sparks 45 → 48%</td>
+        <td class="bill">5,898 dust · 1,966 spore · 492 shard</td>
+        <td class="n">55s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-casino">the casino</h2>
+  <h3>the table</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">stake pebbles</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">10 dust</td>
+        <td class="n"></td>
+      </tr>
+      <tr class="first">
+        <td class="name">stake ore</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">10 shard</td>
+        <td class="n"></td>
+      </tr>
+      <tr class="first">
+        <td class="name">stake crops</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">10 spore</td>
+        <td class="n"></td>
+      </tr></tbody>
+  </table>
+  <h3>winnings</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">bank it</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill"></td>
+        <td class="n"></td>
+      </tr>
+      <tr class="first">
+        <td class="name">spin again</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill"></td>
+        <td class="n"></td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-outhouse">the outhouse</h2>
+  <h3>the janitor's closet</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">another cap</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">30 shard</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-tower">the tower</h2>
+  <h3>the tower</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">train a wizard</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">4,000 dust · 200 shard · 200 spore</td>
+        <td class="n">120s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">quicker casting</td>
+        <td class="n">1/5</td>
+        <td>cast +25%</td>
+        <td class="bill">36 spark · 600 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/5</td>
+        <td>cast +25%</td>
+        <td class="bill">65 spark · 1,080 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/5</td>
+        <td>cast +25%</td>
+        <td class="bill">117 spark · 1,944 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/5</td>
+        <td>cast +25%</td>
+        <td class="bill">210 spark · 3,499 dust</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/5</td>
+        <td>cast +25%</td>
+        <td class="bill">378 spark · 6,299 dust</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">heavier bolts</td>
+        <td class="n">1/5</td>
+        <td>1 → 2 cells/bolt</td>
+        <td class="bill">48 spark · 900 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/5</td>
+        <td>2 → 3 cells/bolt</td>
+        <td class="bill">86 spark · 1,620 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/5</td>
+        <td>3 → 4 cells/bolt</td>
+        <td class="bill">156 spark · 2,916 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/5</td>
+        <td>4 → 5 cells/bolt</td>
+        <td class="bill">280 spark · 5,249 dust</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/5</td>
+        <td>5 → 6 cells/bolt</td>
+        <td class="bill">504 spark · 9,448 dust</td>
+        <td class="n">17s</td>
+      </tr></tbody>
+  </table>
+  <h3>enchantments</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">speed the machines</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">135 spark · 2,500 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">enrich the quarry</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">105 spark · 2,500 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">cheapen the houses</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">90 spark · 2,500 dust</td>
+        <td class="n">45s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">quicken the janitors</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">75 spark · 2,500 dust</td>
+        <td class="n">45s</td>
+      </tr></tbody>
+  </table>
+  <h3>the dome</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">conjure the barrier</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">8 core · 30,000 dust · 1,200 shard · 1,000 spore · 1,000 spark</td>
+        <td class="n">45s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-school">the school</h2>
+  <h3>diggers</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">breaker</td>
+        <td class="n">1/3</td>
+        <td>0 → 1</td>
+        <td class="bill">20 shard</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>1 → 2</td>
+        <td class="bill">32 shard</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>2 → 3</td>
+        <td class="bill">51 shard</td>
+        <td class="n">9s</td>
+      </tr></tbody>
+  </table>
+  <h3>pebble carters</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">carter</td>
+        <td class="n"></td>
+        <td>0 → 1</td>
+        <td class="bill">20 shard</td>
+        <td class="n">5s</td>
+      </tr></tbody>
+  </table>
+  <h3>miners</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">blaster</td>
+        <td class="n">1/3</td>
+        <td>0 → 1</td>
+        <td class="bill">20 shard</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>1 → 2</td>
+        <td class="bill">32 shard</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>2 → 3</td>
+        <td class="bill">51 shard</td>
+        <td class="n">9s</td>
+      </tr></tbody>
+  </table>
+  <h3>farm growers</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">grower</td>
+        <td class="n">1/3</td>
+        <td>0 → 1</td>
+        <td class="bill">20 shard</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/3</td>
+        <td>1 → 2</td>
+        <td class="bill">32 shard</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/3</td>
+        <td>2 → 3</td>
+        <td class="bill">51 shard</td>
+        <td class="n">9s</td>
+      </tr></tbody>
+  </table>
+  <h2 id="the-scrubbing-house">the scrubbing house</h2>
+  <h3>the sky</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">pollution</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill"></td>
+        <td class="n"></td>
+      </tr></tbody>
+  </table>
+  <h3>equipment</h3>
+  <table>
+    <thead><tr><th>row</th><th>rung</th><th>gain</th><th>bill</th><th>work</th></tr></thead>
+    <tbody>
+      <tr class="first">
+        <td class="name">fan power</td>
+        <td class="n">1/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">1,080 dust</td>
+        <td class="n">5s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">1,366 dust</td>
+        <td class="n">7s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">1,728 dust</td>
+        <td class="n">9s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">2,186 dust · 729 spore</td>
+        <td class="n">12s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">2,765 dust · 922 spore</td>
+        <td class="n">17s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">6/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">3,497 dust · 1,166 spore</td>
+        <td class="n">22s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">7/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">4,424 dust · 1,475 spore · 369 shard</td>
+        <td class="n">30s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">8/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">5,596 dust · 1,865 spore · 466 shard</td>
+        <td class="n">41s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">9/9</td>
+        <td>scrub +13%</td>
+        <td class="bill">7,078 dust · 2,359 spore · 590 shard</td>
+        <td class="n">55s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the balloon</td>
+        <td class="n">1/5</td>
+        <td></td>
+        <td class="bill">1,200 dust</td>
+        <td class="n">90s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">2/5</td>
+        <td></td>
+        <td class="bill">2,280 dust</td>
+        <td class="n">122s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">3/5</td>
+        <td></td>
+        <td class="bill">4,332 dust</td>
+        <td class="n">164s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">4/5</td>
+        <td></td>
+        <td class="bill">8,231 dust</td>
+        <td class="n">221s</td>
+      </tr>
+      <tr class="">
+        <td class="name"></td>
+        <td class="n">5/5</td>
+        <td></td>
+        <td class="bill">15,639 dust</td>
+        <td class="n">299s</td>
+      </tr>
+      <tr class="first">
+        <td class="name">the recycler</td>
+        <td class="n"></td>
+        <td></td>
+        <td class="bill">120 shard</td>
+        <td class="n">18s</td>
+      </tr></tbody>
+  </table>
+</body></html>
