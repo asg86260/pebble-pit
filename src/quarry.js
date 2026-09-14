@@ -560,7 +560,15 @@ export function stepQuarrier(w, now, ctx = null) {
     // The last one out is what fills the hole back in. Doing it the moment the
     // seam was emptied dropped the dirt back under the feet of everybody still
     // down there, and they rode it up like a lift.
-    if (!S.workers.some(o => o.type === TYPE.QUARRY && o !== w && o.y > S.groundY)) {
+    //
+    // And only out of a cut that is worked out. A body climbs this leg for
+    // another reason too -- the heap full and a mess up top to clear -- and
+    // when it was the last one below, a half-dug cut filled itself in behind
+    // it and laid a fresh seam over what the old one still owed: the dig paid
+    // more than the board said, and the ground the gang had taken out was
+    // back when they returned.
+    if ((S.quarrySpent || quarryDone())
+        && !S.workers.some(o => o.type === TYPE.QUARRY && o !== w && o.y > S.groundY)) {
       fillQuarry();
       S.quarrySpent = false;
     }

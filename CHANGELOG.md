@@ -11,6 +11,7 @@ this file is for things that were broken.
 ## Unreleased
 
 - The quarry's ore yield rungs stay bought across a reload.
+- A half-dug cut no longer fills itself back in when the last quarrier climbs out to clear the yard.
 
 ## v0.1.16 — 2026-09-14
 
