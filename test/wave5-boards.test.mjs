@@ -119,7 +119,9 @@ group('the books board prints a rate with a clock on it', async () => {
   hud();
   const rows = [...document.getElementById('statsshop').children];
   const dust = rows.find(r => r.dataset.key === 'ratedust');
-  const cost = dust && dust.children[2];
+  // The clock rides the price cell -- a rate is "n a clock" -- not the card's
+  // own time cell, which is for how long a build takes.
+  const cost = dust && dust.querySelector('.cost');
   const said = cost ? cost.innerHTML : '';
   showPanel(null, true);
 

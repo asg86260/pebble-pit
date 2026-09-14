@@ -49,6 +49,10 @@ group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
   // the bench -- so the purse has to hold all three or the row is out of reach
   // and the ladder reads as broken rather than as unaffordable.
   window.__grant({ shards: 5000, spores: 5000 });
+  // ...and the card is off the board until both grounds stand -- a bill naming
+  // a coin the yard cannot get is a card the yard does not draw (coinsOpen).
+  window.__crew(0, 0, 1, 1);
+  window.__crew(1, 0);
   run(0.5);
 
   out.push(ok(critMult(0) === CRIT_MULT_MIN, 'the ladder starts at the minimum',
