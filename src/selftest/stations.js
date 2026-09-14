@@ -67,8 +67,12 @@ export const TESTS = [
       ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      ok(plotRows.join(',') === 'farmplot,crop,tend',
-         'holding the next plot, what a cut is worth and how fast a plot comes on',
+      // ...and the grower's brim, sold where it is worn since the school came
+      // down (the net has been answered here, which is what opens it). The
+      // blaster's lamp is the quarry's the same way, behind the arch, which
+      // this yard has not met -- so the cut's board has no kit row yet.
+      ok(plotRows.join(',') === 'farmplot,crop,tend,grower',
+         'holding the next plot, what a cut is worth, how fast a plot comes on, and the brim',
          plotRows.join(','))
     ];
   }],

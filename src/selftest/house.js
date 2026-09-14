@@ -281,7 +281,10 @@ export const TESTS = [
   ['walking up to the block does not open the settlement on the way', async () => {
     newRun();
     await settle();
-    window.__give(999999);
+    // Plenty for a block, and short of the abyss: a million grains is more
+    // than the hole holds, the rest tears through the rift, and the drowning
+    // is a scene that takes the camera to the pit mid-walk.
+    window.__give(30000);
     window.__grant({ cores: 9 });
     window.__crew(6, 3);
     run(20);
