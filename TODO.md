@@ -1,5 +1,17 @@
 # Still to do
 
+## The school comes down: kit is sold where it is worn -- DESIGN, awaiting sign-off (2026-09-14)
+
+"The school comes down" in DESIGN.md. The training grounds goes; its four
+kit rows move to the board of the station that wears the kit (breaker to
+the shack, blaster to the quarry, grower to the farm, carter to the bench
+beside the belt). The hat is made at the station by the spare hand who
+walks there, so the shelf and the carry errand go with the building. The
+gate is the shields: the props open the breaker and the carter, the net
+the grower, the arch the blaster. Decided with the user: carts on the
+bench; shields as the gate. Flagged: the blaster and the drill land later
+than today, behind the arch's four hundred shards. Blocker: approval.
+
 ## A ladder is six rungs -- BUILT (2026-09-14)
 
 "A ladder is six rungs, and its length is one number" at the end of

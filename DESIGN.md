@@ -8866,3 +8866,117 @@ game again), two dev scenes, and a dozen comments. Nothing decided beyond
 the design; the count tops landed where the table says. Looked at on the
 bench and on the plots' board deep on both ladders (`laddersdeep`): six
 pips in three tinted pairs, and the grounds' multiplier as a two-pip card.
+
+## The school comes down: kit is sold where it is worn (design, not built)
+
+**The training grounds is a building that exists to sell four rows, and the
+four rows each belong somewhere else.** A breaker's helmet is about the rock,
+a blaster's lamp about the cut, a grower's brim about the plots, a cart about
+the lip -- and every one of those places has a board of its own now, with the
+machine that ends the same ladder already drawn on it. The ram is on the
+shack's board and the three helmets it waits for are a thousand pixels away
+in a building whose only other job is to be walked to. The school was built
+when the bench was the only shop and "a decision about people is made
+somewhere else" was the argument; the boards have since gone to the stations,
+and that argument now says the opposite. So the building goes, and each row
+goes home.
+
+| row | board | beside |
+|---|---|---|
+| **breaker** | the shack (the rock's board) | the ram |
+| **blaster** | the quarry | the drill |
+| **grower** | the farm | the tiller |
+| **carter** | the bench | the belt |
+
+Each row keeps its shape exactly: three pips and `done` for the three that a
+machine takes over, the endless count for the carts, `keep: true` so the
+finished set stays on the board saying what the station owns, the shard price
+climbing by `TRADE_RATE`. The section it sits under keeps the school's
+heading (`diggers`, `miners`, `farm growers`, `pebble carters`) and the kit
+count on the badge, so the board says what the station has in the one place
+that question is asked. Nothing about what a hat does, what it costs or how
+many there can be changes; only where you stand to buy one.
+
+**The hat is made where it lands.** A row is a `rung` at the station's own
+site -- `shack`, `quarry`, `farm`, and the lip for the carts -- so the spare
+hand who does the work walks to the station, works the eight seconds under a
+bar, and the hat is put on that station's stand where the body is standing.
+The shelf outside the school's door and the carry across the yard (`hatShelf`,
+`shelved`, `carried`, the `take`/`put` legs in commute.js, the shelf branch of
+`stepKit`) were the answer to a hat appearing a thousand pixels from where it
+was bought; a hat made at its own stand has nowhere to teleport from, so all
+of it comes out. The one made object in the yard that used to need an errand
+is now made by a body you watched walk there. For the carts, the site is the
+yard with `at` the lip's cart stand, the way a machine row names its ground.
+
+**The shields are the gate.** The school was gated on twenty shards and three
+hundred dust; the gate was a building. What the yard actually learns from is
+the sky. Each shield is the yard reaching for one of the things it makes and
+finding out what that thing is worth against a falling rock -- and when it
+fails, the people who made the material are the ones who have learned
+something. So the shield that spends a station's coin, once it has been
+answered, opens that station's kit:
+
+| shield | coin | fails and teaches | opens |
+|---|---|---|---|
+| the props | dust | the yard's own hands are not enough | **breaker** and **carter** |
+| the net | spores, the farm's | the plots' people | **grower** |
+| the arch | shards, the quarry's | the cut's people | **blaster** |
+
+The jack opens nothing: the meteor has no people. A row shows once its
+shield is in `shieldsDone`, its station is open, and a shard has been seen
+(`S.seenShard`, as today -- a shard price on a board before the quarry has
+made one is a price in a coin that does not exist yet). The unlock the
+school gave for one bill is now four beats spread along the run, each one
+paid for by a wreck the player watched come down.
+
+**What this does to the ladder, said plainly.** The breaker and the carter
+arrive earlier than today (the props fall long before anyone could afford a
+school), which is right: the rock and the lip are open from the first frame.
+The blaster arrives later -- after the arch, four hundred shards, where today
+it is twenty -- and the drill stands behind three blasters, so the drill
+moves later with it. That is the trade this makes, and it is the intended
+one: the cut's machine is the yard's answer to the cut's shield failing, not
+something bought on the way past. `SCHOOL_COST` and `SCHOOL_DUST` go with the
+building; `TRADE_COST` and `TRADE_RATE` stay, and move to a `kit` config.
+
+**What goes.** The building: `TO_SCHOOL`, `SCHOOL_W`, `SCHOOL_H`, the `school`
+box in state.js and `SITES`, its drawing in render/stations.js, the flag,
+the windows, the shelf, `nearSchool`, the `#schoolshop` sheet and its CSS,
+`unlockschool` and the bench's row for it, the `school` entry in `STATIONS`,
+`OPENS_PLACE`, `YARD_ROW_SITE`, `SITE_BOX` and `SITE_JOB`. The teacher: the
+job was the school's outputs and nothing else, and "every station's work is
+done by a spare hand" (above) already deletes it; `crew/teacher.js`, `TEACH`
+in `TYPE` and `JOB`, `teachers` on `S` and the roster row go. `school.js` is
+renamed `kit-rows.js` -- `TRADES`, `tradeCost` and the row builder survive,
+the rows are handed to the four boards instead of one. `schoolOpen`,
+`schoolBoardOpen`, `hatShelf`, `teachers` come off `SAVED`; the `school`
+scenes (`schoolboard`, and the school in any scene's stage list) go or
+re-point at the board that now sells the row. `CASINO_SAY_MS` moves to the
+casino's config, where it always belonged. The record's `first day of
+school` is renamed `first hat` and keeps its rule (any trade count).
+
+**The save is migrated, not broken.** A save with `schoolOpen` set has paid
+for a building that no longer stands; its hats stay on their stands, its
+`teachers` go back to carrying (the migration the spare-hand design already
+writes), and anything on `hatShelf` or in a carrier's hands is put straight
+on its stand on load -- the one pop-in, once, for a shelf that no longer
+exists. A yard that owns kit but has not yet answered the matching shield
+keeps the kit and keeps the row: `taught > 0` is treated as the gate met, so
+a finished set never disappears from the board it just moved to.
+
+**The ground it stood on.** The school was pushed out to make the strip the
+outhouse stands in, and its old argument for where everything else sits
+(sixty off the bench, sixty off the apron) does not depend on it. Nothing
+moves. The ground between the quarry's spoil and the crew's doors is bare
+where it stood, which is what it was before the school and is fine.
+
+**Checks.** Every one of `test/kit.test.mjs` and `test/jobs.test.mjs` that
+bought a hat at the school buys it at its station instead, through `__buy`
+on that board, and asserts the hat lands on the station's stand with no
+shelf and no carry. One check per row that the row is hidden until its
+shield is done and shown after. One check that a save with a shelved hat and
+a teacher loads with the hat on the stand and the body carrying.
+`persist-roundtrip` goes red until the four fields are off the lists, which
+is the check working. The board shots (`shackboard`, `quarryboard`,
+`farmboard`, the bench) are the check on the rows themselves.
