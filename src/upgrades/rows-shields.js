@@ -78,8 +78,10 @@ export const SHIELD_ROWS = [
     name: 'maybe the wizards would know?',
     note: () => 'everything of the ground has failed. what is left is not of the ground',
     buy: () => lookAt(tower.x + tower.w / 2),
-    // and it folds away for good once anything is standing over the yard,
-    // because the dome never comes down: the thought has been had
-    show: () => !S.shield && shieldDone('arch')
+    // and it folds away once anything is standing over the yard, and for good
+    // once the dome has been and gone: the thought has been had, and the dome
+    // reads as done the way the three that broke do (`shieldsDone`), so
+    // neither its row nor this one returns after it fades
+    show: () => !S.shield && shieldDone('arch') && !shieldDone('dome')
   }
 ];

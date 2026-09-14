@@ -25,6 +25,7 @@ import { inWorking } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
+import { refitShield } from './shield.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -405,6 +406,9 @@ export function makeBoulder(fromSky = false) {
   const size = rockSize();
   S.gw = size.w;
   S.gh = size.h;
+  // A shield standing over the yard was planned for whichever rock was next
+  // when it was raised; this is that rock now, so it is re-planned to fit.
+  refitShield();
   const deep = depthOf();
   const seed = [rand() * 6, rand() * 6, rand() * 6,
                 rand() < 0.5 ? -1 : 1];

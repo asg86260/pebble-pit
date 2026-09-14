@@ -72,6 +72,26 @@ export const DOME_BOUNCE_C = 5;
 // of daylight over their head, so the walk out is from under a rock and not
 // through one.
 export const DOME_FLOOR_C = 8;
+// The dome's one job is the rescue: hold the rock that would have come down on
+// whoever was underneath, for as long as the dig takes. Once they are out it has
+// nothing left to do, and a dome that went on catching every rock after that
+// was a hold and a slow set-down on every rock for the rest of the game. So it
+// comes down -- and it is magic, not masonry, so it fades rather than falls:
+// this long from the frame after the rescue rock is set down to gone. It is the
+// one exit in the game with no body walking it, because there is no body.
+export const DOME_FADE_MS = 1500;
+
+// How wide the two curved shields stand, as a multiple of the width of the
+// rock they are built for. The props and the net are drawn across the rock
+// with a clear margin either side, and the margin alone is enough for a lid or
+// a rope; an arch or a dome is a curve whose crown is the catch line, and a
+// rock nearly as wide as the curve perches on its apex with its flanks hanging
+// out over the haunches. The span has to be visibly wider than the rock on
+// both sides for the rock to read as sitting *on* it. The flank clearance
+// (ROCK_FLANK_CLEAR) still caps it, so no shield ever reaches the building
+// beside the yard.
+export const ARCH_SPAN = 1.35;
+export const DOME_SPAN = 1.5;
 
 // The fanfare when a shield stands finished: one wave off its crown, out past
 // the span, and the crew cheer under it for a moment. The wave's reach is

@@ -10,7 +10,7 @@
 import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES } from '../config.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
-import { KINDS, risingShield, domeAt } from '../shield.js';
+import { KINDS, risingShield, domeAt, domeFade } from '../shield.js';
 import { ctx } from './ctx.js';
 
 export function drawShield() {
@@ -173,6 +173,13 @@ function drawDome(s, done, topY, cols) {
   const t = now() / 1000;
   const { a, R, total } = domeShell(s);
   const T = 2;
+  // Its exit. Once the rescue is done the dome goes the way it came, as light:
+  // the shell and its sparks thin out together over DOME_FADE_MS until there is
+  // nothing there. Alpha on the whole drawing rather than a shell shrinking or
+  // a ring peeling off, because a field does not come apart in pieces -- and
+  // because nothing in this yard pops out of existence.
+  const fade = domeFade(s);
+  if (fade) { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - fade); }
   for (let c = 0; c < cols; c++) {
     const dx = Math.abs(c + 0.5 - a);
     for (let r = 0; r < s.h; r++) {
@@ -212,6 +219,7 @@ function drawDome(s, done, topY, cols) {
     ctx.fillStyle = MAGIC_TONES[life < 0.3 ? 1 : life < 0.65 ? 2 : 3];
     ctx.fillRect(s.x + cx * P, S.groundY - (cy + 1) * P, P, P);
   }
+  if (fade) ctx.restore();
   ctx.fillStyle = '#000';
 }
 

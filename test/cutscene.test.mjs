@@ -4,7 +4,7 @@
 // the kind runs while the rock is in the air, that it is stood on the span,
 // that the yard never stops for it, and that it lets go once the answer is
 // over. DESIGN.md, "The cutscenes, fleshed out".
-import { group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
 import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL } from '../src/config.js';
 
 const fundDome = () => {
@@ -51,8 +51,10 @@ const standAt = (kind) => {
 // it, a sixtieth at a time: when the scene starts, where it looks, whether
 // somebody kept walking, and when it lets go.
 const watch = (kind) => {
+  // ...or nothing standing, once the dome has faded: the rock falls on bare
+  // ground and the span is where it would have stood
   const span = state().shield;
-  const spanX = span.x + span.w / 2;
+  const spanX = span ? span.x + span.w / 2 : yard.S.cx;
   const seat = state().camX;
   const zoom0 = state().zoom;
   window.__next();
@@ -106,7 +108,9 @@ for (const kind of ['props', 'net', 'arch']) {
 group("the dome's first hold is watched, and the second is not", async () => {
   standAt('dome');
   const first = watch('dome');
-  // the rescue happened under it: the second rock is routine
+  // the rescue happened under it, and the dome has faded out since
+  // (shield.js, `stepShield`): the second rock is routine, on bare ground
+  const gone = !state().shield && state().shieldsDone.includes('dome');
   const again = watch('dome');
   window.__reset();
   return [
@@ -114,8 +118,8 @@ group("the dome's first hold is watched, and the second is not", async () => {
     ok(first.onSpan && first.walked, 'on the span, with the yard still walking'),
     ok(first.ended && !first.ended.held && first.ended.rockFall === 0,
        'and it lets go once the rock is set down', JSON.stringify(first.ended)),
-    ok(first.ended && first.ended.shield === 'dome', 'with the dome still standing'),
-    ok(!again.started, 'the next rock under the dome is not a scene',
+    ok(gone, 'and the dome is gone once the rescue is over'),
+    ok(!again.started, 'and the next rock is not a scene',
        JSON.stringify(again.started)),
   ];
 });
