@@ -5,7 +5,7 @@
 // furniture happens to: the hole it tips into, the lip it may not walk over, the
 // books it holds room in, and the loose core nobody else will pick up.
 
-import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER, HOME_WALK,
+import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
          PILE_LIMIT, HAUL_FIFO } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
@@ -14,7 +14,7 @@ import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../r
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
-import { haulSpeed, scoopMs } from '../upgrades.js';
+import { haulSpeed, scoopMs, homePace } from '../upgrades.js';
 // the swift brew's pace, read per body at every haul walk (feedback7, item 21)
 import { paceBoost } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
@@ -710,7 +710,7 @@ export function haulerWork(w, c) {
     unbook(w);
     if (w.inside) return;                      // in out of it, and nothing to watch
     const door = hireSpot().x;
-    w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
+    w.x += Math.sign(door - w.x) * Math.min(homePace() * frames(), Math.abs(door - w.x));
     w.y = stand(w);
     if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
   } else {

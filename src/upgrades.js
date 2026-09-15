@@ -19,7 +19,7 @@ import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, apothecary, casino, scrub, tower, outhouse } from './state.js';
 import { spend, spendHeld, pitCapacity, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY,
+         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY,
          APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
@@ -161,6 +161,9 @@ export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
 // seconds of crawling, cured by picking the body up and dropping it. A trip is
 // a trip, whoever makes it.
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
+// And the trip between the shacks and the work, either way: a multiple of the
+// commute (config/house.js, HOME_HURRY), so it climbs the pace ladder with it.
+export const homePace = () => commutePace() * HOME_HURRY;
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.

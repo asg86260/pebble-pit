@@ -132,7 +132,7 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // a body retasked mid-walk finished the walk at its
                       // station's amble, a quarter of the commute's pace, and
                       // one sent for a hat came back without one.
-                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching',
+                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching', 'fromHome',
                       // and the dance it is in the middle of -- its mark, its
                       // move and where its feet are -- so a refresh mid-hop
                       // lands the hop rather than dropping the body from it.

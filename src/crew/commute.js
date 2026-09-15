@@ -7,7 +7,7 @@ import { S } from '../state.js';
 import { kitX } from '../world.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
 import { JOB_OF, JOBS as ROSTER_JOBS } from '../upgrades.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace, homePace } from '../upgrades.js';
 import { TYPE } from '../jobs.js';
 import { JOB_MACHINE, machine, specOf } from '../machines.js';
 import { postOf } from './tenders.js';
@@ -122,6 +122,7 @@ export function settle(w) {
   w.legs = null;
   w.walkTo = null;
   w.walking = false;
+  w.fromHome = false;
   w.route = null;
   w.routeTo = null;
   w.routeWay = null;
@@ -184,7 +185,7 @@ function arrive(w) {
   S.dirty = true;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
   if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false;
-                          w.route = null; return; }
+                          w.fromHome = false; w.route = null; return; }
   settle(w);
 }
 
@@ -232,6 +233,11 @@ export function retask(w, type) {
   // it, because nothing else in the game takes somebody off carrying. Put one on
   // the quarry straight from the house and it went down the quarry, worked the
   // face, brought shards up and was invisible the whole time.
+  //
+  // And a body out of the door hurries to its work, the way one going home
+  // hurries back (HOME_HURRY): the flag lasts for this one commute and is
+  // dropped by `clear` on the next.
+  w.fromHome = !!w.inside;
   w.inside = false;
   const job = JOB_OF[type];
   const legs = [];
@@ -308,7 +314,7 @@ export function stepCommute(w, zone) {
   // one.
   if (onYard(w) && duck(w, zone)) { w.y = stand(w); return; }
 
-  if (stepRoute(w, commutePace())) return;
+  if (stepRoute(w, w.fromHome ? homePace() : commutePace())) return;
   w.route = null;
   arrive(w);
 }

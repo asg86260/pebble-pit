@@ -46,7 +46,16 @@ export const HOUSE_PUFF_MS = 5200;
 // before anybody has stood in it long enough to light anything -- knocking off
 // and taking five are the same idle stretch, and this is the far end of it.
 export const HOME_AFTER = 60000;  // idle before a body knocks off
-export const HOME_WALK = 1.15;    // and how fast it walks there, px per frame
+// And how quick the trip is, either way, as a multiple of the commute. The walk
+// home was its own number -- 1.15 px a frame, a quarter of the slowest commute
+// -- so a crew that crossed the yard to work in a few seconds took most of a
+// minute to trudge back to the door, and read as dragging its feet the whole
+// way; and a body hired out of the door walked to its station at the plain
+// commute while every other trip in the yard had been made brisk. A trip that
+// starts or ends at the shacks is the one trip with nothing to do at either end
+// of it, so it is the one to hurry: this many times `commutePace`, and it rides
+// the pace ladder with it.
+export const HOME_HURRY = 2;
 // A room is twice the body that lives in it. It was exactly one body across for
 // a while, which meant a door -- a third of a room -- was half the width of the
 // worker walking out of it, and the whole settlement read as a doll's house
