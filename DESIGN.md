@@ -9926,7 +9926,13 @@ its `workKey`, a gang body claimed to its shed by the front work at its
 off the yard's `y - foot` plus its lunge, scaled cell to cell, and chips
 thrown on the frame its count of blows changes, aged in frames. `drawGlyph`
 takes the list and widens its canvas by a margin on the left for them, which
-the anchor's margin allows for, so the picture stays put. The pose is part
+the anchor's margin allows for, so the picture stays put, and by a cell at
+the foot, since a blow drops a body a cell. The chips are the yard's grit at
+the glyph's scale -- `GRIT_*` scaled cell to cell, a black cell each on the
+cell grid, stopping at the body's foot and fading on the yard's curve; the
+first cut drew them as one-pixel specks at the ghost tone and nobody could
+see them (the owner, 2026-09-15: "can we do the particles in the card as
+well?"). The pose is part
 of the picture's redraw key, so a tile with a body on it is redrawn as the
 body moves and one with nobody on it is not. The glyph canvas's CSS width
 is its own now (`width: auto`) rather than 28px, since a tile being built

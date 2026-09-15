@@ -6,7 +6,7 @@
 // three lines.
 
 import { S } from './state.js';
-import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_CHIPS, SHELF_HAND_CHIP_LIFE } from './config.js';
+import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
@@ -635,11 +635,14 @@ function wearGlyph(row, key, tint, ink, built = null, hands = []) {
 // yard's own builders, read off the bodies. A body's pose is where it is
 // against its own foot -- above it on the hop, a cell below it on the blow
 // (`workJig` sets both; the yard draws the lunge the same way) -- scaled from
-// the yard's cell to the glyph's. Its chips are thrown on the frame a blow
-// lands, which is the frame its count of blows changes, out toward the
-// glyph and up, and fade over `SHELF_HAND_CHIP_LIFE` frames. Both are kept
-// on the body, since it is the body doing them.
+// the yard's cell to the glyph's. Its chips are the yard's grit at the same
+// scale -- `spawnGrit`'s throw, rise, pull and life, in the glyph's cell for
+// the yard's, a frame a frame -- thrown on the frame a blow lands, which is
+// the frame its count of blows changes, out to both sides of the strike at
+// the body's face. Both are kept on the body, since it is the body doing
+// them.
 const hits = new WeakMap();
+const SCALE = SHELF_GLYPH_CELL / P;
 function handsFor(key) {
   return bodiesOn(key).map(w => {
     const dy = ((w.y - w.foot) / P + (w.lunge || 0)) * SHELF_GLYPH_CELL;
@@ -647,11 +650,18 @@ function handsFor(key) {
     const last = hits.get(w)?.hits;
     if (last !== undefined && last !== w.hits) {
       const side = SHELF_HAND_CELLS * SHELF_GLYPH_CELL;
-      for (let i = 0; i < SHELF_HAND_CHIPS; i++) {
-        chips.push({ x: side, y: side / 2, vx: 0.3 + i * 0.25, vy: -(0.4 + i * 0.2), a: 1 });
+      for (let i = 0; i < GRIT_MOTES; i++) {
+        const dir = i % 2 ? 1 : -1, k = (i >> 1) / Math.max(1, (GRIT_MOTES >> 1) - 1);
+        chips.push({ x: side, y: side / 2,
+                     vx: dir * GRIT_SPREAD * (0.5 + k) * SCALE, vy: -GRIT_RISE * (0.6 + k * 0.8) * SCALE,
+                     t: 0, life: GRIT_LIFE * (0.7 + k * 0.6) });
       }
     }
-    chips = chips.filter(c => c.a > 0).map(c => ({ x: c.x + c.vx, y: c.y + c.vy, vx: c.vx, vy: c.vy + 0.05, a: c.a - 1 / SHELF_HAND_CHIP_LIFE }));
+    // ...and stops at the floor, as the yard's does: the body's own foot.
+    const floor = SHELF_HAND_CELLS * SHELF_GLYPH_CELL - SHELF_GLYPH_CELL;
+    chips = chips.map(c => ({ ...c, t: c.t + 1 / 60, vy: c.vy + GRIT_GRAV / 60 * SCALE, x: c.x + c.vx, y: Math.min(floor, c.y + c.vy) }))
+                 .filter(c => c.t < c.life)
+                 .map(c => ({ ...c, a: 1 - (c.t / c.life) ** 2 }));
     hits.set(w, { hits: w.hits, chips });
     return { dy, chips };
   });

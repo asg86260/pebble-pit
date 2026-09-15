@@ -179,7 +179,10 @@ export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch 
 // when a hand arrives beside it.
 export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null, hands = []) => {
   const M = 2, L = hands.length * (HAND + HAND_GAP) * CELL;
-  const W = L + CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
+  // ...and a cell under the foot for them: a blow drops a body a cell below
+  // where it stands, which on a drawing that reaches its bottom row is off
+  // the canvas.
+  const W = L + CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M + (hands.length ? CELL : 0);
   const c = document.createElement('canvas');
   c.width = W; c.height = H; c.className = 'glyph';
   const g = c.getContext('2d');
@@ -256,8 +259,10 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   const [lo, hi] = inkSpan(rows);
   // The hands: the yard's square at this scale -- white, a one-pixel black
   // edge -- each standing a body's width further off the ink's left edge, on
-  // the ink's bottom row, moved by its own `dy`. Its chips go over it, at
-  // the ghost tone, each fading on its own alpha.
+  // the ink's bottom row, moved by its own `dy`. Its chips go over it: a
+  // cell of black each, on the cell grid, as the yard's are, each fading on
+  // its own alpha -- off the body's resting place, not its hop, so a chip
+  // thrown does not ride the next swing.
   if (hands.length) {
     const foot = M + (laid.length ? Math.max(...laid.map(([, y]) => y)) + 1 : CELLS) * CELL;
     const side = HAND * CELL;
@@ -266,10 +271,10 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
       const y = foot - side + Math.round(h.dy);
       g.fillStyle = '#000'; g.fillRect(x, y, side, side);
       g.fillStyle = '#fff'; g.fillRect(x + 1, y + 1, side - 2, side - 2);
-      g.fillStyle = SHELF_INK.ghost;
+      g.fillStyle = '#000';
       for (const s of h.chips || []) {
         g.globalAlpha = Math.max(0, Math.min(1, s.a));
-        g.fillRect(x + Math.round(s.x), y + Math.round(s.y), 1, 1);
+        g.fillRect(Math.round((x + s.x) / CELL) * CELL, Math.round((foot - side + s.y) / CELL) * CELL, CELL, CELL);
       }
       g.globalAlpha = 1;
     });

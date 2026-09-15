@@ -157,8 +157,8 @@
    glyph is a canvas too, so every one of those is undone here. */
 .rows.shelves > .tile .pic .glyph {
   position: static; inset: auto; z-index: auto;
-  /* Its own width: a tile being built draws its hands on a wider canvas. */
-  display: block; width: auto; height: 28px;
+  /* Its own size: a tile being built draws its hands on a wider, deeper canvas. */
+  display: block; width: auto; height: auto;
   background: none; cursor: inherit; image-rendering: pixelated;
 }
 .rows.shelves > .tile .name { grid-row: 2; display: block; min-width: 0; max-width: 100%; }
