@@ -285,9 +285,15 @@ export const gainText = u => {
   return amount && u.does ? `${u.does} ${amount}` : amount;
 };
 const gainAmount = u => {
-  if (!u.from) return '';
-  const a = Number(u.from()), b = Number(u.to());
-  if (!isFinite(a) || !isFinite(b)) return '';
+  if (!u.to) return '';
+  const b = Number(u.to());
+  if (!isFinite(b)) return '';
+  // A row with a `to` and no `from` is not a step up a ladder, it is what
+  // you get: hold to mine gives one hit a second, and "0 -> 1" would be an
+  // arrow from nothing.
+  if (!u.from) return `${Number.isInteger(b) ? b : num(b)}${!u.unit ? '' : /^[%x]$/.test(u.unit) ? u.unit : ' ' + unitText(u.unit)}`;
+  const a = Number(u.from());
+  if (!isFinite(a)) return '';
   // The mark if the yard has one for it, and the row's own word if it has not.
   // Four rows name a unit no coin stands for -- the lab's work, the fan's motes,
   // the tower's bolts and the cells one takes off a star -- and what the board

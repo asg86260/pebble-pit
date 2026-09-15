@@ -132,8 +132,7 @@ export const BENCH_ROWS = [
     // What it gives is the swing ladder's foot: holding the button swings at
     // the pace the first rung of "auto swing" starts from, so the row says
     // that pace rather than nothing.
-    unit: 'hits/s', does: 'hit',
-    from: () => 0,
+    unit: 'hit/s',
     to: () => mineRate(0),
     cost: () => 25,
     buy: () => { S.autoMine = true; },
