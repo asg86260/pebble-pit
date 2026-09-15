@@ -13,6 +13,10 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- Every board is shelves: a section is a plank, an upgrade is a thing standing on it with its name, its gain and one price tag under it. The description is the hover tip.
+- Every upgrade has a drawing -- forty-odd of them, borrowed across the boards, with a small badge in the corner saying how: a plus for more of a thing, a chevron for faster, a coin for which stake.
+- The pinned row in the corner is the same tile it is on its board, on a patch of the shelf's ground, and it stays put under the cursor.
+- A door says what the place is for, where a ladder prints its gain.
 - The ground is hatched below the line, so the yard reads as cut earth rather than blank paper.
 
 ## v0.2.0 — 2026-09-15
