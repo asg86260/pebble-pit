@@ -1,5 +1,15 @@
 # Still to do
 
+## A hand on the tile -- DESIGN, awaiting sign-off (2026-09-15)
+
+"A hand on the tile" at the end of DESIGN.md. While the yard's builder is
+at a site, the same body is drawn on the site's tile, at the glyph's scale,
+off the glyph's foot, swinging on the yard's own beat with chips off each
+blow -- read straight off the body (`y`, `lunge`, `site`, `workKey`), so a
+tile never moves when the site does not. Four calls made in the design
+(mirror the yard's body, stand off the left edge, no hat, every filled
+glyph). Not built: the owner has not signed the design off.
+
 ## A tile being built shows the building -- BUILT (2026-09-15)
 
 "A tile being built shows the building" at the end of DESIGN.md. While a

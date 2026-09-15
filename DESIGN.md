@@ -9830,3 +9830,90 @@ cell. The pips were found to vanish on a building row -- the ladder block
 sat after the status branch's `continue`, on the cards too -- and were
 hoisted above it. The check is "a tile being built fills in, and its clock
 counts down" in `selftest/boards.js`.
+
+## A hand on the tile (design, not built)
+
+### What is wrong
+
+A tile being built fills in from the bottom up, and that is the bar. But a
+bar is still a bar: the picture grows a cell every so often and nothing on
+the tile does anything in between. Out in the yard the same build is a body
+standing off the foot of the thing going up, swinging at it, chips coming
+off each blow, resting, stepping along, swinging again -- and the tile that
+bought that body shows none of it. The plank is the one place a player
+looks to see whether the thing is coming, and it shows the *result* of the
+work, never the work. (The owner, 2026-09-15: "put a worker onto the card
+and use the same construction animation on the card while it was getting
+worked.")
+
+### The rule
+
+**The builder stands on the tile.** While a body is at the site, a body is
+drawn on the tile: the yard's own square, at the glyph's scale -- three
+glyph cells (`SHELF_GLYPH_CELL * 3`, nine pixels; the yard's `WORKER` is
+three of its cells), a one-pixel black edge on white -- standing on the
+glyph's bottom row, off its left edge by a cell, the way `buildStationX`
+stands the yard's builder off the footprint's left edge so it is not lost
+against the black of the building.
+
+**It is the yard's builder, blow for blow.** The tile does not run a clock
+of its own. Each frame it reads the bodies whose `site` is this work's site
+and whose `workKey` is this row, and draws each one from its own `y` and
+`lunge`: the hop is `(w.foot - w.y)` scaled to the glyph's cell, the lunge
+is the body a pixel toward the glyph on the blow, and the chips are the
+blow's -- two or three one-pixel specks at the glyph's face at the ghost
+tone, fading over a few frames, spawned on the same frame `spawnGrit` is.
+So a tile with a body swinging on it is a site with a body swinging at it,
+on the same beat, and a tile with a still body on it does not exist: when
+the yard's builder rests between bursts the tile's rests, when it steps
+along the patch the tile's steps a cell along the glyph's foot, and when
+nobody is at the site there is nobody on the tile and the glyph stands
+part-built with nobody there -- which is what `nobody on it` looks like
+before the word says it. Nothing teleports: the body on the tile appears
+when the yard's body arrives at the site (`workJig` starts), not at the
+press.
+
+**A gang is a row of them.** A build with `BUILD_GANG` bodies on it draws
+one square a body along the glyph's foot, each on its own beat, since the
+yard's bodies each roll their own tempo. Three squares under a glyph is the
+most a tile ever holds, and three nine-pixel squares are twenty-nine pixels
+across a slot with a hundred and eight to spare.
+
+**The glyph does not move.** The picture stays centered on the tile's line
+as it is; the body is drawn beside it, on the same canvas, in a margin
+widened on the left for a building tile only, and `inkSpan` ignores it, so
+the anchor's margin -- and so the picture -- is where it was. A plan (a row
+in line) has no body: nobody has walked to it yet.
+
+### What it costs
+
+A redraw of the building tile's canvas on the frames the body's drawn frame
+changes -- its hop pixel, its lunge, a chip's fade step -- which during a
+swing is most frames, and between bursts none. One small canvas, on the
+one or two tiles the yard is building, and only while the board is open;
+the sim side already keeps every number (`w.y`, `w.lunge`, `w.foot`,
+`w.site`, `w.workKey`). The draw is a `fillRect` and a `strokeRect` a body.
+
+### The calls to make
+
+1. **Mirror the yard's builder, or run a beat of the tile's own.** Mirror.
+   A tile beating on its own would swing while the yard's body was walking
+   up, resting, or gone, and the one thing the tile is for is telling the
+   truth about the site. It costs nothing: the numbers are on the body.
+2. **Where it stands.** Off the left edge of the glyph's bottom row, as in
+   the yard. Inside the glyph's own cells it would sit on the ghost and read
+   as part of the drawing.
+3. **Hat or no hat.** No hat. A builder in the yard wears none, and a bar
+   across a nine-pixel square is a third of it.
+4. **Machine builds and rung builds too.** Yes, wherever the glyph fills:
+   every tile that draws `built` draws the hand. A ladder rung built at the
+   bench has a builder at the bench, and the rung's tile shows it.
+
+### How it is checked
+
+Browser tier, `selftest/boards.js`, beside "a tile being built fills in":
+buy a build, turn the clock until a body is at the site, and read the
+tile's canvas -- there is ink left of the glyph's ink span (the body) that
+was not there before the body arrived; turn a hammer-beat and the body's
+pixels have moved; stand the crew down and they are gone while the glyph's
+built cells hold. A row in line draws no body.
