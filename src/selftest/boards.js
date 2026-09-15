@@ -1665,8 +1665,13 @@ export const TESTS = [
       const c = tile()?.querySelector('.pic canvas');
       if (!c) return -1;
       const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      // black pixels in the drawing's own columns: the cells up. The hand
+      // and its chips stand on a margin to the left of them.
       let n = 0;
-      for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 0) n++;   // black pixels: the cells up
+      for (let y = 0; y < c.height; y++) for (let x = c.width - 28; x < c.width; x++) {
+        const i = (y * c.width + x) * 4;
+        if (d[i + 3] && d[i] === 0) n++;
+      }
       return n;
     };
     const clock = () => tile()?.querySelector('.tag .time')?.textContent.trim() || '';
@@ -1780,10 +1785,14 @@ export const TESTS = [
     // the swing runs on the frame clock: watch a few frames
     const feet = new Set();
     for (let i = 0; i < 24; i++) { window.__fast(1 / 60); await raf(); feet.add(read('jaw').foot); }
-    // some cells up, then nobody at the site: no hand, and the cells hold
+    // some cells up, then nobody at the site: the hand fades out over a few
+    // frames of the frame clock (still there on the first, gone after), and
+    // the cells hold
     await settle(8);
     window.__crew(0, 0, 0, 0);
     await settle(3);
+    const leaving = read('jaw');
+    for (let i = 0; i < 40; i++) await raf();
     const alone = read('jaw');
     await settle(3);
     const stillAlone = read('jaw');
@@ -1809,7 +1818,8 @@ export const TESTS = [
       ok(state().jigging >= 0 && arrived.hand > 0 && arrived.w > bare.w, `a hand is on the tile once a body is on the patch (${at}s)`, `${arrived.hand} pixels, ${arrived.w}px wide`),
       ok(feet.size > 1, 'and it moves with the swing', `feet at rows ${[...feet].join('/')}`),
       ok(queuedSaid === 'queued' && queued.hand === 0 && queued.w === 28, 'a row in line draws no hand', `${queuedSaid}: ${queued.hand} pixels, ${queued.w}px`),
-      ok(alone.hand === 0 && alone.w === 28, 'with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
+      ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
+      ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
       ok(alone.ink === stillAlone.ink && alone.ink > 0, 'and the built cells hold', `${alone.ink} -> ${stillAlone.ink}`),
     ];
   }],

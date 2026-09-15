@@ -7,7 +7,7 @@
 // is a placeholder until the set is drawn as a batch against shelf.html; a
 // row with no glyph of its own gets the crate, so a missing one is visible on
 // the shelf rather than a blank.
-import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP } from './config.js';
+import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP, SHELF_HAND_SLIDE as HAND_SLIDE } from './config.js';
 
 // The drawings, by the object's name. A drawing that is not here yet is a
 // row still wearing the crate, and the review sheet (glyphs.html) says so.
@@ -170,15 +170,18 @@ export const inkSpan = rows => {
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
 //
 // `hands` are the bodies at the site, for a tile being built (DESIGN.md, "A
-// hand on the tile"): one `{ dy, chips }` a body, `dy` how far below the
+// hand on the tile"): one `{ dy, chips, on }` a body, `dy` how far below the
 // glyph's foot the body is drawn this frame, in pixels (a hop is above it, a
 // blow below), `chips` the specks its blows have thrown, `{ x, y, a }` in
-// pixels off the body's top-left and an alpha. The bodies stand in a row off
+// pixels off the body's top-left and an alpha, and `on` how far it has
+// arrived, nought to one: it is drawn that faint and that many of
+// `HAND_SLIDE` cells to the left of its place, eased, so it slides in and
+// fades up together, and back out the same way. The bodies stand in a row off
 // the ink's left edge, on a margin added to the left of the canvas for them,
 // which the anchor's margin below allows for -- so the picture does not move
 // when a hand arrives beside it.
 export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null, hands = []) => {
-  const M = 2, L = hands.length * (HAND + HAND_GAP) * CELL;
+  const M = 2, L = hands.length ? (hands.length * (HAND + HAND_GAP) + HAND_SLIDE) * CELL : 0;
   // ...and a cell under the foot for them: a blow drops a body a cell below
   // where it stands, which on a drawing that reaches its bottom row is off
   // the canvas.
@@ -267,10 +270,18 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
     const foot = M + (laid.length ? Math.max(...laid.map(([, y]) => y)) + 1 : CELLS) * CELL;
     const side = HAND * CELL;
     hands.forEach((h, i) => {
-      const x = M + L + lo * CELL - (i + 1) * (HAND + HAND_GAP) * CELL;
+      const on = h.on ?? 1, ease = 1 - (1 - on) * (1 - on);
+      const x = M + L + lo * CELL - (i + 1) * (HAND + HAND_GAP) * CELL - Math.round((1 - ease) * HAND_SLIDE * CELL);
       const y = foot - side + Math.round(h.dy);
-      g.fillStyle = '#000'; g.fillRect(x, y, side, side);
+      // The edge as four strips round a white middle, not a black square
+      // under a white one: at half alpha the second would show through the
+      // first and the body would read as filled grey.
+      g.globalAlpha = on;
       g.fillStyle = '#fff'; g.fillRect(x + 1, y + 1, side - 2, side - 2);
+      g.fillStyle = '#000';
+      g.fillRect(x, y, side, 1); g.fillRect(x, y + side - 1, side, 1);
+      g.fillRect(x, y, 1, side); g.fillRect(x + side - 1, y, 1, side);
+      g.globalAlpha = 1;
       g.fillStyle = '#000';
       for (const s of h.chips || []) {
         g.globalAlpha = Math.max(0, Math.min(1, s.a));

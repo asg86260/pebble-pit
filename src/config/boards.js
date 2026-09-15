@@ -96,6 +96,10 @@ export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell gl
 // Its chips are the yard's own (GRIT_*), scaled cell to cell.
 export const SHELF_HAND_CELLS = 3;
 export const SHELF_HAND_GAP = 1;
+// A hand arrives and leaves rather than popping: it fades in sliding from the
+// left over this many frames, and out the same way, `SHELF_HAND_SLIDE` cells.
+export const SHELF_HAND_FADE = 18;
+export const SHELF_HAND_SLIDE = 2;
 export const SHELF_GLYPH_CELLS = 8; // cells a glyph is square
 export const SHELF_BADGE_HALO = 1;  // px of white round a badge's ink, cut out of the drawing under it
 export const SHELF_BADGE_CELL = 2;  // screen px a badge cell: finer than the drawing's, for a mark a third its size

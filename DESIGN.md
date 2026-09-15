@@ -9932,7 +9932,14 @@ the glyph's scale -- `GRIT_*` scaled cell to cell, a black cell each on the
 cell grid, stopping at the body's foot and fading on the yard's curve; the
 first cut drew them as one-pixel specks at the ghost tone and nobody could
 see them (the owner, 2026-09-15: "can we do the particles in the card as
-well?"). The pose is part
+well?"). A hand arrives and leaves rather than popping (the owner, the same
+day: "a little fade in and x translate"): `handsFor` keeps an `on` per
+body, nought to one over `SHELF_HAND_FADE` frames after it steps on to the
+patch and back after it steps off, and `drawGlyph` draws the body that
+faint and that share of `SHELF_HAND_SLIDE` cells to the left of its place,
+eased -- so it slides in from the left fading up, and slides back out
+fading down, a body that has left staying on the tile's list until it has
+gone. The pose is part
 of the picture's redraw key, so a tile with a body on it is redrawn as the
 body moves and one with nobody on it is not. The glyph canvas's CSS width
 is its own now (`width: auto`) rather than 28px, since a tile being built

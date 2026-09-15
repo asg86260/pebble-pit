@@ -6,7 +6,7 @@
 // three lines.
 
 import { S } from './state.js';
-import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
+import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_FADE, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
@@ -626,7 +626,7 @@ function wearBadge(line, words, n) {
 function wearGlyph(row, key, tint, ink, built = null, hands = []) {
   const pic = row.querySelector('.pic');
   if (!pic) return;
-  const pose = hands.map(h => `${Math.round(h.dy)}:${h.chips.map(c => `${Math.round(c.x)},${Math.round(c.y)},${c.a.toFixed(1)}`).join(';')}`).join('|');
+  const pose = hands.map(h => `${Math.round(h.dy)}@${h.on.toFixed(2)}:${h.chips.map(c => `${Math.round(c.x)},${Math.round(c.y)},${c.a.toFixed(1)}`).join(';')}`).join('|');
   const drawn = `${tint}/${ink}/${built}/${pose}`;
   if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key), built, hands)); }
 }
@@ -641,14 +641,29 @@ function wearGlyph(row, key, tint, ink, built = null, hands = []) {
 // the frame its count of blows changes, out to both sides of the strike at
 // the body's face. Both are kept on the body, since it is the body doing
 // them.
+//
+// And a hand arrives and leaves rather than popping (the owner, 2026-09-15:
+// "a little fade in and x translate"): `on` climbs from nought to one over
+// `SHELF_HAND_FADE` frames after the body steps on to the patch and falls
+// back after it steps off, the drawing fading and sliding on it. A body
+// that has left is kept on the tile's list until it has faded, still at its
+// foot, throwing nothing; the list is the tile's, in the order the bodies
+// came.
 const hits = new WeakMap();
 const SCALE = SHELF_GLYPH_CELL / P;
+const seen = new Map();                        // key -> Map(body -> on)
 function handsFor(key) {
-  return bodiesOn(key).map(w => {
-    const dy = ((w.y - w.foot) / P + (w.lunge || 0)) * SHELF_GLYPH_CELL;
+  const here = bodiesOn(key), was = seen.get(key) || new Map();
+  const now = new Map();
+  for (const [w, on] of was) if (!here.includes(w) && on > 1 / SHELF_HAND_FADE) now.set(w, on - 1 / SHELF_HAND_FADE);
+  for (const w of here) now.set(w, Math.min(1, (was.get(w) ?? 0) + 1 / SHELF_HAND_FADE));
+  if (now.size) seen.set(key, now); else seen.delete(key);
+  return [...now].map(([w, on]) => {
+    const gone = !here.includes(w);
+    const dy = gone ? 0 : ((w.y - w.foot) / P + (w.lunge || 0)) * SHELF_GLYPH_CELL;
     let chips = hits.get(w)?.chips || [];
     const last = hits.get(w)?.hits;
-    if (last !== undefined && last !== w.hits) {
+    if (!gone && last !== undefined && last !== w.hits) {
       const side = SHELF_HAND_CELLS * SHELF_GLYPH_CELL;
       for (let i = 0; i < GRIT_MOTES; i++) {
         const dir = i % 2 ? 1 : -1, k = (i >> 1) / Math.max(1, (GRIT_MOTES >> 1) - 1);
@@ -663,7 +678,7 @@ function handsFor(key) {
                  .filter(c => c.t < c.life)
                  .map(c => ({ ...c, a: 1 - (c.t / c.life) ** 2 }));
     hits.set(w, { hits: w.hits, chips });
-    return { dy, chips };
+    return { dy, chips, on };
   });
 }
 
@@ -763,6 +778,7 @@ export function refresh(el, list, headcount) {
       const rows = glyphFor(u.key);
       wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
+      seen.delete(u.key);                      // the work is done or gone: no hand to fade
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done
                  : coins.includes('spark') ? SHELF_INK.spark
