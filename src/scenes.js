@@ -949,6 +949,10 @@ export const SCENES = {
   // somebody still under the spot it is coming down on. The `!` scenes run
   // the crew's five-second dance through, so the shot is the rock meeting the
   // shield with the cutscene's camera on it rather than the dance before it.
+  // The offer itself: the bench's board with the first shield on it, unbought,
+  // above everything for sale -- the one card on the sheet that is a notice.
+  shieldrow: { about: 'the shields', say: "the bench's board with a shield on offer", page: true,
+    run: () => { shieldYard(); window.__board('bench'); } },
   ...Object.fromEntries(SHIELD_ORDER.flatMap(k => [
     [k, { about: 'the shields', say: `the ${k}, built`, run: () => shieldBuilt(k) }],
     // The moment it stands: the fanfare a fifth of a second in, wave and cheer.

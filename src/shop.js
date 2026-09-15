@@ -464,7 +464,9 @@ function build(el, list, sections, empty, heads) {
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
-      if (sect.goal) b.classList.add('goal');
+      // The goal card wears its section's title as a sign on its own frame
+      // (shelf.css), since the goal heading itself is not drawn on a shelf.
+      if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
       // The pin: a pushpin in the card's corner, and pressing it puts this
       // card in the top-right corner of the game (`fillPin`) -- or takes it
       // down again, if it is the one there. It is not a press on the card, so
