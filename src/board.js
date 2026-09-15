@@ -1,7 +1,8 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H,
+         SHELF_SLOT, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_PLANK, SHELF_HOVER_MS } from './config.js';
 import { S, bench, lab, apothecary, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -57,6 +58,10 @@ const pages = { bench: document.getElementById('board'),
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
+// The shelf's steps, the same way: config owns them, shelf.css reads them.
+for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['plank', SHELF_PLANK]])
+  document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
+document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 // Where you stand to read the books, and the record beside them: the
 // noticeboard, between the work bench and the front doors.
 //

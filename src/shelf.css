@@ -25,15 +25,11 @@
   all: revert;
 }
 
-/* Every number is a custom property, written from config/boards.js. */
+/* Every number is a custom property on the root, written by board.js from
+   config/boards.js; the values here are only for a page with no board.js. */
 .rows.shelves {
-  --shelf-slot: 140px;
-  --shelf-step: 5px;
-  --shelf-top: 8px;
-  --shelf-foot: 8px;
-  --shelf-plank: 5px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, var(--shelf-slot));
+  grid-template-columns: repeat(auto-fill, var(--shelf-slot, 140px));
   justify-content: start;
   align-items: stretch;
   gap: 0;
@@ -70,7 +66,7 @@
   grid-column: 1 / -1;
   justify-self: start;
   display: block;
-  margin: calc(var(--shelf-plank) + var(--shelf-top)) 0 0;
+  margin: calc(var(--shelf-plank, 5px) + var(--shelf-top, 8px)) 0 0;
   padding: 3px 10px 4px;
   border: 0;
   background: #000;
@@ -85,15 +81,15 @@
   content: '';
   position: absolute;
   left: 0;
-  top: calc(-1 * (var(--shelf-plank) + var(--shelf-top)));
+  top: calc(-1 * (var(--shelf-plank, 5px) + var(--shelf-top, 8px)));
   width: 100cqw;
-  border-top: var(--shelf-plank) solid #000;
+  border-top: var(--shelf-plank, 5px) solid #000;
 }
 .rows.shelves > .sect:first-child, .rows.shelves > .tile.goal + .sect { margin-top: 4px; }
 .rows.shelves > .sect:first-child::before, .rows.shelves > .tile.goal + .sect::before { display: none; }
 .rows.shelves > .sect.goal { display: none; }
 .rows.shelves > .sect .badge { margin-left: 8px; color: #000; background: #fff; }
-.rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank) solid #000; }
+.rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank, 5px) solid #000; }
 
 /* A tile: four rows at fixed steps, everything centered on the tile's own
    center line. Sized, not measured, so every tile on a plank has its glyph on
@@ -102,13 +98,13 @@
   position: relative;
   display: grid;
   grid-template-rows: 24px 13px 13px auto;
-  row-gap: var(--shelf-step);
+  row-gap: var(--shelf-step, 5px);
   justify-items: center;
   align-items: center;
   align-content: start;
   box-sizing: border-box;
-  width: var(--shelf-slot);
-  padding: var(--shelf-top) 6px var(--shelf-foot);
+  width: var(--shelf-slot, 140px);
+  padding: var(--shelf-top, 8px) 6px var(--shelf-foot, 8px);
   margin: 0;
   border: 0;
   background: none;
@@ -217,13 +213,23 @@
    to pick up stands out from the shelf. A tile you cannot press does
    nothing under the cursor. (The owner's pick, 2026-09-14, over inverting
    the tile and over inverting the tag alone.) */
-.rows.shelves > button.tile:hover:not(:disabled) {
-  background: #fff;
-  outline: 1px solid #000;
+/* The edge and the shadow are always there at no ink, so the hover is a fade
+   of the same two things and a lift, not a jump: SHELF_HOVER_MS in
+   config/boards.js. No fill -- the dots stay under the tile -- and nothing
+   inverts. `motion: less` (body.still) cuts the transition like every fade. */
+.rows.shelves > button.tile {
+  outline: 1px solid rgba(0, 0, 0, 0);
   outline-offset: -1px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0);
+  transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, box-shadow var(--shelf-hover-ms, 120ms) ease-out;
+}
+.rows.shelves > button.tile .pic { transition: transform var(--shelf-hover-ms, 120ms) ease-out; }
+.rows.shelves > button.tile:hover:not(:disabled) {
+  outline-color: #000;
   box-shadow: 2px 2px 0 #000;
 }
 .rows.shelves > button.tile:hover:not(:disabled) .pic { transform: translateY(-2px); }
+body.still .rows.shelves > button.tile, body.still .rows.shelves > button.tile .pic { transition: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
    picker, standing where the tag would. */
@@ -262,7 +268,7 @@
   margin: 2px 0 6px;
   padding: 8px 10px 8px 6px;
   border: 1px solid #000;
-  border-bottom: var(--shelf-plank) solid #000;
+  border-bottom: var(--shelf-plank, 5px) solid #000;
   background: #fff;
   text-align: left;
 }
