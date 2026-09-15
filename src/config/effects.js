@@ -1,11 +1,8 @@
 // --- effects: the black hole, a crit landing, and the dance -------------------
-// Track F4's numbers. Three things that are looked at rather than read: what the
-// rift pulls and how it is drawn, what a crit throws up when it lands, and how a
-// body celebrates a finished rock.
-//
-// Every one of these was found with the dev panel or off a `look.mjs` shot, so
-// the rows at the bottom of the file are part of the feature rather than a
-// nicety: none of them can be argued about on paper.
+// Three things that are looked at rather than read: what the rift pulls and
+// how it is drawn, what a crit throws up when it lands, and how a body
+// celebrates a finished rock. All found on the dev panel or off a shot, so the
+// rows at the bottom are part of the feature.
 
 import { P } from './yard.js';
 // The dance's own two rules -- the base beat and the pace that reads as a fault
@@ -13,89 +10,57 @@ import { P } from './yard.js';
 import { DANCE_BEAT, DANCE_BUZZ } from './rocks.js';
 
 // --- the rift inhales ---------------------------------------------------------
-// The pull is not a rate any more, and that is the point of it. A hole in the
-// air that swallows twelve grains a second sits over a full pile doing
-// arithmetic; what it is, and what everybody watching expects of it, is
-// something nothing gets past. So it takes the whole pile, on the frame the
-// grain lands, and there is no ladder because there is nothing left to buy.
-//
-// The one number is a **ceiling on a frame**, not a balance figure. It exists so
-// that a hole with a hundred thousand grains dropped into it in one act does the
-// taking over a handful of frames rather than walking a million cells inside
-// one. Anything the yard can actually earn is orders under it, which is what
-// makes "nothing settles on the pit floor" true rather than nearly true.
+// The rift takes the whole pile on the frame a grain lands; there is no rate
+// and no ladder. The one number is a **ceiling on a frame**, not a balance
+// figure: a hundred thousand grains dropped in one act are taken over a
+// handful of frames rather than a million cells walked inside one. Anything
+// the yard can earn is orders under it, which is what makes "nothing settles
+// on the pit floor" true rather than nearly true.
 export let RIFT_INHALE_MAX = 3000;   // grains it may take in one frame
-// And how many of them are drawn on their way in. The stream is the whole of
-// what the thing looks like when the yard is feeding it, so it is generous --
-// the tearing's own figure is `RIFT_GULP_SHOW`, and this is the same idea at the
-// rate an ordinary frame arrives.
+// How many of them are drawn on their way in. The tearing's own figure is
+// `RIFT_GULP_SHOW`; this is the same idea at the rate an ordinary frame arrives.
 export const RIFT_INHALE_SHOW = 600;
 
 // --- and what it looks like ---------------------------------------------------
-// A disc is an absence; a black hole is an absence that is *pulling*. What says
-// so is the rim of cleared paper that makes the core the darkest thing on the
-// page -- and the dust going into it, which is drawn where it actually is.
-//
-// The halo is what makes the core dark. There is no darker black available --
-// the disc is already ink -- so the way to deepen it is to take everything else
-// away from around it: two cells of bare paper, and then a thinning stipple, so
-// the eye reads a well rather than a sticker.
+// There is no darker black than the disc, so the way to deepen it is to take
+// everything else away from around it: two cells of bare paper, then a
+// thinning stipple, so the eye reads a well rather than a sticker.
 export const RIFT_HALO = 2;          // cells of paper cleared round the rim
 
-// The rim wavers: the edge of the tear is not a drawn circle, it creeps in and
-// out by a cell or so on a slow drift. A tear in the world has no business
-// having a compass edge -- and this is the one motion the disc itself is
-// allowed, because it is the disc saying it is a rip rather than a hole
-// somebody cut. Slow enough that you notice it is never quite still rather
-// than watching it pulse.
-//
-// (A ring of speckle used to sit outside the rim -- RIFT_STIPPLE -- and it is
-// gone: it read as a dotted collar printed round the hole, and the waver says
-// "torn" far better than a scatter of dots did.)
+// The rim creeps in and out by a cell or so on a slow drift: the one motion
+// the disc itself is allowed, because it is the disc saying it is a rip rather
+// than a hole somebody cut.
 export const RIFT_WAVER = 0.11;      // share of the radius the ripple is deep
 
 // The ripple, as modes: [lobes round the rim, ms for one lap, share of the
-// depth]. Lobes is the number that matters and it must be two or more -- one
-// lobe does not bend a circle, it *moves* it, so the first pass at this (a
-// single sine at one cycle per turn) wandered the rim about and left it exactly
-// as round as it started, which is what "it's still just a circle" meant.
-//
-// Three of them, at 2, 3 and 5. The counts are coprime and the lap times divide
-// into one another nowhere, so the sum never returns to an outline it has
-// already had: the edge keeps rippling rather than breathing on a loop. A
-// negative lap runs the other way round, so the modes cross each other instead
-// of travelling as one wave. The shares add to one, so RIFT_WAVER stays the
-// whole depth of the thing however many modes there turn out to be.
+// depth]. Lobes must be two or more: one lobe does not bend a circle, it
+// *moves* it, and the rim stays exactly as round as it started. The counts are
+// coprime and the lap times divide into one another nowhere, so the sum never
+// returns to an outline it has already had; a negative lap runs the other way,
+// so the modes cross instead of traveling as one wave. The shares add to one,
+// so RIFT_WAVER stays the whole depth however many modes there are.
 export const RIFT_RIM_MODES = [
   [2, -7300, 0.34],
   [3,  4900, 0.38],
   [5, -3100, 0.28],
 ];
 
-// The bending. Light coming past something this heavy does not come straight,
-// and the one place that can be shown here is the sky seen through the tear:
-// stars are crowded outward toward the rim and thinned out of the middle, the
-// way a lens piles an image up round its own edge. BELOW one pushes the field
-// out to the rim; at one it is a flat window with no lens in it; above one it
-// drags everything into the middle, which is what the first pass did -- the
-// exponent the wrong side of one, and a hole with a clot in it.
+// The sky seen through the tear is crowded outward toward the rim and thinned
+// out of the middle, the way a lens piles an image up round its own edge.
+// BELOW one pushes the field out to the rim; at one it is a flat window; above
+// one it drags everything into the middle and the hole has a clot in it.
 export const RIFT_BEND = 0.55;
 
-// ...and they sparkle. Each star's own slow fade, on its own phase, so the sky
-// behind the tear is alive without anything travelling across it.
+// Each star's own slow fade, on its own phase, so the sky behind the tear is
+// alive without anything traveling across it.
 export const RIFT_TWINKLE_MS = 2800;
 
 // --- the light bending --------------------------------------------------------
 // The yard behind the hole, sampled and put back magnified in a few thin rings
-// just outside the rim, so the ground line and the pile bow outward as they
-// pass it and snap straight once clear. It is the real warp rather than a
-// picture of one -- see `drawBend` in render/cores.js -- which is why it looks
-// out of place: nothing else in this game bends.
-// Four, and the number is a budget rather than a taste. Each ring is a clipped
-// blit of the picture and they cost about 0.7 ms apiece on this machine: ten
-// of them is 6.8 ms, over a third of a frame, on the one part of the game that
-// is already the heaviest. Four is 2.8 ms and the stepping between them still
-// reads as a smear rather than as bands.
+// just outside the rim (`drawBend` in render/cores.js). Four rings is a budget,
+// not a taste: each is a clipped blit at about 0.7 ms apiece on the heaviest
+// part of the game, and the stepping between four still reads as a smear
+// rather than as bands.
 export const RIFT_BEND_RINGS = 4;    // rings the warp is stepped through
 export const RIFT_BEND_R = 2.1;      // how far out it reaches, in disc radii
 export const RIFT_BEND_AMT = 0.7;    // and how hard it magnifies at the rim
@@ -105,61 +70,43 @@ export const RIFT_BEND_AMT = 0.7;    // and how hard it magnifies at the rim
 export const RIFT_RING_W = 2;        // screen px of it
 export const RIFT_RING_INK = 0.75;
 // --- what is on the other side ------------------------------------------------
-// It is a tear, not a dot. What the hole shows is somewhere else: a sky of
-// magic-coloured stars, layered, each layer keeping less pace with the yard
-// than the one in front of it.
+// What the hole shows is somewhere else: a sky of stars, layered, each layer
+// keeping less pace with the yard than the one in front of it.
 //
 // **The parallax is the whole idea.** Depth cannot be drawn on a flat black
-// circle -- every attempt at that read as a face -- but it can be *shown* by
-// having the far thing move less than the near one. So the stars answer the
-// camera rather than the clock: pan along the yard and they slide behind the
-// rim at a fraction of the yard's pace, and the hole reads as a window with a
-// long way behind it. Stand still and they stand still. That is the one kind
-// of motion this thing has earned -- it is a reply to the player, not an idle.
+// circle (every attempt read as a face) but it can be *shown* by having the
+// far thing move less than the near one. The stars answer the camera rather
+// than the clock: stand still and they stand still.
 export const RIFT_DEEP_LAYERS = 3;    // skies behind the tear
 export const RIFT_DEEP_NEAR = 0.55;   // how much of the yard's pace the nearest keeps
 export const RIFT_DEEP_FAR = 0.12;    // ...and the furthest
 export const RIFT_DEEP_SPACING = 21;  // world px between stars in the nearest sky
 
-// And the pull: a few motes of the wizards' own purple drawn in toward the rim
-// and gone at it. This is the one thing here that moves on its own, and it is
-// kept to a handful on purpose -- what it has to say is "this is pulling", and
-// a crowd says "this is busy" instead. Inward, never out: a ring going out of
-// a hole is a hole broadcasting, and this one takes.
+// A few motes of the wizards' own purple drawn in toward the rim and gone at
+// it. A handful on purpose: what it has to say is "this is pulling", and a
+// crowd says "this is busy". Inward, never out: a ring going out of a hole is
+// a hole broadcasting, and this one takes.
 export const RIFT_PULL_MOTES = 6;     // in the air at once
 export const RIFT_PULL_MS = 3400;     // how long one takes to come in
 export const RIFT_PULL_FROM = 2.4;    // where it starts, in disc radii
 export const RIFT_PULL_INK = 0.9;     // and the strongest it is drawn
 
-// Nothing else about the disc moves. It had a lensing rim that swelled and
-// leaned, a speckle collar that turned, eight strands for ever spiralling in
-// whether or not anything was, and a song of purple rings going out of it --
-// RIFT_LENS, RIFT_STIPPLE_MS, the RIFT_STREAK_* family and the RIFT_SONG_*
-// family, all gone. Each was defensible alone and together they were an
-// ornament that never stopped moving, on a thing that is idle most of the
-// endgame because it is keeping up. The hole is a place, not a creature: what
+// Nothing else about the disc moves. The hole is a place, not a creature: what
 // moves is the dust going into it. See `drawRift` in render/cores.js.
 
-// And the smear on a grain that is actually going in: a few cells of tail
-// pointing back the way it came, so the stream reads as being pulled rather than
-// as beads on a wire. Only near the disc, where it is being dragged hardest.
+// The smear on a grain that is actually going in: a few cells of tail pointing
+// back the way it came, so the stream reads as being pulled rather than as
+// beads on a wire. Only near the disc, where it is being dragged hardest.
 export const RIFT_TAIL = 3;          // cells of tail behind a grain
 export const RIFT_TAIL_R = 2.2;      // and how near the disc, in radii, it grows one
 
 // --- a crit landing -----------------------------------------------------------
-// The crit already throws its own spoil up as a fountain (see `critToss`), and
-// that is the part of it that is *real*: those are the grains the work turned
-// up, and they land and bank like any other dust. What was missing was the blow
-// itself -- the moment reads as a taller throw rather than as a hit.
-//
-// So a crit also lets go of a shockwave and a scatter of motes. Neither is dust
-// and neither is counted: this yard's one unbreakable rule is that one grain is
-// one dust, so anything decorative must be plainly not a grain. They are drawn
-// as an outline ring and as specks that never land.
-//
-// Everything here scales with the crit's multiplier, which is the size of the
-// thing that happened: a three-times blow is a ring you notice and a six-times
-// one is a ring that crosses the yard.
+// The crit's fountain of spoil (`critToss`) is real dust and banks like any
+// other; the blow itself is a shockwave and a scatter of motes, neither of
+// which is counted. One grain is one dust, so anything decorative must be
+// plainly not a grain: an outline ring, and specks that never land.
+// Everything scales with the crit's multiplier, which is the size of the thing
+// that happened.
 export const CRIT_RING_MS = 260;     // how long the ring takes to run out
 export const CRIT_RING_R = P * 1.6;  // how far it reaches, per point of multiplier
 export const CRIT_RING_WIDE = P;     // and how thick the ring is drawn
@@ -169,43 +116,31 @@ export const CRIT_MOTE_SPEED = P * 0.6;  // world pixels a frame it leaves at
 export const CRIT_MOTE_DRAG = 0.78;  // and how quickly it gives that up
 
 // --- the dance ----------------------------------------------------------------
-// A celebration is jumping up and down. It was three moves -- a hop, a pace
-// across the ground, and a turn on the spot -- and the two that travelled read
-// as a shuffle rather than as delight: a body pleased with itself does not amble
-// sideways, it leaves the ground.
-//
-// So the dance is one move now, and it has one dial and one height.
+// A celebration is jumping up and down: one move, one dial, one height.
 //
 // **The tempo is derived, not chosen.** `DANCE_BUZZ` is the pace at which a
-// bouncing body stops reading as pleased and starts reading as faulty -- it is
-// the rule, and it was already written down. What a body actually crosses its
-// own height at is `DANCE_BEAT` times the move's multiple times the tempo that
-// body rolled for itself, so the honest thing to set is how much of that ceiling
-// the QUICKEST body in the yard may use, and to work the multiple back out of
-// it. A hand-set multiple is a number that is right until somebody widens the
-// tempo spread or nudges DANCE_BEAT, and then it is silently wrong in a way only
-// a suite notices.
+// bouncing body stops reading as pleased and starts reading as faulty. A body
+// crosses its own height at `DANCE_BEAT` times the move's multiple times the
+// tempo it rolled for itself, so what is set is how much of that ceiling the
+// QUICKEST body may use, and the multiple is worked back out of it. A hand-set
+// multiple goes silently wrong the moment somebody widens the tempo spread or
+// nudges DANCE_BEAT.
 //
-// Every body rolls its own tempo so that no two of them are ever quite together
-// -- see `beatMs` in dance.js, which is the only reader. The two ends of that
-// roll are here rather than in the module because the bound above is worked out
-// from the top of it: if the roll and the bound lived apart they could drift,
-// and the drift would be exactly this bug.
+// Every body rolls its own tempo so no two are ever quite together (`beatMs`
+// in dance.js, the only reader). The roll's ends are here because the bound
+// above is worked out from the top of it; apart, they could drift.
 export const DANCE_TEMPO_LO = 0.85;  // the slowest tempo a body rolls for itself
 export const DANCE_TEMPO_HI = 1.15;  // and the quickest
-// A ninth of the ceiling is left over the fastest body in the yard, and it is
-// not decoration: a crossing rate can only ever be measured as sixty over some
-// whole number of frames, so a true 2.375 reads as 2.40 and a bound with no room
-// in it is a bound that fails on the rounding. What this buys is a dance that
-// still cannot buzz when somebody widens the tempo roll or nudges DANCE_BEAT.
+// A ninth of the ceiling is left over the fastest body: a crossing rate can
+// only be measured as sixty over some whole number of frames, so a true 2.375
+// reads as 2.40 and a bound with no room in it fails on the rounding.
 export let DANCE_JUMP_ROOM = 0.88;   // how much of the buzz ceiling that quickest one may use
 export const danceJumpBeat = () =>
   DANCE_BUZZ * DANCE_JUMP_ROOM / (DANCE_BEAT * DANCE_TEMPO_HI);
 export let DANCE_JUMP_H = 3.5;       // and how many cells it clears at the top
 
-// The dev panel's rows for the dials above. A row lives beside the binding it
-// moves: an imported `let` is read-only everywhere else, so the get/set pair has
-// to be written in the file that declares it.
+// The dev panel's rows for the dials above, beside the bindings because an
+// imported `let` is read-only everywhere else.
 export const EFFECT_KNOBS = [
   { key: 'RIFT_INHALE_MAX', label: 'rift bite', min: 100, max: 20000, step: 100,
     get: () => RIFT_INHALE_MAX, set: v => { RIFT_INHALE_MAX = v; } },

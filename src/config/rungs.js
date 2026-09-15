@@ -1,40 +1,25 @@
 // Every ladder, rung by rung, written down: what it is worth and what it costs.
-//
-// A ladder used to be two formulas -- a value curve (a unit a rung for a
-// count, an ease from a base to a top for a rate) and a price curve (a first
-// cost raised by a rate a rung) -- and the player asked to move each rung on
-// its own: carry 1, 2, 4, 6, 10; the pick 1, 2, 4, 8; the swing a second
-// faster a rung. At a handful of rungs a curve cannot be told from a list and cannot
-// be made to say the numbers in somebody's head, so a list it is, for the
-// value and for the price both. See DESIGN.md, "A rung is a step up, not a
-// step along" and its as-built note.
+// At a handful of rungs a curve cannot be told from a list and cannot be made
+// to say the numbers in somebody's head, so a list it is, for the value and
+// for the price both. See DESIGN.md, "A rung is a step up, not a step along".
 //
 // One entry a ladder, by the row's key. `value` is what the row reads, in the
-// row's own unit -- pixels, grains, spores, a share, hits a second, trips a minute, a
-// percent -- rung nought first, then one a rung: `LADDER + 1` long, the last
-// the top. `dust` is what each rung costs in dust, `LADDER` long; the coins a
-// band adds are that dust at the coins' rates (`DUST_PER`), which is the one
-// rule the bills keep. test/ladders.test.mjs says every list is the length
-// it must be and every value climbs, so a list a rung short is a red check
-// rather than a ladder that stops early.
+// row's own unit, rung nought first, then one a rung: `LADDER + 1` long, the
+// last the top. `dust` is what each rung costs in dust, `LADDER` long; the
+// coins a band adds are that dust at the coins' rates (`DUST_PER`), which is
+// the one rule the bills keep. test/ladders.test.mjs says every list is the
+// length it must be and every value climbs, so a list a rung short is a red
+// check rather than a ladder that stops early.
 //
-// The game reads its rates off these too: a swing's gap is a thousand over
-// the hits a second written here, a plot's tending sixty thousand over the plots a
-// minute. What used to be MINE_BASE and MINE_FLOOR, TEND_BASE and TEND_FLOOR
-// and their kin is the first and last entry of the row's list.
+// The game reads its rates off these too: a swing's gap is a thousand over the
+// hits a second written here, a plot's tending sixty thousand over the plots a
+// minute.
 //
 // Every entry is a dial in the ladder book (ladders.html) and on the dev
-// panel: `RUNG_KNOBS` hands `TUNABLE` a knob a rung. The table was seeded with
-// what the curves gave on 2026-09-14 and rounded by hand the same day: round
-// figures a rung, the costs mostly doubling, the tops near where they were.
-// Later that day the ladder went from four rungs to eight (two a coin) and
-// each list grew with it: a step slipped in between each pair that was there
-// and one more past the old top, so a ladder reaches a little further than
-// it did. The whole-count ladders that had no room between their rungs
-// (a rockhand's bite, a crit's worth) reach further than a little. The
-// quarry's pace kept its top: at forty trips a minute the walk is already
-// the floor (test/cut-pockets.test.mjs measures the cut at the top rung),
-// so a higher figure would be a rung that changes nothing.
+// panel: `RUNG_KNOBS` hands `TUNABLE` a knob a rung. The quarry's pace tops
+// out at forty trips a minute because the walk is already the floor there
+// (test/cut-pockets.test.mjs measures the cut at the top rung), so a higher
+// figure would be a rung that changes nothing.
 
 export const LADDERS = {
   // --- the bench: you --------------------------------------------------------
