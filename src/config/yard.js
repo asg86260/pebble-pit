@@ -89,7 +89,7 @@ export let CLOCK_LEAP_MS = 100;
 // The ground's texture, below the line: 0 plain, 1 a dot a tile, 2 a diagonal
 // hatch, 3 strata, 4 a stipple. One mark is one cell; GROUND_TILE cells to a
 // repeat; GROUND_INK is how dark a mark is against the white.
-export let GROUND_TEXTURE = 0;
+export let GROUND_TEXTURE = 2;
 export let GROUND_TILE = 6;
 export let GROUND_INK = 0.14;
 

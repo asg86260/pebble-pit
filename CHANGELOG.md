@@ -11,6 +11,10 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+**New this release**
+
+- The ground is hatched below the line, so the yard reads as cut earth rather than blank paper.
+
 ## v0.2.0 — 2026-09-15
 
 **New this release**

@@ -1,4 +1,4 @@
-// TEMP: shoot one scene once per ground texture option, for choosing between them.
+// Shoot one scene once per ground texture option, for choosing between them.
 import { mkdirSync } from 'node:fs';
 import { browser, closeOtherTabs, openTab } from './cdp.mjs';
 const PORT = +(process.env.CDP_PORT || 9341);
