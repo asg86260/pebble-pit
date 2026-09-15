@@ -1152,19 +1152,17 @@ export const QUARRY_UPGRADES = [
           () => `the drill bites ${MACHINE_TUNE}x harder, again`, 'quarry')
 ];
 
-// One heading. The quarry is one place and everything on this board is about the
-// same hole, so a second would be a heading for the sake of having two.
-// Every card of both ladders is named here; only the band you are on answers
-// `true` to `show`, so what the board draws is a place row, one yield card and
-// one speed card.
-// The blaster's lamps are on it too, before the drill they are the price of:
-// kit is sold where it is worn. The row itself lives in upgrades/rows-kit.js
-// and lodges here -- see `lodgers`.
+// Two headings: who works the hole, and what the hole pays. The quarriers'
+// side is everything you buy to have more of the work done -- another bench,
+// the blaster's lamps (kit is sold where it is worn; the row lives in
+// upgrades/rows-kit.js and lodges here, see `lodgers`), the drill they are the
+// price of, and the drill's own ladder. The ore's side is the two questions a
+// ground can answer, what one go is worth and how often a go happens. Every
+// card of both ladders is named there; only the band you are on answers `true`
+// to `show`, so the board draws one yield card and one speed card.
 export const QUARRY_SECTIONS = [
-  { title: 'the quarry', keys: ['quarrybench',
-                                'seam',
-                                'quarrypace',
-                                'blaster', 'jaw', 'tunejaw'] }
+  { title: 'quarriers', keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
+  { title: 'the ore',   keys: ['seam', 'quarrypace'] }
 ];
 
 

@@ -355,17 +355,17 @@ export const FARM_UPGRADES = [
           () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
 ];
 
-// One heading, and every card of both ladders named in it. Only the band you are
-// on is ever shown -- the rest answer `false` to `show` -- so the board draws a
-// place row, one yield card and one speed card, whichever bands those are.
-// The grower's brims are on it too, before the tiller they are the price of:
-// kit is sold where it is worn. The row lives in upgrades/rows-kit.js and
-// lodges here -- see `lodgers`.
+// Two headings: who works the plots, and what a plot pays. The hands' side is
+// everything you buy to have more of the work done -- another plot, the
+// grower's brims (kit is sold where it is worn; the row lives in
+// upgrades/rows-kit.js and lodges here, see `lodgers`), the tiller they are the
+// price of, and the tiller's own ladder. The crop's side is the two questions a
+// ground can answer, what one go is worth and how often a go happens. Every
+// card of both ladders is named there; only the band you are on answers `true`
+// to `show`, so the board draws one yield card and one speed card.
 export const FARM_SECTIONS = [
-  { title: 'the farm', keys: ['farmplot',
-                              'crop',
-                              'tend',
-                              'grower', 'tiller', 'tunetiller'] }
+  { title: 'farmhands', keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
+  { title: 'the crop',  keys: ['crop', 'tend'] }
 ];
 
 

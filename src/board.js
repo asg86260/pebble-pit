@@ -1094,6 +1094,12 @@ const headcount = title =>
 // that number, so it belongs where you act on it.
 const apothHeads = title => title === 'the pot' ? S.stirrers : 0;
 
+// The grounds' boards the same way: the heading over the plots, the hats and
+// the machine is the heading about who does the work, so it says how many.
+const groundHeads = title =>
+  title === 'quarriers' ? S.quarriers :
+  title === 'farmhands' ? S.farmhands : 0;
+
 // The numbers on whichever board is open. Pulled out of `hud` so that opening a
 // board can fill it before it is measured, rather than a frame after.
 function fill(which) {
@@ -1112,8 +1118,8 @@ function fill(which) {
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
-  if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), null);
-  if (which === 'farm') refresh(farmShopEl, listFor('farm'), null);
+  if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), groundHeads);
+  if (which === 'farm') refresh(farmShopEl, listFor('farm'), groundHeads);
   if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
   // The books are written every frame they are open, the same as the crew list
