@@ -3268,8 +3268,36 @@ The rock is kept an even number of cells wide for the same reason, since it is a
 middle. There is a test for it at every cell size a window can pick.
 
 Scrolling is sideways only, because there is never anything above or below worth moving to.
-Wheel, arrow keys, or **two fingers** — a phone has no wheel, and one finger is already sweeping.
+Wheel, arrow keys, the middle button, two fingers, or one finger on anything that is not dust.
 A tap opens a board at the bench or the lab, because a finger cannot hover.
+
+### One finger looks about (built)
+
+On a phone the yard did not scroll. It did, in fact — two fingers dragged it — but nobody found
+that out, because every game on a phone scrolls under one finger and this one used that finger to
+sweep. A player who drags the sky and watches nothing move concludes the yard is one screen wide,
+and the whole right-hand half of the works, the pit and everything dug in it, was never seen.
+
+**The rule.** A finger that lands on dust sweeps it; a finger that lands anywhere else drags the
+view. That is the whole of it. The sky is empty by design and the ground line is a strip of bare
+earth, so most of the screen is a handle; the pit floor is the one place a drag means something
+else, and it is the place a player is looking at when they mean it. "On dust" is the brush's own
+question — a grain within `BRUSH` cells of the press, or a loose core under it — asked once, on the
+press, by the same lookup the sweep makes. The rock keeps its press: a finger on the rock knocks and
+holds, as it always did, and does not drag anything.
+
+**What does not change.** Two fingers still drag the view, from anywhere, dust included: it is the
+way out when the floor is all dust and you want to see along it. A tap still opens and closes a
+board, and a tap does not nudge the camera — the drag only starts once the finger has left the tap's
+slop (`TAP_SLOP`), and starts from there, so a tap is still a tap and a drag does not jump. A mouse
+is untouched: the left button sweeps everywhere it did, because a mouse has a wheel and a middle
+button and does not need its left one for looking.
+
+**Not chosen.** A hold-then-drag (press, wait, then sweep) makes the sweep — a flick — into a
+slow gesture, and nobody flicks slowly. Direction (sideways drags pan, others sweep) fails on the
+one sweep that matters, along the floor. Swapping the fingers (one pans, two sweep) makes the
+harder gesture the commoner one. Where the finger lands is the only split that leaves both
+gestures fast.
 
 ## The pit
 

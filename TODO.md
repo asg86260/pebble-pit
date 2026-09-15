@@ -1,5 +1,13 @@
 # Still to do
 
+## One finger looks about -- BUILT (2026-09-15)
+
+"One finger looks about" under "Fitting the window" in DESIGN.md. On a
+phone a finger on dust sweeps and a finger anywhere else drags the view;
+two fingers still drag from anywhere. Still open from the touch list
+(docs/release-readiness.md): no tooltips on touch, no touch route to lifting
+a body.
+
 ## The reliability freeze -- BUILT (2026-09-14)
 
 "The reliability freeze" in DESIGN.md, with an as-built note. The reload
