@@ -49,7 +49,7 @@ import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, topRow, at, put, bottomY, surfaceY } from './grid.js';
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
-import { spend, bankDust, spendHeld, pitRoom } from './pit.js';
+import { spend, bankDust, spendHeld } from './pit.js';
 import { buildShop } from './shop.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
@@ -96,13 +96,14 @@ export function pickChip(d) {
   buildShop();
 }
 
-// Everything in this game ends up in the hole and the hole has a limit, so a
-// pot has to have somewhere to land before it can be taken. That is checked
-// when you go to bank it, not when you put the stake down: a pot the hole will
-// not take *stays on the table* until it will, the same as a core the hole
-// refuses waits on the ground by the lip. Nothing here is ever lost to a rule
-// about sand, and a full hole is a reason to dig rather than a hand you lose.
-export const canBank = () => !!S.pot && !busy() && !S.paying && pitRoom() >= pot();
+// A pot can be taken whenever the wheel is not going and nothing is still
+// pouring. It used to wait for the hole to have room for the whole of it, from
+// when a full hole turned grains away and a pot with nowhere to land was a pot
+// lost. The hole does not refuse any more -- the first grain it cannot take
+// tears the rift and goes through it, see `throughRift` in pit.js -- so a
+// winnings row that stayed dead over a full hole was a bet you had won and
+// could not collect, for a rule about sand that no longer holds.
+export const canBank = () => !!S.pot && !busy() && !S.paying;
 
 export const canStake = cur =>
   S.casinoOpen && !S.pot && !busy() && !S.paying && stakeOf(cur) > 0 && purseOf(cur) >= stakeOf(cur);
@@ -638,8 +639,8 @@ export const CASINO_UPGRADES = [
     name: 'bank it',
     price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
     cost: () => 0,
-    // the sand is still coming down, the wheel is going, or the hole would not
-    // take it: either way the pot stays where it is
+    // the sand is still coming down or the wheel is going: either way the pot
+    // stays where it is
     dead: () => !canBank(),
     buy: bank,
     show: () => S.casinoOpen && !!S.pot

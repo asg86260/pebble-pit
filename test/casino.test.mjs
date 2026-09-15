@@ -227,3 +227,44 @@ group('the ladder is the one written down', async () => {
        `${said[0]}, ${said[1]}`)
   ];
 });
+
+// A pot won over a full hole can be taken. The winnings row used to wait for
+// the hole to have room for the whole pot, from when a full hole turned grains
+// away; the hole now tears the rift and takes them through it, so the row
+// staying dead was a won bet you could not collect.
+group('winnings can be banked into a hole with no room', async () => {
+  atTheTable(2);
+  // Fill the hole to a hair under the brim -- no further, or the filling tears
+  // the rift (the count credits a few cells the pile cannot fill) and an open
+  // rift drains room back during the spin -- then play until a hand comes in.
+  // A loss takes the stake out of the hole, so it is topped back up before the
+  // next go and the pot, when it lands, is always bigger than the room there is.
+  let won = false;
+  for (let go = 0; go < 30 && !won; go++) {
+    window.__give(state().pitCapacity - state().stored - 500);
+    if (!window.__buy('stakedust')) break;
+    won = runUntil(() => handIn(), 30);
+  }
+  const before = state();
+  const took = window.__buy('bank');
+  run(8);                                        // the whole pot's trip to the hole
+  const after = state();
+
+  return [
+    ok(won && before.pot && before.pot.on > before.pitCapacity - before.stored,
+       'a pot bigger than the room in the hole is on the table',
+       before.pot && `${before.pot.on} won, ${before.pitCapacity - before.stored} cells free`),
+    ok(!before.riftOpen, 'over a hole that has not given way yet'),
+    ok(took, 'and the winnings row takes it'),
+    ok(after.riftOpen, 'the hole gives way under it'),
+    ok(before.pot && after.stored === before.stored + before.pot.on,
+       'and every grain of it is counted',
+       before.pot && `${before.stored} + ${before.pot.on} = ${after.stored}`)
+  ];
+});
+
+// the wheel has stopped and there is a pot on the table
+function handIn() {
+  const s = state();
+  return !!s.pot && !s.spinning && !s.pouring && s.paying === null;
+}
