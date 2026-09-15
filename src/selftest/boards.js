@@ -1670,6 +1670,41 @@ export const TESTS = [
     ];
   }],
 
+  // The pips stand down the tile's right edge out of its flow, so a long
+  // title or a two-coin bill and its clock on one line ran under them. The
+  // tile keeps its sides clear of the column, and a bill of two coins wraps.
+  // Every ladder at a different band, so the bills are one, two, three and
+  // four coins wide across one plank. Measured: nothing in the tile's flow
+  // reaches a pip's left edge.
+  ['nothing on a shelf tile runs under its pips', async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    state().shieldsDone = ['props', 'net', 'arch'];
+    window.__levels({ carryLevel: 0, speedLevel: 2, critChanceLevel: 4, critMultLevel: 6, haulCarryLevel: 2, haulPaceLevel: 4 });
+    window.__board('bench');
+    await settle(1);
+    const bad = [];
+    let seen = 0;
+    for (const t of document.querySelectorAll('#panel .rows.shelves button.tile')) {
+      const l = t.querySelector('.ladder');
+      if (!l?.childElementCount) continue;
+      seen++;
+      const edge = l.getBoundingClientRect().left;
+      for (const part of ['.what', '.tag']) {
+        const r = t.querySelector(part)?.getBoundingClientRect();
+        if (r && r.width && r.right > edge) bad.push(`${t.dataset.key} ${part} ${Math.round(r.right - edge)}px into the pips`);
+      }
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(seen >= 4, 'ladders at several bands on the bench', String(seen)),
+      ok(bad.length === 0, 'and no title or tag reaches a pips column', bad.join('; ') || 'clear'),
+    ];
+  }],
+
   // The pin: one card in the top-right corner, chosen by its pushpin, drawn
   // by the same builder as the board's, buying when pressed and coming down
   // when the row retires. The shield on offer pins itself while it is news,

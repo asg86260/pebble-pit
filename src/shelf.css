@@ -123,7 +123,13 @@
   align-content: start;
   box-sizing: border-box;
   width: var(--shelf-slot, 140px);
-  padding: var(--shelf-top, 8px) 6px var(--shelf-foot, 8px);
+  /* The sides are the pips' column: the ladder stands down the right edge
+     out of the tile's flow (`.ladder` below), so the flow keeps clear of it
+     by padding -- its inset from the edge, its width, and a gap -- and the
+     left matches so the tile's center line stays the slot's. A title clips
+     at this edge and a tag wraps inside it; neither ever runs under a pip. */
+  padding: var(--shelf-top, 8px) var(--shelf-side, 16px) var(--shelf-foot, 8px);
+  --shelf-side: 16px;
   /* Air under the tile, so the plate a hover raises stands clear of the plank. */
   margin: 0 0 var(--shelf-air, 6px);
   border: 0;
@@ -133,6 +139,10 @@
   text-align: center;
   cursor: pointer;
 }
+/* A tile with no pips -- a door, a count, a stat -- has nothing to keep clear
+   of, and its title is the longest on the bench ("discover the tower"), so it
+   keeps the whole slot. */
+.rows.shelves > .tile:has(.ladder:empty) { --shelf-side: 6px; }
 .rows.shelves > button.tile:disabled { cursor: default; }
 .rows.shelves > .tile.stat { cursor: default; }
 
@@ -244,11 +254,13 @@
    either, and says what it needs where its price would go. */
 .rows.shelves > button.tile:has(.tag .short) .what,
 .rows.shelves > button.tile.locked .what { color: #8c8c8c; }
-/* A bill of three or more coins wraps inside its tag, two a line, and the
-   clock takes a line under them; the tag grows, the slot does not. */
-.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
-.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; height: auto; }
-.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .time { padding: 0 6px; }
+/* A bill of two or more coins wraps inside its tag, two a line, and the
+   clock takes a line under them; the tag grows, the slot does not. Two, not
+   three: a two-coin bill and its clock on one line is wider than the room
+   between the pips' columns, and ran under the pips. */
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; height: auto; }
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) .time { padding: 0 6px; }
 /* Short of a coin, stalled, or climbed: the tag says so by its edge. */
 .rows.shelves > button.tile:disabled .tag { border-style: dashed; color: #8c8c8c; }
 /* A tile the yard is building (DESIGN.md, "A tile being built shows the
