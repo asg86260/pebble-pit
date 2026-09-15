@@ -224,18 +224,28 @@
 @property --lift { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --sway-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --sway-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --follow-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --follow-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .rows.shelves > button.tile {
   /* The tile carries the same dots as the ground under it, phased to the
      same grid by the builder (`--dot-x`/`--dot-y`, measured off the tile's
      offset), so at rest there is no seam and on a lift the dots go with it. */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
   background-position: var(--dot-x, 0) var(--dot-y, 0);
+  /* Painted white under its own dots: at rest that is indistinguishable
+     from the ground, and once lifted only the tile's dots are inside the
+     plate rather than the ground's showing through beside them. */
+  background-color: #fff;
   outline: 1px solid rgba(0, 0, 0, 0);
   outline-offset: -1px;
-  transform: translate(calc(var(--lift) + var(--sway-x)), calc(var(--lift) + var(--sway-y)));
-  box-shadow: calc(0px - var(--lift) - var(--sway-x)) calc(0px - var(--lift) - var(--sway-y)) 0 #000;
+  /* Three motions, one transform: the lift, the drift, and a lean toward
+     the cursor (`--follow`, written by the builder off the pointer, in
+     whole pixels). The shadow is the sum's inverse, so it stays put. */
+  transform: translate(calc(var(--lift) + var(--sway-x) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--follow-y)));
+  box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--follow-y)) 0 #000;
   transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
-              --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out;
+              --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out,
+              --follow-x var(--shelf-hover-ms, 120ms) ease-out, --follow-y var(--shelf-hover-ms, 120ms) ease-out;
 }
 .rows.shelves > button.tile:hover:not(:disabled) {
   --lift: -2px;
@@ -246,8 +256,10 @@
   background-color: transparent;
   color: #000;
   /* The drift: eight whole-pixel stops round a one-pixel circle, on
-     SHELF_FLOAT_MS, starting once the lift has landed. */
-  animation: shelf-sway var(--shelf-float-ms, 1200ms) steps(1, end) var(--shelf-hover-ms, 120ms) infinite;
+     SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
+     its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
+     hashed off the row's key by the builder) so no two drift in step. */
+  animation: shelf-sway calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) steps(1, end) var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
 .rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled) .cost { opacity: 1; }

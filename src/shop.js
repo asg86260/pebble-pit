@@ -6,7 +6,7 @@
 // three lines.
 
 import { S } from './state.js';
-import { SHELF_BOARDS, SHELF_INK, SHELF_DOT } from './config.js';
+import { SHELF_BOARDS, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
 import { drawGlyph, glyphFor } from './glyphs.js';
 // The shelf's stylesheet rides along only when the boards are shelves, so a
 // release ships none of it.
@@ -451,7 +451,7 @@ function build(el, list, sections, empty, heads) {
         : '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
           '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
-      if (shelf) b.classList.add('tile');
+      if (shelf) { b.classList.add('tile'); leanToCursor(b, u.key); }
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
@@ -807,6 +807,24 @@ export function refresh(el, list, headcount) {
 // coincide to the pixel. Measured off the layout, never guessed, because a
 // tile's top depends on the signs and planks above it. Written only when the
 // offset changes; a board is laid out once and then only reseated.
+// A lifted tile leans toward the cursor: up to SHELF_FOLLOW px at the tile's
+// edge, in whole pixels so the dots stay on their grid, eased by the
+// stylesheet. And it drifts at a rate and in a direction of its own, hashed
+// off the row's key, so a plank of tiles never breathes in unison.
+function leanToCursor(b, key) {
+  let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  b.style.setProperty('--sway-rate', String(1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD));
+  b.style.setProperty('--sway-dir', (h >> 10) & 1 ? 'reverse' : 'normal');
+  b.addEventListener('pointermove', e => {
+    const r = b.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.right) / 2) / (r.width / 2);
+    const dy = (e.clientY - (r.top + r.bottom) / 2) / (r.height / 2);
+    b.style.setProperty('--follow-x', `${Math.round(Math.max(-1, Math.min(1, dx)) * SHELF_FOLLOW)}px`);
+    b.style.setProperty('--follow-y', `${Math.round(Math.max(-1, Math.min(1, dy)) * SHELF_FOLLOW)}px`);
+  });
+  b.addEventListener('pointerleave', () => { b.style.setProperty('--follow-x', '0px'); b.style.setProperty('--follow-y', '0px'); });
+}
+
 function phaseDots(el) {
   for (const t of el.querySelectorAll('.tile')) {
     const key = `${t.offsetLeft},${t.offsetTop}`;
