@@ -177,6 +177,22 @@ function tenderFor(spec, at) {
   return null;
 }
 
+// The machine this body is minding, if it is minding one -- the same answer
+// `stepMachines` uses to call the machine manned, asked the other way round.
+// Derived, never stamped on the body: the tender stage writes no goal, so a
+// hauler that took the belt's post kept whatever goal it had walked there with
+// and its card read "looking for pebbles" while it stood at the lip for the
+// rest of the run. A player reads that as a stuck body, and it was reported as
+// one twice (test/fixtures/pit-edge-stuck.json).
+export function minding(w) {
+  for (const m of MACHINES) {
+    const r = machine(m.key), spec = specOf(m.key);
+    if (!r || !r.bought || !spec || spec.type !== w.type) continue;
+    if (tenderFor(spec, spec.at()) === w) return m;
+  }
+  return null;
+}
+
 export function stepMachines(now) {
   for (const m of MACHINES) {
     const r = machine(m.key);

@@ -22,6 +22,7 @@ import { now } from './clock.js';
 import { POINT_MS } from './config.js';
 import { WORKER } from './config.js';
 import { JOB } from './jobs.js';
+import { minding } from './crew/tenders.js';
 
 // The block, as a rectangle to stand near: what is actually built, on a plot
 // that never moves.
@@ -115,6 +116,11 @@ function doing(w) {
   if (w.falling) return 'in mid-air';
   if (w.brk || w.resting) return 'on a break';
   if (w.inside) return 'at home';
+  // A tender is asked of the machines, not of its goal: the tender stage is
+  // above the job and writes no goal, so the goal on a body minding the belt
+  // is whatever it was doing before it took the post (see `minding`).
+  const m = minding(w);
+  if (m) return `minding ${m.name}`;
   if (w.goal === 'to') return 'walking there';
   // At a site: what is being put up says more than the word "working". The
   // bench is the one site where the thing being built is not a place.

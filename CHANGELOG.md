@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 - The haulers split themselves between two backed-up heaps instead of all walking to the same one while the heap beside the hole fills up unattended (test/hauler-spread.test.mjs).
+- The hauler standing at the belt's post on the lip of the hole is minding the belt, and its card says so instead of "looking for pebbles" (test/pit-edge-stuck.test.mjs).
 
 ## v0.2.2 — 2026-09-15
 
