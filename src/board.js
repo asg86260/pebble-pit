@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H,
-         SHELF_SLOT, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
+         SHELF_SLOT, SHELF_SLOTS, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
 import { S, bench, lab, apothecary, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -378,8 +378,34 @@ function pinWidth() {
   // the shelf, at five slots -- can cap itself without knowing the purse.
   const purseW = purseEl.offsetWidth;
   sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
+  // A shelf is as many slots wide as its fullest plank, up to the most a
+  // plank holds -- or as many as its longest sign needs, since a sign or the
+  // line that says the board is bare stands in the slots too and would fold
+  // in one. It cannot size itself: the slots are `auto-fill`, which needs a
+  // definite width to count against, so the count is taken here and handed
+  // to the stylesheet. One slot at the least, so an empty board still has a
+  // plank to stand on. The words are measured as a range, not as the box:
+  // a sign's box carries its plank, drawn the whole shelf wide.
+  const shelf = sheet.querySelector(':scope > .page:not([hidden]) .rows.shelves');
+  if (shelf) {
+    let most = 0, run = 0;
+    for (const el of shelf.children) {
+      if (el.classList.contains('sect')) run = 0;
+      else if (el.classList.contains('tile') && !el.classList.contains('goal')) most = Math.max(most, ++run);
+    }
+    const range = document.createRange();
+    for (const el of shelf.querySelectorAll(':scope > .sect, :scope > .empty')) {
+      range.selectNodeContents(el);
+      most = Math.max(most, Math.ceil(range.getBoundingClientRect().width / SHELF_SLOT));
+    }
+    sheet.style.setProperty('--shelf-slots', String(Math.max(1, Math.min(SHELF_SLOTS, most))));
+  }
   sheet.style.width = '';
-  sheet.style.width = `${sheet.offsetWidth}px`;      // border-box, so this is exact
+  // The used width off the style, not the box: a sheet the width of its words
+  // is a fraction wide, and `offsetWidth` rounds that off and the last word
+  // folds under; a client rect is scaled while the board is still easing open
+  // and reads short by more. Rounded up, since a fraction short is the fold.
+  sheet.style.width = `${Math.ceil(parseFloat(getComputedStyle(sheet).width))}px`;      // border-box, so this is exact
 }
 
 // The crew list stands beside the board, one card wide. How wide a card is

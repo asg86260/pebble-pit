@@ -1311,21 +1311,20 @@ body.demo canvas { cursor: default; pointer-events: none; }
 
 .panel .sheet {
   box-sizing: border-box;      /* so a max-height is the height, padding and all */
-  /* One width for every board. It was a floor of 34ch and a ceiling of 84ch
-     with the words deciding where in between a sheet came out, and the words
-     decided differently on every board: measured with everything open, the
-     bench, the school and the tower stood at the ceiling, the house and the
-     closet in the five hundreds, the casino and the apothecary at 245 pixels.
-     Thirteen boards that walk into the same spot and are thirteen sizes there.
-     A fixed width is what makes the wrapping predictable as well: a card's
-     tracks can only be planned if every card is the same width, and a title
-     that wraps at the bench should wrap at the same word at the cut.
-     The number is the ceiling the full boards already reached, so nothing that
-     fitted before wraps now; in `ch`, so it is a count of the sheet's own
-     characters rather than a pixel guess about the type. The crew list wears
-     the same width on purpose: it stands over the board, edge for edge.
-     A phone overrides this with the width of the glass -- see the media rule. */
-  width: var(--sheet-w);
+  /* As wide as its words, up to a ceiling. It was one fixed width for every
+     board for a while (84ch, the widest any full board reached), on the grounds
+     that thirteen boards walking into the same spot should be one size there
+     -- and the price was the closet's one-line board standing as wide as the
+     bench's. Shrink-to-fit again (2026-09-15): a board is the width of what is
+     on it. The ceiling stays, and it is what makes the wrapping predictable: a
+     board that would run past it wraps there, in `ch`, so it is a count of
+     the sheet's own characters rather than a pixel guess about the type. The
+     crew list wears the same ceiling on purpose. The corner card keeps the
+     card width a full board has, from the same variables.
+     A phone overrides the ceiling with the width of the glass -- see the
+     media rule. */
+  width: fit-content;
+  max-width: var(--sheet-w);
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px var(--sheet-pad-x);
   background: #fff;
@@ -1426,9 +1425,8 @@ body.demo canvas { cursor: default; pointer-events: none; }
   .purse .coin b { min-width: 0; }
   .panel .sheet {
     padding: 8px var(--sheet-pad-x);
-    /* The one width is the glass, less the panel's margins: the boards are
-       still all one size, it is just the phone's size. */
-    width: var(--sheet-w);
+    /* The ceiling is the glass, less the panel's margins. */
+    max-width: var(--sheet-w);
     /* in landscape there may be less room above the bench than the board wants:
        it scrolls inside itself rather than running off the top */
     max-height: calc(100vh - 16px);

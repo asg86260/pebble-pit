@@ -81,7 +81,8 @@ export const QUEUE_PIPS = 5;
 // with its name, its gain and one price tag under it (DESIGN.md, "The shelf").
 // Every step is here and nowhere else, so a shelf on one board is the shelf on
 // every board.
-export const SHELF_SLOT = 140;      // px, one item's width; five to the bench's plank
+export const SHELF_SLOT = 140;      // px, one item's width
+export const SHELF_SLOTS = 5;       // slots a plank holds at most; a shorter plank is as wide as what is on it
 export const SHELF_STEP = 5;        // px between the glyph, the name, the gain and the tag
 export const SHELF_TOP = 8;         // px from the plank's sign down to the first glyph
 export const SHELF_FOOT = 8;        // px from the tag down to the tile's own foot

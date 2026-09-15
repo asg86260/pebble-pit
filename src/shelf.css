@@ -50,14 +50,19 @@
 .sheet:has(> .page:not([hidden]) .rows.shelves) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
-/* The sheet is as wide as five slots and its own gutters, and no wider than
-   the window. Keyed on the page that is OPEN: the sheet holds every board's
-   page, the hidden ones too, so `:has(.rows.ledger)` alone made every board
-   the books' width. Derived, not guessed: a slot count and the sheet's own padding
-   and border, so a wider slot or a deeper gutter moves it. `pinWidth` reads
-   this off the sheet once the rows are in. */
+/* The sheet is as wide as its fullest plank's slots and its own gutters --
+   `--shelf-slots`, counted by `pinWidth` in board.js, since `auto-fill`
+   needs a definite width to count against -- and no wider than the window.
+   Never narrower than its words, so a title longer than a short plank widens
+   the board rather than running off it. Keyed on the page that is OPEN: the
+   sheet holds every board's page, the hidden ones too, so `:has(.rows.ledger)`
+   alone made every board the books' width. Derived, not guessed: a slot
+   count and the sheet's own padding and border, so a wider slot or a deeper
+   gutter moves it. `pinWidth` reads this off the sheet once the rows are in. */
 .sheet:has(> .page:not([hidden]) .rows.shelves) {
-  width: min(calc(5 * var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x) + 2 * var(--sheet-border)), var(--sheet-room, 100vw));
+  width: min(calc(var(--shelf-slots, 5) * var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x) + 2 * var(--sheet-border)), var(--sheet-room, 100vw));
+  min-width: fit-content;
+  max-width: none;
 }
 .sheet:has(> .page:not([hidden]) .rows.shelves) .page { width: auto; }
 
@@ -68,6 +73,9 @@
    as the wall, whatever stands on it. The goal section has no sign: its card
    is the sign. */
 .rows.shelves { position: relative; container-type: inline-size; }
+/* A sign and the bare-board line keep to one line: `pinWidth` widens the
+   shelf to fit them, so they have no call to fold. */
+.rows.shelves > .sect, .rows.shelves > .empty { white-space: nowrap; }
 .rows.shelves > .sect {
   position: relative;
   grid-column: 1 / -1;

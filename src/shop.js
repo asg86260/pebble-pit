@@ -184,7 +184,9 @@ export function stayOpen() { clearTimeout(leaving); leaving = 0; }
 // version of it that should exist twice. See potpick.js.
 export function openOptsAt(r, opts, row = null, align = 'right') {
   opts.hidden = false;
-  opts.style.minWidth = `${Math.round(r.width)}px`;
+  // As wide as its longest label and no wider: it used to be held to at least
+  // the control's width, and a short list under a wide dial came out as a box
+  // that was mostly air.
   // Measured pinned at the origin, where nothing can wrap it: left where it
   // last stood, a list near the window's right edge folds its longest label
   // and reports a width the final position will not have, so the right edges
