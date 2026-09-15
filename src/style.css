@@ -60,6 +60,10 @@ canvas {
   will-change: transform;
   backface-visibility: hidden;
 }
+/* A board held open by a click (`holdPanel` in board.js) stands off the
+   yard on a hard shadow, the way a lifted tile does: picked up, and staying
+   until it is put down. */
+.panel.held > .sheet:not(.flyout) { box-shadow: 3px 3px 0 #000; }
 
 /* The columns are cut to the words that are actually in them.
    Every board used to carry its own hand-guessed widths -- nine of them across

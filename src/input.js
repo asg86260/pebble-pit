@@ -16,7 +16,7 @@ import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
-         showTipAt, inSafeZone, standRect } from './board.js';
+         showTipAt, inSafeZone, standRect, holdPanel, openBoard } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -145,6 +145,10 @@ canvas.addEventListener('pointerdown', e => {
   // Before everything else, so it happens whether or not the click lands on
   // anything: clicking bare ground is still a decision to stop reading.
   if (!atStation(p.x, p.y)) showPanel(null, true);
+  // And a click on the station whose board is up holds the board there, or
+  // lets it go if it was held -- see `holdPanel`. A click on a station is
+  // not a swing, so nothing else is asked of it.
+  else if (e.pointerType !== 'touch') { const b = boardAt(p.x, p.y); if (b && b === openBoard()) holdPanel(b); }
   // the sky is checked first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
   // then the rosters: they stand well under the ground line, where a click has
@@ -230,24 +234,7 @@ canvas.addEventListener('pointermove', e => {
     // it; the house is a block that grows a room per body, and its patch reaches
     // the bench. Whoever you are actually standing at should win, and next to a
     // wall of rooms that is the smaller thing, not the bigger one.
-    const want = nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
-               : nearScrub(S.mouse.x, S.mouse.y) ? 'scrub'
-               : nearQuarry(S.mouse.x, S.mouse.y) ? 'quarry'
-               : nearFarm(S.mouse.x, S.mouse.y) ? 'farm'
-               : nearApothecary(S.mouse.x, S.mouse.y) ? 'apothecary'
-               : nearTower(S.mouse.x, S.mouse.y) ? 'tower'
-               // The gang's hut, before the bench it stands in front of.
-               : nearShack(S.mouse.x, S.mouse.y) ? 'shack'
-               : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
-               : nearOuthouse(S.mouse.x, S.mouse.y) ? 'outhouse'
-               : nearHouse(S.mouse.x, S.mouse.y) ? 'house'
-               // and the noticeboard, which carries the books and the record.
-               // It is a building like the rest of them now rather than a
-               // patch of air at the pit mouth, but it stays last in the
-               // cascade all the same: it stands on the busiest strip in the
-               // yard, between the bench and the front doors, so anything
-               // else you might actually be pointing at wins over it.
-               : nearStats(S.mouse.x, S.mouse.y) ? 'stats' : null;
+    const want = boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board.
     //
     // These have been swapped round twice now and both extremes are wrong. With
@@ -285,6 +272,30 @@ canvas.addEventListener('pointermove', e => {
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
+
+// The board a point on the ground asks for, if any, in the order that
+// settles which wins where two patches overlap. The house goes last, and it
+// is the only one whose order matters: every other station is a thing
+// standing on the ground with its own patch around it; the house is a block
+// that grows a room per body, and its patch reaches the bench. Whoever you
+// are actually standing at should win, and next to a wall of rooms that is
+// the smaller thing, not the bigger one. The noticeboard is last of all: it
+// stands on the busiest strip in the yard, between the bench and the front
+// doors, so anything else you might actually be pointing at wins over it.
+function boardAt(x, y) {
+  return nearCasino(x, y) ? 'casino'
+       : nearScrub(x, y) ? 'scrub'
+       : nearQuarry(x, y) ? 'quarry'
+       : nearFarm(x, y) ? 'farm'
+       : nearApothecary(x, y) ? 'apothecary'
+       : nearTower(x, y) ? 'tower'
+       // The gang's hut, before the bench it stands in front of.
+       : nearShack(x, y) ? 'shack'
+       : nearBench(x, y) ? 'bench'
+       : nearOuthouse(x, y) ? 'outhouse'
+       : nearHouse(x, y) ? 'house'
+       : nearStats(x, y) ? 'stats' : null;
+}
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;

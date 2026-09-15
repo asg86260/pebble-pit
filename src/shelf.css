@@ -164,34 +164,38 @@
   grid-row: 4;
   display: inline-grid;
   grid-auto-flow: column;
-  /* Everything in the tag sits on one baseline -- the digits, the marks, the
-     clock, in both cells -- the way a mark sits in a line of type everywhere
-     else on the boards. Nothing is centered on a box and nothing is nudged. */
-  align-items: baseline;
+  /* The two cells are the same height and center what they hold, and the
+     tag centers the two -- one box, one middle. */
+  align-items: center;
   border: 1px solid #000;
   background: #fff;
   line-height: 16px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.rows.shelves > .tile .tag .cost { display: flex; align-items: baseline; gap: 6px; padding: 0 6px; }
+/* Both cells are the tag's inner height and center what they hold; a mark
+   is a flex item, so an eleven-pixel clock cannot stretch its cell's line
+   the way it did inline, which left the two cells different heights and
+   their contents centered on two different boxes. */
+.rows.shelves > .tile .tag .cost, .rows.shelves > .tile .tag .time { display: flex; align-items: center; height: 16px; }
+.rows.shelves > .tile .tag .cost { gap: 6px; padding: 0 6px; }
 .rows.shelves > .tile .tag .cost:empty { display: none; }
+/* A tag with nothing in it -- a row waiting on a coin the yard has no
+   source for says so on its gain line and carries no price -- is no tag at
+   all, not an empty box drawn as a dot. */
+.rows.shelves > .tile .tag:has(.cost:empty):has(.time:empty) { display: none; }
 .rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
-.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
-/* A mark centers on the line the digits set. On the baseline the clock --
-   an eleven-pixel ring -- stood two and a half pixels above the numerals'
-   middle; centered, every mark's middle is the line's middle. */
-.rows.shelves > .tile .tag .cost > span > i, .rows.shelves > .tile .tag .time > span > i { align-self: center; }
+.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; line-height: 16px; }
 /* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
    by its `:has()`; the two cells are pinned to flow order here at a weight
    above it, so the clock never climbs over the bill. */
-.rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: baseline; justify-self: auto; }
+.rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: center; justify-self: auto; }
 .rows.shelves > .tile .tag .short { color: #8c8c8c; }
 /* A bill of three or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. */
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
-.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; }
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; height: auto; }
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .time { padding: 0 6px; }
 /* Short of a coin, being built, or climbed: the tag says so by its edge. */
 .rows.shelves > button.tile:disabled .tag { border-style: dashed; color: #8c8c8c; }
