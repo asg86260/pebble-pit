@@ -35,7 +35,7 @@ export const GLYPHS = {
   door:       ['........', '........', '.######.', '.#....#.', '.#....#.', '.#....#.', '.#....#.', '.######.'],
   house:      ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
   cap:        ['......#.', '.....###', '...#..#.', '...#....', '...#....', '...#....', '..###...', '..###...'],
-  helmet:     ['........', '........', '........', '.######.', '########', '#......#', '........', '........'],
+  helmet:     ['.#####..', '#######.', '#.....#.', '..###...', '.#####..', '#..#..#.', '...#....', '...#....'],
   shovel:     ['......#.', '.....###', '......#.', '#####...', '#...#...', '#...#...', '#...#...', '#####...'],
   ore:        ['......#.', '.....###', '......#.', '........', '...##...', '..####..', '.######.', '########'],
   jaw:        ['...##...', '...##...', '...##...', '########', '########', '.######.', '..####..', '...##...'],
@@ -48,7 +48,7 @@ export const GLYPHS = {
   hat:        ['........', '...##...', '..####..', '.######.', '########', '........', '........', '........'],
 };
 
-// The badges: three cells square, in the bottom-right corner, saying what is
+// The badges: three cells square, in the top-right corner, saying what is
 // being done to the object -- tune it, another of it, a spell on it, a tonic
 // of it, or which coin it is about (docs/glyphs.md, "borrow the object,
 // badge the how").
@@ -89,11 +89,11 @@ export const GLYPH_OF = {
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockscrub: ['fan'],
   // the house and the closet
-  crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
+  crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap'],           // the cap is drawn with its plus
   // the shack
   rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'wrench'],
   // the quarry
-  quarrybench: ['shovel', 'plus'], seam: ['ore'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'wrench'],
+  quarrybench: ['shovel'], seam: ['ore'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'wrench'],   // the shovel is drawn with its plus
   // the farm
   farmplot: ['furrow', 'plus'], crop: ['ear'], tend: ['hoe'], tiller: ['tiller'], tunetiller: ['tiller', 'wrench'],
   // the apothecary
@@ -112,16 +112,18 @@ export const GLYPH_OF = {
   bank: ['sack', 'dust'], ride: ['die'],
 };
 
-// A row's picture: its drawing with its badge laid into the bottom-right
+// A row's picture: its drawing with its badge laid into the top-right
 // corner, cell for cell (the badge's cells replace the drawing's, so it reads
-// on top). A drawing not made yet is the crate, so the shelf shows the gap.
+// on top), with a clear cell round it so it reads against the drawing. The
+// owner draws the "more of it" plus into a glyph's own top-right corner, so a
+// row whose drawing already carries that mark takes no badge (see GLYPH_OF).
+// A drawing not made yet is the crate, so the shelf shows the gap.
 export const glyphFor = key => {
   const [name, badge] = GLYPH_OF[key] || ['crate'];
   const rows = (GLYPHS[name] || GLYPHS.crate).map(r => [...r]);
   if (badge && BADGES[badge]) {
-    const b = BADGES[badge], oy = CELLS - b.length, ox = CELLS - b[0].length;
-    // a clear cell round the badge, so it reads against the drawing
-    for (let y = oy - 1; y < CELLS; y++) for (let x = ox - 1; x < CELLS; x++) if (y >= 0 && x >= 0) rows[y][x] = '.';
+    const b = BADGES[badge], oy = 0, ox = CELLS - b[0].length;
+    for (let y = 0; y <= b.length; y++) for (let x = ox - 1; x < CELLS; x++) if (y < CELLS && x >= 0) rows[y][x] = '.';
     b.forEach((br, y) => [...br].forEach((c, x) => { rows[oy + y][ox + x] = c === '#' ? '#' : '.'; }));
   }
   return rows.map(r => r.join(''));

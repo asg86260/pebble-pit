@@ -166,7 +166,7 @@ function paintGrid() {
   const n = size();
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
     const i = document.createElement('i');
-    if (kind === 'glyphs' && x >= n - 3 && y >= n - 3) i.className = 'corner';
+    if (kind === 'glyphs' && x >= n - 3 && y < 3) i.className = 'corner';
     if (cells[y][x]) i.classList.add('on');
     i.dataset.x = x; i.dataset.y = y;
     gridEl.append(i);
