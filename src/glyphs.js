@@ -103,11 +103,11 @@ export const GLYPH_OF = {
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
   // the shack
-  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],
+  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet', 'plus'], ram: ['ram'], tuneram: ['ram', 'plus'],
   // the quarry
-  blaster: ['lamp'], quarrybench: ['shovel', 'plus'], seam: ['ore', 'plus'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],
+  blaster: ['lamp', 'plus'], quarrybench: ['shovel', 'plus'], seam: ['ore', 'plus'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],
   // the farm
-  farmplot: ['furrow', 'plus'], grower: ['brim'], crop: ['ear', 'plus'], tend: ['hoe', 'up'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
+  farmplot: ['furrow', 'plus'], grower: ['brim', 'plus'], crop: ['ear', 'plus'], tend: ['hoe', 'up'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
   // the apothecary
   potkeep: ['pot'], potprefer: ['pot', 'plus'], anotherpot: ['pot', 'plus'],
   bufflength: ['pot', 'plus'], brewdoses: ['vial', 'plus'],

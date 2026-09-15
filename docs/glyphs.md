@@ -46,9 +46,9 @@ cells wide); those are redrawn at eight, the shape settled.
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
 | jaw *           | `jaw`, `tunejaw` +plus                                                               |
 | tiller *        | `tiller`, `tunetiller` +plus                                                         |
-| helmet *        | `breaker`                                                                              |
-| lamp hat *      | `blaster`                                                                              |
-| brim hat *      | `grower`                                                                               |
+| helmet *        | `breaker` +plus                                                                            |
+| lamp hat *      | `blaster` +plus                                                                            |
+| brim hat *      | `grower` +plus                                                                             |
 | pointed hat *   | `wizard` +plus, `askwizards`                                                           |
 | cap *           | `loopost` +plus, `spellsweep` +star                                                    |
 | house           | `house` +plus, `spellthrift` +star                                                     |
