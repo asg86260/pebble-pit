@@ -62,9 +62,12 @@ group('a grain a stride away is taken before the walk to the hole', async () => 
 
 group('what lies behind the target is left for the next trip', async () => {
   oneHauler();
-  // the target, one grain a stride further out, and one a stride nearer home
+  // the target, one grain a stride further out, and one a stride nearer home.
+  // On the open ground the target is the oldest grain, so the target goes
+  // down first and settles before the others land.
   const at = state().pitX - 1000;
   window.__pile(at, 1);
+  run(1);
   window.__pile(at - P * 8, 1);
   window.__pile(at + P * 8, 1);
   window.__place('hauler', at);
@@ -115,9 +118,16 @@ group('a fast body steps on to the next grain, never over it', async () => {
   oneHauler();
   window.__levels({ haulCarryLevel: LADDER });
   const s0 = state();
+  // A line of grains on the open ground short of the rock's strip: on a strip
+  // the target would be the column nearest the body, and the trip being
+  // watched starts at the far end. The far one goes down first and settles,
+  // so it is the oldest and the target.
   const spots = [];
-  for (let x = s0.pitX - 1000; x < s0.pitX - 100; x += P * 7) spots.push(x);
-  for (const x of spots) window.__pile(x, 1);
+  const rock = s0.piles.find(p => p.key === 'rock');
+  for (let x = rock.from - 700; x < rock.from - P * 4; x += P * 7) spots.push(x);
+  window.__pile(spots[0], 1);
+  run(1);
+  for (const x of spots.slice(1)) window.__pile(x, 1);
   run(1);                                    // and let them settle: a grain still rolling is not on the ground
   // The stride is widened only now: a body this fast sweeps a hand's worth
   // off the line during the settle itself, and the trip being watched is the

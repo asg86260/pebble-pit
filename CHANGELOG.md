@@ -13,11 +13,9 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- The haulers spread themselves over every pile and the open ground -- each trip goes where the fewest of them are already headed -- so no pile is left waiting and nothing lies on the ground for long (test/hauler-spread.test.mjs, test/stray-sweep.test.mjs, test/jobs.test.mjs).
 - The shield on offer stands out on the bench: a heavy frame with "the sky" on a plate over it, the name set like a sign (`node tools/look.mjs shieldrow`).
 
-- The haulers split themselves between two backed-up heaps instead of all walking to the same one while the heap beside the hole fills up unattended (test/hauler-spread.test.mjs).
-- A heap that has stopped its station gets the haulers before a heap that is merely filling, however much nearer the filling one is (test/jobs.test.mjs).
-- Dust lying on the open ground off every pile gets picked up while the piles are backed up, instead of lying there for the rest of the game (test/stray-sweep.test.mjs).
 - The hauler standing at the belt's post on the lip of the hole is minding the belt, and its card says so instead of "looking for pebbles" (test/pit-edge-stuck.test.mjs).
 
 ## v0.2.2 — 2026-09-15

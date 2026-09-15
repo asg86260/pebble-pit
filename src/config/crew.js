@@ -207,10 +207,6 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HOUSE_COST0 = 45;          // the first house
 export const HOUSE_RATE = 1.30;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
-// An experiment, off: a carter's target is the column whose grain has lain
-// longest, anywhere in the yard, rather than a find, the fullest heap or the
-// nearest dust. Compared with `tools/node/carters.mjs --fifo`.
-export let HAUL_FIFO = 0;
 
 // --- tipping a load into the hole ---------------------------------------------
 // A hauler used to empty its cart as one act: every grain left the same point
@@ -239,8 +235,6 @@ export const CREW_KNOBS = [
     get: () => SPOIL_POP, set: v => { SPOIL_POP = v; } },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1,
     get: () => SPOIL_SIDE, set: v => { SPOIL_SIDE = v; } },
-  { key: 'HAUL_FIFO', label: 'carry oldest first', min: 0, max: 1, step: 1,
-    get: () => HAUL_FIFO, set: v => { HAUL_FIFO = v; } },
   // The piles are fields of one object rather than bindings of their own, so
   // their pairs read and write a field. Same row, same door.
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50,

@@ -48,7 +48,7 @@ export { stationX, nextLeg, errand, retask } from './crew/commute.js';
 export { syncWorkers, wearKitOnLoad } from './crew/muster.js';
 export { stepHat } from './crew/falls.js';
 export { pitFree, unbook } from './crew/hole.js';
-export { anyBackedUp, topGrain } from './crew/hauler.js';
+
 export { updateWorkers } from './crew/step.js';
 
 // The pace a body crosses the yard at when it has been put on something else.

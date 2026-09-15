@@ -1,7 +1,7 @@
 // Jobs, trades and what the yard remembers: who does what, which hats belong to
 // which station, and what survives a reload.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
 
 group('every trade doubles the work it is for', async () => {
   // brisk, but not so brisk that either site hits its floor: a station with
@@ -314,19 +314,16 @@ group('a jammed rock heap still lets each ground\'s finds be fetched', async () 
   ];
 });
 
-// ...and while a heap is jammed, the rest of the crew clear the heap that is
-// fullest against its own limit, not the one nearest the hole. The nearest
-// dust to a body coming off the hole is the rock's heap, so with the rock's
-// over the line every body not on a find stood on it -- and the quarry's heap,
-// a quarter the size and full to the limit, kept the quarry stopped behind
-// them. Rock at six hundred of seven hundred, quarry full, four carriers, two
-// minutes: the quarry's heap must come off the limit, and soon. (Measured: the
-// nearest-first rule took 0 off the quarry in the whole run and all of the
-// trips off the rock; fullest-first unstopped it at 113 s, because it spent
-// the rest of the run walking one grain at a time across the yard while the
-// rock's heap stood beside the hole; stopped-first unstops it at 57 s and then
-// works the rock, which is the one heap still worth a walk.)
-group('the crew clear the fullest heap, not the nearest', async () => {
+// ...and the rest of the crew are shared over every ground that has something
+// on it. Each new trip goes to the ground fewest bodies are already headed
+// for, so a full quarry heap and a rock heap over its line both get a steady
+// stream of hands -- not the nearest one alone (the rock's, beside the hole,
+// where the whole crew once stood while the quarry stayed stopped behind
+// them), and not the fullest one alone either (the quarry's, which had them
+// walking one grain at a time across the yard while the rock's heap stood
+// by the hole). Rock at six hundred of seven hundred, quarry full, four
+// carriers, two minutes: both heaps get a fair share of the trips.
+group('the crew are shared over the heaps, not stood on one', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -341,25 +338,34 @@ group('the crew clear the fullest heap, not the nearest', async () => {
   for (let i = 0; i < 186; i++) window.__toss('shard', quarry.from + 6 + (i % cols) * P);
   run(2);
   const start = state();
-  // when the quarry first comes off its limit, in seconds
-  let off = -1;
+  // trips a heap: a body's claim landing on a strip it was not claiming on
+  const on = c => {
+    const x = state().floorX + c * P;
+    return state().piles.find(p => x + P > p.from && x < p.to)?.key || 'yard';
+  };
+  const went = { rock: 0, quarry: 0, yard: 0 };
+  const was = new Map();
   for (let i = 0; i < 120 * 60; i++) {
     run(1 / 60);
-    if (off < 0 && !state().pileFull.quarry) off = i / 60;
+    for (const w of yard.S.workers) {
+      if (w.type !== 'hauler') continue;
+      const g = w.claim >= 0 ? on(w.claim) : null;
+      if (g && g !== was.get(w)) went[g]++;
+      was.set(w, g);
+    }
   }
   const end = state();
 
   window.__crew(0, 0, 0);
+  const trips = went.rock + went.quarry;
   return [
     ok(start.pileFull.quarry && start.pileCount.rock >= start.pileLimit.rock * 0.75 &&
        !start.pileFull.rock,
        'the quarry heap is full and the rock heap is over the line but working',
        `rock ${start.pileCount.rock}/${start.pileLimit.rock}, quarry ${start.pileCount.quarry}/${start.pileLimit.quarry}`),
-    ok(!end.pileFull.quarry, 'the quarry heap has come off its limit',
-       `${start.pileCount.quarry} -> ${end.pileCount.quarry}`),
-    // 57 s with the stopped heap first, 113 s with the fullest heap first;
-    // ninety is clear of both.
-    ok(off >= 0 && off < 90, 'and it did so inside a minute and a half',
-       `${off < 0 ? 'never' : off.toFixed(0) + ' s'}`)
+    ok(went.rock >= trips / 4 && went.quarry >= trips / 4, 'both heaps get a fair share of the trips',
+       `${went.rock} to the rock, ${went.quarry} to the quarry, ${went.yard} to the open ground`),
+    ok(end.pileCount.quarry < start.pileCount.quarry && end.pileCount.rock < start.pileCount.rock,
+       'and both heaps come down', `quarry ${start.pileCount.quarry} -> ${end.pileCount.quarry}, rock ${start.pileCount.rock} -> ${end.pileCount.rock}`)
   ];
 });

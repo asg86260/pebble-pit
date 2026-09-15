@@ -1016,60 +1016,30 @@ answer for all of them — so a single grain behind the crew turned the whole li
 it round again the moment the first of them reached it. Claiming is also what stops six workers
 queueing at one column while the rest of the yard sits there.
 
-**The fullest heap first, measured against its own limit.** A find is worth crossing the yard for
-and one body per ground goes for one; everybody else, while any heap is over three quarters, goes
-to the heap that is nearest to stopping its station — not to the nearest dust. The nearest dust to a
-body coming off the hole is always the rock's heap, so picked by distance the whole crew stood on it
-while the quarry's, a quarter the size and full to the line, kept the quarry stopped behind them.
-Fullness is a ratio because the limits differ by four to one: counted in grains the rock's heap
-wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
-whichever heap needs them without anybody being told which one that is.
+**Fewest hands headed there.** Each new trip, decided with empty hands, goes to the ground — a
+station's strip or the open ground between them — that the fewest bodies are already on their way
+to, ties to the one whose oldest grain has lain longest. On a strip the target is the find if one
+lies there, else the column nearest the body, and the body works along the heap until its hands
+are full; on the open ground it is the oldest grain, so the sweep home takes the rest. That is the
+whole rule.
 
-**Less the hands already on their way, and per pixel of the walk.** The fullest heap is the same
-answer for every body reading it at once, so six read it, six set off for it as a convoy, and six
-came back with eight grains each — while the heap beside the hole, half full when they left, climbed
-past its limit with nobody on it (the rock stopped 46% of the run on the carters bench, quarry-jam).
-So a heap is as full as it will be once the bodies already headed there have taken their armfuls,
-and the fullness is divided by the round trip from here to the heap and the heap to the hole. That
-is not "nearest wins", which is the rule the paragraph above threw out: the discount is what keeps it
-honest. Bodies go to the near heap only until enough armfuls are coming to bring it under the line,
-and from then on the far heap is the better score and the rest walk there. One or two hold the rock
-while the others walk to the quarry, and the rock is stopped 0% of the run instead of 46%, banking
-half again as much. Both terms are read off the yard — the armful is the body's own `load`, the walk
-is measured in pixels — so there is no number to tune (`test/hauler-spread.test.mjs`).
+It was chosen for how it reads, not for what it banks (2026-09-15). The rules before it were about
+throughput — the nearest dust, then the fullest heap measured against its own limit, then that
+less the armfuls already on their way and per pixel of the walk, then a stopped station first, then
+one body kept for the open ground — and each fixed the last one's failure and left the yard reading
+the same way: the crew stood on one heap while the others waited. On a rock-heavy yard the best of
+them sent a hundred and sixty-eight trips of a hundred and seventy-six to the rock and four each to
+the quarry and the plots, and banked half again as much as this does; what a player sees is six
+bodies on one pile and two piles nobody visits. What is wanted is bodies spread over every pile,
+every load full, and every resource coming in at its own steady rate — so the bench reads each
+pile's own rate and the trips a ground (`tools/node/carters.mjs`), and the total is not the
+measure. A heap that fills and stops its station is the station's own ladder to buy hands for; it
+is not this rule's to rob the other piles for.
 
-**But a stopped station first, whatever the walk.** Per pixel of the walk, the near heap wins by
-five to one, and with one grain a trip the discount never brings it under the line: four carriers
-worked the rock's heap for two minutes while the quarry's, six grains over its limit, kept the
-quarry stopped — the convoy again, in the mirror. Full is not a degree of fullness. A heap at its
-limit is costing output on this frame; a heap at nine tenths is costing nothing yet. So a heap that
-would still be at its limit once the hands on the way have taken theirs takes the next body before
-any heap that is merely filling, and the walk decides only among heaps of the same kind. Six grains
-over means six bodies walk to the quarry and the seventh works the rock; the quarry is back at work
-in 57 s where fullest-first took 113 s (`test/jobs.test.mjs`). The price is paid on a heap the crew
-cannot unstop at all — quarry-jam on the bench, five grains a second against six bodies who cannot
-carry that — where the tier keeps sending four of them, and the rock beside the hole is stopped a
-fifth of the run instead of never. The rule cannot see the inflow; it sees a stopped station, and
-goes.
-
-**And one body keeps the loose ground swept.** Dust off every strip — a throw that missed, a heap's
-own fringe shed onto the bare ground beside it, what a bird dropped — was only ever taken by a body
-sweeping home over it, and nobody sweeps home over ground further out than the heap they were sent
-to. The nearest-dust fallback never runs while a heap is over the line, and the day a machine lands
-the rock's heap is over the line for the rest of the run: a grain on the open ground then lay there
-for ever with six bodies walking past the end of its strip. So, the way one body per ground keeps
-its finds up, one body at a time goes for the *oldest* loose grain, wherever it lies, and sweeps
-home over the rest — out to the farthest, back with everything between. One, so the heaps keep
-their crew; the oldest, so nothing is starved. It costs what it looks like it costs: in a yard
-whose heap is jammed for good, the fringe is where the surplus goes, and eating it from the far end
-is a long walk for an armful — a sixth of the crew at an eighth of the rate on the bench's ram row.
-The alternative is a scatter three deep creeping outward from the heap for the rest of the run.
-
-Round robin over the grounds was measured against this and not taken (`tools/node/carters.mjs`,
-2026-09-15): it clears everything and banks a third as much, because a trip across the yard for
-three grains costs the body-time of a trip beside the hole for eight, and a quarter of all trips go
-where nothing is needed. The greedy sweep home is the same in every rule and is where most of the
-carrying happens.
+Round robin over the grounds reads the same from the yard and was measured against this: it clears
+everything too, at a third of the throughput, and leaves the rock stopped half a rock-heavy run
+where this leaves it a tenth. Fewest-headed leans toward the pile that has just been left, which
+is the difference.
 
 **That order decides where a trip starts; the body works that heap, and the rest of the trip is a
 sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the

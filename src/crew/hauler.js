@@ -5,8 +5,7 @@
 // furniture happens to: the hole it tips into, the lip it may not walk over, the
 // books it holds room in, and the loose core nobody else will pick up.
 
-import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
-         PILE_LIMIT, HAUL_FIFO } from '../config.js';
+import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, yardLeft, pileAt } from '../world.js';
@@ -74,240 +73,87 @@ function nearestDust(x, taken) {
   return -1;
 }
 
-// Something that is not dust is worth crossing the yard for: it is one grain and
-// it is worth a whole shard. Workers take the nearest column of anything, so
-// without this a shard out at the plots waits for the whole yard to be swept
-// clean first -- which, in a yard with a working crew, is never.
+// Where a trip starts, decided with empty hands: the ground with the fewest
+// bodies already headed to it.
 //
-// `served` is the set of grounds somebody is already off fetching from; a find
-// on one of those is passed over for one on a ground nobody is serving. See the
-// cap in `stepHauler`: the nearest find is nearly always the farm's, because
-// the farm drips them and stands next to the walk, and picked by distance
-// alone the quarry's finds -- and the star's sparks -- lay there for hours.
-function nearestMark(w, taken, served = EMPTY) {
-  let best = -1, bestD = Infinity;
-  // Nothing beyond the near lip: a body cannot cross the hole, so a find over
-  // there is one it would set off for and stand at the edge of for ever. What
-  // lands past the pit is yours to sweep up, not theirs to fetch -- the same
-  // bound `nearestDust` has always kept. And nothing off the near end either,
-  // for the same reason at the other end of the same walk.
+// The grounds are each station's strip and the open ground between them. A
+// ground counts when something lies on it. Each new trip goes to the ground
+// fewest others have set off for, ties to the one whose oldest grain has lain
+// longest -- so the crew fan out over every pile and the open ground, every
+// pile and every find is visited at a steady rate, and nothing lies anywhere
+// for long. On a strip the target is the find if one lies there, else the
+// nearest column to the body, and the body works along the heap until its
+// hands are full; on the open ground it is the oldest grain, so the sweep
+// home covers the rest.
+//
+// This is the rule chosen for how it reads, not for what it banks
+// (2026-09-15, DESIGN.md "Fewest hands headed there"). The rule before it
+// sent every body to the heap that most needed clearing, and it banked half
+// again as much on a rock-heavy yard -- by sending a hundred and sixty trips
+// of a hundred and seventy-six to the rock and four each to the quarry and
+// the plots, which is a crew stood on one heap while the rest of the yard
+// waits. Bodies spread across the piles is what the player asked for, and
+// each resource's own rate is the measure (`tools/node/carters.mjs`, the
+// trips-per-ground column). What a heap costs the station behind it when it
+// fills is the station's own ladder to buy hands for, not this rule's to
+// rob the other piles for.
+function firstPick(w, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  for (const m of S.floorMarks) {
-    const c = colOf(floor, m.x);
-    if (c < first || c > last || taken.has(c) || !at(floor, c, 0)) continue;
-    if (served.has(groundOf(m.x))) continue;
-    const d = Math.abs(m.x - w.x);
-    if (d < bestD) { bestD = d; best = c; }
-  }
-  return best;
-}
-const EMPTY = new Set();
-
-// Which ground a find is lying on: the strip its column falls in, or the open
-// yard for one that has rolled off a strip. Two finds on the same strip are the
-// same ground's output, which is the thing the fetch cap counts.
-const groundOf = x => pileAt(x)?.key || 'yard';
-
-// The grounds somebody is already off fetching a find from.
-const servedGrounds = () => {
-  const s = new Set();
-  for (const o of S.workers) if (o.type === TYPE.HAUL && o.forMark) s.add(o.forMark);
-  return s;
-};
-
-// Whether anything on the ground is backing up.
-//
-// A pile that fills stops the station behind it: the rock stops coming apart,
-// the quarry stops being cut. A find lying on the ground stops nothing at all -- it
-// is worth money and it is in nobody's way. So while a heap is near its limit
-// the dust is the urgent thing and the find can wait, which is the other way
-// round from the rest of the time.
-//
-// Three quarters rather than full, because full is already too late: by then the
-// station has stopped, and what you want is the crew turning up before it does.
-const BACKED_UP = 0.75;
-// Whether a heap is backing up, and *which* heap, because the two want opposite
-// answers out of a body deciding what to fetch next.
-//
-// This used to be "is any pile backing up", and the answer to that was "fetch
-// dust". Which is right when the dust is what is backing up and exactly wrong
-// when it is not: a full quarry heap is a reason to go and get *shards* sooner,
-// not a reason to walk past them carrying grit. And it stopped being an edge
-// case the day the machines landed -- a ram fills the rock's pile in under a
-// second and never empties it, so `pilingUp` was true for the rest of the run,
-// dust won every single time, and the crew stopped fetching the other two
-// resources at all.
-const backedUp = key =>
-  (S.pileCount[key] || 0) >= (PILE_LIMIT[key] || Infinity) * BACKED_UP;
-// Kept for the pile mark and the stand-down rules, which are about a station
-// having nowhere to put what it makes -- a different question from what a body
-// coming out to fetch should pick up.
-export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
-
-// The heap that most needs the next pair of hands, and the nearest thing on it
-// that nobody has set off for -- or -1 when no heap is backing up at all.
-//
-// Fullness is measured against the heap's own limit, not counted in grains,
-// because the limit is what stops the station: the rock's strip holds seven
-// hundred and the quarry's a hundred and eighty, so a quarry heap that has
-// stopped the quarry is a quarter the size of a rock heap that has not.
-// Counted in grains, the body coming out to fetch goes to the rock's heap
-// every time, and the quarry stays stopped behind a heap nobody thinks is
-// worth a walk.
-//
-// Less the armfuls already on their way. Fullness alone sent the whole crew to
-// the one heap as a convoy: six bodies read the same fullest heap, six set off
-// for it, six came back with eight grains each, and the heap beside the hole
-// climbed past its limit with nobody on it while they walked. A heap is as
-// full as it will be once the hands already headed there have taken theirs.
-//
-// A heap that is stopping its station comes before any that is only filling.
-// Full is not a degree of fullness: a heap at its limit is costing output on
-// this frame and a heap at nine tenths is costing nothing yet. So a heap that
-// would still be at its limit once the hands on the way have taken theirs
-// takes the next body whatever the walk, and the walk only decides between
-// heaps that are merely over the line -- or between two that are stopped. With
-// one grain a trip and the quarry six over its limit, the first six bodies
-// walk to the quarry and the seventh works the rock (`test/jobs.test.mjs`).
-//
-// Among those, per pixel of the round trip, because an armful is an armful
-// wherever it comes from and the far heap costs five times the walk. This is
-// not "nearest wins" -- that sent everybody to the rock, above -- because the
-// discount is what keeps it honest: bodies go to the near heap until enough
-// armfuls are coming to bring it under the line, and the rest walk to the far
-// one. On the carters bench that is the difference between the rock stopped
-// half the run and never (`tools/node/carters.mjs`, quarry-jam). The empty leg
-// is quicker by `HAUL_EMPTY`, and the walk is the strip's middle to here and
-// the strip's middle to the hole.
-function fullestHeap(w, taken) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const coming = armfulsComing(w);
-  let best = -1, bestScore = -1, bestStopped = false;
-  for (const p of S.piles) {
-    const r = ((S.pileCount[p.key] || 0) - (coming.get(p.key) || 0)) / (PILE_LIMIT[p.key] || Infinity);
-    if (r < BACKED_UP) continue;
-    const stopped = r >= 1;
-    if (bestStopped && !stopped) continue;
-    const mid = (p.from + p.to) / 2;
-    const score = r / (Math.abs(w.x - mid) / HAUL_EMPTY + Math.abs(pit.x - mid));
-    if (stopped === bestStopped && score <= bestScore) continue;
-    // The strip's columns, held to the ground the crew can stand on -- the same
-    // two bounds `nearestDust` keeps, for the same reason.
-    const lo = Math.max(first, colOf(floor, p.from));
-    const hi = Math.min(last, colOf(floor, p.to) - 1);
-    if (lo > hi) continue;
-    const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
-    let found = -1;
-    for (let d = 0; d <= hi - lo && found < 0; d++) {
-      for (const c of [from - d, from + d]) {
-        if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
-        found = c; break;
-      }
-    }
-    if (found >= 0) { best = found; bestScore = score; bestStopped = stopped; }
-  }
-  return best;
-}
-
-// The grains already spoken for on each heap: every other carter that has set
-// off for a column on the strip, and what its arms will take when it gets
-// there. Only claims count -- a body walking home has already taken its load
-// off the count.
-function armfulsComing(w) {
-  const m = new Map();
+  const headed = new Map();
   for (const o of S.workers) {
     if (o === w || o.type !== TYPE.HAUL || o.claim < 0) continue;
-    const key = pileAt(o.claim * P + P / 2)?.key;
-    if (key) m.set(key, (m.get(key) || 0) + load(o));
+    const g = groundOf(o.claim);
+    headed.set(g, (headed.get(g) || 0) + 1);
   }
-  return m;
-}
-
-// Whether a column is one of the finds lying about, so a body that has gone for
-// one can be told apart from a body shifting grit.
-const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
-
-// Where a trip starts, decided with empty hands. Three answers, in order: a
-// find, the fullest jammed heap, the nearest dust. Whichever is chosen, the
-// others are the fallback -- a body that came out to fetch goes back with
-// something.
-//
-// A find first -- but not by everybody at once while a heap is jammed. This
-// was an all-or-nothing switch and both settings are wrong. "Any heap backing
-// up, fetch dust" is what it was, and the machines made that permanently true:
-// a ram fills the rock's pile in under a second and never empties it, so dust
-// won every time for the rest of the run and the crew stopped fetching the
-// other two grounds at all. Turning it off outright is worse in the other
-// direction -- measured, the rock then stands on its own heap 85% of a run,
-// because the stations keep dripping finds and a good share of the crew is
-// always off chasing one.
-//
-// So it is a *cap* rather than a switch -- and the cap is one body per ground
-// that has a find waiting, not one body for the yard. One for the yard took the
-// nearest find every time -- the farm's, which drips them beside the walk --
-// and the quarry's shards and the star's sparks lay on the ground for hours:
-// shard income read 0.0/min in every six-hour run and no machine was ever
-// bought (docs/critics-2026-09-10.md, A3). One body per ground is what the old
-// argument actually claims: each ground's own drip is kept up with. Everybody
-// else shifts grit and the rock keeps working.
-//
-// And everybody else goes to the fullest heap, not the nearest dust. The
-// nearest dust to a body coming off the hole is the rock's heap, whatever
-// state it is in -- so the whole crew stood on the one heap while the
-// quarry's, a quarter its size and full to the line, stopped the quarry behind
-// them. `fullestHeap` measures each heap against its own limit and sends the
-// body to whichever is nearest to stopping its station; nothing changes until
-// something is backing up, and then it is the jammed heap that is cleared
-// rather than the handy one.
-//
-// And the loose ground gets one body, the way each ground's finds do. Dust
-// that lies off every strip -- a throw that missed, a grain a bird shed, what
-// the wind moved -- was only ever taken by a body sweeping home over it, and
-// nobody sweeps home over ground further out than the heap they were sent to.
-// While a heap is over the line the nearest-dust fallback below never runs,
-// and the day a machine lands the rock's heap is over the line for the rest
-// of the run: a grain on the open ground then lay there for ever with six
-// bodies walking past the end of its strip. So one body at a time goes for
-// the *oldest* loose grain, wherever it lies, and sweeps home over the rest:
-// out to the farthest, back with everything between. One, so the heaps keep
-// their crew; the oldest, so nothing is starved.
-function firstPick(w, taken) {
-  if (HAUL_FIFO) return oldestDust(taken);
-  const dust = nearestDust(w.x, taken);
-  const heap = fullestHeap(w, taken);
-  const served = heap >= 0 ? servedGrounds() : EMPTY;
-  // A served ground's find is the last fallback of all, not dropped.
-  const mark = nearestMark(w, taken, served);
-  if (mark >= 0) return mark;
-  const stray = heap >= 0 && !straySwept() ? oldestDust(taken, true) : -1;
-  return stray >= 0 ? stray : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
-}
-
-// Whether somebody is already off after a loose grain: a claim on a column
-// off every strip. Read off the claim rather than remembered, because a claim
-// is dropped in half a dozen places and a flag would have to be cleared in
-// every one of them.
-const isStray = c => !pileAt(floor.x + c * P) && !isMark(c);
-const straySwept = () => S.workers.some(o => o.type === TYPE.HAUL && o.claim >= 0 && isStray(o.claim));
-
-// The column whose bottom grain has lain longest, wherever it is -- or, with
-// `stray`, wherever it is off a strip. First in, first out across the whole
-// yard: nothing is ever starved, at the price of the walk. Across every grain
-// it is the experiment (`HAUL_FIFO`), measured rather than argued; across the
-// loose ground alone it is the rule.
-function oldestDust(taken, stray = false) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  let best = -1, bestAge = Infinity;
-  for (let c = first; c <= last; c++) {
-    if (taken.has(c) || !at(floor, c, 0)) continue;
-    if (stray && !isStray(c)) continue;
-    const a = ageAt(floor, c, 0);
-    if (a < bestAge) { bestAge = a; best = c; }
+  let best = -1, bestHeaded = Infinity, bestAge = Infinity;
+  for (const g of [...S.piles.map(p => p.key), 'yard']) {
+    const t = groundTarget(w, g, first, last, taken);
+    if (t.col < 0) continue;
+    const n = headed.get(g) || 0;
+    if (n > bestHeaded || (n === bestHeaded && t.age >= bestAge)) continue;
+    best = t.col; bestHeaded = n; bestAge = t.age;
   }
   return best;
+}
+
+// Which ground a column is on: the strip it falls in, or the open ground.
+const groundOf = c => pileAt(floor.x + c * P)?.key || 'yard';
+
+// A ground's target for a body, and how long that ground's oldest grain has
+// lain: `{ col, age }`, col -1 when nothing lies there that nobody has set
+// off for. `age` is the clock the grain was put down at, so smaller is older.
+function groundTarget(w, g, first, last, taken) {
+  let lo = first, hi = last, strip = null;
+  if (g !== 'yard') {
+    strip = S.piles.find(p => p.key === g);
+    lo = Math.max(first, colOf(floor, strip.from));
+    hi = Math.min(last, colOf(floor, strip.to) - 1);
+    if (lo > hi) return { col: -1, age: Infinity };
+  }
+  const mine = c => strip ? true : !pileAt(floor.x + c * P);
+  let oldest = -1, age = Infinity;
+  for (let c = lo; c <= hi; c++) {
+    if (taken.has(c) || !at(floor, c, 0) || !mine(c)) continue;
+    const a = ageAt(floor, c, 0);
+    if (a < age) { age = a; oldest = c; }
+  }
+  if (oldest < 0) return { col: -1, age: Infinity };
+  if (!strip) return { col: oldest, age };
+  // a find on the strip first: one grain, worth a whole shard
+  for (const m of S.floorMarks) {
+    const c = colOf(floor, m.x);
+    if (c >= lo && c <= hi && !taken.has(c) && at(floor, c, 0)) return { col: c, age };
+  }
+  // else the nearest column to the body: the heap is worked from there
+  const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
+  for (let d = 0; d <= hi - lo; d++) {
+    for (const c of [from - d, from + d]) {
+      if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
+      return { col: c, age };
+    }
+  }
+  return { col: -1, age: Infinity };
 }
 
 // The column with something in it under a body's feet, if there is one -- the
@@ -391,13 +237,9 @@ function nextOnStrip(w, bare, taken) {
   return -1;
 }
 
-// Taking a column on. Which ground it was a find on is remembered so the cap
-// in `firstPick` knows which grounds are being served. It is a fact about the
-// trip, not about the column: the column stops being a find the moment it is
-// picked up.
+// Taking a column on.
 function claim(w, c, taken) {
   w.claim = c; taken.add(c);
-  w.forMark = isMark(c) ? groundOf(floor.x + c * P) : false;
 }
 
 // the columns already spoken for this frame
@@ -599,7 +441,7 @@ export function haulerWork(w, c) {
     // the nearest one afresh every frame is what made the crew swarm.
     if (w.claim >= 0 && !at(floor, w.claim, 0)) {
       const bare = w.claim;
-      taken.delete(w.claim); w.claim = -1; w.forMark = false;
+      taken.delete(w.claim); w.claim = -1;
       // The target was a heap, not a column: a body sent to a jammed heap
       // works along it until its hands are full or the heap is bare, and only
       // then turns for home. Sent for one column, it took that column and
