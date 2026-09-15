@@ -19,6 +19,7 @@ feature lives in DESIGN.md.
 - A hauler with room in hand takes whatever lies nearest, including what a heap has shed past the end of its own pile, instead of stepping over it on the way home (test/heap-fringe.test.mjs).
 - A wizard at the top of its breath no longer drops its pouring for a frame every few frames, so two wizards summon twice as fast as one (test/sky-work.test.mjs).
 - The hauler standing at the belt's post on the lip of the hole is minding the belt, and its card says so instead of "looking for pebbles" (test/pit-edge-stuck.test.mjs).
+- The diggers walk to the last few cells of a rock at the pace they cross the yard, instead of ambling the width of the hill while the next rock waits (test/rock-tail.test.mjs).
 
 ## v0.2.2 — 2026-09-15
 

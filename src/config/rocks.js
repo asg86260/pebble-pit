@@ -82,6 +82,15 @@ export const ROCK_GAP_MS = 1000;
 // A stopped crew is not a frozen crew. When the pile is full the rock hands stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
 // is a hop a second and goes places.
+// How fast a rockhand shuffles along the layer it is working, between swings:
+// a line of men on a bench, moving a step and striking. It is not a walk, and
+// it is not the pace a rockhand goes at when it has ground to make up -- a
+// hand that is off the layer walks back to it at COMMUTE_PACE, the pace the
+// same body crosses the yard at. It went at two and a half times this, a third
+// of a commute, and the end of every rock was the whole gang mozying the width
+// of the hill to the last few cells: a rock that read as finished, and a wait
+// before the next one that was really the last swing not having been taken.
+export const ROCKHAND_WALK = 0.5;   // pixels a frame along the row
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down rockhand sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 

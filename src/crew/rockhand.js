@@ -7,7 +7,7 @@
 // It turns at the ends of the layer and turns before walking into a mate, so the
 // gang works back and forth across the rock like a line of men on a bench.
 
-import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE,
+import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE, ROCKHAND_WALK, COMMUTE_PACE,
          SWING_BOB, SWING_DRIVE } from '../config.js';
 import { S } from '../state.js';
 import { standOn, rockLeft } from '../world.js';
@@ -23,7 +23,6 @@ import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 
 const MINE_BAND = 3;      // cells below the peak still counted as the top layer
-const ROCKHAND_WALK = 0.5;   // pixels a frame along the row
 
 export function findPeak() {
   S.peakRow = S.gh;
@@ -142,7 +141,7 @@ export function rockhandWork(w, c) {
   if (!inBand(here)) {
     const back = nearestInBand(here);      // never null here: the stand-down above caught that
     if (back !== here) w.mineDir = Math.sign(back - here);
-    w.x += w.mineDir * ROCKHAND_WALK * 2.5 * frames();       // brisk, it has ground to make up
+    w.x += w.mineDir * COMMUTE_PACE * frames();   // a walk, at the pace it crosses the yard
   } else {
     const step = w.x + w.mineDir * ROCKHAND_WALK * frames();
     if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
