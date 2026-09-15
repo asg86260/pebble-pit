@@ -132,56 +132,41 @@ group('a core goes in through the rift like anything else', async () => {
   ];
 });
 
-// Room in the hole is a resource like a column of dust is a resource, and it
-// is claimed the same way: at the moment you decide, held until you spend it.
-// Without it every body in the yard filled its hands and walked to the lip to
-// find out, and eight workers stood at the brim holding a load each with
-// nowhere to put any of it and no way to put it back.
-group('a hauler books room in the hole before it fetches', async () => {
-  // A hole of its own. The groups above tear the one they share open, and a
-  // torn hole never refuses -- see `pitFree` -- so bookings against it are
-  // unlimited and this would be a check of nothing.
+// The hole never turns a hauler away. It used to: the crew booked their trips
+// against the room the COUNT said was left, and the count credits a few cells
+// at the heap's shoulders the pile's own search never fills. So a hole a few
+// grains short of the count said "none" by the count while no grain ever
+// reached the pile to tear it, and every hauler stood idle at the lip with
+// dust all over the yard -- for good, because the one thing that would have
+// opened the rift was the trip nobody was allowed to make. Now a trip is
+// always allowed: the pile takes it or the rift does.
+group('a hole full by count does not stand the crew down at the lip', async () => {
+  // A hole of its own, NOT collapsed: the groups above tear the one they share.
   window.__reset();
   run(0.4);
   window.__crew(0, 8);
   window.__levels({ haulCarryLevel: 4 });
-  // Most of the way full, and NOT collapsed: the booking is a promise that
-  // there will be somewhere to put this grain down, and the promise is only
-  // worth anything while the hole can still say no. Once it has torn open there
-  // is always somewhere -- see `pitFree` in crew.js -- and the queue is the
-  // trip rather than the hole.
+  // Filled to one grain short of the count -- the exact hole the old booking
+  // rule handed out one trip for and then nothing.
   const cap = state().pitCapacity;
-  window.__give(Math.round(cap * 0.98));
+  window.__tip(cap - 1);
   run(2);
-  const room = state().pitCapacity - state().pitDust;
   const rockX = state().rockX;
-  // More on the ground than the hole can take -- by six hundred, so what is
-  // left lying is left by the booking rule and not by how fast the crew walk.
-  // It was a flat six hundred, and the two per cent left in a big hole is more
-  // than that: the floor emptied on pace alone once the crew stopped walking
-  // past dust.
-  window.__pile(rockX + 200, room + 600);
+  window.__pile(rockX + 200, 600);
   const before = state().stored;
-  // Up to the tear, and no further. A hole this full gives way before it is
-  // full by count -- it heaps over the mouth and lets go -- and from then on
-  // it never refuses, so the room is the trip and not the hole. The booking
-  // rule is only a rule while the hole can still say no, and that is the
-  // stretch measured.
-  runUntil(() => state().stored - before >= room || state().riftOpen, 60);
+  runUntil(() => state().riftOpen, 90);
   const some = state();
+  // Nobody stands idle with dust on the ground and the rift open: idle is the
+  // old stand-down, and a body carrying is a body going somewhere.
+  const idle = some.workerGoals.filter(g => g === 'hauler:idle').length;
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(some.stored - before <= room + 1,
-       'a hole that has not collapsed takes what it has room for and no more',
-       `${some.stored - before} banked into room for ${room}`),
-    ok(some.floorGrains > 100, 'with plenty still on the ground',
-       `${some.floorGrains} lying about`),
-    // a booking is the whole trip, and what is in hand is part of it -- so
-    // the one number that must never exceed the room is the booking
-    ok(some.carried <= some.booked,
-       'and never more is carried than is spoken for',
-       `${some.carried} carried of ${some.booked} booked`)
+    ok(some.riftOpen, 'the crew carry on past the count and the hole gives way',
+       `${some.stored - before} banked, rift ${some.riftOpen ? 'open' : 'shut'}`),
+    ok(some.stored - before > 0, 'having banked what the pile would still take',
+       `${some.stored - before}`),
+    ok(idle === 0, 'and nobody is stood down at the lip', `${idle} of ${some.workers} idle`)
   ];
 });
 

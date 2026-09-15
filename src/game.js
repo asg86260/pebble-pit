@@ -24,7 +24,7 @@ import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, pitFull, riftCatch, abyssLine } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepCutscene } from './cutscene.js';
 import { wireCut } from './quarry.js';
@@ -364,15 +364,6 @@ function stepChips(now) {
     // came down exactly on the ground line over the mouth failed the pit's
     // test, passed the floor's, and was shoved back to the end of a pile.
     if (overPitMouth(ch.x) && ch.y + P >= S.groundY) {
-      // A full hole hands it straight back: thrown at a brim there is no room
-      // under, the grain comes back out over the lip and lands on the rock's own
-      // pile. Nothing that was mined is destroyed by a pit with no room in it,
-      // and nothing goes in uncounted.
-      if (pitRefuses() && isDust(ch.s)) {
-        spawnSpoil(ch.x, ch.y, ch.s);
-        S.chips.splice(i, 1);
-        continue;
-      }
       // A torn pit takes the grain the moment it crosses the mouth: it goes
       // into the rift's orbit from right here, instead of landing on a pile
       // the rift would only lift it straight back off. See `riftCatch`.
@@ -392,10 +383,9 @@ function stepChips(now) {
       // beyond, which is a grain climbing out of a hole.
       if (ch.vx > 0 && ch.x + P > pit.x + pit.w) { ch.x = pit.x + pit.w - P; ch.vx = 0; }
       if (ch.vy > 0 && ch.y >= surfaceY(pit, pc)) {
-        // The hole would not take it -- everything counts against the same
-        // capacity now, finds included. It is not swallowed: it comes back out
-        // on to the ground by the lip and lies there until a dig makes room.
-        if (!bankDust(ch.x, ch.s)) spawnSpoil(pit.x - P * 4, S.groundY - P * 4, ch.s);
+        // Into the pile, or through the rift if the pile has no cell for it;
+        // the hole never hands a grain back.
+        bankDust(ch.x, ch.s);
         S.chips.splice(i, 1);
         continue;
       }

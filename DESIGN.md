@@ -1052,12 +1052,15 @@ on the oldest heap, and starves everything new: under the ram it fetched none of
 a heap filled last sat at full for a whole run. Under any feed the crew cannot outrun, oldest first
 means newest never. The knob stays for the bench to compare against.
 
-**A booking is topped up, not just spent.** A trip books room in the hole with the hands empty,
-against the room the hole has at that moment, and the walk out is long: a body booked for two
-because that was all the room there was stood over a heap of twenty with a dig's worth of new room
-behind it, took its two and tipped. A spent booking asks the hole again — for what the hands have
-left, no more — and gets nothing when the hole is still full, which is the trip ending the way it
-always did.
+**A trip is booked, and the hole never says no to it.** A trip is booked with the hands empty —
+how many grains it is going for — and a spent booking is topped up for what the hands have left,
+no more. It used to be booked against the room the hole had, and none once the counter said full.
+That was the stuck yard: the counter credits a few cells at the heap's shoulders the pile never
+fills, so a hole a few grains short of the count said "none" while no grain ever reached the pile
+to tear it, and every hauler stood down at the lip for good with dust all over the yard. Now the
+hole is never full to a hauler or to the belt. The pile is the only thing asked, and the first
+grain it has no cell for tears the rift and goes through it (see "The rift"); the counter is a
+reading on the board and gates nothing.
 
 **A yard at rest is a yard at rest, not a yard switched off.** A body with nothing to fetch strolls:
 somewhere to go, a stand about when it gets there, then somewhere else. Three things stop that

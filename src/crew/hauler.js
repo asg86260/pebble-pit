@@ -22,7 +22,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 import { duck, stand, hireSpot } from './body.js';
-import { downTheHole, downTheCut, nearestCutDust, pitFree, load, roomOnBoard,
+import { downTheHole, downTheCut, nearestCutDust, load, roomOnBoard,
          roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, ROAM_PACE } from './idle.js';
@@ -490,27 +490,11 @@ export function haulerWork(w, c) {
   }
   w.y = stand(w);
 
-  // Nothing to go for and nothing owing. A hauler with no room booked and none
-  // to book stands down rather than walking to the lip and throwing at a brim,
-  // the same as a gang stops when the pile it is filling has no room left. It
-  // keeps whatever it is already carrying -- a load tipped into a full pit is
-  // a load lost -- and picks the job up the moment a dig makes room.
-  //
-  // Somebody already on a trip is left to finish it: the room it is holding is
-  // room it booked, and turning it round at the lip is the exact thing this is
-  // here to stop. A core is not dust and the hole always takes one.
-  const noRoom = !w.hasCore && !w.carry && roomOnBoard(w) < 1 && pitFree() < 1;
-  // Somebody already on their way home is left alone. Telling a body there is
-  // no room is telling it to stand down, and a body walking to the door has
-  // stood down already -- so this used to catch it, put it back on `idle`, and
-  // the idle branch would send it home again on the very next frame. Home,
-  // idle, home, idle, and it never took a step: a yard full of dust, a full
-  // hole, and the whole crew stood stock still between the pile and the lip.
-  if (noRoom && w.goal !== 'idle' && w.goal !== 'home') {
-    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-    unbook(w);
-    w.goal = 'idle';
-  }
+  // There is no "no room" here. A hauler used to stand down when the hole's
+  // count said it was full, and stood down for good: the grain that would have
+  // torn the hole open was the one nobody was allowed to carry (see `pitFree`
+  // in hole.js). The hole takes everything -- into the pile or through the
+  // rift -- so a body with a load always has somewhere to put it down.
 
   w.resting = false;
   if (w.goal !== 'idle' && w.goal !== 'home') w.idleSince = 0;
@@ -702,7 +686,7 @@ export function haulerWork(w, c) {
     // which is the one thing that has to be true of this, because a crew you
     // cannot get back is a crew you would never let go in the first place.
     w.resting = false;
-    if (!noRoom && nearestDust(w.x, taken) >= 0) {
+    if (nearestDust(w.x, taken) >= 0) {
       w.inside = false;
       w.goal = 'seek';
       return;
@@ -719,7 +703,7 @@ export function haulerWork(w, c) {
     // there, then another. A yard at rest should read as at rest, not as
     // switched off.
     unbook(w);                  // idle hands hold no room
-    if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; return; }
+    if (nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; return; }
 
     // A rock has just come off, or the next one is on its way down, and this
     // body has nothing to do about either. It joins in rather than ambling

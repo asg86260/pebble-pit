@@ -7,7 +7,6 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P } from './helpers.mjs';
 import { floor } from '../src/state.js';
 import { at } from '../src/grid.js';
-import { spend } from '../src/pit.js';
 import { LADDER } from '../src/config.js';
 
 // One hauler, nothing mining, the floor bare: the only dust in the yard is what
@@ -104,40 +103,6 @@ group('a grain that lands ahead of a laden body is taken on the way', async () =
     ok(r.tossed, 'and tips', `${r.took} grains`),
     ok(r.took === 2 && r.left === 0, 'both grains, the second picked up on the way',
        `${r.took} banked, ${r.left} still on the ground`)
-  ];
-});
-
-// A booking is made with the hands empty against the room the hole has then.
-// The walk out is long and the hole is being spent from while it happens, so a
-// body booked for one because that was all the room there was should take
-// whatever room has opened by the time it is stood over the heap -- not carry
-// its one grain past four and tip.
-group('a spent booking asks the hole again before the body gives up', async () => {
-  oneHauler();
-  const s0 = state();
-  // fill the hole to one grain short, so the trip out books exactly one
-  window.__tip(s0.pitCapacity - 1);
-  run(0.5);
-  const far = state().pitX - 1000;
-  window.__pile(far, 5);
-  window.__place('hauler', far);
-  const free0 = state().pitFree;
-  // one in hand and the booking spent -- caught the frame it happens, so the
-  // body is still stood over the heap when the room turns up
-  let one = false;
-  for (let i = 0; i < 20 * 60 && !one; i++) { run(1 / 60); one = carrying() === 1; }
-  // then make room: paying comes out of the hole
-  spend(20);
-  run(1 / 60);
-  const free1 = state().pitFree;
-  const r = firstToss(30);
-  window.__crew(0, 0);
-  return [
-    ok(free0 === 1, 'the hole has room for one grain when the trip is booked', `${free0}`),
-    ok(one, 'and one grain is taken on it'),
-    ok(free1 > 1, 'room is made while the body stands over the heap', `${free1}`),
-    ok(r.tossed && r.took > 1, 'and it fills its hands from the heap before tipping',
-       `${r.took} tipped, ${r.left} left on the ground`)
   ];
 });
 

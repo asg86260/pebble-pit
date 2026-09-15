@@ -23,6 +23,8 @@ feature lives in DESIGN.md.
 - The crew hurry between the shacks and the work: a body knocking off, or one put to work out of the door, walks at twice the commute (test/home-pace.test.mjs).
 - A quarry, farm or apothecary rung is built at the shed by a spare hand off the dust; nobody leaves the cut, the plots or the pot to do it, and a drill or a keeper keeps going meanwhile (test/wave6-sim.test.mjs, test/drill-upgrade.test.mjs, test/apothecary.test.mjs).
 
+- The hole is never full: haulers and the belt keep carrying to a hole the counter calls full, and the first grain the pile has no room for tears the rift instead of standing the crew down at the lip (test/pit-full.test.mjs).
+
 - The tile being built floats on its plate the whole time, the way a hovered one does, and sits back down when the site stalls (src/selftest/boards.js, "a tile being built fills in").
 
 - A build nobody is at yet says `queued`, and `building` from the moment somebody is on it, rather than `nobody on it` (src/selftest/boards.js, "a board holds its size while a build is running").

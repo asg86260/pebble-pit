@@ -9,7 +9,6 @@ import { MACHINE_IDLE_MS, MACHINE_PUFF_LIFE, MACHINE_PUFF_MS, MACHINE_PUFF_RISE,
 import { beltFrom, beltReach, beltRunning, beltTo, beltY } from '../dust.js';
 import { tillerAt, tillerWay } from '../farm.js';
 import { MACHINES, machine, specOf } from '../machines.js';
-import { pitRefuses } from '../pit.js';
 import { puff } from '../puff.js';
 import { jawX, jawY, rigTop, shaftX } from '../quarry.js';
 import { rand } from '../rng.js';
@@ -221,9 +220,9 @@ export function drawBelt() {
   // Not `stroke`: that reads `workedAt`, which is stamped by *bites*, and the
   // belt has hardly bitten since the rock's spoil started landing on the band
   // straight off the shovel -- so the marks stood still under moving loads.
-  // The band runs whenever it is manned, on, and has somewhere to put things
-  // down, which is exactly the gate `stepBelt` keeps.
-  const t = beltRunning(now()) && !pitRefuses() ? (now() % 900) / 900 : 0;
+  // The band runs whenever it is manned and on, which is exactly the gate
+  // `stepBelt` keeps.
+  const t = beltRunning(now()) ? (now() % 900) / 900 : 0;
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
     ctx.fillRect(x, y, P, P);

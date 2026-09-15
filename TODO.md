@@ -100,20 +100,29 @@ doubled so no top moved. Worth a real play: three presses to a ladder is the
 shortest they have been, and each is a whole coin's step. The builders' 37%
 and the attended wait are untouched and still open.
 
-## The hole's count and its pile disagree by a few cells (2026-09-14)
+## The hole's count and its pile disagree by a few cells -- FIXED (2026-09-15)
 
 `capacityAt` (pit.js) says the hole holds 37,566; the pile's own search
-(`addGrain`) refuses the 37,556th grain. Eleven cells the count credits that no
-column ever gets -- `heapCeiling` hands out fractional ceilings and the count
-takes `Math.ceil` of them, while `roomFor` asks `r < ceiling`, so a ceiling of
-47.0000001 is a row on the books and not in the ground. Small, but it is the
-"physically full one grain before the counter agreed" class of bug pit.js
-already documents once: `pitFull()` is the count, so the lip can stand throwing
-dust at a hole the search has already refused. Found because `__grant` sized
-its handout by the count and the last grains tore the rift (the hook now drops
-the tear it starts; the count is still wrong). Fix is one rounding rule shared
-by both: settle whether a fractional ceiling rounds up or down, and have the
-count and `roomFor` both say it.
+(`addGrain`) refuses the 37,556th grain. The count and the pile still disagree
+by those cells, and it no longer matters, because nothing decides anything on
+the count any more. The count used to be the wall: the crew booked their
+trips against `pitRoom()` and the belt and the chip loop asked `pitRefuses()`,
+so a hole a few grains short of the count said "none" by the count while no
+grain ever reached the pile to tear it -- every hauler stood down at the lip
+for good, with dust all over the yard, because the one trip that would have
+opened the rift was the trip nobody was allowed to make. That was the stuck
+yard the belt seemed to be behind.
+
+Now the hole never refuses. The pile is the only thing asked (`bankDust`),
+and a grain it has no cell for goes through the rift (`throughRift`).
+`pitRefuses` is gone, `pitFree` is unbounded, and the hauler's "no room"
+stand-down is gone with it. `pitFull` and `pitCapacity` are readings for the
+board and the full-hole notice and gate nothing. The check is
+`test/pit-full.test.mjs`, "a hole full by count does not stand the crew down
+at the lip", which loads the hole to one grain short of the count and expects
+the rift to tear. If the count is ever wanted exact, the rule is still the one
+written before: settle how a fractional ceiling rounds and have `capacityAt`
+and `roomFor` both say it.
 
 ## The school comes down: kit is sold where it is worn -- BUILT (2026-09-14)
 

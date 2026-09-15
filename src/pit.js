@@ -196,33 +196,29 @@ export function settlePit() {
   settleSome(pit, SETTLE_BUDGET);
 }
 
-// A full hole takes nothing. The pile is the dust -- one grain one dust, always
-// -- so a counter that went on climbing while the pile stood still would be the
-// number and the picture saying different things, which is the one thing this
-// game does not do. When there is no room the dust does not go in and is not
-// counted, and the way to bank another grain is to dig.
+// Whether the hole is full BY COUNT. A reading and nothing more: the board
+// says it, the notice about a full hole watches it, and that is all it gates.
+//
+// It used to be the wall. Everything that carried dust asked it before setting
+// off, and it was never quite the pile's answer -- the count credits cells at
+// the heap's shoulders that the pile's own search never fills -- so a hole a
+// few grains short of the count stood refusing by the count, the rift stayed
+// shut because no grain ever reached the pile to be turned away, and the crew
+// stood at the lip with their loads. The pile is the only thing that knows
+// whether a grain fits, and its answer is final: a grain it will not take goes
+// through the rift (`bankDust`, `throughRift`). Nothing reads this to decide
+// whether to carry.
 //
 // A find is counted in with everything else. It used to go in over the ceiling
 // on the grounds that a shard is a thing you went and got rather than a grain
 // that happened -- but a hole that holds everything except the four things it
 // does not hold is a hole with a rule you cannot see, and the counter over it
 // stops being a reading of what is down there. One capacity, one queue: a shard
-// takes a grain of room the same as a grain of dust does, and the crew book it
-// the same way.
+// takes a grain of room the same as a grain of dust does.
 export const pitFull = () => pit.n >= pitCapacity();
 
-// ...and whether it will actually TURN SOMETHING AWAY, which is a different
-// question and the one everything that carries dust is really asking.
-//
-// A hole at its brim is full. A hole that has collapsed is full and still takes
-// everything, because what will not fit goes through the rift. Machines and
-// bodies were reading `pitFull` and standing down: the belt held its loads over
-// a hole that would have swallowed them, and the ram would not bite. That is the
-// old wall wearing a new name.
-export const pitRefuses = () => pitFull() && !S.riftOpen;
-
-// Grains of dust the hole would still take. What the crew book their trips
-// against: see `pitFree` in crew.js.
+// Grains of dust the count says the hole would still take. A reading for the
+// hooks that size a handout; nothing in the yard stands down on it.
 export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 
 // Something goes in the hole. A grain of dust is worth one dust; a shard, a
@@ -379,11 +375,14 @@ export function riftCatch(x, y, shade, vx = 0, vy = 0) {
 }
 
 export function bankDust(x, shade = 1) {
-  // A hole with no room turns the grain away and whatever was carrying it keeps
-  // it. It used to settle the pile finer and try again; there is no finer now.
-  // What makes room is the rift swallowing, which happens on its own clock.
+  // A hole with no room does not turn the grain away: it gives way, and the
+  // grain goes through the rift. The pile is asked, never the count -- the
+  // pile is the only thing that knows whether there is a cell for this grain,
+  // and the first grain it has no cell for is what tears the hole open. See
+  // `throughRift`. So this never answers false, and nothing carrying dust
+  // ever needs to ask the hole first.
   //
-  // And the refusal is remembered, because it is what the rift is an answer to.
+  // The refusal is remembered, because it is what the rift is an answer to.
   // The row that sells one is offered the first time the hole says no and not
   // before -- the scrubbing house's rule, which is that a cure sold before the
   // disease is a cure for a number. It was a threshold on `banked` for an hour

@@ -7,7 +7,6 @@ import { at, put, colOf, topRow, isDust } from '../grid.js';
 import { keepTo, stepRoute, wayAt, wayOver, ways, climbTo, feetOn } from '../route.js';
 import { sweepMuckAt } from '../smog.js';
 import { swingFor } from './tenders.js';
-import { pitRoom } from '../pit.js';
 import { haulCap, scoopMs, commutePace } from '../upgrades.js';
 import { stronger } from '../apothecary.js';
 import { now } from '../clock.js';
@@ -126,41 +125,23 @@ export function nearestCutDust(x, taken) {
   return -1;
 }
 
-// --- booking the hole ---------------------------------------------------------
-// A hauler says how much it is going for *before* it goes, and the room it
-// asked for is spoken for until it tips.
+// --- booking the trip ---------------------------------------------------------
+// A hauler says how much it is going for *before* it goes: a trip is
+// `w.booked` grains and no more, and `w.took` is how many of them are in hand.
 //
-// Without that, every body in the yard set off with an empty pair of hands,
-// filled them, walked to the lip and only then found out the hole was full --
-// eight workers stood at the brim holding a load each, with nowhere to put any
-// of it and no way to put it back. Room in the hole is a resource like a column
-// of dust is a resource, and the fix is the same one the columns already use:
-// claim it at the moment you decide, and hold the claim until you have spent it.
+// The room in the hole those grains will take is never in question. A grain
+// the pile has no cell for tears the hole open and goes through the rift (see
+// `throughRift` in pit.js), so a trip always has somewhere to end and the
+// queue is as long as the trip, never as short as the hole.
 //
-// So a trip is `w.booked` grains of dust and no more. Room for five is one
-// worker going for five, not five workers going for a load each.
-//
-// Everything is in this. A shard, a spore and a core take a grain of room the
-// same as a grain of dust does: one capacity, one queue. A hole that held
-// everything except the four things it did not hold was a hole with a rule you
-// could not see, and it let a body set off for a find with a full pit behind it
-// and stand at the lip holding one.
-const bookings = () => S.workers.reduce((n, o) => n + (o.booked || 0), 0);
-
-// ...and once the hole has collapsed, the room is not the hole's any more.
-//
-// A booking is a promise that there will be somewhere to put this grain down.
-// While the hole could refuse, that promise was worth exactly what the hole had
-// left. A hole that has torn open cannot refuse -- what will not fit goes
-// through the rift (see `throughRift` in pit.js) -- so the promise is always
-// good and the queue is as long as the trip.
-//
-// Without this the collapse fixed the wrong half: nothing was turned away any
-// more, but nobody set off either, because the booking still asked a full hole
-// how much room it had and was told none. Six carters banked fifteen grains in
-// thirty seconds -- the rift's own swallowing rate, and a yard still stopped in
-// every way that matters.
-export const pitFree = () => S.riftOpen ? Infinity : pitRoom() - bookings();
+// It used to be booked against the hole: the room the count said was left,
+// less what the other trips had spoken for, and none once the count said
+// full. That was a wall with a gap in it. The count credits a few cells the
+// pile never fills, so a hole a few grains short of the count said "none" by
+// the count while no grain ever reached the pile to tear it -- and every
+// hauler stood down at the lip, for good, because the one thing that would
+// have opened the rift was the trip nobody was allowed to make.
+export const pitFree = () => Infinity;
 
 // what one body carries in a trip -- a cart holds twice, and a strong brew adds
 // its half on top of that for as long as the dose is worn (see apothecary.js)
@@ -179,18 +160,10 @@ export function bookRoom(w, want = load(w)) {
 
 // Whether this body may take one more, asking the hole again if it has to.
 //
-// A booking is made once, with the hands empty, against the room the hole had
-// at that moment -- and the walk out is long. A hole with room for two sent a
-// body out booked for two, and by the time it was stood over the heap a dig had
-// made room for twenty; the body took its two, walked past the rest with its
-// hands mostly empty, and tipped. What its hands hold is the ceiling; what the
-// hole has *now* is the other one; a spent booking is asked again against both,
-// and gets nothing when the hole is still full, which is the trip ending the
-// way it always did.
-//
-// Asked for what the hands have left rather than a whole load, because `took`
-// stays in the booking: a re-book for a full load on top of two already in hand
-// spoke for two grains of the hole that nothing was ever going to fill.
+// A booking is made once, with the hands empty -- and a spent one is asked
+// again for what the hands have left rather than a whole load, because `took`
+// stays in the booking: a re-book for a full load on top of two already in
+// hand would speak for two grains nothing was ever going to carry.
 export const roomToTake = w =>
   (w.carry || 0) < load(w) &&
   (roomOnBoard(w) > 0 || bookRoom(w, load(w) - (w.carry || 0)) > 0);

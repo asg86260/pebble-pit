@@ -9,7 +9,7 @@ import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs, haulCap } from './upgrades.js';
-import { pitFull, pitRefuses } from './pit.js';
+import { pitFull } from './pit.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { shockAt } from './shock.js';       // F4: the ring a crit throws
@@ -218,13 +218,6 @@ export function beltRunning(now) {
 export function catchBelt(ch, now, f) {
   if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
   if (!beltRunning(now)) return false;
-  // A full hole stops the band (see `stepBelt`), and a stopped band takes
-  // nothing new: without this the ram's spoil landed on it, rode to the head,
-  // was handed back out of the brim onto the ground, and rode again -- a loop
-  // that ran for as long as the hole stayed full. Refused here, the spoil falls
-  // through to the rock's own pile, and the pile filling is what stands the ram
-  // down: the same mark that stops every other machine.
-  if (pitRefuses()) return false;
   const y = beltY();
   const under = ch.y + P, was = under - ch.vy * f;
   if (was > y || under < y) return false;             // did not cross the band this frame
@@ -254,11 +247,11 @@ export function catchBelt(ch, now, f) {
 export function stepBelt(now, f) {
   if (!S.belt || !S.belt.length) return;
   if (!beltRunning(now)) return;
-  // Nowhere to put anything down: the band stands still with its loads on it,
-  // exactly as it does when its tender walks off. `ready` already refuses new
-  // bites on a full hole; this is the other half, without which the loads
-  // already riding were tipped into a hole that handed every one straight back.
-  if (pitRefuses()) return;
+  // The band never stops for the hole. It used to stand still with its loads
+  // on when the count said the hole was full, and stood for good when the
+  // count was ahead of the pile: the load that would have torn the hole open
+  // was one of the loads it was holding. What the head drops that the pile
+  // has no cell for goes through the rift (`bankDust` in pit.js).
   const top = bandY(), head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
@@ -298,7 +291,7 @@ defineMachine('belt', {
   // belt is worth. `scoopMs` carries the lip's own ladders, so everything bought
   // for carrying still applies to the machine that replaced it.
   ms: rate => scoopMs() / Math.max(0.01, rate),
-  ready: () => !pitRefuses(),
+  ready: () => true,
   // A beat lifts a *load*, not a grain: `haulCap()` of them, the same number a
   // carter carries in one trip, because the belt is the whole of what a hauler
   // does minus the walking and a hauler does not carry one grain. It was one a
