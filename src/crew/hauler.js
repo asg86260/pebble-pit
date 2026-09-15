@@ -261,6 +261,18 @@ const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
 // body to whichever is nearest to stopping its station; nothing changes until
 // something is backing up, and then it is the jammed heap that is cleared
 // rather than the handy one.
+//
+// And the loose ground gets one body, the way each ground's finds do. Dust
+// that lies off every strip -- a throw that missed, a grain a bird shed, what
+// the wind moved -- was only ever taken by a body sweeping home over it, and
+// nobody sweeps home over ground further out than the heap they were sent to.
+// While a heap is over the line the nearest-dust fallback below never runs,
+// and the day a machine lands the rock's heap is over the line for the rest
+// of the run: a grain on the open ground then lay there for ever with six
+// bodies walking past the end of its strip. So one body at a time goes for
+// the *oldest* loose grain, wherever it lies, and sweeps home over the rest:
+// out to the farthest, back with everything between. One, so the heaps keep
+// their crew; the oldest, so nothing is starved.
 function firstPick(w, taken) {
   if (HAUL_FIFO) return oldestDust(taken);
   const dust = nearestDust(w.x, taken);
@@ -268,18 +280,30 @@ function firstPick(w, taken) {
   const served = heap >= 0 ? servedGrounds() : EMPTY;
   // A served ground's find is the last fallback of all, not dropped.
   const mark = nearestMark(w, taken, served);
-  return mark >= 0 ? mark : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
+  if (mark >= 0) return mark;
+  const stray = heap >= 0 && !straySwept() ? oldestDust(taken, true) : -1;
+  return stray >= 0 ? stray : heap >= 0 ? heap : dust >= 0 ? dust : nearestMark(w, taken);
 }
 
-// The experiment: the column whose bottom grain has lain longest, wherever it
-// is. First in, first out across the whole yard -- nothing is ever starved, at
-// the price of the walk, which is measured rather than argued (`HAUL_FIFO`).
-function oldestDust(taken) {
+// Whether somebody is already off after a loose grain: a claim on a column
+// off every strip. Read off the claim rather than remembered, because a claim
+// is dropped in half a dozen places and a flag would have to be cleared in
+// every one of them.
+const isStray = c => !pileAt(floor.x + c * P) && !isMark(c);
+const straySwept = () => S.workers.some(o => o.type === TYPE.HAUL && o.claim >= 0 && isStray(o.claim));
+
+// The column whose bottom grain has lain longest, wherever it is -- or, with
+// `stray`, wherever it is off a strip. First in, first out across the whole
+// yard: nothing is ever starved, at the price of the walk. Across every grain
+// it is the experiment (`HAUL_FIFO`), measured rather than argued; across the
+// loose ground alone it is the rule.
+function oldestDust(taken, stray = false) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
   let best = -1, bestAge = Infinity;
   for (let c = first; c <= last; c++) {
     if (taken.has(c) || !at(floor, c, 0)) continue;
+    if (stray && !isStray(c)) continue;
     const a = ageAt(floor, c, 0);
     if (a < bestAge) { bestAge = a; best = c; }
   }

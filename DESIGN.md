@@ -1052,6 +1052,25 @@ carry that — where the tier keeps sending four of them, and the rock beside th
 fifth of the run instead of never. The rule cannot see the inflow; it sees a stopped station, and
 goes.
 
+**And one body keeps the loose ground swept.** Dust off every strip — a throw that missed, a heap's
+own fringe shed onto the bare ground beside it, what a bird dropped — was only ever taken by a body
+sweeping home over it, and nobody sweeps home over ground further out than the heap they were sent
+to. The nearest-dust fallback never runs while a heap is over the line, and the day a machine lands
+the rock's heap is over the line for the rest of the run: a grain on the open ground then lay there
+for ever with six bodies walking past the end of its strip. So, the way one body per ground keeps
+its finds up, one body at a time goes for the *oldest* loose grain, wherever it lies, and sweeps
+home over the rest — out to the farthest, back with everything between. One, so the heaps keep
+their crew; the oldest, so nothing is starved. It costs what it looks like it costs: in a yard
+whose heap is jammed for good, the fringe is where the surplus goes, and eating it from the far end
+is a long walk for an armful — a sixth of the crew at an eighth of the rate on the bench's ram row.
+The alternative is a scatter three deep creeping outward from the heap for the rest of the run.
+
+Round robin over the grounds was measured against this and not taken (`tools/node/carters.mjs`,
+2026-09-15): it clears everything and banks a third as much, because a trip across the yard for
+three grains costs the body-time of a trip beside the hole for eight, and a quarter of all trips go
+where nothing is needed. The greedy sweep home is the same in every rule and is where most of the
+carrying happens.
+
 **That order decides where a trip starts; the body works that heap, and the rest of the trip is a
 sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
 same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column

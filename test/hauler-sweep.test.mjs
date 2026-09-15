@@ -242,17 +242,23 @@ group('a body sent to a heap fills its hands there before sweeping home', async 
   }
   window.__pile(r.from + P * 4, 40);
   run(1);
+  // A heap this full sheds a column onto the bare ground beside its strip,
+  // and that fringe is the quarry's too -- it is the first thing a body goes
+  // for (stray-sweep.test.mjs) and the heap is worked on the way home. So
+  // the quarry's loss is everything that left the floor less the rock's.
+  const n0 = floor.n;
   const q0 = state().pileCount.quarry, r0 = state().pileCount.rock;
   const cap = state().haulCap;
   window.__crew(0, 1);
   window.__place('hauler', state().pitX - 60);
   const t = firstToss(90);
-  const q1 = state().pileCount.quarry, r1 = state().pileCount.rock;
+  const r1 = state().pileCount.rock;
+  const fromQuarry = (n0 - t.left) - (r0 - r1);
   window.__crew(0, 0);
   return [
     ok(state().pileFull.quarry || q0 > 0, 'the quarry heap is the one over the line', `${q0}`),
     ok(t.tossed && t.took === cap, 'a full load is tipped', `${t.took} of ${cap}`),
-    ok(q0 - q1 === cap, "all of it off the quarry's heap", `${q0 - q1} from the quarry`),
+    ok(fromQuarry === cap, "all of it off the quarry's heap", `${fromQuarry} from the quarry`),
     ok(r0 - r1 === 0, "and none off the rock's on the way home", `${r0 - r1} from the rock`)
   ];
 });
