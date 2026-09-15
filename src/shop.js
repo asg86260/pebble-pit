@@ -837,6 +837,9 @@ function phaseDots(el) {
   const [gx0, gy0] = laidAt(ground);
   const gx = gx0 + ground.clientLeft, gy = gy0 + ground.clientTop;   // clientLeft/Top: the border
   for (const t of el.querySelectorAll('.tile')) {
+    // A tile that went dear under the cursor keeps no lean: the reset is on
+    // pointer-leave, and the pointer has not left.
+    if (t.disabled && t.style.getPropertyValue('--follow-x')) { t.style.removeProperty('--follow-x'); t.style.removeProperty('--follow-y'); }
     const [tx, ty] = laidAt(t);
     const left = tx - gx, top = ty - gy;
     const key = `${left},${top}`;
