@@ -47,17 +47,19 @@
    over the whole sheet -- title, shelves and the button under them -- so
    the board is one surface. The tiles phase their own dots to this box
    (`phaseDots` measures against the sheet). */
-.sheet:has(.rows.shelves) {
+.sheet:has(> .page:not([hidden]) .rows.shelves) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 /* The sheet is as wide as five slots and its own gutters, and no wider than
-   the window. Derived, not guessed: a slot count and the sheet's own padding
+   the window. Keyed on the page that is OPEN: the sheet holds every board's
+   page, the hidden ones too, so `:has(.rows.ledger)` alone made every board
+   the books' width. Derived, not guessed: a slot count and the sheet's own padding
    and border, so a wider slot or a deeper gutter moves it. `pinWidth` reads
    this off the sheet once the rows are in. */
-.sheet:has(.rows.shelves) {
+.sheet:has(> .page:not([hidden]) .rows.shelves) {
   width: min(calc(5 * var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x) + 2 * var(--sheet-border)), var(--sheet-room, 100vw));
 }
-.sheet:has(.rows.shelves) .page { width: auto; }
+.sheet:has(> .page:not([hidden]) .rows.shelves) .page { width: auto; }
 
 /* A section sign, and the plank of the shelf above it. The sign is the
    heading element itself, a black plate; every section but the first draws
@@ -151,9 +153,11 @@
 .rows.shelves > .tile .gain {
   grid-row: 3;
   white-space: nowrap;
-  font-size: .85em;
+  /* the board's own size: at .85em the effect was the hardest line on the
+     tile to read, and it is the one that says what you are buying */
+  font-size: 12px;
   line-height: 13px;
-  color: rgba(0, 0, 0, .65);
+  color: rgba(0, 0, 0, .6);
 }
 .rows.shelves > .tile .gain i { transform: scale(.78); vertical-align: -1px; }
 
@@ -348,7 +352,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rows.shelves > .tile.goal .gain { display: none; }
 .rows.shelves > .tile.goal .note {
   display: block; grid-column: 2; grid-row: 2;
-  font-size: .85em; line-height: 1.3; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch;
+  font-size: 12px; line-height: 1.35; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch;
 }
 .rows.shelves > .tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }
 
@@ -361,8 +365,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    layout off them the same way it keeps it off a tile. */
 .rows.ledger > button, .rows.ledger > button::before, .rows.ledger > button::after,
 .rows.ledger > button > *, .rows.ledger > button .name > *, .rows.ledger > button .cost > span, .rows.ledger > .sect { all: revert; }
-.sheet:has(.rows.ledger) { width: 48ch; }
-.sheet:has(.rows.ledger) .page { width: auto; }
+.sheet:has(> .page:not([hidden]) .rows.ledger) { width: 48ch; }
+.sheet:has(> .page:not([hidden]) .rows.ledger) .page { width: auto; }
 .rows.ledger {
   display: block;
   padding: 2px 0 4px;
@@ -372,7 +376,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   white-space: normal;
   color: #000;
 }
-.sheet:has(.rows.ledger) {
+.sheet:has(> .page:not([hidden]) .rows.ledger) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 .rows.ledger > .sect {

@@ -532,10 +532,14 @@ function build(el, list, sections, empty, heads) {
       // `sayNote`); the crew submenu keeps the hover, because a roster of a dozen
       // bodies is long enough without a line of prose under each -- and it is a
       // list you read, not a shop of things you buy. So the tip stays here, for
-      // the submenu only.
-      if (inSubmenu && u.note) {
+      // the submenu -- and for a shelf, where a tile has no line to wear its
+      // description on (DESIGN.md, "The shelf": descriptions go to the tip).
+      // The goal card is the exception and keeps its sentence in place.
+      if ((inSubmenu || (shelf && !sect.goal)) && u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();
+          // `showTipAt` stands a note that would land on the sheet off beside
+          // the board, where it is not under the board's layer
           showTipAt(u.note(), r.right + 8, r.top - 2);
         };
         b.addEventListener('pointerenter', say);
