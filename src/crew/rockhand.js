@@ -37,13 +37,14 @@ const inBand = c =>
 
 const colAtX = x => Math.max(0, Math.min(S.gw - 1, Math.round((x - rockLeft()) / P)));
 
-// the nearest column that is still part of the working layer
+// the nearest column that is still part of the working layer, or null when no
+// column is: there is no rock to work
 export function nearestInBand(from) {
   for (let d = 0; d < S.gw; d++) {
     if (inBand(from - d)) return from - d;
     if (inBand(from + d)) return from + d;
   }
-  return from;
+  return null;
 }
 
 // Somebody already working the stretch this one is about to walk into.
@@ -89,7 +90,14 @@ export function rockhandWork(w, c) {
   // The rock's pile is full. The crew stand where they are until it has
   // been carried away: dust with nowhere to go used to roll into the pit,
   // which banks it for nothing and leaves the haulers with no job.
-  if (S.pileFull.rock) {
+  //
+  // And so does a gang with no layer to work at all -- no rock standing and
+  // none on its way. `nearestInBand` has nothing to point at then, and the
+  // "walk back to the layer" branch below, given no layer, walked the body
+  // briskly in whatever direction it last worked, forever: across the yard,
+  // over the mouth of the hole, and out to the world's edge (the slots check,
+  // 2026-09-15, a rockhand made during the opening's chat).
+  if (S.pileFull.rock || nearestInBand(colAtX(w.x + WORKER / 2)) === null) {
     w.resting = true;                      // stopped, and free to take five
     // Standing down is not being switched off. It shifts its weight where
     // it stands: a slow pace of about a cell either side of the spot it
@@ -132,7 +140,7 @@ export function rockhandWork(w, c) {
   // `faceTravel`.
   const here = colAtX(w.x + WORKER / 2);
   if (!inBand(here)) {
-    const back = nearestInBand(here);
+    const back = nearestInBand(here);      // never null here: the stand-down above caught that
     if (back !== here) w.mineDir = Math.sign(back - here);
     w.x += w.mineDir * ROCKHAND_WALK * 2.5 * frames();       // brisk, it has ground to make up
   } else {

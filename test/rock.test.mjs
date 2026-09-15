@@ -10,6 +10,7 @@ import { DANCE_BEAT, DANCE_BUZZ, DANCE_JUMP_H, DANCE_TEMPO_HI, danceJumpBeat } f
 // drew is a fact about a worker and not one the snapshot carries.
 import { S } from '../src/state.js';
 import { sweep } from '../src/hands.js';
+import { boulderAlive } from '../src/rock.js';
 
 // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
 // about on the bare ground, and only then does the next one come down.
@@ -569,5 +570,26 @@ group('the one underneath is covered by the rock, not by the making of it', asyn
     // a mark over its head; every rock after that lands on the same spot, on the
     // same person, and used to land in silence.
     ok(said > 0, 'and whoever saw it says so', `${said} frames of it`)
+  ];
+});
+
+// A gang with no rock to work and none on its way has nowhere to walk to. The
+// "back to the layer" step, asked for the nearest working column when there
+// was no rock at all, walked the body briskly the way it last worked, forever
+// -- across the yard, over the mouth of the hole and out to the edge of the
+// world (the slots check, 2026-09-15). Only a body made during the opening's
+// chat can be in that position, and only the hook makes one, but a branch
+// that marches a body off a cliff is wrong wherever it is reached from.
+group('a rockhand with no rock stands where it is', async () => {
+  window.__reset(true);                        // the opening, and no rock yet
+  runUntil(() => state().intro === 'chat', 20);
+  window.__crew(1);
+  run(0.5);
+  const from = S.workers.find(w => w.type === 'rockhand').x;
+  run(6);                                      // inside the chat: it is INTRO_CHAT_MS long
+  const w = S.workers.find(w => w.type === 'rockhand');
+  return [
+    ok(state().intro === 'chat' && !boulderAlive(), 'the two are still talking and there is no rock', String(state().intro)),
+    ok(w && Math.abs(w.x - from) <= P * 2, 'and the rockhand has not gone anywhere', `${Math.round(from)} -> ${w && Math.round(w.x)}`)
   ];
 });
