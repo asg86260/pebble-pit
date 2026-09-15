@@ -1,7 +1,13 @@
 import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
 import { writeFileSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// a glob for everything under a folder of this checkout; forward slashes,
+// because a glob with backslashes in it matches nothing
+const under = dir => join(__dirname, dir, '**').replace(/\\/g, '/');
 
 // The build is named after the version in package.json, the commit it was
 // made from, and the day. See src/version.js for who reads it. A checkout
@@ -50,7 +56,15 @@ export default defineConfig(({ command }) => {
       // The packager's output is not the game's source, and a watcher holding
       // a handle on it is what stopped electron-builder renaming its own
       // folder (EPERM on `win-unpacked.tmp` while a dev server was up).
-      watch: { ignored: ['**/release/**'] }
+      //
+      // Nor are the agents' worktrees or the shot tool's pngs. Every worktree
+      // lives under `.claude/` in this checkout, so the server on the user's
+      // own game was watching seventy checkouts' worth of edits, shots and
+      // test runs and had eighteen hours of CPU behind it after two days.
+      // Spelled as paths under *this* root rather than as `**/.claude/**`,
+      // so a worktree's own server, which is itself under `.claude/`, keeps
+      // watching its own tree.
+      watch: { ignored: ['**/release/**', under('.claude'), under('shots')] }
     },
     preview: {
       host: true,

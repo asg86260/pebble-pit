@@ -30,7 +30,10 @@ const skyLeft = kind => {
   for (const v of sky.cells) if (v === kind) n++;
   return n;
 };
-import { at, count, countDust } from './grid.js';
+// The ledgers, not the walks: verify.js checks the ledger against the cells
+// every few frames of every check, so a reading off it is the cells' answer
+// at a fortieth of the cost -- the hole alone is forty thousand cells.
+import { grainsIn, dustIn } from './grid.js';
 import { wayAt } from './route.js';
 import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX, plotSlots, farmShed, quarryShed } from './world.js';
 import { rockFootY, dropZone, depthOf } from './rock.js';
@@ -57,14 +60,33 @@ import { hasOffer, STATIONS, standRect } from './board.js';
 import { boiling as apothBoiling } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
+// The floor, a column at a time: how many grains are lying in each, and how
+// tall it stands (the row above the topmost grain, so an empty column is 0).
+//
+// One walk of the grid, shared by the four reports under it. Each of them
+// walked the whole floor for itself, and a snapshot took the four of them --
+// six hundred columns of ninety rows, six times over -- so a check that read
+// the yard every frame spent forty frames of sim on each reading. The reports
+// still answer alone, for anybody who asks one of them on its own; the
+// snapshot surveys once and hands the survey to each.
+export function floorSurvey() {
+  const { cols, rows, grid } = floor;
+  const n = new Uint16Array(cols), h = new Uint16Array(cols);
+  for (let r = 0; r < rows; r++) {
+    const row = r * cols;
+    for (let c = 0; c < cols; c++) if (grid[row + c]) { n[c]++; h[c] = r + 1; }
+  }
+  return { n, h };
+}
+
 // Dust that got past the hole. Everything thrown at the pit is thrown from the
 // near lip, so anything lying on the ground beyond the far wall is a throw that
 // sailed over a hole it should have landed in.
-export function dustPastPit() {
+export function dustPastPit(survey = floorSurvey()) {
   let n = 0;
   for (let c = 0; c < floor.cols; c++) {
     if (floor.x + c * P < pit.x + pit.w) continue;
-    for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+    n += survey.n[c];
   }
   return n;
 }
@@ -76,13 +98,12 @@ export function dustPastPit() {
 // It used to measure from the apron, because the apron was barred ground. The
 // clearance holds dust now and the footprint is the only thing that does not,
 // so `inApron` is what is standing inside the rock -- which is nought, always.
-export function apronReport() {
+export function apronReport(survey = floorSurvey()) {
   let inApron = 0, tallest = 0, crest = 0;
   const near = rockLeft(), far = rockLeft() + S.gw * P;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
-    let h = 0;
-    for (let r = floor.rows - 1; r >= 0; r--) if (at(floor, c, r)) { h = r + 1; break; }
+    const h = survey.h[c];
     if (x + P > near && x < far) { inApron += h; continue; }
     const d = x < near ? (near - (x + P)) / P : (x - far) / P;
     if (d < 1) tallest = Math.max(tallest, h);
@@ -98,13 +119,13 @@ export function apronReport() {
 // when that ground was barred and anything out there was dust that had gone
 // somewhere nobody could reach. That ground is ordinary ground now, so counting
 // it says nothing -- and the mouth it was named for was never being looked at.
-export function dustAtQuarry() {
+export function dustAtQuarry(survey = floorSurvey()) {
   if (!S.quarryOpen) return 0;
   let n = 0;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
     if (!(x + P > quarry.x && x < quarry.x + quarry.w)) continue;
-    for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+    n += survey.n[c];
   }
   return n;
 }
@@ -113,15 +134,13 @@ export function dustAtQuarry() {
 // what is standing under it. The second is the invariant -- nothing may ever be
 // under the rock -- and the first is a measure of how much of the yard's dust
 // has ended up on the far side of the boulder from the crew.
-export function strandedDust() {
+export function strandedDust(survey = floorSurvey()) {
   let left = 0, under = 0;
   const l = rockLeft(), r = l + S.gw * P;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
     if (x >= r) continue;
-    let n = 0;
-    for (let row = 0; row < floor.rows; row++) if (at(floor, c, row)) n++;
-    if (x + P <= l) left += n; else under += n;
+    if (x + P <= l) left += survey.n[c]; else under += survey.n[c];
   }
   return { left, under };
 }
@@ -144,7 +163,18 @@ const machineReport = m => (r => r && ({
 }))(machine(m.key));
 
 // Every number the yard has to say about itself, in one object.
-export const snapshot = () => ({
+//
+// The floor is walked once (`floorSurvey`) and every report that reads it is
+// handed the survey; the air is reported once too. They were called once per
+// field -- `apronReport()` four times over, and each call every cell of a
+// six-hundred-column ground -- so a snapshot cost forty frames of sim, and a
+// check reading the yard on every frame of a thirty-second run at three frame
+// rates spent eighty seconds reading and a fifth of one running.
+export const snapshot = () => {
+  const survey = floorSurvey();
+  return snapshotOf(survey, apronReport(survey), strandedDust(survey), airReport());
+};
+const snapshotOf = (survey, apron, stranded, air) => ({
   // Which run this is. Every wobble in the yard was worked out from this number
   // (see rng.js), so a check that fails and prints its snapshot has named the
   // run that failed rather than describing a yard nobody can build again.
@@ -166,12 +196,12 @@ export const snapshot = () => ({
 
   // The dust banked around the rock: what is in the apron, how high the bank
   // stands, and what has ended up somewhere nobody can shovel it.
-  apronDust: apronReport().inApron,
-  apronClear: apronReport().inApron === 0,
-  heapAtRock: apronReport().tallest,
-  bankCrest: apronReport().crest,
-  dustLeftOfRock: strandedDust().left,
-  dustUnderRock: strandedDust().under,
+  apronDust: apron.inApron,
+  apronClear: apron.inApron === 0,
+  heapAtRock: apron.tallest,
+  bankCrest: apron.crest,
+  dustLeftOfRock: stranded.left,
+  dustUnderRock: stranded.under,
 
   // The boulder, the bench beside it, and the shake when it is struck.
   rockX: Math.round(S.cx),
@@ -214,10 +244,10 @@ export const snapshot = () => ({
   // pixels, as `airPos` is, most of the field reads as standing perfectly still.
   wind: +windAt(clockNow()).toFixed(3),
   airX: AIR.slice(0, 80).map(m => +m.x.toFixed(2)),
-  airUnder: airReport().under,
-  airFront: airReport().front,
-  airKinds: airReport().kinds,
-  airWant: airReport().want,
+  airUnder: air.under,
+  airFront: air.front,
+  airKinds: air.kinds,
+  airWant: air.want,
   sky: skyReport(),
 
   // Where the view sits in a world of this size, and how much of it is on screen.
@@ -238,7 +268,7 @@ export const snapshot = () => ({
   worldW: S.worldW,
   pitCapacity: pitCapacity(),
   pitFull: pitFull(),
-  dustPastPit: dustPastPit(),
+  dustPastPit: dustPastPit(survey),
   stored: S.stored,
   held: S.held,
 
@@ -492,8 +522,8 @@ export const snapshot = () => ({
   benchRising: raising(),
 
   // The dust in the pit, grain by grain.
-  pitGrains: count(pit),
-  pitDust: countDust(pit),
+  pitGrains: grainsIn(pit),
+  pitDust: dustIn(pit),
   // And the dust that is not in the pit, because it is not in this dimension.
   // `stored` is the two of them together -- see `inHole` in pit.js.
   rift: S.rift || 0,
@@ -515,7 +545,7 @@ export const snapshot = () => ({
   gulpedAt: (S.gulped || []).slice(0, 4).map(m => ({ t: +m.t.toFixed(2), x: Math.round(m.x), y: Math.round(m.y) })),
 
   // And the dust lying in the cut, fallen down the mouth and not yet fetched.
-  cutDust: countDust(cut),
+  cutDust: dustIn(cut),
 
   // And what has come down on top of the rock and not yet been thrown off it.
   rockDust: (S.rockSand || []).reduce((n, a) => n + (a ? a.length : 0), 0),
@@ -602,7 +632,7 @@ export const snapshot = () => ({
   pxPerSec: +mineRate().toFixed(2),
 
   // The yard's floor and the piles standing on it.
-  floor: count(floor),
+  floor: survey.n.reduce((a, b) => a + b, 0),
   // The craft the scrubbing house has sold: where each one is, how far up, and
   // whether anybody is in it. `up` is the one worth reading -- a crewed craft
   // still climbing off the mast is not working yet, the same rule the house has
@@ -629,8 +659,8 @@ export const snapshot = () => ({
 
   // Grains, counted where they lie.
   floorGrains: S.floorGrains,
-  dustAtQuarry: dustAtQuarry(),
-  pit: count(pit),
+  dustAtQuarry: dustAtQuarry(survey),
+  pit: grainsIn(pit),
 
   // The casino chips in flight.
   chips: S.chips.length,

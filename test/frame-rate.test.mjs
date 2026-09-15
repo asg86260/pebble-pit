@@ -16,6 +16,10 @@
 // distance covered.
 
 import { group, ok, state, yard, SEED } from './helpers.mjs';
+// Read straight off the yard in the frame-by-frame loops below: a snapshot
+// walks the whole floor, and a loop that takes one a frame spends its time
+// reading rather than running.
+import { raining } from '../src/smog.js';
 
 // how far the crew get in ten seconds, from the same start, at a given rate
 const walkAt = hz => {
@@ -133,7 +137,7 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
     window.__crew(0, 0);
     window.__next();                          // a rock on its way down
     let n = 0;
-    while (state().rockFall > 0 && n < 600) { window.__fast(1 / hz, hz); n++; }
+    while (yard.S.rockFall > 0 && n < 600) { window.__fast(1 / hz, hz); n++; }
     return +(n / hz).toFixed(2);              // seconds it took to land
   };
   const slow = fallAt(30), tuned = fallAt(60), fast = fallAt(120);
@@ -151,7 +155,7 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
     // own ramp before the measuring begins -- so the two clocks would be reading
     // different parts of the same shower and calling the difference a frame-rate
     // fault.
-    for (let i = 0; i < 40 * hz && !state().smog.raining; i++) window.__fast(1 / hz, hz);
+    for (let i = 0; i < 40 * hz && !raining(); i++) window.__fast(1 / hz, hz);
     window.__fast(8, hz);
     return Math.round(state().smog.muck.all);
   };
@@ -207,8 +211,13 @@ group('and a farmhand ambles between plots at one speed', async () => {
     window.__crew(0, 0, 0, 1);                // one hand, so there is nobody to elbow
     window.__clearFloor();
     window.__fast(4, hz);                     // settled on the row before the tape starts
-    const xOf = () => Number(state().workerPos[0].split(':')[1].split(',')[0]);
-    const goalOf = () => state().workerGoals[0].split(':')[1];
+    // The one body, read off the yard rather than out of a snapshot: this
+    // reads it on every frame of a thirty-second run at three rates, and a
+    // snapshot is the whole floor walked -- forty frames of sim per reading,
+    // which made this the slowest group in the tier by a distance.
+    const hand = yard.S.workers[0];
+    const xOf = () => Math.round(hand.x);
+    const goalOf = () => hand.goal || '-';
     let prev = xOf(), was = goalOf(), dist = 0, ticks = 0;
     for (let i = 0; i < 30 * hz; i++) {
       window.__fast(1 / hz, hz);

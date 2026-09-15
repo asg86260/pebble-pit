@@ -247,7 +247,7 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // so the counters do not move and the pile simply shows less of what you have --
 // which is the same account the rift has always kept, arrived at without the
 // hole having to say no first. See `swallow`.
-function throughRift(x, shade) {
+export function throughRift(x, shade) {
   S.seenFullPit = true;
   if (!S.riftOpen) {
     // The hole gives way. This is the one dramatic thing that ever happens to
@@ -849,12 +849,42 @@ export function seedPitCores() {
     let have = 0;
     for (const v of pit.grid) if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) have++;
     const want = heldInHole(key);
+    // Near the lip, where the dust is and where you can see them: a dug-out pit
+    // runs a long way right, and one out in the empty end is one nobody finds.
+    // A hole that has not been dug that far is spread over what there is.
+    //
+    //
+    // Each find is aimed at its own spot along the lip, and goes there if the
+    // column has room. When it has not, the find goes to the next column that
+    // has, found by a cursor that only ever moves on -- the lip first, then the
+    // whole hole -- rather than by `addGrain`'s own search. That search walks
+    // outward from where the grain was aimed, so once the lip was heaped every
+    // find aimed there walked half the hole: eleven million column reads to
+    // seed a full hole, paid on every reload of one and by every check that
+    // hands the yard a fortune. The cursor asks each column once a pass.
+    const lip = Math.max(1, Math.min(pit.cols, Math.floor(Math.min(700, pit.w) / pit.p)));
+    const hasRoom = c => roomFor(pit, c, topRow(pit, c) + 1);
+    // The cursor sweeps the same stretch the aim uses -- the middle four fifths
+    // of the lip, never its first columns -- before it widens to the whole
+    // hole. The first columns are where the carters tip (see `tip` in hooks.js
+    // and the haulers' own tipping), and finds seeded into them made a full
+    // hole refuse the next tip a beat earlier, which is a different yard.
+    let lo = Math.floor(0.1 * lip), hi = Math.max(lo + 1, Math.floor(0.9 * lip)), cur = lo;
+    const nextRoom = () => {
+      for (;;) {
+        for (let tried = 0; tried < hi - lo; tried++, cur = lo + (cur + 1 - lo) % (hi - lo)) if (hasRoom(cur)) return cur;
+        if (lo === 0 && hi === pit.cols) return -1;  // the whole hole has no room: the rest is the rift's
+        lo = 0; hi = pit.cols; cur = 0;
+      }
+    };
     for (let i = have; i < want; i++) {
-      // near the lip, where the dust is and where you can see them: a dug-out pit
-      // runs a long way right, and one out in the empty end is one nobody finds.
-      // A hole that has not been dug that far is spread over what there is.
-      if (!addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * Math.min(700, pit.w), null,
-                    cell === CORE_CELL ? cell : someFind(cell))) break;
+      // The tone is rolled before the column is found, as it always was: the
+      // roll is a draw on the yard's one generator, and a seeded run that
+      // drew one fewer here would be a different run from that frame on.
+      const tone = cell === CORE_CELL ? cell : someFind(cell);
+      let c = Math.floor((0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * lip);
+      if (!hasRoom(c)) c = nextRoom();
+      if (c < 0 || !addGrain(pit, pit.x + (c + 0.5) * pit.p, null, tone)) break;
       have++;
     }
     // Whatever the hole would not take is through the rift, which is the same

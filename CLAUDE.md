@@ -65,6 +65,14 @@ after the merge** — kick off both tiers there in the background, once, and
 report what they say. A red result there is a fix on main, not a reason to have
 run it earlier.
 
+**One sweep of a tier at a time, on the whole machine.** `npm test` and the
+`test:browser*` scripts go through `tools/sweep.mjs`, which refuses (exit 3)
+when another sweep of that tier is running and says whose it is. That refusal
+is the answer, not an obstacle: run the file or two that cover the change, or
+read the running sweep's result when it lands. `--wait` queues behind it for
+the one legitimate case, a landing on main behind somebody else's. Never
+hand-type the sweep to get around it.
+
 Never re-run a suite on a tree that has already passed it. A fast-forward merge,
 a commit, a push, a line-ending fix — none of those change the answer. A
 prose-only edit (DESIGN.md, a comment, a commit message) needs no run at all. A
@@ -126,7 +134,16 @@ node tools/headless.mjs --shard 2/6        # a sixth of the browser groups
 node tools/test.mjs                        # the browser groups in parallel
 node tools/node/break-perf.mjs [s] [tune]  # the driven endgame yard, frame by frame
 node tools/node/carters.mjs [s] [--crew N]  # the carters against fed heaps and finds, a row a scenario
+node tools/node/file-times.mjs [name...]   # wall time per node-tier file, slowest first (a sweep: once, on main)
+node tools/node/rank-prof.mjs <cpuprofile> # a --cpu-prof ranked by self time
 ```
+
+**A slow file is profiled, not read.** Every file that has taken minutes here
+was a hook doing something a million times -- `__give` past the brim,
+`seedPitCores` on a full hole, a snapshot taken every frame -- and from the
+source each read as an honest sim run. `node --cpu-prof --test test/<file>`
+then `rank-prof.mjs`: one line at forty per cent is the answer, and it is
+fixed in the hook or the report, not by shortening the check.
 
 **Buy it like a player.** At least one check per feature must reach the feature
 the way a player does — through the shop row, the click, the walk — not by

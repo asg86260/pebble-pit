@@ -178,6 +178,7 @@ export const countDust = b => {
 // does not. What the hot paths ask; `countDust` stays the walk, which is what
 // a check and verify.js rule 7 want -- the truth, not the copy of it.
 export const dustIn = b => b.d != null ? b.d : countDust(b);
+export const grainsIn = b => b.n != null ? b.n : count(b);
 
 // world y where a grain falling down column c would come to rest
 export function surfaceY(b, c) {

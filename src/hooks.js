@@ -20,7 +20,7 @@ import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
-import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
+import { bankDust, throughRift, spend as spendFromPit, pitFull, pitTop as muckTopAt,
          pitRoom, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
@@ -890,7 +890,18 @@ const countRock = () => S.boulder.flat().reduce((a, b) => a + b, 0);
 // through it.
 export const tuneOne = (key, v) => tune(key, v);
 
-export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + rand() * 40, shade); };
+// ...and once the hole has said no, the rest goes straight through the rift,
+// for the reason `give` gives below.
+export const tip = (n, shade = 4) => {
+  let full = false;
+  for (let i = 0; i < n; i++) {
+    const x = pit.x + rand() * 40;
+    if (full) { throughRift(x, shade); continue; }
+    const held = pit.n;
+    bankDust(x, shade);
+    if (pit.n === held) full = true;
+  }
+};
 
 // dev: hand over dust, and dig the room to hold it. The hole turns dust away
 // when it is full, which is the game working -- but a check that wants two
@@ -904,10 +915,25 @@ export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.
 // it. The column it reached is kept between grains, because starting the walk
 // over for every one of them is six hundred tries a grain once the hole is
 // nearly full.
+//
+// And once the hole has said no, the rest goes straight through the rift.
+// `bankDust` on a full hole is a search of every column of the pit before the
+// rift takes the grain, and a check handing over two million dust to climb a
+// ladder paid that search two million times over -- a quarter of an hour on a
+// busy machine, on the setup of a check that was about something else. The
+// first refusal is the hole's honest answer and nothing drains between two
+// grains of the same handout, so every grain after it gets the rift's answer
+// without asking the hole again.
 export const give = (n, shade = 4) => {
-  let got = 0, col = 0;
+  let got = 0, col = 0, full = false;
   for (let i = 0; i < n; i++) {
-    if (bankDust(pit.x + rand() * pit.w, shade)) { got++; continue; }
+    if (full) { if (throughRift(pit.x + rand() * pit.w, shade)) got++; continue; }
+    const held = pit.n;
+    if (bankDust(pit.x + rand() * pit.w, shade)) {
+      got++;
+      if (pit.n === held) full = true;       // it went through the rift, not into the hole
+      continue;
+    }
     let placed = false, tried = 0;
     while (!placed && tried++ < pit.cols) {
       placed = bankDust(pit.x + col * pit.p, shade);
