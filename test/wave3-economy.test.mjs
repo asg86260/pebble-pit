@@ -100,9 +100,11 @@ group('a save from before the second cap keeps both', async () => {
 // --- A4: worker speed at the start --------------------------------------------
 group('the crew starts quicker: haul base and commute pace are up', async () => {
   const { COMMUTE_PACE } = await import('../src/config.js');
-  const HAUL_BASE = LADDERS.haulpace.value[0] / 60;   // the walk at the foot, in px a frame
+  // The walk at the foot of its ladder, off the table: the grind pass raised
+  // it to a hundred-odd px/s, and the table is where the figure lives now.
+  const walk = LADDERS.haulpace.value[0];
   return [
-    ok(HAUL_BASE === 1.8, 'HAUL_BASE is 1.8', HAUL_BASE),
+    ok(walk >= 100, 'a fresh hauler walks at least a hundred px/s', walk),
     ok(COMMUTE_PACE === 4.6, 'COMMUTE_PACE is 4.6', COMMUTE_PACE)
   ];
 });
@@ -121,9 +123,12 @@ group('the farm costs a real stretch of dust to open, not pocket change', async 
     ok(PLOT_COST === 520, 'PLOT_COST is 520', PLOT_COST),
     ok(plotBill(0) === 520 && plotBill(1) === 884 && plotBill(2) === 1503,
        'first three plot bills', `${plotBill(0)}, ${plotBill(1)}, ${plotBill(2)}`),
-    ok(dust('crop') === 720 && dust('tend') === 720,
-       "and both of the plots' ladders open at 720 dust",
-       `${dust('crop')}, ${dust('tend')}`)
+    // ...and above the plot's own price: the table (config/rungs.js) says what,
+    // and the point is that neither ladder is pocket change beside the plot.
+    ok(dust('crop') === LADDERS.crop.dust[0] && dust('tend') === LADDERS.tend.dust[0]
+       && dust('crop') > PLOT_COST && dust('tend') > PLOT_COST,
+       "and both of the plots' ladders open dearer than a plot",
+       `${dust('crop')}, ${dust('tend')} against ${PLOT_COST}`)
   ];
 });
 

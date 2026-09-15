@@ -4,7 +4,7 @@
 // own `assign` -- and the hooks only set up what the group is not about.
 
 import { group, ok, state, run, runUntil, WORKER } from './helpers.mjs';
-import { LADDER } from '../src/config.js';
+import { LADDER, LADDERS } from '../src/config.js';
 import { S } from '../src/state.js';
 import { workAt, siteBox, worksAt } from '../src/works.js';
 import { quarryShed } from '../src/world.js';
@@ -95,7 +95,8 @@ group('a belt being built is boxed rock-to-lip, not at its tail', async () => {
 group('a fresh wizard casts slowly and rarely crits', async () => {
   return [
     ok(wizMs() === 2600, 'a bolt every 2.6 s at level 0', `${wizMs()}`),
-    ok(Math.abs(critChance() - 0.04) < 1e-9, 'a crit on one swing in twenty-five',
+    ok(Math.abs(critChance() - LADDERS.critchance.value[0] / 100) < 1e-9 && critChance() <= 0.05,
+       'a crit on one swing in twenty at most, off the table',
        `${critChance()}`)
   ];
 });

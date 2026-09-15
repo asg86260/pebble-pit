@@ -44,6 +44,11 @@ group('before the wake nothing is counted, and nothing is queued', async () => {
 });
 
 group('the wake wakes the decisions without a context, and a still yard asks for nothing', async () => {
+  // A still yard, stood up on purpose: a fresh one has a body on its feet
+  // and a rock coming down inside its first second, and both are heard.
+  window.__reset();
+  window.__crew(0, 0);
+  run(5);
   wakeAudio();
   muteAudio(false);
   const before = snap();
