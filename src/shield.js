@@ -21,7 +21,7 @@ import {
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
   DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE,
   DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER,
-  SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES
+  SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES, SHIELD_GATES
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
@@ -69,6 +69,10 @@ export const KINDS = {
 export const shieldKind = () => S.shield && KINDS[S.shield.kind];
 export const shieldUp = () => !!S.shield && S.shield.laid >= KINDS[S.shield.kind].pieces;
 export const shieldDone = kind => S.shieldsDone.includes(kind);
+// Whether the door a shield opens is open: the shield has failed, or the
+// shields are not doors at all (SHIELD_GATES). Every station and kit gate
+// reads this rather than `shieldDone`, so the pacing is one knob.
+export const shieldOpened = kind => !SHIELD_GATES || shieldDone(kind);
 
 // The top of whatever is standing: the lid's upper course, the arch's crown.
 // One height for every kind, because what a shield is *for* is the same in all

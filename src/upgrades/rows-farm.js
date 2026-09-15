@@ -1,7 +1,7 @@
 import { FARM_CORES, FARM_DUST } from '../config.js';
 import { S, farm } from '../state.js';
 import { nearly, seenACore, site } from './site.js';
-import { shieldDone } from '../shield.js';
+import { shieldOpened } from '../shield.js';
 
 const FARM = site({
   key: 'unlockfarm', name: 'build the farm',
@@ -15,8 +15,9 @@ const FARM = site({
   //
   // And not before the timber has failed: the farm is what the props open --
   // the first shield's lesson is that dust is not enough, and the green coin
-  // is the answer (DESIGN.md, "The shields are the spine").
-  once: () => shieldDone('props') && seenACore() && nearly(FARM_DUST),
+  // is the answer (DESIGN.md, "The shields are the spine") -- unless the
+  // shields are not doors (SHIELD_GATES), and then the core is the whole gate.
+  once: () => shieldOpened('props') && seenACore() && nearly(FARM_DUST),
   show: () => !S.farmOpen
 });
 

@@ -1,7 +1,7 @@
 import { TOWER_CORES, TOWER_DUST } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
-import { shieldDone } from '../shield.js';
+import { shieldOpened } from '../shield.js';
 
 // The bench's tower rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -46,6 +46,6 @@ export const TOWER_ROWS = [
     // quarry and the quarry the farm, so the places before it are still
     // before it; the gate names the shield rather than the places because the
     // shield is the reason.
-    show: () => !S.towerOpen && S.seenCore && shieldDone('arch')
+    show: () => !S.towerOpen && S.seenCore && shieldOpened('arch')
   }
 ];

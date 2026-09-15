@@ -4,7 +4,7 @@ import { JOB } from '../jobs.js';
 import { kitX } from '../world.js';
 import { stockOf, kitMaxOf } from '../kit.js';
 import { kitDisplaced, machineFor } from '../machines.js';
-import { shieldDone } from '../shield.js';
+import { shieldOpened } from '../shield.js';
 import { rebalance } from '../upgrades.js';
 import { syncWorkers } from '../crew.js';
 
@@ -104,8 +104,9 @@ const ladder = t => isFinite(ceiling(t));
 // material are the ones who have learned something: the props open the rock's
 // and the lip's kit, the net the plots', the arch the cut's. A yard that
 // already owns kit keeps the row whatever the sky has said -- a finished set
-// never leaves the board it stands on.
-const learned = t => taught(t) > 0 || shieldDone(t.shield);
+// never leaves the board it stands on. With the shields not doors
+// (SHIELD_GATES) every trade is learned from the start.
+const learned = t => taught(t) > 0 || shieldOpened(t.shield);
 
 export const KIT_ROWS = TRADES.map(t => ({
   key: t.key,

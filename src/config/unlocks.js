@@ -23,6 +23,13 @@
 // bottom, and it makes opening the plots something you went and earned rather
 // than something that happened while you were looking elsewhere.
 export const FARM_CORES = 1;       // the plots, and the first thing a core buys
+// Whether a shield's failure is what opens the next door -- the props the
+// farm, the net the quarry, the arch the tower, and each the kit of the
+// trade that made it (DESIGN.md, "The shields are the spine"). Off while the
+// pacing is being played with (2026-09-14): the doors are priced in cores
+// and dust alone, and the shields still stand and fail in their order but
+// open nothing. `shieldOpened` in shield.js is the one place that reads it.
+export const SHIELD_GATES = false;
 // One core, not two: a second core is a second rock's worth of *waiting*, which
 // nothing the player does can hurry. The dust half carries the weight instead
 // (see "The grind pass" in DESIGN.md) -- a bill you can push on.
