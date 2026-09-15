@@ -160,8 +160,30 @@
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-/* No pips: the glyph's stroke is the rung. */
-.rows.shelves > .tile .ladder { display: none; }
+/* The pips: down the tile's right edge, under the new-corner, since the
+   middle of a tile is spoken for and its sides are not. The ladder climbs:
+   the first rung is the bottom pip and the bill deepens upward, band by
+   band -- the bands are stacked foot-first and each band's pips are written
+   as a column and turned over (a circle is the same either way up). Hung
+   from the top, not the foot: a plank stretches every tile to its tallest,
+   and a column hung from the foot would sit lower beside a three-coin tag. */
+.rows.shelves > .tile .ladder {
+  position: absolute; right: 4px; top: 12px;
+  display: flex; flex-direction: column-reverse; align-items: center;
+  font-style: normal;
+  font-size: 10px; line-height: 8px;
+  opacity: var(--pip-tone, .78);
+  pointer-events: none;
+}
+.rows.shelves > .tile .ladder b { writing-mode: vertical-lr; transform: rotate(180deg); font-weight: normal; letter-spacing: -2px; }
+.rows.shelves > .tile .ladder b + b { margin-bottom: 2px; }
+.rows.shelves > .tile .ladder b:nth-child(2) { color: #2e9e4b; }
+.rows.shelves > .tile .ladder b:nth-child(3) { color: #2f5fd0; }
+.rows.shelves > .tile .ladder b:nth-child(4) { color: #d93a25; }
+/* The same share of the way to full ink the cards' pips take on hover. */
+.rows.shelves > button.tile:hover:not(:disabled) .ladder {
+  opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+}
 .rows.shelves > .tile .gain {
   grid-row: 3;
   white-space: nowrap;

@@ -35,7 +35,10 @@ Object.assign(S, { stored: 9000000, shards: 999, spores: 999, sparks: 999, cores
 // Through the real builder, in its shelf mode -- every board's, since 2026-09-15.
 const onBench = new Set(SECTIONS.flatMap(s => s.keys));
 const rows = UPGRADES.filter(u => onBench.has(u.key) && !['net', 'arch', 'askwizards'].includes(u.key))
-  .map(u => ({ ...u, show: () => true, once: null }));
+  .map(u => ({ ...u, show: () => true, once: null }))
+  // Every ladder somewhere on its way up -- foot, a band in, most of the way,
+  // and one topped -- so the pips are drawn at every count they can take.
+  .map((u, i) => (u.rung && u.group ? { ...u, rung: () => [0, 3, 5, 7][i % 4] } : u));
 const root = document.getElementById('shelves');
 root.className = 'rows';
 mountRows(root, rows, 'the bench', SECTIONS);

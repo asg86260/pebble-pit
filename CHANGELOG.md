@@ -11,6 +11,10 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+**New this release**
+
+- The ladder pips are back on the shelf: a column climbing the right edge of every ladder's tile.
+
 - On a phone, one finger on the sky or the bare ground drags the view along; a finger on the dust still sweeps it (src/selftest/view.js, "one finger drags the view").
 
 - The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).

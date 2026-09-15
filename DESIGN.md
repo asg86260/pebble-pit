@@ -9597,14 +9597,20 @@ objects and one line of tags:
   bench's sheet; a section with more wraps to a second plank. A bill of three
   or more coins wraps inside its tag two coins a line -- the tag grows a
   line, the slot does not.
-- **The glyph is the rung marker.** No pips. The glyph is black; a one-pixel
-  stroke around its outside (holes stay white) wears the color of the deepest
-  coin on the *next* rung's bill -- nothing for dust, the farm's green for
-  crops, the quarry's blue for ore, spark red -- and a climbed ladder's glyph
-  is grey. Four rungs a ladder, one a coin, so the color is the rung. The
-  machines' and the tower's endless spark ladders read red for good; a count
-  in the tag (`×4`) says how far, and that is the one thing the pips did
-  that this does not.
+- **The glyph is the rung marker, and the pips climb the right edge.** The
+  glyph is black; a one-pixel stroke around its outside (holes stay white)
+  wears the color of the deepest coin on the *next* rung's bill -- nothing
+  for dust, the farm's green for crops, the quarry's blue for ore, spark
+  red -- and a climbed ladder's glyph is grey. The pips came back on
+  2026-09-15: the shelf shipped without them on the argument that the
+  stroke's color is the rung, and a count was the one thing the stroke could
+  not say. They stand as a column down the tile's right edge, under the
+  new-corner, out of the tile's flow -- the middle of a tile is spoken for and
+  its sides are not. A ladder climbs, so the first rung is the bottom pip and
+  the bands stack upward, each in its coin, the same legend the cards' row
+  reads left to right. Hung from the top, not the foot, since a plank
+  stretches every tile to its tallest. The machines' and the tower's endless
+  spark ladders read red for good; a count in the tag (`×4`) says how far.
 - **The tag is one box at the board's own type size**: 12px, 9px marks, an
   18px box with a 16px line. It never scales the type without the marks --
   the pair is one unit at one size (the 0.8em tag put a 9px mark against a
