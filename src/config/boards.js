@@ -86,6 +86,7 @@ export const SHELF_STEP = 5;        // px between the glyph, the name, the gain 
 export const SHELF_TOP = 8;         // px from the plank's sign down to the first glyph
 export const SHELF_FOOT = 8;        // px from the tag down to the tile's own foot
 export const SHELF_AIR = 6;         // px of air between a tile's foot and the plank
+export const SHELF_SIGN = 6;        // px between a section's sign and the tiles under it
 export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell glyph is 24px
 export const SHELF_GLYPH_CELLS = 8; // cells a glyph is square
 export const SHELF_PLANK = 5;       // px, the plank's thickness

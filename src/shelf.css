@@ -66,7 +66,7 @@
   grid-column: 1 / -1;
   justify-self: start;
   display: block;
-  margin: calc(var(--shelf-plank, 5px) + var(--shelf-top, 8px)) 0 0;
+  margin: calc(var(--shelf-plank, 5px) + var(--shelf-top, 8px)) 0 var(--shelf-sign, 6px);
   padding: 3px 10px 4px;
   border: 0;
   background: #000;
@@ -85,7 +85,7 @@
   width: 100cqw;
   border-top: var(--shelf-plank, 5px) solid #000;
 }
-.rows.shelves > .sect:first-child, .rows.shelves > .tile.goal + .sect { margin-top: 4px; }
+.rows.shelves > .sect:first-child, .rows.shelves > .tile.goal + .sect { margin-top: 4px; margin-bottom: var(--shelf-sign, 6px); }
 .rows.shelves > .sect:first-child::before, .rows.shelves > .tile.goal + .sect::before { display: none; }
 .rows.shelves > .sect.goal { display: none; }
 .rows.shelves > .sect .badge { margin-left: 8px; color: #000; background: #fff; }
