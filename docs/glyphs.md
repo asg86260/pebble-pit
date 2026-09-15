@@ -49,7 +49,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | helmet *        | `breaker`                                                                              |
 | lamp hat *      | `blaster`                                                                              |
 | brim hat *      | `grower`                                                                               |
-| pointed hat *   | `wizard`, `askwizards`                                                                 |
+| pointed hat *   | `wizard` +plus, `askwizards`                                                           |
 | cap *           | `loopost` +plus, `spellsweep` +star                                                    |
 | house           | `house` +plus, `spellthrift` +star                                                     |
 | door            | `crewlist`                                                                             |

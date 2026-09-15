@@ -103,16 +103,16 @@ export const GLYPH_OF = {
   // the shack
   rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],
   // the quarry
-  quarrybench: ['shovel', 'plus'], seam: ['ore', 'plus'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],
+  blaster: ['lamp'], quarrybench: ['shovel', 'plus'], seam: ['ore', 'plus'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],
   // the farm
-  farmplot: ['furrow', 'plus'], crop: ['ear', 'plus'], tend: ['hoe', 'up'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
+  farmplot: ['furrow', 'plus'], grower: ['brim'], crop: ['ear', 'plus'], tend: ['hoe', 'up'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
   // the apothecary
   potkeep: ['pot'], potprefer: ['pot', 'plus'], anotherpot: ['pot', 'plus'],
   bufflength: ['plus'], brewdoses: ['vial', 'plus'],
   'potency-stew': ['bowl', 'plus'], 'potency-brace': ['spark', 'plus'], 'potency-strong': ['sack', 'plus'],
   'potency-swift': ['boot', 'plus'], 'potency-gleam': ['star', 'plus'],
   // the tower
-  wizard: ['point'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
+  wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the scrubbing house
