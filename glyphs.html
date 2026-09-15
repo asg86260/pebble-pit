@@ -42,9 +42,15 @@
   textarea { width: 100%; box-sizing: border-box; height: 180px; font: 11px/1.4 ui-monospace, monospace; border: 1px solid #000; padding: 6px; white-space: pre; }
   .hint { opacity: .65; margin: 4px 0 10px; }
   .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+  .about { margin: -2px 0 8px; max-width: 60ch; line-height: 1.5; }
+  .about b { font-weight: normal; opacity: .6; }
+  .row .k i { font-style: normal; opacity: .7; }
 </style>
 </head>
 <body>
+<!-- The ids board.js and shop.js take hold of at load, so the boards' row lists
+     can be imported here for their names. Nothing in them is drawn. -->
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="scrub"></div><div id="scrubshop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
 <div class="app">
   <div class="list">
     <h1>drawings</h1>
@@ -55,6 +61,7 @@
   </div>
   <div class="edit">
     <div class="name" id="editing">—</div>
+    <div class="about" id="about"></div>
     <div class="hint">left-drag paints, right-drag erases. the shaded corner is where a badge sits.</div>
     <div id="grid" class="grid"></div>
     <div class="tools">
@@ -80,6 +87,41 @@
 <script type="module">
 import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, OVERRIDES_KEY } from './src/glyphs.js';
 import { SHELF_INK, SHELF_GLYPH_CELLS as N } from './src/config.js';
+import { UPGRADES } from './src/upgrades.js';
+import { CASINO_UPGRADES } from './src/casino.js';
+import { SCRUB_UPGRADES } from './src/scrubhouse.js';
+import { QUARRY_UPGRADES } from './src/quarry.js';
+import { FARM_UPGRADES } from './src/farm.js';
+import { APOTHECARY_UPGRADES } from './src/apothecary.js';
+import { TOWER_UPGRADES } from './src/tower.js';
+import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
+
+// Where a row lives and what it is called, read off the boards themselves.
+// The bench's list carries the shack's rows and the house's too, so those
+// two are named by hand.
+const ROW = {};
+const SHACK = new Set(['rockhandpick', 'rockhandspeed', 'breaker', 'ram', 'tuneram']);
+for (const [board, list] of [['the bench', UPGRADES], ['the casino', CASINO_UPGRADES], ['the scrubbing house', SCRUB_UPGRADES], ['the quarry', QUARRY_UPGRADES], ['the farm', FARM_UPGRADES], ['the apothecary', APOTHECARY_UPGRADES], ['the tower', TOWER_UPGRADES], ["the janitor's closet", OUTHOUSE_UPGRADES]])
+  for (const u of list) ROW[u.key] = { board: SHACK.has(u.key) ? 'the shack' : u.key === 'house' ? 'the house' : board, name: u.name };
+ROW.crewlist = { board: 'the house', name: 'who lives here' };
+
+// What each drawing is meant to be -- the object, never the effect
+// (docs/glyphs.md) -- shown over the grid so the picture and the brief are
+// side by side.
+const WHAT = {
+  sack: 'a sack, tied: what a body carries', pickhead: 'a pick head', swing: 'a pick mid-swing, with its arc', spark: 'a four-point spark',
+  cracked: 'a rock, cracked through', boot: 'a boot', lever: 'a lever, pulled', cart: 'the cart', belt: 'the belt: two wheels and a band',
+  ram: 'the ram (MACHINE_MARK.ram in sprites.js, at three cells)', jaw: 'the drill (MACHINE_MARK.jaw)', tiller: 'the tiller (MACHINE_MARK.tiller)',
+  helmet: "a rockhand's helmet (HATS.helmet)", lamp: "a quarrier's lamp hat (HATS.lamp)", brim: "a farmhand's brim hat (HATS.brim)",
+  point: "the wizard's pointed hat (HATS.point)", cap: "the janitor's flat cap (HATS.cap)",
+  house: 'a house', door: 'a door, ajar', hoist: "the quarry's hoist frame", furrow: 'a furrow with a sprout', pot: "the apothecary's pot",
+  die: 'a die', hut: "the shack: the diggers' hut", bucket: 'a bucket and mop', tower: 'the tower', fan: 'a fan, four blades',
+  balloon: 'the balloon on its line', bin: 'the recycler: a bin with a loop on it', shovel: 'a shovel', ore: 'an ore lump, faceted',
+  ear: 'an ear of crop', hoe: 'a hoe', vial: 'a vial', bowl: 'a bowl with a spoon', star: 'a five-point star', wand: 'a wand',
+  bolt: 'a bolt, zigzag', dome: "the dome's arc over a rock", planks: 'three planks, nailed: the wooden barrier', net: 'a net, mesh', arch: 'a stone arch',
+  chip: 'a stack of chips',
+};
+const BADGE_WHAT = { wrench: 'tune it (the four machines)', plus: 'another one of it', star: 'a spell cast on it', vial: 'a tonic made of it', dust: 'about pebbles', crop: 'about crops', ore: 'about ore', spark: 'about sparks' };
 
 // GLYPHS/BADGES already carry the saved overrides (glyphs.js merges them in a
 // dev build); this keeps the committed originals to revert to and to tell
@@ -105,6 +147,10 @@ function select(k, name) {
   const rows = table()[name];
   cells = Array.from({ length: size() }, (_, y) => Array.from({ length: size() }, (_, x) => !!rows && rows[y]?.[x] === '#'));
   document.getElementById('editing').textContent = `${kind === 'glyphs' ? 'drawing' : 'badge'}: ${name}`;
+  const served = kind === 'glyphs' ? rowsOf(name) : Object.entries(GLYPH_OF).filter(([, [, b]]) => b === name).map(([k, [, b]]) => [k, b]);
+  const where = [...new Set(served.map(([k]) => ROW[k]?.board).filter(Boolean))].join(', ');
+  document.getElementById('about').innerHTML =
+    `<b>what:</b> ${(kind === 'glyphs' ? WHAT[name] : BADGE_WHAT[name]) || '—'}<br><b>where:</b> ${where || '—'} · ${served.length} row${served.length === 1 ? '' : 's'}`;
   document.getElementById('grid').classList.toggle('badge', kind === 'badges');
   paintGrid(); render(); list();
 }
@@ -182,7 +228,8 @@ function render() {
   for (const [key, badge] of served) {
     const r = document.createElement('div'); r.className = 'row';
     r.append(scaled(drawGlyph(glyphFor(key)), 2));
-    r.insertAdjacentHTML('beforeend', `<span class="k">${key}${badge ? ' +' + badge : ''}</span>`);
+    const row = ROW[key];
+    r.insertAdjacentHTML('beforeend', `<span class="k">${row ? `${row.name} <i>(${row.board})</i>` : key}${badge ? ' +' + badge : ''}</span>`);
     list.append(r);
   }
   code();
