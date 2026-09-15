@@ -247,7 +247,12 @@
               --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out,
               --follow-x var(--shelf-hover-ms, 120ms) ease-out, --follow-y var(--shelf-hover-ms, 120ms) ease-out;
 }
-.rows.shelves > button.tile:hover:not(:disabled) {
+/* Every tile lifts under the cursor, one you cannot afford included: it is
+   still a thing on a shelf you are looking at, and a tile that lay dead
+   read as broken rather than as dear. A readout is not for sale and stays
+   put. (`:hover` matches a disabled button; only its mouse events are
+   swallowed, so the cursor lean below is for the pressable ones.) */
+.rows.shelves > button.tile:hover:not(.stat) {
   --lift: -2px;
   outline-color: #000;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
@@ -262,9 +267,9 @@
      hashed off the row's key by the builder) so no two drift in step. */
   animation: shelf-sway calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) steps(1, end) var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
-.rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled) .cost { opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled) .note { color: inherit; }
+.rows.shelves > button.tile:hover:not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
+.rows.shelves > button.tile:hover:not(.stat) .cost { opacity: 1; }
+.rows.shelves > button.tile:hover:not(.stat) .note { color: inherit; }
 @keyframes shelf-sway {
   0%     { --sway-x: 0px;  --sway-y: 0px; }
   12.5%  { --sway-x: 1px;  --sway-y: 0px; }
