@@ -20,11 +20,12 @@ quarry" is the ore lump with a star. One drawing serves a family, the
 family reads as one, and a player who knows the sack knows every row that
 is about carrying. (The owner's call, 2026-09-14: reuse as far as it goes.)
 
-Six badges: **plus** (more of it: another one, a machine tuned up, or a
-tonic of it -- one mark for all three), **star** (a spell), and the four
-coins -- **dust** square, **crop** hexagon, **ore** triangle, **spark**
-cross. A drawing may carry its own plus in the corner instead (the cap,
-the shovel), and then the row takes no badge.
+Seven badges: **plus** (more of it: another one, a machine tuned up, a
+tonic of it, or a richer yield -- one mark for all of those), **up** (faster
+-- two chevrons), **star** (a spell), and the four coins -- **dust** square,
+**crop** hexagon, **ore** triangle, **spark** cross. A drawing never carries
+its own mark in the corner; the badge is laid on, so the same drawing serves
+the plain row and the badged one.
 
 ## The drawings, and every row each one serves
 
@@ -38,7 +39,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | pick mid-swing  | `speed`, `rockhandspeed`, `quarrypace`                                                 |
 | spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
-| boot            | `haulpace`, `potency-swift` +plus                                                      |
+| boot            | `haulpace` +up, `potency-swift` +plus                                                    |
 | lever           | `auto`, `recycler`                                                                     |
 | cart            | `carter`                                                                               |
 | belt            | `belt`, `tunebelt` +plus                                                             |
@@ -62,19 +63,19 @@ cells wide); those are redrawn at eight, the shape settled.
 | fan             | `unlockscrub`, `fan`                                                                   |
 | balloon         | `balloon`                                                                              |
 | shovel          | `quarrybench` +plus                                                                    |
-| ore lump        | `seam`, `spellluck` +star                                                              |
-| ear of crop     | `crop`                                                                                 |
-| hoe             | `tend`                                                                                 |
+| ore lump        | `seam` +plus, `spellluck` +star                                                          |
+| ear of crop     | `crop` +plus                                                                           |
+| hoe             | `tend` +up                                                                             |
 | vial            | `bufflength`, `brewdoses` +plus                                                        |
 | bowl            | `potency-stew` +plus                                                                   |
 | star (5-point)  | `potency-gleam` +plus                                                                  |
-| wand            | `wizspeed`                                                                             |
+| wand            | `wizspeed` +up                                                                         |
 | bolt            | `wizpower`                                                                             |
 | dome arc        | `dome`                                                                                 |
 | planks          | `props`                                                                                |
 | net             | `net`                                                                                  |
 | arch            | `arch`                                                                                 |
-| chip            | `chip`, `stakedust` +dust, `stakeshard` +ore, `stakespore` +crop                       |
+| chip            | `chip` +plus, `stakedust` +dust, `stakeshard` +ore, `stakespore` +crop                       |
 
 That is every one of the sixty-one.
 
