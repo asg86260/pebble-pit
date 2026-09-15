@@ -826,15 +826,19 @@ function leanToCursor(b, key) {
   b.addEventListener('pointerleave', () => { b.style.setProperty('--follow-x', '0px'); b.style.setProperty('--follow-y', '0px'); });
 }
 
+// Layout offsets, never rects: a rect carries the tile's transform, and a
+// lifted tile re-phased off its moving rect every frame had its dots pinned
+// to the ground while the plate moved -- the one thing the dots are for.
+const laidAt = e => { let x = 0, y = 0; for (; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; } return [x, y]; };
 function phaseDots(el) {
   // The dots are painted on the sheet, from its padding edge; on a page with
   // no sheet (the bench) the rows paint them and the rows are the box.
   const ground = el.closest('.sheet') || el;
-  const g = ground.getBoundingClientRect(), gs = getComputedStyle(ground);
-  const gx = g.left + parseFloat(gs.borderLeftWidth), gy = g.top + parseFloat(gs.borderTopWidth);
+  const [gx0, gy0] = laidAt(ground);
+  const gx = gx0 + ground.clientLeft, gy = gy0 + ground.clientTop;   // clientLeft/Top: the border
   for (const t of el.querySelectorAll('.tile')) {
-    const r = t.getBoundingClientRect();
-    const left = Math.round(r.left - gx), top = Math.round(r.top - gy);
+    const [tx, ty] = laidAt(t);
+    const left = tx - gx, top = ty - gy;
     const key = `${left},${top}`;
     if (t._dots === key) continue;
     t._dots = key;
