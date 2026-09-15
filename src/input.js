@@ -16,7 +16,7 @@ import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
-         showTipAt, inSafeZone, standRect, holdPanel, openBoard } from './board.js';
+         showTipAt, inSafeZone, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -145,10 +145,6 @@ canvas.addEventListener('pointerdown', e => {
   // Before everything else, so it happens whether or not the click lands on
   // anything: clicking bare ground is still a decision to stop reading.
   if (!atStation(p.x, p.y)) showPanel(null, true);
-  // And a click on the station whose board is up holds the board there, or
-  // lets it go if it was held -- see `holdPanel`. A click on a station is
-  // not a swing, so nothing else is asked of it.
-  else if (e.pointerType !== 'touch') { const b = boardAt(p.x, p.y); if (b && b === openBoard()) holdPanel(b); }
   // the sky is checked first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
   // then the rosters: they stand well under the ground line, where a click has

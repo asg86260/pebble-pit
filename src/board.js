@@ -854,33 +854,7 @@ export function showCrewList(on) {
 // on bare ground, a new game, the wheel starting. Those are answers, and an
 // answer that takes a tenth of a second to arrive reads as a control that did
 // not take. Only the pointer drifting off a station gets the benefit of LINGER.
-// A board held open by a click. Walking up opens a board and walking away
-// closes it, which is right while the cursor is drifting -- but reading a
-// long shelf means the cursor leaves it, and a board that goes with it is a
-// board you cannot read. So a click on a station whose board is up holds
-// it: the drift of the pointer cannot close it or swap it for another, and
-// only a decision can -- a click on that station again, or on bare ground.
-// (The owner's ask, 2026-09-14.) Not saved: it is about this sitting.
-let held = null;
-export const heldBoard = () => held;
-// Which board is up right now, by name, or null.
-export const openBoard = () => at;
-export function holdPanel(which) {
-  held = held === which ? null : which;
-  panelEl.classList.toggle('held', !!held);
-}
-// The board itself is where the click lands: it stands over its station, so
-// a press on the sheet anywhere that is not a control -- the title, the
-// ground between tiles -- is the hold. A press on a row is the row's.
-panelEl.addEventListener?.('pointerdown', e => {
-  if (!at || e.target.closest('button, .job, .step, .chosen, .optspop, input, .flyout')) return;
-  holdPanel(at);
-});
 export function showPanel(want, now = false) {
-  // A held board answers only to a decision (`now`): the pointer wandering
-  // off, or onto another station, is not one.
-  if (held && !now) return;
-  if (now && want !== held) { held = null; panelEl.classList.remove('held'); }
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
