@@ -5,7 +5,7 @@
 import { WORKER, GRAV, HURL_DRAG } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { addGrain } from '../grid.js';
-import { yardLeft, atStation, blocked } from '../world.js';
+import { atStation, blocked } from '../world.js';
 import { standTop, rockTop, ways, footing, solidNear, SOLID } from '../route.js';
 import { restOnRock } from '../rock.js';
 import { JOB_OF } from '../upgrades.js';
@@ -89,7 +89,16 @@ export function fall(w) {
     w.vx *= HURL_DRAG ** f;
     // The yard has ends. A body thrown at one bumps off it rather than sailing
     // out of the world and walking back in from nowhere.
-    const lo = yardLeft(), hi = pit.x + pit.w - WORKER;
+    //
+    // The ends are the WORLD's -- the floor's own left edge and the ground past
+    // the pit -- not `yardLeft`. That is the first heap, which is where the crew
+    // stop *walking* for dust, and it lies out past the farm's plots: the farm's
+    // own hands stand left of it, and so do the tower, the scrubbing house and
+    // whoever is on their way to any of them. Read as a wall it snapped a body
+    // let go anywhere left of the heap to the heap's edge on the frame it left
+    // your hand -- picked up beside the farm shed with the least flick, and
+    // stood four hundred pixels to the right of it.
+    const lo = floor.x, hi = pit.x + pit.w - WORKER;
     if (w.x < lo) { w.x = lo; w.vx = -w.vx * 0.4; }
     if (w.x > hi) { w.x = hi; w.vx = -w.vx * 0.4; }
     if (Math.abs(w.vx) < 0.05) w.vx = 0;

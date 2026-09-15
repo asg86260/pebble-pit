@@ -25,6 +25,8 @@ feature lives in DESIGN.md.
 
 - A build nobody is at yet says `queued`, and `building` from the moment somebody is on it, rather than `nobody on it` (src/selftest/boards.js, "a board holds its size while a build is running").
 
+- A worker picked up left of the farm and let go there comes down there, instead of jumping to the right of the farm (test/thrown.test.mjs).
+
 - The ladder pips stay on a tile while it is being built (src/selftest/boards.js, "a tile being built fills in").
 - The coins on a lifted tile's price glide with the words instead of jittering beside them (no check can see it; hover a tile on the shelf).
 
