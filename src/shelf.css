@@ -272,27 +272,21 @@
      with it; the shorthand would take the dots with it. */
   background-color: #fff;
   color: #000;
-  /* The drift: eight stops round a one-pixel circle, eased between them
-     (the owner's call over stepped: smooth over crisp -- between stops the
-     tile sits on a fraction of a pixel), on SHELF_FLOAT_MS, starting once
-     the lift has landed. Each tile turns at
+  /* The drift: a one-pixel circle through the lifted position, eased, on
+     SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
      its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
      hashed off the row's key by the builder) so no two drift in step. */
-  animation: shelf-sway calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
+  animation: shelf-sway-x calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+             shelf-sway-y calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
 .rows.shelves > button.tile:hover:not(:disabled):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled):not(.stat) .cost { opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled):not(.stat) .note { color: inherit; }
-@keyframes shelf-sway {
-  0%     { --sway-x: 0px;  --sway-y: 0px; }
-  12.5%  { --sway-x: 1px;  --sway-y: 0px; }
-  25%    { --sway-x: 1px;  --sway-y: -1px; }
-  37.5%  { --sway-x: 0px;  --sway-y: -1px; }
-  50%    { --sway-x: -1px; --sway-y: -1px; }
-  62.5%  { --sway-x: -1px; --sway-y: 0px; }
-  75%    { --sway-x: -1px; --sway-y: 1px; }
-  87.5%  { --sway-x: 0px;  --sway-y: 1px; }
-  100%   { --sway-x: 0px;  --sway-y: 0px; }
+/* A circle, not a square: x runs a sine and y a raised cosine on the same
+   clock, eased through the four quarter-points, so the tile sweeps round
+   through the lifted position rather than stepping one axis at a time. */
+@keyframes shelf-sway-x { 0% { --sway-x: 0px; } 25% { --sway-x: 1px; } 50% { --sway-x: 0px; } 75% { --sway-x: -1px; } 100% { --sway-x: 0px; } }
+@keyframes shelf-sway-y { 0% { --sway-y: 0px; } 25% { --sway-y: -1px; } 50% { --sway-y: -2px; } 75% { --sway-y: -1px; } 100% { --sway-y: 0px; } }
 }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
