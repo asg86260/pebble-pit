@@ -112,6 +112,10 @@
 .rows.shelves > .tile {
   position: relative;
   display: grid;
+  /* One column: style.css lays a job card out as a name beside its stepper,
+     and a picker's control is pinned to that second column; on a plank the
+     card is a stack, so both go down the tile's one column. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 24px 13px 13px auto;
   row-gap: var(--shelf-step, 5px);
   justify-items: center;
@@ -343,6 +347,21 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rows.shelves > .tile .step .less:disabled, .rows.shelves > .tile .step .more:disabled { color: #8c8c8c; cursor: default; }
 .rows.shelves > .tile .step .count { min-width: 2em; text-align: center; }
 .rows.shelves > .tile .chosen { padding: 0 8px; cursor: pointer; }
+/* A picker tile stands two slots wide: what it shows is a sentence ("batch
+   after batch", a crew's name), not a number, and a slot folds one. The
+   control sits on the center line like a tag, not flush right as it does on
+   a card, and keeps to one line. `pinWidth` reads the span off the style. */
+.rows.shelves > .tile.pickrow { grid-column: span 2; width: calc(2 * var(--shelf-slot, 140px)); }
+.rows.shelves > .tile.pickrow .chosen {
+  grid-column: 1;
+  justify-self: center;
+  align-self: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .rows.shelves > .tile .chosen::after { content: ' \25BE'; opacity: .55; }
 .rows.shelves > .tile.job .gain, .rows.shelves > .tile.job .tag { display: none; }
 

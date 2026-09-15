@@ -10,6 +10,7 @@ this file is for things that were broken.
 
 ## Unreleased
 
+- The apothecary's two settings read whole again -- "keep brewing" and "give tonics to" on one line each, side by side, with the pot drawn over them -- instead of a cut-off name beside a control folded onto three lines. (`src/selftest/boards.js`)
 - The crew list stays out while you cross the row beside the door to reach it. (`src/selftest/house.js`)
 - A new building opens with a spare worker already walking over to it, the way the quarry did, instead of standing empty until you staff it. (`test/door-staffs.test.mjs`)
 - The farm, the quarry and the apothecary doors carry their line of words under the card like every other door. (`test/door-notes.test.mjs`)

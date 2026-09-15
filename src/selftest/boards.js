@@ -1128,6 +1128,44 @@ export const TESTS = [
     ];
   }],
 
+  // A picker on a plank is a tile like the rest, but what it shows is a
+  // sentence -- "batch after batch", a crew's name -- not a number. It stands
+  // two slots wide so the name and the control each keep to one line, the two
+  // pickers stand side by side on one plank, and it wears its drawing like any
+  // other tile. It once took the card's two-column layout onto the plank: the
+  // name was squeezed to "KEE..." beside a control folded onto three lines.
+  ['a picker tile keeps its name and its control on one line each', async () => {
+    newRun();
+    await settle();
+    window.__crew(0, 1, 0, 2);
+    window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__board('apothecary');
+    await sleep(120);
+
+    const rows = ['potkeep', 'potprefer'].map(k => document.querySelector(`.rows.shelves > [data-dial="${k}"]`));
+    const fits = rows.map(r => {
+      const what = r?.querySelector('.what'), chosen = r?.querySelector('.chosen');
+      if (!what || !chosen) return null;
+      const c = chosen.getBoundingClientRect();
+      return { name: what.scrollWidth <= what.clientWidth + 1, oneLine: c.height < 24,
+               control: chosen.scrollWidth <= chosen.clientWidth + 1,
+               drawn: !!r.querySelector('.pic canvas'), top: Math.round(r.getBoundingClientRect().top) };
+    });
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(fits.every(f => f), 'both pickers stand on the apothecary board as tiles', JSON.stringify(fits)),
+      ok(fits.every(f => f?.name), 'the name is not cut short', JSON.stringify(fits.map(f => f?.name))),
+      ok(fits.every(f => f?.oneLine && f?.control), 'the chosen option sits on one line and is not cut short',
+         JSON.stringify(fits.map(f => f && [f.oneLine, f.control]))),
+      ok(fits[0] && fits[1] && fits[0].top === fits[1].top, 'and the two stand side by side on one plank',
+         JSON.stringify(fits.map(f => f?.top))),
+      ok(fits.every(f => f?.drawn), 'each wears its drawing', JSON.stringify(fits.map(f => f?.drawn)))
+    ];
+  }],
+
   // Track F3 (wave5). The books are the one board in the game that belongs to no
   // building: they hang over the pit mouth, where the counter card already
   // floats, because the counter says what you have and this says how fast it is
