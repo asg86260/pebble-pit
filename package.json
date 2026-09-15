@@ -1,7 +1,7 @@
 {
   "name": "boulder-clicker",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A black-and-white pixel clicker about a rock, a hole and the people between them.",
   "author": "Andrew Graham",
   "type": "module",
