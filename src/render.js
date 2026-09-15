@@ -34,7 +34,7 @@ import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
-import { drawFloor, drawGroundLine, drawPit, drawPitOutline } from './render/ground.js';
+import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
 import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
@@ -104,6 +104,7 @@ const LAYERS = [
   { name: 'world', draw: enterWorld },
   { name: 'core behind', draw: drawCoreBehind },
   { name: 'ground line', draw: drawGroundLine },
+  { name: 'ground texture', draw: drawGroundTexture },
   // The offer flags go down before every building: each pole runs to the
   // ground and the station's own silhouette covers its lower run, so the pole
   // stands on whatever roofline the building actually draws.

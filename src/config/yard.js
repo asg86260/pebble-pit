@@ -86,7 +86,20 @@ export let CLOCK_LEAP_MS = 100;
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
 // `let` is. config.js gathers every file's rows into one TUNABLE.
+// The ground's texture, below the line: 0 plain, 1 a dot a tile, 2 a diagonal
+// hatch, 3 strata, 4 a stipple. One mark is one cell; GROUND_TILE cells to a
+// repeat; GROUND_INK is how dark a mark is against the white.
+export let GROUND_TEXTURE = 0;
+export let GROUND_TILE = 6;
+export let GROUND_INK = 0.14;
+
 export const YARD_KNOBS = [
+  { key: 'GROUND_TEXTURE', label: 'ground texture', min: 0, max: 4, step: 1,
+    get: () => GROUND_TEXTURE, set: v => { GROUND_TEXTURE = v; } },
+  { key: 'GROUND_TILE', label: 'ground tile', min: 2, max: 12, step: 1,
+    get: () => GROUND_TILE, set: v => { GROUND_TILE = v; } },
+  { key: 'GROUND_INK', label: 'ground ink', min: 0.05, max: 1, step: 0.01,
+    get: () => GROUND_INK, set: v => { GROUND_INK = v; } },
   { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true,
     get: () => CELL, set: v => { CELL = v; } },
   // wave-release: track D
