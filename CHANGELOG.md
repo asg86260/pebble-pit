@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+## v0.2.1 — 2026-09-15
+
 **New this release**
 
 - Every board is shelves: a section is a plank, an upgrade is a thing standing on it with its name, its gain and one price tag under it. The description is the hover tip.
