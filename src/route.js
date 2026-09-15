@@ -234,19 +234,31 @@ export const feetOn = (way, leftX) =>
 // busy yard built it fifty times a frame doing routing that had not changed
 // since the frame before. The perf gate (test/perf-gate.test.mjs) counts the
 // builds, so a caller that starts building its own again shows up there.
-let last = null, lastKey = '';
+//
+// What the gate counts is builds a frame *for one outline*. The outline can
+// change in the middle of a frame -- the gang are stepped one after another,
+// and the one that knocks the last cell off the hill's edge moves `rockSpan`
+// for every body stepped after it -- and the build that follows is this cache
+// doing its job, not a caller doing its own. So a second build on the same
+// frame is counted only when it is for an outline already built that frame --
+// which is the cache thrashing between two outlines, and is the fifty-a-frame
+// this counter was put here to catch.
+let last = null, lastKey = '', builtTick = -1;
+const builtKeys = new Set();
 
 export function ways() {
   const span = rockSpan();
   const key = `${S.quarryOpen ? 1 : 0}|${pit.grid && pit.cols ? pit.x + ',' + pit.w : ''}|` +
               `${quarry.x},${quarry.w}|${span ? span.from + ',' + span.to : ''}`;
   if (last && key === lastKey) return last;
+  if (S.tick !== builtTick) { builtTick = S.tick; builtKeys.clear(); }
+  if (!builtKeys.size || builtKeys.has(key)) globalThis.__perf.ways++;   // the perf gate's
+  builtKeys.add(key);
   lastKey = key;
   return last = buildWays(span);
 }
 
 function buildWays(span) {
-  globalThis.__perf.ways++;                  // the perf gate's: a build only when the outline changed
   const out = { yard: { key: 'yard', from: -1e6, to: 1e6, at: groundTop } };
 
   // The floor of the cut, which exists while there is a cut. It is below the

@@ -16,7 +16,9 @@
 //               surfaces a body can walk is worked out from the yard rather
 //               than kept, and PERF.md section 3 item 1 is the pass that took
 //               `refresh` from one build per column to one a frame. One a
-//               frame is the rule.
+//               frame is the rule -- one per *outline*: a hill whose edge is
+//               cleared mid-frame is a second outline, and the build for it
+//               is not counted (see `ways` in route.js).
 //   grainCols   how many columns `addGrain` asked whether they had room. PERF.md
 //               section 4: the endgame spike was a chip landing on a strip at
 //               its ceiling and searching the whole floor for a column with

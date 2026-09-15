@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).
+
 - A rockhand with no rock to work stands where it is instead of marching off across the yard (test/rock.test.mjs).
 
 ## v0.2.1 — 2026-09-15
