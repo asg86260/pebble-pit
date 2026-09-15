@@ -105,7 +105,8 @@
   box-sizing: border-box;
   width: var(--shelf-slot, 140px);
   padding: var(--shelf-top, 8px) 6px var(--shelf-foot, 8px);
-  margin: 0;
+  /* Air under the tile, so the plate a hover raises stands clear of the plank. */
+  margin: 0 0 var(--shelf-air, 6px);
   border: 0;
   background: none;
   font: inherit;
