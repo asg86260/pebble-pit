@@ -360,18 +360,19 @@ Two harness facts, each of which cost a full launch cycle:
   fully-invested yard that goes permanently clean. An upgrade that quietly
   cleaned the sky would be a number you buy once and never think about again;
   the sky is meant to stay a live decision.
-- **A ladder is a rung a coin, on every board -- four rungs, the same four
-  everywhere.** One card; `TIER_BAND` rungs to a band (one, since 2026-09-14;
-  `LADDER` is four -- never write the number, write the constant), the bill
-  deepening rung by rung in the order the yard hands out its coins:
-  **dust only, then dust and crops, then dust, crops and ore, then crops, ore
-  and a spark.** Never the core: nine exist and they open places. The first
-  rung is cheap and dust-only so an early yard can buy it; the ladder gets dear
-  in the coins the station has started spending, and the last rung is the
-  spark's on the bench as at the grounds -- on the same card, climbing the
-  same field, never a card of its own. **Every ladder is a written table**
-  (`LADDERS` in `config/rungs.js`: a value for the foot and one a rung, in the
-  row's own unit, and a dust cost a rung -- carry 1, 2, 4, 6, 10); no
+- **A ladder is two rungs a coin, on every board -- eight rungs, the same
+  eight everywhere.** One card; `TIER_BAND` rungs to a band (two, since
+  2026-09-14; `LADDER` is eight -- never write the number, write the
+  constant), the bill deepening band by band in the order the yard hands out
+  its coins: **dust only, then dust and crops, then dust, crops and ore, then
+  crops, ore and a spark.** Never the core: nine exist and they open places.
+  The first rungs are cheap and dust-only so an early yard can buy them; the
+  ladder gets dear in the coins the station has started spending, and the last
+  band is the spark's on the bench as at the grounds -- on the same card,
+  climbing the same field, never a card of its own. **Every ladder is a
+  written table** (`LADDERS` in `config/rungs.js`: a value for the foot and
+  one a rung, in the row's own unit, and a dust cost a rung -- carry 1, 2, 3,
+  4, 6, 8, 10, 12, 15); no
   unit-a-rung constants, no base-and-top, no first-cost-and-rate (DESIGN.md,
   "A rung is a step up"). The ladder book edits it a rung at a time.
   The tower's and the machines' spark ladders are outside this rule by the

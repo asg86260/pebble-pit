@@ -4,7 +4,7 @@
 // count, an ease from a base to a top for a rate) and a price curve (a first
 // cost raised by a rate a rung) -- and the player asked to move each rung on
 // its own: carry 1, 2, 4, 6, 10; the pick 1, 2, 4, 8; the swing a second
-// faster a rung. At four rungs a curve cannot be told from a list and cannot
+// faster a rung. At a handful of rungs a curve cannot be told from a list and cannot
 // be made to say the numbers in somebody's head, so a list it is, for the
 // value and for the price both. See DESIGN.md, "A rung is a step up, not a
 // step along" and its as-built note.
@@ -27,36 +27,41 @@
 // panel: `RUNG_KNOBS` hands `TUNABLE` a knob a rung. The table was seeded with
 // what the curves gave on 2026-09-14 and rounded by hand the same day: round
 // figures a rung, the costs mostly doubling, the tops near where they were.
+// Later that day the ladder went from four rungs to eight (two a coin) and
+// each list grew with it: a step slipped in between each pair that was there
+// and one more past the old top, so a ladder reaches a little further than
+// it did. The whole-count ladders that had no room between their rungs
+// (a rockhand's bite, a crit's worth) reach further than a little.
 
 export const LADDERS = {
   // --- the bench: you --------------------------------------------------------
-  carry:        { value: [1, 2, 4, 6, 10],           dust: [20, 100, 200, 600] },       // px you can carry
-  speed:        { value: [1, 2, 4, 6, 8],            dust: [100, 200, 400, 800] },      // hits/s, your swing
-  pick:         { value: [1, 2, 4, 8, 12],           dust: [250, 500, 1000, 2000] },    // px your swing takes
-  critchance:   { value: [5, 10, 15, 20, 25],        dust: [500, 1250, 3000, 8000] },   // % of swings
-  critmult:     { value: [3, 4, 5, 6, 8],            dust: [1000, 2500, 6000, 16000] }, // x a crit is worth
+  carry:        { value: [1, 2, 3, 4, 6, 8, 10, 12, 15], dust: [20, 50, 100, 150, 200, 400, 600, 1000] },       // px you can carry
+  speed:        { value: [1, 1.5, 2, 3, 4, 5, 6, 8, 10], dust: [100, 150, 200, 300, 400, 600, 800, 1200] },      // hits/s, your swing
+  pick:         { value: [1, 2, 3, 4, 6, 8, 10, 12, 16], dust: [250, 400, 500, 750, 1000, 1500, 2000, 3000] },    // px your swing takes
+  critchance:   { value: [5, 8, 10, 12, 15, 18, 20, 25, 30], dust: [500, 800, 1250, 2000, 3000, 5000, 8000, 12000] },   // % of swings
+  critmult:     { value: [3, 4, 5, 6, 7, 8, 9, 10, 12], dust: [1000, 1500, 2500, 4000, 6000, 10000, 16000, 25000] }, // x a crit is worth
   // --- the shack: the gang -----------------------------------------------------
-  rockhandpick: { value: [1, 2, 3, 4, 5],            dust: [1000, 2000, 4000, 8000] },  // px a rockhand takes
-  rockhandspeed:{ value: [1, 1.5, 2, 3, 4],          dust: [200, 400, 800, 1600] },     // hits/s, its swing
+  rockhandpick: { value: [1, 2, 3, 4, 5, 6, 7, 8, 9], dust: [1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000] },  // px a rockhand takes
+  rockhandspeed:{ value: [1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5], dust: [200, 300, 400, 600, 800, 1200, 1600, 2400] },     // hits/s, its swing
   // --- the bench: the haulers ---------------------------------------------------
-  haulcarry:    { value: [1, 3, 6, 10, 16],          dust: [150, 300, 500, 1000] },     // grains a load
-  haulpace:     { value: [100, 200, 300, 400, 500],  dust: [200, 400, 600, 1200] },     // px/s, the walk
+  haulcarry:    { value: [1, 2, 3, 4, 6, 8, 10, 14, 20], dust: [150, 200, 300, 400, 500, 750, 1000, 1500] },     // grains a load
+  haulpace:     { value: [100, 150, 200, 250, 300, 350, 400, 500, 600], dust: [200, 300, 400, 500, 600, 900, 1200, 1800] },     // px/s, the walk
   // --- the scrubbing house -----------------------------------------------------
-  fan:          { value: [30, 40, 50, 70, 90],       dust: [1000, 2000, 4000, 7000] },  // motes/s a fan pulls
+  fan:          { value: [30, 35, 40, 45, 50, 60, 70, 90, 110], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // motes/s a fan pulls
   // --- the quarry ---------------------------------------------------------------
-  seam:         { value: [1, 1.5, 2, 3, 4],          dust: [750, 1500, 2500, 5000] },   // a dig, as a share of the handful a bench
-  quarrypace:   { value: [5, 10, 15, 25, 40],        dust: [750, 1500, 2500, 5000] },   // trips a minute
+  seam:         { value: [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // a dig, as a share of the handful a bench
+  quarrypace:   { value: [5, 8, 10, 12, 15, 20, 25, 40, 50], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // trips a minute
   // --- the farm -----------------------------------------------------------------
-  crop:         { value: [1, 2, 4, 6, 10],           dust: [750, 1500, 2500, 5000] },   // spores a cut
-  tend:         { value: [6, 10, 20, 30, 50],        dust: [750, 1500, 2500, 5000] },   // plots a minute
+  crop:         { value: [1, 2, 3, 4, 5, 6, 8, 10, 12], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // spores a cut
+  tend:         { value: [6, 8, 10, 15, 20, 25, 30, 50, 60], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // plots a minute
   // --- the apothecary -----------------------------------------------------------
-  bufflength:   { value: [60, 90, 120, 150, 180],    dust: [1000, 2000, 3000, 6000] },  // seconds a dose lasts
-  brewdoses:    { value: [1, 2, 3, 5, 8],            dust: [1000, 2000, 3000, 6000] },  // doses a brew
-  'potency-stew':   { value: [25, 35, 45, 50, 60],   dust: [1000, 2000, 3000, 6000] },  // % quicker work
-  'potency-brace':  { value: [8, 10, 12, 15, 20],    dust: [1000, 2000, 3000, 6000] },  // % more crits
-  'potency-strong': { value: [50, 70, 85, 100, 120], dust: [1000, 2000, 3000, 6000] },  // % more carried
-  'potency-swift':  { value: [25, 35, 45, 50, 60],   dust: [1000, 2000, 3000, 6000] },  // % quicker walk
-  'potency-gleam':  { value: [20, 25, 30, 40, 50],   dust: [1000, 2000, 3000, 6000] }   // % more sparks
+  bufflength:   { value: [60, 75, 90, 105, 120, 135, 150, 180, 210], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // seconds a dose lasts
+  brewdoses:    { value: [1, 2, 3, 4, 5, 6, 7, 8, 10], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // doses a brew
+  'potency-stew':   { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker work
+  'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % more crits
+  'potency-strong': { value: [50, 60, 70, 80, 85, 100, 110, 120, 150], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % more carried
+  'potency-swift':  { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker walk
+  'potency-gleam':  { value: [20, 22, 25, 28, 30, 35, 40, 50, 60], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] }   // % more sparks
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

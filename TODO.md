@@ -30,6 +30,17 @@ with the sections as tabs, one plank tall, was mocked over the live yard
 (`shots/drawer-A2.png`) and is the fallback if the popover proves too big.
 >>>>>>> main
 
+## Eight rungs, two a coin -- BUILT (2026-09-14)
+
+The four-rung ladder was too short to be worth climbing, so `TIER_BAND` is
+two again: eight rungs, every coin asked twice, on every ladder and at the
+grounds. Every list in `config/rungs.js` grew with it -- a step between each
+pair and one past the old top (DESIGN.md, "A rung is a step up", the
+2026-09-14 note). The rockhand's bite (1 → 9 px) and the crit's worth (3 →
+12×) are whole counts with no room between their rungs and so climbed most;
+the ladder book is the place to settle every figure on a played yard. The
+builders' 37% and the attended wait are untouched and still open.
+
 ## A rung is a step up, not a step along -- BUILT (2026-09-14)
 
 "A rung is a step up, not a step along" at the end of DESIGN.md, with an

@@ -95,9 +95,12 @@ group('the spark rung climbs the same field and reads the top of its list', asyn
   for (let i = 0; i < TIER_OWN; i++) buyNow('crop');
   const before = cropYield();
   const pressed = buyNow('crop');
+  const first = S.cropLevel;
+  // ...and the rest of the spark band, to the top.
+  for (let i = 1; i < TIER_BAND; i++) buyNow('crop');
   return [
-    ok(S.cropLevel === TIER_OWN + 1 && pressed, 'the spark rung is one more of the field', `${S.cropLevel}`),
-    ok(cropYield() === LADDERS.crop.value[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
+    ok(first === TIER_OWN + 1 && pressed, 'the spark rung is one more of the field', `${first}`),
+    ok(S.cropLevel === LADDER && cropYield() === LADDERS.crop.value[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
        `${before} -> ${cropYield()}`)
   ];
 });

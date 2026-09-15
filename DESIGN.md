@@ -9514,6 +9514,17 @@ rung the grounds had.
   rung worth more and costing more than the last, and each count reading the
   top of its own list at the top.
 
+**Eight rungs, two a coin (2026-09-14, later).** Four rungs played too
+short: each coin was asked once and the card was done. `TIER_BAND` is two
+again -- dust, dust, +spore, +spore, +shard, +shard, +spark, +spark, on every
+ladder and at the grounds alike -- and every list in `LADDERS` is nine
+values and eight costs. The lists grew by a step between each pair that was
+there and one past the old top, so a ladder reaches a little further than
+it did (carry 1, 2, 3, 4, 6, 8, 10, 12, 15; the fan 30 → 110 motes a
+second). Two whole-count ladders had no room between their rungs and reach
+further than a little: a rockhand's bite is 1 → 9 px and a crit's worth 3 →
+12×. All of it is the ladder book's to settle on a played yard.
+
 ## The shelf: a board is things on planks, not cards (built, dev only)
 
 Settled on shots, 2026-09-14, against the bench with every row forced on
