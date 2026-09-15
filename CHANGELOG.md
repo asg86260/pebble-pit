@@ -14,6 +14,9 @@ feature lives in DESIGN.md.
 **New this release**
 
 - The ladder pips are back on the shelf: a column climbing the right edge of every ladder's tile.
+- A tile being built shows it: the drawing fills in from the bottom as the work is done, the tag is a clock to the second, and a tile in line is a ghost with its place.
+
+- The ladder pips stay on a tile while it is being built (src/selftest/boards.js, "a tile being built fills in").
 
 - On a phone, one finger on the sky or the bare ground drags the view along; a finger on the dust still sweeps it (src/selftest/view.js, "one finger drags the view").
 

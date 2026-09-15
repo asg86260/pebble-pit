@@ -156,16 +156,31 @@ export const inkSpan = rows => {
 // the shape itself grey. `ink` is the shape's own color: black, or the shelf's
 // short grey on a tile whose bill you cannot yet pay -- the stroke keeps its
 // coin either way, since it is the rung's legend and not a verdict on it.
-export const drawGlyph = (rows, tint = null, ink = '#000', badge = null) => {
+//
+// `built` is how many of the drawing's cells are up, for a tile whose thing
+// the yard is still building (DESIGN.md, "A tile being built shows the
+// building"): the picture is the bar. The cells are laid the way a wall goes
+// up -- bottom row first, left to right -- and the ones not yet laid are a
+// ghost, one pixel in four at the shelf's ghost tone, so the whole shape is
+// there to be read from the press and fills in under the hands. Null is the
+// whole drawing, which is every tile not being built.
+export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
+export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null) => {
   const M = 2, W = CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
   const c = document.createElement('canvas');
   c.width = W; c.height = H; c.className = 'glyph';
   const g = c.getContext('2d');
-  const solid = new Uint8Array(W * H);
-  rows.forEach((r, y) => [...r].forEach((ch, x) => {
-    if (ch !== '#') return;
-    for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) solid[(y * CELL + j + M) * W + x * CELL + i + M] = 1;
-  }));
+  const solid = new Uint8Array(W * H), ghost = new Uint8Array(W * H);
+  const laid = [];
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') laid.push([x, y]); }));
+  laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  laid.forEach(([x, y], k) => {
+    const up = built === null || k < built;
+    for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) {
+      const at = (y * CELL + j + M) * W + x * CELL + i + M;
+      if (up) solid[at] = 1; else if (i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
+    }
+  });
   // The badge, top-right, on the same cell grid: its ink, and a halo of
   // BADGE_HALO pixels round that ink knocked out of the drawing beneath.
   if (badge) {
@@ -210,6 +225,8 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null) => {
   }
   g.fillStyle = tint === SHELF_INK.done ? tint : ink;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (solid[y * W + x]) g.fillRect(x, y, 1, 1);
+  g.fillStyle = SHELF_INK.ghost;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ghost[y * W + x]) g.fillRect(x, y, 1, 1);
   // Centered on the ink: the canvas's left edge sits on the tile's center
   // line, and this pulls it left by exactly the ink's half-width.
   const [lo, hi] = inkSpan(rows);

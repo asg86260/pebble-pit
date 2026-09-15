@@ -7,10 +7,10 @@
 
 import { S } from './state.js';
 import { SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
-import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
+import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
+import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
+import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -609,11 +609,14 @@ function wearBadge(line, words, n) {
 // The picture on a shelf tile, redrawn only when its two inks change. A row
 // for sale wears the deepest coin of its bill as a stroke and pales while it
 // is short (see below); a dial or a job row spends nothing and wears plain ink.
-function wearGlyph(row, key, tint, ink) {
+// `built` is the count of the drawing's cells up so far on a tile the yard is
+// building -- part of the key, so the picture is redrawn once a cell and not
+// once a frame -- and null on every other tile.
+function wearGlyph(row, key, tint, ink, built = null) {
   const pic = row.querySelector('.pic');
   if (!pic) return;
-  const drawn = `${tint}/${ink}`;
-  if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key))); }
+  const drawn = `${tint}/${ink}/${built}`;
+  if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key), built)); }
 }
 
 export function refresh(el, list, headcount) {
@@ -698,8 +701,19 @@ export function refresh(el, list, headcount) {
     // to press reads as one from across the plank and not only at its price.
     // Redrawn only when either changes.
     const waits = u.waits?.() || '';
+    // The work on this row, if the yard is building it or has it in line: the
+    // picture and the tag below are about the build then, not the offer.
+    const mine = takesTime(u) ? workOn(u.key) : null;
     const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
-    if (pic) {
+    if (pic && mine) {
+      // The glyph is built: drawn to the share done, no stroke, since a stroke
+      // is the next rung's legend and there is no next rung on a thing not up
+      // (DESIGN.md, "A tile being built shows the building"). A row in line
+      // has none of it up. The share is the site's own, so it stops with the
+      // hands.
+      const rows = glyphFor(u.key);
+      wearGlyph(row, u.key, null, '#000', inLine(u) ? 0 : Math.floor(progressOf(mine) * cellsOf(rows)));
+    } else if (pic) {
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done
                  : coins.includes('spark') ? SHELF_INK.spark
@@ -719,71 +733,6 @@ export function refresh(el, list, headcount) {
     // nothing had to -- a multiplier is a build now, so the branch below, which
     // every other site has always used, says the same thing about it.
 
-    // A row past the bench is a thing the yard has to build, and while it is
-    // building the row says so where the numbers go -- the same shape the lab
-    // has used for research since the day it opened. The clock in its bill is
-    // counting down what is left at the rate the site is actually going, so the
-    // price cell is left standing rather than blanked: it is the one number you
-    // came to the board to read.
-    //
-    // A row bought and waiting its turn at a site that is building something
-    // else says where in the line it stands, with its ordinary price -- and it
-    // stays pressable, because pressing it again is how it is handed back.
-    // The site used to grey every other row on it while it built one thing;
-    // see DESIGN.md, "The queue", for why that went.
-    if (takesTime(u)) {
-      const mine = building(u);
-      if (mine) {
-        say(what, u.name);
-        // Nobody standing there is the one thing that stops it, and it is a
-        // thing you can act on: an empty cut builds nothing however long you
-        // leave it, and the roster under the cut is where you fix that.
-        // ...except at a builders' site, where there is always somebody: the
-        // nearest body is lent if nobody is spare, and the row says "building"
-        // from the press, walk included -- a body on its way to a job is on
-        // that job, and a second word for the walk was one status too many.
-        //
-        // The vocabulary is closed, and every word in it fits the tightest cell
-        // on any board (see `pinWidth` in board.js and the width check in
-        // selftest/boards.js): "queued up in 7", "building", "nobody on it". A
-        // status is about the whole card, and the gain's line -- which it
-        // takes over -- spans the card less the pips' corner (see `.gain` in
-        // style.css).
-        row.classList.add('waiting');
-        const queued = inLine(u);
-        sayHTML(gain, queued ? `queued up in ${lineAt(u)}` :
-                stalled(u.site) && !BUILDER_SITES.includes(u.site) ? 'nobody on it' :
-                'building');
-        sayHTML(price, bill); sayHTML(time, clock);
-        // Greyed while it is being built -- committed, nothing to press for --
-        // and live while it waits, so a press can pull it back out.
-        grey(row, !queued);
-        // A queued row is pressable (to hand it back) but its price is not
-        // one you are being offered: it wears `off` so the shelf's hover
-        // leaves it alone with the rest you cannot pay for.
-        row.classList.add('off');
-        continue;
-      }
-    }
-    // ...and the site is clear again, so the card goes back to a gain in a
-    // column and the note about what was on it goes -- unless the card is
-    // waiting on something of its own, below.
-    if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
-    if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
-
-
-    // and a dot on anything that has not been on a board you have looked at
-    // -- a purchase, that is: a readout on the books is not a thing to have
-    // missed, and every one of the twelve wore the corner (critics C13)
-    const fresh = !u.read && !S.seenRows.includes(u.key);
-    if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
-
-    // The name, and where the row is on its ladder. Five rungs to nearly every
-    // ladder in the game (see RUNGS; the kit is the one that is shorter, and says
-    // so), so "3 of 5" means the same thing wherever it is read, and a finished
-    // one says so and stays there rather than vanishing -- which is what the rate
-    // rows used to do when they hit a floor nobody had been told about.
-    say(what, u.name);
     // How far up the ladder, as a row of pips under the words rather than as a
     // number in the middle of them. "3/5" sat between the name and what the next
     // one buys, which is two numbers about different things a character apart --
@@ -811,6 +760,78 @@ export function refresh(el, list, headcount) {
       if (ladder.innerHTML !== want) ladder.innerHTML = want;
       // No '3 of 5' on hover: the pips are the answer.
     }
+
+    // A row past the bench is a thing the yard has to build, and while it is
+    // building the row says so where the numbers go -- the same shape the lab
+    // has used for research since the day it opened. The clock in its bill is
+    // counting down what is left at the rate the site is actually going, so the
+    // price cell is left standing rather than blanked: it is the one number you
+    // came to the board to read.
+    //
+    // A row bought and waiting its turn at a site that is building something
+    // else says where in the line it stands, with its ordinary price -- and it
+    // stays pressable, because pressing it again is how it is handed back.
+    // The site used to grey every other row on it while it built one thing;
+    // see DESIGN.md, "The queue", for why that went.
+    if (takesTime(u)) {
+      if (mine) {
+        say(what, u.name);
+        // Nobody standing there is the one thing that stops it, and it is a
+        // thing you can act on: an empty cut builds nothing however long you
+        // leave it, and the roster under the cut is where you fix that.
+        // ...except at a builders' site, where there is always somebody: the
+        // nearest body is lent if nobody is spare, and the row says "building"
+        // from the press, walk included -- a body on its way to a job is on
+        // that job, and a second word for the walk was one status too many.
+        //
+        // The vocabulary is closed, and every word in it fits the tightest cell
+        // on any board (see `pinWidth` in board.js and the width check in
+        // selftest/boards.js): "queued up in 7", "building", "nobody on it". A
+        // status is about the whole card, and the gain's line -- which it
+        // takes over -- spans the card less the pips' corner (see `.gain` in
+        // style.css).
+        row.classList.add('waiting');
+        const queued = inLine(u);
+        const stuck = !queued && stalled(u.site) && !BUILDER_SITES.includes(u.site);
+        sayHTML(gain, queued ? `queued up in ${lineAt(u)}` : stuck ? 'nobody on it' : 'building');
+        // The bill is paid, and a paid bill is not a price: the tag holds the
+        // time left alone, to the second, at the rate the site is going -- or,
+        // for a row in line, its place, since a clock on a thing not started
+        // is a guess the site cannot keep. `building` on the row is the tag's
+        // cue to stand solid: a running clock is not a thing you cannot afford.
+        sayHTML(price, '');
+        sayHTML(time, `<span class="have">${queued ? ordinal(lineAt(u)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
+        if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
+        // Greyed while it is being built -- committed, nothing to press for --
+        // and live while it waits, so a press can pull it back out.
+        grey(row, !queued);
+        // A queued row is pressable (to hand it back) but its price is not
+        // one you are being offered: it wears `off` so the shelf's hover
+        // leaves it alone with the rest you cannot pay for.
+        row.classList.add('off');
+        continue;
+      }
+    }
+    // ...and the site is clear again, so the card goes back to a gain in a
+    // column and the note about what was on it goes -- unless the card is
+    // waiting on something of its own, below.
+    if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
+    if (row.classList.contains('building')) row.classList.remove('building');
+    if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
+
+
+    // and a dot on anything that has not been on a board you have looked at
+    // -- a purchase, that is: a readout on the books is not a thing to have
+    // missed, and every one of the twelve wore the corner (critics C13)
+    const fresh = !u.read && !S.seenRows.includes(u.key);
+    if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
+
+    // The name, and where the row is on its ladder. Five rungs to nearly every
+    // ladder in the game (see RUNGS; the kit is the one that is shorter, and says
+    // so), so "3 of 5" means the same thing wherever it is read, and a finished
+    // one says so and stays there rather than vanishing -- which is what the rate
+    // rows used to do when they hit a floor nobody had been told about.
+    say(what, u.name);
     // A finished ladder has nothing left to say in the middle or on the right.
     // "done" rather than a price, because a price on a row you cannot buy is a
     // row that looks like you cannot afford it.

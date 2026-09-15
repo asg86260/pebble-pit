@@ -1564,6 +1564,68 @@ export const TESTS = [
     ];
   }],
 
+  // A tile being built shows the building (DESIGN.md): the glyph is drawn to
+  // the share done and fills in while a hand is at the site, the tag holds a
+  // clock to the second that falls while the site is going, a tile in line
+  // is all ghost with its place in the tag. Bought the player's way, through
+  // the row; the counts are read off the canvas, since the fill is pixels and
+  // nothing in the yard knows how many are inked.
+  ['a tile being built fills in, and its clock counts down', async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__board('quarry');
+    await settle(1);
+    const tile = () => document.querySelector('#panel .rows.shelves [data-key="jaw"]');
+    const inked = () => {
+      const c = tile()?.querySelector('.pic canvas');
+      if (!c) return -1;
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 0) n++;   // black pixels: the cells up
+      return n;
+    };
+    const clock = () => tile()?.querySelector('.tag .time')?.textContent.trim() || '';
+    const whole = inked();
+    tile()?.click();
+    await settle(2);
+    const atStart = inked(), clockAt = clock();
+    await settle(20);
+    const later = inked(), clockLater = clock();
+    const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
+    // Nobody at the site: the fill and the clock both hold.
+    window.__crew(0, 0, 0, 0);
+    await settle(3);
+    const held = inked(), clockHeld = clock();
+    await settle(5);
+    const stillHeld = inked(), clockStillHeld = clock();
+    window.__finish();
+    await settle(1);
+    // A ladder rung is built too (at the bench), and its pips are a fact about
+    // the ladder, not about the build: they stay up while it goes.
+    window.__crew(3, 3, 5, 7);
+    window.__board('bench');
+    await settle(1);
+    shop().querySelector('[data-key="carry"]')?.click();
+    await settle(1);
+    const pips = shop().querySelector('[data-key="carry"] .ladder')?.textContent || '';
+    const said = shop().querySelector('[data-key="carry"] .gain')?.textContent || '';
+    window.__finish();
+    await settle(1);
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(whole > 0 && atStart < whole, 'pressing a build row draws its glyph as a ghost', `${whole} -> ${atStart}`),
+      ok(/building|queued/.test(said) && pips.length > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips || 'none'}`),
+      ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
+      ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),
+         'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),
+      ok(stillHeld === held && clockStillHeld === clockHeld,
+         'and with nobody on it the fill and the clock both hold', `${held}/${clockHeld} -> ${stillHeld}/${clockStillHeld}`),
+    ];
+  }],
+
   // The pin: one card in the top-right corner, chosen by its pushpin, drawn
   // by the same builder as the board's, buying when pressed and coming down
   // when the row retires. The shield on offer pins itself while it is news,

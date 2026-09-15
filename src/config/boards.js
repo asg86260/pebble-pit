@@ -105,4 +105,4 @@ export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor 
 // What the stroke round a glyph is painted in: the deepest coin on the next
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
 // climbed ladder is grey. The three colors are the marks' own.
-export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c', short: '#8c8c8c' };
+export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c', short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the unbuilt cells of a glyph being built, dotted

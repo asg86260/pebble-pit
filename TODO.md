@@ -1,14 +1,17 @@
 # Still to do
 
-## A tile being built shows the building -- DESIGN, awaiting sign-off (2026-09-15)
+## A tile being built shows the building -- BUILT (2026-09-15)
 
 "A tile being built shows the building" at the end of DESIGN.md. While a
 build is on, the tile's glyph fills in from the bottom up to the share done
 (the picture is the bar; a stalled site is a glyph stopped part-built), the
 tag drops the paid bill and holds a live `m:ss` clock ticking a game
 second, and a queued tile is a ghost with its place in line in the tag.
-The words on the gain line stay. Blocked on: the owner's answer to the
-three calls (fill order, the ghost's drawing, clock replacing the bill).
+The words on the gain line stay. Open from the same session: "a board holds
+its size while a build is running" has one red line on main ("no card on
+any board is given a status it cannot hold", 101>29 on every bench tile) --
+the measurement reads the gain's `clientWidth` on a shelf tile, which is
+content-sized, so the check is measuring the word it just wrote.
 
 ## One finger looks about -- BUILT (2026-09-15)
 

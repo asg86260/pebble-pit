@@ -249,8 +249,16 @@
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; height: auto; }
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .time { padding: 0 6px; }
-/* Short of a coin, being built, or climbed: the tag says so by its edge. */
+/* Short of a coin, stalled, or climbed: the tag says so by its edge. */
 .rows.shelves > button.tile:disabled .tag { border-style: dashed; color: #8c8c8c; }
+/* A tile the yard is building (DESIGN.md, "A tile being built shows the
+   building"): the tag is a clock and nothing else, at full ink and with a
+   solid edge -- a running clock is not a thing you cannot afford. It goes
+   dashed again only when the site has nobody on it, which is when the clock
+   stops. A tile in line is not disabled (a press hands it back) and wears
+   its place the same way. */
+.rows.shelves > button.tile.building:disabled .tag { border-style: solid; color: #000; }
+.rows.shelves > .tile .tag:has(.cost:empty) .time { color: #000; padding: 0 6px; }
 .rows.shelves > .tile.waiting .gain { color: #000; }
 
 /* A shelf on which nothing has a gain has no gain line. The builder cannot

@@ -1076,6 +1076,20 @@ export const priceText = (money, n) =>
   money !== 'time' ? fmt(n) :
   n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}`;
 
+// The time left on a build, as a clock reads it -- `0:47`, `1:12`, `1:02:05` --
+// to the second. The bill's coarse form above is for an offer, where a minute
+// is a fair word for how long a thing takes; a build under way is watched, and
+// a number that moves under the eye is the proof the site is going. Ceiling,
+// so it reads 0:01 until the last blow and never 0:00 on a thing not up.
+export const leftText = ms => {
+  const s = Math.max(0, Math.ceil(ms / 1000)), m = Math.floor(s / 60) % 60, h = Math.floor(s / 3600);
+  const two = n => String(n).padStart(2, '0');
+  return h ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
+};
+// A place in a line, as it is said: 2nd, 3rd, 11th.
+export const ordinal = n =>
+  n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
 // True when something was actually bought, false when the press came to

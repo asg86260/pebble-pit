@@ -9691,7 +9691,7 @@ the card markup laid out by the stylesheet, and nothing on it answers the
 cursor. The owner's pick over big-figure tiles: the game calls it the
 books, and a ledger is the thing those words name.
 
-## A tile being built shows the building (design, not built)
+## A tile being built shows the building (built)
 
 ### What is wrong
 
@@ -9784,3 +9784,15 @@ two frames while a hand is at the site and holds while the site is stalled;
 the tag's text is `m:ss` and its reading falls by one a game second. The
 look is the shot: `buildboard` and a new `buildstalled` scene in
 `scenes.js`.
+
+### As built (2026-09-15)
+
+All three calls went the way the design leaned: bottom-up fill, a dotted
+ghost (it reads against the plank's dots -- the plank's are one in
+thirty-six at .14, the ghost's one in four at the short grey), and the
+clock in place of the bill. `drawGlyph` takes a count of built cells and
+`wearGlyph` keys the redraw on it, so a build redraws its picture once a
+cell. The pips were found to vanish on a building row -- the ladder block
+sat after the status branch's `continue`, on the cards too -- and were
+hoisted above it. The check is "a tile being built fills in, and its clock
+counts down" in `selftest/boards.js`.

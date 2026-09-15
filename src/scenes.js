@@ -461,7 +461,14 @@ export const SCENES = {
   // ...and how the row reads while it is going on: greyed, saying what it is
   // doing, with the clock in its bill counting down what is left.
   buildboard: { about: 'the bench', say: 'a row read while its work is on the go',
-    run: () => { rich(); window.__buy('jaw'); window.__fast(4); window.__board('quarry'); } },
+    run: () => { rich(); window.__buy('jaw'); window.__fast(30); window.__board('quarry'); } },
+  // The same tile with nobody at the site: the glyph stopped part-built, the
+  // clock stopped on its reading and the tag's edge gone dashed. The whole
+  // crew is stood down after the work has some cells up, so there is a part
+  // to be stopped at -- a station with no gang is helped by a lent builder,
+  // so standing down the quarriers alone stalls it for the length of a walk.
+  buildstalled: { about: 'the bench', say: 'a build stalled: the glyph stopped part-built, the clock stopped',
+    run: () => { rich(); window.__buy('jaw'); window.__fast(20); window.__crew(0, 0, 0, 0); window.__fast(3); window.__board('quarry'); } },
   // The offer aura (wave7-ui): a rich yard where every open board has
   // something affordable, so the stations breathe their dashed outline. Shot
   // at the lab, with the bench in frame too.
