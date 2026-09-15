@@ -24,7 +24,7 @@ import { duck, stand, hireSpot } from './body.js';
 import { downTheHole, downTheCut, nearestCutDust, load, roomOnBoard,
          roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
-import { strollTo, elbowIdle, ROAM_PACE } from './idle.js';
+import { strollTo, elbowIdle, amble, ROAM_PACE } from './idle.js';
 
 export function newHauler() {
   // Its feet are on the ground from the first frame. Every other job's step
@@ -609,10 +609,10 @@ export function haulerWork(w, c) {
       // mid-cigarette would be a body that was never really standing there
       if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
     } else {
-      const d = w.roamTo - w.x;
-      // its own legs, not everybody's
+      // its own legs, not everybody's -- and they get going and slow down
+      // rather than switching on and off (`amble`)
       const stride = w.x;
-      w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
+      const there = amble(w, w.roamTo, haulSpeed() * ROAM_PACE * (w.amble || 1));
       // and its feet on the ground it is strolling over. The roam never asked --
       // it moved x and left y where the last job put it, so a body dropped on
       // the crest of the rock strolled off the edge at crest height, drawing a
@@ -625,8 +625,8 @@ export function haulerWork(w, c) {
       // drop down ramps and lips all over the yard and their length is a tested
       // promise -- a roam has nowhere to be, so it can afford to pick its way
       // down the outline.
-      if (standTop(w.x, rockTop) - (w.y + WORKER) > P * 2) w.x = stride;
-      if (Math.abs(d) < 1) {
+      if (standTop(w.x, rockTop) - (w.y + WORKER) > P * 2) { w.x = stride; w.pace = 0; }
+      if (there) {
         w.roamTo = null;
         // and its own patience about standing there afterwards
         w.restUntil = now + (500 + rand() * 3000) * (w.linger || 1);

@@ -12,6 +12,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stand } from './body.js';
 import { stationX } from './commute.js';
+import { amble } from './idle.js';
 
 // Somebody whose job is the mess. It starts at the shed it belongs to, the way
 // every other body starts at its station -- though the work is wherever the mess
@@ -51,14 +52,12 @@ export function janitorWork(w, c) {
   }
   const sway = now / 1000 * IDLE_BEAT + w.ph;
   const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
-  const step = to - w.x;
   // At an amble, and at its own pace rather than at a fraction of a
   // commute. Chased at half a walking pace the spot two or three cells
   // away was reached in a blink, so the whole idle was a long freeze and
   // then a scoot -- and it got worse every time the crew's legs did.
   // `IDLE_PACE` is the speed of loitering and belongs to loitering.
-  w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
-           * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
+  amble(w, to, IDLE_PACE * (spelled('sweep') ? SPELL_SWEEP : 1));
   // and its feet stay on the ground -- the straightening-up hop is gone, for
   // the same reason the rockhand's is: see the note there.
   w.y = stand(w);

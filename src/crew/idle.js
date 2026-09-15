@@ -13,7 +13,7 @@
 // which is what turns two bodies standing near each other into the conversation
 // the break code was already able to have and almost never got the chance to.
 
-import { WORKER, ROCK_CLEAR } from '../config.js';
+import { WORKER, ROCK_CLEAR, AMBLE_RAMP } from '../config.js';
 import { S, pit, shack } from '../state.js';
 import { rockLeft, yardLeft } from '../world.js';
 import { TYPE } from '../jobs.js';
@@ -68,4 +68,25 @@ export function elbowIdle(w) {
     w.x -= Math.sign(d || 1) * 0.25 * frames();
     return;
   }
+}
+
+// A step of a walk that is going nowhere in particular, at a pace that gets
+// going and slows down rather than switching on and off. The body keeps its
+// current pace on itself and gains a frame's share of `top` every frame until
+// it is there; coming in, the pace is held under what can still be shed by the
+// spot at that same rate, so it arrives at a stop instead of hitting one. That
+// second cap is the stopping distance turned round, not a second knob.
+//
+// Returns true when the spot is reached. The pace is left at nought then, so
+// the next stroll starts from a standstill too.
+export function amble(w, target, top) {
+  const f = frames();
+  const d = target - w.x, dist = Math.abs(d);
+  const gain = top / AMBLE_RAMP;
+  let pace = Math.min(top, (w.pace || 0) + gain * f, Math.sqrt(2 * gain * dist));
+  const step = Math.min(pace * f, dist);
+  w.x += Math.sign(d) * step;
+  const there = dist - step < 1;
+  w.pace = there ? 0 : pace;
+  return there;
 }

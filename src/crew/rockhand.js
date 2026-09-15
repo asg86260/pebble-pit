@@ -19,6 +19,7 @@ import { speedBoost, stronger } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { rockMuck } from '../smog.js';
 import { frames } from '../clock.js';
+import { amble } from './idle.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 
@@ -112,7 +113,7 @@ export function rockhandWork(w, c) {
     // position dragged bodies over edges the climber was refusing. The janitor
     // idles this way already; now the stood-down rockhand does too.
     const swayTo = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
-    w.x += Math.sign(swayTo - w.x) * Math.min(IDLE_PACE * frames(), Math.abs(swayTo - w.x));
+    amble(w, swayTo, IDLE_PACE);
     const surf = rockTopY(colAtX(w.x + WORKER / 2));
     // No straightening-up hop. There used to be a whole cell of it -- the body
     // rose 6px the frame its sway crossed a threshold and dropped 6px when it

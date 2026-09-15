@@ -103,6 +103,10 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // was stood on the ground in one frame, two hundred
                       // pixels in a sixtieth of a second (critics C14)
                       'falling', 'vx', 'vy',
+                      // and how fast it is strolling (`amble`, crew/idle.js):
+                      // dropped, a body came back from a refresh mid-stroll
+                      // and set off again from a standstill
+                      'pace',
                       // and whether it is behind a door. A body that had
                       // knocked off came back standing at the doorstep.
                       'inside',
