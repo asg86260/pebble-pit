@@ -10107,3 +10107,136 @@ nothing new goes on `S`.
   bills and the five-key fold), `test/pot-prefer.test.mjs` and the browser's
   "a pot says who it is for" for the list. `test/wave7-brew.test.mjs` and
   `test/mana-brew.test.mjs` went with the recipes they were about.
+
+## The second pass (design, not built)
+
+The first pass built every system once, under a design that was being found
+as it was built, and it worked: the registries that came out of it -- `STEPS`
+in game.js, `LAYERS` in render.js, `JOBS` in crew/jobs.js, the plot object in
+grid.js, `LADDERS` and `tierRows`, the three `SAVED` lists in state.js -- are
+the shape the rest of the tree should have. This is a survey of where it does
+not, measured rather than felt, and a list of seams to take one at a time.
+Each seam is a branch of its own, landed on main and swept there before the
+next one starts; none of them changes what the game does, so the check for
+every one is "the same suite is green and the same shots look the same".
+
+What was measured (2026-09-15, throwaway scripts against main at 6ae31b2):
+
+- 59,296 lines under `src/`, **28,797 of them comment lines (49%)**.
+- **72 of the ~130 modules form one strongly-connected import cycle.** The
+  pivot is `upgrades.js`: every station and every crew file imports it for
+  a rate (`commutePace`, `haulCap`, `rockhandBite`, `capOf`), and it imports
+  every station back to price their rows. `game.js` breaks the ring with six
+  late-bound setters (`setGround`, `setDone`, `setFoot`, `setRooms`,
+  `setSheds`, `setTake`), which is the ring showing.
+- 42 exports nothing imports, 22 of them config knobs nobody reads
+  (`RIFT_RATE*`, `LAB_*`, `METEOR_CORES`, `SCRUB_REACH`, `TO_SKY`...).
+- `S` has 255 fields; 12 of them are `<station>BoardOpen` booleans (one for
+  the lab, which is deleted) where one key would do; 209 hand-placed
+  `S.dirty = true` lines and 46 `buildShop()` calls do the invalidation.
+- board.js answers "which station" with 46 `which === '...'` branches and
+  12 `near<Station>` functions, chained by hand in input.js.
+- `restore()` in persist.js is 580 lines, and about 40 of its paragraphs
+  begin "a save from before X": renamed jobs (miners, spelunkers, labbers,
+  scrubbers, rifters), the folded `mult` ladders, `research`/`research2`,
+  `hatShelf`, `harnessLevel`/`bootsLevel`, `labDone`, clock-stamped `wonAt`.
+  Five fields stay on `S` only so those saves load (`brewLevel`,
+  `doseCarryLevel`, `potPrefer`, `mult`, `scholars`). Two of the five
+  fixtures (`player-yard`, `stuck-yard`) are pre-rename saves and are what
+  pins the migrations.
+- The crew (`crew/`) needs nothing: registry, one file a job, stages in
+  `step.js`. The model.
+
+### The seams, in the order to take them
+
+**1. The dead-code sweep.** The 42 exports, the 22 knobs, `SHIELD_GATES`
+(decided off: the flag and its branches go, the `BEFORE` chain stays), the
+lab's leftovers (`labOpen`, `labBoardOpen`, the `SCHOLAR` and `BUILD` rows
+of `capOfBare`), `secondsMark` (an identity with an essay over it),
+`staffSheds` (only strips kit now; it is `stripKit`). A grep-survey-then-
+delete job. Check: `tools/unresolved.mjs`, the two shop-coverage files, and
+the node tier on main.
+
+**2. `upgrades.js` is four modules.** Split by who reads it:
+`levels.js` -- what every ladder is worth now (`mineMs`, `haulCap`,
+`commutePace`, `capOf`, `handsOf`, `gangWorth`, `machineRate`, `kitFull`),
+pure functions of `S`, config, kit and machines, and the only one of the
+four the sim may import; `roster.js` takes `JOBS`, `spareHands`,
+`rebalance`, `assign`, `hire`, `restaff` (the file of that name today is
+the drawn roster; one of the two is renamed); `words.js` takes `MARK`,
+`UNITS`, `gainText`, `priceText`, `leftText`, `ordinal`; `upgrades.js`
+keeps `UPGRADES`, `SECTIONS`, `billOf`, `canPay`, `buy`, `take`. Every
+import in `crew/` and the stations then points at `levels.js`, and the
+72-module ring falls to whatever `board.js`/`shop.js` still hold -- which
+the cycle script will say. The six setters in game.js come out one at a
+time as each stops being needed. A pure move: no check changes, no shot
+changes; the cycle count is the check.
+
+**3. The save floor.** *Needs a decision.* The first public build was
+v0.1.1 (itch, 2026-09-12). A save written before that has never been on a
+player's machine. If the game refuses to read one -- the sheet already
+offers a broken blob back as a file -- then every "a save from before X"
+branch older than the floor goes: `OLD_TYPE`, `OLD_JOB`, the `mult` fold,
+`research`/`research2`, `hatShelf`, `harnessLevel`/`bootsLevel`, `labDone`,
+the `wonAt` renumbering, `migrateApothecary`, `noticeMigrated`, and the five
+retired fields on `S`. The two old fixtures are loaded once by the current
+build, saved, and written back in today's shape, so the checks they carry
+lose nothing. Migrations newer than the floor stay, and from here on a
+migration is dated in its comment so the next floor can find it. Check:
+`persist-roundtrip`, the fixture checks, and every node group (each is a
+reload check). Roughly 250 lines out of persist.js and state.js.
+
+**4. A station is a row in a table.** `STATIONS` in board.js becomes
+`{ key, open: () => S.quarryOpen, stand: () => standAt.quarry, ... }`; the
+12 `near<Station>` functions become `nearStation(key, x, y)` read off it,
+`standing` and `standRect` read off it, and the `which === '...'` branches
+that only pick a flag or a rect read off it too. The 12 `<station>BoardOpen`
+booleans become one `S.boardOpen` holding the key (persisted by hand as the
+old booleans for one release, then not). `input.js` walks the table instead
+of its two hand-written `||` chains. Check: the browser `boards` and
+`stations` groups, a `boards` scene shot, `shop-coverage-*`. This is the one
+of the seven that touches the pointer, so it is looked at, not only run.
+
+**5. Saving beside the owner.** After 3 has cleared the migrations out of
+it, what is left of `SAVED_BY_HAND` is a `write`/`read` pair for each of a
+dozen owners -- the shield, the machines, the works, the sky, the cut. Each
+moves next to the thing it saves and registers with persist.js, the way a
+job registers with `JOBS`; `persist-roundtrip` keeps the rule that a field
+is in one list. persist.js becomes the loop and the grid codec.
+
+**6. Invalidation is not a thing every line does.** `S.dirty` only gates
+the autosave: it becomes "save on the clock, and skip if the last blob is
+byte-equal" and the 209 lines go. `buildShop()` becomes a flag drained once
+at the end of the frame, like `restaff` already is, and the 46 calls become
+`S.shopStale = true` or nothing. Last, because a board that rebuilds a frame
+late is a thing a check can see and this needs looking at with the shots.
+
+**7. The comment pass.** Half the tree is comments, and the house rule --
+say why, in sentences -- is right and stays. What has crept in beside it is
+*history*: "it used to be X, which broke Y, so now Z", paragraph after
+paragraph, and in three places the same paragraph twice (upgrades.js over
+`handsOf` and `HOUSE_ROW`; route.js). The commit holds the history. The
+rule for the pass: a comment says what is true now and why; the path to it
+stays only where it names a trap the next reader would fall back into (the
+`fillRect` center, the cache-busted import), and goes where it narrates a
+refactor. Prose-only, no run, one module a sitting, and never in the same
+commit as a code change -- a diff that is half comments and half code
+cannot be reviewed for either. *Needs a decision*, because the register is
+the owner's.
+
+### Not on the list
+
+- The sixteen `rows-*.js` files, `config/`, the `render/` split, `smog/`:
+  already one file a subject.
+- Half a dozen browser groups (`dust`, `work`, `sky`, `queue`) touch no DOM
+  and could be node groups. A wall-time question, not an architecture one;
+  file-times.mjs says whether it is worth it.
+- Performance. Nothing here is a frame-cost change, and any seam that turns
+  out to be one is measured with break-perf.mjs before it lands.
+
+### The gate
+
+None of this starts until the reliability freeze has held -- the node tier
+green twice running on main (TODO.md). A refactor on a suite that is not
+reliably green cannot tell a regression from a flake, and every seam above
+is verified by nothing else.

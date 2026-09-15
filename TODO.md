@@ -1,5 +1,17 @@
 # Still to do
 
+## The second pass -- DESIGNED (2026-09-15), not built
+
+"The second pass" at the end of DESIGN.md: a measured survey of the tree
+(49% comment lines, a 72-module import cycle pivoting on `upgrades.js`, 42
+dead exports, ~40 pre-release save migrations, 12 `<station>BoardOpen`
+flags) and seven seams to take one branch at a time, in order: the dead-code
+sweep; splitting `upgrades.js` into `levels`/`roster`/`words`/`upgrades`;
+a save floor at v0.1.1 (needs a decision); a station table in board.js;
+saving beside the owner; invalidation off the clock; the comment pass
+(needs a decision on the register). Gated on the reliability freeze holding
+green twice on main. Blocker: the two decisions, and the freeze.
+
 ## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
 "Three brews, one a coin, read per trade" at the end of DESIGN.md. The five
