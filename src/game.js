@@ -1,19 +1,10 @@
 // The game, without the browser around it.
 //
-// One frame of the yard: what happens, and in what order. Everything this file
-// touches is the simulation -- the ground, the rock, the crew, the sky -- and
-// nothing in it draws, listens for a pointer or writes to the page. That is the
-// whole of the split: `main.js` is the shell that gives this a window, a canvas
-// and a mouse, and this is the game underneath it.
-//
-// It is separate so the game can be run without a window at all. A check about
-// what the crew do with a full hole is a check about `step`, and running it
-// through a browser to find out cost a browser -- so the checks that are about
-// the yard rather than about the page run this in node instead, one file per
-// feature, as many at once as the machine has cores. See tools/node.
-//
-// `step` is called by whoever is turning the handle: sixty times a second by the
-// frame loop in the shell, or as fast as it will go by a check.
+// One frame of the yard: what happens, and in what order. Nothing in here
+// draws, listens for a pointer or writes to the page; `main.js` is the shell
+// that gives this a window, and the node checks run this without one. `step`
+// is called by whoever is turning the handle: the frame loop in the shell, or
+// a check as fast as it will go.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
          RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX,
@@ -37,20 +28,15 @@ import { sampleRates } from './stats.js';
 import { stepNotices } from './notices.js';
 import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
-import { stepShocks } from './shock.js';        // F4
+import { stepShocks } from './shock.js';
 import { stepWorks, setGround, setDone, setFoot, setRooms, setSheds } from './works.js';
 import { cubes as houseCubes } from './house.js';
-// Track F3 (wave5): the books over the pit, which measure what the yard earned.
 import { sampleBooks } from './stats.js';
-// wave-desk-sound, track B: the beds follow the yard, once a frame.
 import { stepAudio, sfx } from './audio.js';
 
-// The ground is laid the moment the order the yard was bought in changes, and
-// not on the frame after. `layPiles` would catch it next frame -- the order is
-// in its key now -- but a frame late is too late for anything that reads a
-// position in the same tick as the purchase: `__finish` in the checks does
-// exactly that, and so does a player's click landing a build and the board
-// seating itself off where the building now is.
+// The ground is laid the moment the order the yard was bought in changes, not
+// the frame after: `__finish` in the checks and a player's click landing a
+// build both read a position in the same tick as the purchase.
 setGround(layPiles);
 // and a site puts a mark up when its own work lands -- see `workFinished`
 setDone(workFinished);
@@ -70,14 +56,12 @@ import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, stepUnder, maybeReunion } from './intro.js';
 import { stepSkip } from './skip.js';
 import { mineMs, restaff, staffSheds, take } from './upgrades.js';
-// The bench is built rather than delivered, and the row it is finished under is
-// registered by this file being loaded. Imported here rather than by the page,
-// because a yard with no document still has to be able to raise a bench --
-// see raise.js.
+// The bench's row is registered by this file being loaded, here rather than
+// by the page, because a yard with no document still has to raise a bench
+// (raise.js).
 import './raise.js';
-// The pot pays for its crop through the same `take` every price uses; wired here
-// rather than imported into apothecary.js, which would close a ring back to
-// upgrades. See `setTake`.
+// Wired rather than imported into apothecary.js, which would close a ring
+// back to upgrades. See `setTake`.
 setTake(take);
 import { stepMachineSmoke } from './render.js';
 import { stepSmoke } from './puff.js';
@@ -88,9 +72,8 @@ import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
-// height test is here rather than in `restOnRock` because it is the chip loop's
-// own question -- has this thing reached the surface yet -- and every other
-// place that puts a grain on the rock has no chip to ask it of.
+// height test is the chip loop's own question; every other place that puts a
+// grain on the rock has no chip to ask it of.
 function restOnRockAt(x, y, shade) {
   if (!boulderAlive()) return false;
   const c = Math.floor((x - rockLeft()) / P);
@@ -100,19 +83,14 @@ function restOnRockAt(x, y, shade) {
 }
 
 // The ground is the ground because of these: the grid module knows none of it.
-// A new plot of sand somewhere else is another few lines like this, not another
-// copy of the sand rules.
 export function wireGround() {
   if (!floor.painter) floor.painter = makePainter(floor);
   floor.onPut = floor.painter.mark;
   floor.blocked = blocked;
   floor.ceiling = bankCeiling;             // and lean away from the rock rather than against it
   floor.repose = true;                     // heaps on the ground stand up
-  // Nothing topples over the lip on its own. Dust may not stand deep enough
-  // beside the ledge to do it: a heap that could tip itself in banked the whole
-  // yard for free and put the haulers out of work, which is the one thing the
-  // ground must never do. The hooks that used to allow it are gone from grid.js
-  // as well -- a branch nothing takes is a branch nothing keeps honest.
+  // Nothing topples over the lip on its own: a heap that could tip itself in
+  // banks the yard for free and puts the haulers out of work.
 }
 
 // Laying out the world moves things; this is what each site does about it. The
@@ -130,24 +108,14 @@ export function settleIntoWorld() {
 }
 
 // --- the order a frame happens in ---------------------------------------------
-// One list, top to bottom, and it IS the order: `step` walks it and does nothing
-// else. It is the same shape as the layer list in render.js, and for the same
-// reason -- the order was load-bearing and buried in a call sequence, where the
-// only way to see it was to read the whole function and the only way to move
-// something was to hope. Two of these positions have a comment on them saying
-// what breaks if they move; those comments are the point of the list.
-//
-// Each entry is handed `c`, the frame: `{ now, dt }`, filled in by the `clock`
-// entry before anything reads it. `frames()` is the same number for the whole
-// frame once `setFrames` has run, so anything wanting it asks the clock.
-//
-// Adding a step is one row here. Where in the list it goes is a decision you
-// have to make out loud, which is the whole idea.
+// One list, top to bottom, and it IS the order: `step` walks it and does
+// nothing else. Entries with a comment saying what breaks if they move are
+// the point of the list. Each entry is handed `c`, the frame: `{ now, dt }`,
+// filled in by the `clock` entry before anything reads it; `frames()` is the
+// same number for the whole frame once `setFrames` has run.
 
-// How long this frame was, before anything moves on the strength of it. It used
-// to be worked out halfway down, which was fine while it was only handed to the
-// things below it; now that everything which moves reads it (see `frames` in
-// clock.js) it has to be the first thing the frame knows.
+// How long this frame was, before anything moves on the strength of it:
+// everything that moves reads it (`frames` in clock.js).
 function startFrame(c) {
   const frameNow = clockNow();
   // a long tab-out is not a long frame -- and the clock agrees, see `tick`
@@ -157,30 +125,25 @@ function startFrame(c) {
   c.now = clockNow();
 }
 
-// How much is lying about. Counting fifty thousand cells is not a thing to do
-// every frame, and the answer moves by a grain at a time, so it is counted
-// twice a second and the crew are told to stop or start on that.
+// The things worth knowing about the ground that are not worth working out
+// every frame.
 function countTick() {
   S.tick++;
   tickGrid();
-  // four times a second, not twice: this is what tells a station it has room
-  // again, and waiting half a second to notice reads as the crew dawdling.
+  // four times a second: this is what tells a station it has room again, and
+  // waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();
-  // The lab and the scrubbing house take a body when there is work for one. Not
-  // every frame: it is a decision about the roster, and the roster does not need
-  // revisiting sixty times a second.
+  // A decision about the roster, which does not need revisiting sixty times a
+  // second.
   if (S.tick % 15 === 7) staffSheds();
-  // And the mess settles, a few times a second rather than every frame: a heap
-  // finding its angle is a slow thing and nobody is watching a single cell.
+  // A heap finding its angle is a slow thing and nobody is watching a cell.
   if (S.tick % 12 === 3) slumpMess();
 }
 
-// A lever that was thrown during the crew pass asks for its station to be
-// staffed again, and it cannot do that itself: `restaff` calls `syncWorkers`,
-// which replaces `S.workers` -- the very array the pass was walking. So the
-// arrival sets a latch and it is drained here, one frame's worth at a time,
-// safely outside the loop. This is the same reason the yard does its rebuilding
-// between passes rather than inside them.
+// A lever thrown during the crew pass cannot restaff its station itself:
+// `restaff` calls `syncWorkers`, which replaces `S.workers`, the array the
+// pass is walking. So the arrival sets a latch and it is drained here,
+// outside the loop.
 function drainRestaff() {
   if (S.restaff) { const r = S.restaff; S.restaff = null; restaff(r.job, r.want); }
 }
@@ -189,15 +152,10 @@ function holdToMine(now) {
   if (!S.mining) return;
   S.nextHit = Math.max(S.nextHit, now - 500);      // don't burst after a background tab
   while (now >= S.nextHit) {
-    // A held swing takes the top off, at the nearest high point to where the
-    // cursor is -- see `topOfRock`. You aim a click; holding the button is
-    // working, and a rock is worked from the top down.
-    //
-    // And not while the rock's pile is full. The rock hands down tools at that
-    // mark (`ready` in rock.js); a held button that kept swinging put the spoil
-    // on ground that had no room for it, and from there it ran into the pit --
-    // dust nobody carried, which is the one thing the ground must never do. The
-    // hold waits, like the crew, and picks up the moment a hauler makes room.
+    // A held swing takes the top off at the nearest high point to the cursor
+    // (`topOfRock`). Not while the rock's pile is full: the hold waits like
+    // the crew, or the spoil lands on ground with no room and runs into the
+    // pit as dust nobody carried.
     const at = !S.pileFull.rock && overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
     if (at) knockOff(at.x, at.y, undefined, false);   // hold-to-mine is still your hands
     S.nextHit += mineMs();
@@ -206,31 +164,25 @@ function holdToMine(now) {
 
 export const STEPS = [
   // The plots are dug when the ground is broken, not when the first farmhand
-  // walks up to them: a plot you have paid for that shows nothing but fence
-  // posts reads as a purchase that did not happen. Asked every frame rather
-  // than hooked onto the sale, so a save, the dev panel and the sale itself all
-  // arrive at the same plot; it is two length checks and it does nothing once
-  // the plots are there.
+  // walks up. Asked every frame rather than hooked onto the sale, so a save,
+  // the dev panel and the sale all arrive at the same plot; it is two length
+  // checks once the plots are there.
   { name: 'plots',   step: () => { if (S.farmOpen) plantPlots(); } },
-  // And the ground each station heaps on, for the same reason: a save, the dev
-  // panel and the door itself all arrive at the same strips. It does nothing at
-  // all unless the set of open places has actually changed. See `layPiles`.
+  // And the ground each station heaps on, for the same reason. It does
+  // nothing unless the set of open places has changed. See `layPiles`.
   { name: 'piles',   step: layPiles },
   { name: 'clock',   step: startFrame },      // and how long this frame was
   // Before the camera, so a running scene's aim is what the glide obeys this
-  // frame rather than next. The old rule -- "the collapse does NOT take the
-  // camera" (below) -- stands for anything ad hoc; the cutscenes are the one
-  // system allowed to point it, they are once-per-yard, and any click skips.
+  // frame rather than next. The cutscenes are the one system allowed to
+  // point the camera; nothing ad hoc takes it.
   { name: 'cutscene', step: c => stepCutscene(c.now) },
   { name: 'camera',  step: c => stepCamera(c.now) },
   { name: 'shake',   step: stepShake },       // and whatever the last landing left
   { name: 'air',     step: stepAir },
   { name: 'paid',    step: stepPaid },
   { name: 'rates',   step: c => sampleRates(c.now) },
-  // Track F3 (wave5): and the books, which take the same readings over a window
-  // instead of an easing and are what the stats board prints. Beside `rates`
-  // rather than anywhere else because it is the same act -- reading the
-  // counters -- and after `clock`, which is what puts `now` on the frame.
+  // Beside `rates` because it is the same act, reading the counters, and
+  // after `clock`, which puts `now` on the frame.
   { name: 'books',   step: c => sampleBooks(c.now) },
   { name: 'notices', step: c => stepNotices(c.now) },   // and whether the yard did anything worth saying
   { name: 'weather', step: c => stepWeather(c.now) },
@@ -238,30 +190,24 @@ export const STEPS = [
   { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
   { name: 'rock',    step: stepRock },        // a new one on its way down
   { name: 'shack',   step: c => stepShack(c.dt) },  // and the hut scooting over to make room for it
-  // and whatever is standing over the yard, and what the rock makes of it.
-  // Straight after the rock: it reads where the rock has got to this frame and
-  // may stop it there, so it has to run on the same frame the rock moved.
+  // Straight after the rock: it reads where the rock has got to this frame
+  // and may stop it there, so it has to run on the same frame the rock moved.
   { name: 'shield',  step: stepShield },
   { name: 'crew',    step: c => updateWorkers(c.now, c.dt) },
   { name: 'restaff', step: drainRestaff },
   // Before `smog`, so the dirt a machine makes this frame is in this frame's
-  // sky rather than trailing it by one -- the same ordering the stations' own
-  // fouling already has.
+  // sky rather than trailing it by one.
   { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through
   { name: 'records',  step: c => stepRecords(c.dt) },     // and everybody gets a little older
   { name: 'under',    step: c => stepUnder(c.dt) },       // and the one under the rock has been there a frame longer
   { name: 'breaks',   step: c => stepBreaks(c.now) },     // and what the stopped ones get up to
-  // The collapse does NOT take the camera. It was tempting -- it is the one
-  // thing that happens to you rather than because you pressed something -- but
-  // the view is where you put it, and a yard that yanks it away is a yard
-  // interrupting you to show you a thing you did not ask about. It also stole
-  // the frame from anything else pointing the camera, which is how it was
-  // noticed. The hole is there when you next look at it.
+  // The collapse does NOT take the camera: the view is where you put it, and
+  // an ad hoc grab steals the frame from anything else pointing it.
   { name: 'works',        step: c => stepWorks(c.dt) },   // and whatever the yard is building
   { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
   { name: 'smoke',        step: c => stepSmoke(c.dt) },   // and every mote of it climbing and going out
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
-  { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
+  { name: 'shocks',       step: c => stepShocks(c.dt) },  // and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table
   { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
   { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
@@ -277,10 +223,9 @@ export const STEPS = [
   { name: 'apothecary',   step: c => stepApothecary(c.dt) },  // and the pot on the boil, minting its doses
   { name: 'doses',        step: stepDoses },              // spent tonics come off the bodies wearing them
   { name: 'dosemotes',    step: c => stepDoseMotes(c.dt) },   // and the rest burn off whoever is under them
-  // And the rift swallows, if it is torn. It takes grains off the top of the
-  // pile without taking them off you -- see `swallow` in pit.js -- so this is
-  // the one thing in the yard that empties the hole and leaves the counter where
-  // it was.
+  // The rift takes grains off the top of the pile without taking them off you
+  // (`swallow` in pit.js): the one thing that empties the hole and leaves the
+  // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
   { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
   { name: 'balloons',  step: stepBalloons },              // and the craft crossing it
@@ -288,9 +233,8 @@ export const STEPS = [
   // swinging does not catch its own spray
   { name: 'catch', step: () => { if (S.dragging) catchAir(S.mouse.x, S.mouse.y); } },
   { name: 'mining', step: c => holdToMine(c.now) },
-  // The belt's band, before the chips: a load that runs off the head becomes a
-  // chip this same frame, and it should fall on the frame it left rather than
-  // hanging in the air for one.
+  // The belt's band before the chips: a load that runs off the head becomes a
+  // chip this same frame and should fall on the frame it left.
   { name: 'belt',  step: c => stepBelt(c.now, frames()) },
   { name: 'chips', step: c => stepChips(c.now) },
   { name: 'settle', step: () => {
@@ -302,8 +246,7 @@ export const STEPS = [
 export function step() {
   const c = { now: 0, dt: 0 };
   for (const s of STEPS) s.step(c);
-  // Last, so the beds read the frame the yard has just finished: what is
-  // raining, who is at a machine, how wide the rift is now.
+  // Last, so the audio reads the frame the yard has just finished.
   stepAudio(c.dt);
 }
 
@@ -318,26 +261,16 @@ function stepChips(now) {
     ch.y += ch.vy * f;
 
     // The far wall of the hole is a wall at every height, not only below the
-    // ground line. Everything is thrown at the pit from the near lip, so a grain
-    // that gets past the far wall is a throw that sailed -- and it used to be
-    // stopped only once it was already down inside the mouth, which let the odd
-    // one over the top and out onto the strip of ground behind, where it lies
-    // for the rest of the run with nobody able to reach it.
+    // ground line: everything is thrown at the pit from the near lip, so a
+    // grain past the far wall is a throw that sailed, and one let over lies
+    // behind the hole for the rest of the run where nobody can reach it.
     //
-    // Asked BEFORE the world's own edge, and without asking where that edge is.
-    // It used to run after, and to stand down for a grain already out at
-    // `S.worldW - P`, which is a wall that gives way exactly when it is hit
-    // hardest: a hauler's toss leaves the lip at over a hundred pixels a frame,
-    // and the ground behind the hole is eighteen columns. One frame takes such a
-    // grain from inside the mouth to past the end of the world, so the edge
-    // clamp below caught it first -- pinning it on the last column with its
-    // speed reversed -- and this test then declined to look at it because that
-    // is where it now was. Measured: born at the lip at vx 112.7, found at rest
-    // on column 1722 with vx -33.8, on ground nobody can reach.
-    //
-    // The two clamps are a sequence, not a pair of opinions: the hole's wall
-    // stops the throw, and the world's edge is the last word for anything that
-    // was never thrown at the hole at all.
+    // Asked BEFORE the world's edge: a hauler's toss leaves the lip at over a
+    // hundred pixels a frame and the ground behind the hole is eighteen
+    // columns, so the edge clamp catches such a grain first, pins it on the
+    // last column with its speed reversed, and a test run after would decline
+    // to look at it. The hole's wall stops the throw; the world's edge is the
+    // last word for anything never thrown at the hole.
     if (ch.vx > 0 && ch.x + P > pit.x + pit.w) {
       ch.x = pit.x + pit.w - P;
       ch.vx = 0;
@@ -349,38 +282,27 @@ function stepChips(now) {
       ch.vx = -Math.abs(ch.vx) * 0.3;
     }
 
-    // Onto the belt's band, which is a surface like the ground is a surface --
-    // the rock's spoil comes down on it straight off the shovel and never
-    // touches the yard. See `catchBelt`, which owns every condition; this is a
-    // landing like the three below it and is written in the same shape.
-    //
-    // Ahead of the hole and the cut, because the head of the belt hangs out over
-    // the mouth of the hole and a grain crossing the band above the lip would
-    // otherwise be taken by the hole from under it.
+    // Onto the belt's band, a surface like the ground (`catchBelt` owns every
+    // condition). Ahead of the hole and the cut, because the head of the belt
+    // hangs over the mouth of the hole and a grain crossing the band above
+    // the lip would otherwise be taken by the hole from under it.
     if (catchBelt(ch, now, f)) { S.chips.splice(i, 1); continue; }
 
     // down the shaft: the pit collects whatever falls through its mouth
-    // `>=`, to match what the ground asks a line below. With `>` a chip that
-    // came down exactly on the ground line over the mouth failed the pit's
-    // test, passed the floor's, and was shoved back to the end of a pile.
+    // `>=`, to match what the ground asks below: with `>` a chip that came
+    // down exactly on the ground line over the mouth failed the pit's test,
+    // passed the floor's, and was shoved back to the end of a pile.
     if (overPitMouth(ch.x) && ch.y + P >= S.groundY) {
-      // A torn pit takes the grain the moment it crosses the mouth: it goes
-      // into the rift's orbit from right here, instead of landing on a pile
-      // the rift would only lift it straight back off. See `riftCatch`.
+      // A torn pit takes the grain the moment it crosses the mouth, instead
+      // of landing it on a pile the rift would only lift it back off.
       if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s, ch.vx, ch.vy)) {
         S.chips.splice(i, 1);
         continue;
       }
       const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, ch.x)));
       if (ch.vx < 0 && ch.x < pit.x) { ch.x = pit.x; ch.vx = 0; }             // pit wall
-      // And the far one, which is a wall to anything already below the lip.
-      //
-      // A throw that *clears* the hole clears it and lands on the ground behind
-      // -- that is a throw that went too far, and it never comes through here at
-      // all, because it is never over the mouth at ground level. This is the
-      // other case: a grain down inside the hole, still travelling, arriving at
-      // the back of it. It used to be let through and deposited on the surface
-      // beyond, which is a grain climbing out of a hole.
+      // And the far one, for a grain down inside the hole arriving at the
+      // back of it; let through, it is a grain climbing out of a hole.
       if (ch.vx > 0 && ch.x + P > pit.x + pit.w) { ch.x = pit.x + pit.w - P; ch.vx = 0; }
       if (ch.vy > 0 && ch.y >= surfaceY(pit, pc)) {
         // Into the pile, or through the rift if the pile has no cell for it;
@@ -393,31 +315,21 @@ function stepChips(now) {
     }
 
     // down the ladder's own hole: the cut collects whatever falls through its
-    // mouth, exactly the way the pit does through the mouth of the hole. See
-    // `overCutMouth`, and the one clause this took out of `blocked` in world.js
-    // -- a grain over the mouth used to have nowhere at all to land, because
-    // there was no cut for it to land in.
+    // mouth, as the pit does (`overCutMouth`).
     if (overCutMouth(ch.x) && ch.y + P >= S.groundY) {
       const cc = Math.max(0, Math.min(cut.cols - 1, colOf(cut, ch.x)));
-      // The walls stop a grain coming down inside the cut, as the pit's do. A
-      // grain still on its way UP is a shard thrown at the rim from the floor,
-      // and from the columns under the far wall it meets the face before it
-      // clears the ground line; stopped dead there it fell straight back to
-      // the floor, was picked up and thrown from the same column, and met the
-      // face again -- the ore that lay in the quarry and never came out. Held
-      // against the wall with its throw intact, it rides up the face and goes
-      // on over the rim.
+      // The walls stop a grain coming down inside the cut. A grain still on
+      // its way UP is a shard thrown at the rim from the floor: from the
+      // columns under the far wall it meets the face before the ground line,
+      // and stopped dead there it fell back, was thrown again from the same
+      // column, and never came out. Held against the wall with its throw
+      // intact, it rides up the face and over the rim.
       if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; if (ch.vy >= 0) ch.vx = 0; }
       if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; if (ch.vy >= 0) ch.vx = 0; }
       if (ch.vy > 0 && ch.y >= surfaceY(cut, cc)) {
-        // Almost always room: the cut is a working plot, not a bank, and the
-        // grid is mostly open air above whatever rock is left. The one time it
-        // is not is a chip still in flight the instant `fillQuarry` puts the
-        // ground back in underneath it -- the whole column solid rock, rim to
-        // floor, nowhere for the grain to go. It is not an opening any more
-        // either way, so it comes down on it exactly as it would on any other
-        // ground: every pixel is worth one dust, the same rule the fill itself
-        // keeps.
+        // Almost always room in the cut. The one time not is a chip in flight
+        // the instant `fillQuarry` puts the ground back under it, and then it
+        // comes down as it would on any other ground.
         if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
         else bankDust(ch.x, ch.s);
         S.chips.splice(i, 1);
@@ -426,36 +338,28 @@ function stepChips(now) {
       continue;
     }
 
-    // Land on the floor dust -- but an aimed chip clears the bank it is thrown
-    // over first. Stopping it on the near face is what built the bank towards
-    // the rock instead of away from it: every chip came down on the slope facing
-    // the rock and the heap grew back up to the foot.
+    // Land on the floor dust -- but an aimed chip clears the bank it is
+    // thrown over first, or every chip comes down on the slope facing the
+    // rock and the heap grows back up to the foot.
     const c = Math.max(0, Math.min(floor.cols - 1, colOf(floor, ch.x)));
     const arrived = ch.land == null || ch.y >= S.groundY - P ||
                     (ch.vx > 0 ? ch.x >= ch.land : ch.x <= ch.land);
 
-    // And on the rock, which is a surface like any other now. The hill used to
-    // be barred ground -- a grain over the crest had nowhere to be, so it walked
-    // out from under the footprint and appeared in the heap beside it, eighty
-    // columns from where it was dropped. It comes to rest on the outline as it
-    // has actually been mined, and lies there until a rockhand throws it on the
-    // heap: see `restOnRock` in rock.js.
-    //
-    // Behind `arrived`, which is what keeps this from catching the spoil coming
-    // off the face: a thrown grain is aimed past the hill and is not arrived
-    // while it is still over it. Only something coming down on the rock without
-    // anywhere else to be -- a chip over the crest, a shaken body's spill --
-    // stops here.
+    // And on the rock, a surface like any other: a grain over the crest
+    // comes to rest on the outline as mined (`restOnRock` in rock.js) rather
+    // than walking out from under the footprint into the heap beside it.
+    // Behind `arrived`, which keeps this from catching the spoil coming off
+    // the face: a thrown grain is aimed past the hill and is not arrived
+    // while still over it.
     if (ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s)) {
       S.chips.splice(i, 1);
       S.dirty = true;
       continue;
     }
     if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
-      // One rule for everything that lands: a shard keeps to the piles exactly as
-      // a grain of dust does, because as far as the ground is concerned it is one.
-      // The yard's most common physical event: a grain coming to rest. The
-      // pit says its own when the grain goes to it instead.
+      // One rule for everything that lands: as far as the ground is
+      // concerned a shard is a grain. The pit says its own sound when the
+      // grain goes to it instead.
       if (addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
       else bankDust(ch.x, ch.s);
       S.chips.splice(i, 1);
@@ -464,10 +368,8 @@ function stepChips(now) {
   }
 }
 
-// One walk of the ground, four times a second, for the things worth knowing about
-// it and not worth working out every frame: how much is lying there, and where
-// anything that is not dust has come to rest. A mark is drawn only where it is
-// the top of its column -- one under a foot of dust is buried, and looks it.
+// One walk of the ground, four times a second: how much lies on each strip,
+// and where anything that is not dust has come to rest.
 export function surveyFloor() {
   const marks = [];
   const count = {};
@@ -480,10 +382,10 @@ export function surveyFloor() {
       const v = at(floor, c, r);
       if (!v) continue;
       n++;
-      // The painter has no colour for anything that is not dust, so it leaves
-      // that cell clear and the mark is drawn over the top. Every one of them,
-      // not just the top of a column: a cell left clear and never marked is a
-      // hole in the pile, and a shard with another on top of it is still there.
+      // The painter has no color for anything that is not dust and leaves
+      // that cell clear, so the mark is drawn over it. Every one, not just
+      // the top of a column: a cell left clear and unmarked is a hole in
+      // the pile.
       if (!isDust(v)) {
         marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
       }
@@ -491,38 +393,26 @@ export function surveyFloor() {
     if (pile) count[pile.key] += n;
   }
   S.floorMarks = marks;
-  // The total is not counted here. The floor keeps its own ledger -- `put`
-  // maintains it and verify.js rule 7 watches it drift -- so re-deriving it from
-  // the same walk would be a second copy of a number that is already exact. The
-  // walk stays for the two things a ledger cannot answer: which strip each grain
-  // is standing on, and where the cells that are not dust have come to rest.
+  // The total is the floor's own ledger (`put` keeps it, verify.js rule 7
+  // watches it), not re-derived from the walk. The walk stays for what a
+  // ledger cannot answer: which strip each grain stands on, and the marks.
   S.floorGrains = floor.n;
   S.pileCount = count;
 
-  // A pile that is full stops the station behind it, and the moment there is
-  // room for one more it starts again. No waiting for the pile to come down by
-  // some fraction: clearing a handful should put somebody back to work, because
-  // that is what clearing a handful looks like it ought to do.
+  // A full pile stops the station behind it, and room for one more starts it
+  // again: clearing a handful should put somebody back to work.
   const full = {};
   for (const p of S.piles) full[p.key] = count[p.key] >= (PILE_LIMIT[p.key] || Infinity);
   S.pileFull = full;
 }
 
-// Dust flying to the bench, on its way out of the counter. A purchase is not a
-// number going down: the grains leave the pile and cross the yard, and this is
-// where along that arc each of them is. It moves them; `drawPaid` in the shell
-// draws them.
+// Dust flying to the bench, on its way out of the counter. This moves them;
+// `drawPaid` in the shell draws them.
 export function stepPaid() {
   fly(S.paid, bench.x + bench.w / 2, bench.y - P * 2);
-  // And the ones going into the rift, which do not arc anywhere: they rise off
-  // the top of the pile to the ring round the disc, go round it on a tightening
-  // spiral, and are gone at the middle. Same lift off the pile as paying --
-  // `liftTo` in pit.js makes both lists -- and a different journey, because the
-  // one thing a player needs to read about a swallowed grain is that it went
-  // *in*, not that it went somewhere.
-  // The hole giving way rocks the yard. The knock is asked for where the tear
-  // happens (pit.js) and spent here, because a shake is the world's business and
-  // pit.js is downstream of the world -- see `shakeView` in world.js.
+  // The hole giving way rocks the yard. The knock is asked for where the
+  // tear happens (pit.js) and spent here, because a shake is the world's
+  // business and pit.js is downstream of the world (`shakeView`).
   if (S.riftShake) { shakeView(S.riftShake); S.riftShake = 0; }
   sink(S.gulped);
   // ripples too old to show are dropped here rather than in the drawing,
@@ -530,39 +420,11 @@ export function stepPaid() {
   while (S.ripples.length && clockNow() - S.ripples[0].at > ABYSS_RIPPLE_MS) S.ripples.shift();
 }
 
-// A grain's whole orbit is one number, `t`, from nought at the pile to one at
-// the middle of the disc. The angle runs on with it and the radius comes in
-// with it, so the path is a spiral; the first stretch of it blends from where
-// the grain left the pile to where it joins the ring, so it is seen to leave the
-// top rather than appear on the ring. Every grain has its own angle to join at
-// and its own way round, from `lift`, so the ring is a ring and not a queue.
-//
-// **Everything about the shape of it accelerates**, which is the difference
-// between a thing being pulled in and a thing going round. It used to leave the
-// pile on a smoothstep, join a ring well outside the rim, and hold that radius
-// until a cubed dive at the end -- a grain easing off the heap and settling into
-// an orbit somebody had arranged for it. Now:
-//
-// - the lift off the pile is eased *in*, not in and out, so a grain starts slow
-//   where it was lying and is moving when it arrives;
-// - the angle runs on a rising power of `t`, so the closer in it gets the faster
-//   it is dragged round -- the last quarter of the path is a whip, and that is
-//   the whole picture of the thing pulling;
-// - and the radius holds out past the rim for most of the way and then dives,
-//   which is the one thing here that is about being *seen* rather than about
-//   falling. The grains are drawn under the disc, so everything inside the rim
-//   is already gone as far as the picture is concerned; a path that fell
-//   straight in from the pile would spend four fifths of itself behind black.
-//   Out past the rim it is a black speck on white paper, which is where the
-//   pulling can be watched happening.
-//
-// The radius and the angle are the same one number, so none of this is a second
-// clock that can drift: a grain is exactly as far round as it is far in.
-// Grains going into the abyss: no orbit -- each one dives to the liquid's
-// surface below where it was caught and is eaten there, with a ripple left at
-// the spot. The dive accelerates, because falling into something is what this
-// is. While the pit is merely torn, the disc hangs instead and the grains
-// orbit into it -- see `orbit` below and "The pit's arc" in DESIGN.md.
+// Grains going into the abyss: each dives to the liquid's surface below where
+// it was caught and is eaten there, with a ripple left at the spot. The dive
+// accelerates, because falling into something is what this is. While the pit
+// is merely torn, the grains orbit into the hanging disc instead (`orbit`;
+// "The pit's arc" in DESIGN.md).
 function sink(list) {
   if (!S.drowned) return orbit(list);
   const f = frames();
@@ -577,8 +439,8 @@ function sink(list) {
       continue;
     }
     if (m.t <= 0) continue;
-    // Down to the surface, held inside the mouth: a grain caught right at a
-    // lip still drowns in the hole rather than in the ground beside it.
+    // Held inside the mouth: a grain caught right at a lip still drowns in
+    // the hole rather than in the ground beside it.
     const gx = Math.max(pit.x + P, Math.min(pit.x + pit.w - P, m.x0));
     const gy = abyssLine();
     const e = m.t * m.t;
@@ -587,21 +449,12 @@ function sink(list) {
   }
 }
 
-// The torn era's journey: the fall into the hanging disc.
-//
-// **The rift pulls and the grain does the rest.** An inverse square toward the
-// middle, quoted at one disc radius so it follows the disc as it grows; the
-// grain's own speed carries it; a little is shed each frame so nothing circles
-// for ever; and inside RIFT_EAT it is gone. That is the whole of it.
-//
-// What comes out is not one shape. A grain a hauler threw arrives with the arc
-// still on it and swings round the hole once or twice before it goes; a grain
-// lifted off the pile was lying still and drops straight in. Both are right,
-// and neither is drawn -- which is the difference between this and what it
-// replaced. That was a logarithmic spiral every grain was pinned to, the same
-// number of turns whatever it had been doing beforehand, and the giveaway was
-// that a grain released at rest orbited exactly as hard as one flung past at
-// speed. One authored curve wearing the costume of physics.
+// The torn era's journey: the fall into the hanging disc. **The rift pulls
+// and the grain does the rest.** An inverse square toward the middle, quoted
+// at one disc radius so it follows the disc as it grows; the grain's own
+// speed carries it; a little is shed each frame so nothing circles for ever;
+// inside RIFT_EAT it is gone. A thrown grain swings round once or twice and
+// a lifted one drops straight in, and neither is an authored curve.
 function orbit(list) {
   const f = frames();
   const c = riftCenter(), R = riftRadius();
@@ -613,25 +466,19 @@ function orbit(list) {
     const dx = c.x - m.x, dy = c.y - m.y;
     const d = Math.hypot(dx, dy);
     // Near the horizon the grain's own clock slows: its frame is shortened,
-    // so the pull, the speed and the step all ease off together and it creeps
-    // the last stretch instead of leaping it. `dim` is that same number, and
-    // the drawing fades on it -- a thing falling into something this heavy
-    // takes longer and longer to arrive and dims as it goes, and is never
-    // seen to cross. It is also what cures the flicker: a grain at full speed
-    // here stepped two or three cells a frame, and a mark that jumps two
-    // cells blinks.
+    // so the pull, the speed and the step ease off together and it creeps
+    // the last stretch. `dim` is the same number and the drawing fades on
+    // it, so a grain is never seen to cross. It is also what cures the
+    // flicker: a mark that jumps two cells a frame blinks.
     const ease = d <= eat ? 0
                : Math.min(1, (d - eat) / Math.max(1, slowFrom - eat)) ** 1.5;
     m.dim = ease;
     if (ease < RIFT_GONE) { list.splice(i, 1); continue; }   // faded out, and gone
     const fe = f * ease;
-    // The pull. Held at its value on the rim below that, because a true square
-    // goes to infinity at the middle and would fling a grain across the yard
-    // in the frame it got close.
     // Held at its rim value inside the mouth, because a true square goes to
-    // infinity at the middle -- and floored everywhere, because over the
-    // length of this hole a true square is the wrong law: a grain off the far
-    // end sits at forty radii and would feel nothing at all. See RIFT_G_MIN.
+    // infinity at the middle; floored everywhere, because a grain off the far
+    // end of this hole sits at forty radii and would feel nothing at all
+    // (RIFT_G_MIN).
     const g = Math.max(RIFT_G_MIN,
                        RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT));
     m.vx = (m.vx || 0) + (dx / d) * g * fe;
@@ -652,9 +499,9 @@ function fly(list, tx, ty) {
     if (m.t >= 1) { list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 
-    // A grain flies to the station that sold the row it paid for -- stamped on
-    // the grain at `lift` -- and falls back to the bench (`tx`/`ty`) for a spend
-    // with no destination around it. See `payTo` in pit.js.
+    // A grain flies to the station that sold the row it paid for (stamped on
+    // the grain at `lift`, see `payTo` in pit.js) and falls back to the
+    // bench (`tx`/`ty`) for a spend with no destination.
     const gx = m.tx != null ? m.tx : tx;
     const gy = m.ty != null ? m.ty : ty;
     const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out

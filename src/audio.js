@@ -1,27 +1,21 @@
 // The sound of the yard.
 //
-// You hear the yard, not the game, and everything is struck, nothing is played
-// (DESIGN.md, "The sound of the yard"). Modules never build a node; they say
-// what happened -- `sfx('stone', { x, hard })` at the spot where a pick met
-// rock -- and this file alone decides whether that survives the window and the
-// ceiling, and what it sounds like if it does. There is no bed: nothing hums,
-// hisses or drones between the strikes, so a still yard is silent.
+// Everything is struck, nothing is played, and there is no bed (DESIGN.md,
+// "The sound of the yard"). Modules never build a node; they say what
+// happened (`sfx('stone', { x, hard })`) and this file alone decides whether
+// it survives the window and the ceiling, and what it sounds like.
 //
-// It is the only file in the repo that has heard of an AudioContext, and it is
-// written in two halves that never mix. The **decision half** -- the fold
-// windows, the ceilings, the voice cap, the counters -- runs on the game's
-// clock and needs no context at all, which is what lets the node yard assert
-// it: given forty grains in one frame, how many voices fire. The **context
-// half** turns a decision into a sound, and is skipped wholesale where there is
-// no context, which is every check and every page before the first gesture.
-// Nothing is queued before that gesture: a yard that coughed up its whole
-// first second the moment the browser allowed it would not be the yard.
+// The only file that has heard of an AudioContext, in two halves that never
+// mix. The **decision half** (windows, ceilings, the voice cap, the counters)
+// runs on the game's clock with no context, which is what lets the node yard
+// assert it. The **context half** turns a decision into a sound and is
+// skipped wholesale where there is no context: every check, and every page
+// before the first gesture. Nothing is queued before that gesture.
 //
-// A strike is not a node graph. It is a recipe (`RECIPES` in config/sound.js,
-// mapped to the yard's events by `SOUNDS`) rendered sample by sample into a buffer -- the sfxr way,
-// and the same arithmetic the hit bench runs -- so the pixel stage (a bit
-// depth and a sample-rate divide) is a line of arithmetic, and a recipe landed
-// by ear on the bench ships as it was heard.
+// A strike is a recipe (`RECIPES` in config/sound.js, mapped to events by
+// `SOUNDS`) rendered sample by sample into a buffer, the same arithmetic the
+// hit bench runs, so a recipe landed by ear on the bench ships as it was
+// heard.
 
 import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATIO,
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
@@ -41,11 +35,9 @@ import { rand, seed, stream } from './rng.js';
 let awake = false;
 let muted = false;
 
-// What has been decided since wake. `byClass` is what the yard *asked for*, by
-// class, and `firedBy` is what got through. `pending` is open fold windows,
-// which is the backlog, and is meant to read as nought a window after the yard
-// goes quiet. `byEvent` is what the yard asked for, by event, so a check can
-// say how often one thing in the yard is heard.
+// What has been decided since wake. `byClass` is what the yard asked for,
+// `firedBy` what got through, `pending` the open fold windows (nought a
+// window after the yard goes quiet), `byEvent` the asks by event.
 const decisions = {
   fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0,
   byClass: { hand: 0, fold: 0, punct: 0, each: 0 },
@@ -61,22 +53,19 @@ function recipeOf(event) {
   return typeof r === 'string' ? RECIPES[r] || null : r || null;
 }
 
-// An open fold window per event: the one sound it will emit when it closes,
-// and everything folded into it so far, so the emission can stand for all of
-// them -- panned to where they were on average, as hard as they were on
-// average, big if any one of them was.
+// An open fold window per event: everything folded into it so far, so the
+// one emission can stand for all of them (panned to their average, as hard
+// as their average, big if any was).
 const windows = new Map();
 // When each event last fired, per ceilinged class, for the last second.
 const recent = { fold: new Map(), punct: new Map(), each: new Map() };
 // Every one-shot still sounding, for the cap. `env` is the context half's
-// handle on it, or null on a yard with no context.
+// handle, or null on a yard with no context.
 const active = [];
 let lastT = -Infinity;
 
-// The game's clock is turned back by a new game or a reseeded yard, and
-// everything here is a time on that clock: a window due, a strike ringing, a
-// fire in the last second. All of it belonged to the yard that is gone, so it
-// goes with it -- fading, where there is anything to fade.
+// A new game or a reseeded yard turns the clock back, and everything here is
+// a time on that clock, so it all goes with the old yard.
 function clock() {
   const t = now();
   if (t < lastT) {
@@ -96,9 +85,8 @@ const clamp = (v, lo = 0, hi = 1) => v < lo ? lo : v > hi ? hi : v;
 const db = d => Math.pow(10, d / 20);
 const cents = c => Math.pow(2, c / 1200);
 
-// The ceilings. An event's recent fires in a class are kept for a second and
-// pruned as they age out. Over the ceiling is *dropped*: a ceiling that defers
-// runs permanently late once the endgame yard gets going.
+// The ceilings. Over the ceiling is *dropped*, never deferred: a ceiling that
+// defers runs permanently late once the endgame yard gets going.
 function over(event, cls, t, ceiling) {
   const list = recent[cls].get(event) || [];
   const kept = list.filter(at => at > t - 1000);
@@ -107,9 +95,8 @@ function over(event, cls, t, ceiling) {
 }
 const mark = (event, cls, t) => recent[cls].get(event).push(t);
 
-// The cap. Oldest-and-quietest goes first, and the player's own hand is never
-// the one taken: it is the one event the player caused directly, and it is
-// allowed to be the clearest thing in the mix.
+// The cap. Oldest-and-quietest goes first, and the player's own hand is
+// never taken: it is allowed to be the clearest thing in the mix.
 function makeRoom() {
   while (active.length >= SND_VOICES) {
     let pick = -1;
@@ -129,8 +116,8 @@ function makeRoom() {
 // A recipe's field, or what a recipe that never set it has for it.
 const field = (spec, k) => spec[k] ?? RECIPE_DEFAULTS[k];
 
-// How long a recipe sounds, in seconds: its longest envelope run out, plus the
-// thump if it carries one.
+// How long a recipe sounds, in seconds: its longest envelope run out, plus
+// the thump if it carries one.
 function ringOf(spec, o) {
   const sub = field(spec, 'sub');
   const longest = Math.max(spec.decay * SND_RELEASE_TAILS + field(spec, 'bodyHold'),
@@ -140,12 +127,10 @@ function ringOf(spec, o) {
   return longest + (o.big ? SND_THUMP_S : 0);
 }
 
-// One decided strike: the level it will take, the room it needs, and -- where
-// there is a context -- the sound. `n` is how many events this one stands for,
-// and a folded strike was counted when its window opened, which is when the
-// decision was made. The jitter is drawn here, from the yard's own word, so
-// the node yard and the browser draw the same numbers whether or not anything
-// is rendered.
+// One decided strike. `n` is how many events it stands for; a folded strike
+// was counted when its window opened. The jitter is drawn here from the
+// yard's own word, so the node yard and the browser draw the same numbers
+// whether or not anything is rendered.
 function fire(event, o, cls, t, n = 1, counted = false) {
   if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
   const spec = recipeOf(event);
@@ -162,16 +147,13 @@ function fire(event, o, cls, t, n = 1, counted = false) {
   if (ctx) v.env = play(spec, o, { level, widen, delay, detune, ring });
 }
 
-// Something physically happened at world x. `event` is a key in SOUNDS --
-// 'rock-hit', 'footstep', 'boulder-land' -- and the table says what class it
-// falls under and what, if anything, it plays. `opts` is { x, hard, big }
-// plus, for a check that wants to say so, a `cls` that overrides the table's.
-// 'hand' is never folded or stolen; 'fold' (the yard's own work) is one sound
-// per window; 'punct' is rare by construction, with a ceiling of its own;
-// 'each' is a strike per event, never folded, but stolen like the yard's work
-// and ceilinged, because a refund lands hundreds of grains in one frame and
-// every strike is a buffer rendered.
-// Before the first gesture it is a no-op and nothing is queued.
+// Something physically happened at world x. `event` is a key in SOUNDS, and
+// the table says its class and what it plays. `opts` is { x, hard, big }
+// plus an optional `cls` override for a check. 'hand' is never folded or
+// stolen; 'fold' (the yard's own work) is one sound per window; 'punct' is
+// rare by construction with its own ceiling; 'each' is a strike per event,
+// never folded, but stolen and ceilinged, because a refund lands hundreds of
+// grains in one frame and every strike is a buffer rendered.
 export function sfx(event, opts = {}) {
   if (!awake) return;
   const cls = CLASSES.has(opts.cls) ? opts.cls : (SOUNDS[event] ? SOUNDS[event].cls : 'fold');
@@ -187,9 +169,7 @@ export function sfx(event, opts = {}) {
   }
   const w = windows.get(event);
   if (w) {
-    // Inside the window: folded into the sound it will emit, not queued and
-    // not fired. Averaged where it is worth averaging, or'd where one is
-    // enough.
+    // Inside the window: folded into the sound it will emit.
     w.n++;
     w.x += opts.x || 0;
     w.hard += opts.hard || 0;
@@ -199,10 +179,8 @@ export function sfx(event, opts = {}) {
   }
   if (over(event, cls, t, SND_FOLD_PER_S)) { decisions.dropped++; return; }
   mark(event, cls, t);
-  // The decision is made now -- this window will sound -- and the sound itself
-  // waits for the window to close, so everything that lands inside it is in
-  // it. Eighty milliseconds behind the first grain is not a lag anybody hears
-  // on a grain; it is what makes forty of them one handful.
+  // The decision is made now and counted now; the sound waits for the window
+  // to close so everything landing inside it is in it.
   windows.set(event, { due: t + SND_FOLD_MS, n: 1, x: opts.x || 0,
                        hard: opts.hard || 0, big: !!opts.big });
   decisions.fired++;
@@ -211,7 +189,7 @@ export function sfx(event, opts = {}) {
 }
 
 // Once a frame: the windows that have closed and the voices that have
-// finished. With no bed there is nothing here that needs the frame's length.
+// finished.
 export function stepAudio() {
   if (!awake) return;
   const t = clock();
@@ -225,9 +203,9 @@ export function stepAudio() {
   if (ctx) follow();
 }
 
-// The first real pointer gesture; until then the browser allows nothing, and
-// nothing here is counted either. On the node yard there is no context to
-// make, and the decisions wake without one.
+// The first real pointer gesture; until then nothing is counted either. On
+// the node yard there is no context to make, and the decisions wake without
+// one.
 export function wakeAudio() {
   if (awake) { if (ctx && ctx.state === 'suspended') ctx.resume(); return; }
   awake = true;
@@ -237,19 +215,16 @@ export function wakeAudio() {
   if (ctx.state === 'suspended') ctx.resume();
 }
 
-// The mute. A ramp both ways -- the one thing the switch calls, and the
-// switch's own memory is `prefs.js`'s.
+// The mute, ramped both ways. The switch's memory is `prefs.js`'s.
 export function muteAudio(on) {
   muted = !!on;
   if (!ctx) return;
   nodes.master.gain.setTargetAtTime(masterLevel(), ctx.currentTime, SND_MUTE_S / 3);
 }
 
-// The slider. SND_MASTER is the level the whole mix was pitched at and the
-// slider is a share of it rather than a second absolute: all the way up is
-// still the designed level, not louder, so nothing a player can reach turns
-// the yard into the thing the mix law refuses. Ramped like the mute, so a
-// dragged slider is not a run of clicks.
+// The slider is a share of SND_MASTER, not a second absolute: all the way up
+// is the designed level, not louder. Ramped, so a dragged slider is not a
+// run of clicks.
 let volume = 1;
 export function setVolume(v) {
   volume = Math.max(0, Math.min(1, +v || 0));
@@ -262,10 +237,9 @@ const masterLevel = () => muted ? 0 : SND_MASTER * volume;
 export function audioDecisions() { return decisions; }
 
 // The bench's mapping laid over the table: `{ event: recipe | null, ... }`,
-// each a recipe pasted whole or a name in RECIPES. An event the table does
-// not know is ignored, and one the mapping does not name keeps what it had.
-// This is how a sound is heard in place before it is written into config:
-// the dev panel's `sounds` tab pastes here and remembers the paste.
+// each a recipe pasted whole or a name in RECIPES. Unknown events are
+// ignored; unnamed ones keep what they had. The dev panel's `sounds` tab
+// pastes here.
 export function applySounds(map) {
   if (!map || typeof map !== 'object') return 0;
   let n = 0;
@@ -279,9 +253,7 @@ export function applySounds(map) {
   return n;
 }
 
-// The renderer, for the bench and tools/listen.mjs: a recipe to samples, with
-// no context and no jitter. What the game plays is this with the jitter drawn
-// by `fire`.
+// The renderer, for the bench and tools/listen.mjs: no context, no jitter.
 export function renderStrike(spec, o = {}, shape = { level: spec.gain, widen: 1, detune: 0 }) {
   return render(spec, o, shape);
 }
@@ -335,10 +307,9 @@ function follow() {
   aim(nodes.lowpass.frequency, nodes, 'cornerSent', SND_LOWPASS_HZ, SND_MUTE_S, 1);
 }
 
-// Where a world x sits in the ear. Shallow across the view, against its
-// middle; then, past either edge, deepening toward SND_PAN_OFF over
-// SND_PAN_REACH view widths, so a strike off the left of the screen is heard
-// off the left. Exported for the node yard, which has no context to hear it.
+// Where a world x sits in the ear: shallow across the view, then past either
+// edge deepening toward SND_PAN_OFF over SND_PAN_REACH view widths. Exported
+// for the node yard, which has no context to hear it.
 export function panOf(x) {
   if (x == null || !S.viewW) return 0;
   const half = S.viewW / 2;
@@ -349,18 +320,17 @@ export function panOf(x) {
   return side * (SND_PAN_MAX + (SND_PAN_OFF - SND_PAN_MAX) * beyond);
 }
 
-// The grit's and the click's noise: a stream of its own rather than `rand()`,
-// because a strike draws thousands of numbers and taking those from the
-// yard's word would put the browser's run off the node yard's from the first
-// gesture on (see `stream` in rng.js). Seeded from the run, so a seeded run
-// has a seeded soundtrack.
+// The grit's and the click's noise: a stream of its own, because a strike
+// draws thousands of numbers and taking them from the yard's word would put
+// the browser's run off the node yard's (`stream` in rng.js). Seeded from
+// the run.
 let noise = null;
 
-// A recipe rendered to samples at SND_RATE. The bench's `render`, line for
-// line, with the yard's meanings laid over it: `hard` moves the body and the
-// grit down and dulls the grit; `big` puts the thump under it; a fold's `widen` opens the grit's band and
-// its `level` carries the fold gain. Everything is one pass over the buffer,
-// then the pixel stage, then the recipe's own lowpass and a soft clip.
+// A recipe rendered to samples at SND_RATE: the bench's `render` with the
+// yard's meanings laid over it. `hard` moves the body and the grit down and
+// dulls the grit; `big` puts the thump under it; a fold's `widen` opens the
+// grit's band and its `level` carries the fold gain. One pass over the
+// buffer, then the pixel stage, then the recipe's own lowpass and a soft clip.
 function render(spec, o, { level, widen, detune }) {
   if (!noise) noise = stream(seed());
   const SR = SND_RATE;
@@ -442,9 +412,8 @@ function render(spec, o, { level, widen, detune }) {
   return out;
 }
 
-// One strike, played: rendered, put in a buffer, panned to where it happened
-// and started `delay` from now. Returns the gain the cap fades if it takes
-// this one.
+// One strike, played: rendered, panned to where it happened and started
+// `delay` from now. Returns the gain the cap fades if it takes this one.
 function play(spec, o, { level, widen, delay, detune }) {
   const data = render(spec, o, { level, widen, detune });
   const buf = ctx.createBuffer(1, data.length, SND_RATE);
