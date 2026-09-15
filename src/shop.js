@@ -455,8 +455,11 @@ function build(el, list, sections, empty, heads) {
           '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
       // A readout (`u.read`) is not for sale and does not answer the cursor:
-      // no lean, no drift. The hover rule leaves `.stat` alone as well.
-      if (shelf) { b.classList.add('tile'); if (!u.read) leanToCursor(b, u.key); }
+      // no lean, no drift. The hover rule leaves `.stat` alone as well. Nor
+      // does the pin: a thing kept in the corner to be glanced at is furniture,
+      // and furniture that stirs when the cursor crosses it is a distraction
+      // (the owner, 2026-09-15). The stylesheet holds its lift at nought.
+      if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl) leanToCursor(b, u.key); }
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no

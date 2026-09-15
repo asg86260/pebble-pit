@@ -473,4 +473,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 }
 .pin.rows.shelves > .sect { display: none; }
 .pin.rows.shelves::after { display: none; }
+/* The pin does not answer the cursor: no lift, no drift, no darkened border.
+   It is the resting tile whatever the pointer does; the builder attaches no
+   lean to it either. */
+.pin.rows.shelves > button.tile:hover { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
 
