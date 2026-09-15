@@ -971,7 +971,30 @@ export const SCENES = {
                  for (let i = 0; i < 12; i++) { window.__buy('tuneram'); window.__buy('tunebelt'); }
                  window.__meteor(); window.__give(60000); window.__buy('rift');
                  for (let i = 0; i < 14; i++) window.__buy('riftrate');
-                 window.__fast(20); window.__look(st().pitX - 700); } }
+                 window.__fast(20); window.__look(st().pitX - 700); } },
+  // The actual endgame: a yard with nothing left to buy. Every row on every
+  // board pressed to the top of its ladder or off its board, every machine
+  // standing and tuned, every shield up, the rift torn and widened, a full
+  // crew in every hat. `__everything` walks the boards the way a player would,
+  // so whatever is sold is in this shot without the scene naming it -- a row
+  // added tomorrow is bought here tomorrow. The shields come first because
+  // their rows are a story, offered one at a time as the one before fails,
+  // and a board walk cannot wait for a rock to fall.
+  // Framed on the rock end -- bench, shack, ram and the shields over the drop
+  // -- because the works is nine screens wide and the rock is the end of it
+  // that every ladder changed most; `__look` walks the rest.
+  everything: { about: 'the endgame', say: 'the actual endgame: everything bought, every ladder topped',
+    run: () => { rich(); lip(); window.__crew(6, 5, 5, 7, 3, 3);
+                 window.__grant({ sparks: 999999, shards: 999999, spores: 9999999, dust: 90000000 });
+                 S.shieldsDone = SHIELD_ORDER.slice(0, 3); S.towerOpen = S.meteorOpen = true;
+                 window.__everything(); window.__fast(20);
+                 // A yard this far up its ladders breaks a rock a beat after it
+                 // lands, and `look.mjs` runs a second more before the shot -- so the
+                 // scene ends a third of a second after a break, which is the next
+                 // rock just down, or just dropping, when that second is up.
+                 for (let i = 0; i < 100 && st().rock > 0; i++) window.__fast(0.05);
+                 window.__fast(0.35);
+                 window.__look(st().rockLeftX - 500); } }
 };
 
 // The names under each part, in ABOUT's order -- what the sheet draws and what

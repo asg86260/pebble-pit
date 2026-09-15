@@ -823,6 +823,41 @@ export const buyRowByKey = key => {
       || (!wasOn && !!workOn(u.key));
 };
 
+
+// Everything bought. Every row on every board is pressed the way a player
+// presses it -- through `buyRowByKey`, prices and rules and all -- until it
+// is at the top of its ladder or off its board, with each work finished as it
+// is started, and the boards are walked again until a whole pass buys nothing:
+// a row that only appears once another has gone is reached on the next pass.
+// The casino is left alone -- a chip put down is a wager, not an upgrade --
+// and rows with no price (jobs, dials, readings) have nothing to press.
+//
+// The machines' tuning ladders have no top (`kind: 'rung'` with no `rung`, see
+// `tuneRow`), so they go last and get `endless` rungs each: walked in board
+// order they drank every spark before the jaw was reached, and a yard with a
+// tuned ram and no jaw is not everything. The yard has to be able to pay, so
+// `grant` first. The return is every key pressed, in order.
+export const everything = (endless = LADDER, passes = 8) => {
+  const bought = [];
+  const bottomless = u => u.kind === 'rung' && !u.rung;
+  const rows = everyRow().filter(u => !CASINO_UPGRADES.includes(u) && (u.bill || u.cost));
+  const order = [...rows.filter(u => !bottomless(u)), ...rows.filter(bottomless)];
+  for (let p = 0; p < passes; p++) {
+    let any = false;
+    for (const u of order) {
+      const cap = bottomless(u) ? endless - bought.filter(k => k === u.key).length : 64;
+      for (let i = 0; i < cap && revealed(u) && !maxed(u); i++) {
+        if (!buyRowByKey(u.key)) break;
+        finishWorks();
+        bought.push(u.key); any = true;
+      }
+    }
+    if (!any) break;
+  }
+  buildShop(); S.dirty = true;
+  return bought;
+};
+
 // what the pile actually looks like, sampled across the hole: dust arrives at
 // the lip, so the shape of it is the shape of how it got there
 export const pitProfile = (n = 20) => {
@@ -1123,7 +1158,7 @@ export const HANDLES = {
   __pay: take,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
-  __tip: tip, __give: give, __finish: finishWorks,
+  __tip: tip, __give: give, __finish: finishWorks, __everything: everything,
   // dev: end whatever scene is running, without pressing anything.
   //
   // A press in the yard while a cutscene is on screen skips the scene and does
