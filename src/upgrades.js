@@ -1,8 +1,7 @@
 // What the bench sells, and what each thing costs.
 //
-// One row is one object. Every field is a function of the current game, so a row
-// never holds a stale number, and adding an upgrade is adding an object -- no
-// other file has to know about it. `SECTIONS` decides the order and the grouping
+// One row is one object. Every field is a function of the current game, so a
+// row never holds a stale number. `SECTIONS` decides the order and the grouping
 // on the board.
 
 import {
@@ -35,91 +34,43 @@ import { syncWorkers } from './crew.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
          busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
-// The one row this file's owner does not hold: the house is track C's
-// building, and this is the one line of upgrades.js it edits. See C1 in
-// wave-feedback3.md.
 import { nextHouseAt } from './house.js';
 
-// Every swing in the game is the same shape: a gap in milliseconds that shrinks
-// by a fixed fraction per level and never goes below a floor. One function, five
-// swings -- the next kind of worker gets its speed for a line.
-// A rate ladder, from what it starts at down to the fastest it will ever go, in
-// a fixed number of rungs -- so the last rung *is* the floor.
-//
-// It used to be a fraction a level for ever: multiply by 0.8 and clamp at the
-// floor. Which meant the row reached the floor at some level nobody had written
-// down, and then vanished off the board -- a cap the game had and would not
-// admit to. Spread across the rungs instead, the last one lands exactly on the
-// floor and the row says "5 of 5" and stays there.
-//
-// Eased rather than even: the first rungs are worth more than the last, which is
-// how a rate reads -- going from a swing a second to two is a different feeling
-// from going from nine to ten, and paying the same for both is what makes a
-// long tail of upgrades feel like nothing is happening.
+// A rate ladder from `base` to `floor` in a fixed number of rungs, eased so the
+// first rungs are worth more than the last; the last rung lands exactly on the
+// floor, so a row can say "5 of 5" instead of quietly reaching a cap.
 export const swing = (base, floor, rungs) => lvl => {
   const k = Math.max(0, Math.min(1, lvl / rungs));
   return Math.round(base + (floor - base) * (1 - Math.pow(1 - k, 1.6)));
 };
 const perSecond = ms => lvl => 1000 / ms(lvl);
 
-// What the counts read is a list a ladder -- see config/rungs.js.
 export const capacity = (lvl = S.carryLevel) => rungValue('carry', lvl);
 
 // `rungCost` and `DUST_PER` live in upgrades/price.js, a leaf, so the ladder
-// helper can price a row without importing this file -- see the note there.
+// helper can price a row without importing this file.
 import { rungCost, DUST_PER } from './upgrades/price.js';
 export { rungCost, DUST_PER };
 
-// Where a row is on its ladder, and whether it is at the top of it. A row with
-// no `rung` is not a ladder at all -- a building, a one-off, a job -- and is
+// A row with no `rung` is not a ladder (a building, a one-off, a job) and is
 // never finished.
 export const rungOf = u => (u.rung ? u.rung() : 0);
-// How long this row's ladder is. `RUNGS` unless the row says otherwise, which is
-// one row in the game and its argument is over `KIT_MAX`: the kit ladders are
-// three rungs, and a board drawing five pips over a ladder that ends at three is
-// a board promising two purchases that do not exist.
-//
-// Read through one function rather than compared against `RUNGS` at each of the
-// four places that ask -- the pips, the count under them, "done", and the fold
-// -- because a cap only half of them know about is a row that says 3/5 and
+// `RUNGS` unless the row says otherwise (the kit ladders are `KIT_MAX`). Read
+// through one function because the pips, the count, "done" and the fold all
+// ask, and a cap only some of them know about is a row that says 3/5 and
 // cannot be bought.
 export const rungsOf = u => (u.rungs ? u.rungs() : RUNGS);
 export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
 
 // Whether a finished row may be folded off its board by "finished: hidden".
-//
-// Nearly all of them may, which is the whole point of the switch: a rate you
-// have taken to its floor has nothing left to say and is in the way of the rows
-// that do. A kit row is the exception and says so with `keep`.
-//
-// The argument was the school board's own, and it was written down long before
-// there was a switch that could take it away: a row in this game says what
-// buying it *gives* you and what it costs, and never what you already have --
-// which leaves the kit rows as the only place in the game to read how many
-// helmets are on the rock, and that is the whole question of a kit row. Fold a
-// finished kit row away and the board loses the fact it exists to carry, right
-// at the moment the fact becomes final.
-//
-// It became reachable when the kit got a ceiling. Before that these rows had no
-// ladder, so `maxed` was never true of them and the switch could never see them
-// -- and a three-rung ladder is finished quickly, so what the player sees is a
-// row they have just bought vanishing under their hand.
+// A kit row says `keep`: it is the only place to read how many hats a station
+// owns, and that fact becomes final exactly when the ladder finishes.
 export const folds = u => maxed(u) && !u.keep;
 
-// A ladder sold in more than one row is still one ladder, and shows one row at
-// a time. Load and then the harness are two rows over what a pair of hands
-// carries; pace, then boots, then the pace multiplier are three over how fast
-// they walk. Side by side they read as the same thing for sale twice -- and a
-// player with both open is being asked which of two identical rows to buy, which
-// is not a decision, it is a shrug. So a row that continues another names it
-// with `after`, and stays off every board until that row's ladder is finished:
-// the same rule the four cards of a tier ladder already keep (`tierRows`), said
-// once here for the rows written by hand. The finished row folds away under
-// "finished: hidden" and the next one stands where it stood.
-//
-// It wraps `show` rather than being a second gate the boards have to ask about,
-// so everything that reads `show()` -- the sheet, `canAfford`, the bench's mark,
-// `__rows` -- gets the chain for free.
+// A ladder sold in more than one row shows one row at a time: a row naming
+// `after` stays off every board until that row's ladder is finished. Wraps
+// `show` so everything that reads it (the sheet, `canAfford`, the bench's
+// mark, `__rows`) gets the chain without a second gate.
 export const chained = rows => {
   const byKey = new Map(rows.map(u => [u.key, u]));
   for (const u of rows) {
@@ -132,66 +83,44 @@ export const chained = rows => {
   return rows;
 };
 
-// Every ladder reads a written list -- what it is worth at each rung, in the
-// row's own unit (config/rungs.js) -- so the swings are kept as hits a second and the
-// gap between hits is a thousand over that. The scoop is the one curve left
-// here: it rides the haulers' pace ladder and no row reads it.
+// The scoop is the one curve left here: it rides the haulers' pace ladder and
+// no row reads it. Every other ladder reads its written list (config/rungs.js).
 const scoopGap = swing(HAUL_MS, 30, LADDER);
 
 export const mineRate = (lvl = S.speedLevel) => rungValue('speed', lvl);
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, Math.round(1000 / mineRate(lvl)));
 export const rockhandRate = (lvl = S.rockhandSpeedLevel) => rungValue('rockhandspeed', lvl);
 export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, Math.round(1000 / rockhandRate(lvl)));
-// What a pair of hands carries: what it can hold, and then what it can hold
-// *with something to hold it in*. The harness is the second tier -- bought with
-// stone out of the quarry, because gear is what stone is for.
-// What a hauler carries and how fast it walks, one ladder each. A load is a
-// whole number of grains and the walk a speed, both off their lists
-// (config/rungs.js).
 export const haulCap = (lvl = S.haulCarryLevel) => rungValue('haulcarry', lvl);
 // The walk is written in px/s and stepped in px a frame.
 export const haulSpeed = (lvl = S.haulPaceLevel) => rungValue('haulpace', lvl) / 60;
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
-// A trip's pace, for anybody making one. It lived in crew.js, and the stations
-// could not reach it -- crew.js imports them -- so each grew a private walking
-// speed tuned for its own few feet of ground: FARM_WALK for stepping to the
-// next plot, QUARRY_WALK for shuffling in the cut. Both were then used for
-// whole commutes, and a farmhand carried across the world by a shovelling
-// errand came home at a plot-shuffle: sixty-five pixels a second, ninety-five
-// seconds of crawling, cured by picking the body up and dropping it. A trip is
-// a trip, whoever makes it.
+// A trip's pace for anybody making one. One number for every commute: a
+// station-private walking speed tuned for a few feet of ground gets used for
+// whole commutes and a body crawls across the world.
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
-// And the trip between the shacks and the work, either way: a multiple of the
-// commute (config/house.js, HOME_HURRY), so it climbs the pace ladder with it.
+// The trip between the shacks and the work, a multiple of the commute so it
+// climbs the pace ladder with it.
 export const homePace = () => commutePace() * HOME_HURRY;
-// Pixels a swing takes. Yours and theirs are two different tools now: one row
-// that made every rockhand in the yard hit harder was doing two jobs at once, and
-// it sat under `you` while half of what it bought was on the rock.
-export const pickCount = (lvl = S.pickLevel) => rungValue('pick', lvl);   // pixels your own swing takes
-// What a rockhand takes: whole pixels off its list. The eased curve this
-// replaced bought fractions of a pixel per rung -- numbers the row could only
-// show as noise ("1.4 -> 1.7 px"). Clamped to the list here as well as at
-// load, so a saved level past the top reads as the top.  (feedback7, item 19)
+// Pixels a swing takes: yours and the rockhands' are two ladders.
+export const pickCount = (lvl = S.pickLevel) => rungValue('pick', lvl);
+// Whole pixels off the list; clamped to the list so a saved level past the top
+// reads as the top.
 export const rockhandBite = (lvl = S.rockhandPickLevel) => rungValue('rockhandpick', lvl);
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
-// in the stylesheet.
+// in the stylesheet. Time is a price like the coins and reads the same way.
 export const MARK = {
   dust: '<i class="dust"></i>',
   core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
   spore: '<i class="spore"></i>',
   spark: '<i class="spark"></i>',
-  // Time is a price like the rest of them. Something that takes two minutes
-  // costs you two minutes, and a row that said so in a note was a row you had to
-  // open a second sheet beside to read one number off. It goes in the bill with
-  // the coins, under a clock, and reads the same way they do.
   time: '<i class="clock"></i>'
 };
 
-// what you have of one. Time is the exception and always will be: you cannot be
-// short of it, so a bill that asks for it is never the reason a row is out of
-// reach and the clock on it is never greyed.
+// What you have of one. You cannot be short of time, so a bill asking for it
+// is never the reason a row is out of reach.
 export const purse = money =>
   money === 'time' ? Infinity :
   money === 'core' ? S.cores :
@@ -200,89 +129,34 @@ export const purse = money =>
   money === 'spark' ? S.sparks :
   S.stored;
 
-// units are the marks themselves: a grain of dust, a grain a second
-//
-// Only the ones the yard has a coin for. A unit measured in something you cannot
-// hold -- work at the bench, motes through the fan, bolts off a wand -- is
-// written out in the words the row already names it by. See `gainText`: this
-// table says what a unit is *drawn* as, not which units exist, and a row naming
-// one that is not in here used to have the lookup itself put on the board.
+// What a unit is *drawn* as, for the units the yard has a coin for. A unit not
+// in here is written out in the row's own word (see `gainText`).
 export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
   'trips/min': '<i class="shard"></i>/min',
   'plots/min': '<i class="spore"></i>/min',
-  // What one go on either ground is worth, which is the other half of what the
-  // two grounds sell -- a rate says how often, these say how much.
   'shards/dig': '<i class="shard"></i>/dig',
   'spores/cut': '<i class="spore"></i>/harvest'
 };
 
-// A second is the clock, never the letter.
-//
-// Every other quantity on these boards is a mark -- a grain, a core, a shard,
-// a clock for what a build costs in waiting -- and seconds were the one thing
-// still spelled out, as an `s` hanging off a number. Next to a lowercase word
-// unit that reads as the end of the word ("a longer dose, +14 s") and next to a
-// mark it reads as a stray letter, and the game already has a picture for time
-// standing in the bill directly underneath.
-//
-// Done here rather than in the four rows that name a unit in seconds -- and in
-// whichever row is written next -- because a row's business is what it measures,
-// not how the board spells it. `s` on its own is a duration; a trailing `/s` is
-// a rate, and the clock goes where the letter was in both.
-//
-// ...and then not. The clock is the mark of a PRICE in time -- the bill's
-// '⏱ 5' -- and the same glyph in a gain line meant 'per second' on the same
-// card: '+30% ■/⏱' beside '⏱ 5', and on the apothecary '30 → 27 ⏱' (a brew's
-// length) beside '⏱ 5' (a build's). One glyph, two meanings, forty pixels
-// apart (critics 2026-09-10, C9). A second is written 's' again wherever it is
-// a unit and not a price; the clock is the bill's alone.
+// A second is written 's' wherever it is a unit; the clock glyph is the bill's
+// alone, because the same glyph meaning "per second" on the gain line and "a
+// price in time" on the bill forty pixels below it read as two things.
 export const secondsMark = text => text;
 
-// What a unit is drawn as: the mark the yard has a coin for, or the row's own
-// word if it has not -- and either way with its seconds turned into clocks.
 export const unitText = unit => secondsMark(UNITS[unit] || unit);
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 
 // --- what a row says it gives you -------------------------------------------
-// No row on any board states a number the game is keeping. It used to: every
-// purchase read `1 -> 1.5` and a unit, which is two numbers and an arrow to say
-// one thing, and it asked the player to hold both halves in their head and do
-// the subtraction. Worse, it put the game's own bookkeeping on the shelf --
-// 1.5 dust a second is a figure that means nothing until you have watched it
-// for a minute, and by then you have bought the row anyway.
-//
-// So a row says what buying it *changes*, and nothing else. The same move the
-// sky made when the pollution readout became a mark you look at: the number was
-// never the thing, the direction was.
-//
-// Two shapes, and only two. Something you can count -- a pair of hands, a bench,
-// a pixel of reach -- goes up by a whole number and says so. Everything else is
-// a rate, and a rate is a proportion of itself: half again as fast is +50%
-// whatever it was doing before, which is the one form that stays true at every
-// level and never needs a unit explained.
-//
-// `from` and `to` are still the current value and the value after: the row is
-// the only place that knows how its own maths works, and the difference is
-// taken here rather than written out by hand thirteen times.
-//
-// And the thing that changes is *named*, when the row's name does not name it.
-// "boots +45%" is a noun and a number with no verb between them: forty-five per
-// cent of what? A row called "swing" is a stat and its share is a share of
-// swinging, but most rows are called after the thing you buy -- boots, a
-// harness, a stew -- and for those the board was leaving the one word that
-// matters to the player's guess. So a row carries `does`, the verb its number
-// is about, and the gain line leads with it: "walk +45%", "carry 1 -> 3",
-// "crit 4 -> 8%". Every proportional row has one -- a share has to be a share
-// of something, and test/gain-verb.test.mjs holds the board to it -- and a
-// count row has one wherever its unit does not already say (a mark of dust a
-// swing, a mark of dust a sweep of the cursor holds).
+// A row says what buying it *changes*, never a number the game is keeping.
+// Two shapes only: a count goes "a -> b" and a rate goes "+n%". The verb the
+// number is about (`does`) leads the line, because "boots +45%" leaves the one
+// word that matters to the player's guess; test/gain-verb.test.mjs holds
+// every proportional row to having one.
 export const gainText = u => {
-  // A finished ladder has nothing left to give, verb included -- "walk" over
-  // "done" would be a promise with nothing after it. The board blanks the
-  // column itself; this is so anything else reading the words agrees with it.
+  // A finished ladder has nothing left to give, verb included.
   if (maxed(u)) return '';
   const amount = gainAmount(u);
   // A door has no amount to print; it says what the place is for instead.
@@ -293,87 +167,47 @@ const gainAmount = u => {
   if (!u.to) return '';
   const b = Number(u.to());
   if (!isFinite(b)) return '';
-  // The mark if the yard has one for it, and the row's own word if it has not.
-  // Four rows name a unit no coin stands for -- the lab's work, the fan's motes,
-  // the tower's bolts and the cells one takes off a star -- and what the board
-  // printed for all four was the failed lookup: "better instruments, +25%
-  // undefined". A missing mark is a unit to write out, not a row to break.
-  //
-  // Glued to the number, not spaced off it: the gain shares its column with the
-  // bill on the line above and can be squeezed to a word's width, and an amount
-  // that breaks -- "4 -> 8" on one line and "%" on the next -- is a number and a
-  // stray symbol. The verb in front of it may break off; the amount never. A
-  // bare symbol (a per cent, a times) is written against its number the way
-  // it is everywhere else; a mark or a word takes the fixed space.
+  // The gain shares a narrow column with the bill, so the amount is glued to
+  // its mark with a no-break space: the verb may wrap off, the amount never
+  // breaks. A bare symbol (%, x) sits against its number like everywhere else.
   const NB = ' ';
   const mark = !u.unit ? '' : /^[%x]$/.test(u.unit) ? u.unit : NB + unitText(u.unit);
-  // A row with a `to` and no `from` is not a step up a ladder, it is what
-  // you get: hold to mine gives one hit a second, and "0 -> 1" would be an
-  // arrow from nothing.
+  // A `to` with no `from` is not a step up a ladder, it is what you get.
   if (!u.from) return `${Number.isInteger(b) ? b : num(b)}${mark}`;
   const a = Number(u.from());
   if (!isFinite(a)) return '';
-  // A count says what it is now and what it would be. "+1" tells you what the
-  // row does and nothing about whether it is worth it: going from one to two is
-  // doubling what you can carry, and going from eleven to twelve is not, and the
-  // row read identically either way. The number you have is the one thing the
-  // board could not tell you and the yard could not either -- it is on your
-  // cursor, not on a counter.
-  //
-  // Counts only. A rate is already a comparison -- it says what share it adds --
-  // and "2.4/s -> 3.1/s" in a column this wide is two numbers where one will do.
-  // `num` is for rates and puts a decimal on everything under ten, so "+1.0
-  // benches" is a number pretending to be a measurement.
+  // A count says now and after: one to two is doubling, eleven to twelve is
+  // not, and "+1" reads the same for both. Counts only; a rate is already a
+  // comparison.
   if (!u.pct) {
     const say = v => (Number.isInteger(v) ? v : num(v));
     return `${say(a)}${NB}→${NB}${say(b)}${mark}`;
   }
-  // A rate stepping onto its floor can gain a real amount and round to nothing.
-  // A row that says +0% is a row that reads as broken, so the smallest thing a
-  // purchase is ever allowed to claim is one per cent.
-  //
-  // And no mark after it. A proportion is a comparison of a thing with itself,
-  // and the unit cancels out of it: the haulers' pace row read "+30% grains per
-  // clock", which is thirty per cent of nothing anyone could name. The row
-  // still carries its unit -- that is what `from` and `to` are measured in --
-  // but the board has no use for it once the number is a share.
+  // A rate stepping onto its floor can gain a real amount and round to 0%,
+  // which reads as broken, so the least a purchase claims is one per cent.
+  // No mark after a proportion: the unit cancels out of it.
   const up = a > 0 ? Math.round((b / a - 1) * 100) : 0;
   return `+${b > a ? Math.max(1, up) : up}%`;
 };
 
 
-// Hiring and putting to work are two different things now. You buy a body once
-// — a core for the first, dust for the next — and it carries dust until you put
-// it on something else. A job is a count, not a purchase, so every one of them
-// can be taken back the moment you want the dust moving again. What a body is
-// twice as good at is its hat, and the hat stays at the station -- see
-// upgrades/rows-kit.js.
+// A job is a count, not a purchase: you buy a body once and move it freely.
+// What a body is twice as good at is its hat, and the hat stays at the station
+// (upgrades/rows-kit.js).
 export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
 
-// Bodies with nothing else to do. They are the haulers, always: every body in
-// the yard can be moved to every job, and nothing you buy changes that.
-// Builders are not subtracted here: the count is derived FROM the spares (see
-// `rebalance`), so subtracting it would take the same body off twice.
+// Bodies on no job. They are the haulers. Builders are not subtracted here:
+// the builder count is derived FROM the spares (`rebalance`), so subtracting
+// it would take the same body off twice.
 export const spareHands = () =>
   S.crew - JOBS.reduce((n, j) => n + S[j], 0);
 export const idle = () => spareHands();
 
 // --- the kit ----------------------------------------------------------------
-// What a kit row sells is not a person, it is a hat -- and a hat belongs to the
-// station, not to the head that happens to be under it. Buying one used to
-// upgrade a body and nail it to the post for good, which is a decision you make
-// once and then live with for the rest of the run: thirteen carters is thirteen
-// bodies that cannot go and work a plot.
-//
-// So the kit stays where the work is. Whoever is standing at the rock picks up
-// whatever helmets are lying on it, and a helmet nobody is wearing lies there
-// waiting for the next body sent over. Move everybody off and the hats stay
-// behind; move somebody back and they are wearing one before they get there.
-// Nothing is ever wasted and nothing is ever locked.
-// Which station owns which hats, and what job a body is doing from what it is.
-// Both live in kit.js now, with the shape of the hat and the rest of what a hat
-// is, and are passed straight through here: the shop asks about a trade, and a
-// trade is a fact about a hat.
+// A hat belongs to the station, not to the head under it. Whoever stands at
+// the station wears whatever is lying there; move everybody off and the hats
+// stay behind. Which station owns which hats, and what job a body is doing
+// from what it is, live in kit.js and are passed through here.
 import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 import { JOB } from './jobs.js';
 import { BENCH_ROWS } from './upgrades/rows-bench.js';
@@ -393,185 +227,76 @@ import { SHACK_ROWS } from './upgrades/rows-shack.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
 
-// hats the station owns, hats actually on heads, and hats lying on the ground
-// there waiting for somebody to come and get them
-//
-// Where those hats came from is the kit table's business and not the shop's:
-// most stations buy theirs a trade at a time, the outhouse simply has its caps,
-// and `stockOf` is the one place that knows the difference. Everything from here
-// down -- `spareKit`, `kitFull`, the errand, the stand, the roster's second line
-// -- is written against this number and cannot tell the two apart.
+// Hats the station owns. `stockOf` is the one place that knows whether they
+// were bought a trade at a time or came with the shed; nothing below can tell.
 export const hats = stockOf;
-// Counted off `kitOf` -- whose kit it is -- and not off the job the body is on.
-// Those two agree except for the length of a walk back, and reading the job was
-// how a helmet came to be counted twice: a body moved from the rock to carrying
-// keeps the helmet on its head until it has walked it to the stand, and while it
-// did, `JOB_OF` said hauler, the rock counted nobody wearing its kit, and the
-// rock put a helmet it did not have out on the stand for the next body along.
-// The hat is on a head. That is the fact, and this is the count of it.
+// Counted off `kitOf` (whose hat it is), not off the job the body is on: a
+// body moved off the rock keeps the helmet on until it has walked it to the
+// stand, and counting by job put a helmet out on the stand that was still on
+// a head.
 export const worn = job => S.workers.filter(w => w.trained && w.kitOf === job).length;
-// Kit knocked off a head and lying loose in the yard is the station's, but it
-// is not ON THE STAND: until its owner picks it back up (or hands it in) nobody
-// else can be sent to wear it. Without this a shaken carter's cart was counted
-// spare while it lay on the ground, a second hauler fetched a phantom from an
-// empty stand, and when the first recovered its real cart the books read one
-// too many and marched it straight back.
+// Kit knocked off a head and lying loose is the station's but not on the
+// stand: nobody else can be sent to wear it until its owner picks it up.
 export const loose = job => S.workers.filter(w => w.hatOff && w.hatOff.of === job).length;
-// A hat is made at its own station's stand -- the body that does the work is
-// standing there when it lands (upgrades/rows-kit.js) -- so a bought hat is
-// spare from the frame it is bought, and there is no shelf and no carrier to
-// subtract.
+// A hat is made at its own station's stand, so a bought hat is spare from the
+// frame it is bought: no shelf, no carrier to subtract.
 export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 
-// How many bodies a station has room for. Two of them have a floor plan: a cut
-// holds one body per bench and a plot holds one per plot, and there is nowhere
-// else down there to put anybody. That is what makes the quarry and the farm
-// worth what they give up the moment they open -- a shard buys the third body
-// somewhere to stand, and a spore buys the fourth a plot -- and it is why the
-// plus button under either of them goes pale with hands still spare.
-//
-// The rock and the lab have no such plan: a rock is as long as it is and a room
-// holds who it holds.
-// What a station's floor plan says it holds. One table, read by both questions
-// below, because a second hand-kept copy of it is precisely the bug `rebalance`
-// was fixed for one screen down: the copy that gets forgotten is the one that
-// matters.
+// What a station's floor plan says it holds. One table, read by `capOf` and
+// `handsOf` both, so the two cannot disagree.
 const capOfBare = job =>
   job === JOB.QUARRY ? benches() :
   job === JOB.FARM ? plotCount() :
-  // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
-  // apothecary has broken standing room for. A second pot is a second body's.
+  // One stirrer to a pot.
   job === JOB.STIR ? S.apothPots :
-  // No room for a scholar anywhere, because there is no lab: research is a build
-  // now and the bodies that do it are builders. Kept as a nought rather than
-  // deleted so a save written before the lab went can still be read -- it lands
-  // its scholars in the spare pool through `rebalance`, which is what a job with
-  // no room does. See DESIGN.md, "The lab is deleted".
+  // There is no lab. Kept as a nought rather than deleted so a save with
+  // scholars still reads: `rebalance` lands them in the spare pool.
   job === JOB.SCHOLAR ? 0 :
-  // One body in the scrubbing house too, and for the same reason: it is a shed
-  // with a fan in it. A second body was a second pair of hands on a machine
-  // that runs itself once somebody is standing in it -- the draught it makes is
-  // the same draught -- so the extra bodies read as a way to buy a faster sky
-  // rather than as a place to be. What makes the sky come down quicker is the
-  // recycler and the machine, not a queue inside the shed.
-  //
-  // This is also the argument for the machines, word for word. See `capOf`.
-  // One in the house -- and one in each balloon it has sold. The shed argument
-  // above is about the *shed*: a second body at one fan is a queue. A craft is a
-  // second mouth rather than a second pair of hands at the same one, so it is a
-  // place to be and it takes a body of its own. See balloon.js.
+  // One body in the scrubbing house (a second pair of hands at one fan is a
+  // queue) and one in each balloon it has sold (a second mouth is a place).
   job === JOB.PURIFY ? 1 + craftCount() :
-  // Shovelling up after everybody is a job once there is a shed to gather it
-  // under. Before that the mess is the yard's problem and nobody is on it -- see
-  // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
-  //
-  // More than one of them, because unlike the shed jobs this one is not a room
-  // with a bench in it: it is the whole yard, and a yard the length of this one
-  // is more ground than one pair of hands can keep up with.
-  //
-  // How many is `LOO_POSTS`, and the outhouse hangs a cap on its stand for each --
-  // which is why this reads the kit table rather than the number itself. A post
-  // and the cap that goes with it are one thing the shed opens, and two places
-  // counting it separately is exactly how you get a body sent to a job with
-  // nothing on the stand to pick up.
+  // One janitor a post, and the outhouse hangs a cap on its stand for each --
+  // read off the kit table rather than `LOO_POSTS` so a post and its cap are
+  // one fact.
   job === JOB.JANITOR ? hats(JOB.JANITOR) :
-  // One body per hat, and the tower makes them one at a time. This is the only
-  // station in the yard whose floor plan is a thing you buy rather than a thing
-  // you build: there is as much room in the sky as there are people who can get
-  // to it.
+  // The tower's floor plan is the hats it has made: one body per hat.
   job === JOB.WIZARD ? S.wizardHats :
-  // Building is not a job you assign at all. The yard derives its builders from
-  // whoever is spare when something is going up (see `rebalance`), so there is
-  // no room to put anybody in -- and a save written while the construction
-  // bench stood lands its hired builders in the spare pool, the way the lab's
-  // scholars do above.
+  // Building is derived from the spares (`rebalance`), never assigned.
   job === JOB.BUILD ? 0 :
-  // The rock and the lip have no plan: a rock is as long as it is, and carrying
-  // is what a body does when it is on nothing at all.
+  // The rock and the lip have no plan.
   Infinity;
 
-// Where a body may be put, which is the floor plan unless a machine has the
-// station.
-//
-// A station being worked by a machine holds one body: the tender. That is the
-// scrubbing house's rule and its comment above is the argument for it word for
-// word -- a machine runs itself once somebody is standing in it, and a second
-// pair of hands is a queue rather than a place to be.
-//
-// It reads the lever (`on`) and not whether anybody is actually standing there.
-// That distinction is the whole of why this works: a cap derived from "is it
-// manned" would flip every time the tender walked off to shovel, and `rebalance`
-// would thrash the gang between the station and carrying, twice a minute, for
-// ever.
+// Where a body may be put: the floor plan, or one tender while a machine has
+// the station. Reads the lever, not whether anybody is standing there -- a
+// cap derived from "is it manned" would flip every time the tender walked
+// off to shovel and `rebalance` would thrash the gang for ever.
 export const capOf = job => machineFor(job) ? 1 : capOfBare(job);
 
 export const roomAt = job => capOf(job) - S[job];
 
-// What the station could hold by hand -- its complement, before it was given a
-// machine. `capOf` answers 1 while a machine runs, which is the right answer to
-// "where can I put a body" and the wrong one to "what is this machine standing
-// in for", so the two questions get two functions.
-//
-// The rock is the one station with no floor plan to read: `capOf('rock hands')` is
-// `Infinity` and should stay that way. Its complement is `ROCK_GANG`, a named
-// constant in config with its reasoning over it.
-// What the station could hold by hand -- its complement, before it was given a
-// machine. `capOf` answers 1 while a machine runs, which is the right answer to
-// "where can I put a body" and the wrong one to "what is this machine standing
-// in for", so the two questions get two functions off the one table.
-//
-// The rock is the one station with a machine and no floor plan to read, so its
-// complement is `ROCK_GANG` -- a named constant in config with its reasoning
-// over it. Every *other* plan-less job keeps `Infinity` and is reported as
-// having no complement at all, rather than being quietly handed the rock's: the
-// lip has no machine and no floor plan, and a roster claiming carrying holds
-// five would be a number with nothing behind it.
+// What the station could hold by hand -- what a machine stands in for. The
+// rock has no floor plan, so its complement is `ROCK_GANG`; carrying is not a
+// place, so what the belt stands in for is `LIP_GANG`. Every other plan-less
+// job keeps `Infinity` rather than being handed the rock's number.
 export const handsOf = job =>
   job === JOB.ROCK ? ROCK_GANG :
-  // Carrying has no floor plan either, and for a different reason: it is not a
-  // place at all. It is what a body does when it is on nothing, so "how many fit"
-  // is the whole crew, and what the belt stands in for is a full complement of
-  // carriers.
   job === JOB.HAUL ? LIP_GANG :
   capOfBare(job);
 
 
-// What a full set of a station's kit is: its trade's own set (`KIT_MAX`, for the
-// four kit rows), or its whole complement if it holds fewer hands than
-// that. The second half is what keeps a small station honest -- the outhouse's two
-// posts are fully kitted at two, and asking it for a third cap would be asking
-// for a cap with no head to go under.
-//
-// Read off `kitSetOf` rather than the board's ceiling. The two are the same
-// number everywhere but the lip, where the cart row has no ceiling and a set is
-// still three -- see the note over `kitSetOf`.
+// A full set of a station's kit: its trade's set, or its whole complement if
+// that is smaller -- the outhouse's two posts are fully kitted at two. Read
+// off `kitSetOf` rather than the board's ceiling; the cart row has no ceiling
+// and a set is still three.
 export const kitCap = job => Math.min(handsOf(job), kitSetOf(job));
 
-// Whether a station's kit is complete: every hat it will ever own, bought.
-//
-// It used to be a hat for every pair of hands -- which is a gate that recedes as
-// you walk at it, because the hands are themselves a thing you buy. Deepening
-// the cut moved the jaw further away; breaking another furrow moved the tiller.
-// The ceiling is a number now (see `KIT_MAX`), so a set is a set.
 export const kitFull = job => hasKit(job) && hats(job) >= kitCap(job);
 
-// What the station's gang is worth, in bare pairs of hands.
-//
-// A hat is a flat doubling wherever one is worn -- twice the bite on the rock,
-// twice the pace at a cell, twice the tending on a plot, twice the load at the
-// lip -- so a hatted body counts twice and a bare one counts once, and the gang
-// is the complement plus however many of it are hatted.
-//
-// This is a sum rather than a multiplier now, and it has to be: with kit capped
-// below the complement there is no longer one number that describes every body
-// at the station. Five hands and three helmets is eight, not five-times-
-// anything, and rounding it to "fully kitted" or "bare" is what would make a
-// machine either a bargain or a downgrade depending on which way it rounded.
-//
-// A station whose machine took its kit is counted at a full set whatever its hat
-// count says, and has to be: the machine was gated behind a full set and then
-// *took* them -- see `buyMachine` -- so reading the station afterwards would
-// find nought hats and quietly shrink the thing you had just bought.
+// The gang in bare pairs of hands: a hat is a flat doubling, so a hatted body
+// counts twice. A sum, not a multiplier -- with kit capped below the
+// complement there is no one number that describes every body. A station
+// whose machine took its kit is counted at a full set, because the machine
+// was gated behind a full set and then took it (`buyMachine`).
 export const gangWorth = job => {
   const n = handsOf(job);
   if (!isFinite(n)) return n;
@@ -580,54 +305,24 @@ export const gangWorth = job => {
   return n + hatted;
 };
 
-// The same thing per pair of hands, for anybody who wants it as a multiplier.
 export const kitMult = job => gangWorth(job) / handsOf(job);
 
-// What the machine is worth, in hands, at this station.
-//
-// It reads the hats, and this is the correction that makes the whole upgrade
-// path hold together. It used to read the ladders only, on the argument that a
-// machine should not be able to arrive at fifteen hands off kit you happened to
-// have bought -- which was the right worry about the wrong thing. What it
-// actually produced was a machine that was a *downgrade*: a fully-hatted cut of
-// five is worth ten hands, and the jaw at complement-times-one-and-a-half was
-// worth seven and a half. You paid fifty sparks to make the quarry slower.
-//
-// And it made the specialists obsolete at a stroke. A machine caps its station
-// at one body, so every hat you had bought went in a drawer the moment you threw
-// the lever, and the whole trade ladder stopped being worth finishing.
-//
-// So the gate is a full set of hats -- `KIT_MAX` of them, see `canBuy` -- and the
-// rate is measured against the gang that set of hats made, which is `gangWorth`
-// and is a sum rather than a multiple now that a set is smaller than a
-// complement. The specialists become the thing you finish *before* the machine,
-// and the machine is worth half again what they were, which is what MACHINE_GAIN
-// has meant all along.
+// A machine's rate is measured against the gang a full set of hats made
+// (`gangWorth`), so the specialists are the thing you finish before the
+// machine and the machine is worth `MACHINE_GAIN` over them. Every machine's
+// rate runs through here, so a tuning ladder is a number in a record rather
+// than four rate functions.
 export const machineRate = job =>
   gangWorth(job) * MACHINE_GAIN
   * (machineFor(job)?.driven ? 2 : 1)
-  // Every rung of the machine's own endless ladder. One multiplier, here, for
-  // all four of them -- see `tuneGain` in machines.js: every machine's rate runs
-  // through this one function, so a ladder is a number in a record rather than
-  // four rate functions to keep in step.
   * tuneGain(JOB_MACHINE[job])
-  // and the tower's, if the yard has been enchanted
   * (spelled('drive') ? SPELL_DRIVE : 1);
 
-// Put a gang back where a machine displaced it.
-//
-// `rebalance` only ever clamps *down*: when the lever went on it walked the
-// surplus to carrying, and nothing walks them home again. So throwing the lever
-// off has to ask for them back, or every "off" costs five clicks on the roster
-// and nobody ever throws the lever twice.
-//
-// It restores a complement; it does not conjure bodies. If the hands have since
-// been sent down the quarry or up the tower, what comes back is whatever was
-// idle, and no more.
+// Put a gang back where a machine displaced it. `rebalance` only clamps down,
+// so a lever thrown off has to ask for its bodies back. It restores from
+// whatever is idle and never conjures bodies. `want` of nought is the other
+// direction: a machine switched on, and this only lets `rebalance` clamp.
 export function restaff(job, want) {
-  // `want` of nought is the other direction: a machine has just been switched
-  // *on* and all this has to do is let `rebalance` clamp the station down to the
-  // one tender. Same latch, same drain, one function.
   const room = Math.max(0, Math.min(want, capOf(job)) - S[job]);
   if (room > 0) S[job] += Math.min(room, Math.max(0, idle()));
   rebalance();
@@ -635,17 +330,10 @@ export function restaff(job, want) {
   S.dirty = true;
 }
 
-// `haulers` is a fact on S rather than a sum worked out where it is read, so
-// that the crew code can treat it like any other job. This is the one place it
-// is set, and every path that moves a body goes through here.
-
-// A station whose machine took its kit owns no hats. Zeroed here rather than in
-// `buyMachine`, because this is the one place allowed to move counts about --
-// and because a save from before the machines existed can arrive with both a
-// machine and a full set, which is the same tidy-up.
-//
-// Nothing else is needed to make it read: `stepKit` finds heads wearing kit the
-// station does not own and walks each one over to hand it in.
+// A station whose machine took its kit owns no hats. Zeroed here, the one
+// place allowed to move counts about, and because a save can arrive with
+// both a machine and a full set. `stepKit` walks any head still wearing one
+// over to hand it in.
 function stripKit() {
   for (const m of MACHINES) {
     const r = machine(m.key);
@@ -655,72 +343,31 @@ function stripKit() {
   }
 }
 
-// Nothing staffs itself.
-//
-// The lab and the scrubbing house used to take a body when there was work and
-// give it back when there was not, on the argument that each is one room with
-// one job and the choice made itself. It does not: what that setting decides is
-// whether the station runs at all, and a building quietly taking a pair of hands
-// off the rock -- or handing them back mid-shift -- is the yard overruling the
-// roster. Both are on the roster again and both stay where they are put.
+// Nothing staffs itself: every station stays where the roster put it.
 export function staffSheds() {
   stripKit();
 }
 
 export function rebalance() {
-  // Hats are not clamped to bodies. A station may own more of them than it has
-  // people standing at it -- that is the whole point of the kit belonging to the
-  // place -- so the only rule left is that a count of hats is not negative.
-  // A station cannot hold more bodies than it has places to stand. Nothing the
-  // player can do breaks that either, but a save from a wider plot can, and the
-  // ones that do not fit go back to carrying dust rather than standing in each
-  // other at a plot that is not there.
-  // Over `JOBS`, not over a hand-kept copy of it. The list used to be written out
-  // here with `rock hands` deliberately left off, because `capOf('rock hands')` is
-  // `Infinity` and clamping to it is a no-op -- which was true right up until the
-  // ram made it finite, and then the one job the list omitted was the one job
-  // that needed clamping and nothing walked the gang off the rock. A no-op for
-  // six of the seven is a cheaper thing to carry than a second copy of a list
-  // that is declared eighty lines up.
+  // A station cannot hold more bodies than places to stand; a save from a
+  // wider plot can say otherwise, and the extras go back to carrying. Over
+  // `JOBS`, not a hand-kept copy: the copy once left the rock off because its
+  // cap was `Infinity`, and then the ram made it finite.
   for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
+  // Hats are not clamped to bodies -- the kit belongs to the place.
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
-  // and no ladder past its top, whatever a save says
   for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel', 'critMultLevel',
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
-  // Building is not a job on the roster and never will be. You do not decide to
-  // have builders -- you decide to build something, and the hands that had
-  // nothing else on go and do it, which is what "spare" already meant. So the
-  // count is derived here rather than set anywhere, and it goes back to nought
-  // the moment the thing is standing.
-  //
-  // Never the whole yard: a build that swallowed every idle body would stop the
-  // dust moving altogether, and what this is meant to be is a share of the
-  // yard's attention rather than all of it. One a site (the old BUILD_GANG),
-  // because the bench, the yard and the shack are three places and a body at
-  // one of them is not at the other two.
+  // Builders are derived, one a site, never the whole yard: a build that
+  // swallowed every idle body would stop the dust moving.
   const sites = busyBuilderSites();
   const gang = sites.length;
-  // Nobody spare: the nearest body comes and does it. Carrying first -- a
-  // hauler is spare by definition and is already counted -- and if there is
-  // nobody carrying, the body standing nearest the site is *lent*: taken off
-  // its count, which makes it spare, and given back the moment there is nothing
-  // left to build. One a site and never a gang: borrowing is what keeps a
-  // purchase from stalling, not a way to staff a build off the rock. What it
-  // costs is a rockhand away from the rock for ten seconds, which you can see.
-  //
-  // The four sites with a gang of their own keep the lab's rule instead -- an
-  // empty cut builds nothing -- because their work *is* the gang's.
-  //
-  // What is owed rides on the body it was borrowed from. It used to be a list of
-  // job names in `S.lent`, pushed on one side of this function and paid back on
-  // the other -- a ledger kept beside the thing it is about, which is a ledger
-  // that can disagree with it, and did twice over. The array was saved and the
-  // flag on the body was not, so a reload came back owing a debt no body in the
-  // yard was carrying. And nothing tied a repayment to a body still being there
-  // to repay: move somebody on to the same job while the loan is out and the
-  // count came back on *top* of the move, so a crew of three ended the build
-  // with four rock hands on the rock and nothing said.
+  // Nobody spare: the body standing nearest the site is *lent* -- taken off
+  // its count, which makes it spare -- and given back when nothing is left to
+  // build. The loan rides on the body (`lentFrom`) rather than in a list
+  // beside it, so a reload cannot come back owing a debt no body carries and
+  // a repayment cannot land on top of a move the player made meanwhile.
   for (let short = sites.length - Math.max(0, spareHands()); short > 0; short--) {
     const w = nearestLendable(sites);
     if (!w) break;
@@ -728,15 +375,9 @@ export function rebalance() {
     w.lentFrom = job;                    // stood down first, see syncWorkers
     S[job]--;
   }
-  // ...and given back. Whatever job a body was borrowed from gets its count back
-  // the frame the last builders' site clears, and `syncWorkers` walks a body
-  // home to it -- if there is still room there: a bench dug out from under a
-  // borrowed quarrier is a body back on carrying, which is what it would have
-  // been anyway.
-  //
-  // And only if there is a body spare to be the one going home. A count handed
-  // back that nobody in the yard can stand behind is a roster that reads higher
-  // than the crew, for ever, with the extra rockhand nowhere to be seen.
+  // Given back only if there is still room there and a body spare to be the
+  // one going home; a count handed back that nobody stands behind is a roster
+  // that reads higher than the crew for ever.
   if (!sites.length) {
     for (const w of S.workers) {
       const job = w.lentFrom;
@@ -745,21 +386,14 @@ export function rebalance() {
       if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
     }
   }
-  // What is out on loan, read off the bodies rather than kept in step with them.
-  // Saves, the roster and the checks all read this; none of them can now read
-  // something the yard does not have.
   S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   S.builders = sites.length ? Math.min(gang, Math.max(0, spareHands())) : 0;
-  // Carrying is the job nobody is assigned to: it is what a body does when it is
-  // on nothing, so the haulers are whatever is left over -- less whoever is over
-  // at the site putting something up. The carts are the lip's kit and are
-  // counted with the rest of it, not held out of this.
+  // Carrying is what a body does when it is on nothing, less whoever is
+  // building. The carts are the lip's kit and are not held out of this.
   S.haulers = Math.max(0, spareHands() - S.builders);
 }
 
-// The body on a station standing nearest any of the sites that want one, and
-// not already spoken for. Station bodies only: a hauler is spare already and a
-// builder is the thing being looked for.
+// The station body nearest any site that wants one and not already lent.
 function nearestLendable(sites) {
   const xs = sites.map(siteX).filter(x => x != null);
   let best = null, dist = Infinity;
@@ -781,23 +415,18 @@ export function hire() {
   buildShop();
 }
 
-// A loan taken off a job the player has just re-set is not a loan any more.
-//
-// The roster shows a job's count with whatever is out on loan already taken off
-// it, so a press on those buttons is a decision about the number in front of
-// you. Handing the borrowed body back afterwards, on top of the press, is the
-// yard quietly undoing what you just did -- which is how "+1 rockhand" ended a
-// build with two more rock hands than it started with. Forgiven rather than repaid:
-// `rebalance`, on the next line down, borrows again if the build still needs
-// somebody, and it borrows against the count you just set.
+// A loan taken off a job the player has just re-set is forgiven, not repaid:
+// the roster shows the count with the loan already off it, so repaying on top
+// of the press undoes what the player just did. `rebalance` borrows again
+// against the new count if the build still needs somebody.
 const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) delete w.lentFrom; };
 
-// move one body on to a job, or off it and back to carrying dust
+// Move one body on to a job, or off it and back to carrying. The hat it was
+// wearing stays at the station.
 export function assign(job, d) {
   if (d > 0 && idle() < 1) return;
-  if (d > 0 && roomAt(job) < 1) return;          // nowhere down there to put them
+  if (d > 0 && roomAt(job) < 1) return;
   if (d < 0 && S[job] < 1) return;
-  // and nothing stops one leaving: the hat it was wearing stays at the station.
   S[job] += d;
   forgive(job);
   rebalance();
@@ -806,75 +435,36 @@ export function assign(job, d) {
   buildShop();
 }
 
-// Where a body works is not on the bench any more: every station carries its own
-// count and its own two buttons, under the place the work happens. The bench
-// sells things, and moving somebody from the plots to the rock was never a
-// purchase. `roster.js` is where that lives now; the lab keeps a row of its own,
-// because starting a piece of research and staffing it are one job and the lab
-// is where you are standing when you do it.
-
-// The one thing you hire. Everything else is where you put them.
-//
-// There is no row for the *first* one any more. It used to cost a core, and the
-// opening hands you a body now -- somebody who was already standing there when
-// the rock came down -- so a row selling you the crew you already have is a row
-// that could never fire. A game that has never been played gets its first body
-// from the story; see intro.js.
-// The one thing you hire, and it is bought where the crew live rather than at
-// the bench. A hire has always *been* a room -- the settlement is drawn straight
-// off the headcount, so taking somebody on is what builds the next one -- and a
-// row on the bench selling "workers" was the shop describing that from the far
-// end of the yard. Standing at the houses and putting another one up is the same
-// purchase with the fiction the game was already drawing.
-//
-// There is no row for the *first* one. It used to cost a core, and the opening
-// hands you a body now -- somebody who was already standing there when the rock
-// came down -- so a row selling you the crew you already have is a row that
-// could never fire. See intro.js.
+// The one thing you hire, bought where the crew live: a hire is a room, and
+// the settlement is drawn off the headcount. There is no row for the first
+// body; the opening hands you one (intro.js).
 export const HOUSE_ROW = {
   key: 'house',
   name: 'another house',
-  // A building, like the rest of them past the bench: a room does not appear,
-  // it goes up, with a builder at it -- see C1 in wave-feedback3.md. `at` is
-  // where the next room will stand, which house.js works out the same way it
-  // works out every other room.
   kind: 'building', site: 'yard', at: () => nextHouseAt(),
-  // Its own curve, off how many rooms already stand -- see #8, "Wave 3.1"
-  // amendment. It is `kind: 'building'` with no `rung` of its own, so without
-  // this `workFor` gave it one flat number for ever: ninety worker-seconds,
-  // which with BUILD_GANG at one is ninety seconds alone for your very first
-  // hire. `S.crew` is a rung in all but name -- it is exactly the "from" this
-  // row already reports below -- clamped at zero so the crew the intro hands
-  // you does not push the very first bought house up the curve.
+  // Its own curve off how many rooms stand, because a `building` with no
+  // `rung` would get one flat number from `workFor` for ever. Clamped at zero
+  // so the body the intro hands you does not push the first bought house up
+  // the curve.
   work: () => Math.min(HOUSE_WORK_MAX,
     HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew - 1))),
   from: () => S.crew,
   to: () => S.crew + 1,
-  // One pool pays for every job now, so the curve is gentler than the four
-  // it replaced: 1.7 a body was steep because it was steep four times over,
-  // and the same eight bodies came to about 1,500 dust between them. The rate
-  // sits above the ladders' 1.6 on purpose: every body compounds the income
-  // every ladder is priced against, so the crew is the one curve that must
-  // outrun the shop's -- the grind pass, DESIGN.md.
+  // Steeper than the ladders' rate on purpose: every body compounds the
+  // income every ladder is priced against, so the crew is the one curve that
+  // must outrun the shop's.
   cost: () => Math.round(HOUSE_COST0 * Math.pow(HOUSE_RATE, Math.max(0, S.crew - 1))
                          * (spelled('thrift') ? SPELL_THRIFT : 1)),
   buy: hire,
   show: () => S.crew > 0
 };
-// Registered on its own, because it lives on the crew board rather than the
-// bench (see crewboard.js) and so is not one of `UPGRADES` below -- but a work
-// coming out of a save is a key and two numbers, and it still has to find its
-// way back to this row's own `buy` when it lands. See `registerRows` in
-// works.js.
+// Not one of `UPGRADES` (it lives on the crew board), but a work coming out
+// of a save still has to find its way back to this row's `buy`.
 registerRows([HOUSE_ROW]);
 
-// What the bench sells, in the order it is written down. Every row is a data
-// object in its own file under `src/upgrades/` -- one file per section of the
-// board -- and this is the only place their order is decided. A new row is a
-// row in one of those files; a new section is a file and a line here.
-//
-// The economy below is what does not fit in a data file: rebalancing the crew,
-// hiring, staffing, paying a bill. That stays here.
+// What the bench sells, in the order it is written down. A new row is a row in
+// one of the `src/upgrades/rows-*.js` files; a new section is a file and a
+// line here.
 export const UPGRADES = chained([
   ...BENCH_ROWS,
   ...LUCK_ROWS,
@@ -893,69 +483,21 @@ export const UPGRADES = chained([
   ...SHIELD_ROWS
 ]);
 
-// and the yard is told what these rows are, so a work coming back out of a save
-// knows which one it belongs to. See `registerRows`.
 registerRows(UPGRADES);
 
-// The rows on this list that another station's sheet draws. A row names its
-// board and the bench takes the rest (`listFor`, board.js); this is the other
-// half of that question, so a station whose own rows are a list of its own --
-// the quarry, the plots -- can pick up the kit row that moved in with it. The
-// shack reads its rows the same way, by key: see shack.js.
+// The rows on this list that another station's sheet draws (`u.board`).
 export const lodgers = board => UPGRADES.filter(u => u.board === board);
 
-// The order and the grouping on the board. A section with nothing to show in it
-// is left out, so rows appear as they are unlocked.
+// The order and grouping on the bench. A section with nothing to show is left
+// out. The shield on offer is the goal card: its own frame, above everything
+// for sale. Everything not yet built is under one "build" heading, because
+// those are the one group that cannot be sold at the place they belong to --
+// the place is what they buy.
 export const SECTIONS = [
-  // The goal, first. What the yard puts between itself and the sky, one at a
-  // time, and each failure is what opens the next station (DESIGN.md, "The
-  // shields are the spine") -- so the shield on offer is the one thing on the
-  // bench that says what the yard is for right now, and it is drawn as the
-  // goal card: its own frame, across the sheet, above everything for sale.
-  // `goal` is the whole of what the board does differently with it; the row
-  // is the row it always was. The dome is the tower's and is on the tower's
-  // board.
   { title: 'the sky', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
-  // "you", not "your gear": you are the cursor, and the heading under this one
-  // is the one about gear.
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  // The crit rows apply to the whole yard, so the bench is their natural home.
-  // "lucky swings" rather than the genre's "critical hits": a heading here is a
-  // thing in the yard, not a term from another game's manual.
   { title: 'lucky swings', keys: ['critchance', 'critmult'] },
-  // Everything a hauler is issued: what they carry, how fast they walk, the
-  // multiplier over that, and the machine that carries without them. All of it
-  // was sold at the house for a while, in two moves, and all of it has come
-  // back: the house is for putting a roof up, and the bench is where kit is
-  // fitted -- yours under the heading above, theirs under this one. Ladder
-  // first, the thing that climbs past it last, the way the shack orders the
-  // rock's. Named for the job, the way the shack's is: "the haulers" beside
-  // "the miners", and "crew" left to the house, where the crew live.
-  // The cart is theirs too: kit is sold where it is worn, and the lip has no
-  // board of its own, so the carter stands here beside the belt that ends its
-  // ladder -- see upgrades/rows-kit.js.
   { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'belt', 'tunebelt'] },
-  // "the rock" is not here any more either: the gang's ladders, the multiplier
-  // over their swing and their machine are sold at the hut they work out of --
-  // see shack.js. What is left under "you" above is your own gear, which has no
-  // station because you are the cursor.
-  // Everything the yard has not built yet, under one heading.
-  //
-  // These were ten headings, each carrying a single row -- "the quarry" over
-  // "open the quarry", "the tower" over "raise the tower", and so on down. That
-  // is roughly six hundred pixels of bench spent on a table of contents, and a
-  // heading over one row was never telling you anything the row did not.
-  //
-  // Every row under it says "build the <place>", and the heading says "build".
-  // They each had their own verb once -- "open the quarry", "break the ground",
-  // "raise the tower" -- which read well one row at a time and badly as a list:
-  // ten rows, ten verbs, and nothing to tell you at a glance that they were all
-  // the same kind of purchase. A heading is a label, not a voice.
-  //
-  // They are the one group that cannot be moved to the place it belongs to,
-  // which is the rule every other section on this board now follows: a decision
-  // about a place is made at the place, and these cannot be, because the place
-  // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlocktower',
@@ -963,51 +505,37 @@ export const SECTIONS = [
   ] }
 ];
 
-// What the bench has to say for itself, without opening it. The board is built
-// from the same two questions, so a new upgrade or a new section is picked up
-// here without this ever being touched.
+// What the bench has to say for itself without being opened. One place
+// decides it, so the drawing and the check that reads it cannot drift.
 
-// the sections that have any row showing right now
 export const openSections = () =>
   SECTIONS.filter(sect => sect.keys.some(k => {
     const u = UPGRADES.find(x => x.key === k);
     return u && u.show();
   })).map(sect => sect.title);
 
-// something on the board you could buy this second
-//
-// ...and actually press. A row already bought and waiting its turn is not one:
-// pressing it hands it back, which is not what a mark on the bench promises.
+// Something you could buy and actually press this second: a row bought and
+// waiting its turn is not one, since pressing it hands it back.
 export const canAfford = () =>
   UPGRADES.some(u => !u.job && u.show() && !u.dead?.() && canPay(u) && !inLine(u));
 
-// a whole heading you have not seen yet -- worth more of a nudge than one more
-// row under a heading you have already read
 export const unseenSection = () =>
   openSections().some(title => !S.seenSects.includes(title));
 
-// What the bench is showing without being opened. One place decides it, so the
-// drawing and the check that reads it can never drift apart.
 export const benchMark = () =>
   !S.seenBench ? '' : unseenSection() ? 'flag' : canAfford() ? 'dot' : '';
 
-// the board has been looked at: every heading on it now counts as read
 export function markSectionsSeen() {
   S.seenSects = openSections();
   S.dirty = true;
 }
 
-// Buying is the same shape whatever the row and whatever it is priced in: check
-// you can afford it, take the price out of wherever that currency is kept, then
-// let the row do its one thing.
-// Take one currency out of wherever it is kept. Dust is lifted back out of the
-// pile; everything else is one grain in that pile, so paying lifts that many of
-// them out of it -- the pile always shows exactly what you are holding.
+// Take one currency out of wherever it is kept. Dust is lifted out of the
+// pile; every other coin is a grain in that pile, so paying lifts that many
+// grains out of it. `spendHeld` takes off what the rift is holding for
+// whatever the hole did not have, the same order paying in dust keeps.
 export function take(money, n) {
   if (!n) return;
-  // `spendHeld` takes the grains out of the hole first and off what the rift is
-  // holding for whatever the hole did not have -- the same order paying in dust
-  // keeps, and the reason it is one call rather than a subtraction here.
   if (money === 'dust') spend(n);
   else if (money === 'core') { S.cores -= n; spendHeld(n, CORE_CELL); }
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
@@ -1015,38 +543,12 @@ export function take(money, n) {
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
 }
 
-// What the coins of the grounds are worth in dust.
-//
-// Every row in this game is priced in dust as well as in whatever else it asks
-// for, and this is what makes that true rather than sixteen numbers typed into
-// sixteen rows. A row says what it costs in its own coin -- shards at the
-// school, spores at the quarry, red at the tower -- and the dust half is worked
-// out from that here.
-//
-
-// What a row costs, as a currency and an amount each. Almost every row in the
-// game is priced in one thing and says so with `cost` and `currency`; the tower
-// is priced in all four at once and says so with `bill`.
-//
-// And then the dust, which every row carries.
-//
-// It is added here rather than written into each row because a rule sixteen
-// rows have to remember is a rule the seventeenth will forget -- and it was
-// forgotten: the lab, the school, the scrubbing house and the quarry sold
-// fifteen rows between them and not one of them asked for a grain. Which is
-// what left the pile with nowhere to go. A row that genuinely wants a different
-// number says so by naming dust itself, and what it names is what it costs.
-//
-// `time` is on the tower's hat and is not a coin: it buys nothing here, and a
-// row priced in nothing but time stays priced in nothing but time.
-//
-// ...and then the time, for anything past the bench. A row that has to be built
-// says so in its bill under a clock, beside the coins, and reads the same way
-// they do -- how long a thing takes is part of what it costs, and a note you
-// have to open a second sheet to read is not a price. While it is being built
-// the clock counts down what is left of it, at the rate the site is actually
-// going. Appended here for the same reason the dust is: a new row past the
-// bench gets its clock by saying what kind of thing it is and nothing else.
+// What a row costs, as [currency, amount] pairs. A row says `cost` and
+// `currency` (or `bill` for several coins at once); the dust every row also
+// costs is derived here from `DUST_PER`, so no row can forget it -- a row
+// that wants a different dust number names dust itself. A row past the bench
+// gets its time appended the same way: what is left of the build if it is on,
+// else the whole of it. `time` is not a coin and buys no dust.
 export const billOf = u => {
   let bill = u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
   if (!bill.some(([money]) => money === 'dust')) {
@@ -1059,69 +561,47 @@ export const billOf = u => {
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
-// Whether the yard has this row on the go -- being built, or bought and waiting
-// its turn at the site -- and, of those, whether it is the waiting kind. The
-// board reads both: "building" and "queued" are not the same row to a
-// player, and only the second can be pressed again to hand it back. `siteBusy`
-// stood here while a site took one work at a time and greyed every other row
-// with it; a site takes a line now, so no row is refused for what its
-// neighbor is doing. See DESIGN.md, "The queue".
+// Being built, or bought and waiting its turn; only the second can be pressed
+// again to hand it back. A site takes a line, so no row is refused for what
+// its neighbor is doing.
 export const building = u => takesTime(u) && !!workOn(u.key);
 export const inLine = u => takesTime(u) && waiting(u.site, u.key);
-// ...and where in the line, counting the one being built as the first.
 export const lineAt = u => placeOf(u.site, u.key);
 
-// A price, in the words that price is said in. Coins are counted in the same
-// short form as every other reading in the yard (`fmt`: 872, 1.3k, 14k); time is
-// read off a clock, and a hundred and twenty thousand of anything is not a
-// thing anybody says about two minutes.
+// A price in the words it is said in: coins in the counter's short form,
+// time off a clock.
 export const priceText = (money, n) =>
   money !== 'time' ? fmt(n) :
   n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}`;
 
-// The time left on a build, as a clock reads it -- `0:47`, `1:12`, `1:02:05` --
-// to the second. The bill's coarse form above is for an offer, where a minute
-// is a fair word for how long a thing takes; a build under way is watched, and
-// a number that moves under the eye is the proof the site is going. Ceiling,
-// so it reads 0:01 until the last blow and never 0:00 on a thing not up.
+// Time left on a build, to the second: `0:47`, `1:02:05`. Ceiling, so it
+// reads 0:01 until the last blow and never 0:00 on a thing not up.
 export const leftText = ms => {
   const s = Math.max(0, Math.ceil(ms / 1000)), m = Math.floor(s / 60) % 60, h = Math.floor(s / 3600);
   const two = n => String(n).padStart(2, '0');
   return h ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
 };
-// A place in a line, as it is said: 2nd, 3rd, 11th.
 export const ordinal = n =>
   n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
-// True when something was actually bought, false when the press came to
-// nothing -- no money, maxed out, the site already busy. The board reads it to
-// decide whether to put itself away, and a press that bought nothing must
-// leave it open: a sheet that shuts on a bill you cannot pay looks like it
-// took the money.
+// True when something was actually bought. The board reads it to decide
+// whether to put itself away; a press that bought nothing must leave it open,
+// or a sheet shutting on a bill you cannot pay looks like it took the money.
 export function buy(u) {
   if (u.job || u.dial) return false;   // a job row moves bodies and a dial sets a number
-  // A signpost: a row with a thought on it rather than a thing for sale. It
-  // costs nothing and takes nothing; pressing it only does whatever pointing
-  // is worth doing -- the shields' "maybe the wizards would know?" pans out to
-  // the tower. Turned away here beside job and dial, and excused from the
-  // bill checks for the same reason, because the two lists say the same thing.
+  // A signpost costs nothing; pressing it only points somewhere.
   if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
-  // A row with a payout on it instead of a price is not a purchase: nothing is
-  // taken, and what it does is its own business. The casino's two decisions are
-  // the only ones in the game.
+  // A payout row (the casino's two decisions) takes nothing and is done at
+  // the table, so the board stays up for the next hand.
   if (u.price) {
     if (!u.show() || u.dead?.()) return false;
     u.buy(); S.dirty = true; buildShop();
-    // A payout row is the casino's two decisions: it is a thing you do at the
-    // table, not a thing you take away, so the board stays up for the next hand.
     return false;
   }
-  // A row bought and waiting its turn: pressing it again hands it back. The
-  // bill comes back in full -- nobody has done anything for it yet -- and it
-  // arcs from where it was going to be built to the pile, the payment's own
-  // flight the other way. Not a purchase, so the board stays up.
+  // Pressing a row in line hands it back: the bill comes back in full and
+  // arcs from where it would have stood to the pile. Not a purchase.
   if (inLine(u)) {
     const box = siteBox(u.site, workOn(u.key));
     const bill = billOf(u);
@@ -1132,44 +612,25 @@ export function buy(u) {
     buildShop();
     return false;
   }
-  // A row that is greyed out for a reason of its own -- the tower already has a
-  // hat on the go -- takes nothing and does nothing. Without this the money went
-  // and the row shrugged.
   if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return false;
-  // A row the yard is already building is bought once. A site putting up
-  // something else is no refusal any more: the work goes in line behind it.
   if (building(u)) return false;
-  // Past the bench, paying does not buy the thing: it starts the yard building
-  // it, and the row's own `buy` runs when somebody has finished the work. The
-  // coin is taken either way and taken now -- what you are waiting on is the
-  // labour, not the bill.
-  //
-  // The work is started BEFORE the bill is taken, and that order is the whole
-  // of what makes a building's dust fly to the right place. A yard row's
-  // destination is the ground the thing is going up on, and that ground does
-  // not exist until `start` reserves it (`reserve` in works.js, which re-lays
-  // the yard on the spot) -- so a payment taken first had nowhere to aim and
-  // fell back to the bench, which is the one place the dust is not going. A
-  // start that comes to nothing returns before a coin is touched, which is the
-  // same bargain as the checks above it.
+  // Past the bench, paying starts the yard building; the row's own `buy`
+  // runs when the work lands. The work is started BEFORE the bill is taken:
+  // a yard row's dust flies to the ground the thing goes up on, and that
+  // ground does not exist until `start` reserves it. A start that comes to
+  // nothing returns before a coin is touched.
   if (takesTime(u) && !start(u.site, u, u.at?.())) return false;
 
-  // What is spent flies to where it is going, not to the bench: buy a rung of
-  // the farm and the dust arcs to the farm, buy a brew rung and it arcs to the
-  // cauldron, buy a whole new building and it arcs to the fenced-off patch it
-  // is rising on. The destination is the row's own site (`siteBox`) -- for a
-  // yard row, the box of the work just started -- and it is set for the length
-  // of the payment and cleared straight after, so a spend with nobody's `payTo`
-  // around it -- the rift -- still falls back to the bench. A row with no site
-  // at all is the bench's own and pays there, which is where it is bought.
+  // What is spent flies to where it is going -- the row's own site, or the
+  // box of the work just started -- and `payTo` is cleared straight after so
+  // a spend with nobody's destination around it falls back to the bench.
   const box = u.site === 'yard' ? siteBox('yard', workOn(u.key))
             : u.site           ? siteBox(u.site)
             : null;
   if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
-  // Nothing is taken until all of it can be: a bill you can half afford would
-  // leave you with less of everything and none of the thing.
+  // Nothing is taken until all of it can be (`canPay` above).
   for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
-  payTo();                                       // back to the bench for the next spend
+  payTo();
 
   if (!takesTime(u)) u.buy();
   S.dirty = true;
