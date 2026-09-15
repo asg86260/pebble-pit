@@ -30,7 +30,7 @@ function standTwoPots() {
   window.__assign('stirrers', 2);
 }
 
-group('each pot favors its own job, and the picker offers only who its brew reaches', async () => {
+group('each pot favors its own job, and the picker offers the trades that stand', async () => {
   standTwoPots();
   // The stew for the diggers, the strong brew for the quarriers: two favors
   // the one dial could not hold at once.
@@ -46,10 +46,12 @@ group('each pot favors its own job, and the picker offers only who its brew reac
   return [
     ok(potPreferOf(0) === 'rockhands' && potPreferOf(1) === 'quarriers', 'each pot keeps its own favor',
        `${potPreferOf(0)} / ${potPreferOf(1)}`),
-    ok(!canStew.includes('haulers') && canStew.includes('rockhands'),
-       'the stew pot does not offer the haulers, who cannot drink it', canStew.join(',')),
-    ok(!canStrong.includes('rockhands') && canStrong.includes('quarriers'),
-       'and the strong pot does not offer the diggers', canStrong.join(',')),
+    ok(canStew.includes('haulers') && canStew.includes('rockhands') && canStew.includes('quarriers'),
+       'the stew pot offers every trade that stands, haulers too', canStew.join(',')),
+    ok(canStrong.includes('rockhands') && canStrong.includes('quarriers'),
+       'and so does the strong pot', canStrong.join(',')),
+    ok(!canStew.includes('wizards') && !canStrong.includes('wizards'),
+       'and neither offers a trade with no station in the yard', canStew.join(',')),
     ok(first.stew && first.stew.type === 'rockhand', 'the first stew lands on a digger',
        first.stew && first.stew.type),
     ok(first.strong && first.strong.type === 'quarrier', 'and the first strong brew on a quarrier',

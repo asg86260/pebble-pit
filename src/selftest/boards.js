@@ -1262,7 +1262,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(1, 4, 0, 2);
-    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     // The second pot is an earned row: it does not appear until the craft has
@@ -1378,28 +1378,28 @@ export const TESTS = [
     const deeper = linesNow();
     const moved = priced.filter(k => before[k] !== deeper[k]);
 
-    // Only what the purse can pay for is on the list. The dust is paid away
+    // Only what the purse can pay for is on the list. The crop is paid away
     // through the same `take` every bill goes through, so the rows priced in it
     // go -- all but the one this pot is already on, which stays so it can be
     // seen and turned off. Read off the page against the bills the yard says it
-    // charges, so the check does not know which recipes want dust. (Dust rather
-    // than shard: the quarry is shut in this yard, so shard rows were never on
-    // the list to begin with.) "Shown" is whether the row takes up room, not
+    // charges, so the check does not know which recipes want crop (every one
+    // of them does: crop is the base of the book, which is what makes it the
+    // coin to drain here). "Shown" is whether the row takes up room, not
     // whether its `hidden` attribute is set: the rows are `display: flex`, which
     // beat the browser's own rule for the attribute, and every brew stayed on
     // the list with `hidden` faithfully set on three of them.
     const shown = () => [...pop().querySelectorAll('.opt')]
       .filter(o => o.dataset.opt && o.offsetHeight > 0).map(o => o.dataset.opt);
     const shownBefore = shown();
-    window.__pay('dust', state().stored);
+    window.__pay('spore', state().spores);
     point('pointermove', two()[0], two()[1] + 260, 0);
     await sleep(40);
     point('pointermove', ...two(), 0);
     await sleep(60);
     const shownAfter = shown();
-    const wantDust = k => window.__brewCost(k).some(([m]) => m === 'dust');
+    const wantCrop = k => window.__brewCost(k).some(([m]) => m === 'spore');
     const setTo = state().potTonics[1];
-    const expect = shownBefore.filter(k => k === setTo || !wantDust(k));
+    const expect = shownBefore.filter(k => k === setTo || !wantCrop(k));
 
     return [
       ok(open, 'standing at a cauldron drops its picker open, with no press'),
@@ -1430,14 +1430,15 @@ export const TESTS = [
       ok(moved.join(',') === 'stew',
          'a rung on one recipe moves that row and no other',
          `${moved.join(',') || 'nothing'} moved -- ${before.stew} -> ${deeper.stew}`),
-      ok(shownBefore.some(wantDust) && shownAfter.join(',') === expect.join(','),
+      ok(shownBefore.some(wantCrop) && shownAfter.join(',') === expect.join(','),
          'a brew the purse cannot pay for is off the list, unless the pot is on it',
          `${shownBefore.join(',')} -> ${shownAfter.join(',')}, wanted ${expect.join(',')}`)
     ];
   }],
   // Under the brews, the picker says who THIS pot's doses go to first, with
   // how many of that job are under the brew out of how many there are. Only
-  // the jobs the set brew can reach are offered, and a click sets that pot and
+  // the trades the set brew can reach whose station stands are offered, and a
+  // click sets that pot and
   // no other -- it was one dial on the board for the whole building, which
   // with two pots on two brews could not hold two answers. Done the player's
   // way: the pointer at the cauldron, the row clicked.
@@ -1445,7 +1446,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(2, 3, 0, 2);
-    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     window.__brews(5);
@@ -1488,32 +1489,25 @@ export const TESTS = [
     point('pointermove', ...one(), 0);
     await sleep(40);
     const stewOn = pop()?.querySelector('.for.on')?.dataset.for;
-    // A brew only one trade drinks offers no choice: the speed brew's pot says
-    // "haulers" as a line, with no "whoever is nearest" to pick instead.
-    window.__pot('swift', 1);
-    point('pointermove', ...two(), 0);
-    await sleep(40);
-    const swiftOffers = offered();
-    const swiftOnly = pop()?.querySelector('.for[data-for="haulers"]')?.classList.contains('only');
     point('pointermove', one()[0], one()[1] + 260, 0);
     await sleep(800);
     window.__crew(0, 0);
     return [
       ok(nearestFirst === '', 'a pot starts out for whoever is nearest', String(nearestFirst)),
-      ok(stewOffers.includes('rockhands') && !stewOffers.includes('haulers'),
-         'the stew pot offers the diggers and not the haulers, who cannot drink it', stewOffers.join(',')),
+      ok(stewOffers.includes('rockhands') && stewOffers.includes('haulers') && stewOffers.includes('farmhands'),
+         'the stew pot offers every trade that stands, haulers too', stewOffers.join(',')),
+      ok(!stewOffers.includes('quarriers') && !stewOffers.includes('wizards') && !stewOffers.includes('purifiers'),
+         'and none whose station is not up', stewOffers.join(',')),
       ok(diggers === '0/2', 'and counts the diggers under it out of the diggers there are', String(diggers)),
       ok(setStew === 'rockhands' && stillUp && markedNow === 'rockhands',
          'clicking a job sets that pot, and the list stays up with it marked',
          `${setStew} up=${stillUp} marked=${markedNow}`),
-      ok(strongOffers.includes('haulers') && !strongOffers.includes('rockhands'),
-         'the strong pot offers the haulers and not the diggers', strongOffers.join(',')),
+      ok(strongOffers.includes('haulers') && strongOffers.includes('rockhands'),
+         'the strong pot offers the haulers and the diggers alike', strongOffers.join(',')),
       ok(strongOn === '', "and comes up unset: the choice was the other pot's", String(strongOn)),
       ok(after.potPrefers?.[1] === 'haulers' && after.potPrefers?.[0] === 'rockhands',
          'each pot keeps its own', JSON.stringify(after.potPrefers)),
-      ok(stewOn === 'rockhands', 'and the stew pot still shows its own', String(stewOn)),
-      ok(swiftOffers.join(',') === 'haulers' && swiftOnly,
-         'a brew for one trade says that trade as a line, with no choice', `${swiftOffers.join(',')} only=${swiftOnly}`)
+      ok(stewOn === 'rockhands', 'and the stew pot still shows its own', String(stewOn))
     ];
   }],
 

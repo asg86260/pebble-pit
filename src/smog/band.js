@@ -1,5 +1,6 @@
 import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SCRUB_PULL, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
 import { TYPE } from '../jobs.js';
+import { speedBoost, strengthBoost } from '../apothecary.js';
 import { S, scrub } from '../state.js';
 import { colAt, muckCols } from './layer.js';
 
@@ -8,7 +9,8 @@ import { colAt, muckCols } from './layer.js';
 // ring -- the boards read the sky, the scrubbing house is a board, and the sky
 // asked the scrubbing house how many were in it -- so whichever file in the ring
 // happened to be reached first came up with its exports still empty.
-const inScrub = () => S.workers.filter(w => w.type === TYPE.PURIFY && w.goal === 'in').length;
+const inHouse = w => w.type === TYPE.PURIFY && w.goal === 'in';
+const inScrub = () => S.workers.filter(inHouse).length;
 
 // Every mote in the air, climbing or arrived. This is the haze -- not a number
 // with a picture of a cloud beside it, the actual things.
@@ -131,7 +133,14 @@ export function outletMuck() {
 // What one body in the house is worth, with whatever fan has been fitted:
 // motes a second off its list (config/rungs.js), the foot being the bare pull.
 export const fanPull = (lvl = S.fanLevel || 0) => rungValue('fan', lvl);
-export const scrubRate = () => (S.scrubOpen ? inScrub() * fanPull() : 0);
+// Summed a body at a time rather than `inScrub() * fanPull()`, because the
+// apothecary reaches in here: a purifier under a stew pulls faster and one
+// under a strong brew pulls more, and for a body whose whole job is one rate
+// those are the same lever -- so both multiply it. The bodies counted are the
+// ones through the door (`inHouse`), never the assigned count.
+export const scrubRate = () => (S.scrubOpen
+  ? S.workers.reduce((n, w) => n + (inHouse(w) ? fanPull() * speedBoost(w) * strengthBoost(w) : 0), 0)
+  : 0);
 // Where the thread ends, and where the dust comes back out. Both are places on
 // the building rather than numbers near it: the head of the throat, which is the
 // cell the hood's taper closes to and the last of it you can see, and the lip of

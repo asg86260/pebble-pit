@@ -623,7 +623,7 @@ export function pickCell(mx, my) {
 // It is threaded through only so a body under a tonic gets what the tonic
 // promised: a bracing tonic lifts this one swing's crit chance (`critBoost`),
 // and the cadence a rockhand swings at is quickened at its own clock in crew.js
-// (`workBoost`), the same way the farm quickens a stoop. Your own click carries
+// (`speedBoost`), the same way the farm quickens a stoop. Your own click carries
 // no body and so neither bonus, which is right -- the tonics are dealt to the
 // crew, not to your cursor.
 export function knockOff(mx, my, want = pickCount(), dirties = true, body = null, from = 'you') {

@@ -141,7 +141,7 @@ group('a spent booking asks the hole again before the body gives up', async () =
   ];
 });
 
-// A stride is `frames()` wide, so on a slow frame or under a swift brew it is
+// A stride is `frames()` wide, so on a slow frame or under a stew it is
 // wider than the span under the feet. The walk home used to look only under
 // the feet, and a body that fast stepped clean over single grains between two
 // looks -- the exact thing a sweep is for. The step ends on the next column

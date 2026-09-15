@@ -15,25 +15,20 @@ export const APOTHECARY_CORES = 1;     // a place costs a core
 export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it follows
 
 // What one batch of each tonic costs. Crop on every recipe -- the green drain
-// the whole design wants -- plus the reagent that gives the recipe its
-// identity, in amounts that differ from brew to brew. Both are spent when a
-// brew starts. They were one flat pair (twelve spore, two of the reagent) on
-// every line of the book, and a menu of five things at one price is a menu with
-// no choice on it: the reagent's name changed and nothing else did. Now the
-// shape of the bill is part of what the tonic is. The stew is the everyday brew
-// and takes the everyday coin; the bracing tonic is the sharp one and pays for
-// it in the scarce coin; the strong brew and the speed brew are the crop-heavy
-// ones, the haulers' brews eating the haulers' own harvest; and the gleam brew
-// is priced in sparks, the machines' coin, because a brew that makes sparks
-// should cost the thing it makes, and a spark is the one price a wizard's owner
-// already feels. `brewCost` in apothecary.js is nothing but a lookup on this,
-// and the reagent named on each recipe in TONICS is the second line here.
+// the whole design wants -- plus the coin the brew's AXIS is about. Three
+// brews, one a coin, each one axis of a body's day (DESIGN.md, "Three brews,
+// one a coin, read per trade"): the stew is speed and costs crop alone, the
+// everyday brew at the everyday price; the strong brew is strength -- more
+// made at once -- and is priced in ore, because strength is more ore; the
+// bracing tonic is crit and is priced in sparks, because a crit is a strike
+// of luck and sparks are the machines' coin. Nothing is priced in dust: dust
+// is what every ladder already takes, and a brew is a running cost, not a
+// rung. `brewCost` in apothecary.js is nothing but a lookup on this, and the
+// reagent named on each recipe in TONICS is the second line here.
 export const BREW_BILL = {
-  stew:   [['spore', 12], ['dust', 40]],
-  brace:  [['spore', 10], ['shard', 4]],
-  strong: [['spore', 16], ['shard', 2]],
-  swift:  [['spore', 20]],
-  gleam:  [['spore', 8],  ['spark', 3]]
+  stew:   [['spore', 12]],
+  strong: [['spore', 16], ['shard', 4]],
+  brace:  [['spore', 10], ['spark', 3]]
 };
 
 // The pot's clock and the dose's. A batch is thirty seconds, and that is not
@@ -52,22 +47,16 @@ export const BREW_BILL = {
 // (docs/critics-2026-09-10.md, B9).
 export const BREW_MS = 30000;          // a batch, always
 
-// The three tonics the game opens with. Each is a crop base plus one reagent
-// that is never the coin of the station it boosts, and each effect is a lever
-// the game already has: the stew scales a body's own action, the bracing tonic
-// lifts its crit chance, the strong brew widens what a hauler carries. The magic
-// numbers are the level-0 effects; each tonic's own potency list climbs its
+// The three brews, and what each is worth at potency nought. Every body reads
+// the axis in its own trade's terms -- see `speedBoost` and `strengthBoost` in
+// apothecary.js and the table in DESIGN.md: a hauler's speed is its legs and
+// its strength its armful, a wizard's speed is its cast and its strength its
+// bolt, a digger's speed is its beat and its strength its bite. The magic
+// numbers are the level-0 effects; each brew's own potency list climbs its
 // own (config/rungs.js, in the percent the row shows).
-export const TONIC_STEW_WORK = 0.25;   // +25% work, its own main action
-export const TONIC_BRACE_CRIT = 0.08;  // +8 points of crit chance
-export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
-// The two wave-7 recipes, each for one trade only (items 21 and 25): the speed
-// brew is the hauler's -- a hauler's whole day is the walk, so pace is the one
-// lever a tonic can pull for it -- and the gleam brew is the wizard's, scaling
-// what a bolt brings off the star. Both climb the same potency ladder shape as
-// the first three.
-export const TONIC_SWIFT_PACE = 0.25;  // +25% haul speed at potency 0
-export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
+export const TONIC_STEW_SPEED = 0.25;     // +25% quicker, whatever the trade's clock is
+export const TONIC_STRONG_STRENGTH = 0.25;// +25% more, whatever the trade makes a go
+export const TONIC_BRACE_CRIT = 0.08;     // +8 points of crit chance, for whoever rolls
 
 // A stirrer carries one vial. It was a ladder (one to four an armful), and an
 // armful is the walk being decoration: four vials in a pair of hands is four

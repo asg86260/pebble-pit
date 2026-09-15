@@ -9956,7 +9956,7 @@ along the patch does not step along the glyph's foot -- the hands stand by
 their place in the row. The check is "a hand on a tile being built swings
 with the body at the site" in `selftest/boards.js`.
 
-## Three brews, one a coin, read per trade (design, not built)
+## Three brews, one a coin, read per trade (built, 2026-09-15)
 
 *(The owner, 2026-09-15: "i think we have 3 brews: crops, ore, and spark
 cost. crop speeds up production times and hauler pace, and wizard spells.
@@ -10024,15 +10024,16 @@ trade. What "faster" means for a wizard is the wizard's business.
 
 With every brew reaching every trade, the favor list is the same list under
 every pot, so it stops being filtered by the recipe (bar the bracing
-tonic's two absentees). **Every trade shows, including ones the yard has no
-station for yet**, dimmed and not pickable, with no count -- so the list
-under a pot reads as what the building could do, and a player who has not
-broken the quarry yet sees that the stew will reach quarriers when there
-are any (the owner, 2026-09-15: the give-to list "should show roles the
-player doesn't have unlocked yet"). Today's rule hides any job nobody is on
-(`markFor`, `c.of > 0`), which hid the same rows and said nothing about
-why. A trade with a station and nobody on it shows live with `0/N`, as
-now.
+tonic's two absentees). **Every trade whose station stands shows, staffed
+or not, and a trade with no station is not on the list at all** (the owner,
+2026-09-15: "unbuilt roles should not appear at all"; the first draft had
+them dimmed). Which stations stand is the roster's own question
+(`posts()` in roster.js), asked by `preferableFor`, so the picker and the
+counters under the buildings cannot disagree about what exists. The rule
+before was "hide any job nobody is on" (`markFor`, `c.of > 0`), which hid
+a built-but-unstaffed station along with the unbuilt ones -- and the stew
+will reach that station the moment somebody is put on, so its row belongs
+on the list, with `0/0`.
 
 ### Ladders and the shelf
 
@@ -10070,10 +10071,23 @@ nothing new goes on `S`.
   (`test/fixtures/` gets one).
 - `test/shop-rows.mjs` gets the three potency rows and loses two.
 
-### Not decided here
+### Decided in the building
 
-- Whether the bracing tonic's color is red (the spark's) or stays purple.
-  Red is the machines' color and a spark-priced brew arguably owns it; the
-  table above says red.
-- The strength brew on the farm: more crop a harvest, or a plot ripening
-  fuller. The table says a harvest.
+- The bracing tonic is red: it is priced in sparks and red is the machines'
+  color. It was purple.
+- Strength on the farm is more crop a cut, not a plot ripening fuller.
+- **A whole count under the strong brew rounds up.** A quarter more of one
+  grain is one grain again if it is rounded to nearest, so a hauler at the
+  foot of its ladder would drink the brew and carry exactly what it carried
+  before -- a brew bought, walked out and drunk for nothing. `stronger(w, n)`
+  in apothecary.js is the one rule: the armful, the rockhand's bite, the
+  quarrier's pocket and the crop a cut all go through it, and the undosed
+  count is untouched. The wizard's bite is a float and multiplies plain.
+- The purifier reads both brews on its one rate (`scrubRate`), summed a
+  body at a time through the door, since for a body whose whole job is one
+  pull "faster" and "more" are the same lever.
+- Checks: `test/three-brews.test.mjs` (the stew and the strong brew bought
+  and walked to a hauler and a wizard, who each reads them, the gates, the
+  bills and the five-key fold), `test/pot-prefer.test.mjs` and the browser's
+  "a pot says who it is for" for the list. `test/wave7-brew.test.mjs` and
+  `test/mana-brew.test.mjs` went with the recipes they were about.

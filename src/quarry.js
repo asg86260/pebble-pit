@@ -27,7 +27,7 @@ import { ROCK_CELL } from './config.js';
 import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
-import { critBoost, workBoost } from './apothecary.js';
+import { critBoost, speedBoost, stronger } from './apothecary.js';
 import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
@@ -693,8 +693,11 @@ export function stepQuarrier(w, now, ctx = null) {
   // stone landing earlier and not a shard a minute more
   // (docs/critics-2026-09-10.md, B6) -- so a crit is more ground out at once,
   // which is what makes it a crit.
+  // A strong brew is a wider pocket by the same argument: strength at the cut
+  // is more ground out at once, so a fed quarrier's swing takes more cells and
+  // the seam's stone comes forward with them.
   const crit = critRoll(critBoost(w));
-  const take = pocketOf(w) + (crit - 1);
+  const take = stronger(w, pocketOf(w)) + (crit - 1);
   // Each cell is dealt its own share of the seam, counted before it comes out,
   // so a pocket of three is three one-in-what-is-left chances exactly as three
   // swings were, and the last cell of a cut is still certain. The crit's
@@ -734,7 +737,7 @@ export function stepQuarrier(w, now, ctx = null) {
   w.swingAt = now + QUARRY_SWING;
   // A hearty stew quickens this body's own digging -- the next swing comes
   // round sooner for as long as the dose is worn. See apothecary.js.
-  w.next = now + beatMs() / workBoost(w) * (0.85 + rand() * 0.3);
+  w.next = now + beatMs() / speedBoost(w) * (0.85 + rand() * 0.3);
   S.dirty = true;
 
   if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out

@@ -60,11 +60,11 @@ export const LADDERS = {
   // --- the apothecary -----------------------------------------------------------
   bufflength:   { value: [60, 75, 90, 105, 120, 135, 150, 180, 210], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // seconds a dose lasts
   brewdoses:    { value: [1, 2, 3, 4, 5, 6, 7, 8, 10], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // doses a brew
-  'potency-stew':   { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker work
-  'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % more crits
-  'potency-strong': { value: [50, 60, 70, 80, 85, 100, 110, 120, 150], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % more carried
-  'potency-swift':  { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker walk
-  'potency-gleam':  { value: [20, 22, 25, 28, 30, 35, 40, 50, 60], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] }   // % more sparks
+  // The three brews' potency, one a brew, in the percent the row shows; every
+  // trade reads it in its own terms (DESIGN.md, "Three brews, one a coin").
+  'potency-stew':   { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker
+  'potency-strong': { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % stronger
+  'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] }   // points of crit
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

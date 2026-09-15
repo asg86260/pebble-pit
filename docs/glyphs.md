@@ -39,7 +39,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | pick mid-swing  | `speed`, `rockhandspeed`, `quarrypace`                                                 |
 | spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
-| boot            | `haulpace` +up, `potency-swift` +plus                                                    |
+| boot            | `haulpace` +up                                                                         |
 | lever           | `auto`, `recycler`                                                                     |
 | cart            | `carter`                                                                               |
 | belt            | `belt`, `tunebelt` +plus                                                             |
@@ -68,7 +68,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | hoe             | `tend` +up                                                                             |
 | vial            | `brewdoses` +plus                                                                      |
 | bowl            | `potency-stew` +plus                                                                   |
-| star (5-point)  | `potency-gleam` +plus                                                                  |
+| star (5-point)  | `spelldrive`, `spellluck`, `spellthrift`, `spellsweep` (with their own first glyph)     |
 | wand            | `wizspeed` +up                                                                         |
 | bolt            | `wizpower`                                                                             |
 | dome arc        | `dome`                                                                                 |

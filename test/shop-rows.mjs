@@ -147,8 +147,6 @@ export const ROWS = [
   { key: 'potency-stew', part: 2, reach: apothecary },
   { key: 'potency-brace', part: 2, reach: apothecary },
   { key: 'potency-strong', part: 2, reach: apothecary },
-  { key: 'potency-swift', part: 2, reach: apothecary },
-  { key: 'potency-gleam', part: 2, reach: apothecary },
 
   // --- the casino -------------------------------------------------------------
   { key: 'chip', dial: true, part: 2, reach: casino },

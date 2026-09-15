@@ -15,7 +15,7 @@ import { climbTo } from '../route.js';
 import { boulderAlive, knockOff, rockTopY, rockPatch } from '../rock.js';
 import { tidyStep } from '../tidy.js';
 import { rockhandMs, rockhandBite } from '../upgrades.js';
-import { workBoost } from '../apothecary.js';
+import { speedBoost, stronger } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { rockMuck } from '../smog.js';
 import { frames } from '../clock.js';
@@ -159,15 +159,16 @@ export function rockhandWork(w, c) {
 
   if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
     // twice the bite for a breaker: the shards bought a bigger swing on a
-    // body that is not going anywhere
-    const bite = rockhandBite() * (w.trained ? 2 : 1);
+    // body that is not going anywhere. A strong brew is a bigger bite too --
+    // strength, read as a rockhand reads it (`stronger`).
+    const bite = stronger(w, rockhandBite() * (w.trained ? 2 : 1));
     knockOff(w.x + WORKER / 2, surf + P / 2, bite, true, w);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     // A hearty stew quickens the swing the way it quickens a stoop at the farm --
     // the rockhand's own clock, divided by the boost, so a fed rockhand comes round
-    // sooner. `workBoost` is 1 for a body wearing no work tonic.
-    w.next = now + rockhandMs() / workBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
+    // sooner. `speedBoost` is 1 for a body wearing no stew.
+    w.next = now + rockhandMs() / speedBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
   } else if (boulderAlive()) {
     // Between swings, and never instead of one: a grain that came down on the
     // hill is lying on the ground this body is working, so it goes on the rock's

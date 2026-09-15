@@ -404,14 +404,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(2, 5);
                  window.__dose(TYPE.HAUL, 'brace'); window.__dose(TYPE.HAUL, 'strong');
                  window.__dose(TYPE.ROCK, 'stew'); window.__fast(12); window.__look(st().pitX - 620); } },
-  // The mana brew on its way to a wizard: the pot lit, the stirrer out with
+  // The strong brew on its way to a wizard: the pot lit, the stirrer out with
   // the vial, and the wizard called down off the ring for it -- landing at its
   // spot under the star while the stirrer walks up. Run to the frame the
   // stirrer is nearly at it, so the shot is the two of them meeting.
-  manabrew: { about: 'the crew', say: 'a wizard coming down off the ring for its mana brew',
+  manabrew: { about: 'the crew', say: 'a wizard coming down off the ring for its strong brew',
     run: () => { rich(); window.__crew(3, 3, 5, 7, 0, 2);
                  window.__buy('unlockapothecary'); window.__finish();
-                 window.__pot('gleam'); window.__assign(JOB.STIR, 1);
+                 window.__pot('strong'); window.__assign(JOB.STIR, 1);
                  for (let i = 0; i < 240 * 60; i++) {
                    window.__fast(1 / 60);
                    const s = st();
@@ -423,7 +423,7 @@ export const SCENES = {
     run: () => { rich(); window.__crew(3, 3, 5, 7, 0, 2);
                  // dosed on the ground, before the climb -- a dose is never
                  // handed to a body in the sky (verify.js, rule 11)
-                 window.__dose(TYPE.WIZARD, 'gleam'); window.__fast(30);
+                 window.__dose(TYPE.WIZARD, 'strong'); window.__fast(30);
                  window.__look(st().meteorX - st().viewW / 2); } },
 
   // --- the bench --------------------------------------------------------------
@@ -747,14 +747,14 @@ export const SCENES = {
                  window.__pot('stew', 0); window.__pot('brace', 1);
                  window.__look(st().apothecaryX - 200);
                  const b = window.__potSpot(1); hover(b.x + b.w / 2, b.y + b.h / 2); } },
-  // ...and at a pot on a brew only one trade drinks: the "for" section is a
-  // line saying so, not a choice.
-  apothpickone: { about: 'the apothecary', say: 'the picker at a pot on the speed brew: for haulers, no choice', page: true,
-    run: () => { window.__reset(); window.__crew(1, 4, 1, 2);
+  // ...and at a pot in a yard with only the rock and the plots: the "for"
+  // section lists the trades that stand and none of the ones that do not.
+  apothpickone: { about: 'the apothecary', say: 'the picker at a pot before the quarry: rockhands and farmhands, nobody else', page: true,
+    run: () => { window.__reset(); window.__crew(1, 4, 0, 2);   // no quarrier: the cut stays shut
                  window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
-                 window.__pot('swift', 0);
+                 window.__pot('stew', 0);
                  window.__look(st().apothecaryX - 200);
                  const b = window.__potSpot(0); hover(b.x + b.w / 2, b.y + b.h / 2); } },
 

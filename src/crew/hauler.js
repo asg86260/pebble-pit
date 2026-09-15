@@ -15,8 +15,8 @@ import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs, homePace } from '../upgrades.js';
-// the swift brew's pace, read per body at every haul walk (feedback7, item 21)
-import { paceBoost } from '../apothecary.js';
+// the stew on a hauler's legs, read per body at every haul walk
+import { speedBoost } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
 import { rand } from '../rng.js';
@@ -273,7 +273,7 @@ function oldestDust(taken) {
 //
 // `ahead` widens the look by that many pixels toward the lip, for the stride
 // the body is about to take: a step is `frames()` long, so on a slow frame or
-// under a swift brew one stride is wider than the span under the feet, and a
+// under a stew one stride is wider than the span under the feet, and a
 // column could be crossed between two looks. Found within the stride, the
 // step is shortened to land on it -- see the walk home.
 function underfoot(w, ahead = 0) {
@@ -448,7 +448,7 @@ export function haulerWork(w, c) {
     S.coreTaker = w;
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
     const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-    const pace = haulSpeed() * paceBoost(w) * HAUL_EMPTY;
+    const pace = haulSpeed() * speedBoost(w) * HAUL_EMPTY;
     // A route, like every other errand, and not a straight line. The core
     // comes to rest at the foot of the rock and the next rock lands on the
     // same spot, so a carter sent for it from the far side walked straight
@@ -584,7 +584,7 @@ export function haulerWork(w, c) {
     const col = w.claim;
     const target = floor.x + col * P;
     // hands free, so it moves; a load is what slows it down
-    const pace = haulSpeed() * paceBoost(w) * HAUL_EMPTY;
+    const pace = haulSpeed() * speedBoost(w) * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
     // It scoops what is under it, not what its left edge is exactly on. The
     // last two columns before the lip sit further right than a worker is
@@ -623,7 +623,7 @@ export function haulerWork(w, c) {
     // booking held to the lip, and a body walking to tip should not be
     // holding room it will not use.
     const target = pit.x - WORKER;                 // the lip, where they can stand
-    let stride = Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));
+    let stride = Math.min(haulSpeed() * speedBoost(w) * frames(), Math.abs(target - w.x));
     if (!w.hasCore && w.carry < load(w)) {
       const c = underfoot(w, stride);
       const under = c >= 0 && floor.x + c * P <= w.x + WORKER;

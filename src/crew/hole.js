@@ -9,7 +9,7 @@ import { sweepMuckAt } from '../smog.js';
 import { swingFor } from './tenders.js';
 import { pitRoom } from '../pit.js';
 import { haulCap, scoopMs, commutePace } from '../upgrades.js';
-import { carryBoost } from '../apothecary.js';
+import { stronger } from '../apothecary.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
 
@@ -164,7 +164,7 @@ export const pitFree = () => S.riftOpen ? Infinity : pitRoom() - bookings();
 
 // what one body carries in a trip -- a cart holds twice, and a strong brew adds
 // its half on top of that for as long as the dose is worn (see apothecary.js)
-export const load = w => Math.round(haulCap() * (w.trained ? 2 : 1) * carryBoost(w));
+export const load = w => stronger(w, Math.round(haulCap() * (w.trained ? 2 : 1)));
 
 // what it may still take this trip, and taking one more off it
 export const roomOnBoard = w => (w.booked || 0) - (w.took || 0);

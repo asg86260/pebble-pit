@@ -11,7 +11,7 @@
 import { group, ok, state, run, runUntil, openSites, buyNow, yard, WORKER } from './helpers.mjs';
 import { workAt } from '../src/works.js';
 import { LADDERS } from '../src/config.js';
-import { doseLive, boiling, potBoiling, apothHut, brewMs, dosesPer, workBoost, critBoost,
+import { doseLive, boiling, potBoiling, apothHut, brewMs, dosesPer, speedBoost, critBoost,
          doseStockTotal, potTonicOf, potSpentOf } from '../src/apothecary.js';
 
 // Open the farm, put the apothecary up, and hand the yard enough coin to brew.
@@ -20,7 +20,8 @@ function standApothecary() {
   window.__reset();
   openSites();                                 // the plots are broken
   window.__crew(1, 3, 0, 1);                   // a rockhand, spare hands, a farmhand to buff
-  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400 });
+  // Sparks too: the bracing tonic is priced in them.
+  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400, sparks: 200 });
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
@@ -106,13 +107,16 @@ group('a hearty stew makes a farmhand cut faster', async () => {
   // the pot and let the stirrer deal it, then read the boost off the body.
   window.__pot('stew');
   window.__assign('stirrers', 1);
+  // The stew reaches every trade, so the pot is pointed at the plots the way
+  // a player would point it: the favor, not the recipe, is what says who.
+  window.__potPrefer('farmhands');
   runUntil(() => dosed().some(w => w.type === 'farmhand'), 200);
   const fh = dosed().find(w => w.type === 'farmhand');
 
   return [
     ok(!!fh, 'a farmhand is dealt the stew'),
-    ok(fh && workBoost(fh) > 1.2, 'and its work is scaled up while it wears it',
-       fh && String(workBoost(fh)))
+    ok(fh && speedBoost(fh) > 1.2, 'and its work is quickened while it wears it',
+       fh && String(speedBoost(fh)))
   ];
 });
 
@@ -137,7 +141,7 @@ group('a hearty stew makes a rockhand swing faster', async () => {
     if (buff) m().doses = [{ tonic: 'stew', until: 9e12 }];   // a stew that will not lapse
     const before = m().mined || 0;
     run(30);
-    return { took: (m().mined || 0) - before, boost: workBoost(m()) };
+    return { took: (m().mined || 0) - before, boost: speedBoost(m()) };
   }
   const base = minedIn(30, false);
   const up = minedIn(30, true);
@@ -242,11 +246,12 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   buyNow('anotherpot');
   window.__pot('stew', 0);
   window.__assign('stirrers', 1);
+  window.__potPrefer('farmhands', 0);
   runUntil(() => dosed().some(w => w.type === 'farmhand'), 200);
   // By name -- see the stew group above.
   const fhName = dosed().find(w => w.type === 'farmhand').name;
   const fh = () => yard.S.workers.find(w => w.name === fhName);
-  const stewOnly = workBoost(fh());
+  const stewOnly = speedBoost(fh());
   const critBefore = critBoost(fh());
 
   // ...and the second pot goes on something that lifts a different thing. The
@@ -254,9 +259,10 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   // mid-brew: a batch belongs to the tonic it was bought as, so turning a pot
   // while it cooks changes what it lights NEXT, not what is on the fire.
   window.__pot('brace', 1);
+  window.__potPrefer('farmhands', 1);
   window.__assign('stirrers', 2);
   const both = runUntil(() => (fh().doses || []).length > 1, 300);
-  const workAfter = workBoost(fh());
+  const workAfter = speedBoost(fh());
   const critAfter = critBoost(fh());
 
   // A second of the SAME kind: the list does not grow, and the boost does not
@@ -265,7 +271,7 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   const stew = { tonic: 'stew', until: 1 };    // a spent one to be replaced
   fh().doses = [...(fh().doses || []).filter(d => d.tonic !== 'stew'), stew];
   const again = runUntil(() => (fh().doses || []).some(d => d.tonic === 'stew' && d.until > 1), 300);
-  const doubled = workBoost(fh());
+  const doubled = speedBoost(fh());
 
   const worn = (fh().doses || []).map(d => d.tonic), nDoses = (fh().doses || []).length,
         oneStew = (fh().doses || []).filter(d => d.tonic === 'stew').length === 1;

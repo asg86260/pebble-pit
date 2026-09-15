@@ -29,14 +29,14 @@
 
 import { LADDER,
          BREW_BILL, BREW_MS, rungValue,
-         TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
-         TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
+         TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT,
          APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
          DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
+import { posts } from './roster.js';
 import { now, frames } from './clock.js';
 import { rand } from './rng.js';
 import { walkY } from './world.js';
@@ -66,50 +66,57 @@ export const buffMs = (lvl = S.lengthLevel) => rungValue('bufflength', lvl) * 10
 export const dosesPer = (lvl = S.dosesLevel) => rungValue('brewdoses', lvl);
 // One vial in a stirrer's hands, always -- see DOSE_CARRY.
 export const carryDoses = () => DOSE_CARRY;
-// --- the three tonics ---------------------------------------------------------
-// A crop base plus one reagent. The stew is the general buff, so its reagent is
-// dust, the shared coin; the two targeted tonics take shard, the coin of
-// neither the crew nor the crit they lift; the gleam brew alone is priced in
-// the coin it makes, sparks, so a wizard's tonic is a bet with the machines'
-// money. Each effect is a lever the game already has. How much of each coin a
-// batch takes is `BREW_BILL` in config -- the reagent here names the second
-// line of that bill and is what the menu gates on.
-// `color` is the liquid in the vial -- each tonic its own, so the stock on the
+// --- the three brews ----------------------------------------------------------
+// One a coin, each one axis of a body's day, and every body reads the axis in
+// its own trade's terms (DESIGN.md, "Three brews, one a coin, read per
+// trade"). The stew is speed and costs crop; the strong brew is strength and
+// costs ore; the bracing tonic is crit and costs sparks. The brew is WHAT you
+// want more of; the favor set under the pot is WHO -- the two questions a
+// player has, each asked once. It was five recipes, and the recipe decided
+// who drank it, so "which trade do I want to help" was asked twice, once as
+// the brew and once as the favor.
+//
+// How much of each coin a batch takes is `BREW_BILL` in config -- the reagent
+// here names the second line of that bill and is what the menu gates on.
+// `color` is the liquid in the vial -- each brew its own, so the stock on the
 // shelf, the vial a stirrer carries, the fire under the pot that is brewing it
 // and the potion floating over a buffed body all read as the same brew by
 // colour. The one place besides the fire the yard takes colour, and here it
-// carries meaning (which tonic), which is what colour is for. See `tonicColor`,
+// carries meaning (which brew), which is what colour is for. See `tonicColor`,
 // the buff haze and carried vial in render/crew.js, and the shelf and the flames
-// in render/apothecary.js.
+// in render/apothecary.js. The bracing tonic is red because it is priced in
+// sparks and red is the machines' color.
 //
 // `short` is the one word that tells the three apart, for a row that already
 // says what it is doing to them -- "a stronger hearty stew" is three words of
 // throat-clearing on a line with a price on the end of it, and "a stronger
 // strong brew" is a joke.
-// `jobs` is who a brew is for, said on the recipe itself (item 22). The stew and
-// the bracing tonic are for everybody who swings or rolls -- every job but the
-// haulers, whose day has no swing in it; the strong brew is for whoever carries;
-// and the two wave-7 recipes are each one trade's own. `takesTonic` below is
-// nothing but a membership test on this list, so who a brew reaches and what the
-// picker offers cannot come apart.
-const EVERY_BUT_HAUL = Object.values(JOB).filter(j => j !== JOB.HAUL);
+// `jobs` is who a brew reaches: the stew and the strong brew reach every
+// trade there is, because every trade has a clock and every trade makes
+// something; the bracing tonic reaches only the trades that roll -- haulers
+// and purifiers have no crit and a dose of it walked out to them would be a
+// dose for nothing. `takesTonic` below is nothing but a membership test on
+// this list, so who a brew reaches and what the picker offers cannot come
+// apart. The stirrer is on none of them: it hands the drink out.
+const EVERY = Object.values(JOB).filter(j => j !== JOB.STIR);
+const ROLLERS = EVERY.filter(j => j !== JOB.HAUL && j !== JOB.PURIFY);
 export const TONICS = [
-  { key: 'stew',   name: 'hearty stew',   reagent: 'dust',  kind: 'work',
-    base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f', short: 'stew',
-    jobs: EVERY_BUT_HAUL },                                                      // green
-  { key: 'brace',  name: 'bracing tonic', reagent: 'shard', kind: 'crit',
-    base: TONIC_BRACE_CRIT,  unit: 'crit',  color: '#a05fd6', short: 'tonic',
-    jobs: EVERY_BUT_HAUL },                                                      // purple
-  { key: 'strong', name: 'strong brew',   reagent: 'shard', kind: 'carry',
-    base: TONIC_STRONG_CARRY, unit: 'carry', color: '#4a86c7', short: 'brew',
-    jobs: [JOB.HAUL, JOB.QUARRY] },                                              // blue
-  { key: 'swift',  name: 'speed brew',      reagent: 'spore', kind: 'pace',
-    base: TONIC_SWIFT_PACE,  unit: 'pace',  color: '#d9a441', short: 'speed',
-    jobs: [JOB.HAUL] },                                                          // amber
-  { key: 'gleam',  name: 'mana brew',      reagent: 'spark', kind: 'spark',
-    base: TONIC_GLEAM_SPARK, unit: 'spark', color: '#e04848', short: 'gleam',
-    jobs: [JOB.WIZARD] }                                                         // red
+  { key: 'stew',   name: 'hearty stew',   reagent: 'spore', kind: 'speed',
+    base: TONIC_STEW_SPEED,      unit: 'faster',   color: '#5fb84f', short: 'stew',
+    jobs: EVERY },                                                               // green
+  { key: 'strong', name: 'strong brew',   reagent: 'shard', kind: 'strength',
+    base: TONIC_STRONG_STRENGTH, unit: 'stronger', color: '#4a86c7', short: 'brew',
+    jobs: EVERY },                                                               // blue
+  { key: 'brace',  name: 'bracing tonic', reagent: 'spark', kind: 'crit',
+    base: TONIC_BRACE_CRIT,      unit: 'crit',     color: '#e04848', short: 'tonic',
+    jobs: ROLLERS }                                                              // red
 ];
+// The five keys the book held before it was three (stew, brace, strong,
+// swift, gleam), each folded into the brew that carries its axis now: the
+// speed brew was speed, so it is the stew's; the mana brew was more spark a
+// bolt, which is strength, so it is the strong brew's. Read by
+// `migrateApothecary` and nowhere else.
+const FOLDED = { swift: 'stew', gleam: 'strong' };
 // A recipe is hidden until its reagent has been seen (item 24): shard is the
 // quarry's coin and a spark comes off the sky, and a brew priced in a currency
 // the player has never met is a row about nothing. Asked by the picker and by
@@ -134,27 +141,21 @@ const strengthOf = (key, lvl = potencyLevel(key)) => rungValue(`potency-${key}`,
 export const tonicVal = t => (t ? t.base * strengthOf(t.key) : 0);
 
 // What a brew does, in the few words a menu row has for it: how much of what,
-// and how long it lasts. Read live off the tonic's own potency ladder and off
+// and how long it lasts. Read live off the brew's own potency ladder and off
 // the building's dose-length ladder, so a rung bought on one recipe changes what
 // the picker says about that recipe the next time it opens and says nothing
 // about the other two.
 //
-// One place, because it is said in one place: the picker at the pot. It was
-// written for the board rows that used to set a pot's brew and went with them,
-// and it is back for the control that replaced them -- the same string, because
-// the question "what does this do" did not change when the answer moved.
+// It says the AXIS -- faster, stronger, crit -- and not the trade's word for
+// it, because the same dose is a quicker swing on one body and quicker legs
+// on the next; the favor rows under it say the trade. What "faster" means for
+// a wizard is the wizard's business.
 //
 // Seconds are a clock, never the letter `s` (see `secondsMark` in upgrades.js).
-// The carry brew names haulers because it is the only brew a hauler takes at
-// all, and that is the fact that decides whether it is worth putting a pot on.
 export function tonicGain(t) {
   if (!t) return '';
   const v = Math.round(tonicVal(t) * 100);
-  const what = t.kind === 'work' ? `+${v}% work`
-             : t.kind === 'crit' ? `+${v} crit`
-             : t.kind === 'pace' ? `+${v}% haul speed`
-             : t.kind === 'spark' ? `+${v}% sparks`
-             : `+${v}% carried, haulers too`;
+  const what = t.kind === 'crit' ? `+${v} crit` : `+${v}% ${t.unit}`;
   return `${what}, ${Math.round(buffMs() / 1000)} ${unitText('s')}`;
 }
 
@@ -204,31 +205,39 @@ export const doseLeftMs = w =>
 // The three readers, each returning the neutral value when the body wears no
 // dose of that kind. One of each kind at most, so each of these finds one or
 // none -- no summing, and no question about what two stews would mean.
-export function workBoost(w) {
-  const d = kindOf(w, 'work');
+//
+// Speed and strength are one number each, and the TRADE decides what it
+// multiplies -- the same reader at every call site, so a stew is never
+// "work" here and "pace" there. Speed divides a clock: the rockhand's swing
+// (`rockhandMs`), the quarrier's beat (`beatMs`), the farmhand's tending and
+// cut, the hauler's stride (`haulSpeed`), the wizard's cast (`wizMs`), the
+// purifier's pull. Strength multiplies what one go makes: the bite off the
+// rock, the shard a beat, the crop a cut, the hauler's armful (`load`), the
+// spark a bolt (`wizBite`), the motes a purifier draws. Crit adds points to
+// whoever rolls.
+export function speedBoost(w) {
+  const d = kindOf(w, 'speed');
+  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
+}
+export function strengthBoost(w) {
+  const d = kindOf(w, 'strength');
   return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
 }
 export function critBoost(w) {
   const d = kindOf(w, 'crit');
   return d ? tonicVal(tonicOf(d.tonic)) : 0;
 }
-export function carryBoost(w) {
-  const d = kindOf(w, 'carry');
-  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
-}
-// The speed brew on a hauler's legs (item 21): multiply the pace wherever a
-// hauler's own walk is computed. The one call site is crew/hauler.js's use of
-// `haulSpeed()`.
-export function paceBoost(w) {
-  const d = kindOf(w, 'pace');
-  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
-}
-// And the gleam brew on a wizard's bolt (item 25): scale what a strike brings
-// off the star, at wizard.js's one `fire(...)` call.
-export function sparkBoost(w) {
-  const d = kindOf(w, 'spark');
-  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
-}
+// A whole count under the body's strength -- the armful, the bite, the crop
+// a cut, the pocket -- rounded UP, and only when a dose is worn. A quarter
+// more of one grain is one grain again if it is rounded to nearest, and a
+// dosed hauler at the foot of its ladder would carry exactly what it carried
+// before: a brew bought, walked out and drunk for nothing. Up, so a strong
+// brew is always at least one more of whatever the trade makes a go; the
+// undosed count is untouched.
+export const stronger = (w, n) => {
+  const b = strengthBoost(w);
+  return b > 1 ? Math.ceil(n * b) : n;
+};
 
 // Take the spent ones off. Nothing reads a lapsed dose, but a body that works
 // all day would otherwise carry a list of every tonic it has ever been handed.
@@ -283,6 +292,30 @@ export function migrateApothecary() {
   S.potency = S.potency || {};
   S.shelf = S.shelf || {};
   S.brewKeys = S.brewKeys || [];
+  // Five brews became three (DESIGN.md, "Three brews, one a coin"): a save
+  // with the speed brew or the mana brew on it folds each into the brew that
+  // carries its axis now. The potency is the deeper of the two rungs -- a
+  // player who climbed both bought two things that are now one thing, and
+  // the deeper is what they are owed -- the stock is added to the shelf it
+  // joins, a pot on the old brew is set to the new one, and a live dose on a
+  // body is renamed and keeps its clock.
+  for (const [old, to] of Object.entries(FOLDED)) {
+    if (S.potency[old] != null) {
+      S.potency[to] = Math.max(S.potency[to] | 0, S.potency[old] | 0);
+      delete S.potency[old];
+      S.dirty = true;
+    }
+    if (S.shelf[old] != null) {
+      S.shelf[to] = (S.shelf[to] | 0) + (S.shelf[old] | 0);
+      delete S.shelf[old];
+      S.dirty = true;
+    }
+  }
+  const fold = key => FOLDED[key] || key;
+  S.potTonics = (S.potTonics || []).map(fold);
+  S.brewKeys = S.brewKeys.map(fold);
+  for (const w of S.workers)
+    for (const d of w.doses || []) d.tonic = fold(d.tonic);
   for (const t of TONICS) {
     if (S.potency[t.key] == null) S.potency[t.key] = 0;
     if (S.shelf[t.key] == null) S.shelf[t.key] = 0;
@@ -377,7 +410,7 @@ export const inMix = () => S.workers.filter(atPot).length;
 const potOf = w => stirrers().indexOf(w);
 
 // A body worth dealing a tonic to: anybody working who is not a stirrer, who
-// takes that tonic at all (a hauler takes only the carry brew -- item 12), and
+// takes that tonic at all (a hauler takes no bracing tonic: it never rolls), and
 // who is not already under a live dose OF ITS KIND. It used to be "not already
 // under anything", which with tonics that stack means a body under a bracing
 // tonic would never be offered a stew -- the crew would settle on whichever
@@ -739,12 +772,12 @@ const brewLadder = ({ after = 0, ...o }) => tierRows({
 // The per-tonic potency ladders (item 14). One ladder a tonic, all in the hut's
 // own section: what you are buying is a deeper version of one recipe, which is a
 // fact about the craft rather than about any one pot. The cards are named for
-// the drink, with a numeral, so five ladders showing one card each still read
-// as five tonics.
+// the drink, with a numeral, so three ladders showing one card each still read
+// as three brews.
 //
 // What each tonic's number is a number *of*, in the yard's own words: "stew 25
 // -> 32%" says nothing about what the drinker does more of.
-const DOES = { work: 'work', crit: 'crit', carry: 'carry', pace: 'walk', spark: 'sparks' };
+const DOES = { speed: 'faster', strength: 'stronger', crit: 'crit' };
 const potencyRows = t => brewLadder({
   level: () => potencyLevel(t.key),
   climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
@@ -822,13 +855,17 @@ export const APOTHECARY_SECTIONS = [
 // The jobs a dose can favor, in the order the picker lists them. Null (whoever
 // is nearest) is the first row of the list rather than a step off either end.
 const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
-// The jobs a POT's picker offers: only those the brew it is set to can land on
-// (item 22). A list saying "haulers" under a pot on stew would be offering a
-// favor no dose can honor. A pot set to nothing offers the whole list -- it
+// The jobs a POT's picker offers: the trades the brew it is set to can land on
+// (item 22) whose station stands in the yard. A trade with no station yet is
+// not on the list at all (the owner, 2026-09-15: "unbuilt roles should not
+// appear at all") -- the roster's own rule for which posts stand, asked
+// through `posts`, so the picker and the counters under the buildings agree
+// about what exists. A pot set to nothing offers every standing trade -- it
 // then reads as what the building could do.
 export function preferableFor(i) {
   const t = tonicOf(potTonicOf(i));
-  return t ? PREFER_JOBS.filter(j => t.jobs.includes(j)) : PREFER_JOBS;
+  const standing = new Set(posts().map(p => p.job));
+  return PREFER_JOBS.filter(j => standing.has(j) && (!t || t.jobs.includes(j)));
 }
 // Said the way every other board says a job -- see `jobSaid` in kit.js. This was
 // a second table of the same words, which is how the haulers ended up as "the

@@ -112,7 +112,6 @@ export const GLYPH_OF = {
   potkeep: ['pot'], anotherpot: ['pot', 'plus'],
   bufflength: ['pot', 'plus'], brewdoses: ['vial', 'plus'],
   'potency-stew': ['bowl', 'plus'], 'potency-brace': ['spark', 'plus'], 'potency-strong': ['sack', 'plus'],
-  'potency-swift': ['boot', 'plus'], 'potency-gleam': ['star', 'plus'],
   // the tower
   wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],

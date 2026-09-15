@@ -1,6 +1,6 @@
 // The apothecary rework: pots that are each their own, stock that is per tonic,
 // potency ladders one to a recipe, the armful a stirrer carries, and the rule
-// that a hauler takes the carry brew and nothing else. Node tier -- everything
+// that a hauler takes the stew on its legs and no bracing tonic. Node tier -- everything
 // about the yard; the hut, the bookshelf and the coloured flames are looked at
 // with `node tools/look.mjs apothpots`. See docs/wave5.md, track F1.
 //
@@ -13,7 +13,7 @@
 import { group, ok, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { TONICS, tonicOf, tonicVal, doseStock, choosePotTonic,
          potTonicOf, carryDoses, potencyLevel, migrateApothecary,
-         workBoost, critBoost, carryBoost, doses } from '../src/apothecary.js';
+         speedBoost, critBoost, strengthBoost, doses } from '../src/apothecary.js';
 
 // Open the farm, put the apothecary up, and hand the yard enough coin to brew
 // for a good while on two pots at once.
@@ -21,7 +21,8 @@ function standApothecary() {
   window.__reset();
   openSites();                                 // the plots are broken
   window.__crew(1, 4, 0, 2);                   // a rockhand, spare hands, two farmhands
-  window.__grant({ cores: 3, dust: 40000, spores: 4000, shards: 800 });
+  // Sparks too: the bracing tonic is priced in them.
+  window.__grant({ cores: 3, dust: 40000, spores: 4000, shards: 800, sparks: 200 });
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
@@ -146,7 +147,7 @@ group('a stirrer carries one vial and nothing sells it more', async () => {
 });
 
 // --- who a tonic is for -------------------------------------------------------
-group('a hauler takes the carry brew and nothing else', async () => {
+group('a hauler reads the stew on its legs and takes no bracing tonic', async () => {
   standApothecary();
   const hauler = yard.S.workers.find(w => w.type === 'hauler');
   const farmhand = yard.S.workers.find(w => w.type === 'farmhand');
@@ -154,41 +155,41 @@ group('a hauler takes the carry brew and nothing else', async () => {
 
   hauler.doses = [{ tonic: 'stew', until: forever },
                   { tonic: 'brace', until: forever }];
-  const haulWork = workBoost(hauler), haulCrit = critBoost(hauler);
+  const haulSpeed = speedBoost(hauler), haulCrit = critBoost(hauler);
 
   hauler.doses = [{ tonic: 'strong', until: forever }];
-  const haulCarry = carryBoost(hauler);
+  const haulStrength = strengthBoost(hauler);
 
   farmhand.doses = [{ tonic: 'stew', until: forever }];
-  const farmWork = workBoost(farmhand);
+  const farmSpeed = speedBoost(farmhand);
 
   return [
-    ok(haulWork === 1, 'a stew does nothing for a hauler\'s work', String(haulWork)),
-    ok(haulCrit === 0, 'and a bracing tonic nothing for its crit', String(haulCrit)),
-    ok(haulCarry > 1, 'while the strong brew widens what it carries', String(haulCarry)),
-    ok(farmWork > 1.2, 'and the same stew still lifts a farmhand',
-       String(farmWork))
+    ok(haulSpeed > 1.2, 'a stew quickens a hauler the way it quickens anybody', String(haulSpeed)),
+    ok(haulCrit === 0, 'while a bracing tonic does nothing for a body that never rolls', String(haulCrit)),
+    ok(haulStrength > 1.2, 'and the strong brew widens what it carries', String(haulStrength)),
+    ok(farmSpeed > 1.2, 'and the same stew still lifts a farmhand',
+       String(farmSpeed))
   ];
 });
 
-group('and no stirrer ever walks a stew out to a hauler', async () => {
+group('and no stirrer ever walks a bracing tonic out to a hauler', async () => {
   standApothecary();
   window.__assign('stirrers', 1);
-  setPot(0, 'stew');
+  setPot(0, 'brace');
   // Long enough for several batches to be brewed and dealt across the yard.
   runUntil(() => yard.S.workers.some(w =>
     w.doses && w.doses.length && w.type !== 'stirrer'), 400);
   run(180);
   const dosedHaulers = yard.S.workers.filter(w =>
-    w.type === 'hauler' && w.doses && w.doses.some(d => d.tonic === 'stew'));
+    w.type === 'hauler' && w.doses && w.doses.some(d => d.tonic === 'brace'));
   const dosedOthers = yard.S.workers.filter(w =>
     w.type !== 'hauler' && w.type !== 'stirrer' &&
-    w.doses && w.doses.some(d => d.tonic === 'stew'));
+    w.doses && w.doses.some(d => d.tonic === 'brace'));
   return [
-    ok(dosedOthers.length > 0, 'the stew reaches the bodies it is for',
+    ok(dosedOthers.length > 0, 'the bracing tonic reaches the bodies that roll',
        `${dosedOthers.length} bodies`),
     ok(dosedHaulers.length === 0, 'and not one hauler',
-       `${dosedHaulers.length} haulers under a stew`)
+       `${dosedHaulers.length} haulers under a bracing tonic`)
   ];
 });
 

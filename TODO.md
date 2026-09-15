@@ -1,14 +1,16 @@
 # Still to do
 
-## Three brews, one a coin, read per trade -- DESIGN, awaiting sign-off (2026-09-15)
+## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
 "Three brews, one a coin, read per trade" at the end of DESIGN.md. The five
 recipes fold to three by coin -- crop is speed, ore is strength, spark is
 crit -- and every trade reads the axis in its own terms (a hauler's speed is
-its legs, a wizard's strength is its bolt). The favor list under a pot shows
-every trade, unbuilt ones dimmed. Blocker: the owner's sign-off on the
-design; then the two open calls at its foot (the crit brew's color, and
-strength on the farm).
+its legs, a wizard's strength is its bolt). The favor list under a pot names
+the trades whose station stands and no others. Built as designed, with the
+owner's amendment (unbuilt trades off the list, not dimmed), the bracing
+tonic red, and strength on the farm as more crop a cut. One thing the design
+did not foresee: a quarter more of one grain is one grain, so a whole count
+under the strong brew rounds up (`stronger`). Check: test/three-brews.test.mjs.
 
 ## A hand on the tile -- BUILT (2026-09-15)
 

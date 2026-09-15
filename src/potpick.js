@@ -151,18 +151,18 @@ function build() {
   opts.addEventListener('pointerleave', leaveSoon);
 }
 
-// Who pot `i` is for, on the rows: the jobs the set brew reaches and somebody
-// is doing, with the round's count on each. Read at every open and again on
-// every pick, so the count is the yard as it stands. A job nobody is on -- a
-// station not yet built -- is a row about nobody and stays off, unless it is
-// the one already set, which stays so it can be seen and changed: the brew
-// rows' own rule.
+// Who pot `i` is for, on the rows: the trades the set brew reaches whose
+// station stands (`preferableFor`), with the round's count on each. Read at
+// every open and again on every pick, so the count is the yard as it stands.
+// A trade with a station and nobody on it shows with "0/0" -- the brew will
+// reach them the moment somebody is put on -- and a trade with no station is
+// not on the list at all: the owner's call, 2026-09-15.
 //
-// A brew only one trade can drink -- the speed brew is the haulers', the mana
-// brew the wizards' -- has nobody to favor over anybody, so it offers no
-// choice: the one row stands as a plain line saying who it is for and how the
-// round is going, and "whoever is nearest" is off, since nearest and that
-// trade are the same people.
+// A list with one trade on it -- an early yard where only the rock has hands
+// -- has nobody to favor over anybody, so it offers no choice: the one row
+// stands as a plain line saying who it is for and how the round is going, and
+// "whoever is nearest" is off, since nearest and that trade are the same
+// people.
 function markFor(i) {
   const can = preferableFor(i);
   const favor = potPreferOf(i) || '';
@@ -170,7 +170,7 @@ function markFor(i) {
   for (const r of opts.querySelectorAll('.for')) {
     const job = r.dataset.for;
     const c = job ? doseCount(i, job) : null;
-    r.hidden = job ? !(can.includes(job) && (only || c.of > 0 || job === favor)) : only;
+    r.hidden = job ? !can.includes(job) : only;
     r.classList.toggle('only', only);
     r.classList.toggle('on', !only && job === favor);
     r.querySelector('.count').textContent = c ? `${c.dosed}/${c.of}` : '';

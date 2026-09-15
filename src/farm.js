@@ -25,7 +25,7 @@ import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
-import { critBoost, workBoost } from './apothecary.js';
+import { critBoost, speedBoost, stronger } from './apothecary.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
@@ -175,7 +175,9 @@ function cut(i, x, w) {
   // A bracing tonic on this hand lifts its crit chance for as long as it is worn
   // -- nobody else's. See apothecary.js.
   const crit = critRoll(critBoost(w));
-  const got = cropYield() * crit;
+  // And a strong brew is a bigger cut -- more crop off the same plot, strength
+  // as a farmhand reads it (`stronger`).
+  const got = stronger(w, cropYield()) * crit;
   for (let n = 0; n < got; n++) {
     if (crit > 1) critToss(x, plotTop(i) - P, tone, 'farm', crit);
     else spawnSpoil(x, plotTop(i) - P, tone, 'farm');
@@ -246,7 +248,7 @@ export function stepFarmhand(w, now, dt, c = null) {
   // should be seen to have grown before anybody takes it away.
   // A hearty stew makes this hand work its own action faster -- the plot comes
   // on quicker under it, as if the frame gave it more time. See apothecary.js.
-  tend(w, dt * workBoost(w));
+  tend(w, dt * speedBoost(w));
   // and it picks up after itself while it works. Tending is a share of the
   // frame's own time and goes in whatever the hands are doing with themselves
   // -- see `tend` -- so this costs the row nothing: what it costs is the
@@ -257,11 +259,11 @@ export function stepFarmhand(w, now, dt, c = null) {
   // then it is taken off, from exactly where it grew. The wait is the same
   // whether it ripened under this body's hands or came on while the body was
   // further down the row.
-  if (!w.quarryAt) w.quarryAt = now + CUT_MS / workBoost(w);
+  if (!w.quarryAt) w.quarryAt = now + CUT_MS / speedBoost(w);
   if (now < w.quarryAt) return;
   // a smothered plot is dug out before it is picked: the muck is on top of the
   // crop, not beside it
-  if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS / workBoost(w); return; }
+  if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS / speedBoost(w); return; }
   w.farmed = (w.farmed || 0) + cut(i, plotX(i), w);
   w.quarryAt = 0;
   w.plot = pickPlot(w);

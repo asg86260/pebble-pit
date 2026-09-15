@@ -28,7 +28,7 @@ import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from 
 import { domeRising, domeSpot, domeOrbitR, pourDome } from './shield.js';
 import { rand } from './rng.js';
 import { critRoll } from './crit.js';
-import { critBoost, sparkBoost, doseComing } from './apothecary.js';
+import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
@@ -334,14 +334,16 @@ export function stepWizard(w, now) {
     // sparks in the sky, on their own arc, and it reads as a patch coming off at
     // once. See DESIGN.md: the crit rule is one rule, but its dust looks like
     // whatever the station's own spoil already looks like.
-    // The gleam brew pays out here because the bite is the one per-body step in
+    // The strong brew pays out here because the bite is the one per-body step in
     // a wizard's spark yield -- the sparks a cell gives up are fixed.
-    const bite = wizBite() * critRoll(critBoost(w)) * sparkBoost(w);
+    const bite = wizBite() * critRoll(critBoost(w)) * strengthBoost(w);
     fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, bite);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     w.cell = null;                 // the bolt has it now; pick the next one
-    w.next = now + wizMs();
+    // And the stew is a quicker cast: the wizard's own clock, divided by the
+    // boost, the way every other trade's clock is.
+    w.next = now + wizMs() / speedBoost(w);
   }
 }
 
