@@ -83,6 +83,7 @@ export const QUEUE_PIPS = 5;
 // every board.
 export const SHELF_SLOT = 140;      // px, one item's width
 export const SHELF_SLOTS = 5;       // slots a plank holds at most; a shorter plank is as wide as what is on it
+export const SHELF_SLOTS_MIN = 2;   // and never narrower than this many, so a one-row board still reads as a board
 export const SHELF_STEP = 5;        // px between the glyph, the name, the gain and the tag
 export const SHELF_TOP = 8;         // px from the plank's sign down to the first glyph
 export const SHELF_FOOT = 8;        // px from the tag down to the tile's own foot

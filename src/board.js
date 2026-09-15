@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H,
-         SHELF_SLOT, SHELF_SLOTS, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
+         SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
 import { S, bench, lab, apothecary, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -404,7 +404,7 @@ function pinWidth() {
       range.selectNodeContents(el);
       most = Math.max(most, Math.ceil(range.getBoundingClientRect().width / SHELF_SLOT));
     }
-    sheet.style.setProperty('--shelf-slots', String(Math.max(1, Math.min(SHELF_SLOTS, most))));
+    sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(SHELF_SLOTS, most))));
   }
   sheet.style.width = '';
   // The used width off the style, not the box: a sheet the width of its words
