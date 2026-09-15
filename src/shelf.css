@@ -1,0 +1,149 @@
+/* The shelf: a board as planks with things on them (DESIGN.md, "The shelf").
+   Every number is a custom property written on the root from config/boards.js
+   by whoever mounts a shelf, the way board.js writes the pips'. Nothing here
+   depends on the card stylesheet: a tile is its own grid, and its cells are
+   found by class. */
+
+.shelves {
+  --shelf-slot: 140px;
+  --shelf-step: 5px;
+  --shelf-top: 8px;
+  --shelf-foot: 8px;
+  --shelf-plank: 5px;
+  --shelf-dot: .14;
+  /* The ground: the held sheet's dot tile, one pixel in six, at half its ink.
+     Painted on the shelves as a whole so the planks and the signs sit on it. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  padding: 6px 10px 10px;
+  font: 12px/1 ui-monospace, "Courier New", monospace;
+  color: #000;
+}
+
+/* A section: its sign, then its items standing on the plank. The plank is the
+   items' bottom edge, the full width of the sheet whether the row is full or
+   not -- a shelf is as long as the wall, not as long as what is on it. */
+.shelf { margin-top: 10px; }
+.shelf:first-child { margin-top: 0; }
+.shelf .sign {
+  display: inline-block;
+  margin-bottom: 0;
+  padding: 3px 10px 4px;
+  background: #000;
+  color: #fff;
+  font-weight: bold;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.shelf .items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--shelf-slot));
+  justify-content: start;
+  align-items: start;
+  border-bottom: var(--shelf-plank) solid #000;
+}
+
+/* A tile: four rows at fixed steps, everything centered on the tile's own
+   center line. The rows are sized, not measured, so every tile on a plank has
+   its glyph on one line, its name on one line and its tag on one line. */
+.tile {
+  position: relative;
+  display: grid;
+  grid-template-rows: 24px 13px 13px auto;
+  row-gap: var(--shelf-step);
+  justify-items: center;
+  align-items: center;
+  width: var(--shelf-slot);
+  padding: var(--shelf-top) 6px var(--shelf-foot);
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.tile:disabled { cursor: default; }
+/* A shelf with no gains on it has no gain line. */
+.shelf.nogain .tile { grid-template-rows: 24px 13px auto; }
+.shelf.nogain .tile .gain { display: none; }
+
+/* The picture: a zero-width anchor on the center line; the canvas hangs off
+   it by exactly its ink's half-width (glyphs.js sets the margin). No flex, no
+   centering of the box -- the box has no width to center. */
+.tile .pic { display: block; width: 0; height: 24px; overflow: visible; }
+/* The stylesheet's `canvas` rule is for the yard's window -- fixed, full
+   size -- and a glyph is a canvas too, so every one of those is undone here. */
+.tile .pic .glyph {
+  position: static; inset: auto; z-index: auto;
+  display: block; width: 28px; height: 28px;
+  background: none; cursor: inherit; image-rendering: pixelated;
+}
+
+.tile .what {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .85em;
+  line-height: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.tile .gain {
+  white-space: nowrap;
+  font-size: .85em;
+  line-height: 13px;
+  color: rgba(0, 0, 0, .65);
+}
+.tile .gain i { transform: scale(.78); vertical-align: -1px; }
+
+/* The tag: one box, the bill and the clock in it, at the board's own type
+   size with the marks it was drawn for. An 18px box round a 16px line; the
+   clock is a cell of the same box, dimmed by color so its border matches. */
+.tile .tag {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
+  height: 18px;
+  border: 1px solid #000;
+  background: #fff;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.tile .tag .cost { display: flex; gap: 6px; padding: 0 6px; }
+.tile .tag .cost:empty { display: none; }
+.tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
+.tile .tag .time:empty { display: none; }
+.tile .tag .cost > span, .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; }
+.tile .tag i { vertical-align: 0; }
+/* A bill of three or more coins wraps inside its tag, two a line; the tag
+   grows a line, the slot does not. */
+.tile.wide .tag { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
+.tile.wide .tag .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; row-gap: 0; padding: 1px 6px 0; }
+.tile.wide .tag .time { padding: 0 6px; }
+.tile .short { color: #8c8c8c; }
+.tile.done .tag { border-style: dashed; color: #8c8c8c; }
+.tile:disabled:not(.done) .tag { border-style: dashed; }
+
+/* The goal card: the same cells on their side, across the shelf, with its
+   sentence. The one row that is a story, so it keeps its words. */
+.goalshelf .items { grid-template-columns: 1fr; border-bottom: 0; }
+.tile.goal {
+  grid-template-columns: 40px 1fr auto;
+  grid-template-rows: auto auto;
+  width: 100%;
+  justify-items: start;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
+  padding: 8px 10px 8px 6px;
+  border: 1px solid #000;
+  border-bottom: var(--shelf-plank) solid #000;
+  background: #fff;
+  text-align: left;
+}
+.tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; width: 0; }
+.tile.goal .what { grid-column: 2; grid-row: 1; font-size: 1em; }
+.tile.goal .gain { display: none; }
+.tile.goal .note { grid-column: 2; grid-row: 2; font-size: .85em; line-height: 1.3; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch; }
+.tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }

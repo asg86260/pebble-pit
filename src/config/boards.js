@@ -75,3 +75,21 @@ export const TWEEN_PER_UNIT_MS = 1.6;  // ...until the ceiling
 // built: filled for the share done. Five reads at a glance; more reads as a
 // dotted rule.
 export const QUEUE_PIPS = 5;
+
+// --- the shelf ---------------------------------------------------------------
+// A board drawn as shelves: a section is a plank, an item is a pixel object
+// with its name, its gain and one price tag under it (DESIGN.md, "The shelf").
+// Every step is here and nowhere else, so a shelf on one board is the shelf on
+// every board.
+export const SHELF_SLOT = 140;      // px, one item's width; five to the bench's plank
+export const SHELF_STEP = 5;        // px between the glyph, the name, the gain and the tag
+export const SHELF_TOP = 8;         // px from the plank's sign down to the first glyph
+export const SHELF_FOOT = 8;        // px from the tag down to the plank
+export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell glyph is 24px
+export const SHELF_GLYPH_CELLS = 8; // cells a glyph is square
+export const SHELF_PLANK = 5;       // px, the plank's thickness
+export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .28
+// What the stroke round a glyph is painted in: the deepest coin on the next
+// rung's bill. Dust is nothing -- black on the ground is the default -- and a
+// climbed ladder is grey. The three colors are the marks' own.
+export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c' };
