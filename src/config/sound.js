@@ -1,36 +1,29 @@
 // --- the sound of the yard -------------------------------------------------
 // Every number audio.js runs on. The law it is all in service of is in
 // DESIGN.md, "The sound of the yard": you hear the yard, not the game, and
-// everything is struck, nothing is played. Since the hits-only pass there is
-// no bed at all -- no rain, no wind, no hum, no rift drone -- so the whole of
-// the sound is the strikes, and the discipline about how many of them may
-// sound at once, which is the part that decides whether the game is bearable
-// at minute ninety.
+// everything is struck, nothing is played. There is no bed at all, so the
+// whole of the sound is the strikes, and the discipline about how many of
+// them may sound at once, which decides whether the game is bearable at minute
+// ninety.
 //
-// A sound is a *recipe*, the shape the hit bench renders (the Boulder Hit
-// Bench artifact and the `render` in audio.js are the same arithmetic): a
-// body, a click on the front, a puff of grit, and a pixel stage. Recipes are
-// landed by ear on the bench and the JSON is copied in here; which event in
-// the yard plays which is the SOUNDS table below.
+// A sound is a *recipe*, the shape the hit bench renders (the bench and the
+// `render` in audio.js are the same arithmetic). Recipes are landed by ear on
+// the bench and the JSON is copied in here; which event in the yard plays
+// which is the SOUNDS table below.
 
 // --- the mix -----------------------------------------------------------------
-// Quiet by default, and satisfying at that volume. The target is a laptop
-// speaker at half volume in a room with other things going on; a sound that
-// has to be loud to be good has not been designed yet.
+// Quiet by default: the target is a laptop speaker at half volume in a room
+// with other things going on.
 export let SND_MASTER = 0.6;
 // The six-grey palette enforced in one place: a lowpass over everything, so no
-// voice has to be trusted to stay dull on its own. High frequency is what wears
-// an ear out over an hour, and this is a game about grey rock under an
-// overcast sky, not about glass. A gentle corner rather than a wall.
+// voice has to be trusted to stay dull on its own. High frequency is what
+// wears an ear out over an hour. A gentle corner rather than a wall.
 export let SND_LOWPASS_HZ = 5000;
 export const SND_LOWPASS_Q = 0.5;      // a soft knee: the nearest a biquad gets to one pole
-// The soft limiter, which is there so the endgame yard at full tilt is the
-// same loudness as the opening yard rather than louder. Slow release, so it
-// leans on the whole mix rather than pumping on each hit.
-// A safety limiter and nothing more: it starts a decibel under full scale
-// and leaves everything under that alone, so a boulder is as much louder
-// than a click as the bench said. Punch is contrast; a limiter leaning on
-// the mix took the contrast out.
+// A safety limiter and nothing more: it starts a decibel under full scale and
+// leaves everything under that alone, so a boulder is as much louder than a
+// click as the bench said. Punch is contrast; a limiter leaning on the mix
+// takes the contrast out.
 export const SND_LIMIT_DB = -1;
 export const SND_LIMIT_RATIO = 20;
 export const SND_LIMIT_RELEASE_S = 0.1;
@@ -47,14 +40,14 @@ export const SND_MUTE_S = 0.05;
 export const SND_JITTER_CENTS = 100;
 export const SND_JITTER_DB = 2;
 export const SND_JITTER_MS = 8;
-// Nearly mono on screen. The yard is drawn flat, so what you can see is panned
-// shallowly from world x against the middle of the view and capped well short
-// of hard; a hard-panned yard is a yard you have to sit in the middle of.
+// Nearly mono on screen: what you can see is panned shallowly from world x
+// against the middle of the view; a hard-panned yard is a yard you have to
+// sit in the middle of.
 export let SND_PAN_MAX = 0.3;
-// Off screen is another matter: a strike you cannot see is placed by its
-// direction alone, so past the view's edge the pan keeps going, reaching
-// SND_PAN_OFF at SND_PAN_REACH view widths beyond the edge and holding there.
-// Short of hard even so, so a far yard is still heard in both ears.
+// Off screen a strike is placed by its direction alone, so past the view's
+// edge the pan keeps going, reaching SND_PAN_OFF at SND_PAN_REACH view widths
+// beyond the edge and holding there. Short of hard even so, so a far yard is
+// still heard in both ears.
 export let SND_PAN_OFF = 0.85;
 export let SND_PAN_REACH = 0.5;
 // A voice stolen by the cap fades rather than stops.
@@ -92,8 +85,8 @@ export const SND_RATE = 44100;
 //   gain     the recipe's level into the mix
 //   vary     the share of SND_JITTER_* this voice scatters by, per hit
 //
-// And the knobs added for weight, each "off" in RECIPE_DEFAULTS so a recipe
-// written before it existed sounds exactly as it did:
+// And the knobs for weight, each "off" in RECIPE_DEFAULTS so a recipe that
+// does not name it sounds exactly as it did:
 //
 //   bodyHold   ms the body sits at full before its decay starts
 //   sub        a sine thump under the body, at this level ...
@@ -108,8 +101,8 @@ export const SND_RATE = 44100;
 export const RECIPE_DEFAULTS = { bodyHold: 0, sub: 0, subHz: 50, subDrop: 2, subMs: 80, clickRaw: 0,
                                  noiseSlide: 1, noiseHold: 0, drive: 1.4 };
 //
-// Named as they were on the bench, and pasted in from it (2026-09-13, fourth
-// mapping). A knob left at its RECIPE_DEFAULTS value is not written.
+// Named as they were on the bench, and pasted in from it. A knob left at its
+// RECIPE_DEFAULTS value is not written.
 export const RECIPES = {
   'stone':        { wave: 'sine', hz: 266, slide: 0.5, slideMs: 120, decay: 10, level: 0.23, duty: 0.05,
                     click: 0.03, clickMs: 0.5, clickHz: 500,
@@ -159,13 +152,11 @@ export const RECIPES = {
 // what the module says (`sfx('rock-hit', { x })`); the class is the mix
 // discipline it falls under -- 'hand' is never folded or stolen, 'fold' is
 // one sound per window, 'punct' has a ceiling of its own, 'each' is a strike
-// per event under a ceiling of its own -- and the recipe is
-// a name in RECIPES, a recipe pasted in whole, or null, which is silence: the
-// event is still decided and counted, and never rendered. The mapping is the
-// one the player made on the bench (2026-09-13, fourth mapping): silence where it says
-// silence. The dev panel's `sounds` tab takes the bench's mapping JSON and
-// lays it over this table live, and `applySounds` in audio.js is what does
-// the laying.
+// per event under a ceiling of its own -- and the recipe is a name in
+// RECIPES, a recipe pasted in whole, or null, which is silence: the event is
+// still decided and counted, and never rendered. The dev panel's `sounds` tab
+// takes the bench's mapping JSON and lays it over this table live
+// (`applySounds` in audio.js).
 export const SOUNDS = {
   'rock-hit':     { label: 'you hit the rock',                          cls: 'hand',  recipe: 'stone' },
   'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone 2' },
@@ -197,12 +188,11 @@ export const SOUNDS = {
 };
 
 // `hard` in [0, 1] can move the body and the grit down and dull the grit --
-// harder rock lower and duller, not louder. Both at nought for now: the hit
-// on the rock is the recipe exactly as it was landed, at every depth.
+// harder rock lower and duller, not louder. Both at nought: the hit on the
+// rock is the recipe exactly as it was landed, at every depth.
 export const SND_HARD_DROP = 0;        // share of the pitch taken off at hard = 1
 export const SND_HARD_DULL = 0;        // share of the grit's q taken off at hard = 1
-// `big` can put a sine thump under the recipe that tunes down as it goes: the
-// boulder, a core banking, a building coming down onto its footprint. At
+// `big` can put a sine thump under the recipe that tunes down as it goes. At
 // nought: the bench has no thump, so a recipe landed there plays without one.
 export const SND_THUMP_HZ = 70;
 export const SND_THUMP_FALL = 0.45;    // it ends at this share of where it began
@@ -210,14 +200,13 @@ export const SND_THUMP_S = 0.22;
 export const SND_THUMP_LEVEL = 0;
 // --- density -------------------------------------------------------------------
 // A handful of gravel is one sound, not forty. Events of the folding class
-// arriving inside a window neither queue nor each fire: they fold into the one
-// sound the window emits when it closes, a little louder and a little wider
-// for each one folded in.
+// arriving inside a window fold into the one sound the window emits when it
+// closes, a little louder and a little wider for each one folded in.
 export let SND_FOLD_MS = 80;
 export const SND_FOLD_GAIN_DB = 1.5;   // per doubling of what was folded in
 export const SND_FOLD_GAIN_MAX_DB = 6;
 export const SND_FOLD_WIDEN = 0.25;    // the grit's q divided by 1 + this per doubling
-// And past the window, a ceiling per voice per second, over which events are
+// Past the window, a ceiling per voice per second, over which events are
 // dropped -- never deferred. A ceiling that defers runs permanently late once
 // the endgame yard gets going, and then you are hearing last minute's yard.
 export let SND_FOLD_PER_S = 12;
@@ -231,9 +220,8 @@ export let SND_PUNCT_PER_S = 4;
 // buffer rendered.
 export let SND_EACH_PER_S = 60;
 
-// The knobs. See the note over `TUNABLE` in config.js: an imported `let` is
-// read-only everywhere else, so the get/set pair has to be written where the
-// `let` is.
+// The knobs, beside the bindings because an imported `let` is read-only
+// everywhere else.
 export const SOUND_KNOBS = [
   { key: 'SND_MASTER', label: 'sound', min: 0, max: 1, step: 0.01,
     get: () => SND_MASTER, set: v => { SND_MASTER = v; } },

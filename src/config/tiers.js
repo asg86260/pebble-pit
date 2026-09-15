@@ -7,14 +7,9 @@
 // spark band is the top of the ladder".
 //
 // The width of a band is a number about the game, not a fact about the code
-// that builds a ladder, which is why it lives here. It was three, then two,
-// then one: a nine-rung ladder was nine trips to the board with a builder to
-// watch between each, and a rung a coin made a ladder four presses, which
-// played too short -- each coin was asked once and the card was done
-// (2026-09-14, back to two). The length is this one number; what a rung is
-// worth is a written list in `config/rungs.js`, as long as the ladder, so a
-// change here is a change there too (DESIGN.md, "A ladder is six rungs" and
-// "A rung is a step up, not a step along").
+// that builds a ladder, which is why it lives here. The length is this one
+// number; what a rung is worth is a written list in `config/rungs.js`, as
+// long as the ladder, so a change here is a change there too.
 export const TIER_BAND = 2;                       // rungs to a card's group
 export const TIER_BANDS = 4;                      // groups on a ground's ladder
 export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // eight, all told
@@ -22,12 +17,10 @@ export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // eight, all told
 // wants a ladder short of its spark rung.
 export const TIER_OWN = TIER_RUNGS - TIER_BAND;
 
-// And every other ladder in the yard: the same card, the same four groups. The
-// bench's last group asks the spark too (2026-09-14): every ladder is two
-// rungs a coin, and the coins are the same four everywhere.
+// And every other ladder in the yard: the same card, the same four groups, the
+// same coins everywhere.
 export const LADDER_BANDS = 4;                    // groups on an ordinary ladder
 export const LADDER = TIER_BAND * LADDER_BANDS;    // eight rungs, all told
-// The coins each group adds to the dust, first to last.
-// Not the core: nine exist in the game and they open places, and a fourth rung
-// on every ladder priced in them was thirty-two cores for one rung of crit.
+// The coins each group adds to the dust, first to last. Not the core: nine
+// exist in the game and they open places.
 export const BAND_COINS = [[], ['spore'], ['spore', 'shard'], ['spore', 'shard', 'spark']];

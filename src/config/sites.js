@@ -9,106 +9,66 @@ import { SCRUB_W } from './scrub.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 
-export const TO_LEDGE = 636;     // rock centre to the lip of the pit
-// The rock is the only thing left on this side, so the ground the bench and the
-// lab used to stand on is its spoil's now: the pile runs out towards the lip and
-// stops a sweep short of it, rather than ending in a stretch of bare ground.
+export const TO_LEDGE = 636;     // rock center to the lip of the pit
+// The rock is the only thing on this side, so the ground is its spoil's: the
+// pile runs out toward the lip and stops a sweep short of it.
 export const ROCK_PILE_TO = 576; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
-// And bare ground kept between a station and the *start* of its own pile, so
-// the heap stands off the thing that made it instead of burying it. The farm
-// clears its last plot; the quarry clears the far ramp of the bridge, which
+// Bare ground kept between a station and the *start* of its own pile, so the
+// heap stands off the thing that made it instead of burying it. The farm's
+// heap has to clear its fence, not just its last plot, which is why it is
+// more than FARM_GATE; the quarry's clears the far ramp of the bridge, which
 // comes down well past the mouth. The rock has ROCK_CLEAR for the same job.
-// The farm's own heap has to clear its fence, not just its last plot, which is
-// why this is more than FARM_GATE rather than measured off the plots.
 export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
-// Ground running away to the left of everything. This is what the town has to
-// spread into: every building out that way is placed as an offset back from the
-// rock, so the last one along was standing four cells from the end of the world
-// with the casino almost against its wall. Widened so the far end of the walk
-// has somewhere to be.
 
 // --- where everything stands ----------------------------------------------------
 //
-// The yard laid out as a list of requirements rather than a list of answers.
-//
-// Every site used to carry its own `TO_` offset: a distance from the rock,
-// measured once by hand and then true only for as long as nothing either side
-// of it changed. Two lists had to agree -- these offsets, and the pile strips in
-// `refreshPiles` -- and they agreed only because whoever wrote them had picked
-// numbers that happened to leave room. When they stopped agreeing, `heap()`
-// clamped the far end of a strip against a neighbour it had not placed, and a
-// strip came back with its end left of its start. A yard with an inverted strip
-// hangs at boot, which is what the first attempt at this did.
-//
-// So: each site declares only what it owns, and placement is a walk.
+// The yard laid out as a list of requirements rather than a list of answers:
+// each site declares only what it owns, and placement is a walk. A hand-typed
+// offset a site is true only for as long as nothing either side of it
+// changes, and a strip clamped against a neighbor it was not placed beside
+// comes back inverted, which hangs the yard at boot.
 //
 //   w         its own widest FUTURE self, not its width today. The farm reserves
 //             room for every plot it will ever have, so breaking new ground
-//             never shoves the lab along. This is what "required spacing for
-//             future growth" means.
+//             never shoves the lab along.
 //   standoff  bare ground between the site and the near end of its own heap.
 //   pile      whose heap that is, or null for a site that makes nothing. The
 //             heap's WIDTH is never declared -- it is `heapBase(key) * P`, the
 //             width that key's own limit needs at `BANK_SLOPE`, so the ground
 //             reserved and the ground used cannot disagree.
-//   side      which side of the site its heap lies on. 'right' means towards the
+//   side      which side of the site its heap lies on. 'right' means toward the
 //             rock, which is where a body throwing already aims. The scrubbing
 //             house is the exception: its spout is on the left wall, so a strip
 //             laid the usual way round would put the heap inside the building.
 //
-// In yard order, walking LEFT from the rock -- which is the order you meet them
-// in as the cores open them, and the order they are read out in here.
-//
-// Adding a station is a row. Its spot is reserved from the moment the table
-// names it, whether or not it has been bought, so "place it in the next open
-// spot" is true by construction rather than by arithmetic at purchase time.
-// --- Track F2: the yard's furniture ------------------------------------------
-// One gap between every pair of neighbouring sites, and the whole of the yard's
-// spacing.
-//
-// Every row here used to carry a `gap` of its own -- eleven numbers between 60
-// and 240, each measured by hand against whatever happened to stand beside it
-// when it was written. The near end of the walk was the cramped end: the bench,
-// the settlement, the closet and the school stood 60 to 102 apart, close enough
-// to read as one long building, while the far end had 240 of bare ground
-// between the apothecary and the lab. Eleven numbers cannot be right about a
-// yard whose order changes with what you buy (see `siteOrder` in world.js) --
-// a gap measured against the lab is a guess the moment the farm is standing
-// there instead.
-//
-// So there is one, and it is BARE ground: nothing of either neighbour stands
-// in it. It was twenty cells and sized to clear the farmhands' kit stand,
-// eighteen cells out from the first plot -- which is to say the gap was
-// mostly stand. The apothecary's last pot stood two cells off the farm's kit
-// stand, the stand a cell off the farm's shed, the shed three cells off the
-// first plot, and the two stations read as one long row of things. What a
-// site hangs off its left side is its own furniture (`hang`, below) and is
-// padded for by the site that owns it, the way a heap is; the gap is what is
-// left over, and it is left over everywhere.
+// In yard order, walking LEFT from the rock, which is the order the cores open
+// them in. Adding a station is a row: its spot is reserved from the moment the
+// table names it, whether or not it has been bought.
+// One gap between every pair of neighboring sites, and it is BARE ground:
+// nothing of either neighbor stands in it. What a site hangs off its left side
+// is its own furniture (`hang`, below) and is padded for by the site that owns
+// it, the way a heap is; the gap is what is left over, and it is left over
+// everywhere. A gap a site cannot be right about a yard whose order changes
+// with what you buy (`siteOrder` in world.js).
 export const STATION_GAP = P * 24;
-// And the bare ground between the tower's wall and the near end of the star's
-// ground under it. See the tower's row below: the star is the tower's business,
-// so the ground it drops its rind on is reserved by the tower's own slot.
+// The bare ground between the tower's wall and the near end of the star's
+// ground under it. See the tower's row below.
 export const SUN_GAP = P * 3;
 
-// A shack is a course taller than it was, and wears an eave. Item 1 of
-// feedback5: the sheds beside the cut and the field read as meagre -- a black
-// box with a slot in it, at the two sites you spend the most time looking at.
-// The presence is the extra course and the lip; what tells them apart is the
-// detail each one carries (see drawFarmShed / drawQuarryShed in render/sites.js).
+// A shack is a course taller than a plain shed, and wears an eave; what tells
+// the two apart is the detail each carries (drawFarmShed / drawQuarryShed in
+// render/sites.js).
 export const SHACK_RISE = P;
 
 // Where each trade's kit stand is put down, as bare ground LEFT of the station
 // it belongs to. `kitX` in world.js seats the stand off these, and the walk
 // below pads each site's left side by them, so the stand a body walks to and
-// the ground reserved for it are one number rather than two that agree.
+// the ground reserved for it are one number.
 //
-// The quarry's clears the bridge: the ramp up to the deck starts right at the
-// mouth, and a trestle standing on a slope is a trestle about to fall over.
-// The farm's clears the first plot and whoever is stooping over it: a farmhand
-// stands a body's width off its plot, which is where a stand four cells out
-// would be standing too. The rest stand clear of a door.
+// The quarry's clears the bridge: a trestle standing on the ramp is a trestle
+// about to fall over. The farm's clears the first plot and whoever is stooping
+// over it. The rest stand clear of a door.
 export const KIT_OUT = {
   shack: P * 6, outhouse: P * 6, quarry: BRIDGE_RUN + P * 5,
   farm: P * 18, apothecary: P * 6, tower: P * 8
@@ -117,30 +77,25 @@ export const KIT_OUT = {
 // crew.js), so its reach is one more cell than where it is put down.
 export const STAND_REACH = P;
 // The farthest thing a site with a kit stand hangs off its left side is the
-// stand: the sheds (SHED_GAP + a shed's width, nine cells) and the farm's
-// fence post (FARM_GATE, six) and the bridge's near ramp (BRIDGE_RUN, eleven)
-// all fall inside it.
+// stand: the sheds (SHED_GAP + a shed's width, nine cells), the farm's fence
+// post (FARM_GATE, six) and the bridge's near ramp (BRIDGE_RUN, eleven) all
+// fall inside it.
 const kitHang = key => KIT_OUT[key] + STAND_REACH;
 export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
 
 export const SITES = [
-  // The rockhands' hut, and the first thing along from the rock: it is the one
-  // building that belongs to the station that was always there. Its ground is
-  // reserved from the moment this row names it, like everybody's, so the bench
-  // and the whole walk behind it stand one shack further out whether or not
-  // anybody has bought one -- and the rock, which is measured off whatever is
-  // nearest rather than off the bench by name, is exactly the size it was.
+  // The rockhands' hut, the first thing along from the rock. Its ground is
+  // reserved from the moment this row names it, so the whole walk stands one
+  // shack further out whether or not anybody has bought one, and the rock,
+  // measured off whatever is nearest, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null,
     hang: () => kitHang('shack') },
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   // The settlement owns the ground the noticeboard stands on. The board is
-  // furniture rather than a station (see world.js, where it is seated) and so
-  // has no slot of its own -- it stands in the walk between the front doors and
-  // the bench. But a walk is STATION_GAP of bare ground, and a board eleven
-  // cells wide set in twenty cells of it left four and a half either side: the
-  // board read as leaning on the house. So the house pads its rock side by the
-  // board's own width, the way a site with a heap pads by its heap, and the
-  // board is centered in a gap that has a walk's worth of ground round it.
+  // furniture rather than a station (seated in world.js) and has no slot of
+  // its own, so the house pads its rock side by the board's own width, the
+  // way a site with a heap pads by its heap, and the board is centered in a
+  // gap with a walk's worth of ground round it.
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,
     furniture: () => BOARD_W },
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,
@@ -151,132 +106,83 @@ export const SITES = [
     hang: () => kitHang('farm') },
   { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null,
     hang: () => kitHang('apothecary') },
-  // The lab had a row here. It is deleted, and a building that is gone must not
-  // go on holding ground: left in the table it kept its own width plus a
-  // station's padding of empty yard, which is a hole in the walk where a
-  // building used to be. See DESIGN.md, "The lab is deleted".
+  // The lab has no row: a building that is gone must not go on holding ground.
+  // See DESIGN.md, "The lab is deleted".
   { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
   { key: 'casino',   w: () => CASINO_W,                    standoff: 0,  pile: null },
-  // The tower carries the star's ground on its own far side, which is what puts
-  // the star beside it (item 10). A wizard is made in the tower and flies from
-  // it to the star, so the two are one station in everything but where they
-  // stand -- and the rind the star drops has to land on ground somebody has
-  // reserved, or it walks the yard looking for a column with room in it.
+  // The tower carries the star's ground on its own far side, which is what
+  // puts the star beside it: the rind the star drops has to land on ground
+  // somebody has reserved, or it walks the yard looking for a column with room.
   { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left',
     hang: () => kitHang('tower') }
 ];
 
 // The ground a site owns beside itself for its heap: the heap at full width
 // plus the standoff that keeps it off the wall, and nothing for a site that
-// makes nothing. DERIVED, not tuned, and measured off the site's OWN content.
-//
-// It was one number for every site -- the widest heap in the yard, the
-// quarry's thirty-five cells, laid beside all thirteen whether or not they had
-// a heap to put there -- on the argument that an even rhythm is wall to wall.
-// Nine of the thirteen have no heap, so the argument bought the shack and the
-// bench three hundred and thirty pixels of bare ground between them and the
-// walk out to the tower a screen and a half of nothing. The rhythm the yard
-// actually reads is the bare ground between one drawn thing and the next, and
-// that is STATION_GAP everywhere by construction once each site is padded by
-// what it parks there and no more.
-//
-// A heap is one thing a site parks beside itself; a piece of furniture is the
-// other (the house's noticeboard), and it is padded the same way -- by what
-// it is, not by a number about it.
+// makes nothing. DERIVED, not tuned, and measured off the site's OWN content,
+// so the bare ground between one drawn thing and the next is STATION_GAP
+// everywhere by construction. A piece of furniture (the house's noticeboard)
+// is padded the same way, by what it is.
 export const padOf = row =>
   row.pile ? row.standoff + heapBase(row.pile) * P :
   row.furniture ? row.furniture() : 0;
 
-// And the ground a site owns on its LEFT for what it hangs there -- its kit
-// stand, its shed, its fence post -- past whatever its pad already reserves on
-// that side. A site whose heap lies to its left (the scrubbing house, the
-// tower) has ground there already, and its stand sits in it; one whose heap
-// lies toward the rock has nothing on its left but the walk, and the walk
-// may not be where its furniture ends up. This is what keeps STATION_GAP
-// bare: the walk steps past the hang before it steps the gap.
+// The ground a site owns on its LEFT for what it hangs there -- its kit stand,
+// its shed, its fence post -- past whatever its pad already reserves on that
+// side. A site whose heap lies to its left has ground there already, and its
+// stand sits in it. This is what keeps STATION_GAP bare: the walk steps past
+// the hang before it steps the gap.
 export const hangOf = row => {
   const hang = row.hang ? row.hang() : 0;
   return row.side === 'left' ? Math.max(0, hang - padOf(row)) : hang;
 };
 
 // How wide the rock is ever allowed to get, and how much bare ground it keeps
-// off the building on its flank. They live up here, ahead of the walk, because
-// the walk has to know them: the first site along stands where the biggest rock
-// leaves room for it, and that is the one spacing in the yard measured against
-// something that grows.
+// off the building on its flank. Ahead of the walk because the walk has to
+// know them: the first site along stands where the biggest rock leaves room
+// for it, the one spacing in the yard measured against something that grows.
 //
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_W_MAX = 92;
-// The ground the biggest rock keeps clear of its flank SLOT, rather than
-// growing up against the wall. It was `P * 14` written into `rockSize`
-// (rock.js) -- a number in a module, and the module could not be read against
-// the spacing that had to agree with it. The two ends of one decision.
-//
-// Fourteen is not a hand's width; it is the ram's parking space. The ram
-// stands off the flank building by RAM_CLEAR and is spriteW(RAM) -- eleven
-// cells -- long, and `ramTargetX` (rock.js) parks it no nearer the flank than
-// that, so a slot any closer to the biggest rock puts the machine and its
-// tender's post inside the boulder. It was cut to six once, for the hut, and
-// the endgame checks buried a rockhand at the ram's post. The hut itself
-// stands nearer than this (SHACK_CLEAR, config/buildings.js; `shackSpot`,
-// world.js) and only reaches the slot at the biggest rock. shack.test.mjs
-// holds this number against the ram's real width.
+// The ground the biggest rock keeps clear of its flank SLOT. Fourteen is the
+// ram's parking space, not a hand's width: the ram stands off the flank
+// building by RAM_CLEAR and is spriteW(RAM), eleven cells, long, and
+// `ramTargetX` (rock.js) parks it no nearer the flank than that, so a slot
+// any closer puts the machine and its tender's post inside the boulder. The
+// hut stands nearer than this (SHACK_CLEAR; `shackSpot`, world.js) and only
+// reaches the slot at the biggest rock. shack.test.mjs holds this against the
+// ram's real width.
 export const ROCK_FLANK_CLEAR = P * 14;
 
-// The bare ground between the rock's centre and the near wall of the first
-// site along. Measured from `S.cx` rather than from the rock's edge, because the
-// rock changes size and the yard does not rearrange itself around it.
-//
-// Derived, not measured. It was 264 -- the width of rock one, by eye -- which
-// left the shack standing three hundred and forty pixels off the boulder while
-// every other station in the yard wears its shed three cells from the wall. The
-// gap was not spacing, it was room the rock had not grown into yet.
-//
-// So it is the room the rock actually needs and no more: the biggest rock
-// reaches ROCK_W_MAX / 2 cells either side of `S.cx`, `rockSize` keeps
-// ROCK_FLANK_CLEAR of bare ground off whatever stands on its flank. Any closer
-// and the rock quietly stops growing short of its own ceiling -- a cap nobody
-// asked for, hidden in a spacing number. Any further and the shack is standing
-// out in the yard for no reason, which is where it was.
-//
-// The shack is what this places, and it is the only site that has a neighbour
-// on its rock side that is not a building. It has no heap, so nothing of its
-// own stands in the rock's clear ground; a first site that threw toward the
-// rock would need its `padOf` added here. Everything behind it is spaced off
-// its neighbours as before.
+// The bare ground between the rock's center and the near wall of the first
+// site along. Measured from `S.cx` rather than from the rock's edge, because
+// the rock changes size and the yard does not rearrange itself around it.
+// Derived: the room the rock actually needs and no more. Any closer and the
+// rock quietly stops growing short of its own ceiling; any further and the
+// shack stands out in the yard for no reason. The shack has no heap, so
+// nothing of its own stands in the rock's clear ground; a first site that
+// threw toward the rock would need its `padOf` added here.
 export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR;
 
 // Bare ground kept past the last building, at the far end of the walk, before
-// the world runs out. Somewhere for the camera to stop and for the casino to
-// stand clear of the edge rather than against it.
+// the world runs out: somewhere for the camera to stop and for the casino to
+// stand clear of the edge.
 export const YARD_MARGIN = P * 10;
 
-// How much ground there is to the left of the rock -- which is the whole of the
-// yard, since everything but the hole is laid out leftwards from the boulder.
+// How much ground there is to the left of the rock, which is the whole of the
+// yard. As wide as the table says it needs to be, so the next station that
+// grows moves the world's edge instead of walking through it (the view may not
+// scroll past nought, so a building past the edge is unreachable). The sum is
+// what `placeSites` in world.js spends on one pass, and it does not depend on
+// the ORDER the walk visits them in, which is what makes it safe to work out
+// here while the order is a thing the player decides by buying.
 //
-// It was 3678, measured by hand, and it was a guess about content nobody had
-// written yet. Track F1 widened the apothecary from 24 cells to 68 -- a hut, a
-// bookshelf and four pots, which is the shape that station has to be -- and the
-// walk ran 204 pixels off the left-hand end of the world: the casino stood at
-// x = -204, half of it outside the ground and none of it reachable, because the
-// view may not scroll past nought. Nothing warned about it except a check that
-// happened to ask.
-//
-// So the ground is as wide as the table says it needs to be, and the next
-// station that grows moves the world's edge instead of walking through it. The
-// sum is what `placeSites` in world.js spends on one pass: every site's own
-// width, the standoff to its heap and the heap itself, what it hangs off its
-// left side, with one STATION_GAP between each pair -- and it does not depend on the ORDER the walk visits them
-// in, which is what makes it safe to work out here while the order is a thing
-// the player decides by buying.
-//
-// It is a `const` worked out once at load, not a function: `S.worldW` and
-// `floor.cols` are measured off it, and a world whose width could change under a
-// standing yard is a world where every grain on the ground is in a column that
-// means something else. Growing it at all is a migration -- see `floorShift` in
-// persist.js, which slides a save's dust across by however many columns the
-// world gained on its left.
+// A `const` worked out once at load, not a function: `S.worldW` and
+// `floor.cols` are measured off it, and a world whose width could change under
+// a standing yard is a world where every grain on the ground is in a column
+// that means something else. Growing it at all is a migration -- see
+// `floorShift` in persist.js.
 const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row), 0)
   + STATION_GAP * (SITES.length - 1);
 export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
@@ -287,19 +193,5 @@ export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
 export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
 // ROCK_W_MAX is up with the walk, which is measured off it -- see TO_FIRST_SITE.
-// Rocks go on for ever, so they must stop growing at some point or rock ninety
-// would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_H_MAX = 42;
 export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
-// A bank may stand this many cells high per cell of distance from the apron.
-// Without it the apron is a cliff the sand cannot slump over, and the bank
-// stands up against the rock as a sheer wall however tall it gets. 1.5 is the
-// angle the sand finds on its own, so both faces of a heap read the same.
-// How deep dust may lie on ground that is nobody's pile. Enough that anything you
-// put down stays put and settles like sand; not enough that the bare yard becomes
-// somewhere to store it.
-//
-// A `let`, and a row in TUNABLE, because it is now the ceiling on a great deal
-// more ground than it used to be: the rock's clearance and the whole run out
-// past the left-hand end of the yard are bare ground like any other, and how
-// deep a scatter reads across all of it is a thing to look at rather than guess.

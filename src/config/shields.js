@@ -1,11 +1,11 @@
 // The shields, and the shape a rock is in while it is arriving.
 //
-// DESIGN.md, "The shields" and "The shields are the spine": four tries at stopping
-// the next rock, of which the first three fail -- the rocks are the game's income,
-// and a wall that worked in the mid-game would starve the yard that built it --
-// and each failure opens the next station. What every shield shares is here;
-// what one kind does differently is a field in KINDS (shield.js). A shield's width and height are derived from the rock it stands
-// over, so only the story's own numbers live in this file.
+// DESIGN.md, "The shields" and "The shields are the spine": four tries at
+// stopping the next rock, of which the first three fail, and each failure
+// opens the next station. What every shield shares is here; what one kind
+// does differently is a field in KINDS (shield.js). A shield's width and
+// height are derived from the rock it stands over, so only the story's own
+// numbers live in this file.
 
 export const SHIELD_LEG_W = 2;       // cells across a leg or a pier
 export const SHIELD_LID_T = 2;       // courses thick across the lid, and the arch's band
@@ -13,8 +13,8 @@ export const SHIELD_CLEAR_C = 4;     // courses of daylight kept over the rock's
 export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most of the spend comes home
 
 // What each one costs in labor, in worker-seconds at the site (works.js).
-// They climb with the material: timber goes up in half a minute, rope is quick,
-// stone is most of the yard's afternoon. The dome has no figure here
+// They climb with the material: timber goes up in half a minute, rope is
+// quick, stone is most of the yard's afternoon. The dome has no figure here
 // because nobody works on it -- the tower pours it on its own clock.
 export const PROP_WORK = 30;
 export const NET_WORK = 20;
@@ -25,35 +25,29 @@ export const PROP_FROM = 4;         // rocks fallen before the yard thinks to lo
 export const PROP_COST = 400;       // dust for the timber
 export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives per walk
 
-// The net: rope off the farm, and the first idea that is not "build it
-// stronger". It catches the rock and pays out under it, all the way down.
+// The net: rope off the farm. It catches the rock and pays out under it, all
+// the way down.
 export const NET_COST = 300;        // spores: three plots' worth, not less than one
 export const NET_ROPES = 10;
 export const NET_SLOW = 26;         // world pixels a second the rock sinks through it
 
-// The arch: quarried stone, priced in the quarry's own coin. It catches one --
-// the hold is long enough for the yard to believe it has won, and short enough
-// that the belief is the beat rather than a pause in the game.
+// The arch: quarried stone, priced in the quarry's own coin. The hold is long
+// enough for the yard to believe it has won, and short enough that the belief
+// is the beat rather than a pause in the game.
 export const ARCH_COST = 400;       // shards: more than the tiller, a real cut of the quarry
 export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
 export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs
-// A rock stopping on stone is an arrival, and the yard feels it: a knock,
-// smaller than the ground's because the arch takes the weight before the
-// ground does, and a lighter thump for the same reason.
+// A rock stopping on stone is an arrival: a knock, smaller than the ground's
+// because the arch takes the weight before the ground does.
 export const ARCH_CATCH_SHAKE = 6;  // world pixels the catch throws the view
 
-// The dome: the tower's, and the only one that holds. It is cast rather than
-// carried: the wizards fly over and pour it the way they pour a star into an
-// empty sky. It is priced in everything the yard makes, and it is the dearest
-// thing in the game by a distance: every line of this bill stands well above
-// the biggest ask of that coin on any other board at any rung (the balloon's
-// dust, the ram's shards and sparks, the crit ladder's spores, the TNT's
-// cores), and the whole bill comes to about a third of everything else on
-// every board put together. It was four cores alone, which made the end of
-// the argument cheaper than the machine that had just lost it; then eight and
-// thirty thousand dust, which a climbed ladder or two outbid. The last shield
-// is the whole works' answer to the sky, and it costs the whole works.
-// `test/shield.test.mjs` holds this against every row on every board, climbed.
+// The dome: the tower's, and the only one that holds, cast by the wizards the
+// way they pour a star. The dearest thing in the game by a distance: every
+// line of this bill stands well above the biggest ask of that coin on any
+// other board at any rung, and the whole bill is about a third of everything
+// else on every board put together. The last shield is the whole works'
+// answer to the sky, and it costs the whole works. `test/shield.test.mjs`
+// holds this against every row on every board, climbed.
 export const DOME_BILL = [['core', 25], ['dust', 250000], ['shard', 5000],
                           ['spore', 10000], ['spark', 5000]];
 export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
@@ -63,40 +57,32 @@ export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run 
 export const DOME_WORK = 45;
 export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
 export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second
-// A held rock is not stopped dead: it springs back up off the dome by this
-// much, in cells, and settles again under its own weight before the hold
-// begins. The shell gives, the way the light it is made of ought to.
+// A held rock springs back up off the dome by this much, in cells, and settles
+// again under its own weight before the hold begins.
 export const DOME_BOUNCE_C = 5;
-// While somebody is still in the ground under it -- or walking out from
-// under -- the rock creeps down with the digging but keeps this many courses
-// of daylight over their head, so the walk out is from under a rock and not
+// While somebody is still in the ground under it, or walking out from under,
+// the rock creeps down with the digging but keeps this many courses of
+// daylight over their head, so the walk out is from under a rock and not
 // through one.
 export const DOME_FLOOR_C = 8;
-// The dome's one job is the rescue: hold the rock that would have come down on
-// whoever was underneath, for as long as the dig takes. Once they are out it has
-// nothing left to do, and a dome that went on catching every rock after that
-// was a hold and a slow set-down on every rock for the rest of the game. So it
-// comes down -- and it is magic, not masonry, so it fades rather than falls:
-// this long from the frame after the rescue rock is set down to gone. It is the
-// one exit in the game with no body walking it, because there is no body.
+// The dome's one job is the rescue. Once they are out it has nothing left to
+// do, and it is magic, not masonry, so it fades rather than falls: this long
+// from the frame after the rescue rock is set down to gone. The one exit in
+// the game with no body walking it, because there is no body.
 export const DOME_FADE_MS = 1500;
 
 // How wide the two curved shields stand, as a multiple of the width of the
-// rock they are built for. The props and the net are drawn across the rock
-// with a clear margin either side, and the margin alone is enough for a lid or
-// a rope; an arch or a dome is a curve whose crown is the catch line, and a
-// rock nearly as wide as the curve perches on its apex with its flanks hanging
-// out over the haunches. The span has to be visibly wider than the rock on
-// both sides for the rock to read as sitting *on* it. The flank clearance
-// (ROCK_FLANK_CLEAR) still caps it, so no shield ever reaches the building
-// beside the yard.
+// rock they are built for. An arch or a dome is a curve whose crown is the
+// catch line, and a rock nearly as wide as the curve perches on its apex with
+// its flanks hanging out over the haunches: the span has to be visibly wider
+// than the rock on both sides for the rock to read as sitting *on* it. The
+// flank clearance (ROCK_FLANK_CLEAR) still caps it.
 export const ARCH_SPAN = 1.35;
 export const DOME_SPAN = 1.5;
 
 // The fanfare when a shield stands finished: one wave off its crown, out past
-// the span, and the crew cheer under it for a moment. The wave's reach is
-// measured off the span rather than set -- a wider shield throws a wider one
-// -- so it is a share of the span, plus how long it runs; the cheer is the
+// the span, and the crew cheer under it for a moment. The wave's reach is a
+// share of the span, so a wider shield throws a wider one; the cheer is the
 // dance the crew do for a finished rock, cut short.
 export const SHIELD_WAVE_MS = 1000;     // how long the wave takes to run out
 export const SHIELD_WAVE_SPAN = 0.8;   // how far it reaches, as a share of the span
@@ -104,10 +90,9 @@ export const SHIELD_WAVE_POWER = 5;    // the specks thrown with it, in a crit's
 export const SHIELD_CHEER_MS = 2500;   // and how long the crew cheer
 
 // How long a landed rock spends spreading and settling back into its own
-// shape. Long enough to see it happen, short enough that it is over before you
-// could reach for it -- an impact, not an animation. It lives beside the
-// shields because the dome is what decides a rock does not do it: something
-// set down gently is placed rather than dropped.
+// shape: an impact, not an animation. Beside the shields because the dome is
+// what decides a rock does not do it -- something set down gently is placed
+// rather than dropped.
 export const SQUASH_MS = 260;
 export const SQUASH_WIDE = 0.16; // how much wider it goes at the worst of it
 export const SQUASH_FLAT = 0.26; // and how much of its height it gives up
