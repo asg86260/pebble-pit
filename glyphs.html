@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>glyphs</title>
+<link rel="stylesheet" href="/src/style.css">
+<style>
+  /* The glyph sheet: every drawing the shelf uses, at one, three and six
+     times, with the rows it serves and each of their badges, on the dots
+     the shelf stands on -- so a glyph is judged where it will live.
+     A drawing the inventory names but nobody has drawn is flagged. */
+  body { background: #fff; margin: 0; padding: 16px; font: 12px/1.4 ui-monospace, "Courier New", monospace; color: #000; }
+  h1 { font: inherit; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 12px; padding-bottom: 4px; border-bottom: 2px solid #000; }
+  h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin: 18px 0 8px; }
+  .sheet { display: grid; grid-template-columns: repeat(auto-fill, 320px); gap: 12px; align-items: start; }
+  .card { border: 1px solid #000; padding: 8px 10px 10px; background: #fff;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E"); }
+  .card.missing { border-style: dashed; }
+  .card .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; }
+  .card .name .flag { float: right; font-weight: normal; letter-spacing: 0; text-transform: none; color: #b00; }
+  .sizes { display: flex; align-items: flex-end; gap: 14px; margin: 8px 0 6px; }
+  canvas { image-rendering: pixelated; display: block; position: static; inset: auto; width: auto; height: auto; background: none; cursor: default; }
+  .rows { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; font-size: .85em; }
+  .row .k { opacity: .65; }
+  .tints { display: flex; gap: 8px; margin-top: 6px; }
+  .badges .card { grid-column: span 1; }
+  .legend { margin: 0 0 10px; opacity: .7; }
+</style>
+</head>
+<body>
+<h1>the glyphs</h1>
+<p class="legend">Each drawing at 1×, 3× and 6×; under it, every row that borrows it, with its badge. Right column of each card: the four rung strokes. A dashed card is a drawing the inventory names that nobody has drawn yet — the shelf shows the crate there.</p>
+<div id="drawings"></div>
+<h2>the badges</h2>
+<div id="badges" class="sheet badges"></div>
+<script type="module">
+import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, drawn } from './src/glyphs.js';
+import { SHELF_INK, SHELF_GLYPH_CELL, SHELF_GLYPH_CELLS } from './src/config.js';
+
+const scaled = (canvas, k) => { canvas.style.width = `${canvas.width * k}px`; canvas.style.height = `${canvas.height * k}px`; canvas.style.marginLeft = '0'; return canvas; };
+
+// every drawing the inventory names, drawn or not, in the order they first appear
+const names = [...new Set(Object.values(GLYPH_OF).map(([n]) => n))];
+const byBoard = {};
+for (const [key, [name]] of Object.entries(GLYPH_OF)) (byBoard[name] ||= []).push(key);
+
+const root = document.getElementById('drawings');
+const sheet = document.createElement('div'); sheet.className = 'sheet'; root.append(sheet);
+for (const name of names) {
+  const has = !!GLYPHS[name];
+  const card = document.createElement('div'); card.className = 'card' + (has ? '' : ' missing');
+  card.innerHTML = `<div class="name">${name}${has ? '' : '<span class="flag">not drawn — crate</span>'}</div><div class="sizes"></div><div class="tints"></div><div class="rows"></div>`;
+  const rows = GLYPHS[name] || GLYPHS.crate;
+  const sizes = card.querySelector('.sizes');
+  for (const k of [1, 3, 6]) sizes.append(scaled(drawGlyph(rows), k));
+  const tints = card.querySelector('.tints');
+  for (const t of [null, SHELF_INK.spore, SHELF_INK.shard, SHELF_INK.spark, SHELF_INK.done]) tints.append(scaled(drawGlyph(rows, t), 2));
+  const list = card.querySelector('.rows');
+  for (const key of byBoard[name]) {
+    const [, badge] = GLYPH_OF[key];
+    const r = document.createElement('div'); r.className = 'row';
+    r.append(scaled(drawGlyph(glyphFor(key)), 2));
+    r.insertAdjacentHTML('beforeend', `<span class="k">${key}${badge ? ' +' + badge : ''}</span>`);
+    list.append(r);
+  }
+  sheet.append(card);
+}
+
+const badges = document.getElementById('badges');
+for (const [name, rows] of Object.entries(BADGES)) {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<div class="name">${name}</div><div class="sizes"></div>`;
+  // the badge alone, padded into an eight-cell frame so it draws at the same scales
+  const frame = Array.from({ length: SHELF_GLYPH_CELLS }, (_, y) => Array.from({ length: SHELF_GLYPH_CELLS }, (_, x) => {
+    const by = y - (SHELF_GLYPH_CELLS - rows.length), bx = x - (SHELF_GLYPH_CELLS - rows[0].length);
+    return by >= 0 && bx >= 0 && rows[by][bx] === '#' ? '#' : '.';
+  }).join(''));
+  const sizes = card.querySelector('.sizes');
+  for (const k of [1, 3, 6]) sizes.append(scaled(drawGlyph(frame), k));
+  badges.append(card);
+}
+
+// how many are drawn, for the title
+document.querySelector('h1').textContent = `the glyphs — ${names.filter(n => GLYPHS[n]).length} of ${names.length} drawn`;
+</script>
+</body>
+</html>

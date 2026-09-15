@@ -9,30 +9,89 @@
 // the shelf rather than a blank.
 import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK } from './config.js';
 
+// The drawings, by the object's name. A drawing that is not here yet is a
+// row still wearing the crate, and the review sheet (glyphs.html) says so.
 export const GLYPHS = {
-  carry:      ['...##...', '..#..#..', '.######.', '#......#', '#......#', '#......#', '#......#', '.######.'],
-  auto:       ['....#...', '...##...', '..###...', '.####...', '#####...', '.####...', '..###...', '....#...'],
-  speed:      ['......##', '.....##.', '....##..', '...##...', '..##....', '.###....', '####....', '.##.....'],
-  pick:       ['.....###', '....####', '...##.#.', '..##....', '.##.....', '##......', '#.......', '........'],
-  critchance: ['...#....', '...#....', '.#.#.#..', '..###...', '#######.', '..###...', '.#.#.#..', '...#....'],
-  critmult:   ['#......#', '.#....#.', '..#..#..', '...##...', '...##...', '..#..#..', '.#....#.', '#......#'],
-  haulcarry:  ['...##...', '..####..', '.######.', '#......#', '#.####.#', '#......#', '#......#', '.######.'],
-  haulpace:   ['......##', '.....###', '....####', '...#####', '..######', '.#..##..', '#...##..', '....##..'],
-  carter:     ['........', '.######.', '.#....#.', '.#....#.', '########', '#......#', '.#....#.', '..#..#..'],
+  sack:       ['...##...', '..#..#..', '.######.', '#......#', '#......#', '#......#', '#......#', '.######.'],
+  lever:      ['....#...', '...##...', '..###...', '.####...', '#####...', '.####...', '..###...', '....#...'],
+  swing:      ['......##', '.....##.', '....##..', '...##...', '..##....', '.###....', '####....', '.##.....'],
+  pickhead:   ['.....###', '....####', '...##.#.', '..##....', '.##.....', '##......', '#.......', '........'],
+  spark:      ['...#....', '...#....', '.#.#.#..', '..###...', '#######.', '..###...', '.#.#.#..', '...#....'],
+  cracked:    ['#......#', '.#....#.', '..#..#..', '...##...', '...##...', '..#..#..', '.#....#.', '#......#'],
+  boot:       ['......##', '.....###', '....####', '...#####', '..######', '.#..##..', '#...##..', '....##..'],
+  cart:       ['........', '.######.', '.#....#.', '.#....#.', '########', '#......#', '.#....#.', '..#..#..'],
   belt:       ['........', '........', '.######.', '#......#', '.######.', '.#....#.', '..#..#..', '........'],
-  tunebelt:   ['..#.....', '.###....', '..#.....', '..#.....', '.######.', '#......#', '.######.', '........'],
   crate:      ['...##...', '..####..', '.######.', '########', '#......#', '#.#..#.#', '#......#', '########'],
   shield:     ['#.#.#.#.', '########', '#......#', '#.####.#', '#.#..#.#', '#.####.#', '#......#', '########'],
   hat:        ['........', '...##...', '..####..', '.######.', '########', '........', '........', '........'],
 };
 
-// Which glyph a row wears when it has none of its own.
-export const glyphFor = key =>
-  GLYPHS[key] ||
-  (key.startsWith('unlock') ? GLYPHS.crate :
-   ['breaker', 'blaster', 'grower'].includes(key) ? GLYPHS.hat :
-   ['props', 'net', 'arch', 'askwizards'].includes(key) ? GLYPHS.shield :
-   GLYPHS.crate);
+// The badges: three cells square, in the bottom-right corner, saying what is
+// being done to the object -- tune it, another of it, a spell on it, a tonic
+// of it, or which coin it is about (docs/glyphs.md, "borrow the object,
+// badge the how").
+export const BADGES = {
+  wrench: ['#.#', '###', '.#.'],
+  plus:   ['.#.', '###', '.#.'],
+  star:   ['#.#', '.#.', '#.#'],
+  vial:   ['.#.', '.#.', '###'],
+  dust:   ['###', '###', '###'],
+  crop:   ['.#.', '###', '.#.'],
+  ore:    ['.#.', '.#.', '###'],
+  spark:  ['.#.', '###', '.#.'],
+};
+
+// Every row on every shelf: the drawing it borrows and, if any, the badge.
+// This is the whole of docs/glyphs.md as a table, so a row never names a
+// picture in its own file and the inventory and the code cannot drift.
+export const GLYPH_OF = {
+  // the bench
+  props: ['planks'], net: ['net'], arch: ['arch'], askwizards: ['point'],
+  carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
+  critchance: ['spark'], critmult: ['cracked'],
+  haulcarry: ['sack'], haulpace: ['boot'], carter: ['cart'], belt: ['belt'], tunebelt: ['belt', 'wrench'],
+  unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
+  unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockscrub: ['fan'],
+  // the house and the closet
+  crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
+  // the shack
+  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'wrench'],
+  // the quarry
+  quarrybench: ['shovel', 'plus'], seam: ['ore'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'wrench'],
+  // the farm
+  farmplot: ['furrow', 'plus'], crop: ['ear'], tend: ['hoe'], tiller: ['tiller'], tunetiller: ['tiller', 'wrench'],
+  // the apothecary
+  potkeep: ['pot'], potprefer: ['pot', 'vial'], anotherpot: ['pot', 'plus'],
+  bufflength: ['vial'], brewdoses: ['vial', 'plus'],
+  'potency-stew': ['bowl', 'vial'], 'potency-brace': ['spark', 'vial'], 'potency-strong': ['sack', 'vial'],
+  'potency-swift': ['boot', 'vial'], 'potency-gleam': ['star', 'vial'],
+  // the tower
+  wizard: ['point'], wizspeed: ['wand'], wizpower: ['bolt'],
+  spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
+  dome: ['dome'],
+  // the scrubbing house
+  fan: ['fan'], balloon: ['balloon'], recycler: ['bin'],
+  // the casino
+  chip: ['chip'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
+  bank: ['sack', 'dust'], ride: ['die'],
+};
+
+// A row's picture: its drawing with its badge laid into the bottom-right
+// corner, cell for cell (the badge's cells replace the drawing's, so it reads
+// on top). A drawing not made yet is the crate, so the shelf shows the gap.
+export const glyphFor = key => {
+  const [name, badge] = GLYPH_OF[key] || ['crate'];
+  const rows = (GLYPHS[name] || GLYPHS.crate).map(r => [...r]);
+  if (badge && BADGES[badge]) {
+    const b = BADGES[badge], oy = CELLS - b.length, ox = CELLS - b[0].length;
+    // a clear cell round the badge, so it reads against the drawing
+    for (let y = oy - 1; y < CELLS; y++) for (let x = ox - 1; x < CELLS; x++) if (y >= 0 && x >= 0) rows[y][x] = '.';
+    b.forEach((br, y) => [...br].forEach((c, x) => { rows[oy + y][ox + x] = c === '#' ? '#' : '.'; }));
+  }
+  return rows.map(r => r.join(''));
+};
+// Whether a row's drawing exists yet, for the review sheet.
+export const drawn = key => !!GLYPHS[(GLYPH_OF[key] || ['crate'])[0]];
 
 // The drawn cells' left and right edge, in cells: what the glyph is centered on.
 // A sprite's box is eight wide; its ink is often narrower and off to one side,

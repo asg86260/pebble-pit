@@ -99,10 +99,11 @@ By the board they first appear on, so a shelf can be finished at a time:
 
 ## How they are drawn
 
-On `shelf.html`, the glyph bench: every glyph at one and four times, under
-its name, beside its neighbors on the plank -- a glyph is judged against the
-one next to it. `GLYPHS` in `glyphs.js` is the table of drawings, `BADGES`
-the marks, and `glyphFor` maps a key to a drawing and an optional badge, so
-a row never names a picture in its own file. Placeholders (the crate, the
-hat, the shield) stay until the real one lands, and a shelf full of crates
-is the to-do list.
+On `glyphs.html`, the glyph sheet: every drawing at one, three and six
+times, its four rung strokes, and every row that borrows it with its badge;
+a drawing named here and not yet in `GLYPHS` is a dashed card. Then
+`shelf.html`, for it among its neighbors on the plank -- a glyph is judged
+against the one next to it. `GLYPHS` in `glyphs.js` is the table of
+drawings, `BADGES` the marks, `GLYPH_OF` this inventory as code (row key to
+drawing and badge), and `glyphFor` composes the two; a row never names a
+picture in its own file. The crate stands in until the real one lands.
