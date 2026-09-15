@@ -19,7 +19,7 @@ feature lives in DESIGN.md.
 
 - The tile being built floats on its plate the whole time, the way a hovered one does, and sits back down when the site stalls (src/selftest/boards.js, "a tile being built fills in").
 
-- A stalled build's tile says `building` like a running one -- the stopped clock and the dashed tag say the rest -- rather than `nobody on it` (src/selftest/boards.js, "a board holds its size while a build is running").
+- A build nobody is at yet says `queued`, and `building` from the moment somebody is on it, rather than `nobody on it` (src/selftest/boards.js, "a board holds its size while a build is running").
 
 - The ladder pips stay on a tile while it is being built (src/selftest/boards.js, "a tile being built fills in").
 - The coins on a lifted tile's price glide with the words instead of jittering beside them (no check can see it; hover a tile on the shelf).

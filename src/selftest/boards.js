@@ -1673,6 +1673,7 @@ export const TESTS = [
     window.__crew(0, 0, 0, 0);
     await settle(3);
     const held = inked(), clockHeld = clock();
+    const stalledSaid = tile()?.querySelector('.gain')?.textContent || '';
     await sleep(300);                  // the plate comes down on a wall-clock transition (SHELF_HOVER_MS)
     const liftStalled = lift();
     await settle(5);
@@ -1717,6 +1718,7 @@ export const TESTS = [
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),
          'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),
+      ok(stalledSaid === 'queued', 'and says queued while nobody is at it', stalledSaid || 'nothing'),
       ok(liftGoing === '-2px' && liftStalled === '0px', 'the tile being built floats on its plate, and sits down when the site stalls', `${liftGoing} -> ${liftStalled}`),
       ok(stillHeld === held && clockStillHeld === clockHeld,
          'and with nobody on it the fill and the clock both hold', `${held}/${clockHeld} -> ${stillHeld}/${clockStillHeld}`),

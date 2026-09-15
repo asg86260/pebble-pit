@@ -62,10 +62,11 @@ const pips = w => {
 // tile wears.
 const clockOf = (site, list, i) => {
   const going = roomAt(site);
-  // A front line nobody is at says `building` and no clock: a clock over a
+  // A front line nobody is at says `queued` and no clock: a clock over a
   // work nobody is doing is a promise the yard is not keeping, and the tile
-  // says the same word (its stopped clock and dashed tag carry the rest).
-  if (i < going && stalled(site)) return 'building';
+  // says the same word -- bought, waiting -- until a body arrives and it
+  // reads `building`.
+  if (i < going && stalled(site)) return 'queued';
   let ms = 0;
   for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
   const place = i < going ? '' : `<em>${placeWord(i - going + 1)}</em> `;
