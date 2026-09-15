@@ -320,9 +320,12 @@ group('a jammed rock heap still lets each ground\'s finds be fetched', async () 
 // over the line every body not on a find stood on it -- and the quarry's heap,
 // a quarter the size and full to the limit, kept the quarry stopped behind
 // them. Rock at six hundred of seven hundred, quarry full, four carriers, two
-// minutes: the quarry's heap must come off the limit, and lose more than the
-// rock's does. (Measured: the old rule took 0 off the quarry and all of the
-// trips off the rock; this one the other way about.)
+// minutes: the quarry's heap must come off the limit, and soon. (Measured: the
+// nearest-first rule took 0 off the quarry in the whole run and all of the
+// trips off the rock; fullest-first unstopped it at 113 s, because it spent
+// the rest of the run walking one grain at a time across the yard while the
+// rock's heap stood beside the hole; stopped-first unstops it at 57 s and then
+// works the rock, which is the one heap still worth a walk.)
 group('the crew clear the fullest heap, not the nearest', async () => {
   window.__reset();
   openSites();
@@ -338,9 +341,13 @@ group('the crew clear the fullest heap, not the nearest', async () => {
   for (let i = 0; i < 186; i++) window.__toss('shard', quarry.from + 6 + (i % cols) * P);
   run(2);
   const start = state();
-  run(120);
+  // when the quarry first comes off its limit, in seconds
+  let off = -1;
+  for (let i = 0; i < 120 * 60; i++) {
+    run(1 / 60);
+    if (off < 0 && !state().pileFull.quarry) off = i / 60;
+  }
   const end = state();
-  const lost = k => start.pileCount[k] - end.pileCount[k];
 
   window.__crew(0, 0, 0);
   return [
@@ -350,7 +357,9 @@ group('the crew clear the fullest heap, not the nearest', async () => {
        `rock ${start.pileCount.rock}/${start.pileLimit.rock}, quarry ${start.pileCount.quarry}/${start.pileLimit.quarry}`),
     ok(!end.pileFull.quarry, 'the quarry heap has come off its limit',
        `${start.pileCount.quarry} -> ${end.pileCount.quarry}`),
-    ok(lost('quarry') > lost('rock'), 'and the quarry heap lost more than the rock heap did',
-       `quarry -${lost('quarry')}, rock -${lost('rock')}`)
+    // 57 s with the stopped heap first, 113 s with the fullest heap first;
+    // ninety is clear of both.
+    ok(off >= 0 && off < 90, 'and it did so inside a minute and a half',
+       `${off < 0 ? 'never' : off.toFixed(0) + ' s'}`)
   ];
 });

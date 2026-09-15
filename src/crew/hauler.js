@@ -162,38 +162,51 @@ export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 // climbed past its limit with nobody on it while they walked. A heap is as
 // full as it will be once the hands already headed there have taken theirs.
 //
-// And per pixel of the round trip, because an armful is an armful wherever it
-// comes from and the far heap costs five times the walk. This is not "nearest
-// wins" -- that sent everybody to the rock, above -- because the discount is
-// what keeps it honest: bodies go to the near heap until enough armfuls are
-// coming to bring it under the line, and the rest walk to the far one. On the
-// carters bench that is the difference between the rock stopped half the run
-// and never (`tools/node/carters.mjs`, quarry-jam). The empty leg is quicker
-// by `HAUL_EMPTY`, and the walk is the strip's middle to here and the strip's
-// middle to the hole.
+// A heap that is stopping its station comes before any that is only filling.
+// Full is not a degree of fullness: a heap at its limit is costing output on
+// this frame and a heap at nine tenths is costing nothing yet. So a heap that
+// would still be at its limit once the hands on the way have taken theirs
+// takes the next body whatever the walk, and the walk only decides between
+// heaps that are merely over the line -- or between two that are stopped. With
+// one grain a trip and the quarry six over its limit, the first six bodies
+// walk to the quarry and the seventh works the rock (`test/jobs.test.mjs`).
+//
+// Among those, per pixel of the round trip, because an armful is an armful
+// wherever it comes from and the far heap costs five times the walk. This is
+// not "nearest wins" -- that sent everybody to the rock, above -- because the
+// discount is what keeps it honest: bodies go to the near heap until enough
+// armfuls are coming to bring it under the line, and the rest walk to the far
+// one. On the carters bench that is the difference between the rock stopped
+// half the run and never (`tools/node/carters.mjs`, quarry-jam). The empty leg
+// is quicker by `HAUL_EMPTY`, and the walk is the strip's middle to here and
+// the strip's middle to the hole.
 function fullestHeap(w, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
   const coming = armfulsComing(w);
-  let best = -1, bestScore = -1;
+  let best = -1, bestScore = -1, bestStopped = false;
   for (const p of S.piles) {
     const r = ((S.pileCount[p.key] || 0) - (coming.get(p.key) || 0)) / (PILE_LIMIT[p.key] || Infinity);
     if (r < BACKED_UP) continue;
+    const stopped = r >= 1;
+    if (bestStopped && !stopped) continue;
     const mid = (p.from + p.to) / 2;
     const score = r / (Math.abs(w.x - mid) / HAUL_EMPTY + Math.abs(pit.x - mid));
-    if (score <= bestScore) continue;
+    if (stopped === bestStopped && score <= bestScore) continue;
     // The strip's columns, held to the ground the crew can stand on -- the same
     // two bounds `nearestDust` keeps, for the same reason.
     const lo = Math.max(first, colOf(floor, p.from));
     const hi = Math.min(last, colOf(floor, p.to) - 1);
     if (lo > hi) continue;
     const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
-    for (let d = 0; d <= hi - lo && bestScore < score; d++) {
+    let found = -1;
+    for (let d = 0; d <= hi - lo && found < 0; d++) {
       for (const c of [from - d, from + d]) {
         if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
-        best = c; bestScore = score; break;
+        found = c; break;
       }
     }
+    if (found >= 0) { best = found; bestScore = score; bestStopped = stopped; }
   }
   return best;
 }

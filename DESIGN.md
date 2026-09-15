@@ -1038,6 +1038,20 @@ while the others walk to the quarry, and the rock is stopped 0% of the run inste
 half again as much. Both terms are read off the yard — the armful is the body's own `load`, the walk
 is measured in pixels — so there is no number to tune (`test/hauler-spread.test.mjs`).
 
+**But a stopped station first, whatever the walk.** Per pixel of the walk, the near heap wins by
+five to one, and with one grain a trip the discount never brings it under the line: four carriers
+worked the rock's heap for two minutes while the quarry's, six grains over its limit, kept the
+quarry stopped — the convoy again, in the mirror. Full is not a degree of fullness. A heap at its
+limit is costing output on this frame; a heap at nine tenths is costing nothing yet. So a heap that
+would still be at its limit once the hands on the way have taken theirs takes the next body before
+any heap that is merely filling, and the walk decides only among heaps of the same kind. Six grains
+over means six bodies walk to the quarry and the seventh works the rock; the quarry is back at work
+in 57 s where fullest-first took 113 s (`test/jobs.test.mjs`). The price is paid on a heap the crew
+cannot unstop at all — quarry-jam on the bench, five grains a second against six bodies who cannot
+carry that — where the tier keeps sending four of them, and the rock beside the hole is stopped a
+fifth of the run instead of never. The rule cannot see the inflow; it sees a stopped station, and
+goes.
+
 **That order decides where a trip starts; the body works that heap, and the rest of the trip is a
 sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
 same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column
