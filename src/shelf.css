@@ -251,9 +251,10 @@
   --lift: -2px;
   outline-color: #000;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
-     and a pseudo-class outranks the firewall's revert. The color only -- the
-     shorthand would take the tile's dots with it. */
-  background-color: transparent;
+     and a pseudo-class outranks the firewall's revert. White, the same as at
+     rest, so only the tile's own dots are inside the plate and they move
+     with it; the shorthand would take the dots with it. */
+  background-color: #fff;
   color: #000;
   /* The drift: eight whole-pixel stops round a one-pixel circle, on
      SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
