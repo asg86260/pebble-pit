@@ -91,7 +91,7 @@ export let CLOCK_LEAP_MS = 100;
 // repeat; GROUND_INK is how dark a mark is against the white.
 export let GROUND_TEXTURE = 2;
 export let GROUND_TILE = 6;
-export let GROUND_INK = 0.14;
+export let GROUND_INK = 0.05;
 
 export const YARD_KNOBS = [
   { key: 'GROUND_TEXTURE', label: 'ground texture', min: 0, max: 4, step: 1,

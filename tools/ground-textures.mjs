@@ -8,7 +8,11 @@ const tab = await openTab(PORT);
 const out = process.argv[2] || 'shots/ground';
 mkdirSync(out, { recursive: true });
 const scene = process.argv[3] || 'crew';
-const opts = [
+// A fourth argument names an option list by key; the default is every texture.
+const LISTS = {
+  inks: [['hatch-14', 2, 6, 0.14], ['hatch-08', 2, 6, 0.08], ['hatch-05', 2, 6, 0.05], ['hatch-08-wide', 2, 8, 0.08]],
+};
+const opts = LISTS[process.argv[4]] || [
   ['dots-light', 1, 6, 0.14], ['dots-dark', 1, 6, 0.3], ['dots-dense', 1, 3, 0.14],
   ['hatch', 2, 6, 0.14], ['strata', 3, 6, 0.14], ['stipple', 4, 6, 0.14],
 ];
