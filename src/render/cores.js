@@ -1,8 +1,6 @@
 // What a core gives off, and the things that leave the yard: the core's glow,
-// the buried and freed core, the sand that comes off it, the paid dust and the
-// abyss the drowned pit holds. Owns drawCoreGlow, drawCoreAt, drawRockSand,
-// drawCoreBehind, drawCore, drawPaid, drawAbyss and drawLeaving. The shared
-// primitives (ctx, drawCircle, drawMark) come from ./ctx.js and ./marks.js.
+// the buried and freed core, the sand that comes off it, the paid dust, the
+// rift and the abyss the drowned pit holds.
 
 import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
@@ -35,103 +33,58 @@ import { ctx } from './ctx.js';
 import { drawCircle, drawMark } from './marks.js';
 
 // --- what a core gives off ----------------------------------------------------
-// The one thing in this game with anything in it.
-//
-// Everything else in the yard is what it looks like: dust is dust, a shard is a
-// blue chip, a rock is a lot of rock. A core is a rock's worth of *something*
-// and the game has never said so -- it was a ring, drawn once, sitting there.
-//
-// So it gives something off: rings of cells walking outward and fading, each
-// one a different colour and all of them cycling, which is as close to heat
-// coming off a thing as a grid this coarse gets. Cells, not a gradient -- the
-// glow is made of the same squares the rest of the world is, so it belongs to
-// the picture rather than sitting on top of it -- and faint, because the whole
-// of it should read as the air over the thing rather than as the thing.
+// Rings of cells walking outward and fading, each a different color and all of
+// them cycling. Cells, not a gradient, so the glow belongs to the picture; and
+// faint, so it reads as the air over the thing rather than the thing.
 const WAVES = 3;                   // rings in the air at once
 const WAVE_MS = 2400;              // how long one takes to walk out and go
 const WAVE_REACH = P * 6;          // and how far it gets
 const WAVE_ALPHA = 0.62;
 
-// Rounding that treats the two sides of nought alike. See the ring below.
+// Rounding that treats the two sides of nought alike (see the ring below).
 const evenly = v => Math.sign(v) * Math.round(Math.abs(v));
 
 export function drawCoreGlow(cx, cy, capAtGround) {
   const t = now();
-  // The middle, snapped once, and every cell of every ring measured from *it*.
-  //
-  // Each cell used to be snapped to the world grid on its own -- `round(x / P)`
-  // of an absolute position -- which puts the ring where the grid happens to
-  // fall rather than round the thing it belongs to. The core does not sit on a
-  // whole cell (it rolls, and you carry it about), so the rounding bit harder on
-  // one side than the other and the glow sat visibly off its own disc. Measured
-  // out from a snapped middle, it is symmetrical by construction and still lands
-  // on whole cells.
-  // The origin IS the centre of the circle. Not a cell corner, not the nearest
-  // cell centre -- the point the disc is drawn around.
-  //
-  // This has been wrong twice, in the same way both times: the ring was measured
-  // out from a *snapped* version of the middle, so it sat wherever the lattice
-  // fell rather than around the thing it belongs to. Snapping to a corner put it
-  // half a cell down and right; snapping to a cell centre fixed the systematic
-  // half-cell and left up to another half of drift, because a core does not sit
-  // on a whole cell -- it rolls, and you carry it about. Three pixels on an
-  // eighteen-pixel core is still visibly off its own disc.
-  //
-  // So nothing is snapped. Each cell is still a whole cell and still a whole
-  // cell's step from the next -- the shape is as square as it ever was -- but
-  // the point they are all measured from is `cx, cy` exactly, which makes the
-  // ring symmetric about the disc by construction at any position.
+  // Nothing is snapped: the point every cell is measured from is `cx, cy`
+  // exactly, which makes the ring symmetric about the disc by construction.
+  // A core does not sit on a whole cell (it rolls, and you carry it about), so
+  // a snapped middle sits wherever the lattice falls rather than around the
+  // thing; three pixels on an eighteen-pixel core is visibly off its own disc.
   const ox = cx, oy = cy;
   for (let i = 0; i < WAVES; i++) {
     const k = ((t / WAVE_MS) + i / WAVES) % 1;
     const r = CORE_SIZE / 2 + k * WAVE_REACH;
-    // out and gone: it thins as it widens, the way anything spreading does
+    // out and gone: it thins as it widens
     ctx.globalAlpha = WAVE_ALPHA * (1 - k) * (1 - k);
     ctx.fillStyle = `hsl(${Math.round(t / 12 + i * 140) % 360} 85% 58%)`;
-    // one cell per cell of arc, and never the same cell twice: a ring drawn at
-    // an even angle doubles up on the diagonals, and a cell painted twice at
-    // half alpha is a cell at full alpha
-    // An EVEN number of them, always.
-    //
-    // This is why the ring leaned. The angles sampled are `j/n` of a turn plus
-    // however far round the ring has spun; when n is even that set is closed
-    // under adding half a turn, so every cell has an exact opposite and the
-    // whole thing is symmetric about the middle wherever it has spun to. When n
-    // is odd nothing pairs up and the ring really is lopsided -- a different way
-    // each frame, which is how it looked.
+    // One cell per cell of arc, never the same cell twice (a cell painted twice
+    // at half alpha is a cell at full alpha), and an EVEN number of them: when
+    // n is even the sampled angles are closed under a half turn, so every cell
+    // has an exact opposite wherever the ring has spun to. Odd, nothing pairs
+    // up and the ring is lopsided a different way each frame.
     const spokes = Math.max(8, Math.round((Math.PI * 2 * r) / P));
     const n = spokes + (spokes % 2);
     const seen = new Set();
     for (let j = 0; j < n; j++) {
       const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
-      // Rounded away from nought rather than always upwards -- the other half
-      // of the lean. `Math.round` goes half-UP, so a cell wanted at plus a half
-      // lands on 1 and its mirror at minus a half lands on 0: the offset exists
-      // on one side and not on the other. `cell` is odd-symmetric, so
-      // `cell(-v) === -cell(v)` for every v and a pair of opposite spokes always
-      // produces a pair of opposite cells.
+      // Rounded away from nought rather than half-UP: `Math.round` lands plus
+      // a half on 1 and minus a half on 0, so the offset exists on one side
+      // only. `evenly` is odd-symmetric, so opposite spokes give opposite cells.
       const x = ox + evenly(Math.cos(a) * r / P) * P;
       const y = oy + evenly(Math.sin(a) * r / P) * P;
-      // A whole ring, except where the thing is still inside the rock.
-      //
-      // A core lying about glows all round, which is what a thing giving
-      // something off does -- the ground line is not a lid for it. But the one
-      // still buried is drawn BEHIND the boulder so the boulder covers it, and
-      // the rock only covers what is above the ground line: the bottom of the
-      // ring came out underneath the hill and lay on the open ground, glowing,
-      // while the core was still in the rock. So that one -- and only that one
-      // -- keeps the cut.
+      // A whole ring, except where the thing is still inside the rock: the
+      // buried core is drawn BEHIND the boulder, and the rock only covers what
+      // is above the ground line, so without the cut the bottom of the ring
+      // lies glowing on the open ground.
       if (capAtGround && y - P / 2 >= S.groundY) continue;
 
 
       const key = `${x},${y}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      // `x, y` is where the cell's MIDDLE goes; `fillRect` wants its top-left.
-      // Passing one as the other puts every cell of the ring half a cell down
-      // and to the right, which is the whole ring off its own disc -- and it is
-      // the same half cell three times over now, so it is worth being explicit:
-      // this offset is the conversion, not a nudge.
+      // `x, y` is the cell's MIDDLE; `fillRect` wants its top-left. This offset
+      // is the conversion, not a nudge.
       ctx.fillRect(x - P / 2, y - P / 2, P, P);
     }
   }
@@ -140,23 +93,17 @@ export function drawCoreGlow(cx, cy, capAtGround) {
 }
 
 export function drawCoreAt(x, y, capAtGround) {
-  // One middle for both, so the glow and the thing it is coming off cannot
-  // disagree about where the thing is.
+  // One middle for both, so the glow and the disc cannot disagree.
   const cx = x + CORE_SIZE / 2, cy = y + CORE_SIZE / 2;
   drawCoreGlow(cx, cy, capAtGround);
   // radius allows for the 2px stroke, so the circle stays inside its box and
-  // never paints over the ground line it is resting on
+  // never paints over the ground line
   drawCircle(cx, cy, CORE_SIZE / 2 - 2);
 }
 
-// What is lying on the hill. Drawn straight after the rock and before the chips,
-// so a grain on the crest is in front of the rock it is resting on and behind
-// anything still in the air over it.
-//
-// Every grain through `drawMark`, which is what a chip in the air and a mark on
-// the ground both go through: what lands up here is dust, or a spore, or a
-// shard, and it has to look like the thing it is. There are never many of them
-// -- a rockhand throws them off between swings -- so a call each costs nothing.
+// What is lying on the hill, drawn after the rock and before the chips. Every
+// grain goes through `drawMark` so it looks like the thing it is; there are
+// never many, so a call each costs nothing.
 export function drawRockSand() {
   if (!boulderAlive() || !S.rockSand) return;
   const left = rockLeft();
@@ -170,20 +117,13 @@ export function drawRockSand() {
   ctx.fillStyle = '#000';
 }
 
-// Buried in the rock: drawn first so the boulder covers it until you dig it out.
-//
-// Which is only true once the boulder is *there*. A rock still coming down out
-// of the sky is drawn up in the sky, so for the second and a half of the fall it
-// covers nothing at all and the core sat on the bare ground in plain view,
-// waiting to be landed on. Nothing is buried until there is something on top
-// of it.
+// Buried in the rock: drawn first so the boulder covers it until you dig it
+// out. Only once the boulder is *there*: a rock still falling covers nothing.
 export function drawCoreBehind() {
   if (S.heldCore || S.coreItem || !boulderAlive() || S.rockFall > 0) return;
-  // and there is nothing to see inside the first four, because there is nothing
-  // in them: cores start at CORE_FROM. `coreBuried` is set on every rock -- what
-  // it means is "this one still has something to give up", which is a question
-  // about the rock being whole rather than about what is inside it -- so drawing
-  // off it showed a core in four rocks that were never going to yield one.
+  // Cores start at CORE_FROM. `coreBuried` is set on every rock and means
+  // "this one still has something to give up", so drawing off it shows a core
+  // in rocks that will never yield one.
   if (S.boulderNo < CORE_FROM) return;
   const h = coreHome();
   drawCoreAt(h.x, h.y, true);          // still in the rock: nothing spills onto the ground
@@ -205,124 +145,68 @@ const drawLeaving = list => {
   ctx.fillStyle = '#000';
 };
 
-// The stream arcing off the top of the pile to the bench, because you bought
-// something. The other stream off the pile -- the one going into the abyss --
-// is drawn by `drawAbyss`, under the liquid's own fill, so a grain that has
-// crossed the surface is gone into it rather than drawn on top of it.
+// The stream arcing off the pile to the bench. The stream into the abyss is
+// drawn by `drawAbyss`, under the liquid's fill, so a grain past the surface
+// is gone into it.
 export function drawPaid() { drawLeaving(S.paid); }
 
-// The abyss: the drowned pit. The hole gave way and what it holds now is a
-// black liquid standing a few cells below the brim -- see "The abyss" in
-// DESIGN.md, and `abyssLine` in pit.js for where the surface stands (during
-// the tear it rises out of the floor with the pile it is taking).
+// The abyss: the drowned pit, a black liquid standing below the brim ("The
+// abyss" in DESIGN.md; `abyssLine` in pit.js for where the surface stands).
 //
-// Six things are drawn, and each is one property of the thing:
-//
-//   the body    solid ink from the surface to the floor of the hole, clipped
-//               to the mouth and to the view.
-//   the swell   the surface breathes, per column, on two slow waves out of
-//               step -- a heave and a chop -- so no stretch of it ever moves
-//               as one plate.
-//   the stars   the liquid is a window into somewhere else, and the somewhere
-//               else has stars in it: sparse specks breathing on their own
-//               clocks, thicker with depth, a few in the tower's magic
-//               purples. This is what makes it an abyss and not a puddle of
-//               ink -- the darkness has something on the other side of it.
-//   the wisps   energy rising off the surface and thinning to nothing a few
-//               cells up: the thing exhaling. Derived from the clock and the
-//               column, no list and nothing saved.
-//   the ripples a white notch where a grain just went in, gone in half a
-//               second, with a glint drifting along the surface between
-//               swallows so the waterline is never still.
-//   the plank   a board over the mouth at the brim. The drowned pit stays a
-//               way through -- the two ladders exist exactly so it is not a
-//               dead end -- and the plank is what the crossing stands on.
-//
-// The order is the picture: diving grains go down first and the body over
-// them at the waterline, so anything past the surface is gone into it; the
+// Drawn: the body (ink from the surface to the floor), the swell (the surface
+// breathing per column), the stars (the liquid is a window, thicker with
+// depth), the wisps (energy off the surface), the ripples (a notch where a
+// grain went in) and the bridge over the mouth. Diving grains go down first
+// and the body over them, so anything past the surface is gone into it; the
 // stars go over the body, being *through* it.
 //
-// Everything here is derived from the clock, the column and a stable hash --
-// the same trick the timber grain uses -- so the abyss costs no state, no
-// stepping and no saving, and two frames of a still yard show the same stars.
+// Everything is derived from the clock, the column and a stable hash, so the
+// abyss costs no state, no stepping and no saving, and two frames of a still
+// yard show the same stars.
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
-// The surface's height at a world column, snapped to the cell. Two waves: the
-// long heave and a shorter chop at a third the size, out of step so the
-// waterline rolls rather than pulses.
+// The surface's height at a world column, snapped to the cell.
 const swellAt = (c, t) => {
-  // The middle wave runs the other way and none of the three periods divide any
-  // other, so no arrangement of crests repeats: they meet, pile up and come
-  // apart again, and the silhouette is a different silhouette every second.
-  // Two waves both phased on the clock plus the column carry one fixed profile
-  // sideways forever, which is what this used to do and what it looked like.
+  // The middle wave runs the other way and none of the three periods divide
+  // any other, so no arrangement of crests repeats. Two waves phased alike
+  // carry one fixed profile sideways forever.
   const h = Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + c * ABYSS_SWELL_K1) * ABYSS_SWELL_W1
           + Math.sin(t / ABYSS_SWELL_MS2 * Math.PI * 2 - c * ABYSS_SWELL_K2) * ABYSS_SWELL_W2
           + Math.sin(t / ABYSS_SWELL_MS3 * Math.PI * 2 + c * ABYSS_SWELL_K3) * ABYSS_SWELL_W3;
-  // and the envelope, which decides which stretch of the line is doing the
-  // heaving at all; it crawls, so a calm patch takes a good while to wake up
+  // The envelope decides which stretch of the line is heaving at all; it
+  // crawls, so a calm patch takes a while to wake up.
   const env = ABYSS_SWELL_CALM + (1 - ABYSS_SWELL_CALM)
             * (Math.sin(t / ABYSS_SWELL_ENV_MS * Math.PI * 2 + c * ABYSS_SWELL_ENV_K) + 1) / 2;
   return Math.round(h * env * (ABYSS_SWELL / P)) * P;
 };
 
-// A brightness from 0 to 1 picks a rung of a family's ramp. There is no alpha
-// to fade with, so the ramp is the fade -- and every ramp's bottom rung is
-// black, which is what makes the ends of a fade invisible: a thing on its way
-// out reaches a tone the liquid cannot be told from, and then stops being
-// drawn, with no step between the two. Rung nought therefore means "do not
-// draw", and every caller checks for it rather than painting black on black.
+// A brightness from 0 to 1 picks a rung of a ramp. There is no alpha, so the
+// ramp is the fade, and every ramp's bottom rung is black: rung nought means
+// "do not draw", and every caller checks for it rather than painting black on
+// black.
 const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
   Math.round(k * (ramp.length - 1))));
 
-// The rift: the black hole hanging over the pit through the torn era, with
-// everything the yard throws into the hole being pulled through it. Back from
-// the abyss's own removal of it, because it is a *stage* now rather than the
-// end state -- it tears small, grows with what it eats, and gives way into the
-// drowning (see "The pit's arc" in DESIGN.md).
+// The rift: the black hole over the pit through the torn era, pulling in
+// everything the yard throws into the hole ("The pit's arc" in DESIGN.md).
 //
-// Everything in this yard is black cells on white paper, so the honest drawing
-// of an absence is the paper's opposite -- a solid black disc, with nothing
-// inside it because there is nothing inside it. A disc on its own was not
-// enough, and what it was missing was *pulling*. Four things are drawn and
-// each of them is one property of the thing:
-//
-//   the halo    two cells of bare paper cleared round the rim, and a thinning
-//               stipple past that -- there is no ink blacker than ink, so the
-//               way to deepen the middle is to take everything else away.
-//   the streaks stuff falling in, spiralling to the rim, running whether or
-//               not the hole has anything to eat.
-//   the lens    the rim swells and shrinks, slowly and not evenly round
-//               itself -- light bending, as a warp of the silhouette.
-//   the tails   a smear on each grain actually going in, pointing back the
-//               way it came.
-//
-// The order is the picture: halo, streaks and tails go down first and the disc
-// over them, so anything that has crossed the rim is gone behind it rather
-// than drawn on top of it -- which is what going *in* looks like.
+// A solid black disc with nothing inside it, plus what makes it *pull*: the
+// halo (paper cleared round the rim, since there is no ink blacker than ink),
+// the motes spiraling in, the lens (the rim wavering, and the picture behind
+// it bent), and the tails on grains going in. Halo, motes and tails go down
+// first and the disc over them, so anything past the rim is gone behind it.
 
-// A settled number in 0..1 from two small ones. No state, no list: a star is
-// where it is because of which star it is, so the sky is the same sky every
-// frame and does not boil.
+// A settled number in 0..1 from two small ones, so a star is where it is
+// because of which star it is and the sky does not boil.
 const spec = (i, n) => {
   const h = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
   return h - Math.floor(h);
 };
 
-// How far out of round the rim is at a given angle, this instant.
-//
-// This was one harmonic at one lobe per turn, chosen to stop the rim churning
-// the way an earlier pass did. It did stop the churn, and it also could not do
-// the job: `1 + w*sin(a + t)` is, to first order, a circle shifted a little
-// sideways -- the amplitude went into moving the disc rather than bending its
-// edge, so the tear stayed exactly as round as a compass and only wandered. A
-// single lobe is the one mode that cannot deform a circle.
-//
-// So the shape comes from modes with two or more lobes (RIFT_RIM_MODES), and
-// the churn is kept off by the other knob: laps of three to seven seconds, not
-// by refusing to have more than one term. What churned before was fast modes
-// beating; slow ones crossing each other is a ripple travelling round the edge,
-// which is what a tear in something under tension does.
+// How far out of round the rim is at a given angle, this instant. Modes with
+// two or more lobes only (RIFT_RIM_MODES): `1 + w*sin(a + t)` is, to first
+// order, a circle shifted sideways, so a single lobe cannot deform a circle.
+// The churn is kept off by slow laps, not by fewer terms.
 const waver = (a, t) => {
   let r = 1;
   for (let i = 0; i < RIFT_RIM_MODES.length; i++) {
@@ -332,19 +216,11 @@ const waver = (a, t) => {
   return r;
 };
 
-// What is on the other side, cut to the hole.
-//
-// Layers of magic-coloured stars, each keeping less pace with the yard than
-// the one in front of it. A star's world position carries `camX * (1 - k)`, so
-// once the world transform has taken `camX` off it what is left slides at `k`
-// of the yard's pace -- near layers nearly keep up with the rim, far ones
-// hardly move, and the gap between them is the depth. Pan the yard and the sky
-// wheels slowly behind the tear; stand still and it stands still.
-//
-// The field is a lattice with a hash-jitter per cell rather than a list of
-// stars: it is endless, it costs nothing to keep, and it is identical frame to
-// frame. Only the cells that fall inside the rim are drawn, so this is a
-// window rather than a sprite.
+// What is on the other side, cut to the hole. Layers of stars, each keeping
+// less pace with the yard than the one in front: a star's position carries
+// `camX * (1 - k)`, so after the world transform it slides at `k` of the
+// yard's pace, and the gap between layers is the depth. A lattice with a
+// hash-jitter per cell, not a list: endless, free, identical frame to frame.
 function drawThrough(cx, cy, rad, t) {
   const inner = rad - P;                      // keep the rim's own edge clean
   if (inner < P) return;
@@ -352,9 +228,7 @@ function drawThrough(cx, cy, rad, t) {
     const f = RIFT_DEEP_LAYERS === 1 ? 0 : L / (RIFT_DEEP_LAYERS - 1);
     const k = RIFT_DEEP_NEAR + (RIFT_DEEP_FAR - RIFT_DEEP_NEAR) * f;
     const sp = RIFT_DEEP_SPACING * (1 + L * 0.5);   // thinner further back
-    // The nearest sky is the brightest; the far ones fall away down the
-    // purples, which is the same "spending itself with distance" the rest of
-    // this game's ramps do.
+    // The nearest sky is the brightest; the far ones fall away down the purples.
     const tone = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
                              Math.round(f * (MAGIC_TONES.length - 1)))];
     const baseX = S.camX * k, baseY = S.camY * k;
@@ -362,33 +236,26 @@ function drawThrough(cx, cy, rad, t) {
     const j0 = Math.floor((baseY - inner) / sp), j1 = Math.ceil((baseY + inner) / sp);
     for (let i = i0; i <= i1; i++) {
       for (let j = j0; j <= j1; j++) {
-        // a fraction of the lattice actually carries a star, so the sky is
-        // scattered rather than ruled
+        // a fraction of the lattice carries a star, so the sky is scattered
+        // rather than ruled
         if (spec(i * 31 + L * 7, j) > 0.55) continue;
         let ox = (i + spec(i, j + L)) * sp - baseX;
         let oy = (j + spec(j + 40, i + L)) * sp - baseY;
         const d = Math.hypot(ox, oy);
         if (d > inner || d < 0.001) continue;
-        // **The bending.** Light coming past something this heavy does not
-        // come straight, and the sky through the tear is the one place it can
-        // be shown: every star is pushed outward along its own ray, hard near
-        // the rim and hardly at all in the middle, so the field piles up round
-        // the edge and thins out of the centre the way an image does round a
-        // lens. It also keeps the middle dark, which is the one thing about a
-        // hole that must never be in question.
+        // The bending: every star is pushed outward along its own ray, hard
+        // near the rim and hardly at all in the middle, so the field piles up
+        // round the edge and the middle stays dark.
         const bent = inner * Math.pow(d / inner, RIFT_BEND);
         ox *= bent / d; oy *= bent / d;
-        // ...and each one sparkles on its own phase, so the sky is alive
-        // without anything travelling across it. Keyed to the star rather than
-        // to the clock alone: they must not blink together.
+        // Each sparkles on its own phase, keyed to the star rather than the
+        // clock alone, so they never blink together.
         const tw = 0.5 + 0.5 * Math.sin(t / RIFT_TWINKLE_MS * Math.PI * 2
                                         + spec(i + L * 13, j) * Math.PI * 2);
         ctx.globalAlpha = 0.35 + tw * 0.65;
         ctx.fillStyle = tone;
-        // Round, and off the lattice, like the tear that frames them. The sky
-        // is the other side: it is no more made of this world's cells than the
-        // rim is. Sizes vary with the layer and with the star -- a field of
-        // identical dots is a texture, and this is meant to be a distance.
+        // Round, and off the lattice, like the tear that frames them. Sizes
+        // vary with the layer and the star: identical dots are a texture.
         const size = P * (0.30 + spec(i + 5, j + L * 3) * 0.30) * (1 - f * 0.35);
         ctx.beginPath();
         ctx.arc(cx + ox, cy + oy, size, 0, Math.PI * 2);
@@ -400,21 +267,15 @@ function drawThrough(cx, cy, rad, t) {
   ctx.fillStyle = '#000';
 }
 
-// The pull: a few motes of the wizards' purple drawn in toward the rim.
-//
-// The one thing here that moves on its own, and a handful on purpose -- what
-// it has to say is "this is pulling", and a crowd would say "this is busy"
-// instead, which is what the whole of the last pass was deleting. Inward,
-// never out: a ring going out of a hole is a hole broadcasting, and this one
-// takes.
+// The pull: a few motes drawn in toward the rim. A handful on purpose (a crowd
+// says busy, not pulling), and inward, never out: a ring going out of a hole
+// is a hole broadcasting.
 function drawPull(cx, cy, rad, t) {
   for (let i = 0; i < RIFT_PULL_MOTES; i++) {
     const k = ((t / (RIFT_PULL_MS * (0.75 + spec(i, 3) * 0.5))) + spec(i, 1)) % 1;
     const a = spec(i, 2) * Math.PI * 2;
-    // In from RIFT_PULL_FROM to the rim, quickening as it arrives -- the
-    // squared term is the same "falling into something" shape the grains
-    // themselves have, and it is the only thing here that says which way the
-    // hole works.
+    // In from RIFT_PULL_FROM to the rim, quickening as it arrives: the squared
+    // term is the same falling shape the grains have.
     const r = rad * (RIFT_PULL_FROM - (RIFT_PULL_FROM - 1) * k * k);
     ctx.globalAlpha = RIFT_PULL_INK * (1 - k) * (0.5 + spec(i, 5) * 0.5);
     ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
@@ -424,31 +285,18 @@ function drawPull(cx, cy, rad, t) {
   ctx.fillStyle = '#000';
 }
 
-// The rim, as a true circle wavering slowly -- a path, not a run of cell rows.
+// The rim, as a true circle wavering slowly: a path, not cell rows.
 //
-// **This is the one thing in the yard that is not on the cell grid, and that is
-// the point of it.** The lattice is not a style here, it is the fabric the
-// world is made of: everything that belongs to the yard is built out of whole
-// six-pixel cells, and half a cell off puts a hairline through the picture.
-// The rift is the one object whose whole identity is that it does NOT belong
-// -- it is a hole in that fabric. So it is drawn round, smoothly, with an edge
-// with no cells in it at all, and it looks out of place in exactly the way it
-// ought to. The contrast does more work than the smoothness: a true circle
-// with blocky dust falling into it says "tear" better than any amount of
-// drawing on the disc ever did.
-//
-// The boundary is at the rim and nowhere else. Everything of the yard stays
-// blocky -- the grains, their tails, the motes being pulled in -- and only the
-// tear and the sky through it are smooth. Smoothness leaking onto the yard's
-// own things would read as a different renderer rather than a different place.
+// This is the one thing in the yard not on the cell grid, and that is the
+// point: the rift is a hole in the fabric the world is made of. The boundary
+// is at the rim and nowhere else; the grains, their tails and the motes stay
+// blocky, or the smoothness reads as a different renderer rather than a
+// different place.
 function rimPath(cx, cy, rad, t, grow) {
-  // Enough segments for the roundness AND for the ripple. One per world pixel
-  // of radius is plenty for a circle, and it was all this needed while the rim
-  // was one; a five-lobed edge at that rate gets a dozen points a lobe and the
-  // crests come out as corners. So take whichever is more: the radius, or
-  // sixteen a lobe for the busiest mode there is. Derived from the modes rather
-  // than a number raised until it looked smooth -- add a sixth lobe to the
-  // table and the path keeps up on its own.
+  // Enough segments for the roundness AND the ripple: one per world pixel of
+  // radius is plenty for a circle, but a five-lobed edge at that rate gets a
+  // dozen points a lobe and the crests come out as corners. Derived from the
+  // modes, so a sixth lobe in the table keeps up on its own.
   const lobes = Math.max(...RIFT_RIM_MODES.map(m => m[0]));
   const n = Math.max(48, Math.round(rad), lobes * 16);
   ctx.beginPath();
@@ -461,17 +309,12 @@ function rimPath(cx, cy, rad, t, grow) {
   ctx.closePath();
 }
 
-// The light bending, and it is the real thing rather than a picture of one:
-// the yard already drawn behind the hole is sampled and put back magnified
-// about the rift's middle, inside a few thin rings just outside the rim. A
-// point that truly sits at some distance out is shown further out than it is,
-// which is what a lens does -- so the ground line, the pile and a passing body
-// all bow outward as they go past the hole and snap straight once clear of it.
-//
-// Done in screen pixels rather than world ones, because it is a warp of the
-// *picture*: the transform is dropped to the page for the length of it and the
-// world's restored after. Only each ring's own box is sampled, so this is a
-// handful of small blits rather than four copies of the window.
+// The light bending: the yard already drawn behind the hole is sampled and
+// put back magnified about the rift's middle, inside a few thin rings just
+// outside the rim, so the ground line and a passing body bow outward as they
+// go past. Done in screen pixels, since it is a warp of the *picture*: the
+// transform is dropped to the page for the length of it. Only each ring's own
+// box is sampled.
 // One offscreen sheet, kept, so the warp reads from a still copy of the frame
 // rather than from the frame it is drawing into.
 let bendCan = null, bendCtx = null;
@@ -485,17 +328,9 @@ function drawBend(cx, cy, rad) {
   // off the glass entirely: nothing to bend and nothing to sample
   if (sx + sr * RIFT_BEND_R < 0 || sx - sr * RIFT_BEND_R > wide) return;
 
-  // **Take a copy first.** Every ring used to sample the live canvas -- the
-  // one the earlier rings had just written into -- so ring two magnified ring
-  // one's output, ring three magnified that, and the picture fed on itself. A
-  // pixel's worth of change anywhere near the hole came back amplified a ring
-  // at a time and the whole band boiled. It looked like noise in the warp and
-  // it was the warp reading its own work.
-  //
-  // Copied once into a sheet of its own, every ring samples the same still
-  // picture: the frame as it stood before any of this. Which is also what a
-  // lens does -- it bends the light that arrives, not the light it has already
-  // bent.
+  // Take a copy first. A ring sampling the live canvas magnifies the previous
+  // ring's output, the picture feeds on itself and the whole band boils. A
+  // lens bends the light that arrives, not the light it has already bent.
   const R1 = Math.ceil(sr * RIFT_BEND_R) + 2;
   const bx0 = Math.floor(sx - R1), by0 = Math.floor(sy - R1);
   const side = R1 * 2;
@@ -520,9 +355,8 @@ function drawBend(cx, cy, rad) {
     ctx.arc(sx, sy, r1, 0, Math.PI * 2);
     ctx.arc(sx, sy, r0, 0, Math.PI * 2, true);
     ctx.clip('evenodd');
-    // The ring's own box, and the patch of the COPY that lands in it once that
-    // patch is blown up by `m` about the middle. The copy's own corner comes
-    // off first, since it is its own little coordinate space.
+    // The ring's own box, and the patch of the COPY that lands in it once
+    // blown up by `m` about the middle. The copy's own corner comes off first.
     const bx = sx - r1, by = sy - r1, bw = r1 * 2;
     const px = sx + (bx - sx) / m, py = sy + (by - sy) / m;
     ctx.drawImage(bendCan,
@@ -540,21 +374,16 @@ export function drawRift() {
   const cx = x + w / 2, cy = y + h / 2;
   const rad = w / 2;
 
-  // The motes being drawn in go down FIRST, before the bend, so the bend has
-  // them to work on: they are as much a part of the picture near the hole as
-  // the haze and the ground are, and light coming past does not pick and
-  // choose. Drawn straight and then warped with everything else, they stretch
-  // and swing as they cross the band, which is the whole point of having a
-  // lens rather than a drawing of one.
+  // The motes go down FIRST, before the bend, so the bend has them to work
+  // on: drawn straight and then warped with everything else, they stretch and
+  // swing as they cross the band.
   drawPull(cx, cy, rad, t);
 
-  // ...and the bend, on the picture as it now stands: the yard behind the
-  // hole, and those motes, bowed outward as they pass.
+  // The bend, on the picture as it now stands.
   drawBend(cx, cy, rad);
 
-  // Then paper cleared round the rim, so whatever the disc stands over -- the
-  // pile, the ground line, a grain on its last turn -- is taken away from the
-  // edge, and the hole is a hole *in* the world rather than a sticker on it.
+  // Paper cleared round the rim, so the hole is a hole *in* the world rather
+  // than a sticker on it.
   ctx.fillStyle = '#fff';
   rimPath(cx, cy, rad, t, RIFT_HALO * P);
   ctx.fill();
@@ -564,9 +393,8 @@ export function drawRift() {
   rimPath(cx, cy, rad, t, 0);
   ctx.fill();
 
-  // ...and the light piled up at its edge. The one feature off a real
-  // photograph that survives here, because it lies ON the boundary: everything
-  // tried across the middle read as a face.
+  // The light piled up at its edge: it lies ON the boundary. Anything drawn
+  // across the middle reads as a face.
   ctx.save();
   rimPath(cx, cy, rad, t, 0);
   ctx.clip();
@@ -585,22 +413,18 @@ export function drawRift() {
   drawThrough(cx, cy, rad, t);
   ctx.restore();
 
-  // The grains, which ARE of the yard and stay on cells. Each cell asks which
-  // side of the rim it is on and inks itself: its own colour out on the page,
-  // paper over the black inside. A grain crossing does not vanish behind the
-  // disc, it changes colour and carries on -- and a square grain against a
-  // round rim is the whole idea in one mark.
+  // The grains ARE of the yard and stay on cells. Each cell asks which side of
+  // the rim it is on and inks itself: its own color out on the page, paper
+  // over the black inside, so a grain crossing changes color and carries on.
   const inDisc = (px, py) =>
     Math.hypot(px - cx, py - cy) < rad * waver(Math.atan2(py - cy, px - cx), t);
 
   for (const m of S.gulped) {
     const dx = cx - m.x, dy = cy - m.y;
     const d = Math.hypot(dx, dy);
-    // It fades as it slows. `dim` is the grain's own slowed clock (see `orbit`
-    // in game.js): the nearer the horizon the less of a frame it gets, and the
-    // fainter it is drawn, so it eases out of the picture instead of being
-    // deleted mid-stride. Nothing here decides when -- the same number does
-    // both, so what you see going dim IS what is slowing down.
+    // `dim` is the grain's own slowed clock (`orbit` in game.js): the nearer
+    // the horizon the less of a frame it gets and the fainter it is drawn, so
+    // what you see going dim IS what is slowing down.
     ctx.globalAlpha = m.dim === undefined ? 1 : Math.max(0, Math.min(1, m.dim));
     ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
     ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
@@ -623,14 +447,12 @@ export function drawAbyss() {
   const line = abyssLine();
   const floorY = S.groundY + pitDepth();
 
-  // Only the columns in view: the hole is six hundred wide and the window
-  // shows a tenth of it.
+  // Only the columns in view.
   const from = Math.max(pit.x, Math.floor((S.camX - P * 2) / P) * P);
   const to = Math.min(pit.x + pit.w, Math.ceil((S.camX + S.viewW + P * 2) / P) * P);
   if (to <= from) return;
 
-  // The grains still diving, before the body goes down, so a grain past the
-  // surface is under it.
+  // The grains still diving go under the body.
   drawLeaving(S.gulped);
 
   // The body, a column at a time so the surface is a rolling line.
@@ -640,28 +462,17 @@ export function drawAbyss() {
     ctx.fillRect(x, top, P, Math.max(0, floorY - top));
   }
 
-  // The deep, in one pass: the current that runs through it and the stars that
-  // breathe in it, both read off the same flow field so the sky and the smoke
-  // are plainly the same fluid.
-  //
-  // The stars keep their fixed seats -- the fine hash seats one, the coarse
-  // hash over eight-cell patches decides whether that stretch is nebula-thick,
-  // ordinary or empty, so the field clumps and leaves voids the way a sky does.
-  // What changed is that a star no longer switches on: its breath is a
-  // brightness that walks up its family's ramp and back down, and the current
-  // passing over lifts or lowers that brightness, so brightening travels
-  // through the field in slow waves. Depth still sets a star's ceiling -- only
-  // the deep rows are allowed all the way to white -- so looking down is
-  // looking further in.
-  //
-  // The veil is the crest of the same field: the cells riding near the top of
-  // the wave, broken by the same fixed hash so they light in ragged runs rather
-  // than a painted band. The crests curl and shear as the field turns, which is
-  // what makes it read as smoke in a light ray rather than as stripes.
+  // The deep, in one pass: the current and the stars breathing in it, both
+  // read off the same flow field so the sky and the smoke are plainly the same
+  // fluid. The fine hash seats a star; the coarse hash over eight-cell patches
+  // decides whether that stretch is nebula-thick, ordinary or empty. A star's
+  // breath walks up its family's ramp and back, lifted or lowered by the
+  // current; depth sets its ceiling, so looking down is looking further in.
+  // The veil is the crest of the same field, broken by the hash so it lights
+  // in ragged runs rather than a painted band.
   //
   // The row's sideways drag and the column's downward drag each depend on only
-  // one of the two, so both are worked out once and reused across the pass; a
-  // cell costs one sine.
+  // one of the two, so both are worked out once; a cell costs one sine.
   {
     const a = t / ABYSS_FLOW_MS * Math.PI * 2;
     const top = Math.round(line / P) * P + P * 3;
@@ -681,10 +492,9 @@ export function drawAbyss() {
         const cx = c + dragX, ry = r + dragY[i];
         const f = Math.sin(cx * ABYSS_FLOW_COL + ry * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT
                            - a * ABYSS_FLOW_DRIFT);
-        // the second, far slower wave is not added to the first: it rides over
-        // it as a strength, thinning the filament to nothing along one stretch
-        // and swelling it along another, which is how a wisp of smoke fails and
-        // recovers as it travels
+        // the second, far slower wave rides over the first as a strength,
+        // thinning the filament to nothing along one stretch and swelling it
+        // along another
         const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX
                     * (Math.sin(cx * ABYSS_FLOW_COL2 + ry * ABYSS_FLOW_ROW2
                                 - a * ABYSS_FLOW_DRIFT2) + 1) / 2;
@@ -694,17 +504,16 @@ export function drawAbyss() {
         const keep = patch >= 7 ? 4 : 1;           // nebula patches keep four times the stars
         const seated = patch >= 3 && h % ABYSS_STAR_EVERY < keep;
         if (seated) {
-          // the breath, bent so a star spends most of its life dim and only
-          // briefly at its own top, then lifted or lowered by the current
+          // the breath, bent so a star spends most of its life dim, then lifted
+          // or lowered by the current
           const swing = (Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h)
                          + 1) / 2;
           const k = Math.pow(swing, ABYSS_BREATH_BEND)
                   * (1 - ABYSS_FLOW_LIFT + ABYSS_FLOW_LIFT * (f + 1) / 2);
           const ramp = h % 7 === 0 ? ABYSS_MAGIC_TONES : ABYSS_TONES;
           // its ceiling: shallow stars never reach the bright end of their
-          // family, and the hash keeps some of the deep ones modest too. At
-          // least two rungs, so even the dimmest star has a fade rather than a
-          // switch.
+          // family. At least two rungs, so even the dimmest star has a fade
+          // rather than a switch.
           const allowed = ABYSS_STAR_FLOOR
                         + Math.round(depth * (ramp.length - 1 - ABYSS_STAR_FLOOR));
           const ceiling = allowed - (h >> 3) % ABYSS_STAR_VARY;
@@ -717,9 +526,9 @@ export function drawAbyss() {
         }
         const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
         if (off > band || h % ABYSS_VEIL_EVERY === 0) continue;
-        // how near the middle of the filament this cell sits, which is how
-        // brightly the smoke shows; the deep carries it a shade further up the
-        // ramp, and the hash nudges each cell so no stretch is one flat tone
+        // how near the middle of the filament this cell sits; the deep carries
+        // it a shade further up the ramp, and the hash nudges each cell so no
+        // stretch is one flat tone
         const thick = (1 - off / band) * swell;
         const lit = thick * (ABYSS_VEIL_LIT + depth * ABYSS_VEIL_DEEP)
                   + (h % 3 - 1) * ABYSS_VEIL_JITTER;
@@ -731,10 +540,9 @@ export function drawAbyss() {
     }
   }
 
-  // The wisps: a speck rising off the surface every dozen or so columns, gone
-  // by the top of its climb. Position is the clock and the column, so a wisp
-  // is a place that exhales rather than a particle that exists -- and it
-  // narrows as it rises by simply not being drawn on its last stretch.
+  // The wisps: position is the clock and the column, so a wisp is a place
+  // that exhales rather than a particle that exists; it narrows as it rises
+  // by not being drawn on its last stretch.
   for (let x = from; x < to; x += P) {
     const c = x / P;
     const h = seeth(c, 1);
@@ -742,18 +550,16 @@ export function drawAbyss() {
     const k = ((t / ABYSS_WISP_MS) + h / 997) % 1;
     if (k > 0.82) continue;                       // thinned to nothing near the top
     const wy = Math.round((line + swellAt(c, t) - k * ABYSS_WISP_RISE) / P) * P;
-    // It rises past the mouth into the open air -- it is energy, not a grain,
-    // and a plank does not hold it -- but the plank's own row is skipped, so
-    // it passes behind the board rather than being drawn on it.
+    // It rises past the mouth into the open air, but the bridge's own row is
+    // skipped so it passes behind the span.
     if (wy === S.groundY - P) continue;
     const sway = Math.round(Math.sin(t / 640 + h) * 1) * P;
     ctx.fillStyle = MAGIC_TONES[(h + Math.floor(k * 3)) % MAGIC_TONES.length];
     ctx.fillRect(x + sway, wy, P, P);
   }
 
-  // The ripples: a white notch cut into the surface where something just went
-  // in, opening a cell as it dies -- on the surface's own rolling line, so it
-  // reads as the liquid closing over rather than as a mark floating on it.
+  // The ripples: a white notch where something just went in, on the surface's
+  // own rolling line so it reads as the liquid closing over.
   ctx.fillStyle = '#fff';
   for (const r of S.ripples) {
     const k = Math.min(1, (t - r.at) / ABYSS_RIPPLE_MS);
@@ -762,18 +568,10 @@ export function drawAbyss() {
     ctx.fillRect(rx, Math.round((line + swellAt(Math.round(r.x / P), t)) / P) * P, wide, P);
   }
 
-  // (A glint used to slide along the waterline here. Cut: the swell, the
-  // ripples and the wisps already animate the surface, and the one bright
-  // moving thing in the abyss should be the presence in the deep.)
-
-  // And the bridge over the mouth: a cell-thick run across the two lips,
-  // which is what a body crossing the drowned pit walks on (see `pitTop`).
-  // It is not a board any more. The plank that lay here read as furniture --
-  // one black rule over a field of purple light -- so the way across is now
-  // made of the same light as the deep: each cell picks its tone off the
-  // flow, so a brightening travels along the span in slow waves, and the
-  // hash nudges every cell a rung so no stretch of it is one flat color.
-  // It is still solid; that is `pitTop`'s business, not the drawing's.
+  // The bridge over the mouth: a cell-thick run across the two lips, which is
+  // what a body crossing the drowned pit walks on (`pitTop`). Made of the same
+  // light as the deep, each cell's tone off the flow, so a brightening travels
+  // along the span; the hash nudges every cell so no stretch is one flat color.
   {
     const bx = Math.round((pit.x - P) / P) * P, bw = pit.w + P * 2, by = S.groundY - P;
     const a = t / ABYSS_BRIDGE_MS * Math.PI * 2;

@@ -1,19 +1,13 @@
-// Value noise, for things that burn.
+// Value noise, for things that burn: hashed samples eased between, so a column
+// driven by it rises and falls at random heights without the per-frame strobe
+// raw randomness gives. The fire under the cauldron and the tonic burning off
+// a dosed body both use it, so they flicker with the same hand.
 //
-// Hashed samples eased between, so a column driven by it rises and falls at
-// random heights without the per-frame strobe raw randomness gives. Two things
-// in the yard flicker this way now -- the fire under the cauldron and the tonic
-// burning off a dosed body -- and they should flicker with the same hand, so the
-// function lives here rather than twice.
-//
-// The one rule for using it: give each column a LARGE offset of its own
-// (`c * 17.3`, not `c * 0.3`). Neighbours a small step apart in noise space hold
-// nearly the same value, and a row of columns reading nearly the same value one
-// step apart is a travelling wave -- the fire looked like it was sliding
-// sideways. Far apart, they are uncorrelated and flicker where they stand.
+// The one rule: give each column a LARGE offset of its own (`c * 17.3`, not
+// `c * 0.3`). Neighbors a small step apart in noise space hold nearly the same
+// value, and that is a wave sliding sideways.
 // The hash on its own is for anything drawn that wants a fixed, arbitrary
-// value per cell -- a tone that varies across a heap but never changes
-// frame to frame, since the alternative is `rand()`, which strobes.
+// value per cell, since the alternative, `rand()`, strobes.
 export const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
 
 // 0..1, smooth

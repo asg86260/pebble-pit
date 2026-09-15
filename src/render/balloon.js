@@ -1,6 +1,5 @@
 // The filter balloons the scrubbing house sells, and anyone stepped out under a
-// brolly. Extracted verbatim from render.js; behavior unchanged. Owns
-// drawBalloons and drawBrollies. ctx comes from ./ctx.js.
+// brolly.
 
 import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftY, mastX } from '../balloon.js';
 import { BROLLY_STICK, BROLLY_W, P, WORKER } from '../config.js';
@@ -10,23 +9,17 @@ import { ctx } from './ctx.js';
 
 // The craft the scrubbing house sells, one per lane. See balloon.js.
 //
-// Everything about where it is comes off the craft's own geometry -- the mast is
-// the house's door, the lane is off the sky's own top and bottom, and the height
-// is eased between the two by `lift`. Nothing here is remembered, so a balloon
-// cannot end up drawn over a house that has been re-sited under it.
+// Everything about where it is comes off the craft's own geometry; nothing is
+// remembered, so a balloon cannot be drawn over a house re-sited under it.
 //
-// **The filter is the point of the drawing.** A bag with a basket under it is a
-// balloon; what makes this one read as a *purifier* is the works slung between
-// the two -- a vented box the air goes into at the top and what is caught falls
-// out of the bottom. Without it the craft is a nice picture of the wrong thing.
+// The filter is the point of the drawing: without the vented box slung between
+// bag and basket the craft is a nice picture of the wrong thing.
 export function drawBalloons() {
   if (!S.scrubOpen) return;
   for (let i = 0; i < CRAFT.length; i++) {
     const c = CRAFT[i];
-    // Whole pixels, and *not* the lattice. Everything standing on the ground in
-    // this yard is snapped to a cell; a balloon is not standing on anything, and
-    // snapping it would turn a slow drift into a six-pixel stutter -- the same
-    // reason the tractor rolls on pixels.
+    // Whole pixels, and *not* the lattice: a balloon is not standing on
+    // anything, and snapping it turns a slow drift into a six-pixel stutter.
     const bx = Math.round(c.x);
     const by = Math.round(craftY(i));
     const w = BALLOON_W, h = BALLOON_H;
@@ -36,24 +29,16 @@ export function drawBalloons() {
     const left = bx - w / 2;
 
     ctx.fillStyle = '#000';
-    // The tether, and **only while the craft is actually tied down.**
-    //
-    // It used to be drawn the whole way up, which made the rope the loudest thing
-    // about a launch: a black line growing out of the ground for two seconds,
-    // stretching to follow the balloon, then vanishing. A rope that pays out
-    // behind a rising balloon is a rope that is not holding it, and drawing one
-    // says the opposite of what is happening. What a mooring line is for is
-    // saying "this thing is not going anywhere", so it is there while that is
-    // true and gone the instant it is not.
+    // The tether, only while the craft is actually tied down: a rope paying out
+    // behind a rising balloon is a rope that is not holding it.
     if (c.lift < 0.02) {
       const mast = Math.round(mastX());
       const foot = walkY(c.x);
       ctx.fillRect(mast, by, P, Math.max(0, foot - by));
     }
 
-    // The envelope: a bag, widest a third of the way down and closing to a neck.
-    // Drawn as rows rather than as an oval, because everything in this yard is
-    // cells and a curve here would be the one smooth edge in the game.
+    // The envelope, drawn as rows rather than an oval: a curve here would be
+    // the one smooth edge in the game.
     const rows = Math.round(h / P);
     for (let n = 0; n < rows; n++) {
       const t = n / (rows - 1);
@@ -63,15 +48,12 @@ export function drawBalloons() {
       ctx.fillRect(Math.round(left + (w - runW) / 2), top + n * P, runW, P);
     }
 
-    // The lines from the envelope down to the filter's shoulders, so the works
-    // hangs off the bag rather than being stuck to it.
+    // The lines from the envelope down to the filter's shoulders.
     const fl = Math.round(bx - fw / 2);
     ctx.fillRect(fl + P, ftop - P, P, P);
     ctx.fillRect(fl + fw - P * 2, ftop - P, P, P);
 
-    // The filter: a box with its middle course vented. The vents are what say it
-    // is a filter rather than a crate -- a solid block that size under a balloon
-    // reads as cargo.
+    // The vents are what say filter rather than crate.
     ctx.fillRect(fl, ftop, fw, P);                       // the intake lip, solid
     for (let cx = 0; cx < Math.round(fw / P); cx++) {
       // every other cell open across the middle, and the ends always closed
@@ -88,18 +70,10 @@ export function drawBalloons() {
   }
 }
 
-// The umbrella a body puts up when it steps out of a balloon.
-//
-// It was a parachute for four goes and never read as one at the size it is
-// played at. A parachute is a hard shape to draw small: what makes it legible is
-// a canopy *and* a spread of rigging, and rigging is thin diagonal lines, which
-// in cells are staircases -- so it came out as a bulb, a lampshade, a mushroom
-// and a funnel in turn. An umbrella is the same joke and one tenth the drawing:
-// a scalloped cap and one straight stick.
-//
-// Drawn with the craft rather than with the crew, because it is a piece of the
-// balloon's story: it is what the yard shows you instead of a body being
-// switched off in mid-air.
+// The umbrella a body puts up when it steps out of a balloon: a scalloped cap
+// and one straight stick. (A parachute needs rigging, and thin diagonals in
+// cells are staircases.) Drawn with the craft rather than the crew because it
+// is a piece of the balloon's story.
 export function drawBrollies() {
   for (const w of S.workers) {
     if (!w.brolly) continue;
@@ -108,21 +82,18 @@ export function drawBrollies() {
     const wide = Math.round(BROLLY_W / P);                       // cells across
     ctx.fillStyle = '#000';
 
-    // The cap: three rows, and it is the *bottom* one that is widest. Written out
-    // as shares of the width rather than worked out from a curve -- three numbers
-    // are easier to read and to change than the arithmetic that produces them,
-    // and the arithmetic is what got the last four wrong.
+    // Three rows, the *bottom* one widest, as shares of the width: three numbers
+    // are easier to read and change than the curve that produces them.
     const rowsOf = [0.45, 0.82, 1];
     for (let n = 0; n < rowsOf.length; n++) {
       let cells = Math.max(2, Math.round(wide * rowsOf[n]));
-      if ((cells & 1) !== (wide & 1)) cells++;                   // keep it centred on the stick
+      if ((cells & 1) !== (wide & 1)) cells++;                   // keep it centered on the stick
       const runW = cells * P;
       ctx.fillRect(Math.round(cx + P / 2 - runW / 2), hemY - (rowsOf.length - n) * P, runW, P);
     }
 
-    // **The scallop.** One row of cells hanging below the hem, every other one --
-    // and this is the whole of what says umbrella rather than mushroom. A cap
-    // with a ruled edge is a toadstool; a cap with a wavy one is cloth on ribs.
+    // The scallop: every other cell hanging below the hem is the whole of what
+    // says umbrella rather than mushroom.
     const hemCells = (() => {
       let c = Math.max(2, Math.round(wide));
       if ((c & 1) !== (wide & 1)) c++;
@@ -131,8 +102,7 @@ export function drawBrollies() {
     const left = Math.round(cx + P / 2 - (hemCells * P) / 2);
     for (let c = 1; c < hemCells - 1; c += 2) ctx.fillRect(left + c * P, hemY, P, P);
 
-    // The stick, straight down the middle to the top of the head. One cell wide,
-    // and the one line in the whole drawing.
+    // The stick, one cell wide, to the top of the head.
     ctx.fillRect(cx, hemY - P, P, Math.max(P, Math.round(w.y) - hemY + P));
   }
 }

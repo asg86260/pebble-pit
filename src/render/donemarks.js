@@ -1,8 +1,6 @@
-// The tick that stands over a station when it has finished something. It was
-// the lab's alone (this file was labmark.js) and every station shows it now: a
-// rung usually lands while you are looking somewhere else, and the bar coming
-// down is a signal made of nothing happening. Owns drawDoneMarks, doneMarkAt
-// and overDoneMark. ctx comes from ./ctx.js.
+// The tick that stands over a station when it has finished something: a rung
+// usually lands while you are looking somewhere else, and the bar coming down
+// is a signal made of nothing happening.
 
 import { now } from '../clock.js';
 import { P } from '../config.js';
@@ -12,20 +10,13 @@ import { barSpot } from './bars.js';
 import { ctx } from './ctx.js';
 
 // A tick in a box, the opposite number to the bar that means a station
-// stopped. It bobs, because it is asking to be come and looked at rather than
-// reporting a state, and it stays there until somebody opens that station's
-// board.
+// stopped. It bobs, because it is asking to be come and looked at, and it
+// stays until somebody opens that station's board.
 export const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
-// The box itself, and whichever glyph goes in it. Two places draw one of these
-// -- here, and over the casino when a hand settles -- and they were two copies
-// of the same eleven lines. The second copy had lost the line that says what a
-// tick is, so every winning hand threw `TICK is not defined` out of the render
-// loop and took the frame with it. Neither tier can see a drawing, so nothing
-// said a word; `tools/look.mjs` did, the first time a scene staked a chip.
-//
-// `y` rather than `at.y`: the bob is the caller's, because what bobs and how
-// fast is a thing about the mark and not about the box.
+// The box and whichever glyph goes in it; the casino's mark uses it too.
+// `y` rather than `at.y`: the bob is the caller's, a thing about the mark and
+// not about the box.
 export function drawMarkBox(at, y, glyph) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
@@ -48,10 +39,8 @@ export function drawDoneMarks() {
   }
 }
 
-// Where a site's tick hangs: the same spot its bar does (`barSpot` -- over the
-// building, which for the quarry and the farm is the shack and for the
-// apothecary the hut), lifted over any bars still on the go there so the two
-// never sit on each other.
+// Where a site's tick hangs: the same spot its bar does (`barSpot`), lifted
+// over any bars still on the go there so the two never sit on each other.
 export function doneMarkAt(site) {
   const at = barSpot(site);
   if (!at) return null;

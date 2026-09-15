@@ -1,11 +1,6 @@
 // The crew and everything they carry, say and stand under: the bodies, their
-// hats and carts, the bench, the kit stands, the speech, the pointed
-// arrow, and the whole-crew draw. Extracted verbatim from render.js; behavior
-// unchanged. Owns drawBench, drawBody, drawHat, drawCart,
-// drawDroppedHats, drawKitStands, drawKitCounts, drawSays, drawPointed,
-// drawIntro, drawWorkers and their private helpers. The shared primitives (ctx,
-// drawCircle, drawMark) come from ./ctx.js and ./marks.js; drawCoreGlow
-// comes from the cores cluster that already owns it.
+// hats and carts, the bench, the kit stands, the speech, the pointed arrow,
+// and the whole-crew draw.
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
@@ -29,17 +24,11 @@ import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 
-// The bench is not in the yard until there is something on it worth buying, and
-// once it is there it says so without being opened: a dot for something you can
-// afford this second, a flag for a heading you have never seen. A flag is worth
-// more than a dot -- one more row under `you` is not news, a whole new group is.
-//
-// It is also built rather than delivered (see raise.js), so while it is going
-// up it is drawn through the same clip every other rising building is: as much
-// of it as the work has actually done, from the ground up. The clamped block
-// stands two cells proud of the slab, so the box the clip is taken over starts
-// there rather than at the bench's own top -- otherwise the last thing to go on
-// would be the first thing showing.
+// The bench is not in the yard until there is something on it worth buying.
+// It is built rather than delivered (raise.js), so while it is going up it is
+// drawn through the same clip as every rising building. The clamped block
+// stands two cells proud of the slab, so the clip box starts there rather than
+// at the bench's own top, or the last thing to go on is the first showing.
 export function drawBench() {
   const up = raising();
   if (!S.seenBench && !up) return;
@@ -53,22 +42,13 @@ export function drawBench() {
   });
 }
 
-// The body: one hollow square, whoever it is. Each job used to carry a mark of
-// its own -- a lamp on a quarrier's head, a low notch on a stooping farmhand, a
-// hollow centre on a rockhand -- and every one of them was a thing to learn before
-// the yard could be read. Where somebody is standing already says what they are
-// doing: the one on the rock is mining it, the one at a plot is tending it. So
-// the marks went, and what is left is a body.
-//
-// Drawn here rather than in each branch of `drawWorkers`, because the roster
-// under each station draws the same square beside its count.
+// The body: one hollow square, whoever it is. Where somebody is standing says
+// what they are doing, so no job carries a mark of its own. Drawn here because
+// the roster under each station draws the same square beside its count.
 export function drawBody(x, y) {
-  // Filled, not see-through. An outlined square standing on a black rock or in a
-  // grey bank showed the pile through its middle, so a body read as a hole in
-  // whatever was behind it rather than as somebody standing in front of it --
-  // and a gang on the crest of a rock came out as a row of notches in the rock.
-  // The page is white, so a body is white: it is the same paper everything else
-  // in this game is drawn on, and now it covers what it is standing over.
+  // Filled, not see-through: an outlined square on a black rock shows the rock
+  // through its middle and reads as a hole in whatever is behind it. The page
+  // is white, so a body is white.
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
   ctx.strokeStyle = '#000';
@@ -77,104 +57,54 @@ export function drawBody(x, y) {
   ctx.fillStyle = '#000';
 }
 
-// The kit, on a body or on the ground. Both marks are one cell: anything finer
-// than that on an eighteen-pixel square is a smudge, and both of them have to
-// read at a glance from across the yard, because what they are for is telling
-// you at a glance who has picked up what.
-//
-// A trade wears its own. All three are the same solid bar across the top of the
-// square -- the only filled thing on a body, and the one thing that reads as
-// headgear rather than as hair -- with one cell of difference each, which is
-// exactly as much difference as an eighteen-pixel square will carry:
-//
-//   helmet  a bare bar. The rock, where the thing on your head is for the rock
-//           landing on it and nothing else.
-//   lamp    a bar with a cell standing proud of the middle of it. The quarry is
-//           the one place in the yard with no daylight in it.
-//   brim    a bar hanging a cell over each side, with a crown on top. Out in the
-//           plots all day, and the only hat here that is about the sun.
-//
-// A carter wears no hat at all: what you see of a carter is the cart.
-// `tight` pulls the sun hat's brim in by a cell each side. It is for the roster,
-// where the mark stands in a slot with a number beside it and a brim at full
-// span reaches under the digits; out in the yard it wears its proper width.
-// A hat, from the table in sprites.js. `tight` pulls an overhanging brim in to
-// the body's own width, for the hats drawn on a counter where there is no room
-// beside them -- and the wizard's point is exempt, because the brim standing
-// proud of the body is the whole of what says wizard.
-//
-// The shapes themselves are not here any more. They were a handful of `fillRect`
-// calls with offsets in them, which is hard to read and impossible to *design*:
-// nobody can look at `fillRect(x + P, y - P, WORKER - P * 2, P)` and see a flat
-// cap. They are pictures now, in one file, one character to a cell.
+// A hat, from the table in sprites.js. All three trade hats are the same solid
+// bar across the top of the square with one cell of difference each, which is
+// as much difference as an eighteen-pixel square will carry: helmet a bare
+// bar, lamp a cell proud of the middle, brim a cell over each side with a
+// crown. A carter wears no hat: what you see of a carter is the cart.
 export function drawHat(x, y, kind = 'helmet', tight = false) {
-  // `tight` is for a hat drawn on a counter, where there is no bare ground
-  // either side to overhang into -- and only the sun hat has a narrower version,
-  // because a helmet is a helmet either way and the wizard's brim standing proud
-  // of the body is the whole of what says wizard.
+  // `tight` is for a hat drawn on a counter, where there is no bare ground to
+  // overhang into; only the sun hat has a narrower version, since the wizard's
+  // brim standing proud of the body is the whole of what says wizard.
   const rows = (tight && HATS_TIGHT[kind]) || HATS[kind] || HATS.helmet;
-  // Centred on the body, sitting with its bottom row one cell above the top of
-  // it -- which is where every hat in this yard has always sat.
-  // Not snapped to the cell grid.
-  //
-  // A body moves in whole *pixels* -- `drawBody` rounds `w.x` and no further --
-  // so a hat snapped to the six-pixel lattice hopped a cell at a time while the
-  // head under it slid, and spent most of every step somewhere the body was not.
-  // The offset is a whole number of pixels already (a hat is an odd number of
-  // cells wide on a three-cell body), so the snapping was doing nothing but
-  // introducing the lag.
+  // Centered on the body, bottom row one cell above its top, and NOT snapped
+  // to the cell grid: a body moves in whole pixels, so a snapped hat hops a
+  // cell at a time while the head slides. The offset is already whole pixels
+  // (an odd number of cells wide on a three-cell body).
   const left = x + (WORKER - spriteW(rows) * P) / 2;
-  // No white around it. A cell of white under and beside the glyph was tried
-  // for the helmets on the crest, where hat, outline and rock are one black
-  // (critics 2026-09-10, C12); it took the hat off the head, and the owner's
-  // word is no white around a hat at all.
+  // No white around it: it takes the hat off the head where hat, outline and
+  // rock are one black.
   drawSprite(ctx, rows, left, y - spriteH(rows) * P);
 }
 
-// What a body has on: asked of kit.js, which is the one place that knows. It
-// used to be worked out here, which meant the drawing believed in a different
-// set of hats from the roster, the errand and the shop -- and the janitor's cap,
-// which only this file believed in at all.
+// What a body has on is asked of kit.js, the one place that knows.
 
-// A carter drags a cart: a box on the ground behind it, hitched by a shaft, and
-// what it is carrying rides *in* the cart rather than over its head. That is the
-// whole of why a cart is worth having, and a carter walking a double load
-// stacked on its own head would be a cart that was decoration.
-//
-// Wider than the body and half its height, on purpose. At three cells square it
-// was the same box as the person pulling it and a carter read as two workers
-// walking in step; four by two is the one proportion in the yard that is not a
-// body, so it reads as a thing being dragged before you have worked out what.
+// A carter drags a cart behind it, and what it carries rides *in* the cart.
+// Wider than the body and half its height: at three cells square a carter reads
+// as two workers walking in step.
 const CART_W = P * 4, CART_H = P * 2, CART_ABREAST = 4;
 
 function cartBox(x, y, face) {
   const back = face > 0 ? -1 : 1;                       // behind whichever way it is going
-  // A cell off the ground, because it is standing on a wheel now: see
-  // `drawCartBox`. The body of the cart rides above the axle, the way a barrow
-  // does, and what was on the ground before was the box itself.
+  // A cell off the ground, standing on its wheel (`drawCartBox`).
   return { x: back < 0 ? x - CART_W - P : x + WORKER + P,
            y: y + WORKER - CART_H - P, back };
 }
 
 function drawCartBox(x, y) {
-  // white through it too, for the same reason the body is: half a carter solid
-  // and half of it see-through is worse than either
+  // white through it too, for the same reason the body is
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
   ctx.fillStyle = '#000';
-  // And the wheel it rolls on, under the middle of it. A box sliding along the
-  // ground behind somebody is a crate being dragged; one cell of wheel under it
-  // is the difference between a thing hauled and a thing wheeled, and it is the
-  // whole reason a carter carries twice as much without going any slower.
+  // The wheel under the middle is the difference between a thing hauled and a
+  // thing wheeled.
   ctx.fillRect(x + CART_W / 2 - P / 2, y + CART_H, P, P);
 }
 
-// The cart, hitched behind a body at (x, y). Exported because the roster draws
-// the same thing beside its count: what a carter looks like is a body *with* a
-// cart, and a cart on its own is a cart nobody is pulling.
+// Exported because the roster draws the same thing beside its count.
 export { drawCart };
 
 function drawCart(x, y, face) {
@@ -185,36 +115,20 @@ function drawCart(x, y, face) {
   ctx.fillRect(c.back < 0 ? c.x + CART_W : x + WORKER, c.y + CART_H / 2 - 1, P + 1, 2);
 }
 
-// The kit nobody is wearing, lying on the ground where the work is. A hat sits
-// on the ground as the same bar it is on a head, and a cart as the same box it
-// is behind one: what you are looking at is the thing itself put down, not an
-// icon for it, so picking it up is obviously what happens when somebody walks
-// over there.
-// The kit waiting at a station: a stand with one of the thing on it, and over it
-// the figure for how many there are. A trestle -- a slab and two legs, five
-// cells across -- because a helmet lying on bare ground reads as a helmet
-// somebody dropped, and this is gear put out ready.
+// The kit waiting at a station: a trestle (a slab and two legs, five cells
+// across) with one of the thing on it, and over it the count. A helmet on bare
+// ground reads as a helmet somebody dropped; this is gear put out ready.
 const STAND_W = P * 5, STAND_H = P * 3;
 
-// How far above the slab each mark reaches, so the count can stand clear of it.
-// Off the kit table with the rest of it: a hat added there stands the right
-// height here without anybody remembering to come and say so.
-
-// A hat that has been shaken off somebody: in the air on its own little arc
-// while it falls, then lying where it came down until its owner comes round and
-// fetches it. Drawn off its own position both ways -- it flies off the head the
-// moment the shaking counts, so for the first half-second what you see is a hat
-// tumbling away from a body still in your hand. Not on a stand: it was not put
-// down, it came off.
+// A hat shaken off somebody: in the air on its own arc while it falls, then
+// lying where it came down until its owner fetches it. Not on a stand: it was
+// not put down, it came off.
 export function drawDroppedHats() {
   for (const w of S.workers) {
     if (!w.hatOff || w.hatOff.x == null) continue;
     const x = Math.round(w.hatOff.x), y = Math.round(w.hatOff.y);
-    // Drawn as the thing it IS, derived from whose kit it is -- `kind` used to
-    // carry a boolean and everything knocked off drew as the helmet fallback,
-    // so a cart lying on the ground was a little hat. A cart is the box and
-    // its wheel, tumbling and lying exactly as it stands at the lip's stand;
-    // everything else is its own hat shape.
+    // Drawn as the thing it IS, off whose kit it is: a cart lying on the ground
+    // is the box and its wheel, not a little hat.
     const mark = KIT_MARK[w.hatOff.of] || 'helmet';
     if (mark === 'cart') drawCartBox(x, y - CART_H - P);
     else drawHat(x, y, mark);
@@ -234,8 +148,7 @@ export function drawKitStands() {
   }
 }
 
-// And the figure over it, in screen pixels like every other number in the yard:
-// a count is type, and type scaled by five sixths is type with a fuzzy edge.
+// The count over it, in screen pixels like every other number in the yard.
 export function drawKitCounts(screenAt) {
   const stands = kitStands();
   if (!stands.length) return;
@@ -244,11 +157,8 @@ export function drawKitCounts(screenAt) {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
   for (const k of stands) {
-    // A clear two cells over whatever is standing on the slab, whatever that is.
-    // Three cells of headroom was plenty while every mark was a bar a cell or
-    // two tall; the wizard's cone is three courses on its own and the number sat
-    // in the tip of it. Measured off the mark rather than fixed, so the gap over
-    // a helmet and the gap over a cone are the same gap.
+    // A clear two cells over whatever is on the slab, measured off the mark
+    // rather than fixed: the wizard's cone is three courses on its own.
     const at = screenAt(k.x - P + STAND_W / 2,
                         k.y - STAND_H - HAT_TALL[k.mark] - P * 2);
     ctx.fillText(String(Math.round(shown('kit:' + k.mark, k.n))), Math.round(at.x), Math.round(at.y));
@@ -258,22 +168,17 @@ export function drawKitCounts(screenAt) {
 }
 
 // --- what a body on a break has to say ----------------------------------------
-// Never words. The yard has no writing in it anywhere and is not about to start
-// on the strength of somebody having a smoke, so a thing said is a mark: a note
-// is singing, a burst is swearing, and dots are talking -- and dots going back
-// and forth between two bodies facing each other is a conversation, which is a
-// thing you read off the pair rather than off either of them.
-//
-// All of it is small flat shapes on the cell grid, and all of it stands a clear
-// cell above the head so it never touches the load a worker is carrying.
+// Never words: a note is singing, a burst is swearing, dots are talking, and
+// dots going back and forth between two bodies facing each other is a
+// conversation. Everything stands a clear cell above the head so it never
+// touches the load a worker is carrying.
 
 function drawSay(w) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
   ctx.fillStyle = '#000';
 
-  // the same heart the opening uses: a body saying it and a body in the opening
-  // saying it are the same thing said, so they are the same shape
+  // the same heart the opening uses: the same thing said, so the same shape
   if (w.say.mark === 'heart') {
     for (let r = 0; r < HEART.length; r++)
       for (let c = 0; c < 5; c++)
@@ -289,12 +194,8 @@ function drawSay(w) {
     return;
   }
 
-  // A little heap, in the colour of the stuff it is about to become. Nothing
-  // else in this yard is drawn in brown, so it needs no explaining -- and it is
-  // the same shape the muck makes on the ground a second later.
-  // Stars. Two cells going round the head rather than a fixed pair, so a body
-  // seeing them is plainly still spinning -- which is the whole of what being
-  // shaken about earns you.
+  // Stars, two cells going round the head rather than a fixed pair, so a body
+  // seeing them is plainly still spinning.
   if (w.say.mark === 'dizzy') {
     const t = now() / 160;
     for (const off of [0, Math.PI]) {
@@ -313,9 +214,8 @@ function drawSay(w) {
     return;
   }
 
-  // wave7-crew: stink risers, the comic-strip smell mark -- two thin wavy lines
-  // climbing off the patch the body has just refused to step in. They alternate
-  // their middle cell so the pair reads as wafting rather than printed.
+  // Stink risers, the comic-strip smell mark, off the patch the body has just
+  // refused to step in. They alternate their middle cell so the pair wafts.
   if (w.say.mark === 'yuck') {
     const wave = Math.floor(now() / 240) % 2 ? P : -P;
     for (const sx of [-P, P]) {
@@ -327,13 +227,9 @@ function drawSay(w) {
     return;
   }
 
-  // wave7-crew: a body held still under the cursor asks what you want of it.
-  //
-  // Drawn as a mark rather than as a cell glyph: on the P grid the smallest
-  // legible question mark was three cells across and five tall, which stood
-  // over the head like a sign rather than sitting there like a thought. The
-  // strokes are half a cell, so the whole thing is two cells wide and three
-  // and a half tall -- still crisp, because half of six is a whole pixel.
+  // A body held still under the cursor asks what you want of it. Drawn in
+  // half-cell strokes (still whole pixels) because the smallest legible question
+  // mark on the P grid stands over the head like a sign.
   if (w.say.mark === '?') {
     const u = P / 2;
     const x0 = Math.round(x - P);
@@ -354,15 +250,13 @@ function drawSay(w) {
     return;
   }
 
-  // a burst: four cells off a corner, which is the shape a swear word is in
-  // every comic ever drawn
+  // a burst: four cells off a corner, the comic shape of a swear word
   for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]])
     ctx.fillRect(Math.round(x + dx * P) - P / 2, top - P + dy * P, P - 1, P - 1);
 }
 
-// Somebody you have just asked for by name. A solid arrow over the head, bobbing
-// so it reads as put there rather than drawn on -- nothing else in this yard
-// hangs still in the air.
+// Somebody you have just asked for by name: a solid arrow over the head,
+// bobbing so it reads as put there rather than drawn on.
 const ARROW = ['11111', '01110', '00100'];
 
 export function drawPointed() {
@@ -390,17 +284,12 @@ export function drawSays() {
 }
 
 // --- the two of them, and the one under the rock -----------------------------
-// The opening is two squares talking on the bare ground. They are drawn here
-// rather than being workers, because they are not: nobody has been hired yet and
-// one of them is about to stop being anybody at all.
-//
-// And afterwards, every time the last of a rock goes, the one underneath is
-// there -- alive, on the bare ground, saying the same dots two people say to
-// each other anywhere else in this yard. Then the next rock lands on them. That
-// is the whole story and it is told in shapes.
-// What somebody in the opening has to say, over its head. Three marks and no
-// words, like everything else here: dots are talking, a heart is the other
-// thing, and a bang is what you say when a boulder has just landed on somebody.
+// The opening is two squares talking on the bare ground, drawn here rather
+// than as workers because they are not: nobody has been hired yet. After it,
+// every time the last of a rock goes, the one underneath is there until the
+// next rock lands on them.
+// Dots are talking, a heart is the other thing, and a bang is what you say
+// when a boulder has just landed on somebody.
 const HEART = ['01010', '11111', '11111', '01110', '00100'];
 
 function drawSaying(x, y, say) {
@@ -417,7 +306,7 @@ function drawSaying(x, y, say) {
   }
 
   if (say.mark === 'bang') {
-    // a bar and a dot under it, which is the shape of the thing everywhere
+    // a bar and a dot under it
     ctx.fillRect(Math.round(mid - P / 2), top - P * 4, P, P * 3);
     ctx.fillRect(Math.round(mid - P / 2), top, P, P);
     return;
@@ -428,9 +317,8 @@ function drawSaying(x, y, say) {
     ctx.fillRect(Math.round(mid - (n * P) / 2 + i * P), top, P - 1, P - 1);
 }
 
-// A body knocked flat. It is the same square lying down: two cells tall and
-// three wide instead of the other way about, which is the least a square can do
-// to say it is on its back and the most this alphabet has.
+// A body knocked flat: the same square lying down, two cells tall and three
+// wide.
 function drawFloored(x, y) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(x - P + 1, y + WORKER - P * 2 + 1, WORKER + P * 2 - 2, P * 2 - 2);
@@ -454,14 +342,10 @@ export function drawIntro() {
   if (S.buriedSay) drawSaying(at.x, at.y + depth, S.buriedSay);
 }
 
-// The one in the ground. It is the same square as everybody else, stood with
-// its feet where anybody's feet would be and then sunk by however much of it
-// is still lodged -- two cells of its three to start, less as it is dug, a
-// whole cell at a time because that is the grid. The ground is already drawn
-// under it, so the part below the ground line is simply not drawn: a square
-// with no bottom edge is a square going into the ground, and nothing else in
-// this alphabet is needed to say so. Returns how far down it is, so whatever
-// it says can sit over the part of it that shows.
+// The one in the ground: the same square, stood with its feet where anybody's
+// would be and sunk by however much is still lodged, a whole cell at a time.
+// The part below the ground line is simply not drawn. Returns how far down it
+// is, so whatever it says can sit over the part that shows.
 function drawLodged(x, y, out) {
   const sunk = Math.round(BURIED_SUNK_C * (1 - out));
   const depth = sunk * P;
@@ -475,14 +359,10 @@ function drawLodged(x, y, out) {
   return depth;
 }
 
-// The ground it is in. A square with no bottom edge says "going into the
-// ground", but on a bare white floor it said it quietly; the dirt says it out
-// loud. A small heap banked against each side of it, as many cells high as
-// the square is deep and stepping down a cell a column outward -- the ground
-// that was shoved up when it went in, which is the ground the digger throws
-// on to the heap, so it shrinks as the dig goes and is gone when they are out.
-// Each cell keeps its own tone, off its position rather than the frame, so the
-// heap is mottled like every other pile in the yard and does not strobe.
+// The ground it is in: a heap banked against each side, as many cells high as
+// the square is deep, stepping down a cell a column outward. It shrinks as the
+// dig goes. Each cell keeps its own tone off its position rather than the
+// frame, so the heap is mottled and does not strobe.
 function drawDirt(x, groundY, sunk) {
   for (let side = -1; side <= 1; side += 2) {
     for (let i = 0; i < sunk; i++) {
@@ -497,29 +377,18 @@ function drawDirt(x, groundY, sunk) {
   ctx.fillStyle = '#000';
 }
 
-// How each kind of body is drawn, as a row rather than as a branch.
+// How each kind of body is drawn, as a row rather than a branch: a body
+// stands somewhere, may drag a cart, wears whatever is on its head and holds
+// whatever it picked up. Only what differs between kinds is here.
 //
-// This was six branches, each repeating the same four steps in a slightly
-// different order and each free to forget one of them -- which is how a hat came
-// to be drawn on five kinds of body and not the sixth, and how a rockhand walking a
-// shovelful of muck across the yard carried it invisibly. A body is a body: it
-// stands somewhere, it may be dragging a cart, it wears whatever is on its head,
-// and it is holding whatever it picked up. The only things that actually differ
-// between one kind and the next are in this table.
-//
-//   lunge  which way a swing throws the body: down into the work for anybody on
-//          the ground, up for a wizard, whose work is above it. 0 for the bodies
-//          that do not swing at all.
-//   lean   ...or forward instead, into the way it is facing, for a body whose
-//          swing is a push rather than a stoop. A janitor plants its feet on a
-//          whole cell and shovels without going anywhere, so a lunge on its y was
-//          the only thing about it that moved: a square dropping a cell and
-//          rising again, four times a second, on the spot -- which reads as a
-//          body bobbing, not as a body working. It shoves the shovel out in
-//          front of it instead, which is what the swing actually is.
-//   load   how what it is carrying is drawn. A quarrier brings up one thing at a
-//          time and it rides over its head as that thing; everybody else stacks
-//          grains, in the cart if there is one.
+//   lunge  which way a swing throws the body: down into the work, up for a
+//          wizard, 0 for bodies that do not swing.
+//   lean   ...or forward, into the way it is facing, for a swing that is a
+//          push rather than a stoop: a janitor plants its feet and shovels
+//          without going anywhere, and a lunge on its y reads as bobbing.
+//   load   a quarrier brings up one thing at a time and it rides over its
+//          head as that thing; everybody else stacks grains, in the cart if
+//          there is one.
 const LOOK = {
   janitor:  { lunge:  0, lean: 1 },
   scholar:   { lunge:  1 },
@@ -529,103 +398,67 @@ const LOOK = {
   wizard:   { lunge: -1 },
   rockhand:    { lunge:  0 },
   hauler:   { lunge:  0 },
-  // A builder at a busy site hops and lunges at the bottom of each hop -- see
-  // `workJig` in crew.js -- but with no row here it fell through to `PLAIN`,
-  // whose `lunge: 0` threw the lunge away regardless of what `w.lunge` said.
-  // #4, "Wave 3.1": the body was hopping (a player just could not see it),
-  // and this is why the one part of the hop meant to read as effort read as
-  // nothing at all.
+  // A builder at a busy site hops and lunges at the bottom of each hop
+  // (`workJig` in crew.js); with no row here it falls through to `PLAIN`,
+  // whose `lunge: 0` throws the lunge away.
   builder:  { lunge:  1 }
 };
 const PLAIN = { lunge: 0 };
 
-// How far a lean throws a body, in cells. Half of what a stoop drops it: an
-// eighteen-pixel square shoved a whole cell sideways reads as a body stepping,
-// not as a body reaching.
+// How far a lean throws a body, in cells. Half of what a stoop drops it: a
+// whole cell sideways reads as a body stepping, not reaching.
 const LEAN = 0.5;
 
-// A little flask, in cells: a corked neck over a rounded body, with the liquid
-// filling the body from the bottom by `fill` (0..1). Black glass, a white line
-// for the surface of what is in it -- no glow, on the grid, the yard's language.
-// `x` is the left of the three-wide body; `topY` is the neck's row.
-// A little vial: a black cork over glass sides with a column of coloured liquid
-// between them. `color` is the tonic's own (see TONICS); `fill` is how full it
-// is, the liquid rising from the foot, so a fresh dose is a full vial and a
-// spent one nearly empty.
 export function drawWorkers() {
   const t0 = now();
   for (const w of S.workers) {
-    // out of sight: in the lab, down the quarry, in the outhouse, or home. The
-    // stirrer is NOT hidden -- it stands at the pot's left and stirs in plain
-    // sight, so `atPot` is not a reason to skip it here (it still gates the
-    // brew clock and the count in apothecary.js).
+    // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
+    // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
+    // reason to skip it here.
     if (underground(w) || inHouse(w) || atHome(w)) continue;
 
-    // Somebody digging at the one in the ground is drawn as a builder: the
-    // stoop is a builder's, whatever job the body came from, because it is
-    // digging.
+    // Somebody digging at the one in the ground is drawn as a builder,
+    // whatever job the body came from.
     const look = (w.dig ? LOOK.builder : LOOK[w.type]) || PLAIN;
     const throwOn = w.lunge || 0;
-    // A lean is a pose and not an ease -- see `LEAN_HOLD`. Drawn off the
-    // eased lunge it was a half-cell kick and then a creep back a pixel at a
-    // time, on every swing: a janitor that never once stood still on its cell,
-    // which is the reported "janitor jittering while it cleans".
+    // A lean is a pose and not an ease (`LEAN_HOLD`): drawn off the eased
+    // lunge it is a kick and then a creep back a pixel at a time, on every
+    // swing, which is a janitor jittering while it cleans.
     const leanOn = throwOn > LEAN_HOLD ? 1 : 0;
     const x = Math.round(w.x + leanOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
     // The landing hop is drawn here and nowhere else: `landRock` stamps the
-    // moment and the weight, and this lifts the body along one parabola -- up
-    // and back down over `LAND_HOP_MS`, `LAND_HOP_H` cells at the top for a
-    // first-sized rock, more for a bigger one -- without ever moving `w.y`, so
-    // nothing that reasons about where a body stands has a body in the air to
-    // reason about. Whole pixels, like everything else on the grid: a body
+    // moment and the weight, and this lifts the body along one parabola
+    // without ever moving `w.y`, so nothing that reasons about where a body
+    // stands has a body in the air to reason about. Whole pixels, or a body
     // drawn between pixels smears a hairline off its own edge.
     const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
     const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
     const y = Math.round(w.y + throwOn * look.lunge * P - hop);
 
-    // A cart is kit like any other, so it is drawn off what the body is holding
-    // rather than off what the books say it is. Somebody walking a cart back to
-    // the lip is walking a cart back to the lip, whatever job it is on this
-    // second -- the same rule a helmet has always had.
+    // A cart is kit like any other, drawn off what the body is holding rather
+    // than what the books say it is: the same rule a helmet has.
     const cart = wearing(w) === 'cart' ? cartBox(x, y, w.face || 1) : null;
     if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
 
     drawBody(x, y);
 
-    // and whatever is on its head. One line, for everybody: this is the whole of
-    // what "hats are always shown" means.
+    // One line, for everybody: the whole of what "hats are always shown" means.
     const hat = wearing(w);
     if (hat && hat !== 'cart') drawHat(x, y, hat);
 
-    // The tonic on the body reads as a haze of its own colour lifting off the
-    // worker -- coloured motes rising and winking out around the head, not a vial
-    // parked overhead. The haze thins as the dose wears off, so a nearly-spent
-    // body gives off only a wisp and a fresh one fizzes. It is the one place a
-    // worker itself carries colour, so a buffed body reads as buffed at a glance.
-    // See `doseLive`, `tonicColor` in apothecary.js.
-    // The tonic is not drawn on the body at all. It is a plume of coloured motes
-    // let go from the head into the yard -- see `stepDoseMotes` in apothecary.js
-    // -- so it stays where it was let go and a body that walks trails it behind.
-    // Anything drawn on the head could only ever move with the head, however it
-    // was anchored.
-    //
-    // It was drawn on the head for a while, off the body's own box, on the
-    // reading that a trail whose length is the body's pace is the same buff
-    // wearing four different faces (item 6, feedback5). That is withdrawn: the
-    // yard was looked at with both and the plume let go into it is the one that
-    // reads right. What a walking body leaves behind it is the point of it.
+    // The tonic is not drawn on the body: it is a plume of motes let go from
+    // the head into the yard (`stepDoseMotes` in apothecary.js), so a walking
+    // body trails it behind.
 
-    // A stirrer carrying a dose holds a little vial over its head, the way a
-    // hauler carries dust -- the same small flask that stands on the apothecary
-    // table, coloured by which tonic it is walking out, so you can see what is
-    // crossing the yard. See `stepStirrer` (`w.carryTonic`).
+    // A stirrer carrying a dose holds a little vial over its head, colored by
+    // which tonic it is walking out (`stepStirrer`, `w.carryTonic`).
     if (w.type === TYPE.STIR && w.holding) {
       const vx = Math.round((x + WORKER / 2 - P / 2) / P) * P;
       const vy = y - P * 5;
       ctx.fillStyle = '#000';
       ctx.fillRect(vx, vy, P, P);                              // the cork
       ctx.fillStyle = tonicColor(w.carryTonic);
-      ctx.fillRect(vx, vy + P, P, P * 2);                      // the coloured brew
+      ctx.fillRect(vx, vy + P, P, P * 2);                      // the colored brew
       ctx.fillStyle = '#000';
     }
 
@@ -634,10 +467,8 @@ export function drawWorkers() {
     // What it brought up, over its head, as the thing itself.
     if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); continue; }
 
-    // A load is drawn grain by grain as whatever each grain is, so a worker
-    // walking a shard to the pit is visibly walking a shard to the pit. It
-    // rides overhead, stacked two abreast -- or in the cart, four abreast,
-    // if there is a cart to put it in.
+    // A load is drawn grain by grain as whatever each grain is: overhead two
+    // abreast, or in the cart four abreast.
     const abreast = cart ? CART_ABREAST : 2;
     const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
     const top = cart ? cart.y : y;
@@ -651,19 +482,17 @@ export function drawWorkers() {
     if (w.hasCore) {
       const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
       const cx = x + WORKER / 2, cy = y - P * (stack + 2);
-      // A carried core is still a core: it gives off the same waves one lying
-      // on the ground does, the way `drawCoreAt` draws both together. Drawn
-      // straight here rather than through `drawCoreAt` because the disc riding
-      // a body is a different size from the one on the ground.
+      // A carried core gives off the same waves one on the ground does. Drawn
+      // straight rather than through `drawCoreAt` because the disc riding a
+      // body is a different size from the one on the ground.
       drawCoreGlow(cx, cy);
       drawCircle(cx, cy, P * 1.2);
     }
   }
 }
 
-// Who is working here, under the place they work. roster.js lays the badges out
-// and is handed the four draws a badge is made of, so that the crew's own
-// drawing stays here rather than being pulled into the roster.
+// roster.js lays the badges out and is handed the draws a badge is made of,
+// so the crew's own drawing stays here.
 export function drawRosterBodies() {
   drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch);
 }

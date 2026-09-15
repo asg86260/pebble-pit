@@ -1,6 +1,4 @@
-// What you are carrying, drifting round the pointer. Extracted verbatim from
-// render.js; behavior unchanged. Owns drawCursor. ctx comes from ./ctx.js and
-// the mark from ./marks.js.
+// What you are carrying, drifting round the pointer.
 
 import { now } from '../clock.js';
 import { P } from '../config.js';

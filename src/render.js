@@ -1,28 +1,14 @@
 // The painting order, and the loop that walks it.
 //
-// Painting order is the whole trick: the rock goes down over the ground line so
-// it stands in front of it, the crew and the spoil go over the rock, and the pit
-// is blitted from its own scratch canvas rather than drawn a grain at a time.
-// That order used to be a call sequence buried in a two-hundred-line function,
-// where a layer's place in the picture was whatever line it happened to sit on.
-// It is a list now: `LAYERS`, top to bottom, one entry a layer. Reading the list
-// is reading the picture from the back of the yard to the front of it, and
-// moving a layer is moving one line.
-//
-// An entry is `{ name, draw }`, plus an optional `when` -- a layer that is only
-// in the picture some of the time says so here rather than opening its own draw
-// with a guard. Nothing in today's frame is conditional at the call site (every
-// guard that exists lives inside the draw it belongs to, where it can also
-// decide *what* to draw), so no entry carries a `when` yet; the loop honours one
-// so that a layer which genuinely appears and disappears can say so in the list.
-//
-// Every draw itself lives in `src/render/`, one file a cluster. This file draws
-// nothing; it only says in what order.
+// `LAYERS` is the picture back to front, one entry a layer; moving a layer is
+// moving one line. An entry is `{ name, draw }` plus an optional `when` for a
+// layer that is only in the picture some of the time. Every draw lives in
+// `src/render/`; this file draws nothing.
 
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
-import { drawApothecary, drawPotLabels } from './render/apothecary.js'; // drawPotLabels: wave7-brew
+import { drawApothecary, drawPotLabels } from './render/apothecary.js';
 import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
@@ -39,12 +25,12 @@ import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
-import { drawAuras, drawFlags } from './render/aura.js';   // wave7-ui
+import { drawAuras, drawFlags } from './render/aura.js';
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawShield } from './render/shield.js';
 import { drawScrub } from './render/scrub.js';
-import { drawShocks } from './render/shock.js';          // F4
+import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
@@ -53,9 +39,8 @@ import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
 
-// The drawing side's public surface, kept exactly as it was: the rest of the
-// game imports every one of these from render.js and has no business knowing
-// which file in `src/render/` each of them ended up in.
+// The drawing side's public surface: the rest of the game imports every one of
+// these from render.js and has no business knowing which file each is in.
 export { canvas, ctx } from './render/ctx.js';
 export { cell, drawCircle, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
 export { risingPlaces, rising, withRise } from './render/rise.js';
@@ -75,7 +60,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';   // wave7-ui
+export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';
 export { drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
@@ -83,11 +68,10 @@ export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, dra
 
 // --- the painting order -------------------------------------------------------
 //
-// Back to front. `world` and `screen` are spaces rather than pictures: what is
-// drawn between `world` and the `world:done` under it is in the yard and zooms
-// and shakes with it, and what comes after `screen` is in screen pixels. Which
-// space a layer is painted in is as much a part of the order as where it sits,
-// so both are in the list.
+// Back to front. `world` and `screen` are spaces, not pictures: what is drawn
+// between `world` and its `world:done` is in the yard and zooms and shakes with
+// it; what comes after `screen` is in screen pixels. The space is as much a
+// part of the order as the depth, so both are in the list.
 const LAYERS = [
   { name: 'page', draw: clearPage },
 
@@ -97,8 +81,8 @@ const LAYERS = [
   { name: 'birds', draw: drawBirds },
   { name: 'world:done', draw: leaveWorld },
 
-  // Then the dust, which hangs in front of them -- it is weather in the yard and
-  // not something out on the horizon, so a cloud must never paint over it.
+  // The dust hangs in front of the clouds: it is weather in the yard, not
+  // something on the horizon.
   { name: 'air', draw: drawAir },
 
   { name: 'world', draw: enterWorld },
@@ -106,13 +90,11 @@ const LAYERS = [
   { name: 'ground line', draw: drawGroundLine },
   { name: 'ground texture', draw: drawGroundTexture },
   // The offer flags go down before every building: each pole runs to the
-  // ground and the station's own silhouette covers its lower run, so the pole
-  // stands on whatever roofline the building actually draws.
+  // ground and the building's silhouette covers its lower run.
   { name: 'offer flags', draw: drawFlags },
   { name: 'quarry', draw: drawQuarry },          // a hole in the ground, so it goes down with the ground
   { name: 'quarry shed', draw: drawQuarryShed }, // the shed beside it, holding its board
-  { name: 'cut', draw: drawCut },                // the dust lying in it, after the quarry for the same reason
-                                                 // after the quarry, or its white columns erase it
+  { name: 'cut', draw: drawCut },                // the dust lying in it; after the quarry, or its white columns erase it
   { name: 'bridge', draw: drawBridge },          // and the way across it
   { name: 'drill', draw: drawDrill },            // which the drill stands on
   { name: 'farm', draw: drawFarm },
@@ -133,23 +115,18 @@ const LAYERS = [
   { name: 'smoke', draw: drawSmoke },
 
   { name: 'rock', draw: drawRock },
-  // and whatever the yard has put between itself and the sky. After the rock,
-  // because a shield stands over it and may be holding it up; before the crew,
-  // who walk in front of everything.
+  // After the rock, because a shield stands over it; before the crew, who walk
+  // in front of everything.
   { name: 'shield', draw: drawShield },
   { name: 'rock sand', draw: drawRockSand },     // and whatever has come down on top of it
   { name: 'chips', draw: drawChips },            // and whatever is in the air off it
-  // F4: and the ring and specks off a crit, over the chips it threw up -- the
-  // blow is in front of its own spoil, the way a splash is in front of the water.
+  // The ring and specks off a crit go over the chips it threw up: the blow is
+  // in front of its own spoil.
   { name: 'shocks', draw: drawShocks },
 
-  // The bench and the settlement go down before the loose stuff, not after.
-  //
-  // Everything that is lying on the ground -- dust, finds, the muck a rain left --
-  // is in front of every building it reaches. A heap that runs up to a wall and
-  // then stops dead at it is a heap that has been drawn around the wall; a heap
-  // that piles up *against* the wall and buries its foot is a heap. The buildings
-  // are the yard and the loose stuff is what the yard is full of.
+  // The bench and the settlement go down before the loose stuff: everything
+  // lying on the ground (dust, finds, muck) piles up against a wall and buries
+  // its foot, rather than stopping dead at it.
   { name: 'bench', draw: drawBench },
   { name: 'noticeboard', draw: drawNoticeboard },  // the record, on the way to the houses
   { name: 'settlement', draw: drawSettlement },  // and the crew are drawn later still, so they walk in front of both
@@ -183,19 +160,9 @@ const LAYERS = [
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
 
-  // The tear goes here, near the front, and it is a move worth explaining: it
-  // used to sit back with the pit, painted before the outline of the hole and
-  // before the whole sky. That was fine while it was a disc, and wrong the
-  // moment it started BENDING what is behind it -- a lens can only bend what
-  // has already been drawn, and what had been drawn at that point was blank
-  // page. It read as a plain circle because the world it was supposed to be
-  // warping was still to come.
-  //
-  // Here, everything of the world is under it: the lip and the outline of the
-  // hole, the ground, the buildings, the bodies, the smoke and the haze. It
-  // does cover anything that happens to be behind it, which is what a hole in
-  // the world does, and nothing that has to stay readable is ever over the
-  // pit's near end.
+  // The rift bends what is behind it, so it must come after everything of the
+  // world: painted back with the pit, it warped blank page and read as a plain
+  // disc. Nothing that has to stay readable is ever over the pit's near end.
   { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
   { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
   { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
@@ -207,14 +174,14 @@ const LAYERS = [
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
 
-  // The roster's counts, in screen pixels so the digits stay sharp, but moved
-  // with the yard rather than pinned to the window: the number belongs to the
-  // badge beside it, shake and all.
+  // The roster's counts are in screen pixels so the digits stay sharp, but
+  // moved with the yard rather than pinned to the window: the number belongs
+  // to the badge beside it, shake and all.
   { name: 'screen', draw: enterScreen },
   { name: 'roster counts', draw: drawRosterBadgeCounts },
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
-  { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, as a color block under it
+  { name: 'pot labels', draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
 
@@ -226,9 +193,7 @@ const LAYERS = [
 export { LAYERS };
 
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
-// and not read: the layers that are counts, marks, cursors and controls --
-// the things a player reads off the picture -- are left out of it. Named
-// here, beside the list they are entries of.
+// and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'pot labels', 'counter']);

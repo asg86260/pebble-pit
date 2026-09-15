@@ -1,7 +1,5 @@
 // The star in the sky: its crust, corona, the summon flash, the trail and the
-// bolts. Extracted verbatim from render.js; behavior unchanged. Owns drawSky,
-// drawCorona, drawSummon, drawFlash, drawTrail, drawBolts, skyRing. ctx comes
-// from ./ctx.js and the ring cell from ./marks.js.
+// bolts.
 
 import { now } from '../clock.js';
 import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER } from '../config.js';
@@ -12,30 +10,19 @@ import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
 
-// The thing in the sky is a star, and a small one: a dead black crust with fire
-// under it, drawn cell by cell like everything else here that is made of cells.
-//
-// It reads as a star rather than as a stone because of what stands off it. A
-// corona of rays all round, breathing in and out on a slow beat, and the rays
-// take their colour from what is showing: black while the crust is whole, and
-// redder the more of the core has been uncovered. So the thing visibly catches
-// as it is worked -- the last of a star is a blazing one -- and that is the same
-// fact the counter is about to be told, said by the picture first.
-//
-// Nothing here is a gradient or a glow. Rays are cells on the lattice like the
-// rock is, the fire is the four reds the sparks are drawn in, and the shimmer is
-// those four tones changing places every quarter second.
+// The thing in the sky is a small star: a dead black crust with fire under it,
+// drawn cell by cell. A corona of rays breathes on a slow beat and takes its
+// color from what is showing, redder the more of the core is uncovered, so the
+// picture says what the counter is about to be told. Nothing here is a
+// gradient or a glow: the fire is the four reds the sparks are drawn in, and
+// the shimmer is those tones changing places every quarter second.
 export function drawSky() {
   if (!S.skyShown && !S.meteorOpen) return;
   drawTrail();
-  // A dome being cast is the wizards' other summoning, and it goes on whether
-  // or not there is a star up: they are called off it. So its beams are drawn
-  // here, before the sky decides what else it is showing -- they used to live
-  // inside the empty-sky branch, and with a star still burning the wizards
-  // hung over the dome pouring nothing anybody could see.
+  // A dome being cast goes on whether or not there is a star up, so its beams
+  // are drawn here, before the sky decides what else it is showing.
   if (domeRising()) drawBeams(true, domeAt(), domeSpot());
-  // Being made. The ring is pouring into the middle of an empty sky, so what is
-  // there is whatever they have poured so far -- see `drawSummon`.
+  // Being made: what is there is whatever they have poured so far.
   if (S.meteorOpen && (!sky.cells || !sky.n)) { drawSummon(); return; }
   // Nothing called down yet: the plain circle, the far end of the world.
   if (!sky.cells || !sky.n) {
@@ -63,16 +50,13 @@ export function drawSky() {
       const v = sky.cells[r * sky.cols + c];
       if (!v) continue;
       if (v === METEOR_CORE_CELL) {
-        // The fire, and never the same two cells the same shade for long: the
-        // tone is picked off the cell and the clock, so it shifts where it
+        // The fire: tone off the cell and the clock, so it shifts where it
         // stands rather than crawling about. Only the brighter half of the four
-        // reds, so the core is always plainly hotter than the crust round it.
+        // reds, so the core is always plainly hotter than the crust.
         ctx.fillStyle = tones[(c * 7 + r * 13 + flick) % 2];
       } else {
-        // The crust: the deepest of the reds rather than black. It is a star and
-        // the whole of it is hot -- a black body with a red middle read as an
-        // eclipse, which is a picture of a thing being in front of a sun rather
-        // than of a sun.
+        // The crust: the deepest of the reds rather than black, or a black body
+        // with a red middle reads as an eclipse.
         ctx.fillStyle = tones[tones.length - 1];
       }
       ctx.fillRect(cellX(c), cellY(r), sky.p, sky.p);
@@ -82,9 +66,8 @@ export function drawSky() {
   drawBolts();
 }
 
-// The rays. Whole cells, stepped out along the ray's own line, so a ray is a
-// dotted run of squares rather than a drawn line -- there are no lines in this
-// game and a stroked one here would be the only stroke in the sky.
+// The rays: whole cells stepped out along the ray's own line, since a stroked
+// line here would be the only stroke in the sky.
 function drawCorona(hot) {
   const beat = now() / 1000 / RAY_BEAT * Math.PI * 2;
   const tones = FIND_COLOR[SPARK_CELL];
@@ -98,12 +81,10 @@ function drawCorona(hot) {
       const d = sky.r + P * (1 + k);
       const x = Math.round((sky.x + Math.cos(a) * d - P / 2) / P) * P;
       const y = Math.round((sky.y + Math.sin(a) * d - P / 2) / P) * P;
-      // The tip is thinner than the root: the further out a cell is, the paler
-      // it is drawn, which is a corona thinning into the sky rather than a
+      // Paler the further out, a corona thinning into the sky rather than a
       // starburst cut out of paper.
       ctx.globalAlpha = 1 - k / (RAY_MAX + 1);
-      // Brighter the more of the fire is uncovered: a crusted star throws a dull
-      // corona and a stripped one blazes.
+      // Brighter the more of the fire is uncovered.
       ctx.fillStyle = tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2];
       ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);   // about its middle
     }
@@ -113,31 +94,25 @@ function drawCorona(hot) {
 }
 
 // The beams: one steady line of cells from each body that is pouring, and a
-// bead of light running down it, from the ring to whatever is being made --
-// the star coming into an empty sky, or the dome, which is the same act aimed
-// at the ground. The brightness rides the making's own progress. Every cell
-// used to flicker on its own clock, which is not a beam -- it is a shower of
-// confetti in the rough shape of one. A quiet line says where the magic is
-// going; the bead says it is going.
+// bead of light running down it, to the star coming into an empty sky or to
+// the dome. The brightness rides the making's own progress. A quiet line says
+// where the magic is going; the bead says it is going.
 function drawBeams(dome, at, mid) {
   const t = now() / 1000;
   for (const w of S.workers) {
     if (!w.channel || !w.aloft) continue;
     const fx = w.x + WORKER / 2, fy = w.y + WORKER / 2;
-    // A star is poured into its middle. A dome is poured on to its growing
-    // edges -- both horns, from every body -- so the beams land on the thing
-    // being made and climb the shell with it. Both rather than the nearer,
-    // because the ring turns: a beam that picked a side would jump to the
-    // other horn every time its body crossed the middle.
+    // A star is poured into its middle. A dome is poured on to both horns from
+    // every body, so the beams climb the shell with it. Both rather than the
+    // nearer, because the ring turns: a beam that picked a side would jump to
+    // the other horn every time its body crossed the middle.
     const ends = dome ? [domeEdge(-1), domeEdge(1)] : [mid];
     for (const end of ends) {
       const dx = end.x - fx, dy = end.y - fy;
       const len = Math.hypot(dx, dy) || 1;
       const from = P * 2, to = len - P * 2;
 
-      // The dome's beam starts strong: it is landing on a thing already there,
-      // and a beam that had to wait for the pour to be visible was a wizard
-      // hanging over the yard doing nothing anybody could see.
+      // The dome's beam starts strong: it is landing on a thing already there.
       ctx.globalAlpha = dome ? 0.5 + at * 0.3 : 0.2 + at * 0.35;
       ctx.fillStyle = MAGIC_TONES[2];
       ctx.beginPath();
@@ -147,8 +122,8 @@ function drawBeams(dome, at, mid) {
       }
       ctx.fill();
 
-      // and the bead: two cells, running inward, on this body's own phase so a
-      // ring of them is not one flash repeated
+      // and the bead, on this body's own phase so a ring of them is not one
+      // flash repeated
       ctx.globalAlpha = 0.55 + at * 0.45;
       ctx.fillStyle = MAGIC_TONES[0];
       const k = (t * 0.55 + (w.ph || 0) / (Math.PI * 2)) % 1;
@@ -164,18 +139,9 @@ function drawBeams(dome, at, mid) {
   ctx.fillStyle = '#000';
 }
 
-// A star being made.
-//
-// Every body in the ring pours into the middle of the empty spot, and what is
-// there grows as they pour: a knot of fire that starts as one cell and opens out
-// into the disc the star will be. The beams are drawn from each of them, cell by
-// cell along the line, brightening and thickening as the thing takes -- and the
-// last of it goes off as a flash, because a star arriving quietly would be the
-// one moment in this game that deserves a noise and does not make one.
-//
-// Nothing here is a sprite or a gradient. Beams are runs of whole cells, the
-// knot is the same red the core is drawn in, and the flash is a ring of cells
-// going out.
+// A star being made: every body in the ring pours into the middle of the empty
+// spot, and a knot of fire there opens out into the disc the star will be. The
+// last of it goes off as a flash.
 function drawSummon() {
   const at = summonAt();
   const mid = { x: sky.x, y: sky.y };
@@ -183,15 +149,13 @@ function drawSummon() {
 
   drawFlash();
   // While the dome is rising the ring is over the dome and its beams are
-  // already drawn; what is left here is whatever star they had poured so far.
+  // already drawn.
   if (at <= 0 && (domeRising() || !S.workers.some(w => w.channel))) return;
   if (!domeRising()) drawBeams(false, at, mid);
 
-  // And the knot in the middle: a solid disc of the star's own fire, opening out
-  // as it takes. Its edge is an edge -- it was fraying cell by cell on its own
-  // clock, which read as a thing coming apart rather than a thing being made --
-  // and what moves is the shimmer inside it and the size of it, which are the
-  // same shimmer and the same shape the finished star will have.
+  // The knot in the middle: a solid disc of the star's own fire, opening out
+  // as it takes. Its edge is an edge; what moves is the shimmer inside it and
+  // the size, the same shimmer and shape the finished star will have.
   const r = Math.max(P, at * sky.r);
   const flick = Math.floor(now() / CORE_FLICK);
   for (let y = -r; y <= r; y += P) {
@@ -204,18 +168,17 @@ function drawSummon() {
   ctx.fillStyle = '#000';
 }
 
-// The moment it takes: a ring of cells going out from where it arrived, and
-// gone within the second. It is drawn over a star that now exists, which is the
-// point -- the flash is the arrival, not a thing standing in for it.
+// The moment it takes: a ring of cells going out from where it arrived, drawn
+// over a star that now exists. The flash is the arrival.
 function drawFlash() {
   const since = now() - (S.flashAt || 0);
   if (!S.flashAt || since > SUMMON_FLASH) return;
   const k = since / SUMMON_FLASH;
   const tones = FIND_COLOR[SPARK_CELL];
 
-  // Two rings rather than one: the star's own fire going out fast and hard, and
-  // the last of the magic that made it following it out, slower and wider. One
-  // ring read as a hoop; two reads as a thing letting go.
+  // Two rings: the star's own fire going out fast and hard, and the last of
+  // the magic that made it following slower and wider. One ring reads as a
+  // hoop.
   const rings = [
     { r: sky.r + k * sky.r * 3.4, ink: 1 - k, colour: tones[0], step: 1 },
     { r: sky.r + Math.max(0, k - 0.15) * sky.r * 5, ink: Math.max(0, 0.8 - k), colour: MAGIC_TONES[1], step: 2 }
@@ -237,17 +200,15 @@ function drawFlash() {
 }
 
 // What comes off a flying body: its own light, sinking and going out. Drawn
-// before the star and the bodies, so it is behind them -- it is what they left
-// behind, not something in front of them.
+// before the star and the bodies, so it is behind them.
 function drawTrail() {
   if (!SPARKLE.length) return;
   const t = now();
   for (const k of SPARKLE) {
     const life = 1 - (t - k.born) / k.life;
     if (life <= 0) continue;
-    // It goes out as it ages, and it goes *down* the tones as it goes: a speck
-    // ends deeper and fainter than it started, which is a thing burning out
-    // rather than a thing being turned off.
+    // Down the tones as it ages, so a speck ends deeper and fainter than it
+    // started: a thing burning out rather than being turned off.
     ctx.globalAlpha = Math.max(0, life) * 0.8;
     ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
                                          k.tone + Math.floor((1 - life) * 2))];
@@ -261,9 +222,9 @@ function drawTrail() {
 // what it is about to knock loose.
 function drawBolts() {
   for (const b of BOLTS) {
-    // the cell behind it, fainter: two cells is enough to say which way a thing
-    // is going, and a longer tail on a six pixel cell is a streak. The specks it
-    // has shed are drawn with the rest of the magic -- see `drawTrail`.
+    // the cell behind it, fainter: two cells says which way a thing is going,
+    // and a longer tail on a six pixel cell is a streak. The specks it has
+    // shed are drawn in `drawTrail`.
     ctx.globalAlpha = 0.45;
     ctx.fillStyle = MAGIC_TONES[2];
     ctx.fillRect(Math.round(b.px / P) * P, Math.round(b.py / P) * P, P, P);
@@ -275,9 +236,8 @@ function drawBolts() {
   ctx.fillStyle = '#000';
 }
 
-// Only the benched circle wears this. A star does not need a line drawn round it
-// to read as a thing hanging in the air -- its own corona does that -- and a ring
-// through the rays was a bubble it was sitting in.
+// Only the benched circle wears this: a star's own corona says it is hanging
+// in the air, and a ring through the rays reads as a bubble.
 function skyRing() {
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;

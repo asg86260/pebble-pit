@@ -1,14 +1,10 @@
-// A sheet coming up and going down as a fade, with `hidden` still the truth.
-//
-// `hidden` is what every check and every observer reads, so it stays
-// honest: a sheet fading in is not hidden from the first frame, and a sheet
-// fading out is hidden only once it has gone. What moves is the `on` class
-// -- style.css fades opacity on it -- put on after the element is showing
-// (a reflow between, so the browser has a frame at nought to fade from)
-// and taken off ahead of the hide. Both are safe to call every frame: a
-// sheet already up is left alone, and a sheet on its way down is not
-// restarted. Under motion: less (body.still) the fade is nought and the
-// hide is immediate.
+// A sheet coming up and going down as a fade, with `hidden` still the truth:
+// a sheet fading in is not hidden from the first frame, and a sheet fading out
+// is hidden only once it has gone. What moves is the `on` class (style.css
+// fades opacity on it), put on after the element is showing, with a reflow
+// between so the browser has a frame at nought to fade from, and taken off
+// ahead of the hide. Both are safe to call every frame. Under motion: less
+// (body.still) the fade is nought and the hide is immediate.
 
 import { SHEET_FADE_MS } from './config.js';
 

@@ -1,6 +1,4 @@
-// The boulder itself, and the chips coming off it. Lifted out of the frame's
-// own body in render.js; behavior unchanged. Owns drawRock and drawChips. ctx
-// comes from ./ctx.js and the mark from ./marks.js.
+// The boulder itself, and the chips coming off it.
 
 import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT } from '../config.js';
 import { depthShade, shadeOf } from '../grid.js';
@@ -11,22 +9,13 @@ import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 
 // the tone of every thickness a rock cell can hold, filled in once a frame
-// rather than worked out per cell. See the rock's pass below.
+// rather than worked out per cell
 const TONE = [];
 
-// The rock, a run at a time rather than a cell at a time.
-//
-// A rock is up to forty cells across and twenty deep, and this used to be
-// eight hundred separate `fillRect`s with a `cellPos` object allocated for
-// each one -- the most expensive thing in the whole frame, and by some way:
-// measured at 0.12 ms on a yard with nothing else in it.
-//
-// But shade *is* depth, and depth runs in bands across a row. A row of a rock
-// is three or four runs of one tone, not forty cells of it, so each run goes
-// down as one `fillRect` and the whole rock is a few dozen calls. The tone of
-// a thickness is looked up once a frame rather than worked out per cell for
-// the same reason: neither `depthShade` nor `shadeOf` knows anything a table
-// of seven entries does not.
+// The rock, a run at a time rather than a cell at a time: shade *is* depth, and
+// depth runs in bands across a row, so a row is three or four runs of one tone
+// rather than forty `fillRect`s, and the tone of a thickness is a table of
+// seven entries looked up once a frame.
 export function drawRock() {
   ctx.fillStyle = '#000';
 
@@ -36,14 +25,11 @@ export function drawRock() {
   if (round > 0) return drawRoundRock(deep);
 
   const left = rockLeft(), foot = rockFootY();
-  // Wider and flatter for a moment after it lands, easing back to itself --
-  // see `rockShape`. Both scales are whole cells, so the rock never leaves the
-  // lattice: a boulder drawn at a fraction of a cell is a boulder with a soft
-  // edge, and this one is made of pixels like everything else.
-  //
-  // A scaled grid is drawn by mapping each run's *edges* and filling between
-  // them, never by moving a run and leaving it its old width. Move it and a
-  // stretch opens a hairline of white between every column.
+  // Wider and flatter for a moment after it lands (`rockShape`). Both scales
+  // are whole cells, so the rock never leaves the lattice. A scaled grid is
+  // drawn by mapping each run's *edges* and filling between them, never by
+  // moving a run and leaving it its old width, or a stretch opens a hairline
+  // of white between every column.
   const half = S.gw / 2;
   const ex = i => Math.round((i - half) * (1 + SQUASH_WIDE * squash) + half);
   const ey = j => Math.round(j * (1 - SQUASH_FLAT * squash));
@@ -68,16 +54,10 @@ export function drawRock() {
   }
 }
 
-// A rock in the air: round, and nothing about it flat -- but not a circle. A
-// circle is a ball, and a ball is a different object from the cragged hill it
-// turns into on the ground. So the rim is knocked about by three sines of the
-// angle, the same trick the crest is roughed with in `makeBoulder`, seeded off
-// the boulder's own number so it is the same lump every frame of one fall and
-// a different one for the next rock.
-//
-// It is shaded the way the hill is -- deepest through the middle, thinning to
-// the rim -- so the two shapes are plainly the same object. It carries no
-// mining, because a rock that is still falling has never been touched.
+// A rock in the air: round, but not a circle, which would be a ball. The rim is
+// knocked about by three sines of the angle, seeded off the boulder's own
+// number so it is the same lump every frame of one fall. Shaded the way the
+// hill is, so the two are plainly the same object; it carries no mining.
 function drawRoundRock(deep) {
   const R = S.gw / 2;
   const foot = rockFootY(), left = rockLeft();
@@ -92,13 +72,10 @@ function drawRoundRock(deep) {
       const dx = x + 0.5 - R, dy = y + 0.5 - R;
       const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
       if (d > 1) continue;
-      // The bands are dithered, cell by cell, off a hash of where the cell is.
-      // Without it each band's edge runs flat for long stretches -- the depth
-      // changes slowest through the middle -- and the rock came down with
-      // straight lines through it, like contours on a map. The landed hill's
-      // bands are ragged because mining makes them so; a falling rock has no
-      // mining, so the raggedness has to be dealt. Hashed, not random: the
-      // same speckle every frame of one fall, or the whole face shimmers.
+      // The bands are dithered cell by cell off a hash of where the cell is,
+      // or each band's edge runs flat through the middle like contours on a
+      // map. Hashed, not random: the same speckle every frame of one fall, or
+      // the whole face shimmers.
       const jit = ((((x * 73) ^ (y * 151) ^ (S.boulderNo * 41)) % 7) - 3) * 0.13;
       const tone = TONE[Math.max(1, Math.min(deep,
                      Math.round(deep * Math.sqrt(1 - d * d) + jit)))];
@@ -108,14 +85,11 @@ function drawRoundRock(deep) {
   }
 }
 
-// a chip is a grain in the air, drawn as whatever it is -- and a crit's chip
-// swells through the top of its arc. The apex is where the grain is slowest
-// vertically, so the swell is read straight off `vy`: fattest where `|vy|` is
-// smallest (near nothing at the top), back to one cell where it is fastest
-// (its launch speed `cv`). No apex is stored and no per-grain timer runs -- it
-// is a number worked out from `vy` the same frame it is drawn. A harder crit
-// (`cp`) blooms fatter, which ties the two tells together: it throws higher,
-// so it hangs longer near the slow apex, so it is both higher and fatter.
+// A chip is a grain in the air, drawn as whatever it is. A crit's chip swells
+// through the top of its arc, read straight off `vy`: fattest where `|vy|` is
+// smallest, back to one cell at its launch speed `cv`. No apex is stored and
+// no timer runs. A harder crit (`cp`) blooms fatter, tying the two tells
+// together: it throws higher, so it hangs longer near the apex.
 export function drawChips() {
   ctx.fillStyle = '#000';
 

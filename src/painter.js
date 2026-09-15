@@ -1,15 +1,10 @@
-// Drawing a sand grid one grain at a time is fine until there are tens of
-// thousands of them, and then it is the most expensive thing in the frame.
-//
-// A painter keeps a scratch canvas at one pixel per cell. It is told about every
+// A painter keeps a scratch canvas at one pixel per cell, is told about every
 // cell that changes, pushes only those across, and blits the whole thing up to
-// size in a single call. A million fillRects a frame is not a drawing routine;
-// one drawImage is.
-//
-// Give a grid one and hand it the `mark` as its `onPut` -- see wirePit and
-// wireGround. Anything the painter does not have a color for is left clear, so
-// a grid can keep values of its own in cells (the pit keeps cores in its pile)
-// and draw them itself, on top.
+// size in one drawImage; a grain a fillRect is the most expensive thing in the
+// frame once there are tens of thousands. Give a grid one and hand it `mark`
+// as its `onPut` (wirePit, wireGround). Anything the painter has no color for
+// is left clear, so a grid can keep values of its own (the pit's cores) and
+// draw them itself, on top.
 
 import { SHADES, FIND_COLOR } from './config.js';
 
@@ -21,43 +16,27 @@ const rgb = h => {
 // the shades as packed RGBA, so a grain is four array writes
 const RGBA = SHADES.map(rgb);
 
-// and the colors for the cells that are not dust. A shard in a pile is painted
-// by the same pass that paints the dust around it, which is what makes a heap of
-// them as solid as a heap of anything else. Anything with no color here is
-// still left clear, for its owner to draw on top -- the pit's cores are drawn as
-// rings that way, because a core is a thing rather than a grain.
+// The colors for the cells that are not dust: a shard in a pile is painted by
+// the same pass as the dust around it. Anything with no color here is left
+// clear for its owner to draw on top.
 const EXTRA = new Map();
 for (const [base, tones] of Object.entries(FIND_COLOR)) {
   tones.forEach((h, i) => EXTRA.set(+base + i, rgb(h)));
 }
 
-// What the painters have actually rewritten since it was last reset, in cells.
-// The same handle `settleWork` in grid.js keeps, and for the same reason: what
-// this file is for is not doing work, so the check that it does not do work is
-// written as a count of cells read rather than as a stopwatch reading that would
-// mean something different on every machine that ran it.
+// Cells rewritten since the last reset, the same handle `settleWork` in grid.js
+// keeps: a count of cells rather than a stopwatch reading that would mean
+// something different on every machine.
 let work = 0;
 export const paintWork = () => work;
 export const resetPaintWork = () => { work = 0; };
 
 // How big a patch the painter tracks as one, in cells. A tile is the smallest
-// thing that can be dirty, so one grain landing costs a whole tile however few
-// cells actually moved -- which makes the size a floor under every frame, and
-// the floor is what has to be measured rather than guessed.
-//
-// Measured on a pressed hole with two hundred thousand dust in it, the machines
-// running and the belt feeding the lip, in cells rewritten per frame:
-//
-//   tile   mean   worst frame
-//    32    3314      11936     -- a whole tile to move one grain: worse than a box
-//     8     576       2344
-//     4     269       1140
-//
-// Thirty-two loses to the bounding box it replaced on an ordinary frame and only
-// wins on the bad ones, which is the wrong trade. Four is better again, and both
-// it and eight are already small enough that the number stopped mattering -- so
-// eight, which is half the tiles to keep track of for a cost that is the same
-// nothing. It is a shift rather than a divide.
+// thing that can be dirty, so one grain landing costs a whole tile. Measured
+// on a pressed hole with two hundred thousand dust, in cells rewritten a
+// frame (mean / worst): 32 -> 3314 / 11936, 8 -> 576 / 2344, 4 -> 269 / 1140.
+// Four and eight are both small enough that the number stopped mattering, so
+// eight, which is half the tiles to track. A shift rather than a divide.
 const TILE = 8, SHIFT = 3;
 
 export function makePainter(b) {
@@ -65,29 +44,12 @@ export function makePainter(b) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   let image = null;
 
-  // What has changed since the last paint.
-  //
-  // This used to be one bounding box -- the lowest and highest column and row
-  // any `mark` had named -- and a box is the wrong shape for what happens to a
-  // pile. Two grains landing at opposite ends of the hole are two cells changed
-  // and a box the full width of the plot, so nearly the whole grid was rewritten
-  // to move two grains.
-  //
-  // What that actually cost had to be measured rather than argued, and the
-  // measurement is smaller than the argument: on a pressed hole with two hundred
-  // thousand dust in it the box averaged 1749 cells a frame and its worst frame
-  // was 20,859 -- against a plot of 383,400. So the box was never rewriting the
-  // whole plot every frame, and this was not the thing making the endgame slow.
-  //
-  // It is still the wrong shape, and the bad frames are the ones that show it:
-  // paying for something lifts grains off the top of the pile along the whole
-  // length of it, and the box around that is the width of the hole by however
-  // deep the payment cut. Diced into tiles the same frame is 2344 cells instead
-  // of 20,859, and the ordinary frame is 576 instead of 1749.
-  //
-  // `dirty` is the list of tiles somebody has marked, so a frame that touches
-  // four tiles looks at four rather than at all of them; `flag` is the set, so a
-  // tile marked twice is only listed once.
+  // What has changed since the last paint, as tiles rather than one bounding
+  // box: paying for something lifts grains off the top of the pile along the
+  // whole length of it, and the box around that is the width of the hole
+  // (20,859 cells on the worst frame against 2344 in tiles). `dirty` is the
+  // list of tiles somebody has marked; `flag` is the set, so a tile marked
+  // twice is listed once.
   let flag = null, dirty = [], tCols = 0, tRows = 0;
   let all = true;                          // true means push the whole grid across
 
@@ -125,8 +87,7 @@ export function makePainter(b) {
       canvas.width = b.cols;
       canvas.height = b.rows;
       image = ctx.createImageData(b.cols, b.rows);
-      // A fresh scratch canvas holds nothing, so whatever any tile was told
-      // about before it is no longer on the glass. Everything is dirty.
+      // A fresh scratch canvas holds nothing, so everything is dirty.
       tCols = Math.ceil(b.cols / TILE);
       tRows = Math.ceil(b.rows / TILE);
       flag = new Uint8Array(tCols * tRows);
@@ -144,11 +105,9 @@ export function makePainter(b) {
       all = false;
     } else if (dirty.length) {
       const d = image.data;
-      // The pixels are written per tile, but they go across in one call: a
-      // `putImageData` is a copy the browser does natively, and the box around
-      // a handful of tiles is cheap in a way that the same box walked in
-      // JavaScript is not. So the box is back -- for the blit alone, which
-      // never cared, and not for the rewrite, which is what the cost was.
+      // Written per tile, blitted in one call: a `putImageData` over the box
+      // around a handful of tiles is a native copy and cheap; the same box
+      // walked in JavaScript is what the cost was.
       let cLo = b.cols, cHi = -1, rLo = b.rows, rHi = -1;
       for (const t of dirty) {
         const c0 = (t % tCols) * TILE, r0 = ((t - t % tCols) / tCols) * TILE;
