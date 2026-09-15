@@ -4,6 +4,7 @@
 // its own stamp. Here we read the stamp off the grains a purchase throws.
 
 import { group, ok, yard } from './helpers.mjs';
+import { apothHut } from '../src/apothecary.js';
 
 // Open the farm and the apothecary, the player's way, with coin to spend.
 function stand() {
@@ -17,9 +18,13 @@ function stand() {
 const near = (a, b) => Math.abs(a - b) < 50;
 const centre = s => s.x + s.w / 2;
 
-group('an apothecary row pays to the cauldron, not the bench', async () => {
+// To the hut, which is the building: the row is bought at it, the bar hangs
+// over it and the spare hand builds at it (`siteBox` answers the hut for the
+// apothecary), so that is where the coin goes. The plot's own middle is the
+// shelves, which is nowhere in particular.
+group('an apothecary row pays to the hut, not the bench', async () => {
   stand();
-  const apX = centre(yard.apothecary), benchX = centre(yard.bench);
+  const apX = centre(apothHut()), benchX = centre(yard.bench);
   // The second pot reveals after batches have landed (the grind pass); the
   // reveal has its own check, and this one is about where the dust flies.
   yard.S.brews = 5;
