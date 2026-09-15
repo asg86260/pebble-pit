@@ -132,7 +132,16 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // a body retasked mid-walk finished the walk at its
                       // station's amble, a quarter of the commute's pace, and
                       // one sent for a hat came back without one.
-                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching'];
+                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching',
+                      // and the dance it is in the middle of -- its mark, its
+                      // move and where its feet are -- so a refresh mid-hop
+                      // lands the hop rather than dropping the body from it.
+                      // (`moveAt` is a moment, below.)
+                      'jigAt', 'jigDir', 'jigRate', 'jigBeat', 'jigDown', 'move', 'moveFrom', 'moveBeats', 'foot', 'footAt',
+                      // and the mess it is on, and where it planted its shovel:
+                      // a shoveller re-picked its patch on every refresh and
+                      // walked, and a janitor against a fouling crew never won.
+                      'muckAt', 'shovelAt'];
 
 // Moments on a body's clock -- when its next break comes round, when it has
 // stood about long enough to knock off -- kept the way doses are (below):
@@ -144,7 +153,7 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
 // stroke. Without them every refresh handed every body a free swing -- five
 // quarriers dug a cut a sixth faster under a refresh every five seconds.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
-                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext'];
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt'];
 const momentsOf = w => {
   const out = {};
   for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());

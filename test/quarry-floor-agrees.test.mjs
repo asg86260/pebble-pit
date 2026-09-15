@@ -21,10 +21,12 @@ const columns = () => quarryCells().map((_, c) => c);
 const seam = c => (cutTop(quarry.x + c * P + P / 2) - dugTopY(quarry.x + c * P + P / 2)) / P;
 
 group('a save whose rock sits above the counted floor comes back squared, and the gang stands on the floor', async () => {
-  // The deepest cut there is, five on the face, dug down to its last course.
+  // The deepest cut there is, five on the face, dug down near its floor -- a
+  // few courses left rather than one, so the gang are still at work on the
+  // floor when it is measured after the load rather than done and climbing out.
   window.__crew(0, 0, 5, 0); window.__fullSites(); window.__tip(90000);
   const deepest = Math.max(...columns().map(quarryTarget));
-  window.__digCut(deepest - 1);
+  window.__digCut(deepest - 4);
   runUntil(() => quarriers().some(w => w.goal === 'work'), 60);
   run(2);
   // The grid disagrees with the count by a course in every column that still

@@ -281,7 +281,10 @@ group('a speck off a swing is the speck in the band', async () => {
   // hold now is that nothing visible ever teleports (a jump only happens
   // while it is faded to nothing) and its weight never flickers back up
   // mid-climb (thinning is one-way until it settles).
-  let visibleJump = 0, flicker = 0, lastY = startY, lastFade = 1;
+  // "One way" is: once it has begun to thin, it never comes back up. It comes
+  // up to weight first (wave7-sky, A1), and which speck is first in the list
+  // is a fact about timing, so the speck caught here may still be arriving.
+  let visibleJump = 0, flicker = 0, lastY = startY, lastFade = mote ? (mote.fade ?? 1) : 1, thinned = false;
   for (let i = 0; i < 600 && mote && mote.up; i++) {
     run(1 / 30);
     const f = mote.fade ?? 1;
@@ -289,7 +292,8 @@ group('a speck off a swing is the speck in the band', async () => {
     // weight at the new spot is it fading back in there, which is an
     // arrival, not a teleport.
     if (Math.abs(mote.y - lastY) > 40 && lastFade > 0) visibleJump++;
-    if (f > lastFade && mote.up) flicker++;
+    if (f < lastFade) thinned = true;
+    if (f > lastFade && thinned && mote.up) flicker++;
     lastY = mote.y;
     lastFade = f;
   }

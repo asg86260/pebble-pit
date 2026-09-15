@@ -38,7 +38,9 @@ group('the ram does not strike a rock that is still coming down', async () => {
   // second, which would skip the entire thing.
   for (let i = 0; i < 1200 && !(yard.S.rockFall > 0); i++) run(1 / 60);
   const falling = yard.S.rockFall > 0;
-  const ram = yard.S.machines.ram;
+  // Read fresh each time, not held: a reload (test/helpers.mjs) lays the
+  // machine records down again, and a record held across it is the old one.
+  const ram = () => yard.S.machines.ram;
   // The tender is put at its post for the fall. A new rock's face is back at
   // the near end and the tender is still walking over from where the last one
   // finished, so left alone the machine is simply unmanned while the rock is in
@@ -47,13 +49,13 @@ group('the ram does not strike a rock that is still coming down', async () => {
   const tender = yard.S.workers.find(w => w.type === 'rockhand');
   const post = specOf('ram').tendAt();
   if (tender) { tender.x = post; tender.walking = false; tender.route = null; tender.walkTo = null; }
-  const workedAtStart = ram.workedAt || 0;
+  const workedAtStart = ram().workedAt || 0;
   // Every frame of the fall: nothing off the hill.
   let struck = 0, frames = 0;
   while (yard.S.rockFall > 0 && frames < 600) {
     run(1 / 60);
     frames++;
-    if ((ram.workedAt || 0) > workedAtStart) struck++;
+    if ((ram().workedAt || 0) > workedAtStart) struck++;
   }
   const landedAt = yard.S.boulderNo;
   // And once it is down, the ram goes back to work. Generously: `ready` also
@@ -61,10 +63,10 @@ group('the ram does not strike a rock that is still coming down', async () => {
   // face after a landing (no dance after rock one, wave polish 2026-09-14) the
   // heap stays full longer than it did while they danced. How long the haulers
   // take to make room is a fact about the heap, not about the ram's rule.
-  const worked = runUntil(() => (ram.workedAt || 0) > workedAtStart, 60);
+  const worked = runUntil(() => (ram().workedAt || 0) > workedAtStart, 60);
 
   return [
-    ok(before.rock > 0 && ram.bought, 'the ram is standing at a rock', `bought ${ram.bought}`),
+    ok(before.rock > 0 && ram().bought, 'the ram is standing at a rock', `bought ${ram().bought}`),
     ok(falling, 'a new rock comes down from the sky', `fall ${yard.S.rockFall}`),
     ok(frames > 0 && struck === 0, 'and the ram strikes nothing while it is in the air',
        `${struck} strikes over ${frames} frames of fall`),
