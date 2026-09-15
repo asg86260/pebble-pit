@@ -315,8 +315,8 @@ group('a jammed rock heap still lets each ground\'s finds be fetched', async () 
 });
 
 // ...and the rest of the crew are shared over every ground that has something
-// on it. Each new trip goes to the ground fewest bodies are already headed
-// for, so a full quarry heap and a rock heap over its line both get a steady
+// on it. Each new trip goes to the grain farthest from where the rest of the
+// crew are headed, so a full quarry heap and a rock heap over its line both get a steady
 // stream of hands -- not the nearest one alone (the rock's, beside the hole,
 // where the whole crew once stood while the quarry stayed stopped behind
 // them), and not the fullest one alone either (the quarry's, which had them

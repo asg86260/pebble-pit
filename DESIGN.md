@@ -1016,30 +1016,29 @@ answer for all of them — so a single grain behind the crew turned the whole li
 it round again the moment the first of them reached it. Claiming is also what stops six workers
 queueing at one column while the rest of the yard sits there.
 
-**Fewest hands headed there.** Each new trip, decided with empty hands, goes to the ground — a
-station's strip or the open ground between them — that the fewest bodies are already on their way
-to, ties to the one whose oldest grain has lain longest. On a strip the target is the find if one
-lies there, else the column nearest the body, and the body works along the heap until its hands
-are full; on the open ground it is the oldest grain, so the sweep home takes the rest. That is the
-whole rule.
+**Farthest from the rest of the crew.** Each new trip, decided with empty hands, goes to the grain
+on the ground farthest from where the other carters are or are headed — their claims, or where they
+stand — ties to the column whose top grain has lain longest. The ground is the whole floor, from
+the world's left edge to the lip; there is no pile in the rule and no ground the crew do not fetch
+from. Then the body takes what is nearest until its hands are full and walks home taking what it
+walks over. That is the whole rule.
 
-It was chosen for how it reads, not for what it banks (2026-09-15). The rules before it were about
-throughput — the nearest dust, then the fullest heap measured against its own limit, then that
-less the armfuls already on their way and per pixel of the walk, then a stopped station first, then
-one body kept for the open ground — and each fixed the last one's failure and left the yard reading
-the same way: the crew stood on one heap while the others waited. On a rock-heavy yard the best of
-them sent a hundred and sixty-eight trips of a hundred and seventy-six to the rock and four each to
-the quarry and the plots, and banked half again as much as this does; what a player sees is six
-bodies on one pile and two piles nobody visits. What is wanted is bodies spread over every pile,
-every load full, and every resource coming in at its own steady rate — so the bench reads each
-pile's own rate and the trips a ground (`tools/node/carters.mjs`), and the total is not the
-measure. A heap that fills and stops its station is the station's own ladder to buy hands for; it
-is not this rule's to rob the other piles for.
-
-Round robin over the grounds reads the same from the yard and was measured against this: it clears
-everything too, at a third of the throughput, and leaves the rock stopped half a rock-heavy run
-where this leaves it a tenth. Fewest-headed leans toward the pile that has just been left, which
-is the difference.
+It was chosen for how it reads, not for what it banks (2026-09-15). Every rule before it was about
+piles — the nearest dust, then the fullest heap measured against its own limit, then that less the
+armfuls already on their way and per pixel of the walk, then a stopped station first, then one
+body kept for the open ground, then the ground with the fewest hands headed for it — and each
+fixed the last one's failure while leaving the yard reading the same way: the crew stood on one
+heap while the rest of the ground waited, and what lay off every strip, or out past the first one,
+was nobody's. Oldest-first alone was tried on the way and drains one heap at a time. Farthest from
+the crew is what "spread out" means said as a rule: the second body does not go where the first is
+going, the sixth goes where the other five are not, and a grain thrown out past the tower is
+exactly the place nobody else is. On the bench every strip and the open ground gets trips in every
+row, the quarry and the plots are cleared at the rate they fill, finds wait five seconds, every
+load is full (`tools/node/carters.mjs`, the trips-a-ground column; each resource's own rate is the
+measure and the total is not). What it costs is the heap beside the hole: a rock fed faster than a
+quarter of the crew can carry stops, and that is the rock's own ladder to buy hands for, not this
+rule's to rob the other piles for (`test/crew.test.mjs`, "a jammed heap and the finds are both
+carried in", reports the share of the run the rock stood stopped).
 
 **The target decides where a trip starts; after it the body takes whatever is nearest, and the
 rest of the trip is a sweep home.** With something in hand it keeps taking the nearest thing to

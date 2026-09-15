@@ -1,6 +1,6 @@
 // Where the crew go when two heaps are backing up at once: over both of
-// them. Each new trip goes to the ground fewest bodies are already headed
-// for (`firstPick` in crew/hauler.js), so the crew fan out rather than read
+// them. Each new trip goes to the grain farthest from where the rest of the
+// crew are headed (`firstPick` in crew/hauler.js), so the crew fan out rather than read
 // one answer and set off for it as a convoy -- which is what they did when
 // the pick was the fullest heap: six bodies walked two thousand pixels for
 // eight grains each while the heap beside the hole climbed past its limit

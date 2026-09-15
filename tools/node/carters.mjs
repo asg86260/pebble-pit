@@ -15,8 +15,8 @@
 // Read the per-resource columns, not the total. The rule is chosen for how
 // it reads from the yard -- bodies spread over every pile, every load full --
 // and each pile's own rate is the measure of that; the total banked rewards
-// a crew stood on the one heap beside the hole (DESIGN.md, "Fewest hands
-// headed there").
+// a crew stood on the one heap beside the hole (DESIGN.md, "Farthest from
+// the rest of the crew").
 //
 // The point is comparing rules, not passing: run it on main and on a branch
 // and read the two tables side by side. The sim is seeded, so the same

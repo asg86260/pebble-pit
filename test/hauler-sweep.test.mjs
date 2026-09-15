@@ -157,7 +157,6 @@ group('a fast body steps on to the next grain, never over it', async () => {
 // sees its column bare and picks again.
 group('the body on the spot takes a grain another has set off for', async () => {
   window.__reset();
-  window.__crew(0, 2);
   quickCrew();
   window.__clearFloor();
   run(0.2);
@@ -166,6 +165,9 @@ group('the body on the spot takes a grain another has set off for', async () => 
   window.__pile(far, 1);
   window.__pile(next, 1);
   run(1);
+  // hired only now: a crew this quick would have both grains in hand before
+  // they had settled
+  window.__crew(0, 2);
   // where the second grain actually came to rest -- a grain settles a column
   // or so from where it was dropped
   let c = -1;

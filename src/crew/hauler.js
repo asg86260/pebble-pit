@@ -8,7 +8,7 @@
 import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
-import { walkY, yardLeft, pileAt } from '../world.js';
+import { walkY, pileAt } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
@@ -45,115 +45,62 @@ export function newHauler() {
   };
 }
 
-// The nearest column of dust that nobody else has set off for. One column, one
-// worker: without that, every worker in the yard works out the same answer and
-// the whole line turns round for a single grain behind them, then turns round
-// again when the first of them picks it up.
-function nearestDust(x, taken) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  // And the near end is where the crew stop walking, not where the ground stops.
-  // Dust may lie the whole way out to the edge of the world now -- a bird sheds
-  // over it, and your own cursor reaches it -- but a body held at `yardLeft`
-  // cannot stand on a column past it. Booked one anyway, it would set off, stop
-  // at the end of its own span, and stand there for the rest of the run with a
-  // claim on ground it can never reach. What lies out there is yours to sweep
-  // up, not theirs to fetch, which is the same bargain the ground past the lip
-  // has always had.
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const from = Math.max(first, Math.min(last, colOf(floor, x)));
-  for (let d = 0; d <= last; d++) {
-    for (const c of [from - d, from + d]) {
-      // Anything in a column is worth fetching, barred or not: a barred column
-      // normally holds nothing, and when it does hold something -- a shard set
-      // down at the plots -- somebody should still go out and get it.
-      if (c < first || c > last || taken.has(c)) continue;
-      if (at(floor, c, 0)) return c;
-    }
-  }
-  return -1;
-}
+// The ground the crew fetch from: every column of the floor from the world's
+// left edge to the near lip of the hole. It used to stop at the first heap,
+// and what lay past that -- a grain thrown out left of the tower, a bird's
+// shedding -- was the player's to sweep up; the farm's hands and the tower's
+// crew already stand out there, and a grain a body can walk to is a grain it
+// fetches.
+const lastCol = () => Math.max(0, colOf(floor, pit.x) - 1);
 
-// Where a trip starts, decided with empty hands: the ground with the fewest
-// bodies already headed to it.
+// Whether anything lies on the ground that nobody has set off for.
+const anyDust = taken => {
+  const last = lastCol();
+  for (let c = 0; c <= last; c++) if (!taken.has(c) && at(floor, c, 0)) return true;
+  return false;
+};
+
+// Where a trip starts, decided with empty hands: whatever lies farthest from
+// where the rest of the crew are headed.
 //
-// The grounds are each station's strip and the open ground between them. A
-// ground counts when something lies on it. Each new trip goes to the ground
-// fewest others have set off for, ties to the one whose oldest grain has lain
-// longest -- so the crew fan out over every pile and the open ground, every
-// pile and every find is visited at a steady rate, and nothing lies anywhere
-// for long. On a strip the target is the find if one lies there, else the
-// nearest column to the body, and the body works along the heap until its
-// hands are full; on the open ground it is the oldest grain, so the sweep
-// home covers the rest.
+// One rule for everything on the ground -- a heap, a heap's spill past the
+// end of its strip, a find, a grain thrown out past the tower -- rather than
+// a rule about piles with the rest of the ground as a special case. Each
+// other carter is somewhere or on its way somewhere (its claim, or where it
+// stands); the next body's target is the column with something on it that
+// is farthest from the nearest of those, ties to the column whose top grain
+// has lain longest. So the crew spread themselves over the ground: the
+// second body does not go where the first is going, the sixth goes where
+// the other five are not, and a lone grain out past the tower is exactly
+// the place nobody else is. Then the body takes what is nearest until its
+// hands are full (`nextNear`) and walks home taking what it walks over.
 //
 // This is the rule chosen for how it reads, not for what it banks
-// (2026-09-15, DESIGN.md "Fewest hands headed there"). The rule before it
-// sent every body to the heap that most needed clearing, and it banked half
-// again as much on a rock-heavy yard -- by sending a hundred and sixty trips
-// of a hundred and seventy-six to the rock and four each to the quarry and
-// the plots, which is a crew stood on one heap while the rest of the yard
-// waits. Bodies spread across the piles is what the player asked for, and
-// each resource's own rate is the measure (`tools/node/carters.mjs`, the
-// trips-per-ground column). What a heap costs the station behind it when it
-// fills is the station's own ladder to buy hands for, not this rule's to
-// rob the other piles for.
+// (2026-09-15, DESIGN.md "Farthest from the rest of the crew"). Every rule
+// before it was about piles -- the nearest dust, the fullest heap, the heap
+// with the fewest hands headed for it -- and each left the crew stood on
+// one heap while the rest of the ground waited, or left the ground off
+// every strip to nobody. Oldest-first alone was tried on the way here and
+// drains one heap at a time. The bench reads each resource's own rate, not
+// the total (`tools/node/carters.mjs`).
 function firstPick(w, taken) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const headed = new Map();
+  const last = lastCol();
+  const others = [];
   for (const o of S.workers) {
-    if (o === w || o.type !== TYPE.HAUL || o.claim < 0) continue;
-    const g = groundOf(o.claim);
-    headed.set(g, (headed.get(g) || 0) + 1);
+    if (o === w || o.type !== TYPE.HAUL) continue;
+    others.push(o.claim >= 0 ? o.claim : colOf(floor, o.x));
   }
-  let best = -1, bestHeaded = Infinity, bestAge = Infinity;
-  for (const g of [...S.piles.map(p => p.key), 'yard']) {
-    const t = groundTarget(w, g, first, last, taken);
-    if (t.col < 0) continue;
-    const n = headed.get(g) || 0;
-    if (n > bestHeaded || (n === bestHeaded && t.age >= bestAge)) continue;
-    best = t.col; bestHeaded = n; bestAge = t.age;
+  let best = -1, bestApart = -1, bestAge = Infinity;
+  for (let c = 0; c <= last; c++) {
+    if (taken.has(c) || !at(floor, c, 0)) continue;
+    let apart = Infinity;
+    for (const t of others) apart = Math.min(apart, Math.abs(c - t));
+    if (apart < bestApart) continue;
+    const a = ageAt(floor, c, topGrain(c));
+    if (apart === bestApart && a >= bestAge) continue;
+    best = c; bestApart = apart; bestAge = a;
   }
   return best;
-}
-
-// Which ground a column is on: the strip it falls in, or the open ground.
-const groundOf = c => pileAt(floor.x + c * P)?.key || 'yard';
-
-// A ground's target for a body, and how long that ground's oldest grain has
-// lain: `{ col, age }`, col -1 when nothing lies there that nobody has set
-// off for. `age` is the clock the grain was put down at, so smaller is older.
-function groundTarget(w, g, first, last, taken) {
-  let lo = first, hi = last, strip = null;
-  if (g !== 'yard') {
-    strip = S.piles.find(p => p.key === g);
-    lo = Math.max(first, colOf(floor, strip.from));
-    hi = Math.min(last, colOf(floor, strip.to) - 1);
-    if (lo > hi) return { col: -1, age: Infinity };
-  }
-  const mine = c => strip ? true : !pileAt(floor.x + c * P);
-  let oldest = -1, age = Infinity;
-  for (let c = lo; c <= hi; c++) {
-    if (taken.has(c) || !at(floor, c, 0) || !mine(c)) continue;
-    const a = ageAt(floor, c, 0);
-    if (a < age) { age = a; oldest = c; }
-  }
-  if (oldest < 0) return { col: -1, age: Infinity };
-  if (!strip) return { col: oldest, age };
-  // a find on the strip first: one grain, worth a whole shard
-  for (const m of S.floorMarks) {
-    const c = colOf(floor, m.x);
-    if (c >= lo && c <= hi && !taken.has(c) && at(floor, c, 0)) return { col: c, age };
-  }
-  // else the nearest column to the body: the heap is worked from there
-  const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
-  for (let d = 0; d <= hi - lo; d++) {
-    for (const c of [from - d, from + d]) {
-      if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
-      return { col: c, age };
-    }
-  }
-  return { col: -1, age: Infinity };
 }
 
 // The column with something in it under a body's feet, if there is one -- the
@@ -190,9 +137,8 @@ function groundTarget(w, g, first, last, taken) {
 // column could be crossed between two looks. Found within the stride, the
 // step is shortened to land on it -- see the walk home.
 function underfoot(w, ahead = 0) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const lo = Math.max(first, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER + ahead));
+  const last = lastCol();
+  const lo = Math.max(0, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER + ahead));
   for (let c = lo; c <= hi; c++) {
     if (!at(floor, c, 0)) continue;
     const x = floor.x + c * P;
@@ -226,14 +172,13 @@ function scoop(w, c, now) {
 // of its strip, and those lay there for good. Nearer than the hole is the
 // bound: a grain closer than the lip is a small detour or on the way, one
 // further off is another trip's. Held to the ground the crew can stand on,
-// the same two bounds `nearestDust` keeps.
+// held to the near lip of the hole, as everything a carter fetches is.
 function nextNear(w, bare, taken) {
-  const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  const last = lastCol();
   const reach = Math.floor(Math.abs(pit.x - w.x) / P);
   for (let d = 1; d <= reach; d++) {
     for (const c of [bare - d, bare + d]) {
-      if (c < first || c > last || taken.has(c)) continue;
+      if (c < 0 || c > last || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
@@ -593,7 +538,7 @@ export function haulerWork(w, c) {
     // which is the one thing that has to be true of this, because a crew you
     // cannot get back is a crew you would never let go in the first place.
     w.resting = false;
-    if (nearestDust(w.x, taken) >= 0) {
+    if (anyDust(taken)) {
       w.inside = false;
       w.goal = 'seek';
       return;
@@ -610,7 +555,7 @@ export function haulerWork(w, c) {
     // there, then another. A yard at rest should read as at rest, not as
     // switched off.
     unbook(w);                  // idle hands hold no room
-    if (nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; return; }
+    if (anyDust(taken)) { w.goal = 'seek'; w.idleSince = 0; return; }
 
     // A rock has just come off, or the next one is on its way down, and this
     // body has nothing to do about either. It joins in rather than ambling

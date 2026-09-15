@@ -1,8 +1,8 @@
 // Dust that lies off every strip is fetched, even while a heap is jammed.
 //
-// The open ground is a ground like any strip: a trip goes to it as soon as
-// it is the one fewest bodies are headed for (`firstPick` in crew/hauler.js),
-// to its oldest grain, and the sweep home takes the rest. Before that, the
+// There are no piles in the pick (`firstPick` in crew/hauler.js): a body
+// goes to the grain farthest from where the rest of the crew are headed, and
+// a grain off every strip is as much a target as any. Before that, the
 // pick was a find, the fullest jammed heap, then the nearest dust -- and once
 // a machine kept the rock's heap over its line for the rest of the run,
 // "then the nearest dust" never happened again: a grain out past the strips

@@ -522,22 +522,21 @@ group('a laden body takes what is near and sweeps home rather than setting off a
   ];
 });
 
-// And when the ground is backing up, the heap comes first.
-//
-// A find is picked before dust, which is right nearly all of the time: a green
-// one is rare and dust is not. It stops being right the moment a heap fills,
-// because a full heap *stops the station behind it* -- the rock stops coming
-// apart -- while a find lying about stops nothing and is worth exactly as much
-// in an hour. A yard where the crew step over the heap that is holding up the
-// works to go and collect a spore is a yard that grinds to a halt with everybody
-// busy.
-group('a heap that is backing up is cleared before the finds are collected', async () => {
+// And a jammed heap does not take the crew off the rest of the ground. The
+// pick has no piles in it: a body goes where the rest of the crew are not,
+// so while the rock's heap is over its line the plots' spores are still
+// carried in and the heap is still worked -- neither gets the whole crew.
+// (Heap-first was the rule once: while any heap was over the line nobody
+// fetched a find, and once a machine kept the rock's heap there for good
+// the crew never fetched anything else again.)
+group('a jammed heap and the finds are both carried in', async () => {
   window.__reset();
   openSites();
   window.__crew(4, 4, 0, 2);                  // and two on the plots, paying green
   window.__levels({ haulCarryLevel: 5, pickLevel: 6, rockhandPickLevel: 6 });
   run(30);                                    // long enough to be a going concern
 
+  const spores0 = state().spores, pit0 = state().pit;
   let full = 0, n = 0;
   for (let i = 0; i < 5400; i++) {
     run(1 / 60);
@@ -546,18 +545,10 @@ group('a heap that is backing up is cleared before the finds are collected', asy
   }
   const s = state();
   window.__reset();
-  const stopped = full / n;
   return [
     ok(s.pileCount.rock > 0, 'there is a heap under the rock to be dealt with',
        `${s.pileCount.rock} of ${s.pileLimit.rock}`),
-    // It sat full about five sixths of the run while the finds always won, and
-    // about seven tenths once the heap could win. Four fifths is the wrong side
-    // of that and clear of the noise.
-    ok(stopped < 0.8, 'the rock is not stopped by its own heap for most of the run',
-       `${(stopped * 100).toFixed(1)}% of the time`),
-    // The point of clearing it is what gets banked while the works keep running:
-    // this ran at about fifty grains before and two hundred after.
-    ok(s.pit > 100, 'and a good deal more comes off the yard for it',
-       `${s.pit} grains banked`)
+    ok(s.spores > spores0, 'the spores are carried in while it stands', `${s.spores - spores0} spores`),
+    ok(s.pit - pit0 > 100, 'and so is the heap', `${s.pit - pit0} grains banked, the rock stopped ${(100 * full / n).toFixed(0)}% of the run`)
   ];
 });
