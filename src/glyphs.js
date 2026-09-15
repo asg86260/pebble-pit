@@ -115,7 +115,7 @@ export const GLYPH_OF = {
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the scrubbing house
-  fan: ['fan'], balloon: ['balloon'], recycler: ['bin'],
+  fan: ['fan'], balloon: ['balloon'], recycler: ['lever'],
   // the casino
   chip: ['chip'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
   bank: ['sack', 'dust'], ride: ['die'],

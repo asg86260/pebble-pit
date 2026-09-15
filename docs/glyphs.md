@@ -39,7 +39,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
 | boot            | `haulpace`, `potency-swift` +plus                                                      |
-| lever           | `auto`                                                                                 |
+| lever           | `auto`, `recycler`                                                                     |
 | cart            | `carter`                                                                               |
 | belt            | `belt`, `tunebelt` +plus                                                             |
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
@@ -61,7 +61,6 @@ cells wide); those are redrawn at eight, the shape settled.
 | tower           | `unlocktower`                                                                          |
 | fan             | `unlockscrub`, `fan`                                                                   |
 | balloon         | `balloon`                                                                              |
-| bin (recycler)  | `recycler`                                                                             |
 | shovel          | `quarrybench` +plus                                                                    |
 | ore lump        | `seam`, `spellluck` +star                                                              |
 | ear of crop     | `crop`                                                                                 |
@@ -81,7 +80,7 @@ That is every one of the sixty-one.
 
 ## What is left to draw
 
-Forty-three drawings in the table; eight exist; **thirty-five new**, and
+Forty-two drawings in the table; eight exist; **thirty-four new**, and
 the eight badges at three-by-three.
 
 By the board they first appear on, so a shelf can be finished at a time:
@@ -94,7 +93,7 @@ By the board they first appear on, so a shelf can be finished at a time:
 - **farm** (2): ear of crop, hoe
 - **apothecary** (4): pot, vial, bowl, star
 - **tower** (3): wand, bolt, dome arc
-- **scrub** (2): balloon, bin
+- **scrub** (1): balloon
 - **casino** (1): chip
 - **the sky** (3): planks, net, arch
 - **redrawn at eight** (8): ram, jaw, tiller, helmet, lamp, brim, point, cap
