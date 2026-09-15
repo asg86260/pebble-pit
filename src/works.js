@@ -535,7 +535,15 @@ export function stepWorks(dt) {
 // announcement -- it is standing there -- and a tick centered on the camera (the
 // yard has no box until something is rising) said nothing.
 export function workFinished(site, key) {
-  if (site !== 'yard') S.siteDone[site] = key;
+  if (site === 'yard') return;
+  S.siteDone[site] = key;
+  // And the tile itself is news again: the rung that landed is the thing on
+  // it you have not read, so it wears the same turned-down corner a card you
+  // have never seen does, until you hover it (`markRowSeen` in shop.js). The
+  // tick over the station says a board has something on it; the corner says
+  // which tile. A fresh array, as `markRowSeen` writes one: the save notices
+  // a new array where it can miss a splice.
+  if (S.seenRows.includes(key)) S.seenRows = S.seenRows.filter(k => k !== key);
 }
 
 // what finished at a site, in the words the row used

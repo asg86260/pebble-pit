@@ -19,6 +19,7 @@ feature lives in DESIGN.md.
 - The ladder pips are back on the shelf: a column climbing the right edge of every ladder's tile.
 - A tile being built shows it: the drawing fills in from the bottom as the work is done, the tag is a clock to the second, and a tile in line is a ghost with its place.
 - A hand on the tile: while somebody is at the site, the builder stands beside the tile's drawing and swings at it, on the yard's own beat, throwing the yard's own chips, and slides in fading up as the body arrives and out again as it leaves.
+- A rung that lands while you are looking elsewhere is news: its tile wears the unread corner again until you hover it (test/landed-unread.test.mjs).
 - The quarry and farm boards are in two groups: the workers -- the plot or bench, the hat, the machine and its ladder -- under a heading wearing the headcount, and the yield and speed ladders under the ore or the crop.
 - The crew hurry between the shacks and the work: a body knocking off, or one put to work out of the door, walks at twice the commute (test/home-pace.test.mjs).
 - A quarry, farm or apothecary rung is built at the shed by a spare hand off the dust; nobody leaves the cut, the plots or the pot to do it, and a drill or a keeper keeps going meanwhile (test/wave6-sim.test.mjs, test/drill-upgrade.test.mjs, test/apothecary.test.mjs).
