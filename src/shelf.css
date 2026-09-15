@@ -241,14 +241,15 @@
 .rows.shelves > button.tile:hover:not(:disabled) {
   outline-color: #000;
   box-shadow: 2px 2px 0 #000;
-  /* Once up, it floats: a one-pixel bob on a slow beat, stepped so the pixel
-     art never sits on a half pixel, starting only after the lift has landed
-     (the delay is the lift's own time, and no fill, so the transition carries
-     it there first). The shadow bobs the other way, so it stays on the ground. */
-  animation: shelf-float var(--shelf-float-ms, 1600ms) steps(1, end) var(--shelf-hover-ms, 120ms) infinite;
+  /* Once up, it floats: a one-pixel bob, eased, starting only after the lift
+     has landed (the delay is the lift's own time, and no fill, so the
+     transition carries it there first). The shadow bobs the other way, so it
+     stays on the ground. */
+  animation: shelf-float var(--shelf-float-ms, 900ms) ease-in-out var(--shelf-hover-ms, 120ms) infinite;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
-     and a pseudo-class outranks the firewall's revert. */
-  background: none;
+     and a pseudo-class outranks the firewall's revert. The color only -- the
+     shorthand would take the tile's dots with it. */
+  background-color: transparent;
   color: #000;
 }
 .rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }

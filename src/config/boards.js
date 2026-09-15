@@ -93,7 +93,7 @@ export const SHELF_PLANK = 5;       // px, the plank's thickness
 export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .28
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six
 export const SHELF_HOVER_MS = 120;  // the plate and the lift easing in under the cursor
-export const SHELF_FLOAT_MS = 1600; // one bob of a lifted tile, up a pixel and back
+export const SHELF_FLOAT_MS = 900;  // one bob of a lifted tile, up a pixel and back
 // What the stroke round a glyph is painted in: the deepest coin on the next
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
 // climbed ladder is grey. The three colors are the marks' own.
