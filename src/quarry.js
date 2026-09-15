@@ -1161,7 +1161,7 @@ export const QUARRY_UPGRADES = [
 // card of both ladders is named there; only the band you are on answers `true`
 // to `show`, so the board draws one yield card and one speed card.
 export const QUARRY_SECTIONS = [
-  { title: 'quarriers', keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
+  { title: JOB.QUARRY, keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
   { title: 'the ore',   keys: ['seam', 'quarrypace'] }
 ];
 

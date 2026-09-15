@@ -364,7 +364,7 @@ export const FARM_UPGRADES = [
 // card of both ladders is named there; only the band you are on answers `true`
 // to `show`, so the board draws one yield card and one speed card.
 export const FARM_SECTIONS = [
-  { title: 'farmhands', keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
+  { title: JOB.FARM, keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
   { title: 'the crop',  keys: ['crop', 'tend'] }
 ];
 

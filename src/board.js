@@ -23,6 +23,7 @@ import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
 import { shown } from './tween.js';
+import { JOB } from './jobs.js';
 
 const shopEl = document.getElementById('shop');
 const casinoShopEl = document.getElementById('casinoshop');
@@ -1097,8 +1098,8 @@ const apothHeads = title => title === 'the pot' ? S.stirrers : 0;
 // The grounds' boards the same way: the heading over the plots, the hats and
 // the machine is the heading about who does the work, so it says how many.
 const groundHeads = title =>
-  title === 'quarriers' ? S.quarriers :
-  title === 'farmhands' ? S.farmhands : 0;
+  title === JOB.QUARRY ? S[JOB.QUARRY] :
+  title === JOB.FARM ? S[JOB.FARM] : 0;
 
 // The numbers on whichever board is open. Pulled out of `hud` so that opening a
 // board can fill it before it is measured, rather than a frame after.
