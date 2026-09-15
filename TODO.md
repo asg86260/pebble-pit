@@ -1,5 +1,15 @@
 # Still to do
 
+## A tile being built shows the building -- DESIGN, awaiting sign-off (2026-09-15)
+
+"A tile being built shows the building" at the end of DESIGN.md. While a
+build is on, the tile's glyph fills in from the bottom up to the share done
+(the picture is the bar; a stalled site is a glyph stopped part-built), the
+tag drops the paid bill and holds a live `m:ss` clock ticking a game
+second, and a queued tile is a ghost with its place in line in the tag.
+The words on the gain line stay. Blocked on: the owner's answer to the
+three calls (fill order, the ghost's drawing, clock replacing the bill).
+
 ## One finger looks about -- BUILT (2026-09-15)
 
 "One finger looks about" under "Fitting the window" in DESIGN.md. On a

@@ -9690,3 +9690,97 @@ line). Half a shelf's width. The same builder in a third mode (`ledger`),
 the card markup laid out by the stylesheet, and nothing on it answers the
 cursor. The owner's pick over big-figure tiles: the game calls it the
 books, and a ledger is the thing those words name.
+
+## A tile being built shows the building (design, not built)
+
+### What is wrong
+
+A row past the bench is a thing the yard has to build, and while it is
+building the tile says so in words: the title goes grey, the gain line says
+`building` (or `queued up in 3`, or `nobody on it`), and the tag goes dashed
+with the bill still in it and a clock that reads `1 min` or `5`. Three things
+are wrong with that, in order of weight:
+
+- **Nothing on the tile moves.** The yard has a bar over the site filling as
+  the hands work; the tile that bought the bar is a still picture with a word
+  on it. The one place a player looks to see whether the thing is coming is
+  the one place that does not show it.
+- **The clock is coarse.** `1 min` is the reading for anything from sixty
+  seconds to ninety, and it does not change until it drops to `59`. A player
+  who opens the board twice in a minute reads the same number twice and
+  cannot tell whether the site is going or stalled -- which is the one
+  question a stalled site needs answered.
+- **The bill is still there.** A price on a thing you have already paid for
+  reads as a price. The tag is dashed to say otherwise, and the dashed tag is
+  also the tag of a thing you cannot afford, so the two most different states
+  a tile can be in wear the same edge.
+
+### The rule
+
+**The glyph is built.** While the work is on, the tile's drawing is drawn
+*to the share done*: its cells fill in from the bottom row up, in the order
+the hands would lay them, and the cells not yet built are a dotted ghost --
+every other pixel of the cell, at the tone of the ground's dots. The picture
+is the bar. At the press it is all ghost; at the last hammer-blow it is all
+ink, and the tile is the tile it will be from then on. The stroke stays off
+until it is done: a stroke is the next rung's legend and there is no next
+rung on a thing not yet built.
+
+The yard's rule holds: **the fill moves only while somebody is at the site.**
+It is `progressOf(workOn(key))` read straight, the same number the site's
+bar draws, so a stalled site is a glyph that has stopped part-built, and
+that is what `nobody on it` looks like before the word says it.
+
+**The tag becomes a clock.** The bill goes -- it is paid, and a paid bill is
+not a price -- and the tag holds the time left, alone, at second resolution:
+`0:47`, `1:12`, `12:05`, ticking every game second at the rate the site is
+actually going (`leftAt`). A number that changes under your eye is the
+cheapest proof the site is alive; a number that does not is the proof it is
+not. Stalled, the clock stops on its reading and the tag's edge goes dashed,
+and the gain line says `nobody on it` as now. The clock is the one number
+you came back to the board to read, so it keeps the board's type size and
+the tag's box, and takes the whole box rather than a cell of it.
+
+**Queued is a ghost with a place in line.** A tile bought and waiting its
+turn is drawn all ghost, no fill, and its tag says its place -- `2nd`,
+`3rd` -- with no clock, since a clock on a thing not yet started would be a
+guess the site cannot keep. It stays pressable, as now, since a press hands
+it back. The gain line keeps `queued up in 3` for the words' sake: the
+selftest reads the vocabulary, and the ordinal in the tag is the same fact
+drawn.
+
+The stalled word, the queued word and `building` stay in the gain line as
+they are; the drawing and the clock are added under them, not in place of
+them. A test that reads the words reads the same words.
+
+### What it costs
+
+A redraw of one canvas per cell of progress -- sixty-four at most over a
+build, and only on the tile being built, since the picture is redrawn only
+when the count of built cells changes. The clock is one `textContent` a
+second. Nothing on the sim side: every number is already kept for the bar
+over the site.
+
+### The calls to make
+
+1. **Fill order.** Bottom row up, left to right within a row, is a wall going
+   up; it reads as building. The alternative -- filling by the sprite's own
+   stroke order, or randomly -- reads as loading. Bottom-up.
+2. **The ghost.** A dotted cell (one pixel in four, at the ground's dot tone)
+   against the plank's own dotted ground risks vanishing. If a shot says it
+   does, the ghost is an outline instead: the shape's one-pixel edge in grey
+   with nothing inside, the way a plan is drawn.
+3. **Whether the clock replaces the bill or joins it.** Replaces. A player who
+   wants to know what they paid can read the queue card; a tag with both is
+   the three-line tag the belt already has, on every build.
+
+### How it is checked
+
+The words are already checked (`selftest/boards.js`, "queued up in 7",
+"building", "nobody on it"); they do not change. New, in the browser tier
+(`selftest/boards.js`, a group "a tile being built"): buy a build, turn the
+clock, and read the tile's canvas -- the count of inked pixels rises between
+two frames while a hand is at the site and holds while the site is stalled;
+the tag's text is `m:ss` and its reading falls by one a game second. The
+look is the shot: `buildboard` and a new `buildstalled` scene in
+`scenes.js`.
