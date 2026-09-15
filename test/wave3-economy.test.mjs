@@ -142,7 +142,7 @@ group('the rockhand pick bites a whole pixel more per rung, and no further', asy
     ok(b0 === 1, 'rung 0 is the bare bite', b0),
     ok(b1 === LADDERS.rockhandpick.value[1] && Number.isInteger(b1) && b1 > b0, 'a rung is whole pixels more', b1),
     ok(top === LADDERS.rockhandpick.value[LADDER], 'the top of the ladder is the end of its list', top),
-    ok(rockhandBite(RUNGS) === top, 'a saved level past it bites the top', rockhandBite(RUNGS))
+    ok(rockhandBite(LADDER + 1) === top, 'a saved level past it bites the top', rockhandBite(LADDER + 1))
   ];
 });
 

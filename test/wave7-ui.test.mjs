@@ -53,7 +53,7 @@ group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
   // in dust -- the one three-rung ladder that is, being the strongest rung on
   // the bench -- so the purse has to hold all three or the row is out of reach
   // and the ladder reads as broken rather than as unaffordable.
-  window.__grant({ shards: 20000, spores: 20000, cores: 9, sparks: 5000 });
+  window.__grant({ shards: 20000, spores: 50000, cores: 9, sparks: 5000 });
   // ...and the card is off the board until both grounds stand -- a bill naming
   // a coin the yard cannot get is a card the yard does not draw (coinsOpen).
   window.__crew(0, 0, 1, 1);
@@ -77,11 +77,11 @@ group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
 
 // --- 3. a save from the longer ladders reads as the new top --------------------
 group('saved levels past the shorter ladders clamp to their tops', async () => {
-  S.rockhandPickLevel = 5;                 // the old five-rung ladder's top
-  S.critMultLevel = 5;
+  S.rockhandPickLevel = LADDER + 1;        // a rung past the top, off a longer ladder's save
+  S.critMultLevel = LADDER + 1;
   rebalance();                             // the same clamp a load runs
   return [
-    ok(S.rockhandPickLevel === LADDER, 'pick level five reads as the top',
+    ok(S.rockhandPickLevel === LADDER, 'a pick level past the top reads as the top',
        `${S.rockhandPickLevel}`),
     ok(rockhandBite() === ROCKHAND_PX[LADDER], 'and bites what the top rung bites',
        `${rockhandBite()}`),

@@ -148,8 +148,13 @@ group('the ram advances into the hill as it eats it', async () => {
   // machine does nothing, which would make this pass for the wrong reason.
   runUntil(() => (state().machines.ram.workedAt | 0) > 0, 40);
 
-  const seen = [];
-  for (let i = 0; i < 12; i++) { run(0.25); window.__clearFloor(); seen.push([rockFaceX(), ramX()]); }
+  // The gang's ladders are bought out, and a ram at their top can finish
+  // the boulder inside these three seconds; only the samples off the first
+  // boulder say anything about the face, since the next one lands where the
+  // hill began.
+  const all = [];
+  for (let i = 0; i < 12; i++) { run(0.25); window.__clearFloor(); all.push([rockFaceX(), ramX(), state().boulderNo]); }
+  const seen = all.filter(s => s[2] === all[0][2]);
 
   const face = seen.map(s => s[0]), ram = seen.map(s => s[1]);
   const moved = face[face.length - 1] - face[0];
@@ -164,8 +169,8 @@ group('the ram advances into the hill as it eats it', async () => {
 
   window.__crew(0, 0, 0);
   return [
-    ok(moved > 0, 'the face gives ground as the machine works it',
-       `${face[0]} -> ${face[face.length - 1]}`),
+    ok(seen.length >= 4 && moved > 0, 'the face gives ground as the machine works it',
+       `${face[0]} -> ${face[face.length - 1]}, ${seen.length} samples of one boulder`),
     ok(!backwards, 'and never takes any back -- the hill is only ever eaten',
        face.join(' ')),
     ok(ram[ram.length - 1] > ram[0],
@@ -1259,6 +1264,11 @@ group('a full hole does not stop the band', async () => {
   openSites();
   window.__fullSites();
   window.__crew(2, 2);
+  // The gang's ladders back at their feet: at their top the ram eats the
+  // whole boulder while the band is being loaded, and the check then runs
+  // in the gap before the next one lands. What it asks is that the ram
+  // goes on working once the hole is full, not how fast.
+  window.__levels({ rockhandPickLevel: 0, rockhandSpeedLevel: 0 });
   window.__machine('ram', { bought: true });
   window.__machine('belt', { bought: true });
   haveRock();
@@ -1286,8 +1296,8 @@ group('a full hole does not stop the band', async () => {
        `${full.stored} -> ${later.stored}`),
     ok(later.rift > full.rift, 'through the rift, because the pile itself is full',
        `${full.rift} -> ${later.rift}`),
-    ok(later.rock < full.rock, 'and the ram goes on working the rock',
-       `${full.rock} -> ${later.rock}`)
+    ok(later.rock < full.rock || later.boulderNo > full.boulderNo, 'and the ram goes on working the rock',
+       `${full.rock} -> ${later.rock}, boulder ${full.boulderNo} -> ${later.boulderNo}`)
   ];
 });
 

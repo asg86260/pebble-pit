@@ -31,7 +31,10 @@
 // each list grew with it: a step slipped in between each pair that was there
 // and one more past the old top, so a ladder reaches a little further than
 // it did. The whole-count ladders that had no room between their rungs
-// (a rockhand's bite, a crit's worth) reach further than a little.
+// (a rockhand's bite, a crit's worth) reach further than a little. The
+// quarry's pace kept its top: at forty trips a minute the walk is already
+// the floor (test/cut-pockets.test.mjs measures the cut at the top rung),
+// so a higher figure would be a rung that changes nothing.
 
 export const LADDERS = {
   // --- the bench: you --------------------------------------------------------
@@ -50,7 +53,7 @@ export const LADDERS = {
   fan:          { value: [30, 35, 40, 45, 50, 60, 70, 90, 110], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // motes/s a fan pulls
   // --- the quarry ---------------------------------------------------------------
   seam:         { value: [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // a dig, as a share of the handful a bench
-  quarrypace:   { value: [5, 8, 10, 12, 15, 20, 25, 40, 50], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // trips a minute
+  quarrypace:   { value: [5, 8, 10, 12, 15, 20, 25, 32, 40], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // trips a minute
   // --- the farm -----------------------------------------------------------------
   crop:         { value: [1, 2, 3, 4, 5, 6, 8, 10, 12], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // spores a cut
   tend:         { value: [6, 8, 10, 15, 20, 25, 30, 50, 60], dust: [750, 1000, 1500, 2000, 2500, 3500, 5000, 7500] },   // plots a minute

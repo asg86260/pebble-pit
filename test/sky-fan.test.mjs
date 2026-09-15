@@ -312,7 +312,7 @@ group('three machines are more than a bare fan can hold, and less than a full on
     });
   };
   const bare = net(0);
-  const full = net(5);
+  const full = net(LADDER);
   return [
     ok(bare.dry && full.dry, 'both stretches were measured without a shower in them',
        `bare ${bare.dry}, full ${full.dry}`),
