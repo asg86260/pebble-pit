@@ -672,7 +672,10 @@ export function refresh(el, list, headcount) {
     const what = row.querySelector('.what'), ladder = row.querySelector('.ladder');
     // The picture, on a shelf, wears the deepest coin of the next rung's bill
     // as a stroke and goes grey once the ladder is climbed: it is the rung
-    // marker (DESIGN.md, "The shelf"). Redrawn only when that changes.
+    // marker (DESIGN.md, "The shelf"). Its ink pales with the title while a
+    // coin of the bill is short, the same grey the tag goes, so a tile you
+    // cannot pay for reads as one from across the plank and not only at its
+    // price. Redrawn only when either changes.
     const pic = row.querySelector('.pic');
     if (pic) {
       const coins = full.map(([m]) => m);
@@ -680,7 +683,9 @@ export function refresh(el, list, headcount) {
                  : coins.includes('spark') ? SHELF_INK.spark
                  : coins.includes('shard') ? SHELF_INK.shard
                  : coins.includes('spore') ? SHELF_INK.spore : null;
-      if (pic.dataset.tint !== String(tint)) { pic.dataset.tint = String(tint); pic.replaceChildren(drawGlyph(glyphFor(u.key), tint)); }
+      const ink = full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
+      const drawn = `${tint}/${ink}`;
+      if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(u.key), tint, ink)); }
     }
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words

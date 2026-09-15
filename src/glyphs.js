@@ -120,8 +120,10 @@ export const inkSpan = rows => {
 // the outside of the shape only. Outside is found by flooding from the margin,
 // so a hole in the shape -- the carter's window, the belt's slots -- stays
 // white rather than filling with color. `tint` null is no stroke; `done` draws
-// the shape itself grey.
-export const drawGlyph = (rows, tint = null) => {
+// the shape itself grey. `ink` is the shape's own color: black, or the shelf's
+// short grey on a tile whose bill you cannot yet pay -- the stroke keeps its
+// coin either way, since it is the rung's legend and not a verdict on it.
+export const drawGlyph = (rows, tint = null, ink = '#000') => {
   const M = 2, W = CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
   const c = document.createElement('canvas');
   c.width = W; c.height = H; c.className = 'glyph';
@@ -154,7 +156,7 @@ export const drawGlyph = (rows, tint = null) => {
       if (near) g.fillRect(x, y, 1, 1);
     }
   }
-  g.fillStyle = tint === SHELF_INK.done ? tint : '#000';
+  g.fillStyle = tint === SHELF_INK.done ? tint : ink;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (solid[y * W + x]) g.fillRect(x, y, 1, 1);
   // Centered on the ink: the canvas's left edge sits on the tile's center
   // line, and this pulls it left by exactly the ink's half-width.

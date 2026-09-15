@@ -196,6 +196,13 @@
    above it, so the clock never climbs over the bill. */
 .rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: center; justify-self: auto; }
 .rows.shelves > .tile .tag .short { color: #8c8c8c; }
+/* A coin short is the whole tile's news, not the tag's alone: the title pales
+   to the same grey (the glyph's ink goes with it, redrawn by the board), so the
+   plank sorts itself into what you can buy and what you are saving for from
+   across the room. Keyed off the bill and not off `:disabled`, as the cards
+   are: a climbed ladder and a site under construction are not "you cannot
+   afford this". */
+.rows.shelves > button.tile:has(.tag .short) .what { color: #8c8c8c; }
 /* A bill of three or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. */
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
