@@ -77,7 +77,9 @@ export const ROWS = [
   // The two doors with a `once`: revealed when the price is within reach.
   { key: 'unlockshack', part: 1, reach: () => { crew(); grantAll(); } },
   { key: 'unlockfarm', part: 1, reach: () => { hands(); window.__answered('props'); grantAll(); } },
-  { key: 'unlockquarry', part: 1, reach: () => { hands(); window.__answered('props', 'net'); } },
+  // The plots first: the quarry's door waits on the farm standing (shield.js,
+  // `shieldOpened`), so the farm is opened by the crew and not by its row.
+  { key: 'unlockquarry', part: 1, reach: () => { window.__crew(3, 6, 0, 3); window.__answered('props', 'net'); } },
   { key: 'unlocktower', part: 1, reach: () => { crew(); window.__answered('props', 'net', 'arch'); } },
   { key: 'unlockcasino', part: 1, reach: () => { window.__invest(); } },
   { key: 'unlockapothecary', part: 1, reach: sites },

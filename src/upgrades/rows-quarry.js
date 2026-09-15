@@ -21,7 +21,8 @@ const CAVE = site({
   // And the net's failure is what opens it: rope catches and does not hold,
   // so the yard reaches for something harder than the ground grows. The net
   // needs the farm, so the plots still come first. With the shields not
-  // doors (SHIELD_GATES) a core seen is the gate, as at the tower.
+  // doors (SHIELD_GATES) the plots standing is the gate, as the tower waits
+  // on the cut -- `shieldOpened` keeps the chain either way.
   show: () => shieldOpened('net') && S.seenCore && !S.quarryOpen,
   job: JOB.QUARRY
 });

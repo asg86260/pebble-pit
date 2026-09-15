@@ -28,7 +28,7 @@ import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from 
 import { domeRising, domeSpot, domeOrbitR, pourDome } from './shield.js';
 import { rand } from './rng.js';
 import { critRoll } from './crit.js';
-import { critBoost, sparkBoost } from './apothecary.js';
+import { critBoost, sparkBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
@@ -169,8 +169,31 @@ function descend(w) {
 export const wizMs = () => Math.max(120, WIZ_MS / Math.pow(STEP, S.wizSpeedLevel || 0));
 export const wizBite = () => 1 + (S.wizPowerLevel || 0);
 
+// A body coming down for its dose: a glide to its own spot on the ground, then
+// standing there until the stirrer's hand reaches it. The stirrer walks to
+// where the wizard stands, and the wizard stands on the ground under the ring
+// rather than wherever on the ring it happened to be -- the far side of the
+// ring can be over a roof or the hole -- so the hand-off is on ground both of
+// them can stand on.
+function landForDose(w) {
+  const foot = walkY(w.x + WORKER / 2);
+  const d = (w.spot ?? underMeteor()) - w.x;
+  const pace = WIZ_RISE * 2 * frames();
+  w.cell = null; w.channel = false; w.pace = pace / frames();
+  if (Math.abs(d) > 1) w.x += Math.sign(d) * Math.min(pace, Math.abs(d));
+  if (w.y >= foot && Math.abs(d) <= 1) { w.y = foot; w.aloft = false; w.pace = 0; return; }
+  w.y = Math.min(foot, w.y + pace);
+  w.aloft = w.y < foot;
+}
+
 export function stepWizard(w, now) {
   if (w.aloft) trail(w, now);
+
+  // A stirrer is on its way with a dose (apothecary.js, `doseComing`), and a
+  // body on the ring cannot be handed anything. Down for it, and back up
+  // once it is drunk. Not mid-dome: the dome is a call, and the pour is not
+  // dropped for a drink; the stirrer waits it out under the ring.
+  if (doseComing(w) && !domeRising()) { landForDose(w); return; }
 
   // No hat, no flying. The hat is the job -- see the tower -- so a body put on
   // this before the tower has finished one stands under the meteor and waits for

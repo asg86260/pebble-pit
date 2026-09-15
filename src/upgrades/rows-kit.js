@@ -105,7 +105,8 @@ const ladder = t => isFinite(ceiling(t));
 // and the lip's kit, the net the plots', the arch the cut's. A yard that
 // already owns kit keeps the row whatever the sky has said -- a finished set
 // never leaves the board it stands on. With the shields not doors
-// (SHIELD_GATES) every trade is learned from the start.
+// (SHIELD_GATES) a trade is learned once the place before its station stands
+// (`shieldOpened`), which the station's own OPEN gate below already implies.
 const learned = t => taught(t) > 0 || shieldOpened(t.shield);
 
 export const KIT_ROWS = TRADES.map(t => ({

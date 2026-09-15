@@ -34,6 +34,8 @@ feature lives in DESIGN.md.
 - The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).
 
 - A rockhand with no rock to work stands where it is instead of marching off across the yard (test/rock.test.mjs).
+- The mana brew reaches the wizards: a wizard comes down off the ring for its dose, drinks it on the ground, and flies back up with its plume showing (test/mana-brew.test.mjs).
+- "Build the quarry" and "discover the tower" wait their turn again: the farm opens the quarry's door and the quarry the tower's, instead of all three arriving with the first core (test/door-chain.test.mjs).
 
 ## v0.2.1 — 2026-09-15
 

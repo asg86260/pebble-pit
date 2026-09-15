@@ -57,7 +57,7 @@ import { windAt } from './wind.js';
 import { CRAFT, craftY, crewed, working } from './balloon.js';
 import { mineMs, capacity, mineRate, rockhandMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
-import { boiling as apothBoiling } from './apothecary.js';
+import { boiling as apothBoiling, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
 // The floor, a column at a time: how many grains are lying in each, and how
@@ -415,6 +415,11 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   lent: [...(S.lent || [])],
   aloft: S.workers.filter(w => w.aloft).length,
   wizardY: S.workers.filter(w => w.type === TYPE.WIZARD).map(w => Math.round(w.y)),
+  // A wizard down on the ground for a dose, with the stirrer nearly at it:
+  // the `manabrew` scene runs to this frame, so the shot is the two of them
+  // meeting rather than a body alone on the ground.
+  doseMeeting: S.workers.some(w => w.type === TYPE.WIZARD && !w.aloft && doseComing(w) &&
+    S.workers.some(s => s.type === TYPE.STIR && s.dealTo === w && Math.abs(s.x - w.x) < 240)),
 
   // The smog, and the house that scrubs it.
   smog: smogReport(),

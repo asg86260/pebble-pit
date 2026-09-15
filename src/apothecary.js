@@ -377,6 +377,10 @@ const potOf = w => stirrers().indexOf(w);
 // body may not have is two of the same kind.
 const buffable = (w, key) => {
   if (w.type === TYPE.STIR) return false;
+  // A body up in a balloon does not come down for a drink the way a wizard
+  // does (wizard.js, `landForDose`); a stirrer waiting under the basket would
+  // stand there for the whole ride.
+  if (w.craft != null) return false;
   const t = tonicOf(key);
   if (!t || !takesTonic(w, t)) return false;
   return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);
@@ -398,6 +402,15 @@ function pickTarget(self, key, skip) {
   return pool.reduce((best, w) =>
     Math.abs(w.x - door) < Math.abs(best.x - door) ? w : best);
 }
+
+// Whether a stirrer is on its way to this body with a dose in hand. The one
+// body that cannot be handed anything where it works is the wizard, four
+// hundred pixels up on the ring, and it comes down for its dose (wizard.js
+// reads this). Derived from the stirrers rather than flagged on the body: the
+// round already copes with a target that has gone, and a flag it forgot to
+// clear would be a wizard grounded for good.
+export const doseComing = w =>
+  S.workers.some(s => s.type === TYPE.STIR && s.holding > 0 && s.dealTo === w);
 
 // The dose reaches the body: the buff lands here, when the stirrer arrives, and
 // not before.
@@ -458,6 +471,11 @@ export function stepStirrer(w) {
     w.y = walkY(w.x + WORKER / 2);
     const d = t.x - w.x;
     if (Math.abs(d) < WORKER) {
+      // A body in the sky is not in reach, whatever its x says. The dose was
+      // handed up four hundred pixels to a wizard on the ring, which is the
+      // hand-off nobody could see and the buff nobody believed. The stirrer
+      // stands under it and waits; the wizard is on its way down (`doseComing`).
+      if (t.aloft) { w.face = Math.sign(d) || w.face || 1; return; }
       deal(w, t, key);
       w.holding--;
       // Still loaded: straight on to the next body, without the walk home. This
@@ -581,10 +599,13 @@ export const brewFrac = () => {
 export function stepDoseMotes(dt) {
   for (const w of S.workers) {
     if (!doseLive(w)) { w.moteAt = 0; continue; }
-    // Nothing to see through a wall, or off a body in the air. Read off the
-    // body's own fields rather than by asking the lab and the house, which
-    // would be this module importing half the yard to draw a mote.
-    if (w.inside || w.aloft || w.lifted || w.falling) continue;
+    // Nothing to see through a wall, or off a body in your hand or falling.
+    // A body flying is a body in plain view, and the plume is the one sign
+    // the dose is on it: a dosed wizard with no plume was a mana brew nobody
+    // could tell had been drunk. Read off the body's own fields rather than by
+    // asking the lab and the house, which would be this module importing half
+    // the yard to draw a mote.
+    if (w.inside || w.lifted || w.falling) continue;
     const at = now();
     if (at < (w.moteAt || 0)) continue;
     w.moteAt = at + DOSE_MOTE_MS;

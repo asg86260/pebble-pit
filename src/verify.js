@@ -58,6 +58,7 @@ const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
+import { now } from './clock.js';
 import { JOB } from './jobs.js';
 
 // The jobs the roster is made of, and the count on S that owns each. This is the
@@ -106,6 +107,8 @@ const sunkSince = new WeakMap();
 const FLOAT = WORKER;
 const FLOAT_FRAMES = BURIED_FRAMES;
 const floatSince = new WeakMap();
+// How many doses each body was under last frame (rule 11).
+const dosesLast = new WeakMap();
 
 // How far off the column under its middle a body in the cut may stand (rule 10).
 // A course of the floor is a cell, and a course was the whole of the 2026-09-14
@@ -253,6 +256,22 @@ export function verifyWorld() {
            `${who(w)} wears ${JSON.stringify(w.kitOf)}`);
     if (w.type && !JOB_OF[w.type])
       fail('a body is doing a job the roster does not have', `${who(w)}`);
+
+    // --- rule 11: a dose is handed over on the ground ---------------------------
+    // A dose lands when a stirrer's hand reaches the body (apothecary.js,
+    // `deal`), and a hand does not reach four hundred pixels up. The stirrer
+    // used to deal by x alone, so a wizard on the ring was dosed from the ground
+    // under it -- the hand-off nobody could see and the buff nobody believed.
+    // Counted on the frame the list grows, so a dose that merely wears off or
+    // is refreshed says nothing. "In the sky" is the feet a body's height or
+    // more over the ground line, not the flag: a wizard that drank and lifted
+    // off in the same frame ends it flagged aloft with its feet on the ground.
+    // A body seen for the first time is only written down: a reload stands
+    // every body up afresh, doses and all, and that is not a hand-off.
+    const dosesNow = (w.doses || []).filter(d => d.until > now()).length;
+    if (dosesLast.has(w) && dosesNow > dosesLast.get(w) && w.aloft && gy - (w.y + WORKER) > WORKER)
+      fail('a dose was handed to a body in the sky', `${who(w)} carries ${dosesNow}`);
+    dosesLast.set(w, dosesNow);
 
     // --- rules 1 and 2: what is underfoot ---------------------------------------
     // Both of them are about a body *standing* somewhere, and there are four

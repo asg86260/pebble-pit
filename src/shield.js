@@ -69,10 +69,20 @@ export const KINDS = {
 export const shieldKind = () => S.shield && KINDS[S.shield.kind];
 export const shieldUp = () => !!S.shield && S.shield.laid >= KINDS[S.shield.kind].pieces;
 export const shieldDone = kind => S.shieldsDone.includes(kind);
-// Whether the door a shield opens is open: the shield has failed, or the
-// shields are not doors at all (SHIELD_GATES). Every station and kit gate
-// reads this rather than `shieldDone`, so the pacing is one knob.
-export const shieldOpened = kind => !SHIELD_GATES || shieldDone(kind);
+// Whether the door a shield opens is open: the shield has failed, or -- with
+// the shields not doors at all (SHIELD_GATES) -- the place before it stands.
+// Every station and kit gate reads this rather than `shieldDone`, so the
+// pacing is one knob.
+//
+// The second half is the chain the shields carried, kept without them: props
+// -> farm -> net -> quarry -> arch -> tower. Turning the gates off used to
+// answer yes to everything, and a single core then put the farm, the quarry
+// and the tower on the bench together -- the spoiler the doors are ordered to
+// avoid (rows-quarry.js: "each one is a surprise that the last one earns").
+const BEFORE = { props: () => true, net: () => S.farmOpen,
+                 arch: () => S.quarryOpen, dome: () => S.towerOpen };
+export const shieldOpened = kind =>
+  SHIELD_GATES ? shieldDone(kind) : (BEFORE[kind] || (() => true))();
 
 // The top of whatever is standing: the lid's upper course, the arch's crown.
 // One height for every kind, because what a shield is *for* is the same in all

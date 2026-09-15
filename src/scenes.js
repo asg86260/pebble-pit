@@ -404,6 +404,27 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(2, 5);
                  window.__dose(TYPE.HAUL, 'brace'); window.__dose(TYPE.HAUL, 'strong');
                  window.__dose(TYPE.ROCK, 'stew'); window.__fast(12); window.__look(st().pitX - 620); } },
+  // The mana brew on its way to a wizard: the pot lit, the stirrer out with
+  // the vial, and the wizard called down off the ring for it -- landing at its
+  // spot under the star while the stirrer walks up. Run to the frame the
+  // stirrer is nearly at it, so the shot is the two of them meeting.
+  manabrew: { about: 'the crew', say: 'a wizard coming down off the ring for its mana brew',
+    run: () => { rich(); window.__crew(3, 3, 5, 7, 0, 2);
+                 window.__buy('unlockapothecary'); window.__finish();
+                 window.__pot('gleam'); window.__assign(JOB.STIR, 1);
+                 for (let i = 0; i < 240 * 60; i++) {
+                   window.__fast(1 / 60);
+                   const s = st();
+                   if (s.doseMeeting) break;
+                 }
+                 window.__look(st().meteorX - st().viewW / 2); } },
+  // ...and drunk: the plume off a dosed wizard back up on the ring.
+  manabrewup: { about: 'the crew', say: 'a dosed wizard back on the ring, plume and all',
+    run: () => { rich(); window.__crew(3, 3, 5, 7, 0, 2);
+                 // dosed on the ground, before the climb -- a dose is never
+                 // handed to a body in the sky (verify.js, rule 11)
+                 window.__dose(TYPE.WIZARD, 'gleam'); window.__fast(30);
+                 window.__look(st().meteorX - st().viewW / 2); } },
 
   // --- the bench --------------------------------------------------------------
   // The call to build the bench, standing over the bare patch it will go on.
