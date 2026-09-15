@@ -103,7 +103,7 @@ export const GLYPH_OF = {
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
   // the shack
-  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet', 'plus'], ram: ['ram'], tuneram: ['ram', 'plus'],
+  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],
   // the quarry
   blaster: ['lamp', 'plus'], quarrybench: ['shovel', 'plus'], seam: ['ore', 'plus'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],
   // the farm
