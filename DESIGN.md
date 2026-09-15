@@ -9955,3 +9955,125 @@ is wider. One thing the design said that is not built: a body stepping
 along the patch does not step along the glyph's foot -- the hands stand by
 their place in the row. The check is "a hand on a tile being built swings
 with the body at the site" in `selftest/boards.js`.
+
+## Three brews, one a coin, read per trade (design, not built)
+
+*(The owner, 2026-09-15: "i think we have 3 brews: crops, ore, and spark
+cost. crop speeds up production times and hauler pace, and wizard spells.
+ore brew is strength, more resources made at once, haulers haul more,
+wizards spells are stronger. spark brew boosts crit rate.")*
+
+### The bargain
+
+The book has five recipes today and the recipe decides who drinks it: the
+stew and the bracing tonic for everyone who swings, the strong brew for
+whoever carries, the speed brew for haulers only, the mana brew for wizards
+only. Five recipes, five potency ladders, five shelves, and a "who is it
+for" list under each pot that has to be filtered by the recipe on it -- a
+pot on stew cannot favor the haulers, a pot on the speed brew has nobody to
+favor. The menu was built to make committing to a recipe the choice
+(item 14); what it actually asks is "which trade do I want to help", asked
+twice, once as the brew and once as the favor.
+
+Redone as **three brews, one a coin, each one axis of a body's day, and every
+body reads the axis in its own trade's terms.** The brew is *what* you want
+more of; the favor under the pot is *who*. Those are the two questions a
+player actually has, and now each is asked once.
+
+| brew | reagent | axis | rockhand | quarrier | farmhand | hauler | wizard | purifier |
+|---|---|---|---|---|---|---|---|---|
+| **hearty stew** (green) | crop | speed | swings sooner (`rockhandMs`) | beats sooner (`beatMs`) | tends and cuts faster (`tend`, `CUT_MS`) | walks faster (`haulSpeed`) | casts sooner (`wizMs`) | scrubs faster |
+| **strong brew** (blue) | crop + ore | strength | a bigger bite a swing | more shard a beat (`findShards`) | more crop a harvest | a bigger armful (`load`) | more spark a bolt (`wizBite`) | more cleaned a pass |
+| **bracing tonic** (red) | crop + spark | crit | +points on the swing's roll | +points on the beat's roll | +points on the harvest's roll | -- | +points on the bolt's roll | -- |
+
+Crop stays the base of every recipe -- the green drain the whole design
+wants. The reagent is the coin the axis is about: ore for strength because
+strength is more ore, sparks for crit because a crit is a strike of luck and
+sparks are the machines' coin (CLAUDE.md, "Decided"). Nothing is priced in
+dust: dust is the coin every ladder already takes, and a brew is a running
+cost, not a rung.
+
+The bracing tonic reaches only the trades that roll: haulers and purifiers
+have no crit and take none, and the picker says so by leaving them off that
+pot's list. That is the one exception, and it is honest -- a "+8 crit" on a
+body that never rolls would be a dose walked out for nothing. The other two
+brews reach every trade there is.
+
+### What the yard already has, and what is new
+
+Speed and strength are levers the game already pulls, mostly. `workBoost`
+shortens the rockhand's, quarrier's and farmhand's clocks; `paceBoost` is
+the hauler's legs; `carryBoost` is the hauler's armful; `sparkBoost` is the
+wizard's bolt; `critBoost` is everyone's roll. The redesign is a
+re-mapping, not a new mechanism: two readers, `speedBoost(w)` and
+`strengthBoost(w)`, each `1 + tonicVal` of the one dose of that kind on the
+body, and the trade decides which clock or which yield it multiplies --
+the same shape as `workBoost` today, read at the same call sites. New call
+sites, each one line: the wizard's cadence (`wizMs` at the cast), the
+rockhand's and quarrier's bite, the farm's yield at harvest, and the
+scrubbing house's rate and pass, which take no tonic at all today. The
+purifier's numbers go through `inScrub()` -- a body through the door -- so
+the walk still decides.
+
+`tonicGain` says the effect per row as it does now, but the picker's row
+can no longer say "+25% work" for everyone: it says the axis -- "+25%
+faster", "+25% stronger", "+8 crit" -- and the favor rows under it say the
+trade. What "faster" means for a wizard is the wizard's business.
+
+### The picker's "for" list
+
+With every brew reaching every trade, the favor list is the same list under
+every pot, so it stops being filtered by the recipe (bar the bracing
+tonic's two absentees). **Every trade shows, including ones the yard has no
+station for yet**, dimmed and not pickable, with no count -- so the list
+under a pot reads as what the building could do, and a player who has not
+broken the quarry yet sees that the stew will reach quarriers when there
+are any (the owner, 2026-09-15: the give-to list "should show roles the
+player doesn't have unlocked yet"). Today's rule hides any job nobody is on
+(`markFor`, `c.of > 0`), which hid the same rows and said nothing about
+why. A trade with a station and nobody on it shows live with `0/N`, as
+now.
+
+### Ladders and the shelf
+
+Three potency ladders, one a brew, in bands like every ladder (`tierRows`,
+`named` bands, lists in `config/rungs.js` -- `potency-stew`,
+`potency-strong`, `potency-brace`). The two building ladders (dose length,
+doses a brew) stay as they are. The shelf has three planks.
+
+### Migration
+
+A save carries the five keys; `migrateApothecary` folds them:
+
+| old | new | potency |
+|---|---|---|
+| stew, swift | stew | max of the two rungs |
+| strong, gleam | strong | max of the two rungs |
+| brace | brace | as is |
+
+Pots set to a folded key are set to its new key; shelf stock is summed
+across the folded keys; a live dose on a body is renamed and keeps its
+clock. Max, not sum: a player who climbed both the speed and the stew
+ladder bought two things that are now one thing, and the deeper of the two
+is what they are owed. `S.potency` keeps its shape (a rung a key), so
+nothing new goes on `S`.
+
+### Checks
+
+- `test/pot-prefer.test.mjs`: every pot on the stew offers every trade; a
+  pot on the bracing tonic offers no haulers or purifiers; a trade with no
+  station is offered dimmed and a pick on it is refused.
+- `test/apothecary-brews.test.mjs` (new): buy it like a player -- a pot set
+  to the strong brew, a hauler's `load` is bigger under it and a wizard's
+  bolt is worth more; a pot on the stew, the same wizard casts sooner and a
+  hauler walks faster; a five-key save folds as the table says
+  (`test/fixtures/` gets one).
+- `test/shop-rows.mjs` gets the three potency rows and loses two.
+
+### Not decided here
+
+- Whether the bracing tonic's color is red (the spark's) or stays purple.
+  Red is the machines' color and a spark-priced brew arguably owns it; the
+  table above says red.
+- The strength brew on the farm: more crop a harvest, or a plot ripening
+  fuller. The table says a harvest.
