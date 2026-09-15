@@ -12,11 +12,10 @@
 //   repose                               optional: heaps stand up instead of spreading flat
 //   awake, awakeOf, awakeN, awakeList    which columns are still moving; see below
 //
-// The four `awake*` fields are this file's own bookkeeping and nothing outside
-// it touches them, but a new grid should still declare them empty in its object
-// literal rather than let them be added here on the first grain -- a grid object
-// is read a hundred thousand times a frame and growing its shape late costs more
-// than the whole of what they save. See `floor` in state.js.
+// The four `awake*` fields are this file's own, but a new grid should still
+// declare them empty in its object literal: a grid object is read a hundred
+// thousand times a frame and growing its shape late costs more than they
+// save. See `floor` in state.js.
 //
 // Cells hold a shade, 1..SHADES.length, or 0 for empty. Anything above that is
 // for the owner to mean what it likes by (the pit puts cores in its pile).
@@ -26,37 +25,26 @@ import { rand } from './rng.js';
 
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 
-// The perf gate's counters (test/perf-gate.test.mjs; PERF.md section 8). Two
-// things that were once most of a frame -- `ways()` rebuilt over and over,
-// `addGrain` searching the whole floor for a column with room -- are counted
-// per frame rather than timed, because a count is the same on a quiet machine
-// and a loaded one and a millisecond is not. Published on `globalThis` so the
-// check reads the live module's count and not a second instance's (CLAUDE.md,
-// "Anything drawn"). `route.js` adds to `ways`; the other two are added to in
-// `addGrain` below: `grains` is how many grains were dropped in this frame,
-// which is what `grainCols` is a multiple of.
+// The perf gate's counters (test/perf-gate.test.mjs): counted per frame, not
+// timed, because a count is the same on a loaded machine. Published on
+// `globalThis` so the check reads the live module's count and not a second
+// instance's. `route.js` adds to `ways`; `addGrain` adds to the other two.
 globalThis.__perf = { ways: 0, grainCols: 0, grains: 0 };
 
-// A cell holds a shade of dust, or something that is not dust at all: a core,
-// a shard or a spore. They live in the same plots and move the same way;
-// what they are not is worth one dust.
+// A cell holds a shade of dust, or something that is not dust at all (a core,
+// a shard, a spore). They move the same way; they are not worth one dust.
 export const isDust = v => v > 0 && v <= SHADES.length;
 
-// Shade reads how much rock is left, relative to that rock's own thickness: a
-// rock is black where it is at full thickness and pales as it is worn through.
-// So rock 1, one sheet everywhere, is solid black, and so is the dust off it.
-// Nothing of ours is ever drawn over the rock -- the crew stand on top of it and
-// the spoil lands to either side of it -- so black on black never comes up.
+// Shade reads how much rock is left, relative to that rock's own thickness:
+// black at full thickness, paling as it is worn through. Nothing of ours is
+// ever drawn over the rock, so black on black never comes up.
 export const depthShade = (v, max) =>
   Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
 
 // A shade near a given one, for anything that makes dust without a reason to
-// pick a particular darkness. Spoil off the rock has a reason -- it comes out
-// the shade of the depth it was cut from, see `depthShade` -- but a machine
-// handing back what it caught has none, and paying out on one fixed tone gave
-// a heap that was a flat block of a single grey where every other pile in the
-// yard is mottled. Clamped, so a centre near either end of the range simply
-// leans that way instead of running off it.
+// pick a darkness: one fixed tone gives a heap that is a flat block where
+// every other pile is mottled. Clamped, so a center near either end leans
+// that way instead of running off it.
 export const shadeNear = (centre, spread = 1) =>
   Math.max(1, Math.min(SHADES.length,
                        Math.round(centre + (rand() * 2 - 1) * spread)));
@@ -65,30 +53,18 @@ export const at = (b, c, r) => b.grid[r * b.cols + c];
 
 // --- which columns are still moving -------------------------------------------
 //
-// `settle` used to walk every cell of every grid every frame, asking each one
-// whether it had anywhere to fall. The yard floor is a hundred and twenty
-// thousand cells and the hole is another forty-odd thousand, and on an empty
-// yard the answer was no every single time: two thirds of a frame spent finding
-// out that nothing had happened, at sixty frames a second, for ever.
+// Sand only moves where something has just touched it, so each grid keeps
+// one flag per column. A column is woken when a cell in it or beside it is
+// written and sleeps again when a pass over it moves nothing; a settled heap
+// is not read at all. Per column because a grain leaving a cell disturbs the
+// whole column above it; the two neighbors as well so a grain can topple
+// sideways into ground that was asleep.
 //
-// Sand only moves where something has just touched it. So each grid keeps one
-// flag per column -- awake or asleep. A column is woken when a cell in it or
-// beside it is written, and it goes back to sleep the moment a pass over it
-// moves nothing. A heap that has found its angle stops being read at all, and a
-// grid nobody has touched costs one integer check.
-//
-// Per column rather than per cell, because a grain leaving a cell disturbs the
-// whole column above it -- everything up there falls a row -- and because the
-// walk is column-shaped already. Waking the two neighbours as well is what makes
-// a grain able to topple sideways into ground that was asleep.
-//
-// The flags are deliberately generous. Waking a column that did not need it
-// costs one ordinary pass and is never visible; the other way round -- a grid
-// that believes it is settled when it is not -- is dust hanging in mid-air,
-// which is the bug this whole structure has to be built so as not to have. So
-// anything that writes cells behind `put`'s back says so out loud (`recount`,
-// `wakeGrid`), and a grid whose cells have been swapped out from under it
-// wholesale is spotted here and woken end to end without being asked.
+// The flags are deliberately generous: waking a column that did not need it
+// costs one pass, while a grid that believes it is settled when it is not is
+// dust hanging in mid-air. Anything that writes cells behind `put`'s back
+// says so (`recount`, `wakeGrid`), and a grid whose cells were swapped out
+// wholesale is spotted here and woken end to end.
 function awakeCols(b) {
   if (b.awake && b.awake.length === b.cols && b.awakeOf === b.grid) return b.awake;
   b.awake = new Uint8Array(b.cols);
@@ -105,45 +81,32 @@ export function wake(b, c) {
   for (let n = lo; n <= hi; n++) if (!a[n]) { a[n] = 1; b.awakeN++; }
 }
 
-// The whole grid: for anything that has written cells without going through
-// `put`, or that has changed the rules the last pass settled against -- a new
-// ceiling, a strip of ground that has just opened, a save being unpacked.
+// For anything that has written cells without going through `put`, or has
+// changed the rules the last pass settled against (a new ceiling, a strip
+// just opened, a save being unpacked).
 export function wakeGrid(b) {
   if (!b.cols) return;
   awakeCols(b).fill(1);
   b.awakeN = b.cols;
 }
 
-// How many columns `settle` has actually looked at. Only a check reads this: it
-// is how "an untouched yard does no work" is asserted as a fact about the code
-// rather than as a stopwatch reading, which would flake on a busy machine.
+// How many columns `settle` has looked at, so "an untouched yard does no
+// work" is a fact about the code and not a stopwatch reading.
 let work = 0;
 export const settleWork = () => work;
 export const resetSettleWork = () => { work = 0; };
 
-// A grid may keep a live count of how many of its cells are occupied. Give it an
-// `n` and this maintains it; leave `n` undefined and nothing is counted.
+// A grid may keep a live count of its occupied cells (`n`) and of its dust
+// (`d`); leave them undefined and nothing is counted. The pit asks "is there
+// room" thousands of times a frame, and the counter of banked dust is the
+// wrong answer by exactly one core. What makes a second copy of a fact safe
+// is the alarm: everything that writes cells behind `put`'s back says so
+// (`recount`, `fillFlat`), and verify.js rule 7 fails on the frame a ledger
+// and its cells disagree.
 //
-// It exists because the pit has to ask "is there room in the hole" thousands of
-// times a frame, and walking sixty thousand cells to answer that is not on. It
-// used to ask the *counter* instead -- how much dust you have banked -- which is
-// nearly the same number and was wrong in exactly the way that matters: a core
-// in the pile takes a cell and is not dust, so the hole filled up one grain
-// before the counter said it had, the heap over the mouth never unlocked, and
-// the crew stood at the lip throwing dust at a brim that would not take it.
-//
-// The yard floor keeps one for the same reason from the other end: "how much
-// dust is lying about" was two full-grid walks -- a hundred and sixty thousand
-// cells -- four times a second, for a number nothing needed to the grain. What
-// makes a second copy of a fact safe is not care at the handful of places that
-// write cells behind `put`'s back but the alarm that catches them when they are
-// missed: every one of those says so out loud (`recount`, or the reset in
-// `fillFlat` below), and verify.js rule 7 walks both grids once a second and
-// fails on the frame a ledger and its cells disagree.
-// When each cell was last written, in frames, for a grid that keeps one -- see
-// `resizeGrid`. A grain that rolls is re-stamped where it lands, so the age is
-// how long it has lain *there*; for a settled heap that is the same thing.
-// Read by the carters' first-in-first-out pick (`HAUL_FIFO`).
+// `age` is when each cell was last written, in frames, for a grid that keeps
+// one (`resizeGrid`). A grain that rolls is re-stamped where it lands, so the
+// age is how long it has lain *there*. Read by the carters' `HAUL_FIFO` pick.
 let clock = 0;
 export const tickGrid = () => { clock++; };
 export const ageAt = (b, c, r) => b.age ? b.age[r * b.cols + c] : 0;
@@ -152,10 +115,8 @@ export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
   if (b.age) b.age[i] = v ? clock : 0;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
-  // And the dust alone, beside it. The rift asks how much dust is in the hole
-  // every frame it swallows, and `countDust` is a walk of forty thousand cells
-  // -- measured, a fifth of the endgame's whole simulation. Kept the same way
-  // `n` is and watched by the same rule.
+  // The rift asks how much dust is in the hole every frame it swallows, and
+  // `countDust` was a fifth of the endgame's whole simulation.
   if (b.d != null) b.d += (isDust(v) ? 1 : 0) - (isDust(b.grid[i]) ? 1 : 0);
   b.grid[i] = v;
   wake(b, c);                              // and this is the one place sand starts moving
@@ -174,9 +135,8 @@ export const countDust = b => {
   for (const v of b.grid) if (isDust(v)) n++;
   return n;
 };
-// The dust in a grid, off the ledger when it keeps one and by walking when it
-// does not. What the hot paths ask; `countDust` stays the walk, which is what
-// a check and verify.js rule 7 want -- the truth, not the copy of it.
+// Off the ledger when the grid keeps one, by walking when not. `countDust`
+// stays the walk: a check and verify.js rule 7 want the truth, not the copy.
 export const dustIn = b => b.d != null ? b.d : countDust(b);
 export const grainsIn = b => b.n != null ? b.n : count(b);
 
@@ -194,31 +154,15 @@ export function topRow(b, c) {
   return -1;
 }
 
-// how high a column is allowed to stand. A grid with no ceiling has no limit:
-// this is how a bank is kept from standing up as a wall against whatever is
-// beside it, by letting it rise only as it gets further away.
+// How high a column may stand. A grid with no ceiling has no limit; a
+// ceiling is how a bank is kept from standing up as a wall.
 export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 
-// How far a grain may walk to get out from under something that is not ground,
-// in columns.
-//
-// The rule the walk is written to is "however wide the thing in the way is", and
-// the widest thing in any of these yards is the hill with the bare clearance kept
-// either side of it: at its largest that is a little over eighty columns of
-// floor. So ninety-six is that with slack, and a rock grown wider still would
-// want this raised rather than the ceiling taken off again.
-//
-// It used to have no ceiling at all, and that is the second half of the dust
-// that was arriving in heaps nobody filled. The first half was fixed above by
-// keeping a heaped grain inside its own region; this is the other one. Off the
-// left-hand end of the yard there are three hundred columns of ground that is
-// barred because nobody can walk there, and it runs to the edge of the world --
-// so a grain let go out there walked the whole way in and came to rest in the
-// first strip it met, which is the farm's. Nobody carried it and the counter
-// went up anyway.
-//
-// Past the reach the grain is simply dropped. Falling off the world is truer
-// than appearing in a heap nobody filled.
+// How far a grain may walk to get out from under something that is not
+// ground, in columns: however wide the thing in the way is, and the widest
+// is the hill with its clearance, a little over eighty columns. Past the
+// reach the grain is dropped: falling off the world is truer than appearing
+// in a heap nobody filled. A rock grown wider wants this raised.
 export const BARRED_REACH = 96;
 
 // drop one grain in at x. If that column is full or barred it goes in the
@@ -228,58 +172,23 @@ export const BARRED_REACH = 96;
 export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
   globalThis.__perf.grains++;                // the perf gate's: one grain dropped in
-  // Two different reasons a column will not take a grain, and they want two
-  // different answers.
-  //
-  // **Barred** is not ground at all: under the rock, over the mouth of the hole,
-  // over the mouth of the cut. A grain aimed there has to go somewhere, and how
-  // far it has to walk to find ground is however wide the thing in the way is --
-  // the rock and its clearance are eighty-odd columns across. So that search
-  // crosses whatever it likes on its way, and stops at `BARRED_REACH`.
-  //
-  // **Heaped** is ground that has simply reached its ceiling. That search used
-  // to be unbounded too, and it is where dust was teleporting from: a grain
-  // landing on a full patch of bare yard walked outward until it found room,
-  // which was usually the nearest station's strip, a hundred cells away. The
-  // spout paid out and the grain appeared in the farm's heap.
-  //
-  // A grain rolling off the shoulder of a heap onto the next column is a thing
-  // that happens. Travelling the length of the yard to find a hole is not, and
-  // it is worse than losing the grain, because it puts dust somewhere nobody
-  // carried it. So it looks a few cells either side and then gives up.
+  // Two reasons a column will not take a grain, with two answers. **Barred**
+  // is not ground at all (under the rock, over a mouth): the grain has to go
+  // somewhere, the search crosses whatever it likes and stops at
+  // `BARRED_REACH`. **Heaped** is ground at its ceiling: the search may spread
+  // as far as it likes inside the strip or bare ground it landed on, and never
+  // out of it, or a grain lands in a station's heap nobody carried it to.
   const barred = c => at(b, c, b.rows - 1) || (skip && skip(c));
   // (the increment is the perf gate's: one per column asked whether it has room)
   const full = c => (globalThis.__perf.grainCols++, barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1)));
   if (full(col)) {
-    // ...and it may not cross out of the ground it landed on.
-    //
-    // Distance was the wrong rule to reach for. A heap is *meant* to spread: a
-    // load tipped at the lip fills the hole end to end, and the scrubbing house's
-    // chute pays out along its own strip until the strip is full. What was
-    // actually wrong is that a grain could spread out of one kind of ground and
-    // into another -- land on a full patch of bare yard, walk outward looking for
-    // room, and come to rest in the nearest station's heap a hundred cells away.
-    // The spout paid out and the dust appeared somewhere nobody had carried it.
-    //
-    // So it spreads as far as it likes inside the strip it is in, or along the
-    // bare ground it is on, and never from one into the other. See `floor.region`.
-    //
-    // Barred ground is the exception and stays exempt from the region rule: under
-    // the rock, over the mouth of the hole, over the mouth of the cut. That is
-    // not ground at all, a grain aimed there has to go *somewhere*, and how far
-    // it must walk is however wide the thing in the way is -- which is what
-    // `BARRED_REACH` says, and it is the one limit that search does have.
     const out = barred(col);
     const from = out || !b.region ? null : b.region(col);
     const reach = out ? BARRED_REACH : b.cols;
-    // The region is asked *before* the column is, and a side that has left the
-    // region is not looked at again. `full` walks the rows of a column, and a
-    // grain landing on a heaped strip used to ask it of every column in the
-    // world on both sides -- six hundred columns of ninety rows, per grain, on
-    // the frames a driven ram was landing fifty of them. Measured, that walk was
-    // the whole of the endgame's frame spike: nothing about the break, just
-    // spoil coming down on a strip that was already at its ceiling. The strip is
-    // the only ground the grain may settle on, so the strip is the whole search.
+    // The region is asked *before* the column is, and a side that has left
+    // the region is not looked at again: `full` walks a column's rows, and
+    // asking it of every column in the world for each grain landing on a
+    // heaped strip was the whole of the endgame's frame spike.
     const inRegion = c => from === null || b.region(c) === from;
     let alt = -1, left = true, right = true;
     for (let d = 1; d <= reach && d < b.cols && (left || right); d++) {
@@ -303,23 +212,19 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   return false;
 }
 
-// One sand tick: unsupported grains fall, then slump sideways. `from`/`to` limit
-// it to a band of columns, so a very large grid can be settled a piece a frame.
-//
-// Only the awake columns of that band are walked -- see `awakeCols` above -- and
-// they are all put back to sleep before the walk starts. A column then earns its
-// next pass by having done something in this one: every move goes through `put`,
-// and `put` wakes the column it wrote and the two beside it. So a grain that
-// falls keeps its own column awake until it lands, and a grain that topples
-// sideways wakes the ground it landed on.
+// One sand tick: unsupported grains fall, then slump sideways. `from`/`to`
+// limit it to a band of columns, so a very large grid can be settled a piece
+// a frame. Only the awake columns of the band are walked, and all are put
+// back to sleep before the walk: every move goes through `put`, which wakes
+// the column it wrote and the two beside it, so a column earns its next pass
+// by having done something in this one.
 //
 // Returns how many columns it looked at, which is the cost of the call.
 export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
   const awake = awakeCols(b);
   if (!b.awakeN) return 0;                 // nothing anywhere has moved: no cell is read
-  // Taken as a list rather than tested column by column inside the row loop,
-  // because the rows are the outer loop: the band would otherwise be scanned
-  // once per row instead of once per pass.
+  // A list, because the rows are the outer loop: the band would otherwise be
+  // scanned once per row instead of once per pass.
   const cols = b.awakeList || (b.awakeList = []);
   cols.length = 0;
   for (let c = from; c < to; c++) {
@@ -335,14 +240,11 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
     for (let k = 0; k < wide; k++) {
       const c = cols[k];
       if (!at(b, c, r)) continue;
-      // A cell that is not dust at all, and is never going anywhere: the
-      // quarry keeps the rock still waiting to come out of the cut in the same
-      // grid the fallen dust lies in (see `cut` in state.js), and it supports
-      // whatever is above it exactly the way any occupied cell does -- it just
-      // must never itself be read as a grain with somewhere to fall or slide.
-      // Without this a rock cell one column shallower than its neighbour would
-      // slump sideways into the neighbour's already-open air, which is a piece
-      // of undug ground migrating to a column nobody has swung at yet.
+      // A cell that is not dust and never moves: the quarry keeps undug rock
+      // in the same grid as the fallen dust (`cut` in state.js). It supports
+      // what is above it like any occupied cell, but must never be read as a
+      // grain with somewhere to slide, or undug ground migrates to a column
+      // nobody has swung at.
       if (b.fixed && b.fixed(c, r)) continue;
       const v = at(b, c, r);
       if (!at(b, c, r - 1)) { put(b, c, r, 0); put(b, c, r - 1, v); continue; }
@@ -365,14 +267,10 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
   return wide;
 }
 
-// A big grid is too many cells to walk every frame, so it is settled a band of
-// columns at a time, picking up where it left off. The sand slumps a beat behind
-// itself, which nobody can see, and the frame cost is flat whatever the size.
-//
-// The band is still worth having now that the awake columns are the only ones
-// walked: it is what caps the cost of the one frame after a whole grid is woken
-// -- a save loading, a plot regridding, a rock landing -- so that pass is spread
-// over a few frames instead of arriving as a single hitch.
+// A big grid is settled a band of columns at a time, picking up where it
+// left off. With only awake columns walked, the band is what caps the one
+// frame after a whole grid is woken (a save loading, a rock landing), so
+// that pass is spread over a few frames instead of arriving as a hitch.
 export function settleSome(b, budget) {
   const band = Math.max(1, Math.min(b.cols, Math.floor(budget / b.rows)));
   const from = b.settleAt || 0;
@@ -389,7 +287,7 @@ export function fillFlat(b, n) {
   wakeGrid(b);                             // the cells went, and not through `put`
   if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);
-  const shade = 4;                         // repacked dust, middling grey
+  const shade = 4;                         // repacked dust, middling gray
   for (let r = 0; r < b.rows && n > 0; r++) {
     for (let c = 0; c < b.cols && n > 0; c++) {
       if (b.blocked && b.blocked(c)) continue;
@@ -403,10 +301,9 @@ export function fillFlat(b, n) {
 export function resizeGrid(b) {
   const want = b.cols * b.rows;
   const had = b.grid ? count(b) : 0;
-  // Called whenever the world is laid out again, which is exactly when the rules
-  // a settled column settled against may have moved under it: a station's strip,
-  // the rock's apron, the ceiling a bank leans to. So the whole grid gets one
-  // more look even when the box has not changed size at all.
+  // Called whenever the world is laid out again, which is when the rules a
+  // column settled against may have moved under it (a strip, the apron, a
+  // ceiling), so the whole grid gets one more look even at the same size.
   wakeGrid(b);
   if (b.grid && b.grid.length === want) return;
   b.grid = new Uint8Array(want);

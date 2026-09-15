@@ -1,30 +1,18 @@
 // The yard at rest.
 //
-// A body with nothing to do already ambles rather than standing to attention:
-// a spot to stroll to, a stand about when it gets there, then another. This is
-// what it does during the standing about, and it is the only thing in the game
-// that is purely for watching -- nothing here makes, spends or moves anything,
-// and a break that produced something would be a break you farmed.
-//
-// So the rule is strict and worth stating: **a break only ever happens to a
-// body that had stopped anyway.** A rockhand stood down because the yard is full,
-// a hauler with nothing left to fetch, a quarrier at a face it cannot tip
-// another shard off. Nobody ever downs tools to have one. The pace of the works
-// is exactly what it was before this file existed.
-//
-// What they do is drawn in cells, like everything else, and never in words: a
-// note over the head is singing, a burst is swearing, and dots going back and
-// forth between two of them is a conversation. A cigarette is the one that is
-// not a mark at all -- it is a puff of the same smoke the lab's chimney makes,
-// off a body instead of off a roof.
+// What a body does while standing about, purely for watching: nothing here
+// makes, spends or moves anything. **A break only ever happens to a body that
+// had stopped anyway.** Nobody downs tools to have one, so the pace of the
+// works is untouched. Everything is drawn in cells, never words: a note is
+// singing, a burst is swearing, dots going between two bodies is talk, and a
+// cigarette is the chimney's smoke off a body.
 
 import { P, WORKER, BREAK_WAIT, BREAK_ODDS, BREAK_LIFE, BREAK_NEAR, BREAK_BEAT } from './config.js';
 import { S } from './state.js';
 import { puff } from './puff.js';
 import { rand } from './rng.js';
 
-// What a body can be caught doing. `alone` is whether it needs somebody to do
-// it at, which is the whole of the difference between singing and talking.
+// `needs: 'mate'` is the whole difference between singing and talking.
 const KINDS = [
   { key: 'smoke', weight: 3 },
   { key: 'sing',  weight: 2 },
@@ -32,12 +20,8 @@ const KINDS = [
   { key: 'talk',  weight: 4, needs: 'mate' }
 ];
 
-// A body whose break is always the same thing. Most of the yard takes whatever
-// comes up, and the point of that is that you never know what you will catch
-// somebody at. A janitor is the other case: it is the one job that spends the
-// whole day stood at its post with nothing to do until somebody makes a mess,
-// so the standing about *is* what you see of it, and a job you mostly see idle
-// wants an idle you can recognise from across the yard. So it always smokes.
+// A body whose break is always the same thing. A janitor is mostly seen idle,
+// so its idle wants to be recognizable from across the yard.
 const HABIT = { janitor: 'smoke' };
 
 const kind = key => KINDS.find(k => k.key === key);
@@ -50,9 +34,9 @@ const pick = w => {
   return KINDS[0];
 };
 
-// Somebody else stood about within earshot, not already busy having a break of
-// their own. Earshot is short on purpose: two bodies at opposite ends of the
-// yard swapping dots would read as semaphore rather than as a conversation.
+// Somebody else stood about within earshot, not already on a break. Earshot
+// is short: two bodies at opposite ends of the yard swapping dots read as
+// semaphore.
 function mate(w) {
   let best = null, near = BREAK_NEAR;
   for (const o of S.workers) {
@@ -66,12 +50,8 @@ function mate(w) {
 }
 
 function begin(w, now) {
-  // Most turns come to nothing, and that is the whole tuning of this: what makes
-  // a cigarette worth noticing is that the last four times you looked over there
-  // nobody was having one.
-  // -- unless the break is the body's habit, which is not a thing you catch it
-  // at. A janitor smoking once in three turns would read as a janitor doing
-  // nothing, which is exactly what it looks like anyway.
+  // Most turns come to nothing; that rarity is what makes a cigarette worth
+  // noticing. A habit is not a thing you catch a body at, so it always fires.
   if (!HABIT[w.type] && rand() > BREAK_ODDS) return sit(w, now);
   const k = pick(w);
   const other = k.needs === 'mate' ? mate(w) : null;
@@ -80,29 +60,24 @@ function begin(w, now) {
   w.brk = { kind: k.key, until, next: now, turn: true, with: other || null };
   if (other) {
     other.brk = { kind: 'talk', until, next: now, turn: false, with: w };
-    // Which way they are standing is not set here. Nothing on a body draws a
-    // front -- see `MOVES` in crew.js -- and the one thing facing does draw, the
-    // side a cart trails on, is measured off the ground the body last covered.
-    // A pair turning to look at each other was two more writers on a field
-    // nobody could see the effect of.
+    // Facing is not set here: nothing on a body draws a front (`MOVES` in
+    // crew.js), and the one thing facing draws, the side a cart trails on, is
+    // measured off the ground the body last covered.
   }
 }
 
 // nothing to do and nobody to do it with: try again in a while
 const sit = (w, now) => { w.brkAt = now + BREAK_WAIT * (0.5 + rand()); };
 
-// One body, one frame of its break. `say` is a mark standing over its head with
-// a moment left to live, and the drawing knows nothing else about any of this.
+// One body, one frame of its break. `say` is a mark over its head with a
+// moment left to live; the drawing knows nothing else about any of this.
 function stepOne(w, now) {
   const b = w.brk;
   if (now >= b.until) { end(w, now); return; }
   if (now < b.next) return;
 
   if (b.kind === 'smoke') {
-    // the same smoke the chimney makes, smaller, off the side of its head
-    // A smaller puff than a chimney's and fewer motes in it -- it is a cigarette
-    // -- but a puff all the same, drawn on the same beat as everything else that
-    // smokes here.
+    // the chimney's puff, smaller and with fewer motes, off the side of its head
     puff(w.x + WORKER + P * 0.5 * (w.face || 1) - (w.face > 0 ? 0 : WORKER), w.y + P,
          { s: 0.6, n: 2, flag: 'cig' });
     b.next = now + BREAK_BEAT * 1.6 * (0.8 + rand() * 0.6);
@@ -110,9 +85,7 @@ function stepOne(w, now) {
   }
 
   if (b.kind === 'talk') {
-    // They take it in turns. A pair both saying something at once is two people
-    // talking over each other, which is a thing that happens and not a thing
-    // that reads.
+    // They take it in turns; both at once does not read.
     const o = b.with;
     if (!o || !o.brk || o.brk.with !== w) { end(w, now); return; }
     if (b.turn) {
@@ -144,15 +117,14 @@ function end(w, now) {
   if (o) sit(o, now);
 }
 
-// One frame of the whole yard's idling. It runs after the crew have been
+// One frame of the whole yard's idling. Runs after the crew have been
 // stepped, so `resting` is this frame's answer and not the last one's.
 export function stepBreaks(now) {
   for (const w of S.workers) {
     if (w.say && now >= w.say.until) w.say = null;
-    // Back at work. Whatever it was doing stops, but the clock on the *next*
-    // one is left alone: a hauler's standing about comes in a few seconds at a
-    // time between strolls, and a timer reset every time it took a step would
-    // be a timer that never came round at all.
+    // Back at work: the break stops, but the clock on the *next* one is left
+    // alone. A hauler rests a few seconds at a time between strolls, and a
+    // timer reset on every step would never come round.
     if (!w.resting) {
       if (w.brk) drop(w);
       continue;
