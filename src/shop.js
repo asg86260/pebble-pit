@@ -607,6 +607,16 @@ function wearBadge(line, words, n) {
   }
 }
 
+// The picture on a shelf tile, redrawn only when its two inks change. A row
+// for sale wears the deepest coin of its bill as a stroke and pales while it
+// is short (see below); a dial or a job row spends nothing and wears plain ink.
+function wearGlyph(row, key, tint, ink) {
+  const pic = row.querySelector('.pic');
+  if (!pic) return;
+  const drawn = `${tint}/${ink}`;
+  if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key))); }
+}
+
 export function refresh(el, list, headcount) {
   if (el._titled) wearBadge(el._titled.el, el._titled.el.dataset.name, el._titled.heads());
   for (const row of el.children) {
@@ -630,6 +640,7 @@ export function refresh(el, list, headcount) {
         grey(row.querySelector('.more'), u.hi());
       }
       sayNote(row, u);
+      wearGlyph(row, u.key, null, '#000');
       continue;
     }
     if (row.dataset.job) {
@@ -638,6 +649,7 @@ export function refresh(el, list, headcount) {
       grey(row.querySelector('.less'), u.count() < 1);
       say(row.querySelector('.count'), sayCount(u.key, u.count()));
       grey(row.querySelector('.more'), u.spare() < 1);
+      wearGlyph(row, u.key, null, '#000');
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
@@ -687,7 +699,7 @@ export function refresh(el, list, headcount) {
     // to press reads as one from across the plank and not only at its price.
     // Redrawn only when either changes.
     const waits = u.waits?.() || '';
-    const pic = row.querySelector('.pic');
+    const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
     if (pic) {
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done
@@ -695,8 +707,7 @@ export function refresh(el, list, headcount) {
                  : coins.includes('shard') ? SHELF_INK.shard
                  : coins.includes('spore') ? SHELF_INK.spore : null;
       const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
-      const drawn = `${tint}/${ink}`;
-      if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(u.key), tint, ink, badgeFor(u.key))); }
+      wearGlyph(row, u.key, tint, ink);
     }
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words

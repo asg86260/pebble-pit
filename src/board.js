@@ -391,7 +391,13 @@ function pinWidth() {
     let most = 0, run = 0;
     for (const el of shelf.children) {
       if (el.classList.contains('sect')) run = 0;
-      else if (el.classList.contains('tile') && !el.classList.contains('goal')) most = Math.max(most, ++run);
+      else if (el.classList.contains('tile') && !el.classList.contains('goal')) {
+        // A tile is a slot wide unless the stylesheet says it spans more (a
+        // picker does), read off the style rather than kept as a second list.
+        // `grid-column: span 2` lands on the start line; the end computes to auto.
+        const span = /span (\d+)/.exec(getComputedStyle(el).gridColumnStart);
+        most = Math.max(most, run += span ? +span[1] : 1);
+      }
     }
     const range = document.createRange();
     for (const el of shelf.querySelectorAll(':scope > .sect, :scope > .empty')) {
