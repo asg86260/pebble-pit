@@ -58,7 +58,7 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
     ok(full.plots === 7, 'and the whole plot is broken', `${full.plots}`),
     // The pick ladder is three whole-pixel rungs since wave 7; speed is the
     // house ladder, nine rungs in three cards.
-    ok(full.pick === 3 && full.speed === LADDER, "and the rock's kit is bought out",
+    ok(full.pick === LADDER && full.speed === LADDER, "and the rock's kit is bought out",
        `pick ${full.pick}, speed ${full.speed}`),
     ok(quarry && quarry.cap === 5, 'so the cut has five places to stand',
        `cap ${quarry && quarry.cap}`),
@@ -87,12 +87,16 @@ group('a machine is stopped by taking its tender off', async () => {
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
   buyBuilt('jaw');
-  window.__fast(12);
+  // The heap swept between readings: nobody here is carting, and a jaw fills
+  // the quarry's heap in eight seconds and stops for that -- which is the
+  // pile-full rule doing its job, and not what this check is about.
+  const spell = s => { window.__clearFloor(); window.__fast(s); };
+  spell(12);
   const running = state();
 
   // Off, through the roster's own button and not a hook that reaches past it.
   window.__assign('quarriers', -1);
-  window.__fast(10);
+  spell(10);
   const off = state();
 
   // The heap swept before the tender comes back: a jaw with nowhere to put
@@ -101,7 +105,7 @@ group('a machine is stopped by taking its tender off', async () => {
   // was full by here. This group is about the tender, not the heap.
   window.__clearFloor();
   window.__assign('quarriers', 1);
-  window.__fast(10);
+  spell(10);
   const back = state();
   window.__crew(0, 0, 0);
   return [

@@ -62,12 +62,13 @@ group('a refresh does not send the gang back down the ladder', async () => {
   yard.restore();
   const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
   const digging = () => gang().filter(w => w.goal === 'work').length;
-  // Down there and digging -- caught mid-dig rather than at a fixed second: at
-  // this yard's pace a whole dig is half a minute, and a fixed forty seconds
-  // landed on the frame the gang climbed out for the refill.
+  // Down there and digging, with most of the bench still to take out -- caught
+  // early in a dig rather than at a fixed second: a fixed forty seconds landed
+  // on the frame the gang climbed out for the refill, and a gang at the top of
+  // its ladder finishes a bench in well under the six seconds watched below.
   run(10);
-  runUntil(() => digging() === gang().length, 60);
-  run(2);
+  runUntil(() => digging() === gang().length && dugShare() < 0.2, 120);
+  run(1);
   const wasY = gang().map(w => Math.round(w.y));
   const wasDigging = digging();
 
@@ -213,7 +214,10 @@ group('a refresh does not hand you a second core', async () => {
     window.__jump(5);                          // the first rock with a core in it
     run(2);
     window.__next();                           // the last of it goes, the core drops
-    runUntil(() => S.coreItem && S.coreItem.rest, 20);
+    // A frame at a time: the next rock is in the air within a second of the
+    // last (ROCK_GAP_MS), and a whole-second stride lands past it with the rock
+    // alive again -- which is not the moment this save is about.
+    for (let i = 0; i < 20 * 60 && !(S.coreItem && S.coreItem.rest); i++) run(1 / 60);
     S.dirty = true;
     window.__reload();                         // and that moment is written down
 

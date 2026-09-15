@@ -92,7 +92,7 @@ import { stepDig } from '../intro.js';
 import { stepTender } from './tenders.js';
 import { outOfYard } from './records.js';
 import { dispossessed, stepKit } from './kitwalk.js';
-import { onYard, stand, surfaceUnder } from './body.js';
+import { onYard, stand, surfaceUnder, duck } from './body.js';
 import { findPeak } from './rockhand.js';
 import { claims } from './hauler.js';
 import { fall, stepHat } from './falls.js';
@@ -102,9 +102,15 @@ import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
 import { sfx } from '../audio.js';
 
-// The yard is celebrating: a rock has just come off, or the next one is on its
-// way down.
-const dancing = c => c.now < S.danceUntil || S.rockFall > 0;
+// The yard is celebrating: a rock has just come off and earned a dance, the
+// rescue is done, or a shield has just stood up. The dance ends at the clock and
+// nowhere else. A fall is never a party: every fall used to be danced through
+// so that the bodies were kept clear of the footprint and off the rock, and
+// the stage below does both of those now. Reading a fall as a dance by
+// `danceUntil > 0` was wrong twice over -- the deadline goes stale-positive
+// after any fanfare, so every fall after a shield stood was danced, and a body
+// dancing under a rock the dome is holding was jigged up onto its top.
+const dancing = c => c.now < S.danceUntil;
 
 // --- the stages -------------------------------------------------------------------
 // The list from the top of this file, in order, as code. Each one is handed
@@ -333,6 +339,43 @@ const STAGES = [
     return true;
   },
 
+  // A rock on its way over a yard that is not dancing. Until every fall was a
+  // dance this could not happen, and the dance did two jobs the coming rock
+  // still needs done: it ducked every body clear of the footprint, and it kept
+  // the gang off the rock. Without it a rockhand's own work stage stands the
+  // body on the rock's top -- which is in the sky, and coming down -- and
+  // swings at it there. So a body in the footprint steps out of it, the way the
+  // dance stepped it out, and then stands where it stepped to and watches the
+  // rock come down; the gang wait the same way, with nothing to work until it
+  // lands. Everybody else has ground to work on and carries on; the footprint's
+  // columns are already spoken for (see `taken`, below).
+  //
+  // Standing until it lands, rather than being let go the frame it is clear:
+  // an idle hauler ducked to the edge strolled straight back over the line and
+  // was ducked again, a pixel in and a pixel out, for the whole of the fall.
+  // The rock landed with it a pixel inside the footprint. A body that has got
+  // out of the way stays out of the way, which is also what a person does.
+  //
+  // Asked of the zone rather than of the fall, because the zone is there from
+  // the moment the last rock dies: the next one waits in the sky until the
+  // footprint is clear (core.js), and this is the stage that clears it. A
+  // rock made the frame its predecessor died gave a gang stood in the middle
+  // of the footprint a fall's length to cross half a rock, and they lost.
+  //
+  // The gang wait on the rock being in the air, not on the zone: a scene that
+  // has the yard takes the zone away (`dropZone`) while the dome holds a rock
+  // overhead, and a rockhand let go there climbed the held rock and swung at it.
+  (w, c) => {
+    if (outOfYard(w) || w.craft || !onYard(w)) return false;
+    const coming = S.rockFall > 0;
+    if (!c.zone && !(coming && w.type === TYPE.ROCK)) return false;
+    if (c.zone && duck(w, c.zone)) w.ducked = true;
+    else if (w.type !== TYPE.ROCK && !w.ducked) return false;
+    w.lunge = 0;
+    w.y = stand(w);
+    return true;
+  },
+
   // Every station's tender, *before* the station's own work -- the rockhand's
   // included. See the first of the two ordering bugs at the top of this file.
   (w, c) => stepTender(w, c.now),
@@ -360,6 +403,11 @@ const STAGES = [
 export function updateWorkers(now, dt) {
   if (S.rockhands > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
+  // and once nothing is coming, whoever stepped out of its way is let go --
+  // here, for every body, rather than in the stage that set it, so a body
+  // some other stage owned on the frame the rock landed is not left waiting
+  // for the one after
+  if (!zone) for (const w of S.workers) w.ducked = false;
   const taken = claims();
   // And who is going for which patch of muck. Rebuilt each pass rather than kept
   // on the bodies: a shovelling body is not carrying a claim around the way a

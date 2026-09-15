@@ -39,21 +39,29 @@ group('a ladder is one card that fills, and says done at the top', async () => {
   ];
 });
 
-group('the fourth card of a ground ladder waits on the three before it', async () => {
+// The spark rung is the last rung of the same card, not a card of its own: the
+// bill deepens to everything the yard makes and the same field climbs. It was
+// `labtend`, a research card that appeared beside the finished ladder.
+group("a ground ladder's spark rung is the top of the one card", async () => {
   window.__reset();
   openSites();
   window.__invest();
   rich();
   window.__crew(1, 0);
 
-  const mult0 = shown('labtend');
-  climb('tend', TIER_OWN);
-  const mult1 = shown('labtend');
+  const bill = () => (window.__rows().find(r => r.key === 'tend')?.bill || []).map(b => b[0]).filter(m => m !== 'time').join();
+  const own = climb('tend', TIER_OWN);
+  const asks = bill();
+  const noCard = !window.__rows().some(r => r.key === 'labtend');
+  const last = climb('tend', TIER_BAND);
   window.__crew(0, 0);
 
   return [
-    ok(!mult0 && mult1, "the plots' multiplier follows the tending ladder",
-       `${mult0} -> ${mult1}`)
+    ok(own === TIER_OWN, 'the rungs before the spark one climb', `${own}`),
+    ok(asks === 'dust,shard,spore,spark', 'then the same card asks every coin the yard makes', asks),
+    ok(noCard, 'and no research card stands beside it'),
+    ok(last === TIER_BAND && S.tendLevel === TIER_OWN + TIER_BAND,
+       'and the spark rung climbs the same field', `${last}, ${S.tendLevel}`)
   ];
 });
 

@@ -1,97 +1,112 @@
 // The two grounds' four ladders: a yield one and a speed one at each of the
-// farm and the quarry, twelve rungs apiece in four cards of three.
+// farm and the quarry, one card apiece, a rung a coin, the last rung the
+// spark's.
 //
 // Bought through the rows, never by setting a level with a hook. What is worth
 // checking about a ladder built out of a table is not that the table has four
-// lines in it -- that is the source, read back -- but the three things the
-// player actually meets: that finishing a band retires its card and shows the
-// next one, that the top band is a piece of work bodies have to stand and
-// finish, and that a rung of the yield ladder changes what one cut or one dig is
-// actually worth in the yard.
+// lines in it -- that is the source, read back -- but the things the player
+// actually meets: that the bill deepens by a coin a rung on the one card, that
+// the spark rung is a rung of the same field and worth what the old multiplier
+// was, that a rung is a piece of work bodies have to stand and finish, and that
+// a rung of the yield ladder changes what one cut or one dig is actually worth
+// in the yard.
 //
-// See DESIGN.md, "What the two grounds sell".
+// See DESIGN.md, "What the two grounds sell" and "The spark band is the top of
+// the ladder".
 
-import { group, ok, state, run, runUntil, openSites, buyNow } from './helpers.mjs';
+import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, RUNGS,
-         QUARRY_BASE, QUARRY_FLOOR } from '../src/config.js';
-import { rungOf, rungsOf } from '../src/upgrades.js';
+import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER,
+         QUARRY_BASE, QUARRY_FLOOR,
+         CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT } from '../src/config.js';
+import { rungOf, rungsOf, capacity, pickCount, haulCap } from '../src/upgrades.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
 import { cellMs, seamDig, QUARRY_UPGRADES } from '../src/quarry.js';
+import { dosesPer } from '../src/apothecary.js';
 
 // A row as its own board reads it. `__rows()` says which key is on a board and
 // what it costs, which is what most checks want; where a card sits on its own
 // ladder is `rungOf`/`rungsOf`, the same pair the pips under it are drawn from.
 const rowOf = key => [...FARM_UPGRADES, ...QUARRY_UPGRADES].find(u => u.key === key);
 
-// Enough of every coin to climb a whole ladder. Band one is dust, band two adds
-// the ground's own coin, band three the other ground's and band four everything
+// Enough of every coin to climb a whole ladder. Rung one is dust, rung two adds
+// the ground's own coin, rung three the other ground's and rung four everything
 // -- so a check that wants to reach the top has to be able to pay all five.
 const rich = () => window.__grant({ dust: 400000, shards: 9000, spores: 40000,
                                     cores: 400, sparks: 9000 });
 
-// Which of a ladder's four cards is on the board. Exactly one of them ever is,
-// which is the whole of what a band buys over a twelve-pip row.
-const showing = keys => window.__rows().filter(r => keys.includes(r.key) && r.shown)
-                              .map(r => r.key);
+const coinsOf = key => (window.__rows().find(r => r.key === key)?.bill || [])
+                          .map(([m]) => m).filter(m => m !== 'time').sort().join();
 
-group('a ladder is one card, its pips in threes, and the bill deepens as they fill', async () => {
+group('a ladder is one card, a pip a rung, and the bill deepens as they fill', async () => {
   window.__reset();
   openSites();
   rich();
-  const cards = ['crop', 'crop2', 'crop3', 'labcrop'];
 
-  const first = showing(cards);
+  const shown = () => window.__rows().filter(r => r.shown && /^crop/.test(r.key)).map(r => r.key);
+  const first = shown();
   const row0 = rowOf('crop');
-  const coins = () => rowOf('crop').bill().map(([m]) => m).filter(m => m !== 'time').sort().join();
-  const c0 = coins();
+  const c0 = coinsOf('crop');
   const bought = Array.from({ length: TIER_BAND }, () => buyNow('crop'));
-  const second = showing(cards);
+  const second = shown();
   const row = rowOf('crop');
 
   return [
     ok(first.join() === 'crop', 'the ladder is its first key', first.join() || 'none'),
-    ok(row0 && rungsOf(row0) === TIER_OWN && row0.group === TIER_BAND,
-       'with its pips in groups of a band', row0 ? `${rungsOf(row0)} in ${row0.group}s` : 'no row'),
-    ok(bought.every(Boolean), 'and its first card can be bought', bought.join()),
+    ok(row0 && rungsOf(row0) === TIER_RUNGS && row0.group === TIER_BAND,
+       'with every rung on it, in groups of a band', row0 ? `${rungsOf(row0)} in ${row0.group}s` : 'no row'),
+    ok(bought.every(Boolean), 'and its first rung can be bought', bought.join()),
     ok(second.join() === 'crop', 'on the same card', second.join() || 'none'),
-    ok(S.cropLevel === TIER_BAND && rungOf(row) === TIER_BAND, 'a card of rungs on the ladder',
+    ok(S.cropLevel === TIER_BAND && rungOf(row) === TIER_BAND, 'a band of rungs on the ladder',
        `${S.cropLevel}, ${rungOf(row)} pips`),
-    ok(c0 === 'dust' && coins() === 'dust,spore', 'and the bill has deepened by a coin',
-       `${c0} -> ${coins()}`)
+    ok(c0 === 'dust' && coinsOf('crop') === 'dust,spore', 'and the bill has deepened by a coin',
+       `${c0} -> ${coinsOf('crop')}`)
   ];
 });
 
-group('each band asks for one more coin than the last', async () => {
+group('each rung asks for one more coin than the last, on the one card', async () => {
   window.__reset();
   openSites();
   window.__invest();
   rich();
-  const coins = key => window.__rows().filter(r => r.key === key)[0]
-                             ?.bill.map(([m]) => m).filter(m => m !== 'time') ?? [];
   const seen = [];
-  // One card for the ladder's own nine rungs, its bill deepening every three;
-  // then the research card.
-  for (let band = 0; band < 3; band++) {
-    seen.push(coins('seam'));
+  for (let band = 0; band < 4; band++) {
+    seen.push(coinsOf('seam'));
     for (let i = 0; i < TIER_BAND; i++) buyNow('seam');
   }
-  seen.push(coins('labseam'));
+  const noCard = !window.__rows().some(r => r.key === 'labseam');
   return [
-    ok(seen[0].join() === 'dust', 'band one is dust and nothing else', seen[0].join()),
-    ok(seen[1].sort().join() === 'dust,shard', "band two adds the cut's own coin",
-       seen[1].join()),
-    ok(seen[2].sort().join() === 'dust,shard,spore', "band three adds the farm's",
-       seen[2].join()),
-    ok(seen[3].sort().join() === 'core,dust,shard,spark,spore',
-       'and band four asks for everything the yard makes', seen[3].join())
+    ok(seen[0] === 'dust', 'rung one is dust and nothing else', seen[0]),
+    ok(seen[1] === 'dust,shard', "rung two adds the cut's own coin", seen[1]),
+    ok(seen[2] === 'dust,shard,spore', "rung three adds the farm's", seen[2]),
+    ok(seen[3] === 'dust,shard,spark,spore',
+       'and rung four asks for everything the yard makes', seen[3]),
+    ok(noCard && S.seamLevel === TIER_RUNGS, 'all on the one card, to the top',
+       `${S.seamLevel} of ${TIER_RUNGS}`)
   ];
 });
 
-// The last three rungs are the multiplier over the ladder, which is a BUILD:
-// paying starts it and bodies at the site finish it. That was the lab's whole
-// bargain and it survives at the top of every one of these.
-group('the last band is a build that bodies have to finish', async () => {
+// The spark rung was the lab's multiplier, a card of its own that climbed
+// `S.mult`. It is a rung of the same field now, reading the last entry of the
+// yield's list like any other rung.
+group('the spark rung climbs the same field and reads the top of its list', async () => {
+  window.__reset();
+  openSites();
+  window.__invest();
+  rich();
+  for (let i = 0; i < TIER_OWN; i++) buyNow('crop');
+  const before = cropYield();
+  const pressed = buyNow('crop');
+  return [
+    ok(S.cropLevel === TIER_OWN + 1 && pressed, 'the spark rung is one more of the field', `${S.cropLevel}`),
+    ok(cropYield() === CROP_SPORES[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
+       `${before} -> ${cropYield()}`)
+  ];
+});
+
+// Every rung is a BUILD: paying starts it and bodies at the site finish it. That
+// was the lab's whole bargain and it survives at every rung of these.
+group('a rung is a build that bodies have to finish', async () => {
   window.__reset();
   openSites();
   window.__invest();
@@ -99,28 +114,20 @@ group('the last band is a build that bodies have to finish', async () => {
   window.__crew(0, 0, 0, 2);                 // two farmhands, to do the work
   run(2);
 
-  // Nine rungs of the ladder's own field first -- through the rows, band gates
-  // and all -- so band four is the card on the board.
-  for (let i = 0; i < TIER_OWN; i++) buyNow('tend');
-  const card = showing(['tend', 'tend2', 'tend3', 'labtend']);
-
-  const was = S.mult.tend;
-  const pressed = window.__buy('labtend');
+  const was = S.tendLevel;
+  const pressed = window.__buy('tend');
   const started = !!Object.values(state().works || {}).flat()
-                          .some(w => w && w.key === 'labtend');
-  const landedOnPress = S.mult.tend > was;
-  const landed = runUntil(() => S.mult.tend > was, 400);
+                          .some(w => w && w.key === 'tend');
+  const landedOnPress = S.tendLevel > was;
+  const landed = runUntil(() => S.tendLevel > was, 400);
 
   window.__crew(0, 0);
   return [
-    ok(S.tendLevel === TIER_OWN, 'nine rungs of its own field first', `${S.tendLevel}`),
-    ok(card.join() === 'tend,labtend', 'and the research card stands beside the finished ladder',
-       card.join() || 'none'),
     ok(pressed, 'the row can be pressed'),
     ok(started, 'paying starts a piece of work rather than finishing it'),
-    ok(!landedOnPress, 'so the multiplier does not move on the press'),
+    ok(!landedOnPress, 'so the rung does not land on the press'),
     ok(landed, 'and the bodies at the plots finish it'),
-    ok(S.mult.tend === 1, 'one rung of the multiplier', `${S.mult.tend}`)
+    ok(S.tendLevel === was + 1, 'one rung', `${S.tendLevel}`)
   ];
 });
 
@@ -145,7 +152,7 @@ group('a yield rung changes what one go is worth', async () => {
 // the ladder shortened a swing that was already on its floor, and the time a
 // dig takes is nine tenths walking between cells, which the ladder never
 // touched. Pace 0 and pace 9 dug the same 45 shards in ten minutes. Measured
-// after the fix, 45 -> 182. Bought through the row, a band at a time.
+// after the fix, 45 -> 182. Bought through the row, to the top.
 group('a speed rung makes the cut give up shards faster', async () => {
   window.__reset();
   openSites();
@@ -159,15 +166,17 @@ group('a speed rung makes the cut give up shards faster', async () => {
   // what the ladder is about; and the gang stands down at a full heap, which
   // a fast gang at a rich seam reaches inside this window -- haulers fetch
   // finds one at a time -- so left to fill it is the carting being measured
-  // and not the ladder.
+  // and not the ladder. The stone is read off the quarriers' own tallies of
+  // what they brought out: a shard lying in the yard is swept with the rest,
+  // and the purse only moves when a hauler gets one to the hole.
   const dug = () => S.quarryTotal || 0;
-  const stone = () => state().shards + state().finds.filter(f => f === 'shard').length;
+  const stone = () => S.workers.reduce((n, w) => n + (w.quarried || 0), 0);
   const swept = seconds => { for (let i = 0; i < seconds; i++) { run(1); window.__clearFloor(); } };
   const a0 = dug(), s0 = stone();
   swept(240);
   const slow = dug() - a0, slowStone = stone() - s0;
 
-  for (let i = 0; i < 6; i++) buyNow(showing(['quarrypace', 'quarrypace2'])[0]);
+  for (let i = 0; i < TIER_RUNGS; i++) buyNow('quarrypace');
   const lvl = S.quarryPaceLevel;
   window.__clearFloor();
   run(5);
@@ -176,7 +185,7 @@ group('a speed rung makes the cut give up shards faster', async () => {
   const fast = dug() - b0, fastStone = stone() - t0;
 
   return [
-    ok(lvl === 6, 'six rungs bought through the rows', `${lvl}`),
+    ok(lvl === TIER_RUNGS, 'every rung bought through the row', `${lvl}`),
     ok(fast > slow * 1.8, 'and the cut comes out a good deal faster for them',
        `${slow} -> ${fast} cells in four minutes`),
     ok(fastStone > slowStone, 'and so gives up more shards',
@@ -184,7 +193,7 @@ group('a speed rung makes the cut give up shards faster', async () => {
   ];
 });
 
-// A twelve-rung ladder is the same climb in finer steps, not a faster yard. Both
+// A shorter ladder is the same climb in fewer steps, not a slower yard. Both
 // speeds must still end exactly where they ended when the ladder was five rungs
 // and the multiplier sat beside it.
 group('the speed ladders end where they always ended', async () => {
@@ -196,7 +205,7 @@ group('the speed ladders end where they always ended', async () => {
   const cellTop = cellAt(TIER_OWN);
   S.quarryPaceLevel = 0;
   return [
-    ok(tendTop === TEND_FLOOR, 'tending lands on its floor at the ladder top',
+    ok(tendTop === TEND_FLOOR, 'tending lands on its floor before the spark rung',
        `${tendTop} vs ${TEND_FLOOR}`),
     ok(tendMs(0) === TEND_BASE, 'and starts from the same base', `${tendMs(0)}`),
     // The cut's swing and the cut's row climb one curve. The swing used to run
@@ -206,49 +215,71 @@ group('the speed ladders end where they always ended', async () => {
     ok(Math.abs(cellTop / cell0 - QUARRY_FLOOR / QUARRY_BASE) < 1e-9,
        'and a cell of the cut ends at the same fifth the row sells',
        `${(cellTop / cell0).toFixed(6)} vs ${(QUARRY_FLOOR / QUARRY_BASE).toFixed(6)}`),
-    ok(TIER_RUNGS === TIER_BAND * 4 && TIER_OWN === TIER_RUNGS - TIER_BAND, 'four cards, the last of them the multiplier',
+    ok(TIER_RUNGS === TIER_BAND * 4 && TIER_OWN === TIER_RUNGS - TIER_BAND, "four rungs, the last of them the spark's",
        `${TIER_RUNGS}/${TIER_OWN}`)
   ];
 });
 
-// A save is the reason `levelOf` clamps where it is read rather than where it is
-// bought. `S.mult.tend` went to five when the farm's multiplier was its own
-// five-rung row; the band it lives in now has three, and an old save has to read
-// as a ladder somebody finished rather than as a rate nothing else agrees with.
-group('an old save with more of a multiplier than the band holds reads as finished', async () => {
+// Every count ladder reads a written list -- what it is worth at the foot and
+// at each rung (config/rungs.js) -- and the lists are what make the length one
+// number: each is exactly a value for the foot and one a rung, whole where a
+// count is whole, and every rung worth more than the last. A list a rung short
+// is a red line here rather than a ladder that quietly stops early; the counts
+// are read through their own functions so the wiring is checked as well as
+// the table.
+group('every count ladder reads a list a value a rung, each worth more than the last', async () => {
   window.__reset();
   openSites();
-  S.mult.tend = 5;
-  S.tendLevel = TIER_OWN;
-  const row = rowOf('labtend');
-  const quick = tendMs();
-  S.mult.tend = TIER_BAND;
-  const capped = tendMs();
+  const LISTS = { CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT };
+  const short = Object.entries(LISTS).filter(([, l]) => l.length !== LADDER + 1).map(([k, l]) => `${k}: ${l.length}`);
+  const flat = Object.entries(LISTS).filter(([, l]) => l.some((v, i) => i && !(v > l[i - 1]))).map(([k]) => k);
+  const broken = Object.entries(LISTS).filter(([k, l]) => k !== 'SEAM_SHARE' && l.some(v => !Number.isInteger(v))).map(([k]) => k);
+  const at = (field, lvl, read) => { const was = S[field]; S[field] = lvl; const v = read(); S[field] = was; return v; };
+  const reads = [
+    ['carry', at('carryLevel', LADDER, capacity), CARRY_PX[LADDER]],
+    ['pick', pickCount(LADDER), PICK_PX[LADDER]],
+    ['hauler load', haulCap(LADDER), HAUL_LOAD[LADDER]],
+    ['a cut', at('cropLevel', LADDER, cropYield), CROP_SPORES[LADDER]],
+    ['doses', dosesPer(LADDER), DOSES[LADDER]]
+  ].filter(([, got, want]) => got !== want).map(([k, got, want]) => `${k}: ${got} not ${want}`);
+  const dig0 = at('seamLevel', 0, seamDig), digTop = at('seamLevel', LADDER, seamDig);
   return [
-    ok(row && rungOf(row) === TIER_BAND, 'the card reads three of three',
-       row ? `${rungOf(row)} of ${rungsOf(row)}` : 'no row'),
-    ok(quick === capped, 'and the rate is the one the cap allows, not the save\'s',
-       `${quick} vs ${capped}`)
+    ok(short.length === 0, 'every list is a value for the foot and one a rung', short.join(', ')),
+    ok(flat.length === 0, 'and every rung is worth more than the last', flat.join(', ')),
+    ok(broken.length === 0, 'and a count is whole at every rung', broken.join(', ')),
+    ok(reads.length === 0, 'and each count reads the top of its own list at the top', reads.join('; ')),
+    ok(Math.abs(digTop / dig0 - SEAM_SHARE[LADDER]) < 0.05, 'and a dig at the top is its list\'s share of the base',
+       `${(digTop / dig0).toFixed(2)} vs ${SEAM_SHARE[LADDER]}`)
   ];
 });
 
-// The two new level fields, and the two new multipliers under `S.mult`, have to
-// come back off a save. `persist-roundtrip.test.mjs` covers every plain field on
-// the list; this says the same thing about these four in particular, because
-// they are the ones a player would notice going missing.
-group('the new levels and multipliers survive a reload', async () => {
+// A save from when the last band was a multiplier: `S.mult.tend` held a rung
+// or two of the lab's quarter-again over a finished ladder. It reads as the
+// spark rung bought -- a rung the old ladder had is a rung the new one has --
+// and a `lab*` piece still in flight lands the same way, since the sparks
+// were paid and there is no row left to finish it.
+group('an old save with a multiplier reads as the spark rung bought', async () => {
   window.__reset();
   openSites();
-  S.cropLevel = 4;
-  S.seamLevel = 7;
-  S.mult.crop = 2;
-  S.mult.seam = 1;
+  S.tendLevel = TIER_OWN;
+  S.mult.tend = 2;
   S.dirty = true;
   window.__cold();
+  const tend = S.tendLevel, mult = S.mult.tend;
+
+  // ...and one written mid-research, by hand, since nothing writes one now.
+  S.dirty = true;
+  yard.persist();
+  const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
+  raw.cropLevel = TIER_OWN;
+  raw.works = { ...(raw.works || {}), farm: [{ key: 'labcrop', done: 3, of: 60, at: null }] };
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
+  yard.restore();
   return [
-    ok(S.cropLevel === 4, 'the crop level comes back', `${S.cropLevel}`),
-    ok(S.seamLevel === 7, 'and the seam level', `${S.seamLevel}`),
-    ok(S.mult.crop === 2, "and the crop's multiplier", `${S.mult.crop}`),
-    ok(S.mult.seam === 1, "and the seam's", `${S.mult.seam}`)
+    ok(tend === TIER_RUNGS, 'the field goes to the top', `${tend}`),
+    ok(mult === 0, 'and the multiplier is folded away', `${mult}`),
+    ok(S.cropLevel === TIER_RUNGS, 'a piece of research in flight lands as the spark rung', `${S.cropLevel}`),
+    ok(!Object.values(S.works).flat().some(w => w && w.key === 'labcrop'), 'and is not left on the bench')
   ];
 });
+

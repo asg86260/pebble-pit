@@ -14,13 +14,13 @@
 // the wreck flies out along the heap as ordinary spoil and mines back as dust.
 import { S } from './state.js';
 import {
-  P, ROCK_CLEAR,
+  P, ROCK_CLEAR, ROCK_FLANK_CLEAR,
   SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST,
   PROP_FROM, PROP_COST, PROP_PLANKS,
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
   DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE,
-  DOME_BOUNCE_C, DOME_FLOOR_C, DROP_GRAV, WORKER,
+  DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER,
   SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
@@ -75,17 +75,36 @@ export const shieldDone = kind => S.shieldsDone.includes(kind);
 // of them -- being the thing the rock reaches first.
 export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;
 
-// Sized against the rock it has to answer: wide enough for the *next* one's
-// footprint and its clearance, and tall enough to stand over whichever is
-// bigger of the rock here now and the one coming -- with a body's worth of
-// daylight over the peak, so the crew climb under it rather than into it.
-// Measured, never tuned: a later rock cannot outgrow sums taken against it.
+// Which rock a shield planned now will actually meet: the one in the air, if
+// there is one, else the one after the one on the ground. It always planned
+// for the next number, which is the wrong rock for a shield bought mid-fall --
+// the plan was a rock too big, and the rock already coming was the one it met.
+const rockToMeet = () => S.rockFall > 0 ? S.boulderNo : S.boulderNo + 1;
+
+// Sized against the rock it has to answer: wide enough for that one's footprint
+// and its clearance, and tall enough to stand over whichever is bigger of the
+// rock here now and the one coming -- with a body's worth of daylight over the
+// peak, so the crew climb under it rather than into it. Measured, never tuned:
+// a later rock cannot outgrow sums taken against it.
 export function shieldPlan(kind) {
   const was = S.boulderNo;
-  S.boulderNo = was + 1;
+  S.boulderNo = rockToMeet();
   const size = rockSize();
   S.boulderNo = was;
-  const w = size.w * P + ROCK_CLEAR * 2 + SHIELD_LEG_W * P * 2;
+  const rockW = size.w * P;
+  let w = rockW + ROCK_CLEAR * 2 + SHIELD_LEG_W * P * 2;
+  // The curved kinds are wider than the margin alone makes them. Their crown is
+  // the catch line, so a rock nearly as wide as the span perches on the apex
+  // with its flanks out over the haunches; the span is a set share wider than
+  // the rock instead (ARCH_SPAN, DOME_SPAN), snapped to whole cells and kept
+  // even so the middle stays on the grid. And nothing stands closer to the
+  // building on the flank than the rock itself is allowed to.
+  const span = kind === 'arch' ? ARCH_SPAN : kind === 'dome' ? DOME_SPAN : 0;
+  if (span) {
+    const cells = Math.ceil(rockW * span / P / 2) * 2;
+    w = Math.max(w, cells * P);
+  }
+  w = Math.min(w, rockW + ROCK_FLANK_CLEAR * 2);
   const x = Math.round((S.cx - w / 2) / P) * P;
   const clear = Math.max(S.gh, size.h) + SHIELD_CLEAR_C;
   // An arch's height is a consequence of its span rather than a free choice:
@@ -122,8 +141,29 @@ export function raiseShield(kind) {
   // hammered and nobody is lent, the tower pours it on its own clock.
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
   S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
-               sag: 0, rising: false, rested: 0, setting: false };
+               sag: 0, rising: false, rested: 0, setting: false, fading: 0 };
   if (laid >= KINDS[kind].pieces) fanfare(S.shield);
+  refitShield();
+  S.dirty = true;
+}
+
+// A standing shield is re-sized for the rock that is now going to reach it.
+// Called when a new rock is made (rock.js, `makeBoulder`) and when a shield
+// is raised, so the plan is never older than the rock it is about. The
+// footprint moves with the width, and the rest -- how much is laid or poured,
+// what it has hold of -- is kept. A shield bought while a rock is in the air
+// is planned for that rock; if the rock lands before the shield is finished,
+// the next one is bigger, and the half-built thing widens by a course or two
+// under the builders. That is the accepted cost of buying under a falling
+// rock: a plan that changes is better than a rock that overhangs it. Nothing
+// with a rock on it is touched -- a caught rock rests where it was caught --
+// and nothing on its way out is worth the sum.
+export function refitShield() {
+  const s = S.shield;
+  if (!s || s.caught || s.fading) return;
+  const { x, w, h, rise } = shieldPlan(s.kind);
+  if (x === s.x && w === s.w && h === s.h && rise === s.rise) return;
+  Object.assign(s, { x, w, h, rise });
   S.dirty = true;
 }
 
@@ -249,8 +289,9 @@ function answer(s, kind) {
   // The dome. It gives under the rock -- the rock springs back up off it and
   // settles again -- then holds it overhead for a beat and lets it down:
   // gently, which is the one arrival in this game with no shake and no shout
-  // in it. The dome is still standing afterwards, ready for the next one, so
-  // its own state is put back rather than thrown away.
+  // in it. Its own state is put back rather than thrown away, because until
+  // the rescue is done it stands for the next one; once it is, `stepShield`
+  // sees the set-down and starts the fade.
   if (kind.answer === 'hold') {
     // The first time it holds one, whoever is under that spot is dug out and
     // walks clear -- the beat this whole arc was built to reach. `startRescue`
@@ -310,6 +351,26 @@ export function stepShield() {
   const s = S.shield;
   if (!s) return;
   const kind = KINDS[s.kind];
+  // The dome comes down once the rescue is over. It has held the one rock it
+  // was for and set it down; every rock after that was a hold and a slow
+  // set-down for nothing. It fades from the frame after the beat is over --
+  // the rock set down and the two of them met under it, since the dome stands
+  // over that walk -- and on loading an older save where it was left standing
+  // after the rescue, since the rule reads the facts and not the frame. It
+  // goes into `shieldsDone` like the kinds that broke, so its row never
+  // returns.
+  if (kind.answer === 'hold' && S.rescued && S.intro !== 'rescue' && !s.caught && !s.fading) {
+    s.fading = now();
+    S.dirty = true;
+  }
+  if (s.fading) {
+    if (now() - s.fading >= DOME_FADE_MS) {
+      if (!S.shieldsDone.includes(s.kind)) S.shieldsDone.push(s.kind);
+      S.shield = null;
+      S.dirty = true;
+    }
+    return;                      // a fading dome catches nothing
+  }
   if (S.rockFall > 0 || S.rockHeld) {
     if (s.caught) { answer(s, kind); return; }
     if (rockFootY() < shieldTopY(s) - P) return;
@@ -354,7 +415,13 @@ export function stepShield() {
 // once a frame for all of them, so what rises is one thing being made by
 // everybody in the ring rather than a share each.
 export const domeRising = () =>
-  !!S.shield && !!KINDS[S.shield.kind].cast && S.shield.laid < KINDS[S.shield.kind].pieces;
+  !!S.shield && !!KINDS[S.shield.kind].cast && !S.shield.fading &&
+  S.shield.laid < KINDS[S.shield.kind].pieces;
+
+// How far a dome has faded: nought while it stands, one when it is gone. The
+// drawing reads it for the shell's alpha, so nothing about the exit pops.
+export const domeFade = (s = S.shield) =>
+  s && s.fading ? Math.min(1, (now() - s.fading) / DOME_FADE_MS) : 0;
 
 // Where the ring hangs: just over the crown of the dome being made.
 export function domeSpot() {

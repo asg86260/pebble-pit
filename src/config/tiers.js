@@ -1,48 +1,38 @@
-import { RUNGS } from './crew.js';
-
-// --- a ladder sold as four cards ----------------------------------------------
-// The farm and the quarry each sell two ladders as four cards, and a card is
-// a band of the ladder with its own bill: the pips you can see are grouped by
-// band, and the bill deepens as the groups fill. See DESIGN.md, "What the two
-// grounds sell" and "Every ladder is sold in bands".
+// --- a ladder is a rung a coin -----------------------------------------------
+// Every ladder in the yard is one card, and every rung on it is a new bill:
+// dust, then dust and crops, then dust, crops and ore -- the order the run
+// hands its coins out -- and at the two grounds a fourth rung that asks
+// everything the yard makes, sparks included. A band is one rung now, so the
+// bands rule and the ladder are the same statement. See DESIGN.md, "Every
+// ladder is sold in bands" and "The spark band is the top of the ladder".
 //
-// Two and four rather than any other pair, and they are here rather than
-// written into the helper because the shape of a ladder is a number about the
-// game, not a fact about the code that builds one. The band was three, and a
-// nine-rung ladder was nine trips to the board with a builder to watch between
-// each; a rung has a size, a ladder has a length, and the length is this one
-// number (DESIGN.md, "A ladder is six rungs"). Rates ease to the same tops
-// over whatever the length is; counts keep a whole unit a rung and their tops
-// move with it.
-export const TIER_BAND = 2;                       // rungs to a card
-export const TIER_BANDS = 4;                      // cards to a ladder
-export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // eight, all told
-// The last band is the multiplier over the ladder rather than more of the
-// ladder's own field, so the field itself only ever climbs this far.
+// The width of a band is a number about the game, not a fact about the code
+// that builds a ladder, which is why it lives here. It was three, then two:
+// a nine-rung ladder was nine trips to the board with a builder to watch
+// between each, and two rungs to a card was still a second press that asked
+// the same coins for a smaller step. The length is this one number; what a
+// rung is worth is written so the tops hold whatever the length is -- a rate
+// eases to the same top in as many steps as there are, and a count's unit a
+// rung is what a whole band used to add (DESIGN.md, "A ladder is six rungs"
+// and its as-built note).
+export const TIER_BAND = 1;                       // rungs to a card's group
+export const TIER_BANDS = 4;                      // groups on a ground's ladder
+export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // four, all told
+// The rungs before the spark one. A ground's rate eases to its top over these
+// and its count climbs a unit a rung over these; the last rung is the spark's.
 export const TIER_OWN = TIER_RUNGS - TIER_BAND;
+// What the spark rung is worth over the top of the rest: half again and a
+// bit. It was the lab's multiplier, a quarter again a rung for a band of
+// two, and folding the band into one rung keeps what the band came to rather
+// than what one of its rungs did -- no ladder's top came down for the fold.
+export const SPARK_GAIN = 1.5625;
 
-// And every other ladder in the yard: the same cards, three of them. Dust
-// only on the first, dust and crops on the second, dust, crops and ore on the
-// third -- the order the run hands its coins out -- and no fourth, because the
-// grounds' fourth card is the old lab multiplier and nothing else ever had
-// one. See DESIGN.md, "Every ladder is sold in bands". `RUNGS` (five) is what
-// is left to the two crew multipliers and the tower's spark ladders, which are
-// outside that rule by decision.
-export const LADDER_BANDS = 3;                    // cards to an ordinary ladder
-export const LADDER = TIER_BAND * LADDER_BANDS;    // six rungs, all told
-// The coins each card adds to the dust, first card to last.
-export const BAND_COINS = [[], ['spore'], ['spore', 'shard']];
-
-// How far up each multiplier goes, by the field it multiplies.
-//
-// `levelOf` clamped every one of them at `RUNGS` when there were four and they
-// were the lab's. There are six now and they are not all the same length: the
-// crew's two are still ladders in their own right and keep their five rungs,
-// and the four station ones are the last band of a longer ladder, so they end
-// where a band ends. One table read in the one place `levelOf` clamps -- a cap
-// only half the game knows about is a row that says 3 of 3 and can still be
-// bought.
-// `swing` and `haul` were here at RUNGS; their rows are gone (rows-mult.js).
-export const MULT_MAX = {
-  tend: TIER_BAND, quarry: TIER_BAND, crop: TIER_BAND, seam: TIER_BAND
-};
+// And every other ladder in the yard: the same card, the same four groups. The
+// bench's fourth rung asks the spark too (2026-09-14): every ladder is a rung
+// a coin, and the coins are the same four everywhere.
+export const LADDER_BANDS = 4;                    // groups on an ordinary ladder
+export const LADDER = TIER_BAND * LADDER_BANDS;    // four rungs, all told
+// The coins each group adds to the dust, first to last.
+// Not the core: nine exist in the game and they open places, and a fourth rung
+// on every ladder priced in them was thirty-two cores for one rung of crit.
+export const BAND_COINS = [[], ['spore'], ['spore', 'shard'], ['spore', 'shard', 'spark']];

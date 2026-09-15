@@ -69,6 +69,7 @@ export function startIntro() {
   // from the first still set, never throws, and stands there until the timeout
   // takes pity on it.
   S.introThrew = 0;
+  S.introCut = false;
   // They come out of the house. Nobody in this game arrives from nowhere, and
   // for a long while these two did: stood at the spot from the first frame,
   // the one pair of bodies in the yard with no door behind them. The house
@@ -93,9 +94,15 @@ export function startIntro() {
 // Straight to the yard as it stands after all of it, for the dev hooks and the
 // checks: nothing in the suite is about the opening except the one check that
 // is, and twenty seconds of it in front of every other one is twenty seconds of
-// nothing being tested.
-export function skipIntro() {
+// nothing being tested. The player's own skip (skip.js) comes through here too,
+// with `played` off: the yard is the same yard, but the one difference between
+// the two is kept -- the body. The checks want the yard as it stands after all
+// of it; the player was watching a square, and the square that carries on is
+// the one they were watching, stood where it stood, the bargain `begin`
+// strikes at the end of the opening played out.
+export function skipIntro(played = true) {
   if (!introRunning()) return;
+  const from = played || !S.pair.length ? null : S.pair[S.pair.length - 1].x;
   if (S.intro === 'leave') arrive();
   if (S.intro === 'chat') crush();
   S.pair = [];
@@ -103,10 +110,34 @@ export function skipIntro() {
   S.rockhands = 1;
   // A yard that skips the opening is a yard that has been played from: the
   // rows gated on a player's own first act (the bench's 'strength' row waits
-  // for a drag) are open on it, the way they are on any save.
-  S.seenDrag = true;
+  // for a drag) are open on it, the way they are on any save. A player who
+  // skipped has not dragged yet, and the row waits for them as it would.
+  if (played) S.seenDrag = true;
   finish();
+  const w = S.workers[0];
+  if (from != null && w) { w.x = from; w.y = walkY(from + WORKER / 2); }
   buildShop();                     // the rows that flag opens are on the board from the first frame
+}
+
+// The player's skip, whichever scene has the yard: the opening goes straight
+// to the yard; the reunion goes straight to the rock coming down again, which
+// is where it was going; the rescue finishes its dig and keeps its walk -- a
+// body walks out from under the rock at its own pace whatever the player
+// holds, because a square that is under the rock one frame and stood clear
+// the next is the one thing this game never shows. What is cut from it is the
+// ceremony, the hearts, and the hold the yard is under for them. True if there
+// was a scene to cut.
+export function cutIntro(t) {
+  if (!introRunning() || S.introCut) return false;
+  if (S.intro === 'meet') { parted(t); letGo(); return true; }
+  if (S.intro === 'part') { letGo(); return true; }
+  if (S.intro === 'rescue') {
+    S.introCut = true;
+    if (S.buried) { S.buriedDug = 1; getOut(t); }
+    return true;
+  }
+  skipIntro(false);
+  return true;
 }
 
 // --- one frame of it ----------------------------------------------------------
@@ -148,6 +179,7 @@ export function maybeReunion(t) {
   S.introAt = t;
   S.introSaid = 0;
   S.introHeart = 0;
+  S.introCut = false;
 
   // and whoever has been digging goes over and digs. It is not scripted people:
   // it is one of the crew, sent on the same walk the roster sends anybody on,
@@ -179,6 +211,7 @@ export function startRescue(t) {
   S.intro = 'rescue';
   S.introAt = t;
   S.introSaid = 0;
+  S.introCut = false;
   S.rescueTo = 0;                              // nobody walks anywhere until it is dug out
   sendDigger();
   S.dirty = true;
@@ -262,13 +295,13 @@ function rescue(t) {
     return;
   }
   b.y = walkY(b.x + WORKER / 2);
-  if (t >= (S.introSaid || 0)) {
+  if (!S.introCut && t >= (S.introSaid || 0)) {
     S.introSaid = t + INTRO_BEAT * 1.4;
     b.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
     const who = S.workers.find(w => w.met);
     if (who && !who.walking) who.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
   }
-  if (t - S.introAt < MEET_MS) return;
+  if (!S.introCut && t - S.introAt < MEET_MS) return;
 
   // And then it is one of the crew. Where it is standing is where it walked to,
   // which is the same bargain `begin` strikes at the end of the opening: the
@@ -304,8 +337,11 @@ function meet(t) {
     S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
   }
   if (t - S.introAt < MEET_MS) return;
+  parted(t);
+}
 
-  // and the sky opens again, on somebody half dug out
+// and the sky opens again, on somebody half dug out
+function parted(t) {
   S.intro = 'part';
   S.introAt = t;
   S.buriedSay = null;
@@ -320,6 +356,10 @@ function meet(t) {
 // do, and the view lets go. From here on nothing ever stops for a rock.
 function part(t) {
   if (t - S.introAt < PART_MS) return;
+  letGo();
+}
+
+function letGo() {
   S.intro = null;
   S.reunionDone = true;
   S.camLockY = null;

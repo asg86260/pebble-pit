@@ -737,6 +737,7 @@ export function seatSites() {
   // with its reserved ground somewhere else entirely.
   //
   // Seating a site is one job and it is this function's.
+<<<<<<< HEAD
   // The cut moves with the walk, and the gang down in it move with the cut.
   // The yard re-walks when a station grows -- a second pot -- and the cut
   // can go a hundred pixels along; a quarrier on its floor was left at its
@@ -746,6 +747,28 @@ export function seatSites() {
   // Only a body below the ground line inside the old span: anyone up top is
   // on the yard, and the yard did not move.
   const wasX = quarry.x;
+=======
+  //
+  // And whoever is down the cut moves with it. The ground is laid again while
+  // the yard stands -- a pot bought widens the apothecary and the walk shoves
+  // the quarry along -- and the dug shape and the sand in it are columns off
+  // `quarry.x`, so the hole goes with the seat. A body standing on its floor
+  // did not: it was left under ground that was no longer a hole, outside the
+  // span of any working, and the verifier called it walking through a wall.
+  // The hole shifting with its contents is the same hole, and the body is on
+  // the same floor cell after as before; its route is dropped so it is planned
+  // again from where it now stands.
+  const dx = S.placed.quarry.x - quarry.x;
+  if (dx && S.quarryOpen && quarry.w) {
+    for (const w of S.workers) {
+      if (w.y + WORKER > S.groundY && w.x + WORKER > quarry.x && w.x < quarry.x + quarry.w) {
+        w.x += dx;
+        if (w.seat != null) w.seat += dx;
+        w.route = null;
+      }
+    }
+  }
+>>>>>>> main
   quarry.w = S.placed.quarry.w;
   quarry.x = S.placed.quarry.x;
   quarry.y = S.groundY;                 // a hole hangs below the line, not on it

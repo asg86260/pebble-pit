@@ -16,11 +16,6 @@ export const LAB_EFFORT = 1;      // a worker does one second of work a second
 export const LAB_W = P * 16;
 export const LAB_H = P * 12;
 export const LAB_FLUE = 4;       // courses of it standing against the sky, above the body
-export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
-// The two spore-priced multipliers that were here -- the cut's and the plots' --
-// are the last band of the two grounds' own ladders now, and are priced off
-// those ladders' first rungs in config/quarry.js and config/farm.js. The crew's
-// two keep their own firsts in upgrades/rows-mult.js.
 // What a bench costs, and how much steeper each one gets. The lab's own ladder:
 // it is the one building that never made itself quicker, so every piece of
 // research took exactly as long as the first one did however far into a run you
@@ -35,11 +30,3 @@ export const LAB_ROOM_COST = 14;
 // The chimney's own numbers went with the chimney: SMOKE_LIFE and SMOKE_RISE
 // are in config/machines.js now, beside the rest of what a puff is made of.
 
-// The dev panel's rows for the knobs above. A row lives beside the binding it
-// moves because nothing but this file can assign to one: an imported `let` is
-// read-only everywhere else, so the get/set pair has to be written where the
-// `let` is. config.js gathers every file's rows into one TUNABLE.
-export const LAB_KNOBS = [
-  { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5,
-    get: () => LAB_WORK, set: v => { LAB_WORK = v; } }
-];

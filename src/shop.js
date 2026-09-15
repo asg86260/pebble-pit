@@ -712,8 +712,12 @@ export function refresh(el, list, headcount) {
       // band, each group in its band's coin (the stylesheet tints them): the
       // pips are then the bill's legend as well as the count. Each group is an
       // element so it can be colored; a ladder with no groups is one run.
+      // The gap between groups is what tells a band's pips from the next
+      // band's, so a band one pip wide gets none -- there is nothing inside
+      // it to set apart, and with the gap the row stood a pip's width open
+      // between every mark and read as three marks rather than one row.
       const want = u.group && pips
-        ? pips.match(new RegExp(`.{1,${u.group}}`, 'g')).map(g => `<b>${g}</b>`).join(' ')
+        ? pips.match(new RegExp(`.{1,${u.group}}`, 'g')).map(g => `<b>${g}</b>`).join(u.group > 1 ? ' ' : '')
         : pips;
       if (ladder.innerHTML !== want) ladder.innerHTML = want;
       // No '3 of 5' on hover: the pips are the answer.

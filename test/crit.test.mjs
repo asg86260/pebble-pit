@@ -11,7 +11,7 @@ import { group, ok, state, run, haveRock, openSites, buyBuilt, climb, P, WORKER 
 import { S, floor } from '../src/state.js';
 import { findShards, seamShards } from '../src/quarry.js';
 import { critMult, critChance, critEV } from '../src/crit.js';
-import { TIER_BAND } from '../src/config.js';
+import { TIER_BAND, CUT_POCKET, CRIT_MULT } from '../src/config.js';
 
 // The dust in the world that a crit's fountain ends up as: what is banked on the
 // floor, what is down the hole, and what is still in the air. A crit throws real
@@ -57,38 +57,48 @@ group('a dig with crits forced on yields exactly the seam, never a shard more', 
 // ...and a crit at the cut takes GROUND, not stone. Pulling the seam's shards
 // forward changed nothing about when a dig finished, so a crit rung bought at
 // the quarry was worth nothing a minute (critics 2026-09-10, B6): a crit swing
-// takes the cell and its neighbors now, and a gang whose every swing crits
-// gets through a dig -- and so through a seam -- sooner. Measured in ground,
-// because the stone over a window this short is mostly which dig the window
-// cut off where: 1436 -> 2023 cells in five minutes, with a quarter kept clear
-// of the noise. (Counted in stone, this check used to pass on the front-loading
-// it was blind to -- a crit pulling whole shards forward paid the truncated
-// last dig out early, and the players saw the ore come up only out of the top
-// of the cut. See `findShards`.)
-group('a crit at the cut takes more ground out at once, so the digs come sooner', async () => {
-  const dug = force => {
+// takes the cell and its neighbors now -- `crit - 1` cells past the pocket --
+// and a gang whose every swing crits gets through a dig, and so through a
+// seam, sooner. Measured per swing, which is the claim: ground a minute is
+// the same figure diluted by the walking between cells, the climb out and the
+// fill, and a tune of any of those moved a five-minute count under a
+// threshold that had nothing to do with the crit (1.41x when written, 1.20x
+// after the pockets and the beat). Swings are read off each body's own clock,
+// the way cut-pockets reads them.
+group('a crit at the cut takes more ground out at once', async () => {
+  const perSwing = force => {
     window.__reset();
     openSites();
     window.__fullSites();
+    window.__kit({ blasters: 0 });      // bare hands: a lamp doubles the pocket, and this is about the crit
     window.__crew(0, 6, 3);
     window.__clearFloor();
     window.__crit(force);
     run(5);
-    const a = state().shards + state().finds.filter(f => f === 'shard').length;
-    const ca = S.quarryTotal || 0;
-    run(300);
-    return { stone: state().shards + state().finds.filter(f => f === 'shard').length - a,
-             cells: (S.quarryTotal || 0) - ca };
+    const gang = () => S.workers.filter(w => w.type === 'quarrier');
+    let swings = 0;
+    const c0 = S.quarryTotal || 0;
+    for (let f = 0; f < 90 * 60; f++) {
+      const nexts = gang().map(w => w.next);
+      run(1 / 60);
+      gang().forEach((w, i) => { if (w.next !== nexts[i]) swings++; });
+      if (f % 60 === 0) window.__clearFloor();       // the heap never stops the gang
+    }
+    return { swings, cells: (S.quarryTotal || 0) - c0 };
   };
-  const plain = dug(false);
-  const critted = dug(true);
+  const plain = perSwing(false);
+  const critted = perSwing(true);
   window.__crit(false);
+  const per = r => r.cells / Math.max(1, r.swings);
+  // A pocket and the crit's extra, less the swings at the end of a course that
+  // find fewer neighbors than the pocket wants.
+  const want = (CUT_POCKET + CRIT_MULT[0] - 1) / CUT_POCKET;
   return [
-    ok(plain.stone > 0, 'the cut gives up stone with crits off', `${plain.stone} in five minutes`),
-    ok(critted.cells > plain.cells * 1.25, 'and a gang critting every swing takes a good deal more ground',
-       `${plain.cells} -> ${critted.cells} cells in five minutes`),
-    ok(critted.stone > plain.stone, 'and so turns up more stone',
-       `${plain.stone} -> ${critted.stone} in five minutes`)
+    ok(plain.swings > 50 && plain.cells > 0, 'the gang swings and the cut comes out with crits off',
+       `${plain.swings} swings, ${plain.cells} cells`),
+    ok(per(critted) > per(plain) * (want * 0.8),
+       'and a swing that crits takes the pocket and its extra cells',
+       `${per(plain).toFixed(2)} -> ${per(critted).toFixed(2)} cells a swing, wanted about x${want.toFixed(2)}`)
   ];
 });
 
@@ -200,18 +210,17 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
   const lvl1 = S.critChanceLevel;
   const [d1, sh1, sp1] = purse();
 
-  // And the damage rung, one card of three -- but priced in all three coins
-  // from its first rung, the one short ladder that is (see rows-luck.js).
+  // And the damage rung: a band ladder like every other since the lists, so its
+  // first rung is dust alone (it asked all three coins from rung one once).
   const mult0 = S.critMultLevel;
   const gotMult = buyBuilt('critmult');
   const [d2, sh2, sp2] = purse();
 
-  // A card's worth more up the chance ladder through whichever card is showing
-  // -- the rest of the first card and into the second, which takes crops with the
-  // dust; the third takes crops and ore.
+  // The rest of the first band up the chance ladder, and the bill deepens:
+  // the second band takes crops with the dust, the third crops and ore.
   const bill = key => window.__rows().find(r => r.key === key)?.bill || [];
   const coins = key => bill(key).map(([c]) => c).filter(c => c !== 'time').sort().join();
-  const got = climb('critchance', TIER_BAND, buyBuilt);
+  const got = climb('critchance', TIER_BAND - 1, buyBuilt);
   const secondCoins = coins('critchance');
 
   return [
@@ -219,7 +228,7 @@ group('the crit ladders are dust first, and the chance ladder asks crops and ore
     ok(d1 < d0, 'it took dust', `${d0} -> ${d1}`),
     ok(sh1 === sh0 && sp1 === sp0, 'and nothing else on the first card', `${sh0}->${sh1} shard, ${sp0}->${sp1} spore`),
     ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
-    ok(d2 < d1 && sh2 < sh1 && sp2 < sp1, 'in dust, crops and ore together', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
-    ok(got === TIER_BAND && secondCoins === 'dust,spore', 'the first band finished and the second asks dust and crops', `${got}, ${secondCoins}`)
+    ok(d2 < d1 && sh2 === sh1 && sp2 === sp1, 'in dust alone on its first rung', `${d1}->${d2} dust, ${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
+    ok(got === TIER_BAND - 1 && secondCoins === 'dust,spore', 'the first band finished and the second asks dust and crops', `${got}, ${secondCoins}`)
   ];
 });

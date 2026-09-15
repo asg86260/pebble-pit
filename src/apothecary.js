@@ -29,7 +29,7 @@
 
 import { LADDER,
          BREW_BILL, BREW_MS, BUFF_MS0, BUFF_MS5,
-         DOSES0, DOSES_CARDS, TIER_BAND, STRENGTH0, STRENGTH5,
+         DOSES, rungValue, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
          BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
@@ -63,9 +63,8 @@ const ease = (a, b, lvl) => a + (b - a) * (rung(lvl) / LADDER);
 // pot in it. The batch clock is fixed; see BREW_MS.
 export const brewMs = () => BREW_MS;
 export const buffMs = (lvl = S.lengthLevel) => ease(BUFF_MS0, BUFF_MS5, lvl);
-// A whole dose a rung over its own shorter ladder -- see DOSES0.
-export const dosesPer = (lvl = S.dosesLevel) =>
-  DOSES0 + Math.max(0, Math.min(DOSES_CARDS * TIER_BAND, lvl | 0));
+// Whole doses off its list -- see DOSES in config/rungs.js.
+export const dosesPer = (lvl = S.dosesLevel) => rungValue(DOSES, lvl);
 // One vial in a stirrer's hands, always -- see DOSE_CARRY.
 export const carryDoses = () => DOSE_CARRY;
 // --- the three tonics ---------------------------------------------------------
@@ -790,8 +789,7 @@ export const APOTHECARY_UPGRADES = [
     bands: named('bufflength', 'brew concentration') }),
   ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
     value: lvl => dosesPer(lvl),
-    // Two cards, not three: a dose a rung and one to seven is six rungs.
-    bands: named('brewdoses', 'batch size', DOSES_CARDS) }),
+    bands: named('brewdoses', 'batch size') }),
   ...TONICS.flatMap(potencyRows)
 ];
 

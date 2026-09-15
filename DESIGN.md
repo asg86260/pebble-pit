@@ -9063,6 +9063,7 @@ is the check working. The board shots (`shackboard`, `quarryboard`,
 the three shields for a check that buys a hat. `first day of school` on the
 record is `first hat`.
 
+<<<<<<< HEAD
 ## The reliability freeze: every check is a reload check (design, approved 2026-09-14)
 
 Sixteen releases in two days and forty changelog lines, and the shape of
@@ -9171,3 +9172,326 @@ harness off its mocks.
 Still open, found by the harness and not fixed: a hat knocked off and
 lying on the ground is not saved (`hatOff`), and a body sent to pick it up
 after a refresh finds nothing there.
+=======
+## The spark band is the top of the ladder, not a card beside it (built)
+
+The grounds' four ladders each end in a research card -- `labseam`, `labcave`,
+`labcrop`, `labtend` -- that stands on its own after the ladder's six rungs
+are climbed, gated on the yard being invested, costing every coin the yard
+makes, and climbing a multiplier (`S.mult`) rather than the ladder's own field.
+That was the lab's row grafted onto the top of the ladder when the lab came
+down, and the graft shows: the player finishes a card, and a second card with
+a different name appears in its place asking for sparks. It was meant to be
+the fourth band of the same ladder ("A ladder is four cards, not one"), and
+since the ladder became one card with its bands drawn as groups of pips, the
+research card is the one band still sold as a card of its own.
+
+**It joins the card.** A ground's ladder is one card of four groups, the last
+group's bill adding the core and the spark to the shard and the spore, exactly
+as the third group added the other ground's coin to the first's. Nothing about
+the fourth group is special: it is drawn by the same `group`, greyed by the
+same `waits`/`dead` until the yard has met the coins it asks (which is later
+than `invested` ever was, so that gate goes), and bought as a rung of the same
+field. The names `enchanted TNT`, `anti-gravity zone`, `astral GMOs` and
+`summer's aura` go with the cards they were on; the card is called what the
+ladder does, once, and the bill says the rest.
+
+**The multiplier goes with it.** The last band climbed `S.mult.<key>` by a
+quarter again a rung because that was the lab's arithmetic. Folded in, a rung
+is a rung: a count keeps its whole unit (a dig's share, a cut's spores), and a
+rate eases to the same top over the whole length. That is the rule "the
+length is one number" applied to the last two rungs as it already is to the
+first six -- `tierLevel`, `tierGain`, `TIER_OWN` and the four station keys in
+`MULT_MAX` lose their reason to exist, and `S.mult` is left holding nothing a
+row sells. A save carrying a mult level for one of the four folds it into the
+field on load, one rung a rung and clamped to the top, the way the harness
+and boots folded into the haulers' ladders; a save with a `lab*` work in
+flight lands it as a rung of the field the day it loads, and the key is kept
+in the fold so the save can name it.
+
+**What it costs the player:** the top of a count ladder is one unit higher
+per rung the band adds and the ×1.56 multiplier is gone -- a dig's share
+tops at ×3 instead of ×2.5 × 1.56, a cut's spores at 9 instead of 7 × 1.56.
+The rates' tops do not move. Sparks still buy the top of every ground's
+ladder; what changes is that the ask is a rung of the card the player has
+been climbing, not a second card.
+
+### One rung a band?
+
+With the spark band folded in, every ladder in the yard is the same
+statement: *a rung a coin*. An ordinary ladder is dust, then dust and crops,
+then dust, crops and ore; a ground's adds everything the yard makes. The
+question is whether `TIER_BAND` should be **one** -- a three-rung ladder on
+the bench and a four-rung one at the grounds, each press a new coin -- rather
+than two. The case for it is the one that took the ladders from nine to six
+this morning, taken to its end: each rung is a real decision because each
+rung is a new bill, and there is no second press that asks the same coins
+for a smaller step. The case against is the count ladders' tops, which keep a
+whole unit a rung and so fall with the length:
+
+| count | at six (today) | at three, four at the grounds |
+|---|---|---|
+| carry, pick (px) | 7 | 4 |
+| hauler load (grains) | 13 | 7 |
+| spores a cut | 7 | 5 |
+| shards a dig (share) | ×2.5 | ×2.0 |
+| doses a batch | 5 | 3 |
+
+Every rate holds its top; the price curve's ends hold and the steps between
+are the five-rung curve's rungs 1, 3 and 5. The counts' tops are the whole
+cost, and each is one constant (`CAP_STEP`, `HAUL_CARRY_STEP`,
+`CROP_PER_RUNG`, `SEAM_PER_RUNG`, the doses' unit) if any of them needs
+lifting to make a shorter ladder worth what a longer one was. Either way it
+is the one number, and it can be flipped on a played yard.
+
+**Decided (2026-09-14): one, and no top comes down.** Both halves built
+together, with one amendment to the text above: the table of falling tops was
+refused. A rung is worth what the band it replaces was worth -- "take the
+last value in each band and make that the rung" -- so every ladder ends
+exactly where it ended at six.
+
+### As built
+
+- `TIER_BAND` is one. `TIER_RUNGS` four, `LADDER` three, `TIER_OWN` three
+  (the rungs before the spark's), all written in terms of it.
+- **The spark rung is a rung of the field**, on the same card as its fourth
+  group of pips, its bill `shard, spore, core, spark` over the dust. The
+  research cards `labseam`, `labcave`, `labcrop`, `labtend` are gone; the
+  band keys are `seam4`, `quarrypace4`, `crop4`, `tend4`. `tierRows` has no
+  `multKey` and builds one card; `tierLevel` clamps a field to its length.
+- **The multiplier's worth is kept, not its mechanism.** The old band was two
+  rungs of ×1.25 over the field's top, ×1.5625 together; the spark rung is
+  worth that: `SPARK_GAIN` in `config/tiers.js`, applied by `tierGain` to the
+  counts and by `tendMs`/`quarryMs` to the rates, the same place `MULT_STEP`
+  was. `mult.js` keeps only `STEP` for the wizards' ladders; `MULT_MAX`,
+  `levelOf`, `FIELD`, `workFor`, `finish`, `rows-mult.js`, `LAB_WORK`, the
+  `__research` hook and the report's `research` fields are gone.
+- **The counts' units doubled** so no ladder's top moved: `CAP_STEP` 2,
+  `PICK_STEP` 2 (new; the pick's unit was a bare `1 + lvl` in two places),
+  `HAUL_CARRY_STEP` 4, `CROP_PER_RUNG` 2, `SEAM_PER_RUNG` 0.5, `DOSE_STEP` 2
+  (new). Carry and pick top at 7 px, a hauler at 13, a cut at 7 spores then
+  11 on the spark rung, a dig at ×2.5 then ×3.9, a batch at 5 doses -- the
+  figures at six, asserted by name in `test/ladders.test.mjs`. The rates ease
+  to their same tops in three steps.
+- **Saves.** A field from a longer ladder clamps to the top on read, which
+  only ever rounds a player up. Any `S.mult` level for one of the four grounds
+  sets that field to `TIER_RUNGS` -- the ladder under it was necessarily
+  finished -- and a `lab*` work still in flight in `works`, `research` or
+  `research2` does the same, since the sparks were paid and there is no row
+  left to finish it. `S.mult` is then noughts; it stays on `SAVED_BY_HAND` so
+  an old save round-trips. The player fixture had `mult.quarry: 5` past the
+  old cap, which the old code silently read as no gain at all (the field was
+  short of its top, so the mult rungs counted as own rungs); it reads as the
+  spark rung now and the gang is half again as quick.
+- The `invested` gate on the last band is gone; the bill's own coins gate it
+  later than that flag ever did.
+
+## Skipping a scene (built)
+
+Four things take the yard away from the player for a while: the opening,
+the reunion after the first rock, the rescue under the dome, and the camera
+scenes. Each had its own idea about being skipped -- the camera scenes on any
+click, the opening through a dev hook, the other two not at all -- and the
+opening is twenty seconds long on every new yard, which is twenty seconds a
+player on their third yard has already seen.
+
+**One key, held.** Space, held for `SKIP_HOLD_MS`, ends whichever of them is
+running; a tap does nothing. Held rather than pressed because every one of
+these plays once, and a hand resting on the keyboard is not a decision. A
+hint at the bottom edge -- "hold space to skip", in the held sheet's small
+hand, the one black card on the page -- is up while a scene has the yard,
+with a bar filling under the words for as long as the key is down, so the
+hold is seen counting from the first frame and a hold let go early has lost
+nothing. The count is on the game's clock, so it does not run down under the
+held sheet. One hold is one skip: a key held through the end of a scene does
+not eat the start of the next. The camera scenes keep their click.
+
+**What a skip is, scene by scene.** `src/skip.js` only knows that a scene is
+running and that the key has been down long enough; what ending early means
+is each scene's own business (`cutIntro` in intro.js, `skipCutscene`):
+
+- The opening goes straight to the yard as it stands after all of it -- the
+  same `skipIntro` the checks use -- with one difference kept: the body. The
+  square the player was watching is the square that carries on, stood where
+  it stood, the bargain `begin` strikes when the opening plays out. And the
+  player has still not dragged anything, so the bench's row that waits for a
+  drag goes on waiting; the dev skip marks the yard played-from, this does
+  not.
+- The reunion goes straight to where it was going: the rock coming down
+  again. From the meeting, the parting is started and ended in one frame; the
+  rock falls out of the sky as it would have, the crew scatter, the view lets
+  go.
+- The rescue finishes its dig and keeps its walk. The one underneath is out
+  of the ground at once, but it walks clear at its own pace whatever the
+  player holds -- a square under the rock one frame and stood clear the next
+  is the one thing this game never shows. What is cut is the ceremony: the
+  hearts, and the wait on them before it joins the crew. A rescue already cut
+  is finishing its walk and is nobody's to hurry, so the hint goes down with
+  the hold.
+- A camera scene is let go the way a click lets it go: the camera eases back,
+  the moment plays on in the yard.
+
+**Where it lives.** `skip.js` in the simulation frame -- `skippable`,
+`holdSkip`, `stepSkip` in `STEPS` after the intro's -- and `skiphint.js` in
+the browser shell beside the toast; `input.js` turns the key into `holdSkip`
+on and off, ignoring the browser's repeats and a key pressed in the settings
+sheet's paste box, and a window losing focus lets go. `S.skipHeldAt` and
+`S.introCut` are ephemeral. Hooks `__holdSkip` and `__skip`;
+`test/skip.test.mjs` holds the key through all four the player's way, and
+the browser tier's `input.js` presses the real key.
+## The dance is for two rocks, the dome retires, every shield fits, the crew hop (built)
+
+Four small things asked for together on 2026-09-14; the spec is
+`docs/wave-polish.md`, and this is what stands.
+
+- **Two dances.** The crew dance after the first rock and once more when the
+  "you saved your sqwife" sheet is put down (`storyDanced`, saved, so it is
+  once). Every other rock they get straight back to work. No fall is ever
+  danced: the fall-dance did two jobs -- keeping bodies out of the footprint
+  and off the rock -- and a stage of its own does both now (`crew/step.js`,
+  the duck-and-wait stage). The gang wait on *a rock being in the air*, not
+  on the drop zone, because a scene that holds the yard takes the zone away
+  while the dome holds a rock overhead. The next rock is not made until the
+  footprint is clear, backstopped by `ROCK_GAP_MS` (a second); the crew run
+  out of a footprint at `DUCK_PACE`, so rock N+1 is in the air about half a
+  second after rock N dies and down 0.7 s later. The between-rocks dig at
+  the buried one went with the dance that gave it time; the dig happens
+  under the dome, which is the one place a player was ever going to finish it.
+- **A rockhand's shovel stays on its rock.** Surfaced by the change above:
+  `rockhandMess` gated the shovel on muck being on the rock, but the pick
+  (`nearestMuck`) handed out the nearest column of anything, so a gang with
+  a few grains left on the face followed the yard's drift to the far wall.
+  The pick is kept to the rock's own columns unless the pile is full.
+- **The dome comes down.** Its job is one hold, the rescue. Once `rescued`
+  and the rescue walk is over, a standing dome fades over `DOME_FADE_MS` and
+  is gone; `'dome'` joins `shieldsDone`, the row reads done. Magic, so a fade
+  and not a walk-off -- the one exception to "every body walks", because
+  there is no body.
+- **Every shield fits.** `shieldPlan` plans for the rock that will reach it
+  (the one in the air if one is, else the next), and `makeBoulder` refits any
+  standing shield to the rock it just made (`refitShield`). The arch and the
+  dome are arcs the rock perches on, so they stand `ARCH_SPAN` / `DOME_SPAN`
+  times the rock's width, capped at the rock's flank clearance; the props and
+  net keep their margin.
+- **The hop.** A hard landing gives every grounded body `hopAt`/`hopK`, and
+  `drawWorkers` lifts it one parabola of `LAND_HOP_H * hopK` cells over
+  `LAND_HOP_MS`. Render-time only: `w.y` is untouched, so the walk and the
+  falls see nothing. A gentle set-down (the dome's) hops nobody.
+
+## A rung is a step up, not a step along (built)
+
+The player: *I kind of want some exponential-type growth instead of linear
+updates -- carry 1 → 2 → 4 → 6 → 10, not quite double; auto swing 1, 2, 3, 4 a
+second; your pick 1, 2, 4, 8. I don't know if there's one formula for
+everything.*
+
+Today every count ladder is a straight line -- a fixed unit a rung (`CAP_STEP`,
+`PICK_STEP`, `HAUL_CARRY_STEP`, `CROP_PER_RUNG`, `SEAM_PER_RUNG`, `DOSE_STEP`)
+-- and every rate eases along one curve from its base to a named top
+(`swing`, `ease`). What the ladders read now, rung by rung, off the ladder book:
+
+| ladder | rung 0 → 1 → 2 → 3 (→ 4) | shape |
+|---|---|---|
+| carry (px) | 1 → 3 → 5 → 7 | a line, +2 |
+| your pick (px) | 1 → 3 → 5 → 7 | a line, +2 |
+| hauler load (grains) | 1 → 5 → 9 → 13 | a line, +4 |
+| a cut (spores) | 1 → 3 → 5 → 7 → 11 | a line, +2, then ×1.56 |
+| a dig (share) | 1 → 1.5 → 2 → 2.5 → 3.9 | a line, +½, then ×1.56 |
+| a batch (doses) | 1 → 3 → 5 | a line, +2 |
+| auto swing (px/s) | 2.2 → 3.6 → 7.1 → 13.3 | eased to a top: +67%, +96%, +88% |
+| tending, the cut's pace | eased to a top | +62%, +83%, +69%, then +56% |
+
+The rates already climb the way the player is asking for -- each step is
+bigger than the last, because they are measured in milliseconds and read in
+per-second -- and the request there ("1, 2, 3, 4 a second") is in fact
+*flatter* than what stands. The counts are the linear ones, and they are what
+the request is about.
+
+### There is not one formula, and that is fine
+
+The three examples are three different curves: the pick doubles (×2), the carry
+does not quite (1, 2, 4, 6, 10 -- the *differences* double every two rungs),
+and the swing is a straight line in the rate. A geometric formula
+`base × ratio^rung` rounded to whole units gives the pick exactly and the carry
+nothing the player named: at ratio 1.7 the carry reads 1, 2, 3, 5; at 1.8 it
+reads 1, 2, 3, 6; the small integers round the shape away. Three or four rungs
+is too short a ladder for a curve to be told apart from a list.
+
+So the honest form is **a list a ladder**: the values a count reads at each
+rung, written down, in config.
+
+```
+CARRY_PX  = [1, 2, 4, 6, 10]   // what you carry
+PICK_PX   = [1, 2, 4, 8]       // your pick
+HAUL_LOAD = [1, 3, 6, 13]      // a hauler's load
+...
+```
+
+A row's `value(lvl)` is `LIST[Math.min(lvl, LIST.length - 1)]`; the last entry
+is the top. A rate keeps its curve (it is already the shape asked for) and its
+two ends stay the knobs they are. The grounds' spark rung stays a multiplier
+over the top of the list (`SPARK_GAIN`), because that is the one rung that is
+about the coin rather than the ladder.
+
+**What this costs the rules.** "A count is a whole unit a rung" (the six-rungs
+section) goes; it was the rule that made the length one number, and the length
+is one number still -- **every list is `LADDER` long, or `TIER_OWN` long at
+the grounds, and `test/ladders.test.mjs` says so**, so a list that is a rung
+short is a red check rather than a ladder that stops early. The tops in the
+"no top came down" check move to whatever the lists say and are read off them.
+The ladder book gains a knob a rung for each list, which is the page the
+request was really for: the curve of a ladder is settled by looking at the
+column of numbers, not by choosing an exponent.
+
+**The other road**, for the record: one geometric formula with a ratio knob a
+ladder (`CARRY_RATIO = 1.7`). Fewer numbers, one shape, and the reason to
+refuse it is above -- it cannot say 1, 2, 4, 6, 10, and a knob the player
+cannot dial to the numbers in their head is a knob that argues.
+
+### The two calls
+
+1. **Lists, or one ratio?** Recommendation: lists, for the reasons above.
+2. **The bench's fourth value.** The carry example has five values, which is
+   four rungs; the bench's ladders have three. Either the example is one
+   longer than the ladder and the list is `[1, 2, 4, 8]`-shaped, or the
+   bench's ladders want a fourth rung -- which, by the bands rule, would be a
+   fourth coin, and the bench has none to add short of the spark. Assumed:
+   three rungs, four values; the fourth is where a list ends.
+
+Once decided, the build is `config`: one list a count ladder, the six unit
+constants retired, `value` reading the list, the checks reading the lists, and
+the book's knobs. Nothing about saves: a level is a rung, and a rung reads its
+value off the list whatever the list says.
+
+**Decided (2026-09-14): lists, and every ladder gets a rung for every coin.**
+The second call went the long way: not "the list is one longer than the
+ladder" but "every ladder is four rungs" -- the bench's ladders have the spark
+rung the grounds had.
+
+### As built
+
+- `LADDER_BANDS` is four, so `LADDER` is `TIER_RUNGS` and the grounds' ladders
+  and the bench's are the same ladder: dust, then spore, then shard, then
+  spore, shard and spark. **Not the core.** The grounds' fourth band listed it
+  from the lab's research bill; on every ladder it came to thirty-two cores
+  for one rung of crit damage, in a game with nine. `BAND_COINS[3]` and the
+  grounds' fourth bands ask `spore, shard, spark`.
+- `config/rungs.js` holds the lists -- `CARRY_PX`, `PICK_PX`, `ROCKHAND_PX`,
+  `HAUL_LOAD`, `CROP_SPORES`, `SEAM_SHARE`, `DOSES`, `CRIT_MULT` -- each five
+  values, the foot and four rungs, and `rungValue(list, lvl)` clamps a level to
+  the list on read. `RUNG_KNOBS` hands `TUNABLE` a knob a rung, so every entry
+  is a dial in the ladder book and on the dev panel.
+- Retired: `CAP_BASE/CAP_STEP`, `PICK_BASE/PICK_STEP`, `HAUL_CARRY_STEP`,
+  `CROP_PER_RUNG`, `SEAM_PER_RUNG`, `DOSES0/DOSE_STEP/DOSES_CARDS`,
+  `CRIT_MULT_MIN/MAX/RUNGS`, `ROCKHAND_RUNGS`, `tierGain`. The grounds' spark
+  rung reads its list's last entry like any other; `SPARK_GAIN` stays for the
+  two ground rates (`tendMs`, `quarryMs`), which ease to their tops over
+  `TIER_OWN` and take the spark rung on top.
+- The last two flat rows -- `critmult` and `rockhandpick` -- are `tierRows`
+  ladders now, dust alone on the first rung like every other; the hauler's two
+  hand-written three-band tables went onto `named`. Every other rate keeps
+  its curve and eases to the same top over the four rungs.
+- `test/ladders.test.mjs` asserts the lists: each `LADDER + 1` long, whole
+  where the count is whole, every rung worth more than the last, and each
+  count reading the top of its own list at the top.
+>>>>>>> main

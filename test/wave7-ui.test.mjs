@@ -9,34 +9,38 @@
 
 import { group, ok, state, run, buyNow, openSites } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { ROCKHAND_RUNGS, CRIT_MULT_RUNGS, CRIT_MULT_MIN, CRIT_MULT_MAX } from '../src/config.js';
+import { LADDER, ROCKHAND_PX, CRIT_MULT } from '../src/config.js';
 import { critMult } from '../src/crit.js';
 import { rockhandBite, rebalance } from '../src/upgrades.js';
 
 // --- 1. the pickaxe: three integer rungs, bought off the bench -----------------
-group('the pickaxe ladder is three whole-pixel rungs, bought like a player', async () => {
+group('the pickaxe ladder is whole-pixel rungs off its list, bought like a player', async () => {
   const out = [];
   // the row shows once spores have been seen and there is a crew. The purse
   // is the dust one, sized like the spore one: enough for the whole ladder
   // with room to spare, so what the check is about is the rung, not the bill.
+  window.__invest();                        // the grounds stand: the rungs past the first are priced in their coins
   window.__crew(1, 1);
   window.__grant({ spores: 5000 });
   window.__give(50000);
   run(0.5);
 
-  out.push(ok(rockhandBite(0) === 1, 'level 0 bites one pixel', `${rockhandBite(0)}`));
-  for (let lvl = 0; lvl < ROCKHAND_RUNGS; lvl++) {
+  // Every coin, so the last rung -- the spark's, like every ladder's -- is
+  // within reach; the check is about the rungs, not the bill.
+  window.__grant({ shards: 20000, spores: 20000, cores: 9, sparks: 5000 });
+  out.push(ok(rockhandBite(0) === ROCKHAND_PX[0], 'level 0 bites the foot of its list', `${rockhandBite(0)}`));
+  for (let lvl = 0; lvl < LADDER; lvl++) {
     const before = rockhandBite();
     const bought = buyNow('rockhandpick');
     out.push(ok(bought, `rung ${lvl + 1} can be bought through the row`, `level ${lvl}`));
     const after = rockhandBite();
     out.push(ok(Number.isInteger(after), 'the bite is a whole pixel', `${after}`),
-             ok(after === before + 1, 'and each rung is worth exactly one more',
+             ok(after > before && after === ROCKHAND_PX[lvl + 1], 'and each rung is worth more, off the list',
                 `${before} -> ${after}`));
   }
-  out.push(ok(S.rockhandPickLevel === ROCKHAND_RUNGS, 'the ladder tops out at three rungs',
+  out.push(ok(S.rockhandPickLevel === LADDER, 'the ladder tops out at the ladder\'s length',
               `${S.rockhandPickLevel}`),
-           ok(!window.__buy('rockhandpick'), 'and a fourth rung is not for sale'));
+           ok(!window.__buy('rockhandpick'), 'and a rung past it is not for sale'));
   return out;
 });
 
@@ -48,24 +52,24 @@ group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
   // in dust -- the one three-rung ladder that is, being the strongest rung on
   // the bench -- so the purse has to hold all three or the row is out of reach
   // and the ladder reads as broken rather than as unaffordable.
-  window.__grant({ shards: 5000, spores: 5000 });
+  window.__grant({ shards: 20000, spores: 20000, cores: 9, sparks: 5000 });
   // ...and the card is off the board until both grounds stand -- a bill naming
   // a coin the yard cannot get is a card the yard does not draw (coinsOpen).
   window.__crew(0, 0, 1, 1);
   window.__crew(1, 0);
   run(0.5);
 
-  out.push(ok(critMult(0) === CRIT_MULT_MIN, 'the ladder starts at the minimum',
-              `${critMult(0)} vs ${CRIT_MULT_MIN}`));
-  for (let lvl = 0; lvl < CRIT_MULT_RUNGS; lvl++) {
+  out.push(ok(critMult(0) === CRIT_MULT[0], 'the ladder starts at the foot of its list',
+              `${critMult(0)} vs ${CRIT_MULT[0]}`));
+  for (let lvl = 0; lvl < LADDER; lvl++) {
     const from = critMult(S.critMultLevel);
     const to = critMult(S.critMultLevel + 1);
-    out.push(ok(to === from + 1, `rung ${lvl + 1} promises a whole unit more`,
+    out.push(ok(Number.isInteger(to) && to > from, `rung ${lvl + 1} promises whole units more`,
                 `${from} -> ${to}`));
     out.push(ok(buyNow('critmult'), 'and can be bought through the row', `level ${lvl}`));
   }
-  out.push(ok(critMult() === CRIT_MULT_MAX, 'the top of the ladder is the maximum',
-              `${critMult()} vs ${CRIT_MULT_MAX}`),
+  out.push(ok(critMult() === CRIT_MULT[LADDER], 'the top of the ladder is the end of its list',
+              `${critMult()} vs ${CRIT_MULT[LADDER]}`),
            ok(!window.__buy('critmult'), 'and there is no rung past it'));
   return out;
 });
@@ -76,13 +80,13 @@ group('saved levels past the shorter ladders clamp to their tops', async () => {
   S.critMultLevel = 5;
   rebalance();                             // the same clamp a load runs
   return [
-    ok(S.rockhandPickLevel === ROCKHAND_RUNGS, 'pick level five reads as the new top',
+    ok(S.rockhandPickLevel === LADDER, 'pick level five reads as the top',
        `${S.rockhandPickLevel}`),
-    ok(rockhandBite() === 1 + ROCKHAND_RUNGS, 'and bites what the top rung bites',
+    ok(rockhandBite() === ROCKHAND_PX[LADDER], 'and bites what the top rung bites',
        `${rockhandBite()}`),
-    ok(S.critMultLevel === CRIT_MULT_RUNGS, 'crit power clamps the same way',
+    ok(S.critMultLevel === LADDER, 'crit power clamps the same way',
        `${S.critMultLevel}`),
-    ok(critMult() === CRIT_MULT_MAX, 'to exactly the maximum multiplier', `${critMult()}`),
+    ok(critMult() === CRIT_MULT[LADDER], 'to exactly the top of its list', `${critMult()}`),
   ];
 });
 

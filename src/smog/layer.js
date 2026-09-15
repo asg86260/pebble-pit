@@ -485,6 +485,18 @@ export function nearestMuck(wx, taken, hand) {
   // the rest of the run with the janitor loitering at its shed: barred here,
   // while every hauler that could walk to it was barred by `shiftable`.
   const canDescend = hand && (hand.type === TYPE.HAUL || hand.type === TYPE.JANITOR);
+  // And where this pair of hands is allowed to look. A rockhand shovels what is
+  // lying on its own site (`rockhandMess`, rockhand.js): it downs tools while
+  // there is muck on the rock and goes back up when the face is clear. The gate
+  // said so and the pick did not -- it handed out the nearest column of
+  // anything -- so a gang that had worked the face down to its last few grains
+  // found the drift lying against the rock's foot nearer than those, followed
+  // it out across the yard, and swept the whole works to the far wall for two
+  // minutes while the rock stood under its last patch and nobody mined. Its
+  // own columns, then, unless its pile is full and there is nothing else for
+  // it to be doing anyway.
+  const own = hand && hand.type === TYPE.ROCK && !S.pileFull.rock ? rockCols() : null;
+  const inside = c => !own || (c * P + P / 2 >= own.from && c * P + P / 2 < own.to);
   const m = muckCols();
   const here = c => { let n = 0; for (const s of mine) n += s[c] || 0; return n; };
   // Where the scan starts and how much ground a claim reserves are this body's
@@ -499,7 +511,7 @@ export function nearestMuck(wx, taken, hand) {
   const home = colAt(wx) + jitter;
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !here(c)) continue;
+      if (c < 0 || c >= m.length || !here(c) || !inside(c)) continue;
       if (!canDescend && overPitMouth(c * P + P / 2)) continue;
       if (taken && taken.has(c)) continue;
       // A claim is a stretch, not a cell. Columns are six pixels and a body is

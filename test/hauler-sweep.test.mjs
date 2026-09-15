@@ -226,12 +226,17 @@ group('a claimant already at its column keeps it against a sweeper', async () =>
   window.__crew(0, 2);
   quickCrew();
   window.__clearFloor();
+  // Past the opening drop. A fresh yard has its first rock in the air, and two
+  // quick haulers let go the moment it lands took both grains below before this
+  // check had placed anybody at them -- the dance that used to hold them
+  // through the fall is gone (wave polish, 2026-09-14).
+  runUntil(() => !(yard.S.rockFall > 0), 10);
   run(0.2);
   const s0 = state();
   const far = s0.pitX - 1000, next = far + P * 8;
   window.__pile(far, 1);
   window.__pile(next, 1);
-  run(1);
+  run(0.1);                                  // the grains come to rest; longer and a free hauler has them
   let c = -1;
   for (let k = Math.floor((next - s0.floorX) / P) - 3; k <= Math.floor((next - s0.floorX) / P) + 3; k++) if (at(floor, k, 0)) c = k;
   const [a, b] = yard.S.workers.filter(w => w.type === 'hauler');

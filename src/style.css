@@ -223,8 +223,8 @@ canvas {
      line is clipped with an ellipsis rather than allowed to shove the card
      wider than its column; the bill spans both tracks and never lived in this
      one. The right is as wide as the pips. Settled on the card bench
-     (cards.html) against the deepest bill in the game, the grounds' six-coin
-     research card. */
+     (cards.html) against the deepest bill in the game, a ground ladder's
+     spark rung. */
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto auto auto;
   gap: var(--card-gap);
@@ -610,6 +610,7 @@ canvas {
 .rows .ladder b { font-weight: normal; }
 .rows .ladder b:nth-child(2) { color: #2e9e4b; }   /* the farm's green, as the spore mark */
 .rows .ladder b:nth-child(3) { color: #2f5fd0; }   /* the quarry's blue, as the shard mark */
+.rows .ladder b:nth-child(4) { color: #d93a25; }   /* the spark's red: the grounds' last rung */
 /* The hover is a share of the way from the resting tone to full black rather
    than a second tone found by hand -- two hand-tuned numbers would part company
    the moment either was retuned. */
@@ -1458,3 +1459,30 @@ body.demo canvas { cursor: default; pointer-events: none; }
 @media (max-width: 560px) {
   .rows { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* The skip hint (skiphint.js): a strip at the bottom edge, in the held
+   sheet's small hand, the one black card on the page while a scene runs --
+   the yard's floor is white, and the toast's strip at the top is spoken for.
+   Under the held sheet's wash and over the boards, like the toast. The bar
+   is its own layer under the words, filling left to right for as long as
+   space is held; the words invert over it, so they stay legible on either. */
+.skip {
+  position: fixed;
+  z-index: 11;
+  left: 50%; bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px 5px;
+  background: #000;
+  border: 1px solid #fff;
+  outline: 1px solid #000;
+  font: 10px ui-monospace, "Courier New", monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s linear;   /* SHEET_FADE_MS in config/view.js */
+}
+.skip.on { opacity: 1; }
+.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; }
+.skip .say { position: relative; mix-blend-mode: difference; }

@@ -35,6 +35,7 @@ import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H }
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene } from './cutscene.js';
+import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane } from './settings.js';
 
@@ -698,7 +699,20 @@ addEventListener('keydown', e => {
   }
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
+  // Space, held, skips whatever scene is running (skip.js). The hold is
+  // counted on the game's clock from the first press; the browser's repeats
+  // are ignored. Not while typing -- the settings sheet has a box a save is
+  // pasted into, and a space in there is a space.
+  if (e.key === ' ' && !typing(e.target)) {
+    e.preventDefault();
+    if (!e.repeat) holdSkip(true);
+  }
 });
+addEventListener('keyup', e => { if (e.key === ' ') holdSkip(false); });
+// A window that loses focus never sees its key come up.
+addEventListener('blur', () => holdSkip(false));
+const typing = el =>
+  !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 
 // One flag, set here and read everywhere. The sheet that says so is not set
 // here at all -- the frame keeps it in step with the flag, so anything that

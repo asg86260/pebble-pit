@@ -21,32 +21,60 @@
 
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
+import { WORKER } from '../src/config.js';
 
 // On this same yard -- deep in mess, so every free hand is on muck duty -- the
-// crew spent every fall vibrating instead of dancing. The muck walk never asked
-// about the drop zone, so a body sent at a mess under or across the coming rock
+// crew spent every fall vibrating at the drop zone. The muck walk never asked
+// about the zone, so a body sent at a mess under or across the coming rock
 // stepped in and was shoved out by the duck, every frame, juddering on the line
-// for the whole of the fall. `takeMess` sends them to the dance instead now, the
-// same answer every hauler errand already gave.
-group('the crew dance through the fall instead of grinding at the zone', async () => {
+// for the whole of the fall. The answer used to be the dance: every fall was
+// danced through and a dancing body covers no ground. No fall is a dance now
+// (wave polish, 2026-09-14); what stands in for it is the duck stage in
+// crew/step.js -- a body that has stepped out of the footprint stands where it
+// stepped to until the rock is down -- and `takeMess` still keeps a shovel off
+// a mess under the fall. So what is asserted is the outcome itself: through
+// the whole fall nobody grinds on the line.
+group('the crew stand clear through the fall instead of grinding at the zone', async () => {
   localStorage.setItem('boulder-clicker/v4',
     readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
   yard.restore();
-  window.__next();                             // the rock goes; the beat starts
-  // frame by frame -- the fall is a couple of seconds and a coarse step walks
+  window.__next();                             // the rock goes; the gap starts
+  // frame by frame -- the fall is under a second and a coarse step walks
   // straight over it
   for (let i = 0; i < 1200 && state().rockFall <= 0; i++) run(1 / 60);
-  let most = 0, frames = 0;
+  // Per body, every frame of the fall: where it stood. A judder is a body
+  // reversing along the ground again and again within a stride of the zone's
+  // line; a body walking clear reverses once at most.
+  const films = new Map();
+  let frames = 0, zone = null;
   for (let i = 0; i < 600 && state().rockFall > 0; i++) {
     run(1 / 60);
     frames++;
-    most = Math.max(most, state().jigging);
+    const s = state();
+    zone = s.dropZone || zone;
+    s.workerPos.forEach((p, idx) => {
+      const x = +p.split(':')[1].split(',')[0];
+      if (!films.has(idx)) films.set(idx, []);
+      films.get(idx).push(x);
+    });
   }
+  const grinders = [...films.entries()].filter(([, xs]) => {
+    if (!zone) return false;
+    const nearLine = xs.some(x => Math.abs(x - zone[0]) < WORKER * 2 || Math.abs(x + WORKER - zone[1]) < WORKER * 2);
+    if (!nearLine) return false;
+    let flips = 0, last = 0;
+    for (let i = 1; i < xs.length; i++) {
+      const d = Math.sign(xs[i] - xs[i - 1]);
+      if (d && last && d !== last) flips++;
+      if (d) last = d;
+    }
+    return flips > 3;
+  }).map(([idx]) => idx);
   window.__crew(0, 0);
   return [
     ok(frames > 20, 'there was a fall to watch', `${frames} frames of it`),
-    ok(most >= 4, 'and a real crowd joins the dance under it',
-       `${most} bodies at the height of it`)
+    ok(grinders.length === 0, 'and nobody grinds on the zone line through it',
+       `bodies ${grinders.join(',')} reversed more than three times at the line`)
   ];
 }, 20250830);
 

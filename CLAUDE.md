@@ -45,6 +45,12 @@ The game itself is `play.html` (`index.html` is the landing page); a `GAME`
 naming only the server gets `play.html` appended by the tools.
 Use it before `look.mjs` for any change to a card's shape.
 
+For anything about what a **ladder** costs or is worth, `ladders.html` is the
+ladder book: every ladder on every board climbed rung by rung -- bill, work,
+from/to -- read off the real rows, with the `TUNABLE` knobs beside it so a first
+cost or a unit a rung can be moved and every table re-reads. It copies out what
+you changed as config lines.
+
 Iterate against a shot, not against a suite. A four-minute run that cannot tell
 you whether a hat is on straight is pure latency.
 
@@ -337,17 +343,20 @@ Two harness facts, each of which cost a full launch cycle:
   fully-invested yard that goes permanently clean. An upgrade that quietly
   cleaned the sky would be a number you buy once and never think about again;
   the sky is meant to stay a live decision.
-- **A ladder is sold in bands, on every board.** `TIER_BAND` rungs to a card
-  (two, since 2026-09-14 -- six to a ladder; never write the number, write the
-  constant), the bill deepening card by card in the order the yard hands out
-  its coins:
-  **dust only, then dust and crops, then dust, crops and ore.** The first card
-  is cheap and dust-only so an early yard can buy it; the ladder gets dear in
-  the coins the station has started spending. The grounds' fourth (spark/core)
-  band is theirs alone. A ladder no longer than a band is one dust-only
-  card. A rate ladder eases to a named top over `LADDER`; a count ladder is a
-  whole unit a rung and its top moves with the length (DESIGN.md, "A ladder
-  is six rungs"). The tower's and the machines' spark ladders are outside this rule by
-  the decision above. Build every new ladder through `tierRows`; a flat
-  five-pip row with one bill from rung one is the old shape and a bug. See
-  DESIGN.md, "Every ladder is sold in bands".
+- **A ladder is a rung a coin, on every board -- four rungs, the same four
+  everywhere.** One card; `TIER_BAND` rungs to a band (one, since 2026-09-14;
+  `LADDER` is four -- never write the number, write the constant), the bill
+  deepening rung by rung in the order the yard hands out its coins:
+  **dust only, then dust and crops, then dust, crops and ore, then crops, ore
+  and a spark.** Never the core: nine exist and they open places. The first
+  rung is cheap and dust-only so an early yard can buy it; the ladder gets dear
+  in the coins the station has started spending, and the last rung is the
+  spark's on the bench as at the grounds -- on the same card, climbing the
+  same field, never a card of its own. **A count ladder reads a written list**
+  (`config/rungs.js`: the foot and a value a rung, each worth more than the
+  last -- carry 1, 2, 4, 6, 10) and a rate ladder eases to a named top; no
+  unit-a-rung constants, no curve formula (DESIGN.md, "A rung is a step up").
+  The tower's and the machines' spark ladders are outside this rule by the
+  decision above. Build every new ladder through `tierRows` with `named`
+  bands; a flat row with one bill from rung one is the old shape and a bug.
+  See DESIGN.md, "Every ladder is sold in bands".

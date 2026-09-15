@@ -5,8 +5,9 @@
 import { group, ok, state, run, runUntil, openSites, yard, buyBuilt } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         DOME_BILL, DOME_FLOOR_C, P } from '../src/config.js';
+         DOME_BILL, DOME_FLOOR_C, DOME_FADE_MS, P } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
+import { domeOrbitR } from '../src/shield.js';
 import { DUST_PER } from '../src/upgrades.js';
 
 // The dome is priced in everything the yard makes, and the fixture pays for
@@ -342,7 +343,13 @@ group('under the dome, the one underneath walks out', async () => {
   ];
 });
 
-group('the dome holds, and sets every rock down after it', async () => {
+// The dome holds the one rock it was for, and then it is done. Its whole job
+// is the rescue; a dome that went on catching every rock after that was a hold
+// and a slow set-down on every rock for the rest of the game. So the frame
+// after the rescue rock is set down it starts to fade, and DOME_FADE_MS later
+// it is gone, remembered in `shieldsDone` like the kinds that broke -- and
+// the next rock comes down on the ground, hard, the way rocks do.
+group('the dome holds the rescue rock, sets it down, and then fades out', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
@@ -371,17 +378,49 @@ group('the dome holds, and sets every rock down after it', async () => {
   }, 240);
   const noGroundWork = !state().works.yard;
 
-  // the first rock it answers
+  // the first rock it answers -- the rescue rock
   window.__next();
   const caught = runUntil(() => state().rockHeld, 240);
   const up = state().rockFall;
-  const set = runUntil(() => !state().rockHeld && state().rock > 0 && !state().rockFall, 60);
-  const after = state();
+  const S = yard.S;
+  // Frame by frame through the set-down: the fade starts the frame after the
+  // rock is set, and a fading dome is still `S.shield` for DOME_FADE_MS, so a
+  // second's stride from the set-down would step into the middle of it.
+  let set = false, atSet = null;
+  for (let i = 0; i < 60 * 120 && !set; i++) {
+    run(1 / 60);
+    if (!S.rockHeld && S.rockFall === 0 && S.boulder.length) { set = true; atSet = { landAt: S.landAt, shield: S.shield && { ...S.shield } }; }
+  }
+  const stillUp = !!S.shield && S.shield.kind === 'dome';
+  // The rock is set down while the two of them are still walking to meet
+  // under it (`S.intro === 'rescue'`), and the dome stands over that walk:
+  // the fade waits for the beat to end, then starts on the next frame.
+  let walkOver = false;
+  for (let i = 0; i < 60 * 60 && !walkOver; i++) {
+    if (S.intro !== 'rescue') { walkOver = true; break; }
+    run(1 / 60);
+  }
+  const heldOff = !!S.shield && !S.shield.fading;
+  run(1 / 60);
+  const fading = !!S.shield && S.shield.fading > 0;
+  const fadeFrom = S.shield && S.shield.fading;
+  // the whole fade is a shield that is still there and never catches anything
+  let heldWhileFading = false, gone = false, goneAt = 0;
+  for (let i = 0; i < 60 * 10 && !gone; i++) {
+    run(1 / 60);
+    if (S.shield && S.rockHeld) heldWhileFading = true;
+    if (!S.shield) { gone = true; goneAt = yard.clock.now(); }
+  }
+  const done = state().shieldsDone.includes('dome');
+  const rowBack = !!dome()?.show();
+  const wonders = !!window.__upgrades().find(u => u.key === 'askwizards')?.show();
+  const restoredDone = (() => { window.__reload(); return !state().shield && state().shieldsDone.includes('dome'); })();
 
-  // and the one after that, because the dome does not go anywhere
+  // and the one after that comes down on bare ground, the way rocks do
   window.__next();
-  const again = runUntil(() => state().rockHeld, 240);
-  const settled = runUntil(() => !state().rockHeld && !state().rockFall, 60);
+  let everHeld = false;
+  const landed = runUntil(() => { if (state().rockHeld) everHeld = true; return state().rock > 0 && !state().rockFall; }, 240);
+  const landAt = S.landAt;
 
   window.__reset();
   return [
@@ -392,9 +431,19 @@ group('the dome holds, and sets every rock down after it', async () => {
     ok(cast && poured, 'the wizards ring it and pour it up', `laid ${state().shieldsDone}`),
     ok(noGroundWork, 'and no work of it ever touches the ground'),
     ok(caught && up > 0, 'it catches the rock overhead', `${up}px up`),
-    ok(set, 'and lets it down rather than dropping it'),
-    ok(after.shield && after.shield.kind === 'dome', 'the dome is still standing'),
-    ok(again && settled, 'and it catches the next one too')
+    ok(set && atSet.landAt === 0, 'and lets it down rather than dropping it',
+       atSet && `landAt ${atSet.landAt}`),
+    ok(stillUp && !atSet.shield.fading, 'the dome is still standing the frame the rock is set'),
+    ok(walkOver && heldOff, 'and stands until the two of them have met under it'),
+    ok(fading, 'then starts to fade the frame after', `fading ${fadeFrom}`),
+    ok(gone && !heldWhileFading, 'it catches nothing while it fades, and then it is gone'),
+    ok(gone && Math.abs(goneAt - fadeFrom - DOME_FADE_MS) <= 1000 / 60 * 2,
+       `gone ${DOME_FADE_MS}ms after the fade began`, `${goneAt - fadeFrom}ms`),
+    ok(done, 'and it is remembered as answered, like the kinds that broke'),
+    ok(!rowBack && !wonders, 'so neither its row nor the thought of it comes back'),
+    ok(restoredDone, 'and a reload keeps it gone'),
+    ok(landed && !everHeld, 'the next rock is never held'),
+    ok(landed && landAt > 0, 'and lands on the ground with a shake', `landAt ${landAt}`)
   ];
 });
 
@@ -421,15 +470,17 @@ group('a wizard at the star is called to the dome, and gets there fast', async (
   const far = Math.abs(state().meteorX - (state().shield.x + state().shield.w / 2));
   const poured = runUntil(() => state().shield && state().shield.laid > 0, 12);
   const y = state().wizardY[0];
+  // The ring hangs just over the crown (`domeSpot`), so where the body has
+  // come down to is measured against the dome standing rather than against a
+  // drop typed in here -- a wider dome is a taller one, and a higher ring.
+  const ringY = state().groundY - (state().shield.h + 4) * P;
   window.__reset();
   return [
     ok(bought, 'the dome is bought out from under a wizard at the star'),
     ok(far > 2000, 'which is the far side of the yard', `${far}px`),
     ok(poured, 'and the pour starts within seconds of the buy, not most of a minute'),
-    // Lower than the star's ring by a few cells: the two rings are a hundred
-    // pixels apart give or take, and before the flight was saved across a
-    // reload the body measured here had not left the ground at all.
-    ok(y > starY + P * 4, 'the body having come down to the ring over the crown', `${starY} -> ${y}`)
+    ok(y > starY && Math.abs(y - ringY) <= domeOrbitR() + P * 2,
+       'the body having come down to the ring over the crown', `${starY} -> ${y}, ring at ${ringY}`)
   ];
 });
 

@@ -59,10 +59,26 @@ export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 export let SHAKE_LAND = 15;      // world pixels the landing throws the view
 export const SHAKE_RATE = 0.9;   // radians a frame it rocks through
 export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
-// Nothing is standing under it when it lands. The crew get out of the footprint
-// while the last rock's celebration is on, and a body still in it once the rock
-// is in the air walks out at a pace nobody walks anywhere else.
-export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
+// And so is the crew. The view rocked and a mark went up over every head, but
+// no body moved, and a yard that says "that was heavy" with a caption while
+// everybody stands like furniture reads as a caption. The hop is one parabola,
+// up and back down, over the beat below; the height is in cells and is scaled
+// by the same rock-size factor the shake is, so a big rock throws them higher.
+// It is drawn, not simulated -- `w.y` never moves, so the walk, the falls and
+// the drop zone see nothing -- which is why a hop can be this short and still
+// never leave a body somewhere it did not walk to.
+export let LAND_HOP_MS = 240;    // how long a body is off its feet after a landing
+export let LAND_HOP_H = 1.5;     // cells the hop peaks at, for a first-sized rock
+// Nothing is standing under it when it lands. Only the first rock's finish is
+// celebrated; after every other one the next rock is on its way the moment the
+// footprint is empty, so the crew *run* out of it -- a pace nobody moves at
+// anywhere else, because nowhere else is a rock coming down on them.
+export const DUCK_PACE = 6;      // pixels a frame out from under a falling rock
+// ...and how long the yard waits for them before the rock comes anyway. The
+// rock is made the frame the footprint is clear; this is the backstop for a
+// body that cannot get out, kept short because everything between one rock
+// and the next is dead air to the player.
+export const ROCK_GAP_MS = 1000;
 // A stopped crew is not a frozen crew. When the pile is full the rock hands stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
 // is a hop a second and goes places.
@@ -109,15 +125,16 @@ export const ROCK_KNOBS = [
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250,
     get: () => DANCE_MS, set: v => { DANCE_MS = v; } },
   { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1,
-    get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } }
+    get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } },
+  { key: 'LAND_HOP_MS', label: 'landing hop', min: 0, max: 1000, step: 20,
+    get: () => LAND_HOP_MS, set: v => { LAND_HOP_MS = v; } },
+  { key: 'LAND_HOP_H', label: 'landing hop height', min: 0, max: 4, step: 0.25,
+    get: () => LAND_HOP_H, set: v => { LAND_HOP_H = v; } }
 ];
 
 // --- wave7-ui -----------------------------------------------------------------
-// The pickaxe ladder: three rungs, each worth a whole pixel of bite. The eased
-// fractional curve read as noise on the row ("1.4 -> 1.7 px"); a whole pixel a
-// rung is a purchase you can see land, so there are fewer rungs and each is
-// dearer -- see rows-rock.js, where the bases are eight times what they were.
-export const ROCKHAND_RUNGS = 3;
-// And what its first rung costs, in dust. It was spore and dust from the first
-// rung; a three-rung ladder is one card and takes the first card's coin.
+// The pickaxe ladder reads whole pixels off ROCKHAND_PX (config/rungs.js). The
+// eased fractional curve it replaced read as noise on the row ("1.4 -> 1.7 px").
+// What its first rung costs, in dust: a band ladder like every other, dust
+// only on the first rung.
 export const ROCKHAND_PICK_COST = 2400;

@@ -6,11 +6,12 @@
 // on the board.
 
 import {
-  P, CAP_BASE, CAP_STEP, RUNGS, LADDER, HAUL_PACE_TOP, HAUL_CARRY_STEP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
+  P, RUNGS, LADDER, HAUL_PACE_TOP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
+  CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, rungValue,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST, ROCKHAND_RUNGS, CRIT_MULT_RUNGS
+  TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { fmt } from './board.js';
 import { scrubCost } from './scrubhouse.js';
@@ -32,7 +33,6 @@ import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
-import { mult } from './mult.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
          busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
@@ -63,7 +63,8 @@ export const swing = (base, floor, rungs) => lvl => {
 };
 const perSecond = ms => lvl => 1000 / ms(lvl);
 
-export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
+// What the counts read is a list a ladder -- see config/rungs.js.
+export const capacity = (lvl = S.carryLevel) => rungValue(CARRY_PX, lvl);
 
 // `rungCost` and `DUST_PER` live in upgrades/price.js, a leaf, so the ladder
 // helper can price a row without importing this file -- see the note there.
@@ -147,10 +148,10 @@ export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lv
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
 // stone out of the quarry, because gear is what stone is for.
-// What a hauler carries and how fast it walks, one ladder each -- see
-// HAUL_CARRY_STEP. A load is a whole number of grains, so it steps; the walk
+// What a hauler carries and how fast it walks, one ladder each. A load is a
+// whole number of grains and reads its list (config/rungs.js); the walk
 // eases across the ladder to its top.
-export const haulCap = (lvl = S.haulCarryLevel) => 1 + HAUL_CARRY_STEP * Math.max(0, Math.min(LADDER, lvl | 0));
+export const haulCap = (lvl = S.haulCarryLevel) => rungValue(HAUL_LOAD, lvl);
 export const haulSpeed = (lvl = S.haulPaceLevel) =>
   HAUL_BASE * (1 + HAUL_PACE_TOP * Math.max(0, Math.min(LADDER, lvl)) / LADDER);
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
@@ -166,15 +167,12 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
-export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
-// What a rockhand takes: a whole pixel a rung, over the pickaxe's own short
-// ladder. The eased curve this replaces bought fractions of a pixel per rung --
-// numbers the row could only show as noise ("1.4 -> 1.7 px") -- so the ladder
-// is three rungs now, each a pixel you can watch land, and each an order dearer
-// (see rows-rock.js). Clamped to the ladder here as well as at load, so a saved
-// level past the new top reads as the top.  (feedback7, item 19)
-export const rockhandBite = (lvl = S.rockhandPickLevel) =>
-  1 + Math.max(0, Math.min(ROCKHAND_RUNGS, lvl | 0));
+export const pickCount = (lvl = S.pickLevel) => rungValue(PICK_PX, lvl);   // pixels your own swing takes
+// What a rockhand takes: whole pixels off its list. The eased curve this
+// replaced bought fractions of a pixel per rung -- numbers the row could only
+// show as noise ("1.4 -> 1.7 px"). Clamped to the list here as well as at
+// load, so a saved level past the top reads as the top.  (feedback7, item 19)
+export const rockhandBite = (lvl = S.rockhandPickLevel) => rungValue(ROCKHAND_PX, lvl);
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet.
@@ -384,7 +382,6 @@ import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
-import { MULT_ROWS } from './upgrades/rows-mult.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
 
@@ -680,14 +677,9 @@ export function rebalance() {
   for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
-  for (const k of ['carryLevel', 'speedLevel', 'pickLevel',
+  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel', 'critMultLevel',
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
-  // Two ladders got shorter (feedback7 items 19 and 20), so their saved levels
-  // clamp against their own tops rather than the shared RUNGS: a save at pick
-  // level five reads as the new level three, not as two rungs past the ladder.
-  S.rockhandPickLevel = Math.max(0, Math.min(ROCKHAND_RUNGS, S.rockhandPickLevel || 0));
-  S.critMultLevel = Math.max(0, Math.min(CRIT_MULT_RUNGS, S.critMultLevel || 0));
   // Building is not a job on the roster and never will be. You do not decide to
   // have builders -- you decide to build something, and the hands that had
   // nothing else on go and do it, which is what "spare" already meant. So the
@@ -890,7 +882,6 @@ export const UPGRADES = chained([
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
   ...SHACK_ROWS,
-  ...MULT_ROWS,
   ...SHIELD_ROWS
 ]);
 

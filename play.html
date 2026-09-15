@@ -115,6 +115,10 @@
   <div class="name"></div>
   <div class="note"></div>
 </button>
+<!-- The skip hint: up at the bottom edge while a scene has the yard, with a
+     bar that fills under the words for as long as space is held. See
+     skiphint.js. -->
+<div id="skip" class="skip" hidden><span class="bar"></span><span class="say">hold space to skip</span></div>
 <!-- the wash behind the held sheet: the yard, dimmed and stippled, so the
      sheet reads as over something rather than pasted on it. The frame keeps
      it in step with the sheet (main.js). -->
@@ -179,7 +183,7 @@
        key combination. settings.js gives it both fronts when window.desk
        exists; without one the page-turn never shows it. -->
   <button id="quit" type="button" hidden>exit to desktop</button>
-  <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about</div>
+  <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about &middot; hold space to skip a scene</div>
   <div id="build" class="small" data-pane="main settings"></div>
 </div>
 

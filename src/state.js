@@ -77,6 +77,7 @@ export const S = {
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   storyTold: false,       // and the sheet that says so has been read and put down
+  storyDanced: false,     // and the crew have had their dance about it (core.js)
   rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
@@ -278,9 +279,10 @@ export const S = {
   // research calls exactly these back, so the game undoing its own tidying is
   // not a chore it hands to you.
   labLeft: 0,
-  // Six of them: the crew's two, and the last band of each of the four ladders
-  // the two grounds sell. `crop` and `seam` are the yield ones and are the only
-  // multipliers here that were never the lab's.
+  // The multipliers a save may still carry, and nothing reads: the crew's two
+  // went with their rows, and the four grounds' are the spark rung of their
+  // ladders now, folded in by `restore` (DESIGN.md, "The spark band is the
+  // top of the ladder"). Kept so an old save round-trips; always nought here.
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -449,6 +451,11 @@ export const S = {
   // boots to walk in. Their own counts rather than more rungs on the first two
   // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
   introThrew: 0,          // when the opening's one throw was let go of
+  // Skipping (skip.js): when the space bar went down, on the game's clock, or
+  // 0; and whether the scene running was cut short, so a rescue cut mid-walk
+  // finishes its walk without its ceremony.
+  skipHeldAt: 0,
+  introCut: false,
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
   scrubMuck: 0,           // and part of a clod of muck, on its way out of the spout
@@ -680,6 +687,9 @@ export const SAVED = [
   // (ending.js) and never by the sim, so a reload with the sheet still up
   // brings it back rather than losing it.
   'storyTold',
+  // The dance after it, played once. Saved so a reload does not throw a
+  // second party; a save from before the field loads with `storyTold`'s value.
+  'storyDanced',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy
@@ -744,7 +754,7 @@ export const SAVED_BY_HAND = [
   'pot',                  // the casino: what is on the table...
   'pouring',              // ...whether its stake is still raining down...
   'paying',               // ...and what a taken pot still owes the hole
-  'mult',                 // the lab's multipliers; its quarry one answered to `cave`
+  'mult',                 // legacy: folded into the ladders on read, written as noughts
   'plots',                // how far along each plot is, as hundredths
   'plotTone',             // and the spore standing ripe on it
   'boulder',              // the rock, as a run-length string...
@@ -813,7 +823,13 @@ export const EPHEMERAL = [
   'peakRow',
   // the opening, while it is running
   'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
+<<<<<<< HEAD
   'introThrew',
+=======
+  'introThrew', 'skipHeldAt', 'introCut',
+  // a rock on its way down, and the celebration for the last one
+  'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
+>>>>>>> main
   // ...and when the last one hit, which is only read for the spread it does on
   // arriving: a reload has no arrival to be moments after.
   'landAt',

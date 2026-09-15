@@ -10,6 +10,7 @@ this file is for things that were broken.
 
 ## Unreleased
 
+<<<<<<< HEAD
 - A stirrer caught by a refresh out on its round keeps the doses in its arms and finishes the round, instead of standing in the yard empty-handed for good. (`test/helpers.mjs`, every group)
 - A body stepping on or off the quarry's ladder no longer hops eight cells back, or a course down into the cut, on every refresh. (`test/helpers.mjs`, every group)
 - A refresh in the moment between rocks no longer lands the next one without a word from whoever watched it. (`test/rock.test.mjs`)
@@ -37,7 +38,18 @@ this file is for things that were broken.
 - The ore notices count every cell the cut has ever given up, across refreshes. (`test/crit.test.mjs`)
 - A new game after a load starts with an empty cut ledger. (`test/cut-dust.test.mjs`)
 
+=======
+- The crew only dance after the first rock and after the rescue; every other rock they get straight back to work.
+>>>>>>> main
 - The quarry's ore yield rungs stay bought across a reload.
+- A half-dug cut no longer fills itself back in when the last quarrier climbs out to clear the yard.
+- Quarriers down the cut move with it when a new pot shoves the quarry along, instead of being left standing in solid ground.
+- A quarrier called away to build an upgrade gives up its column, so the rest of the gang dig it instead of leaving a spike.
+- The crew get knocked off their feet for a beat when a rock lands.
+- The dome comes down once the rescue is over, so later rocks land without being held.
+- Every barrier is built wide enough for the rock that reaches it.
+- After the first rock, the next one is down within about a second of the last cell going; the crew run clear instead of standing about.
+- Rockhands clear the muck on their own rock instead of following the yard's drift to the far wall.
 
 ## v0.1.16 — 2026-09-14
 

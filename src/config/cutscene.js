@@ -36,3 +36,10 @@ export const CUT_GLIDE = 0.12;
 // move rather than a jump closer and then a pan. Short because the thing
 // being watched is already under way -- a rock is down in under a second.
 export const CUT_IN_S = 0.5;
+
+// Skipping. Every scene -- the opening, the reunion, the rescue, and the
+// camera's own -- ends early under a held space bar (src/skip.js). Held, not
+// pressed: a tap is the accident of a hand resting on the keyboard, and a
+// scene that plays once is not worth losing to one. The hold is measured on
+// the game's clock, so it does not run down while the yard is held.
+export const SKIP_HOLD_MS = 700;

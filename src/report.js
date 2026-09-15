@@ -18,7 +18,7 @@ import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
 import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table , tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
-import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
+import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
 import { BOLTS, SPARKLE } from './meteor.js';
 import { callOut, raising } from './raise.js';
 import { riftCells } from './rift.js';
@@ -37,13 +37,6 @@ import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
 import { coreHome } from './core.js';
-import { mult, workFor, FIELD } from './mult.js';
-// What multipliers are being worked on right now: the multiplier rows out of
-// whatever every site is putting up. They were read off the yard's works alone,
-// which was right while every ladder was `site: 'yard'`; a ladder sold at a
-// station's own board is worked there now (the swing's, at the shack), and a
-// reading that only looked at the yard said "nothing on the go" while it was.
-const research = () => SITES.flatMap(site => worksAt(site)).filter(w => FIELD[w.key]);
 import { rates } from './stats.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
@@ -313,14 +306,6 @@ export const snapshot = () => ({
   grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,
   shutters: [...S.shutters].sort((a, b) => a - b),
-  // A multiplier being worked on, off the works the whole yard uses. It is a
-  // build at the yard's own site now that the lab has gone, and it keeps the
-  // name `research` because that is what a check asks about -- what it is
-  // called, not which site it runs at.
-  research: research()[0] ? { key: research()[0].key, done: research()[0].done,
-                              need: research()[0].of, at: +progressOf(research()[0]).toFixed(3) } : null,
-  research2: research()[1] ? { key: research()[1].key, done: research()[1].done,
-                               need: research()[1].of } : null,
   // per-site now; `labDone` is kept as the lab's own reading of it
   siteDone: S.siteDone,
   labDone: S.siteDone?.lab ?? null,
@@ -410,8 +395,6 @@ export const snapshot = () => ({
   follows: S.follow ? S.follow.name : null,
   followOff: S.follow ? Math.round(S.camX + S.viewW / 2 - (S.follow.x + WORKER / 2)) : null,
 
-  // What research has bought, and where the buildings stand.
-  mult: { ...S.mult },
   rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) },
   labX: Math.round(lab.x),
   apothecaryX: Math.round(apothecary.x),
@@ -522,6 +505,7 @@ export const snapshot = () => ({
   riftCells: riftCells(),
   drowned: !!S.drowned,
   cine: S.cine ? S.cine.name : null,
+  cineOut: !!(S.cine && S.cine.out),        // let go, and on its way out
   // and the coins through it, which the counters do not distinguish: what you
   // own is what is in the hole plus what is in here
   riftHeld: { ...(S.riftHeld || {}) },

@@ -78,7 +78,6 @@ export const TESTS = [
     window.__air({ haze: state().smog.cap });
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
-    window.__research('labair');
     // ...and a machine running, which is the third thing the house waits on now.
     // Hand labour dirties the sky slowly; a machine dirties it three times over
     // per unit of work, and the house is the bill for the thing you switched on

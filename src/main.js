@@ -44,6 +44,7 @@ import { hold } from './input.js';   // the mouse, the wheel and the keyboard --
 import './settings.js';              // wave-release, track A: the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
+import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
 import { tick } from './clock.js';
 
 // The window changed size: lay the world out again, and measure the board that
@@ -109,6 +110,7 @@ function frame() {
     fillQueue();
     fillPin();
     stepToast();
+    stepSkipHint();
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
   } catch (e) {

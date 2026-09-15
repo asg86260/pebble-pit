@@ -82,6 +82,13 @@ export function stepShedwork(w) {
     w.atShed = false;
     // off whatever errand it was on: the muck claim goes back to the crew
     if (w.goal === 'muck') { w.goal = null; w.muckAt = null; }
+    // ...and so does the column. A quarrier's `cell` is a claim the rest of
+    // the gang steer round (`claimedCells`), and a body stood at a hut for
+    // the length of an upgrade -- or several -- kept its column booked the
+    // whole while: nobody else would take it, and a spike stood in the cut
+    // until the body came back. The run was its own plan and goes with it.
+    w.cell = null;
+    w.run = null;
     // ...and out from behind the door. `in` is a body at its post and out of
     // sight -- not drawn, counted as brewing -- and a body walking to the shed
     // is neither. The walk home sets `to` again when the claim clears.

@@ -43,6 +43,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
+| `skip.js` | the space bar, held, ending whichever scene has the yard; `skiphint.js` is the hint under it, in the shell | yes |
 | `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
 | `persist.js` | reading and writing the game; plain fields come off `SAVED` in state.js in one loop, hand-encoded ones stay here | a field in no list is a red test |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
@@ -139,7 +140,13 @@ change, not a tidy-up; a new feature adds its entry at the right depth.
 **Every new field on `S` goes in one of state.js's three lists** — `SAVED`
 (a plain copy), `SAVED_BY_HAND` (its code in `persist.js`), or `EPHEMERAL`
 (thrown away on purpose). `test/persist-roundtrip.test.mjs` goes red for a
-field in none of them, which is the warning persist.js used to owe you.
+field in none of them, and for a by-hand name `persist()` never writes, which
+is the warning persist.js used to owe you.
+
+**Every new row on any board gets a line in `test/shop-rows.mjs`** — how a
+player reaches it. The two `shop-coverage-*.test.mjs` files walk the table:
+hidden before the gate, shown after, bought through `__buy`, and every board
+reading the same after a cold reload. A row with no line is a red check.
 
 ## The scenes
 

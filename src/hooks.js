@@ -13,7 +13,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, ROCKHAND_RUNGS, LADDER, ABYSS_AT } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
@@ -31,7 +31,6 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
 import { now as clockNow } from './clock.js';
-import { finish } from './mult.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
@@ -52,6 +51,7 @@ import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
 import { CASINO_UPGRADES, pickChip } from './casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
+import { holdSkip, skipScene } from './skip.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
@@ -87,7 +87,7 @@ export const machineSet = (which, o = {}) => {
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
-  S.rockhandPickLevel = ROCKHAND_RUNGS;
+  S.rockhandPickLevel = LADDER;
   S.rockhandSpeedLevel = LADDER;
   S.quarryOpen = true;
   S.farmOpen = true;
@@ -341,7 +341,6 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
-  if (o.mult) for (const k of Object.keys(S.mult)) if (k in o.mult) S.mult[k] = o.mult[k];
   buildShop(); S.dirty = true;
 };
 
@@ -546,19 +545,6 @@ export const openShack = (open = true) => { S.shackOpen = open; buildShop(); S.d
 // wheel, which is not a check about how the building gets built
 export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S.dirty = true; };
 
-// a piece of research finished, without the worker-seconds: a check about what a
-// finished piece unlocks is not a check about how long it takes
-// dev: land a piece of research without the worker-seconds -- or, with no key,
-// clear the bench of whatever is on it. Both go through the works, because the
-// bench a piece is on is works.js's business now and a hook that reached past it
-// would be setting up a yard the game cannot get to.
-export const finishResearch = key => {
-  if (key == null) { while (abandonAt('lab')) ; }
-  else { abandonAt('lab', key); finish(key); }
-  buildShop();
-  S.dirty = true;
-  return { seenAir: S.seenAir, mult: { ...S.mult } };
-};
 
 // dev: put a tonic on a body -- a dose on a worker to look at the buff mark, or a
 // dose in a stirrer's hand to look at it being carried. For screenshots only; the
@@ -1102,7 +1088,7 @@ export const HANDLES = {
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __climbed: climbedBills, __boards: boards, __unsection: unsection,
-  __invest: invest, __research: finishResearch, __grant: grant, __dose: dose,
+  __invest: invest, __grant: grant, __dose: dose,
   __spend: spendDust,
   // Pay a price in any coin, through the very function every row's bill goes
   // through. Not a way of setting a counter: what a check using this is about
@@ -1121,6 +1107,9 @@ export const HANDLES = {
   // instant later is really testing the skip. This ends the scene the way its
   // own clock would, so the press that follows is the press the check meant.
   __nocine: skipCutscene,
+  // The space bar, for the checks: held down or let go, and the skip it ends
+  // in, on its own.
+  __holdSkip: holdSkip, __skip: skipScene,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,

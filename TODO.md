@@ -1,5 +1,6 @@
 # Still to do
 
+<<<<<<< HEAD
 ## The reliability freeze -- BUILT (2026-09-14)
 
 "The reliability freeze" in DESIGN.md, with an as-built note. The reload
@@ -9,6 +10,27 @@ hold: a full run green twice running on main, and then the freeze lifts.
 Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
 saved, so a body sent to pick it up after a refresh finds nothing there --
 save it as a fact of the yard, the way a loose core is.
+=======
+## A rung is a step up, not a step along -- BUILT (2026-09-14)
+
+"A rung is a step up, not a step along" at the end of DESIGN.md, with an
+as-built note. Every ladder is four rungs, dust → +spore → +shard → +spark
+(never the core); every count reads a written list in `config/rungs.js`,
+a knob a rung in the ladder book. The lists shipped with first guesses
+(`CARRY_PX` 1, 2, 4, 6, 10; `PICK_PX` 1, 2, 4, 8, 12; …) and the fourth
+rung's bills are steep in spores at the top of the price curve -- both are
+the ladder book's to settle on a played yard. The builders' 37% and the
+attended wait are untouched and still open.
+
+## A ladder is a rung a coin, the spark rung on the card -- BUILT (2026-09-14)
+
+"The spark band is the top of the ladder, not a card beside it" at the end
+of DESIGN.md, with an as-built note. `TIER_BAND` is one; the grounds'
+research cards are the fourth rung of their ladders; every count's unit
+doubled so no top moved. Worth a real play: three presses to a ladder is the
+shortest they have been, and each is a whole coin's step. The builders' 37%
+and the attended wait are untouched and still open.
+>>>>>>> main
 
 ## The hole's count and its pile disagree by a few cells (2026-09-14)
 

@@ -61,10 +61,7 @@ export const TEND_HERE = 0.5;
 // to sit with a yard and push them about, not to reason about them here.
 export let CROP_COST = 720;    // dust for the first rung of the yield ladder
 export let TEND_COST = 720;    // and for the first rung of the speed one
-// What one more rung of the yield ladder puts on a cut, as a share of the plain
-// one-spore cut. A whole spore a rung, so the gain line is a count going up by
-// one rather than a rounded fraction that reads as nothing on half the rungs.
-export let CROP_PER_RUNG = 1;
+// What a cut is worth at each rung is CROP_SPORES in config/rungs.js.
 // A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
@@ -82,7 +79,5 @@ export const FARM_KNOBS = [
   { key: 'CROP_COST', label: 'crop rung 1', min: 60, max: 4000, step: 20,
     get: () => CROP_COST, set: v => { CROP_COST = v; } },
   { key: 'TEND_COST', label: 'tending rung 1', min: 60, max: 4000, step: 20,
-    get: () => TEND_COST, set: v => { TEND_COST = v; } },
-  { key: 'CROP_PER_RUNG', label: 'spores a cut, a rung', min: 0.25, max: 4, step: 0.25,
-    get: () => CROP_PER_RUNG, set: v => { CROP_PER_RUNG = v; } }
+    get: () => TEND_COST, set: v => { TEND_COST = v; } }
 ];

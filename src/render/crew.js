@@ -9,7 +9,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -553,6 +553,7 @@ const LEAN = 0.5;
 // is, the liquid rising from the foot, so a fresh dose is a full vial and a
 // spent one nearly empty.
 export function drawWorkers() {
+  const t0 = now();
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden -- it stands at the pot's left and stirs in plain
@@ -574,7 +575,16 @@ export function drawWorkers() {
     // which is the reported "janitor jittering while it cleans".
     const leanOn = throwOn > LEAN_HOLD ? 1 : 0;
     const x = Math.round(w.x + leanOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
-    const y = Math.round(w.y + throwOn * look.lunge * P);
+    // The landing hop is drawn here and nowhere else: `landRock` stamps the
+    // moment and the weight, and this lifts the body along one parabola -- up
+    // and back down over `LAND_HOP_MS`, `LAND_HOP_H` cells at the top for a
+    // first-sized rock, more for a bigger one -- without ever moving `w.y`, so
+    // nothing that reasons about where a body stands has a body in the air to
+    // reason about. Whole pixels, like everything else on the grid: a body
+    // drawn between pixels smears a hairline off its own edge.
+    const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
+    const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
+    const y = Math.round(w.y + throwOn * look.lunge * P - hop);
 
     // A cart is kit like any other, so it is drawn off what the body is holding
     // rather than off what the books say it is. Somebody walking a cart back to

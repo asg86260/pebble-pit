@@ -1,9 +1,9 @@
-import { BELT_BILL, CAP_BASE, CAP_STEP, RAM_BILL, ROCKHAND_RUNGS, LADDER,
+import { BELT_BILL, RAM_BILL, LADDER,
          CARRY_COST, SWING_COST, PICK_COST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
-import { kitFull, mineRate, rebalance } from '../upgrades.js';
+import { kitFull, mineRate, rebalance, capacity, pickCount } from '../upgrades.js';
 import { tierRows, named } from './tiers.js';
 
 // The bench's bench rows. Data only: upgrades.js strings the files together
@@ -20,7 +20,7 @@ const YOU_CARRY = tierRows({
   // a pair of hands lifts in one go. Yours were called "carry" and theirs
   // "load", which is two names for one idea and a player having to learn both.
   unit: 'px', does: 'hold',
-  value: lvl => CAP_BASE + lvl * CAP_STEP,
+  value: lvl => capacity(lvl),
   first: CARRY_COST,
   site: 'bench',
   // Once you have dragged. This is a rung on YOUR hands -- how many grains a
@@ -59,7 +59,7 @@ const YOU_PICK = tierRows({
   // exactly the same job, so they are the same row under two headings rather
   // than "pick" here and "pickaxe" over there.
   unit: 'px', does: 'per swing',
-  value: lvl => 1 + lvl,
+  value: lvl => pickCount(lvl),
   first: PICK_COST,
   site: 'bench',
   // Beside the swing, once the swinging is automatic: it was gated on the
@@ -94,7 +94,7 @@ export const BENCH_ROWS = [
     // The pick ladder is shorter than the house LADDER (wave 7 cut it to whole
     // pixels), so the gate asks its own top, not the shared one -- a gate on a
     // rung nobody can buy is a machine that is never for sale.
-    show: () => canBuy('ram', () => S.rockhandPickLevel >= ROCKHAND_RUNGS && S.rockhandSpeedLevel >= LADDER,
+    show: () => canBuy('ram', () => S.rockhandPickLevel >= LADDER && S.rockhandSpeedLevel >= LADDER,
                        () => kitFull(JOB.ROCK))
   },
   {

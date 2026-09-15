@@ -204,7 +204,7 @@ export const TESTS = [
       'achievements',                         // the button to the page behind -- see record.js
       'settings',                             // and the settings, behind one word
       'return to title',
-      'esc holds · ← → look about',
+      'esc holds · ← → look about · hold space to skip a scene',
       version(),
     ];
     settingsPage();

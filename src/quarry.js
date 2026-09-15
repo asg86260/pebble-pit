@@ -9,8 +9,8 @@
 // cores is shown until one is banked.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo, plant } from './route.js';
-import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
-         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN,
+import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_SHARE, rungValue,
+         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL, TIER_OWN, SPARK_GAIN,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
 import { shockAt } from './shock.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
@@ -21,12 +21,10 @@ import { QUARRY_FOUL } from './config.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
-import { invested } from './upgrades/site.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
-import { STEP as MULT_STEP } from './mult.js';
-import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
+import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -58,18 +56,17 @@ import { JOB, TYPE } from './jobs.js';
 // answering with the number the game started with -- and upgrades.js imports
 // this file, so a `swing(...)` run while this module's body is being evaluated
 // can be reached before upgrades.js has finished defining it.
-// Where the two quarry ladders stand: the level field's own rungs, then a
-// band of the multiplier over it. See `tierLevel`.
-export const paceLadder = () => tierLevel('quarryPaceLevel', 'quarry');
-export const seamLadder = () => tierLevel('seamLevel', 'seam');
+// Where the two quarry ladders stand, clamped to their length. See `tierLevel`.
+export const paceLadder = () => tierLevel('quarryPaceLevel');
+export const seamLadder = () => tierLevel('seamLevel');
 
-// From the base to the floor over the ladder's own rungs, the last rung being
-// the floor itself. It ran over `RUNGS` when the speed ladder was five
-// rungs and the multiplier was a rival row beside it; the ends have not moved,
-// only the number of steps between them.
+// From the base to the floor over the rungs before the spark's, the last of
+// them the floor itself, and the spark rung's gain over that. It ran over
+// `RUNGS` when the speed ladder was five rungs and the multiplier was a rival
+// row beside it; the ends have not moved, only the number of steps between.
 const quarryGap = lvl => swing(QUARRY_BASE, QUARRY_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
 export const quarryMs = (lvl = paceLadder()) =>
-  Math.max(500, Math.round(quarryGap(lvl) / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN))));
+  Math.max(500, Math.round(quarryGap(lvl) / Math.pow(SPARK_GAIN, Math.max(0, lvl - TIER_OWN))));
 
 export const quarryRate = (lvl = paceLadder()) => 60000 / quarryMs(lvl);   // trips a minute
 
@@ -568,7 +565,15 @@ export function stepQuarrier(w, now, ctx = null) {
     // The last one out is what fills the hole back in. Doing it the moment the
     // seam was emptied dropped the dirt back under the feet of everybody still
     // down there, and they rode it up like a lift.
-    if (!S.workers.some(o => o.type === TYPE.QUARRY && o !== w && o.y > S.groundY)) {
+    //
+    // And only out of a cut that is worked out. A body climbs this leg for
+    // another reason too -- the heap full and a mess up top to clear -- and
+    // when it was the last one below, a half-dug cut filled itself in behind
+    // it and laid a fresh seam over what the old one still owed: the dig paid
+    // more than the board said, and the ground the gang had taken out was
+    // back when they returned.
+    if ((S.quarrySpent || quarryDone())
+        && !S.workers.some(o => o.type === TYPE.QUARRY && o !== w && o.y > S.groundY)) {
       fillQuarry();
       S.quarrySpent = false;
     }
@@ -1036,7 +1041,7 @@ export function fillQuarry() {
 // a dig are two different rows, and this is the one that stays true however deep
 // the hole goes. It is what the row's own gain line reads, in shards a dig.
 export const seamDig = (lvl = seamLadder()) =>
-  Math.max(1, Math.round(benches() * CUT_SEAM * tierGain(lvl, SEAM_PER_RUNG)));
+  Math.max(1, Math.round(benches() * CUT_SEAM * rungValue(SEAM_SHARE, lvl)));
 
 // And what actually goes into the ground when a cut is laid, which is that with
 // the luck spell over it.
@@ -1077,15 +1082,12 @@ export function cellMs(lvl = paceLadder()) {
 //
 // The row that *opens* it stays on the bench, because you cannot walk up to a
 // quarry that has not been dug yet.
-// The cut's two ladders, twelve rungs each in four cards of three -- what one
+// The cut's two ladders, a rung a coin, the last one the spark's -- what one
 // dig turns up, and how often a dig happens. The second used to be sold twice,
 // as a `speed` rung with a `speed x` beside it. See DESIGN.md, "What the two
-// grounds sell".
-//
-// Band four keeps the key `labcave` it had as the lab's row, because a piece of
-// research in flight in somebody's save quotes it and a key is never renamed.
+// grounds sell" and "The spark band is the top of the ladder".
 const QUARRY_YIELD = tierRows({
-  field: 'seamLevel', multKey: 'seam',
+  field: 'seamLevel',
   unit: 'shards/dig',
   value: lvl => seamDig(lvl),
   first: SEAM_COST,
@@ -1095,14 +1097,15 @@ const QUARRY_YIELD = tierRows({
     { key: 'seam',    name: 'ore yield',     coins: [] },
     { key: 'seam2',   name: 'ore yield',  coins: ['shard'] },
     { key: 'seam3',   name: 'ore yield', coins: ['shard', 'spore'] },
-    { key: 'labseam', name: 'enchanted TNT',
-      coins: ['shard', 'spore', 'core', 'spark'],
-      gate: invested }
+    // The spark rung. It was `labseam`, the lab's multiplier, sold as a card
+    // of its own behind `invested`; the bill's own coins gate it now, later
+    // than that flag ever did. `restore` still knows the old key.
+    { key: 'seam4',   name: 'ore yield', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
 const QUARRY_SPEED = tierRows({
-  field: 'quarryPaceLevel', multKey: 'quarry',
+  field: 'quarryPaceLevel',
   unit: 'trips/min', pct: true, does: 'dig',
   value: lvl => quarryRate(lvl),
   first: QUARRY_PACE_COST,
@@ -1112,9 +1115,7 @@ const QUARRY_SPEED = tierRows({
     { key: 'quarrypace',  name: 'mining speed',     coins: [] },
     { key: 'quarrypace2', name: 'mining speed',  coins: ['shard'] },
     { key: 'quarrypace3', name: 'mining speed', coins: ['shard', 'spore'] },
-    { key: 'labcave',     name: 'anti-gravity zone',
-      coins: ['shard', 'spore', 'core', 'spark'],
-      gate: invested }
+    { key: 'quarrypace4', name: 'mining speed', coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
@@ -1179,8 +1180,8 @@ export const QUARRY_UPGRADES = [
 // and lodges here -- see `lodgers`.
 export const QUARRY_SECTIONS = [
   { title: 'the quarry', keys: ['quarrybench',
-                                'seam', 'labseam',
-                                'quarrypace', 'labcave',
+                                'seam',
+                                'quarrypace',
                                 'blaster', 'jaw', 'tunejaw'] }
 ];
 

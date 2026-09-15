@@ -25,6 +25,7 @@ import { inWorking } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
+import { refitShield } from './shield.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -167,8 +168,21 @@ export function dropHeight() {
 // fall should read this -- it is zero when nothing is coming.
 export function fallMs() {
   if (S.rockFall <= 0) return 0;
-  const g = DROP_GRAV, v = S.rockFallV + g / 2;
-  const n = (Math.sqrt(v * v + 2 * g * S.rockFall) - v) / g;
+  return msToFall(S.rockFall, S.rockFallV);
+}
+
+// ...and the whole of one from the sky: what `fallMs` says on the frame a rock
+// is let go, asked before there is one. A scene that wants the frame a beat
+// after the landing has to stop before the rock exists -- the fall is shorter
+// than the second the shot tool runs -- and this is how far ahead of the drop
+// that is. Nothing in play reads it.
+export function dropMs() {
+  return msToFall(dropHeight(), 0);
+}
+
+function msToFall(left, v0) {
+  const g = DROP_GRAV, v = v0 + g / 2;
+  const n = (Math.sqrt(v * v + 2 * g * left) - v) / g;
   return n * (1000 / 60);
 }
 
@@ -215,11 +229,25 @@ export function landRock(gentle = false) {
     // thrown clear gets up and stares at it -- and then the second one lands on
     // the same spot, on the same person underneath, with nobody saying anything
     // at all. It is the same event and it gets the same mark.
+    //
+    // And they are knocked off their feet by it, for a beat: the same bodies
+    // that get the mark get a hop (`hopAt`, `hopK`), drawn and never simulated
+    // -- see `drawWorkers`. The scale is the shake's own, so the crew and the
+    // view are thrown by one weight. A body already off the ground has nothing
+    // to be knocked off: falling, lifted, aloft or floating down (`falls`), or
+    // up in a dance jump -- a jigging body is off its foot while `w.y` is
+    // above it -- and a body with its feet down at the end of a danced fall is
+    // standing and hops like anyone else.
     if (S.boulderNo > 1) {
       const at = now();
+      const k = Math.min(1.6, S.gh / ROCK_H);
       for (const w of S.workers) {
         if (w.inside || inWorking(w) || w.aloft) continue;
         w.say = { mark: 'bang', until: at + LAND_SAY_MS };
+        if (w.falling || w.lifted || w.floating) continue;
+        if (w.jigAt != null && w.y < w.foot) continue;
+        w.hopAt = at;
+        w.hopK = k;
       }
     }
   }
@@ -415,6 +443,10 @@ export function makeBoulder(fromSky = false) {
   // the air.
   S.rockFall = fromSky ? dropHeight() : 0;
   S.rockFallV = 0;
+  // A shield standing over the yard was planned for whichever rock was next
+  // when it was raised; this is that rock now, so it is re-planned to fit.
+  // After the fall is set, so the plan reads this rock as the one in the air.
+  refitShield();
   refreshPiles();            // a wider rock is a narrower pile beside it
   placeRock();
   refreshRockTops();

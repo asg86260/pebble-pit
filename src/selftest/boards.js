@@ -6,6 +6,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
+import { TIER_OWN } from '../config.js';
 
 // The ink standing in the band of sky over a station -- where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -124,7 +125,7 @@ export const TESTS = [
   //
   // It went the other way for a while and nothing said so: the gain sat in a
   // `1fr` track against the bill's `auto`, so on a card whose bill runs to six
-  // coins -- the farm's astral GMOs, deep in the yield ladder -- the bill took
+  // coins -- a ground ladder's spark rung -- the bill took
   // the whole card and the gain cell came out exactly nought pixels wide. The
   // line was still in the markup, still in the DOM, and simply not on the
   // screen; every check about statuses passed, because a status spans the card
@@ -140,9 +141,9 @@ export const TESTS = [
     // and a card that is not on a board cannot be measured.
     window.__fullSites();
     window.__invest();
-    // The far end of both ground ladders, which is where the bills get wide
-    // enough to squeeze the card -- the state the defect actually needed.
-    window.__levels({ cropLevel: 9, tendLevel: 4, seamLevel: 9 });
+    // The spark rung of the ground ladders on offer, which is where the bills
+    // get wide enough to squeeze the card -- the state the defect actually needed.
+    window.__levels({ cropLevel: TIER_OWN, tendLevel: TIER_OWN, seamLevel: TIER_OWN });
     run(20);
     const bad = [];
     const seen = new Set();
@@ -172,9 +173,9 @@ export const TESTS = [
       // should fail here rather than quietly measure ten easy cards instead.
       // Eight or more: a ladder is one card now, where it was up to three, so
       // a board carries fewer gain lines than it did and the same deep bills.
-      ok(seen.has('labcrop') && seen.size >= 8,
+      ok(seen.has('crop') && seen.size >= 8,
          'the deep bills are on the boards to read',
-         `${seen.size} lines${seen.has('labcrop') ? '' : ', no labcrop'}`),
+         `${seen.size} lines${seen.has('crop') ? '' : ', no crop'}`),
       ok(bad.length === 0, 'and every one of them fits the cell it is in',
          bad.join(' | ') || 'all whole')
     ];

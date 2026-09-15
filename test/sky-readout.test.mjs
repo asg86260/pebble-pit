@@ -43,7 +43,6 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__crew(4, 4, 5);
   window.__machine('jaw', { bought: true });
   window.__invest();
-  window.__research('labair');
   // Long enough for the cut to be working at its steady rate. The rock fouled
   // from the first frame; a quarry takes a while to get going -- bodies walk to
   // the rim, climb down, and only then start taking ground out -- so a reading at
