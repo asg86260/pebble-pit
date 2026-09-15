@@ -7,7 +7,7 @@
 // is a placeholder until the set is drawn as a batch against shelf.html; a
 // row with no glyph of its own gets the crate, so a missing one is visible on
 // the shelf rather than a blank.
-import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO } from './config.js';
+import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS } from './config.js';
 
 // The drawings, by the object's name. A drawing that is not here yet is a
 // row still wearing the crate, and the review sheet (glyphs.html) says so.
@@ -23,7 +23,7 @@ export const GLYPHS = {
   spark:      ['........', '.#...##.', '..#..##.', '...#....', '....#...', '.##..#..', '.##...#.', '........'],
   cracked:    ['##....##', '###..###', '.######.', '..####..', '..####..', '.######.', '###..###', '##....##'],
   boot:       ['......#.', '.....#.#', '........', '......#.', '####.#.#', '.##.....', '.####...', '.####...'],
-  cart:       ['........', '........', '........', '.######.', '.#....#.', '.#....#.', '.######.', '...##...'],
+  cart:       ['........', '........', '........', '########', '#......#', '#......#', '########', '...##...'],
   belt:       ['........', '########', '#..#..#.', '.#..#..#', '.#..#..#', '#..#..#.', '########', '........'],
   hoist:      ['........', '#......#', '#......#', '##....##', '##....##', '.#....#.', '.#.##.#.', '.######.'],
   furrow:     ['........', '.#...#..', '.##..##.', '.#...#..', '##..##..', '.#...#..', '.##..##.', '.#...#..'],
@@ -48,19 +48,20 @@ export const GLYPHS = {
   hat:        ['........', '...##...', '..####..', '.######.', '########', '........', '........', '........'],
 };
 
-// The badges: three cells square, in the top-right corner, saying what is
-// being done to the object -- tune it, another of it, a spell on it, a tonic
-// of it, or which coin it is about (docs/glyphs.md, "borrow the object,
-// badge the how").
+// The badges: SHELF_BADGE_CELLS square at SHELF_BADGE_CELL px a cell -- a
+// finer grid than the drawing's, so a mark a third the drawing's size still
+// has a shape -- in the top-right corner, saying what is being done to the
+// object: tune it, another of it, a spell on it, a tonic of it, or which
+// coin it is about (docs/glyphs.md, "borrow the object, badge the how").
 export const BADGES = {
-  wrench: ['#.#', '###', '.#.'],
-  plus:   ['.#.', '###', '.#.'],
-  star:   ['#.#', '.#.', '#.#'],
-  vial:   ['.#.', '.#.', '###'],
-  dust:   ['###', '###', '###'],
-  crop:   ['.#.', '###', '.#.'],
-  ore:    ['.#.', '.#.', '###'],
-  spark:  ['.#.', '###', '.#.'],
+  wrench: ['##..#', '##..#', '#####', '..#..', '..#..'],
+  plus:   ['..#..', '..#..', '#####', '..#..', '..#..'],
+  star:   ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
+  vial:   ['..#..', '..#..', '..#..', '.###.', '.###.'],
+  dust:   ['#####', '#####', '#####', '#####', '#####'],
+  crop:   ['..#..', '.###.', '#####', '.###.', '..#..'],
+  ore:    ['..#..', '..#..', '.###.', '.###.', '#####'],
+  spark:  ['..#..', '..#..', '#####', '..#..', '..#..'],
 };
 
 // The glyph editor (glyphs.html) keeps its work in the browser until it is
@@ -157,10 +158,11 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null) => {
   // The badge, top-right, on the same cell grid: its ink, and a halo of
   // BADGE_HALO pixels round that ink knocked out of the drawing beneath.
   if (badge) {
-    const mark = new Uint8Array(W * H), ox = (CELLS - badge[0].length) * CELL + M, oy = M;
+    // on its own, finer grid, its top-right pixel on the drawing's
+    const mark = new Uint8Array(W * H), ox = CELLS * CELL + M - badge[0].length * BCELL, oy = M;
     badge.forEach((r, y) => [...r].forEach((ch, x) => {
       if (ch !== '#') return;
-      for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) mark[(oy + y * CELL + j) * W + ox + x * CELL + i] = 1;
+      for (let j = 0; j < BCELL; j++) for (let i = 0; i < BCELL; i++) mark[(oy + y * BCELL + j) * W + ox + x * BCELL + i] = 1;
     }));
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (mark[y * W + x]) { solid[y * W + x] = 1; continue; }
