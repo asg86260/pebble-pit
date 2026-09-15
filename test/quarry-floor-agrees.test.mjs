@@ -31,14 +31,17 @@ group('a save whose rock sits above the counted floor comes back squared, and th
   // has one to dig: rock put back in the row the count says is gone. This is
   // the shape an old save carries; nothing in play writes it any more.
   const cells = quarryCells();
-  let spoiled = 0;
+  const spoiled = [];
   for (const c of columns()) {
     if (cells[c] < 1) continue;
     const r = cut.rows - cells[c];           // the counted row, just dug
-    if (at(cut, c, r) !== ROCK_CELL) { put(cut, c, r, ROCK_CELL); spoiled++; }
+    if (at(cut, c, r) !== ROCK_CELL) { put(cut, c, r, ROCK_CELL); spoiled.push(c); }
   }
   run(0.1);
-  const before = Math.max(...columns().map(seam));
+  // Over the columns that were spoiled: a column the gang has already dug out
+  // has nothing to put back and agrees with itself, and how many of those
+  // there are by now is the gang's timing, not this check's subject.
+  const before = Math.max(...spoiled.map(seam));
   persist();
   yard.restore();
   run(2);
@@ -46,7 +49,7 @@ group('a save whose rock sits above the counted floor comes back squared, and th
   const feet = quarriers().filter(w => w.goal === 'work')
     .map(w => (dugTopY(w.x + WORKER / 2) - (w.y + WORKER)) / P);
   return [
-    ok(spoiled > 10, 'the grid was put a course above the count', `${spoiled} columns`),
+    ok(spoiled.length > 10, 'the grid was put a course above the count', `${spoiled.length} columns`),
     ok(before <= -0.9, 'and the feet stood a course above the drawn floor before the reload', `${before.toFixed(2)} cells`),
     ok(after > -0.1 && after < 0.1, 'after the reload the grid and the count agree in every column', `${after.toFixed(2)} cells`),
     ok(feet.length > 0 && feet.every(g => Math.abs(g) < 0.5), 'and every body at work stands on the floor the outline draws',

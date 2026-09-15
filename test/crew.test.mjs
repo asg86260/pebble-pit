@@ -144,7 +144,12 @@ group('a body walks to its new work instead of appearing at it', async () => {
     const p = body();
     trail.push({ ...p, feet: quarryFeetY(p.x) });
   }
-  const arrived = runUntil(() => state().commuting.length === 0, 200);
+  // Arrived is at the rock with the walk over, not merely the walk over: a
+  // reload in the middle of the commute (test/helpers.mjs does one every few
+  // seconds) drops the walk for the frame it takes the body to plan it again,
+  // and "nobody commuting" was true for that frame, halfway across the yard.
+  const arrived = runUntil(() => state().commuting.length === 0
+                                 && Math.abs(body().x - s0.rockX) < s0.rockW, 200);
   const home = body();
   const after = state();
   window.__crew(0, 0);

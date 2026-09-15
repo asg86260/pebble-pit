@@ -9063,6 +9063,115 @@ is the check working. The board shots (`shackboard`, `quarryboard`,
 the three shields for a check that buys a hat. `first day of school` on the
 record is `first hat`.
 
+## The reliability freeze: every check is a reload check (design, approved 2026-09-14)
+
+Sixteen releases in two days and forty changelog lines, and the shape of
+them is the point: six are "after a refresh, the quarriers..." -- the same
+dig, caught at a different frame each time, fixed one frame at a time -- and
+two more are bodies standing where nothing is ("a course above the floor",
+"floating up out of the cut"). Every one of those was found by a player and
+none by a check, and the reason is not a missing check. It is that reload
+is covered by seven hand-built scenarios in `reload.test.mjs`, and floating
+is not a rule anywhere: `verify.js` says a body may not be *buried* in its
+way, and says nothing about a body held up over it.
+
+So no features and no one-off fixes until three things land. The feature
+list keeps; it waits.
+
+### The bargain
+
+The suite already runs the yard through one door (`fast` in hooks.js) and
+watches every rule in `verify.js` on every frame of every group, whatever
+the group is about. The freeze extends that in two directions rather than
+writing more scenarios:
+
+**A. Every run is a reload run.** `run(seconds)` in `test/helpers.mjs` --
+the one way a node check turns the clock -- saves and reloads the yard
+every `RELOAD_EVERY` game seconds of a group, and asserts that nothing
+teleported: the same bodies, at the same jobs, within a cell of where they
+stood, and every rule in `verify.js` holding on the first frame back.
+Every group in the tier becomes a reload check of whatever yard it happens
+to build, which is the same trick `verify.js` pulled and for the same
+reason: a rule broken by a state your own scenario never reaches is a rule
+nobody checks. `RELOAD=0` turns it off for a run that is measuring
+something else (the perf gate).
+
+The scenes are the widest net: `scenes-stand-*` already stands all 110
+setups; it reloads each one mid-run too, so every part of the game has a
+reload check without anyone writing one.
+
+**B. Floating is a rule.** Two new rules in `verify.js`:
+
+- *Nothing floats.* A body that is not lifted, falling, aloft, indoors or
+  walking a route, whose feet are more than `FLOAT` above the highest
+  column under it for more than `FLOAT_FRAMES`, is standing on nothing.
+  The slack is the same shape as the buried rule's, and for the same
+  reason: feet ease to the ground, and a hop in a dance is a few pixels
+  for a few frames.
+- *The cut is worked from its floor.* A body on the cut way with no route
+  stands on the column under its middle -- the rule the dig uses,
+  `feetOn` uses, and the 2026-09-14 floor bugs each broke. Written out
+  against `cutTop` directly rather than through `feetOn`, because this
+  file does not trust the code it checks.
+
+**D. Fixture-first, written down.** A player-reported bug gets the save as
+`test/fixtures/` and a red check before any fix, and its changelog line
+ends with the check's file in parentheses. That was already the rule (see
+"The save is the fixture" in CLAUDE.md); the parenthetical makes it
+visible when it is skipped.
+
+Dropped from the plan: a test gate on `npm run release`. The tests are run
+by hand before a release already, and a gate would only formalize that.
+
+### What it costs
+
+A reload is a `persist` and a `restore`, and both walk the grids: a few
+milliseconds a time, once every `RELOAD_EVERY` seconds of a group. The tier
+is about a hundred seconds; the budget for this is a tenth of that. Groups
+that go red under it are the deliverable, not a cost -- each is a reload
+bug that has been in the game all along.
+
+### How it is checked
+
+It checks itself: every group in the node tier, and the scenes files in
+particular. The rules are checked the way the others are, by the groups
+that happen to break them.
+
+### As built (2026-09-14)
+
+The first full run under the harness went 540/608; the harness and the
+two rules between them found some thirty reload and floating defects, each
+fixed at its mechanism and listed in CHANGELOG.md with the check that
+would go red again. Three decisions were made on the way and hold:
+
+**Transient state is saved, not declared ephemeral.** The question came
+up on the first run -- weather, the beat between rocks, breaks, a spin, a
+flight, a plume -- and the answer was to save it. Anything a player would
+see reset by a refresh is a fact of the yard. What stays ephemeral is a
+moment with no duration (a flash, a ring, a shake), a reference to a body
+(rebuilt from the crew), or a thing worked out again from what is saved
+(the layout, the rock tops, the strips).
+
+**A moment is written as a distance.** The clock starts again with the
+page, so a field that names a moment on it is written as how far off the
+moment is and read back the other way: doses were already kept so, and
+now a body's `MOMENTS` (crew/records.js), the beat between rocks, a spin
+and a machine's clock are too. A new moment on a body is one name in that
+list; a new one on `S` is two lines in persist.js and an alias in the
+roundtrip check.
+
+**The opt-out is for following a particular thing.** `group(name, fn,
+{ reload: false })` exists, and is used by nine groups: five that hold a
+body on the cursor or by reference across a load, three that follow one
+speck or one grain the rebuild would replace, and one that measures a
+cost. A group that goes red for any other reason is a bug in the game.
+`storeChecks()` at the top of a file about the store itself keeps the
+harness off its mocks.
+
+Still open, found by the harness and not fixed: a hat knocked off and
+lying on the ground is not saved (`hatOff`), and a body sent to pick it up
+after a refresh finds nothing there.
+
 ## The spark band is the top of the ladder, not a card beside it (built)
 
 The grounds' four ladders each end in a research card -- `labseam`, `labcave`,

@@ -126,11 +126,15 @@ group('a hearty stew makes a rockhand swing faster', async () => {
     window.__crew(1, 2, 0, 0);                 // one rockhand at the rock
     window.__grant({ dust: 5000 });
     run(2);                                     // let it reach the face
-    const m = yard.S.workers.find(w => w.type === 'rockhand');
-    if (buff) m.doses = [{ tonic: 'stew', until: 9e12 }];   // a stew that will not lapse
-    const before = m.mined || 0;
+    // By name, not by reference: a reload (test/helpers.mjs, every few
+    // seconds) builds the crew again, and a body held across it is a body
+    // that is no longer in the yard.
+    const name = yard.S.workers.find(w => w.type === 'rockhand').name;
+    const m = () => yard.S.workers.find(w => w.name === name);
+    if (buff) m().doses = [{ tonic: 'stew', until: 9e12 }];   // a stew that will not lapse
+    const before = m().mined || 0;
     run(30);
-    return { took: (m.mined || 0) - before, boost: workBoost(m) };
+    return { took: (m().mined || 0) - before, boost: workBoost(m()) };
   }
   const base = minedIn(30, false);
   const up = minedIn(30, true);
@@ -236,9 +240,11 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   window.__pot('stew', 0);
   window.__assign('stirrers', 1);
   runUntil(() => dosed().some(w => w.type === 'farmhand'), 200);
-  const fh = dosed().find(w => w.type === 'farmhand');
-  const stewOnly = workBoost(fh);
-  const critBefore = critBoost(fh);
+  // By name -- see the stew group above.
+  const fhName = dosed().find(w => w.type === 'farmhand').name;
+  const fh = () => yard.S.workers.find(w => w.name === fhName);
+  const stewOnly = workBoost(fh());
+  const critBefore = critBoost(fh());
 
   // ...and the second pot goes on something that lifts a different thing. The
   // second tonic comes off a second pot rather than by turning this one
@@ -246,29 +252,31 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   // while it cooks changes what it lights NEXT, not what is on the fire.
   window.__pot('brace', 1);
   window.__assign('stirrers', 2);
-  const both = runUntil(() => fh.doses.length > 1, 300);
-  const workAfter = workBoost(fh);
-  const critAfter = critBoost(fh);
+  const both = runUntil(() => (fh().doses || []).length > 1, 300);
+  const workAfter = workBoost(fh());
+  const critAfter = critBoost(fh());
 
   // A second of the SAME kind: the list does not grow, and the boost does not
   // double -- it is the same stew, wound back up.
-  const was = fh.doses.length;
+  const was = (fh().doses || []).length;
   const stew = { tonic: 'stew', until: 1 };    // a spent one to be replaced
-  fh.doses = [...fh.doses.filter(d => d.tonic !== 'stew'), stew];
-  const again = runUntil(() => fh.doses.some(d => d.tonic === 'stew' && d.until > 1), 300);
-  const doubled = workBoost(fh);
+  fh().doses = [...(fh().doses || []).filter(d => d.tonic !== 'stew'), stew];
+  const again = runUntil(() => (fh().doses || []).some(d => d.tonic === 'stew' && d.until > 1), 300);
+  const doubled = workBoost(fh());
 
+  const worn = (fh().doses || []).map(d => d.tonic), nDoses = (fh().doses || []).length,
+        oneStew = (fh().doses || []).filter(d => d.tonic === 'stew').length === 1;
   window.__crew(0, 0);
   return [
     ok(stewOnly > 1.2 && critBefore === 0,
        'a stew alone lifts the work and nothing else', `${stewOnly.toFixed(2)}, crit ${critBefore}`),
     ok(both, 'a bracing tonic lands on a body already under a stew',
-       fh.doses.map(d => d.tonic).join(',')),
+       worn.join(',')),
     ok(workAfter > 1.2 && critAfter > 0,
        'and it is under both at once -- the stew was not thrown away',
        `work ${workAfter.toFixed(2)}, crit ${critAfter.toFixed(2)}`),
-    ok(again && fh.doses.filter(d => d.tonic === 'stew').length === 1,
-       'a second stew is one stew, not two', `${fh.doses.length} doses`),
+    ok(again && oneStew,
+       'a second stew is one stew, not two', `${nDoses} doses`),
     ok(Math.abs(doubled - workAfter) < 0.001,
        'and it lifts the work by the same as one did', `${doubled.toFixed(2)}`)
   ];

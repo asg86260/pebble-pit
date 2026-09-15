@@ -132,17 +132,19 @@ const STAGES = [
     // The bar sits above every deliberate jump in the yard -- the dance's hop
     // is three cells, the swings and bobs less -- and a dancing body is let
     // alone entirely: its height IS the animation. What is left above five
-    // cells of nothing is ground that genuinely is not there.
+    // cells of nothing is ground that genuinely is not there. (Four cells
+    // since 2026-09-14; see the seat note below.)
     // And only under the open sky. A body down a working stands on its way's
     // own floor, which `fall` knows nothing about -- its landing is the yard's
     // surface, so a quarrier tripped mid-dig was yanked UP through the wall
     // onto the bridge. The reported float is bodies over the yard and the
     // hill; the holes keep their ladders and their eases.
-    // And not in its first moments. A fresh body is born at its station's own
-    // height -- a rockhand at the heart of the rock -- and eases onto the surface
-    // as it comes into the world; treating that settling-in as a fall dropped
-    // newborns out of the sky with their velocities zeroed, and a warm-up's
-    // worth of hat errands never happened.
+    // A fresh body used to be excused for its first four seconds, because it
+    // was born at its station's own height -- a rockhand at the heart of the
+    // rock, a farmhand at the top of the world -- and eased down onto the
+    // surface as it came into the world. `FACTORY` stands every body on the
+    // ground under it now (crew/jobs.js), so there is nothing to excuse, and
+    // a newborn that walks off a ledge drops like anybody else.
     // ...and not a body scaling a face. `climbTo`'s wall rule holds a body at
     // the foot of anything steeper than a walk and leads it up by the feet, and
     // for the length of that climb the surface under it really is a long way
@@ -156,11 +158,18 @@ const STAGES = [
     // written by the one climber in the game, so a body genuinely dropped --
     // ground mined out from under it, a ledge walked off -- has no stamp and
     // falls exactly as it did.
+    // ...nor a body in a machine's seat, which stamps `aboardAt` the same
+    // way. The bar was five cells and the seats sat at exactly five, so a
+    // seated tender never fell -- and neither did one that had *left* the
+    // seat: it hung over the deck at the seat's height until something else
+    // moved it (the reliability freeze found it, 2026-09-14). Four cells now,
+    // still over the dance's hop, and the seat says so for itself.
     if (!w.falling && !w.lifted && !w.aloft && !w.floating && !w.inside &&
-        w.jigAt == null && onYard(w) && (w.lived || 0) > 4000 &&
+        w.jigAt == null && onYard(w) &&
         !(w.route && w.route[0] && w.route[0].climb) &&
         S.tick - (w.scaleAt ?? -9) > 2 &&
-        surfaceUnder(w) - w.y > P * 5) {
+        S.tick - (w.aboardAt ?? -9) > 1 &&
+        surfaceUnder(w) - w.y > P * 4) {
       w.falling = true;
       w.vy = 0;
       w.vx = 0;
@@ -235,6 +244,12 @@ const STAGES = [
   (w, c) => {
     if (!(w.pauseUntil > c.now) || dancing(c)) return false;
     w.say = { mark: '?', until: w.pauseUntil };
+    // Standing, on whatever is under it now. A hold that only returns true
+    // leaves the body at the height it had when the hold began, and the
+    // ground does not wait: the gang take the columns under a gagging mate
+    // and it hangs there, under the fall rule's five cells, until the hold
+    // lets go. The dizzy hold below stands its body every frame; so do these.
+    w.y = stand(w);
     return true;
   },
 
@@ -262,7 +277,7 @@ const STAGES = [
   // a fouled yard does not gridlock.
   (w, c) => {
     if (w.grossUntil) {
-      if (c.now < w.grossUntil) { w.lunge = 0; return true; }
+      if (c.now < w.grossUntil) { w.lunge = 0; w.y = stand(w); return true; }   // and standing, see the pause
       // done gagging: around it, one clear column past the fouled one
       w.x += (w.face || 1) * P * 2;
       w.grossUntil = 0;
@@ -312,7 +327,7 @@ const STAGES = [
       // body every frame it was not celebrating -- which is every frame -- and
       // no builder ever swung. The move says which animation this is; the job
       // does not, and a second work jig later would be caught by the same test.
-      if (w.jigAt != null && MOVE_KEYS.includes(w.move)) { stopJig(w); w.say = null; }
+      if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
       return false;
     }
     // ...and a body that belongs to a craft: aloft in it, or on its way to the

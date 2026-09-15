@@ -1,5 +1,16 @@
 # Still to do
 
+<<<<<<< HEAD
+## The reliability freeze -- BUILT (2026-09-14)
+
+"The reliability freeze" in DESIGN.md, with an as-built note. The reload
+harness and the two floating rules are in; the first run under them went
+540/608 and the fixes are in CHANGELOG.md, each with its check. Still to
+hold: a full run green twice running on main, and then the freeze lifts.
+Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
+saved, so a body sent to pick it up after a refresh finds nothing there --
+save it as a fact of the yard, the way a loose core is.
+=======
 ## The shelf: a board is things on planks (design, not built) (2026-09-14)
 
 "The shelf" at the end of DESIGN.md. Every board becomes shelves: a section
@@ -11,6 +22,7 @@ centering. The glyphs -- about thirty, in the sprite alphabet -- are the
 real cost and are drawn as a batch against that bench. Blocker: the design
 wants sign-off, and the glyphs want drawing before it can replace the
 cards.
+>>>>>>> main
 
 ## A rung is a step up, not a step along -- BUILT (2026-09-14)
 

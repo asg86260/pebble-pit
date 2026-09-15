@@ -47,7 +47,10 @@ group('a quarry upgrade gets worked while the drill stands', async () => {
   // The work lands, the claim clears, and the body goes back to tending.
   const landed = runUntil(() => !workAt('quarry'), 600);
   const released = runUntil(() => claimed().length === 0, 10);
-  const back = runUntil(() => state().machines.jaw.workedAt > idleTo, 90);
+  // The heap swept first: a jaw with nowhere to put what comes out stands
+  // down for that reason, and this line is about the tender coming back.
+  window.__clearFloor();
+  const back = runUntil(() => { if (state().machines.jaw.workedAt > idleTo) return true; window.__clearFloor(); return false; }, 90);
 
   window.__crew(0, 0, 0);
   return [

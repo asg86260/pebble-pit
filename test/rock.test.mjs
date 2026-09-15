@@ -16,6 +16,13 @@ import { sweep } from '../src/hands.js';
 group('a finished rock is worth a moment', async () => {
   window.__crew(3, 0);
   haveRock();
+  // Rock one is the only rock that gets a dance now (wave polish, A1), and
+  // its finish is otherwise the reunion, which is a beat and not a party --
+  // nobody jumps (see `celebrate`). So the reunion is put behind it first.
+  // Before this, the check was passing on the reunion: the "hopping" it
+  // measured was three fresh bodies easing down out of the sky to the
+  // ground they were made above.
+  S.reunionDone = true;
   window.__next();                          // the last of it goes
   run(0.5);
   const partying = state();
@@ -254,7 +261,10 @@ group('the crew dance rather than vibrate while the next rock falls', async () =
     ok(rises.filter(r => r > jump * 0.5).length >= 2,
        'for more of the gang than one', rises.map(r => `${r}px`).join(' ')),
     // The vibration this group is named for, said as the rule it always meant.
-    ok(quickest < DANCE_BUZZ, 'and nobody crosses its own height fast enough to buzz',
+    // Up to the buzz and not over it: the tempo is derived to run exactly up
+    // to DANCE_BUZZ (config/effects.js), and a body at the top of the roll
+    // crosses its own height at precisely that rate on a sixtieth clock.
+    ok(quickest <= DANCE_BUZZ, 'and nobody crosses its own height fast enough to buzz',
        `quickest ${quickest.toFixed(2)} a second against ${DANCE_BUZZ}`),
     ok(ceiling < DANCE_BUZZ, 'nor could they: the tempo is derived to stay under it',
        `ceiling ${ceiling.toFixed(2)} against ${DANCE_BUZZ}`),

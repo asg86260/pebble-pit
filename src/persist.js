@@ -6,10 +6,10 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER, TIER_RUNGS } from './config.js';
+         ABYSS_AT, WORKER, LADDER, TIER_RUNGS, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
-import { seedSmog, skyFromSave } from './smog.js';
+import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
@@ -240,6 +240,16 @@ function blankEphemeral() {
 // page whose writes were failing was the save from before the evening's play.
 let lastBlob = null;
 
+// What the hole is still owed by the casino: the pot being paid out, plus
+// every grain already in the air toward it. See `paying` in the save below.
+function payingOwed() {
+  const arcs = (S.tableAir || []).filter(k => k.arc);
+  const inAir = arcs.reduce((n, k) => n + (k.worth || 0), 0);
+  if (S.paying) return { cur: S.paying.cur, left: S.paying.left + inAir, grains: S.paying.grains + arcs.length };
+  if (!arcs.length) return null;
+  return { cur: 'dust', left: inAir, grains: arcs.length };
+}
+
 export function persist() {
   // A yard that has thrown is not written down. The loop stops on a throw, but
   // the interval that calls this does not, and once a second it would put the
@@ -332,10 +342,19 @@ function blob() {
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
     crew: S.crew,
+    // The beat between rocks, as how far off its two moments are -- the clock
+    // starts again with the page, so a moment on it is written as a distance
+    // (the same turn doses and a body's moments take, crew/records.js).
+    danceLeft: Math.max(0, Math.round(S.danceUntil - clockNow())),
+    nextBoulderIn: Math.max(0, Math.round(S.nextBoulderAt - clockNow())),
+    spinLeft: Math.max(0, Math.round(S.spinUntil - clockNow())),
     // The crew itself, not just how many of them there are. A body has a name
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
     who: S.workers.map(keepOf),
+    // and where the mouth of the cut was under them, so a load can tell a
+    // layout that moved from one that did not -- see `restoreCrew`
+    mouth: S.quarryOpen ? quarry.x : null,
     rockhands: S.rockhands,
     // Haulers are whoever is spare, so this is worked out again on the way in
     // rather than read -- it is written down for the sake of a save being
@@ -369,7 +388,11 @@ function blob() {
     reunionDone: S.reunionDone,
     rescued: S.rescued,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
-                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid },
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                          // and how far it has strained and sagged under a rock it holds, so a
+                          // re-caught rock (below, on the way in) picks up where the rope was
+                          strain: S.shield.strain || 0, sag: S.shield.sag || 0,
+                          caughtAgo: S.shield.caught ? Math.max(0, Math.round(clockNow() - S.shield.caught)) : null },
     shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     looPosts: S.looPosts,
@@ -384,7 +407,13 @@ function blob() {
     machines: Object.fromEntries(MACHINES.map(m => {
       const r = (S.machines && S.machines[m.key]) || {};
       return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit,
-                       tune: r.tune || 0 }];
+                       tune: r.tune || 0,
+                       // and its clock, as distances: when its next unit of
+                       // work is due, and how long since it last worked. A
+                       // refresh used to hand every machine a free unit, and
+                       // read a working one as never having worked.
+                       beatIn: r.beatAt ? Math.max(0, Math.round(r.beatAt - clockNow())) : null,
+                       workedAgo: r.workedAt ? Math.max(0, Math.round(clockNow() - r.workedAt)) : null }];
     })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
@@ -410,6 +439,12 @@ function blob() {
     // cured of (critics C14). Position and shade; the band's height is the
     // world's to answer on the way back in.
     belt: (S.belt || []).map(b => [Math.round(b.x), b.s]),
+    // ...and every grain in the air: a chip off a swing, a shovelful on its
+    // arc to a heap. Five numbers apiece, a few dozen at a time. They were
+    // not saved -- "a grain mid-flight has no beginning" -- and every refresh
+    // destroyed whatever was up, which is the one thing the yard promises it
+    // never does. A tidy check lost two of twelve grains to it.
+    chips: (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]),
     buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
@@ -418,6 +453,20 @@ function blob() {
     // lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
     haze: Math.round(S.haze),
+    // ...and what the haze is made of, by kind. The band is rebuilt out of
+    // the number on the way in, and rebuilt all as dust it told the readout
+    // that nothing but hand work had fouled it -- every stack's soot read as
+    // dust after a refresh. Counts, not motes: the readout is a proportion.
+    skyKinds: skyKindCounts(),
+    // ...and the rain that is in the air, three numbers a drop. A shower goes
+    // on across a refresh now (`raining`, `rainFor`); the drops already
+    // falling are the muck it was about to leave, and were being dropped.
+    drops: DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2)]),
+    // ...and the plume: every speck still on its way up, with its climb. A
+    // refresh emptied the sky of smoke that was mid-air and the band was
+    // rebuilt as if it had all arrived.
+    puffs: SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
+                                          Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]),
     poop: S.poop || [],
     // and what is lying on top of the rock, which is a layer like the muck and
     // belongs to the rock the save already writes down. Column by column,
@@ -444,11 +493,14 @@ function blob() {
     // grain in flight is a grain the hole has not counted. It comes back the way
     // `pouring` does -- the sand flies again out of an empty table, and the hole
     // is paid the same pot it was always going to be paid.
-    paying: S.paying && {
-      cur: S.paying.cur,
-      left: S.paying.left + (S.tableAir || []).reduce((n, k) => n + (k.arc ? (k.worth || 0) : 0), 0),
-      grains: S.paying.grains + (S.tableAir || []).filter(k => k.arc).length
-    },
+    //
+    // ...and the last grains of a pot count too. `paying` is put down the
+    // moment the last grain leaves the heap, a second and a half before it
+    // lands, so a save in that window wrote `paying: null` over money still in
+    // the air and the hole came up short by exactly that (the reload harness
+    // found 136 of a 2,000 pot). The arcs alone are owed then, in dust, which
+    // is what an arc lands as.
+    paying: payingOwed(),
     mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
     plotTone: [...S.plotTone],
@@ -674,6 +726,20 @@ export function restore() {
   // by nobody now, and the pile it wrote at three pixels or two will not fit
   // this plot. `rehomeDust` below is what puts that dust back where it goes.
   setPitGrain();
+  // Nobody has claimed the loose core yet. `coreTaker` is a body, and the
+  // bodies are about to be built again from the save: a claim left standing
+  // pointed at a body that was no longer in the yard, nobody else could take
+  // the core (`haulerWork` defers to the taker), and it lay there for good.
+  // A page load starts at null; a restore in a running page has to say so.
+  S.coreTaker = null;
+  S.danceUntil = Number.isFinite(s.danceLeft) && s.danceLeft > 0 ? clockNow() + s.danceLeft : 0;
+  S.nextBoulderAt = Number.isFinite(s.nextBoulderIn) && s.nextBoulderIn > 0 ? clockNow() + s.nextBoulderIn : 0;
+  // A spin picks up where it was: the wheel carries on to the mark it was
+  // already turning toward, and stops when it would have.
+  if (Number.isFinite(s.spinLeft) && s.spinLeft > 0) {
+    S.spinUntil = clockNow() + s.spinLeft;
+    S.spinAt = S.spinUntil - CASINO_SPIN_MS;
+  } else { S.spinUntil = 0; S.spinAt = 0; }
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -743,6 +809,8 @@ export function restore() {
     // stand every frame under a row that is still selling carts.
     rec.tookKit = rec.bought && kitDisplaced(m.job)
       ? (r.tookKit == null ? true : !!r.tookKit) : false;
+    if (Number.isFinite(r.beatIn)) rec.beatAt = clockNow() + r.beatIn;
+    if (Number.isFinite(r.workedAgo)) rec.workedAt = clockNow() - r.workedAgo;
   }
   rebalance();
   // The harness and the boots were ladders of their own over what a hauler
@@ -771,9 +839,8 @@ export function restore() {
   // and a save from before the second act existed has plainly had its first rock
   S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
   // A save from before the shields existed has plainly not raised one. The
-  // catch is not restored: a rock held in the air is a beat a few seconds
-  // long, and a save reloaded into the middle of it would come back to a rock
-  // resting on nothing if anything about the arch had changed. It falls.
+  // catch is taken again below, once the rock's fall has been read: a rock
+  // that was in the shield's hands comes back in them, from where it is.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
                           laid: s.shield.laid || 0, caught: 0, held: 0,
@@ -788,6 +855,35 @@ export function restore() {
   }
   S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
   S.rockHeld = false;
+  // A rock that was in the shield's hands is in them still. The rock's fall
+  // is saved now (`rockFall`), and the catch was not: so the frame after a
+  // load the rock fell the rest of the way on its own, landed inside the
+  // net without the net ever giving up, and the net stood for good with the
+  // rock on the ground under it -- `shieldsDone` never got the word, and the
+  // arch was never offered. The catch is taken again here, from where the
+  // rock is: the rope pays out from this height, the arch cracks after its
+  // beat, the dome holds. Only a finished shield of a kind that catches --
+  // an unfinished one, or the props, is what the rock goes through anyway.
+  if (S.shield && S.rockFall > 0) {
+    const k = KINDS[S.shield.kind];
+    if (S.shield.laid >= k.pieces && k.answer !== 'through' && s.shield.caughtAgo != null && Number.isFinite(+s.shield.caughtAgo)) {
+      // When it took hold, as how long ago -- the arch's crack and the dome's
+      // hold are clocks from that moment -- and where: the height at which a
+      // falling rock's foot meets the shield's top (the catch in `stepShield`).
+      // The rope's strain is how far below that the rock has been let down, so
+      // `held` is the catch height and not where the rock is now, or every
+      // refresh would have the rope start straining from nothing again. A rock
+      // above it is one the dome sprang back up, and it comes down again on
+      // the speed it was saved with rather than hanging at the top of its arc.
+      S.shield.caught = clockNow() - (+s.shield.caughtAgo || 0);
+      S.shield.held = (S.shield.h + 1) * P + ROCK_SINK;
+      S.shield.strain = +s.shield.strain || 0;
+      S.shield.sag = +s.shield.sag || 0;
+      if (k.answer === 'hold' && S.rockFall > S.shield.held) S.shield.rising = true;
+      else S.rockFallV = 0;
+      S.rockHeld = true;
+    }
+  }
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -831,6 +927,10 @@ export function restore() {
     S.wonAt = Object.fromEntries(stamps.map(([k], i) => [k, i + 1]));
     S.wonSeq = stamps.length;
   }
+  S.chips = Array.isArray(s.chips)
+    ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
+        .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
+    : [];
   S.belt = Array.isArray(s.belt)
     ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
     : [];
@@ -886,12 +986,12 @@ export function restore() {
   craftLoad(s.craft);
   S.haze = s.haze || 0;
   S.scrubBank = 0;
-  // The rain itself is not saved. It is nine seconds long and it is weather:
-  // coming back to a shower that started before you closed the tab is a shower
-  // with no beginning. What it left behind is saved, because that is the part
-  // that is somebody's job.
-  S.raining = false;
-  S.rainFor = 0;
+  // The weather in flight comes back with the sky (decided 2026-09-14, the
+  // reliability freeze). It used to be dropped -- "a shower with no beginning
+  // is not a shower" -- and every refresh mid-storm cleared the sky: eleven
+  // checks about rain went red the day every check became a reload check.
+  // `raining`, `rainFor` and `stormFor` are plain saved fields now; the bolt is
+  // a flash of a few frames and is not.
   S.bolt = null;
   S.poop =Array.isArray(s.poop) ? s.poop.slice() : [];
   // A save from before the rock was something dust could lie on has none, and
@@ -909,12 +1009,12 @@ export function restore() {
   // This is exactly the case `skyFromSave` is for: a sky being restored rather
   // than made. Safe here because the world is laid out before the save is read
   // (see the boot order in main.js), so there is a width to spread it across.
-  skyFromSave();
+  skyFromSave(s.skyKinds, s.drops, s.puffs);
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.
   S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
-  S.spinUntil = 0;
+  // (`spinUntil` is read back above, from `spinLeft`: a spin in flight goes on.)
   S.tableAir = [];
   // A pot you have already taken comes back still owed to you.
   //
@@ -969,7 +1069,9 @@ export function restore() {
   // a ripe plot keeps the spore that grew on it, tone and all
   if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
   resite();                    // the quarry is as deep and the plot as wide as it was
-  restoreCrew(s.who);          // the same people, where they were, with what they have done
+  // ...on the ground they were saved on, if the mouth of the cut is where the
+  // save says it was: then a body over it is over it on purpose.
+  restoreCrew(s.who, Number.isFinite(s.mouth) ? s.mouth : null);
   // A body written down is a body in the yard.
   //
   // The headcount and the list of people are two records of the same thing, and
@@ -1127,7 +1229,13 @@ const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
 const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.HAUL, scholars: JOB.HAUL,
                   scrubbers: JOB.PURIFY };
 
-function restoreCrew(who) {
+function restoreCrew(who, mouth = null) {
+  // Whether the ground under the crew is the ground they were saved on, and
+  // if the cut has moved, by how much. The yard re-walks when a station grows
+  // (a second pot; see DRAWN_W in world.js), and a save from before the walk
+  // carries every body at the x it stood at on the old one.
+  const sameGround = mouth != null && mouth === quarry.x;
+  const cutShift = mouth != null && S.quarryOpen ? quarry.x - mouth : 0;
   S.workers = [];
   if (!Array.isArray(who)) return;
   for (const k of who) {
@@ -1186,7 +1294,26 @@ function restoreCrew(who) {
     // for five seconds on every refresh (reported 2026-09-13). It stands on the
     // cut's floor under its own x -- the same height the work leg would put it
     // at on its first frame -- whatever the save said about its y.
-    if (Number.isFinite(rec.x) && overCutMouth(rec.x)
+    //
+    // And none of it when the mouth is where the save left it. The whole
+    // premise here is a layout that moved under the crew between one build and
+    // the next; on the same layout a body at ground height over the mouth is
+    // at the head of the ladder, mid-stride, and is there on purpose. Moved
+    // anyway, a quarrier stepping on to the ladder hopped eight cells back on
+    // every refresh, and one stepping off it was dropped a course into the
+    // cut -- the reload harness in test/helpers.mjs named both, and this is
+    // the third patch on the same spot. The save says where the mouth was.
+    // A body down IN the cut when the cut moved goes with the cut: the same
+    // seat on the same floor, shifted by what the mouth shifted. Left at its
+    // old x it came back under the yard, in solid ground, with no working
+    // under it -- verify.js rule 1, the frame after a load that followed a
+    // second pot being bought.
+    if (cutShift && Number.isFinite(rec.x) && Number.isFinite(rec.y)
+        && rec.y + WORKER > S.groundY + 1
+        && rec.x + WORKER > mouth && rec.x < mouth + quarry.w) {
+      rec = { ...rec, x: rec.x + cutShift };
+    }
+    if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
       if (type === TYPE.QUARRY && rec.goal === 'work') {
         rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };

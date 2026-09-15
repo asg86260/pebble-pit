@@ -10,7 +10,7 @@ import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER, HOME_WALK,
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, yardLeft, pileAt } from '../world.js';
-import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
+import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
@@ -438,7 +438,7 @@ export function haulerWork(w, c) {
   // The rock has landed and this one was dancing while it came down. Put the
   // dance away before it walks off, or it carries the hop and the shout on to
   // the next thing it does -- the same tidy-up the gang on the rock do.
-  if (w.jigAt != null && S.rockFall <= 0) { stopJig(w); w.say = null; }
+  if (w.jigAt != null && S.rockFall <= 0) stopJig(w);
 
   // fetch a loose core if there is one, else scoop dust, then tip it all
   // over the ledge
@@ -449,7 +449,17 @@ export function haulerWork(w, c) {
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
     const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
     const pace = haulSpeed() * paceBoost(w) * HAUL_EMPTY;
-    w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
+    // A route, like every other errand, and not a straight line. The core
+    // comes to rest at the foot of the rock and the next rock lands on the
+    // same spot, so a carter sent for it from the far side walked straight
+    // through the hill at ground level -- a mover that moved x and left y,
+    // which is the one thing the climber cannot answer (see `climbTo`). The
+    // buried rule caught it a hundred and thirty pixels into the rock.
+    if (Math.abs(target - w.x) >= P * 2) {
+      if (!keepTo(w, target, wayOver(target, all))) { S.coreTaker = null; return; }
+      if (stepRoute(w, pace)) return;
+      w.route = null;
+    }
     if (Math.abs(target - w.x) < P * 2) {
       S.coreItem = null;
       S.coreTaker = null;

@@ -253,6 +253,9 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
 // deleted at the top of the climb and a mote created in its place, coming up
 // from nothing over the best part of a second -- so what you watched was one
 // cell going out and another coming in beside it.
+// No reload harness: this group follows one particular speck from the swing
+// to the band, and a load rebuilds the band out of a count -- the same haze,
+// made of fresh motes. Which is the one case the opt-out is for (`group`).
 group('a speck off a swing is the speck in the band', async () => {
   // A machine running, because a machine is the only thing that dirties this
   // yard. No hand work fouls at all any more -- not the rock, not the cut, not
@@ -317,4 +320,4 @@ group('a speck off a swing is the speck in the band', async () => {
     ok(offSlot < 40, 'and it joins the band at its slot, uniform over the sky',
        `${Math.round(offSlot)}px from its slot`)
   ];
-});
+}, { reload: false });

@@ -72,7 +72,15 @@ group('a cut takes the time it took before the pockets, at pace nought and at th
   // The pocket and the beat are solved to hold those; a tenth either way is
   // the tolerance, and a tune of the beat that breaks it has moved the
   // quarry's economy, which is the thing this file is here to notice.
-  const WAS_P0 = 108, WAS_P9 = 31;
+  //
+  // Re-measured 2026-09-14 at 103 s and 21 s, with the same tool and seed. The
+  // beat did not move: a fresh quarrier used to be made at the top of the
+  // world and sink to the ground for five seconds before it could set off,
+  // and the five sank in a stagger that put them on the face one by one.
+  // `FACTORY` stands a body on the ground now (crew/jobs.js), so the gang
+  // arrives together -- which is what a gang assigned from the board, walking
+  // from where it stood, always did in play.
+  const WAS_P0 = 103, WAS_P9 = 21;
   // The spark rung's pace over the floor's, off the pace list itself.
   const sparkGain = LADDERS.quarrypace.value[TIER_OWN] / LADDERS.quarrypace.value[TIER_RUNGS];
   const time = () => {

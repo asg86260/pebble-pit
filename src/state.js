@@ -552,6 +552,10 @@ export const BLANK = JSON.parse(JSON.stringify(S));
 // they say why a field is worth keeping, which is the part that is not obvious.
 export const SAVED = [
   'stored',               // dust in the hole: the whole point
+  // a spin in flight: where the wheel is, where it is going and what it will
+  // say when it stops. A refresh mid-spin used to leave the stake on the table
+  // with a wheel that never came to rest. The moments are by hand (`spinLeft`).
+  'wheel', 'spinFrom', 'spinTo', 'spinWon',
   'carryLevel',
   'speedLevel',
   'autoMine',
@@ -648,6 +652,17 @@ export const SAVED = [
   'recycler',
   'seenAir',
   'rains',
+  // ...and the weather in flight, since the reliability freeze (2026-09-14):
+  // a refresh mid-storm used to clear the sky. The bolt is a flash and stays
+  // ephemeral; the sky's motes are re-marked as this storm's on the way in.
+  'raining', 'rainFor', 'stormFor',
+  // ...and a rock on its way down, for the same reason: a refresh under a
+  // falling rock had it land at once, and one in the beat between rocks
+  // skipped the beat
+  'rockFall', 'rockFallV',
+  // how many cells the cut has ever given up: the ore notices climb on it and
+  // the stats board reads it, and a refresh used to set it back to nought
+  'quarryTotal',
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
@@ -695,6 +710,14 @@ export const SAVED_BY_HAND = [
   'coreItem',             // a core loose in the world: a spot, or the fact of one
   'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
+  'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
+  'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
+  'drops',                // and the rain in the air, [x, y, vy] a drop; the same
+  'puffs',                // and the plume still climbing, a speck a row; the same
+  // the celebration for the last rock and the backstop for the next: moments
+  // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
+  'danceUntil', 'nextBoulderAt',
+  'spinUntil',            // as `spinLeft`: how much of the spin is left; `spinAt` is worked back from it
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
@@ -723,6 +746,7 @@ export const SAVED_BY_HAND = [
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
   'belt',                 // what is riding the belt, as [x, shade] pairs
+  'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
   JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
@@ -800,8 +824,6 @@ export const EPHEMERAL = [
   // the opening, while it is running
   'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
   'introThrew', 'skipHeldAt', 'introCut',
-  // a rock on its way down, and the celebration for the last one
-  'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
   // ...and when the last one hit, which is only read for the spread it does on
   // arriving: a reload has no arrival to be moments after.
   'landAt',
@@ -813,7 +835,7 @@ export const EPHEMERAL = [
   // fact and is saved; this is the walk, and a reload has no walk in progress.
   'rescueTo',
   // dust in the air: a grain mid-flight has no beginning to come back to
-  'chips', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
+  'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
   // the counter chasing the real number
   'shownStored',
   // how far the toast has read through the record: what was earned before
@@ -830,7 +852,8 @@ export const EPHEMERAL = [
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',
   // the wheel, and a hand that settled before you closed the tab
-  'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',
+  // the stake still in the air, and a hand that settled before you closed the tab
+  'tableAir', 'hand', 'spinAt',
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing
@@ -843,10 +866,9 @@ export const EPHEMERAL = [
   // worked out again from the counts, or only true for a few lines of a frame.
   // (wave7b-build: `builders` moved to SAVED -- once the construction bench is
   // open it is a hired post like any job, and a hired post survives a reload.)
-  'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
-  'raining', 'rainFor', 'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
-  'stormFor',                              // wave6-sky: weather in flight is not saved
+  'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
   'placed', 'strips', 'introHeart',
   // housekeeping
   'dirty', 'fatal', 'lastFrame', 'settleAt',

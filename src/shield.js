@@ -28,6 +28,10 @@ import { workOn } from './works.js';
 import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
+// The yard's one generator, not `Math.random`: a shield's wreck and its
+// straining were the last two draws outside it, and a run with them in it
+// could not be had again from its seed (rng.js).
+import { rand } from './rng.js';
 import { startRescue, buriedOut } from './intro.js';
 import { shakeView, rockEdge } from './world.js';
 import { sfx } from './audio.js';
@@ -196,8 +200,8 @@ export function breakShield() {
   const top = shieldTopY(s);
   const grains = s.laid * SHIELD_PIECE_DUST;
   for (let i = 0; i < grains; i++) {
-    const px = s.x + Math.random() * s.w;
-    const py = top + Math.random() * P * SHIELD_LID_T;
+    const px = s.x + rand() * s.w;
+    const py = top + rand() * P * SHIELD_LID_T;
     spawnSpoil(px, py, shadeNear(3), 'rock');
   }
   if (!S.shieldsDone.includes(s.kind)) S.shieldsDone.push(s.kind);
@@ -229,9 +233,9 @@ function strainOn(s, kind) {
            : s.held > 0 ? (s.held - S.rockFall) / s.held : 1;
   s.strain = Math.max(0, Math.min(1, s.strain));
   // more of it, and faster, the nearer it is to going
-  if (Math.random() > 0.08 + s.strain * 0.5) return;
+  if (rand() > 0.08 + s.strain * 0.5) return;
   const top = shieldTopY(s) + (s.sag || 0) * P;
-  const px = s.x + Math.random() * s.w;
+  const px = s.x + rand() * s.w;
   // Thrown along the heap like every other spoil, never dropped where it is.
   // The grit used to fall straight down -- into the footprint, where it lay in
   // a little pile *inside* the rock the moment the rock came the rest of the

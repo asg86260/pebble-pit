@@ -9,7 +9,8 @@
 // old save put back, and one that reads is the yard from then on.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, storeChecks } from './helpers.mjs';
+storeChecks();          // this file is about the store itself: no reload harness
 
 const { exportSave, importSave } = await import('../src/persist.js');
 const { PREV_KEY, loadPrev, BROKEN_KEY, OWNER_KEY, TAB } = await import('../src/save.js');

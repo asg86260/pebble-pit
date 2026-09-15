@@ -102,7 +102,11 @@ group('every field on S is accounted for', async () => {
 
   // The three keys a save spells differently from the field it holds. Every
   // other name in the two saved lists is the field's own.
-  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem' };
+  // ...and the two moments of the beat between rocks, written as distances
+  // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
+  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
+                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt',
+                  spinLeft: 'spinUntil' };
   S.dirty = true;
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
@@ -132,7 +136,9 @@ group('every field on S is accounted for', async () => {
     // grids, the sky, the chance, the craft, and the two leftovers the format
     // still carries. Named here so a typo cannot hide among them.
     ...Object.entries(lists).map(([name, list]) => {
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft'];
+      // ...and `mouth`, where the cut's mouth was: a fact about the layout the
+      // crew were saved on, read by `restoreCrew` and kept by nothing.
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })

@@ -99,6 +99,11 @@ group('a machine is stopped by taking its tender off', async () => {
   spell(10);
   const off = state();
 
+  // The heap swept before the tender comes back: a jaw with nowhere to put
+  // what comes out stands down for that reason, and the gang got to the cut
+  // sooner once a fresh body stood on its ground (crew/jobs.js), so the heap
+  // was full by here. This group is about the tender, not the heap.
+  window.__clearFloor();
   window.__assign('quarriers', 1);
   spell(10);
   const back = state();
@@ -505,6 +510,10 @@ group('what a machine remembers across a reload', async () => {
 // the same two functions, one cell at a time -- and the checks below are mostly
 // about that "one cell at a time", because it is what everything underneath
 // stands on.
+// No reload harness here: the "nobody at it" half holds the tender on the
+// cursor by writing `lifted` between runs, and a refresh drops what is on
+// the cursor by design -- the body lands and tends. The group follows one
+// held body, which is the one case the opt-out is for (see `group`).
 group('a manned jaw digs, and an unmanned one does not', async () => {
   window.__reset();
   openSites();
@@ -538,7 +547,7 @@ group('a manned jaw digs, and an unmanned one does not', async () => {
        `${alone} cells with nobody standing there`),
     ok(still, 'and it is still standing there -- idle, not gone, and nothing was switched')
   ];
-});
+}, { reload: false });
 
 // The invariant the whole scatter rests on. `findShards` pays a dig exactly its
 // seam *because* the count of what is left is taken before each single cell

@@ -80,14 +80,76 @@ export const newRecord = () => ({
 // yard reloaded mid-build came back owing a debt that no worker in it was
 // carrying, and the two could only ever drift further apart. See `rebalance` in
 // upgrades.js.
-export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
+export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
+                      // and the doses in a stirrer's arms, and which tonic
+                      // they are. A stirrer saved out on a round came back
+                      // with `goal: 'out'` and empty hands: the doses were
+                      // gone -- not dealt, not shelved -- and the body stood
+                      // in the yard with a goal nothing steps. Who it was
+                      // walking to is a body, not a fact, and is picked again
+                      // (the round already copes with a target that has gone).
+                      'holding', 'carryTonic',
+                      // and the room a carter has booked in the hole and how
+                      // much of it it has taken (crew/hole.js). The hole's
+                      // book is the sum over the bodies, so a load that
+                      // forgot them came back with a full armful and no
+                      // booking behind it -- more carried than was spoken
+                      // for, into a hole that had counted on the number.
+                      'booked', 'took',
                       // and whether it was in the air, and how it was moving:
                       // a body saved mid-arc came back at its saved height and
                       // was stood on the ground in one frame, two hundred
                       // pixels in a sixtieth of a second (critics C14)
-                      'falling', 'vx', 'vy'];
+                      'falling', 'vx', 'vy',
+                      // and whether it is behind a door. A body that had
+                      // knocked off came back standing at the doorstep.
+                      'inside',
+                      // and the shed it has been claimed to for an upgrade,
+                      // and whether it is there (crew/shedhand.js). Dropped,
+                      // a refresh handed the claim to whoever was next and
+                      // that body started the walk from wherever it stood.
+                      'onBuild', 'atShed',
+                      // and whether it is in the air on its own account -- a
+                      // wizard climbing to the ring, or coming down under a
+                      // brolly -- and the spot it took off from. A wizard saved
+                      // three hundred pixels up came back with `aloft` off,
+                      // fell to the ground and started the climb again, on
+                      // every refresh; a star was never worked.
+                      'aloft', 'floating', 'brolly', 'spot',
+                      // and which craft it is aboard (balloon.js: "who is
+                      // aboard is a fact about the body", and it was not written),
+                      // and the berth a purifier was dealt -- the house, or a
+                      // craft -- which is what puts it back in the same basket
+                      'craft', 'berth',
+                      // and the plot a farmhand is working along the row. It
+                      // came back on plot nought every time, so the far end of
+                      // a long row was never reached between refreshes.
+                      'plot',
+                      // and the commute it is on: where it is walking to and
+                      // why, and the legs still to go (crew/commute.js). Dropped,
+                      // a body retasked mid-walk finished the walk at its
+                      // station's amble, a quarter of the commute's pace, and
+                      // one sent for a hat came back without one.
+                      'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching'];
+
+// Moments on a body's clock -- when its next break comes round, when it has
+// stood about long enough to knock off -- kept the way doses are (below):
+// as how far off they are, because the clock starts again with the page. A
+// refresh used to start every one of them over, so a yard refreshed now and
+// then never took a break and never went home. The name is the field's, the
+// value written is `field - now()`, and the way back in is the reverse.
+// ...and the clocks of the work itself: the next swing, stoop, cut and
+// stroke. Without them every refresh handed every body a free swing -- five
+// quarriers dug a cut a sixth faster under a refresh every five seconds.
+const MOMENTS = ['brkAt', 'idleSince', 'looAt',
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext'];
+const momentsOf = w => {
+  const out = {};
+  for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());
+  return out;
+};
 
 // Live doses are kept too, and they are the one thing on a body that cannot be
 // written down as they stand. A dose's `until` is a moment on the clock, and the
@@ -108,6 +170,8 @@ export function keepOf(w) {
   for (const k of KEEPS) if (w[k] != null) out[k] = w[k];
   const doses = doseKeep(w);
   if (doses.length) out.doses = doses;
+  const moments = momentsOf(w);
+  if (Object.keys(moments).length) out.moments = moments;
   return out;
 }
 
@@ -131,6 +195,8 @@ export function wearRecord(w, from) {
   const on = had.filter(d => d && d.left > 0)
                 .map(d => ({ tonic: d.tonic, until: now() + d.left }));
   if (on.length) w.doses = on;
+  // and its moments, the same way round: what was written is how far off
+  if (from.moments) for (const k of MOMENTS) if (Number.isFinite(from.moments[k])) w[k] = now() + from.moments[k];
   if (!w.at) w.at = {};
   return w;
 }

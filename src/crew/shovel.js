@@ -181,7 +181,7 @@ export function takeMess(w, c) {
   }
   // and the dance is put away when the shovel comes back out, the same tidy-up
   // the rock hands and the haulers do, so the hop is not carried to the mess
-  if (w.jigAt != null) { stopJig(w); w.say = null; }
+  if (w.jigAt != null) stopJig(w);
   if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
   unbook(w);
   // Out of the house first. A mess is the one thing that calls a body back
@@ -206,7 +206,7 @@ export function takeMess(w, c) {
   // either direction. A rockhand leaving the crest walks down it the way it
   // walked up.
   if (w.type === TYPE.ROCK) {
-    if (w.jigAt != null) { stopJig(w); w.say = null; }
+    if (w.jigAt != null) stopJig(w);
     w.idleAt = null;
   }
   // A shovel in hand is not a break, whoever is holding it. Only the rockhand

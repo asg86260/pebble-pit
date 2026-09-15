@@ -123,6 +123,11 @@ export function stepTender(w, now) {
     }
     w.x = seat.x;                                  // aboard
     w.y = seat.y;
+    // And say so, this frame. A seat is a roof or a cab -- a body's height
+    // over the ground -- and the "nothing floats" rule (verify.js) would read
+    // a body up there as standing on air. A stamp rather than a flag, for the
+    // reason `scaleAt` gives: nothing has to remember to clear it.
+    w.aboardAt = S.tick;
     w.resting = false;
     return true;
   }

@@ -14,7 +14,8 @@
 // import, so the stamp is there when version.js reads it -- and the version
 // boundary check below has something to be newer than.
 globalThis.__BUILD__ = { version: '0.0.0', hash: 'test000', date: '2026-09-12' };
-const { group, ok, state, run, yard } = await import('./helpers.mjs');
+const { group, ok, state, run, yard, storeChecks } = await import('./helpers.mjs');
+storeChecks();          // this file is about the store itself: no reload harness
 
 const { persist, restore, exportSave, importSave, bootYard } = await import('../src/persist.js');
 const { BROKEN_KEY } = await import('../src/save.js');

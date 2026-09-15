@@ -37,11 +37,20 @@
 // run in, which is the only thing about them that is not local to one of them.
 
 import { S } from './state.js';
+import { RAIN_FALL, PUFF_UP, SMOG_PER_MOTE } from './config.js';
 import { DROPS, GOING, SKY, bandLow, bandTop, climbing, clogged, fanPull,
          outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
-import { foul, reckon, stepPuffs } from './smog/vents.js';
+import { foul, look, reckon, skyMote, stepPuffs } from './smog/vents.js';
+import { enter } from './smog/sky.js';
+
+// What the band is made of, by kind, for the save. See `skyFromSave`.
+export function skyKindCounts() {
+  const kinds = {};
+  for (const m of SKY) { const k = m.kind || 'dust'; kinds[k] = (kinds[k] || 0) + 1; }
+  return kinds;
+}
 import { stirSmoke } from './smog/draught.js';
-import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave } from './smog/sky.js';
+import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
 import { pullCraft } from './smog/craft.js';
 import { breaks, dryTime, forceStrike, markStorm, pour, rainOdds, settled, stepBolt, stepDrops, stepEmbers, EMBERS,
@@ -54,10 +63,61 @@ import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
 import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
+// A save coming back, under whatever weather it was saved under. The band is
+// rebuilt out of the haze (see sky.js); if a storm was brewing or pouring
+// when the save was written, the rebuilt sky is marked as that storm's --
+// "everything settled up there belongs to this storm", the same rule the
+// roll applies -- so the shower goes on coming down rather than finding no
+// mote it is allowed to drop and calling itself over.
+export function skyFromSave(kinds = null, drops = null, puffs = null) {
+  // The band is filled to the haze, and the haze counts the plume too, so
+  // what the plume will put back is taken off first and the count is
+  // reckoned again once it is up.
+  const climbing = Array.isArray(puffs) ? puffs.filter(q => Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1])) : [];
+  S.haze = Math.max(0, S.haze - climbing.length * SMOG_PER_MOTE);
+  rebuildSky();
+  for (const q of climbing) {
+    const p = skyMote(q[0], Number.isFinite(q[4]) ? q[4] : q[1], q[2] || 'dust');
+    p.up = true;
+    p.y = q[1];
+    p.vy = Number.isFinite(q[3]) && q[3] < 0 ? q[3] : -PUFF_UP;
+    p.lean = Number.isFinite(q[5]) ? q[5] : 0;
+    p.fade = Number.isFinite(q[6]) ? q[6] : 0;
+    p.age = Number.isFinite(q[7]) ? q[7] : 0;
+    enter(p);
+  }
+  reckon();
+  // The rain already falling, where it was. See `drops` in persist.js.
+  if (Array.isArray(drops))
+    for (const d of drops)
+      if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1]))
+        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL });
+  // ...of the kinds it was made of. The rebuild makes dust; the save says
+  // how much of the band was soot, spore and the rest, and that share of
+  // the rebuilt motes is relabelled, look and all, so the readout that
+  // says which part of the works dirtied the sky says the same thing after
+  // a refresh as before it.
+  if (kinds && SKY.length) {
+    const total = Object.values(kinds).reduce((n, v) => n + (+v || 0), 0);
+    if (total > 0) {
+      let i = 0;
+      for (const [kind, n] of Object.entries(kinds)) {
+        if (kind === 'dust') continue;
+        const want = Math.round(SKY.length * (+n || 0) / total);
+        for (let k = 0; k < want && i < SKY.length; k++, i++) Object.assign(SKY[i], { kind }, look(kind));
+      }
+    }
+  }
+  if (!(S.raining || S.stormFor >= 0)) return;
+  let marked = 0;
+  for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
+  markStorm(marked);
+}
+
 export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
          foul, stirSmoke,
-         moteX, moteY, clearSky, fillSky, skyFromSave, cloudR,
+         moteX, moteY, clearSky, fillSky, cloudR,
          DRAUGHT, rainOdds, dryTime, forceStrike, EMBERS,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,

@@ -310,7 +310,10 @@ group('under the dome, the one underneath walks out', async () => {
   let lowest = Infinity, crept = false;
   const dug = runUntil(() => {
     const s = state();
-    lowest = Math.min(lowest, s.rockFall);
+    // Only while somebody is under it: the sample that finds them out is a
+    // second on from the one before, and in that second the dome has begun
+    // letting the rock the rest of the way down -- which is the next check.
+    if (s.buried) lowest = Math.min(lowest, s.rockFall);
     if (s.buried && s.shield.setting && s.rockFall < held) crept = true;
     return !s.buried;
   }, 60);
