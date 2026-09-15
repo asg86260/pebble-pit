@@ -228,7 +228,11 @@
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0);
   transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, box-shadow var(--shelf-hover-ms, 120ms) ease-out;
 }
-.rows.shelves > button.tile .pic { transition: transform var(--shelf-hover-ms, 120ms) ease-out; }
+/* The whole of what stands on the tile lifts together -- picture, name, gain
+   and tag -- and the plate stays where it is. */
+.rows.shelves > button.tile > .pic, .rows.shelves > button.tile > .name, .rows.shelves > button.tile > .gain, .rows.shelves > button.tile > .tag {
+  transition: transform var(--shelf-hover-ms, 120ms) ease-out;
+}
 .rows.shelves > button.tile:hover:not(:disabled) {
   outline-color: #000;
   box-shadow: 2px 2px 0 #000;
@@ -240,8 +244,9 @@
 .rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled) .cost { opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled) .note { color: inherit; }
-.rows.shelves > button.tile:hover:not(:disabled) .pic { transform: translateY(-2px); }
-body.still .rows.shelves > button.tile, body.still .rows.shelves > button.tile .pic { transition: none; }
+.rows.shelves > button.tile:hover:not(:disabled) > .pic, .rows.shelves > button.tile:hover:not(:disabled) > .name,
+.rows.shelves > button.tile:hover:not(:disabled) > .gain, .rows.shelves > button.tile:hover:not(:disabled) > .tag { transform: translateY(-2px); }
+body.still .rows.shelves > button.tile, body.still .rows.shelves > button.tile > * { transition: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
    picker, standing where the tag would. */
