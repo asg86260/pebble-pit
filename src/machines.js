@@ -53,8 +53,18 @@ export const MACHINES = [
   // rock and the hole. So the carts stay bought, they stay useful, and the
   // kit row goes on selling them -- see `kitDisplaced`, which is what tells the
   // training grounds which rows to take down.
-  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false }
+  //
+  // And `unmanned`: it runs from the moment it is bought, with nobody posted
+  // at it. Every other machine needs a body standing at it, and the belt did
+  // too -- but its post is the lip, which is where every hauler comes to tip,
+  // so the body the belt took as its tender was a laden one arriving to tip,
+  // and it stood there holding its load for the rest of the run (the player's
+  // save, test/fixtures/belt-lip.json). A conveyor is not worked; it is
+  // switched on.
+  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true }
 ];
+// The machines that run themselves, by key.
+export const UNMANNED = new Set(MACHINES.filter(m => m.unmanned).map(m => m.key));
 
 // Derived, not written out again: a hand-kept inverse of the table six lines
 // above is a second place to forget.

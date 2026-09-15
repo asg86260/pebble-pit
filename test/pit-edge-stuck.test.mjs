@@ -1,17 +1,10 @@
-// A yard from the field, loaded whole: boulder 46, thirty-one crew, the belt
-// bought and running, the rift open.
-//
-// The player reported "a stuck worker at the edge of the pit" -- twice, the
-// second time after the fix that cut the nine haulers parked at the belt's post
-// down to one. The one left is the belt's tender, and the belt runs while it
-// stands there; what was wrong was the card over its head, which read "looking
-// for pebbles" for the rest of the run, because the tender stage writes no goal
-// and the card read the goal. A body standing still at the lip saying it is
-// looking for something is a stuck body, whatever the machine behind it is
-// doing. So the card asks the machines (`minding`, crew/tenders.js).
-//
-// What is asserted: after a while, one body stands at the belt's post, its card
-// says it is minding the belt, the belt is manned, and no body that has not
+// The player's save, twice reported as "a stuck worker at the edge of the
+// pit". First it was nine haulers parked at the belt's post; then one, the
+// belt's tender, whose card said "looking for pebbles" for the rest of the
+// run; then a laden one, made the tender the frame it arrived to tip
+// (test/belt-lip.test.mjs). The belt posts nobody now -- it runs itself the
+// moment it is bought (`unmanned`, machines.js) -- so what is asserted is
+// that the belt runs, nobody stands at its post, and no body that has not
 // covered ground says it is looking for something.
 
 import { readFileSync } from 'node:fs';
@@ -20,7 +13,7 @@ import { card } from '../src/crewboard.js';
 import { beltRunning, beltPost } from '../src/dust.js';
 import { now } from '../src/clock.js';
 
-group('the belt\'s tender at the lip says so, and nobody else stands still', async () => {
+group('the belt runs with nobody at its post, and nobody stands still looking for work', async () => {
   localStorage.setItem('boulder-clicker/v4',
     readFileSync(new URL('./fixtures/pit-edge-stuck.json', import.meta.url), 'utf8'));
   yard.restore();
@@ -44,16 +37,12 @@ group('the belt\'s tender at the lip says so, and nobody else stands still', asy
   // nothing much, is what a player calls stuck. A farmhand at its plot barely
   // moves either, and its card says "tending a plot", which is the difference.
   const stuck = still.filter(w => /looking for|nothing much/.test(line(w)));
-  // read before the roster is cleared: both are asked of the bodies
-  const tenderLines = tender.map(line);
   const running = beltRunning(now());
   window.__crew(0, 0);
   return [
-    ok(tender.length === 1, 'one body stands at the belt\'s post',
+    ok(tender.length === 0, 'nobody stands at the belt\'s post',
        tender.map(w => `${w.type} ${w.name} at ${Math.round(w.x)}`).join(', ')),
-    ok(tenderLines.every(l => l.includes('minding the belt')), 'and its card says it is minding the belt',
-       tenderLines.join(' | ')),
-    ok(running, 'and the belt is running'),
+    ok(running, 'and the belt is running anyway'),
     ok(stuck.length === 0, 'and no body standing still says it is looking for something',
        stuck.map(w => `${w.type} ${w.name} at ${Math.round(w.x)}: ${line(w)}`).join(', '))
   ];

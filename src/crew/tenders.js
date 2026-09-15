@@ -6,7 +6,7 @@
 
 import { frames, now } from '../clock.js';
 import { CLIMB_PACE, MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
-import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
+import { JOB_MACHINE, MACHINES, UNMANNED, machine, specOf } from '../machines.js';
 import { sfx } from '../audio.js';
 import { quarryFace } from '../quarry.js';
 import { inWorking, keepTo, stepRoute, ways } from '../route.js';
@@ -39,6 +39,9 @@ export function stepTender(w, now) {
   if (!key) return false;
   const r = machine(key);
   if (!r || !r.bought) return false;
+  // A machine that runs itself posts nobody: the body goes about the yard's
+  // ordinary work exactly as if the machine were not its trade's.
+  if (UNMANNED.has(key)) return false;
   const spec = specOf(key);
   if (!spec) return false;
 
@@ -187,7 +190,7 @@ function tenderFor(spec, at) {
 export function minding(w) {
   for (const m of MACHINES) {
     const r = machine(m.key), spec = specOf(m.key);
-    if (!r || !r.bought || !spec || spec.type !== w.type) continue;
+    if (!r || !r.bought || !spec || spec.type !== w.type || m.unmanned) continue;
     if (tenderFor(spec, spec.at()) === w) return m;
   }
   return null;
@@ -201,17 +204,20 @@ export function stepMachines(now) {
 
     const at = spec.at();
     r.working = false;                         // until it gets through all of it
-    const tender = tenderFor(spec, at);
-    // Unmanned: it does not tick, and the beat is pushed forward every idle
-    // frame so the clock cannot fall behind. There is nothing banked to pay out
-    // the moment somebody wanders back into reach; it simply is not running.
-    if (!tender) { r.beatAt = now + 200; continue; }
-    // Somebody is standing at it, this frame. The belt's band reads this to know
-    // whether to keep running -- a load already on it must not be gated on the
-    // machine having *bitten*, since the ground goes clean long before the last
-    // grain reaches the hole. See `stepBelt`.
+    // A machine that runs itself is manned by nobody and running whenever it is
+    // bought; every other one needs a body standing at it.
+    const tender = UNMANNED.has(m.key) ? null : tenderFor(spec, at);
+    // Unmanned and needing a tender: it does not tick, and the beat is pushed
+    // forward every idle frame so the clock cannot fall behind. There is
+    // nothing banked to pay out the moment somebody wanders back into reach;
+    // it simply is not running.
+    if (!tender && !UNMANNED.has(m.key)) { r.beatAt = now + 200; continue; }
+    // Somebody is standing at it, this frame -- or it needs nobody. The belt's
+    // band reads this to know whether to keep running -- a load already on it
+    // must not be gated on the machine having *bitten*, since the ground goes
+    // clean long before the last grain reaches the hole. See `stepBelt`.
     r.mannedAt = now;
-    tender.resting = false;                    // it is working, whatever it looks like
+    if (tender) tender.resting = false;        // it is working, whatever it looks like
     if (!spec.ready()) { r.beatAt = now + 200; continue; }
 
     // How long one unit of the station's own work takes it. Not clamped to a

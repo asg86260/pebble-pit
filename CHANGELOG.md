@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- The belt runs on its own from the moment it is bought: no hauler is posted at it, so a hauler arriving at the lip with a load tips it instead of standing there for the rest of the game (test/belt-lip.test.mjs).
+
 ## v0.2.3 — 2026-09-15
 
 **New this release**

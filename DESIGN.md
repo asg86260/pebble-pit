@@ -2712,6 +2712,16 @@ grounds, having handed over the carters' carts for it -- stood there and never
 ran. It was made leverless, and nothing was lost, and that should have been the
 whole answer three drawings earlier than it was.
 
+**And tenderless, for the same reason (2026-09-15).** It kept every other machine's rule --
+it ran only while a body stood at its post -- and its post is the lip, which is where every hauler
+comes to tip. So the body the belt took as its tender was one arriving to tip, and the tender stage
+owned it from then on: a carter with twenty-two in hand stood at the edge of the hole for the rest
+of the run doing nothing, reported three times over as "a stuck worker at the edge of the pit" and
+patched twice before the premise was questioned. A conveyor is not worked; it is switched on. The
+belt is `unmanned` (`MACHINES`, machines.js): it runs from the moment it is bought, posts nobody,
+takes no place from the haulers' roster, and the hum counts it while it is bought
+(`test/belt-lip.test.mjs`, the player's save).
+
 **What the machine is really worth, honestly.** A machine is a flat rate and a
 gang is not -- but the cut can never hold more than its five benches and the farm
 never more than its seven plots, and the machine is measured against a *hatted*
