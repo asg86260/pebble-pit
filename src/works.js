@@ -317,6 +317,13 @@ export const inLine = site => worksAt(site).slice(roomAt(site));
 export const workAt = site => worksAt(site)[0] || null;
 export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key) || null;
 export const busyAt = site => worksAt(site).length > 0;
+// The bodies on this work's patch right now, for the tile that bought it
+// (DESIGN.md, "A hand on the tile"): a builder claims a work by key and is on
+// the patch while its jig is set; a gang body claimed to its own shed
+// (`onBuild`) works whatever is at the front of that site. Read straight off
+// the bodies each frame, so the tile shows a hand only while the site has one.
+export const bodiesOn = key => S.workers.filter(w => w.jigAt != null
+  && (w.workKey === key || (!w.workKey && w.onBuild && workAt(w.onBuild)?.key === key)));
 // Where a work stands in its site's list, counting the front as one -- so the
 // first behind it is 2, which is what "2nd" in its tag means. Nought for
 // a work the site does not have.

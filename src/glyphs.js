@@ -7,7 +7,7 @@
 // is a placeholder until the set is drawn as a batch against shelf.html; a
 // row with no glyph of its own gets the crate, so a missing one is visible on
 // the shelf rather than a blank.
-import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS } from './config.js';
+import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP } from './config.js';
 
 // The drawings, by the object's name. A drawing that is not here yet is a
 // row still wearing the crate, and the review sheet (glyphs.html) says so.
@@ -168,8 +168,18 @@ export const inkSpan = rows => {
 // way a plan is drawn, so a tile waiting its turn and one being built read
 // apart from the picture alone.
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
-export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null) => {
-  const M = 2, W = CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
+//
+// `hands` are the bodies at the site, for a tile being built (DESIGN.md, "A
+// hand on the tile"): one `{ dy, chips }` a body, `dy` how far below the
+// glyph's foot the body is drawn this frame, in pixels (a hop is above it, a
+// blow below), `chips` the specks its blows have thrown, `{ x, y, a }` in
+// pixels off the body's top-left and an alpha. The bodies stand in a row off
+// the ink's left edge, on a margin added to the left of the canvas for them,
+// which the anchor's margin below allows for -- so the picture does not move
+// when a hand arrives beside it.
+export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null, hands = []) => {
+  const M = 2, L = hands.length * (HAND + HAND_GAP) * CELL;
+  const W = L + CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
   const c = document.createElement('canvas');
   c.width = W; c.height = H; c.className = 'glyph';
   const g = c.getContext('2d');
@@ -181,7 +191,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   laid.forEach(([x, y], k) => {
     const up = built === null || (!plan && k < built);
     for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) {
-      const at = (y * CELL + j + M) * W + x * CELL + i + M;
+      const at = (y * CELL + j + M) * W + x * CELL + i + M + L;
       if (up) solid[at] = 1; else if (!plan && i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
     }
   });
@@ -190,7 +200,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   // shape's own footprint and the ink lands where the built cells will.
   if (plan) {
     const shape = new Uint8Array(W * H);
-    laid.forEach(([x, y]) => { for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) shape[(y * CELL + j + M) * W + x * CELL + i + M] = 1; });
+    laid.forEach(([x, y]) => { for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) shape[(y * CELL + j + M) * W + x * CELL + i + M + L] = 1; });
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (!shape[y * W + x]) continue;
       const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !shape[(y + dy) * W + x + dx]);
@@ -201,7 +211,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   // BADGE_HALO pixels round that ink knocked out of the drawing beneath.
   if (badge) {
     // on its own, finer grid, its top-right pixel on the drawing's
-    const mark = new Uint8Array(W * H), ox = CELLS * CELL + M - badge[0].length * BCELL, oy = M;
+    const mark = new Uint8Array(W * H), ox = L + CELLS * CELL + M - badge[0].length * BCELL, oy = M;
     badge.forEach((r, y) => [...r].forEach((ch, x) => {
       if (ch !== '#') return;
       for (let j = 0; j < BCELL; j++) for (let i = 0; i < BCELL; i++) mark[(oy + y * BCELL + j) * W + ox + x * BCELL + i] = 1;
@@ -243,9 +253,30 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (solid[y * W + x]) g.fillRect(x, y, 1, 1);
   g.fillStyle = SHELF_INK.ghost;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ghost[y * W + x]) g.fillRect(x, y, 1, 1);
-  // Centered on the ink: the canvas's left edge sits on the tile's center
-  // line, and this pulls it left by exactly the ink's half-width.
   const [lo, hi] = inkSpan(rows);
-  c.style.marginLeft = `${-(M + (lo + hi) / 2 * CELL)}px`;
+  // The hands: the yard's square at this scale -- white, a one-pixel black
+  // edge -- each standing a body's width further off the ink's left edge, on
+  // the ink's bottom row, moved by its own `dy`. Its chips go over it, at
+  // the ghost tone, each fading on its own alpha.
+  if (hands.length) {
+    const foot = M + (laid.length ? Math.max(...laid.map(([, y]) => y)) + 1 : CELLS) * CELL;
+    const side = HAND * CELL;
+    hands.forEach((h, i) => {
+      const x = M + L + lo * CELL - (i + 1) * (HAND + HAND_GAP) * CELL;
+      const y = foot - side + Math.round(h.dy);
+      g.fillStyle = '#000'; g.fillRect(x, y, side, side);
+      g.fillStyle = '#fff'; g.fillRect(x + 1, y + 1, side - 2, side - 2);
+      g.fillStyle = SHELF_INK.ghost;
+      for (const s of h.chips || []) {
+        g.globalAlpha = Math.max(0, Math.min(1, s.a));
+        g.fillRect(x + Math.round(s.x), y + Math.round(s.y), 1, 1);
+      }
+      g.globalAlpha = 1;
+    });
+  }
+  // Centered on the ink: the canvas's left edge sits on the tile's center
+  // line, and this pulls it left by exactly the ink's half-width -- past the
+  // hands' margin, which is theirs and not the picture's.
+  c.style.marginLeft = `${-(M + L + (lo + hi) / 2 * CELL)}px`;
   return c;
 };

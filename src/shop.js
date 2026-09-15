@@ -6,11 +6,11 @@
 // three lines.
 
 import { S } from './state.js';
-import { SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
+import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_CHIPS, SHELF_HAND_CHIP_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt } from './works.js';
+import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -620,11 +620,41 @@ function wearBadge(line, words, n) {
 // `built` is the count of the drawing's cells up so far on a tile the yard is
 // building -- part of the key, so the picture is redrawn once a cell and not
 // once a frame -- and null on every other tile.
-function wearGlyph(row, key, tint, ink, built = null) {
+// `hands` are the bodies at the site drawn beside it, each frame's pose in
+// the key too, so a tile with a body swinging on it is redrawn as the body
+// moves and a tile with nobody on it is not.
+function wearGlyph(row, key, tint, ink, built = null, hands = []) {
   const pic = row.querySelector('.pic');
   if (!pic) return;
-  const drawn = `${tint}/${ink}/${built}`;
-  if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key), built)); }
+  const pose = hands.map(h => `${Math.round(h.dy)}:${h.chips.map(c => `${Math.round(c.x)},${Math.round(c.y)},${c.a.toFixed(1)}`).join(';')}`).join('|');
+  const drawn = `${tint}/${ink}/${built}/${pose}`;
+  if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key), built, hands)); }
+}
+
+// The hands on a tile being built (DESIGN.md, "A hand on the tile"): the
+// yard's own builders, read off the bodies. A body's pose is where it is
+// against its own foot -- above it on the hop, a cell below it on the blow
+// (`workJig` sets both; the yard draws the lunge the same way) -- scaled from
+// the yard's cell to the glyph's. Its chips are thrown on the frame a blow
+// lands, which is the frame its count of blows changes, out toward the
+// glyph and up, and fade over `SHELF_HAND_CHIP_LIFE` frames. Both are kept
+// on the body, since it is the body doing them.
+const hits = new WeakMap();
+function handsFor(key) {
+  return bodiesOn(key).map(w => {
+    const dy = ((w.y - w.foot) / P + (w.lunge || 0)) * SHELF_GLYPH_CELL;
+    let chips = hits.get(w)?.chips || [];
+    const last = hits.get(w)?.hits;
+    if (last !== undefined && last !== w.hits) {
+      const side = SHELF_HAND_CELLS * SHELF_GLYPH_CELL;
+      for (let i = 0; i < SHELF_HAND_CHIPS; i++) {
+        chips.push({ x: side, y: side / 2, vx: 0.3 + i * 0.25, vy: -(0.4 + i * 0.2), a: 1 });
+      }
+    }
+    chips = chips.filter(c => c.a > 0).map(c => ({ x: c.x + c.vx, y: c.y + c.vy, vx: c.vx, vy: c.vy + 0.05, a: c.a - 1 / SHELF_HAND_CHIP_LIFE }));
+    hits.set(w, { hits: w.hits, chips });
+    return { dy, chips };
+  });
 }
 
 export function refresh(el, list, headcount) {
@@ -721,7 +751,7 @@ export function refresh(el, list, headcount) {
       // build just started. The share is the site's own, so it stops with
       // the hands.
       const rows = glyphFor(u.key);
-      wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)));
+      wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done

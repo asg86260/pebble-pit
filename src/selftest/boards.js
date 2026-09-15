@@ -1738,6 +1738,82 @@ export const TESTS = [
     ];
   }],
 
+  // The hand on the tile (DESIGN.md, "A hand on the tile"): while a body is
+  // at the site, the yard's builder is drawn beside the glyph, off its left
+  // edge, swinging on the yard's own beat; nobody at the site is nobody on
+  // the tile, with the built cells holding; a row in line draws no body.
+  // Read off the canvas: ink left of the picture is the hand, and the hand's
+  // lowest black row moving between frames is the swing.
+  ['a hand on a tile being built swings with the body at the site', async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__board('quarry');
+    await settle(1);
+    const tile = k => document.querySelector(`#panel .rows.shelves [data-key="${k}"]`);
+    // The canvas, read: its width (a hand widens it by a margin on the left),
+    // the black pixels in that margin (the hand, or nothing) and the lowest
+    // row of them.
+    const read = k => {
+      const c = tile(k)?.querySelector('.pic canvas');
+      if (!c) return { w: -1, hand: -1, foot: -1, ink: -1 };
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let hand = 0, foot = -1, ink = 0;
+      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+        const i = (y * c.width + x) * 4;
+        if (!(d[i + 3] && d[i] === 0)) continue;
+        ink++;
+        if (x < c.width - 28) { hand++; foot = y; }
+      }
+      return { w: c.width, hand, foot, ink };
+    };
+    const bare = read('jaw');
+    tile('jaw')?.click();
+    await settle(1);
+    const pressed = read('jaw');
+    // ...until a body is on the patch: the walk is a walk
+    let at = 0;
+    for (let i = 0; i < 40 && !(state().jigging > 0); i++) { await settle(0.5); at += 0.5; }
+    await settle(0.2);
+    const arrived = read('jaw');
+    // the swing runs on the frame clock: watch a few frames
+    const feet = new Set();
+    for (let i = 0; i < 24; i++) { window.__fast(1 / 60); await raf(); feet.add(read('jaw').foot); }
+    // some cells up, then nobody at the site: no hand, and the cells hold
+    await settle(8);
+    window.__crew(0, 0, 0, 0);
+    await settle(3);
+    const alone = read('jaw');
+    await settle(3);
+    const stillAlone = read('jaw');
+    window.__finish();
+    await settle(1);
+    // a work in line behind another is a plan, and a plan has no hand: two
+    // rungs pressed at the bench, the second waiting on the first
+    window.__crew(3, 3, 5, 7);
+    window.__board('bench');
+    await settle(1);
+    tile('carry')?.click();
+    await settle(1);
+    tile('auto')?.click();
+    await settle(2);
+    const queued = read('auto');
+    const queuedSaid = tile('auto')?.querySelector('.gain')?.textContent || '';
+    window.__finish();
+    await settle(1);
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(bare.w === 28 && pressed.hand === 0, 'a tile for sale, and one just pressed, has no hand on it', `${bare.w}px wide; ${pressed.hand} hand pixels after the press`),
+      ok(state().jigging >= 0 && arrived.hand > 0 && arrived.w > bare.w, `a hand is on the tile once a body is on the patch (${at}s)`, `${arrived.hand} pixels, ${arrived.w}px wide`),
+      ok(feet.size > 1, 'and it moves with the swing', `feet at rows ${[...feet].join('/')}`),
+      ok(queuedSaid === 'queued' && queued.hand === 0 && queued.w === 28, 'a row in line draws no hand', `${queuedSaid}: ${queued.hand} pixels, ${queued.w}px`),
+      ok(alone.hand === 0 && alone.w === 28, 'with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
+      ok(alone.ink === stillAlone.ink && alone.ink > 0, 'and the built cells hold', `${alone.ink} -> ${stillAlone.ink}`),
+    ];
+  }],
+
   // The kit's ladder has no bands, and its pips went flat on the shelf while
   // every banded ladder's stood in a column: the shelf sets the pips by their
   // group element, and an ungrouped run was bare text. Measured, not read:

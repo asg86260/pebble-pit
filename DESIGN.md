@@ -9831,7 +9831,7 @@ sat after the status branch's `continue`, on the cards too -- and were
 hoisted above it. The check is "a tile being built fills in, and its clock
 counts down" in `selftest/boards.js`.
 
-## A hand on the tile (design, not built)
+## A hand on the tile (built)
 
 ### What is wrong
 
@@ -9917,3 +9917,20 @@ tile's canvas -- there is ink left of the glyph's ink span (the body) that
 was not there before the body arrived; turn a hammer-beat and the body's
 pixels have moved; stand the crew down and they are gone while the glyph's
 built cells hold. A row in line draws no body.
+
+### As built (2026-09-15)
+
+`bodiesOn(key)` in `works.js` is the bodies on a work's patch -- a builder by
+its `workKey`, a gang body claimed to its shed by the front work at its
+`onBuild` site -- and `handsFor` in `shop.js` turns each into a pose: `dy`
+off the yard's `y - foot` plus its lunge, scaled cell to cell, and chips
+thrown on the frame its count of blows changes, aged in frames. `drawGlyph`
+takes the list and widens its canvas by a margin on the left for them, which
+the anchor's margin allows for, so the picture stays put. The pose is part
+of the picture's redraw key, so a tile with a body on it is redrawn as the
+body moves and one with nobody on it is not. The glyph canvas's CSS width
+is its own now (`width: auto`) rather than 28px, since a tile being built
+is wider. One thing the design said that is not built: a body stepping
+along the patch does not step along the glyph's foot -- the hands stand by
+their place in the row. The check is "a hand on a tile being built swings
+with the body at the site" in `selftest/boards.js`.

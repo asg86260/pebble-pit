@@ -90,6 +90,14 @@ export const SHELF_FOOT = 8;        // px from the tag down to the tile's own fo
 export const SHELF_AIR = 6;         // px of air between a tile's foot and the plank
 export const SHELF_SIGN = 6;        // px between a section's sign and the tiles under it
 export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell glyph is 24px
+// The hand on a tile being built (DESIGN.md, "A hand on the tile"): the yard's
+// builder drawn beside the glyph, in glyph cells -- the body's side (the yard's
+// WORKER is three of its own cells), the gap it stands off the glyph's ink,
+// and the chips a blow throws, counted and aged in frames.
+export const SHELF_HAND_CELLS = 3;
+export const SHELF_HAND_GAP = 1;
+export const SHELF_HAND_CHIPS = 3;
+export const SHELF_HAND_CHIP_LIFE = 20;
 export const SHELF_GLYPH_CELLS = 8; // cells a glyph is square
 export const SHELF_BADGE_HALO = 1;  // px of white round a badge's ink, cut out of the drawing under it
 export const SHELF_BADGE_CELL = 2;  // screen px a badge cell: finer than the drawing's, for a mark a third its size
