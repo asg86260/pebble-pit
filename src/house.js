@@ -1,20 +1,8 @@
-// Somewhere for the crew to come from.
-//
-// A body used to be hired out of a menu and appear at its work, which made the
-// crew a number rather than people: nowhere they came from, nowhere they went at
-// the end of it. So the payroll stands in the yard now as a thing you can look
-// at -- a room per body, on the bare ground between the bench and the rock, with
-// the door a new hire walks out of.
-//
-// It is one shape rather than a row of huts. It spreads along the ground before
-// it climbs, the same width on every storey, so what it leaves is a block with
-// a lip along its top edge and over the unfinished end of the top course -- and
-// the rooms punched in it, not any detail of the outline, are what make it read
-// as somewhere people live.
-//
-// Nothing here can be clicked, hovered or opened, and it holds no state of its
-// own: `S.crew` says everything about it there is to say, and every wobble in it
-// is worked out from a room's number rather than from anything random.
+// Somewhere for the crew to come from: a room per body, with the door a new
+// hire walks out of. One block, the same width on every storey. Nothing here
+// can be clicked or opened, and it holds no state of its own: `S.crew` says
+// everything, and every wobble is worked out from a room's number, never from
+// anything random.
 
 import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
          HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H } from './config.js';
@@ -23,65 +11,35 @@ import { puff } from './puff.js';
 import { rockLeft } from './world.js';
 import { rand } from './rng.js';
 
-// The middle of the plot, and it never moves. The rock grows leftwards into
-// this ground as the game goes on, so what the block has to fit is the room
-// left at the biggest rock -- 240px between the bench and the apron -- and not
-// the room it has at rock one.
-// The middle of the block, off the same walk that places everything else. It was
-// `S.cx + HOUSE_TO`, one more hand-measured offset that had to agree with its
-// neighbours by luck.
+// The middle of the plot, off the same walk that places everything else, and
+// it never moves.
 export const houseCx = () => {
   const spot = S.placed && S.placed.house;
   return spot ? Math.round((spot.x + spot.w / 2) / P) * P
               : Math.round((S.cx + HOUSE_TO) / P) * P;
 };
 
-// The far edge of the plot, whether anybody lives on it or not. The quarry's
-// spoil stops here: a pile is allowed to run to the next thing along the ground,
-// and the next thing along is where the crew live even on a day when the crew is
-// nobody. Worked out from a full base, like the block itself, so the ground the
-// shacks will stand on is not somewhere the sand is already sitting.
+// The far edge of the plot, whether anybody lives on it or not: the quarry's
+// spoil stops here even on a day when the crew is nobody. Worked out from a
+// full base, so the ground the shacks will stand on is not already under sand.
 export const houseLeft = () =>
   Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
-// How many rooms stand in a course: the full width of the plot, every storey.
-// A fixed number, and it has to be fixed.
-//
-// It was worked out from the size of the crew for a while -- a wider base for
-// more bodies, so the whole silhouette spread as you hired. That looked better
-// standing still and was wrong in motion: taking somebody on rebuilt the place.
-// Rooms moved, windows moved, the door moved, and the one thing hiring should
-// obviously do -- add a room -- was the one thing you could not see happen.
-// Building is additive. Room seventeen stands where room seventeen stands
-// whether the crew is eighteen or eighty.
-//
-// Then each course lost a room on the one below, for a stepped profile. The
-// first few storeys visibly narrowed as the place went up, which read as the
-// building tapering rather than as anything a builder would do, so a course is
-// now as wide as the plot and the block goes straight up.
+// A fixed width, and it has to be fixed: a base that grew with the crew
+// rebuilt the place on every hire, and the one thing hiring should visibly do
+// (add a room) was the one thing you could not see. Room seventeen stands
+// where room seventeen stands whether the crew is eighteen or eighty.
 const courseWide = () => HOUSE_COLS;
 
-// Every room, bottom course first and left to right within a course. Rooms in a
-// course touch, which is the point: they share their walls, so what stands there
-// is one settlement with rooms in it rather than a stack of separate huts. What
-// moves is the courses -- each one sits a room off the one below when there is
-// slack to do it with, and never hangs out over thin air.
-// The first body gets two rooms, not one: the doorway and a room to live in.
+// Every room, bottom course first and left to right within a course. Rooms
+// in a course touch, so what stands is one settlement rather than huts.
 //
-// A settlement of one used to be a single cube with a door punched in it and no
-// window anywhere, which reads as a shed rather than as somewhere anybody lives
-// -- and the first thing hiring did was give that shed a window, which is a
-// strange thing for hiring to do. Room zero is the way in and has always been
-// the doorway; the rooms after it are the ones with people in them. So there is
-// one window a body from the very first, and building stays what it was: a hire
-// is a room, and room seventeen stands where room seventeen stands.
-//
-// And the two rooms stand before anybody is hired. The opening starts with the
-// two of them walking out of this door, so there has to be a door: a fresh
-// game draws the doorway and the one room from its first frame, and the crush
-// changes nothing about the place -- the one left standing is a crew of one,
-// whose house is the same two rooms. Only a yard that has had its opening and
-// has nobody in it (nothing in the game gets there; the checks do) has no house.
+// The first body gets two rooms: room zero is the doorway and has no window,
+// the rooms after it are the ones with people in them, so there is one
+// window a body from the first. The two stand before anybody is hired,
+// because the opening is two bodies walking out of this door. Only a yard
+// that has had its opening and has nobody in it (the checks get there; the
+// game does not) has no house.
 export const roomsToday = () =>
   S.crew > 0 ? S.crew + 1 : (S.introDone ? 0 : 2);
 
@@ -89,17 +47,13 @@ export function cubes(nOverride) {
   const n = nOverride != null ? nOverride : roomsToday();
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
-  // The left edge of the ground course, and it never moves: it is worked out
-  // from a full base rather than from what is standing, so the settlement fills
-  // its plot from one end instead of sliding along it as it grows.
+  // Worked out from a full base rather than from what is standing, so the
+  // settlement fills its plot from one end instead of sliding as it grows.
   const foot = Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
-  // Every course starts at the same edge and is as wide as the one below, so
-  // the settlement stands square on both sides and only its top course is
-  // ever part-built.
-  // Courses used to sit a room off each other, which looked hand-built standing
-  // still and made the whole place restless as it grew: with everything else
-  // held still, the wobble was the only thing moving, and it read as a fault.
+  // Every course starts at the same edge and is as wide as the one below;
+  // courses set a room off each other made the whole place restless as it
+  // grew.
   const out = [];
   for (let i = 0, c = 0, placed = 0; i < n; i++) {
     if (i - placed === courseWide(c)) { placed = i; c++; }   // that course is full
@@ -108,57 +62,36 @@ export function cubes(nOverride) {
   return out;
 }
 
-// The ground in front of the block: the spawn point for a newly hired body, so
-// that somebody taken on steps out of the place the crew live and walks to the
-// work rather than appearing at it. Nothing in this file moves anybody -- the
-// walk belongs to the crew, and this is only the address.
+// The spawn point for a new hire. Nothing in this file moves anybody; this is
+// only the address.
 export function doorAt() {
   return { x: Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P + HOUSE_CUBE / 2 };
 }
 
-// Where the *next* hire's room will stand, for a builder to walk to while it is
-// going up. Hiring is a room -- see `cubes` -- so the row that hires somebody
-// asks here rather than picking a spot of its own, and the body doing the
-// building stands exactly where the room is about to appear.
-//
-// Worked out by asking `cubes` for one more than today's count, never by
-// mutating `S.crew` to peek: a peek that forgot to put the count back would be
-// a hire that happened twice. The first hire ever adds two rooms at once -- the
-// doorway and the first room to live in, see the comment on `cubes` -- so the
-// spot offered is the later of the two, which is the one anybody would call
-// "the new room".
+// Where the *next* hire's room will stand, for a builder to walk to. Asks
+// `cubes` for one more than today's count, never mutates `S.crew` to peek: a
+// peek that forgot to put the count back is a hire that happened twice. The
+// first hire adds two rooms, and the spot offered is the later of the two.
 export function nextHouseAt() {
   const rooms = cubes(roomsToday() + (S.crew > 0 ? 1 : 2));
   const added = rooms[rooms.length - 1];
   return added ? Math.round((added.x + HOUSE_CUBE / 2) / P) * P : houseCx();
 }
 
-// Where the holes go: the door in the first room built, and one window dead in
-// the middle of every room after it. A pure function of a room's number and
-// nothing else -- not of its neighbours, not of how many people live here.
-//
-// Every room the same, on purpose. Two rooms in three used to have a window and
-// the third went blank, which gave the wall some life to look at and made every
-// hire a small rearrangement to read: a new room, and the pattern of dark and
-// light along the course shifted with it. When the only thing that changes is
-// one more room exactly like the last one, the change is the room.
+// The door in room zero, and one window dead in the middle of every room after
+// it: a pure function of a room's number, never of its neighbors, so a hire
+// never rearranges the wall. When the only thing that changes is one more
+// room like the last, the change is the room.
 export function holes() {
   const C = HOUSE_CUBE;
   return cubes().map(r => r.i === 0
-    // A doorway wider than the body that walks out of it. A door somebody plainly
-    // could not fit through is the fastest way to make a building read as a model
-    // of a building. This one was the yard's only honest door for a long while
-    // and the rest have been brought to it: DOOR_W by DOOR_H is what it always
-    // was, named in config.js now so the outhouse, the lab, the casino and the
-    // scrubbing house are the same way in.
+    // DOOR_W by DOOR_H, the one way in every building shares.
     ? { x: r.x + P, y: r.y + C - P * DOOR_H, w: P * DOOR_W, h: P * DOOR_H, door: true, i: r.i }
     : { x: r.x + P * 2, y: r.y + P * 2, w: P * 2, h: P * 2, i: r.i });
 }
 
-// The chimney stands on the top of the left-hand column, so it rises with the
-// building the way a flue does when another storey goes on under it. It is the
-// one thing here that is allowed to move as the settlement grows, because going
-// up with it is what a chimney does.
+// On top of the left-hand column: the one thing here allowed to move as the
+// settlement grows, because going up with it is what a chimney does.
 export function chimneyAt() {
   const rooms = cubes();
   if (!rooms.length) return null;
@@ -167,32 +100,19 @@ export function chimneyAt() {
   return { x: left + P * 2, y: top };
 }
 
-// A puff off it, now and then. It goes into the same list the lab's chimney uses
-// -- one thing in this game knows how smoke rises, and it is not this file.
 // --- who is in ----------------------------------------------------------------
-// A light in a window means somebody is behind it, and that is the only thing it
-// is allowed to mean. Bodies with nothing to carry knock off and come here (see
-// crew.js), so the front of the settlement is a reading of how much of the crew
-// is out at work: a lit wall is a yard standing idle, and a dark one is
-// everybody out on the ground where you can see them.
-//
-// Rooms are lit from the bottom up, in the order they were built, because a
-// scatter of lit rooms would read as a pattern somebody chose. Room zero is the
-// doorway and is not a window -- so there is exactly one window a body, and a
-// yard with everybody home is a front with every light on.
+// A light in a window means somebody is behind it and nothing else. Bodies
+// with nothing to carry knock off and come here (crew.js), so a lit wall is a
+// yard standing idle. Rooms are lit from the bottom up, in the order built;
+// room zero is the doorway, so there is exactly one window a body.
 export const homeCount = () => S.workers.filter(w => w.inside).length;
 export const lit = i => i > 0 && i <= homeCount();
 
-// One lit window changes its mind, every so often -- somebody pulling something
-// across it. Which one walks round the settlement rather than being drawn out of
-// a hat, and it walks by the golden ratio: a whole-number stride shares a factor
-// with the room count sooner or later -- a stride of seven in fourteen rooms
-// picked the same two windows for ever -- and this one lands somewhere new
-// whatever the crew has grown to.
-//
-// It only ever touches rooms with somebody in them. A curtain across a dark room
-// is a change nobody can see, and it would spend the walk's turns on windows
-// that are already grey.
+// One lit window changes its mind every so often. Which one walks the
+// settlement by the golden ratio: a whole-number stride shares a factor with
+// the room count sooner or later (seven in fourteen picked the same two
+// windows forever). Only rooms with somebody in them, because a curtain across
+// a dark room is a change nobody can see.
 const GOLDEN = 0.6180339887;
 
 export function stepShutters(now) {
@@ -204,7 +124,7 @@ export function stepShutters(now) {
   S.shutterAt = now + HOUSE_FLIP_MS;
 
   // Either one more goes across, or the one that has been across longest comes
-  // back: one window changes, and the number of them stays about where it was.
+  // back, so the number of them stays about where it was.
   const want = Math.max(1, Math.round(home * HOUSE_SHUT));
   if (S.shutters.length >= want) { S.shutters.shift(); return; }
   for (let k = 0; k < 8; k++) {
@@ -216,33 +136,20 @@ export function stepShutters(now) {
 export function stepHouse(now) {
   stepShutters(now);
   const at = chimneyAt();
-  // The hearth is lit by whoever is sitting at it. A chimney smoking over an
-  // empty house is the building claiming somebody is in when the windows say
-  // otherwise, and the two have to agree or neither is worth looking at.
+  // The hearth is lit by whoever is sitting at it: the chimney and the windows
+  // have to agree.
   if (!at || !homeCount() || now < S.houseSmokeAt) return;
   S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + rand() * 0.8);
-  // Marked as the crew's, because the lab's chimney means something specific --
-  // that research is being worked on -- and a check reads it. Two chimneys, one
-  // list, and only one of them is a signal.
+  // Flagged, because the lab's chimney means research is being worked on and
+  // a check reads it. Two chimneys, one list, and only one is a signal.
   puff(at.x + P, at.y - P * 4, { flag: 'house' });
 }
 
 // --- drawing -----------------------------------------------------------------
 
-// The settlement is drawn the way everything else in this yard is drawn: as a
-// solid black shape with a few white holes knocked in it.
-//
-// It was outlined first -- white rooms with black walls, roofs, windows, vents,
-// aerials, a ladder, props. At the four times zoom it was drawn at, that read as
-// a shanty town. At the size the game is actually played, it read as a patch of
-// grey lace: a cell is five screen pixels, so a two-pixel wall and a six-pixel
-// window are a scribble, and the whole thing was busier than the rock while
-// being the wrong value against it. The rock is a black mass. The bench and the
-// lab are black shapes with a notch or two knocked out. A building that is white
-// with black lines round it is the only thing in the picture drawn inside out.
-//
-// So: the mass, a lip along whatever has sky over it, and a hole where a door or
-// a window goes. Everything that survived is something you can see at 1x.
+// A solid black mass with a few white holes knocked in it, like every building
+// here. Outlined rooms with walls and props read as grey lace at 1x, where a
+// cell is five screen pixels; everything that survived is visible at 1x.
 export function drawHouses(ctx) {
   const rooms = cubes();
   if (!rooms.length) return;
@@ -253,9 +160,8 @@ export function drawHouses(ctx) {
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
 
   // The eaves: a lip over whatever has sky above it, hanging half a cell past
-  // the end of a run of rooms. It is the only thing that says roof rather than
-  // top edge; with every course the full width, it runs along the top of the
-  // block and drops to the course below at the end of an unfinished top course.
+  // the end of a run of rooms. It is the only thing that says roof rather
+  // than top edge.
   for (const r of rooms) {
     if (room(r.x, r.y - C)) continue;
     const over = P / 2;
@@ -264,38 +170,15 @@ export function drawHouses(ctx) {
     ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
   }
 
-  // The chimney: a stack on the top of the left-hand column with a lip on it,
-  // drawn with the mass because it is part of the building rather than something
-  // standing on it.
+  // The chimney, drawn with the mass because it is part of the building.
   const flue = chimneyAt();
   ctx.fillRect(flue.x, flue.y - P * 4, P * 2, P * 4);
   ctx.fillRect(flue.x - P / 2, flue.y - P * 4, P * 3, P);
 
-  // The holes, and every one of them dead in the middle of its room.
-  //
-  // They used to be chosen from wherever there was wall to spare -- against a
-  // shared wall if the room had a neighbour, in the middle if it did not. Which
-  // meant a room's window depended on its neighbours, so building a room moved
-  // the window in the room beside it, and two rooms punching against the wall
-  // between them made one window two cells wide. Reading anything about a room
-  // off the rooms around it is what made the place shuffle every time somebody
-  // was hired.
-  //
-  // The middle asks nothing of anybody: cells of wall clear on every side, the
-  // same cells whether the room is the end of the settlement or buried in it,
-  // and never touching its neighbour's however the courses step. Nothing here
-  // can grow into anything else, which is the whole point of it.
-  //
-  // And they are the one part of this that moves. A settlement of people who are
-  // all out at work is a shape; a curtain going across, a room going dark and
-  // somebody crossing the light is the difference between a building and a place
-  // with anybody in it. Nothing here is random -- a room's beat comes off its own
-  // number -- and none of it is fast: it is meant to be caught out of the corner
-  // of the eye rather than watched.
-  // The doorway is always a hole -- it is a way in, not a light. A window is
-  // white when there is somebody behind it and grey when there is not, and grey
-  // is also what a drawn curtain looks like, which is the right answer both
-  // times: what the colour says is whether there is anything to see.
+  // The holes. The doorway is always a hole: a way in, not a light. A window
+  // is white when somebody is behind it and grey when not, and grey is also
+  // what a drawn curtain looks like; either way the color says whether there
+  // is anything to see.
   for (const h of holes()) {
     ctx.fillStyle = h.door ? '#fff'
       : lit(h.i) && !S.shutters.includes(h.i) ? '#fff'
@@ -306,10 +189,9 @@ export function drawHouses(ctx) {
   ctx.fillStyle = '#000';
 }
 
-// what is standing on the plot, and how much room it has left either side, for
-// the checks. The clearances are worked out here rather than in the suite
-// because where the bench ends and where the rock's apron starts are this
-// module's problem, not a fact a check should be holding a copy of.
+// What is standing on the plot and how much room it has either side, for the
+// checks. The clearances are worked out here because where the bench ends and
+// the apron starts is this module's problem, not a copy a check should hold.
 export function houseReport() {
   const cs = cubes();
   const left = cs.length ? Math.min(...cs.map(c => c.x)) : null;
@@ -325,7 +207,7 @@ export function houseReport() {
     foot: S.groundY,
     door: doorAt().x,
     holes: holes().map(h => `${h.x},${h.y},${h.h}`),
-    // the bench stands between the block and the rock now, so the block clears
+    // the bench stands between the block and the rock, so the block clears
     // the bench and the bench clears the apron
     ofBench: right === null ? null : Math.round(bench.x - right),
     ofApron: right === null ? null : Math.round(rockLeft() - ROCK_CLEAR - right),
