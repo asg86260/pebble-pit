@@ -713,20 +713,21 @@ export function refresh(el, list, headcount) {
         // thing you can act on: an empty cut builds nothing however long you
         // leave it, and the roster under the cut is where you fix that.
         // ...except at a builders' site, where there is always somebody: the
-        // nearest body is lent if nobody is spare, and while it is walking over
-        // the row says so rather than claiming the yard has given up.
+        // nearest body is lent if nobody is spare, and the row says "building"
+        // from the press, walk included -- a body on its way to a job is on
+        // that job, and a second word for the walk was one status too many.
         //
         // The vocabulary is closed, and every word in it fits the tightest cell
         // on any board (see `pinWidth` in board.js and the width check in
-        // selftest/boards.js): "queued up in 7", "building", "on the way",
-        // "nobody on it". A status is about the
-        // whole card, and the gain's line -- which it takes over -- spans the
-        // card less the pips' corner (see `.gain` in style.css).
+        // selftest/boards.js): "queued up in 7", "building", "nobody on it". A
+        // status is about the whole card, and the gain's line -- which it
+        // takes over -- spans the card less the pips' corner (see `.gain` in
+        // style.css).
         row.classList.add('waiting');
         const queued = inLine(u);
         sayHTML(gain, queued ? `queued up in ${lineAt(u)}` :
-                !stalled(u.site) ? 'building' :
-                BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
+                stalled(u.site) && !BUILDER_SITES.includes(u.site) ? 'nobody on it' :
+                'building');
         sayHTML(price, bill); sayHTML(time, clock);
         // Greyed while it is being built -- committed, nothing to press for --
         // and live while it waits, so a press can pull it back out.

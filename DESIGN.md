@@ -8612,7 +8612,8 @@ a bigger sack           ◴ 12
 
 Every line carries a clock (amended 2026-09-12, the owner's ask): the front's
 is what is left of it at the pace the site is actually going, or its status
-(`on the way`, `nobody on it`) when nobody is at it; a waiting line's is how
+(`building` while the builder is still walking over, `nobody on it`) when
+nobody is at it; a waiting line's is how
 long until *it* lands, everything ahead of it counted at the site's own rate.
 Hover a name and the board's own tip names the station, beside the line.
 A waiting name is a button: press it and the work is handed back, through

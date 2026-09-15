@@ -44,7 +44,7 @@ export const TESTS = [
       // is still walking over; the waiting one's is always a figure, and more
       // than the front's when the front has one, since it counts both.
       ok(two.clocks.length === 2 && +two.clocks[1] > 0
-         && (two.clocks[0] === 'on the way' || +two.clocks[1] > +two.clocks[0] && +two.clocks[0] > 0),
+         && (two.clocks[0] === 'building' || +two.clocks[1] > +two.clocks[0] && +two.clocks[0] > 0),
          'every line has a clock, and the waiting one counts what is ahead of it', two.clocks.join(' | ')),
       ok(!after, 'and the card goes when the line is empty')
     ];

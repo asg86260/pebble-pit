@@ -7,7 +7,8 @@
 // plain names. Nothing says which site a name is at -- hover it and the tip
 // does. Every line carries a clock: the front one's is what is left of it at
 // the pace the site is actually going, or its status when nobody is at it
-// (`on the way`, `nobody on it` -- the row's own words), and a waiting one's
+// (`building` while the builder walks over, `nobody on it` -- the row's own
+// words), and a waiting one's
 // is how long until IT lands, everything ahead of it counted. See DESIGN.md,
 // "The queue".
 //
@@ -55,7 +56,7 @@ const pips = w => {
 // is a promise the yard is not keeping.
 const clockOf = (site, list, i) => {
   if (i < roomAt(site) && stalled(site))
-    return BUILDER_SITES.includes(site) ? 'on the way' : 'nobody on it';
+    return BUILDER_SITES.includes(site) ? 'building' : 'nobody on it';
   let ms = 0;
   for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
   return `<i class="clock"></i><b>${priceText('time', ms)}</b>`;

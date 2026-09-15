@@ -1451,7 +1451,7 @@ export const TESTS = [
     // one pixel now. A number that close is not a thing to leave to a comment.
     // ...and the words a ladder says while its next rung is priced in a coin
     // the yard has no source for yet (see coinNeeds in upgrades/price.js).
-    const SAYS = ['queued up in 9', 'building', 'on the way', 'nobody on it',
+    const SAYS = ['queued up in 9', 'building', 'nobody on it',
                   'needs plots', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
@@ -1498,7 +1498,7 @@ export const TESTS = [
 
     return [
       ok(!!row, 'the bench has a row that takes time to build'),
-      ok(/queued up|building|on the way|nobody on it/.test(status),
+      ok(/queued up|building|nobody on it/.test(status),
          'and pressing it puts a status where the gain was', status || 'nothing'),
       ok(seen.size === 1 && seen.has(before),
          'and the sheet is the same size on every frame the build runs',
