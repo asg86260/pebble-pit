@@ -80,7 +80,9 @@ const today = new Date().toISOString().slice(0, 10);
 // and a bare `\n+` stops at the `\r` of the blank line, so three releases
 // went out with their fixes still under Unreleased. The new heading is
 // written in whatever ending the file already uses.
-const unreleased = /^## Unreleased(?:\r?\n)+(?=- )/m;
+// A section opens with a "- " line or a "**New this release**" line; the
+// only thing that means it is empty is the next heading.
+const unreleased = /^## Unreleased(?:\r?\n)+(?!## )(?=\S)/m;
 const eol = rawLog.includes('\r\n') ? '\r\n' : '\n';
 const stampedLog = rawLog.replace(unreleased, `## Unreleased${eol}${eol}## ${tag} — ${today}${eol}${eol}`);
 if (stampedLog === rawLog) console.log('release: nothing under Unreleased in CHANGELOG.md; no section added');

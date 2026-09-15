@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+## v0.2.0 — 2026-09-15
+
 **New this release**
 
 - Every ladder is eight rungs, two a coin: dust, then crops, then ore, then a spark -- one card, the last band red.
