@@ -65,7 +65,7 @@ import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
-import { stepIntro, stepBuried, maybeReunion } from './intro.js';
+import { stepIntro, stepBuried, stepUnder, maybeReunion } from './intro.js';
 import { stepSkip } from './skip.js';
 import { mineMs, restaff, staffSheds, take } from './upgrades.js';
 // The bench is built rather than delivered, and the row it is finished under is
@@ -247,6 +247,7 @@ export const STEPS = [
   // fouling already has.
   { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through
   { name: 'records',  step: c => stepRecords(c.dt) },     // and everybody gets a little older
+  { name: 'under',    step: c => stepUnder(c.dt) },       // and the one under the rock has been there a frame longer
   { name: 'breaks',   step: c => stepBreaks(c.now) },     // and what the stopped ones get up to
   // The collapse does NOT take the camera. It was tempting -- it is the one
   // thing that happens to you rather than because you pressed something -- but

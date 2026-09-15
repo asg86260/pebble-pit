@@ -181,6 +181,19 @@ const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
 const sayTime = ms =>
   ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
 
+// The clock over the one under the rock, read as a stopwatch -- minutes and
+// seconds, hours in front once there are any -- because it is a time you are
+// racing rather than a bill you are paying, and a player watching it wants to
+// see it move. Two rows for the one number: while they are under it is still
+// running, and once they are out it is what the rescue took. The second name
+// is the ending sheet's word for it, so the two agree.
+export const sayClock = ms => {
+  const s = Math.floor(ms / 1000);
+  const mm = String(Math.floor(s / 60) % 60).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return s >= 3600 ? `${Math.floor(s / 3600)}:${mm}:${ss}` : `${mm}:${ss}`;
+};
+
 const TALLY_UPGRADES = [
   ...TALLY.map(t => ({
     key: `tally${t.key}`,
@@ -199,7 +212,23 @@ const TALLY_UPGRADES = [
     dead: () => false,
     cost: () => 0,
     buy: () => {},
-    show: () => eldest() >= 60000 }
+    show: () => eldest() >= 60000 },
+  { key: 'tallyunder',
+    name: 'sqwife under the rock for',
+    price: () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+    read: true,
+    dead: () => false,
+    cost: () => 0,
+    buy: () => {},
+    show: () => S.buried },
+  { key: 'tallysaved',
+    name: 'sqwife saved in',
+    price: () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+    read: true,
+    dead: () => false,
+    cost: () => 0,
+    buy: () => {},
+    show: () => S.rescued }
 ];
 
 // One list for the board: the books' own rows and the tally, so the two places

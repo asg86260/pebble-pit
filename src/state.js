@@ -84,6 +84,10 @@ export const S = {
   // How far out of the ground it has been dug, nought to one. Every rock that
   // lands on it puts it back to nought. See intro.js.
   buriedDug: 0,
+  // How long they have been under, on the game's clock, in ms. It runs from
+  // the first rock and stops the moment they walk out, so after the rescue
+  // it is the time the story took -- the one number the ending has to say.
+  buriedMs: 0,
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
@@ -690,6 +694,9 @@ export const SAVED = [
   // The dance after it, played once. Saved so a reload does not throw a
   // second party; a save from before the field loads with `storyTold`'s value.
   'storyDanced',
+  // The clock over the one under the rock: still running, or the time the
+  // rescue took. A reload carries it on rather than starting it over.
+  'buriedMs',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy

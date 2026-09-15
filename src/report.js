@@ -294,6 +294,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   buried: S.buried,
   buriedVisible: buriedVisible(),
   buriedDug: S.buriedDug,
+  buriedMs: S.buriedMs,
   rescued: S.rescued,
   storyTold: S.storyTold,
 

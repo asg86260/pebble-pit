@@ -25,15 +25,23 @@
 // once the scene has let go all the way -- the same rule the notices keep.
 
 import { S } from './state.js';
+import { sayClock } from './stats.js';
 
 const sheet = document.getElementById('saved');
+const savedIn = document.getElementById('savedin');
 
 const due = () =>
   S.rescued && S.intro !== 'rescue' && !S.cine && !S.storyTold && !S.paused && !S.fatal;
 
 export function syncEnding() {
   const up = due();
-  if (sheet.hidden === up) sheet.hidden = !up;
+  if (sheet.hidden === up) {
+    sheet.hidden = !up;
+    // The time it took, written once as the sheet comes up: the clock stopped
+    // when they walked out (`stepUnder`), so it is the same number the books
+    // read.
+    if (up) savedIn.textContent = sayClock(S.buriedMs);
+  }
 }
 
 document.getElementById('keepplaying').addEventListener('click', () => {

@@ -821,6 +821,16 @@ export function stepDig(w, c) {
   return true;
 }
 
+// One frame longer under there. The clock over the one underneath runs from
+// the rock that put them there until `getOut` clears `buried`, whether or
+// not they can be seen, because the point of it is how long the rescue took
+// and a rock on top of them is part of that. It is on the frame's `dt`, not
+// the wall: a held yard is not time they spent waiting.
+export function stepUnder(dt) {
+  if (!S.buried) return;
+  S.buriedMs += dt;
+}
+
 // and every so often, while it is in sight, it says something -- and somebody
 // comes to dig
 export function stepBuried(t) {

@@ -8151,6 +8151,15 @@ counted, and every row names a thing only once you have met it, the rule the
 books and the counter already keep. It lives in `stats.js` beside the income
 rows, in the same row shape, so the board needed no second kind of row.
 
+**The clock over the sqwife (built).** One saved counter, `S.buriedMs`, runs
+on the frame's `dt` from the first rock until `getOut` clears `buried` -- a
+held yard adds nothing, a rock on top of them counts, a reload carries it on.
+The tally reads it as a stopwatch (`mm:ss`, hours in front once there are
+any) on two rows for the one number: `sqwife under the rock for` while they
+are under, `sqwife saved in` once they are out; and the ending sheet says the
+same figure -- "it took 12:34" -- so the story ends with a time you can beat.
+It is the one thing in the game you are racing, and it was never written down.
+
 **The house owns the board's ground.** The board stands in the walk between
 the front doors and the bench, and a walk is one `STATION_GAP` of bare ground:
 eleven cells of board in twenty cells of walk left four and a half either side,

@@ -324,6 +324,9 @@ group('under the dome, the one underneath walks out', async () => {
   const out = runUntil(() => state().rescued && !state().intro, 60);
   const after = state();
   const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
+  // the clock over them stopped the moment they walked out
+  run(5);
+  const later = state();
 
   window.__reset();
   return [
@@ -339,7 +342,10 @@ group('under the dome, the one underneath walks out', async () => {
     ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
     ok(after.crew > before.crew, 'they join the crew',
        `${before.crew} -> ${after.crew}`),
-    ok(set, 'and the rock is set down')
+    ok(set, 'and the rock is set down'),
+    ok(after.buriedMs > before.buriedMs && later.buriedMs === after.buriedMs,
+       'the clock over them ran until they walked out, and stopped there',
+       `${before.buriedMs} -> ${after.buriedMs} -> ${later.buriedMs}`)
   ];
 });
 
