@@ -1025,6 +1025,19 @@ Fullness is a ratio because the limits differ by four to one: counted in grains 
 wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
 whichever heap needs them without anybody being told which one that is.
 
+**Less the hands already on their way, and per pixel of the walk.** The fullest heap is the same
+answer for every body reading it at once, so six read it, six set off for it as a convoy, and six
+came back with eight grains each — while the heap beside the hole, half full when they left, climbed
+past its limit with nobody on it (the rock stopped 46% of the run on the carters bench, quarry-jam).
+So a heap is as full as it will be once the bodies already headed there have taken their armfuls,
+and the fullness is divided by the round trip from here to the heap and the heap to the hole. That
+is not "nearest wins", which is the rule the paragraph above threw out: the discount is what keeps it
+honest. Bodies go to the near heap only until enough armfuls are coming to bring it under the line,
+and from then on the far heap is the better score and the rest walk there. One or two hold the rock
+while the others walk to the quarry, and the rock is stopped 0% of the run instead of 46%, banking
+half again as much. Both terms are read off the yard — the armful is the body's own `load`, the walk
+is measured in pixels — so there is no number to tune (`test/hauler-spread.test.mjs`).
+
 **That order decides where a trip starts; the body works that heap, and the rest of the trip is a
 sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
 same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column

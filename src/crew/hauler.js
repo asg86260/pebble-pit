@@ -145,41 +145,71 @@ const backedUp = key =>
 // coming out to fetch should pick up.
 export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 
-// The fullest heap that is over the line, and the nearest thing on it that
-// nobody has set off for -- or -1 when no heap is backing up at all.
+// The heap that most needs the next pair of hands, and the nearest thing on it
+// that nobody has set off for -- or -1 when no heap is backing up at all.
 //
 // Fullness is measured against the heap's own limit, not counted in grains,
 // because the limit is what stops the station: the rock's strip holds seven
 // hundred and the quarry's a hundred and eighty, so a quarry heap that has
-// stopped the quarry is a quarter the size of a rock heap that has not. Picked
-// by distance, or by count, the body coming out to fetch goes to the rock's
-// heap every time -- it stands nearest the hole and it is always the biggest --
-// and the quarry stays stopped behind a heap nobody thinks is worth a walk.
-// Measured against the limit, the heap that is closest to stopping its station
-// is the one everybody goes to, and as it comes down whichever is next fullest
-// takes over: the crew settle on to the heap that needs them without anybody
-// having been told which one that is.
+// stopped the quarry is a quarter the size of a rock heap that has not.
+// Counted in grains, the body coming out to fetch goes to the rock's heap
+// every time, and the quarry stays stopped behind a heap nobody thinks is
+// worth a walk.
+//
+// Less the armfuls already on their way. Fullness alone sent the whole crew to
+// the one heap as a convoy: six bodies read the same fullest heap, six set off
+// for it, six came back with eight grains each, and the heap beside the hole
+// climbed past its limit with nobody on it while they walked. A heap is as
+// full as it will be once the hands already headed there have taken theirs.
+//
+// And per pixel of the round trip, because an armful is an armful wherever it
+// comes from and the far heap costs five times the walk. This is not "nearest
+// wins" -- that sent everybody to the rock, above -- because the discount is
+// what keeps it honest: bodies go to the near heap until enough armfuls are
+// coming to bring it under the line, and the rest walk to the far one. On the
+// carters bench that is the difference between the rock stopped half the run
+// and never (`tools/node/carters.mjs`, quarry-jam). The empty leg is quicker
+// by `HAUL_EMPTY`, and the walk is the strip's middle to here and the strip's
+// middle to the hole.
 function fullestHeap(w, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  let best = -1, bestR = -1;
+  const coming = armfulsComing(w);
+  let best = -1, bestScore = -1;
   for (const p of S.piles) {
-    const r = (S.pileCount[p.key] || 0) / (PILE_LIMIT[p.key] || Infinity);
-    if (r < BACKED_UP || r <= bestR) continue;
+    const r = ((S.pileCount[p.key] || 0) - (coming.get(p.key) || 0)) / (PILE_LIMIT[p.key] || Infinity);
+    if (r < BACKED_UP) continue;
+    const mid = (p.from + p.to) / 2;
+    const score = r / (Math.abs(w.x - mid) / HAUL_EMPTY + Math.abs(pit.x - mid));
+    if (score <= bestScore) continue;
     // The strip's columns, held to the ground the crew can stand on -- the same
     // two bounds `nearestDust` keeps, for the same reason.
     const lo = Math.max(first, colOf(floor, p.from));
     const hi = Math.min(last, colOf(floor, p.to) - 1);
     if (lo > hi) continue;
     const from = Math.max(lo, Math.min(hi, colOf(floor, w.x)));
-    for (let d = 0; d <= hi - lo && bestR < r; d++) {
+    for (let d = 0; d <= hi - lo && bestScore < score; d++) {
       for (const c of [from - d, from + d]) {
         if (c < lo || c > hi || taken.has(c) || !at(floor, c, 0)) continue;
-        best = c; bestR = r; break;
+        best = c; bestScore = score; break;
       }
     }
   }
   return best;
+}
+
+// The grains already spoken for on each heap: every other carter that has set
+// off for a column on the strip, and what its arms will take when it gets
+// there. Only claims count -- a body walking home has already taken its load
+// off the count.
+function armfulsComing(w) {
+  const m = new Map();
+  for (const o of S.workers) {
+    if (o === w || o.type !== TYPE.HAUL || o.claim < 0) continue;
+    const key = pileAt(o.claim * P + P / 2)?.key;
+    if (key) m.set(key, (m.get(key) || 0) + load(o));
+  }
+  return m;
 }
 
 // Whether a column is one of the finds lying about, so a body that has gone for

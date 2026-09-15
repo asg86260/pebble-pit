@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- The haulers split themselves between two backed-up heaps instead of all walking to the same one while the heap beside the hole fills up unattended (test/hauler-spread.test.mjs).
+
 ## v0.2.2 — 2026-09-15
 
 **New this release**
