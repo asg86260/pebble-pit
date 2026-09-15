@@ -38,10 +38,8 @@ export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
-export let MINE_BASE = 460;    // gap between held hits at speed level 0
-export const MINE_FLOOR = 75;    // fastest the pick will ever swing (13.3 px/s)
-// What you carry and what your pick takes, at each rung, are CARRY_PX and
-// PICK_PX in config/rungs.js.
+// Your swing's pace, what you carry and what your pick takes, at each rung,
+// are lists in config/rungs.js -- and what each rung costs.
 // How many rungs there are on every ladder in the game.
 //
 // One number, because "how far along is this" should be one question with one
@@ -121,8 +119,7 @@ export const AT_POST = IDLE_ROAM + P + WORKER;
 // put three of the five off instead.
 export const DOOR_W = 4;         // cells across a way in, everywhere in the yard
 export const DOOR_H = 4;         // and courses tall
-export let ROCKHAND_BASE = 1100;  // a hired rockhand starts slower than your own pick
-export const ROCKHAND_FLOOR = 260;  // fastest a rockhand can swing
+// A rockhand's swing at each rung is a list in config/rungs.js.
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
@@ -197,29 +194,10 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 // somebody walking to work, it reads as somebody who has been paused. The whole
 // ladder above it is unchanged -- every multiplier still multiplies this -- so
 // what moved is where the ladder starts, not how far it goes.
-export let HAUL_BASE = 1.8;
+// (The walk at each rung is a list in config/rungs.js now, in px/s.)
 
-// What the crew's own ladders open at, and what a body costs over a run. These
-// rows serve a compounding crew, so their firsts sit well above the solo rows
-// beside them, and the house climbs steeply enough that the twentieth body is a
-// decision rather than a reflex -- the grind pass, DESIGN.md.
-export const HAUL_CARRY_COST = 150;     // the haulers' carry ladder, dust
-export const HAUL_PACE_COST = 180;      // and their speed, dust
-export const ROCKHAND_SPEED_COST = 210; // the diggers' swing, dust
-// One ladder over what a hauler carries and one over how fast it walks. Each
-// used to be two -- load then a harness, pace then boots -- which was the same
-// thing sold twice under two names, a player reading which of two identical
-// rows to buy. Folded into one ladder apiece (2026-09-12), with the top where
-// the two together reached. What a hauler carries at each rung is HAUL_LOAD in
-// config/rungs.js; it walks this much again of the base at the top of its
-// ladder (pace's 1.5 and boots' 2.25).
-export const HAUL_PACE_TOP = 3.75;      // at the top: four and three quarters times the base
-// Your own bench's three ladders, first rungs in dust. Yours come first and
-// cheap: they are the first rows on the first board, bought before there is a
-// crew to buy for.
-export const CARRY_COST = 10;           // your strength -- what a sweep picks up
-export const SWING_COST = 20;           // your swing
-export const PICK_COST = 240;           // your pickaxe
+// What each ladder's rungs cost is written a rung at a time in config/rungs.js;
+// what a body costs over a run is below.
 // The house was 60 at 1.45x, and a full playthrough said bodies were the
 // bottleneck of the whole run: the seventeenth cost 15,800 and the twenty-fifth
 // 447,000, hours of a yard's income for one hauler, when every later station
@@ -261,12 +239,6 @@ export const CREW_KNOBS = [
     get: () => SPOIL_POP, set: v => { SPOIL_POP = v; } },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1,
     get: () => SPOIL_SIDE, set: v => { SPOIL_SIDE = v; } },
-  { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20,
-    get: () => MINE_BASE, set: v => { MINE_BASE = v; } },
-  { key: 'ROCKHAND_BASE', label: 'rockhand swing', min: 60, max: 2000, step: 20,
-    get: () => ROCKHAND_BASE, set: v => { ROCKHAND_BASE = v; } },
-  { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1,
-    get: () => HAUL_BASE, set: v => { HAUL_BASE = v; } },
   { key: 'HAUL_FIFO', label: 'carry oldest first', min: 0, max: 1, step: 1,
     get: () => HAUL_FIFO, set: v => { HAUL_FIFO = v; } },
   // The piles are fields of one object rather than bindings of their own, so

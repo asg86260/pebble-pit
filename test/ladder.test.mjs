@@ -10,7 +10,7 @@
 
 import { group, ok, state, yard, openSites, buyBuilt, climb } from './helpers.mjs';
 
-import { LADDER, TIER_BAND, MINE_FLOOR } from '../src/config.js';
+import { LADDER, TIER_BAND, LADDERS } from '../src/config.js';
 import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
@@ -65,9 +65,9 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
     ok(before > after.mineMs, 'the swing gets faster', `${before}ms -> ${after.mineMs}ms`),
     // The floor was always there. What is new is that the ladder lands on it
     // rather than approaching it for ever and then vanishing off the board.
-    ok(after.mineMs === MINE_FLOOR,
+    ok(after.mineMs === Math.round(1000 / LADDERS.speed.value[LADDER]),
        'and the last rung is the fastest a pick has ever gone',
-       `${after.mineMs}ms against a floor of ${MINE_FLOOR}ms`)
+       `${after.mineMs}ms against a floor of ${Math.round(1000 / LADDERS.speed.value[LADDER])}ms`)
   ];
 });
 

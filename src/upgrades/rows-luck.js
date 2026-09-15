@@ -1,4 +1,3 @@
-import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_RATE } from '../config.js';
 import { critChance, critMult } from '../crit.js';
 import { S } from '../state.js';
 import { tierRows, named } from './tiers.js';
@@ -18,7 +17,6 @@ const CHANCE = tierRows({
   field: 'critChanceLevel',
   unit: '%', does: 'crit',
   value: lvl => Math.round(critChance(lvl) * 100),
-  first: CRIT_CHANCE_COST, rate: CRIT_RATE,
   site: 'bench',
   // Once there is a crew to swing: the pair used to wait on both coins it was
   // priced in, and the first card is dust now.
@@ -26,7 +24,7 @@ const CHANCE = tierRows({
   bands: named('critchance', 'crit chance')
 });
 
-// And what a crit is worth: whole units off its list (CRIT_MULT, config/rungs.js),
+// And what a crit is worth: whole units off its list (config/rungs.js),
 // so no rung ever reads "4 -> 4" (feedback7, item 20). It was a flat row that
 // asked the third band's coins from its first rung, on the argument that a
 // whole unit of crit is the strongest rung on the bench; it is a band ladder
@@ -35,7 +33,6 @@ const MULT = tierRows({
   field: 'critMultLevel',
   unit: 'x', does: 'crit',
   value: lvl => critMult(lvl),
-  first: CRIT_MULT_COST, rate: CRIT_RATE,
   site: 'bench',
   show: () => S.crew > 0,
   bands: named('critmult', 'crit damage')

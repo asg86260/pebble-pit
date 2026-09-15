@@ -16,23 +16,18 @@
 import { S } from './state.js';
 import { rand } from './rng.js';
 import {
-  LADDER, CRIT_CHANCE_MIN, CRIT_CHANCE_MAX, CRIT_MULT, rungValue,
+  rungValue,
 } from './config.js';
 
-// A level clamped to the ladder, the way lab.js clamps its own -- a save from
-// before this landed reads as level nought rather than as some rung nothing
-// agrees with.
-const rung = lvl => Math.max(0, Math.min(LADDER, lvl | 0));
-
-// How often a swing crits, and how much it is worth when it does. Both ease
-// straight across the ladder from the base to the top over `LADDER` rungs.
-export const critChance = (lvl = S.critChanceLevel) =>
-  CRIT_CHANCE_MIN + (CRIT_CHANCE_MAX - CRIT_CHANCE_MIN) * (rung(lvl) / LADDER);
+// How often a swing crits, and how much it is worth when it does: both off
+// their lists (config/rungs.js), the chance written as a percent. A level
+// past the list reads as the top.
+export const critChance = (lvl = S.critChanceLevel) => rungValue('critchance', lvl) / 100;
 
 // Whole units off its list, so no rung repeats a value: the eased five-rung
 // ladder rounded two neighbors to the same figure and the row read "4 -> 4".
 // A saved level past the top reads as the top.
-export const critMult = (lvl = S.critMultLevel) => rungValue(CRIT_MULT, lvl);
+export const critMult = (lvl = S.critMultLevel) => rungValue('critmult', lvl);
 
 // The expected multiplier on a unit of work over many swings, for a check that
 // wants to know what a run should come to: 1 + chance*(mult - 1).

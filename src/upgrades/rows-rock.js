@@ -1,4 +1,3 @@
-import { ROCKHAND_PICK_COST, ROCKHAND_SPEED_COST } from '../config.js';
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate } from '../upgrades.js';
 import { tierRows, named } from './tiers.js';
@@ -24,13 +23,12 @@ const SPEED = tierRows({
   field: 'rockhandSpeedLevel',
   unit: 'px/s', pct: true, does: 'hit',
   value: lvl => rockhandRate(lvl),
-  first: ROCKHAND_SPEED_COST,
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
   bands: named('rockhandspeed', 'swing speed')
 });
 
-// And the gang's bite: whole pixels off its list (ROCKHAND_PX, config/rungs.js),
+// And the gang's bite: whole pixels off its list (config/rungs.js),
 // in bands like every other ladder. It was a flat three-rung row with one dust
 // bill, the last of that shape on any board. What you are buying is the tool,
 // not the number the tool moves: the row said "rockhand bite", which is the
@@ -40,7 +38,6 @@ const BITE = tierRows({
   field: 'rockhandPickLevel',
   unit: 'px', does: 'per swing',
   value: lvl => rockhandBite(lvl),
-  first: ROCKHAND_PICK_COST,
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
   bands: named('rockhandpick', 'digger pick damage')

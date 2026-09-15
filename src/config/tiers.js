@@ -18,14 +18,9 @@
 export const TIER_BAND = 1;                       // rungs to a card's group
 export const TIER_BANDS = 4;                      // groups on a ground's ladder
 export const TIER_RUNGS = TIER_BAND * TIER_BANDS; // four, all told
-// The rungs before the spark one. A ground's rate eases to its top over these
-// and its count climbs a unit a rung over these; the last rung is the spark's.
+// The rung before the spark one: the last a scene or a check climbs to when it
+// wants a ladder short of its spark rung.
 export const TIER_OWN = TIER_RUNGS - TIER_BAND;
-// What the spark rung is worth over the top of the rest: half again and a
-// bit. It was the lab's multiplier, a quarter again a rung for a band of
-// two, and folding the band into one rung keeps what the band came to rather
-// than what one of its rungs did -- no ladder's top came down for the fold.
-export const SPARK_GAIN = 1.5625;
 
 // And every other ladder in the yard: the same card, the same four groups. The
 // bench's fourth rung asks the spark too (2026-09-14): every ladder is a rung

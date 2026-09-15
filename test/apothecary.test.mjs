@@ -10,7 +10,7 @@
 
 import { group, ok, state, run, runUntil, openSites, buyNow, yard, WORKER } from './helpers.mjs';
 import { workAt } from '../src/works.js';
-import { DOSES } from '../src/config.js';
+import { LADDERS } from '../src/config.js';
 import { doseLive, boiling, potBoiling, apothHut, brewMs, dosesPer, workBoost, critBoost,
          doseStockTotal, potTonicOf, potSpentOf } from '../src/apothecary.js';
 
@@ -201,7 +201,7 @@ group('the pot ladders deepen what a brew is worth', async () => {
   const boughtPot = buyNow('anotherpot');
   return [
     ok(doses0 === 1, 'a first batch is one dose', `${doses0}`),
-    ok(boughtDoses && dosesPer() === DOSES[1], 'and a rung on doses a brew reads the next of its list',
+    ok(boughtDoses && dosesPer() === LADDERS.brewdoses.value[1], 'and a rung on doses a brew reads the next of its list',
        `${doses0} -> ${dosesPer()}`),
     ok(brewMs() === brew0 && brew0 === 30000, 'the batch clock is not for sale', `${brewMs()}`),
     ok(boughtPot && yard.S.apothPots === pots0 + 1, 'another pot breaks more room',

@@ -157,12 +157,12 @@ group('a fast body steps on to the next grain, never over it', async () => {
   // The stride is widened only now: a body this fast sweeps a hand's worth
   // off the line during the settle itself, and the trip being watched is the
   // one that starts at the far end with nothing in hand.
-  window.__tune('HAUL_BASE', 40);            // a stride many columns wide
+  window.__tune('LADDERS.haulpace.value[0]', 2400);   // a stride many columns wide: forty px a frame
   window.__place('hauler', spots[0]);
   run(0.1);
   const cap = state().haulCap;
   const r = firstToss();
-  window.__tune('HAUL_BASE', 1.8);
+  window.__tune('LADDERS.haulpace.value[0]', 108);
   window.__crew(0, 0);
   const want = Math.min(cap, spots.length);
   return [

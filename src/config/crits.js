@@ -9,10 +9,9 @@
 // the crit module and the board rows read the one set.
 // One in twenty-five at level 0, not one in ten: a crit should be bought, not
 // arrive free -- the ladder is where the chance comes from. (wave6-sim, item 10)
-export const CRIT_CHANCE_MIN = 0.04;
-export const CRIT_CHANCE_MAX = 0.25;   // and one in four at the top of the ladder
-// What a crit is worth is CRIT_MULT in config/rungs.js: a whole unit a rung,
-// written down, so no two rungs round to one figure (feedback7, item 20).
+// The chance at each rung, and what a crit is worth at each rung, are lists in
+// config/rungs.js -- whole units, written down, so no two rungs round to one
+// figure (feedback7, item 20) -- and so are the two ladders' costs.
 // The strongest per-rung buy on the board was also its cheapest; the grind pass
 // (DESIGN.md) prices the pair against the crew-backed income that actually
 // reaches them, not the solo clicking that sees them first. The mult rung
@@ -30,9 +29,7 @@ export const CRIT_CHANCE_MAX = 0.25;   // and one in four at the top of the ladd
 // bands (CLAUDE.md, "Decided"): the first card asks dust alone, at what the
 // old blue-and-green first rung was worth, and the crops and the ore come on
 // as the ladder climbs. The power ladder is three rungs and stays one card.
-// Both crit ladders climb at twice a rung rather than the house 1.6 (the
+// Both crit ladders climbed at twice a rung rather than the house 1.6 (the
 // Ladder Book, 2026-09-12): a crit reaches every station at once, so its
-// ladder is the one worth making a wall of.
-export const CRIT_CHANCE_COST = 500;   // first rung of the chance ladder, dust
-export const CRIT_MULT_COST = 1000;    // and of the damage ladder, dust
-export const CRIT_RATE = 2;
+// ladder is the one worth making a wall of. The costs are written a rung at a
+// time in config/rungs.js now, seeded from that curve.

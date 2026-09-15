@@ -8,9 +8,8 @@
 // still*. What a hand is worth is one plot's worth of tending in the time one
 // plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, CROP_COST, TEND_COST,
-         CROP_SPORES, rungValue, TIER_OWN, SPARK_GAIN } from './config.js';
-import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
+import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
+import { P, WORKER, FARM_GAP, FARM_H, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
@@ -18,7 +17,7 @@ import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
 import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
+import { rebalance, kitFull, commutePace, rungCost } from './upgrades.js';
 import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
@@ -38,25 +37,18 @@ import { JOB, TYPE } from './jobs.js';
 export const tendLadder = () => tierLevel('tendLevel');
 export const cropLadder = () => tierLevel('cropLevel');
 
-// how long one plot takes to come on, at this level of tending
-// From the base to the floor over the rungs before the spark's, the last of
-// them being the floor itself -- the same climb it always made, in `TIER_OWN`
-// steps -- and the spark rung's gain over that. It ran over `RUNGS` when the
-// speed ladder was five rungs and the multiplier was a rival row beside it;
-// the ends have not moved.
-// Built when it is read, for the two reasons `quarryMs` sets out.
-const tendGap = lvl => swing(TEND_BASE, TEND_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
-export const tendMs = (lvl = tendLadder()) =>
-  Math.max(400, Math.round(tendGap(lvl) / Math.pow(SPARK_GAIN, Math.max(0, lvl - TIER_OWN))));
-
-export const tendRate = (lvl = tendLadder()) => 60000 / tendMs(lvl);   // plots a minute
+// How long one plot takes to come on, at this level of tending: the ladder is
+// written in plots a minute (config/rungs.js) and the gap is sixty thousand
+// over that, floored where the animation stops reading.
+export const tendRate = (lvl = tendLadder()) => rungValue('tend', lvl);   // plots a minute
+export const tendMs = (lvl = tendLadder()) => Math.max(400, Math.round(60000 / tendRate(lvl)));
 
 // What one cut off a ripe plot is worth: whole spores off its list (CROP_SPORES,
 // config/rungs.js), the last entry the spark rung's. A count rather than a
 // fraction, because a cut drops spores and half a spore is not a thing the
 // yard can draw.
 export const cropYield = (lvl = cropLadder()) =>
-  Math.max(1, Math.round(rungValue(CROP_SPORES, lvl)));
+  Math.max(1, Math.round(rungValue('crop', lvl)));
 
 export const plotX = i => farm.x + i * FARM_GAP;
 export const plotTop = i => S.groundY - FARM_H * S.plots[i];
@@ -290,7 +282,6 @@ const FARM_YIELD = tierRows({
   field: 'cropLevel',
   unit: 'spores/cut',
   value: lvl => cropYield(lvl),
-  first: CROP_COST,
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [
@@ -308,7 +299,6 @@ const FARM_SPEED = tierRows({
   field: 'tendLevel',
   unit: 'plots/min', pct: true, does: 'tend',
   value: lvl => tendRate(lvl),
-  first: TEND_COST,
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [

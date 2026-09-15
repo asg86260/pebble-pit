@@ -16,12 +16,10 @@
 
 import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { TEND_BASE, TEND_FLOOR, TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER,
-         QUARRY_BASE, QUARRY_FLOOR,
-         CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT } from '../src/config.js';
+import { TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER, LADDERS } from '../src/config.js';
 import { rungOf, rungsOf, capacity, pickCount, haulCap } from '../src/upgrades.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
-import { cellMs, seamDig, QUARRY_UPGRADES } from '../src/quarry.js';
+import { cellMs, seamDig, quarryMs, QUARRY_UPGRADES } from '../src/quarry.js';
 import { dosesPer } from '../src/apothecary.js';
 
 // A row as its own board reads it. `__rows()` says which key is on a board and
@@ -99,7 +97,7 @@ group('the spark rung climbs the same field and reads the top of its list', asyn
   const pressed = buyNow('crop');
   return [
     ok(S.cropLevel === TIER_OWN + 1 && pressed, 'the spark rung is one more of the field', `${S.cropLevel}`),
-    ok(cropYield() === CROP_SPORES[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
+    ok(cropYield() === LADDERS.crop.value[LADDER] && cropYield() > before, 'and the yield reads the top of its list',
        `${before} -> ${cropYield()}`)
   ];
 });
@@ -205,16 +203,16 @@ group('the speed ladders end where they always ended', async () => {
   const cellTop = cellAt(TIER_OWN);
   S.quarryPaceLevel = 0;
   return [
-    ok(tendTop === TEND_FLOOR, 'tending lands on its floor before the spark rung',
-       `${tendTop} vs ${TEND_FLOOR}`),
-    ok(tendMs(0) === TEND_BASE, 'and starts from the same base', `${tendMs(0)}`),
+    ok(tendTop === Math.round(60000 / LADDERS.tend.value[TIER_OWN]), 'tending reads its list before the spark rung',
+       `${tendTop} vs ${Math.round(60000 / LADDERS.tend.value[TIER_OWN])}`),
+    ok(tendMs(0) === Math.round(60000 / LADDERS.tend.value[0]), 'and starts from the list\'s foot', `${tendMs(0)}`),
     // The cut's swing and the cut's row climb one curve. The swing used to run
     // its own (five rungs of a fifth off, 0.371 at the top) while the row
     // claimed the trip curve's fifth -- and neither reached the ground, because
     // the swing sat on its floor from rung nought (critics 2026-09-10, A4).
-    ok(Math.abs(cellTop / cell0 - QUARRY_FLOOR / QUARRY_BASE) < 1e-9,
-       'and a cell of the cut ends at the same fifth the row sells',
-       `${(cellTop / cell0).toFixed(6)} vs ${(QUARRY_FLOOR / QUARRY_BASE).toFixed(6)}`),
+    ok(Math.abs(cellTop / cell0 - quarryMs(TIER_OWN) / quarryMs(0)) < 1e-9,
+       'and a cell of the cut ends at the same share the row sells',
+       `${(cellTop / cell0).toFixed(6)} vs ${(quarryMs(TIER_OWN) / quarryMs(0)).toFixed(6)}`),
     ok(TIER_RUNGS === TIER_BAND * 4 && TIER_OWN === TIER_RUNGS - TIER_BAND, "four rungs, the last of them the spark's",
        `${TIER_RUNGS}/${TIER_OWN}`)
   ];
@@ -230,26 +228,29 @@ group('the speed ladders end where they always ended', async () => {
 group('every count ladder reads a list a value a rung, each worth more than the last', async () => {
   window.__reset();
   openSites();
-  const LISTS = { CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, CROP_SPORES, SEAM_SHARE, DOSES, CRIT_MULT };
-  const short = Object.entries(LISTS).filter(([, l]) => l.length !== LADDER + 1).map(([k, l]) => `${k}: ${l.length}`);
-  const flat = Object.entries(LISTS).filter(([, l]) => l.some((v, i) => i && !(v > l[i - 1]))).map(([k]) => k);
-  const broken = Object.entries(LISTS).filter(([k, l]) => k !== 'SEAM_SHARE' && l.some(v => !Number.isInteger(v))).map(([k]) => k);
+  // Every ladder's two lists: the value, a value for the foot and one a rung,
+  // and the dust, one a rung; both climbing. The counts are whole at every rung.
+  const WHOLE = ['carry', 'pick', 'rockhandpick', 'haulcarry', 'crop', 'brewdoses', 'critmult'];
+  const rows = Object.entries(LADDERS);
+  const short = rows.filter(([, l]) => l.value.length !== LADDER + 1 || l.dust.length !== LADDER).map(([k, l]) => `${k}: ${l.value.length} values, ${l.dust.length} costs`);
+  const flat = rows.filter(([, l]) => [l.value, l.dust].some(a => a.some((v, i) => i && !(v > a[i - 1])))).map(([k]) => k);
+  const broken = rows.filter(([k, l]) => WHOLE.includes(k) && l.value.some(v => !Number.isInteger(v))).map(([k]) => k);
   const at = (field, lvl, read) => { const was = S[field]; S[field] = lvl; const v = read(); S[field] = was; return v; };
   const reads = [
-    ['carry', at('carryLevel', LADDER, capacity), CARRY_PX[LADDER]],
-    ['pick', pickCount(LADDER), PICK_PX[LADDER]],
-    ['hauler load', haulCap(LADDER), HAUL_LOAD[LADDER]],
-    ['a cut', at('cropLevel', LADDER, cropYield), CROP_SPORES[LADDER]],
-    ['doses', dosesPer(LADDER), DOSES[LADDER]]
+    ['carry', at('carryLevel', LADDER, capacity), LADDERS.carry.value[LADDER]],
+    ['pick', pickCount(LADDER), LADDERS.pick.value[LADDER]],
+    ['hauler load', haulCap(LADDER), LADDERS.haulcarry.value[LADDER]],
+    ['a cut', at('cropLevel', LADDER, cropYield), LADDERS.crop.value[LADDER]],
+    ['doses', dosesPer(LADDER), LADDERS.brewdoses.value[LADDER]]
   ].filter(([, got, want]) => got !== want).map(([k, got, want]) => `${k}: ${got} not ${want}`);
   const dig0 = at('seamLevel', 0, seamDig), digTop = at('seamLevel', LADDER, seamDig);
   return [
-    ok(short.length === 0, 'every list is a value for the foot and one a rung', short.join(', ')),
-    ok(flat.length === 0, 'and every rung is worth more than the last', flat.join(', ')),
+    ok(short.length === 0, 'every ladder has a value for the foot and one a rung, and a cost a rung', short.join(', ')),
+    ok(flat.length === 0, 'and every rung is worth more, and costs more, than the last', flat.join(', ')),
     ok(broken.length === 0, 'and a count is whole at every rung', broken.join(', ')),
     ok(reads.length === 0, 'and each count reads the top of its own list at the top', reads.join('; ')),
-    ok(Math.abs(digTop / dig0 - SEAM_SHARE[LADDER]) < 0.05, 'and a dig at the top is its list\'s share of the base',
-       `${(digTop / dig0).toFixed(2)} vs ${SEAM_SHARE[LADDER]}`)
+    ok(Math.abs(digTop / dig0 - LADDERS.seam.value[LADDER]) < 0.05, 'and a dig at the top is its list\'s share of the base',
+       `${(digTop / dig0).toFixed(2)} vs ${LADDERS.seam.value[LADDER]}`)
   ];
 });
 

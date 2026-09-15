@@ -9366,21 +9366,32 @@ rung the grounds had.
   from the lab's research bill; on every ladder it came to thirty-two cores
   for one rung of crit damage, in a game with nine. `BAND_COINS[3]` and the
   grounds' fourth bands ask `spore, shard, spark`.
-- `config/rungs.js` holds the lists -- `CARRY_PX`, `PICK_PX`, `ROCKHAND_PX`,
-  `HAUL_LOAD`, `CROP_SPORES`, `SEAM_SHARE`, `DOSES`, `CRIT_MULT` -- each five
-  values, the foot and four rungs, and `rungValue(list, lvl)` clamps a level to
-  the list on read. `RUNG_KNOBS` hands `TUNABLE` a knob a rung, so every entry
-  is a dial in the ladder book and on the dev panel.
-- Retired: `CAP_BASE/CAP_STEP`, `PICK_BASE/PICK_STEP`, `HAUL_CARRY_STEP`,
-  `CROP_PER_RUNG`, `SEAM_PER_RUNG`, `DOSES0/DOSE_STEP/DOSES_CARDS`,
-  `CRIT_MULT_MIN/MAX/RUNGS`, `ROCKHAND_RUNGS`, `tierGain`. The grounds' spark
-  rung reads its list's last entry like any other; `SPARK_GAIN` stays for the
-  two ground rates (`tendMs`, `quarryMs`), which ease to their tops over
-  `TIER_OWN` and take the spark rung on top.
+- **Then everything (2026-09-14, the same evening): the player asked to edit
+  every rung's cost and every rate's step as well.** `config/rungs.js` is
+  one table, `LADDERS`, an entry a ladder by the row's key: `value` (the
+  foot and one a rung, in the row's own unit -- px, grains, px/s, trips a
+  minute, a percent) and `dust` (one a rung). `rungValue(key, lvl)` and
+  `rungDust(key, lvl)` clamp on read. The rates read the table too: a swing's
+  gap is a thousand over its px/s, tending sixty thousand over its plots a
+  minute, the fan's pull and the crit's chance the entries themselves. The
+  table was seeded with the figures the curves gave that day, so nothing moved
+  when it landed.
+- Retired with it: every rate's base and top (`MINE_BASE/FLOOR`,
+  `ROCKHAND_BASE/FLOOR`, `HAUL_BASE`, `HAUL_PACE_TOP`, `TEND_BASE/FLOOR`,
+  `QUARRY_BASE/FLOOR`, `FAN_TOP`, `CRIT_CHANCE_MIN/MAX`, `BUFF_MS0/5`,
+  `STRENGTH0/5`), every first cost (`*_COST`, `BREW_RUNG_DUST`, `CRIT_RATE`),
+  `tierCost`, `SPARK_GAIN`, and the earlier per-count lists. `tierRows` takes
+  no `first`/`rate`; the bill is the table's dust with the band's coins at
+  `DUST_PER`. The hauler's scoop is the one curve left, riding the pace level
+  unseen. `RUNG_KNOBS` hands `TUNABLE` a knob a value and a knob a cost.
 - The last two flat rows -- `critmult` and `rockhandpick` -- are `tierRows`
   ladders now, dust alone on the first rung like every other; the hauler's two
-  hand-written three-band tables went onto `named`. Every other rate keeps
-  its curve and eases to the same top over the four rungs.
-- `test/ladders.test.mjs` asserts the lists: each `LADDER + 1` long, whole
-  where the count is whole, every rung worth more than the last, and each
-  count reading the top of its own list at the top.
+  hand-written three-band tables went onto `named`.
+- The ladder book (`ladders.html`) draws every rung's value and dust as boxes
+  in the table, with step, gain, the bill in dust-equivalent, the price of a
+  percent and the spend so far beside them; a figure typed there changes the
+  table, re-reads every ladder, and comes out as a config line.
+- `test/ladders.test.mjs` asserts the table: every ladder a value for the foot
+  and one a rung and a cost a rung, whole where the count is whole, every
+  rung worth more and costing more than the last, and each count reading the
+  top of its own list at the top.

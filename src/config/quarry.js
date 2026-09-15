@@ -44,12 +44,9 @@ export const BENCH_RATE = 1.7;     // and how much steeper each one gets
 // two's coin here and not band one's. Priced level with the farm's, which is the
 // ground next door and the one you open first.
 //
-// The first price and the steepness of each ladder are the numbers the design
-// left open, so both are dials rather than constants.
-export let QUARRY_PACE_COST = 720; // dust for the first rung of the speed ladder
-export let SEAM_COST = 720;        // and for the first rung of the yield one
-// What a dig is worth at each rung, as a share of the handful, is SEAM_SHARE in
-// config/rungs.js.
+// What each rung of the two ladders is worth and costs is written a rung at a
+// time in config/rungs.js, where the ladder book dials it: the pace in trips a
+// minute, the dig as a share of the handful a bench.
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a
@@ -67,7 +64,6 @@ export const QUARRY_FLOOR_JAG = [0, 1, 2, 1, 0, 2, 1, 0];  // and cells of relie
 // busy whether or not it is being productive.
 export const QUARRY_SWING = 620;
 export const QUARRY_SHUFFLE = 0.35;   // and how fast it works along the face
-export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // --- what the quarry is for ------------------------------------------------------
 // Shards used to trickle: a quarrier swung, and every so often one came off the
 // face and went over the rim, for ever, at a steady rate. Which made blue a tap
@@ -135,7 +131,6 @@ export let CUT_BLAST_POWER = 1;
 // minute, the deepest cut near seventy. A dial, because the right figure is
 // one to find by playing.
 export let CUT_SEAM = 24;          // shards in the ground, per bench of depth
-export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // And how fast it steps between the cells of its own face, which is a different
 // thing: crossing the yard is a journey and shifting along a course you are
@@ -175,12 +170,6 @@ export const QUARRY_KNOBS = [
     get: () => CUT_RUN, set: v => { CUT_RUN = v; } },
   { key: 'CUT_BLAST_POWER', label: 'a blaster\'s ring', min: 0, max: 3, step: 0.5,
     get: () => CUT_BLAST_POWER, set: v => { CUT_BLAST_POWER = v; } },
-  { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200,
-    get: () => QUARRY_BASE, set: v => { QUARRY_BASE = v; } },
-  { key: 'SEAM_COST', label: 'seam rung 1', min: 60, max: 4000, step: 20,
-    get: () => SEAM_COST, set: v => { SEAM_COST = v; } },
-  { key: 'QUARRY_PACE_COST', label: 'dig pace rung 1', min: 60, max: 4000, step: 20,
-    get: () => QUARRY_PACE_COST, set: v => { QUARRY_PACE_COST = v; } },
   { key: 'CUT_SEAM', label: 'shards a bench', min: 1, max: 60, step: 1,
     get: () => CUT_SEAM, set: v => { CUT_SEAM = v; } }
 ];

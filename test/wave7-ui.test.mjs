@@ -9,7 +9,8 @@
 
 import { group, ok, state, run, buyNow, openSites } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { LADDER, ROCKHAND_PX, CRIT_MULT } from '../src/config.js';
+import { LADDER, LADDERS } from '../src/config.js';
+const ROCKHAND_PX = LADDERS.rockhandpick.value, CRIT_MULT = LADDERS.critmult.value;
 import { critMult } from '../src/crit.js';
 import { rockhandBite, rebalance } from '../src/upgrades.js';
 

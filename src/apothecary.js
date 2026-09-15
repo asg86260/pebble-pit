@@ -28,11 +28,10 @@
 //    because those are facts about the place rather than about a recipe.
 
 import { LADDER,
-         BREW_BILL, BREW_MS, BUFF_MS0, BUFF_MS5,
-         DOSES, rungValue, STRENGTH0, STRENGTH5,
+         BREW_BILL, BREW_MS, rungValue,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
-         BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
+         APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
@@ -62,9 +61,9 @@ const ease = (a, b, lvl) => a + (b - a) * (rung(lvl) / LADDER);
 // is felt on the next batch. These are the building's, one figure for every
 // pot in it. The batch clock is fixed; see BREW_MS.
 export const brewMs = () => BREW_MS;
-export const buffMs = (lvl = S.lengthLevel) => ease(BUFF_MS0, BUFF_MS5, lvl);
-// Whole doses off its list -- see DOSES in config/rungs.js.
-export const dosesPer = (lvl = S.dosesLevel) => rungValue(DOSES, lvl);
+export const buffMs = (lvl = S.lengthLevel) => rungValue('bufflength', lvl) * 1000;
+// Whole doses off its list (config/rungs.js).
+export const dosesPer = (lvl = S.dosesLevel) => rungValue('brewdoses', lvl);
 // One vial in a stirrer's hands, always -- see DOSE_CARRY.
 export const carryDoses = () => DOSE_CARRY;
 // --- the three tonics ---------------------------------------------------------
@@ -125,7 +124,9 @@ export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 // could ask -- which of these three is worth leaning on -- had already been
 // answered for you by any purchase at all.
 export const potencyLevel = key => rung((S.potency || {})[key]);
-const strengthOf = (key, lvl = potencyLevel(key)) => ease(STRENGTH0, STRENGTH5, lvl) / STRENGTH0;
+// Off the tonic's own list, which is written as the percent the row shows;
+// what the tonic does with it is `base` times this factor.
+const strengthOf = (key, lvl = potencyLevel(key)) => rungValue(`potency-${key}`, lvl) / 100 / tonicOf(key).base;
 
 // What a tonic is worth right now, at the strength ITS OWN ladder has climbed
 // to. A crit tonic reads in points of chance; the other two in a fraction of the
@@ -695,7 +696,6 @@ export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 // set of choices (docs/critics-2026-09-10.md, B9).
 const brewLadder = ({ after = 0, ...o }) => tierRows({
   ...o,
-  first: BREW_RUNG_DUST,
   site: 'apothecary',
   show: () => S.apothecaryOpen && S.brews >= after
 });

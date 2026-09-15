@@ -133,8 +133,6 @@ export const ROCK_KNOBS = [
 ];
 
 // --- wave7-ui -----------------------------------------------------------------
-// The pickaxe ladder reads whole pixels off ROCKHAND_PX (config/rungs.js). The
-// eased fractional curve it replaced read as noise on the row ("1.4 -> 1.7 px").
-// What its first rung costs, in dust: a band ladder like every other, dust
-// only on the first rung.
-export const ROCKHAND_PICK_COST = 2400;
+// The pickaxe ladder reads whole pixels off its list in config/rungs.js, and
+// its costs; the eased fractional curve it replaced read as noise on the row
+// ("1.4 -> 1.7 px").

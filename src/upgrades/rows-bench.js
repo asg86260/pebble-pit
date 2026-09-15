@@ -1,5 +1,4 @@
-import { BELT_BILL, RAM_BILL, LADDER,
-         CARRY_COST, SWING_COST, PICK_COST } from '../config.js';
+import { BELT_BILL, RAM_BILL, LADDER } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
@@ -21,7 +20,6 @@ const YOU_CARRY = tierRows({
   // "load", which is two names for one idea and a player having to learn both.
   unit: 'px', does: 'hold',
   value: lvl => capacity(lvl),
-  first: CARRY_COST,
   site: 'bench',
   // Once you have dragged. This is a rung on YOUR hands -- how many grains a
   // sweep of the cursor picks up -- and it was the first-listed, cheapest row
@@ -37,7 +35,6 @@ const YOU_SWING = tierRows({
   field: 'speedLevel',
   unit: 'px/s', pct: true, does: 'hit',
   value: lvl => mineRate(lvl),
-  first: SWING_COST,
   site: 'bench',
   // faster swings only read as an upgrade once the swinging is automatic. It
   // stays on the board once it is finished, saying so -- it used to vanish the
@@ -60,7 +57,6 @@ const YOU_PICK = tierRows({
   // than "pick" here and "pickaxe" over there.
   unit: 'px', does: 'per swing',
   value: lvl => pickCount(lvl),
-  first: PICK_COST,
   site: 'bench',
   // Beside the swing, once the swinging is automatic: it was gated on the
   // shard while the shard was its coin, and the coin has moved to the last card.

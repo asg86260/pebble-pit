@@ -6,9 +6,8 @@
 // on the board.
 
 import {
-  P, RUNGS, LADDER, HAUL_PACE_TOP, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
-  CARRY_PX, PICK_PX, ROCKHAND_PX, HAUL_LOAD, rungValue,
-  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR,
+  P, RUNGS, LADDER, LOO_MUCK, LOO_POSTS, rungValue,
+  HAUL_MS,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST
@@ -64,7 +63,7 @@ export const swing = (base, floor, rungs) => lvl => {
 const perSecond = ms => lvl => 1000 / ms(lvl);
 
 // What the counts read is a list a ladder -- see config/rungs.js.
-export const capacity = (lvl = S.carryLevel) => rungValue(CARRY_PX, lvl);
+export const capacity = (lvl = S.carryLevel) => rungValue('carry', lvl);
 
 // `rungCost` and `DUST_PER` live in upgrades/price.js, a leaf, so the ladder
 // helper can price a row without importing this file -- see the note there.
@@ -133,27 +132,25 @@ export const chained = rows => {
   return rows;
 };
 
-// One length to every ladder in the game -- see LADDER -- so that "how far
-// along is this" is one question with one answer wherever it is asked. The
-// floor is where it was when the ladders were five: the length decides how
-// many steps it takes to reach the same top, not how fast the yard gets.
-const mineGap = swing(MINE_BASE, MINE_FLOOR, LADDER);
-const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, LADDER);
+// Every ladder reads a written list -- what it is worth at each rung, in the
+// row's own unit (config/rungs.js) -- so the swings are kept as px/s and the
+// gap between hits is a thousand over that. The scoop is the one curve left
+// here: it rides the haulers' pace ladder and no row reads it.
 const scoopGap = swing(HAUL_MS, 30, LADDER);
 
-export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl));
-export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
-export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, rockhandGap(lvl));
-export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lvl);
+export const mineRate = (lvl = S.speedLevel) => rungValue('speed', lvl);
+export const mineMs = (lvl = S.speedLevel) => Math.max(1, Math.round(1000 / mineRate(lvl)));
+export const rockhandRate = (lvl = S.rockhandSpeedLevel) => rungValue('rockhandspeed', lvl);
+export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, Math.round(1000 / rockhandRate(lvl)));
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
 // stone out of the quarry, because gear is what stone is for.
 // What a hauler carries and how fast it walks, one ladder each. A load is a
-// whole number of grains and reads its list (config/rungs.js); the walk
-// eases across the ladder to its top.
-export const haulCap = (lvl = S.haulCarryLevel) => rungValue(HAUL_LOAD, lvl);
-export const haulSpeed = (lvl = S.haulPaceLevel) =>
-  HAUL_BASE * (1 + HAUL_PACE_TOP * Math.max(0, Math.min(LADDER, lvl)) / LADDER);
+// whole number of grains and the walk a speed, both off their lists
+// (config/rungs.js).
+export const haulCap = (lvl = S.haulCarryLevel) => rungValue('haulcarry', lvl);
+// The walk is written in px/s and stepped in px a frame.
+export const haulSpeed = (lvl = S.haulPaceLevel) => rungValue('haulpace', lvl) / 60;
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
 // A trip's pace, for anybody making one. It lived in crew.js, and the stations
 // could not reach it -- crew.js imports them -- so each grew a private walking
@@ -167,12 +164,12 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
-export const pickCount = (lvl = S.pickLevel) => rungValue(PICK_PX, lvl);   // pixels your own swing takes
+export const pickCount = (lvl = S.pickLevel) => rungValue('pick', lvl);   // pixels your own swing takes
 // What a rockhand takes: whole pixels off its list. The eased curve this
 // replaced bought fractions of a pixel per rung -- numbers the row could only
 // show as noise ("1.4 -> 1.7 px"). Clamped to the list here as well as at
 // load, so a saved level past the top reads as the top.  (feedback7, item 19)
-export const rockhandBite = (lvl = S.rockhandPickLevel) => rungValue(ROCKHAND_PX, lvl);
+export const rockhandBite = (lvl = S.rockhandPickLevel) => rungValue('rockhandpick', lvl);
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet.

@@ -10,7 +10,7 @@ import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
-import { PLOT_COST, PLOT_RATE, LOO_POSTS, LOOPOST_SHARDS, LAB_DUST, ROCKHAND_PX, LADDER, RUNGS, QUARRY_CORES } from '../src/config.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LOOPOST_SHARDS, LAB_DUST, LADDERS, LADDER, RUNGS, QUARRY_CORES } from '../src/config.js';
 
 const roster = () => state().roster;
 
@@ -99,7 +99,8 @@ group('a save from before the second cap keeps both', async () => {
 
 // --- A4: worker speed at the start --------------------------------------------
 group('the crew starts quicker: haul base and commute pace are up', async () => {
-  const { HAUL_BASE, COMMUTE_PACE } = await import('../src/config.js');
+  const { COMMUTE_PACE } = await import('../src/config.js');
+  const HAUL_BASE = LADDERS.haulpace.value[0] / 60;   // the walk at the foot, in px a frame
   return [
     ok(HAUL_BASE === 1.8, 'HAUL_BASE is 1.8', HAUL_BASE),
     ok(COMMUTE_PACE === 4.6, 'COMMUTE_PACE is 4.6', COMMUTE_PACE)
@@ -128,14 +129,14 @@ group('the farm costs a real stretch of dust to open, not pocket change', async 
 
 // --- A6: the rockhand's pick is a whole pixel a rung, capped at its own top ------
 // Rewritten by wave 7 (feedback7, item 19): the eased 2.2x curve is gone, the
-// ladder reads whole pixels off ROCKHAND_PX, and a level past the top bites
+// ladder reads whole pixels off its list, and a level past the top bites
 // what the top bites. The full new-ladder coverage is in wave7-ui.test.mjs.
 group('the rockhand pick bites a whole pixel more per rung, and no further', async () => {
   const b0 = rockhandBite(0), b1 = rockhandBite(1), top = rockhandBite(LADDER);
   return [
     ok(b0 === 1, 'rung 0 is the bare bite', b0),
-    ok(b1 === ROCKHAND_PX[1] && Number.isInteger(b1) && b1 > b0, 'a rung is whole pixels more', b1),
-    ok(top === ROCKHAND_PX[LADDER], 'the top of the ladder is the end of its list', top),
+    ok(b1 === LADDERS.rockhandpick.value[1] && Number.isInteger(b1) && b1 > b0, 'a rung is whole pixels more', b1),
+    ok(top === LADDERS.rockhandpick.value[LADDER], 'the top of the ladder is the end of its list', top),
     ok(rockhandBite(RUNGS) === top, 'a saved level past it bites the top', rockhandBite(RUNGS))
   ];
 });

@@ -6,7 +6,7 @@
 
 import { group, ok, state, run, runUntil, openSites } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { CUT_BEAT_MIN, TIER_OWN, TIER_RUNGS, SPARK_GAIN } from '../src/config.js';
+import { CUT_BEAT_MIN, TIER_OWN, TIER_RUNGS, LADDERS } from '../src/config.js';
 import { quarryCells, quarryTarget, cellsLeft, beatMs } from '../src/quarry.js';
 import { now } from '../src/clock.js';
 
@@ -73,6 +73,8 @@ group('a cut takes the time it took before the pockets, at pace nought and at th
   // the tolerance, and a tune of the beat that breaks it has moved the
   // quarry's economy, which is the thing this file is here to notice.
   const WAS_P0 = 108, WAS_P9 = 31;
+  // The spark rung's pace over the floor's, off the pace list itself.
+  const sparkGain = LADDERS.quarrypace.value[TIER_OWN] / LADDERS.quarrypace.value[TIER_RUNGS];
   const time = () => {
     runUntil(() => (S.quarryTotal || 0) > 0, 120);
     const t0 = now(), total = (S.quarryTotal || 0) + cellsLeft();
@@ -90,7 +92,7 @@ group('a cut takes the time it took before the pockets, at pace nought and at th
   return [
     ok(Math.abs(p0 - WAS_P0) <= WAS_P0 * 0.12, 'five at pace nought finish in the time they did', `${p0.toFixed(1)} s vs ${WAS_P0}`),
     ok(Math.abs(p9 - WAS_P9) <= WAS_P9 * 0.12, 'and five at the floor of the ladder', `${p9.toFixed(1)} s vs ${WAS_P9}`),
-    ok(Math.abs(p4 - WAS_P9 / SPARK_GAIN) <= WAS_P9 * 0.12, 'and the spark rung takes the cut half again as quick', `${p4.toFixed(1)} s vs ${(WAS_P9 / SPARK_GAIN).toFixed(1)}`)
+    ok(Math.abs(p4 - WAS_P9 * sparkGain) <= WAS_P9 * 0.12, 'and the spark rung takes the cut quicker by what its list says', `${p4.toFixed(1)} s vs ${(WAS_P9 * sparkGain).toFixed(1)}`)
   ];
 });
 
