@@ -328,7 +328,7 @@ const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
 let full = { w: 0, h: 0 };
 
 // The main board's own width: the open page and the purse. The crew list is
-// out of the panel's flow and stands above the board, so it is not in this and
+// out of the panel's flow and stands beside the board, so it is not in this and
 // could not move the seat if it wanted to. The flex gap is read off the
 // element rather than restated here. (feedback7, items 2 and 3)
 function mainWidth() {
@@ -382,28 +382,21 @@ function pinWidth() {
   sheet.style.width = `${sheet.offsetWidth}px`;      // border-box, so this is exact
 }
 
-// The crew list stands over the door that opens it, one card wide. Where the
-// door is and how wide a card is are both facts about the board's layout this
-// frame, so they are read off it here -- the door's own width plus the sheet's
-// border and padding, and the sheet's left edge in the panel -- rather than
-// restated in the stylesheet as numbers that would be wrong the day a padding
-// changed. Nothing to seat while no door is on the open board.
+// The crew list stands beside the board, one card wide. How wide a card is
+// is a fact about the board's layout this frame, so it is read off it here --
+// the door's own width plus the sheet's border and padding -- rather than
+// restated in the stylesheet as a number that would be wrong the day a
+// padding changed. Which side it stands on is `place`'s call, since that is
+// where the seat is known. Nothing to seat while no door is on the open board.
 function seatFlyout() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   const door = sheet && sheet.querySelector('.rows > button.door');
   if (!door) return;
   const rows = door.parentElement;
-  if (door.classList.contains('tile')) {
-    // On a shelf the door is one slot, and a slot is too narrow for a list
-    // of names drawn as cards: the list stands over the door's own left
-    // edge, two slots wide, so the cards in it are the width they were
-    // drawn for. The door's edge in the panel is read off the layout.
-    let x = 0; for (let e = door; e && e !== panelEl; e = e.offsetParent) x += e.offsetLeft;
-    crewListEl.style.left = `${x}px`;
-    crewListEl.style.width = `${2 * door.offsetWidth}px`;
-    return;
-  }
-  crewListEl.style.left = `${sheet.offsetLeft}px`;
+  // On a shelf the door is one slot, and a slot is too narrow for a list of
+  // names drawn as cards: two slots wide, so the cards in it are the width
+  // they were drawn for.
+  if (door.classList.contains('tile')) { crewListEl.style.width = `${2 * door.offsetWidth}px`; return; }
   crewListEl.style.width = `${door.offsetWidth + sheet.offsetWidth - rows.offsetWidth}px`;
 }
 
@@ -442,10 +435,27 @@ function place(el, at) {
   // stops being the odd one out.
   const mid = at.x + (at.w || 0) / 2;
   const want = (mid - S.camX) * S.zoom - w / 2;
-  // `w` and `h` are the board's own: the crew list stands above the board, out
+  // `w` and `h` are the board's own: the crew list stands beside the board, out
   // of the panel's flow (see the CSS), so nothing about the seat changes when
   // it comes out. That is the whole point of seating it that way.
-  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
+  let x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
+
+  // Which side the crew list stands on. To the right of the board, the way a
+  // submenu stands beside the menu that opened it; to the left of the purse
+  // (`port`) when the right runs out; and when neither side has the room --
+  // a window narrower than the board, the purse and a card of names together
+  // -- it stays on the right and the board gives ground, just as far as it
+  // must. That last case is the only time opening the list moves the board,
+  // and the alternative was the names standing off the edge of the glass,
+  // which is a list you cannot read. Decided here, every time the seat is,
+  // because the seat is what it depends on.
+  const listW = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
+  let port = false;
+  if (listW && x + w + listW > S.W - GAP) {
+    if (x - listW >= GAP) port = true;
+    else x = Math.max(GAP, S.W - GAP - listW - w);
+  }
+  crewListEl.classList.toggle('port', port);
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
 
@@ -483,17 +493,16 @@ function place(el, at) {
   putX = x;
   putY = bottom;
   el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
-  // The crew list stands on the board's top edge and grows upward, so the room
-  // it has is whatever is between that edge and the top of the window -- a
-  // board seated high with a long settlement behind it would otherwise put the
-  // first names off the glass. Derived from the seat rather than guessed, and
-  // written here because here is where the seat changes. The gap is the
-  // panel's, restated in the CSS beside the list.
-  crewListEl.style.maxHeight = `min(46vh, ${S.H - bottom - h - FLY_GAP - GAP}px)`;
+  // The crew list stands on the board's bottom edge and grows upward, so the
+  // room it has is whatever is between that edge and the top of the window --
+  // a long settlement would otherwise put the first names off the glass.
+  // Derived from the seat rather than guessed, and written here because here
+  // is where the seat changes.
+  crewListEl.style.maxHeight = `min(46vh, ${S.H - bottom - GAP}px)`;
 }
 
 const GAP = 4;                             // never flush against the edge
-const FLY_GAP = 8;                         // the panel's gap, between the board and the list above it
+const FLY_GAP = 8;                         // the panel's gap, between the board and the list beside it
 
 // --- the call to build the bench ----------------------------------------------
 // The one button on this page that is not on a board. It stands over the bare
@@ -606,14 +615,16 @@ const SAFE_SLACK = 34;
 const panelRect = () => {
   if (putX === null) return null;
   // The full panel, not the seat: the wedge and the tip are about everything on
-  // the page, and the crew list is part of the panel. It stands above the
+  // the page, and the crew list is part of the panel. It stands beside the
   // board, out of the panel's flow, so it is counted in by hand -- gap and all,
-  // or the strip between the door and the names would be outside the menu and
-  // crossing it would close the board.
-  const w = panelEl.offsetWidth || full.w;
-  const h = (panelEl.offsetHeight || full.h) +
-            (crewListEl.hidden ? 0 : crewListEl.offsetHeight + FLY_GAP);
-  return { x: putX, y: S.H - putY - h, w, h };
+  // or the strip between the board and the names would be outside the menu and
+  // crossing it would close the board. On the left (`port`) it pushes the
+  // rectangle's left edge out instead of its right.
+  const list = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
+  const w = (panelEl.offsetWidth || full.w) + list;
+  const h = Math.max(panelEl.offsetHeight || full.h, crewListEl.hidden ? 0 : crewListEl.offsetHeight);
+  const x = putX - (crewListEl.classList.contains('port') ? list : 0);
+  return { x, y: S.H - putY - h, w, h };
 };
 
 // The same rectangle, for whatever is drawn on the canvas underneath it. A board
@@ -663,6 +674,15 @@ const inHull = (h, px, py) => {
   }
   return !(neg && pos);
 };
+
+// is (px, py) on the menu itself -- the board, the purse, the crew list and
+// the strips between them? No slack: this is the rectangle the sheets are
+// actually drawn on, not the way to it.
+export function onMenu(px, py) {
+  if (!at) return false;
+  const r = panelRect();
+  return !!r && px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+}
 
 // is (px, py) on the board, or on the way to it from the station it belongs to?
 export function inSafeZone(px, py) {

@@ -447,18 +447,18 @@ export const TESTS = [
     ];
   }],
 
-  // The list stands above the board it came out of, and the board does not move.
-  //
-  // It stood beside the board once, as a flex sibling, and went to the other
-  // side or onto a line of its own when the window was too narrow for both --
-  // which on an ordinary window was always, so hovering the door threw the
-  // whole board into the top corner of the glass to make room. The row you
-  // hovered should stay where it was. So the list is out of the panel's flow,
-  // stood on the board's top edge, and the board is measured before and after
-  // to prove it has not moved an inch. The door is the top-left card of the
-  // board on a line of its own, and the list is one card wide and stands
-  // directly over it, so the names come out over the row that opened them.
-  ['the list opens above the board and the board stays put', async () => {
+  // The list stands beside the board it came out of, on the board's bottom
+  // edge, the panel's gap away: to the right, or to the left of the purse when
+  // the right runs out. The board does not move for it -- it stood beside the
+  // board once as a flex sibling and hovering the door threw the whole board
+  // into the corner of the glass to make room -- except on a window too narrow
+  // for the board, the purse and the list together, where the board gives
+  // ground by exactly the shortfall and the list ends inside the window. The
+  // headless window is 800 wide, which is that case: so the board is measured
+  // before and after and the move, if any, is proved to be the shortfall and
+  // nothing more. The list is two slots wide when the door is a tile on a
+  // shelf and one card wide when it is a card.
+  ['the list opens beside the board', async () => {
     newRun();
     await settle();
     window.__crew(3, 2);
@@ -466,35 +466,41 @@ export const TESTS = [
     await hoverHouse();
     const sheet = document.querySelector('#panel .sheet:not(.flyout)');
     const list = document.getElementById('crewlist');
+    const panel = document.getElementById('panel');
     const before = sheet.getBoundingClientRect();
+    const panelBefore = panel.getBoundingClientRect();
     const door = await openCrewList();
     await sleep(80);
     const after = sheet.getBoundingClientRect();
+    const panelAfter = panel.getBoundingClientRect();
     const listed = list.getBoundingClientRect();
     const doorAt = door.getBoundingClientRect();
-    const rows = [...document.querySelectorAll('#crewshop button')].filter(b => b.offsetParent !== null);
-    const panel = document.getElementById('panel');
-    const still = Math.abs(after.left - before.left) < 1 && Math.abs(after.bottom - before.bottom) < 1;
-    const above = Math.abs(listed.left - after.left) < 1 && listed.bottom < after.top &&
-                  after.top - listed.bottom < 16;
-    // one card wide: the door's width, plus the sheet's border and padding on
-    // either side, which is the board's width less what its rows take
+    const gap = 8;
+    const right = Math.abs(listed.left - (panelAfter.right + gap)) < 1;
+    const left = Math.abs(listed.right - (panelAfter.left - gap)) < 1;
+    const beside = (right || left) && Math.abs(listed.bottom - after.bottom) < 1;
+    const inside = listed.left >= 0 && listed.right <= innerWidth;
+    const shortfall = Math.max(0, panelBefore.right + gap + listed.width + 4 - innerWidth);
+    const gave = panelBefore.left - panelAfter.left;
+    const still = Math.abs(after.bottom - before.bottom) < 1 &&
+                  (shortfall === 0 ? Math.abs(gave) < 1 : Math.abs(gave - shortfall) < 1);
+    // a slot, or a card plus the sheet's border and padding on either side,
+    // which is the board's width less what its rows take
     const sheetAir = after.width - document.getElementById('crewshop').getBoundingClientRect().width;
-    const cardWide = Math.abs(listed.width - (doorAt.width + sheetAir)) < 1;
-    const topRow = rows.every(b => b === door || b.getBoundingClientRect().top >= doorAt.bottom);
-    const spans = doorAt.width < after.width * 0.6 && Math.abs(doorAt.left - listed.left - sheetAir / 2) < 1;
+    const wantW = door.classList.contains('tile') ? 2 * doorAt.width : doorAt.width + sheetAir;
+    const wide = Math.abs(listed.width - wantW) < 1;
     const unmoved = !panel.classList.contains('stack') && !panel.classList.contains('flip');
     await hoverAway();
     window.__crew(0, 0);
     return [
       ok(listed.width > 60, 'the list opens with something on it', `${Math.round(listed.width)}px`),
-      ok(still, 'and the board it came out of has not moved',
-         `${Math.round(before.left)},${Math.round(before.bottom)} -> ${Math.round(after.left)},${Math.round(after.bottom)}`),
-      ok(above, 'because the list stands above it, on its left edge',
-         `list ${Math.round(listed.left)},${Math.round(listed.bottom)}; board ${Math.round(after.left)},${Math.round(after.top)}`),
-      ok(cardWide, 'one card wide', `list ${Math.round(listed.width)}w, door ${Math.round(doorAt.width)}w + ${Math.round(sheetAir)}`),
-      ok(topRow && spans, 'and the door is the top-left card of the board, on a line of its own',
-         `door ${Math.round(doorAt.width)}w of ${Math.round(after.width)} at ${Math.round(doorAt.left)}, top ${Math.round(doorAt.top)}`),
+      ok(beside, 'beside the board, on its bottom edge, the panel\'s gap away',
+         `list ${Math.round(listed.left)}-${Math.round(listed.right)},${Math.round(listed.bottom)}; panel ${Math.round(panelAfter.left)}-${Math.round(panelAfter.right)},${Math.round(after.bottom)}`),
+      ok(inside, 'and inside the window', `${Math.round(listed.left)}-${Math.round(listed.right)} of ${innerWidth}`),
+      ok(still, 'and the board it came out of has not moved, or gave only the ground it had to',
+         `${Math.round(before.left)},${Math.round(before.bottom)} -> ${Math.round(after.left)},${Math.round(after.bottom)}, short ${Math.round(shortfall)}`),
+      ok(wide, door.classList.contains('tile') ? 'two slots wide' : 'one card wide',
+         `list ${Math.round(listed.width)}w, door ${Math.round(doorAt.width)}w`),
       ok(unmoved, 'with nothing in the panel re-seated to make room for it', panel.className)
     ];
   }],

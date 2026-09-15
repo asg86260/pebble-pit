@@ -16,7 +16,7 @@ import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
-         showTipAt, inSafeZone, standRect } from './board.js';
+         showTipAt, inSafeZone, onMenu, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -246,7 +246,15 @@ canvas.addEventListener('pointermove', e => {
     // time. The wedge is for the ground *between* things -- which is all it was
     // ever meant to protect -- so it only gets a say when the answer would
     // otherwise be "nothing".
-    if (want) showPanel(want);
+    //
+    // Unless the cursor is on the menu itself. A sheet is opaque and the canvas
+    // under it never hears a pointer that is over it -- but the crew list
+    // stands beside the board, over whatever station is next along, and the
+    // strip between the two is bare canvas. Crossing that strip is not
+    // arriving at the bench; it is reading the menu. So a station under a
+    // point that is on the menu's own rectangle gets no say, which is only
+    // what the page already does everywhere the sheet is in the way.
+    if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
     else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // and whatever the cursor is asking about, which is not the same question:
     // a board opens because you walked up to a station, a tooltip opens because

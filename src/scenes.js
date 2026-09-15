@@ -379,7 +379,14 @@ export const SCENES = {
   // `page`: the camera reads `houses` off the page's snapshot, which the node
   // yard's has not got.
   houseboard: { about: 'the crew', say: "the crew's board", page: true,
-    run: () => { rich(); window.__board('house'); window.__look(st().houses[0].x - 320); } },
+    run: () => { rich(); window.__board('house'); window.__look(st().houses.door - 400); } },
+  // The crew list out beside the board: the door hovered the way a pointer
+  // does it, since nothing but a hover opens it.
+  crewlist: { about: 'the crew', say: 'the crew list, out beside its board', page: true,
+    run: () => { rich(); window.__crew(6, 5, 5, 4); window.__board('house'); window.__look(st().houses.door - 400);
+                 const door = document.querySelector('#crewshop button[data-key="crewlist"]');
+                 if (door) { const r = door.getBoundingClientRect();
+                   door.dispatchEvent(new PointerEvent('pointerenter', { clientX: r.left + 2, clientY: r.top + 2, bubbles: true })); } } },
   // Two bodies under a tonic each, standing with the crew.
   apothbuff: { about: 'the crew', say: 'bodies under tonics, standing',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);

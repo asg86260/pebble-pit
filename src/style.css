@@ -1020,26 +1020,28 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    actually press hiding at the top of it. So the names come out beside the board
    when you ask for them, and the board stays the size of what you can do.
 
-   Above the board, not beside it. It stood to the right of the board once, as
-   a flex sibling, with a rule for flipping to the left when the right ran out
-   and a rule for going on a line of its own when neither side would take it --
-   and on any window narrower than about 1400 pixels neither side would, so
-   hovering the door threw the board into the top corner of the window to make
-   room. A list you opened by hovering a row should not move the row.
-   So it is out of the panel's flow altogether: standing on the board's top
-   edge, the panel's own gap above it, and growing upward into the sky. The
-   door is the top-left card of the board and the list is one card wide, a
-   single column of names, stood directly over the card that opened it -- its
-   left edge and its width are measured off the door and the sheet by
-   `seatFlyout` in board.js rather than restated here. Nothing the panel
-   measures includes the list, so nothing about the board's seat changes when
-   it comes out. The gap is the panel's gap, restated: `gap` has no length a
-   child can read. */
-.panel .flyout { position: absolute; left: 0; bottom: calc(100% + 8px); transform-origin: 0 100%; }
+   Beside the board, to the right, standing on the same bottom edge -- the
+   way a submenu stands beside the menu it opened from -- and out of the
+   panel's flow altogether. It stood to the right once before as a flex
+   sibling, and that moved the board: on any window narrower than about 1400
+   pixels the panel no longer fit and hovering the door threw the board into
+   the corner to make room. A list you opened by hovering a row should not
+   move the row. Then it stood above the board, which moved nothing but had
+   nowhere to go the day the board was seated high: a tall board on a short
+   window put every name off the top of the glass. So: out of flow, beside,
+   and when the right-hand side runs out it stands to the left of the purse
+   instead (`.port`, decided in `place` in board.js) rather than squashing or
+   moving anything. Its width is measured off the door and the sheet by
+   `seatFlyout` rather than restated here. Nothing the panel measures
+   includes the list, so nothing about the board's seat changes when it comes
+   out. The gap is the panel's gap, restated: `gap` has no length a child can
+   read. */
+.panel .flyout { position: absolute; bottom: 0; left: calc(100% + 8px); transform-origin: 0 100%; }
+.panel .flyout.port { left: auto; right: calc(100% + 8px); transform-origin: 100% 100%; }
 #crewlist .rows { grid-template-columns: minmax(0, 1fr); }
 /* A settlement can get long. The names scroll inside the sheet rather than
    growing off the top of the window -- `place` caps this further by the room
-   the board actually has above it. */
+   the board actually has above its bottom edge. */
 #crewlist { max-height: 46vh; overflow-y: auto; }
 /* Two columns rather than three. Nothing on this sheet has a price, so the
    middle column -- what a purchase gives you -- is closed up, and where the body
