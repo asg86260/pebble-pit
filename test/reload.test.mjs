@@ -214,7 +214,10 @@ group('a refresh does not hand you a second core', async () => {
     window.__jump(5);                          // the first rock with a core in it
     run(2);
     window.__next();                           // the last of it goes, the core drops
-    runUntil(() => S.coreItem && S.coreItem.rest, 20);
+    // A frame at a time: the next rock is in the air within a second of the
+    // last (ROCK_GAP_MS), and a whole-second stride lands past it with the rock
+    // alive again -- which is not the moment this save is about.
+    for (let i = 0; i < 20 * 60 && !(S.coreItem && S.coreItem.rest); i++) run(1 / 60);
     S.dirty = true;
     window.__reload();                         // and that moment is written down
 
