@@ -719,6 +719,10 @@ export function refresh(el, list, headcount) {
         // Greyed while it is being built -- committed, nothing to press for --
         // and live while it waits, so a press can pull it back out.
         grey(row, !queued);
+        // A queued row is pressable (to hand it back) but its price is not
+        // one you are being offered: it wears `off` so the shelf's hover
+        // leaves it alone with the rest you cannot pay for.
+        row.classList.add('off');
         continue;
       }
     }
@@ -774,7 +778,7 @@ export function refresh(el, list, headcount) {
     if (maxed(u)) {
       sayHTML(gain, '');
       sayHTML(price, 'done'); sayHTML(time, '');
-      grey(row, true);
+      grey(row, true); row.classList.add('off');
       continue;
     }
     // A ladder whose next rung is priced in a coin the yard has no source for
@@ -786,7 +790,7 @@ export function refresh(el, list, headcount) {
       row.classList.add('waiting');
       sayHTML(gain, waits);
       sayHTML(price, ''); sayHTML(time, '');
-      grey(row, true);
+      grey(row, true); row.classList.add('off');
       continue;
     }
     // On a shelf the gain is the number alone -- the name is the verb.
@@ -796,7 +800,13 @@ export function refresh(el, list, headcount) {
     // The casino's two decisions are the only ones: neither costs anything, and
     // the number either of them is about is the one on the table.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
-    grey(row, u.price ? !!u.dead?.() : !canPay(u));
+    const off = u.price ? !!u.dead?.() : !canPay(u);
+    grey(row, off);
+    // `off` is the shelf's own word for "not yours to press right now": the
+    // hover, the lift and the lean all key off it, never off `disabled`,
+    // so a tile you cannot pay for does not answer the cursor whatever the
+    // button's state is.
+    row.classList.toggle('off', off);
   }
   if (el.classList.contains('shelves')) phaseDots(el);
 }
@@ -816,7 +826,7 @@ function leanToCursor(b, key) {
   b.style.setProperty('--sway-rate', String(1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD));
   b.style.setProperty('--sway-dir', (h >> 10) & 1 ? 'reverse' : 'normal');
   b.addEventListener('pointermove', e => {
-    if (b.disabled) return;                      // a tile you cannot press does not lean either
+    if (b.disabled || b.classList.contains('off')) return;   // a tile you cannot pay for does not lean
     const r = b.getBoundingClientRect();
     const dx = (e.clientX - (r.left + r.right) / 2) / (r.width / 2);
     const dy = (e.clientY - (r.top + r.bottom) / 2) / (r.height / 2);
@@ -839,7 +849,7 @@ function phaseDots(el) {
   for (const t of el.querySelectorAll('.tile')) {
     // A tile that went dear under the cursor keeps no lean: the reset is on
     // pointer-leave, and the pointer has not left.
-    if (t.disabled && t.style.getPropertyValue('--follow-x')) { t.style.removeProperty('--follow-x'); t.style.removeProperty('--follow-y'); }
+    if ((t.disabled || t.classList.contains('off')) && t.style.getPropertyValue('--follow-x')) { t.style.removeProperty('--follow-x'); t.style.removeProperty('--follow-y'); }
     const [tx, ty] = laidAt(t);
     const left = tx - gx, top = ty - gy;
     const key = `${left},${top}`;

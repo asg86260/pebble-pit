@@ -233,6 +233,8 @@
 @property --lift { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --sway-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --sway-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --sway-x2 { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --sway-y2 { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --follow-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --follow-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .rows.shelves > button.tile {
@@ -255,15 +257,18 @@
   /* Three motions, one transform: the lift, the drift, and a lean toward
      the cursor (`--follow`, written by the builder off the pointer, in
      whole pixels). The shadow is the sum's inverse, so it stays put. */
-  transform: translate(calc(var(--lift) + var(--sway-x) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--follow-y)));
-  box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--follow-y)) 0 #000;
+  transform: translate(calc(var(--lift) + var(--sway-x) + var(--sway-x2) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--sway-y2) + var(--follow-y)));
+  box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--sway-x2) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--sway-y2) - var(--follow-y)) 0 #000;
   transition: border-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
               --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out,
+              --sway-x2 var(--shelf-hover-ms, 120ms) ease-out, --sway-y2 var(--shelf-hover-ms, 120ms) ease-out,
               --follow-x var(--shelf-hover-ms, 120ms) ease-out, --follow-y var(--shelf-hover-ms, 120ms) ease-out;
 }
-/* Only a tile you can press lifts: one you cannot afford, or a readout,
-   stays on the plank (the owner's call, 2026-09-14). */
-.rows.shelves > button.tile:hover:not(:disabled):not(.stat) {
+/* Only a tile you can pay for lifts. `off` is set by the builder on every
+   row you cannot pay for right now -- short of a coin, climbed, waiting,
+   building, queued -- so the hover never depends on the button's own
+   `disabled`; a readout is not for sale and stays put too. */
+.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) {
   --lift: -2px;
   border-color: #000;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
@@ -276,17 +281,24 @@
      SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
      its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
      hashed off the row's key by the builder) so no two drift in step. */
-  animation: shelf-sway-x calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
-             shelf-sway-y calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
+  animation: shelf-sway-x  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+             shelf-sway-y  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+             shelf-sway-x2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 1.618) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+             shelf-sway-y2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 0.73) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
-.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .cost { opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .note { color: inherit; }
-/* A circle, not a square: x runs a sine and y a raised cosine on the same
-   clock, eased through the four quarter-points, so the tile sweeps round
-   through the lifted position rather than stepping one axis at a time. */
-@keyframes shelf-sway-x { 0% { --sway-x: 0px; } 25% { --sway-x: 1px; } 50% { --sway-x: 0px; } 75% { --sway-x: -1px; } 100% { --sway-x: 0px; } }
-@keyframes shelf-sway-y { 0% { --sway-y: 0px; } 25% { --sway-y: -1px; } 50% { --sway-y: -2px; } 75% { --sway-y: -1px; } 100% { --sway-y: 0px; } }
+.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .cost { opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .note { color: inherit; }
+/* Interference, not a circle: each axis is two sines summed, one on the
+   tile's own clock and one at an incommensurate multiple of it (the golden
+   ratio one way, .73 the other), so the path beats against itself and never
+   repeats -- a thing held loosely, not a thing on a track. Every wave passes
+   through nought at the start, so the drift grows out of the lifted position
+   rather than jumping to it. */
+@keyframes shelf-sway-x  { 0% { --sway-x: 0px; }  25% { --sway-x: 1px; }   50% { --sway-x: 0px; }  75% { --sway-x: -1px; } 100% { --sway-x: 0px; } }
+@keyframes shelf-sway-y  { 0% { --sway-y: 0px; }  25% { --sway-y: -1px; }  50% { --sway-y: 0px; }  75% { --sway-y: 1px; }  100% { --sway-y: 0px; } }
+@keyframes shelf-sway-x2 { 0% { --sway-x2: 0px; } 25% { --sway-x2: -1px; } 50% { --sway-x2: 0px; } 75% { --sway-x2: 1px; } 100% { --sway-x2: 0px; } }
+@keyframes shelf-sway-y2 { 0% { --sway-y2: 0px; } 25% { --sway-y2: -1px; } 50% { --sway-y2: 0px; } 75% { --sway-y2: 1px; } 100% { --sway-y2: 0px; } }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
