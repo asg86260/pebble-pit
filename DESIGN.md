@@ -9395,3 +9395,107 @@ rung the grounds had.
   and one a rung and a cost a rung, whole where the count is whole, every
   rung worth more and costing more than the last, and each count reading the
   top of its own list at the top.
+
+## The shelf: a board is things on planks, not cards (design, not built)
+
+Settled on shots, 2026-09-14, against the bench with every row forced on
+(`shots/board-shelf*.png`; the mocks were CSS laid over the card builder and
+kept fighting it, which is why this is written down before anything is
+built).
+
+### What is wrong
+
+A board is a stack of cards, and a card is a box with six facts in it, each
+in a corner. Every card is the same box, so the eye has one rhythm and
+nothing to hold on to; the name, the gain and the bill are all the same
+12px caps, so what a row *is* and what it *costs* look like the same kind of
+fact; and the gain line is a private code (`HOLD 8 → 9 ■`) whose verb only
+restates the name. Rows in a shared table (the shape before 2026-09-07)
+are more scannable and just as lame: they present the data and nothing
+else, and this game is a place. The owner's word was *charm*, and the
+version that had it was the one where the board looked like the thing it
+is named for.
+
+### The rule
+
+**A board is shelves. A section is a plank; what it sells stands on the
+plank as a small pixel object with its name, what it gives and its price
+tag under it.** The ground behind the planks is the held sheet's own dot
+tile (`.scrim` in style.css: one pixel in six) at half its ink, so the
+sheet and the boards share one texture and it sits on the cell grid.
+
+The tile, top to bottom, at fixed steps so a shelf reads as one line of
+objects and one line of tags:
+
+```
+        [glyph]          24px, the object, centered on its ink
+        NAME             one line, caps, .85em
+        what it gives    one line, dim, .85em -- the number alone, no verb
+       [■ 240  ◴ 5]      the tag: bill and clock in one box
+  ══════════════════════ the plank
+```
+
+- **Every item is one slot** (`SHELF_SLOT`, 140px); five to a plank on the
+  bench's sheet; a section with more wraps to a second plank. A bill of three
+  or more coins wraps inside its tag two coins a line -- the tag grows a
+  line, the slot does not.
+- **The glyph is the rung marker.** No pips. The glyph is black; a one-pixel
+  stroke around its outside (holes stay white) wears the color of the deepest
+  coin on the *next* rung's bill -- nothing for dust, the farm's green for
+  crops, the quarry's blue for ore, spark red -- and a climbed ladder's glyph
+  is grey. Four rungs a ladder, one a coin, so the color is the rung. The
+  machines' and the tower's endless spark ladders read red for good; a count
+  in the tag (`×4`) says how far, and that is the one thing the pips did
+  that this does not.
+- **The tag is one box at the board's own type size**: 12px, 9px marks, an
+  18px box with a 16px line. It never scales the type without the marks --
+  the pair is one unit at one size (the 0.8em tag put a 9px mark against a
+  7px cap and everything sat on a half pixel). The clock is a cell of the
+  same box, dimmed by color, not opacity, so its border matches.
+- **A name is one line.** A name that wraps is a name to shorten (`build the
+  closet`, `build the scrubber`); the card rule already said so.
+- **The gain line is one line, the number alone**: `1 → 3 ■`, `+45%`. The
+  verb goes; the name is the verb. A shelf on which nothing has a gain drops
+  the line; a shelf where some do keeps it on all, so tags stay level.
+- **Descriptions** move to the board's own tip on hover; the goal card keeps
+  its sentence, because it is a card lying across the shelf -- glyph left,
+  name over its sentence, tag beside them -- and the one row that is a
+  story. Its section has no heading; the card is the heading.
+- **The section sign** is the black-on-white heading inverted to a black
+  plate, sitting just above its plank's first row of objects.
+- **Everything centers on ink**, measured, not on its box: a glyph on its
+  drawn cells, the tag on the pair's outer edges. `SHELF_STEP` (5px) between
+  the four rows; `SHELF_TOP` (8px) from the sign; `SHELF_FOOT` (8px) to the
+  plank.
+
+### The glyphs
+
+The heart of it and the cost of it: about thirty small sprites, in the
+yard's own alphabet (`'#'` rows in sprites.js), eight cells square, drawn at
+three screen pixels a cell. A glyph is the **object**, never the effect: a
+sack for carry, the hat the kit sells, a machine's own `MACHINE_MARK`, a
+crate with the station's silhouette for a build, the shield's own shape for
+a shield. They are drawn as a batch against the shelf on the bench page,
+where a glyph at its worst neighbor is a five-second shot. Placeholders
+until then are a bug with a name on it.
+
+### What it is not
+
+- Not a skill tree. No lines between items, no branching, no unlock arrows.
+- Not a change to what a row is: the same `UPGRADES`, the same `bill`,
+  `gain`, `rung`, the same `buy`. The shelf is a second renderer over the
+  rows, built beside the card builder and swapped in when it is right, so
+  the boards' checks about *words* (`test/boards.test.mjs`,
+  `selftest/boards.js`) keep meaning what they mean.
+- Not a new number in a module: every step is a constant in `config/boards.js`.
+
+### How it is checked
+
+A shelf bench, `shelf.html`, beside `cards.html`: the bench's real rows,
+every one forced on, drawn by the shelf builder alone. A browser check
+(`src/selftest/shelf.js`) measures, for every tile, the center of the
+glyph's ink, of the name, and of the tag's outer edges against the tile's
+center, and fails past half a pixel -- the 5.5px the mock carried for four
+rounds is exactly the class of defect no eye reliably catches and a Range
+measures in one line. A second check says every tag on a shelf shares one
+top edge.

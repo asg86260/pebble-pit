@@ -1,5 +1,17 @@
 # Still to do
 
+## The shelf: a board is things on planks (design, not built) (2026-09-14)
+
+"The shelf" at the end of DESIGN.md. Every board becomes shelves: a section
+is a plank, an item is a pixel object with name, gain and one price tag
+under it; the glyph's one-pixel stroke in the next rung's coin replaces the
+pips; descriptions go to the hover tip. Built first as `shelf.html`, a
+bench beside `cards.html`, with a browser check that measures every tile's
+centering. The glyphs -- about thirty, in the sprite alphabet -- are the
+real cost and are drawn as a batch against that bench. Blocker: the design
+wants sign-off, and the glyphs want drawing before it can replace the
+cards.
+
 ## A rung is a step up, not a step along -- BUILT (2026-09-14)
 
 "A rung is a step up, not a step along" at the end of DESIGN.md, with an
