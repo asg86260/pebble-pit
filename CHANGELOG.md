@@ -36,6 +36,8 @@ feature lives in DESIGN.md.
 
 - A tile's title and its price keep clear of the pips down its edge, instead of running under them (src/selftest/boards.js, "nothing on a shelf tile runs under its pips").
 
+- A tile's name that is wider than the slot folds to a second line instead of being cut off with an ellipsis, and the tiles beside it keep level with it (src/selftest/boards.js, "a long name on a shelf tile wraps").
+
 - On a phone, one finger on the sky or the bare ground drags the view along; a finger on the dust still sweeps it (src/selftest/view.js, "one finger drags the view").
 
 - The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).

@@ -1789,6 +1789,39 @@ export const TESTS = [
     ];
   }],
 
+  // A name wider than its slot folds to a second line instead of being clipped
+  // with an ellipsis, and the plank's rows are shared: every tile beside it
+  // drops its gain and its tag by the same line, so the tags stay level.
+  ['a long name on a shelf tile wraps, and its neighbors keep level with it', async () => {
+    newRun();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    // The farm stands and its crop has been seen: the apothecary's door is on
+    // the bench, and "build the apothecary" is wider than a slot.
+    window.__crew(3, 3, 5, 7);
+    window.__buy('unlockfarm'); window.__finish();
+    state().seenSpore = true;
+    run(1);
+    window.__board('bench');
+    await settle(1);
+    const tiles = [...document.querySelectorAll('#panel .rows.shelves button.tile:not(.goal)')];
+    const lines = t => { const r = document.createRange(); r.selectNodeContents(t.querySelector('.what')); return r.getClientRects().length; };
+    const long = tiles.find(t => lines(t) > 1);
+    const what = long?.querySelector('.what');
+    const top = e => Math.round(e.getBoundingClientRect().top);
+    // ...its plankmates: the tiles that start on its line
+    const mates = long ? tiles.filter(t => top(t) === top(long) && t !== long) : [];
+    const tagTops = new Set([long, ...mates].filter(Boolean).map(t => top(t.querySelector('.tag'))));
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(!!long, 'a name on the bench takes two lines', long ? what.textContent : 'none'),
+      ok(!!what && what.scrollWidth <= what.clientWidth + 1, 'and none of it is clipped', what ? `${what.scrollWidth} in ${what.clientWidth}` : 'none'),
+      ok(mates.length > 0 && tagTops.size === 1, 'and every tag on its plank sits on one line', `${mates.length} mates, tag tops ${[...tagTops].join('/')}`),
+    ];
+  }],
+
   // The pin: one card in the top-right corner, chosen by its pushpin, drawn
   // by the same builder as the board's, buying when pressed and coming down
   // when the row retires. The shield on offer pins itself while it is news,

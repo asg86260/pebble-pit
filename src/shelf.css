@@ -106,9 +106,13 @@
 .rows.shelves > .sect .badge { margin-left: 8px; color: #000; background: #fff; }
 .rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank, 5px) solid #000; }
 
-/* A tile: four rows at fixed steps, everything centered on the tile's own
-   center line. Sized, not measured, so every tile on a plank has its glyph on
-   one line, its name on one line and its tag on one line. */
+/* A tile: four rows -- picture, name, gain, tag -- everything centered on
+   the tile's own center line. The rows are the plank's, not the tile's: a
+   tile spans four of the shelf's rows and subgrids them, so every tile on a
+   plank shares one set of tracks and a name that takes two lines lowers the
+   gain and the tag of every tile beside it by the same line. A tile of its
+   own with fixed steps kept its neighbors aligned only while a name was one
+   line, and a name too long for the slot was clipped for it. */
 .rows.shelves > .tile {
   position: relative;
   display: grid;
@@ -116,11 +120,11 @@
      and a picker's control is pinned to that second column; on a plank the
      card is a stack, so both go down the tile's one column. */
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 24px 13px 13px auto;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
   row-gap: var(--shelf-step, 5px);
   justify-items: center;
   align-items: center;
-  align-content: start;
   box-sizing: border-box;
   width: var(--shelf-slot, 140px);
   /* The sides are the pips' column: the ladder stands down the right edge
@@ -161,9 +165,11 @@
   display: block;
   min-width: 0;
   max-width: 100%;
+  /* A name wider than the slot folds at a space; the plank's rows take the
+     line (see `.tile`). A word wider than the slot on its own -- none is --
+     would still be clipped, not broken. */
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-style: normal;
   font-size: .85em;
   line-height: 13px;
@@ -214,6 +220,9 @@
    clock is a cell of the same box, dimmed by color so its border matches. */
 .rows.shelves > .tile .tag {
   grid-row: 4;
+  /* Hung from the gain line: the row is the plank's, as tall as the tallest
+     tag on it, and a one-line tag floated in the middle of a three-line row. */
+  align-self: start;
   display: inline-grid;
   grid-auto-flow: column;
   /* The two cells are the same height and center what they hold, and the
@@ -403,6 +412,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    picker, standing where the tag would. */
 .rows.shelves > .tile .step, .rows.shelves > .tile .chosen {
   grid-row: 4;
+  align-self: start;
   display: inline-grid;
   grid-auto-flow: column;
   align-items: center;
@@ -441,6 +451,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    sentence. The one row that is a story, so it keeps its words. */
 .rows.shelves > .tile.goal {
   grid-column: 1 / -1;
+  grid-row: auto;
   grid-template-columns: 40px 1fr auto;
   grid-template-rows: auto auto;
   width: auto;
