@@ -54,13 +54,12 @@ export const GLYPHS = {
 // The badges: SHELF_BADGE_CELLS square at SHELF_BADGE_CELL px a cell -- a
 // finer grid than the drawing's, so a mark a third the drawing's size still
 // has a shape -- in the top-right corner, saying what is being done to the
-// object: more of it (another one, or a machine tuned up -- one mark for
-// both, the owner's call), a spell on it, a tonic of it, or which coin it
-// is about (docs/glyphs.md, "borrow the object, badge the how").
+// object: more of it (another one, a machine tuned up, or a tonic of it --
+// one mark for all three, the owner's call), a spell on it, or which coin
+// it is about (docs/glyphs.md, "borrow the object, badge the how").
 export const BADGES = {
   plus:   ['..#..', '..#..', '#####', '..#..', '..#..'],
   star:   ['..#..', '.#.#.', '.....', '..#..', '.#.#.'],
-  vial:   ['..#..', '..#..', '..#..', '.###.', '.###.'],
   dust:   ['#####', '#####', '#####', '#####', '#####'],
   crop:   ['..#..', '.###.', '#####', '.###.', '..#..'],
   ore:    ['..#..', '..#..', '.###.', '.###.', '#####'],
@@ -101,10 +100,10 @@ export const GLYPH_OF = {
   // the farm
   farmplot: ['furrow', 'plus'], crop: ['ear'], tend: ['hoe'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
   // the apothecary
-  potkeep: ['pot'], potprefer: ['pot', 'vial'], anotherpot: ['pot', 'plus'],
-  bufflength: ['vial'], brewdoses: ['vial', 'plus'],
-  'potency-stew': ['bowl', 'vial'], 'potency-brace': ['spark', 'vial'], 'potency-strong': ['sack', 'vial'],
-  'potency-swift': ['boot', 'vial'], 'potency-gleam': ['star', 'vial'],
+  potkeep: ['pot'], potprefer: ['pot', 'plus'], anotherpot: ['pot', 'plus'],
+  bufflength: ['plus'], brewdoses: ['vial', 'plus'],
+  'potency-stew': ['bowl', 'plus'], 'potency-brace': ['spark', 'plus'], 'potency-strong': ['sack', 'plus'],
+  'potency-swift': ['boot', 'plus'], 'potency-gleam': ['star', 'plus'],
   // the tower
   wizard: ['point'], wizspeed: ['wand'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],

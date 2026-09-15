@@ -14,14 +14,14 @@ are a ledger and want none. Sixty-one rows.
 
 A row borrows the glyph of the thing it is *about*, and a **badge** -- a
 five-by-five mark in the top-right corner -- says what is being done
-to it. So "tune the ram" and "another pot" are the ram and the pot with a
-plus (more of it, either way), "strong brew" is the sack (carry) with a vial, "enrich the
+to it. So "tune the ram", "another pot" and "strong brew" are the ram, the
+pot and the sack (carry) with a plus (more of it, any way), "enrich the
 quarry" is the ore lump with a star. One drawing serves a family, the
 family reads as one, and a player who knows the sack knows every row that
 is about carrying. (The owner's call, 2026-09-14: reuse as far as it goes.)
 
-Seven badges: **plus** (more of it: another one, or a machine tuned up --
-one mark for both), **star** (a spell), **vial** (a tonic), and the four
+Six badges: **plus** (more of it: another one, a machine tuned up, or a
+tonic of it -- one mark for all three), **star** (a spell), and the four
 coins -- **dust** square, **crop** hexagon, **ore** triangle, **spark**
 cross. A drawing may carry its own plus in the corner instead (the cap,
 the shovel), and then the row takes no badge.
@@ -33,12 +33,12 @@ cells wide); those are redrawn at eight, the shape settled.
 
 | drawing         | rows                                                                                   |
 |-----------------|----------------------------------------------------------------------------------------|
-| sack            | `carry`, `haulcarry`, `potency-strong` +vial, `bank` +dust                              |
+| sack            | `carry`, `haulcarry`, `potency-strong` +plus, `bank` +dust                              |
 | pick head       | `pick`, `rockhandpick`                                                                 |
 | pick mid-swing  | `speed`, `rockhandspeed`, `quarrypace`                                                 |
-| spark (4-point) | `critchance`, `potency-brace` +vial                                                    |
+| spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
-| boot            | `haulpace`, `potency-swift` +vial                                                      |
+| boot            | `haulpace`, `potency-swift` +plus                                                      |
 | lever           | `auto`                                                                                 |
 | cart            | `carter`                                                                               |
 | belt            | `belt`, `tunebelt` +plus                                                             |
@@ -54,7 +54,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | door            | `crewlist`                                                                             |
 | hoist frame     | `unlockquarry`                                                                         |
 | furrow + sprout | `unlockfarm`, `farmplot` +plus                                                         |
-| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +vial                   |
+| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +plus                   |
 | die             | `unlockcasino`, `ride`                                                                 |
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
@@ -67,8 +67,8 @@ cells wide); those are redrawn at eight, the shape settled.
 | ear of crop     | `crop`                                                                                 |
 | hoe             | `tend`                                                                                 |
 | vial            | `bufflength`, `brewdoses` +plus                                                        |
-| bowl            | `potency-stew` +vial                                                                   |
-| star (5-point)  | `potency-gleam` +vial                                                                  |
+| bowl            | `potency-stew` +plus                                                                   |
+| star (5-point)  | `potency-gleam` +plus                                                                  |
 | wand            | `wizspeed`                                                                             |
 | bolt            | `wizpower`                                                                             |
 | dome arc        | `dome`                                                                                 |
