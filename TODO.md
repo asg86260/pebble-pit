@@ -22,6 +22,9 @@ centering. The glyphs -- about thirty, in the sprite alphabet -- are the
 real cost and are drawn as a batch against that bench. Blocker: the design
 wants sign-off, and the glyphs want drawing before it can replace the
 cards.
+Placement stays the popover for now (owner, 2026-09-14): a bottom drawer
+with the sections as tabs, one plank tall, was mocked over the live yard
+(`shots/drawer-A2.png`) and is the fallback if the popover proves too big.
 >>>>>>> main
 
 ## A rung is a step up, not a step along -- BUILT (2026-09-14)
