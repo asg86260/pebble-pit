@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H,
-         SHELF_SLOT, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS } from './config.js';
+         SHELF_SLOT, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
 import { S, bench, lab, apothecary, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -456,6 +456,12 @@ function place(el, at) {
     else x = Math.max(GAP, S.W - GAP - listW - w);
   }
   crewListEl.classList.toggle('port', port);
+  // And when even that is not enough -- a window narrower than the board and
+  // the list together, which a five-slot shelf on a small window is -- the
+  // list slides back over the board's edge by the rest, because a list you
+  // can read over a corner of the board beats a list off the glass.
+  const over = listW && !port ? Math.max(0, x + w + listW - (S.W - GAP)) : 0;
+  crewListEl.style.marginLeft = over ? `${-over}px` : '';
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
 
@@ -858,7 +864,24 @@ const LINGER = 130;                    // and how long the moment is
 // row below, and the names stayed out beside a board that was no longer about
 // them. Hovering anything is an answer to "which row am I reading", and only one
 // row can be the answer.
-export const closeSubmenu = () => showCrewList(false);
+//
+// But not on the spot. The list stands beside the board, and the row next to
+// the door is between the door and the list: a pointer heading for the names
+// crosses it, and a close that fired on the crossing made the list impossible
+// to reach -- the submenu that shuts because you went to read it. So a row
+// that leads nowhere asks the list to go, and the list goes a moment later
+// unless the pointer has left the row again by then (`keepSubmenu`, off the
+// row's pointerleave and the list's own pointerenter). The same bargain as
+// LINGER, for the same reason: a journey is not decided in the frame it
+// starts. Standing on the other row is still an answer, it just takes the
+// grace to become one.
+let folding = 0;
+export function closeSubmenu() {
+  if (folding || !S.crewListOpen) return;
+  folding = setTimeout(() => { folding = 0; showCrewList(false); }, SUBMENU_GRACE_MS);
+}
+export function keepSubmenu() { clearTimeout(folding); folding = 0; }
+crewListEl.addEventListener('pointerenter', keepSubmenu);
 
 export function showCrewList(on) {
   // Only ever out beside the house. Asked for while any other board is up -- or
@@ -868,6 +891,8 @@ export function showCrewList(on) {
   // it puts the board away, so at the moment the board leaves the flag already
   // says "closed" while the list is still standing on the page -- and a check
   // on the flag alone let it stand there into the next run.
+  // Whichever way it is going, it is going now, and no close is still pending.
+  keepSubmenu();
   if (want === S.crewListOpen && crewListEl.hidden === !want) return;
   S.crewListOpen = want;
   crewListEl.hidden = !want;

@@ -16,7 +16,7 @@ if (SHELF_BOARDS) import('./shelf.css').then(() => remeasure());
 import { showTipAt, remeasure } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
-import { closeSubmenu } from './board.js';
+import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
@@ -514,7 +514,14 @@ function build(el, list, sections, empty, heads) {
       // every name in the crew list carried an instruction to close the crew
       // list, and hovering a body to read it shut the sheet it was written on.
       if (u.over) { b.classList.add('door'); b.addEventListener('pointerenter', () => u.over()); }
-      else if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
+      //
+      // And it puts it away by being *stood on*, not crossed: the list stands
+      // beside the board and this row is on the way to it, so the fold waits a
+      // grace and leaving the row inside it is the pointer passing through.
+      else if (!inSubmenu) {
+        b.addEventListener('pointerenter', () => closeSubmenu());
+        b.addEventListener('pointerleave', () => keepSubmenu());
+      }
       // And the corner comes off the card you actually went and looked at.
       // Closing the board used to take every mark on it off at once, on the
       // grounds that the board had been open with the rows on it -- but "it was

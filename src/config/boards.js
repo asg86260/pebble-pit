@@ -94,6 +94,7 @@ export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six
 export const SHELF_HOVER_MS = 120;  // the plate and the lift easing in under the cursor
 export const SHELF_FLOAT_MS = 2400; // one turn of a lifted tile's drift, a one-pixel circle in eight stops
+export const SUBMENU_GRACE_MS = 220; // how long a row you crossed on the way to the crew list waits before folding it
 export const SHELF_FLOAT_SPREAD = 0.35; // how far a tile's own rate strays from that, either way
 export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor at the tile's edge
 // What the stroke round a glyph is painted in: the deepest coin on the next

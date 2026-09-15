@@ -144,13 +144,22 @@ export const TESTS = [
     // any other row on the same board -- the one that buys another house
     const other = [...document.querySelectorAll('#crewshop button')]
       .find(b => b !== door && b.offsetParent !== null);
-    if (other) {
-      const r = other.getBoundingClientRect();
-      other.dispatchEvent(new PointerEvent('pointerenter',
+    const enter = (el, type = 'pointerenter') => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new PointerEvent(type,
         { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
-      await raf();
-      await raf();
-    }
+    };
+    const leave = el => enter(el, 'pointerleave');
+    // Crossed on the way to the list: the row is between the door and the
+    // names, so the pointer passes over it and lands on the list inside the
+    // grace, and the list must still be there when it arrives.
+    if (other) { enter(other); await raf(); leave(other); enter(list); }
+    await sleep(320);                      // past SUBMENU_GRACE_MS
+    const crossed = state().crewListOpen;
+    // Stood on, and stayed on: that is reading the other row.
+    if (other) { enter(other); await raf(); await raf(); }
+    const atOnce = state().crewListOpen;   // not yet -- the grace has not run
+    await sleep(320);
     const after = state().crewListOpen;
 
     // and back on the door it comes out again, so this is a change of mind
@@ -162,7 +171,8 @@ export const TESTS = [
     return [
       ok(wasOut, 'hovering the door opens the list'),
       ok(!!other, 'there is another row on the board to read'),
-      ok(!after, 'and reading another row folds it away', `${after}`),
+      ok(crossed, 'crossing that row on the way to the list does not fold it', `${crossed}`),
+      ok(atOnce && !after, 'and standing on it does, a moment later', `${atOnce} -> ${after}`),
       ok(again, 'and going back to the door brings it out again', `${again}`)
     ];
   }],
@@ -476,14 +486,18 @@ export const TESTS = [
     const listed = list.getBoundingClientRect();
     const doorAt = door.getBoundingClientRect();
     const gap = 8;
-    const right = Math.abs(listed.left - (panelAfter.right + gap)) < 1;
+    const shortfall = Math.max(0, panelBefore.right + gap + listed.width + 4 - innerWidth);
+    const gave = panelBefore.left - panelAfter.left;
+    // all the ground the board has to give is what stands between it and the
+    // window's edge; past that the list itself comes back over the board
+    const canGive = Math.min(shortfall, panelBefore.left - 4);
+    const right = Math.abs(listed.left - (panelAfter.right + gap)) < 1 ||
+                  (shortfall > canGive && Math.abs(listed.right - (innerWidth - 4)) < 1);
     const left = Math.abs(listed.right - (panelAfter.left - gap)) < 1;
     const beside = (right || left) && Math.abs(listed.bottom - after.bottom) < 1;
     const inside = listed.left >= 0 && listed.right <= innerWidth;
-    const shortfall = Math.max(0, panelBefore.right + gap + listed.width + 4 - innerWidth);
-    const gave = panelBefore.left - panelAfter.left;
     const still = Math.abs(after.bottom - before.bottom) < 1 &&
-                  (shortfall === 0 ? Math.abs(gave) < 1 : Math.abs(gave - shortfall) < 1);
+                  (shortfall === 0 ? Math.abs(gave) < 1 : Math.abs(gave - canGive) < 1);
     // a slot, or a card plus the sheet's border and padding on either side,
     // which is the board's width less what its rows take
     const sheetAir = after.width - document.getElementById('crewshop').getBoundingClientRect().width;
