@@ -52,10 +52,10 @@ export const GLYPHS = {
 // The badges: SHELF_BADGE_CELLS square at SHELF_BADGE_CELL px a cell -- a
 // finer grid than the drawing's, so a mark a third the drawing's size still
 // has a shape -- in the top-right corner, saying what is being done to the
-// object: tune it, another of it, a spell on it, a tonic of it, or which
-// coin it is about (docs/glyphs.md, "borrow the object, badge the how").
+// object: more of it (another one, or a machine tuned up -- one mark for
+// both, the owner's call), a spell on it, a tonic of it, or which coin it
+// is about (docs/glyphs.md, "borrow the object, badge the how").
 export const BADGES = {
-  wrench: ['##..#', '##..#', '#####', '..#..', '..#..'],
   plus:   ['..#..', '..#..', '#####', '..#..', '..#..'],
   star:   ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
   vial:   ['..#..', '..#..', '..#..', '.###.', '.###.'],
@@ -87,17 +87,17 @@ export const GLYPH_OF = {
   props: ['planks'], net: ['net'], arch: ['arch'], askwizards: ['point'],
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
   critchance: ['spark'], critmult: ['cracked'],
-  haulcarry: ['sack'], haulpace: ['boot'], carter: ['cart'], belt: ['belt'], tunebelt: ['belt', 'wrench'],
+  haulcarry: ['sack'], haulpace: ['boot'], carter: ['cart'], belt: ['belt'], tunebelt: ['belt', 'plus'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockscrub: ['fan'],
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap'],           // the cap is drawn with its plus
   // the shack
-  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'wrench'],
+  rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],
   // the quarry
-  quarrybench: ['shovel'], seam: ['ore'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'wrench'],   // the shovel is drawn with its plus
+  quarrybench: ['shovel'], seam: ['ore'], quarrypace: ['swing'], jaw: ['jaw'], tunejaw: ['jaw', 'plus'],   // the shovel is drawn with its plus
   // the farm
-  farmplot: ['furrow', 'plus'], crop: ['ear'], tend: ['hoe'], tiller: ['tiller'], tunetiller: ['tiller', 'wrench'],
+  farmplot: ['furrow', 'plus'], crop: ['ear'], tend: ['hoe'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
   // the apothecary
   potkeep: ['pot'], potprefer: ['pot', 'vial'], anotherpot: ['pot', 'plus'],
   bufflength: ['vial'], brewdoses: ['vial', 'plus'],

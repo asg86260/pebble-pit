@@ -20,9 +20,11 @@ quarry" is the ore lump with a star. One drawing serves a family, the
 family reads as one, and a player who knows the sack knows every row that
 is about carrying. (The owner's call, 2026-09-14: reuse as far as it goes.)
 
-Eight badges: **wrench** (tune), **plus** (another), **star** (a spell),
-**vial** (a tonic), and the four coins -- **dust** square, **crop** hexagon,
-**ore** triangle, **spark** cross.
+Seven badges: **plus** (more of it: another one, or a machine tuned up --
+one mark for both), **star** (a spell), **vial** (a tonic), and the four
+coins -- **dust** square, **crop** hexagon, **ore** triangle, **spark**
+cross. A drawing may carry its own plus in the corner instead (the cap,
+the shovel), and then the row takes no badge.
 
 ## The drawings, and every row each one serves
 
@@ -39,10 +41,10 @@ cells wide); those are redrawn at eight, the shape settled.
 | boot            | `haulpace`, `potency-swift` +vial                                                      |
 | lever           | `auto`                                                                                 |
 | cart            | `carter`                                                                               |
-| belt            | `belt`, `tunebelt` +wrench                                                             |
-| ram *           | `ram`, `tuneram` +wrench, `spelldrive` +star                                           |
-| jaw *           | `jaw`, `tunejaw` +wrench                                                               |
-| tiller *        | `tiller`, `tunetiller` +wrench                                                         |
+| belt            | `belt`, `tunebelt` +plus                                                             |
+| ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
+| jaw *           | `jaw`, `tunejaw` +plus                                                               |
+| tiller *        | `tiller`, `tunetiller` +plus                                                         |
 | helmet *        | `breaker`                                                                              |
 | lamp hat *      | `blaster`                                                                              |
 | brim hat *      | `grower`                                                                               |
