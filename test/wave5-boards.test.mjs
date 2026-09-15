@@ -109,7 +109,7 @@ group('a purchase does not read as the yard running backwards', async () => {
 // And what the board itself prints, through the board: the row is built by the
 // same builder every other row goes through, and what it says is read back off
 // the sheet rather than off the function behind it.
-group('the books board prints a rate with a clock on it', async () => {
+group('the books board prints a rate as a mark and a number under a heading that says a second', async () => {
   window.__reset();
   window.__crew(3, 3);
   run(40);
@@ -118,16 +118,22 @@ group('the books board prints a rate with a clock on it', async () => {
   hud();
   const rows = [...document.getElementById('statsshop').children];
   const dust = rows.find(r => r.dataset.key === 'ratedust');
-  // The clock rides the price cell -- a rate is "n a clock" -- not the card's
-  // own time cell, which is for how long a build takes.
+  // The rate rides the price cell as a mark and a number. "A second" is the
+  // heading's word, said once over the rates rather than as a clock on every
+  // line -- the books are a ledger (DESIGN.md, "The shelf", the books). The
+  // browser twin of this check is in src/selftest/boards.js.
   const cost = dust && dust.querySelector('.cost');
   const said = cost ? cost.innerHTML : '';
+  // (Off the board's own children: the node yard's DOM knows `.cls` selectors
+  // and nothing else.)
+  const heading = rows.filter(r => r.dataset.sect).map(r => r.dataset.sect).join(' | ');
   showPanel(null, true);
 
   return [
     ok(state().statsBoardOpen === false, 'the board closes again when asked'),
     ok(!!dust, 'the books draw a row for dust', rows.map(r => r.dataset.key).join(',')),
-    ok(said.includes('class="clock"'), 'and it says its rate over a clock', said),
+    ok(/class="dust"/.test(said) && /\d/.test(said) && !/class="clock"/.test(said), 'and it says its rate as a mark and a number', said),
+    ok(/a second/.test(heading), 'and the heading says the rate is a second', heading),
     ok(!/\/s(\b|<|$)/.test(said), 'and never over the letter s', said)
   ];
 });
