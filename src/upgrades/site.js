@@ -1,6 +1,7 @@
 import { UNLOCK_SHOW } from '../config.js';
 import { S } from '../state.js';
 import { lookAt } from '../world.js';
+import { assign, rebalance } from '../upgrades.js';
 
 // The shape every "open a place" row on the bench is cut from. It lives here
 // rather than in upgrades.js because the rows files build a site the moment they
@@ -16,7 +17,7 @@ import { lookAt } from '../world.js';
 // A place costs a core *and* dust. The core is what says this is a place rather
 // than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
 // the rock worth digging after it, which every bill above tier one does.
-export const site = ({ key, name, note, cores, dust, more, open, at, once, show, then }) => ({
+export const site = ({ key, name, note, cores, dust, more, open, at, once, show, job, then }) => ({
   key, name,
   // The line of words under the card. Every door writes one; this used to leave
   // it behind, so three of the doors wrote a note nobody ever read.
@@ -28,15 +29,35 @@ export const site = ({ key, name, note, cores, dust, more, open, at, once, show,
   // the lab takes a handful of spores, because it multiplies the grounds and
   // should cost a taste of one.
   bill: () => [['core', cores], ['dust', dust], ...(more || [])],
-  // `then` is anything else the door does the moment it opens -- the quarry
-  // sends its first body over, so the place is never bought and then dead.
-  buy: () => { S[open] = true; lookAt(at()); if (then) then(); },
+  // `job` is the trade worked there, and the door opens with one spare body
+  // already sent over -- see `staffDoor`. `then` is anything else the door
+  // does the moment it opens.
+  buy: () => { S[open] = true; lookAt(at()); if (job) staffDoor(job); if (then) then(); },
   // `once` is the door's reveal, and it is optional: a door with none is
   // revealed by `show` alone. See `revealed` in shop.js -- a condition that can
   // stop being true belongs here, so the door does not come off the board again.
   once,
   show
 });
+
+// A place opens with one spare body already sent over -- through the same
+// `assign` the board's + button uses, so it walks there like anybody retrained
+// and stays where it is put. The quarry alone used to do this and every other
+// place was bought and then stood empty, which read as a purchase that did
+// nothing. Nobody idle, or no room yet, and nothing moves: `assign` says no
+// the same way the button does.
+//
+// The loan is paid back first. A door is a build, and a build with nobody
+// spare borrows the nearest body off its station (`rebalance`); on the frame
+// the door lands that body is still out on loan, off its count, and so reads
+// as idle. Asked then, `assign` would hand the yard's one rockhand to the new
+// place -- the yard overruling the roster, which is the one thing staffing
+// must never do. `rebalance` with the work gone gives it back, and only what
+// is genuinely idle after that is asked for.
+export function staffDoor(job) {
+  rebalance();
+  assign(job, 1);
+}
 
 // A door is shown once you are within reach of affording it. Nothing here is
 // revealed by a counter passing a mark nobody can see -- and a price you have no

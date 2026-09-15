@@ -1,4 +1,5 @@
 import { FARM_CORES, FARM_DUST } from '../config.js';
+import { JOB } from '../jobs.js';
 import { S, farm } from '../state.js';
 import { nearly, seenACore, site } from './site.js';
 import { shieldOpened } from '../shield.js';
@@ -6,7 +7,7 @@ import { shieldOpened } from '../shield.js';
 const FARM = site({
   key: 'unlockfarm', name: 'build the farm',
   note: () => 'plots worked for crops, the green coin: tonics and the cut\'s benches are paid in them',
-  cores: FARM_CORES, dust: FARM_DUST, open: 'farmOpen',
+  cores: FARM_CORES, dust: FARM_DUST, open: 'farmOpen', job: JOB.FARM,
   at: () => farm.x + farm.w / 2,                   // show them what they just bought
   // Revealed once you have been within reach of the price, and then it stays:
   // `nearly` reads the dust in the hole, so before this was split the door came

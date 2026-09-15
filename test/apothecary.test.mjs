@@ -60,6 +60,9 @@ group('and it will not open before the farm does', async () => {
 // --- a pot needs a body -------------------------------------------------------
 group('a set pot brews nothing until a stirrer is at it', async () => {
   standApothecary();
+  // The door sends one spare body over as it opens (test/door-staffs.test.mjs);
+  // an empty pot is the subject here, so take it off again.
+  window.__assign('stirrers', -1);
   window.__pot('stew');                         // set the pot, keep brewing
   run(90);
   const idle = doseHeld();

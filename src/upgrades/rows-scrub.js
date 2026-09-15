@@ -1,6 +1,8 @@
 import { MACHINES, running } from '../machines.js';
 import { scrubCost } from '../scrubhouse.js';
+import { JOB } from '../jobs.js';
 import { S, scrub } from '../state.js';
+import { staffDoor } from './site.js';
 import { lookAt, refreshPiles } from '../world.js';
 
 // The bench's scrub rows. Data only: upgrades.js strings the files together
@@ -18,7 +20,8 @@ export const SCRUB_ROWS = [
     cost: () => scrubCost(),
     // and the ground under its spout becomes a station's strip the moment it is
     // up: what the house makes has to have somewhere of its own to heap.
-    buy: () => { S.scrubOpen = true; refreshPiles(); lookAt(scrub.x + scrub.w / 2); },
+    // ...and one spare body walks in, the way every door sends one (see `staffDoor`).
+    buy: () => { S.scrubOpen = true; refreshPiles(); lookAt(scrub.x + scrub.w / 2); staffDoor(JOB.PURIFY); },
     // Offered after the first rain, and after the lab has been told to watch the
     // sky. Two things have to have happened, in that order, and neither of them
     // is a threshold quietly passing somewhere.

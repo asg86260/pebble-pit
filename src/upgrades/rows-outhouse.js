@@ -1,5 +1,7 @@
 import { LOO_MUCK, OUTHOUSE_DUST } from '../config.js';
+import { JOB } from '../jobs.js';
 import { S, outhouse } from '../state.js';
+import { staffDoor } from './site.js';
 import { poopLeft } from '../smog.js';
 import { lookAt } from '../world.js';
 
@@ -22,7 +24,8 @@ export const OUTHOUSE_ROWS = [
     name: "build the janitor's closet",
     note: () => 'you\'ve seen enough poop, lets clean it up.',
     cost: () => OUTHOUSE_DUST,
-    buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },
+    // ...and one spare body picks up a cap, the way every door sends one (see `staffDoor`).
+    buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); staffDoor(JOB.JANITOR); },
     // Offered once you have seen why you want one -- which is a thing you can
     // point at rather than a guess about how far along you are.
     //

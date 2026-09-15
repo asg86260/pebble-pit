@@ -1,4 +1,5 @@
 import { APOTHECARY_CORES, APOTHECARY_DUST, APOTH_HUT_W } from '../config.js';
+import { JOB } from '../jobs.js';
 import { S, apothecary } from '../state.js';
 import { site } from './site.js';
 
@@ -13,7 +14,7 @@ export const APOTHECARY_ROWS = [
   site({
     key: 'unlockapothecary', name: 'build the apothecary',
     note: () => 'brew temporary boosts for your sqworkers',
-    cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen',
+    cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen', job: JOB.STIR,
     // Built at the hut, not at the middle of the plot. The building is the hut;
     // the shelves and the row of pots to its right are what the hut goes on to
     // fill, and the middle of all that is bare ground with nothing standing on

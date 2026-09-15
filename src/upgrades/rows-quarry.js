@@ -1,7 +1,6 @@
 import { QUARRY_CORES, QUARRY_DUST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { S, quarry } from '../state.js';
-import { assign } from '../upgrades.js';
 import { site } from './site.js';
 import { shieldOpened } from '../shield.js';
 
@@ -23,10 +22,7 @@ const CAVE = site({
   // needs the farm, so the plots still come first. With the shields not
   // doors (SHIELD_GATES) a core seen is the gate, as at the tower.
   show: () => shieldOpened('net') && S.seenCore && !S.quarryOpen,
-  // The cut opens with one body already sent over -- through the same assign
-  // the board's + button uses, so it walks there like anybody retrained. A
-  // quarry bought and then standing empty read as a purchase that did nothing.
-  then: () => assign(JOB.QUARRY, 1)
+  job: JOB.QUARRY
 });
 
 // The bench's quarry rows. Data only: upgrades.js strings the files together
