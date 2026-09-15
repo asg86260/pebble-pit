@@ -11,7 +11,7 @@ Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
 saved, so a body sent to pick it up after a refresh finds nothing there --
 save it as a fact of the yard, the way a loose core is.
 =======
-## The shelf: a board is things on planks -- BUILT, dev only (2026-09-14)
+## The shelf: a board is things on planks -- BUILT, dev only, behind `?shelf` (2026-09-14)
 
 "The shelf" at the end of DESIGN.md. Every board becomes shelves: a section
 is a plank, an item is a pixel object with name, gain and one price tag

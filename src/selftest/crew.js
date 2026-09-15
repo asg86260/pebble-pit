@@ -200,7 +200,8 @@ export const TESTS = [
       // which was the only bill in the game that did and the one row you had to
       // study rather than read -- and it argued with the row's own note, which
       // says a core is what this is for.
-      ok(marks && marks.join() === 'core,dust',
+      // A set, not an order: bills are drawn in the yard's coin order, dust first.
+      ok(marks && [...marks].sort().join() === 'core,dust',
          'priced in a core and dust', String(marks)),
       ok(built.towerOpen, 'buying it puts it up'),
       ok(built.cores === cores0 - 1 && built.shards === 2000 && built.spores === 2000,

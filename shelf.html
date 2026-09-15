@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>shelf</title>
+<!-- The builder draws shelves only when the page asks (`?shelf`, see
+     SHELF_BOARDS), and this page is the ask: it sends itself there before
+     the modules load. -->
+<script>if (!new URLSearchParams(location.search).has('shelf')) location.replace(location.pathname + '?shelf' + location.hash);</script>
 <link rel="stylesheet" href="/src/style.css">
 <link rel="stylesheet" href="/src/shelf.css">
 <style>

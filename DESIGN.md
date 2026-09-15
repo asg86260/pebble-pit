@@ -9609,7 +9609,7 @@ rounds is exactly the class of defect no eye reliably catches and a Range
 measures in one line. A second check says every tag on a shelf shares one
 top edge.
 
-**As built (2026-09-14, behind `SHELF_BOARDS`, a dev build only).** Not a
+**As built (2026-09-14, behind `SHELF_BOARDS`: a dev build, and `?shelf` on the address -- every dev build drawing shelves put the prototype under eleven card checks).** Not a
 second renderer after all: the shelf is a mode of the card builder itself
 (`build`/`refresh` in shop.js), so dials, job steppers, the crew door, the
 pin, the new-corner and the queue's "building"/"queued" states all came for
