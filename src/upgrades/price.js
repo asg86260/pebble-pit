@@ -41,7 +41,7 @@ export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: D
 // see `coinNeeds`. Kept beside the flag so the two cannot disagree about what
 // a coin's source is.
 const COIN_FROM = {
-  spore: { open: () => !!S.farmOpen,   needs: 'needs plots' },
+  spore: { open: () => !!S.farmOpen,   needs: 'needs crops' },
   shard: { open: () => !!S.quarryOpen, needs: 'needs a quarry' },
   core:  { open: () => !!S.seenCore,   needs: 'needs a core' },
   spark: { open: () => !!S.seenSpark,  needs: 'needs a spark' }

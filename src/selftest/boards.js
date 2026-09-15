@@ -1452,7 +1452,7 @@ export const TESTS = [
     // ...and the words a ladder says while its next rung is priced in a coin
     // the yard has no source for yet (see coinNeeds in upgrades/price.js).
     const SAYS = ['queued up in 9', 'building', 'nobody on it',
-                  'needs plots', 'needs a quarry', 'needs a core', 'needs a spark'];
+                  'needs crops', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
                          'outhouse', 'house']) {

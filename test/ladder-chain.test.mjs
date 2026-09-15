@@ -95,8 +95,8 @@ group("a card waits, still on the board, while its bill names a coin the yard ca
   window.__crew(0, 0);
 
   return [
-    ok(first === TIER_BAND && noPlots && saidPlots === "needs plots",
-       "a card in dust, then the card stays and says it needs plots", first + " rungs, shown " + noPlots + ", says " + saidPlots),
+    ok(first === TIER_BAND && noPlots && saidPlots === "needs crops",
+       "a card in dust, then the card stays and says it needs crops", first + " rungs, shown " + noPlots + ", says " + saidPlots),
     ok(pressed === 0, "and a press with crops in the purse buys nothing", pressed + " bought"),
     ok(withPlots && saidNothing === "" && second === TIER_BAND && noQuarry && saidQuarry === "needs a quarry",
        "a card more in crops, then it says it needs a quarry", second + " rungs, says " + saidQuarry),

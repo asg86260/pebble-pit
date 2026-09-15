@@ -1878,7 +1878,7 @@ card never asks for a coin the yard has no source for (`coinsOpen` in
 upgrades/price.js -- spore is the plots, shard is the cut, spark the sky, core
 the first one banked). A bill in crops on a yard without plots is not a price
 the player can read, so it is not shown: the ladder's card **stays on the
-board, greyed, with "needs plots" where the price was** (`coinNeeds`) until
+board, greyed, with "needs crops" where the price was** (`coinNeeds`) until
 the plots are broken, and then prices its next rung. It stays because the
 card is the whole ladder -- when each band was a card of its own the band-two
 card simply went, and once the bands became one card that same gate took the
