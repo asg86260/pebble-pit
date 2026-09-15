@@ -165,6 +165,10 @@
 .rows.shelves > .tile .gain {
   grid-row: 3;
   white-space: nowrap;
+  /* one line, and never past the tile's edge: a door's blurb is words, not a
+     number, and a long one clipped with an ellipsis is a short one, where
+     one let run wrote itself across the neighbor's tile */
+  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   /* the board's own size: at .85em the effect was the hardest line on the
      tile to read, and it is the one that says what you are buying */
   font-size: 12px;

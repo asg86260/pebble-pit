@@ -15,6 +15,7 @@ export const TOWER_ROWS = [
     kind: 'building', site: 'yard', at: () => tower.x + tower.w / 2,
     name: 'discover the tower',
     note: () => 'train some wizards',
+    blurb: 'wizards live here',
     bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
     // Raising it raises a tower and nothing else. It used to call the first star

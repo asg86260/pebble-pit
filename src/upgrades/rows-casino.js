@@ -11,6 +11,7 @@ export const CASINO_ROWS = [
     kind: 'building', site: 'yard', at: () => casino.x + casino.w / 2,
     name: 'build the casino',
     note: () => 'a table that takes a stake and pays double or nothing',
+    blurb: 'double or nothing',
     cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
     // The yard's "you have invested in this place" beat -- see `invested`.

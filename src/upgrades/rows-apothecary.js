@@ -14,6 +14,7 @@ export const APOTHECARY_ROWS = [
   site({
     key: 'unlockapothecary', name: 'build the apothecary',
     note: () => 'brew temporary boosts for your sqworkers',
+    blurb: 'brews crew tonics',
     cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen', job: JOB.STIR,
     // Built at the hut, not at the middle of the plot. The building is the hut;
     // the shelves and the row of pots to its right are what the hut goes on to

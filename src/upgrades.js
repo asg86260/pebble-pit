@@ -282,6 +282,8 @@ export const gainText = u => {
   // column itself; this is so anything else reading the words agrees with it.
   if (maxed(u)) return '';
   const amount = gainAmount(u);
+  // A door has no amount to print; it says what the place is for instead.
+  if (!amount && u.blurb) return u.blurb;
   return amount && u.does ? `${u.does} ${amount}` : amount;
 };
 const gainAmount = u => {

@@ -14,6 +14,7 @@ import { shieldOpened } from '../shield.js';
 const CAVE = site({
   key: 'unlockquarry', name: 'build the quarry',
   note: () => 'start digging for ore',
+  blurb: 'ore, blue coin',
   cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
   //

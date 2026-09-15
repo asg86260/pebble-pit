@@ -16,6 +16,7 @@ export const SHACK_ROWS = [
     kind: 'building', site: 'yard', at: () => shack.x + shack.w / 2,
     name: 'build the shack',
     note: () => 'Digging upgrades',
+    blurb: 'gear for the rock',
     cost: () => SHACK_DUST,
     // A third of what a building takes. It is a third of a building, and it is
     // the first thing most players will ever put up: a first build that outlasts

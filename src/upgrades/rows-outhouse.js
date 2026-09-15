@@ -23,6 +23,7 @@ export const OUTHOUSE_ROWS = [
     // outhouse -- but the player is sold a janitor's closet (wave7-crew, item 10).
     name: "build the janitor's closet",
     note: () => 'you\'ve seen enough poop, lets clean it up',
+    blurb: 'poop, cleaned up',
     cost: () => OUTHOUSE_DUST,
     // ...and one spare body picks up a cap, the way every door sends one (see `staffDoor`).
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); staffDoor(JOB.JANITOR); },

@@ -17,6 +17,7 @@ export const SCRUB_ROWS = [
     kind: 'building', site: 'yard', at: () => scrub.x + scrub.w / 2,
     name: 'build the scrubbing house',
     note: () => 'somebody in it pulls the haze back out of the sky, before it falls again',
+    blurb: 'clears the sky',
     cost: () => scrubCost(),
     // and the ground under its spout becomes a station's strip the moment it is
     // up: what the house makes has to have somewhere of its own to heap.

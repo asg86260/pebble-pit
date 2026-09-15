@@ -17,8 +17,14 @@ import { assign, rebalance } from '../upgrades.js';
 // A place costs a core *and* dust. The core is what says this is a place rather
 // than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
 // the rock worth digging after it, which every bill above tier one does.
-export const site = ({ key, name, note, cores, dust, more, open, at, once, show, job, then }) => ({
+export const site = ({ key, name, note, blurb, cores, dust, more, open, at, once, show, job, then }) => ({
   key, name,
+  // What the place is for, in a few words, where a ladder row prints its gain:
+  // a door has no number to promise, and a tile with a blank line under its
+  // name reads as a name alone (`gainText`). One line of a slot -- seventeen
+  // characters at the shelf's type -- since the line does not wrap; the note
+  // is the longer say, on the tip.
+  blurb,
   // The line of words under the card. Every door writes one; this used to leave
   // it behind, so three of the doors wrote a note nobody ever read.
   note,
