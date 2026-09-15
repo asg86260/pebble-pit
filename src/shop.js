@@ -673,9 +673,11 @@ export function refresh(el, list, headcount) {
     // The picture, on a shelf, wears the deepest coin of the next rung's bill
     // as a stroke and goes grey once the ladder is climbed: it is the rung
     // marker (DESIGN.md, "The shelf"). Its ink pales with the title while a
-    // coin of the bill is short, the same grey the tag goes, so a tile you
-    // cannot pay for reads as one from across the plank and not only at its
-    // price. Redrawn only when either changes.
+    // coin of the bill is short, or while the bill names a coin the yard
+    // cannot get yet, the same grey the tag goes, so a tile that is not yours
+    // to press reads as one from across the plank and not only at its price.
+    // Redrawn only when either changes.
+    const waits = u.waits?.() || '';
     const pic = row.querySelector('.pic');
     if (pic) {
       const coins = full.map(([m]) => m);
@@ -683,7 +685,7 @@ export function refresh(el, list, headcount) {
                  : coins.includes('spark') ? SHELF_INK.spark
                  : coins.includes('shard') ? SHELF_INK.shard
                  : coins.includes('spore') ? SHELF_INK.spore : null;
-      const ink = full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
+      const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
       const drawn = `${tint}/${ink}`;
       if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(u.key), tint, ink)); }
     }
@@ -747,8 +749,8 @@ export function refresh(el, list, headcount) {
     // ...and the site is clear again, so the card goes back to a gain in a
     // column and the note about what was on it goes -- unless the card is
     // waiting on something of its own, below.
-    const waits = u.waits?.() || '';
     if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
+    if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
 
 
     // and a dot on anything that has not been on a board you have looked at
@@ -805,6 +807,8 @@ export function refresh(el, list, headcount) {
     // price: a bill in crops on a yard with no plots is not a price, it is a
     // word the player has not met (see `coinNeeds`).
     if (waits) {
+      // `locked` is the shelf's word for it: the tile pales like one you
+      // cannot pay for, since to the player it is the same news.
       row.classList.add('waiting');
       sayHTML(gain, waits);
       sayHTML(price, ''); sayHTML(time, '');

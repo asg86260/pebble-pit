@@ -201,8 +201,11 @@
    plank sorts itself into what you can buy and what you are saving for from
    across the room. Keyed off the bill and not off `:disabled`, as the cards
    are: a climbed ladder and a site under construction are not "you cannot
-   afford this". */
-.rows.shelves > button.tile:has(.tag .short) .what { color: #8c8c8c; }
+   afford this". A ladder waiting on a coin the yard has no source for yet
+   (`locked`, set by the board) is, near enough: it is not yours to press
+   either, and says what it needs where its price would go. */
+.rows.shelves > button.tile:has(.tag .short) .what,
+.rows.shelves > button.tile.locked .what { color: #8c8c8c; }
 /* A bill of three or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. */
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
