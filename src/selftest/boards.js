@@ -1611,6 +1611,18 @@ export const TESTS = [
     await settle(1);
     const pips = shop().querySelector('[data-key="carry"] .ladder')?.textContent || '';
     const said = shop().querySelector('[data-key="carry"] .gain')?.textContent || '';
+    // A second press on the same board goes in line behind it: its tag says
+    // its place in the line, the queue card says the same word, and the tile
+    // says what a press does.
+    shop().querySelector('[data-key="auto"]')?.click();
+    await settle(1);
+    const nextTag = shop().querySelector('[data-key="auto"] .tag .time')?.textContent.trim() || '';
+    const nextSaid = shop().querySelector('[data-key="auto"] .gain')?.textContent || '';
+    const cardLine = [...document.querySelectorAll('#queue button.wait')].map(b => b.textContent.replace(/\s+/g, ' ').trim())[0] || '';
+    shop().querySelector('[data-key="auto"]')?.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+    await raf();
+    const tip = document.getElementById('tip')?.textContent || '';
+    shop().querySelector('[data-key="auto"]')?.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true }));
     window.__finish();
     await settle(1);
     window.__board(null);
@@ -1618,6 +1630,9 @@ export const TESTS = [
     return [
       ok(whole > 0 && atStart < whole, 'pressing a build row draws its glyph as a ghost', `${whole} -> ${atStart}`),
       ok(/building|queued/.test(said) && pips.length > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips || 'none'}`),
+      ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
+      ok(/next/.test(cardLine), 'and the queue card says next on the same line', cardLine || 'no line'),
+      ok(/hand it back/.test(tip), 'and hovering it says a press hands it back', tip || 'no tip'),
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),
          'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),

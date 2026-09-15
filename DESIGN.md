@@ -9741,10 +9741,16 @@ and the gain line says `nobody on it` as now. The clock is the one number
 you came back to the board to read, so it keeps the board's type size and
 the tag's box, and takes the whole box rather than a cell of it.
 
-**Queued is a ghost with a place in line.** A tile bought and waiting its
-turn is drawn all ghost, no fill, and its tag says its place -- `2nd`,
+**Queued is a plan with a place in line.** A tile bought and waiting its
+turn is drawn as a plan -- the shape's one-pixel edge and nothing inside --
+so it reads apart from a build just started, whose ghost is dotted and
+about to fill. Its tag says its place *in the line* -- `next`, then `2nd`,
 `3rd` -- with no clock, since a clock on a thing not yet started would be a
-guess the site cannot keep. It stays pressable, as now, since a press hands
+guess the site cannot keep. In the line, not among the site's works: a
+site building two at once has its first waiting row third in the list and
+next in line, and next is the fact. Hovering it says `in line -- press to
+hand it back`, since that press is the one on a board that undoes a
+purchase and nothing on the tile said so. It stays pressable, as now, since a press hands
 it back. The gain line says `queued`, no number: the place is the tag's,
 and a number said twice on one tile is one too many.
 
@@ -9785,6 +9791,13 @@ look is the shot: `buildboard` and a new `buildstalled` scene in
 `scenes.js`.
 
 ### As built (2026-09-15)
+
+The queue card took the tile's vocabulary the same day: `m:ss` to the
+second on every line, and a waiting line says its place -- `next`, `2nd`
+-- before its clock, the same word its tile wears; the front line keeps its
+five-pip bar. The owner kept the tile's tag place-only (no estimate on a
+thing not started) and asked for the plan outline over a second dotted
+ghost.
 
 All three calls went the way the design leaned: bottom-up fill, a dotted
 ghost (it reads against the plank's dots -- the plank's are one in

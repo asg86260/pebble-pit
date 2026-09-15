@@ -10,7 +10,7 @@ import { SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn } from './works.js';
+import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -542,13 +542,18 @@ function build(el, list, sections, empty, heads) {
       // the submenu -- and for a shelf, where a tile has no line to wear its
       // description on (DESIGN.md, "The shelf": descriptions go to the tip).
       // The goal card is the exception and keeps its sentence in place.
-      if ((inSubmenu || (shelf && !sect.goal)) && u.note) {
+      // A tile in line says what a press does -- hands the work back -- since
+      // it is the one press on a board that undoes a purchase, and nothing on
+      // the tile says so. A row with no note of its own gets the tip only then.
+      if ((inSubmenu || (shelf && !sect.goal)) && (u.note || takesTime(u))) {
         const say = () => {
           const r = b.getBoundingClientRect();
+          const words = inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
+          if (!words) { showTipAt(null); return; }
           // Beside the row: off the board for a card (a note under the
           // board's layer is a note nobody reads), and over the neighbors
           // for a shelf tile, which is a tooltip and stands where its tile is.
-          showTipAt(u.note(), r.right + 8, r.top - 2, false, shelf);
+          showTipAt(words, r.right + 8, r.top - 2, false, shelf);
         };
         b.addEventListener('pointerenter', say);
         b.addEventListener('pointermove', say);
@@ -573,6 +578,9 @@ function build(el, list, sections, empty, heads) {
 // count: only a value that is a number runs.
 const sayCount = (key, v) => typeof v === 'number' ? String(Math.round(shown('count:' + key, v))) : String(v);
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
+// A place in a line, as the board says it: the first waiting is `next`, the
+// rest count from there.
+export const placeWord = n => (n <= 1 ? 'next' : ordinal(n));
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; reworded = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 // A row's description, in place of the hover it used to carry -- written into the
@@ -709,10 +717,11 @@ export function refresh(el, list, headcount) {
       // The glyph is built: drawn to the share done, no stroke, since a stroke
       // is the next rung's legend and there is no next rung on a thing not up
       // (DESIGN.md, "A tile being built shows the building"). A row in line
-      // has none of it up. The share is the site's own, so it stops with the
-      // hands.
+      // is a plan: the outline and nothing in it, so it reads apart from a
+      // build just started. The share is the site's own, so it stops with
+      // the hands.
       const rows = glyphFor(u.key);
-      wearGlyph(row, u.key, null, '#000', inLine(u) ? 0 : Math.floor(progressOf(mine) * cellsOf(rows)));
+      wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)));
     } else if (pic) {
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done
@@ -802,10 +811,13 @@ export function refresh(el, list, headcount) {
         // The bill is paid, and a paid bill is not a price: the tag holds the
         // time left alone, to the second, at the rate the site is going -- or,
         // for a row in line, its place, since a clock on a thing not started
-        // is a guess the site cannot keep. `building` on the row is the tag's
-        // cue to stand solid: a running clock is not a thing you cannot afford.
+        // is a guess the site cannot keep. The place is in the LINE, not
+        // among the site's works: a site building two at once has its first
+        // waiting row third in the list and next in line, and `next` is what
+        // the player wants to know. `building` on the row is the tag's cue to
+        // stand solid: a running clock is not a thing you cannot afford.
         sayHTML(price, '');
-        sayHTML(time, `<span class="have">${queued ? ordinal(lineAt(u)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
+        sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         // Greyed while it is being built -- committed, nothing to press for --
         // and live while it waits, so a press can pull it back out.

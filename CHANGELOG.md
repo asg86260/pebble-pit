@@ -21,7 +21,11 @@ feature lives in DESIGN.md.
 
 - A hat row's pips stand in a column down the tile's edge like every other ladder's, instead of lying flat at the top (src/selftest/boards.js, "a kit row's pips stand in a column").
 
-- A row waiting its turn says `queued`, and its place in line is in the tag alone (src/selftest/boards.js, "a board holds its size while a build is running").
+- A row waiting its turn says `queued`, its tag says `next` (then `2nd`, `3rd`) counted in the line rather than among what the site is building, and hovering it says a press hands it back (src/selftest/boards.js, "a tile being built fills in").
+
+- A tile waiting its turn is drawn as a plan -- the outline only -- so it no longer looks like a build just started (src/selftest/boards.js, "a tile being built fills in").
+
+- The queue card's clocks read to the second, and a waiting line says its place the way its tile does (src/selftest/boards.js, "a tile being built fills in").
 
 - On a phone, one finger on the sky or the bare ground drags the view along; a finger on the dust still sweeps it (src/selftest/view.js, "one finger drags the view").
 

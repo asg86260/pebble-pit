@@ -1114,6 +1114,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* The figure is a right-aligned column of its own so the clocks read down
    the card as one column; "3 min" is the widest it says. */
 .queue button .left b { font-weight: inherit; min-width: 5ch; text-align: right; }
+.queue button .left em { font-style: normal; }
 .queue button.wait:hover .left { opacity: 1; }
 .queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
 .queue button.wait:hover { color: #fff; background: #000; }

@@ -163,7 +163,10 @@ export const inkSpan = rows => {
 // up -- bottom row first, left to right -- and the ones not yet laid are a
 // ghost, one pixel in four at the shelf's ghost tone, so the whole shape is
 // there to be read from the press and fills in under the hands. Null is the
-// whole drawing, which is every tile not being built.
+// whole drawing, which is every tile not being built. `'plan'` is a thing in
+// line, not yet started: the shape's one-pixel edge and nothing inside, the
+// way a plan is drawn, so a tile waiting its turn and one being built read
+// apart from the picture alone.
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
 export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built = null) => {
   const M = 2, W = CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
@@ -174,13 +177,26 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   const laid = [];
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') laid.push([x, y]); }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const plan = built === 'plan';
   laid.forEach(([x, y], k) => {
-    const up = built === null || k < built;
+    const up = built === null || (!plan && k < built);
     for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) {
       const at = (y * CELL + j + M) * W + x * CELL + i + M;
-      if (up) solid[at] = 1; else if (i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
+      if (up) solid[at] = 1; else if (!plan && i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
     }
   });
+  // The plan's edge: every pixel of the shape with a pixel outside it beside
+  // it. Found on the shape, not on the outside, so the edge is inside the
+  // shape's own footprint and the ink lands where the built cells will.
+  if (plan) {
+    const shape = new Uint8Array(W * H);
+    laid.forEach(([x, y]) => { for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) shape[(y * CELL + j + M) * W + x * CELL + i + M] = 1; });
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!shape[y * W + x]) continue;
+      const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !shape[(y + dy) * W + x + dx]);
+      if (edge) ghost[y * W + x] = 1;
+    }
+  }
   // The badge, top-right, on the same cell grid: its ink, and a halo of
   // BADGE_HALO pixels round that ink knocked out of the drawing beneath.
   if (badge) {

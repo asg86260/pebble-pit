@@ -25,7 +25,8 @@
 
 import { S } from './state.js';
 import { SITES, BUILDER_SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
-import { buy, priceText } from './upgrades.js';
+import { buy, leftText } from './upgrades.js';
+import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';
 
@@ -54,12 +55,19 @@ const pips = w => {
 // line quotes the lab's pace and not the yard's. The front line with nobody at
 // it says so instead of quoting a figure: a clock over a work nobody is doing
 // is a promise the yard is not keeping.
+//
+// The words and the clock are the tile's (DESIGN.md, "A tile being built
+// shows the building"): `m:ss` to the second, and a waiting line says its
+// place in the line -- `next`, `2nd` -- before its clock, the same word its
+// tile wears.
 const clockOf = (site, list, i) => {
-  if (i < roomAt(site) && stalled(site))
+  const going = roomAt(site);
+  if (i < going && stalled(site))
     return BUILDER_SITES.includes(site) ? 'building' : 'nobody on it';
   let ms = 0;
   for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
-  return `<i class="clock"></i><b>${priceText('time', ms)}</b>`;
+  const place = i < going ? '' : `<em>${placeWord(i - going + 1)}</em> `;
+  return `${place}<i class="clock"></i><b>${leftText(ms)}</b>`;
 };
 
 // The lines are rebuilt only when the set of works changes -- a name arriving,
