@@ -998,7 +998,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    price. That column was a track shared by the sheet; a card owns its own
    tracks now and a long bill wraps inside it (see `.cost` above), so the
    premise is gone -- and the rule it left behind was hiding the one thing the
-   cell says while a work is on the go: `building`, `queued up in n`, `nobody on
+   cell says while a work is on the go: `building`, `queued`, `nobody on
    it`. The tower's rows read like every other board's. */
 
 /* A row that is a reading rather than a purchase. It sits on a board of things

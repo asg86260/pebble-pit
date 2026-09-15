@@ -754,9 +754,12 @@ export function refresh(el, list, headcount) {
       // band's, so a band one pip wide gets none -- there is nothing inside
       // it to set apart, and with the gap the row stood a pip's width open
       // between every mark and read as three marks rather than one row.
+      // A ladder with no bands (the kit's) is one group: the shelf sets its
+      // pips by the group element, so bare text would lie flat where the
+      // banded ones stand in a column.
       const want = u.group && pips
         ? pips.match(new RegExp(`.{1,${u.group}}`, 'g')).map(g => `<b>${g}</b>`).join(u.group > 1 ? ' ' : '')
-        : pips;
+        : pips ? `<b>${pips}</b>` : '';
       if (ladder.innerHTML !== want) ladder.innerHTML = want;
       // No '3 of 5' on hover: the pips are the answer.
     }
@@ -786,14 +789,16 @@ export function refresh(el, list, headcount) {
         //
         // The vocabulary is closed, and every word in it fits the tightest cell
         // on any board (see `pinWidth` in board.js and the width check in
-        // selftest/boards.js): "queued up in 7", "building", "nobody on it". A
+        // selftest/boards.js): "queued", "building", "nobody on it". A
         // status is about the whole card, and the gain's line -- which it
         // takes over -- spans the card less the pips' corner (see `.gain` in
         // style.css).
         row.classList.add('waiting');
         const queued = inLine(u);
         const stuck = !queued && stalled(u.site) && !BUILDER_SITES.includes(u.site);
-        sayHTML(gain, queued ? `queued up in ${lineAt(u)}` : stuck ? 'nobody on it' : 'building');
+        // `queued` and no number: the place in line is the tag's (`2nd`), and
+        // a number said twice on one tile is one too many (the owner, 2026-09-15).
+        sayHTML(gain, queued ? 'queued' : stuck ? 'nobody on it' : 'building');
         // The bill is paid, and a paid bill is not a price: the tag holds the
         // time left alone, to the second, at the rate the site is going -- or,
         // for a row in line, its place, since a clock on a thing not started

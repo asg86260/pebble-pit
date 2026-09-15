@@ -1489,7 +1489,7 @@ export const TESTS = [
     // one pixel now. A number that close is not a thing to leave to a comment.
     // ...and the words a ladder says while its next rung is priced in a coin
     // the yard has no source for yet (see coinNeeds in upgrades/price.js).
-    const SAYS = ['queued up in 9', 'building', 'nobody on it',
+    const SAYS = ['queued', 'building', 'nobody on it',
                   'needs crops', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
@@ -1536,7 +1536,7 @@ export const TESTS = [
 
     return [
       ok(!!row, 'the bench has a row that takes time to build'),
-      ok(/queued up|building|nobody on it/.test(status),
+      ok(/queued|building|nobody on it/.test(status),
          'and pressing it puts a status where the gain was', status || 'nothing'),
       ok(seen.size === 1 && seen.has(before),
          'and the sheet is the same size on every frame the build runs',
@@ -1623,6 +1623,35 @@ export const TESTS = [
          'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),
       ok(stillHeld === held && clockStillHeld === clockHeld,
          'and with nobody on it the fill and the clock both hold', `${held}/${clockHeld} -> ${stillHeld}/${clockStillHeld}`),
+    ];
+  }],
+
+  // The kit's ladder has no bands, and its pips went flat on the shelf while
+  // every banded ladder's stood in a column: the shelf sets the pips by their
+  // group element, and an ungrouped run was bare text. Measured, not read:
+  // a column is taller than it is wide.
+  ["a kit row's pips stand in a column like every other ladder's", async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    state().shieldsDone = ['props', 'net', 'arch'];
+    window.__kit({ blasters: 1 });
+    window.__board('quarry');
+    await settle(1);
+    const pips = document.querySelector('#panel .rows.shelves [data-key="blaster"] .ladder');
+    const box = pips?.getBoundingClientRect();
+    // ...and against a banded ladder on the same board: the same distance in
+    // from its tile's right edge, so the two columns line up plank to plank.
+    const inset = el => { const t = el.closest('.tile').getBoundingClientRect(); return Math.round(t.right - el.getBoundingClientRect().right); };
+    const bandedEl = [...document.querySelectorAll('#panel .rows.shelves .tile .ladder')].find(l => l.querySelectorAll('b').length > 1);
+    const mine = pips ? inset(pips) : -1, theirs = bandedEl ? inset(bandedEl) : -1;
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(!!pips && pips.textContent.length === 3, 'the blaster row has three pips', pips?.textContent || 'none'),
+      ok(!!box && box.height > box.width, 'and they stand in a column', box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
+      ok(!!bandedEl && mine === theirs, "the same distance in from the edge as a banded ladder's", `${mine} vs ${theirs}`),
     ];
   }],
 

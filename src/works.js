@@ -318,7 +318,7 @@ export const workAt = site => worksAt(site)[0] || null;
 export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key) || null;
 export const busyAt = site => worksAt(site).length > 0;
 // Where a work stands in its site's list, counting the front as one -- so the
-// first behind it is 2, which is what "queued up in 2" on its row means. Nought for
+// first behind it is 2, which is what "2nd" in its tag means. Nought for
 // a work the site does not have.
 export const placeOf = (site, key) => worksAt(site).findIndex(w => w.key === key) + 1;
 // Whether a work is waiting rather than being built.

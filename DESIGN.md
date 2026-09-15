@@ -9745,9 +9745,8 @@ the tag's box, and takes the whole box rather than a cell of it.
 turn is drawn all ghost, no fill, and its tag says its place -- `2nd`,
 `3rd` -- with no clock, since a clock on a thing not yet started would be a
 guess the site cannot keep. It stays pressable, as now, since a press hands
-it back. The gain line keeps `queued up in 3` for the words' sake: the
-selftest reads the vocabulary, and the ordinal in the tag is the same fact
-drawn.
+it back. The gain line says `queued`, no number: the place is the tag's,
+and a number said twice on one tile is one too many.
 
 The stalled word, the queued word and `building` stay in the gain line as
 they are; the drawing and the clock are added under them, not in place of
@@ -9776,7 +9775,7 @@ over the site.
 
 ### How it is checked
 
-The words are already checked (`selftest/boards.js`, "queued up in 7",
+The words are already checked (`selftest/boards.js`, "queued",
 "building", "nobody on it"); they do not change. New, in the browser tier
 (`selftest/boards.js`, a group "a tile being built"): buy a build, turn the
 clock, and read the tile's canvas -- the count of inked pixels rises between

@@ -18,6 +18,10 @@ feature lives in DESIGN.md.
 
 - The ladder pips stay on a tile while it is being built (src/selftest/boards.js, "a tile being built fills in").
 
+- A hat row's pips stand in a column down the tile's edge like every other ladder's, instead of lying flat at the top (src/selftest/boards.js, "a kit row's pips stand in a column").
+
+- A row waiting its turn says `queued`, and its place in line is in the tag alone (src/selftest/boards.js, "a board holds its size while a build is running").
+
 - On a phone, one finger on the sky or the bare ground drags the view along; a finger on the dust still sweeps it (src/selftest/view.js, "one finger drags the view").
 
 - The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).

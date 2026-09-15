@@ -1058,7 +1058,7 @@ export const billOf = u => {
 
 // Whether the yard has this row on the go -- being built, or bought and waiting
 // its turn at the site -- and, of those, whether it is the waiting kind. The
-// board reads both: "building" and "queued up in n" are not the same row to a
+// board reads both: "building" and "queued" are not the same row to a
 // player, and only the second can be pressed again to hand it back. `siteBusy`
 // stood here while a site took one work at a time and greyed every other row
 // with it; a site takes a line now, so no row is refused for what its
