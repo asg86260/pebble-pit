@@ -74,6 +74,11 @@ group('the tower can enchant the rest of the yard', async () => {
   window.__crew(0, 0, 0, 0, 0, 1);
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(30000);
+  // A spell waits on the thing it enchants (tower.js, SPELL_NEEDS): the
+  // machine for the drive, the closet for the sweep. Stood up here, since
+  // this check is about laying the spells and not about their doors.
+  window.__machine('jaw', { bought: true });
+  window.__loo();
   run(2);
 
   const offered = window.__rows().filter(r => r.shown).map(r => r.key);

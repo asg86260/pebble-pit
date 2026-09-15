@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
-- Who a pot's doses go to first is set at the pot, under its brew: "for", a row a job, each with how many are under it -- diggers 2/3 (test/pot-prefer.test.mjs).
+- Who a pot's doses go to first is set at the pot, under its brew: "for", a row a job, each with how many are under it -- diggers 2/3; the list stays up while you set it, and a brew only one trade drinks just says so (test/pot-prefer.test.mjs).
 - The ladder pips are back on the shelf: a column climbing the right edge of every ladder's tile.
 - A tile being built shows it: the drawing fills in from the bottom as the work is done, the tag is a clock to the second, and a tile in line is a ghost with its place.
 - The quarry and farm boards are in two groups: the workers -- the plot or bench, the hat, the machine and its ladder -- under a heading wearing the headcount, and the yield and speed ladders under the ore or the crop.
@@ -44,6 +44,7 @@ feature lives in DESIGN.md.
 - The frame-cost gate no longer trips on the frame a rockhand clears the last cell off the hill's edge (test/perf-gate.test.mjs).
 
 - A rockhand with no rock to work stands where it is instead of marching off across the yard (test/rock.test.mjs).
+- The tower's enchantments wait for the thing they enchant -- a machine, the quarry, the janitor's closet -- instead of standing on the board with the first spark, and each tile says what it is worth (test/spells.test.mjs).
 - The mana brew reaches the wizards: a wizard comes down off the ring for its dose, drinks it on the ground, and flies back up with its plume showing (test/mana-brew.test.mjs).
 - "Build the quarry" and "discover the tower" wait their turn again: the farm opens the quarry's door and the quarry the tower's, instead of all three arriving with the first core (test/door-chain.test.mjs).
 

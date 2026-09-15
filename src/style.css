@@ -768,6 +768,9 @@ canvas {
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
 .optspop[data-potpick] .for:hover,
 .optspop[data-potpick] .for.on { color: #fff; background: #000; }
+/* The one trade a brew is for, when there is only one: a line, not a choice. */
+.optspop[data-potpick] .for.only { cursor: default; }
+.optspop[data-potpick] .for.only:hover { color: #000; background: none; }
 
 /* A block of the brew's own color, for the picker at the pot. The color itself
    is set on the element, because which color is data about the tonic and not a

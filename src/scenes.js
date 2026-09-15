@@ -736,6 +736,16 @@ export const SCENES = {
                  window.__pot('stew', 0); window.__pot('brace', 1);
                  window.__look(st().apothecaryX - 200);
                  const b = window.__potSpot(1); hover(b.x + b.w / 2, b.y + b.h / 2); } },
+  // ...and at a pot on a brew only one trade drinks: the "for" section is a
+  // line saying so, not a choice.
+  apothpickone: { about: 'the apothecary', say: 'the picker at a pot on the speed brew: for haulers, no choice', page: true,
+    run: () => { window.__reset(); window.__crew(1, 4, 1, 2);
+                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
+                 window.__buy('unlockfarm'); window.__finish();
+                 window.__buy('unlockapothecary'); window.__finish();
+                 window.__pot('swift', 0);
+                 window.__look(st().apothecaryX - 200);
+                 const b = window.__potSpot(0); hover(b.x + b.w / 2, b.y + b.h / 2); } },
 
   // --- the kit ----------------------------------------------------------------
   // A hat being made where it lands: the shack with its bar over it, a spare
@@ -848,8 +858,11 @@ export const SCENES = {
     run: () => { rich(); window.__meteor(); window.__fast(3);
                  const x = st().towerX - 361;
                  const pin = () => { window.__look(x); requestAnimationFrame(pin); }; pin(); } },
+  // With the tower up, a spark seen, and the things the enchantments are
+  // about in the yard -- a machine, the closet -- so every spell row stands.
   towerboard: { about: 'the tower', say: "the tower's board",
-    run: () => { rich(); window.__board('tower'); } },
+    run: () => { rich(); window.__meteor(); window.__loo();
+                 window.__machine('ram', { bought: true }); window.__board('tower'); } },
 
   // --- the casino -------------------------------------------------------------
   // The pot on the ground beside the wheel: a hundred staked, so the heap reads

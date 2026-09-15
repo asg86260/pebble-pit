@@ -112,10 +112,12 @@ export const ROWS = [
   { key: 'wizard', part: 2, reach: tower },
   { key: 'wizspeed', part: 2, reach: tower },
   { key: 'wizpower', part: 2, reach: tower },
-  { key: 'spelldrive', part: 2, reach: tower },
+  // A spell is offered once the thing it enchants is in the yard (tower.js,
+  // SPELL_NEEDS): a machine for the drive, the closet for the sweep.
+  { key: 'spelldrive', part: 2, reach: () => { tower(); window.__machine('ram', { bought: true }); } },
   { key: 'spellluck', part: 2, reach: tower },
   { key: 'spellthrift', part: 2, reach: tower },
-  { key: 'spellsweep', part: 2, reach: tower },
+  { key: 'spellsweep', part: 2, reach: () => { tower(); window.__loo(); } },
 
   // --- the scrubbing house ----------------------------------------------------
   { key: 'fan', part: 2, reach: scrub },

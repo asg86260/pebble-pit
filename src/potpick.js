@@ -133,9 +133,14 @@ function build() {
     const n = document.createElement('span');
     n.className = 'count';
     row.appendChild(n);
+    // The list stays up: setting who it is for is a tweak to the pot you
+    // are already looking at, not a choice that ends the errand the way
+    // picking a brew does, and the count beside the rows is what you want
+    // to keep reading. The rows are re-marked in place.
     row.addEventListener('click', () => {
-      if (onPot >= 0) choosePotPrefer(onPot, job);
-      shutOpts();
+      if (onPot < 0 || row.classList.contains('only')) return;
+      choosePotPrefer(onPot, job);
+      markFor(onPot);
     });
     opts.appendChild(row);
   }
@@ -144,6 +149,32 @@ function build() {
   // the board's dials hang on their own lists, and the same timer behind them.
   opts.addEventListener('pointerenter', stayOpen);
   opts.addEventListener('pointerleave', leaveSoon);
+}
+
+// Who pot `i` is for, on the rows: the jobs the set brew reaches and somebody
+// is doing, with the round's count on each. Read at every open and again on
+// every pick, so the count is the yard as it stands. A job nobody is on -- a
+// station not yet built -- is a row about nobody and stays off, unless it is
+// the one already set, which stays so it can be seen and changed: the brew
+// rows' own rule.
+//
+// A brew only one trade can drink -- the speed brew is the haulers', the mana
+// brew the wizards' -- has nobody to favor over anybody, so it offers no
+// choice: the one row stands as a plain line saying who it is for and how the
+// round is going, and "whoever is nearest" is off, since nearest and that
+// trade are the same people.
+function markFor(i) {
+  const can = preferableFor(i);
+  const favor = potPreferOf(i) || '';
+  const only = can.length === 1;
+  for (const r of opts.querySelectorAll('.for')) {
+    const job = r.dataset.for;
+    const c = job ? doseCount(i, job) : null;
+    r.hidden = job ? !(can.includes(job) && (only || c.of > 0 || job === favor)) : only;
+    r.classList.toggle('only', only);
+    r.classList.toggle('on', !only && job === favor);
+    r.querySelector('.count').textContent = c ? `${c.dosed}/${c.of}` : '';
+  }
 }
 
 // Where the pot is on the glass. The picker is `position: fixed`, so it wants
@@ -184,20 +215,7 @@ function openFor(i) {
       `${MARK[money]} ${priceText(money, n)}</span>`).join('');
     o.querySelector('.note').innerHTML = tonicGain(tonicOf(o.dataset.opt));
   }
-  // And who it is for: the jobs the set brew reaches and somebody is doing,
-  // with the round's count on each. Read at every open, so the count is the
-  // yard as it stands. A job nobody is on -- a station not yet built -- is a
-  // row about nobody and stays off, unless it is the one already set, which
-  // stays so it can be seen and changed: the brew rows' own rule.
-  const can = preferableFor(i);
-  const favor = potPreferOf(i) || '';
-  for (const r of opts.querySelectorAll('.for')) {
-    const job = r.dataset.for;
-    const c = job ? doseCount(i, job) : null;
-    r.hidden = !!job && !(can.includes(job) && (c.of > 0 || job === favor));
-    r.classList.toggle('on', job === favor);
-    r.querySelector('.count').textContent = c ? `${c.dosed}/${c.of}` : '';
-  }
+  markFor(i);
   stayOpen();                       // whatever grace was running, this cancels it
   openOptsAt(potRect(i), opts, null, 'center');
 }

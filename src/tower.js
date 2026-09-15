@@ -16,7 +16,7 @@ import { STEP } from './mult.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         DOME_BILL, DOME_WORK } from './config.js';
+         DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
 import { raiseShield, shieldDone } from './shield.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
@@ -24,6 +24,7 @@ import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, leftAt, progressOf } from './works.js';
 import { TYPE } from './jobs.js';
+import { MACHINES, machine } from './machines.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -74,6 +75,32 @@ export function hatMade() {
 // Whether an enchantment has been laid on the yard.
 export const spelled = key => (S.spells || []).includes(key);
 
+// What each spell has to have in the yard before it is offered: the thing it
+// is a sentence about. "Speed the machines" on a board in a yard with no
+// machine is a row about nothing, and it stood there the moment a spark was
+// seen; so was "quicken the janitors" with no closet to hire one from. The
+// houses are the crew's row from the first minute, so the thrift spell waits
+// on nothing but the tower.
+// And what each is worth, in a line the tile prints where a ladder prints its
+// gain -- off the spell's own constant, so the card cannot drift from what
+// the yard actually does with it. The note keeps the whole sentence for the
+// tip, and the name already says what is enchanted, so the line is the
+// figure alone: a slot is seventeen characters and "machines 50% faster"
+// clipped.
+const pct = f => `${Math.round(Math.abs(f - 1) * 100)}%`;
+const SPELL_BLURB = {
+  drive: () => `+${pct(SPELL_DRIVE)} speed`,
+  luck: () => `+${pct(SPELL_LUCK)} ore`,
+  thrift: () => `${pct(SPELL_THRIFT)} cheaper`,
+  sweep: () => `${SPELL_SWEEP}x faster`
+};
+const SPELL_NEEDS = {
+  drive: () => MACHINES.some(m => machine(m.key)?.bought),
+  luck: () => !!S.quarryOpen,
+  thrift: () => true,
+  sweep: () => !!S.outhouseOpen
+};
+
 export const TOWER_UPGRADES = [
   // The spells. One row each, bought once, and each one a plain sentence about
   // somewhere else in the yard -- which is the whole reason they are not rungs.
@@ -85,9 +112,10 @@ export const TOWER_UPGRADES = [
     kind: 'building', site: 'tower',
     name: sp.name,
     note: () => sp.note,
+    blurb: SPELL_BLURB[sp.key](),
     bill: () => [['spark', sp.spark], ['dust', 2500]],
     buy: () => { if (!spelled(sp.key)) S.spells = [...(S.spells || []), sp.key]; },
-    show: () => S.towerOpen && S.seenSpark && !spelled(sp.key)
+    show: () => S.towerOpen && S.seenSpark && !spelled(sp.key) && SPELL_NEEDS[sp.key]()
   })),
   {
     // How often a wizard throws. The tower had no ladders at all -- the one

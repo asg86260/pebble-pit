@@ -1471,7 +1471,10 @@ export const TESTS = [
     pop()?.querySelector('.for[data-for="rockhands"]')?.click();
     await sleep(40);
     const setStew = state().potPrefers?.[0];
-    const shut = !!pop() && pop().hidden;
+    // ...and the list stays up with the new row marked: who it is for is a
+    // tweak to the pot you are looking at, not the end of the errand.
+    const stillUp = !!pop() && !pop().hidden;
+    const markedNow = pop()?.querySelector('.for.on')?.dataset.for;
 
     point('pointermove', ...two(), 0);           // the strong pot
     await sleep(40);
@@ -1485,6 +1488,13 @@ export const TESTS = [
     point('pointermove', ...one(), 0);
     await sleep(40);
     const stewOn = pop()?.querySelector('.for.on')?.dataset.for;
+    // A brew only one trade drinks offers no choice: the speed brew's pot says
+    // "haulers" as a line, with no "whoever is nearest" to pick instead.
+    window.__pot('swift', 1);
+    point('pointermove', ...two(), 0);
+    await sleep(40);
+    const swiftOffers = offered();
+    const swiftOnly = pop()?.querySelector('.for[data-for="haulers"]')?.classList.contains('only');
     point('pointermove', one()[0], one()[1] + 260, 0);
     await sleep(800);
     window.__crew(0, 0);
@@ -1493,14 +1503,17 @@ export const TESTS = [
       ok(stewOffers.includes('rockhands') && !stewOffers.includes('haulers'),
          'the stew pot offers the diggers and not the haulers, who cannot drink it', stewOffers.join(',')),
       ok(diggers === '0/2', 'and counts the diggers under it out of the diggers there are', String(diggers)),
-      ok(setStew === 'rockhands' && shut, 'clicking a job sets that pot and shuts the list',
-         `${setStew} shut=${shut}`),
+      ok(setStew === 'rockhands' && stillUp && markedNow === 'rockhands',
+         'clicking a job sets that pot, and the list stays up with it marked',
+         `${setStew} up=${stillUp} marked=${markedNow}`),
       ok(strongOffers.includes('haulers') && !strongOffers.includes('rockhands'),
          'the strong pot offers the haulers and not the diggers', strongOffers.join(',')),
       ok(strongOn === '', "and comes up unset: the choice was the other pot's", String(strongOn)),
       ok(after.potPrefers?.[1] === 'haulers' && after.potPrefers?.[0] === 'rockhands',
          'each pot keeps its own', JSON.stringify(after.potPrefers)),
-      ok(stewOn === 'rockhands', 'and the stew pot still shows its own', String(stewOn))
+      ok(stewOn === 'rockhands', 'and the stew pot still shows its own', String(stewOn)),
+      ok(swiftOffers.join(',') === 'haulers' && swiftOnly,
+         'a brew for one trade says that trade as a line, with no choice', `${swiftOffers.join(',')} only=${swiftOnly}`)
     ];
   }],
 
