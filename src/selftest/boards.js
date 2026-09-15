@@ -6,7 +6,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
-import { TIER_OWN } from '../config.js';
+import { TIER_OWN, SHELF_HAND_FADE } from '../config.js';
 
 // The ink standing in the band of sky over a station -- where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1792,7 +1792,7 @@ export const TESTS = [
     window.__crew(0, 0, 0, 0);
     await settle(3);
     const leaving = read('jaw');
-    for (let i = 0; i < 40; i++) await raf();
+    for (let i = 0; i < SHELF_HAND_FADE + 10; i++) await raf();
     const alone = read('jaw');
     await settle(3);
     const stillAlone = read('jaw');
