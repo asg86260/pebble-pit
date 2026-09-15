@@ -13,7 +13,7 @@
 // taken and the yard run. A hook that set the level would prove nothing about
 // the thing that changed.
 
-import { group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
+import { group, ok, state, run, runUntil, openSites, buyBuilt, yard } from './helpers.mjs';
 
 // what the yard is building, site by site
 const works = () => state().works || {};
@@ -108,6 +108,11 @@ group('a bench takes the same time however many are in the cut', async () => {
     window.__reset();
     openSites();
     window.__crew(0, 0, hands, 0);
+    // The same bench for both. `__crew` gives four quarriers the benches to
+    // stand on, and a bench deeper down takes longer (`quarrybench` climbs
+    // with its rung), so the two yards are stood at one depth before either
+    // is asked how long the next one takes.
+    yard.S.benchLevel = 2;
     window.__grant({ shards: 900, spores: 900, dust: 90000 });
     run(2);
     const was = state().benches;

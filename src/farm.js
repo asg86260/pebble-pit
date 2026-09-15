@@ -8,7 +8,7 @@
 // still*. What a hand is worth is one plot's worth of tending in the time one
 // plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
+import { PLOT_COST, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -322,6 +322,11 @@ export const FARM_UPGRADES = [
     unit: 'plots',
     from: () => plotCount(),
     to: () => plotCount() + 1,
+    // A ladder as far as the tile is concerned: a pip a plot the ground can
+    // be broken into, lit as they are. The work climbs with it, as the cut's
+    // benches do (quarry.js, `quarrybench`).
+    rung: () => S.plotLevel,
+    rungs: () => FARM_PLOTS_MAX - FARM_PLOTS0,
     cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel)),
     // Dust, not shards.
     //

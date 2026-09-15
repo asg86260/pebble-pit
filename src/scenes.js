@@ -617,6 +617,17 @@ export const SCENES = {
   // The plots, and the tractor crossing them.
   farm: { about: 'the plots', say: 'the plots, and the tiller crossing them',
     run: () => { rich(); window.__buy('tiller'); window.__finish(); window.__look(st().farmX - 200); } },
+  // ...and the two boards part way down their place ladders, so "another
+  // shovel" and "another plot" stand with pips lit and pips to go. `rich`
+  // fills every site, which folds both rows away.
+  quarryboardmid: { about: 'the cut', say: "the cut's board, a bench taken out and three to go",
+    run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
+                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__board('quarry'); } },
+  farmboardmid: { about: 'the plots', say: "the plots' board, two plots broken and four to go",
+    run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
+                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__board('farm'); } },
   farmboard: { about: 'the plots', say: "the plots' board",
     run: () => { rich(); window.__board('farm'); } },
   // And the far end of the same two ladders, which is where the bills get

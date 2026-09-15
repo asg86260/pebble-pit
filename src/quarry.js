@@ -1119,6 +1119,12 @@ export const QUARRY_UPGRADES = [
     unit: 'shovels',
     from: () => benches(),
     to: () => benches() + 1,
+    // A ladder as far as the tile is concerned: a pip a bench the cut can be
+    // worked down to, lit as they are taken out. And the work climbs with it,
+    // which WORK_BASE always said a bench's should and, with no rung to read,
+    // never did.
+    rung: () => S.benchLevel,
+    rungs: () => QUARRY_BENCH_MAX - QUARRY_BENCH0,
     cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
     // Green, not blue. A station that is bought deeper with the very thing it
     // produces is a station that pays for itself, and a loop that closes on
