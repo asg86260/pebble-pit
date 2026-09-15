@@ -10,7 +10,7 @@
 // step along" and its as-built note.
 //
 // One entry a ladder, by the row's key. `value` is what the row reads, in the
-// row's own unit -- pixels, grains, spores, a share, px/s, trips a minute, a
+// row's own unit -- pixels, grains, spores, a share, hits a second, trips a minute, a
 // percent -- rung nought first, then one a rung: `LADDER + 1` long, the last
 // the top. `dust` is what each rung costs in dust, `LADDER` long; the coins a
 // band adds are that dust at the coins' rates (`DUST_PER`), which is the one
@@ -19,7 +19,7 @@
 // rather than a ladder that stops early.
 //
 // The game reads its rates off these too: a swing's gap is a thousand over
-// the px/s written here, a plot's tending sixty thousand over the plots a
+// the hits a second written here, a plot's tending sixty thousand over the plots a
 // minute. What used to be MINE_BASE and MINE_FLOOR, TEND_BASE and TEND_FLOOR
 // and their kin is the first and last entry of the row's list.
 //
@@ -31,13 +31,13 @@
 export const LADDERS = {
   // --- the bench: you --------------------------------------------------------
   carry:        { value: [1, 2, 4, 6, 10],           dust: [20, 100, 200, 600] },       // px you can carry
-  speed:        { value: [1, 2, 4, 6, 8],            dust: [100, 200, 400, 800] },      // px/s, your swing
+  speed:        { value: [1, 2, 4, 6, 8],            dust: [100, 200, 400, 800] },      // hits/s, your swing
   pick:         { value: [1, 2, 4, 8, 12],           dust: [250, 500, 1000, 2000] },    // px your swing takes
   critchance:   { value: [5, 10, 15, 20, 25],        dust: [500, 1250, 3000, 8000] },   // % of swings
   critmult:     { value: [3, 4, 5, 6, 8],            dust: [1000, 2500, 6000, 16000] }, // x a crit is worth
   // --- the shack: the gang -----------------------------------------------------
   rockhandpick: { value: [1, 2, 3, 4, 5],            dust: [1000, 2000, 4000, 8000] },  // px a rockhand takes
-  rockhandspeed:{ value: [1, 1.5, 2, 3, 4],          dust: [200, 400, 800, 1600] },     // px/s, its swing
+  rockhandspeed:{ value: [1, 1.5, 2, 3, 4],          dust: [200, 400, 800, 1600] },     // hits/s, its swing
   // --- the bench: the haulers ---------------------------------------------------
   haulcarry:    { value: [1, 3, 6, 10, 16],          dust: [150, 300, 500, 1000] },     // grains a load
   haulpace:     { value: [100, 200, 300, 400, 500],  dust: [200, 400, 600, 1200] },     // px/s, the walk

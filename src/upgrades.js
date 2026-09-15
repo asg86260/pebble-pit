@@ -133,7 +133,7 @@ export const chained = rows => {
 };
 
 // Every ladder reads a written list -- what it is worth at each rung, in the
-// row's own unit (config/rungs.js) -- so the swings are kept as px/s and the
+// row's own unit (config/rungs.js) -- so the swings are kept as hits a second and the
 // gap between hits is a thousand over that. The scoop is the one curve left
 // here: it rides the haulers' pace ladder and no row reads it.
 const scoopGap = swing(HAUL_MS, 30, LADDER);

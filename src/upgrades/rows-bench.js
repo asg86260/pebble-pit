@@ -33,7 +33,7 @@ const YOU_CARRY = tierRows({
 
 const YOU_SWING = tierRows({
   field: 'speedLevel',
-  unit: 'px/s', pct: true, does: 'hit',
+  unit: 'hits/s', pct: true, does: 'hit',
   value: lvl => mineRate(lvl),
   site: 'bench',
   // faster swings only read as an upgrade once the swinging is automatic. It
@@ -129,6 +129,12 @@ export const BENCH_ROWS = [
     key: 'auto',
     kind: 'rung', site: 'bench',
     name: 'hold to mine',
+    // What it gives is the swing ladder's foot: holding the button swings at
+    // the pace the first rung of "auto swing" starts from, so the row says
+    // that pace rather than nothing.
+    unit: 'hits/s', does: 'hit',
+    from: () => 0,
+    to: () => mineRate(0),
     cost: () => 25,
     buy: () => { S.autoMine = true; },
     show: () => !S.autoMine

@@ -21,7 +21,7 @@ import { tierRows, named } from './tiers.js';
 // standing over them.
 const SPEED = tierRows({
   field: 'rockhandSpeedLevel',
-  unit: 'px/s', pct: true, does: 'hit',
+  unit: 'hits/s', pct: true, does: 'hit',
   value: lvl => rockhandRate(lvl),
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
