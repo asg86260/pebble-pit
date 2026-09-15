@@ -6,7 +6,7 @@
 // three lines.
 
 import { S } from './state.js';
-import { SHELF_BOARDS, SHELF_INK } from './config.js';
+import { SHELF_BOARDS, SHELF_INK, SHELF_DOT } from './config.js';
 import { drawGlyph, glyphFor } from './glyphs.js';
 // The shelf's stylesheet rides along only when the boards are shelves, so a
 // release ships none of it.
@@ -797,6 +797,23 @@ export function refresh(el, list, headcount) {
     // the number either of them is about is the one on the table.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
     grey(row, u.price ? !!u.dead?.() : !canPay(u));
+  }
+  if (el.classList.contains('shelves')) phaseDots(el);
+}
+
+// Each tile's own dots, phased to the sheet's: the sheet draws a dot every
+// SHELF_DOT px from its padding edge, and a tile standing at (left, top) inside it
+// draws the same tile shifted back by its own offset modulo SHELF_DOT, so the two
+// coincide to the pixel. Measured off the layout, never guessed, because a
+// tile's top depends on the signs and planks above it. Written only when the
+// offset changes; a board is laid out once and then only reseated.
+function phaseDots(el) {
+  for (const t of el.querySelectorAll('.tile')) {
+    const key = `${t.offsetLeft},${t.offsetTop}`;
+    if (t._dots === key) continue;
+    t._dots = key;
+    t.style.setProperty('--dot-x', `${-(t.offsetLeft % SHELF_DOT)}px`);
+    t.style.setProperty('--dot-y', `${-(t.offsetTop % SHELF_DOT)}px`);
   }
 }
 

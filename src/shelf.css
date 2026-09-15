@@ -223,6 +223,11 @@
    config/boards.js. No fill -- the dots stay under the tile -- and nothing
    inverts. `motion: less` (body.still) cuts the transition like every fade. */
 .rows.shelves > button.tile {
+  /* The tile carries the same dots as the ground under it, phased to the
+     same grid by the builder (`--dot-x`/`--dot-y`, measured off the tile's
+     offset), so at rest there is no seam and on a lift the dots go with it. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  background-position: var(--dot-x, 0) var(--dot-y, 0);
   outline: 1px solid rgba(0, 0, 0, 0);
   outline-offset: -1px;
   /* The shadow is black from the start, at no offset -- hidden under the
@@ -236,6 +241,11 @@
 .rows.shelves > button.tile:hover:not(:disabled) {
   outline-color: #000;
   box-shadow: 2px 2px 0 #000;
+  /* Once up, it floats: a one-pixel bob on a slow beat, stepped so the pixel
+     art never sits on a half pixel, starting only after the lift has landed
+     (the delay is the lift's own time, and no fill, so the transition carries
+     it there first). The shadow bobs the other way, so it stays on the ground. */
+  animation: shelf-float var(--shelf-float-ms, 1600ms) steps(1, end) var(--shelf-hover-ms, 120ms) infinite;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
      and a pseudo-class outranks the firewall's revert. */
   background: none;
@@ -248,8 +258,12 @@
    shadow slides out beneath it to where the plate was: one motion, one
    timing. Lifting the contents alone left the plate on the plank with a
    shadow under nothing. */
-.rows.shelves > button.tile:hover:not(:disabled) { transform: translateY(-2px); }
-body.still .rows.shelves > button.tile { transition: none; }
+.rows.shelves > button.tile:hover:not(:disabled) { transform: translate(-2px, -2px); }
+@keyframes shelf-float {
+  0%, 100% { transform: translate(-2px, -2px); box-shadow: 2px 2px 0 #000; }
+  50%      { transform: translate(-2px, -3px); box-shadow: 2px 3px 0 #000; }
+}
+body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
    picker, standing where the tag would. */
