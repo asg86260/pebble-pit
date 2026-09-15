@@ -217,20 +217,23 @@ function scoop(w, c, now) {
   return true;
 }
 
-// The nearest column with something in it on the same strip as `bare`, the
-// column just emptied, that nobody else has set off for -- or -1 when `bare`
-// was not on a strip or the strip has nothing left. Held to the ground the
-// crew can stand on, the same two bounds `nearestDust` keeps.
-function nextOnStrip(w, bare, taken) {
-  const strip = pileAt(floor.x + bare * P);
-  if (!strip) return -1;
+// The nearest column with something in it to `bare`, the column just
+// emptied, that nobody else has set off for, on any ground -- a heap's own
+// spill on the bare ground beside its strip, a grain that rolled, the next
+// heap along -- or -1 when there is nothing nearer than the walk home. A body
+// with room in hand keeps taking what is nearest until its hands are full:
+// held to its own strip it stepped over the grains a heap sheds past the edge
+// of its strip, and those lay there for good. Nearer than the hole is the
+// bound: a grain closer than the lip is a small detour or on the way, one
+// further off is another trip's. Held to the ground the crew can stand on,
+// the same two bounds `nearestDust` keeps.
+function nextNear(w, bare, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
-  const lo = Math.max(first, colOf(floor, strip.from));
-  const hi = Math.min(last, colOf(floor, strip.to) - 1);
-  for (let d = 1; d <= hi - lo; d++) {
+  const reach = Math.floor(Math.abs(pit.x - w.x) / P);
+  for (let d = 1; d <= reach; d++) {
     for (const c of [bare - d, bare + d]) {
-      if (c < lo || c > hi || taken.has(c)) continue;
+      if (c < first || c > last || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
@@ -442,19 +445,14 @@ export function haulerWork(w, c) {
     if (w.claim >= 0 && !at(floor, w.claim, 0)) {
       const bare = w.claim;
       taken.delete(w.claim); w.claim = -1;
-      // The target was a heap, not a column: a body sent to a jammed heap
-      // works along it until its hands are full or the heap is bare, and only
-      // then turns for home. Sent for one column, it took that column and
-      // filled the rest of its hands from the rock's heap on the sweep back --
-      // the rock's strip lies between the quarry's and the hole -- so the
-      // quarry's heap, the one the fullest-heap rule had sent it to, lost one
-      // column a trip and sat at full for the whole of a run (carters.mjs,
-      // quarry-jam: cleared exactly what landed, full 100% of the time). The
-      // next column is the nearest on the same strip, which is a shuffle along
-      // the heap and never a turn across the yard; a find off a strip has no
-      // heap to work and goes straight to the sweep.
+      // The target was a place, not a column: a body with room in hand keeps
+      // taking the nearest thing to where it stands -- along the heap, on to
+      // the ground the heap has shed onto, across to the next heap if that is
+      // nearer than home -- until its hands are full, and only then turns for
+      // home. Sent for one column, it took that column and filled the rest of
+      // its hands on the sweep back, so a far heap lost one column a trip.
       if (w.carry && w.carry < load(w)) {
-        const next = nextOnStrip(w, bare, taken);
+        const next = nextNear(w, bare, taken);
         if (next >= 0) claim(w, next, taken);
       }
     }

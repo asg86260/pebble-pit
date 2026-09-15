@@ -1041,12 +1041,16 @@ everything too, at a third of the throughput, and leaves the rock stopped half a
 where this leaves it a tenth. Fewest-headed leans toward the pile that has just been left, which
 is the difference.
 
-**That order decides where a trip starts; the body works that heap, and the rest of the trip is a
-sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
-same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column
-it took that column and filled up from the rock's heap on the way back — the rock's strip lies
-between the quarry's and the hole — so the quarry's heap, the one the fullest-heap rule had sent it
-to, lost a column a trip and sat at full for a whole run (`tools/node/carters.mjs`, quarry-jam).
+**The target decides where a trip starts; after it the body takes whatever is nearest, and the
+rest of the trip is a sweep home.** With something in hand it keeps taking the nearest thing to
+where it stands — along the heap, on to the grains the heap has shed past the end of its strip,
+across to the next heap — until its hands are full, so long as the next thing is nearer than the
+walk home; a grain further off than the lip is another trip's. It was held to the strip it was
+sent to, and a heap's own spill a cell past the strip's edge was on no ground it was working: a
+body with room in hand stepped over it every trip and it lay there for good
+(`test/heap-fringe.test.mjs`). Before that it was sent for one column, took that column and filled
+up from the rock's heap on the way back — the rock's strip lies between the quarry's and the hole
+— so the far heap lost a column a trip.
 Then it goes for nothing else: it walks back toward the lip and takes everything it walks over until
 its hands are full, and it never turns round. What is behind it is the next trip's.
 A grain that lands ahead of it on the way is taken — claimed or not, unless the claimant is nearer

@@ -4,7 +4,7 @@
 // Node checks: the yard is run rather than watched, so a walk the length of the
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFeetY, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFeetY, P, WORKER } from './helpers.mjs';
 // The yard's own chance, for the dust a check heaps itself. `Math.random` here
 // would hand each run a differently-shaped pile out of the same seed, which is
 // the seed's whole point undone from the test side. Every group is seeded
@@ -473,15 +473,15 @@ group('clearing a handful puts the crew back to work', async () => {
 
 // A body with anything in its hands never sets off across the yard.
 //
-// A trip is out to a target, along its heap, and home along the ground. The
-// target is picked with empty hands -- a find, the fullest jammed heap, the
-// nearest dust -- and after that the only column a laden body takes on is the
-// next one on the strip it is already working; the rest of the trip it takes
-// what it walks over on its way to the lip. It used to pick again at every
-// column, so a body part-laden at the quarry walked back past the rock's heap
-// to the farm for a spore, and a yard of single-grain finds had it turning
-// round on every one.
-group('a laden body works its heap and sweeps home rather than setting off again', async () => {
+// A trip is out to a target, then whatever is nearest, then home along the
+// ground. The target is picked with empty hands; after that a laden body
+// takes the nearest thing to where it stands -- along its heap, on to what
+// the heap has shed past its strip, across to the next heap -- but only
+// while that is nearer than the walk home. It used to pick again at every
+// column, so a body part-laden at the quarry walked back past the rock's
+// heap to the farm for a spore, and a yard of single-grain finds had it
+// turning round on every one.
+group('a laden body takes what is near and sweeps home rather than setting off again', async () => {
   window.__reset();
   openSites();
   window.__crew(2, 4, 0, 2);                  // two on the plots: green, at the far end
@@ -491,38 +491,33 @@ group('a laden body works its heap and sweeps home rather than setting off again
   run(20);                                    // let the plots come in
 
   const banked0 = state().pit;
-  // Every column newly taken on, and what the body was holding when it took
-  // it -- read off the frame before, because a target already under the feet
-  // is scooped from on the frame it is claimed, and the row then shows a new
-  // claim and a grain in hand that was picked up *after* it.
-  let took = 0, laden = 0, off = 0;
-  const had = new Map(), held = new Map(), on = new Map();
-  const stripOf = col => s0.piles.find(p => s0.floorX + col * P >= p.from && s0.floorX + col * P < p.to)?.key || null;
+  // Every column newly taken on with something in hand, and whether it was
+  // further off than the lip -- read off the frame before, because a target
+  // already under the feet is scooped from on the frame it is claimed.
+  let took = 0, laden = 0, far = 0;
+  const had = new Map(), held = new Map();
   for (let i = 0; i < 7200; i++) {
     run(1 / 60);
-    state().crewDetail.forEach((row, idx) => {
-      const [type, , , c, k] = row.split('|');
-      if (type !== 'h') return;
-      const claim = Number(k.slice(1));
-      const before = had.get(idx), carried = held.get(idx) || 0, was = on.get(idx);
-      had.set(idx, claim);
-      held.set(idx, Number(c.slice(1)));
-      if (claim >= 0) on.set(idx, stripOf(claim));
-      if (!(claim >= 0) || before === claim) return;   // nothing newly taken on
+    for (const w of yard.S.workers) {
+      if (w.type !== 'hauler') continue;
+      const before = had.get(w), carried = held.get(w) || 0;
+      had.set(w, w.claim);
+      held.set(w, w.carry || 0);
+      if (w.claim < 0 || before === w.claim) continue;   // nothing newly taken on
       took++;
       if (carried > 0) {
         laden++;
-        // laden, so it had better be the heap it was already on
-        if (!was || stripOf(claim) !== was) off++;
+        const x = s0.floorX + w.claim * P;
+        if (Math.abs(x - w.x) > Math.abs(s0.pitX - w.x) + P) far++;
       }
-    });
+    }
   }
   const banked = state().pit - banked0;
   window.__reset();
   return [
     ok(took >= 10, 'columns are taken on often enough to judge', `${took} times`),
-    ok(off === 0, 'and a body with anything in hand only ever takes the next column of its own heap',
-       `${off} of ${laden} laden claims were off the heap`),
+    ok(far === 0, 'and a body with anything in hand never sets off for something further than home',
+       `${far} of ${laden} laden claims were further off than the lip`),
     ok(banked > 0, 'and the hole still fills', `${banked} grains`)
   ];
 });

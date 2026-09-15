@@ -254,7 +254,13 @@ export function stepWizard(w, now) {
   const mid = ringMid();
   const mx = w.x + WORKER / 2, my = w.y + WORKER / 2;
   const out = Math.hypot(mx - mid.x, my - mid.y) || 1;
-  if (Math.abs(out - ringR()) > WIZ_RISE) {
+  // A body is on the ring if it is within a stride of anywhere its own breath
+  // can put it: the bob below swings it `WIZ_BOB` in and out, and measured
+  // against the stride alone a wizard at the top of a breath read as off the
+  // ring, spent a frame floating back with its channel dropped, and was placed
+  // again -- pouring at a fraction of its rate for as long as its breath
+  // peaked past the line (test/sky-work.test.mjs).
+  if (Math.abs(out - ringR()) > WIZ_RISE + WIZ_BOB) {
     const want = ringR() / out;
     const tx = mid.x + (mx - mid.x) * want - WORKER / 2;
     const ty = mid.y + (my - mid.y) * want - WORKER / 2;
