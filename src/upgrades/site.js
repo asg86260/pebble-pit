@@ -16,8 +16,11 @@ import { lookAt } from '../world.js';
 // A place costs a core *and* dust. The core is what says this is a place rather
 // than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
 // the rock worth digging after it, which every bill above tier one does.
-export const site = ({ key, name, cores, dust, more, open, at, once, show, then }) => ({
+export const site = ({ key, name, note, cores, dust, more, open, at, once, show, then }) => ({
   key, name,
+  // The line of words under the card. Every door writes one; this used to leave
+  // it behind, so three of the doors wrote a note nobody ever read.
+  note,
   // A place is a building like the rest of them: the yard's spare hands go out
   // and put it up, and the view does not glide to it until it is standing.
   kind: 'building', site: 'yard', at,
