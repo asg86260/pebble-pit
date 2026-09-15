@@ -451,7 +451,9 @@ function build(el, list, sections, empty, heads) {
         : '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
           '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
-      if (shelf) { b.classList.add('tile'); leanToCursor(b, u.key); }
+      // A readout (`u.read`) is not for sale and does not answer the cursor:
+      // no lean, no drift. The hover rule leaves `.stat` alone as well.
+      if (shelf) { b.classList.add('tile'); if (!u.read) leanToCursor(b, u.key); }
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
@@ -826,7 +828,8 @@ function leanToCursor(b, key) {
   b.style.setProperty('--sway-rate', String(1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD));
   b.style.setProperty('--sway-dir', (h >> 10) & 1 ? 'reverse' : 'normal');
   b.addEventListener('pointermove', e => {
-    if (b.disabled || b.classList.contains('off')) return;   // a tile you cannot pay for does not lean
+    // a tile you cannot pay for, or that is not for sale, does not lean
+    if (b.disabled || b.classList.contains('off') || b.classList.contains('stat')) return;
     const r = b.getBoundingClientRect();
     const dx = (e.clientX - (r.left + r.right) / 2) / (r.width / 2);
     const dy = (e.clientY - (r.top + r.bottom) / 2) / (r.height / 2);
