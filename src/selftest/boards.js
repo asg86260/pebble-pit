@@ -1559,7 +1559,7 @@ export const TESTS = [
     // one pixel now. A number that close is not a thing to leave to a comment.
     // ...and the words a ladder says while its next rung is priced in a coin
     // the yard has no source for yet (see coinNeeds in upgrades/price.js).
-    const SAYS = ['queued', 'building', 'nobody on it',
+    const SAYS = ['queued', 'building',
                   'needs crops', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
@@ -1606,7 +1606,7 @@ export const TESTS = [
 
     return [
       ok(!!row, 'the bench has a row that takes time to build'),
-      ok(/queued|building|nobody on it/.test(status),
+      ok(/queued|building/.test(status),
          'and pressing it puts a status where the gain was', status || 'nothing'),
       ok(seen.size === 1 && seen.has(before),
          'and the sheet is the same size on every frame the build runs',
@@ -1663,11 +1663,18 @@ export const TESTS = [
     const atStart = inked(), clockAt = clock();
     await settle(20);
     const later = inked(), clockLater = clock();
+    // The tile being built is up on its plate the whole time, cursor or no
+    // cursor -- the hover state, held -- and sits back down when the site
+    // stalls. Read as the lift, which is what the hover sets.
+    const lift = () => (tile() ? getComputedStyle(tile()).getPropertyValue('--lift').trim() : '');
+    const liftGoing = lift();
     const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
     // Nobody at the site: the fill and the clock both hold.
     window.__crew(0, 0, 0, 0);
     await settle(3);
     const held = inked(), clockHeld = clock();
+    await sleep(300);                  // the plate comes down on a wall-clock transition (SHELF_HOVER_MS)
+    const liftStalled = lift();
     await settle(5);
     const stillHeld = inked(), clockStillHeld = clock();
     window.__finish();
@@ -1710,6 +1717,7 @@ export const TESTS = [
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),
          'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),
+      ok(liftGoing === '-2px' && liftStalled === '0px', 'the tile being built floats on its plate, and sits down when the site stalls', `${liftGoing} -> ${liftStalled}`),
       ok(stillHeld === held && clockStillHeld === clockHeld,
          'and with nobody on it the fill and the clock both hold', `${held}/${clockHeld} -> ${stillHeld}/${clockStillHeld}`),
     ];

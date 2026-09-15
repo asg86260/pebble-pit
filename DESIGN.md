@@ -9805,6 +9805,14 @@ look is the shot: `buildboard` and a new `buildstalled` scene in
 
 ### As built (2026-09-15)
 
+Two more calls the same evening: the tile being built holds the hover
+state -- lifted on its plate and drifting -- the whole time the work is on,
+cursor or no cursor, and sits back down when the site stalls; and `nobody
+on it` went. The stalled tile says `building` like a running one, and
+stopping is what says the rest: the fill halts, the clock freezes, the tag
+goes dashed, the plate comes down. The queue card says `building` for a
+stalled front line too.
+
 The queue card took the tile's vocabulary the same day: `m:ss` to the
 second on every line, and a waiting line says its place -- `next`, `2nd`
 -- before its clock, the same word its tile wears; the front line keeps its

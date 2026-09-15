@@ -662,7 +662,7 @@ export const TESTS = [
          `seated ${grew.w}x${grew.h}, really ${grew.realW}x${grew.realH}`),
       ok(!!again && left === drawn.length, 'starting a build leaves the row where it is',
          `${drawn.length} -> ${left} rows`),
-      ok(/building|nobody on it|queued/.test(said),
+      ok(/building|queued/.test(said),
          'and the row says what the yard is doing about it', said || 'nothing'),
       ok(Math.abs(fit.h - fit.realH) < 2 && Math.abs(fit.w - fit.realW) < 2,
          'and the board is seated by the size it is now, not the size it was',

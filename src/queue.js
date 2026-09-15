@@ -24,7 +24,7 @@
 // tall as its line -- a card that sizes to what is on it (the owner's call).
 
 import { S } from './state.js';
-import { SITES, BUILDER_SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
+import { SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
 import { buy, leftText } from './upgrades.js';
 import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
@@ -62,8 +62,10 @@ const pips = w => {
 // tile wears.
 const clockOf = (site, list, i) => {
   const going = roomAt(site);
-  if (i < going && stalled(site))
-    return BUILDER_SITES.includes(site) ? 'building' : 'nobody on it';
+  // A front line nobody is at says `building` and no clock: a clock over a
+  // work nobody is doing is a promise the yard is not keeping, and the tile
+  // says the same word (its stopped clock and dashed tag carry the rest).
+  if (i < going && stalled(site)) return 'building';
   let ms = 0;
   for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
   const place = i < going ? '' : `<em>${placeWord(i - going + 1)}</em> `;

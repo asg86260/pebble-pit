@@ -807,7 +807,11 @@ export function refresh(el, list, headcount) {
         const stuck = !queued && stalled(u.site) && !BUILDER_SITES.includes(u.site);
         // `queued` and no number: the place in line is the tag's (`2nd`), and
         // a number said twice on one tile is one too many (the owner, 2026-09-15).
-        sayHTML(gain, queued ? 'queued' : stuck ? 'nobody on it' : 'building');
+        // `building` whether or not anybody is at it: a stalled site says so
+        // by stopping -- the fill halts, the clock freezes, the tag goes
+        // dashed and the tile sits back down on the plank -- and a word for
+        // it on top was one status too many (the owner, 2026-09-15).
+        sayHTML(gain, queued ? 'queued' : 'building');
         // The bill is paid, and a paid bill is not a price: the tag holds the
         // time left alone, to the second, at the rate the site is going -- or,
         // for a row in line, its place, since a clock on a thing not started

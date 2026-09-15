@@ -266,7 +266,7 @@
 /* A tile the yard is building (DESIGN.md, "A tile being built shows the
    building"): the tag is a clock and nothing else, at full ink and with a
    solid edge -- a running clock is not a thing you cannot afford. It goes
-   dashed again only when the site has nobody on it, which is when the clock
+   dashed again only when the site has nobody at it, which is when the clock
    stops. A tile in line is not disabled (a press hands it back) and wears
    its place the same way. */
 .rows.shelves > button.tile.building:disabled .tag { border-style: solid; color: #000; }
@@ -357,8 +357,16 @@
 /* Only a tile you can pay for lifts. `off` is set by the builder on every
    row you cannot pay for right now -- short of a coin, climbed, waiting,
    building, queued -- so the hover never depends on the button's own
-   `disabled`; a readout is not for sale and stays put too. */
-.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) {
+   `disabled`; a readout is not for sale and stays put too.
+
+   ...and the tile being built is up the whole time, cursor or no cursor:
+   lifted and drifting the way a hovered one is, since it is the one thing
+   on the plank that is in hand -- the yard is at work on it, and a tile
+   that floats while its clock runs is that work, seen from the board (the
+   owner, 2026-09-15). The same plate, the same drift; it is the hover state,
+   held. */
+.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat),
+.rows.shelves > button.tile.building {
   --lift: -2px;
   border-color: #000;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
@@ -536,5 +544,5 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 /* The pin does not answer the cursor: no lift, no drift, no darkened border.
    It is the resting tile whatever the pointer does; the builder attaches no
    lean to it either. */
-.pin.rows.shelves > button.tile:hover { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
+.pin.rows.shelves > button.tile:hover, .pin.rows.shelves > button.tile.building { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
 
