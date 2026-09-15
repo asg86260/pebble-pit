@@ -93,14 +93,12 @@ export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
 // climbed ladder is grey. The three colors are the marks' own.
 export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c' };
-// Whether the boards are drawn as shelves at all. A dev build only, until the
-// glyphs are drawn and the design is marked built: a release keeps the cards.
-// And asked for, not assumed: `?shelf` on the page's address. Every dev build
-// drawing shelves put the prototype under the browser suite, whose eleven
-// card checks -- heights, columns, the corner, the seating -- were then
-// measuring a parked design instead of the boards a release ships; the
-// shelf is one query away for a look (`play.html?shelf`, `shelf.html`) and
-// the checks read the cards. `import.meta.env` is vite's and `location` the
-// page's; neither exists in the node yard, which has no boards to draw.
-export const SHELF_BOARDS = !!(import.meta.env && import.meta.env.DEV)
-  && typeof location !== 'undefined' && new URLSearchParams(location.search).has('shelf');
+// Whether the boards are drawn as shelves at all. Every dev build, so the
+// owner plays on them (their call, 2026-09-14); a release keeps the cards
+// until the glyphs are drawn and the design is marked built. It was gated on
+// `?shelf` for a day so the browser suite's eleven card checks -- heights,
+// columns, the corner, the seating -- would read the cards; with the shelf
+// on for dev those checks now read the shelf, and the ones that disagree
+// are the shelf's to make true. `import.meta.env` is vite's and does not
+// exist in the node yard, which has no boards to draw.
+export const SHELF_BOARDS = !!(import.meta.env && import.meta.env.DEV);
