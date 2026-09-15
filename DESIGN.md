@@ -9063,7 +9063,6 @@ is the check working. The board shots (`shackboard`, `quarryboard`,
 the three shields for a check that buys a hat. `first day of school` on the
 record is `first hat`.
 
-<<<<<<< HEAD
 ## The reliability freeze: every check is a reload check (design, approved 2026-09-14)
 
 Sixteen releases in two days and forty changelog lines, and the shape of
@@ -9172,7 +9171,7 @@ harness off its mocks.
 Still open, found by the harness and not fixed: a hat knocked off and
 lying on the ground is not saved (`hatOff`), and a body sent to pick it up
 after a refresh finds nothing there.
-=======
+
 ## The spark band is the top of the ladder, not a card beside it (built)
 
 The grounds' four ladders each end in a research card -- `labseam`, `labcave`,
@@ -9494,4 +9493,3 @@ rung the grounds had.
 - `test/ladders.test.mjs` asserts the lists: each `LADDER + 1` long, whole
   where the count is whole, every rung worth more than the last, and each
   count reading the top of its own list at the top.
->>>>>>> main

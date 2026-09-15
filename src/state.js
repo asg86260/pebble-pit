@@ -823,13 +823,7 @@ export const EPHEMERAL = [
   'peakRow',
   // the opening, while it is running
   'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
-<<<<<<< HEAD
-  'introThrew',
-=======
   'introThrew', 'skipHeldAt', 'introCut',
-  // a rock on its way down, and the celebration for the last one
-  'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
->>>>>>> main
   // ...and when the last one hit, which is only read for the spread it does on
   // arriving: a reload has no arrival to be moments after.
   'landAt',

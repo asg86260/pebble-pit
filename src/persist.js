@@ -6,11 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-<<<<<<< HEAD
-         ABYSS_AT, WORKER, LADDER, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
-=======
-         ABYSS_AT, WORKER, LADDER, TIER_RUNGS } from './config.js';
->>>>>>> main
+         ABYSS_AT, WORKER, LADDER, TIER_RUNGS, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
@@ -392,7 +388,11 @@ function blob() {
     reunionDone: S.reunionDone,
     rescued: S.rescued,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
-                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid },
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                          // and how far it has strained and sagged under a rock it holds, so a
+                          // re-caught rock (below, on the way in) picks up where the rope was
+                          strain: S.shield.strain || 0, sag: S.shield.sag || 0,
+                          caughtAgo: S.shield.caught ? Math.max(0, Math.round(clockNow() - S.shield.caught)) : null },
     shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     looPosts: S.looPosts,
@@ -866,15 +866,19 @@ export function restore() {
   // an unfinished one, or the props, is what the rock goes through anyway.
   if (S.shield && S.rockFall > 0) {
     const k = KINDS[S.shield.kind];
-    if (S.shield.laid >= k.pieces && k.answer !== 'through') {
-      S.shield.caught = clockNow();
-      // Where the shield took hold of it: the height at which a falling
-      // rock's foot meets the shield's top (the catch in `stepShield`), or
-      // lower if the rope has already paid out that far. A rock above that
-      // is one the dome sprang back up, and it comes down again on the
-      // speed it was saved with rather than hanging at the top of its arc.
-      const catchAt = (S.shield.h + 1) * P + ROCK_SINK;
-      S.shield.held = Math.min(S.rockFall, catchAt);
+    if (S.shield.laid >= k.pieces && k.answer !== 'through' && s.shield.caughtAgo != null && Number.isFinite(+s.shield.caughtAgo)) {
+      // When it took hold, as how long ago -- the arch's crack and the dome's
+      // hold are clocks from that moment -- and where: the height at which a
+      // falling rock's foot meets the shield's top (the catch in `stepShield`).
+      // The rope's strain is how far below that the rock has been let down, so
+      // `held` is the catch height and not where the rock is now, or every
+      // refresh would have the rope start straining from nothing again. A rock
+      // above it is one the dome sprang back up, and it comes down again on
+      // the speed it was saved with rather than hanging at the top of its arc.
+      S.shield.caught = clockNow() - (+s.shield.caughtAgo || 0);
+      S.shield.held = (S.shield.h + 1) * P + ROCK_SINK;
+      S.shield.strain = +s.shield.strain || 0;
+      S.shield.sag = +s.shield.sag || 0;
       if (k.answer === 'hold' && S.rockFall > S.shield.held) S.shield.rising = true;
       else S.rockFallV = 0;
       S.rockHeld = true;

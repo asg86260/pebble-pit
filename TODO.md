@@ -1,6 +1,5 @@
 # Still to do
 
-<<<<<<< HEAD
 ## The reliability freeze -- BUILT (2026-09-14)
 
 "The reliability freeze" in DESIGN.md, with an as-built note. The reload
@@ -10,7 +9,7 @@ hold: a full run green twice running on main, and then the freeze lifts.
 Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
 saved, so a body sent to pick it up after a refresh finds nothing there --
 save it as a fact of the yard, the way a loose core is.
-=======
+
 ## A rung is a step up, not a step along -- BUILT (2026-09-14)
 
 "A rung is a step up, not a step along" at the end of DESIGN.md, with an
@@ -30,7 +29,6 @@ research cards are the fourth rung of their ladders; every count's unit
 doubled so no top moved. Worth a real play: three presses to a ladder is the
 shortest they have been, and each is a whole coin's step. The builders' 37%
 and the attended wait are untouched and still open.
->>>>>>> main
 
 ## The hole's count and its pile disagree by a few cells (2026-09-14)
 
