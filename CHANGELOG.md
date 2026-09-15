@@ -5,10 +5,23 @@ commit that fixes it, under **Unreleased**; `npm run release` turns that
 heading into the version number and the date, so nobody types a number by hand.
 
 One short line per fix, in the player's words. No account of how it looked
-or why it happened -- that belongs in the commit. Features go in DESIGN.md;
-this file is for things that were broken.
+or why it happened -- that belongs in the commit. A release may open with a
+**New this release** list, a line a feature, no more; the reasoning behind a
+feature lives in DESIGN.md.
 
 ## Unreleased
+
+**New this release**
+
+- Every ladder is eight rungs, two a coin: dust, then crops, then ore, then a spark -- one card, the last band red.
+- Hold space to skip any scene.
+- A clock over the sqwife: how long they have been under, and what the rescue took.
+- The crew dance after the first rock and the rescue, and get knocked off their feet when a rock lands.
+- The dome comes down after the rescue, every barrier is built to fit its rock, and the next rock is down within a second of the last.
+- Every building opens with a spare hand already walking over, and every door carries its note.
+- Every check now saves and reloads the game every five seconds while it runs; the "survives a refresh" fixes below are what it found.
+
+**Fixed**
 
 - "hold to mine" says "1 hit/s", the pace it gives, instead of "0 -> 1". (`src/selftest/boards.js`)
 - A ladder waiting on crops says "needs crops", the coin it wants, instead of asking for a plot. (`test/ladder-chain.test.mjs`)

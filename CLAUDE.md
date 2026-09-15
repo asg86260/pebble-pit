@@ -17,7 +17,8 @@ what is fixed, **ending with the check that would go red again, in
 parentheses** -- `(test/reload.test.mjs)`. No symptom story, no mechanism;
 that goes in the commit message. Never write a version number there;
 `npm run release` stamps the heading with the version and the date.
-Features do not go in it. A fix with no check to name is a fix that will
+Features get one line each under **New this release** at the top of the
+section, nothing longer; their reasoning stays in DESIGN.md. A fix with no check to name is a fix that will
 be reported again; a player's save goes in `test/fixtures/` and the check
 goes red before the fix is written (see "The save is the fixture").
 
