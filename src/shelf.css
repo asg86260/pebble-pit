@@ -225,7 +225,10 @@
 .rows.shelves > button.tile {
   outline: 1px solid rgba(0, 0, 0, 0);
   outline-offset: -1px;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0);
+  /* The shadow is black from the start, at no offset -- hidden under the
+     tile -- and slides out as the tile lifts, the way a shadow moves under a
+     thing picked up. A shadow that faded in read as a light coming on. */
+  box-shadow: 0 0 0 #000;
   transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, box-shadow var(--shelf-hover-ms, 120ms) ease-out;
 }
 /* The whole of what stands on the tile lifts together -- picture, name, gain

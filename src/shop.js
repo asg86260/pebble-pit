@@ -271,8 +271,10 @@ function build(el, list, sections, empty, heads) {
   const inSubmenu = el === crewListEl;
   // The shelf (DESIGN.md, "The shelf"): the same rows, the same builder, a
   // different picture -- a section is a plank and a row is a thing standing
-  // on it. The crew submenu is a list, not a shop, and keeps the cards.
-  const shelf = SHELF_BOARDS && !inSubmenu;
+  // on it. The crew submenu is a list, not a shop, and keeps the cards; so
+  // does the pin in the corner, which is one card on its own with no shelf
+  // to stand on (the owner's call, 2026-09-14).
+  const shelf = SHELF_BOARDS && !inSubmenu && el !== pinEl;
   el.classList.toggle('shelves', shelf);
   // A board whose one heading repeats the name at the top of it says the same
   // thing twice with a rule between: a title reading "the tower" and, directly
