@@ -140,10 +140,7 @@ function underfoot(w, ahead = 0) {
   const last = lastCol();
   const lo = Math.max(0, colOf(floor, w.x - P)), hi = Math.min(last, colOf(floor, w.x + WORKER + ahead));
   for (let c = lo; c <= hi; c++) {
-    if (!at(floor, c, 0)) continue;
-    const x = floor.x + c * P;
-    const owner = S.workers.find(o => o !== w && o.type === TYPE.HAUL && o.claim === c);
-    if (owner && Math.abs(owner.x - x) <= Math.abs(w.x - x)) continue;
+    if (!at(floor, c, 0) || keptBy(w, c)) continue;
     return c;
   }
   return -1;
@@ -171,18 +168,37 @@ function scoop(w, c, now) {
 // held to its own strip it stepped over the grains a heap sheds past the edge
 // of its strip, and those lay there for good. Nearer than the hole is the
 // bound: a grain closer than the lip is a small detour or on the way, one
-// further off is another trip's. Held to the ground the crew can stand on,
-// held to the near lip of the hole, as everything a carter fetches is.
+// further off is another trip's. Held to the near lip of the hole, as
+// everything a carter fetches is.
+//
+// Claimed or not, unless the claimant is nearer -- the same rule the sweep
+// home keeps (`keptBy`). A claim is for empty hands setting off across the
+// yard; held against the body already stood beside the column, a body ran
+// out to a cluster of three, took one, and turned for home while another
+// walked the length of the yard for the two beside it.
 function nextNear(w, bare, taken) {
   const last = lastCol();
   const reach = Math.floor(Math.abs(pit.x - w.x) / P);
   for (let d = 1; d <= reach; d++) {
     for (const c of [bare - d, bare + d]) {
-      if (c < 0 || c > last || taken.has(c)) continue;
-      if (at(floor, c, 0)) return c;
+      if (c < 0 || c > last || !at(floor, c, 0) || keptBy(w, c)) continue;
+      return c;
     }
   }
   return -1;
+}
+
+// Whether another carter has set off for a column and is at least as near to
+// it as this body: then it is theirs. A claim is a target for empty hands, so
+// six bodies do not converge on one shard; it is not a reservation against
+// the body already stood beside the column. Whoever is nearer keeps it: a
+// claimant losing its target early has most of its walk ahead and the re-pick
+// is a small course change, where one losing it at the last stride stops on
+// bare ground and turns, which reads as hesitating.
+function keptBy(w, c) {
+  const x = floor.x + c * P;
+  const o = S.workers.find(o => o !== w && o.type === TYPE.HAUL && o.claim === c);
+  return !!o && Math.abs(o.x - x) <= Math.abs(w.x - x);
 }
 
 // Taking a column on.
