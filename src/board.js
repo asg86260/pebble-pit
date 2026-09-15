@@ -393,6 +393,16 @@ function seatFlyout() {
   const door = sheet && sheet.querySelector('.rows > button.door');
   if (!door) return;
   const rows = door.parentElement;
+  if (door.classList.contains('tile')) {
+    // On a shelf the door is one slot, and a slot is too narrow for a list
+    // of names drawn as cards: the list stands over the door's own left
+    // edge, two slots wide, so the cards in it are the width they were
+    // drawn for. The door's edge in the panel is read off the layout.
+    let x = 0; for (let e = door; e && e !== panelEl; e = e.offsetParent) x += e.offsetLeft;
+    crewListEl.style.left = `${x}px`;
+    crewListEl.style.width = `${2 * door.offsetWidth}px`;
+    return;
+  }
   crewListEl.style.left = `${sheet.offsetLeft}px`;
   crewListEl.style.width = `${door.offsetWidth + sheet.offsetWidth - rows.offsetWidth}px`;
 }
