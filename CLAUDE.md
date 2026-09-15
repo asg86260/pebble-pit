@@ -352,10 +352,11 @@ Two harness facts, each of which cost a full launch cycle:
   rung is cheap and dust-only so an early yard can buy it; the ladder gets dear
   in the coins the station has started spending, and the last rung is the
   spark's on the bench as at the grounds -- on the same card, climbing the
-  same field, never a card of its own. **A count ladder reads a written list**
-  (`config/rungs.js`: the foot and a value a rung, each worth more than the
-  last -- carry 1, 2, 4, 6, 10) and a rate ladder eases to a named top; no
-  unit-a-rung constants, no curve formula (DESIGN.md, "A rung is a step up").
+  same field, never a card of its own. **Every ladder is a written table**
+  (`LADDERS` in `config/rungs.js`: a value for the foot and one a rung, in the
+  row's own unit, and a dust cost a rung -- carry 1, 2, 4, 6, 10); no
+  unit-a-rung constants, no base-and-top, no first-cost-and-rate (DESIGN.md,
+  "A rung is a step up"). The ladder book edits it a rung at a time.
   The tower's and the machines' spark ladders are outside this rule by the
   decision above. Build every new ladder through `tierRows` with `named`
   bands; a flat row with one bill from rung one is the old shape and a bug.

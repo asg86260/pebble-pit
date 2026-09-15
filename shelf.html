@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>shelf</title>
+<link rel="stylesheet" href="/src/style.css">
+<link rel="stylesheet" href="/src/shelf.css">
+<style>
+  body { background: #fff; margin: 0; padding: 12px; }
+  .sheet { width: 100ch; border: 2px solid #000; background: #fff; padding: 10px 12px; }
+  .sheet .title { margin-bottom: 7px; padding-bottom: 4px; border-bottom: 2px solid #000;
+                  font: 12px/1.4 ui-monospace, "Courier New", monospace; letter-spacing: .18em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<!-- The shelf bench: the bench's real rows, every one forced on, drawn by the
+     shelf builder alone (DESIGN.md, "The shelf"). A state the game never
+     shows at once, which is the point: a glyph or a tag at its worst neighbor
+     is a five-second shot.
+
+       GAME=http://localhost:PORT/shelf.html node tools/headless.mjs --shot out.png 1
+
+     `window.__shelfMeasure()` reads every tile's glyph, name and tag center
+     against the tile's own, in pixels, so centering is a number and not an
+     opinion. -->
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="scrub"></div><div id="scrubshop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div class="sheet"><div class="title">the bench</div><div id="shelves"></div></div>
+<script type="module">
+import { UPGRADES, SECTIONS } from './src/upgrades.js';
+import { S } from './src/state.js';
+import { mountShelf } from './src/shelf.js';
+
+Object.assign(S, { stored: 9000000, shards: 999, spores: 999, sparks: 999, cores: 9, introDone: true });
+// Every row on, the one shield being the first; the others are the same card.
+const shown = u => !['net', 'arch', 'askwizards'].includes(u.key);
+const root = document.getElementById('shelves');
+mountShelf(root, SECTIONS, UPGRADES, shown);
+
+window.__shelfMeasure = () => {
+  const out = [];
+  const ink = el => { const r = document.createRange(); r.selectNodeContents(el); const q = r.getBoundingClientRect(); return (q.left + q.right) / 2; };
+  for (const t of root.querySelectorAll('.tile:not(.goal)')) {
+    const r = t.getBoundingClientRect(), mid = (r.left + r.right) / 2;
+    const c = t.querySelector('.glyph'); const q = c.getBoundingClientRect();
+    // the ink's span, read back off the canvas
+    const g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data;
+    let lo = c.width, hi = 0;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3]) { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); }
+    const tag = t.querySelector('.tag').getBoundingClientRect();
+    out.push({ key: t.dataset.key,
+               glyph: +((q.left + (lo + hi) / 2) - mid).toFixed(2),
+               name: +(ink(t.querySelector('.what')) - mid).toFixed(2),
+               tag: +(((tag.left + tag.right) / 2) - mid).toFixed(2),
+               tagTop: +tag.top.toFixed(1) });
+  }
+  return out;
+};
+</script>
+</body>
+</html>

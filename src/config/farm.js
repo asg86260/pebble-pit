@@ -30,8 +30,7 @@ export const FARM_H = 54;        // how tall a ripe stalk stands
 // standing right against the crop reads as a crop growing through a fence: the
 // plot wants a margin, the way a picture wants one.
 export const FARM_GATE = P * 6;
-export let TEND_BASE = 9000;   // to bring one plot on at tending 0
-export const TEND_FLOOR = 1800;
+// How fast a plot comes on at each rung of tending is a list in config/rungs.js.
 export const FARM_WALK = 1.1;
 // How much of a hand's tending stays on the plot it is standing over. The rest
 // goes over the other plots, evenly.
@@ -56,12 +55,8 @@ export const TEND_HERE = 0.5;
 // of every one of these is dust and a lot of it. Twice what the retired `tend`
 // rung asked, which is the same factor `PLOT_COST` took.
 //
-// The first price and the steepness of each ladder are the numbers the design
-// left open, so both are dials rather than constants: the way to settle them is
-// to sit with a yard and push them about, not to reason about them here.
-export let CROP_COST = 720;    // dust for the first rung of the yield ladder
-export let TEND_COST = 720;    // and for the first rung of the speed one
-// What a cut is worth at each rung is CROP_SPORES in config/rungs.js.
+// What each rung of the two ladders is worth and costs is written a rung at a
+// time in config/rungs.js, where the ladder book dials it.
 // A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
@@ -73,11 +68,4 @@ export let TEND_COST = 720;    // and for the first rung of the speed one
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
 // `let` is. config.js gathers every file's rows into one TUNABLE.
-export const FARM_KNOBS = [
-  { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200,
-    get: () => TEND_BASE, set: v => { TEND_BASE = v; } },
-  { key: 'CROP_COST', label: 'crop rung 1', min: 60, max: 4000, step: 20,
-    get: () => CROP_COST, set: v => { CROP_COST = v; } },
-  { key: 'TEND_COST', label: 'tending rung 1', min: 60, max: 4000, step: 20,
-    get: () => TEND_COST, set: v => { TEND_COST = v; } }
-];
+export const FARM_KNOBS = [];

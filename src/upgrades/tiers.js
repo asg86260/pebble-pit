@@ -24,21 +24,13 @@
 // sell" and "Every ladder is sold in bands".
 
 import { S } from '../state.js';
-import { RUNGS, TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP } from '../config.js';
-import { rungCost, DUST_PER, coinsOpen, coinNeeds } from './price.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP, LADDERS, rungDust } from '../config.js';
+import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 
-// What a rung of a long ladder costs, from what the first one costs.
-//
-// `rungCost` is half again a rung over five rungs, which is about six and a half
-// times across the whole of a ladder -- and that span is the thing worth
-// keeping, not the exponent, which was written for a ladder of five. Spreading
-// the same span over more rungs is `rungCost` asked for a fractional level,
-// which it answers perfectly well: the ends of the ladder are where they were
-// and the steps between them are finer. The alternative -- 1.6 twelve times
-// over -- is a hundred and seventy times the first price at the top, which is a
-// row nobody can buy rather than a ladder anybody climbs.
-export const tierCost = (first, lvl, rungs = TIER_RUNGS, rate) =>
-  rungCost(first, (RUNGS - 1) * lvl / (rungs - 1), rate);
+// What a rung costs is written down, a rung at a time, in config/rungs.js --
+// the dust, with the band's coins at the coins' rates on top. It was a first
+// cost raised by a rate a rung, and the rate was a knob about the whole
+// ladder when what wanted moving was one rung of it.
 
 // Where a ladder stands, clamped on read: a save from when the ladders were
 // longer may hold any level at all, and it reads as a finished ladder rather
@@ -61,10 +53,8 @@ export const named = (key, name, n = LADDER_BANDS) =>
 //   level    where the ladder stands, and `climb` how a rung is taken --
 //            for a ladder kept somewhere other than one field on S (the
 //            apothecary's potency, one per tonic). Both default to `field`
-//   value    what the ladder is worth at a ladder level -- the from/to
-//   first    what rung one costs, in dust
-//   rate     how much steeper each rung is, over five rungs' worth of the
-//            ladder -- RUNG_RATE (1.6) unless the ladder says otherwise
+//   value    what the ladder is worth at a ladder level -- the from/to; the
+//            dust a rung costs is LADDERS[key].dust, keyed by the first band
 //   follows  the key of a row this ladder continues -- `chained` in
 //            upgrades.js keeps every card off the board until that row is done
 //   bands    one line a band: a key, a name, optionally the coins the bill
@@ -73,7 +63,7 @@ export const named = (key, name, n = LADDER_BANDS) =>
 //            in a group a band (see `group` below); the first band's key and
 //            name are the card's.
 export function tierRows({ field, level: at, climb, unit, pct, does, value,
-                           first, rate, site, board, show, after, follows, keep, bands }) {
+                           site, board, show, after, follows, keep, bands }) {
   const rungs = TIER_BAND * bands.length;
   const level = at || (() => tierLevel(field, rungs));
   const step = climb || (() => { S[field]++; });
@@ -104,7 +94,7 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
     // worth. `billOf` only adds dust to a bill that names none, so naming it
     // here is what stops the conversion being done twice.
     bill: () => {
-      const dust = tierCost(first, level(), rungs, rate);
+      const dust = rungDust(bands[0].key, level());
       return [['dust', dust],
               ...coinsAt().map(c => [c, Math.max(1, Math.round(dust / DUST_PER[c]))])];
     },

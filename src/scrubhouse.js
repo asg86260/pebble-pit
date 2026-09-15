@@ -10,8 +10,7 @@
 // it are bodies not on the rock. That is the cost, and it is a decision you can
 // take back whenever you like -- the same bargain every other station makes.
 
-import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
-         FAN_COST } from './config.js';
+import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
@@ -102,7 +101,6 @@ const FAN = tierRows({
   field: 'fanLevel',
   unit: 'motes/s', pct: true, does: 'scrub',
   value: lvl => fanPull(lvl),
-  first: FAN_COST,
   site: 'scrub',
   show: () => S.scrubOpen,
   bands: named('fan', 'fan power')

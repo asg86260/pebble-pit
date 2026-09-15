@@ -41,31 +41,23 @@ export const BREW_BILL = {
 // beside it every rung the building sold pushed production up while nothing
 // drew it down, so an endgame yard brewed far past what its bodies could
 // drink. The pot brews as fast as a keeper can light it; what you buy is how
-// far a batch reaches (doses) and how long it holds (dose length), and how
-// deep each recipe goes (potency). Dose length eases across `LADDER`, the way
-// the crit ladders do; the name says five because that is how long the ladder
-// was when the top was set, and the top has not moved.
+// far a batch reaches (doses), how long it holds (dose length), and how deep
+// each recipe goes (potency). All three read lists in config/rungs.js -- doses
+// whole, so every rung on the card lands (it eased 3 -> 8 and rounded once,
+// and two rungs read "5 -> 5"); potency one tonic at a time (item 14), a rung
+// deepening the tonic it was bought for and leaving the rest of the menu where
+// it was, see `potencyLevel` -- and so do their costs. The first rung was set
+// at the door's own price (900 dust), not a fortieth of it: a board you can
+// clear on the frame it opens is a list, not a set of choices
+// (docs/critics-2026-09-10.md, B9).
 export const BREW_MS = 30000;          // a batch, always
-export const BUFF_MS0 = 60000;         // a dose lasts a minute at dose-length 0...
-export const BUFF_MS5 = 180000;        // ...three minutes at the top
-// Doses a brew at each rung is DOSES in config/rungs.js: whole doses, so every
-// rung on the card lands (it eased 3 -> 8 and rounded once, and two rungs read
-// "5 -> 5").
-// Buff strength: the fraction a level-0 dose is worth, and at the top. The stew
-// is +25% at level 0 -- the lab's own STEP, one familiar size -- and +60% maxed.
-// This ladder is climbed one tonic at a time now (item 14): a rung deepens the
-// tonic it was bought for and leaves the rest of the menu where it was, so
-// leaning on one brew is a decision rather than a side effect of any purchase.
-// See `potencyLevel` in apothecary.js.
-export const STRENGTH0 = 0.25;
-export const STRENGTH5 = 0.60;
 
 // The three tonics the game opens with. Each is a crop base plus one reagent
 // that is never the coin of the station it boosts, and each effect is a lever
 // the game already has: the stew scales a body's own action, the bracing tonic
 // lifts its crit chance, the strong brew widens what a hauler carries. The magic
-// numbers are the level-0 effects; each tonic's own potency ladder climbs its
-// own.
+// numbers are the level-0 effects; each tonic's own potency list climbs its
+// own (config/rungs.js, in the percent the row shows).
 export const TONIC_STEW_WORK = 0.25;   // +25% work, its own main action
 export const TONIC_BRACE_CRIT = 0.08;  // +8 points of crit chance
 export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
@@ -76,17 +68,6 @@ export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
 // the first three.
 export const TONIC_SWIFT_PACE = 0.25;  // +25% haul speed at potency 0
 export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
-
-// The ladders, in bands like every ladder in the yard (CLAUDE.md, "Decided"):
-// dust alone on the first card, dust and crops on the second, dust, crops and
-// ore on the third, the coins over the dust derived at `DUST_PER`. So this is
-// the one price the building's ladders carry -- what a first rung costs.
-// A first rung at the door's own price (900 dust), not a fortieth of it: a
-// board you can clear on the frame it opens is a list, not a set of choices.
-// The grind pass measured exactly that happening, and the idle veteran measured
-// it again at half the door -- every ladder bought inside a minute of the door
-// on every run (docs/critics-2026-09-10.md, B9).
-export const BREW_RUNG_DUST = 900;
 
 // A stirrer carries one vial. It was a ladder (one to four an armful), and an
 // armful is the walk being decoration: four vials in a pair of hands is four

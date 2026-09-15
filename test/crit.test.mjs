@@ -11,7 +11,7 @@ import { group, ok, state, run, haveRock, openSites, buyBuilt, climb, P, WORKER 
 import { S, floor } from '../src/state.js';
 import { findShards, seamShards } from '../src/quarry.js';
 import { critMult, critChance, critEV } from '../src/crit.js';
-import { TIER_BAND, CUT_POCKET, CRIT_MULT } from '../src/config.js';
+import { TIER_BAND, CUT_POCKET, LADDERS } from '../src/config.js';
 
 // The dust in the world that a crit's fountain ends up as: what is banked on the
 // floor, what is down the hole, and what is still in the air. A crit throws real
@@ -92,7 +92,7 @@ group('a crit at the cut takes more ground out at once', async () => {
   const per = r => r.cells / Math.max(1, r.swings);
   // A pocket and the crit's extra, less the swings at the end of a course that
   // find fewer neighbors than the pocket wants.
-  const want = (CUT_POCKET + CRIT_MULT[0] - 1) / CUT_POCKET;
+  const want = (CUT_POCKET + LADDERS.critmult.value[0] - 1) / CUT_POCKET;
   return [
     ok(plain.swings > 50 && plain.cells > 0, 'the gang swings and the cut comes out with crits off',
        `${plain.swings} swings, ${plain.cells} cells`),
