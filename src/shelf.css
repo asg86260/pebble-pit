@@ -213,15 +213,17 @@
   content: ''; position: absolute; top: 2px; right: 4px;
   border: 4px solid #000; border-left-color: transparent; border-bottom-color: transparent;
 }
-/* The hover: a white plate with a hard shadow rises behind the tile and the
-   object lifts a couple of pixels off the plank -- the thing you are about
-   to pick up stands out from the shelf. A tile you cannot press does
-   nothing under the cursor. (The owner's pick, 2026-09-14, over inverting
-   the tile and over inverting the tag alone.) */
-/* The edge and the shadow are always there at no ink, so the hover is a fade
-   of the same two things and a lift, not a jump: SHELF_HOVER_MS in
-   config/boards.js. No fill -- the dots stay under the tile -- and nothing
-   inverts. `motion: less` (body.still) cuts the transition like every fade. */
+/* The hover. The tile lifts off the plank on a plate with a hard shadow; the
+   dots go with it; once up, it drifts in a one-pixel loop. One motion, one
+   set of numbers: the lift and the sway are registered properties, and the
+   transform and the shadow are both computed from them -- the shadow is
+   always exactly where the plate was -- so the entrance, the drift and the
+   exit are one continuous value with no handoff to pop. Every position is a
+   whole pixel, so the pixel art and the dots never sit on a half. No fill:
+   the ground shows through. `motion: less` (body.still) stops all of it. */
+@property --lift { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --sway-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --sway-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .rows.shelves > button.tile {
   /* The tile carries the same dots as the ground under it, phased to the
      same grid by the builder (`--dot-x`/`--dot-y`, measured off the tile's
@@ -230,39 +232,36 @@
   background-position: var(--dot-x, 0) var(--dot-y, 0);
   outline: 1px solid rgba(0, 0, 0, 0);
   outline-offset: -1px;
-  /* The shadow is black from the start, at no offset -- hidden under the
-     tile -- and slides out as the tile lifts, the way a shadow moves under a
-     thing picked up. A shadow that faded in read as a light coming on. */
-  box-shadow: 0 0 0 #000;
-  transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, box-shadow var(--shelf-hover-ms, 120ms) ease-out,
-              transform var(--shelf-hover-ms, 120ms) ease-out;
+  transform: translate(calc(var(--lift) + var(--sway-x)), calc(var(--lift) + var(--sway-y)));
+  box-shadow: calc(0px - var(--lift) - var(--sway-x)) calc(0px - var(--lift) - var(--sway-y)) 0 #000;
+  transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
+              --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out;
 }
-
 .rows.shelves > button.tile:hover:not(:disabled) {
+  --lift: -2px;
   outline-color: #000;
-  box-shadow: 2px 2px 0 #000;
-  /* Once up, it floats: a one-pixel bob, eased, starting only after the lift
-     has landed (the delay is the lift's own time, and no fill, so the
-     transition carries it there first). The shadow bobs the other way, so it
-     stays on the ground. */
-  animation: shelf-float var(--shelf-float-ms, 900ms) ease-in-out var(--shelf-hover-ms, 120ms) infinite;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
      and a pseudo-class outranks the firewall's revert. The color only -- the
      shorthand would take the tile's dots with it. */
   background-color: transparent;
   color: #000;
+  /* The drift: eight whole-pixel stops round a one-pixel circle, on
+     SHELF_FLOAT_MS, starting once the lift has landed. */
+  animation: shelf-sway var(--shelf-float-ms, 1200ms) steps(1, end) var(--shelf-hover-ms, 120ms) infinite;
 }
 .rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled) .cost { opacity: 1; }
 .rows.shelves > button.tile:hover:not(:disabled) .note { color: inherit; }
-/* The whole tile lifts -- plate and everything on it, as one -- and the
-   shadow slides out beneath it to where the plate was: one motion, one
-   timing. Lifting the contents alone left the plate on the plank with a
-   shadow under nothing. */
-.rows.shelves > button.tile:hover:not(:disabled) { transform: translate(-2px, -2px); }
-@keyframes shelf-float {
-  0%, 100% { transform: translate(-2px, -2px); box-shadow: 2px 2px 0 #000; }
-  50%      { transform: translate(-2px, -3px); box-shadow: 2px 3px 0 #000; }
+@keyframes shelf-sway {
+  0%     { --sway-x: 0px;  --sway-y: 0px; }
+  12.5%  { --sway-x: 1px;  --sway-y: 0px; }
+  25%    { --sway-x: 1px;  --sway-y: -1px; }
+  37.5%  { --sway-x: 0px;  --sway-y: -1px; }
+  50%    { --sway-x: -1px; --sway-y: -1px; }
+  62.5%  { --sway-x: -1px; --sway-y: 0px; }
+  75%    { --sway-x: -1px; --sway-y: 1px; }
+  87.5%  { --sway-x: 0px;  --sway-y: 1px; }
+  100%   { --sway-x: 0px;  --sway-y: 0px; }
 }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
