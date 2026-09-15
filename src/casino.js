@@ -1,41 +1,15 @@
 // The casino: the one place in the yard that makes nothing.
 //
-// Everywhere else, a thing you buy does something for ever after. This takes
-// what you have and hands some of it back, and the whole of it is a decision you
-// keep making rather than a purchase you make once.
+// One table, one pot, and putting a chip down is the spin. You pick how much
+// (ten, a hundred, a thousand, or everything) and which of dust, shards or
+// spores, and the wheel goes round: even money, doubled or gone. If it came
+// off, the pot sits there and you decide again: bank it, or spin again. When
+// to stop is the whole game (DESIGN.md).
 //
-// **One table, one pot, and putting a chip down is the spin.** You pick how much
-// -- ten, a hundred, a thousand, or everything you have -- and which of dust,
-// shards or spores it comes out of, and the wheel goes round: half of it doubles
-// what you put down and half of it takes it. That is the whole of it, and it is one
-// gesture, because putting something on a table and then pressing a second thing
-// to find out what happened to it is a form rather than a bet.
-//
-// If it came off, the pot is sitting there and you decide again:
-//
-//   bank it       take it and walk out
-//   spin again    half it doubles, half it is gone
-//
-// Even money, and that is the whole of the house's edge -- which sounds like no
-// edge at all until you notice that a fair double-or-nothing taken for ever ends
-// at nothing with certainty. No spin here is a bad bet and no run of them is a
-// good one. When to stop is the game, it is the only decision in it, and nothing
-// about the odds will make it for you. It is also the only thing in this yard
-// you can actually lose.
-//
-// It is a building with a wheel in it: a block with one big round hole knocked
-// out, which turns slowly while there is a pot sitting on the table and is spun
-// in earnest while a ride is being settled. Everything you need to read is the
-// wheel and two rows.
-//
-// **The wheel waits for the sand.** Putting the chip down is still one gesture,
-// but a stake is not a number leaving a counter -- it is a pot pouring out of
-// the sky on to the ground beside the building, and it takes a second and a half
-// to get there. A wheel that was already spinning while the thing it was
-// spinning for was still in the air was spinning for nothing that was there yet.
-// So the chip goes down, the sand comes down, and the wheel turns its idle turn
-// until the last grain of it is lying still -- and only then does it go round in
-// earnest. See `pouring` and `settledInPile`.
+// The wheel waits for the sand: a stake is a pot pouring out of the sky on to
+// the ground beside the building, and the wheel turns its idle turn until the
+// last grain is lying still, then goes round in earnest. See `pouring` and
+// `settledInPile`.
 
 import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_TURNS,
          CASINO_WHEEL, CASINO_KNOCK,
@@ -54,32 +28,22 @@ import { buildShop } from './shop.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 
-// What is on the table right now, and nothing about it moves on its own: a pot
-// is what the last spin left, until the next one.
+// What is on the table right now: what the last spin left, until the next.
 export const pot = () => S.pot ? S.pot.n : 0;
 
-// A spin is being settled: the wheel is going and nothing you press does
-// anything until it stops. It is a second and a bit of nothing you can do, which
-// is exactly what a wheel is for. The chip going down starts a beat earlier than
-// this -- see `pouring` -- and the whole of the two is `busy`.
+// The wheel is going and nothing you press does anything until it stops.
 export const spinning = () => now() < S.spinUntil;
 
-// The chip is down, the spin is owed, and the sand is still on its way. This is
-// not a wait dressed up as one -- it is the pot arriving, which is the thing the
-// spin is about, and it ends on the frame the last grain of it comes to rest.
-// Nothing here is on a clock: see `settledInPile`.
+// The chip is down, the spin is owed, and the sand is still on its way. It
+// ends on the frame the last grain comes to rest, never on a clock
+// (`settledInPile`).
 export const pouring = () => !!S.pouring;
 
-// A hand is under way, either half of it: the sand is coming or the wheel is
-// going. Between the chip going down and the wheel stopping there is nothing you
-// can press, which is exactly what it was before -- the wait simply starts at
-// the chip now instead of a second and a half later.
+// A hand is under way, either half of it.
 export const busy = () => pouring() || spinning();
 
 // --- the chip -----------------------------------------------------------------
-// How much goes down is chosen, not worked out for you. Four chips, and the last
-// of them is not a number: `all` is everything you are holding of whatever you
-// stake, and it is the one the whole place is really for.
+// `all` is everything you are holding of whatever you stake.
 export const purseOf = cur =>
   cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : S.stored;
 
@@ -96,42 +60,34 @@ export function pickChip(d) {
   buildShop();
 }
 
-// A pot can be taken whenever the wheel is not going and nothing is still
-// pouring. It used to wait for the hole to have room for the whole of it, from
-// when a full hole turned grains away and a pot with nowhere to land was a pot
-// lost. The hole does not refuse any more -- the first grain it cannot take
-// tears the rift and goes through it, see `throughRift` in pit.js -- so a
-// winnings row that stayed dead over a full hole was a bet you had won and
-// could not collect, for a rule about sand that no longer holds.
+// Never gated on the hole having room: the hole does not refuse a grain, the
+// first one it cannot take tears the rift (`throughRift` in pit.js), and a
+// winnings row dead over a full hole is a bet you won and cannot collect.
 export const canBank = () => !!S.pot && !busy() && !S.paying;
 
 export const canStake = cur =>
   S.casinoOpen && !S.pot && !busy() && !S.paying && stakeOf(cur) > 0 && purseOf(cur) >= stakeOf(cur);
 
-// And putting the same pot back on. A pot that is still pouring is a pot you
-// have already bet, so neither of the two decisions is open while it comes down:
-// the pour is part of the spin, not a window before it.
+// A pot still pouring is a pot you have already bet: the pour is part of the
+// spin, not a window before it.
 export const canRide = () => !!S.pot && !busy() && !S.paying;
 
-// The chip goes down and the wheel goes round -- one gesture, not two. Putting
-// something on the table and then having to press a second thing to find out
-// what happened to it is a form to fill in, not a bet.
+// The chip goes down and the wheel goes round: one gesture, not two.
 export function stake(cur) {
   if (!canStake(cur)) return;
   const n = stakeOf(cur);
   if (cur === 'dust') spend(n);
-  // Out of the hole first, and off what the rift holds for the rest: a stake is
-  // spending like any other. See `spendHeld` in pit.js.
+  // Out of the hole first, and off what the rift holds for the rest
+  // (`spendHeld` in pit.js).
   else if (cur === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (cur === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   S.pot = { cur, stake: n, n };
   pour();
 }
 
-// The chip is down. What happens now is that the pot rains down out of the sky
-// on to the ground beside the building -- see `trickleIn` -- and the wheel is
-// promised but not yet turning. `stepCasino` starts it the moment the heap is
-// lying still.
+// The pot rains down beside the building (`trickleIn`); the wheel is promised
+// but not yet turning, and `stepCasino` starts it once the heap is lying
+// still.
 function pour() {
   S.hand = null;                                 // the last one is old news now
   S.pouring = true;
@@ -141,20 +97,14 @@ function pour() {
 
 // --- taking it, or not --------------------------------------------------------
 
-// Taking it is not a number moving from one counter to another. The pot is sand
-// on the ground at the far end of the yard and the hole is at the other end, so
-// what banking looks like is the whole of it going over: grain by grain, off the
-// heap, up over the works in a long arc, and down into the hole where everything
-// else in this game ends up.
-//
-// It is one for one. Every grain that leaves the heap is a grain you watch fly
-// and a grain the hole counts when it lands -- nothing is added at this end and
-// nothing arrives that did not set off.
+// Banking is the heap going over to the hole grain by grain, one for one:
+// every grain that leaves is a grain you watch fly and a grain the hole
+// counts when it lands.
 export function bank() {
   if (!canBank()) return;
-  // What flies is the heap that is there -- which past the first band is fewer
-  // squares than the pot is units -- and each of them carries its share of the
-  // number. `left` is the pot itself and it is paid out to the grain.
+  // What flies is the heap that is there (past the first band, fewer squares
+  // than the pot is units), each carrying its share of the number. `left` is
+  // the pot itself, paid out to the grain.
   S.paying = { cur: S.pot.cur, left: pot(), grains: Math.max(1, table.n) };
   S.pot = null;
   S.hand = null;                                 // taken: there is nothing to report
@@ -162,9 +112,7 @@ export function bank() {
   buildShop();
 }
 
-// One frame of it: grains lifted off the top of the heap and thrown across the
-// yard. The rate is the same as everything else here -- however much there is,
-// it is away in about a second and a half.
+// However much there is, it is away in about a second and a half.
 const FLIGHT_MS = 1700;
 
 function payOutStep(dt) {
@@ -183,9 +131,8 @@ function payOutStep(dt) {
         put(table, c, r, 0);
       }
     }
-    // Its share of the pot, and never less than one: whatever the rounding
-    // leaves over rides on the last grain off the heap, so the hole is paid the
-    // exact pot rather than the exact pot give or take the arithmetic.
+    // Its share of the pot, never less than one; whatever the rounding leaves
+    // over rides on the last grain, so the hole is paid the exact pot.
     const worth = p.grains > 1
       ? Math.max(1, Math.min(p.left - (p.grains - 1), Math.round(p.left / p.grains)))
       : p.left;
@@ -193,9 +140,9 @@ function payOutStep(dt) {
     p.grains--;
     S.tableAir.push({
       x, y, s: v, t: 0, worth,
-      // Not a ballistic lob: the hole is three thousand pixels away and the arc
-      // that gets there under gravity is one that leaves the sky. This is a
-      // thrown line with a hump in it, which is what a long throw looks like.
+      // Not a ballistic lob: the hole is three thousand pixels away and the
+      // arc that gets there under gravity leaves the sky. A thrown line with
+      // a hump in it.
       arc: { x0: x, y0: y, x1: pit.x + rand() * Math.min(700, pit.w),
              y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30 }
     });
@@ -203,27 +150,22 @@ function payOutStep(dt) {
   if (p.grains < 1 && p.left < 1) { S.paying = null; S.dirty = true; }
 }
 
-// Put the whole of it back on. Same wheel, same even money, and the pot is twice
-// what it was or it is nothing.
+// Put the whole of it back on.
 export const ride = () => { if (canRide()) pour(); };
 
-// What it lands on is decided now and shown in a second: a wheel that decided
-// when it stopped would be a wheel you could watch for a tell, and the spin is
-// a beat rather than a simulation.
-// Which slices are which. They are dealt out so the bare ones are spread round
-// the wheel rather than sitting in one block: a wheel with a quarter of it blank
-// in one piece is a wheel you can see the answer coming on.
+// The bare slices are dealt out round the wheel rather than in one block: a
+// wheel with a quarter of it blank in one piece is a wheel you can see the
+// answer coming on.
 export const sliceKeeps = i => (i * CASINO_WIN_SLICES) % CASINO_SLICES < CASINO_WIN_SLICES;
 
-// The wheel does not free-run and then get told the answer. The answer is picked
-// first and the wheel is *aimed* at it: six whole turns and then a slice of the
-// right colour under the pointer. So what you are watching is the thing itself
-// deciding, which is the only way a wheel is worth having.
+// The answer is picked first and the wheel is *aimed* at it: six whole turns
+// and then a slice of the right color under the pointer. A wheel that decided
+// when it stopped would be a wheel you could watch for a tell.
 function spin() {
   S.hand = null;                                 // the last one is old news now
   S.spinWon = rand() < CASINO_ODDS;
 
-  // a slice of the colour it is going to land on, picked at random among them
+  // a slice of the color it is going to land on, picked at random among them
   const want = [];
   for (let i = 0; i < CASINO_SLICES; i++) if (sliceKeeps(i) === S.spinWon) want.push(i);
   const slice = want[Math.floor(rand() * want.length)];
@@ -241,15 +183,10 @@ function spin() {
   buildShop();
 }
 
-// Where the wheel is this frame. It comes off its mark quickly and drags itself
-// down to a stop, which is the shape every wheel has and the reason a spin is
-// worth watching: the last half-turn is the slow one, and by then you can read
-// which way it is going to go.
-// While the stake is pouring in there is a pot on the table, so this is the
-// second branch below: the slow idle turn. That is the honest thing for it to be
-// doing -- the wheel is not deciding anything yet, and a wheel sitting dead
-// still while sand rains down beside it would read as a wheel that had missed
-// the chip going down.
+// Where the wheel is this frame: off its mark quickly, dragging down to a stop.
+// While the stake is pouring there is a pot on the table, so it turns the
+// slow idle turn: a wheel sitting dead still while sand rains down beside it
+// reads as one that missed the chip going down.
 function wheelAt(dt) {
   if (!spinning()) {
     if (S.spinUntil) return S.spinTo;            // exactly on its mark
@@ -261,21 +198,11 @@ function wheelAt(dt) {
 }
 
 // --- the pot, standing on the ground ------------------------------------------
-// What is on the table is a heap beside the building, and it is **the pot**: one
-// grain, one of whatever was staked, up to the first band. Not a drawing of a
-// heap sized to look about right -- a real plot of sand, settled by the same code
-// the yard and the hole use, so a thousand on the table is a thousand grains
-// lying there and doubling it is visibly twice the sand. Past a thousand it is
-// still a real plot of sand and still settled the same way, but how much of it
-// there is comes off the ladder in `shownFor` rather than off the counter.
-//
-// It goes down beside the building and walks *left* past it as it fills, because
-// that is where the empty ground is: `addGrain` already looks outward for the
-// nearest column that will take one, and the casino's own footprint is barred,
-// so a big enough pot flows round the building on its own.
-//
-// The heap has a brim, and it is a number picked in advance rather than whatever
-// the far end of the yard turned out to take -- see `shownFor`.
+// The heap beside the building IS the pot: a real plot of sand, settled by the
+// same code the yard and the hole use, one grain a unit up to the first band
+// and a reading off the ladder in `shownFor` past it. It walks *left* past the
+// building as it fills, because `addGrain` looks outward for the nearest
+// column that will take one and the casino's own footprint is barred.
 export const potAt = () => ({
   x: Math.round((casino.x + casino.w + P * 6) / P) * P,
   y: Math.round(S.groundY / P) * P
@@ -287,19 +214,11 @@ const underCasino = c => {
   return x + P > casino.x && x < casino.x + casino.w;
 };
 
-// How high a heap on the table may stand. Sand here stands up steeply, so
-// without a ceiling a pot poured on one spot goes up as a spire and off the top
-// of the window instead of out along the ground -- which is the one thing about
-// a pile you are meant to be able to read at a glance. Capped, it does what a
-// heap against a wall does: it reaches its height and then walks sideways.
-//
-// It is set against the building rather than against the sky: the casino is
-// twelve cells tall, and a heap of sand standing three and a half times the
-// height of the house it belongs to is not a heap beside a building, it is a
-// dune with a shed at the bottom of it. Twenty cells clears the roof by a third
-// and no more. The ceiling on its own does not make a heap smaller -- it trades
-// height for width one for one -- so it is the bands that keep the footprint
-// down and this that keeps the shape honest.
+// Sand here stands up steeply, so without a ceiling a pot poured on one spot
+// goes up as a spire off the top of the window. Capped at the building's own
+// height and a third, it reaches its height and walks sideways. The ceiling
+// trades height for width one for one; the bands are what keep the footprint
+// down.
 const TABLE_HIGH = 20;               // cells: the building's own height and a third
 
 export function wireTable() {
@@ -312,78 +231,47 @@ export function wireTable() {
 }
 
 // --- the bands ----------------------------------------------------------------
-// How much sand a pot puts on the ground. Up to `CASINO_PILE_ONE` it is the pot
-// itself, one grain a unit, which is the whole of the early table and is not
-// going anywhere: ten is ten grains and doubling it is visibly twice the sand.
-//
-// Past that the heap is a *reading* of the pot rather than a count of it. The
-// pot doubles on every ride, so a run of wins runs off the end of the ground and
-// off the end of the frame rate long before it runs out of numbers -- and the
-// old rule had already given up by then, quietly, by filling the yard and then
-// refusing the next grain. A band is the same admission made in advance, at a
-// size that draws: a tenfold pot for `CASINO_PILE_BAND` more grains, on the log
-// of the pot so nothing jumps, and never more than the brim.
-//
-// A double is about three hundred more grains wherever you are on the ladder, so
-// a win is always visibly more sand. See config.js for the ladder itself.
+// Up to `CASINO_PILE_ONE` the heap is the pot itself, one grain a unit. Past
+// that it is a *reading*: the pot doubles on every ride and would run off the
+// end of the ground long before it ran out of numbers, so a tenfold pot is
+// `CASINO_PILE_BAND` more grains, on the log of the pot so nothing jumps, and
+// never more than the brim. A double is about three hundred more grains
+// wherever you are on the ladder, so a win is always visibly more sand.
 export const shownFor = n =>
   n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
     : Math.min(CASINO_PILE_BRIM,
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
 
-// What one grain of the heap is worth: one, below the first band, and its share
-// of the pot above it. This is the one number in the building that is not one,
-// and it lives in the picture only -- see `payOutStep`, which pays the hole the
-// exact pot however the rounding falls.
+// What one grain of the heap is worth. Lives in the picture only: `payOutStep`
+// pays the hole the exact pot however the rounding falls.
 export const grainWorth = () => pot() / Math.max(1, tableWant());
 
-// How much sand should be lying there: the band, and never more than the ground
-// will actually hold. The brim is well inside what this stretch takes, so the
-// second clause is a backstop rather than the mechanism -- but the wheel waits
-// on the heap reaching this number, so a ground that refused a grain with no way
-// to say so would be a wheel that never went round. The first grain refused sets
-// the mark, and clearing the plot forgets it again.
+// The band, and never more than the ground will hold. The wheel waits on the
+// heap reaching this number, so a ground that refused a grain with no way to
+// say so would be a wheel that never went round: the first grain refused sets
+// `capped`, and clearing the plot forgets it.
 export const tableWant = () => Math.min(shownFor(pot()), table.capped ?? Infinity);
 
 // --- the trickle --------------------------------------------------------------
-// Sand does not arrive all at once. It comes down out of the sky and piles up,
-// and the pile growing is the thing worth watching -- so the plot is walked
-// towards what the pot says rather than set to it.
-//
-// The rate is worked out from how far there is to go, so ten grains trickle and
-// twenty thousand pour, and either is issued over about a second and a half.
-//
-// **Every grain of the heap is seen.** There was a cap on how many could be in
-// the air at once, with the rest put straight into the plot, and it was a lie of
-// exactly the kind this game does not tell: the heap arriving has to be the heap
-// arriving. It stays a backstop, and the bands have put it out of reach for good
-// -- the brim is seven hundred and this is twenty-four thousand, so no hand ever
-// comes near it.
+// The plot is walked toward what the pot says rather than set to it, over
+// about a second and a half whatever the size. Every grain of the heap is
+// seen: `IN_AIR` is a backstop the brim puts out of reach.
 const TRICKLE_MS = 1500;
 const IN_AIR = 24000;
 
-// Grains already on their way down count as arrived for the purpose of deciding
-// how many more to send. Without that the trickle keeps issuing sand for sand
-// that is already in the air, and the heap ends up a handful over the pot.
+// Grains on their way down count as arrived for deciding how many more to
+// send, or the trickle keeps issuing sand for sand already in the air.
 const airborne = () => S.tableAir.reduce((n, k) => n + (k.lands ? 1 : 0), 0);
 
-// **The dust is settled in its pile**, which is what the wheel waits on and is
-// three facts about the ground rather than a length of time:
+// What the wheel waits on: three facts about the ground, not a length of time.
 //
-//   nothing left to send    the heap holds what the pot says -- or as much of it
-//                           as the ground will take, which is what `tableWant`
-//                           already works out for a pot bigger than the far end
-//                           of the yard
-//   nothing in the air      every grain that was sent has landed
-//   nothing still moving    and the heap itself has stopped shuffling: the grid
-//                           puts a column to sleep the moment a pass over it
-//                           moves nothing, so a heap that has found its angle
-//                           has no awake columns at all (see grid.js)
-//
-// The last of those is the one that makes this an event and not a timer. A pot
-// of ten settles in a blink and a pot of twenty thousand takes as long as it
-// takes, and neither is a number written down anywhere.
+//   nothing left to send    the heap holds what the pot says, or as much as
+//                           the ground will take (`tableWant`)
+//   nothing in the air      every grain sent has landed
+//   nothing still moving    the grid puts a column to sleep the moment a pass
+//                           moves nothing, so a settled heap has no awake
+//                           columns (grid.js)
 export const settledInPile = () =>
   !S.paying && airborne() === 0 && table.n >= tableWant() && !table.awakeN;
 
@@ -398,11 +286,9 @@ function trickleIn(dt, cur) {
     if (S.tableAir.length < IN_AIR) {
       S.tableAir.push({
         x: at.x + (rand() - 0.5) * P * 20,
-        // Out of the sky, but out of the sky a little way up rather than out of
-        // the top of the plot: the grid stands eighty cells tall, and a grain
-        // starting up there spends two seconds falling before it is anything to
-        // look at. This is high enough to read as coming down and near enough
-        // that the heap grows while you are watching it.
+        // A little way up, not the top of the plot: the grid stands eighty
+        // cells tall, and a grain starting up there spends two seconds
+        // falling before it is anything to look at.
         y: S.groundY - P * 30 - rand() * P * 14,
         vx: (rand() - 0.5) * 0.3,
         vy: 0.9 + rand() * 0.8,
@@ -417,9 +303,8 @@ function trickleIn(dt, cur) {
   }
 }
 
-// And going the other way: grains lifted off the top of the heap, one at a time,
-// each of them fading out on its way up. A pot that vanished in a frame was a
-// number being set to zero; this is it *leaving*.
+// Grains lifted off the top of the heap one at a time, fading on the way up:
+// the pot *leaving*, not a number set to zero.
 function drainOut(dt) {
   const want = tableWant();
   let n = Math.min(table.n - want, Math.max(1, Math.ceil((table.n - want) * (dt / TRICKLE_MS))));
@@ -479,11 +364,8 @@ export function stepSparks(dt) {
     k.x += k.vx * f;
     k.y += k.vy * f;
     k.t += dt / 1000;
-    // and they are gone when they reach the ground rather than falling through
-    // it: a chip is not dust, it lands on nothing and it is worth nothing, but
-    // it is still a thing in a yard with a floor.
-    // A grain on its way to the hole: along its arc, and into the pile when it
-    // gets there. This is the one that is actually worth something.
+    // A grain on its way to the hole: along its arc, and into the pile when
+    // it gets there. The one that is actually worth something.
     if (k.arc) {
       const a = k.arc;
       a.k = Math.min(1, a.k + dt / FLIGHT_MS);
@@ -491,17 +373,14 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         // One square off the heap is worth its band, and the hole takes the
-        // whole of it: down there the pile *is* the dust, and that rule outranks
-        // the reading over here.
+        // whole of it: down there the pile *is* the dust.
         for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
         S.tableAir.splice(i, 1);
       }
       continue;
     }
 
-    // A grain coming down out of the sky is one of the pot arriving: it stops
-    // being a thing in the air and becomes a grain in the plot, which is what
-    // makes the heap grow as you watch rather than appear.
+    // A grain coming down is the pot arriving: it becomes a grain in the plot.
     if (k.lands) {
       const c = Math.max(0, Math.min(table.cols - 1, Math.round((k.x - table.x) / P)));
       if (k.y >= surfaceY(table, c)) {
@@ -519,14 +398,12 @@ export function stepSparks(dt) {
 }
 
 // The wheel turns while there is a pot on the table and spins while a ride is
-// being settled. It is the whole of the signal: the rows say what the numbers
-// are and this says whether anything is happening.
+// being settled: the rows say what the numbers are and this says whether
+// anything is happening.
 export function stepCasino(dt) {
   if (!S.casinoOpen) return;
   stepSparks(dt);
-  // The wheel waits for the pot. A chip that is down is a spin that is owed, and
-  // it is paid on the frame the last grain of the stake comes to rest -- not
-  // after a second of nothing, and not while there is still sand in the air.
+  // The spin is paid on the frame the last grain of the stake comes to rest.
   if (S.pouring && settledInPile()) { S.pouring = false; spin(); }
   const fast = spinning();
   S.wheel = wheelAt(dt);
@@ -538,11 +415,9 @@ export function stepCasino(dt) {
     else S.pot = null;
     // the stop is felt as well as seen -- and a win is felt harder
     shakeView(S.spinWon ? CASINO_WIN_KNOCK : CASINO_KNOCK);
-    // What happens to the sand is the plot's business now: it walks itself towards
-    // whatever the pot says, raining in or lifting off. See `stepTable`.
-    // and it says which way it went, for a few seconds, over the building --
-    // a wheel that stopped and told you nothing is a wheel you had to have been
-    // watching, and you are usually somewhere else in the yard.
+    // The sand is the plot's business now (`stepTable`). The result is said
+    // over the building for a few seconds, because you are usually somewhere
+    // else in the yard.
     S.hand = { won: S.spinWon, n: S.spinWon ? pot() : 0, cur, at: now(), bursts: 0 };
     noteHand(S.spinWon, S.hand.n || S.pot?.n || 0, CASINO_BIG);
     // and it is felt: a fountain out of the wheel, or a dud
@@ -551,21 +426,20 @@ export function stepCasino(dt) {
     S.dirty = true;
     buildShop();
   }
-  // A win's fountains go up a beat apart rather than all at once: three bursts
-  // read as a celebration, one reads as a hiccup.
+  // A win's fountains go up a beat apart: three bursts read as a celebration,
+  // one reads as a hiccup.
   if (S.hand?.won && S.hand.bursts < CASINO_BURSTS &&
       now() - S.hand.at >= S.hand.bursts * CASINO_BURST_GAP_MS) { burst(); S.hand.bursts++; }
   if (S.hand && now() - S.hand.at > CASINO_SAY_MS) { S.hand = null; S.dirty = true; }
 }
 
-// The middle of the wheel, which is where the news comes out of. The same
-// arithmetic the drawing uses, so the squares leave the hole and not the roof.
+// The middle of the wheel, the same arithmetic the drawing uses, so the
+// squares leave the hole and not the roof.
 const wheelAtXY = () => ({ x: casino.x + casino.w / 2, y: casino.y + casino.h * 0.62 });
 
-// A fountain of squares out of the wheel: up hard, out a little, and down
-// under gravity, fading as they go. They are scenery -- worth nothing, landing
-// nowhere -- in every shade the yard has, so they read as confetti against the
-// sky and against the block both.
+// A fountain of squares out of the wheel: scenery, worth nothing, landing
+// nowhere, in every shade the yard has so they read as confetti against the
+// sky and the block both.
 function burst() {
   const { x, y } = wheelAtXY();
   for (let i = 0; i < CASINO_BURST; i++) {
@@ -585,17 +459,13 @@ function burst() {
 export const saying = () => S.hand ? (S.hand.won ? 'won' : 'lost') : null;
 
 // --- the board ---------------------------------------------------------------
-// Three rows to put something down and two to decide what happens to it, and
-// never both sets at once: a table with a pot on it is not a table you can
-// stake at.
-//
-// A stake row is priced like any other row on any other board -- a mark and a
-// number -- because that is exactly what it is: this much, out of your hands,
-// now. The two decisions are not priced at all, so they carry what they would
-// pay instead, which is the number the decision is actually about.
+// Three rows to put something down and two to decide what happens to it,
+// never both sets at once. A stake row is priced like any other row (this
+// much, out of your hands, now); the two decisions carry what they would pay
+// instead, which is the number the decision is about.
 const STAKES = [
   // Named by the coin: three cards all reading STAKE differed by a seven-pixel
-  // mark in the price column (critics 2026-09-10, C6).
+  // mark in the price column.
   { key: 'stakedust', name: 'stake pebbles', cur: 'dust' },
   { key: 'stakeshard', name: 'stake ore', cur: 'shard' },
   { key: 'stakespore', name: 'stake crops', cur: 'spore' }
@@ -604,9 +474,8 @@ const STAKES = [
 const seen = cur => cur === 'shard' ? S.seenShard : cur === 'spore' ? S.seenSpore : true;
 
 export const CASINO_UPGRADES = [
-  // How much goes down, on a dial rather than as four rows a currency. It is the
-  // one row on this board that spends nothing, exactly like the roster's job
-  // rows: a setting between two buttons, not a purchase.
+  // A dial, like the roster's job rows: a setting between two buttons, not a
+  // purchase.
   {
     key: 'chip',
     name: 'chips',
@@ -618,10 +487,9 @@ export const CASINO_UPGRADES = [
     hi: () => S.chip >= CASINO_CHIPS.length - 1,
     show: () => S.casinoOpen && !S.pot && !busy() && !S.paying
   },
-  // A stake is written like a price -- a mark and a number, this much out of
-  // your hands, now -- but it is not a purchase and it does not go through the
-  // buying machinery: `stake` takes what it takes, and the row is dead when it
-  // could not.
+  // Written like a price but not a purchase: it does not go through the
+  // buying machinery. `stake` takes what it takes, and the row is dead when
+  // it could not.
   ...STAKES.map(t => ({
     key: t.key,
     name: t.name,
@@ -630,8 +498,8 @@ export const CASINO_UPGRADES = [
     currency: t.cur,
     dead: () => !canStake(t.cur),
     buy: () => stake(t.cur),
-    // A row for a currency you have never seen is a row naming a thing you have
-    // not met, which is the one rule every board in this game keeps.
+    // A row for a currency you have never seen names a thing you have not
+    // met, the rule every board keeps.
     show: () => S.casinoOpen && !S.pot && !busy() && !S.paying && seen(t.cur)
   })),
   {
@@ -648,9 +516,8 @@ export const CASINO_UPGRADES = [
   {
     key: 'ride',
     name: 'spin again',
-    // What it is worth if it comes off, which is the number the decision is
-    // about. The odds are not written anywhere: they are the same every time,
-    // and a percentage on a row would turn a wheel into a spreadsheet.
+    // What it is worth if it comes off. The odds are not written anywhere: a
+    // percentage on a row would turn a wheel into a spreadsheet.
     //
     price: () => `${MARKOF(S.pot?.cur)} ${pot() * 2}`,
     cost: () => 0,
