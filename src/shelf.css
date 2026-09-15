@@ -316,7 +316,13 @@
   background-clip: padding-box;
   /* Three motions, one transform: the lift, the drift, and a lean toward
      the cursor (`--follow`, written by the builder off the pointer, in
-     whole pixels). The shadow is the sum's inverse, so it stays put. */
+     whole pixels). The shadow is the sum's inverse, so it stays put.
+     The tile is promoted to its own layer so the lift moves one bitmap:
+     without it every frame is a fresh paint, and the coin marks -- borders
+     and background boxes -- snap to whole pixels while the words beside
+     them slide through the fractions, so the bill juddered against its
+     own label. */
+  will-change: transform;
   transform: translate(calc(var(--lift) + var(--sway-x) + var(--sway-x2) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--sway-y2) + var(--follow-y)));
   box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--sway-x2) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--sway-y2) - var(--follow-y)) 0 #000;
   transition: border-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,

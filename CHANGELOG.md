@@ -17,6 +17,7 @@ feature lives in DESIGN.md.
 - A tile being built shows it: the drawing fills in from the bottom as the work is done, the tag is a clock to the second, and a tile in line is a ghost with its place.
 
 - The ladder pips stay on a tile while it is being built (src/selftest/boards.js, "a tile being built fills in").
+- The coins on a lifted tile's price glide with the words instead of jittering beside them (no check can see it; hover a tile on the shelf).
 
 - A hat row's pips stand in a column down the tile's edge like every other ladder's, instead of lying flat at the top (src/selftest/boards.js, "a kit row's pips stand in a column").
 
