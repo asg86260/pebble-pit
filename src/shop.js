@@ -819,6 +819,7 @@ export function refresh(el, list, headcount) {
         sayHTML(price, '');
         sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
+        if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
         // Greyed while it is being built -- committed, nothing to press for --
         // and live while it waits, so a press can pull it back out.
         grey(row, !queued);
@@ -834,6 +835,7 @@ export function refresh(el, list, headcount) {
     // waiting on something of its own, below.
     if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
     if (row.classList.contains('building')) row.classList.remove('building');
+    if (row.classList.contains('queued')) row.classList.remove('queued');
     if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
 
 

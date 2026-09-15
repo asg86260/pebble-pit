@@ -24,7 +24,9 @@ feature lives in DESIGN.md.
 
 - A row waiting its turn says `queued`, its tag says `next` (then `2nd`, `3rd`) counted in the line rather than among what the site is building, and hovering it says a press hands it back (src/selftest/boards.js, "a tile being built fills in").
 
-- A tile waiting its turn is drawn as a plan -- the outline only -- so it no longer looks like a build just started (src/selftest/boards.js, "a tile being built fills in").
+- A tile waiting its turn is drawn as a plan -- the outline only -- and wears a dashed edge round the whole tile, so it no longer looks like a build just started (src/selftest/boards.js, "a tile being built fills in").
+
+- A tile waiting its turn keeps its title under the cursor instead of going white on white (src/shelf.css, the hover rule under "No tile inverts on hover"; no in-page check can force :hover).
 
 - The queue card's clocks read to the second, and a waiting line says its place the way its tile does (src/selftest/boards.js, "a tile being built fills in").
 

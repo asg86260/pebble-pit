@@ -9759,7 +9759,11 @@ guess the site cannot keep. In the line, not among the site's works: a
 site building two at once has its first waiting row third in the list and
 next in line, and next is the fact. Hovering it says `in line -- press to
 hand it back`, since that press is the one on a board that undoes a
-purchase and nothing on the tile said so. It stays pressable, as now, since a press hands
+purchase and nothing on the tile said so. And the tile's own edge is
+dashed, the whole plate pencilled in (the owner, 2026-09-15: "a more
+distinct look, like a dashed outline") -- it is the one tile on a plank
+that is neither for sale nor being made, and it should read so from
+across the room. It stays pressable, as now, since a press hands
 it back. The gain line says `queued`, no number: the place is the tag's,
 and a number said twice on one tile is one too many.
 

@@ -1689,6 +1689,9 @@ export const TESTS = [
     const nextTag = shop().querySelector('[data-key="auto"] .tag .time')?.textContent.trim() || '';
     const nextSaid = shop().querySelector('[data-key="auto"] .gain')?.textContent || '';
     const cardLine = [...document.querySelectorAll('#queue button.wait')].map(b => b.textContent.replace(/\s+/g, ' ').trim())[0] || '';
+    // Its edge is dashed: a thing waiting its turn is pencilled in.
+    const queuedTile = shop().querySelector('[data-key="auto"]');
+    const edge = queuedTile ? getComputedStyle(queuedTile).borderTopStyle : '';
     shop().querySelector('[data-key="auto"]')?.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
     await raf();
     const tip = document.getElementById('tip')?.textContent || '';
@@ -1703,6 +1706,7 @@ export const TESTS = [
       ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
       ok(/next/.test(cardLine), 'and the queue card says next on the same line', cardLine || 'no line'),
       ok(/hand it back/.test(tip), 'and hovering it says a press hands it back', tip || 'no tip'),
+      ok(edge === 'dashed', 'and its edge is dashed', edge || 'none'),
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),
          'and the tag holds a clock to the second that falls as the work goes', `${clockAt} -> ${clockLater}`),

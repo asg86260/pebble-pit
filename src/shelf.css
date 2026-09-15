@@ -342,6 +342,18 @@
               --sway-x2 var(--shelf-hover-ms, 120ms) ease-out, --sway-y2 var(--shelf-hover-ms, 120ms) ease-out,
               --follow-x var(--shelf-hover-ms, 120ms) ease-out, --follow-y var(--shelf-hover-ms, 120ms) ease-out;
 }
+/* No tile inverts on hover, whatever it is: style.css turns a hovered card
+   white-on-black (`.rows button:hover:not(:disabled)`), and a pseudo-class
+   outranks the firewall's revert. The lifting tile below says the same
+   again with its plate; this is for the ones that do not lift and are not
+   disabled -- a row in line, pressable to hand it back -- whose title went
+   white on a white tile and vanished under the cursor. */
+.rows.shelves > button.tile:hover:not(:disabled) { color: #000; background-color: #fff; }
+/* A tile in line is pencilled in: a dashed edge round the whole tile, on
+   the plate's own border, so a thing waiting its turn reads as such from
+   across the plank and not only from its tag. It is the one tile on a
+   plank that is neither for sale nor being made. */
+.rows.shelves > button.tile.queued { border: 1px dashed #000; }
 /* Only a tile you can pay for lifts. `off` is set by the builder on every
    row you cannot pay for right now -- short of a coin, climbed, waiting,
    building, queued -- so the hover never depends on the button's own
