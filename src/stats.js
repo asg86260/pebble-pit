@@ -131,7 +131,9 @@ export const STATS_UPGRADES = BOOKS.map(b => ({
   // The mark and the rate, over a clock. Seconds are a clock everywhere on these
   // boards now -- see `secondsMark` in upgrades.js -- and this column is the one
   // that would have printed the most of them.
-  price: () => `${MARK[b.mark]} ${say(bookRate(b.key))}/${MARK.time}`,
+  // The number and its coin; that it is a rate is the heading's to say
+  // ("income, a second"), once, rather than a clock on every line.
+  price: () => `${MARK[b.mark]} ${say(bookRate(b.key))}`,
   read: true,
   dead: () => false,
   cost: () => 0,
@@ -206,7 +208,7 @@ const TALLY_UPGRADES = [
 STATS_UPGRADES.push(...TALLY_UPGRADES);
 
 export const STATS_SECTIONS = [
-  { title: 'income', keys: STATS_UPGRADES.filter(u => u.key.startsWith('rate')).map(u => u.key) },
+  { title: 'income, a second', keys: STATS_UPGRADES.filter(u => u.key.startsWith('rate')).map(u => u.key) },
   { title: 'the tally', keys: TALLY_UPGRADES.map(u => u.key) }
 ];
 

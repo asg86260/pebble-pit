@@ -1182,6 +1182,10 @@ export const TESTS = [
     // What the dust row says, off the sheet: a mark, a number and a clock.
     const dust = document.querySelector('#statsshop [data-key="ratedust"]');
     const said = dust ? dust.querySelector('.cost').innerHTML : '';
+    // "a second" is the heading's word, said once over the rates rather than
+    // as a clock on every line (the books are a ledger; DESIGN.md, "The
+    // shelf", the books).
+    const heading = [...document.querySelectorAll('#statsshop [data-sect]')].map(h => h.dataset.sect).join(' | ');
     // Away has to mean away, and which way is away has changed. These used to
     // stand at the pit mouth, off on their own, so the top-left corner of the
     // screen was away from everything -- which is what `hoverAway` points at.
@@ -1201,7 +1205,8 @@ export const TESTS = [
          stand ? `${stand.x},${stand.y}` : 'nowhere'),
       ok(open, 'standing there opens them'),
       ok(rows.includes('ratedust'), 'and dust is on them', rows.join(',')),
-      ok(/class="clock"/.test(said), 'with its rate over a clock', said),
+      ok(/class="dust"/.test(said) && /\d/.test(said) && !/class="clock"/.test(said), 'with its rate as a mark and a number', said),
+      ok(/a second/.test(heading), 'and the heading says the rate is a second', heading),
       ok(shut, 'and walking away shuts them again')
     ];
   }],

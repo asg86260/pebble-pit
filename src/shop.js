@@ -274,8 +274,14 @@ function build(el, list, sections, empty, heads) {
   // on it. The crew submenu is a list, not a shop, and keeps the cards; so
   // does the pin in the corner, which is one card on its own with no shelf
   // to stand on (the owner's call, 2026-09-14).
-  const shelf = SHELF_BOARDS && !inSubmenu && el !== pinEl;
+  // ...and the books are a ledger, not a shelf: a line a reading, the value
+  // flush right. Nothing on that board is for sale, so nothing stands on a
+  // plank (the owner's call, 2026-09-14). The card markup serves it; the
+  // stylesheet lays the cells out as a line.
+  const ledger = SHELF_BOARDS && el === statsEl;
+  const shelf = SHELF_BOARDS && !inSubmenu && el !== pinEl && !ledger;
   el.classList.toggle('shelves', shelf);
+  el.classList.toggle('ledger', ledger);
   // A board whose one heading repeats the name at the top of it says the same
   // thing twice with a rule between: a title reading "the tower" and, directly
   // under it, a heading reading "the tower", over a single row. Where there are

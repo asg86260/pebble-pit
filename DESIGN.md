@@ -9625,3 +9625,13 @@ are sorted into the yard's order on every board, cards included. Still
 open: the glyphs are placeholders; three build names overflow a slot and
 clip; the gain line is kept on every shelf (the builder does not drop it
 per section yet); `cards.html` draws shelves too while the flag is on.
+
+**The books are a ledger (2026-09-14).** The notice board's readings are
+not for sale, and the shelf drew them as crates with price tags. So that
+one board is a ledger: a line a reading, the label left, the value flush
+right with its mark, a dotted leader between, under a ruled heading that
+names the unit once (`income, a second` -- the clock came off every rate
+line). Half a shelf's width. The same builder in a third mode (`ledger`),
+the card markup laid out by the stylesheet, and nothing on it answers the
+cursor. The owner's pick over big-figure tiles: the game calls it the
+books, and a ledger is the thing those words name.
