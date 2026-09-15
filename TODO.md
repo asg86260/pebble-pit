@@ -16,7 +16,7 @@ save it as a fact of the yard, the way a loose core is.
 plank, an item is a pixel object with name, gain and one price tag under
 it; the glyph's one-pixel stroke in the next rung's coin replaces the pips;
 descriptions go to the hover tip. Built as a mode of the card builder, on
-for every build since 2026-09-15 (the pin and the crew list keep the cards;
+for every build since 2026-09-15 (the corner pin is the same tile; the crew list keeps the cards;
 the books are a ledger). The glyphs are drawn (`glyphs.js`, edited on
 `glyphs.html`). Still open: `build the apothecary`, `build the janitor's
 closet` and `build the scrubbing house` are wider than a slot and clip

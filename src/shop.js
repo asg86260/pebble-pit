@@ -276,7 +276,7 @@ function build(el, list, sections, empty, heads) {
   // plank (the owner's call, 2026-09-14). The card markup serves it; the
   // stylesheet lays the cells out as a line.
   const ledger = el === statsEl;
-  const shelf = !inSubmenu && el !== pinEl && !ledger;
+  const shelf = !inSubmenu && !ledger;
   el.classList.toggle('shelves', shelf);
   el.classList.toggle('ledger', ledger);
   // A board whose one heading repeats the name at the top of it says the same
