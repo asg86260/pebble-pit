@@ -22,7 +22,7 @@ import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor, tickGrid } from './grid.js';
-import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack } from './world.js';
+import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
@@ -38,7 +38,7 @@ import { stepNotices } from './notices.js';
 import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';        // F4
-import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
+import { stepWorks, setGround, setDone, setFoot, setRooms, setSheds } from './works.js';
 import { cubes as houseCubes } from './house.js';
 // Track F3 (wave5): the books over the pit, which measure what the yard earned.
 import { sampleBooks } from './stats.js';
@@ -58,6 +58,8 @@ setDone(workFinished);
 setFoot(stationFoot);
 // and the settlement's rooms, so a build there is fenced round what will stand
 setRooms(houseCubes);
+// and the sheds the quarry's, the farm's and the apothecary's works are done at
+setSheds({ quarry: quarryShed, farm: farmShed, apothecary: apothHut });
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';
@@ -84,7 +86,7 @@ import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
-import { stepApothecary, stepDoseMotes, stepDoses, setTake } from './apothecary.js';
+import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is here rather than in `restOnRock` because it is the chip loop's
 // own question -- has this thing reached the surface yet -- and every other

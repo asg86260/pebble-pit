@@ -386,36 +386,31 @@ Fix those, re-run the bot, then tune.
 
 ## Every station's work goes to a spare hand (2026-09-10)
 
-**Designed, awaiting approval** -- "Every station's work is done by a spare
-hand" in DESIGN.md. **The shack's slice landed 2026-09-10**: a player reported
-bodies stuck walking to the hut, and the shack is builder-manned now
-(`shack: JOB.BUILD`); the quarry, the farm and the apothecary still claim. The shedhand claim (quarry, farm, shack, apothecary) and
-the standing credit (scrub, tower, school) both go; every site is
-builder-manned the way the bench and the ground already are, a hauler walks
-over and does the work, and the yard borrows the nearest body when nobody is
-carrying. It closes the item below and the critics' top defect (a shack rung
-that never lands once the ram caps the gang at one). The teacher post is
-retired with it.
+**The shed claim is gone (2026-09-15).** "Every station's work is done by a
+spare hand" in DESIGN.md. The shack's slice landed 2026-09-10; the owner's
+word on 2026-09-15 -- a stationed worker should not leave its station to work
+its shack -- took the quarry, the farm and the apothecary the same way.
+`crew/shedhand.js` is deleted, the three sites are `JOB.BUILD` in `SITE_JOB`,
+and their site box is the shed, so the tape, the bar, the payment and the
+spare hand all land on the same rect. The yard still borrows the nearest body
+when nobody is carrying (`rebalance`), as designed. What is left of the
+section is the standing credit (scrub, tower) -- the item below, still a
+balance call.
 
 ## The scrubbing house, the tower and the school build their rungs for free (2026-09-10)
 
-**Diagnosed, not fixed.** Three gang stations still credit an upgrade to a body
-that goes on producing: `handsAt` counts a purifier, a wizard or a teacher at
-its post, and the post is where it works. The fan ladder fills while the house
-scrubs, the hat rises while the wizard casts, a trade is taught while the
-lesson runs. That is the defect wave6-sim item 2 took out of the quarry and the
-farm, and this pass took out of the apothecary -- where it had the opposite
-face: a keeper is out dealing on nearly every frame, so `another pot` climbed
-through the first batch and then froze.
+**Diagnosed, not fixed.** Two gang stations still credit an upgrade to a body
+that goes on producing: `handsAt` counts a purifier or a wizard at its post,
+and the post is where it works. The fan ladder fills while the house scrubs,
+the hat rises while the wizard casts. (The school is gone since 2026-09-14.)
 
-**The fix is one line a trade** -- an entry in `SHED_OF` (crew/shedhand.js)
-naming where the claimed body stands, and `stepShedwork(w) ||` in front of the
-trade's `work` in crew/jobs.js. What holds it up is not code but where the
-body stands and what it costs: a purifier claimed off the fan is a house that
-stops scrubbing, and a one-wizard tower stops casting while its hat is made.
-Both are the bargain `works.js` already states; both are also balance calls
-the sky's target (`pollution-balance-target`) has a stake in. Decide, then it
-is an hour.
+**The fix is one line a site** -- `scrub: JOB.BUILD` and `tower: JOB.BUILD`
+in `SITE_JOB` (works.js), which is what the quarry, the farm and the
+apothecary got on 2026-09-15: a spare hand walks over and stands at the
+building while the bar fills, and the gang goes on. What holds it up is the
+cost: a hauler off the dust for the length of a fan rung or a hat, which the
+sky's target (`pollution-balance-target`) has a stake in. Decide, then it is
+an hour.
 
 ## The noticeboard and the record on it (2026-09-09)
 

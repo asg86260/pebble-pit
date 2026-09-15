@@ -19,26 +19,34 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench, quarry, farm, lab, scrub, tower, apothecary, shack } from './state.js';
+import { S, bench, lab, scrub, tower, shack } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
 
 // Where a row's work stands, and therefore whose hands do it.
 //
-// Four of the sites have a gang of their own and the work is theirs: quarriers
-// take out the next bench, farmhands break the next furrow, the purifiers fit
-// the bigger fan, the wizards raise what the tower raises. That is the whole
-// cost of it -- a station building its own upgrade is a station not producing
-// while it does, which is the same bargain every other decision in this game
-// makes.
+// Two of the sites have a gang of their own and the work is theirs: the
+// purifiers fit the bigger fan, the wizards raise what the tower raises, each
+// from the post it works at. That is the standing rule, and it is a balance
+// call still open in TODO.md ("rungs for free").
 //
-// The shack and everything on the bench have no gang, because the thing being
-// built is not standing there yet. Those go to the yard, and the yard's spare
-// hands walk over and put it up. See `builders` in crew.js.
+// Everything else is put up by the yard's spare hands: a hauler walks over,
+// stands at the place while the bar fills, and goes back to the dust. See
+// `builders` in crew.js, and "Every station's work is done by a spare hand"
+// in DESIGN.md.
 export const SITE_JOB = {
-  quarry: JOB.QUARRY,
-  farm: JOB.FARM,
+  // The quarry, the farm and the apothecary each used to claim one of their
+  // own gang to the shed for the duration (the shed claim, crew/shedhand.js,
+  // wave6-sim item 2). The bargain was honest -- a producer stops producing
+  // -- but a body at its post is a body the player put there to produce, and
+  // watching it down tools and walk off to the hut was the yard overriding
+  // that. And the claim could stall for good: a one-body gang with a load in
+  // its hands never qualified. The work is a spare hand's now, at the same
+  // shed, the way the shack's has been since 2026-09-10.
+  quarry: JOB.BUILD,
+  farm: JOB.BUILD,
+  apothecary: JOB.BUILD,
   scrub: JOB.PURIFY,
   tower: JOB.WIZARD,
   yard: JOB.BUILD,
@@ -50,20 +58,12 @@ export const SITE_JOB = {
   // research is a thing somebody stands there and works at, which is what every
   // row in this file already was.
   lab: JOB.SCHOLAR,
-  // The apothecary, whose gang is its stirrers. Its rungs are built by its own
-  // hands the way the plots break the next furrow; the brewing itself is an
-  // upkeep stepped in apothecary.js, not a one-shot work here.
-  apothecary: JOB.STIR,
-  // The shack, worked by the yard's spare hands: a hauler walks over, stands
-  // at the hut while the bar fills, and goes back to the dust. It was the
-  // rock's own gang (`JOB.ROCK`, through the shed claim in shedhand.js), and
-  // that stalled twice over -- a gang capped at one by the ram had nobody to
-  // spare, and a claimed rockhand walking to the hut could be stood down on
-  // the way and never arrive, so the row took your spores and sat at nought.
-  // The rock's gang has no post to leave and nothing to carry; the cost of a
-  // pick is a carrier off the dust, which the yard can always pay. This is the
-  // shack's slice of "Every station's work is done by a spare hand" in
-  // DESIGN.md; the quarry, the farm and the apothecary still keep the claim.
+  // The shack was the first to go to the spare hands. It was the rock's own
+  // gang, and that stalled twice over -- a gang capped at one by the ram had
+  // nobody to spare, and a claimed rockhand walking to the hut could be stood
+  // down on the way and never arrive, so the row took your spores and sat at
+  // nought. The cost of a pick is a carrier off the dust, which the yard can
+  // always pay.
   shack: JOB.BUILD
 };
 
@@ -246,7 +246,18 @@ const YARD_ROW_SITE = {
 // The shack is in it so its bar has a roof to hang over: `barSpot` reads the
 // site's box, and a site missing here answered null -- so the rock's rows were
 // worked at the hut with no bar anywhere while they were.
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, shack };
+//
+// The quarry's, the farm's and the apothecary's boxes are their sheds, not
+// their ground. The hole, the plots and the run of pots are where the gang
+// works; the shed is where the work is done -- the board opens at it, the bar
+// hangs over it, the tape goes round it and the spare hand stands at its
+// front -- and one rect answering all of those is what keeps them on the
+// same ground. The sheds are wired in from game.js (`setSheds`) like the
+// station foot: world.js and apothecary.js both import this file, so naming
+// them here reads them before they exist.
+const SITE_BOX = { scrub: () => scrub, tower: () => tower, bench: () => bench,
+                   lab: () => lab, shack: () => shack };
+export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
 
 // Every room the settlement will have once the one going up lands -- one more
 // than today's count, the same way `nextHouseAt` in house.js asks.
@@ -262,7 +273,7 @@ export const setRooms = fn => { houseRooms = fn; };
 // going up must all stand on the second thing's ground, not the head work's.
 // Left out, it is the head work, which is what every one-work caller means.
 export function siteBox(site, which = null) {
-  const box = SITE_BOX[site];
+  const box = SITE_BOX[site]?.();
   if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
   if (site !== 'yard') return null;
   const w = which || workAt(site);
@@ -319,11 +330,9 @@ export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key
 export const busyAt = site => worksAt(site).length > 0;
 // The bodies on this work's patch right now, for the tile that bought it
 // (DESIGN.md, "A hand on the tile"): a builder claims a work by key and is on
-// the patch while its jig is set; a gang body claimed to its own shed
-// (`onBuild`) works whatever is at the front of that site. Read straight off
-// the bodies each frame, so the tile shows a hand only while the site has one.
-export const bodiesOn = key => S.workers.filter(w => w.jigAt != null
-  && (w.workKey === key || (!w.workKey && w.onBuild && workAt(w.onBuild)?.key === key)));
+// the patch while its jig is set. Read straight off the bodies each frame, so
+// the tile shows a hand only while the site has one.
+export const bodiesOn = key => S.workers.filter(w => w.jigAt != null && w.workKey === key);
 // Where a work stands in its site's list, counting the front as one -- so the
 // first behind it is 2, which is what "2nd" in its tag means. Nought for
 // a work the site does not have.

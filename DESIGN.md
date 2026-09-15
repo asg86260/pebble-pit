@@ -8494,10 +8494,18 @@ leaves the store's blob byte-identical and `my yard` brings it back.
 **The shack's slice is built (2026-09-10).** `shack: JOB.BUILD` in `SITE_JOB`;
 the rock is out of `SHED_OF` and `ARRIVED`; a rockhand's step is its own
 again. A pick is fitted by a hauler off the dust and the rock's gang swings
-throughout. Player report: bodies stuck on the walk to the hut. The quarry, the
-farm and the apothecary still keep the shed claim, and the standing rule at the
-house, the tower and the school is untouched -- the rest of this section is
-still the plan.
+throughout. Player report: bodies stuck on the walk to the hut.
+
+**The shed claim is gone (2026-09-15).** The owner's word: a stationed worker
+should not leave its station to work its shack; a hauler should always do the
+work. The quarry, the farm and the apothecary are `JOB.BUILD` in `SITE_JOB`,
+`crew/shedhand.js` is deleted with `SHED_SITES`, `onBuild` and `atShed`, and
+each of the three sites' box (`siteBox`) is its shed rather than its ground --
+so the tape, the bar, the payment's flight and the spare hand's feet all land
+on one rect. A machine's tender is never asked to leave its post for a rung
+any more: the drill keeps running while the pace rung is built
+(`test/drill-upgrade.test.mjs`). The standing rule at the house and the tower
+is the part of this section still a plan.
 
 **The rule.** A row bought at any station -- a rung, a hat, a trade, a pot, a
 multiplier -- is a piece of work, and the body that does it is a spare hand:

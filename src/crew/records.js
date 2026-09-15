@@ -106,11 +106,6 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // and whether it is behind a door. A body that had
                       // knocked off came back standing at the doorstep.
                       'inside',
-                      // and the shed it has been claimed to for an upgrade,
-                      // and whether it is there (crew/shedhand.js). Dropped,
-                      // a refresh handed the claim to whoever was next and
-                      // that body started the walk from wherever it stood.
-                      'onBuild', 'atShed',
                       // and whether it is in the air on its own account -- a
                       // wizard climbing to the ring, or coming down under a
                       // brolly -- and the spot it took off from. A wizard saved
@@ -192,8 +187,8 @@ export function wearRecord(w, from) {
   // moment ago, so what it carries is the job's own starting goal -- `to` for
   // the trades that walk to a post, nothing for a rockhand -- and a saved word
   // the job has no stepper for would ride along unread for ever. Saves written
-  // before the shed release was fixed (shedhand.js) hold rockhands marked `to`
-  // that no shack work could claim; this is what puts them right on the way in.
+  // under the old shed claim hold rockhands marked `to` that no shack work
+  // could claim; this is what puts them right on the way in.
   if (!hasGoal) delete w.goal;
   // A save written before tonics stacked has one `dose` rather than a list of
   // them; it is read as a list of one. Either way a dose with no `left` on it is

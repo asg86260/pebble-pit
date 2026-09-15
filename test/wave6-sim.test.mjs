@@ -13,55 +13,55 @@ import { wizMs } from '../src/wizard.js';
 import { critChance } from '../src/crit.js';
 import { TYPE } from '../src/jobs.js';
 
-// --- A2: a quarry upgrade pulls one of the gang to the shed --------------------
+// --- A2: a quarry upgrade is worked at the shed by a spare hand ----------------
 //
 // The bench used to be credited to the whole gang while every one of them went
-// on quarrying: a bar that fills without the yard changing. Now the work
-// claims one body -- it stops producing, stands at the shed, and the bar moves
-// only while it is standing there -- and it walks back after.
-group('a quarry upgrade claims one gang body to the shed, and gives it back', async () => {
-  window.__crew(0, 0, 3);                      // a three-body quarry gang
+// on quarrying: a bar that fills without the yard changing. Then the work
+// claimed one of the gang to the shed (wave6-sim item 2), and a body the
+// player had put in the cut downed tools and walked off. Now it is the
+// shack's rule: a hauler off the dust walks to the shed, the bar moves only
+// while it stands there, and the gang digs throughout.
+group('a quarry upgrade is worked at the shed by a spare hand, and the gang keeps digging', async () => {
+  window.__crew(0, 2, 3);                      // a three-body quarry gang, two spare
   window.__grant({ shards: 500, spores: 500 });  // the bench is priced in crop
   window.__give(50000);
   runUntil(() => S.workers.filter(w => w.type === TYPE.QUARRY && w.goal !== 'to').length === 3, 90);
 
   const bought = window.__buy('quarrybench');  // the next bench, like a player
-  const claimed = () => S.workers.filter(w => w.onBuild === 'quarry');
+  const sent = () => S.workers.filter(w => w.type === TYPE.BUILD && w.site === 'quarry');
+  const gang = () => S.workers.filter(w => w.type === TYPE.QUARRY);
 
-  // Exactly one of the gang is claimed, and until it is standing at the shed
-  // the bar does not move.
+  // Exactly one spare hand is sent, and until it is standing at the shed the
+  // bar does not move.
   run(0.5);
-  const nClaimed = claimed().length;
+  const nSent = sent().length;
   const beforeArrive = workAt('quarry')?.done ?? -1;
 
   const shed = quarryShed();
   const inShed = w => w.x + WORKER > shed.x && w.x < shed.x + shed.w;
-  const arrived = runUntil(() => claimed().some(w => w.atShed && inShed(w)), 60);
+  const arrived = runUntil(() => sent().some(w => w.goal === 'at' && inShed(w)), 60);
   const atStart = workAt('quarry')?.done ?? -1;
   run(4);
   const later = workAt('quarry')?.done ?? atStart + 999;
 
-  // While the bench is being cut, the claimed body is out of the cut: two of
-  // three still working it, which is the production drop made visible.
-  const working = S.workers.filter(w => w.type === TYPE.QUARRY && !w.onBuild).length;
+  // While the bench is being cut the gang is still the gang: three in the
+  // cut, none of them at the shed.
+  const working = gang().filter(w => !inShed(w)).length;
 
-  // And when it lands, the claim clears and the body goes back to the cut.
+  // And when it lands, the hand goes back to the dust.
   const landed = runUntil(() => !workAt('quarry'), 300);
-  const released = runUntil(() => claimed().length === 0, 10);
-  const backAtWork = runUntil(() =>
-    S.workers.filter(w => w.type === TYPE.QUARRY && !inShed(w)).length === 3, 90);
+  const released = runUntil(() => sent().length === 0, 10);
 
   return [
     ok(bought, 'the bench is bought like a player buys it'),
-    ok(nClaimed === 1, 'exactly one gang body is claimed', `${nClaimed}`),
+    ok(nSent === 1, 'exactly one spare hand is sent', `${nSent}`),
     ok(beforeArrive === 0, 'the bar does not move before it is at the shed',
        `${beforeArrive}`),
-    ok(arrived, 'the claimed body stands at the quarry shed'),
+    ok(arrived, 'the spare hand stands at the quarry shed'),
     ok(later > atStart, 'the bar advances while it stands there',
        `${atStart} -> ${later}`),
-    ok(working === 2, 'the other two go on quarrying', `${working}`),
-    ok(landed && released, 'the work lands and the claim clears'),
-    ok(backAtWork, 'and the body walks back to the cut')
+    ok(working === 3, 'and all three of the gang go on quarrying', `${working}`),
+    ok(landed && released, 'the work lands and the hand goes back to the dust')
   ];
 });
 

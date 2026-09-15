@@ -247,7 +247,6 @@ group('a rock row bought at the shack is worked at the shack, by a spare hand', 
 
   const bought = window.__buy('rockhandspeed');
   const claimed = () => S.workers.filter(w => w.type === TYPE.BUILD && w.site === 'shack');
-  const noRockhand = () => !S.workers.some(w => w.type === TYPE.ROCK && w.onBuild);
   run(0.5);
   const nClaimed = claimed().length;
   const beforeArrive = workAt('shack')?.done ?? -1;
@@ -268,8 +267,8 @@ group('a rock row bought at the shack is worked at the shack, by a spare hand', 
     if (!inShack(w)) off.push(Math.round(w.x));
   }
   const later = workAt('shack')?.done ?? atStart + 999;
-  const working = S.workers.filter(w => w.type === TYPE.ROCK && !w.onBuild).length;
-  const gangLeftAlone = noRockhand();
+  const working = S.workers.filter(w => w.type === TYPE.ROCK).length;
+  const gangLeftAlone = working === 3;
   const nowhereElse = !workAt('bench');
 
   const landed = runUntil(() => !workAt('shack'), 300);

@@ -561,13 +561,10 @@ export function drawWorkers() {
     // brew clock and the count in apothecary.js).
     if (underground(w) || inHouse(w) || atHome(w)) continue;
 
-    // A gang body claimed to its shed is doing a builder's job, and it is
-    // drawn doing it: the hammer's lunge (`workJig`) is thrown away by its own
-    // row -- a rockhand's swing is a blur on the face, not a stoop -- and a
-    // hop with no drive at the bottom of it reads as a body bouncing.
-    // ...and so is somebody digging at the one in the ground: the stoop is a
-    // builder's, whatever job the body came from, because it is digging.
-    const look = ((w.onBuild && w.atShed) || w.dig ? LOOK.builder : LOOK[w.type]) || PLAIN;
+    // Somebody digging at the one in the ground is drawn as a builder: the
+    // stoop is a builder's, whatever job the body came from, because it is
+    // digging.
+    const look = (w.dig ? LOOK.builder : LOOK[w.type]) || PLAIN;
     const throwOn = w.lunge || 0;
     // A lean is a pose and not an ease -- see `LEAN_HOLD`. Drawn off the
     // eased lunge it was a half-cell kick and then a creep back a pixel at a

@@ -13,7 +13,6 @@ import { newRecord } from './records.js';
 import { retask } from './commute.js';
 import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted } from './jobs.js';
-import { atShed, SHED_SITES } from './shedhand.js';
 import { atTower } from '../wizard.js';
 
 // --- who is actually at a site ------------------------------------------------
@@ -26,12 +25,7 @@ import { atTower } from '../wizard.js';
 // while its gang was halfway down the ladder would be the building claiming
 // something the crew deny.
 const ARRIVED = {
-  quarriers: w => w.type === TYPE.QUARRY && w.goal !== 'to',
-  farmhands: w => w.type === TYPE.FARM && w.goal !== 'to',
   purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',
-  // Through the door and stirring. A stirrer out dealing a dose is not at the
-  // pot, so the brew clock pauses -- same rule the lab and the house keep.
-  stirrers: w => w.type === TYPE.STIR && w.goal === 'in',
   // A wizard's work is four hundred pixels up and the walk is to the ground
   // under it; either way it is at the tower -- and it has to *be* there, not
   // merely be one. See `atTower`.
@@ -52,16 +46,8 @@ setHands(site => {
   // asking how many WIZARDS were there, and the answer was the nought that had
   // sent for it.
   const helping = w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
-  // The quarry's and the farm's works are not done from the bench or the plot:
-  // the work claims one of the gang and the claimed body does it from the
-  // station's shed -- see shedhand.js -- so what counts here is that body
-  // standing there, not the gang at its posts. The rest of the gang goes on
-  // producing and none of it credits the bar. A station with no gang at all is
-  // still helped by a lent builder, through `helping` above. (wave6-sim, item 2)
-  const shedwork = SHED_SITES.has(site);
   const there = S.workers.filter(w => helping(w)
-                                   || (shedwork ? atShed(w) && w.onBuild === site
-                                               : at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
+                                   || (at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
   // One pair of hands on a piece of work, whoever owns the site.
   //
   // `BUILD_GANG` already said this for the yard and the bench -- one spare body

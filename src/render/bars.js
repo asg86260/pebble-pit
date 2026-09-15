@@ -57,15 +57,10 @@ const towerSpireBox = () =>
   ({ x: tower.x, w: P * TOWER_SHAFT, y: tower.y - P * 4, h: tower.h + P * 4 });
 
 // Sites whose box is wider than their building hang the bar over the building.
-// The quarry's and farm's boxes are ground -- the hole and the plots -- and the
-// apothecary's is the whole plot of hut, shelves and pots; a bar centered on
-// any of those floats over the middle of nowhere. Each has one rect that IS the
-// building (the board opens at it, the crew stand at it), so the bar hangs over
-// that. Still a measured rect, not a hand-placed spot.
-// Deferred with arrows: this module sits in an import cycle with world.js, so
-// naming the bindings while the object is built reads them before they exist.
-const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
-                      apothecary: () => apothHut(),
+// The quarry's, the farm's and the apothecary's boxes are their sheds already
+// (`SITE_BOX` in works.js), so the one site whose bar hangs somewhere other
+// than its box is the tower.
+const BUILDING_OF = {
                       // The tower's box is the shaft plus the turret off its
                       // right side, so the middle of it sits well right of the
                       // point -- and a bar about the hat being made under that

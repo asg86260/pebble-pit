@@ -344,7 +344,7 @@ export function verifyWorld() {
       if (S.tick - since > FLOAT_FRAMES)
         fail('a body is standing on nothing',
              `${who(w)} has its feet ${Math.round(top - feet)}px over the ${way.key} `
-             + `(goal ${w.goal}, foot ${Math.round(w.foot ?? NaN)}, resting ${!!w.resting}, lifted ${!!w.lifted}, dizzy ${!!w.dizzyUntil}, idle ${w.idleAt != null}, walking ${!!w.walking} to ${w.walkTo} leg ${w.leg}, onBuild ${w.onBuild}, muck ${w.muckAt}, hatOff ${!!w.hatOff}, tend ${w.tending}, wanting ${w.wanting}, fetching ${w.fetching}, trained ${!!w.trained}, kit ${w.kitOf}, robbed ${!!w.robbed}, legs ${JSON.stringify(w.legs)}) `
+             + `(goal ${w.goal}, foot ${Math.round(w.foot ?? NaN)}, resting ${!!w.resting}, lifted ${!!w.lifted}, dizzy ${!!w.dizzyUntil}, idle ${w.idleAt != null}, walking ${!!w.walking} to ${w.walkTo} leg ${w.leg}, muck ${w.muckAt}, hatOff ${!!w.hatOff}, tend ${w.tending}, wanting ${w.wanting}, fetching ${w.fetching}, trained ${!!w.trained}, kit ${w.kitOf}, robbed ${!!w.robbed}, legs ${JSON.stringify(w.legs)}) `
              + `and has been up there for ${S.tick - since} frames`);
     } else floatSince.delete(w);
 

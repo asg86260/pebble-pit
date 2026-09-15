@@ -47,14 +47,14 @@ group('a shack rung in a player\'s save is fitted, by a spare hand, and the gang
   const at0 = work && { key: work.key, done: work.done };
   const inShack = w => w.x + WORKER > shack.x && w.x < shack.x + shack.w;
   const arrived = runUntil(() => S.workers.some(w => w.type === TYPE.BUILD && w.site === 'shack' && w.goal === 'at' && inShack(w)), 60);
-  const claimed = rockhands().some(w => w.onBuild);
+  const gangKept = rockhands().length === 2;
   const landed = runUntil(() => !workAt('shack'), 400);
   window.__crew(0, 0);
   return [
     ok(!!at0 && at0.key === 'rockhandspeed' && at0.done === 0, 'the save holds the rung at nought', JSON.stringify(at0)),
     ok(marked === 0, 'the saved "to" comes off the rockhands on the way in', `${marked} marked`),
     ok(arrived, 'a spare hand stands at the hut'),
-    ok(!claimed, 'and neither rockhand is claimed to it'),
+    ok(gangKept, 'and both rockhands are still on the rock'),
     ok(landed, 'and the rung lands')
   ];
 });

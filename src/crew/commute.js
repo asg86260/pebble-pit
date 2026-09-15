@@ -127,11 +127,6 @@ export function settle(w) {
   w.routeTo = null;
   w.routeWay = null;
   w.muckAt = null;
-  // ...and the shed claim, which belongs to the job it was claimed on. A body
-  // retasked mid-upgrade lets go of it; the next frame's `stepShedwork` hands
-  // it to another of the gang, or the bar stalls -- honestly -- until one is.
-  w.onBuild = null;
-  w.atShed = false;
   w.cutClaim = null;
   w.tidyAt = null;
   w.foot = null;
