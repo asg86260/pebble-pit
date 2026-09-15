@@ -63,6 +63,24 @@ export const overCore = (mx, my) =>
   Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
   Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE;
 
+// Whether a sweep here would find anything: a grain within the brush, or a
+// loose core under the hand. The same reach `sweep` uses, asked without
+// taking anything. A finger on a phone asks it once, on the press, to tell a
+// sweep from a look about -- see "One finger looks about" in DESIGN.md.
+export function dustUnder(mx, my) {
+  if (overCore(mx, my)) return true;
+  const c0 = colOf(floor, mx);
+  const r0 = Math.floor((bottomY(floor) - my) / P);
+  for (let dr = -BRUSH; dr <= BRUSH; dr++) {
+    for (let dc = -BRUSH; dc <= BRUSH; dc++) {
+      if (dc * dc + dr * dr > BRUSH * BRUSH) continue;
+      const c = c0 + dc, r = r0 + dr;
+      if (inside(floor, c, r) && at(floor, c, r)) return true;
+    }
+  }
+  return false;
+}
+
 export function sweep(mx, my) {
   // a loose core on the ground is picked up by hand, no capacity needed
   if (S.coreItem && !S.heldCore &&

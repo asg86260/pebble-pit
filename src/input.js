@@ -9,7 +9,7 @@ import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, f
 import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, overCore } from './hands.js';
+import { sweep, release, track, overCore, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
@@ -51,6 +51,11 @@ let panning = null;                        // where the fingers were last frame
 // `panning` because it is one pointer rather than the middle of several, and
 // because it must not be cancelled by the same "fewer than two fingers" rule.
 let wheelPan = null;
+// And one finger on a phone, which looks about wherever it is not on dust
+// (see "One finger looks about" in DESIGN.md). Where it pressed and where it
+// was last seen; `live` once it has left the tap's slop, because a tap must
+// not nudge the view and a drag must not jump when it starts.
+let fingerPan = null;
 const TAP_SLOP = 14;                       // pixels a tap may wander and still be a tap
 const TAP_TIME = 500;
 
@@ -131,7 +136,7 @@ canvas.addEventListener('pointerdown', e => {
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
                           at: now(), kind: e.pointerType });
-  if (down.size === 2) { startPan(); return; }
+  if (down.size === 2) { fingerPan = null; startPan(); return; }
   if (down.size > 2) return;
 
   const p = pos(e);
@@ -169,6 +174,14 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
+  // A finger on bare ground or sky is looking about, not sweeping: there is
+  // nothing under it to sweep. A mouse keeps its left button for the sweep
+  // everywhere, because it has a wheel and a middle button for looking.
+  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) {
+    fingerPan = { x0: e.clientX, x: e.clientX, live: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
   S.dragging = true;
   S.trail = [];
   track(p.x, p.y);
@@ -183,6 +196,17 @@ canvas.addEventListener('pointermove', e => {
   if (wheelPan !== null) {                   // middle button: drag the view along
     pan((wheelPan - e.clientX) / S.zoom);
     wheelPan = e.clientX;
+    return;
+  }
+
+  if (fingerPan && down.size === 1) {        // one finger, off the dust: the same
+    if (!fingerPan.live) {
+      if (Math.abs(e.clientX - fingerPan.x0) < TAP_SLOP) return;
+      fingerPan.live = true;                 // from here, not from the press
+    } else {
+      pan((fingerPan.x - e.clientX) / S.zoom);
+    }
+    fingerPan.x = e.clientX;
     return;
   }
 
@@ -308,6 +332,7 @@ export function endDrag(e) {
   const held = down.get(e.pointerId);
   down.delete(e.pointerId);
   if (down.size < 2) panning = null;
+  if (held) fingerPan = null;
 
   // A tap on a touchscreen is what a hover is on a desk: near the bench it opens
   // the board, anywhere else it puts it away.
@@ -344,6 +369,7 @@ addEventListener('blur', () => {
   down.clear();
   panning = null;
   wheelPan = null;
+  fingerPan = null;
   S.mining = false;
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });

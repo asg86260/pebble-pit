@@ -59,6 +59,7 @@ import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
 import { JOB, TYPE } from './jobs.js';
+import { dustUnder } from './hands.js';
 
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
@@ -1159,6 +1160,7 @@ export const HANDLES = {
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give, __finish: finishWorks, __everything: everything,
+  __dustUnder: dustUnder,          // is a press here a sweep or a look about
   // dev: end whatever scene is running, without pressing anything.
   //
   // A press in the yard while a cutscene is on screen skips the scene and does
