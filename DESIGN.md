@@ -9526,7 +9526,7 @@ second). Two whole-count ladders had no room between their rungs and reach
 further than a little: a rockhand's bite is 1 → 9 px and a crit's worth 3 →
 12×. All of it is the ladder book's to settle on a played yard.
 
-## The shelf: a board is things on planks, not cards (built, dev only)
+## The shelf: a board is things on planks, not cards (built)
 
 Settled on shots, 2026-09-14, against the bench with every row forced on
 (`shots/board-shelf*.png`; the mocks were CSS laid over the card builder and
@@ -9630,7 +9630,7 @@ rounds is exactly the class of defect no eye reliably catches and a Range
 measures in one line. A second check says every tag on a shelf shares one
 top edge.
 
-**As built (2026-09-14, behind `SHELF_BOARDS`: a dev build, and `?shelf` on the address -- every dev build drawing shelves put the prototype under eleven card checks).** Not a
+**As built (2026-09-14; behind `SHELF_BOARDS` -- a dev build, or `?shelf` on the address -- until 2026-09-15, when the flag came off and every build draws shelves).** Not a
 second renderer after all: the shelf is a mode of the card builder itself
 (`build`/`refresh` in shop.js), so dials, job steppers, the crew door, the
 pin, the new-corner and the queue's "building"/"queued" states all came for

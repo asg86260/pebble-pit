@@ -33,7 +33,9 @@ function ctx2d() {
 function element(tag = 'div') {
   const el = {
     tagName: String(tag).toUpperCase(),
-    style: {}, dataset: {}, children: [], hidden: false,
+    // A shelf tile writes its dots' phase and its lean as custom properties;
+    // the yard draws nothing, so they go nowhere.
+    style: { setProperty: noop, removeProperty: noop, getPropertyValue: () => '' }, dataset: {}, children: [], hidden: false,
     width: 300, height: 150, offsetWidth: 0, offsetHeight: 0,
     classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
     getContext: () => ctx2d(),

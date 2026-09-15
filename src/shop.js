@@ -6,14 +6,9 @@
 // three lines.
 
 import { S } from './state.js';
-import { SHELF_BOARDS, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
+import { SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
 import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
-// The shelf's stylesheet rides along only when the boards are shelves, so a
-// release ships none of it.
-// It arrives after the first board has been built and its width pinned, so
-// the sheet is measured again once the shelf's own width applies.
-if (SHELF_BOARDS) import('./shelf.css').then(() => remeasure());
-import { showTipAt, remeasure } from './board.js';
+import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
@@ -280,8 +275,8 @@ function build(el, list, sections, empty, heads) {
   // flush right. Nothing on that board is for sale, so nothing stands on a
   // plank (the owner's call, 2026-09-14). The card markup serves it; the
   // stylesheet lays the cells out as a line.
-  const ledger = SHELF_BOARDS && el === statsEl;
-  const shelf = SHELF_BOARDS && !inSubmenu && el !== pinEl && !ledger;
+  const ledger = el === statsEl;
+  const shelf = !inSubmenu && el !== pinEl && !ledger;
   el.classList.toggle('shelves', shelf);
   el.classList.toggle('ledger', ledger);
   // A board whose one heading repeats the name at the top of it says the same

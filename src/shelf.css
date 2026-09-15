@@ -1,5 +1,5 @@
 /* The shelf: a board as planks with things on them (DESIGN.md, "The shelf").
-   Loaded by shop.js only when SHELF_BOARDS is on; `.rows.shelves` is the same
+   Loaded by main.js beside style.css; `.rows.shelves` is the same
    rows container the cards use, built by the same builder, with `.tile` on
    every row.
 

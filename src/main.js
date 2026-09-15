@@ -6,6 +6,7 @@
 // things stand.
 
 import './style.css';
+import './shelf.css';   // the boards are shelves (DESIGN.md, "The shelf"); the card rules stay for the pin and the crew list
 
 // First, so that a throw anywhere below has something listening for it.
 import { fatal } from './crash.js';

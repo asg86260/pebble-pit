@@ -106,17 +106,3 @@ export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor 
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
 // climbed ladder is grey. The three colors are the marks' own.
 export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c', short: '#8c8c8c' };
-// Whether the boards are drawn as shelves at all. Off everywhere for now
-// (the owner's call, 2026-09-14): the cards are back in dev as well as in a
-// release, until the glyphs are drawn and the design is marked built. It was
-// on for every dev build for a day, and gated on `?shelf` the day before so
-// the browser suite's eleven card checks -- heights, columns, the corner,
-// the seating -- would read the cards; they read the cards again. The node
-// yard has no boards to draw and must never see a shelf: its DOM stub has no
-// `style.setProperty`, and a shelf built there takes every check down on
-// load; `import.meta.env` is vite's and does not exist there, so `DEV` reads
-// false in the yard. On for every dev build again (the owner, 2026-09-14,
-// evening), and for any page that asks with `?shelf` on the address, which
-// shelf.html and glyphs.html put there themselves.
-export const SHELF_BOARDS = !!(import.meta.env && import.meta.env.DEV)
-  || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('shelf'));

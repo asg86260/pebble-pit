@@ -3,10 +3,6 @@
 <head>
 <meta charset="utf-8">
 <title>shelf</title>
-<!-- The builder draws shelves only when the page asks (`?shelf`, see
-     SHELF_BOARDS), and this page is the ask: it sends itself there before
-     the modules load. -->
-<script>if (!new URLSearchParams(location.search).has('shelf')) location.replace(location.pathname + '?shelf' + location.hash);</script>
 <link rel="stylesheet" href="/src/style.css">
 <link rel="stylesheet" href="/src/shelf.css">
 <style>
@@ -36,7 +32,7 @@ import { mountRows } from './src/shop.js';
 
 Object.assign(S, { stored: 9000000, shards: 999, spores: 999, sparks: 999, cores: 9, introDone: true });
 // Every row on, the one shield being the first; the others are the same card.
-// Through the real builder, in its shelf mode (SHELF_BOARDS, a dev build).
+// Through the real builder, in its shelf mode -- every board's, since 2026-09-15.
 const onBench = new Set(SECTIONS.flatMap(s => s.keys));
 const rows = UPGRADES.filter(u => onBench.has(u.key) && !['net', 'arch', 'askwizards'].includes(u.key))
   .map(u => ({ ...u, show: () => true, once: null }));
