@@ -816,6 +816,7 @@ function leanToCursor(b, key) {
   b.style.setProperty('--sway-rate', String(1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD));
   b.style.setProperty('--sway-dir', (h >> 10) & 1 ? 'reverse' : 'normal');
   b.addEventListener('pointermove', e => {
+    if (b.disabled) return;                      // a tile you cannot press does not lean either
     const r = b.getBoundingClientRect();
     const dx = (e.clientX - (r.left + r.right) / 2) / (r.width / 2);
     const dy = (e.clientY - (r.top + r.bottom) / 2) / (r.height / 2);
@@ -826,12 +827,19 @@ function leanToCursor(b, key) {
 }
 
 function phaseDots(el) {
+  // The dots are painted on the sheet, from its padding edge; on a page with
+  // no sheet (the bench) the rows paint them and the rows are the box.
+  const ground = el.closest('.sheet') || el;
+  const g = ground.getBoundingClientRect(), gs = getComputedStyle(ground);
+  const gx = g.left + parseFloat(gs.borderLeftWidth), gy = g.top + parseFloat(gs.borderTopWidth);
   for (const t of el.querySelectorAll('.tile')) {
-    const key = `${t.offsetLeft},${t.offsetTop}`;
+    const r = t.getBoundingClientRect();
+    const left = Math.round(r.left - gx), top = Math.round(r.top - gy);
+    const key = `${left},${top}`;
     if (t._dots === key) continue;
     t._dots = key;
-    t.style.setProperty('--dot-x', `${-(t.offsetLeft % SHELF_DOT)}px`);
-    t.style.setProperty('--dot-y', `${-(t.offsetTop % SHELF_DOT)}px`);
+    t.style.setProperty('--dot-x', `${-(((left % SHELF_DOT) + SHELF_DOT) % SHELF_DOT)}px`);
+    t.style.setProperty('--dot-y', `${-(((top % SHELF_DOT) + SHELF_DOT) % SHELF_DOT)}px`);
   }
 }
 

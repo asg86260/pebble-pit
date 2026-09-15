@@ -42,7 +42,12 @@
   text-transform: none;
   white-space: normal;
   color: #000;
-  /* The ground: the held sheet's dot tile, one pixel in six, at half its ink. */
+}
+/* The ground: the held sheet's dot tile, one pixel in six, at half its ink,
+   over the whole sheet -- title, shelves and the button under them -- so
+   the board is one surface. The tiles phase their own dots to this box
+   (`phaseDots` measures against the sheet). */
+.sheet:has(.rows.shelves) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 /* The sheet is as wide as five slots and its own gutters, and no wider than
@@ -218,8 +223,8 @@
    set of numbers: the lift and the sway are registered properties, and the
    transform and the shadow are both computed from them -- the shadow is
    always exactly where the plate was -- so the entrance, the drift and the
-   exit are one continuous value with no handoff to pop. Every position is a
-   whole pixel, so the pixel art and the dots never sit on a half. No fill:
+   exit are one continuous value with no handoff to pop. Every stop is a
+   whole pixel; the drift eases between them. No fill:
    the ground shows through. `motion: less` (body.still) stops all of it. */
 @property --lift { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --sway-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
@@ -236,40 +241,44 @@
      from the ground, and once lifted only the tile's dots are inside the
      plate rather than the ground's showing through beside them. */
   background-color: #fff;
-  outline: 1px solid rgba(0, 0, 0, 0);
-  outline-offset: -1px;
+  /* The plate's edge is a real border, clear at rest, and the background is
+     clipped inside it -- an outline drawn inward sat on a fraction of a
+     device pixel at a scaled display and let a sliver of dots past it. The
+     dots keep the border box as their origin so the phase is the tile's. */
+  border: 1px solid rgba(0, 0, 0, 0);
+  background-origin: border-box;
+  background-clip: padding-box;
   /* Three motions, one transform: the lift, the drift, and a lean toward
      the cursor (`--follow`, written by the builder off the pointer, in
      whole pixels). The shadow is the sum's inverse, so it stays put. */
   transform: translate(calc(var(--lift) + var(--sway-x) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--follow-y)));
   box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--follow-y)) 0 #000;
-  transition: outline-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
+  transition: border-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
               --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out,
               --follow-x var(--shelf-hover-ms, 120ms) ease-out, --follow-y var(--shelf-hover-ms, 120ms) ease-out;
 }
-/* Every tile lifts under the cursor, one you cannot afford included: it is
-   still a thing on a shelf you are looking at, and a tile that lay dead
-   read as broken rather than as dear. A readout is not for sale and stays
-   put. (`:hover` matches a disabled button; only its mouse events are
-   swallowed, so the cursor lean below is for the pressable ones.) */
-.rows.shelves > button.tile:hover:not(.stat) {
+/* Only a tile you can press lifts: one you cannot afford, or a readout,
+   stays on the plank (the owner's call, 2026-09-14). */
+.rows.shelves > button.tile:hover:not(:disabled):not(.stat) {
   --lift: -2px;
-  outline-color: #000;
+  border-color: #000;
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
      and a pseudo-class outranks the firewall's revert. White, the same as at
      rest, so only the tile's own dots are inside the plate and they move
      with it; the shorthand would take the dots with it. */
   background-color: #fff;
   color: #000;
-  /* The drift: eight whole-pixel stops round a one-pixel circle, on
-     SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
+  /* The drift: eight stops round a one-pixel circle, eased between them
+     (the owner's call over stepped: smooth over crisp -- between stops the
+     tile sits on a fraction of a pixel), on SHELF_FLOAT_MS, starting once
+     the lift has landed. Each tile turns at
      its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
      hashed off the row's key by the builder) so no two drift in step. */
-  animation: shelf-sway calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) steps(1, end) var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
+  animation: shelf-sway calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
-.rows.shelves > button.tile:hover:not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
-.rows.shelves > button.tile:hover:not(.stat) .cost { opacity: 1; }
-.rows.shelves > button.tile:hover:not(.stat) .note { color: inherit; }
+.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .cost { opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled):not(.stat) .note { color: inherit; }
 @keyframes shelf-sway {
   0%     { --sway-x: 0px;  --sway-y: 0px; }
   12.5%  { --sway-x: 1px;  --sway-y: 0px; }
