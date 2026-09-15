@@ -1050,7 +1050,8 @@ export const TESTS = [
   // last one, and one press past it went all the way round. Pressed the way a
   // player presses it: the board is opened, the shut control is clicked, and an
   // option is chosen. The hooks here only stand the building up, which is the
-  // part this check is not about.
+  // part this check is not about. (The seven-station dial has since moved to
+  // the pot's own picker; "keep brewing" is the list that is left on the board.)
   ['a setting with named options is picked off a list', async () => {
     newRun();
     await settle();
@@ -1067,12 +1068,16 @@ export const TESTS = [
     window.__board('apothecary');
     await sleep(120);
 
-    const row = document.querySelector('[data-dial="potprefer"]');
+    const row = document.querySelector('[data-dial="potkeep"]');
     const chosen = row?.querySelector('.chosen');
     const opts = row?._opts;                       // out on the body, not in the row
     const under = document.querySelector('[data-key="anotherpot"]');
     const shutFirst = !!opts?.hidden;
-    const wasAt = under?.getBoundingClientRect().top;
+    // Measured against the row itself, not the window: the board is seated on
+    // its station and the camera is still gliding to it, so the whole sheet
+    // drifts a few pixels between the two readings whatever the list does.
+    const below = () => under && row ? under.getBoundingClientRect().top - row.getBoundingClientRect().top : NaN;
+    const wasAt = below();
 
     chosen?.click();
     await sleep(40);
@@ -1081,11 +1086,11 @@ export const TESTS = [
     // The list is laid over the board, so the rows under it do not budge. It was
     // folded into the sheet once, and opening it shoved everything below it down
     // -- past the place you had already aimed at.
-    const stillAt = under?.getBoundingClientRect().top;
+    const stillAt = below();
     const c = chosen?.getBoundingClientRect(), o = opts?.getBoundingClientRect();
     const placed = !!c && !!o && o.top >= c.bottom - 1 && Math.abs(o.right - c.right) <= 2;
 
-    opts?.querySelector('.opt[data-opt="rockhands"]')?.click();
+    opts?.querySelector('.opt[data-opt="off"]')?.click();
     await sleep(40);
     const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
@@ -1110,16 +1115,15 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(shutFirst, 'the list starts shut, with the set option on the row itself'),
-      ok(dropped && listed > 2, 'pressing the row drops its options open',
+      ok(dropped && listed >= 2, 'pressing the row drops its options open',
          `${listed} options`),
       ok(placed, 'the list stands under the control that opened it, right edges level',
          c && o ? `control ${Math.round(c.right)}/${Math.round(c.bottom)}, ` +
                   `list ${Math.round(o.right)}/${Math.round(o.top)}` : 'no rects'),
       ok(Math.abs(wasAt - stillAt) < 1, 'and nothing under it moves to make room',
          `${Math.round(wasAt)} -> ${Math.round(stillAt)}`),
-      // The control repeats the choice the way the yard says it -- "diggers",
-      // per jobSaid -- not the way the key spells it.
-      ok(said === 'diggers', 'pressing one of them sets it', said),
+      // The control repeats the choice in the option's own words, not the key's.
+      ok(said === 'just this one', 'pressing one of them sets it', said),
       ok(shutAfter, 'and the list shuts behind the choice'),
       ok(heldOn, 'the cursor leaving does not shut it on the spot'),
       ok(wanderedOff, 'but it puts itself away a breath later'),
@@ -1129,10 +1133,9 @@ export const TESTS = [
   }],
 
   // A picker on a plank is a tile like the rest, but what it shows is a
-  // sentence -- "batch after batch", a crew's name -- not a number. It stands
-  // two slots wide so the name and the control each keep to one line, the two
-  // pickers stand side by side on one plank, and it wears its drawing like any
-  // other tile. It once took the card's two-column layout onto the plank: the
+  // sentence -- "batch after batch" -- not a number. It stands two slots wide
+  // so the name and the control each keep to one line, and it wears its
+  // drawing like any other tile. It once took the card's two-column layout onto the plank: the
   // name was squeezed to "KEE..." beside a control folded onto three lines.
   ['a picker tile keeps its name and its control on one line each', async () => {
     newRun();
@@ -1144,7 +1147,7 @@ export const TESTS = [
     window.__board('apothecary');
     await sleep(120);
 
-    const rows = ['potkeep', 'potprefer'].map(k => document.querySelector(`.rows.shelves > [data-dial="${k}"]`));
+    const rows = ['potkeep'].map(k => document.querySelector(`.rows.shelves > [data-dial="${k}"]`));
     const fits = rows.map(r => {
       const what = r?.querySelector('.what'), chosen = r?.querySelector('.chosen');
       if (!what || !chosen) return null;
@@ -1156,12 +1159,10 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(fits.every(f => f), 'both pickers stand on the apothecary board as tiles', JSON.stringify(fits)),
+      ok(fits.every(f => f), 'the picker stands on the apothecary board as a tile', JSON.stringify(fits)),
       ok(fits.every(f => f?.name), 'the name is not cut short', JSON.stringify(fits.map(f => f?.name))),
       ok(fits.every(f => f?.oneLine && f?.control), 'the chosen option sits on one line and is not cut short',
          JSON.stringify(fits.map(f => f && [f.oneLine, f.control]))),
-      ok(fits[0] && fits[1] && fits[0].top === fits[1].top, 'and the two stand side by side on one plank',
-         JSON.stringify(fits.map(f => f?.top))),
       ok(fits.every(f => f?.drawn), 'each wears its drawing', JSON.stringify(fits.map(f => f?.drawn)))
     ];
   }],
@@ -1434,6 +1435,75 @@ export const TESTS = [
          `${shownBefore.join(',')} -> ${shownAfter.join(',')}, wanted ${expect.join(',')}`)
     ];
   }],
+  // Under the brews, the picker says who THIS pot's doses go to first, with
+  // how many of that job are under the brew out of how many there are. Only
+  // the jobs the set brew can reach are offered, and a click sets that pot and
+  // no other -- it was one dial on the board for the whole building, which
+  // with two pots on two brews could not hold two answers. Done the player's
+  // way: the pointer at the cauldron, the row clicked.
+  ['a pot says who it is for, and counts them', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 3, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);
+    window.__buy('anotherpot'); window.__finish();
+    window.__pot('stew', 0);
+    window.__pot('strong', 1);
+    window.__look(state().apothecaryX - 200);
+    await raf();
+    window.__nocine();
+    const mid = b => onScreen(b.x + b.w / 2, b.y + b.h / 2);
+    const one = () => mid(window.__potSpot(0));
+    const two = () => mid(window.__potSpot(1));
+    const pop = () => document.querySelector('[data-potpick]');
+    const offered = () => [...pop().querySelectorAll('.for')]
+      .filter(r => r.offsetHeight > 0).map(r => r.dataset.for);
+    const countOf = job => pop().querySelector(`.for[data-for="${job}"] .count`)?.textContent;
+
+    point('pointermove', ...one(), 0);           // the stew pot
+    await sleep(40);
+    const stewOffers = offered();
+    const diggers = countOf('rockhands');
+    const nearestFirst = pop()?.querySelector('.for.on')?.dataset.for;
+    pop()?.querySelector('.for[data-for="rockhands"]')?.click();
+    await sleep(40);
+    const setStew = state().potPrefers?.[0];
+    const shut = !!pop() && pop().hidden;
+
+    point('pointermove', ...two(), 0);           // the strong pot
+    await sleep(40);
+    const strongOffers = offered();
+    const strongOn = pop()?.querySelector('.for.on')?.dataset.for;
+    pop()?.querySelector('.for[data-for="haulers"]')?.click();
+    await sleep(40);
+    const after = state();
+
+    // Back on the stew pot, its own choice is the one marked.
+    point('pointermove', ...one(), 0);
+    await sleep(40);
+    const stewOn = pop()?.querySelector('.for.on')?.dataset.for;
+    point('pointermove', one()[0], one()[1] + 260, 0);
+    await sleep(800);
+    window.__crew(0, 0);
+    return [
+      ok(nearestFirst === '', 'a pot starts out for whoever is nearest', String(nearestFirst)),
+      ok(stewOffers.includes('rockhands') && !stewOffers.includes('haulers'),
+         'the stew pot offers the diggers and not the haulers, who cannot drink it', stewOffers.join(',')),
+      ok(diggers === '0/2', 'and counts the diggers under it out of the diggers there are', String(diggers)),
+      ok(setStew === 'rockhands' && shut, 'clicking a job sets that pot and shuts the list',
+         `${setStew} shut=${shut}`),
+      ok(strongOffers.includes('haulers') && !strongOffers.includes('rockhands'),
+         'the strong pot offers the haulers and not the diggers', strongOffers.join(',')),
+      ok(strongOn === '', "and comes up unset: the choice was the other pot's", String(strongOn)),
+      ok(after.potPrefers?.[1] === 'haulers' && after.potPrefers?.[0] === 'rockhands',
+         'each pot keeps its own', JSON.stringify(after.potPrefers)),
+      ok(stewOn === 'rockhands', 'and the stew pot still shows its own', String(stewOn))
+    ];
+  }],
+
   // A board does not change size while it is saying something.
   //
   // This is the page half of "A board has a size" in DESIGN.md. The sheet is

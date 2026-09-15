@@ -46,7 +46,7 @@ import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections } from './crewboard.js';
-import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
+import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { CASINO_UPGRADES, pickChip } from './casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
@@ -1237,7 +1237,7 @@ export const HANDLES = {
   // itself would only be checking that two people copied the same constant.
   __brewCost: key => brewCost(key),
   __potKeep: keep => { setKeep(keep); return true; },
-  __potPrefer: job => { setPrefer(job); return true; },
+  __potPrefer: (job, pot = 0) => { choosePotPrefer(pot, job); return true; },
   __muckOverPit: muckOverPit, __look: look, __hold: hold,   // wave7b-assign
   // getting about: the surface under a place, the ways there are, and how a
   // given body would get somewhere

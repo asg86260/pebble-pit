@@ -739,6 +739,35 @@ canvas {
 .optspop[data-potpick] .opt:hover .note,
 .optspop[data-potpick] .opt.on .note { opacity: .6; }
 .optspop[data-potpick] .opt .note:empty { display: none; }
+/* Who the pot's doses go to first, under the brews: a heading in the note
+   register, then rows that read like the brew rows -- the job on the left, how
+   many of them are under it out of how many there are on the right, in the
+   bill's column. A row is a button like the rest, and the set one is inverted
+   the way a chosen thing is everywhere on these boards. */
+.optspop[data-potpick] .forhead {
+  padding: 6px 14px 2px 10px;
+  border-top: 1px solid #000;
+  margin-top: 4px;
+  opacity: .5;
+  font-size: .82em;
+}
+.optspop[data-potpick] .for {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  color: #000;
+  background: none;
+  border: 0;
+  padding: 4px 14px 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+}
+.optspop[data-potpick] .for .who { flex: 1 1 auto; }
+.optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
+.optspop[data-potpick] .for:hover,
+.optspop[data-potpick] .for.on { color: #fff; background: #000; }
 
 /* A block of the brew's own color, for the picker at the pot. The color itself
    is set on the element, because which color is data about the tonic and not a

@@ -32,12 +32,21 @@
 // the bills stay in their columns and the list stays scannable at a glance. The
 // wording is `tonicGain`'s, in apothecary.js, which is the one place a brew's
 // effect is put into words.
+//
+// And under the brews, who this pot's doses go to first: "for" and a row a
+// job, only the jobs the set brew can reach, each with how many of them are
+// under it out of how many there are. It was one dial on the board for the
+// whole building, which with two pots on two brews could not say the stew is
+// for the diggers and the brew for the carters -- and the count is what the
+// dial never told you: whether the round is done or somebody is still waiting.
 
 import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
-         tonicGain, tonicOf, tonicShown, canAffordBrew } from './apothecary.js';
+         tonicGain, tonicOf, tonicShown, canAffordBrew,
+         potPreferOf, choosePotPrefer, preferableFor, preferLabel, doseCount } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
 import { MARK, priceText, purse } from './upgrades.js';
 import { screenAt } from './render/frame.js';
+import { JOB } from './jobs.js';
 
 const canvas = document.getElementById('c');
 
@@ -51,6 +60,10 @@ let onPot = -1;                      // which pot it is currently set for
 // and every move over bare ground would restart the wander-off grace and the
 // thing would never close at all.
 let over = -1;
+
+// Every job a brew can favor, in the picker's order. The rows are built once
+// for all of them and shown per pot (`openFor`), the way the brew rows are.
+const FOR_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
 
 function build() {
   opts = document.createElement('div');
@@ -100,6 +113,32 @@ function build() {
     });
     opts.appendChild(pick);
   }
+  // Who it is for. A heading, then "whoever is nearest" and a row a job. The
+  // rows are `for`, not `opt`: an option is a brew, and everything that counts
+  // the brews on this list -- the check that there is a swatch a recipe -- goes
+  // on counting brews.
+  const head = document.createElement('span');
+  head.className = 'forhead';
+  head.textContent = 'for';
+  opts.appendChild(head);
+  for (const job of [null, ...FOR_JOBS]) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'for';
+    row.dataset.for = job || '';
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = job ? preferLabel(job) : 'whoever is nearest';
+    row.appendChild(who);
+    const n = document.createElement('span');
+    n.className = 'count';
+    row.appendChild(n);
+    row.addEventListener('click', () => {
+      if (onPot >= 0) choosePotPrefer(onPot, job);
+      shutOpts();
+    });
+    opts.appendChild(row);
+  }
   // Crossing the gap from the cauldron to the list must not count as wandering
   // off, and neither must running the cursor down the options. Same two handlers
   // the board's dials hang on their own lists, and the same timer behind them.
@@ -144,6 +183,20 @@ function openFor(i) {
       `<span class="${purse(money) >= n ? 'have' : 'short'}">` +
       `${MARK[money]} ${priceText(money, n)}</span>`).join('');
     o.querySelector('.note').innerHTML = tonicGain(tonicOf(o.dataset.opt));
+  }
+  // And who it is for: the jobs the set brew reaches and somebody is doing,
+  // with the round's count on each. Read at every open, so the count is the
+  // yard as it stands. A job nobody is on -- a station not yet built -- is a
+  // row about nobody and stays off, unless it is the one already set, which
+  // stays so it can be seen and changed: the brew rows' own rule.
+  const can = preferableFor(i);
+  const favor = potPreferOf(i) || '';
+  for (const r of opts.querySelectorAll('.for')) {
+    const job = r.dataset.for;
+    const c = job ? doseCount(i, job) : null;
+    r.hidden = !!job && !(can.includes(job) && (c.of > 0 || job === favor));
+    r.classList.toggle('on', job === favor);
+    r.querySelector('.count').textContent = c ? `${c.dosed}/${c.of}` : '';
   }
   stayOpen();                       // whatever grace was running, this cancels it
   openOptsAt(potRect(i), opts, null, 'center');

@@ -5266,14 +5266,23 @@ crit before a rich boulder -- without committing the farm's whole crop to
 keeping it lit. Same pot, same stirrer; the toggle is only how many times it
 comes round.
 
-**A preferred station.** Somewhere on the apothecary's board you set **who the
-doses go to first** -- a station the round favours. Without it "bodies a brew"
+**A preferred station.** At the pot, under its brew, you set **who this pot's
+doses go to first** -- a station the round favors. Without it "bodies a brew"
 is a number with nowhere to point: a brew that reaches four workers is worth
 most when you chose *which* four, and the whole reason to brew a quarry tonic is
 to get it onto the quarriers rather than onto whoever the stirrer passed first.
 The preference is a nudge, not a wall -- the stirrer still deals to others once
-the favoured station is covered -- so a small brew lands where it matters and a
+the favored station is covered -- so a small brew lands where it matters and a
 big one spills to the rest of the yard.
+
+*As built (2026-09-15):* the favor is the **pot's**, set on the pot's own picker
+under the brew rows -- "for", then whoever is nearest and a row a job. It was
+one dial on the board for the whole building, which with two pots on two brews
+could not say the stew is for the diggers and the strong brew for the carters.
+The picker offers only the jobs the set brew can reach and somebody is doing,
+and each row carries the round's count -- diggers `2/3` -- so whether the round
+is done or somebody is still waiting is read off the list rather than counted
+across the yard. An old save's one dial becomes every pot's favor.
 
 ### The stirrer deals the doses
 

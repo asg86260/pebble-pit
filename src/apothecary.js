@@ -297,6 +297,14 @@ export function migrateApothecary() {
     S.potSpent = false;
     S.dirty = true;
   }
+  // One favored job for the whole building becomes every pot's: what the old
+  // dial said is what each pot now says, until it is set at the pot.
+  S.potPrefers = S.potPrefers || [];
+  if (S.potPrefer) {
+    for (let i = 0; i < Math.max(1, S.apothPots | 0); i++) S.potPrefers[i] = S.potPrefer;
+    S.potPrefer = null;
+    S.dirty = true;
+  }
   const held = (S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
   if (held > 0) {
     // Doses in the old save have no tonic of their own -- the building brewed
@@ -386,17 +394,21 @@ const buffable = (w, key) => {
   return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);
 };
 
-// The body the next dose goes to: the preferred station first, then whoever is
-// nearest the pot. A small brew lands where it matters and a big one spills to
-// the rest of the yard. `skip` is who the carrier has already dealt to this
-// trip -- they are still standing there and still buffable for a frame, and
-// without it a stirrer carrying three would hand all three to one body.
+// The body the next dose goes to: the pot's favored station first, then
+// whoever is nearest the pot. A small brew lands where it matters and a big
+// one spills to the rest of the yard. `skip` is who the carrier has already
+// dealt to this trip -- they are still standing there and still buffable for a
+// frame, and without it a stirrer carrying three would hand all three to one
+// body. The favor is the POT's (`potPreferOf`), read off the stirrer's own
+// pot: it was one dial for the building, which with two pots on two brews
+// could not say the stew is for the diggers and the brew for the carters.
 function pickTarget(self, key, skip) {
   const door = apothecaryDoor();
   let pool = S.workers.filter(w => w !== self && w !== skip && buffable(w, key));
   if (!pool.length) return null;
-  if (S.potPrefer) {
-    const pref = pool.filter(w => JOB_OF[w.type] === S.potPrefer);
+  const favor = potPreferOf(potOf(self));
+  if (favor) {
+    const pref = pool.filter(w => JOB_OF[w.type] === favor);
     if (pref.length) pool = pref;
   }
   return pool.reduce((best, w) =>
@@ -684,8 +696,7 @@ export function setPotTonic(i, key) {
 // The same setting, chosen off a list rather than stepped onto -- the picker at
 // the pot. A pick says which one it wants, so unlike `setPotTonic` it does not
 // toggle back off when you pick the one already set; picking `null` is how the
-// picker turns a pot off, and it says so with a row of its own. Same split as
-// `setPrefer` and `choosePrefer` below.
+// picker turns a pot off, and it says so with a row of its own.
 export function choosePotTonic(i, key) {
   S.potTonics[i] = key || null;
   S.potSpents[i] = false;
@@ -694,11 +705,15 @@ export function choosePotTonic(i, key) {
 // Every pot's one-off flag is cleared together, because the dial is the
 // building's: turning it back to "just this one" means one more batch each.
 export function setKeep(keep) { S.potKeep = keep; S.potSpents = []; S.dirty = true; }
-export function setPrefer(job) { S.potPrefer = S.potPrefer === job ? null : job; S.dirty = true; }
-// The same setting, chosen off a list rather than stepped onto: a pick says
-// which one it wants, so unlike `setPrefer` it does not toggle back off when the
-// one you picked is the one already set.
-export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
+// Who a pot's doses go to first, set at the pot beside its brew (potpick.js).
+// A pick says which one it wants, so picking the one already set keeps it;
+// `null` is whoever is nearest, and has a row of its own on the list.
+export const potPreferOf = i => (S.potPrefers || [])[i] || null;
+export function choosePotPrefer(i, job) {
+  if (!S.potPrefers) S.potPrefers = [];
+  S.potPrefers[i] = job || null;
+  S.dirty = true;
+}
 
 // --- what the building's board sells ------------------------------------------
 // The rungs, and nothing about what any one pot is brewing. Setting a pot's brew
@@ -772,24 +787,6 @@ export const APOTHECARY_UPGRADES = [
     show: () => S.apothecaryOpen
   },
 
-  // Who the round favors. A dial that walks the jobs the doses can land on.
-  {
-    key: 'potprefer', dial: true, site: 'apothecary',
-    name: 'give tonics to',
-    value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
-    // Seven stations to walk past two buttons at a time; a list you pick from is
-    // the whole reason this control exists. "Nobody in particular" is the first
-    // of them rather than a step off either end.
-    options: () => [{ key: '', label: 'whoever is nearest' },
-                    ...preferable().map(j => ({ key: j, label: PREFER_LABEL[j] }))],
-    at: () => S.potPrefer || '',
-    pick: k => choosePrefer(k || null),
-    less: () => setPrefer(stepPrefer(-1)),
-    more: () => setPrefer(stepPrefer(1)),
-    lo: () => false, hi: () => false,
-    show: () => S.apothecaryOpen
-  },
-
   // Standing room for one more pot and its stirrer -- capOfBare-shaped, the
   // farm's "another plot" exactly. Broken by the building's own hands.
   {
@@ -817,33 +814,36 @@ export const APOTHECARY_UPGRADES = [
 // Three sections, all of them the building's: how it is run, how well it runs,
 // and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
-  { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
+  { title: 'the pot', keys: ['potkeep', 'anotherpot'] },
   { title: 'brewing', keys: ['bufflength', 'brewdoses'] },
   { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
 ];
 
-// The jobs a dose can favor, in the order the dial walks them. Null (whoever is
-// nearest) is the step before the first and after the last.
+// The jobs a dose can favor, in the order the picker lists them. Null (whoever
+// is nearest) is the first row of the list rather than a step off either end.
 const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
-// The jobs the dial actually offers right now: only those some tonic a pot is
-// SET to can land on (item 22). A dial listing "haulers" while every pot is on
-// stew would be offering a preference no dose can honor. With no pot set, the
-// whole list stands -- the dial then reads as what the building could do.
-function preferable() {
-  const set = (S.potTonics || []).map(tonicOf).filter(Boolean);
-  if (!set.length) return PREFER_JOBS;
-  return PREFER_JOBS.filter(j => set.some(t => t.jobs.includes(j)));
+// The jobs a POT's picker offers: only those the brew it is set to can land on
+// (item 22). A list saying "haulers" under a pot on stew would be offering a
+// favor no dose can honor. A pot set to nothing offers the whole list -- it
+// then reads as what the building could do.
+export function preferableFor(i) {
+  const t = tonicOf(potTonicOf(i));
+  return t ? PREFER_JOBS.filter(j => t.jobs.includes(j)) : PREFER_JOBS;
 }
 // Said the way every other board says a job -- see `jobSaid` in kit.js. This was
 // a second table of the same words, which is how the haulers ended up as "the
 // crew" here and "haulers" everywhere else, on a board where "the crew" also
 // means the whole settlement.
-const PREFER_LABEL = Object.fromEntries(PREFER_JOBS.map(j => [j, jobSaid(j)]));
-function stepPrefer(d) {
-  const list = preferable();                 // the buttons walk what the picker offers
-  const at = list.indexOf(S.potPrefer);
-  const next = at + d;
-  return next < 0 || next >= list.length ? null : list[next];
+export const preferLabel = job => jobSaid(job);
+// How many of a job are under this pot's brew, out of how many there are --
+// the "2/3" on the picker's row, so who is still waiting can be read off the
+// list rather than counted across the yard. The kind, not the exact tonic: a
+// body under any brew of the kind is not waiting for this one (`buffable`).
+export function doseCount(i, job) {
+  const t = tonicOf(potTonicOf(i));
+  const bodies = S.workers.filter(w => JOB_OF[w.type] === job);
+  const dosed = t ? bodies.filter(w => doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind)) : [];
+  return { dosed: dosed.length, of: bodies.length };
 }
 
 // What it costs to put the place up: a core, and dust a small early yard can

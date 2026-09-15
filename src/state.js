@@ -369,7 +369,8 @@ export const S = {
   // follow-up (see the report and DESIGN.md "Open").
   potTonic: null,         // the tonic key the pot is set to, or null for off
   potKeep: true,          // keep brewing (an upkeep) or a one-off (a single batch)
-  potPrefer: null,        // the job the round favors first, or null for whoever is passed
+  potPrefer: null,        // (old saves) one favored job for the whole building; poured into potPrefers on load
+  potPrefers: [],         // the job each pot's doses go to first, by pot index, or null for whoever is nearest
   // A one-off batch has been brewed and the pot is done. Only means anything
   // while `potKeep` is off. It was written, saved and restored without ever
   // being declared here, which is how it stayed out of `BLANK` -- and so out of
@@ -624,6 +625,7 @@ export const SAVED = [
   // bookshelf, and the ladders that are no longer one number for the building.
   'potTonics',
   'potSpents',
+  'potPrefers',
   'shelf',
   'potency',
   'doseCarryLevel',

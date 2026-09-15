@@ -438,6 +438,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   boiling: apothBoiling(),
   stirrers: S.stirrers,
   potTonics: S.potTonics,
+  potPrefers: S.potPrefers,
   potKeep: S.potKeep,
   potSpent: S.potSpent,
   apothPots: S.apothPots,

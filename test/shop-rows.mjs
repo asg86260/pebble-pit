@@ -139,7 +139,6 @@ export const ROWS = [
 
   // --- the apothecary ---------------------------------------------------------
   { key: 'potkeep', dial: true, part: 2, reach: apothecary },
-  { key: 'potprefer', dial: true, part: 2, reach: apothecary },
   { key: 'anotherpot', part: 2, reach: () => { apothecary(); window.__brews(5); } },
   { key: 'bufflength', part: 2, reach: apothecary },
   { key: 'brewdoses', part: 2, reach: apothecary },

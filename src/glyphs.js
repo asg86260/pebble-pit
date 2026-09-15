@@ -109,7 +109,7 @@ export const GLYPH_OF = {
   // the farm
   farmplot: ['furrow', 'plus'], grower: ['brim', 'plus'], crop: ['ear', 'plus'], tend: ['hoe', 'up'], tiller: ['tiller'], tunetiller: ['tiller', 'plus'],
   // the apothecary
-  potkeep: ['pot'], potprefer: ['pot', 'plus'], anotherpot: ['pot', 'plus'],
+  potkeep: ['pot'], anotherpot: ['pot', 'plus'],
   bufflength: ['pot', 'plus'], brewdoses: ['vial', 'plus'],
   'potency-stew': ['bowl', 'plus'], 'potency-brace': ['spark', 'plus'], 'potency-strong': ['sack', 'plus'],
   'potency-swift': ['boot', 'plus'], 'potency-gleam': ['star', 'plus'],

@@ -41,8 +41,9 @@ for every build since 2026-09-15 (the corner pin is the same tile; the crew list
 the books are a ledger). The glyphs are drawn (`glyphs.js`, edited on
 `glyphs.html`). Still open: `build the apothecary`, `build the janitor's
 closet` and `build the scrubbing house` are wider than a slot and clip
-with an ellipsis; `potprefer` and `anotherpot` both draw the pot with a
-plus; the `star` badge is the same drawing as `up`.
+with an ellipsis; the `star` badge is the same drawing as `up`. (`potprefer`
+drew the pot with a plus like `anotherpot`; the dial moved to the pot's
+picker on 2026-09-15 and the row is gone.)
 Placement stays the popover (owner, 2026-09-14): a bottom drawer with the
 sections as tabs, one plank tall, was mocked over the live yard
 (`shots/drawer-A2.png`) and is the fallback if the popover proves too big.

@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- Who a pot's doses go to first is set at the pot, under its brew: "for", a row a job, each with how many are under it -- diggers 2/3 (test/pot-prefer.test.mjs).
 - The ladder pips are back on the shelf: a column climbing the right edge of every ladder's tile.
 - A tile being built shows it: the drawing fills in from the bottom as the work is done, the tag is a clock to the second, and a tile in line is a ghost with its place.
 
