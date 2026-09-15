@@ -621,10 +621,11 @@ export const TESTS = [
     // an hour, which is why the whole browser tier never finished -- see
     // TODO.md. A million is already far more than eighteen rungs cost.
     window.__give(999999);
-    window.__grant({ cores: 9, shards: 9000, spores: 9000 });
-    window.__invest();                        // the grounds stand: rungs past three are priced in their coins
+    // Every coin: the last rung of each is the spark's.
+    window.__grant({ cores: 9, shards: 9000, spores: 9000, sparks: 9000 });
+    window.__invest();                        // the grounds stand: rungs past the first are priced in their coins
     run(20);
-    // Two ladders to their tops, each one card pressed nine times. The pick
+    // Two ladders to their tops, each one card pressed past its length. The pick
     // waits on the swing being automatic.
     window.__buy('auto');
     for (let i = 0; i < 12; i++) {
@@ -1032,8 +1033,10 @@ export const TESTS = [
       // And the verb in front, when the row's name is a thing rather than a stat
       // -- "walk +30%", "carry 1 -> 2" -- with the amount written in no-break
       // spaces so it never splits across the line. See `gainText`.
-      ok(cells.every(c => !c[1] || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+ → )/.test(c[1])),
-         'a count says where it is going, a rate says what it gains',
+      // A row that gives a thing outright rather than a step -- hold to mine,
+      // "1 hit/s" -- says the thing: one figure and its unit.
+      ok(cells.every(c => !c[1] || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+ → |[\d,.]+ [a-z\/]+$)/.test(c[1])),
+         'a count says where it is going, a rate says what it gains, a gift says what it is',
          JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
          'and it opens in the same place the first time as the second',
