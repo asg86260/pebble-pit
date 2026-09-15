@@ -12,7 +12,7 @@ import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK } from 
 // The drawings, by the object's name. A drawing that is not here yet is a
 // row still wearing the crate, and the review sheet (glyphs.html) says so.
 export const GLYPHS = {
-  sack:       ['...##...', '..#..#..', '.######.', '#......#', '#......#', '#......#', '#......#', '.######.'],
+  sack:       ['########', '#......#', '#..##..#', '########', '#..##..#', '#......#', '#......#', '########'],
   lever:      ['....#...', '...##...', '..###...', '.####...', '#####...', '.####...', '..###...', '....#...'],
   swing:      ['......##', '.....##.', '....##..', '...##...', '..##....', '.###....', '####....', '.##.....'],
   pickhead:   ['.....###', '....####', '...##.#.', '..##....', '.##.....', '##......', '#.......', '........'],
