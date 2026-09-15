@@ -42,8 +42,12 @@
   textarea { width: 100%; box-sizing: border-box; height: 180px; font: 11px/1.4 ui-monospace, monospace; border: 1px solid #000; padding: 6px; white-space: pre; }
   .hint { opacity: .65; margin: 4px 0 10px; }
   .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
-  .about { margin: -2px 0 8px; max-width: 60ch; line-height: 1.5; }
-  .about b { font-weight: normal; opacity: .6; }
+  .about { margin: -2px 0 8px; max-width: 78ch; }
+  .about table { border-collapse: collapse; }
+  .about td { padding: 1px 12px 1px 0; vertical-align: top; }
+  .about td:nth-child(2) { opacity: .6; white-space: nowrap; }
+  .about td:nth-child(3) { opacity: .8; }
+  .about td:nth-child(4) { opacity: .6; }
   .row .k i { font-style: normal; opacity: .7; }
 </style>
 </head>
@@ -87,7 +91,7 @@
 <script type="module">
 import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, OVERRIDES_KEY } from './src/glyphs.js';
 import { SHELF_INK, SHELF_GLYPH_CELLS as N } from './src/config.js';
-import { UPGRADES } from './src/upgrades.js';
+import { UPGRADES, gainText } from './src/upgrades.js';
 import { CASINO_UPGRADES } from './src/casino.js';
 import { SCRUB_UPGRADES } from './src/scrubhouse.js';
 import { QUARRY_UPGRADES } from './src/quarry.js';
@@ -102,26 +106,18 @@ import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
 const ROW = {};
 const SHACK = new Set(['rockhandpick', 'rockhandspeed', 'breaker', 'ram', 'tuneram']);
 for (const [board, list] of [['the bench', UPGRADES], ['the casino', CASINO_UPGRADES], ['the scrubbing house', SCRUB_UPGRADES], ['the quarry', QUARRY_UPGRADES], ['the farm', FARM_UPGRADES], ['the apothecary', APOTHECARY_UPGRADES], ['the tower', TOWER_UPGRADES], ["the janitor's closet", OUTHOUSE_UPGRADES]])
-  for (const u of list) ROW[u.key] = { board: SHACK.has(u.key) ? 'the shack' : u.key === 'house' ? 'the house' : board, name: u.name };
-ROW.crewlist = { board: 'the house', name: 'who lives here' };
-
-// What each drawing is meant to be -- the object, never the effect
-// (docs/glyphs.md) -- shown over the grid so the picture and the brief are
-// side by side.
-const WHAT = {
-  sack: 'a sack, tied: what a body carries', pickhead: 'a pick head', swing: 'a pick mid-swing, with its arc', spark: 'a four-point spark',
-  cracked: 'a rock, cracked through', boot: 'a boot', lever: 'a lever, pulled', cart: 'the cart', belt: 'the belt: two wheels and a band',
-  ram: 'the ram (MACHINE_MARK.ram in sprites.js, at three cells)', jaw: 'the drill (MACHINE_MARK.jaw)', tiller: 'the tiller (MACHINE_MARK.tiller)',
-  helmet: "a rockhand's helmet (HATS.helmet)", lamp: "a quarrier's lamp hat (HATS.lamp)", brim: "a farmhand's brim hat (HATS.brim)",
-  point: "the wizard's pointed hat (HATS.point)", cap: "the janitor's flat cap (HATS.cap)",
-  house: 'a house', door: 'a door, ajar', hoist: "the quarry's hoist frame", furrow: 'a furrow with a sprout', pot: "the apothecary's pot",
-  die: 'a die', hut: "the shack: the diggers' hut", bucket: 'a bucket and mop', tower: 'the tower', fan: 'a fan, four blades',
-  balloon: 'the balloon on its line', bin: 'the recycler: a bin with a loop on it', shovel: 'a shovel', ore: 'an ore lump, faceted',
-  ear: 'an ear of crop', hoe: 'a hoe', vial: 'a vial', bowl: 'a bowl with a spoon', star: 'a five-point star', wand: 'a wand',
-  bolt: 'a bolt, zigzag', dome: "the dome's arc over a rock", planks: 'three planks, nailed: the wooden barrier', net: 'a net, mesh', arch: 'a stone arch',
-  chip: 'a stack of chips',
+  for (const u of list) ROW[u.key] = { board: SHACK.has(u.key) ? 'the shack' : u.key === 'house' ? 'the house' : board, name: u.name, u };
+ROW.crewlist = { board: 'the house', name: 'who lives here', u: null };
+// What an upgrade does, in the words its row says it in: the gain line for
+// a ladder, the description for a one-off, the purchase itself otherwise.
+const strip = html => html.replace(/<[^>]+>/g, '').replace(/ /g, ' ').trim();
+const does = u => {
+  if (!u) return 'opens the crew list';
+  try { const g = strip(gainText(u)); if (g) return g; } catch {}
+  try { if (typeof u.note === 'function') return u.note(); } catch {}
+  return u.job ? 'a headcount' : u.dial ? 'a setting' : u.price ? 'a decision at the table' : 'a one-off purchase';
 };
-const BADGE_WHAT = { wrench: 'tune it (the four machines)', plus: 'another one of it', star: 'a spell cast on it', vial: 'a tonic made of it', dust: 'about pebbles', crop: 'about crops', ore: 'about ore', spark: 'about sparks' };
+
 
 // GLYPHS/BADGES already carry the saved overrides (glyphs.js merges them in a
 // dev build); this keeps the committed originals to revert to and to tell
@@ -147,10 +143,11 @@ function select(k, name) {
   const rows = table()[name];
   cells = Array.from({ length: size() }, (_, y) => Array.from({ length: size() }, (_, x) => !!rows && rows[y]?.[x] === '#'));
   document.getElementById('editing').textContent = `${kind === 'glyphs' ? 'drawing' : 'badge'}: ${name}`;
+  // every upgrade this drawing (or badge) is used for: name, board, what it does, badge
   const served = kind === 'glyphs' ? rowsOf(name) : Object.entries(GLYPH_OF).filter(([, [, b]]) => b === name).map(([k, [, b]]) => [k, b]);
-  const where = [...new Set(served.map(([k]) => ROW[k]?.board).filter(Boolean))].join(', ');
-  document.getElementById('about').innerHTML =
-    `<b>what:</b> ${(kind === 'glyphs' ? WHAT[name] : BADGE_WHAT[name]) || '—'}<br><b>where:</b> ${where || '—'} · ${served.length} row${served.length === 1 ? '' : 's'}`;
+  document.getElementById('about').innerHTML = served.length
+    ? `<table>${served.map(([k, badge]) => { const r = ROW[k]; return `<tr><td>${r ? r.name : k}</td><td>${r ? r.board : ''}</td><td>${r ? does(r.u) : ''}</td><td>${badge ? '+' + badge : ''}</td></tr>`; }).join('')}</table>`
+    : '<i>used by no row</i>';
   document.getElementById('grid').classList.toggle('badge', kind === 'badges');
   paintGrid(); render(); list();
 }
