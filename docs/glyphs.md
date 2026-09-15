@@ -55,7 +55,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | door            | `crewlist`                                                                             |
 | hoist frame     | `unlockquarry`                                                                         |
 | furrow + sprout | `unlockfarm`, `farmplot` +plus                                                         |
-| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +plus, `bufflength` +up  |
+| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +plus, `bufflength` +plus|
 | die             | `unlockcasino`, `ride`                                                                 |
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
