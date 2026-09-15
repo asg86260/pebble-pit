@@ -216,6 +216,15 @@ const onBridge = w => {
 };
 
 function jig(w, now, zone, endsAt) {
+  // A body whose ground was taken from under its dance joins again from where
+  // it stands. `foot` is the climber's memory as well as the dance's ground,
+  // and the commute wipes it when a body is retasked (`settle`), as a landing
+  // does after a fall -- neither of which ends the jig, because the job's own
+  // stepper does that and no stepper runs while the yard celebrates. A builder
+  // stood down the moment the props it hammered stood finished kept jumping
+  // off a foot of `null`, which reads as nought: it danced at the top of the
+  // window, and a refresh made the nought a `NaN` and the body nowhere.
+  if (w.jigAt != null && w.foot == null) w.jigAt = null;
   // the mark it dances on, taken once: where it stands. It used to be a spot
   // rolled a few cells either side, because the dance paced across it and the
   // roll is what spread the gang out; jumping goes nowhere, so a body's mark is

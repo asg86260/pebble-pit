@@ -22,7 +22,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 import { swingFor } from './tenders.js';
-import { across } from './body.js';
+import { across, stand } from './body.js';
 import { unbook } from './hole.js';
 
 // Nobody shovels inside anybody. The same quarter-step the idlers take, for the
@@ -82,6 +82,15 @@ function nearestPoop(wx, taken) {
 }
 
 // Returns true if the body is on muck duty and has had its turn this frame.
+// A frame this errand keeps the body for without sending it anywhere. The
+// stage that owns a frame owns the body's feet: nothing below it in the step
+// list runs, so a body held here is stood on its ground here, a climb's pace a
+// frame like everywhere else. Left to "stand where it is", a rockhand that
+// came off the crest after a patch it then let go stood three cells over the
+// hill's flank, where its climb down had got to, for as long as the rain kept
+// laying muck it could not get a stance on.
+const held = w => { w.y = stand(w); return true; };
+
 export function takeMess(w, c) {
   const { now, taken, muckTaken, poopTaken } = c;
   // Two kinds of mess, and they are not the same job.
@@ -115,11 +124,11 @@ export function takeMess(w, c) {
   // is the reported "janitor vibrating while it cleans". Empty hands between two
   // columns of the same mess are not a walk home; the body stands where it is
   // and picks again next frame.
-  if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; return true; }
+  if (w.muckAt != null && muckAtCol(w.muckAt, w) <= 0) { w.muckAt = null; return held(w); }
   // ...and the same frame of empty hands when the hauler's own hole branch let
   // the column go a few lines up (see `muckDropped` there): the set is just as
   // stale for a release made anywhere else in the frame.
-  if (w.muckDropped === now) return true;
+  if (w.muckDropped === now) return held(w);
   if (w.muckAt == null) {
     // A janitor's own mess first -- see B4 in wave-feedback3.md. `nearestMuck`
     // treats every kind alike and hands out whichever column is nearest, which
@@ -163,7 +172,7 @@ export function takeMess(w, c) {
   // is dropped and picked up again next frame, the same way an emptied column
   // is, rather than worked from arm's length.
   const to = patch == null ? null : workSpot(patch);
-  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return true; }
+  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return held(w); }
   // A mess under the coming rock, or the far side of it, is not fetched through
   // the fall. The walk never asked about the zone, so a body sent at one ground
   // against the zone's wall -- stepping in, shoved out by the duck, stepping in

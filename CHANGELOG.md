@@ -39,6 +39,8 @@ this file is for things that were broken.
 - A new game after a load starts with an empty cut ledger. (`test/cut-dust.test.mjs`)
 - The crew only dance after the first rock and after the rescue; every other rock they get straight back to work.
 - The quarry's ore yield rungs stay bought across a reload.
+- A builder stood down the moment its shield stands finished cheers from the ground it is standing on, instead of jumping at the top of the window and vanishing on a refresh. (`test/scenes-stand-e.test.mjs`)
+- A rockhand that comes down off the crest for a patch it cannot get a stance on stands on the hill's flank, not in the air over it. (`test/scenes-stand-d.test.mjs`)
 - A half-dug cut no longer fills itself back in when the last quarrier climbs out to clear the yard.
 - Quarriers down the cut move with it when a new pot shoves the quarry along, instead of being left standing in solid ground.
 - A quarrier called away to build an upgrade gives up its column, so the rest of the gang dig it instead of leaving a spike.
