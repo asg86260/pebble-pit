@@ -45,11 +45,13 @@ The game itself is `play.html` (`index.html` is the landing page); a `GAME`
 naming only the server gets `play.html` appended by the tools.
 Use it before `look.mjs` for any change to a card's shape.
 
-For the shelf's **glyphs**, `glyphs.html` is the glyph sheet: every drawing at
-one, three and six times with the rows that borrow it and their badges, and
-a dashed card for each one the inventory (`docs/glyphs.md`) names that nobody
-has drawn. Draw a glyph, reload the sheet; then `shelf.html` for it among its
-neighbors on the plank.
+For the shelf's **glyphs**, `glyphs.html` is the glyph editor: pick a drawing
+(red ones the inventory, `docs/glyphs.md`, names and nobody has drawn), paint
+it on the grid, and it is shown at one, three and six times, in its four rung
+strokes, and on every row that borrows it with that row's badge. Edits live in
+the browser and a dev build reads them, so `shelf.html` and the game show them
+on the plank at once; "copy" hands back the line for `GLYPHS` in `glyphs.js`,
+which is where a finished drawing goes.
 
 For anything about what a **ladder** costs or is worth, `ladders.html` is the
 ladder book: every ladder on every board climbed rung by rung -- bill, work,

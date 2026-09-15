@@ -5,84 +5,226 @@
 <title>glyphs</title>
 <link rel="stylesheet" href="/src/style.css">
 <style>
-  /* The glyph sheet: every drawing the shelf uses, at one, three and six
-     times, with the rows it serves and each of their badges, on the dots
-     the shelf stands on -- so a glyph is judged where it will live.
-     A drawing the inventory names but nobody has drawn is flagged. */
-  body { background: #fff; margin: 0; padding: 16px; font: 12px/1.4 ui-monospace, "Courier New", monospace; color: #000; }
-  h1 { font: inherit; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 12px; padding-bottom: 4px; border-bottom: 2px solid #000; }
-  h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin: 18px 0 8px; }
-  .sheet { display: grid; grid-template-columns: repeat(auto-fill, 320px); gap: 12px; align-items: start; }
-  .card { border: 1px solid #000; padding: 8px 10px 10px; background: #fff;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E"); }
-  .card.missing { border-style: dashed; }
-  .card .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; }
-  .card .name .flag { float: right; font-weight: normal; letter-spacing: 0; text-transform: none; color: #b00; }
-  .sizes { display: flex; align-items: flex-end; gap: 14px; margin: 8px 0 6px; }
+  /* The glyph editor: every drawing the shelf uses, drawn and edited here.
+     Pick one from the list (or make a new one), paint it on the grid, and it
+     is shown live at one, three and six times, in its four rung strokes, and
+     on every row that borrows it with that row's badge. Edits live in the
+     browser (`OVERRIDES_KEY` in glyphs.js, read by a dev build), so shelf.html
+     and the game show them on the plank at once; "copy" hands back the line
+     for glyphs.js, which is where a finished drawing goes. */
+  body { background: #fff; margin: 0; padding: 0; font: 12px/1.4 ui-monospace, "Courier New", monospace; color: #000; height: 100vh; overflow: hidden; }
+  .app { display: grid; grid-template-columns: 200px 1fr 320px; height: 100vh; }
+  .app > * { overflow: auto; padding: 12px 14px; }
+  .list { border-right: 1px solid #000; }
+  .out { border-left: 1px solid #000; }
+  h1, h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 8px; }
+  h2 { display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin-top: 14px; }
+  .list button { display: block; width: 100%; text-align: left; font: inherit; letter-spacing: .06em; padding: 3px 6px; margin: 0; border: 0; background: none; color: #000; cursor: pointer; }
+  .list button.on { background: #000; color: #fff; }
+  .list button.missing { color: #b00; }
+  .list button.edited::after { content: ' •'; }
+  .list input { width: 100%; box-sizing: border-box; font: inherit; padding: 3px 6px; border: 1px solid #000; margin: 8px 0 4px; }
+  .grid { display: grid; grid-template-columns: repeat(8, 28px); grid-template-rows: repeat(8, 28px); gap: 1px; background: #bbb; border: 1px solid #000; width: max-content; user-select: none; touch-action: none; }
+  .grid.badge { grid-template-columns: repeat(3, 28px); grid-template-rows: repeat(3, 28px); }
+  .grid i { display: block; background: #fff; cursor: crosshair; }
+  .grid i.on { background: #000; }
+  .grid i.corner { background: #eee; }
+  .grid i.corner.on { background: #000; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; max-width: 300px; }
+  .tools button, .out button { font: inherit; letter-spacing: .06em; padding: 3px 8px; border: 1px solid #000; background: #fff; color: #000; cursor: pointer; }
+  .tools button:hover, .out button:hover { background: #000; color: #fff; }
+  .sizes, .tints { display: flex; align-items: flex-end; gap: 14px; margin: 8px 0; }
   canvas { image-rendering: pixelated; display: block; position: static; inset: auto; width: auto; height: auto; background: none; cursor: default; }
-  .rows { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 6px; }
+  .plank { padding: 10px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E"); border-bottom: 5px solid #000; }
+  .rows { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 6px; }
   .row { display: flex; align-items: center; gap: 6px; font-size: .85em; }
   .row .k { opacity: .65; }
-  .tints { display: flex; gap: 8px; margin-top: 6px; }
-  .badges .card { grid-column: span 1; }
-  .legend { margin: 0 0 10px; opacity: .7; }
+  textarea { width: 100%; box-sizing: border-box; height: 180px; font: 11px/1.4 ui-monospace, monospace; border: 1px solid #000; padding: 6px; white-space: pre; }
+  .hint { opacity: .65; margin: 4px 0 10px; }
+  .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
 </style>
 </head>
 <body>
-<h1>the glyphs</h1>
-<p class="legend">Each drawing at 1×, 3× and 6×; under it, every row that borrows it, with its badge. Right column of each card: the four rung strokes. A dashed card is a drawing the inventory names that nobody has drawn yet — the shelf shows the crate there.</p>
-<div id="drawings"></div>
-<h2>the badges</h2>
-<div id="badges" class="sheet badges"></div>
+<div class="app">
+  <div class="list">
+    <h1>drawings</h1>
+    <div id="names"></div>
+    <input id="newname" placeholder="new drawing: name, enter">
+    <h1 style="margin-top:14px">badges</h1>
+    <div id="badgenames"></div>
+  </div>
+  <div class="edit">
+    <div class="name" id="editing">—</div>
+    <div class="hint">left-drag paints, right-drag erases. the shaded corner is where a badge sits.</div>
+    <div id="grid" class="grid"></div>
+    <div class="tools">
+      <button data-op="clear">clear</button>
+      <button data-op="invert">invert</button>
+      <button data-op="fliph">flip ↔</button>
+      <button data-op="flipv">flip ↕</button>
+      <button data-op="left">◀</button><button data-op="right">▶</button><button data-op="up">▲</button><button data-op="down">▼</button>
+      <button data-op="revert">revert to committed</button>
+    </div>
+    <h2>on the plank</h2>
+    <div class="plank"><div class="sizes" id="sizes"></div><div class="tints" id="tints"></div></div>
+    <h2>the rows that borrow it</h2>
+    <div class="rows" id="rows"></div>
+  </div>
+  <div class="out">
+    <h1>as code</h1>
+    <div class="hint">the line for GLYPHS (or BADGES) in src/glyphs.js. every edited drawing is in the box below; paste them in, then "forget edits" here.</div>
+    <div class="tools"><button id="copyone">copy this one</button><button id="copyall">copy all edited</button><button id="forget">forget edits</button></div>
+    <textarea id="code" readonly></textarea>
+  </div>
+</div>
 <script type="module">
-import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, drawn } from './src/glyphs.js';
-import { SHELF_INK, SHELF_GLYPH_CELL, SHELF_GLYPH_CELLS } from './src/config.js';
+import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, OVERRIDES_KEY } from './src/glyphs.js';
+import { SHELF_INK, SHELF_GLYPH_CELLS as N } from './src/config.js';
 
+// GLYPHS/BADGES already carry the saved overrides (glyphs.js merges them in a
+// dev build); this keeps the committed originals to revert to and to tell
+// an edit from a drawing.
+const saved = (() => { try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}'); } catch { return {}; } })();
+saved.glyphs ||= {}; saved.badges ||= {};
+const committed = { glyphs: {}, badges: {} };
+for (const [k, v] of Object.entries(GLYPHS)) committed.glyphs[k] = saved.glyphs[k] ? null : v;
+for (const [k, v] of Object.entries(BADGES)) committed.badges[k] = saved.badges[k] ? null : v;
+// (a name that is both committed and saved: the committed rows are gone from
+// GLYPHS by the merge, so revert falls back to the crate for those)
+const store = () => localStorage.setItem(OVERRIDES_KEY, JSON.stringify(saved));
+
+const names = () => [...new Set([...Object.values(GLYPH_OF).map(([n]) => n), ...Object.keys(GLYPHS)])].filter(n => n !== 'crate' && n !== 'shield' && n !== 'hat');
+const rowsOf = name => Object.entries(GLYPH_OF).filter(([, [n]]) => n === name).map(([k, [, b]]) => [k, b]);
+
+let kind = 'glyphs', cur = null, cells = [];
+const size = () => kind === 'glyphs' ? N : 3;
+const table = () => kind === 'glyphs' ? GLYPHS : BADGES;
+
+function select(k, name) {
+  kind = k; cur = name;
+  const rows = table()[name];
+  cells = Array.from({ length: size() }, (_, y) => Array.from({ length: size() }, (_, x) => !!rows && rows[y]?.[x] === '#'));
+  document.getElementById('editing').textContent = `${kind === 'glyphs' ? 'drawing' : 'badge'}: ${name}`;
+  document.getElementById('grid').classList.toggle('badge', kind === 'badges');
+  paintGrid(); render(); list();
+}
+const toRows = () => cells.map(r => r.map(c => c ? '#' : '.').join(''));
+function commit() {
+  const rows = toRows();
+  table()[cur] = rows; saved[kind][cur] = rows; store();
+  render(); list();
+}
+
+// --- the grid ---------------------------------------------------------------
+const gridEl = document.getElementById('grid');
+let painting = null;
+function paintGrid() {
+  gridEl.innerHTML = '';
+  const n = size();
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const i = document.createElement('i');
+    if (kind === 'glyphs' && x >= n - 3 && y >= n - 3) i.className = 'corner';
+    if (cells[y][x]) i.classList.add('on');
+    i.dataset.x = x; i.dataset.y = y;
+    gridEl.append(i);
+  }
+}
+const cellAt = e => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.parentElement === gridEl ? t : null; };
+gridEl.addEventListener('contextmenu', e => e.preventDefault());
+gridEl.addEventListener('pointerdown', e => {
+  if (!cur) return;
+  painting = e.button === 2 ? false : true;
+  gridEl.setPointerCapture(e.pointerId);
+  const t = cellAt(e); if (t) { cells[t.dataset.y][t.dataset.x] = painting; t.classList.toggle('on', painting); render(); }
+});
+gridEl.addEventListener('pointermove', e => {
+  if (painting === null) return;
+  const t = cellAt(e); if (t && cells[t.dataset.y][t.dataset.x] !== painting) { cells[t.dataset.y][t.dataset.x] = painting; t.classList.toggle('on', painting); render(); }
+});
+gridEl.addEventListener('pointerup', () => { if (painting !== null) { painting = null; commit(); } });
+
+document.querySelector('.tools').addEventListener('click', e => {
+  const op = e.target.dataset.op; if (!op || !cur) return;
+  const n = size();
+  const shift = (dx, dy) => cells.map((r, y) => r.map((_, x) => cells[(y - dy + n) % n]?.[(x - dx + n) % n] ?? false));
+  if (op === 'clear') cells = cells.map(r => r.map(() => false));
+  if (op === 'invert') cells = cells.map(r => r.map(c => !c));
+  if (op === 'fliph') cells = cells.map(r => [...r].reverse());
+  if (op === 'flipv') cells = [...cells].reverse();
+  if (op === 'left') cells = shift(-1, 0);
+  if (op === 'right') cells = shift(1, 0);
+  if (op === 'up') cells = shift(0, -1);
+  if (op === 'down') cells = shift(0, 1);
+  if (op === 'revert') {
+    const orig = committed[kind][cur];
+    delete saved[kind][cur]; store();
+    if (orig) table()[cur] = orig; else delete table()[cur];
+    select(kind, cur); return;
+  }
+  paintGrid(); commit();
+});
+
+// --- what it looks like -------------------------------------------------------
 const scaled = (canvas, k) => { canvas.style.width = `${canvas.width * k}px`; canvas.style.height = `${canvas.height * k}px`; canvas.style.marginLeft = '0'; return canvas; };
-
-// every drawing the inventory names, drawn or not, in the order they first appear
-const names = [...new Set(Object.values(GLYPH_OF).map(([n]) => n))];
-const byBoard = {};
-for (const [key, [name]] of Object.entries(GLYPH_OF)) (byBoard[name] ||= []).push(key);
-
-const root = document.getElementById('drawings');
-const sheet = document.createElement('div'); sheet.className = 'sheet'; root.append(sheet);
-for (const name of names) {
-  const has = !!GLYPHS[name];
-  const card = document.createElement('div'); card.className = 'card' + (has ? '' : ' missing');
-  card.innerHTML = `<div class="name">${name}${has ? '' : '<span class="flag">not drawn — crate</span>'}</div><div class="sizes"></div><div class="tints"></div><div class="rows"></div>`;
-  const rows = GLYPHS[name] || GLYPHS.crate;
-  const sizes = card.querySelector('.sizes');
+const framed = rows => Array.from({ length: N }, (_, y) => Array.from({ length: N }, (_, x) => {
+  const by = y - (N - rows.length), bx = x - (N - rows[0].length);
+  return by >= 0 && bx >= 0 && rows[by][bx] === '#' ? '#' : '.';
+}).join(''));
+function render() {
+  const sizes = document.getElementById('sizes'), tints = document.getElementById('tints'), list = document.getElementById('rows');
+  sizes.innerHTML = ''; tints.innerHTML = ''; list.innerHTML = '';
+  if (!cur) return;
+  const rows = kind === 'glyphs' ? toRows() : framed(toRows());
   for (const k of [1, 3, 6]) sizes.append(scaled(drawGlyph(rows), k));
-  const tints = card.querySelector('.tints');
   for (const t of [null, SHELF_INK.spore, SHELF_INK.shard, SHELF_INK.spark, SHELF_INK.done]) tints.append(scaled(drawGlyph(rows, t), 2));
-  const list = card.querySelector('.rows');
-  for (const key of byBoard[name]) {
-    const [, badge] = GLYPH_OF[key];
+  // the rows, with the drawing as it stands right now (glyphFor reads GLYPHS, which commit() keeps current)
+  const served = kind === 'glyphs' ? rowsOf(cur) : Object.entries(GLYPH_OF).filter(([, [, b]]) => b === cur).map(([k, [, b]]) => [k, b]);
+  for (const [key, badge] of served) {
     const r = document.createElement('div'); r.className = 'row';
     r.append(scaled(drawGlyph(glyphFor(key)), 2));
     r.insertAdjacentHTML('beforeend', `<span class="k">${key}${badge ? ' +' + badge : ''}</span>`);
     list.append(r);
   }
-  sheet.append(card);
+  code();
 }
-
-const badges = document.getElementById('badges');
-for (const [name, rows] of Object.entries(BADGES)) {
-  const card = document.createElement('div'); card.className = 'card';
-  card.innerHTML = `<div class="name">${name}</div><div class="sizes"></div>`;
-  // the badge alone, padded into an eight-cell frame so it draws at the same scales
-  const frame = Array.from({ length: SHELF_GLYPH_CELLS }, (_, y) => Array.from({ length: SHELF_GLYPH_CELLS }, (_, x) => {
-    const by = y - (SHELF_GLYPH_CELLS - rows.length), bx = x - (SHELF_GLYPH_CELLS - rows[0].length);
-    return by >= 0 && bx >= 0 && rows[by][bx] === '#' ? '#' : '.';
-  }).join(''));
-  const sizes = card.querySelector('.sizes');
-  for (const k of [1, 3, 6]) sizes.append(scaled(drawGlyph(frame), k));
-  badges.append(card);
+const line = (name, rows) => `  ${JSON.stringify(name).replace(/"/g, "'")}: [${rows.map(r => `'${r}'`).join(', ')}],`;
+function code() {
+  const box = document.getElementById('code');
+  const all = [];
+  if (Object.keys(saved.glyphs).length) all.push('// GLYPHS', ...Object.entries(saved.glyphs).map(([n, r]) => line(n, r)));
+  if (Object.keys(saved.badges).length) all.push('// BADGES', ...Object.entries(saved.badges).map(([n, r]) => line(n, r)));
+  box.value = all.join('\n');
 }
+document.getElementById('copyone').addEventListener('click', () => { if (cur) navigator.clipboard.writeText(line(cur, toRows())); });
+document.getElementById('copyall').addEventListener('click', () => navigator.clipboard.writeText(document.getElementById('code').value));
+document.getElementById('forget').addEventListener('click', () => { if (confirm('forget every edit in this browser?')) { localStorage.removeItem(OVERRIDES_KEY); location.reload(); } });
 
-// how many are drawn, for the title
-document.querySelector('h1').textContent = `the glyphs — ${names.filter(n => GLYPHS[n]).length} of ${names.length} drawn`;
+// --- the lists ----------------------------------------------------------------
+function list() {
+  const el = document.getElementById('names'); el.innerHTML = '';
+  for (const n of names()) {
+    const b = document.createElement('button'); b.textContent = n;
+    b.className = (kind === 'glyphs' && cur === n ? 'on ' : '') + (GLYPHS[n] ? '' : 'missing ') + (saved.glyphs[n] ? 'edited' : '');
+    b.addEventListener('click', () => select('glyphs', n)); el.append(b);
+  }
+  const bl = document.getElementById('badgenames'); bl.innerHTML = '';
+  for (const n of Object.keys(BADGES)) {
+    const b = document.createElement('button'); b.textContent = n;
+    b.className = (kind === 'badges' && cur === n ? 'on ' : '') + (saved.badges[n] ? 'edited' : '');
+    b.addEventListener('click', () => select('badges', n)); bl.append(b);
+  }
+}
+document.getElementById('newname').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const n = e.target.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, ''); if (!n) return;
+  e.target.value = '';
+  if (!GLYPHS[n]) { GLYPHS[n] = Array(N).fill('.'.repeat(N)); saved.glyphs[n] = GLYPHS[n]; store(); }
+  select('glyphs', n);
+});
+
+list();
+const first = names().find(n => !GLYPHS[n]) || names()[0];
+select('glyphs', first);
 </script>
 </body>
 </html>

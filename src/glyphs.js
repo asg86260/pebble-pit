@@ -41,6 +41,20 @@ export const BADGES = {
   spark:  ['.#.', '###', '.#.'],
 };
 
+// The glyph editor (glyphs.html) keeps its work in the browser until it is
+// pasted into the tables above; a dev build reads it over them, so a drawing
+// in progress can be judged on the plank. Nothing of this ships, and a saved
+// override for a name that has since been drawn here is dropped by the
+// editor, not by the game.
+export const OVERRIDES_KEY = 'boulder-clicker/glyphs';
+if (import.meta.env && import.meta.env.DEV && typeof localStorage !== 'undefined') {
+  try {
+    const saved = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}');
+    Object.assign(GLYPHS, saved.glyphs || {});
+    Object.assign(BADGES, saved.badges || {});
+  } catch { /* a bad save is no save */ }
+}
+
 // Every row on every shelf: the drawing it borrows and, if any, the badge.
 // This is the whole of docs/glyphs.md as a table, so a row never names a
 // picture in its own file and the inventory and the code cannot drift.

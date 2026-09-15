@@ -108,5 +108,9 @@ export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25',
 // the seating -- would read the cards; they read the cards again. The node
 // yard has no boards to draw and must never see a shelf: its DOM stub has no
 // `style.setProperty`, and a shelf built there takes every check down on
-// load.
-export const SHELF_BOARDS = false;
+// load; `import.meta.env` is vite's and does not exist there, so `DEV` reads
+// false in the yard. On for every dev build again (the owner, 2026-09-14,
+// evening), and for any page that asks with `?shelf` on the address, which
+// shelf.html and glyphs.html put there themselves.
+export const SHELF_BOARDS = !!(import.meta.env && import.meta.env.DEV)
+  || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('shelf'));
