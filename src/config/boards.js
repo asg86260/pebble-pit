@@ -90,6 +90,7 @@ export const SHELF_AIR = 6;         // px of air between a tile's foot and the p
 export const SHELF_SIGN = 6;        // px between a section's sign and the tiles under it
 export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell glyph is 24px
 export const SHELF_GLYPH_CELLS = 8; // cells a glyph is square
+export const SHELF_BADGE_HALO = 1;  // px of white round a badge's ink, cut out of the drawing under it
 export const SHELF_PLANK = 5;       // px, the plank's thickness
 export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .28
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six

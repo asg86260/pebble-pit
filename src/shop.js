@@ -7,7 +7,7 @@
 
 import { S } from './state.js';
 import { SHELF_BOARDS, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW } from './config.js';
-import { drawGlyph, glyphFor } from './glyphs.js';
+import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
 // The shelf's stylesheet rides along only when the boards are shelves, so a
 // release ships none of it.
 // It arrives after the first board has been built and its width pinned, so
@@ -696,7 +696,7 @@ export function refresh(el, list, headcount) {
                  : coins.includes('spore') ? SHELF_INK.spore : null;
       const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
       const drawn = `${tint}/${ink}`;
-      if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(u.key), tint, ink)); }
+      if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(u.key), tint, ink, badgeFor(u.key))); }
     }
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words

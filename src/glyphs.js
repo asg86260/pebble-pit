@@ -7,7 +7,7 @@
 // is a placeholder until the set is drawn as a batch against shelf.html; a
 // row with no glyph of its own gets the crate, so a missing one is visible on
 // the shelf rather than a blank.
-import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK } from './config.js';
+import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO } from './config.js';
 
 // The drawings, by the object's name. A drawing that is not here yet is a
 // row still wearing the crate, and the review sheet (glyphs.html) says so.
@@ -118,16 +118,13 @@ export const GLYPH_OF = {
 // owner draws the "more of it" plus into a glyph's own top-right corner, so a
 // row whose drawing already carries that mark takes no badge (see GLYPH_OF).
 // A drawing not made yet is the crate, so the shelf shows the gap.
-export const glyphFor = key => {
-  const [name, badge] = GLYPH_OF[key] || ['crate'];
-  const rows = (GLYPHS[name] || GLYPHS.crate).map(r => [...r]);
-  if (badge && BADGES[badge]) {
-    const b = BADGES[badge], oy = 0, ox = CELLS - b[0].length;
-    for (let y = 0; y <= b.length; y++) for (let x = ox - 1; x < CELLS; x++) if (y < CELLS && x >= 0) rows[y][x] = '.';
-    b.forEach((br, y) => [...br].forEach((c, x) => { rows[oy + y][ox + x] = c === '#' ? '#' : '.'; }));
-  }
-  return rows.map(r => r.join(''));
-};
+export const glyphFor = key => GLYPHS[(GLYPH_OF[key] || ['crate'])[0]] || GLYPHS.crate;
+// ...and its badge's rows, if it wears one. The badge is laid on in
+// `drawGlyph`, at the pixel rather than the cell: a one-pixel white halo
+// round the badge's own ink is all that is cut out of the drawing, so the
+// drawing keeps its corner (a whole cell cleared round the badge took the
+// corner off the belt, the pot and the sack).
+export const badgeFor = key => { const b = (GLYPH_OF[key] || [])[1]; return b && BADGES[b] || null; };
 // Whether a row's drawing exists yet, for the review sheet.
 export const drawn = key => !!GLYPHS[(GLYPH_OF[key] || ['crate'])[0]];
 
@@ -147,7 +144,7 @@ export const inkSpan = rows => {
 // the shape itself grey. `ink` is the shape's own color: black, or the shelf's
 // short grey on a tile whose bill you cannot yet pay -- the stroke keeps its
 // coin either way, since it is the rung's legend and not a verdict on it.
-export const drawGlyph = (rows, tint = null, ink = '#000') => {
+export const drawGlyph = (rows, tint = null, ink = '#000', badge = null) => {
   const M = 2, W = CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
   const c = document.createElement('canvas');
   c.width = W; c.height = H; c.className = 'glyph';
@@ -157,6 +154,24 @@ export const drawGlyph = (rows, tint = null, ink = '#000') => {
     if (ch !== '#') return;
     for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) solid[(y * CELL + j + M) * W + x * CELL + i + M] = 1;
   }));
+  // The badge, top-right, on the same cell grid: its ink, and a halo of
+  // BADGE_HALO pixels round that ink knocked out of the drawing beneath.
+  if (badge) {
+    const mark = new Uint8Array(W * H), ox = (CELLS - badge[0].length) * CELL + M, oy = M;
+    badge.forEach((r, y) => [...r].forEach((ch, x) => {
+      if (ch !== '#') return;
+      for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) mark[(oy + y * CELL + j) * W + ox + x * CELL + i] = 1;
+    }));
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (mark[y * W + x]) { solid[y * W + x] = 1; continue; }
+      let near = false;
+      for (let dy = -BADGE_HALO; dy <= BADGE_HALO && !near; dy++) for (let dx = -BADGE_HALO; dx <= BADGE_HALO; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && mark[ny * W + nx]) { near = true; break; }
+      }
+      if (near) solid[y * W + x] = 0;
+    }
+  }
   if (tint && tint !== SHELF_INK.done) {
     const out = new Uint8Array(W * H); const q = [0]; out[0] = 1;
     while (q.length) {

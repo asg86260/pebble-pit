@@ -89,7 +89,7 @@
   </div>
 </div>
 <script type="module">
-import { GLYPHS, BADGES, GLYPH_OF, glyphFor, drawGlyph, OVERRIDES_KEY } from './src/glyphs.js';
+import { GLYPHS, BADGES, GLYPH_OF, glyphFor, badgeFor, drawGlyph, OVERRIDES_KEY } from './src/glyphs.js';
 import { SHELF_INK, SHELF_GLYPH_CELLS as N } from './src/config.js';
 import { UPGRADES, gainText } from './src/upgrades.js';
 import { CASINO_UPGRADES } from './src/casino.js';
@@ -224,7 +224,7 @@ function render() {
   const served = kind === 'glyphs' ? rowsOf(cur) : Object.entries(GLYPH_OF).filter(([, [, b]]) => b === cur).map(([k, [, b]]) => [k, b]);
   for (const [key, badge] of served) {
     const r = document.createElement('div'); r.className = 'row';
-    r.append(scaled(drawGlyph(glyphFor(key)), 2));
+    r.append(scaled(drawGlyph(glyphFor(key), null, '#000', badgeFor(key)), 2));
     const row = ROW[key];
     r.insertAdjacentHTML('beforeend', `<span class="k">${row ? `${row.name} <i>(${row.board})</i>` : key}${badge ? ' +' + badge : ''}</span>`);
     list.append(r);
