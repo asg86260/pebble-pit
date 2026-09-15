@@ -55,7 +55,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | door            | `crewlist`                                                                             |
 | hoist frame     | `unlockquarry`                                                                         |
 | furrow + sprout | `unlockfarm`, `farmplot` +plus                                                         |
-| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +plus                   |
+| pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `potprefer` +plus, `bufflength` +up  |
 | die             | `unlockcasino`, `ride`                                                                 |
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
@@ -66,7 +66,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |
 | ear of crop     | `crop` +plus                                                                           |
 | hoe             | `tend` +up                                                                             |
-| vial            | `bufflength`, `brewdoses` +plus                                                        |
+| vial            | `brewdoses` +plus                                                                      |
 | bowl            | `potency-stew` +plus                                                                   |
 | star (5-point)  | `potency-gleam` +plus                                                                  |
 | wand            | `wizspeed` +up                                                                         |
