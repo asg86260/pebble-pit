@@ -40,6 +40,8 @@ function element(tag = 'div') {
     classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
     getContext: () => ctx2d(),
     appendChild: c => { el.children.push(c); return c; },
+    // A shelf tile puts its drawing in with this (`wearGlyph`).
+    replaceChildren: (...c) => { el.children = c; },
     removeChild: noop, addEventListener: noop, removeEventListener: noop,
     setAttribute: noop, getAttribute: () => null,
     getBoundingClientRect: () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 }),
