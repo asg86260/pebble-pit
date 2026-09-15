@@ -287,7 +287,6 @@
    through the lifted position rather than stepping one axis at a time. */
 @keyframes shelf-sway-x { 0% { --sway-x: 0px; } 25% { --sway-x: 1px; } 50% { --sway-x: 0px; } 75% { --sway-x: -1px; } 100% { --sway-x: 0px; } }
 @keyframes shelf-sway-y { 0% { --sway-y: 0px; } 25% { --sway-y: -1px; } 50% { --sway-y: -2px; } 75% { --sway-y: -1px; } 100% { --sway-y: 0px; } }
-}
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
