@@ -778,14 +778,17 @@ export function refresh(el, list, headcount) {
       const rows = glyphFor(u.key);
       wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
-      seen.delete(u.key);                      // the work is done or gone: no hand to fade
       const coins = full.map(([m]) => m);
       const tint = maxed(u) ? SHELF_INK.done
                  : coins.includes('spark') ? SHELF_INK.spark
                  : coins.includes('shard') ? SHELF_INK.shard
                  : coins.includes('spore') ? SHELF_INK.spore : null;
       const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
-      wearGlyph(row, u.key, tint, ink);
+      // The work just landed: the body is off the patch, and its hand on the
+      // tile fades out over the finished drawing rather than vanishing with
+      // the ghost. `seen` has an entry only for a tile that had a hand, so
+      // every other tile pays nothing here.
+      wearGlyph(row, u.key, tint, ink, null, seen.has(u.key) ? handsFor(u.key) : []);
     }
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words

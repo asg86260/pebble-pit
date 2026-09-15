@@ -1809,7 +1809,16 @@ export const TESTS = [
     await settle(2);
     const queued = read('auto');
     const queuedSaid = tile('auto')?.querySelector('.gain')?.textContent || '';
+    // ...and when a rung's work lands, the row stays for its next rung and
+    // the hand fades out over the finished drawing rather than going with
+    // the ghost: still there on the first frame after, gone after the fade.
+    for (let i = 0; i < 40 && !(state().jigging > 0); i++) await settle(0.5);
+    await settle(0.5);
     window.__finish();
+    await settle(0.1);
+    const landed = read('carry');
+    for (let i = 0; i < SHELF_HAND_FADE + 10; i++) await raf();
+    const after = read('carry');
     await settle(1);
     window.__board(null);
     window.__crew(0, 0);
@@ -1821,6 +1830,8 @@ export const TESTS = [
       ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
       ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
       ok(alone.ink === stillAlone.ink && alone.ink > 0, 'and the built cells hold', `${alone.ink} -> ${stillAlone.ink}`),
+      ok(landed.hand > 0 && landed.w > 28, 'when the work lands the hand is still fading on the finished tile', `${landed.hand} pixels, ${landed.w}px`),
+      ok(after.hand === 0 && after.w === 28, 'and is gone once it has faded', `${after.hand} pixels, ${after.w}px`),
     ];
   }],
 
