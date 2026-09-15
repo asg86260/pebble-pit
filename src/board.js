@@ -803,7 +803,12 @@ export function showTip(text, at) {
 // The same words, put where a thing on the *page* is rather than where a thing
 // in the yard is. A row on a board is not at a world position and never will be,
 // and the alternative was a second tooltip that looked the same and was not.
-export function showTipAt(text, sx, sy, centred) {
+// `over` lets the note stand on the board: a shelf tile's note is a tooltip
+// beside the tile it is about, over whatever tiles are next to it -- the tip
+// is layered above the panel -- where standing clear of the whole board put a
+// left-column tile's note on the far side of the sheet from the tile (the
+// owner, 2026-09-15: "over the content, don't worry about the containers").
+export function showTipAt(text, sx, sy, centred, over = false) {
   if (!text) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
@@ -837,7 +842,7 @@ export function showTipAt(text, sx, sy, centred) {
     // alone, so a yard label anywhere in the board's column of the window was
     // flung to the far side of it -- 'THE BENCH' drawn on the rock, 'HOUSE'
     // seven hundred pixels from the house (critics 2026-09-10, C10).
-    if (r && !panelEl.hidden && x < r.x + r.w && x + w > r.x && sy < r.y + r.h && sy + h > r.y) {
+    if (!over && r && !panelEl.hidden && x < r.x + r.w && x + w > r.x && sy < r.y + r.h && sy + h > r.y) {
       const right = r.x + r.w + 8;
       x = right + w <= S.W - GAP ? right
         : r.x - w - 8 >= GAP ? r.x - w - 8       // no room that side: stand on the other

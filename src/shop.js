@@ -547,9 +547,10 @@ function build(el, list, sections, empty, heads) {
       if ((inSubmenu || (shelf && !sect.goal)) && u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();
-          // `showTipAt` stands a note that would land on the sheet off beside
-          // the board, where it is not under the board's layer
-          showTipAt(u.note(), r.right + 8, r.top - 2);
+          // Beside the row: off the board for a card (a note under the
+          // board's layer is a note nobody reads), and over the neighbors
+          // for a shelf tile, which is a tooltip and stands where its tile is.
+          showTipAt(u.note(), r.right + 8, r.top - 2, false, shelf);
         };
         b.addEventListener('pointerenter', say);
         b.addEventListener('pointermove', say);
