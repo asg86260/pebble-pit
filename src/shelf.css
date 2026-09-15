@@ -162,23 +162,25 @@
   grid-row: 4;
   display: inline-grid;
   grid-auto-flow: column;
-  align-items: center;
-  height: 18px;
+  /* Everything in the tag sits on one baseline -- the digits, the marks, the
+     clock, in both cells -- the way a mark sits in a line of type everywhere
+     else on the boards. Nothing is centered on a box and nothing is nudged. */
+  align-items: baseline;
   border: 1px solid #000;
   background: #fff;
   line-height: 16px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.rows.shelves > .tile .tag .cost { display: flex; gap: 6px; padding: 0 6px; }
+.rows.shelves > .tile .tag .cost { display: flex; align-items: baseline; gap: 6px; padding: 0 6px; }
 .rows.shelves > .tile .tag .cost:empty { display: none; }
 .rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
-.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
 /* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
    by its `:has()`; the two cells are pinned to flow order here at a weight
    above it, so the clock never climbs over the bill. */
-.rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: center; justify-self: auto; }
+.rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: baseline; justify-self: auto; }
 .rows.shelves > .tile .tag .short { color: #8c8c8c; }
 /* A bill of three or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. */
@@ -210,7 +212,18 @@
   content: ''; position: absolute; top: 2px; right: 4px;
   border: 4px solid #000; border-left-color: transparent; border-bottom-color: transparent;
 }
-.rows.shelves > button.tile:hover:not(:disabled) .what { text-decoration: underline; text-underline-offset: 2px; }
+/* The hover: a white plate with a hard shadow rises behind the tile and the
+   object lifts a couple of pixels off the plank -- the thing you are about
+   to pick up stands out from the shelf. A tile you cannot press does
+   nothing under the cursor. (The owner's pick, 2026-09-14, over inverting
+   the tile and over inverting the tag alone.) */
+.rows.shelves > button.tile:hover:not(:disabled) {
+  background: #fff;
+  outline: 1px solid #000;
+  outline-offset: -1px;
+  box-shadow: 2px 2px 0 #000;
+}
+.rows.shelves > button.tile:hover:not(:disabled) .pic { transform: translateY(-2px); }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
    picker, standing where the tag would. */
