@@ -379,34 +379,46 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   buyBuilt('ram');
   buyBuilt('jaw');
   buyBuilt('tiller');
-  run(40);                                   // a yard properly at work, and smoking
+  run(6);                                    // a yard properly at work, and smoking
 
-  // Enough samples to be a fact rather than a coincidence: a puff spends under
-  // a second of its three thinning, so a fresh yard with a couple of climbers
-  // at a time can put nothing mid-thin in front of five quick looks. Twenty
-  // looks over ten seconds cannot miss a plume that is really there.
-  let fading = 0, thinning = 0, seen = 0;
-  for (let i = 0; i < 20; i++) {
-    run(0.5);
-    const f = window.__skyFades();
-    fading += f.filter(v => v < 0.95).length;
-    // The near end of the jump is the plume's own fade now (wave6-sky, item 4):
-    // a puff climbs for PLUME_LIFE, thins out where it stands, and only then
-    // does its mote come up at its slot. There is no ghost left behind --
-    // the thing that thins out IS the climbing speck.
-    thinning += yard.smogSky().filter(m => m.up && (m.fade ?? 1) < 0.95).length;
-    seen += f.length;
+  // Empty the band and watch it refill from nothing. A yard running three
+  // engines flat out rides at the sky's cap for long stretches, and a full
+  // sky turns fresh climbers away (`foul` breaks at MOTE_CAP), so a fixed
+  // window of looks at a saturated steady state can honestly find no speck
+  // mid-climb and call a working plume broken -- which is a threshold on a
+  // noisy statistic, not a rule (CLAUDE.md). From an emptied band every puff
+  // the engines raise has to climb, so the property this is about -- a speck
+  // comes UP to weight rather than appearing at it -- is guaranteed to be on
+  // show, and we wait for it rather than hope to catch it.
+  window.__coldSky();
+  const climbing = () => yard.smogSky().filter(m => m.up);
+  const rose = runUntil(() => climbing().length > 0, 30);
+
+  // Follow one climbing speck the way sky-readout does: hold the object and
+  // read its own weight across the frames of its climb. It is born faded --
+  // coming up to weight at the far end of its jump -- and it rises toward full
+  // as it climbs. A speck that popped into the band at weight would be at full
+  // the moment it appeared and never seen part-way. Whether it then settles or
+  // is dropped from a busy band is a different rule, and sky-readout's "a speck
+  // off a swing is the speck in the band" is where that one lives; this is only
+  // the arriving edge.
+  const mote = climbing()[0];
+  let cameUp = false, seen = 0;
+  if (mote && (mote.fade ?? 1) < 0.95) seen++;   // faded the moment it is caught
+  for (let i = 0; i < 300 && mote && mote.up; i++) {
+    run(1 / 30);
+    const f = mote.fade ?? 1;
+    if (f < 0.95) seen++;
+    if (f > 0.5) cameUp = true;              // it did reach toward full weight
   }
 
   window.__air({ haze: 0, muck: 0 });
   return [
-    ok(seen > 0, 'the works put a sky up', `${seen} specks sampled`),
-    // Coming up to weight at the far end of the jump...
-    ok(fading > 0, 'and specks are always arriving, part way up to full weight',
-       `${fading} mid-fade over five samples`),
-    // ...and thinning out at the near end of it, which is what stops the plume
-    // reading as popping.
-    ok(thinning > 0, 'while the plume itself thins out at the top of its climb',
-       `${thinning} thinning`)
+    ok(rose && !!mote, 'the works put a speck up into an emptied band'),
+    // It is seen below full weight while it climbs -- coming up to weight
+    // rather than appearing at it.
+    ok(seen > 0, 'and it is on the way to weight, not born at it',
+       `${seen} frames below full weight`),
+    ok(cameUp, 'and it comes up toward full weight as it climbs')
   ];
 });
