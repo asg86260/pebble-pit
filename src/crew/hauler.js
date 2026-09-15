@@ -20,7 +20,7 @@ import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
-import { duck, stand, hireSpot } from './body.js';
+import { duck, stand, hireSpot, sideOf } from './body.js';
 import { downTheHole, downTheCut, nearestCutDust, load, roomOnBoard,
          roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
@@ -83,16 +83,24 @@ const anyDust = taken => {
 // every strip to nobody. Oldest-first alone was tried on the way here and
 // drains one heap at a time. The bench reads each resource's own rate, not
 // the total (`tools/node/carters.mjs`).
-function firstPick(w, taken) {
+//
+// Not across the footprint while the next rock is on its way: the columns
+// under it are already spoken for (`taken`, step.js), and a target past it is
+// a walk to the edge of the footprint and a stand there until the rock is
+// down (`holdTheLine`) with the dust on this side left lying. The body takes
+// its own side; the far side is the next trip's.
+function firstPick(w, taken, zone) {
   const last = lastCol();
   const others = [];
   for (const o of S.workers) {
     if (o === w || o.type !== TYPE.HAUL) continue;
     others.push(o.claim >= 0 ? o.claim : colOf(floor, o.x));
   }
+  const side = zone ? sideOf(zone, w.x) : 0;
   let best = -1, bestApart = -1, bestAge = Infinity;
   for (let c = 0; c <= last; c++) {
     if (taken.has(c) || !at(floor, c, 0)) continue;
+    if (side && sideOf(zone, floor.x + c * P) !== side) continue;
     let apart = Infinity;
     for (const t of others) apart = Math.min(apart, Math.abs(c - t));
     if (apart < bestApart) continue;
@@ -428,7 +436,7 @@ export function haulerWork(w, c) {
       // Nothing at all is fetched without room for it -- a shard on the ground
       // with a full hole behind it is a shard that stays on the ground.
       if (roomToTake(w)) {
-        const pick = firstPick(w, taken);
+        const pick = firstPick(w, taken, zone);
         if (pick >= 0) claim(w, pick, taken);
       }
     }

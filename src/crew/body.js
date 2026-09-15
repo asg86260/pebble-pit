@@ -47,7 +47,7 @@ export const stand = w => climbTo(w, surfaceUnder(w));
 // the worker was doing waits until it is clear.
 // Which side of a coming rock a spot is on: -1 clear to the left, 1 clear to the
 // right, 0 under it. A body already ducked out is never 0.
-const sideOf = (zone, x) => x + WORKER <= zone.from ? -1 : x >= zone.to ? 1 : 0;
+export const sideOf = (zone, x) => x + WORKER <= zone.from ? -1 : x >= zone.to ? 1 : 0;
 
 // Would getting there mean walking under it? A rock is coming down between here
 // and where this body wants to be, so the answer is to stand still and let it

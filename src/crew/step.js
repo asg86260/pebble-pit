@@ -92,7 +92,7 @@ import { stepDig } from '../intro.js';
 import { stepTender } from './tenders.js';
 import { outOfYard } from './records.js';
 import { dispossessed, stepKit } from './kitwalk.js';
-import { onYard, stand, surfaceUnder, duck } from './body.js';
+import { onYard, stand, surfaceUnder, duck, sideOf } from './body.js';
 import { findPeak } from './rockhand.js';
 import { claims } from './hauler.js';
 import { fall, stepHat } from './falls.js';
@@ -345,16 +345,14 @@ const STAGES = [
   // the gang off the rock. Without it a rockhand's own work stage stands the
   // body on the rock's top -- which is in the sky, and coming down -- and
   // swings at it there. So a body in the footprint steps out of it, the way the
-  // dance stepped it out, and then stands where it stepped to and watches the
-  // rock come down; the gang wait the same way, with nothing to work until it
-  // lands. Everybody else has ground to work on and carries on; the footprint's
-  // columns are already spoken for (see `taken`, below).
-  //
-  // Standing until it lands, rather than being let go the frame it is clear:
-  // an idle hauler ducked to the edge strolled straight back over the line and
-  // was ducked again, a pixel in and a pixel out, for the whole of the fall.
-  // The rock landed with it a pixel inside the footprint. A body that has got
-  // out of the way stays out of the way, which is also what a person does.
+  // dance stepped it out; the gang stand where they stepped to and watch the
+  // rock come down, with nothing to work until it lands. Everybody else is
+  // back at work the frame they are clear: the footprint's columns are
+  // already spoken for (see `taken`, below), and nobody is let back over the
+  // line while it stands (see the end of `updateWorkers`). Holding them at the
+  // edge until it landed was the one thing left of the dance on every rock --
+  // a hauler with a load in its hands and the lip on its own side stood and
+  // watched the sky for the whole of the gap and the fall.
   //
   // Asked of the zone rather than of the fall, because the zone is there from
   // the moment the last rock dies: the next one waits in the sky until the
@@ -369,8 +367,7 @@ const STAGES = [
     if (outOfYard(w) || w.craft || !onYard(w)) return false;
     const coming = S.rockFall > 0;
     if (!c.zone && !(coming && w.type === TYPE.ROCK)) return false;
-    if (c.zone && duck(w, c.zone)) w.ducked = true;
-    else if (w.type !== TYPE.ROCK && !w.ducked) return false;
+    if (!(c.zone && duck(w, c.zone)) && w.type !== TYPE.ROCK) return false;
     w.lunge = 0;
     w.y = stand(w);
     return true;
@@ -403,11 +400,6 @@ const STAGES = [
 export function updateWorkers(now, dt) {
   if (S.rockhands > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
-  // and once nothing is coming, whoever stepped out of its way is let go --
-  // here, for every body, rather than in the stage that set it, so a body
-  // some other stage owned on the frame the rock landed is not left waiting
-  // for the one after
-  if (!zone) for (const w of S.workers) w.ducked = false;
   const taken = claims();
   // And who is going for which patch of muck. Rebuilt each pass rather than kept
   // on the bodies: a shovelling body is not carrying a claim around the way a
@@ -475,12 +467,21 @@ export function updateWorkers(now, dt) {
   // claimed and the duck does not know about claims: out, in, out, in, until
   // the rock lands on it. So the columns under a coming rock are spoken for as
   // far as everybody is concerned, and the dust there is fetched afterwards.
+  //
+  // A claim on the far side of it goes the same way. Made while the last rock
+  // still stood, it is a walk to the line and a stand there until the rock is
+  // down (`holdTheLine`), with the dust on this side left lying; let go, the
+  // body picks again on its own side (`firstPick`). A body still in the
+  // footprint has no side yet and keeps its claim until it has ducked to one.
   if (zone) {
     const from = Math.max(0, colOf(floor, zone.from));
     const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
     for (let col = from; col <= to; col++) taken.add(col);
     for (const w of S.workers) {
-      if (w.type === TYPE.HAUL && w.claim >= from && w.claim <= to) w.claim = -1;
+      if (w.type !== TYPE.HAUL || w.claim < 0) continue;
+      const side = sideOf(zone, w.x);
+      const across = side && sideOf(zone, floor.x + w.claim * P) !== side;
+      if ((w.claim >= from && w.claim <= to) || across) w.claim = -1;
     }
   }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
@@ -510,9 +511,33 @@ export function updateWorkers(now, dt) {
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
     if (!done) jobOf(w).work(w, c);
+    holdTheLine(w, was.get(w), zone);
   }
 
   faceTravel(was);
+}
+
+// Nobody walks into the footprint while it stands. The drop-zone stage ducks a
+// body that is already in it; this is the other half, for the body outside it
+// whose errand leads in -- a claim on the far side, the lip past the rock, a
+// stroll to nowhere in particular. Every walk in the crew moves x for itself
+// and none of them knows what a zone is, so rather than teach each one the
+// line is held once, here, for all of them: a body that began the frame clear
+// of the footprint and ended it inside is put back on the edge, and stands
+// there until the rock is down. It used to be answered by holding every body
+// that had ducked exactly where it stood -- which held the ones with work on
+// their own side too -- or, before that, by letting them walk in and be ducked
+// out again, a pixel in and a pixel out for the whole of the fall.
+//
+// The gang are the drop-zone stage's own business, and a body in your hand
+// or under the ground is not walking anywhere.
+function holdTheLine(w, x0, zone) {
+  if (!zone || x0 == null || w.type === TYPE.ROCK) return;
+  if (outOfYard(w) || w.craft || !onYard(w) || w.lifted || w.falling) return;
+  const inside = x => x + WORKER > zone.from && x < zone.to;
+  if (inside(x0) || !inside(w.x)) return;
+  w.x = x0 + WORKER <= zone.from ? zone.from - WORKER : zone.to;
+  w.y = stand(w);
 }
 
 // Which way everybody is facing, worked out once and from the one thing that can
