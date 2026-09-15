@@ -173,6 +173,10 @@
 .rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
 .rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+/* A mark centers on the line the digits set. On the baseline the clock --
+   an eleven-pixel ring -- stood two and a half pixels above the numerals'
+   middle; centered, every mark's middle is the line's middle. */
+.rows.shelves > .tile .tag .cost > span > i, .rows.shelves > .tile .tag .time > span > i { align-self: center; }
 /* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
    by its `:has()`; the two cells are pinned to flow order here at a weight
    above it, so the clock never climbs over the bill. */
@@ -227,7 +231,14 @@
 .rows.shelves > button.tile:hover:not(:disabled) {
   outline-color: #000;
   box-shadow: 2px 2px 0 #000;
+  /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
+     and a pseudo-class outranks the firewall's revert. */
+  background: none;
+  color: #000;
 }
+.rows.shelves > button.tile:hover:not(:disabled) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled) .cost { opacity: 1; }
+.rows.shelves > button.tile:hover:not(:disabled) .note { color: inherit; }
 .rows.shelves > button.tile:hover:not(:disabled) .pic { transform: translateY(-2px); }
 body.still .rows.shelves > button.tile, body.still .rows.shelves > button.tile .pic { transition: none; }
 
