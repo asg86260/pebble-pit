@@ -11,7 +11,7 @@ Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
 saved, so a body sent to pick it up after a refresh finds nothing there --
 save it as a fact of the yard, the way a loose core is.
 =======
-## The shelf: a board is things on planks (design, not built) (2026-09-14)
+## The shelf: a board is things on planks -- BUILT, dev only (2026-09-14)
 
 "The shelf" at the end of DESIGN.md. Every board becomes shelves: a section
 is a plank, an item is a pixel object with name, gain and one price tag
@@ -19,9 +19,12 @@ under it; the glyph's one-pixel stroke in the next rung's coin replaces the
 pips; descriptions go to the hover tip. Built first as `shelf.html`, a
 bench beside `cards.html`, with a browser check that measures every tile's
 centering. The glyphs -- about thirty, in the sprite alphabet -- are the
-real cost and are drawn as a batch against that bench. Blocker: the design
-wants sign-off, and the glyphs want drawing before it can replace the
-cards.
+real cost and are drawn as a batch against that bench. Wired into every
+board as a mode of the card builder behind `SHELF_BOARDS` (`import.meta.env.DEV`),
+so a dev build is shelves and a release is still cards. Left before the flag
+comes off: the real glyph set (`glyphs.js`), shorten `build the apothecary`,
+`build the janitor's closet` and `build the scrubbing house` to fit a slot,
+drop the gain line on a shelf where no tile has one.
 Placement stays the popover for now (owner, 2026-09-14): a bottom drawer
 with the sections as tabs, one plank tall, was mocked over the live yard
 (`shots/drawer-A2.png`) and is the fallback if the popover proves too big.

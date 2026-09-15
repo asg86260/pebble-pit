@@ -1,57 +1,112 @@
 /* The shelf: a board as planks with things on them (DESIGN.md, "The shelf").
-   Every number is a custom property written on the root from config/boards.js
-   by whoever mounts a shelf, the way board.js writes the pips'. Nothing here
-   depends on the card stylesheet: a tile is its own grid, and its cells are
-   found by class. */
+   Loaded by shop.js only when SHELF_BOARDS is on; `.rows.shelves` is the same
+   rows container the cards use, built by the same builder, with `.tile` on
+   every row.
 
-.shelves {
+   THE FIREWALL. style.css lays out a card with some forty rules on
+   `.rows button`, `.rows .what`, `.rows button .gain` and the rest, and every
+   one of them would reach a tile too. Rather than out-shout them property by
+   property -- which is what four rounds of mocks tried, and what put a glyph
+   5.5px off center for a day -- the structural nodes of a tile are reverted
+   wholesale to the browser's own defaults, and the shelf's rules are the only
+   ones left standing. The coin marks (`i.dust` and friends) are deliberately
+   not in the list: they are drawn by style.css and the shelf wants them
+   exactly as they are. */
+.rows.shelves > .tile,
+.rows.shelves > .tile::before,
+.rows.shelves > .tile::after,
+.rows.shelves > .tile > *,
+.rows.shelves > .tile .name > *,
+.rows.shelves > .tile .tag > *,
+.rows.shelves > .tile .step > *,
+.rows.shelves > .tile .cost > span,
+.rows.shelves > .tile .time > span,
+.rows.shelves > .sect {
+  all: revert;
+}
+
+/* Every number is a custom property, written from config/boards.js. */
+.rows.shelves {
   --shelf-slot: 140px;
   --shelf-step: 5px;
   --shelf-top: 8px;
   --shelf-foot: 8px;
   --shelf-plank: 5px;
-  --shelf-dot: .14;
-  /* The ground: the held sheet's dot tile, one pixel in six, at half its ink.
-     Painted on the shelves as a whole so the planks and the signs sit on it. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
-  padding: 6px 10px 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--shelf-slot));
+  justify-content: start;
+  align-items: stretch;
+  gap: 0;
+  /* Out to the sheet's edge, so the ground runs under the whole board; the
+     gutter is the sheet's own padding, given back here so five slots fit. */
+  padding: 4px var(--sheet-pad-x) 0;
+  margin: 0 calc(-1 * var(--sheet-pad-x));
   font: 12px/1 ui-monospace, "Courier New", monospace;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
   color: #000;
+  /* The ground: the held sheet's dot tile, one pixel in six, at half its ink. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
+/* The sheet is as wide as five slots and its own gutters, and no wider than
+   the window. Derived, not guessed: a slot count and the sheet's own padding
+   and border, so a wider slot or a deeper gutter moves it. `pinWidth` reads
+   this off the sheet once the rows are in. */
+.sheet:has(.rows.shelves) {
+  width: min(calc(5 * var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x) + 2 * var(--sheet-border)), var(--sheet-room, 100vw));
+}
+.sheet:has(.rows.shelves) .page { width: auto; }
 
-/* A section: its sign, then its items standing on the plank. The plank is the
-   items' bottom edge, the full width of the sheet whether the row is full or
-   not -- a shelf is as long as the wall, not as long as what is on it. */
-.shelf { margin-top: 10px; }
-.shelf:first-child { margin-top: 0; }
-.shelf .sign {
-  display: inline-block;
-  margin-bottom: 0;
+/* A section sign, and the plank of the shelf above it. The sign is the
+   heading element itself, a black plate; every section but the first draws
+   the previous shelf's plank across the whole container as its `::before`,
+   and the last shelf's plank is the container's tail -- so a plank is as long
+   as the wall, whatever stands on it. The goal section has no sign: its card
+   is the sign. */
+.rows.shelves { position: relative; container-type: inline-size; }
+.rows.shelves > .sect {
+  position: relative;
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: block;
+  margin: calc(var(--shelf-plank) + var(--shelf-top)) 0 0;
   padding: 3px 10px 4px;
+  border: 0;
   background: #000;
   color: #fff;
+  font-size: 12px;
+  line-height: 1;
   font-weight: bold;
   letter-spacing: .18em;
   text-transform: uppercase;
 }
-.shelf .items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, var(--shelf-slot));
-  justify-content: start;
-  align-items: start;
-  border-bottom: var(--shelf-plank) solid #000;
+.rows.shelves > .sect::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(-1 * (var(--shelf-plank) + var(--shelf-top)));
+  width: 100cqw;
+  border-top: var(--shelf-plank) solid #000;
 }
+.rows.shelves > .sect:first-child, .rows.shelves > .tile.goal + .sect { margin-top: 4px; }
+.rows.shelves > .sect:first-child::before, .rows.shelves > .tile.goal + .sect::before { display: none; }
+.rows.shelves > .sect.goal { display: none; }
+.rows.shelves > .sect .badge { margin-left: 8px; color: #000; background: #fff; }
+.rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank) solid #000; }
 
 /* A tile: four rows at fixed steps, everything centered on the tile's own
-   center line. The rows are sized, not measured, so every tile on a plank has
-   its glyph on one line, its name on one line and its tag on one line. */
-.tile {
+   center line. Sized, not measured, so every tile on a plank has its glyph on
+   one line, its name on one line and its tag on one line. */
+.rows.shelves > .tile {
   position: relative;
   display: grid;
   grid-template-rows: 24px 13px 13px auto;
   row-gap: var(--shelf-step);
   justify-items: center;
   align-items: center;
+  align-content: start;
+  box-sizing: border-box;
   width: var(--shelf-slot);
   padding: var(--shelf-top) 6px var(--shelf-foot);
   margin: 0;
@@ -62,45 +117,49 @@
   text-align: center;
   cursor: pointer;
 }
-.tile:disabled { cursor: default; }
-/* A shelf with no gains on it has no gain line. */
-.shelf.nogain .tile { grid-template-rows: 24px 13px auto; }
-.shelf.nogain .tile .gain { display: none; }
+.rows.shelves > button.tile:disabled { cursor: default; }
+.rows.shelves > .tile.stat { cursor: default; }
 
 /* The picture: a zero-width anchor on the center line; the canvas hangs off
-   it by exactly its ink's half-width (glyphs.js sets the margin). No flex, no
-   centering of the box -- the box has no width to center. */
-.tile .pic { display: block; width: 0; height: 24px; overflow: visible; }
-/* The stylesheet's `canvas` rule is for the yard's window -- fixed, full
-   size -- and a glyph is a canvas too, so every one of those is undone here. */
-.tile .pic .glyph {
+   it by exactly its ink's half-width (glyphs.js sets the margin). */
+.rows.shelves > .tile .pic { grid-row: 1; display: block; width: 0; height: 24px; overflow: visible; }
+/* style.css's `canvas` rule is the yard's window -- fixed, full size -- and a
+   glyph is a canvas too, so every one of those is undone here. */
+.rows.shelves > .tile .pic .glyph {
   position: static; inset: auto; z-index: auto;
   display: block; width: 28px; height: 28px;
   background: none; cursor: inherit; image-rendering: pixelated;
 }
-
-.tile .what {
+.rows.shelves > .tile .name { grid-row: 2; display: block; min-width: 0; max-width: 100%; }
+.rows.shelves > .tile .what {
+  display: block;
+  min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-style: normal;
   font-size: .85em;
   line-height: 13px;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-.tile .gain {
+/* No pips: the glyph's stroke is the rung. */
+.rows.shelves > .tile .ladder { display: none; }
+.rows.shelves > .tile .gain {
+  grid-row: 3;
   white-space: nowrap;
   font-size: .85em;
   line-height: 13px;
   color: rgba(0, 0, 0, .65);
 }
-.tile .gain i { transform: scale(.78); vertical-align: -1px; }
+.rows.shelves > .tile .gain i { transform: scale(.78); vertical-align: -1px; }
 
 /* The tag: one box, the bill and the clock in it, at the board's own type
    size with the marks it was drawn for. An 18px box round a 16px line; the
    clock is a cell of the same box, dimmed by color so its border matches. */
-.tile .tag {
+.rows.shelves > .tile .tag {
+  grid-row: 4;
   display: inline-grid;
   grid-auto-flow: column;
   align-items: center;
@@ -109,41 +168,97 @@
   background: #fff;
   line-height: 16px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
-.tile .tag .cost { display: flex; gap: 6px; padding: 0 6px; }
-.tile .tag .cost:empty { display: none; }
-.tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
-.tile .tag .time:empty { display: none; }
-.tile .tag .cost > span, .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; }
-.tile .tag i { vertical-align: 0; }
-/* A bill of three or more coins wraps inside its tag, two a line; the tag
-   grows a line, the slot does not. */
-.tile.wide .tag { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
-.tile.wide .tag .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; row-gap: 0; padding: 1px 6px 0; }
-.tile.wide .tag .time { padding: 0 6px; }
-.tile .short { color: #8c8c8c; }
-.tile.done .tag { border-style: dashed; color: #8c8c8c; }
-.tile:disabled:not(.done) .tag { border-style: dashed; }
+.rows.shelves > .tile .tag .cost { display: flex; gap: 6px; padding: 0 6px; }
+.rows.shelves > .tile .tag .cost:empty { display: none; }
+.rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
+.rows.shelves > .tile .tag .time:empty { display: none; }
+.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+/* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
+   by its `:has()`; the two cells are pinned to flow order here at a weight
+   above it, so the clock never climbs over the bill. */
+.rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: center; justify-self: auto; }
+.rows.shelves > .tile .tag .short { color: #8c8c8c; }
+/* A bill of three or more coins wraps inside its tag, two a line, and the
+   clock takes a line under them; the tag grows, the slot does not. */
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) { height: auto; grid-auto-flow: row; justify-items: center; padding-bottom: 1px; }
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; }
+.rows.shelves > .tile .tag:has(.cost > span:nth-child(3)) .time { padding: 0 6px; }
+/* Short of a coin, being built, or climbed: the tag says so by its edge. */
+.rows.shelves > button.tile:disabled .tag { border-style: dashed; color: #8c8c8c; }
+.rows.shelves > .tile.waiting .gain { color: #000; }
+
+/* A shelf on which nothing has a gain has no gain line. The builder cannot
+   know that per section, so the row keeps its track and the line is simply
+   empty; the height is the price of tags that stay level. */
+
+/* The description: on a shelf it is the hover tip's, not a line under the
+   tile. The goal card is the exception below. */
+.rows.shelves > .tile .note { display: none; }
+
+/* The pin and the new-corner: the card's marks, kept, in the tile's corners. */
+.rows.shelves > .tile .pinmark {
+  position: absolute; right: 4px; bottom: 2px;
+  width: 9px; height: 9px;
+  opacity: 0;
+  cursor: pointer;
+  background: linear-gradient(#000, #000) 4px 0 / 1px 9px no-repeat, linear-gradient(#000, #000) 1px 0 / 7px 3px no-repeat;
+}
+.rows.shelves > .tile:hover .pinmark, .rows.shelves > .tile.pinned .pinmark { opacity: 1; }
+.rows.shelves > .tile.new::before {
+  content: ''; position: absolute; top: 2px; right: 4px;
+  border: 4px solid #000; border-left-color: transparent; border-bottom-color: transparent;
+}
+.rows.shelves > button.tile:hover:not(:disabled) .what { text-decoration: underline; text-underline-offset: 2px; }
+
+/* A job row or a dial: the same tile with a count between two buttons, or a
+   picker, standing where the tag would. */
+.rows.shelves > .tile .step, .rows.shelves > .tile .chosen {
+  grid-row: 4;
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
+  height: 18px;
+  border: 1px solid #000;
+  background: #fff;
+  line-height: 16px;
+  font: inherit;
+  color: #000;
+}
+.rows.shelves > .tile .step .less, .rows.shelves > .tile .step .more {
+  width: 18px; height: 16px; padding: 0; border: 0; background: #fff; color: #000; font: inherit; cursor: pointer;
+}
+.rows.shelves > .tile .step .less:disabled, .rows.shelves > .tile .step .more:disabled { color: #8c8c8c; cursor: default; }
+.rows.shelves > .tile .step .count { min-width: 2em; text-align: center; }
+.rows.shelves > .tile .chosen { padding: 0 8px; cursor: pointer; }
+.rows.shelves > .tile .chosen::after { content: ' \25BE'; opacity: .55; }
+.rows.shelves > .tile.job .gain, .rows.shelves > .tile.job .tag { display: none; }
 
 /* The goal card: the same cells on their side, across the shelf, with its
    sentence. The one row that is a story, so it keeps its words. */
-.goalshelf .items { grid-template-columns: 1fr; border-bottom: 0; }
-.tile.goal {
+.rows.shelves > .tile.goal {
+  grid-column: 1 / -1;
   grid-template-columns: 40px 1fr auto;
   grid-template-rows: auto auto;
-  width: 100%;
+  width: auto;
   justify-items: start;
   align-items: center;
   column-gap: 10px;
   row-gap: 3px;
+  margin: 2px 0 6px;
   padding: 8px 10px 8px 6px;
   border: 1px solid #000;
   border-bottom: var(--shelf-plank) solid #000;
   background: #fff;
   text-align: left;
 }
-.tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; width: 0; }
-.tile.goal .what { grid-column: 2; grid-row: 1; font-size: 1em; }
-.tile.goal .gain { display: none; }
-.tile.goal .note { grid-column: 2; grid-row: 2; font-size: .85em; line-height: 1.3; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch; }
-.tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }
+.rows.shelves > .tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; }
+.rows.shelves > .tile.goal .name { grid-column: 2; grid-row: 1; }
+.rows.shelves > .tile.goal .what { font-size: 1em; }
+.rows.shelves > .tile.goal .gain { display: none; }
+.rows.shelves > .tile.goal .note {
+  display: block; grid-column: 2; grid-row: 2;
+  font-size: .85em; line-height: 1.3; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch;
+}
+.rows.shelves > .tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }

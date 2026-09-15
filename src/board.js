@@ -367,6 +367,11 @@ function panelGap() {
 function pinWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   if (!sheet) return;
+  // How wide the sheet may be: the window less the purse beside it and the
+  // gaps, written onto the sheet so a stylesheet that sizes it by content --
+  // the shelf, at five slots -- can cap itself without knowing the purse.
+  const purseW = purseEl.offsetWidth;
+  sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
   sheet.style.width = '';
   sheet.style.width = `${sheet.offsetWidth}px`;      // border-box, so this is exact
 }

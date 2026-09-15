@@ -6,7 +6,14 @@
 // three lines.
 
 import { S } from './state.js';
-import { showTipAt } from './board.js';
+import { SHELF_BOARDS, SHELF_INK } from './config.js';
+import { drawGlyph, glyphFor } from './glyphs.js';
+// The shelf's stylesheet rides along only when the boards are shelves, so a
+// release ships none of it.
+// It arrives after the first board has been built and its width pinned, so
+// the sheet is measured again once the shelf's own width applies.
+if (SHELF_BOARDS) import('./shelf.css').then(() => remeasure());
+import { showTipAt, remeasure } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor } from './works.js';
 import { closeSubmenu } from './board.js';
@@ -215,6 +222,10 @@ addEventListener('pointerdown', e => {
 }, true);
 // Escape shuts it too, from input.js's one keyboard handler, ahead of the hold.
 
+// The picture a shelf row stands behind: a zero-width anchor on the tile's
+// center line that the glyph hangs off (see `.tile .pic` in shelf.css).
+const PIC = '<span class="pic"></span>';
+const COIN_ORDER = ['dust', 'spore', 'shard', 'core', 'spark'];
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +
@@ -258,6 +269,11 @@ function build(el, list, sections, empty, heads) {
   // whether these rows are the submenu itself rather than a board -- see the
   // note further down about what a row hover means
   const inSubmenu = el === crewListEl;
+  // The shelf (DESIGN.md, "The shelf"): the same rows, the same builder, a
+  // different picture -- a section is a plank and a row is a thing standing
+  // on it. The crew submenu is a list, not a shop, and keeps the cards.
+  const shelf = SHELF_BOARDS && !inSubmenu;
+  el.classList.toggle('shelves', shelf);
   // A board whose one heading repeats the name at the top of it says the same
   // thing twice with a rule between: a title reading "the tower" and, directly
   // under it, a heading reading "the tower", over a single row. Where there are
@@ -343,9 +359,10 @@ function build(el, list, sections, empty, heads) {
         // buttons, which is what stepping is actually good at.
         if (u.options) {
           row.classList.add('pickrow');
-          row.innerHTML = '<span class="name"><i class="what"></i></span>' +
+          row.innerHTML = (shelf ? PIC : '') + '<span class="name"><i class="what"></i></span>' +
                           '<button type="button" class="chosen"></button>' +
                           (u.note ? '<span class="note"></span>' : '');
+          if (shelf) row.classList.add('tile');
           row.querySelector('.what').textContent = u.name;
           const chosen = row.querySelector('.chosen');
           // Out on the body, clear of the board's transform (see `showOpts`).
@@ -384,7 +401,8 @@ function build(el, list, sections, empty, heads) {
           continue;
         }
 
-        row.innerHTML = STEPPER + (u.note ? '<span class="note"></span>' : '');
+        row.innerHTML = (shelf ? PIC : '') + STEPPER + (u.note ? '<span class="note"></span>' : '');
+        if (shelf) row.classList.add('tile');
         row.querySelector('.what').textContent = u.name;
         row.querySelector('.less').addEventListener('click', () => u.less());
         row.querySelector('.more').addEventListener('click', () => u.more());
@@ -396,9 +414,9 @@ function build(el, list, sections, empty, heads) {
       // between two buttons instead of one button with a price on it.
       if (u.job) {
         const row = document.createElement('div');
-        row.className = 'job';
+        row.className = shelf ? 'job tile' : 'job';
         row.dataset.job = u.key;
-        row.innerHTML = STEPPER;
+        row.innerHTML = (shelf ? PIC : '') + STEPPER;
         row.querySelector('.what').textContent = u.name;
         row.querySelector('.less').addEventListener('click', () => u.less());
         row.querySelector('.more').addEventListener('click', () => u.more());
@@ -420,9 +438,18 @@ function build(el, list, sections, empty, heads) {
       // clock, the coins. The clock is a cell of its own rather than the last
       // coin of the bill, so the bill is coins only and the right-hand column
       // is the two facts about time -- see the card in style.css.
-      b.innerHTML = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
-                    '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
-                    (u.note && !inSubmenu ? '<span class="note"></span>' : '');
+      // On a shelf the same cells stand in a column under a picture, and the
+      // clock is a cell of the price's own box (`.tag`) rather than a corner
+      // of the card. `refresh` finds every cell by class, so either shape
+      // reads the same.
+      b.innerHTML = shelf
+        ? PIC + '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
+          '<span class="gain"></span><span class="tag"><span class="cost"></span><span class="time"></span></span>' +
+          (u.note ? '<span class="note"></span>' : '')
+        : '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
+          '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
+          (u.note && !inSubmenu ? '<span class="note"></span>' : '');
+      if (shelf) b.classList.add('tile');
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
@@ -620,10 +647,27 @@ export function refresh(el, list, headcount) {
     const said = ([money, n]) =>
       `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
     const full = billOf(u);
-    const bill = full.filter(([m]) => m !== 'time').map(said).join('');
+    // The coins in the order the yard hands them out, whatever order the row
+    // wrote its bill in, so the same coin is in the same place on every row.
+    const bill = full.filter(([m]) => m !== 'time')
+      .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0])).map(said).join('');
     const clock = full.filter(([m]) => m === 'time').map(said).join('');
-    const [name, gain, time, price] = row.children;
-    const what = name.firstElementChild, ladder = name.lastElementChild;
+    // By class, never by position: a shelf tile has a picture in front and
+    // its clock inside the price's box, and a card has neither.
+    const gain = row.querySelector('.gain'), time = row.querySelector('.time'), price = row.querySelector('.cost');
+    const what = row.querySelector('.what'), ladder = row.querySelector('.ladder');
+    // The picture, on a shelf, wears the deepest coin of the next rung's bill
+    // as a stroke and goes grey once the ladder is climbed: it is the rung
+    // marker (DESIGN.md, "The shelf"). Redrawn only when that changes.
+    const pic = row.querySelector('.pic');
+    if (pic) {
+      const coins = full.map(([m]) => m);
+      const tint = maxed(u) ? SHELF_INK.done
+                 : coins.includes('spark') ? SHELF_INK.spark
+                 : coins.includes('shard') ? SHELF_INK.shard
+                 : coins.includes('spore') ? SHELF_INK.spore : null;
+      if (pic.dataset.tint !== String(tint)) { pic.dataset.tint = String(tint); pic.replaceChildren(drawGlyph(glyphFor(u.key), tint)); }
+    }
     // Nothing counts the coins any more. The bill wraps inside the card's own
     // price cell when it runs out of room, which is a measurement of the words
     // actually in it rather than a guess about how many there will be -- see the
@@ -743,7 +787,9 @@ export function refresh(el, list, headcount) {
       grey(row, true);
       continue;
     }
-    sayHTML(gain, gainText(u));
+    // On a shelf the gain is the number alone -- the name is the verb.
+    const g = gainText(u);
+    sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's two decisions are the only ones: neither costs anything, and
     // the number either of them is about is the one on the table.
@@ -868,9 +914,11 @@ export function buildShop() {
 // count -- and gets back the real markup under the real stylesheet. It is to
 // the boards what preview.html is to the effects: the shot that used to cost a
 // yard, a crew and a walk to the bench costs a page load.
-export function mountRows(el, rows, title = 'the bench') {
+// `sections` is for the shelf bench (shelf.html), which hands the bench's own
+// rows and its own sections through so the planks are the real planks.
+export function mountRows(el, rows, title = 'the bench', sections = null) {
   const list = rows.map(u => ({ show: () => true, ...u }));
-  build(el, list, [{ title, keys: list.map(u => u.key) }], '', null);
+  build(el, list, sections || [{ title, keys: list.map(u => u.key) }], '', null);
   refresh(el, list, null);
 }
 

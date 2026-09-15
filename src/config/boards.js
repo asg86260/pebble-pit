@@ -93,3 +93,8 @@ export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
 // climbed ladder is grey. The three colors are the marks' own.
 export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', done: '#8c8c8c' };
+// Whether the boards are drawn as shelves at all. A dev build only, until the
+// glyphs are drawn and the design is marked built: a release keeps the cards.
+// `import.meta.env` is vite's and does not exist in the node yard, which has no
+// boards to draw anyway.
+export const SHELF_BOARDS = !!(import.meta.env && import.meta.env.DEV);

@@ -9505,7 +9505,7 @@ rung the grounds had.
   rung worth more and costing more than the last, and each count reading the
   top of its own list at the top.
 
-## The shelf: a board is things on planks, not cards (design, not built)
+## The shelf: a board is things on planks, not cards (built, dev only)
 
 Settled on shots, 2026-09-14, against the bench with every row forced on
 (`shots/board-shelf*.png`; the mocks were CSS laid over the card builder and
@@ -9608,3 +9608,20 @@ center, and fails past half a pixel -- the 5.5px the mock carried for four
 rounds is exactly the class of defect no eye reliably catches and a Range
 measures in one line. A second check says every tag on a shelf shares one
 top edge.
+
+**As built (2026-09-14, behind `SHELF_BOARDS`, a dev build only).** Not a
+second renderer after all: the shelf is a mode of the card builder itself
+(`build`/`refresh` in shop.js), so dials, job steppers, the crew door, the
+pin, the new-corner and the queue's "building"/"queued" states all came for
+free. `refresh` finds every cell by class now, never by position -- the
+positional read is what broke every mock the moment a picture was added.
+The card stylesheet's forty-odd rules are kept off a tile by one `all:
+revert` on its structural nodes (shelf.css, "the firewall") rather than
+fought property by property; the coin marks are deliberately outside it.
+The sheet's width is derived -- five slots plus its own gutters -- and
+capped by `--sheet-room`, which `pinWidth` writes from the window less the
+purse, so an 800px window drops to four slots by itself. The bill's coins
+are sorted into the yard's order on every board, cards included. Still
+open: the glyphs are placeholders; three build names overflow a slot and
+clip; the gain line is kept on every shelf (the builder does not drop it
+per section yet); `cards.html` draws shelves too while the flag is on.
