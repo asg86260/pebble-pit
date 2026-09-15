@@ -13,9 +13,9 @@ are a ledger and want none. Sixty-one rows.
 ## The rule: borrow the object, badge the how
 
 A row borrows the glyph of the thing it is *about*, and a **badge** -- a
-three-by-three mark in the bottom-right corner -- says what is being done
-to it. So "tune the ram" is the ram with a wrench, "another pot" is the pot
-with a plus, "strong brew" is the sack (carry) with a vial, "enrich the
+five-by-five mark in the top-right corner -- says what is being done
+to it. So "tune the ram" and "another pot" are the ram and the pot with a
+plus (more of it, either way), "strong brew" is the sack (carry) with a vial, "enrich the
 quarry" is the ore lump with a star. One drawing serves a family, the
 family reads as one, and a player who knows the sack knows every row that
 is about carrying. (The owner's call, 2026-09-14: reuse as far as it goes.)
