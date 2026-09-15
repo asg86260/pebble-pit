@@ -1,6 +1,5 @@
 # Still to do
 
-<<<<<<< HEAD
 ## The reliability freeze -- BUILT (2026-09-14)
 
 "The reliability freeze" in DESIGN.md, with an as-built note. The reload
@@ -10,7 +9,6 @@ hold: a full run green twice running on main, and then the freeze lifts.
 Open from it: a knocked-off hat lying on the ground (`hatOff`) is not
 saved, so a body sent to pick it up after a refresh finds nothing there --
 save it as a fact of the yard, the way a loose core is.
-=======
 ## The shelf: a board is things on planks -- BUILT, dev only, behind `?shelf` (2026-09-14)
 
 "The shelf" at the end of DESIGN.md. Every board becomes shelves: a section
@@ -28,7 +26,6 @@ drop the gain line on a shelf where no tile has one.
 Placement stays the popover for now (owner, 2026-09-14): a bottom drawer
 with the sections as tabs, one plank tall, was mocked over the live yard
 (`shots/drawer-A2.png`) and is the fallback if the popover proves too big.
->>>>>>> main
 
 ## Eight rungs, two a coin -- BUILT (2026-09-14)
 
