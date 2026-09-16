@@ -772,17 +772,19 @@ the middle and a hoist's height can each move a strike without a recipe of
 their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
 recipe is the rock's hit cut short. Nobody has listened to it yet.
 
-## The stake is a heap you carry (design, not built; 2026-09-16)
+## The stake is a heap you carry, and the casino has no board (design, not built; 2026-09-16)
 
 **The chip row is a menu, and nothing else in this yard is bought from a
 menu.** You pick ◾ 10, 100, 1,000 or *all in* from a dial, pick a coin from
-another, press a third row, and sand falls out of the sky. Every other thing
-you do here you do *to the yard* -- swing at the rock, sweep the dust, throw a
-pebble in the pit, pick a body up and put it down -- and the one place that
-is supposed to feel like putting your money on the table is the one place
-you do it through a board. The owner's ask: **premade piles of the coins
-stand beside the casino, and you drag a pile into the hopper to raise the
-stake.**
+another, press a third row, and sand falls out of the sky; then two more rows
+decide the pot. Every other thing you do here you do *to the yard* -- swing at
+the rock, sweep the dust, throw a pebble in the pit, pick a body up and put
+it down -- and the one place that is supposed to feel like putting your money
+on the table is the one place you do it through a board. The owner's ask,
+whole: **premade piles of the coins stand beside the casino and you drag one
+into the hopper to raise the stake; every decision is a control on the
+building, no menu at all; and banking pushes the dust out of the bottom of
+the building into a pile the crew carries away.**
 
 **The piles.** To the right of the casino, on the ground, a row of heaps: for
 each coin the yard has handed out (dust always; shards and spores once the
@@ -808,21 +810,61 @@ rains in today, and the counter moves as each lands -- **nothing teleports;
 the stake still walks**. In the hopper it stands at the handful's scale (the
 bowl holds `min(stake, CASINO_HANDFUL)` grains, since everything in the bowl
 goes down the board). Let it go anywhere else and it goes back where it came
-from, the same arc back to its spot. The chip rows go: `chip`, `stakedust`,
-`stakeshard`, `stakespore` come off the board; `letgo`, `bank` and `ride`
-stay, and `letgo` carries the pot as now.
+from, the same arc back to its spot.
 
 **Raising the stake.** A second heap dropped in adds to the pot standing in
 the hopper -- that is the whole point of the ask -- so the stake is however
-many heaps you carried over before you let it go. One coin a hand, as now: the
-first heap sets the hand's coin, and a heap of another coin let go over the
-hopper is refused -- it bounces off the rim and arcs back to its spot, with
-the dud knock -- until the hand is banked. **Taking it back:** a pot standing
-in the hopper, before the let-go, can be lifted out again -- the same lift on
-the hopper's heap picks up the whole pot as a carried heap, and dropping it
-anywhere on the ground returns it to the purse (it arcs to the hole the way
-banking does; the counter moves as it lands). So a wrong drop is undone by
-the same gesture, and no row says *take it back*.
+many heaps you carried over before you pull the lever. One coin a hand, as
+now: the first heap sets the hand's coin, and a heap of another coin let go
+over the hopper is refused -- it bounces off the rim and arcs back to its
+spot, with the dud knock -- until the hand is over. **Taking it back:** a pot
+standing in the hopper, before the lever, can be lifted out again -- the same
+lift on the hopper's heap picks up the whole pot as a carried heap, and
+dropping it anywhere on the ground returns it to the purse (it arcs to the
+hole the way banking used to; the counter moves as it lands). So a wrong drop
+is undone by the same gesture, and no row says *take it back*.
+
+**No board.** The casino's board goes entirely -- `chip`, the three stake
+rows, `letgo`, `bank` and `ride` -- and the station keeps no shelf behind the
+building (the *build the casino* row stays on the bench, where it is sold).
+Three controls stand on the building itself, drawn in the yard's own lever
+idiom (a stem with a knob, black on the block, that swings when pulled), each
+placed where the thing it does happens, so a control says what it is by
+where it stands:
+
+| control | where | what it does |
+|---|---|---|
+| **the gate lever** | on the wall beside the funnel's throat | opens the floor: the handful goes down the pegs |
+| **the bank chute** | a hatch in the building's foot, under the tray, on the left wall | tips the tray out on to the ground beside the building |
+| **the hoist crank** | on the right wall beside the tray | winds the tray's sand back up into the hopper |
+
+A click or a tap pulls one. A lever stands up (black) when it can be pulled
+and lies flat (grey) when it cannot, for the same reasons the rows were dead:
+nothing while anything pours, falls, pays or hoists; the gate only with a
+pot in the hopper; the chute and the crank only with a pot in the tray. Hover
+on a desk names the lever in the tooltip the way a body or a pile mark is
+named. On a phone a lever is a tap target of `LEVER_HIT` cells (thumb-sized,
+`coarse()` only), placed clear of the heaps and the hopper's rim so a lift
+and a pull cannot be confused.
+
+**Banking is a heap on the ground, and the crew carries it in.** The chute
+opens the tray's floor and the paid sand runs out of the foot of the building
+on to the ground at its left side, where it heaps up as a real pile -- the
+casino gets a strip in `S.piles` (`pile: 'casino'`, side left, like the
+scrubbing house's), with the pile-full mark and the tooltip every strip has,
+a limit in `PILE_LIMIT`, and the haulers' `want` reading it like any other
+heap. What is in the pile is the pot: grains of the staked coin, each worth
+its band (`grainWorth`, as the tray's are), and the counter moves as each
+load lands in the hole, carried there by a body across the yard. **So a win
+is collected, not credited**: you watch the crew shift it, and a big pot is a
+pile the yard has to deal with -- a full strip stops the chute the way a full
+heap stops a station, and the pot waits in the tray until there is room. That
+is the same rule as before ("a pot has to have somewhere to land") with the
+waiting made visible. A pile the haulers cannot reach yet (no haulers hired)
+simply stands there; nothing is lost and the mark says why.
+
+**The box over the building** stays: it is the one word the building says
+about a hand, and it is not a menu.
 
 **The piles refill from the purse.** They are pictures of what you can afford,
 not a stock: the moment a heap is lifted, its spot is bare, and the moment the
@@ -844,8 +886,11 @@ under a finger is a carried heap; a tap on one (no movement) does nothing.
 - **One coin a hand, still.** A mixed pot would need a mixed tray and a
   mixed pay; the refusal at the rim is one rule and it is visible.
 - **The lift gesture is the body's.** One way to pick things up in this yard.
-- **The chip rows go.** A board that also sold chips would be two ways to do
-  one thing.
+- **Levers on the building, one per decision, no board at all.** Two levers
+  and a crank, each where its effect is; nothing about a hand is on a shelf.
+- **Banking goes through the haulers.** It is slower than a counter ticking
+  and that is the point: it was the one thing in the yard still credited
+  rather than carried.
 
 ### What is checked
 
@@ -853,12 +898,17 @@ under a finger is a carried heap; a tap on one (no movement) does nothing.
 stand again after a pour; a heap lifted and dropped on the hopper pours the
 pot in to the grain and the purse down by the same; two heaps make one pot
 of their sum; a heap of another coin is refused and returns; the hopper's
-pot lifted out returns the purse; the board has no chip rows and `letgo`
-still plays the hand. Browser tier (`selftest/casino.js`): a synthetic
-right-drag on a desk and a finger-drag on a phone each carry a heap to the
-hopper and stake it; a finger on a heap never scrolls the yard. Scenes:
-`casinostakes` (the row of heaps beside the building), `casinocarry` (a heap
-under the pointer over the rim).
+pot lifted out returns the purse; the board has no rows; the gate lever
+(`__clickLever('casino-gate')`) plays the hand; the chute tips the tray on
+to the casino's strip to the grain and the haulers carry it to the hole with
+the counter moving as loads land; a full strip holds the chute; the crank
+hoists. The casino's strip gets its pile-full mark wherever the marks are
+checked. Browser tier (`selftest/casino.js`): a synthetic right-drag on a
+desk and a finger-drag on a phone each carry a heap to the hopper and stake
+it; a finger on a heap never scrolls the yard; a tap on each lever pulls it
+and the tooltip names it. Scenes: `casinostakes` (the row of heaps beside
+the building), `casinocarry` (a heap under the pointer over the rim),
+`casinobank` (the chute open, the pile forming, a hauler on its way).
 
 ## Crew
 
