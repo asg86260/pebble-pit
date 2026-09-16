@@ -19,6 +19,7 @@ import { beatRunning } from './beats.js';
 import { shakeView, rockEdge } from './world.js';
 import { sfx } from './audio.js';
 import { shockAt } from './shock.js';
+import { open, shieldBefore } from './stations.js';
 
 // What each shield is made of, what it costs, and how it answers a rock. A
 // new one is an entry here and a case in the drawing. The answers escalate:
@@ -38,14 +39,10 @@ export const KINDS = {
 export const shieldUp = () => !!S.shield && S.shield.laid >= KINDS[S.shield.kind].pieces;
 export const shieldDone = kind => S.shieldsDone.includes(kind);
 // Whether the door a shield stands before is open: the shields are not
-// doors, so it is whether the place before it stands. Every station and kit
-// gate reads this rather than `shieldDone`, so the pacing is one knob. BEFORE
-// keeps the chain (props -> farm -> net -> quarry -> arch -> tower); answering
-// yes to everything put the farm, the quarry and the tower on the bench
-// together off a single core.
-const BEFORE = { props: () => true, net: () => S.farmOpen,
-                 arch: () => S.quarryOpen, dome: () => S.towerOpen };
-export const shieldOpened = kind => (BEFORE[kind] || (() => true))();
+// doors, so it is whether the place before it stands (`shieldBefore`, off the
+// table in stations.js; the props stand before nothing). The kit gates read
+// this rather than `shieldDone`, so the pacing is one knob.
+export const shieldOpened = kind => { const k = shieldBefore(kind); return !k || open(k); };
 
 // The top of whatever is standing: the thing the rock reaches first.
 export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;

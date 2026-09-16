@@ -1,7 +1,7 @@
-import { UNLOCK_SHOW } from '../config.js';
 import { S } from '../state.js';
 import { lookAt } from '../world.js';
 import { assign, rebalance } from '../staffing.js';
+import { station, open, offered } from '../stations.js';
 
 // The shape every "open a place" row on the bench is cut from. It lives here
 // rather than in upgrades.js because the rows files build a site the moment
@@ -9,9 +9,12 @@ import { assign, rebalance } from '../staffing.js';
 // its dead zone.
 //
 // A place costs a core *and* dust: the core says this is a place rather than
-// a rung, and the dust keeps the rock worth digging after it.
-export const site = ({ key, name, note, blurb, cores, dust, more, open, at, once, show, job, then }) => ({
-  key, name,
+// a rung, and the dust keeps the rock worth digging after it. `key` is the
+// station's row in stations.js; the gate is that row's `after` and `needs`,
+// read through `offered`, and the row here says only what it costs and what
+// buying does.
+export const site = ({ key, name, note, blurb, cores, dust, more, at, job, then }) => ({
+  key: 'unlock' + key, name,
   // What the place is for, where a ladder row prints its gain: one line of a
   // slot, since the line does not wrap. The note is the longer say, on the tip.
   blurb,
@@ -23,11 +26,14 @@ export const site = ({ key, name, note, blurb, cores, dust, more, open, at, once
   bill: () => [['core', cores], ['dust', dust], ...(more || [])],
   // `job` is the trade worked there; the door opens with one spare body sent
   // over (`staffDoor`). `then` is anything else the door does on opening.
-  buy: () => { S[open] = true; lookAt(at()); if (job) staffDoor(job); if (then) then(); },
-  // `once` is the door's reveal (`revealed` in shop.js); a condition that can
-  // stop being true belongs there, so the door does not come off the board.
-  once,
-  show
+  buy: () => { S[key + 'Open'] = true; lookAt(at()); if (job) staffDoor(job); if (then) then(); },
+  // A sticky door reveals through `once` (`revealed` in shop.js holds it), so
+  // a fact that can stop being true does not take the door off the board;
+  // `show` then only retires it. Any other door is offered while its gate
+  // holds. Getters, because a row is built the moment its file loads and the
+  // table it reads is not there yet.
+  get once() { return station(key).sticky ? () => offered(key) : undefined; },
+  get show() { return station(key).sticky ? () => !open(key) : () => offered(key); }
 });
 
 // A place opens with one spare body sent over through the same `assign` the
@@ -40,12 +46,3 @@ export function staffDoor(job) {
   assign(job, 1);
 }
 
-// A door is shown once you are within reach of affording it: a price you have
-// no idea is coming is a price you cannot save for.
-export const nearly = n => S.stored >= n * UNLOCK_SHOW;
-export const seenACore = () => S.seenCore;
-
-// The yard has been invested in. Written once, because what the rows waiting
-// on it want is the player having committed to the place, not any one
-// building being up.
-export const invested = () => S.quarryOpen && S.boulderNo >= 2;

@@ -1,7 +1,7 @@
 import { TOWER_CORES, TOWER_DUST } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
-import { shieldOpened } from '../shield.js';
+import { offered } from '../stations.js';
 
 // The bench's tower rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -20,9 +20,6 @@ export const TOWER_ROWS = [
       S.towerOpen = true;
       lookAt(tower.x + tower.w / 2);
     },
-    // What the arch's failure opens (DESIGN.md, "The shields are the spine").
-    // The gate names the shield rather than the places before it because the
-    // shield is the reason; `shieldOpened` keeps the places in order.
-    show: () => !S.towerOpen && S.seenCore && shieldOpened('arch')
+    show: () => offered('tower')
   }
 ];

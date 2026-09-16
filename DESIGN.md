@@ -11110,7 +11110,7 @@ centered", which never asked what was under it. It asks now, through the
 stations' own rectangles and the two corner squares, so a new station is
 dodged without being named.
 
-## Beats and gates: one table each (the beats built 2026-09-15; the gates design, not built)
+## Beats and gates: one table each (built: the beats 2026-09-15, the gates 2026-09-16)
 
 Seam 8 of "The second pass", and the shape seam 4 takes. Two things that
 look alike from the outside -- "the story happens in order" and "the doors
@@ -11264,7 +11264,7 @@ made, none of which the design wrote down:
   `skipIntro(true)` (the played variant, which marks `seenDrag`) rather than
   the row's skip, which is the player's.
 
-### The gates table
+### The gates table (built)
 
 The table above, written down once: `GATES` in `src/gates.js`, a row a
 door.
@@ -11302,6 +11302,48 @@ they are. New, `test/gates.test.mjs`: the table is acyclic; every
 `unlock*` row's `show` is `offered` of its own key and nothing else (a row
 with a private predicate is the old shape); for every door, a yard with
 its `after` doors shut is not offered it whatever `needs` says.
+
+### As built (2026-09-16): the gates table
+
+Seam 4 and this landed as one table, `STATIONS` in `src/stations.js`: a
+row a station, `{ key, open, stand, board, reach, after, needs, sticky }`,
+in the order the pointer asks them, with the four shields as rows with no
+`stand`. The readers are `station`, `open`, `offered`, `standRect`,
+`nearStation`, `stationAt` and `shieldBefore`; `BOARDS` is the keys with a
+board, and board.js re-exports it as its `STATIONS`. What the build
+decided that the design did not say:
+
+- **The table's `after` is what the rows did, not what the door table
+  above says.** With the shields not doors (`SHIELD_GATES` off, 2026-09-14,
+  and the flag since swept), `shieldOpened('props')` was always true,
+  `shieldOpened('net')` was the farm and `shieldOpened('arch')` the quarry.
+  So the farm is after nothing, the quarry after the farm, and the tower
+  after the quarry; the shields' `after` names the shield before it and the
+  door it stands before (the net: props and farm). The table above is the
+  spine as designed; the rows are the game as played, and the rows won. To
+  put the spine back is to edit three `after` lists.
+- **`shieldBefore(kind)`** is derived, not a column: the one door in a
+  shield's `after`. The props stand before nothing and answer null, which
+  `shieldOpened` reads as open.
+- **`board`** on a row is the `S` flag that says its board is up
+  (`quarryBoardOpen`); `settle` in board.js writes the flags in a loop and
+  the phone's tap reads the row. **`reach`** is the per-station pad the
+  `near*` functions carried (the quarry's ramp side one cell, the house's
+  bench side two and nothing above the roof).
+- **The opening is not a door.** The props' "after the opening" is
+  `beatDone('show')` in `needs`.
+- **The house, the books and the bench** have rows with `needs: () =>
+  false` (the first two) and `canAfford()` (the bench, which raise.js's
+  call asks): nobody sells them, so `offered` is never asked of them.
+- **`site()` reads the table lazily** (`once`/`show` are getters): a rows
+  file builds its door the moment it loads, before stations.js has been
+  reached in the ring.
+- **The pointer's order is one order.** The phone's tap ladder had its own
+  (the bench before the casino, the house before the closet); it now reads
+  `stationAt` like the hover does.
+- The `which === '...'` branches left in board.js are the 22 that pick a
+  board's own row list and refresh call (`listFor`, `fill`); the twelve
+  `near*` exports are three thin reads kept for the checks that name them.
 
 ### Decisions for the owner
 

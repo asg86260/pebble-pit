@@ -7,7 +7,8 @@ import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
          DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
-import { raiseShield, shieldDone } from './shield.js';
+import { raiseShield } from './shield.js';
+import { offered } from './stations.js';
 
 import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
@@ -151,9 +152,8 @@ export const TOWER_UPGRADES = [
     cost: () => DOME_BILL.find(([m]) => m === 'dust')[1],
     buy: () => raiseShield('dome'),
     // Gone once bought, and gone for good once the dome has done its work and
-    // faded (`stepShield` in shield.js).
-    show: () => !S.shield && shieldDone('arch') && !shieldDone('dome') && S.towerOpen &&
-                (S.wizards > 0 || S.wizardHats > 0)
+    // faded (`stepShield` in shield.js): its row in stations.js.
+    show: () => offered('dome')
   }
 ];
 

@@ -444,7 +444,7 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
   return true;
 };
 
-// The investment beat three boards wait on (`invested` in upgrades/site.js).
+// The investment beat three boards wait on (the casino's row in stations.js).
 // The boulder is set directly rather than through `jump`, which would make a
 // new rock under a check that may be standing on one.
 export const invest = () => {

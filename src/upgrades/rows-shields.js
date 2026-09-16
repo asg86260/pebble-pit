@@ -1,9 +1,9 @@
-import { PROP_COST, PROP_FROM, NET_COST, ARCH_COST,
+import { PROP_COST, NET_COST, ARCH_COST,
          PROP_WORK, NET_WORK, ARCH_WORK } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
-import { beatDone } from '../beats.js';
+import { offered } from '../stations.js';
 
 // The shields: what the yard puts between itself and the sky. Data only;
 // upgrades.js strings the files together into UPGRADES.
@@ -11,10 +11,10 @@ import { beatDone } from '../beats.js';
 // Every one is a `building` on the yard, so it goes through works.js and
 // `buy` runs when the labor is in. `box` is the footprint, worked out the way
 // `raiseShield` works it out, so the tape goes up around exactly that ground.
-// Each is offered only once its predecessor has failed, and priced in the
-// coin of the station before it (DESIGN.md, "The shields are the spine"). The
-// dome is the tower's and lives on its board; nobody builds it, the tower
-// pours it.
+// Each is offered only once its predecessor has failed (its row in
+// stations.js), and priced in the coin of the station before it (DESIGN.md,
+// "The shields are the spine"). The dome is the tower's and lives on its
+// board; nobody builds it, the tower pours it.
 export const SHIELD_ROWS = [
   {
     key: 'props',
@@ -24,7 +24,7 @@ export const SHIELD_ROWS = [
     note: () => 'quickly try to build a barrier to save your sqwife',
     cost: () => PROP_COST,
     buy: () => raiseShield('props'),
-    show: () => !S.shield && !shieldDone('props') && beatDone('show') && S.boulderNo >= PROP_FROM
+    show: () => offered('props')
   },
   {
     key: 'net',
@@ -35,7 +35,7 @@ export const SHIELD_ROWS = [
     cost: () => NET_COST,
     currency: 'spore',
     buy: () => raiseShield('net'),
-    show: () => !S.shield && shieldDone('props') && !shieldDone('net') && S.farmOpen
+    show: () => offered('net')
   },
   {
     key: 'arch',
@@ -46,7 +46,7 @@ export const SHIELD_ROWS = [
     cost: () => ARCH_COST,
     currency: 'shard',
     buy: () => raiseShield('arch'),
-    show: () => !S.shield && shieldDone('net') && !shieldDone('arch') && S.quarryOpen
+    show: () => offered('arch')
   },
   // After the stone has failed the bench has nothing left to sell; the sign
   // walks your eye out to the tower, where the dome is sold.
