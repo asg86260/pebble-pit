@@ -50,8 +50,9 @@ export function leverShape(l) {
 export function leverBox(l) {
   const { x, y, dir } = leverAt(l);
   const reach = (coarse() ? Math.max(LEVER_HIT, LEVER_REACH) : LEVER_REACH) * P;
-  const left = dir < 0 ? x - reach : x;
-  return { x: left, y: y - reach, w: reach, h: reach + P * 2 };
+  // a cell of the wall itself is in the box too: the pivot stands on it
+  const left = dir < 0 ? x - reach : x - P;
+  return { x: left, y: y - reach, w: reach + P, h: reach + P * 2 };
 }
 
 export function leverUnder(x, y) {

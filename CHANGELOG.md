@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- The casino has no board: heaps of each coin stand beside it and you carry one to the hopper to stake it, three levers on the building play the hand, and banking tips the winnings out on to the ground for the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).

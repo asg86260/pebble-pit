@@ -45,8 +45,8 @@ import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { dealHand, potAt } from './casino.js';
-import { pullLever } from './levers.js';
-import { liftStake, liftPot, dropCarried, stakeAt, overRim } from './stakes.js';
+import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
+import { liftStake, liftPot, dropCarried, stakeAt, overRim, standing, stakeWant } from './stakes.js';
 import { stakes } from './state.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -905,6 +905,8 @@ export const HANDLES = {
   // a lever on the casino pulled by name, the same call the pointer makes:
   // `__clickLever('casino-gate')`, 'casino-chute', 'casino-crank'
   __clickLever: pullLever,
+  __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
+  __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
   // The heaps, handled the way the pointer handles them: lift one by coin and
   // chip (`__liftStake('dust', 100)`), lift the pot out of the hopper, carry
   // to a point, and let go there; `__rim()` is a point over the hopper's rim
@@ -916,6 +918,29 @@ export const HANDLES = {
   __rim: () => ({ x: potAt().x, y: potAt().y - P * 3 }),
   __stakeAt: (cur, chip) => { const h = stakes.find(s => s.cur === cur && s.chip === chip); return h ? stakeAt(h) : null; },
   __overRim: overRim,
+  // The table stood up the way the scenes and the checks want it: open, dust
+  // in the hole, the heaps rained in; a heap poured into the hopper; a hand
+  // played through the gate to the tray standing. Each waits on the sand.
+  __casinoStakes: (dust = 6000) => {
+    newGame(); openCasino(true); give(dust); rebuildBoards();
+    for (let f = 0; f < 60 * 20 && !stakes.every(h => !standing(h) || h.n >= stakeWant(h)); f++) fast(1 / 60);
+  },
+  __casinoStake: (chip = 100, cur = 'dust') => {
+    if (!S.casinoOpen) { newGame(); openCasino(true); give(6000); rebuildBoards(); }
+    const h = stakes.find(s => s.cur === cur && s.chip === chip);
+    for (let f = 0; f < 60 * 20 && h && standing(h) && h.n < stakeWant(h); f++) fast(1 / 60);
+    const at = stakeAt(h); liftStake(h, at.x, at.y);
+    const rim = { x: potAt().x, y: potAt().y - P * 3 };
+    if (S.carried) { S.carried.x = rim.x; S.carried.y = rim.y; }
+    dropCarried(rim.x, rim.y);
+    for (let f = 0; f < 60 * 30 && S.pouring; f++) fast(1 / 60);
+  },
+  __casinoHand: () => {
+    pullLever('casino-gate');
+    for (let f = 0; f < 60 * 40 && (S.drop || S.pouring); f++) fast(1 / 60);
+  },
+  // the pointer, for a scene that wants a heap drawn under it
+  __mouseAt: (x, y) => { S.mouse = { x, y }; },
   // a hand dealt off the rng without the sim -- the bins each grain of a
   // handful lands in and what they pay on this stake -- for the check that
   // measures the spread two thousand hands at a time

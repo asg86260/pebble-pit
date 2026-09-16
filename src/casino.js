@@ -4,22 +4,25 @@
 // what you have and hands some of it back, and the whole of it is a decision you
 // keep making rather than a purchase you make once.
 //
-// **The building is the machine.** The stake rains out of the sky into the
-// hopper on the roof and stands there as a heap -- that heap is the pot. You
-// let it go: the hopper floor splits, and a handful of the heap comes out and
-// down ten rows of pegs into eleven bins. Every grain flips its own coin at
-// every peg, off the seeded rng, so the handful fans out into the bell the bins
-// are priced on and the same handful never lands the same way twice. When the
-// last grain is still the bins pay into the tray at the foot, a bin a beat from
-// the middle outward, each grain carrying its bin's pay -- and what stands in
-// the tray is the pot again. Bank it, or hoist it back up to the roof and drop
-// it again. When to stop is the game. See DESIGN.md, "The handful".
+// **The building is the machine.** A heap of the coin you carry to the hopper
+// on the roof pours in and stands there as the pot, at the table's own band
+// ladder. You pull the gate lever: the floor splits, the whole pile drains
+// into the throat -- into the machine, the way dust goes into the hole -- and
+// out of the throat come a handful of pressed pebbles that go down ten rows
+// of pegs into eleven bins, each flipping its own coin at every peg off the
+// seeded rng, so the handful fans out into the bell the bins are priced on and
+// the same handful never lands the same way twice. When the last pebble is
+// still the bins pay into the tray at the foot, a bin a beat from the middle
+// outward, each pebble carrying its bin's pay -- and what stands in the tray
+// is the pot again. Tip it out for the haulers, or wind it back up to the
+// roof and drop it again. When to stop is the game. See DESIGN.md, "The
+// handful" and "The stake is a heap you carry".
 //
-// A handful is `CASINO_HANDFUL` grains whatever the stake, each carrying its
-// share of it. That count is what makes this a bet: every grain is a fair draw
-// from the bins, and a pour of N pays the mean of N draws, whose spread shrinks
-// with the square root of N. Thirty-two pay with a spread of about a third, put
-// a grain in a x39 one hand in eight, and lose the median hand.
+// A handful is `CASINO_HANDFUL` pebbles whatever the stake, each carrying its
+// share of it. That count is what makes this a bet: every pebble is a fair
+// draw from the bins, and a hand of N pays the mean of N draws, whose spread
+// shrinks with the square root of N. Sixteen pay with a spread near half, put
+// a pebble in a x39 one hand in thirty-odd, and lose the median hand.
 //
 // There was a wheel here, even money, and it is gone: the answer was picked
 // first and the wheel aimed at it, so you watched a picture of a decision that

@@ -90,7 +90,8 @@ function rainIn(dt, h, i, want) {
     const shade = find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length);
     const from = h.pourFrom
       ? { x: h.pourFrom.x + (rand() - 0.5) * P * 4, y: h.pourFrom.y + (rand() - 0.5) * P * 2 }
-      : { x: at0.x + (rand() - 0.5) * P * (h.cols - 2), y: h.y - P * 20 - rand() * P * 10 };
+      // over the middle of the plot, so the heap cones up rather than spreads
+      : { x: at0.x + (rand() - 0.5) * P * (h.cols / 2), y: h.y - P * 20 - rand() * P * 10 };
     S.tableAir.push({ x: from.x, y: from.y, vx: (rand() - 0.5) * 0.3, vy: 0.9 + rand() * 0.8,
                       t: 0, s: shade, lands: 'stake', stake: i });
   }

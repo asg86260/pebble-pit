@@ -487,18 +487,20 @@ function askedAbout(x, y, cx, cy) {
                        (w.y - P * 3 - S.camY) * S.zoom);
     return true;
   }
+  // a heap in your hand, or one on the ground, says what it is; and a lever
+  // on the casino is named, the way a body or a mark is, before the building
+  // it stands on
+  if (S.carried) { showTip(carriedName(), { x: S.carried.x, y: S.carried.y - P * 8 }); return true; }
+  const heap = stakeUnder(x, y);
+  if (heap) { showTip(stakeName(heap), { x, y: y - P * 6 }); return true; }
+  const lv = leverUnder(x, y);
+  if (lv) { const at = leverAt(lv); showTip(lv.name, { x: at.x, y: at.y - P * 6 }); return true; }
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
-  // a heap in your hand, or one on the ground, says what it is
-  if (S.carried) { showTip(carriedName(), { x: S.carried.x, y: S.carried.y - P * 8 }); return true; }
-  const heap = stakeUnder(x, y);
-  if (heap) { showTip(stakeName(heap), { x, y: y - P * 6 }); return true; }
-  // a lever on the casino is named, the way a body or a mark is
-  const lv = leverUnder(x, y);
-  if (lv) { const at = leverAt(lv); showTip(lv.name, { x: at.x, y: at.y - P * 6 }); return true; }
+
   const finished = overDoneMark(x, y);
   if (finished) {
     showTip(doneName(finished), doneMarkAt(finished));

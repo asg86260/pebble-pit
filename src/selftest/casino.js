@@ -1,142 +1,172 @@
-// The casino: the bench row builds it, and a hand pressed through the page's
-// rows -- the chip, the stake, the let-go, the decision -- settles.
+// The casino on the page: the bench row builds it, a heap is dragged to the
+// hopper with the right button on a desk and with a finger on a phone -- a
+// finger on a heap never scrolls the yard -- and a tap on each lever pulls it
+// and the tooltip names it.
 //
 // What the hand *does* is the node tier's (test/casino.test.mjs, handful.test.mjs);
-// this is the page: the board's rows exist, they press, and the hand they start
-// plays out. 2 groups, in the order they have always run in -- see
-// src/selftest.js, which is where the order lives.
+// this is the pointer and the page. 3 groups, in the order they have always
+// run in -- see src/selftest.js, which is where the order lives.
 
-import { sleep, newRun, settle, state, buildShopFromTest, ok, run, runUntil, raf } from './kit.js';
+import { sleep, newRun, settle, state, buildShopFromTest, ok, run, runUntil, raf, canvas, point, touch, finger, P } from './kit.js';
+
+const phone = on => window.__coarse(on ? true : null);
+const frames = async n => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
+const tipText = () => { const t = document.getElementById('tip'); return t && !t.hidden ? t.textContent.trim() : ''; };
+
+// The casino bought through the bench and stood up, the heaps standing, the
+// view on it: a heap's spot and the rim, on screen.
+async function atTheCasino() {
+  newRun();
+  await settle();
+  window.__grant({ cores: 20 });
+  window.__give(20000);
+  window.__dig(23);
+  window.__invest();
+  buildShopFromTest();
+  document.querySelector('#shop button[data-key="unlockcasino"]').click();
+  window.__finish();
+  buildShopFromTest();
+  window.__casinoStakes(20000);
+  const s = state();
+  window.__look(s.casinoX + 100);
+  await frames(2);
+  const t = state();
+  const spot = window.__stakeAt('dust', 100), rim = window.__rim();
+  const sx = [(spot.x - t.camX) * t.zoom, (spot.y - t.camY) * t.zoom];
+  const rx = [(rim.x - t.camX) * t.zoom, (rim.y - t.camY) * t.zoom];
+  return { s: t, sx, rx };
+}
 
 export const TESTS = [
-  // The one place in the yard that makes nothing. Everywhere else a thing you
-  // buy does something for ever after; this takes what you have and hands some
-  // of it back, and the whole of it is a decision you keep making.
-  ['the casino takes a stake and drops a handful', async () => {
-    newRun();
-    await settle();
-    window.__grant({ cores: 20 });
-    window.__give(20000);
-    window.__dig(23);                            // room for the winnings
-    window.__invest();
-    buildShopFromTest();
-    const before = document.querySelector('#shop button[data-key="unlockcasino"]');
-    before.click();
-    window.__finish();  // the casino is a building, and the yard puts it up
-    buildShopFromTest();
-    const open = state();
-
-    const casino = () => document.getElementById('casinoshop');
-    const row = k => casino().querySelector(`button[data-key="${k}"]`);
-    const rows = () => [...casino().querySelectorAll('button[data-key]')].map(b => b.dataset.key);
-
-    // The chips go all the way up to everything you have. Wound back to the
-    // smallest first: the dial is a setting and it keeps whatever an earlier
-    // check left it on.
-    const chips = [];
-    const dial = () => casino().querySelector('[data-dial="chip"]');
-    for (let i = 0; i < 4; i++) { dial().querySelector('.less').click(); buildShopFromTest(); }
-    for (let i = 0; i < 4; i++) { chips.push(state().chip); dial().querySelector('.more').click(); buildShopFromTest(); }
-    // and back to a hundred, so a whole handful goes down
-    for (let i = 0; i < 4; i++) { dial().querySelector('.less').click(); buildShopFromTest(); }
-    dial().querySelector('.more').click(); buildShopFromTest();
-
-    const held = state().stored;
-    const stake = state().stakes.dust;
-    row('stakedust').click();
-    const down = state();
-    // The stake pours into the hopper and stands there: nothing here is on a
-    // clock this check can count off.
-    runUntil(() => !state().pouring, 40);
-    buildShopFromTest();
-    const stood = state();
-    const hopperRows = rows();
-    row('letgo').click();
-    const let_ = state();
-    let sent = 0, onBoard = 0;
-    for (let f = 0; f < 60 * 30 && (state().letting || state().pouring); f++) {
-      run(1 / 60);
-      const d = state().drop;
-      if (d) { sent = Math.max(sent, d.sent); onBoard = Math.max(onBoard, d.falling); }
+  ['the casino takes a heap dragged to the hopper with the right button', async () => {
+    const { s, sx, rx } = await atTheCasino();
+    const rows = window.__rows().filter(r => ['chip', 'stakedust', 'letgo', 'bank', 'ride'].includes(r.key));
+    const held = s.stored;
+    // the right button held on the heap, dragged to the rim, let go there
+    point('pointerdown', sx[0], sx[1], 2, 2);
+    await frames(1);
+    const lifted = state();
+    const steps = 8;
+    for (let i = 1; i <= steps; i++) {
+      point('pointermove', sx[0] + (rx[0] - sx[0]) * i / steps, sx[1] + (rx[1] - sx[1]) * i / steps, 2, 2);
+      await frames(1);
     }
-    buildShopFromTest();
+    const over = state();
+    point('pointerup', rx[0], rx[1], 0, 2);
+    await frames(1);
+    const dropped = state();
+    runUntil(() => !state().pouring, 30);
+    const stood = state();
+    // and the gate lever, tapped, plays the hand
+    const gate = window.__leverAt('casino-gate');
+    const gx = [(gate.x - stood.camX) * stood.zoom, (gate.y - P * 2 - stood.camY) * stood.zoom];
+    point('pointermove', gx[0], gx[1]);
+    await frames(1);
+    const named = tipText();
+    point('pointerdown', gx[0], gx[1]);
+    point('pointerup', gx[0], gx[1], 0);
+    await frames(1);
+    const pulled = state();
+    runUntil(() => !state().letting && !state().pouring, 40);
     const paid = state();
-    const trayRows = rows();
-    row('bank').click();
-    runUntil(() => state().tableAir === 0 && !state().paying, 30);
-    const banked = state();
     newRun();
     await sleep(300);
     return [
-      ok(open.casinoOpen, 'the bench row builds it', `casino at ${open.casinoX}`),
-      ok(Object.entries(open.stands).every(([k, r]) => k === 'casino' || r.x > open.casinoX),
-         'and it is the last thing on the ground',
-         Object.entries(open.stands).filter(([k, r]) => k !== 'casino' && r.x <= open.casinoX)
-           .map(([k, r]) => `${k} at ${r.x}`).join(', ')),
-      ok(chips.join(',') === '10,100,1000,all in',
-         'the chips run from ten to everything you have', chips.join(',')),
-      ok(down.stored === held - stake,
-         'a stake comes out of your hands', `${held} - ${stake} -> ${down.stored}`),
-      ok(down.pot && down.pot.where === 'hopper' && down.pouring,
-         'and pours into the hopper on the roof'),
-      ok(stood.table === Math.min(stake, 32) && hopperRows.join(',') === 'letgo',
-         'where it stands as the handful, with the let-go the one row left',
-         `${stood.table} grains, rows ${hopperRows.join(',')}`),
-      ok(let_.letting, 'pressing it opens the floor'),
-      ok(sent === Math.min(stake, 32) && onBoard > 1,
-         'and a handful goes down the pegs as a stream', `${sent} sent, ${onBoard} at once`),
-      ok(paid.pot && paid.pot.where === 'tray' && paid.tray > 0 && trayRows.join(',') === 'bank,ride',
-         'the bins pay into the tray and the two decisions are the rows',
-         `${paid.pot && paid.pot.on} in the tray, rows ${trayRows.join(',')}`),
-      ok(paid.hand && paid.mult != null, 'and the box says the multiple', `${paid.mult}`),
-      ok(banked.stored === held - stake + (paid.pot ? paid.pot.on : 0) && banked.tray === 0,
-         'banking flies the tray to the hole, grain for grain',
-         `${banked.stored} held after`)
+      ok(s.casinoOpen, 'the bench row builds it', `casino at ${s.casinoX}`),
+      ok(rows.length === 0, 'and it has no rows on any board', rows.map(r => r.key).join(',')),
+      ok(lifted.inHand && lifted.inHand.kind === 'stake' && lifted.inHand.n === 100,
+         'the right button held on a heap lifts it', JSON.stringify(lifted.inHand)),
+      ok(over.inHand && Math.abs(over.inHand.x - window.__rim().x) < 2,
+         'and it goes where the pointer goes', over.inHand && `${over.inHand.x}`),
+      ok(!dropped.inHand && dropped.pot && dropped.pot.on === 100 && dropped.stored === held - 100,
+         'let go over the rim it is the pot, out of the purse', JSON.stringify(dropped.pot)),
+      ok(stood.table > 0 && !stood.pouring, 'and it stands in the funnel', `${stood.table}`),
+      ok(/gate/.test(named), 'hovering the gate lever names it', named),
+      ok(pulled.letting, 'and a click on it opens the floor'),
+      ok(paid.pot && paid.pot.where === 'tray', 'so the hand plays out to the tray')
     ];
   }],
 
-  // A hand is the one moment in this game you are meant to sit and watch, so
-  // the board gets out of the light for the whole of it, from the chip going
-  // down to the tray standing.
-  ['the casino board hushes for the hand', async () => {
-    newRun();
-    await settle();
-    window.__grant({ cores: 20 });
-    window.__give(20000);
-    window.__dig(23);
-    window.__invest();
-    buildShopFromTest();
-    document.querySelector('#shop button[data-key="unlockcasino"]').click();
-    window.__finish();
-    buildShopFromTest();
-    const s0 = state();
-    window.__look(s0.casinoX - 200);
-    run(0.5);
-    const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
-    // The hush is set by the frame's `hud()`, which the fast clock does not
-    // run, so each reading waits one real frame.
-    const panel = document.getElementById('panel');
-    const read = async busy => { await raf(); return { busy, hushed: panel.classList.contains('hushed') }; };
-    row('stakedust').click();
-    run(0.3);
-    const pouring = await read(state().pouring);
-    runUntil(() => !state().pouring, 30);
-    run(0.2);
-    const standing = await read(state().pouring);
-    buildShopFromTest();
-    row('letgo').click();
-    run(0.8);
-    const falling = await read(state().letting);
-    runUntil(() => !state().letting && !state().pouring, 30);
-    run(0.2);
-    const done = await read(state().letting || state().pouring);
+  ['a finger on a heap lifts it and never scrolls the yard', async () => {
+    const { s, sx, rx } = await atTheCasino();
+    phone(true);
+    await frames(1);
+    const sc = document.getElementById('scroller');
+    const camX = state().camX, scrollX = sc.scrollLeft;
+    // the platform asks at touchstart: a finger on a heap is the game's
+    const said = touch('touchstart', canvas(), sx[0], sx[1]);
+    finger('pointerdown', 1, sx[0], sx[1]);
+    await frames(1);
+    const lifted = state();
+    const steps = 8;
+    for (let i = 1; i <= steps; i++) {
+      finger('pointermove', 1, sx[0] + (rx[0] - sx[0]) * i / steps, sx[1] + (rx[1] - sx[1]) * i / steps);
+      await sleep(16); await frames(1);
+    }
+    const mid = state();
+    finger('pointerup', 1, rx[0], rx[1]);
+    touch('touchend', canvas(), rx[0], rx[1]);
+    await frames(1);
+    const dropped = state();
+    // and a finger on the sky beside it is left to the platform
+    const skySaid = touch('touchstart', canvas(), sx[0], sx[1] - 200);
+    touch('touchend', canvas(), sx[0], sx[1] - 200);
+    phone(false);
     newRun();
     await sleep(300);
     return [
-      ok(pouring.busy && pouring.hushed, 'the board is out of the light while the stake pours'),
-      ok(!standing.busy && !standing.hushed, 'and back when the pot is standing in the hopper'),
-      ok(falling.busy && falling.hushed, 'out again while the handful is on the pegs'),
-      ok(!done.busy && !done.hushed, 'and back when the tray is standing')
+      ok(said, 'the touch on a heap is claimed at touchstart, so the platform never scrolls it'),
+      ok(lifted.inHand && lifted.inHand.kind === 'stake', 'and the finger has the heap', JSON.stringify(lifted.inHand)),
+      ok(mid.camX === camX && sc.scrollLeft === scrollX, 'the yard did not move under the drag',
+         `${mid.camX} vs ${camX}, ${sc.scrollLeft} vs ${scrollX}`),
+      ok(!dropped.inHand && dropped.pot && dropped.pot.on === 100, 'and lifting the finger over the rim stakes it',
+         JSON.stringify(dropped.pot)),
+      ok(!skySaid, 'while a finger on the sky is still the platform\'s to scroll')
+    ];
+  }],
+
+  ['a tap on each lever pulls it and the tooltip names it', async () => {
+    const { s } = await atTheCasino();
+    phone(true);
+    window.__casinoStake(100);
+    await frames(1);
+    const at = key => { const l = window.__leverAt(key); const t = state(); return [(l.x - t.camX) * t.zoom, (l.y - P * 2 - t.camY) * t.zoom]; };
+    const tapLever = async key => {
+      const [x, y] = at(key);
+      finger('pointerdown', 1, x, y);
+      finger('pointerup', 1, x, y);
+      await frames(1);
+    };
+    await tapLever('casino-gate');
+    const gate = state();
+    runUntil(() => !state().letting && !state().pouring, 40);
+    await tapLever('casino-crank');
+    const crank = state();
+    runUntil(() => !state().hoisting && !state().pouring, 40);
+    await tapLever('casino-gate');
+    runUntil(() => !state().letting && !state().pouring, 40);
+    await tapLever('casino-chute');
+    const chute = state();
+    runUntil(() => !state().paying, 40);
+    phone(false);
+    // and on a desk, each is named under the pointer
+    const names = [];
+    for (const key of ['casino-gate', 'casino-chute', 'casino-crank']) {
+      const [x, y] = at(key);
+      point('pointermove', x, y);
+      await frames(1);
+      names.push(tipText());
+    }
+    newRun();
+    await sleep(300);
+    return [
+      ok(gate.letting, 'a tap on the gate lever opens the floor'),
+      ok(crank.hoisting || (crank.pot && crank.pot.where === 'hopper'), 'a tap on the crank hoists the tray',
+         JSON.stringify(crank.pot)),
+      ok(chute.paying != null, 'and a tap on the chute tips the tray out', `${chute.paying}`),
+      ok(/gate/.test(names[0]) && /chute/.test(names[1]) && /crank/.test(names[2]),
+         'each is named under the pointer', names.join(' | '))
     ];
   }]
 ];
+
