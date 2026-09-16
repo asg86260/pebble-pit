@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
-const { stake, canStake, bank, canBank, pot } = await import('../src/casino.js');
+const { stake, canStake, letGo, canLet, bank, canBank, pot } = await import('../src/casino.js');
 const { dugShare } = await import('../src/quarry.js');
 const { boulderAlive } = await import('../src/rock.js');
 const { doseLive, doseLeftMs } = await import('../src/apothecary.js');
@@ -106,15 +106,13 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
   window.__tip(2000);
   run(1);
   S.chip = 2;
-  // The wheel is even money and this check is not about the odds, so it plays
-  // until a hand comes in. Each go is paid for out of a fresh tip: a loss takes
-  // the stake, and a purse of nothing cannot put a chip down.
-  let spun = false;
-  for (let go = 0; go < 30 && !spun; go++) {
-    if (!S.pot && !S.paying && canStake('dust')) stake('dust');
-    spun = runUntil(() => canBank(), 30);
-    if (!spun && !S.pot && !S.paying) window.__tip(2000);
-  }
+  // A hand pays at least half of what went down, so one is enough: the stake
+  // into the hopper, let go, and the tray standing. The check is not about the
+  // odds, only about what is in the tray being taken whole.
+  if (canStake('dust')) stake('dust');
+  runUntil(() => canLet(), 30);
+  letGo();
+  const spun = runUntil(() => canBank(), 30);
   const won = pot(), before = S.stored;
   bank();
   run(0.4);                                    // grains off the heap, most still in the air
@@ -134,7 +132,9 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
     ok(paid >= won, 'and the hole is paid every last grain of it',
        `${won} taken, ${paid} landed`)
   ];
-});
+// One particular hand across more than five seconds, and a reload of its own
+// in the middle: the harness's would put the pot back in the hopper.
+}, { reload: false });
 
 // The depth of the cut was written down and the stone left in it was not. So a
 // save read back mid-dig came up with a part-dug floor and `quarryOwed` at

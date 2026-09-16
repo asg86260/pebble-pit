@@ -139,7 +139,8 @@ function fire(event, o, cls, t, n = 1, counted = false) {
   const level = spec.gain * db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);
   const widen = 1 + SND_FOLD_WIDEN * Math.log2(n);
   const delay = rand() * SND_JITTER_MS;
-  const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary;
+  // and the event's own step, if it asked for one: the pegs climb a row at a time
+  const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary + (o.cents || 0);
   const ring = ringOf(spec, o);
   makeRoom();
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
@@ -147,13 +148,16 @@ function fire(event, o, cls, t, n = 1, counted = false) {
   if (ctx) v.env = play(spec, o, { level, widen, delay, detune, ring });
 }
 
-// Something physically happened at world x. `event` is a key in SOUNDS, and
-// the table says its class and what it plays. `opts` is { x, hard, big }
-// plus an optional `cls` override for a check. 'hand' is never folded or
-// stolen; 'fold' (the yard's own work) is one sound per window; 'punct' is
-// rare by construction with its own ceiling; 'each' is a strike per event,
-// never folded, but stolen and ceilinged, because a refund lands hundreds of
-// grains in one frame and every strike is a buffer rendered.
+// Something physically happened at world x. `event` is a key in SOUNDS --
+// 'rock-hit', 'footstep', 'boulder-land' -- and the table says what class it
+// falls under and what, if anything, it plays. `opts` is { x, hard, big, cents }
+// plus, for a check that wants to say so, a `cls` that overrides the table's.
+// 'hand' is never folded or stolen; 'fold' (the yard's own work) is one sound
+// per window; 'punct' is rare by construction, with a ceiling of its own;
+// 'each' is a strike per event, never folded, but stolen like the yard's work
+// and ceilinged, because a refund lands hundreds of grains in one frame and
+// every strike is a buffer rendered.
+// Before the first gesture it is a no-op and nothing is queued.
 export function sfx(event, opts = {}) {
   if (!awake) return;
   const cls = CLASSES.has(opts.cls) ? opts.cls : (SOUNDS[event] ? SOUNDS[event].cls : 'fold');

@@ -35,6 +35,9 @@ const coldReload = () => {
 
 export function cover(part) {
   for (const row of ROWS.filter(r => r.part === part)) {
+    // A row with `reload: false` follows one particular pot across more than
+    // five seconds (helpers.mjs, `group`); every other row runs under the
+    // harness.
     group(`${row.key}: gated, bought and kept`, async () => {
       window.__reset();
       run(0.5);
@@ -65,6 +68,6 @@ export function cover(part) {
       out.push(ok(lost.length === 0, 'and every board reads the same after a cold reload',
                   lost.map(k => `${k}: ${before[k]} -> ${after[k]}`).join('; ')));
       return out;
-    });
+    }, row.reload === false ? { reload: false } : undefined);
   }
 }

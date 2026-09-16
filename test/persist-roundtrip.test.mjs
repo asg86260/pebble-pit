@@ -105,8 +105,7 @@ group('every field on S is accounted for', async () => {
   // ...and the two moments of the beat between rocks, written as distances
   // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
   const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
-                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt',
-                  spinLeft: 'spinUntil' };
+                  danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
   S.dirty = true;
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
@@ -180,12 +179,12 @@ group('every field a module writes on S is declared in state.js', async () => {
 // A reset is the one time a running yard is put down in place, and it used to
 // name what it put down. What it did not name stood: the quarry's running
 // total (and so the "a thousand ore" notice, landing on a yard that had dug
-// none), the house's part-clod, a wheel mid-spin, a cutscene half played. It
+// none), the house's part-clod, a hand mid-cascade, a cutscene half played. It
 // clears the session's fields off the declaration now; this plants a value in
 // each of the ones that leaked and looks for it afterward.
 group('a reset puts down what the save throws away', async () => {
-  const planted = { quarryTotal: 1234, scrubMuck: 5, wheel: 42, cine: { name: 'tear', at: 1 },
-                    riftGulp: 1.8, rescueTo: 5088, smoke: [{ x: 1, y: 1 }], spinWon: true,
+  const planted = { quarryTotal: 1234, scrubMuck: 5, drop: { stage: 'pay' }, cine: { name: 'tear', at: 1 },
+                    riftGulp: 1.8, rescueTo: 5088, smoke: [{ x: 1, y: 1 }], hoisting: { grains: 3 },
                     hand: { won: true }, restaff: { at: 1 } };
   Object.assign(S, planted);
   window.__reset();

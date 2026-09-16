@@ -112,6 +112,13 @@ export const RECIPES = {
                     click: 0, clickMs: 0.9, clickHz: 500,
                     noise: 1, noiseHz: 320, noiseQ: 0.3, noiseMs: 34,
                     bits: 16, hold: 1, cut: 1500, drive: 2.1, gain: 0.67, vary: 1 },
+  // The rock's own hit cut short, for a grain on a peg: thirty-two grains over
+  // ten rows is three hundred and twenty of these in a second and a half, which
+  // is exactly the sound a plinko makes, and a tail on each would be a wall.
+  'peg':          { wave: 'sine', hz: 420, slide: 0.5, slideMs: 30, decay: 6, level: 0.2, duty: 0.05,
+                    click: 0.05, clickMs: 0.5, clickHz: 900,
+                    noise: 0.4, noiseHz: 900, noiseQ: 4, noiseMs: 4,
+                    bits: 16, hold: 1, cut: 2400, gain: 0.7, vary: 0.4 },
   'worker mine':  { wave: 'sine', hz: 110, slide: 0.5, slideMs: 2, decay: 10, level: 0.1, duty: 0.05, bodyHold: 9,
                     click: 0.03, clickMs: 1.3, clickHz: 500,
                     noise: 1, noiseHz: 60, noiseQ: 0.3, noiseMs: 5,
@@ -180,8 +187,19 @@ export const SOUNDS = {
   'bolt-throw':   { label: 'a wizard throws a bolt at the star',        cls: 'fold',  recipe: 'bolt throw' },
   'bolt-strike':  { label: 'a bolt lands on the star',                  cls: 'fold',  recipe: 'worker mine' },
   'bolt-crit':    { label: 'a crit bolt takes a patch off the star',    cls: 'fold',  recipe: 'worker crit' },
-  'jackpot':      { label: 'the wheel pays out',                        cls: 'punct', recipe: null },
-  'dud':          { label: 'the wheel comes up empty',                  cls: 'hand',  recipe: null },
+  // The casino is a machine and a machine is loud: every peg a hit, every bin
+  // a thud, the edge bin a siren. Each strike per event, under the ceiling, so
+  // the cap thins a cascade to a clatter rather than a wall; `cents` on the
+  // event steps the pitch -- up a row at a time on the pegs, out from the
+  // middle on the bins, up the hoist as the tray climbs.
+  'peg-hit':      { label: 'a grain hits a peg',                        cls: 'each',  recipe: 'peg' },
+  'bin-thud':     { label: 'a grain lands in a bin',                    cls: 'each',  recipe: 'dust-gain' },
+  'edge-hit':     { label: 'a grain lands in a x39 bin',                cls: 'punct', recipe: 'stone 2' },
+  'hopper-land':  { label: 'a grain of the stake lands in the hopper',  cls: 'each',  recipe: 'dust-gain' },
+  'tray-tick':    { label: 'a paid grain lands in the tray',            cls: 'each',  recipe: 'dust-gain' },
+  'hoist-tick':   { label: 'a grain of the tray lifts for a drop again', cls: 'each', recipe: 'dust-gain' },
+  'jackpot':      { label: 'the hand pays more than it took',           cls: 'punct', recipe: null },
+  'dud':          { label: 'the hand pays less than it took',           cls: 'hand',  recipe: null },
   'work-land':    { label: 'a building comes down on its ground',       cls: 'punct', recipe: null },
   'rift-tear':    { label: 'the pit floor tears',                       cls: 'punct', recipe: null },
   'rift-open':    { label: 'the pit floor gives way',                   cls: 'punct', recipe: null }
@@ -219,6 +237,12 @@ export let SND_PUNCT_PER_S = 4;
 // refund or a jackpot lands hundreds in one frame, and every strike is a
 // buffer rendered.
 export let SND_EACH_PER_S = 60;
+// How far an event may move a strike's pitch, per step, in cents: a row of
+// pegs, a bin out from the middle, and the whole of a hoist from tray to roof.
+// A `cents` on the event adds to the recipe's own jitter.
+export let SND_PEG_CENTS = 100;
+export let SND_BIN_CENTS = 150;
+export let SND_HOIST_CENTS = 1200;
 
 // The knobs, beside the bindings because an imported `let` is read-only
 // everywhere else.
@@ -242,5 +266,11 @@ export const SOUND_KNOBS = [
   { key: 'SND_PAN_REACH', label: 'pan reach', min: 0.1, max: 2, step: 0.1,
     get: () => SND_PAN_REACH, set: v => { SND_PAN_REACH = v; } },
   { key: 'SND_VOICES', label: 'voices', min: 4, max: 32, step: 1,
-    get: () => SND_VOICES, set: v => { SND_VOICES = v; } }
+    get: () => SND_VOICES, set: v => { SND_VOICES = v; } },
+  { key: 'SND_PEG_CENTS', label: 'a peg row, cents', min: 0, max: 300, step: 10,
+    get: () => SND_PEG_CENTS, set: v => { SND_PEG_CENTS = v; } },
+  { key: 'SND_BIN_CENTS', label: 'a bin out, cents', min: 0, max: 400, step: 10,
+    get: () => SND_BIN_CENTS, set: v => { SND_BIN_CENTS = v; } },
+  { key: 'SND_HOIST_CENTS', label: 'the hoist, cents', min: 0, max: 2400, step: 100,
+    get: () => SND_HOIST_CENTS, set: v => { SND_HOIST_CENTS = v; } }
 ];

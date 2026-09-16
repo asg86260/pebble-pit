@@ -82,12 +82,14 @@ import { RIFT_KNOBS } from './config/rift.js';
 
 import { SOUND_KNOBS } from './config/sound.js';
 import { RUNG_KNOBS } from './config/rungs.js';
+import { CASINO_KNOBS } from './config/casino.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
-  ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS
+  ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS,
+  ...CASINO_KNOBS
 ];
 
 // A knob with no row throws rather than reading `undefined`: setting one

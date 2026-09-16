@@ -82,6 +82,21 @@ hole with no `toWay`); and `Math.max(1, laneY(i) ? 1 : 1)` in
 balloon.js is a no-op divisor. `test/`, `tools/` and the html/css were not
 in the pass.
 
+## The handful: the casino drops dust down a peg board -- BUILT (2026-09-15)
+
+Players find the wheel dull, and the user is not a fan of it. The third plinko:
+thirty-two grains a hand, each carrying a thirty-second of the stake and
+flipping its own coin at every peg, into the drop's fair eleven-bin table; the
+paid bins empty into a tray at the foot, and the tray either banks or rides
+back up to the hopper. DESIGN.md, "The handful" (built), with "What building
+it changed" for the calls the build made. The two cut versions failed on the
+same arithmetic from opposite sides (one rock: no sand; the whole heap: no
+spread), and the design says why the handful is the size where a cascade and a
+bet meet. Supersedes "The casino stays the wheel" below. Left for later: the
+bank row does not wait on a full hole (the rift takes what the hole refuses,
+so the rule the design carried over no longer holds); nobody has listened to
+the peg clatter.
+
 ## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
 "Three brews, one a coin, read per trade" at the end of DESIGN.md. The five
@@ -436,12 +451,13 @@ alike; a heading per part with a button per scene; a scene never touches the
 player's save. DESIGN.md, "Scenes" (built). Left for later: the scrollbar on
 the block is the browser's grey one, not the sheet's hand.
 
-## The casino stays the wheel (2026-09-11)
+## The casino stays the wheel (2026-09-11) -- SUPERSEDED by "The handful" (2026-09-15)
 
 Two plinko versions were built and cut in a day: a rock carrying the pot down
 a tower on the roof ("The drop"), then the sand itself poured through pegs
 ("The sand board"). Both are in the history and in DESIGN.md as cut sections.
-The wheel is what the player wants.
+The wheel was what the player wanted until the players called it dull; the
+handful is the third go, and the one that kept both the sand and the spread.
 
 ## Nine critics played the game (2026-09-10)
 

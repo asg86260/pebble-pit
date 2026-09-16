@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table , tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -34,7 +34,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './casino.js';
+import { pot, pouring, letting, hoisting, stakeOf, chipName, potAt, tableWant, trayWant, shownMult } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -254,20 +254,34 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   pinned: S.pinned,                 // the card in the corner, or null
   rockHeld: S.rockHeld,
 
-  // The casino: the stake, the spin, and the pot.
+  // The casino: the stake in the hopper, the handful on the pegs, the bins,
+  // the tray.
   casinoOpen: S.casinoOpen,
   casinoBoardOpen: S.casinoBoardOpen,
-  pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() },
-  spinning: spinning(),
-  // The beat before the spin: the stake is still coming down.
+  pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot(), where: S.pot.where },
+  // the stake is still coming down into its plot
   pouring: pouring(),
+  // a hand is on the board: the gate open, the grains falling, the bins paying
+  letting: letting(),
+  drop: S.drop && { stage: S.drop.stage, sent: S.drop.sent, handful: S.drop.handful,
+                    falling: S.drop.grains.filter(g => !g.landed).length,
+                    onPegs: S.drop.grains.filter(g => g.seat).length,
+                    bins: S.drop.bins.map(b => b.n),
+                    paid: Math.round(S.drop.paid), edge: S.drop.edge },
+  // the tray on its way back up for a drop again
+  hoisting: hoisting(),
+  // the demonstration grain, ticking down with nothing riding on it
+  attract: !!(S.attract && S.attract.grain),
   tableAir: S.tableAir.length,
-  hand: S.hand && { won: S.hand.won, n: S.hand.n },
+  hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: +S.hand.mult.toFixed(3), edge: S.hand.edge },
+  mult: shownMult(),
   potAt: Math.round(potAt().x),
+  // the grains in the hopper and the tray, and how many each is meant to hold,
+  // which past the first band is fewer than the pot itself -- see `shownFor`
   table: table.n,
-  // How many grains the pot puts on the ground, fewer than the pot itself past
-  // the first band (`shownFor` in casino.js).
   tableWant: tableWant(),
+  tray: tray.n,
+  trayWant: trayWant(),
   paying: S.paying && S.paying.left,
   chip: chipName(),
   stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') },
@@ -380,7 +394,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // Batches ever finished; three rows on the board are revealed by it.
   brews: S.brews,
   casinoX: Math.round(casino.x),
-  wheel: +S.wheel.toFixed(2),
 
   // What is lying on the floor waiting to be found.
   finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',

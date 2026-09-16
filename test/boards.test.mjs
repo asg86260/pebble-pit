@@ -98,7 +98,7 @@ group('the shop keeps to one grammar per kind', async () => {
                 ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                 ...APOTHECARY_UPGRADES];
 
-  // The casino is not a shop -- chips, stake, bank it, spin again are moves at a
+  // The casino is not a shop -- chips, stake, let it go, bank it, drop again are moves at a
   // table -- so its rows keep their own register on purpose. And `airrate` is a
   // readout wearing a row (it says "pollution / holding steady" and sells
   // nothing), exempt until it stops being a row at all. See "What is exempt".

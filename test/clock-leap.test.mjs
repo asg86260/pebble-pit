@@ -4,7 +4,7 @@
 // moved by however long you were away. `dt` was already clamped for that frame
 // (game.js, "a long tab-out is not a long frame"), but `now()` used to take the
 // whole gap in one go -- so the yard did no work for the hour and every deadline
-// on the clock, a dose, a spin, a break, fired the moment you came back. Now
+// on the clock, a dose, a hand, a break, fired the moment you came back. Now
 // `tick` leaps by at most CLOCK_LEAP_MS a frame, the same number `dt` is capped
 // at, and a hidden window is a pause. See docs/release-readiness.md, "The hidden
 // tab, and the clock".
@@ -20,7 +20,6 @@ import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs'
 import { CLOCK_LEAP_MS } from '../src/config.js';
 import { now, tick } from '../src/clock.js';
 import { doseLive, doseLeftMs } from '../src/apothecary.js';
-import { spinning } from '../src/casino.js';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -101,10 +100,12 @@ group('a dose bought before tabbing out is still live after', async () => {
   ];
 });
 
-// The spin is staked through the row the player presses, and the wheel goes
-// round only once the sand has landed -- so the check waits for the spin to be
-// in earnest before it leaves.
-group('a spin in flight resolves after its own time, not on return', async () => {
+// The hand is staked and let go through the rows the player presses, and the
+// handful is on the pegs -- every grain's beat and fall written in time -- when
+// the tab goes dark. An hour away is one frame's leap to the clock, so the
+// grains that were on the board are still on it when you come back, a beat
+// further on and no more, and the hand settles in its own time.
+group('a hand in flight resolves after its own time, not on return', async () => {
   window.__reset();
   window.__casino(true);
   window.__give(6000);
@@ -112,28 +113,31 @@ group('a spin in flight resolves after its own time, not on return', async () =>
   window.__build();
   run(0.5);
   const staked = window.__buy('stakedust');
-  const began = runUntil(() => state().spinning, 15);
-  const untilBefore = yard.S.spinUntil;
+  runUntil(() => !state().pouring, 15);
+  const let_ = window.__buy('letgo');
+  run(0.8);
+  const before = state();
 
   const wall = fakeWall();
-  let stillSpinning, clockShort;
+  let after;
   try {
     wall.away(HOUR);
     frame();
-    stillSpinning = spinning();
-    clockShort = now() < yard.S.spinUntil;
+    after = state();
   } finally { wall.restore(); }
-  // and it does come to rest, in its own time
-  const rested = runUntil(() => !state().spinning, 10);
+  // and it does settle, in its own time
+  const rested = runUntil(() => !state().letting, 10);
 
   return [
-    ok(staked, 'the chip goes down through its row'),
-    ok(began, 'and the wheel goes round'),
-    ok(untilBefore > 0, 'with a mark on the clock to stop at'),
-    ok(clockShort, 'an hour away leaves the clock short of that mark',
-       `now ${Math.round(now())}, until ${Math.round(yard.S.spinUntil)}`),
-    ok(stillSpinning, 'so the wheel is still going when you come back'),
-    ok(rested, 'and stops when its own time is up')
+    ok(staked && let_, 'the chip goes down and the floor opens through their rows'),
+    ok(before.letting && before.drop.falling > 0, 'with the handful on the pegs',
+       before.drop && `${before.drop.falling} falling`),
+    ok(after.letting && after.drop && after.drop.sent <= before.drop.sent + 1,
+       'an hour away moves the hand on by a frame, not an hour',
+       `${before.drop.sent} sent before, ${after.drop && after.drop.sent} after`),
+    ok(after.drop && after.drop.falling > 0, 'so the grains are still on the board when you come back',
+       after.drop && `${after.drop.falling} falling`),
+    ok(rested, 'and the hand settles when its own time is up')
   ];
 });
 
