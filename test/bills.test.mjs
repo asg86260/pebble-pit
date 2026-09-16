@@ -35,7 +35,7 @@ const BOARDS = Object.entries({
 //
 //   job   -- moves bodies between stations; nothing is paid
 //   dial  -- sets a number, like the fold switch
-//   price -- the casino's two rows, which pay *out* rather than being bought
+//   price -- the casino's decisions, which pay *out* rather than being bought
 //   sign  -- a signpost with a thought on it, like the bench wondering about
 //            the wizards; pressing it points, and takes nothing
 //

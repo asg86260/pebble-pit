@@ -572,11 +572,15 @@ export function buy(u) {
   if (u.job || u.dial) return false;   // a job row moves bodies and a dial sets a number
   // A signpost costs nothing; pressing it only points somewhere.
   if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
-  // A payout row (the casino's two decisions) takes nothing and is done at
-  // the table, so the board stays up for the next hand.
+  // A row with a payout on it instead of a price is not a purchase: nothing is
+  // taken, and what it does is its own business. The casino's decisions -- let
+  // it go, bank it, drop again -- are the only ones in the game.
   if (u.price) {
     if (!u.show() || u.dead?.()) return false;
     u.buy(); S.dirty = true; buildShop();
+    // A payout row is one of the casino's decisions: it is a thing you do at
+    // the table, not a thing you take away, so the board stays up for the next
+    // hand.
     return false;
   }
   // Pressing a row in line hands it back: the bill comes back in full and

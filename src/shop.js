@@ -635,8 +635,9 @@ export function refresh(el, list, headcount) {
     // On a shelf the gain is the number alone -- the name is the verb.
     const g = gainText(u);
     sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
-    // A row that is not a purchase (the casino's decisions) says what it
-    // *pays* where a price would go.
+    // A row that is not a purchase says what it *pays* where a price would go.
+    // The casino's decisions are the only ones: none costs anything, and the
+    // number each is about is the pot.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
     const off = u.price ? !!u.dead?.() : !canPay(u);
     grey(row, off);
