@@ -864,6 +864,17 @@ bin cannot be moved on its own.
 `POUR_SHARE` and `POUR_MIN` are config knobs (`config/casino.js`, on the dev
 panel), so both are found by playing rather than argued.
 
+**The sign says the stake.** While the funnel is empty the sign reads
+CASINO. From the first poured pebble until the drop it shows the stake's
+count instead, in the sign's own face -- seven-cell figures in the same
+stroke as the letters -- and the number rolls: it climbs under the hand as
+the pour runs and runs down as the pile drains into the throat on release,
+never snapping, through the yard's own counter tween (`shown` in tween.js,
+the purse counter's convention, `TWEEN_MIN_MS` to `TWEEN_MAX_MS` off
+`TWEEN_BASE_MS` and `TWEEN_PER_UNIT_MS`). After the drop the sign goes back
+to CASINO. So the one number in the building is the one you are deciding
+on, and it is on the sign while you decide.
+
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the
 pebble bins, crops from the crop bins, ore from the ore bins, a spark from
