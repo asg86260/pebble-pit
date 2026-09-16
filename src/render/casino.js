@@ -7,16 +7,17 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, nextStake, inTray } from '../casino.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
-import { S, casino, table, tray, stakes } from '../state.js';
-import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { LEVER_REACH, ARM_LENGTH, ARM_BOSS, BUTTON_RECESS, BUTTON_CAP, BUTTON_SUNK } from '../config.js';
+import { S, casino, table, tray } from '../state.js';
+import { LEVERS, leverAt, leverShape, panelLayout, panelTop, buttonShape } from '../levers.js';
+import { ARM_LENGTH, ARM_BOSS, PANEL_H, PANEL_ROWS, PANEL_GAP, MARK_CELLS, GLYPH_CELLS, WINDOW_DIGITS, DIGIT_W } from '../config.js';
+import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -147,10 +148,11 @@ const DIGIT = {
   '-': ['000', '000', '111', '000', '000']
 };
 const DIGIT_H = 5;
-const digitW = ch => DIGIT[ch][0].length;
+const glyphRows = ch => DIGIT[ch] || LETTER[ch];
+const digitW = ch => glyphRows(ch)[0].length;
 
 function drawDigit(ch, x, y) {
-  const rows = DIGIT[ch];
+  const rows = glyphRows(ch);
   for (let r = 0; r < DIGIT_H; r++)
     for (let c = 0; c < rows[r].length; c++)
       if (rows[r][c] === '1') ctx.fillRect(x + c * P, y + r * P, P, P);
@@ -288,8 +290,10 @@ export function drawCasino() {
     };
     divider(f.x - P);
     for (let b = 0; b < CASINO_BINS.length; b++) divider(f.x + (binLeft(b) + slotW(b)) * P);
-    ctx.fillRect(x + P, footTop, w - 2 * P, P);
-    ctx.fillRect(x + P, footTop + (LABEL_H - 1) * P, w - 2 * P, P);
+    // the floor line and the feet's rim run the width of the field, not
+    // the front: past the outer bins the front is the block's face
+    ctx.fillRect(f.x - P, footTop, (BOARD_COLS + 2) * P, P);
+    ctx.fillRect(f.x - P, footTop + (LABEL_H - 1) * P, (BOARD_COLS + 2) * P, P);
 
     drawLabels(f.x, f.y);
 
@@ -297,17 +301,88 @@ export function drawCasino() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
 
-    // The bank chute: while the tray is being tipped out, the foot's left wall
-    // is open at the tray's rows -- a hatch, white, a way through like every
-    // opening here -- and the sand runs out of it on to the ground.
-    if (S.paying) ctx.fillRect(x, tray.y, P, tray.rows * P);
-
-    // The three controls, on the walls, each where its effect is: the arm by
-    // the funnel, the button at the foot by the chute, the crank beside the
-    // tray. Black when it can be worked, grey at rest when it cannot.
+    // The panel of buttons under the feet, and the arm beside the funnel:
+    // black when it can be worked or is the chosen one, grey when it cannot.
+    drawPanel();
     for (const l of LEVERS) drawControl(l);
     ctx.fillStyle = '#000';
   });
+}
+
+// --- the panel ------------------------------------------------------------------
+// One row of face-on push buttons across the front: each a white recess in a
+// cell of black rim, the rims shared along the row like the feet's dividers,
+// wearing what it does. A chosen or live one wears its face black; a dead
+// one, or one not chosen, grey; one pressed this beat goes grey too, the
+// press sinking it. Between the chips and the sack the window says what the
+// arm will stake.
+// the letters the chips need, in the digits' face
+const LETTER = {
+  'k': ['100', '101', '110', '101', '101'],
+  'A': ['111', '101', '111', '101', '101'],
+  'L': ['100', '100', '100', '100', '111']
+};
+// the coins' marks at five cells: the square of dust, the quarry's triangle,
+// the plots' hexagon -- the same three shapes the counter draws
+const MARK = {
+  dust:  ['11111', '11111', '11111', '11111', '11111'],
+  shard: ['00100', '00100', '01110', '01110', '11111'],
+  spore: ['01110', '11111', '11111', '11111', '01110']
+};
+
+function cells(rows, x0, y0) {
+  rows.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) if (row[c] === '1' || row[c] === '#') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
+  });
+}
+function faceW(face) {
+  if (face.mark) return MARK_CELLS;
+  if (face.glyph) return GLYPH_CELLS;
+  if (face.window) return WINDOW_DIGITS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS;
+  return wordW(face.word);
+}
+// A number in the window, at most `WINDOW_DIGITS` figures: thousands as
+// "12k", millions as "3M".
+const windowText = n => n < 10 ** WINDOW_DIGITS ? String(Math.round(n))
+  : n < 1e6 ? `${Math.round(n / 1000)}k` : `${Math.round(n / 1e6)}M`;
+LETTER['M'] = ['10001', '11011', '10101', '10001', '10001'];
+
+function drawPanel() {
+  const top = panelTop();
+  // the band the panel sits in, white, a clear row above and below the rims
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(casino.x + P, top, casino.w - 2 * P, PANEL_H * P);
+  for (const at of panelLayout()) {
+    const b = at.button;
+    // the rim, and the recess in it
+    ctx.fillStyle = '#000';
+    ctx.fillRect(at.x, at.y, at.w, at.h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(at.x + P, at.y + P, at.w - 2 * P, at.h - 2 * P);
+    // the face, centered in the recess
+    const f = b.face;
+    const fw = faceW(f), fh = f.glyph ? GLYPH_CELLS : DIGIT_H;
+    const fx = at.x + P + PANEL_GAP * P + Math.floor((b.w - 2 * PANEL_GAP - fw) / 2) * P;
+    const fy = at.y + P + Math.floor((PANEL_ROWS - fh) / 2) * P;
+    if (f.window) {
+      // the window: the stake in figures and the coin's mark, black while
+      // there is a stake to play, grey while there is none
+      const stake = nextStake();
+      ctx.fillStyle = stake > 0 ? '#000' : PEG_SHADE;
+      const word = windowText(stake);
+      const wx = fx + (WINDOW_DIGITS * (DIGIT_W + 1) - 1 - wordW(word)) * P;
+      drawWord(word, wx, fy);
+      const cur = inTray() ? S.pot.cur : S.coin;
+      cells(MARK[cur], fx + (WINDOW_DIGITS * (DIGIT_W + 1)) * P, fy);
+      continue;
+    }
+    const shape = buttonShape(b);
+    ctx.fillStyle = shape.pressed || !shape.live ? PEG_SHADE : (f.word || f.mark) && !shape.on ? PEG_SHADE : '#000';
+    if (f.mark) cells(MARK[f.mark], fx, fy);
+    else if (f.glyph) cells(GLYPHS[f.glyph], fx, fy);
+    else drawWord(f.word, fx, fy);
+  }
+  ctx.fillStyle = '#000';
 }
 
 // A round knob on the grid: a square of `n` cells with its corners knocked
@@ -328,41 +403,24 @@ function drawControl(l) {
   const ink = shape.live ? '#000' : PEG_SHADE;
   ctx.fillStyle = ink;
   ctx.strokeStyle = ink;
-  if (l.kind === 'button') {
-    // face on, set into the wall: a white recess in a cell of black rim on
-    // the wall's outer face -- the recess could not cut into the building,
-    // where the pays' foot is -- with the round cap in it; pressed, the cap
-    // goes grey and shrinks, sunk into the wall
-    const rim = BUTTON_RECESS + 2;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(wall - rim * P, y - rim * P, rim * P, rim * P);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(wall - (rim - 1) * P, y - (rim - 1) * P, BUTTON_RECESS * P, BUTTON_RECESS * P);
-    ctx.fillStyle = shape.pressed ? PEG_SHADE : ink;
-    knob(wall - Math.ceil(rim / 2) * P, y - Math.ceil(rim / 2) * P, shape.pressed ? BUTTON_SUNK : BUTTON_CAP);
-    ctx.fillStyle = '#000';
-    return;
-  }
-  // the arm and the crank both turn about a boss on the wall: the arm's
-  // stem swings from straight up, the ball leading; the crank's handle from
-  // straight out, round and round, down first
-  const reach = (l.kind === 'arm' ? ARM_LENGTH : LEVER_REACH) * P;
-  const a = l.kind === 'arm' ? Math.PI / 2 - shape.angle : -shape.angle;
+  // the arm turns about a boss out from the wall: the stem swings from
+  // straight up, the ball leading
+  const reach = ARM_LENGTH * P;
+  const a = Math.PI / 2 - shape.angle;
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
-  // the arm's boss reaches out from the wall to the pivot
-  if (l.kind === 'arm') ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
+  ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, 2);
   ctx.lineWidth = P;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(ex, ey);
   ctx.stroke();
-  knob(ex, ey, l.kind === 'arm' ? 3 : 2);
+  knob(ex, ey, 3);
   ctx.fillStyle = '#000';
 }
 
 // --- the sand -------------------------------------------------------------------
-// The hopper, the tray and the piles are real plots of sand, so they are blitted
+// The hopper and the tray are real plots of sand, so they are blitted
 // like the yard and the hole rather than drawn a grain at a time. The bins are
 // plots too, but a few dozen cells each, so they and the handful on the pegs
 // are drawn straight, cell for cell in the grain's own shade.
@@ -375,9 +433,6 @@ export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
   if (tray.grid && tray.n) drawGrid(tray);
-  // the piles you stake from, on the ground beside the building: your purse,
-  // a coin a pile
-  for (const h of stakes) if (h.grid && h.n) drawGrid(h);
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;

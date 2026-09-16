@@ -213,6 +213,14 @@ export const S = {
   // settled hand can say its multiple.
   casinoOpen: false,
   pot: null,              // { cur, stake, n, where }
+  // The bet set on the panel: which coin and which of CASINO_CHIPS; and the
+  // last hand's, for the same-bet button.
+  coin: 'dust',
+  chip: 1,
+  lastBet: null,          // { coin, chip }
+  // The arm has been pulled and the stake is still on its way into the bowl:
+  // the floor opens on its own the moment the heap is still.
+  armed: false,
   // A chip is down and the stake is still raining into its plot. Nothing can be
   // let go, banked or dropped until the heap has stopped moving. See `pouring`
   // in casino.js.
@@ -231,8 +239,6 @@ export const S = {
   attract: null,          // { grain, next }
   // The lever just pulled on the building, for its swing.
   leverPulled: null,      // { key, at }
-  staking: null,          // { cur, stake, left } -- a tap's chunk still to lift off a pile
-  unstaking: null,        // { cur, stake } -- the pot on its way home from the bowl
   // What the machine is flashing right now: a peg lit on the beat, a divider
   // lit for a x39 or a near miss, the sign on a strobe for a x39.
   tableFx: { pegs: [], edge: null, strobeAt: 0 },
@@ -486,6 +492,7 @@ export const SAVED = [
   'shelf',
   'potency',
   'casinoOpen',
+  'coin', 'chip', 'lastBet',   // the bet set on the casino's panel, and the last hand's
   'scrubOpen',
   'towerOpen',
   'outhouseOpen',
@@ -659,7 +666,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'staking', 'unstaking',
+  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'armed',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
@@ -722,9 +729,6 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
-// The stake piles on the ground to its right: a plot a coin, the purse drawn
-// at the band ladder, laid out and filled by stakes.js.
-export const stakes = [];
 // And the tray at its foot, where the bins pay into and the pot stands after.
 export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a

@@ -680,64 +680,63 @@ export const SCENES = {
                  window.__machine('ram', { bought: true }); window.__board('tower'); } },
 
   // --- the casino -------------------------------------------------------------
-  // The table stood up, its piles rained in, and the dust pile tapped: the
-  // same call a click or a finger's tap makes.
-  //   window.__casinoStakes(dust)    the casino open with the piles standing
-  //   window.__casinoStake(taps)     ...and the dust pile tapped this many times, the stake standing
-  //   window.__casinoHand()          ...and the arm pulled, the hand played out
-  // The piles beside the building: one a coin the yard has handed out, dust
-  // only on a fresh yard, each the purse at its band.
-  casinostakes: { about: 'the casino', say: 'the piles you stake from, one a coin, beside the building',
-    run: () => { window.__casinoStakes(6000); window.__look(st().casinoX - 200); } },
-  // A tap's stream in flight: a tenth of the purse lifting off the dust pile
-  // and arcing over the rim.
-  casinocarry: { about: 'the casino', say: 'the dust pile tapped: a tenth of the purse streaming to the rim',
-    run: () => { window.__casinoStakes(6000);
-                 const at = window.__stakeAt('dust'); window.__tap(at.x, at.y); window.__fast(0.7);
+  // The table stood up, a bet set on the panel and the arm pulled: the same
+  // calls a click makes.
+  //   window.__casinoStakes(dust)    the casino open, dust in the hole
+  //   window.__casinoStake(chip)     ...and a bet set and the arm pulled, the stake standing
+  //   window.__casinoHand()          ...and the hand played out to the tray
+  // The panel: the coins and the chips, one of each chosen, the window
+  // saying the stake, same bet and the sack.
+  casinopanel: { about: 'the casino', say: 'the panel under the feet: coins, chips, the window, same bet, the sack',
+    run: () => { window.__casinoStakes(6000); window.__look(st().casinoX - 380); } },
+  // The panel with a coin more and a hand behind it: ore's button, same bet
+  // live, the sack live over a paid tray, a chip the purse cannot cover dead.
+  casinopanelfull: { about: 'the casino', say: 'the panel with ore open, a hand played, and the all-in dead',
+    run: () => { window.__casinoStakes(500); window.__crew(0, 0, 1); window.__grant({ shards: 50 });
+                 window.__casinoStake('chip-100'); window.__casinoHand(); window.__fast(0.3); window.__spend(400);
                  window.__look(st().casinoX - 380); } },
-  // The pot standing in the hopper, the arm up.
-  casinohopper: { about: 'the casino', say: 'the stake standing in the funnel, the arm up',
-    run: () => { window.__casinoStake(1); window.__look(st().casinoX - 380); } },
+  // The stake raining in: the arm pulled, the sand coming down out of the
+  // sky into the funnel.
+  casinopour: { about: 'the casino', say: 'the arm pulled: the stake raining into the funnel',
+    run: () => { window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+                 window.__fast(0.6); window.__look(st().casinoX - 380); } },
+  // The pot standing in the hopper, the floor about to open.
+  casinohopper: { about: 'the casino', say: 'the stake standing in the funnel',
+    run: () => { window.__casinoStake(); window.__look(st().casinoX - 380); } },
   // A hand mid-cascade: the pile draining into the throat, the pebbles on the
   // pegs with the first in the bins.
-  casino: { about: 'the casino', say: 'the arm pulled: the pile draining, the pebbles on the pegs',
-    run: () => { window.__casinoStake(1); window.__clickLever('casino-gate'); window.__fast(0.9);
-                 window.__look(st().casinoX - 380); } },
+  casino: { about: 'the casino', say: 'the floor open: the pile draining, the pebbles on the pegs',
+    run: () => { window.__casinoStake(); window.__fast(0.9); window.__look(st().casinoX - 380); } },
   // The bins paying, middle outward: a foot inverted for the bin on its beat,
   // the box counting up, pebbles running down into the tray.
   casinopaying: { about: 'the casino', say: 'the bins paying into the tray, a bin a beat',
-    run: () => { window.__casinoStake(1); window.__clickLever('casino-gate');
+    run: () => { window.__casinoStake();
                  for (let f = 0; f < 1200 && !(st().drop && st().drop.stage === 'pay'); f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 380); } },
   // A hand just paid: the tray standing, the box saying the multiple and the
-  // change, the chute and the crank live.
+  // change, the sack live, the window saying the tray rides on the next pull.
   casinopaid: { about: 'the casino', say: 'the tray paid, the box saying the multiple and the change',
-    run: () => { window.__casinoStake(1); window.__casinoHand(); window.__fast(0.3); window.__look(st().casinoX - 380); } },
+    run: () => { window.__casinoStake(); window.__casinoHand(); window.__fast(0.3); window.__look(st().casinoX - 380); } },
   // A win: hands are played until one pays more than it took, and the shot is
   // a beat after -- the strobe on the sign and the fountains in the air.
   casinowin: { about: 'the casino', say: 'a win: the strobe and the fountains',
     run: () => { window.__casinoStakes(60000);
                  for (let i = 0; i < 12; i++) {
-                   if (st().pot) { window.__clickLever('casino-chute'); for (let f = 0; f < 400 && (st().paying || st().tableAir); f++) window.__fast(1 / 60); window.__clearFloor(); }
-                   window.__casinoStake(1); window.__casinoHand();
+                   if (st().pot) { window.__pressButton('bank'); for (let f = 0; f < 400 && (st().paying || st().tableAir); f++) window.__fast(1 / 60); }
+                   window.__casinoStake(); window.__casinoHand();
                    if (st().hand && st().hand.won) break;
                  }
                  window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
-  // The button pressed: the cap sunk into the wall, before the hatch opens.
-  casinopressed: { about: 'the casino', say: 'the bank button pressed: the cap sunk into the wall',
-    run: () => { window.__casinoStake(1); window.__casinoHand(); window.__holdControl('casino-chute'); window.__look(st().casinoX - 380); } },
-  // The chute open: the tray running out of the foot's hatch on to the strip,
-  // the pile forming, a hauler on its way for it.
-  casinobank: { about: 'the casino', say: 'the button pressed: the chute open, the pile forming, a hauler coming',
-    run: () => { window.__casinoStakes(6000); window.__crew(0, 3); window.__levels({ haulPaceLevel: 8 });
-                 window.__casinoStake(1); window.__casinoHand();
-                 window.__clickLever('casino-chute'); window.__fast(1.2);
-                 window.__look(st().casinoX - 300); } },
-  // The crank wound: the tray going back up for a drop again, mid-arc.
-  casinohoist: { about: 'the casino', say: 'the crank turning: the tray hoisted back to the roof',
-    run: () => { window.__casinoStake(1); window.__casinoHand();
-                 window.__clickLever('casino-crank'); window.__fast(0.4);
+  // The sack pressed: the tray flying to the hole across the yard.
+  casinobank: { about: 'the casino', say: 'the sack pressed: the tray flying to the hole',
+    run: () => { window.__casinoStake(); window.__casinoHand();
+                 window.__pressButton('bank'); window.__fast(0.6);
+                 window.__look(st().casinoX + 300); } },
+  // The arm pulled on a paid tray: the winnings going up to the roof to ride.
+  casinohoist: { about: 'the casino', say: 'the arm pulled on a paid tray: the winnings hoisted to ride',
+    run: () => { window.__casinoStake(); window.__casinoHand();
+                 window.__clickLever('casino-gate'); window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
 
   // --- the pit and the rift ---------------------------------------------------

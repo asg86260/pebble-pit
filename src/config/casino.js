@@ -9,14 +9,9 @@
 // first and the wheel aimed at it, so you were watching a picture of a decision
 // already made. Here nothing is decided until a grain is on a peg.
 
-// What goes on the roof is what you sweep into it. One pile a coin stands on
-// the ground beside the building -- the purse itself, drawn at the band
-// ladder -- and staking is the ordinary sweep: pick grains up off the pile
-// and let them go over the rim (stakes.js). The row is laid from the
-// building's right wall this many cells apart, dust nearest, each pile on a
-// plot wide enough for the brim's cone and tall enough for it.
-export const STAKE_GAP = 5;
-export const STAKE_ROWS = 20;
+// What goes on the roof is the bet set on the panel: a coin and a chip, the
+// four chips this casino has always sold. `all` is the whole purse.
+export const CASINO_CHIPS = [10, 100, 1000, 'all'];
 
 // --- the handful ------------------------------------------------------------------
 // How many pebbles come out of the throat a hand, whatever the stake: the
@@ -53,11 +48,12 @@ export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // the walls are fixed cells in the hopper's own plot, so the sand heaps
 // against them by the yard's rules, fills from the throat up and sits in the
 // bowl. What stands in it is the stake at the band ladder -- a chip of ten is
-// ten grains, an all-in is the brim -- and the bowl is sized to the brim: nine
-// rows stepping in four a row come to three hundred and sixty cells. The heap
-// stands up to the rim and no further (`table.ceiling`).
-export const HOPPER_PROFILE = [0, 4, 8, 12, 16, 20, 24, 28, 32];
-export const HOPPER_H = HOPPER_PROFILE.length;
+// ten grains, an all-in is the brim -- and the bowl is at least the brim: nine
+// rows stepping in evenly from the building's width to a floor of
+// `HOPPER_FLOOR` cells (the profile is worked out below, once the width is
+// known). The heap stands up to the rim and no further (`table.ceiling`).
+export const HOPPER_H = 9;
+export const HOPPER_FLOOR = 8;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
 // you let go, to the throat's two cells, the column the handful enters at and
 // its neighbor.
@@ -74,16 +70,18 @@ export const CASINO_SIGN_H = 9;
 // over the bins.
 export const BOARD_AIR = 4;
 export const PEG_ROW_H = 3;
-// A bin is six cells on the field: a five-cell slot and a wall on its right.
-// Five, because a bin wears its own pay in its own foot and the half's ".5"
-// -- a point, a clear cell and a digit, the only way it reads at this size --
-// is five cells; and six halves to the three cells a grain steps across a row,
-// so the fan of ten rows reaches the outer bins exactly. The two edge bins
-// are wider still: their pay is two digits and a gap.
+// A bin is eight cells on the field: a seven-cell slot and a wall on its
+// right. Seven, because a bin wears its own pay in its own foot and the
+// half's ".5" -- a point, a clear cell and a digit, the only way it reads at
+// this size -- is five cells, and a pay wants a clear cell each side of it
+// or it reads as its neighbor's; and eight halves to the four cells a grain
+// steps across a row, so the fan of ten rows reaches the outer bins exactly.
+// The two edge bins are wider still: their pay is two digits and a gap.
 export const DIGIT_W = 3;                      // the pay face's glyph, in cells
 export const HALF_W = DIGIT_W + 2;             // and the half's: a point, air, a digit
-export const BIN_W = HALF_W + 1;
-export const EDGE_BIN_W = DIGIT_W * 2 + 1 + 1;
+export const PAY_AIR = 1;                      // clear cells each side of a pay
+export const BIN_W = HALF_W + 2 * PAY_AIR + 1;
+export const EDGE_BIN_W = DIGIT_W * 2 + 1 + 2 * PAY_AIR + 1;
 export const BIN_H = 6;
 // What a bin pays, written under it in its own foot: the bins' dividers run on
 // down through this band, so it is a row of table cells, one under each bin,
@@ -94,33 +92,57 @@ export const LABEL_H = 9;
 // hopper is, because what stands in it goes back up to the hopper on a drop
 // again.
 export const TRAY_H = 5;
-// The field's width, and the whole building's: the bins across, with two cells
-// of block either side -- a white divider and the wall.
+// The field's width: the bins across. The building is wider by a margin
+// either side -- two cells at least, a white divider and the wall, and more
+// when the panel of buttons under the feet is wider than the field, since
+// the front has to hold the panel (see below).
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
-export const CASINO_MARGIN = 2;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- the controls on the building ---------------------------------------------------
-// Three controls, one a decision, each where its effect is. The arm is a slot
-// machine's: a tall stem up from a boss on the wall by the funnel with a ball
-// on the end, the biggest knob on the building, that swings down through most
-// of a half turn when pulled and comes back up slower; dead, it lies at the
-// bottom of its swing. The bank is a push button set into the foot's wall by
-// the chute, face on: a round cap in a square recess, that sinks into the
-// wall when pressed. The crank is a hub with a bar for a handle that turns
-// while the tray goes up. A thumb needs more than
-// a stem to find, so on a phone every hit box opens out to `LEVER_HIT` cells.
+// The arm is a slot machine's: a tall stem up from a boss on the wall by the
+// funnel with a ball on the end, the biggest knob on the building, that
+// swings down through most of a half turn when pulled and comes back up
+// slower; dead, it lies at the bottom of its swing. The panel under the
+// bins' feet is a row of face-on push buttons: each a white recess with a
+// cell of black rim, rims shared along the row, wearing what it does -- a
+// coin's mark, a chip's figure, the sack, the same-bet turn -- black when
+// live or chosen, grey when dead or not, and grey for a beat when pressed.
+// Between the chips and the sack a boxed window says what the pull stakes.
+// A thumb needs more than a stem to find, so on a phone every hit box opens
+// out to `LEVER_HIT` cells.
 export const ARM_LENGTH = 8;              // the arm's stem, in cells
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
 export const ARM_SWING = (2 * Math.PI) / 3;   // how far down it swings
-export const LEVER_REACH = 3;             // the crank's handle, in cells
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
 export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
-export const BUTTON_PRESS_MS = 200;       // the cap stays sunk this long
-export const BUTTON_RECESS = 7;           // the square recess in the wall, in cells
-export const BUTTON_CAP = 5;              // the cap in it, corners off
-export const BUTTON_SUNK = 3;             // what the cap shrinks to, pressed
-export const CRANK_TURNS = 3;             // full turns of the handle over one hoist
+export const BUTTON_PRESS_MS = 200;       // a pressed button reads pressed this long
+export const PANEL_ROWS = 9;              // a button's recess is this tall, glyph and air
+export const PANEL_H = PANEL_ROWS + 4;    // the band: the recess, its rims, a clear row above and below
+export const PANEL_GAP = 1;               // clear cells between a glyph and its recess's rim
+export const MARK_CELLS = 5;              // a coin's mark on a button, in cells square
+export const GLYPH_CELLS = 8;             // the sack and the same-bet turn: a shelf glyph, a cell a pixel
+export const WINDOW_DIGITS = 4;           // the stake window shows up to this many figures ("12k" past that)
+// A chip's figure on its button, and a figure's width in the sign's face:
+// three cells a figure and a cell of air between.
+export const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
+export const wordCells = word => word.length * DIGIT_W + (word.length - 1);
+// The panel's width: every button's recess -- its face and a cell of air
+// each side -- and the rims between and around them.
+const PANEL_FACES = [
+  MARK_CELLS, MARK_CELLS, MARK_CELLS,
+  ...CASINO_CHIPS.map(c => wordCells(chipLabel(c))),
+  WINDOW_DIGITS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS,
+  GLYPH_CELLS, GLYPH_CELLS
+];
+export const PANEL_CELLS = PANEL_FACES.reduce((n, w) => n + w + 2 * PANEL_GAP + 1, 1);
+// ...which is what sets the building's margin past the field, and with it
+// the hopper's width and its funnel's profile: the walls step in evenly
+// from the rim to the floor.
+export const CASINO_MARGIN = Math.max(2, Math.ceil((PANEL_CELLS + 2 - BOARD_COLS) / 2));
+export const HOPPER_COLS = BOARD_COLS + 2 * CASINO_MARGIN - 2;
+export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
+  Math.round(r * ((HOPPER_COLS - HOPPER_FLOOR) / 2) / (HOPPER_H - 1)));
 
 // --- how a grain moves -----------------------------------------------------------------
 // A grain steps a cell at a time down the face, this often -- slower than a
@@ -191,8 +213,6 @@ export const TABLE_GRAV = 0.05;
 // The brim is what the tray holds and what the bowl holds: five rows of
 // seventy-two, or the funnel's profile, is three hundred and sixty cells, and
 // a heap under a ceiling fills flat, so three hundred stands in either with
-// the rim clear. The stake piles stand at the same ladder, as cones on open
-// ground: `STAKE_COLS` is the plot the brim's cone needs.
 //
 // The ladder is arithmetic on three numbers and nothing else, so it lives
 // here where the numbers do, and the plots are sized off it at layout. What
@@ -206,18 +226,6 @@ export const shownFor = n =>
     : Math.min(CASINO_PILE_BRIM,
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
-// A cone of n grains at the yard's own slope stands sqrt(n) tall and twice
-// that wide; a cell of bare ground either side keeps it its own heap.
-export const STAKE_COLS = Math.ceil(2 * Math.sqrt(CASINO_PILE_BRIM)) + 2;
-// The ground the row takes, for the walk to reserve beside the building: a
-// pile a coin, with a gap before each.
-export const STAKE_COINS = ['dust', 'shard', 'spore'];
-// A tap on a pile stakes this share of the coin's purse, never less than the
-// minimum and never more than the purse; taps stack.
-export const STAKE_TAP_SHARE = 0.1;
-export const STAKE_TAP_MIN = 10;
-export const STAKES_W = STAKE_COINS.length * (STAKE_GAP + STAKE_COLS);
-
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },

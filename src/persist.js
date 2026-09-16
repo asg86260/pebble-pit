@@ -221,7 +221,8 @@ let lastBlob = null;
 // What the hole is still owed by the casino: the pot being paid out, plus
 // every grain already in the air toward it.
 function payingOwed() {
-  const arcs = (S.tableAir || []).filter(k => k.arc);
+  // (a grain arcing up into the hopper is the stake's, not the hole's)
+  const arcs = (S.tableAir || []).filter(k => k.arc && !k.lands);
   const inAir = arcs.reduce((n, k) => n + (k.worth || 0), 0);
   if (S.paying) return { cur: S.paying.cur, left: S.paying.left + inAir, grains: S.paying.grains + arcs.length };
   if (!arcs.length) return null;
@@ -664,11 +665,14 @@ export function restore() {
   // it comes back pouring in again whatever it was doing -- a hand caught on
   // the pegs comes back a pot in the hopper with the let-go open again, a tray
   // caught mid-hoist comes back a pot in the hopper.
+  // `owed` is what the purse has still to pay for a stake caught raining in:
+  // spent as the grains land, so what was not yet spent is spent on the way
+  // back in, and a save mid-pour costs nothing twice.
   S.pot = s.pot && s.pot.cur
-    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0,
+    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, owed: +s.pot.owed || 0,
         where: s.pot.where === 'tray' ? 'tray' : 'hopper' }
     : null;
-  clearCasino();                // every plot starts empty; the pot and the heaps pour again
+  clearCasino();                // every plot starts empty; the pot pours again
   S.tableAir = [];
   S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
   S.hoisting = false;

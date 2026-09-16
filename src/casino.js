@@ -4,19 +4,21 @@
 // what you have and hands some of it back, and the whole of it is a decision you
 // keep making rather than a purchase you make once.
 //
-// **The building is the machine.** A heap of the coin you carry to the hopper
-// on the roof pours in and stands there as the pot, at the table's own band
-// ladder. You pull the gate lever: the floor splits, the whole pile drains
-// into the throat -- into the machine, the way dust goes into the hole -- and
-// out of the throat come a handful of pressed pebbles that go down ten rows
-// of pegs into eleven bins, each flipping its own coin at every peg off the
-// seeded rng, so the handful fans out into the bell the bins are priced on and
-// the same handful never lands the same way twice. When the last pebble is
-// still the bins pay into the tray at the foot, a bin a beat from the middle
-// outward, each pebble carrying its bin's pay -- and what stands in the tray
-// is the pot again. Tip it out for the haulers, or wind it back up to the
-// roof and drop it again. When to stop is the game. See DESIGN.md, "The
-// handful" and "The stake is a heap you carry".
+// **The building is the machine.** The bet is set on the panel under the
+// bins' feet -- a coin, a chip -- and the arm does the rest: the stake rains
+// out of the sky into the hopper on the roof and stands there as the pot,
+// at the table's own band ladder, the purse spent as it lands; the floor
+// splits, the whole pile drains into the throat -- into the machine, the way
+// dust goes into the hole -- and out of the throat come a handful of pressed
+// pebbles that go down ten rows of pegs into eleven bins, each flipping its
+// own coin at every peg off the seeded rng, so the handful fans out into the
+// bell the bins are priced on and the same handful never lands the same way
+// twice. When the last pebble is still the bins that hold one pay into the
+// tray at the foot, a bin a beat from the middle outward, each pebble
+// carrying its bin's pay -- and what stands in the tray is the pot again.
+// Press the sack and it flies to the hole; pull the arm and it goes up into
+// the funnel ahead of the next stake, and rides. When to stop is the game.
+// See DESIGN.md, "The handful" and "The machine".
 //
 // A handful is `CASINO_HANDFUL` pebbles whatever the stake, each carrying its
 // share of it. That count is what makes this a bet: every pebble is a fair
@@ -28,7 +30,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { PILE_LIMIT, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -38,14 +40,13 @@ import { PILE_LIMIT, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, shownFor,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
-import { S, pit, casino, table, tray, floor, stakes } from './state.js';
+import { S, pit, casino, table, tray } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
-import { shakeView, blocked } from './world.js';
+import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
-import { spend, bankDust, spendHeld, payTo } from './pit.js';
-import { goHome } from './stakes.js';
+import { spend, bankDust, spendHeld } from './pit.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 import { reducedMotion } from './prefs.js';
@@ -69,91 +70,119 @@ export const letting = () => !!S.drop;
 export const hoisting = () => !!S.hoisting;
 
 // A hand is under way, any part of it: the stake coming down, the handful on
-// the pegs, the bins paying, the tray going up or over. Chip, let-go, bank and
-// drop-again are all dead for the whole of it.
-export const busy = () => pouring() || letting() || hoisting() || !!S.paying || !!S.staking || !!S.unstaking;
+// the pegs, the bins paying, the tray going up. The panel and the arm are
+// dead for the whole of it. A banked pot still flying to the hole is not a
+// hand: the sack ends the hand, and the next one can be set at once.
+export const busy = () => pouring() || letting() || hoisting();
 
-// --- the stake -----------------------------------------------------------------
-// What you can stake is what you can see: a pile of each coin -- the purse
-// itself, at the band ladder -- stands on the ground beside the building
-// (stakes.js), and what you sweep off it into the funnel is the stake. The
-// purse each comes out of.
+// --- the bet -----------------------------------------------------------------------
+// What the next pull stakes is set on the panel: a coin, and one of the four
+// chips, `all` being the whole purse. The purse each coin comes out of.
 export const purseOf = cur =>
   cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : S.stored;
+// A coin the yard has not handed out yet has no button: ore once the quarry
+// stands, crops once the farm does.
+export const coinOpen = cur => cur === 'shard' ? S.quarryOpen : cur === 'spore' ? S.farmOpen : true;
 
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 export const inTray = () => !!S.pot && S.pot.where === 'tray';
 
-// A grain may go in while no hand is on the board and the pot has no other
-// coin in it: one coin a hand, because a mixed pot would need a mixed tray
-// and a mixed pay, and the refusal at the rim is one rule and it is visible.
-// The hopper still walking to the last grain's worth is no bar: a sweep is
-// many grains a second, and each is a stake. Nor is a banked pot still
-// running out of the chute or lying on the strip for the haulers: banking
-// ends the hand, and the pile on the ground is the crew's business, not the
-// next stake's. (The arm waits for the tray to empty; the stake does not.)
-export const canStake = cur =>
-  S.casinoOpen && !letting() && !hoisting() && (!S.pot || (inHopper() && S.pot.cur === cur));
+// The chip on the panel, and what it is worth in the chosen coin. A chip the
+// purse cannot cover is dead on the panel: it goes grey rather than quietly
+// staking less than it says.
+export const chipOf = () => CASINO_CHIPS[S.chip];
+export const chipValue = (chip = chipOf(), cur = S.coin) => chip === 'all' ? purseOf(cur) : chip;
+export const chipCovered = (chip = chipOf(), cur = S.coin) => chipValue(chip, cur) > 0 && purseOf(cur) >= chipValue(chip, cur);
 
-// The pot is standing in the hopper and nothing is moving: the floor can open.
-export const canLet = () => inHopper() && !busy();
-
-// A pot can be tipped out whenever it is standing in the tray and nothing is
-// still moving. Where it goes is the ground beside the building, and that
-// ground has a limit: the chute holds while the casino's strip is full (see
-// `chuteOpen`), and the pot waits in the tray until the haulers have made
-// room -- a pot has to have somewhere to land, with the waiting visible.
-export const canBank = () => inTray() && !busy();
-
-// And putting the same pot back on the roof.
-export const canRide = () => inTray() && !busy();
-
-// A grain let go over the rim, carrying its band's worth: it comes out of the
-// purse there and then -- lifted out of the hole to the funnel, so the purse
-// is seen leaving -- and joins the pot standing in the bowl. A grain that was
-// swept out of the bowl and dropped back brings its share back with it; the
-// purse was never paid. The bowl walks to the pot's band (`trickleIn`) and
-// the arm is live the moment it is lying still. False when the pot will not
-// have it: another coin, or a hand under way.
-export function stakeGrain(cur, worth, from) {
-  if (!canStake(cur)) return false;
-  let take = worth;
-  if (from !== 'hopper') {
-    take = Math.min(worth, purseOf(cur));
-    if (take <= 0) return false;
-    if (cur === 'dust') { payTo(potAt().x, potAt().y - P * 4); spend(take); payTo(); }
-    // Out of the hole first, and off what the rift holds for the rest: a stake
-    // is spending like any other. See `spendHeld` in pit.js.
-    else if (cur === 'shard') { S.shards -= take; spendHeld(take, SHARD_CELL); }
-    else if (cur === 'spore') { S.spores -= take; spendHeld(take, SPORE_CELL); }
-  }
-  const on = S.pot ? S.pot.n : 0;
-  S.pot = { cur, stake: on + take, n: on + take, where: 'hopper' };
-  S.hand = null;                                 // the last one is old news now
-  S.pouring = true;
-  stopAttract();                                 // the machine has a player
+// The panel is live while nothing is moving and no hand is on the board. A
+// coin can only be picked while it is the pot's, or there is no pot: one
+// coin a hand, because a mixed pot would need a mixed tray and a mixed pay.
+export const canPick = () => S.casinoOpen && !busy();
+export function pickCoin(cur) {
+  if (!canPick() || !coinOpen(cur) || (S.pot && S.pot.cur !== cur)) return false;
+  S.coin = cur;
+  S.shopStale = true;
+  return true;
+}
+export function pickChip(i) {
+  if (!canPick() || !chipCovered(CASINO_CHIPS[i])) return false;
+  S.chip = i;
   S.shopStale = true;
   return true;
 }
 
-// A grain swept out of the bowl takes its share of the pot with it: the pot
-// is what stands in the bowl. Nothing is paid back until it lands somewhere
-// -- back in the bowl, or home on its pile (`refundGrain`).
-export function unstakeGrain(worth) {
-  if (!inHopper()) return;
-  S.pot.n = Math.max(0, S.pot.n - worth);
-  S.pot.stake = S.pot.n;
-  if (S.pot.n === 0) { S.pot = null; S.hand = null; }
-  S.pouring = true;                              // the bowl walks to the pot again
+// What the next pull stakes: the chip, if the purse covers it, plus whatever
+// is standing in the tray from the last hand, which the pull hoists into the
+// funnel first -- that is riding it.
+export const nextStake = () => (chipCovered() ? chipValue() : 0) + (inTray() ? pot() : 0);
+
+// The arm is live with a bet to play -- a chip the purse covers, or winnings
+// in the tray to ride -- or with a pot already standing still in the hopper
+// (a reload mid-hand), and dead while anything moves.
+export const canLet = () => S.casinoOpen && !busy() && (inHopper() || nextStake() > 0);
+
+// The sack is live with a pot standing in the tray and nothing moving; the
+// last pot still flying to the hole holds it a moment, since it is the
+// tray's grains that fly.
+export const canBank = () => inTray() && !busy() && !S.paying;
+
+// One pull is the hand. The tray's winnings, if any, go up into the funnel
+// first; then the chip rains out of the sky into the bowl, the purse spent
+// as each grain lands (`spendStake`); and the moment the heap is still the
+// floor opens on its own (`S.armed`, watched in `stepCasino`). A pot that
+// already stands still in the hopper -- a hand come back from a save -- just
+// opens.
+export function letGo() {
+  if (!canLet()) return;
+  if (inHopper()) { openGate(); return; }
+  const cur = inTray() ? S.pot.cur : S.coin;
+  const chip = chipCovered(chipOf(), cur) ? chipValue(chipOf(), cur) : 0;
+  const riding = inTray() ? pot() : 0;
+  S.lastBet = { coin: cur, chip: S.chip };
+  S.pot = { cur, stake: riding + chip, n: riding, owed: chip, where: 'hopper' };
+  S.armed = true;
+  S.hand = null;                                 // the last one is old news now
+  stopAttract();                                 // the machine has a player
+  // the tray's picture goes up whole: the hopper's picture is the same band
+  if (riding) S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
+  else S.pouring = true;
   S.shopStale = true;
 }
 
-// A grain of the pot come home to its pile: the purse rises by what it
-// carried, into the hole where the purse lives, as it lands.
-export function refundGrain(cur, worth) {
-  const find = potShade(cur);
-  for (let w = 0; w < worth; w++) bankDust(pit.x + rand() * Math.min(700, pit.w), find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length));
+// Same bet: the last hand's coin and chip, and the arm, in one press. Dead
+// until a hand has been played, and while the purse cannot cover it.
+export const canSame = () =>
+  !!S.lastBet && S.casinoOpen && !busy() && !inHopper() && coinOpen(S.lastBet.coin) &&
+  (!S.pot || S.pot.cur === S.lastBet.coin) && chipCovered(CASINO_CHIPS[S.lastBet.chip], S.lastBet.coin);
+export function sameBet() {
+  if (!canSame()) return false;
+  S.coin = S.lastBet.coin;
+  S.chip = S.lastBet.chip;
+  letGo();
+  return true;
+}
+
+// A grain of the stake landing in the bowl: its share comes out of the
+// purse there and then, and the pot grows by it. Out of the hole first, and
+// off what the rift holds for the rest: a stake is spending like any other
+// (see `spendHeld` in pit.js).
+function spendStake(cur, n) {
+  if (!S.pot || n <= 0) return;
+  const take = Math.min(n, S.pot.owed, purseOf(cur));
+  if (cur === 'dust') spend(take);
+  else if (cur === 'shard') { S.shards -= take; spendHeld(take, SHARD_CELL); }
+  else if (cur === 'spore') { S.spores -= take; spendHeld(take, SPORE_CELL); }
+  S.pot.owed -= take;
+  S.pot.n += take;
   S.shopStale = true;
+}
+// What the next grain issued toward the bowl carries: an even share of what
+// is still owed over the grains still to come, the remainder on the last.
+const owedInAir = () => S.tableAir.reduce((n, k) => n + (k.lands === 'hopper' && k.worth ? k.worth : 0), 0);
+function stakeShare(toGo) {
+  if (!S.pot || !S.pot.owed) return 0;
+  const left = Math.max(0, S.pot.owed - owedInAir());
+  return toGo > 1 ? Math.min(left, Math.max(1, Math.round(left / toGo))) : left;
 }
 
 // --- the handful ------------------------------------------------------------------
@@ -267,8 +296,7 @@ const makeGrain = (s, demo = false) => ({
 // out grain by grain, each drawing its path as it leaves. What is left of the
 // heap once the handful has gone lifts off and fades, because it was the
 // picture of the pot and the pot is on the board now.
-export function letGo() {
-  if (!canLet()) return;
+function openGate() {
   S.drop = {
     at: now(), lastSent: -Infinity, sent: 0, handful: handfulFor(S.pot.n), drained: 0, shade: 0,
     grains: [], bins: makeBins(),
@@ -570,14 +598,12 @@ export function stopAttract() {
   S.attract = null;
 }
 
-// --- taking it, or dropping it again -------------------------------------------------
-// Banking is a heap on the ground, and the crew carries it in. The chute
-// opens the tray's floor and the paid sand runs out of the foot of the
-// building on to the casino's strip, where it heaps as a real pile of the
-// staked coin: a tray grain is worth its band, and it lands as that many
-// grains, so what lies on the ground IS the pot, and the counter moves as the
-// haulers' loads land in the hole. A win is collected, not credited -- it was
-// the one thing in the yard still credited rather than carried.
+// --- taking it -------------------------------------------------------------------------
+// Press the sack and the tray flies to the hole: the pot's grains lobbed
+// across the yard one by one, each carrying its share of the number, the
+// counter moving as each lands. The hand is over the moment it is pressed --
+// the next bet can be set and the arm pulled while the last winnings are
+// still in the air.
 export function bank() {
   if (!canBank()) return;
   // `left` is the pot itself and it is paid out to the grain, however the
@@ -585,30 +611,6 @@ export function bank() {
   S.paying = { cur: S.pot.cur, left: pot(), grains: Math.max(1, tray.n) };
   S.pot = null;
   S.hand = null;                                 // taken: there is nothing to report
-  S.shopStale = true;
-}
-
-// The casino's strip, and whether the chute may let another grain out on to
-// it: what lies there plus what is already in the air toward it has to stay
-// under the strip's limit, or the ground would refuse a grain and the hole
-// would be paid for a grain nobody carried.
-const casinoStrip = () => S.piles.find(p => p.key === 'casino');
-const toStrip = () => S.tableAir.reduce((n, k) => n + (k.lands === 'strip' ? (k.worth || 1) : 0), 0);
-export const chuteOpen = () =>
-  !!casinoStrip() && (S.pileCount?.casino || 0) + toStrip() < PILE_LIMIT.casino;
-
-// Put the whole of it back on the roof. The tray's grains lift in a rising arc
-// up the face of the building and drop into the hopper, sounding the pour's
-// tick in reverse, and the pot stands there as the stake for the next handful.
-// A player who watches their winnings climb back up to the roof knows exactly
-// what they are about to risk, which is the whole of the bet.
-export function ride() {
-  if (!canRide()) return;
-  S.pot = { ...S.pot, stake: S.pot.n, where: 'hopper' };
-  // The whole of the tray's picture goes up: the hopper's picture is the same
-  // band, and every grain of it will drain into the machine.
-  S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
-  S.hand = null;
   S.shopStale = true;
 }
 
@@ -646,11 +648,10 @@ function hoistStep(dt) {
 
 function payOutStep(dt) {
   const p = S.paying;
-  const strip = casinoStrip();
   let n = Math.min(p.grains, Math.max(1, Math.ceil(p.grains * (dt / TRICKLE_MS))));
   const find = potShade(p.cur);
-  while (n-- > 0 && p.grains > 0 && chuteOpen()) {
-    let x = tray.x, y = S.groundY - P, v = find ? someFind(find) : 4;
+  while (n-- > 0 && p.grains > 0) {
+    let x = tray.x + tray.cols * P / 2, y = S.groundY - P, v = find ? someFind(find) : 4;
     const c = topmostColumn(tray);                 // off the heap if there is any left
     if (c >= 0) {
       const r = topGrain(tray, c);
@@ -669,18 +670,17 @@ function payOutStep(dt) {
       : p.left;
     p.left -= worth;
     p.grains--;
-    // out of the hatch in the foot's left wall and a short lob on to the strip
     S.tableAir.push({
-      x, y, s: v, t: 0, worth, lands: 'strip',
-      // into the middle half of the strip, so a grain that walks to the nearest
-      // column with room stays on the ground the survey counts as the casino's
-      arc: { x0: x, y0: y, x1: strip.from + (strip.to - strip.from) * (0.25 + rand() * 0.5),
-             y1: S.groundY - P, k: 0, high: P * 4 + rand() * P * 4, ms: CHUTE_MS }
+      x, y, s: v, t: 0, worth,
+      // Not a ballistic lob: the hole is three thousand pixels away and the arc
+      // that gets there under gravity is one that leaves the sky. This is a
+      // thrown line with a hump in it, which is what a long throw looks like.
+      arc: { x0: x, y0: y, x1: pit.x + rand() * Math.min(700, pit.w),
+             y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30, ms: FLIGHT_MS }
     });
   }
   if (p.grains < 1 && p.left < 1) { S.paying = null; }
 }
-const CHUTE_MS = 700;
 
 // --- the two plots ---------------------------------------------------------------------
 // Both are walled: a heap stands up to the rim and then walks sideways, so an
@@ -734,7 +734,6 @@ export function wireTray() {
 // The sand itself is never saved: a reset or a reload starts the building
 // empty, and a pot comes back pouring into whichever plot it stood in.
 export function clearCasino() {
-  for (const h of stakes) if (h.grid) fillFlat(h, 0);
   if (table.grid) layWalls();
   if (tray.grid) fillFlat(tray, 0);
   table.capped = null;
@@ -763,7 +762,7 @@ export { shownFor };
 // no way to say so would be a hand that never came.
 export const tableWant = () => {
   if (!inHopper() || S.drop) return 0;
-  return Math.min(shownFor(pot()), table.capped ?? Infinity);
+  return Math.min(shownFor(S.pot.stake), table.capped ?? Infinity);
 };
 
 // And the tray: the pot's band while the pot stands in it, or the band of what
@@ -797,7 +796,7 @@ const grainsIn = plot => plot === table ? hopperN() : plot.n;
 const settledIn = (plot, want, name) =>
   airborneTo(name) === 0 && grainsIn(plot) >= want && !plot.awakeN;
 export const settledInPile = () =>
-  !S.paying && !S.hoisting &&
+  !S.hoisting &&
   (inHopper() ? settledIn(table, tableWant(), 'hopper') : inTray() ? settledIn(tray, trayWant(), 'tray') : true);
 
 export const potShade = cur =>
@@ -807,12 +806,17 @@ function trickleIn(dt, plot, name, want, from) {
   const have = grainsIn(plot) + airborneTo(name);
   let n = Math.min(want - have, Math.max(1, Math.ceil((want - have) * (dt / TRICKLE_MS))));
   const find = potShade(S.pot?.cur);
+  let toGo = want - have;
   while (n-- > 0) {
     const shade = find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length);
     const { x, y } = from();
+    // a grain of the stake carries its share of what the purse still owes
+    const worth = name === 'hopper' ? stakeShare(toGo--) : 0;
     if (S.tableAir.length < IN_AIR) {
-      S.tableAir.push({ x, y, vx: (rand() - 0.5) * 0.3, vy: 0.9 + rand() * 0.8, t: 0, s: shade, lands: name });
-    } else if (!addGrain(plot, x, null, shade)) {
+      S.tableAir.push({ x, y, vx: (rand() - 0.5) * 0.3, vy: 0.9 + rand() * 0.8, t: 0, s: shade, lands: name, cur: S.pot?.cur, worth });
+    } else if (addGrain(plot, x, null, shade)) {
+      if (worth) spendStake(S.pot.cur, worth);
+    } else {
       plot.capped = grainsIn(plot);
       break;
     }
@@ -916,25 +920,13 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         if (k.lands === 'hopper') { k.arc = null; k.vx = 0; k.vy = 0.5; continue; }
-        // One square off the tray is worth its band, and on the ground it is
-        // that many grains: the pile IS the pot, for the haulers to carry. The
-        // chute holds while the strip is full, so the ground takes them; a
-        // grain it still refuses goes to the hole rather than nowhere.
-        if (k.lands === 'strip') {
-          for (let w = k.worth ?? 1; w > 0; w--) if (!addGrain(floor, a.x1, blocked, k.s)) bankDust(a.x1, k.s);
-          sfx('grain-land', { x: a.x1 });
-          S.tableAir.splice(i, 1);
-          continue;
-        }
-        // A pot lifted out of the hopper and let go on the ground goes back to
-        // the purse the way banking used to: over the works and into the hole,
-        // and down there the pile *is* the dust.
+        // One square off the tray is worth its band, and the hole is paid
+        // that many grains as it lands: down there the pile *is* the dust.
         for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
         S.tableAir.splice(i, 1);
       }
       continue;
     }
-    if (k.lands === 'stake') continue;          // the heaps' rain: stakes.js lands it
     if (!k.up) k.vy += TABLE_GRAV * f;
     k.x += k.vx * f;
     k.y += k.vy * f;
@@ -946,10 +938,8 @@ export function stepSparks(dt) {
       const plot = k.lands === 'hopper' ? table : tray;
       const c = Math.max(0, Math.min(plot.cols - 1, Math.round((k.x - plot.x) / P)));
       if (k.y >= surfaceY(plot, c)) {
-        // a grain of a pile arriving is the stake: the purse is spent as it
-        // lands, and one the pot will not have (the hand shut on the way)
-        // goes home unspent
-        if (k.cur && !stakeGrain(k.cur, k.worth, 'stake')) { goHome(k, k.cur, 0); S.tableAir.splice(i, 1); continue; }
+        // a grain of the stake arriving: the purse is spent as it lands
+        if (k.worth) spendStake(k.cur, k.worth);
         if (!addGrain(plot, k.x, null, k.s)) plot.capped = grainsIn(plot);
         sfx(k.lands === 'hopper' ? 'hopper-land' : 'tray-tick', { x: k.x });
         S.tableAir.splice(i, 1);
@@ -970,6 +960,9 @@ export function stepCasino(dt) {
   stepSparks(dt);
   // The pot is standing in its plot: the pour is over, and the decision is open.
   if (S.pouring && settledInPile()) { S.pouring = false; S.shopStale = true; }
+  // ...and on a pull, the decision was made: the floor opens on its own
+  if (S.armed && inHopper() && !busy()) { S.armed = false; openGate(); }
+  if (S.armed && !inHopper()) S.armed = false;
   if (S.drop) stepDrop(dt);
   stepAttract(dt);
   // A win's fountains go up a beat apart rather than all at once: three bursts

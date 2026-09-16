@@ -46,8 +46,8 @@ import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, p
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { dealHand, potAt } from './casino.js';
 import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
-import { stakeOf, stakeWant, casinoTap } from './stakes.js';
-import { stakes, table } from './state.js';
+import { table } from './state.js';
+import { pressButton, BUTTONS, panelLayout } from './levers.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -903,61 +903,44 @@ export const HANDLES = {
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __answered: answered, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
-  // a lever on the casino pulled by name, the same call the pointer makes:
-  // `__clickLever('casino-gate')`, 'casino-chute', 'casino-crank'
+  // The arm pulled and a button on the panel pressed by key, the same calls
+  // the pointer makes: `__clickLever('casino-gate')`; `__pressButton('chip-100')`,
+  // 'coin-dust', 'coin-shard', 'coin-spore', 'chip-10', 'chip-1k', 'chip-all',
+  // 'same', 'bank'. Both answer false when the control is dead.
   __clickLever: pullLever,
+  __pressButton: pressButton,
   // a control held mid-motion for a scene: its pull timestamped a minute ahead
   __holdControl: key => { S.leverPulled = { key, at: clockNow() + 60000 }; },
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
   __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
+  // where a button stands, in the world: the middle of its recess
+  __buttonAt: key => { const at = panelLayout().find(a => a.button.key === key); return at ? { x: at.x + at.w / 2, y: at.y + at.h / 2 } : null; },
+  __buttons: () => BUTTONS.filter(b => b.shown()).map(b => ({ key: b.key, live: b.live(), on: b.on() })),
   // The sweep, one step in from the pointer: what a press-and-drag does at a
   // point and what letting go there does, the same two calls input.js makes.
   __sweep: (x, y) => { sweep(x, y); return S.held; },
   __let: (x, y) => { release(x, y); },
-  // A tap at a point, the same call a click on a desk and a finger's tap on
-  // a phone make: a stake pile sends a tenth of its purse to the funnel, the
-  // bowl sends the pot home.
-  __tap: casinoTap,
-  // A point on a stake pile's sand, in the middle of its plot; on the sand
-  // standing in the bowl; and over the hopper's rim.
-  __stakeAt: (cur = 'dust') => {
-    const h = stakeOf(cur);
-    if (!h || !h.grid) return null;
-    const x = h.x + Math.floor(h.cols / 2) * P;
-    return { x, y: surfaceY(h, colOf(h, x)) + P * 1.5 };
-  },
-  __bowlAt: () => {
-    if (!table.grid || !table.n) return null;
-    const x = table.x + Math.floor(table.cols / 2) * P;
-    return { x, y: surfaceY(table, colOf(table, x)) + P * 1.5 };
-  },
   __rim: () => ({ x: potAt().x, y: potAt().y - P * 3 }),
   // the pointer, for a scene that wants the cursor somewhere
   __mouseAt: (x, y) => { S.mouse.x = x; S.mouse.y = y; },
-  // The table stood up the way the scenes and the checks want it: open, dust
-  // in the hole, the piles rained in; a pile tapped this many times and the
-  // stream landed and the pour settled; a hand played through the gate to
-  // the tray standing. Each waits on the sand.
+  // The table stood up the way the scenes and the checks want it: open, with
+  // dust in the hole; a bet set on the panel and the arm pulled, the stake
+  // rained in and standing; a hand played through to the tray standing.
+  // Each waits on the sand.
   __casinoStakes: (dust = 6000) => {
     newGame(); openCasino(true); give(dust); rebuildBoards();
-    for (let f = 0; f < 60 * 20 && !stakes.every(h => h.n >= stakeWant(h)); f++) fast(1 / 60);
   },
-  __casinoStake: (taps = 1, cur = 'dust') => {
+  __casinoStake: (chip = 'chip-100', coin = 'coin-dust') => {
     if (!S.casinoOpen) { newGame(); openCasino(true); give(6000); rebuildBoards(); }
-    const h = stakeOf(cur);
-    for (let f = 0; f < 60 * 20 && h && h.n < stakeWant(h); f++) fast(1 / 60);
-    let done = 0;
-    for (let t = 0; t < taps; t++) {
-      const x = h.x + Math.floor(h.cols / 2) * P;
-      if (casinoTap(x, surfaceY(h, colOf(h, x)) + P * 1.5)) done++;
-    }
-    const flying = () => S.staking || S.tableAir.some(k => k.lands === 'hopper' && k.cur);
-    for (let f = 0; f < 60 * 30 && (flying() || S.pouring); f++) fast(1 / 60);
-    return done;
+    pressButton(coin); pressButton(chip);
+    const pulled = pullLever('casino-gate');
+    // the stake raining in, and the floor about to open: stop the frame before it does
+    for (let f = 0; f < 60 * 30 && (S.hoisting || S.pouring) && !S.drop; f++) { fast(1 / 60); if (S.armed && !S.pouring && !S.hoisting) break; }
+    return pulled;
   },
   __casinoHand: () => {
-    pullLever('casino-gate');
-    for (let f = 0; f < 60 * 40 && (S.drop || S.pouring); f++) fast(1 / 60);
+    if (!S.pot) pullLever('casino-gate');
+    for (let f = 0; f < 60 * 60 && (S.armed || S.drop || S.pouring || S.hoisting); f++) fast(1 / 60);
   },
   // a hand dealt off the rng without the sim -- the bins each grain of a
   // handful lands in and what they pay on this stake -- for the check that

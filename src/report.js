@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, stakes, tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -34,8 +34,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, pouring, letting, hoisting, potAt, tableWant, trayWant, shownMult, hopperN } from './casino.js';
-import { stakeWant, stakeAt, stakeGrainWorth } from './stakes.js';
+import { pot, pouring, letting, hoisting, potAt, tableWant, trayWant, shownMult, hopperN, nextStake } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -283,15 +282,11 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   tray: tray.n,
   trayWant: trayWant(),
   paying: S.paying && S.paying.left,
-  // The heaps you stake from: what each is, whether it stands, and how much
-  // sand lies on its plot against what it should; and the heap in your hand.
-  stakes: stakes.map(h => ({ cur: h.cur, grains: h.n, want: stakeWant(h), worth: stakeGrainWorth(h),
-                             x: Math.round(stakeAt(h).x), y: Math.round(stakeAt(h).y) })),
-  // ...and what a sweep has in hand off them, by coin
-  staking: S.staking ? S.staking.left : 0,
-  unstaking: !!S.unstaking,
-  inFlight: S.tableAir.filter(k => k.lands === 'hopper' && k.cur).length,
-  homing: S.tableAir.filter(k => k.lands === 'stake' && k.arc).length,
+  // The bet on the panel: the coin, the chip, and what the next pull stakes
+  // (the chip plus the tray); and whether the arm has been pulled with the
+  // stake still on its way in.
+  coin: S.coin, chip: S.chip, lastBet: S.lastBet, nextStake: nextStake(), armed: S.armed,
+  owed: S.pot ? S.pot.owed || 0 : 0,
 
   // The lab, and every kind of smoke over the yard.
   skyShown: S.skyShown,

@@ -26,8 +26,7 @@ import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
-import { leverHit } from './levers.js';
-import { casinoTap } from './stakes.js';
+import { leverHit, controlName, buttonUnder, leverUnder } from './levers.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -149,10 +148,11 @@ canvas.addEventListener('pointerdown', e => {
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
-  if (leverHit(p.x, p.y)) return;
-  // a click on a stake pile or the bowl works it; a finger is judged at the
-  // release, since a press there may be the start of nothing
-  if (e.pointerType !== 'touch' && casinoTap(p.x, p.y)) return;
+  // the casino's arm and buttons: a click works one at once; a finger is
+  // judged at the release, through the page's one tap gate, since a press
+  // there may be the start of a scroll
+  if (e.pointerType !== 'touch' && leverHit(p.x, p.y)) return;
+
   if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The nearest high point to the click, the same place a held swing lands:
@@ -259,9 +259,7 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning && e.type === 'pointerup' &&
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
-    // a tap on a stake pile or the bowl works it (anything the press swept
-    // up off the ground is let go where it is)
-    if (casinoTap(p.x, p.y)) { S.mining = false; if (S.dragging) { S.dragging = false; release(p.x, p.y); } return; }
+    if (leverHit(p.x, p.y)) { S.mining = false; return; }
     const which = stationAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);
@@ -459,6 +457,10 @@ function askedAbout(x, y, cx, cy) {
                        (w.y - P * 3 - S.camY) * S.zoom);
     return true;
   }
+  // a button on the casino's panel is named, the way a body or a mark is,
+  // before the building it stands on
+  const named = controlName(x, y);
+  if (named) { showTip(named, { x, y: y - P * 6 }); return true; }
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));
@@ -561,7 +563,8 @@ addEventListener('touchstart', e => {
   if (S.dragging) { e.preventDefault(); return; }
   for (const t of e.changedTouches) {
     const p = pos(t);
-    if (dustUnder(p.x, p.y)) { e.preventDefault(); return; }
+    // ...and a finger on the casino's arm or a button on its panel
+    if (dustUnder(p.x, p.y) || buttonUnder(p.x, p.y) || leverUnder(p.x, p.y)) { e.preventDefault(); return; }
   }
 }, { passive: false });
 
