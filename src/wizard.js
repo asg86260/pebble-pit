@@ -1,22 +1,8 @@
-// The wizard: the one body in this yard whose feet leave the ground.
-//
-// Everything else here walks. A station idles until somebody is actually
-// standing at it, a hole is a thing you climb down a ladder into, and nothing is
-// ever anywhere it did not travel to -- which is the rule that makes the yard
-// read as people rather than as numbers with sprites on them.
-//
-// A wizard does not break that rule so much as pay for it. It walks out to the
-// tower for its hat like every other tradesman, walks under the meteor, and then
-// goes *up*, a pixel and a bit a frame, the whole four hundred and sixty of it.
-// You watch it climb. It is slow on purpose: the sky is a long way off, and a
-// body that got there instantly would be a body that teleported with a hat on.
-//
-// What it does up there is not what a rockhand does on the rock. It rides a ring
-// round the star at a distance and throws bolts at it, and the cell comes off
-// where the bolt lands -- which is the one thing in this yard that is allowed to
-// happen at range, and the whole of what the hat is for. What comes off falls
-// the four hundred pixels back down to the yard, where the haulers deal with it
-// like anything else lying about.
+// The wizard: the one body in this yard whose feet leave the ground. It walks
+// under the meteor like anybody, then goes *up*, a pixel and a bit a frame,
+// slow on purpose: a body that got there instantly would have teleported with
+// a hat on. Up there it rides a ring round the star and throws bolts at it,
+// the one thing in the yard allowed to happen at range.
 
 import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN, WIZ_DASH, WIZ_DASH_EASE,
          WIZ_REACH, WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, BROLLY_FALL } from './config.js';
@@ -31,22 +17,19 @@ import { critRoll } from './crit.js';
 import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
-// The ground under the meteor: where a wizard walks to before it goes anywhere
-// near the sky, and where it comes back down to.
+// The ground under the meteor: where a wizard walks to before it goes up, and
+// comes back down to.
 export const underMeteor = () => sky.x - WORKER / 2;
 
-// Whether this wizard is at the tower: up in the ring, or stood on the ground
-// under it with its walk done. The tower's works used to count a wizard the
-// moment it was assigned, which is the count-not-a-body defect every other
-// station had already been cured of -- a hat rung finished for a wizard still
-// two thousand pixels out across the yard (docs/critics-2026-09-10.md, A7).
+// Whether this wizard is at the tower: in the ring, or on the ground under it
+// with its walk done. A body, not an assignment, or a hat rung finishes for a
+// wizard still out across the yard.
 export const atTower = w =>
   w.aloft || (!w.walking && Math.abs((w.spot ?? underMeteor()) - w.x) <= WORKER);
 
 export function newWizard() {
-  // Its own spot on the ground under the meteor, a few cells either side of the
-  // middle of it. They go up from where they are standing, so a gang given one
-  // column between them would rise as a single body four deep.
+  // Its own spot a few cells either side of the middle: they go up from where
+  // they stand, and one column would rise as a single body four deep.
   const x = underMeteor() + Math.round((rand() - 0.5) * 6) * P;
   return {
     type: TYPE.WIZARD, x, spot: x, y: walkY(x + WORKER / 2),
@@ -60,19 +43,11 @@ export function newWizard() {
   };
 }
 
-// Where a wizard is trying to be: its place on the ring, this instant. They
-// circle the star rather than hanging off the cell they are working, because
-// what they do to it is thrown rather than swung -- see `fire` in meteor.js --
-// and a body that has to be *at* the thing it is working is a body with a pick.
-//
-// Each keeps its own angle and they are dealt out a whole turn apart when a body
-// arrives, so a gang reads as a ring going round rather than as a knot.
+// Its place on the ring this instant: each keeps its own angle.
 const angleOf = (w, now) => w.orb0 + now / 1000 * WIZ_SPIN;
 
-// What the ring is around, and how wide it rides. Nearly always the star --
-// and, once in a game, the dome: while one is rising the wizards are diverted
-// to it, a small halo over the crown of the thing they are pouring, because
-// the dome is a summoning that happens to point at the ground. See shield.js.
+// What the ring is around: the star, or the dome while one is rising, a small
+// halo over the crown of the thing they are pouring (shield.js).
 const ringMid = () => domeRising() ? domeSpot() : { x: sky.x, y: sky.y };
 const ringR = () => domeRising() ? domeOrbitR() : orbitR();
 
@@ -83,16 +58,12 @@ function ringSpot(w, now) {
            y: c.y + Math.sin(a) * ringR() };
 }
 
-// How far apart they keep on the ring, in radians. Bodies arrive at the bottom
-// of it -- they come up off the ground under the star -- so without this they
-// would ride round in a heap of three.
+// How far apart they keep on the ring, in radians: bodies all arrive at the
+// foot of it, and without this they would ride round in a heap.
 const APART = Math.PI / 3;
 
-// They do not *choose* a place: they arrive where they arrive, at the foot of
-// the ring, and then push apart. Each turn they lean away from whoever is
-// nearest until there is a body's room between them, which is the same thing
-// the gangs on the ground do with their elbows -- and it happens where you can
-// watch it rather than being decided before anybody sets off.
+// They arrive where they arrive and then push apart, each frame leaning away
+// from whoever is nearest, where you can watch it.
 function spaceOut(w, secs) {
   let push = 0;
   for (const o of S.workers) {
@@ -106,19 +77,13 @@ function spaceOut(w, secs) {
   w.orb0 += push * secs;
 }
 
-// What comes off a body that is flying: a speck of its own light every so often,
-// drifting down behind it and going out. It is the only thing in this yard that
-// says a body is being carried rather than standing on something -- everybody
-// else is on the ground, and the ground says it for them.
-//
-// The same specks the bolts leave and throw off the star -- see `sparkle` in
-// meteor.js. One substance, one list: what a wizard trails and what its magic
-// scatters are the same magic.
+// A flying body sheds a speck of its own light every so often: the one thing
+// that says it is carried rather than standing. The same specks as the bolts'
+// (`sparkle` in meteor.js).
 function trail(w, now) {
   if (now < (w.trailAt || 0)) return;
-  // Specks by the pixel rather than by the clock: a body flat out across the
-  // yard sheds as many per pixel as one climbing, which makes its trail a
-  // streak instead of a row of dots forty pixels apart.
+  // Specks by the pixel rather than by the clock, so a body flat out across
+  // the yard leaves a streak instead of dots forty pixels apart.
   const gait = Math.max(1, (w.pace || WIZ_RISE) / WIZ_RISE);
   w.trailAt = now + WIZ_TRAIL_MS / gait * (0.7 + rand() * 0.6);
   sparkle(w.x + WORKER / 2 + (rand() - 0.5) * P * 2, w.y + WORKER - P / 2,
@@ -127,35 +92,26 @@ function trail(w, now) {
           WIZ_TRAIL_LIFE);
 }
 
-// A body taken off the sky, on its way down. It comes down the way it went up --
-// under its own hat, a pixel and a bit at a time -- rather than dropping under
-// gravity: a wizard is not a thing that falls when you stop paying it, and four
-// hundred pixels of gravity is over in a quarter of a second.
-//
-// Nothing else about the body happens while it is coming down: it is `true`
-// until its feet are on the ground, and the crew loop holds everything else off
-// until then. See `retask`.
+// A body taken off the sky, on its way down under its own hat rather than
+// under gravity. Returns true once its feet are on the ground; the crew loop
+// holds everything else off until then (`retask`).
 export function floatDown(w) {
   const foot = walkY(w.x + WORKER / 2);
   w.aloft = w.y < foot;
-  // The canopy goes with the landing, along with everything else that says this
-  // body is in the sky. An umbrella left up on a body standing on the ground
-  // is an umbrella drawn over somebody shovelling.
+  // The canopy goes with the landing: an umbrella left up on a body on the
+  // ground is an umbrella drawn over somebody shovelling.
   if (w.y >= foot) {
     w.y = foot; w.floating = false; w.aloft = false; w.brolly = false;
     return true;
   }
-  // Under an umbrella it comes down slower, because that is what it is for.
-  // A body stepping out of a balloon and dropping at a wizard's pace is a body
-  // being lowered on a wire.
+  // Under an umbrella it comes down slower.
   const pace = w.brolly ? BROLLY_FALL : WIZ_RISE * 1.6;
   w.y = Math.min(foot, w.y + pace * frames());   // pixels a frame
   return false;
 }
 
-// A body coming down. Used when the sky has nothing left in it, and when the
-// hat comes off -- a wizard stood down mid-air lands before it does anything
-// else, because there is no job in this game you do from up there.
+// A body coming down: a wizard stood down mid-air lands before it does
+// anything else, because there is no job you do from up there.
 function descend(w) {
   const foot = walkY(w.x + WORKER / 2);
   w.cell = null;
@@ -169,12 +125,9 @@ function descend(w) {
 export const wizMs = () => Math.max(120, WIZ_MS / Math.pow(STEP, S.wizSpeedLevel || 0));
 export const wizBite = () => 1 + (S.wizPowerLevel || 0);
 
-// A body coming down for its dose: a glide to its own spot on the ground, then
-// standing there until the stirrer's hand reaches it. The stirrer walks to
-// where the wizard stands, and the wizard stands on the ground under the ring
-// rather than wherever on the ring it happened to be -- the far side of the
-// ring can be over a roof or the hole -- so the hand-off is on ground both of
-// them can stand on.
+// A body coming down for its dose: a glide to its own spot on the ground, not
+// straight down from wherever on the ring it was, since the far side of the
+// ring can be over a roof or the hole.
 function landForDose(w) {
   const foot = walkY(w.x + WORKER / 2);
   const d = (w.spot ?? underMeteor()) - w.x;
@@ -189,19 +142,16 @@ function landForDose(w) {
 export function stepWizard(w, now) {
   if (w.aloft) trail(w, now);
 
-  // A stirrer is on its way with a dose (apothecary.js, `doseComing`), and a
-  // body on the ring cannot be handed anything. Down for it, and back up
-  // once it is drunk. Not mid-dome: the dome is a call, and the pour is not
-  // dropped for a drink; the stirrer waits it out under the ring.
+  // A stirrer is on its way with a dose (`doseComing`), and a body on the ring
+  // cannot be handed anything. Not mid-dome: the pour is not dropped for a
+  // drink, and the stirrer waits it out.
   if (doseComing(w) && !domeRising()) { landForDose(w); return; }
 
-  // No hat, no flying. The hat is the job -- see the tower -- so a body put on
-  // this before the tower has finished one stands under the meteor and waits for
-  // it, which is exactly what `stepKit` is already walking it to the tower for.
+  // No hat, no flying: a body put on this before the tower has finished one
+  // waits under the meteor.
   if (!w.trained || (!meteorAlive() && !summoning() && !domeRising())) {
     if (!descend(w)) return;
-    // and it waits under the sky rather than wandering off: this is its station,
-    // the same as the face of the quarry is a quarrier's
+    // and it waits under the sky rather than wandering off: this is its station
     const d = (w.spot ?? underMeteor()) - w.x;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.1, Math.abs(d));
@@ -210,15 +160,9 @@ export function stepWizard(w, now) {
     return;
   }
 
-  // Out to under it first, on the ground, before any of the going up. A wizard
-  // that rose from wherever it happened to be standing would be a wizard
-  // crossing the yard at four hundred feet, over the rock and the houses.
-  //
-  // The dome is the exception, because the dome is a call: it lifts off where
-  // it stands and flies there. The ring over a dome hangs a few cells above
-  // the crown, so the flight is low and the body is watched the whole way --
-  // and a wizard that walked the width of the yard to it at a tradesman's pace
-  // arrived after the rock did.
+  // Out to under it on the ground first, or it crosses the yard at four
+  // hundred feet. The dome is the exception: it lifts off where it stands and
+  // flies there low, since a wizard that walked to it arrived after the rock.
   if (!w.aloft) {
     const d = (w.spot ?? underMeteor()) - w.x;
     if (!domeRising() && Math.abs(d) > 1) {
@@ -229,28 +173,18 @@ export function stepWizard(w, now) {
     w.aloft = true;
   }
 
-  // Round it goes, whatever else it is doing. The turn is the job -- a wizard
-  // parked in the sky is a hat on a stick -- and it carries on while the body is
-  // still climbing up to the ring, so it arrives already moving with the rest.
-
-  // What it is working on. A cell is kept until it is gone, so the body is not
-  // re-deciding every frame and drifting between two of them. With nothing up
-  // there to work, there is nothing to pick: it is here to pour instead.
+  // What it is working on: a cell is kept until it is gone, so the body is not
+  // drifting between two of them. Nothing to pick while it is here to pour.
   if (domeRising() || !meteorAlive()) w.cell = null;
   else if (!w.cell || !cellLeft(w.cell)) {
     // Elbows first, and the bare cells if that leaves nothing: at the end of a
-    // meteor there are a handful of cells and everybody's elbows are over all of
-    // them, and two of them working shoulder to shoulder on the last of it is
-    // better than one of them floating back down to the ground for it.
+    // meteor everybody's elbows are over all of it.
     w.cell = nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, true))
           || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
     w.next = now + wizMs();
   }
-  // Out to the ring the short way: straight away from the middle of the star,
-  // from wherever the body happens to be. Never across it -- a wizard given a
-  // place on the far side and sent to it in a straight line flew through the
-  // star to get there, which is a body inside the thing it is working, four
-  // hundred feet up, on fire.
+  // Out to the ring straight away from the middle, never across it: a wizard
+  // sent to the far side in a straight line flew through the star.
   const mid = ringMid();
   const mx = w.x + WORKER / 2, my = w.y + WORKER / 2;
   const out = Math.hypot(mx - mid.x, my - mid.y) || 1;
@@ -259,20 +193,17 @@ export function stepWizard(w, now) {
     const tx = mid.x + (mx - mid.x) * want - WORKER / 2;
     const ty = mid.y + (my - mid.y) * want - WORKER / 2;
     const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy) || 1;
-    // The climb to the star is a pixel and a bit a frame, on purpose. The
-    // flight to the dome is flat out, easing off over the last stretch so it
-    // settles on to the ring instead of overshooting it -- see WIZ_DASH.
+    // The climb to the star is slow on purpose; the flight to the dome is flat
+    // out, easing off over the last stretch so it settles onto the ring.
     const pace = (domeRising() ? Math.min(WIZ_DASH, Math.max(WIZ_RISE, d / WIZ_DASH_EASE))
                                : WIZ_RISE) * frames();
     w.pace = pace / frames();
     w.x += (dx / d) * Math.min(pace, d);
     w.y += (dy / d) * Math.min(pace, d);
-    // Pouring starts on the way in, once the dome is within reach: the beam
-    // lands as the body arrives rather than a beat after it has stopped.
+    // Pouring starts on the way in, once the dome is within reach.
     w.channel = domeRising() && d < WIZ_REACH;
     w.next = Math.max(w.next, now + wizMs() / 2);   // no throwing while travelling
-    // and it takes its place on the ring from where it got there, so there is
-    // nothing to travel round to
+    // it takes its place on the ring from where it got there
     w.orb0 = Math.atan2(my - mid.y, mx - mid.x) - now / 1000 * WIZ_SPIN;
     return;
   }
@@ -292,68 +223,44 @@ export function stepWizard(w, now) {
     return;
   }
 
-  // On it, and *placed* rather than steered.
-  //
-  // Its position is its angle: the angle turns smoothly, so the body does. It
-  // used to chase a mark that was itself going round -- stepping towards it,
-  // snapping on to it when it caught up, and bobbing a couple of pixels a frame
-  // on top of that -- and the three of them together read as a body shaking in
-  // the sky rather than one orbiting. What is left of the bob is a slow breath
-  // in and out along the radius, which is a thing floating rather than a thing
-  // vibrating.
+  // On it, and *placed* rather than steered: its position is its angle, so it
+  // turns smoothly. The bob is a slow breath along the radius; a body chasing
+  // a moving mark and bobbing on top read as shaking, not orbiting.
   const a = angleOf(w, now);
   const r = ringR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
   w.x = mid.x + Math.cos(a) * r - WORKER / 2;
   w.y = mid.y + Math.sin(a) * r - WORKER / 2;
 
-  // Nothing there to work: they are making one. Everybody in the ring pours
-  // into the middle for as long as they are up here -- see `summon` -- and the
-  // channel is drawn off the same fact.
+  // Nothing there to work: everybody in the ring pours into the middle
+  // (`summon`), and the channel is drawn off the same fact.
   if (domeRising() || !meteorAlive()) {
     w.channel = true;
     return;
   }
   w.channel = false;
 
-  // A full pile stops the station, and the sky is a station. What comes off the
-  // star lands on the ground under it, and once that ground is heaped as high as
-  // it will go there is nowhere for the next cell to land: the ring holds where
-  // it is until somebody has carried some away. It is the same rule the rock and
-  // the quarry and the plots have, and it is the reason the star's sparks are worth
-  // fetching rather than worth ignoring.
+  // A full pile stops the station, and the sky is a station: the ring holds
+  // until somebody has carried some away.
   if (S.pileFull.sky) { w.lunge = 0; return; }
 
   if (now >= w.next && w.cell) {
-    // The star is a bounded job like the dig -- there are only so many cells in
-    // it -- so a crit PULLS FORWARD: the bolt takes a cluster of cells in one
-    // strike rather than its usual bite, spreading outward from where it hit (see
-    // `nearestLive` in meteor.js). It cannot take more than is there, so the star
-    // still comes apart in exactly as many cells as it has; the crit only brings
-    // them off sooner. The tell here is the bolt's own bigger burst off the face,
-    // not the ground fountain the rock and the cut throw -- the star's spoil is
-    // sparks in the sky, on their own arc, and it reads as a patch coming off at
-    // once. See DESIGN.md: the crit rule is one rule, but its dust looks like
-    // whatever the station's own spoil already looks like.
-    // The strong brew pays out here because the bite is the one per-body step in
-    // a wizard's spark yield -- the sparks a cell gives up are fixed.
+    // The star is a bounded job, so a crit PULLS FORWARD: a cluster of cells
+    // in one strike (`nearestLive` in meteor.js). The strong brew pays out
+    // here because the bite is the one per-body step in a wizard's yield.
     const bite = wizBite() * critRoll(critBoost(w)) * strengthBoost(w);
     fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, bite);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     w.cell = null;                 // the bolt has it now; pick the next one
-    // And the stew is a quicker cast: the wizard's own clock, divided by the
-    // boost, the way every other trade's clock is.
     w.next = now + wizMs() / speedBoost(w);
   }
 }
 
-// Everybody in the ring, pouring. Called once a frame rather than once a body:
-// what it makes is one thing being made by all of them, and a share each would
-// be a different mechanic with the same name.
+// Everybody in the ring, pouring. Once a frame rather than once a body: it
+// is one thing being made by all of them.
 export function stepSummon(dt) {
   const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
-  // The dome first: while one is rising it is what every channel in the sky is
-  // pouring into, whether or not the sky is also empty.
+  // The dome first: while one is rising every channel pours into it.
   if (domeRising()) { pourDome(hands, dt / 1000); return; }
   if (!summoning()) return;
   summon(hands, dt / 1000);
@@ -364,13 +271,9 @@ function cellLeft(cell) {
   return sky.cells && !!sky.cells[cell.r * sky.cols + cell.c];
 }
 
-// The cells the rest of them are already on -- and their elbows with them.
-//
-// A claim is a stretch, not a cell, for the same reason a claim on the muck is:
-// a cell is six pixels and a body is eighteen, so booking only the one cell
-// somebody is working puts the next body one cell over, which is close enough
-// that the two of them hang inside each other for the whole meteor. It is the
-// same rule and the same number as `MUCK_ELBOW` on the ground.
+// A claim is a stretch, not a cell: a cell is six pixels and a body is
+// eighteen, so booking one cell puts the next body inside this one. The same
+// number as `MUCK_ELBOW` on the ground.
 const ELBOW = 3;
 
 function spokenFor(w, elbows) {

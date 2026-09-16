@@ -52,10 +52,8 @@ const pages = { bench: document.getElementById('board'),
                 outhouse: document.getElementById('looboard'),
                 shack: document.getElementById('shackboard') };
 
-// How far up a ladder you are is a row of pips, and how big and how dark they
-// are is a number rather than a rule -- so the two of them live in config with
-// every other number and are handed to the stylesheet here. Written once, on the
-// root, so the nine boards that draw pips cannot disagree about them.
+// The pips' size and tone live in config and are handed to the stylesheet
+// here, once, on the root, so no two boards can disagree about them.
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
@@ -64,33 +62,15 @@ for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHE
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);
-// Where you stand to read the books, and the record beside them: the
-// noticeboard, between the work bench and the front doors.
-//
-// The books used to be the one board in the game with no building under
-// them -- an invisible ten-by-five patch at the near lip of the pit, with a
-// hand-tightened hover box because the ordinary eight cells of padding
-// reached into the rift's air. That was the best answer available while they
-// had nowhere to live. They have somewhere now, and the tight patch and the
-// rift no longer have to be kept out of each other's way, because they are
-// no longer in the same place.
+// Where you stand to read the books: the noticeboard.
 const booksRect = () => S.noticeboard;
-// The house is the only stand that is not a fixed rectangle: it grows a room per
-// body, so where you have to be standing to read the list of who lives there
-// depends on how many of them there are.
-//
-// The farm and the quarry stand at their shed, not at the station itself -- see
-// #1 in "Wave 3.1" in wave-feedback3.md. The shed (C5) used to be scenery: a
-// small building that gave their board something to hang over while the mouth
-// of the hole and the run of plots were still what you had to point at to open
-// it. That read wrong -- the shed is what looks like the sign, so it is what
-// the hand goes to. It is the whole answer now: the hover target, the click
-// target, and the anchor the board hangs from, for both of them.
+// Where you stand to open each board. The house grows a room per body, so its
+// rectangle is read live. The farm and the quarry stand at their shed, which is
+// what looks like the sign: the hover target, the click target and the anchor
+// the board hangs from are all the shed.
 const standAt = { bench, lab, casino, scrub, tower, shack,
-                  // The hut is the station (item 17): the whole plot is 408px of
-                  // hut, shelves and pots, and a board centered over all of it
-                  // hangs off the window on a narrow view. Hover, click and the
-                  // sheet all belong to the building that holds the rungs.
+                  // The hut, not the whole plot: a board centered over hut,
+                  // shelves and pots hangs off the window on a narrow view.
                   get apothecary() { return apothHut(); },
                   outhouse,
                   get stats() { return booksRect(); },
@@ -98,39 +78,29 @@ const standAt = { bench, lab, casino, scrub, tower, shack,
                   get farm() { return farmShed(); },
                   get house() { return houseRect(); } };
 
-// Where the board itself goes up. Split out from `standAt` on principle -- a
-// station could, in general, be stood at somewhere other than where its sheet
-// hangs -- but for every station in the yard today, including the farm and the
-// quarry now, the two questions have the same answer.
+// Where the board goes up: the same place you stand, for every station today.
 const boardAt = which => standAt[which];
 const anchor = which => boardAt(which);
-// Asked for when it is wanted, not gathered at load time. The quarry and the plots
-// are drawn by files this one already reads, so the imports come round in a ring
-// -- and a table built while the ring is still closing gets whichever of them
-// had not been reached yet as `undefined`. Reading it inside a function is the
-// same trick airboard.js hands its row out with.
+// Read inside a function, not gathered at load: the imports come round in a
+// ring, and a table built while the ring is still closing gets `undefined` for
+// whichever list had not been reached yet.
 const listFor = which =>
-  // Everything that has not moved to a board of its own. A row names the sheet
-  // it belongs to and the bench takes the rest, which is what every row used to
-  // be -- see `SHACK_GEAR` in shack.js for a board that reads its rows out.
+  // A row names the sheet it belongs to; the bench takes the rest.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
   which === 'casino' ? CASINO_UPGRADES :
   which === 'scrub' ? SCRUB_UPGRADES :
-  // The cut's and the plots' own rows, and the kit row that moved in with
-  // each -- see `lodgers`.
+  // The grounds' own rows and the kit row that lodges with each (`lodgers`).
   which === 'quarry' ? [...QUARRY_UPGRADES, ...lodgers('quarry')] :
   which === 'farm' ? [...FARM_UPGRADES, ...lodgers('farm')] :
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
   which === 'stats' ? STATS_UPGRADES :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
-  // Gathered when asked, like the house's -- see shack.js.
   which === 'shack' ? shackRows() :
   which === 'house' ? crewRows() : [];
 
-// Every station that has a board. One list, so that a thing which is true of all
-// of them -- the mark under the foot of it, for one -- is written once, and the
-// next station gets it by being added here.
+// Every station that has a board; what is true of all of them (the mark under
+// the foot, for one) is written once against this list.
 export const STATIONS = ['bench', 'casino', 'scrub', 'quarry',
                          'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
                          'shack'];
@@ -144,26 +114,15 @@ const standing = which =>
   which === 'farm' ? S.farmOpen :
   which === 'apothecary' ? S.apothecaryOpen :
   which === 'tower' ? S.towerOpen :
-  // The books open once the hole has had something in it. The hole is there from
-  // the first frame, but a rate measured over a yard that has never earned
-  // anything is a column of noughts, and a board of noughts teaches nothing
-  // except that the board is not worth walking to.
-  // The outhouse's board arrives with the building, like every station's; the
-  // row that puts the building up is on the bench with the other unlocks.
   which === 'outhouse' ? S.outhouseOpen :
   which === 'shack' ? S.shackOpen :
-  // The books open once the hole has had something in it. The record used to
-  // open them too; it hangs on the held sheet now (record.js).
+  // The books open once the hole has had something in it: a rate measured over
+  // a yard that has never earned anything is a column of noughts.
   which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
 
-// Where a station's mark goes: the middle of it, on the ground. Now that the
-// quarry and the farm stand at their shed rather than at the hole or the plots
-// (see #1, "Wave 3.1"), `standAt` is an ordinary rectangle for every station --
-// no more reaching for a hole's near lip, because there is no hole in this
-// table any more.
-// The ground a station stands on, for the checks: where you have to be to open
-// its board is the game's business, not arithmetic written out again in a check.
+// The ground a station stands on, for the checks, so where you have to be to
+// open a board is not arithmetic written out again in a check.
 export function standRect(which) {
   if (!standing(which)) return null;
   const r = standAt[which];
@@ -176,27 +135,14 @@ export function stationFoot(which) {
   return r && r.x + r.w / 2;
 }
 
-// Whether a station has anything for you.
-//
-// One mark and one question: is there something on that board worth the walk.
-// It was two for a while -- a flag for a heading you had never read, a dot for
-// something you could afford -- and two marks is a thing to learn before the
-// yard can be read at a glance, for a difference that changes nothing about
-// what you do next. You go and look either way.
+// Whether a station has something on its board worth the walk: one mark, one
+// question.
 export function hasOffer(which) {
   if (!standing(which)) return false;      // a place that is not there offers nothing
-  // Something you could buy this second, and nothing else. A row you have not
-  // seen before used to count too, which sounds right and is not: a yard you
-  // have just started has never seen any row, so every station would stand
-  // there pointing at itself from the first frame, and a mark that is always up
-  // is a mark nobody reads. This one goes up when there is something to do
-  // about it and comes down when you have done it.
-  //
-  // A row that moves bodies about spends nothing, and a ladder at the top of
-  // itself cannot be bought however much you are holding: neither is something
-  // you would cross the yard for. Nor is a row already bought and waiting its
-  // turn -- a press there hands it back, and a flag promising that is the
-  // station telling you to walk over for no reason.
+  // Something you could buy this second, and nothing else. Not an unseen row
+  // (a new yard has seen none, so every station would point at itself from
+  // the first frame), not a job count, not a maxed ladder, not a row already
+  // bought and waiting its turn.
   return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
                                   !u.price && !maxed(u) && !u.dead?.() &&
                                   canPay(u) && !inLine(u));
@@ -209,76 +155,36 @@ const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-// The hut, not the plot: the plot runs hut, shelves and four pots, and a pot
-// answers to its own picker (src/potpick.js) -- a pointer near a cauldron was
-// throwing the shop menu over the thing being clicked. The same hut rect the
-// stand and the board hang from, so the three cannot disagree.
+// The hut, not the plot: a pot answers to its own picker (potpick.js), and a
+// pointer near a cauldron must not throw the shop menu over it.
 export const nearApothecary = (x, y) =>
   S.apothecaryOpen && near(standAt.apothecary, x, y);
-// The shed beside it is now the *only* way in. #1 of "Wave 3.1" made it a
-// second one and left the hole answering as well, which is the half-measure
-// this replaces: pointing anywhere at the cut -- the ground the crew work, the
-// dust in it, a quarrier on the ladder -- threw a shop menu over the thing you
-// were trying to look at. Every other station in the yard is opened by its
-// building, and the shed is what the quarry's building is. The hole is a hole.
-//
-// The ramp side keeps the tight margin all the same. `SHED_GAP` is a lot
-// narrower than `BRIDGE_RUN`, so `near()`'s generous eight cells of padding
-// reaches from the shed on to the near ramp, and a board that opens when you
-// point at the ramp is the same complaint one step to the left. The far three
-// sides keep the ordinary padding; the ramp, the deck and the hole answer to
-// nothing.
+// The shed is the only way in; the hole is a hole. The ramp side keeps a tight
+// margin: `SHED_GAP` is much narrower than `BRIDGE_RUN`, so `near()`'s eight
+// cells would reach from the shed onto the ramp and open the board there.
 export const nearQuarry = (x, y) => {
   if (!S.quarryOpen) return false;
   const r = quarryShed();
   return x > r.x - P * 8 && x < r.x + r.w + P &&
          y > r.y - P * 8 && y < r.y + r.h + P * 4;
 };
-// The farm has no bridge to keep clear of, so its shed is simply the target --
-// see #1, "Wave 3.1" -- in place of the plots, which used to answer for the
-// whole width of the row.
 export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
 export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
-// And the cupboard by the rooms, once there is a crew to keep a broom for.
 export const nearOuthouse = (x, y) => S.outhouseOpen && near(outhouse, x, y);
-// And the gang's hut off the rock's flank. It is asked BEFORE the rock in the
-// cascade (see input.js): the hut stands on ground the rock's own reach covers,
-// and a building you can walk up to beats a hill you swing at.
+// Asked BEFORE the rock in the cascade (input.js): the hut stands on ground
+// the rock's own reach covers.
 export const nearShack = (x, y) => S.shackOpen && near(shack, x, y);
-// And the books, over the pit mouth. Asked after every building in the cascade
-// -- see input.js -- for the same reason the house is: this is a patch of open
-// air rather than a thing standing on the ground, so anything actually built
-// wins over it.
-// A tight patch rather than `near`'s generous eight cells all round. The rift
-// hangs three cells over the near lip of this very hole, and the ordinary
-// padding reaches into it -- the same complaint the quarry's ramp raised, and
-// answered the same way. One cell of grace above, two either side and two below,
-// which is a comfortable target and reaches nothing else.
-// The books and the record hang on the same board, so they answer to the same
-// patch of yard. It is the ordinary `near` every other station uses now: the
-// tight hand-cut box was the rift's fault and the rift is a long way from
-// here.
+// Asked after every building in the cascade (input.js): a patch of open air
+// loses to anything actually built.
 export const nearStats = (x, y) => standing('stats') && near(S.noticeboard, x, y);
-// And the house, once anybody lives in it -- with a tight right edge rather than
-// the usual eight cells.
-//
-// Every other station is a small thing with bare ground either side of it, so it
-// can afford to claim eight cells all round. The house is a wall of rooms, and
-// the gap between its right side and the bench is eight cells exactly: padded
-// like the rest it claimed the whole of that gap, including the ground the
-// cursor crosses on its way down to the corner of the bench's own board. Two
-// cells is still comfortably more than nothing, and it leaves the strip between
-// the two of them belonging to neither -- which is what the safe wedge needs.
+// The house's right edge is padded two cells, not eight: the gap to the bench
+// is eight cells exactly, and padded like the rest the house claimed the ground
+// the cursor crosses on its way to the bench's board. The strip between them
+// belongs to neither, which is what the safe wedge needs.
 const HOUSE_PAD_IN = P * 2;
-// The whole structure, roof included, is the target now -- see D2 in
-// wave-feedback3.md (#21). This used to be a band at the door: the block is
-// the one thing here that grows, and a region drawn round the whole of it used
-// to reach up into the air the boards hang in, so walking to the far corner of
-// the bench's own board could cross the roof and the house would steal the
-// menu. That is a real risk on a very tall settlement, but the ask is the
-// whole building as the target, and `nearHouse` is asked after every other
-// station -- see the `want` cascade in input.js, where the house goes last on
-// purpose -- so a cursor standing inside another station's own patch still
+// The whole structure, roof included. The block grows, and its region reaches
+// up into the air the boards hang in; that is safe only because `nearHouse` is
+// asked last in input.js's cascade, so a cursor inside another station's patch
 // answers to that station first.
 export const nearHouse = (x, y) => {
   if (S.crew < 1) return false;
@@ -287,114 +193,61 @@ export const nearHouse = (x, y) => {
          y > r.y && y < S.groundY + P * 4;
 };
 
-// The board stands on the bench, but it is a real element on a real screen: on a
-// phone the bench can be near an edge, or there can be less room above it than
-// the board is tall. So it is put where the bench is and then pushed back inside
-// the window rather than being allowed to hang off it.
-// Moved with a transform rather than with `left` and `bottom`. Those are layout:
-// animating them makes the browser lay the page out again every frame of the
-// slide, which is exactly what a menu sliding along in steps looks like. A
-// transform is handed to the compositor and moves smoothly.
-// Measured when it opens, when it changes page and when the window changes --
-// not every frame. Reading `offsetWidth` forces the browser to lay the page out,
-// and doing that sixty times a second for a menu whose size did not change is
-// work for nothing.
+// The board's size, measured when it opens, changes page or the window changes,
+// never every frame: reading `offsetWidth` forces a layout.
 let sized = { w: 0, h: 0 };
 
-// How big the sheet is *now*, with the last measurement standing in only while
-// it is not laid out at all.
-//
-// `sized` is a cache to keep the frame loop from forcing a layout sixty times a
-// second. It is not a second opinion, and it used to be treated as one: the
-// clamp below took `Math.max(sized.h, offsetHeight)` on the argument that the
-// pretend window a check reasons about is not the window on the screen, so the
-// taller of the two was the safe one. That is true of the direction it was
-// written for and false of the other, and the other happens every time a board
-// is swapped for a shorter one -- the cache still holds the *last* board's
-// height, and it belongs to a different sheet entirely. Clamped against 568
-// pixels of bench, a 292-pixel sheet in a 390-pixel window was pushed ninety
-// pixels off the top of the glass to make room for rows that were not there.
-//
-// A board that grows a section -- a pot, a shelf, a currency -- changes height
-// under its own seating, so this cannot be a rule about which boards exist. The
-// live measurement is the only thing that is about *this* sheet, so it wins
-// whenever there is one; a hidden element is zero by zero, and that is the one
-// case the cache is for.
+// How big the sheet is *now*. `sized` is a cache, not a second opinion: it
+// holds the *last* board's height, which belongs to a different sheet, so the
+// live measurement wins whenever there is one and the cache stands in only
+// while the element is hidden (zero by zero).
 const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
                           h: panelEl.offsetHeight || sized.h });
 
-// The whole panel, flyout included, for the things that are about the element
-// on the page rather than the seat -- the safe-zone wedge and the tip's dodge
-// both have to cover the list of names, or crossing to it closes the board.
+// The whole panel, flyout included, for the safe-zone wedge and the tip's
+// dodge: both have to cover the list of names, or crossing to it closes the
+// board.
 let full = { w: 0, h: 0 };
 
-// The main board's own width: the open page and the purse. The crew list is
-// out of the panel's flow and stands beside the board, so it is not in this and
-// could not move the seat if it wanted to. The flex gap is read off the
-// element rather than restated here. (feedback7, items 2 and 3)
+// The main board's own width: the open page and the purse. The crew list is out
+// of the panel's flow, so it is not in this and cannot move the seat.
 function mainWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   const purseW = purseEl.offsetWidth;
   return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + panelGap() : 0);
 }
 
-// The panel's flex gap, read off the element rather than restated here. The
-// node yard has elements but no layout engine: getComputedStyle is a browser
-// global there, and every width it would feed is a seat nobody looks at, so
-// zero is the honest answer rather than a crash.
+// The panel's flex gap, read off the element. The node yard has elements but
+// no layout engine, so zero there rather than a crash.
 function panelGap() {
   if (typeof getComputedStyle !== 'function') return 0;
   return parseFloat(getComputedStyle(panelEl).columnGap) || 0;
 }
 
-// A board is as wide as what it HOLDS, not as wide as what it happens to be
-// SAYING this frame.
-//
-// The sheet is `white-space: nowrap` and sized by its content, so until this
-// existed the widest line anywhere on it set the width of the whole panel --
-// and `place` re-seats the panel by that width, so a word arriving walked the
-// board sideways and took every row out from under the cursor. Measured on the
-// bench: a card whose status read `busy: the next bench, the tiller` took the
-// sheet from 525 pixels to 731, and three works took it to 1167. It snapped
-// back when the build landed.
-//
-// Two cells had already been let out of `nowrap` one at a time for exactly this
-// -- the bill, so three coins wrap inside their own cell, and the note, so a
-// description wraps as prose -- and the status line would have been the third.
-// A third exception is the tell that the mechanism is wrong: the sheet should
-// not be taking its width from its longest line at all.
-//
-// So the width is measured once, from the rows that are actually there, and
-// pinned. It is the same reading `max-content` was giving, taken when the set
-// of rows changes rather than continuously. Everything inside then lays out
-// against a box that does not move, and `refresh` can write whatever it likes.
-//
-// Cleared before it is read, or every measurement after the first is a
-// measurement of the pin.
+// A board is as wide as what it HOLDS, not what it is SAYING this frame. The
+// sheet is `nowrap` and sized by content, so left to itself the widest line
+// sets the panel's width and `place` re-seats by it: a status word arriving
+// walked the board sideways out from under the cursor. So the width is
+// measured once, when the set of rows changes, and pinned. Cleared before it
+// is read, or every measurement after the first is a measurement of the pin.
 function pinWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   if (!sheet) return;
-  // How wide the sheet may be: the window less the purse beside it and the
-  // gaps, written onto the sheet so a stylesheet that sizes it by content --
-  // the shelf, at five slots -- can cap itself without knowing the purse.
+  // The room the sheet may take, written onto it so a stylesheet that sizes it
+  // by content (the shelf) can cap itself without knowing the purse.
   const purseW = purseEl.offsetWidth;
   sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
-  // A shelf is as many slots wide as its fullest plank, up to the most a
-  // plank holds -- or as many as its longest sign needs, since a sign or the
-  // line that says the board is bare stands in the slots too and would fold
-  // in one. It cannot size itself: the slots are `auto-fill`, which needs a
-  // definite width to count against, so the count is taken here and handed
-  // to the stylesheet. One slot at the least, so an empty board still has a
-  // plank to stand on. The words are measured as a range, not as the box:
-  // a sign's box carries its plank, drawn the whole shelf wide.
+  // A shelf is as many slots wide as its fullest plank or its longest sign,
+  // capped. It cannot size itself: `auto-fill` needs a definite width to count
+  // against. Signs are measured as a range, not as the box, since a sign's box
+  // carries its plank, drawn the whole shelf wide.
   const shelf = sheet.querySelector(':scope > .page:not([hidden]) .rows.shelves');
   if (shelf) {
     let most = 0, run = 0;
     for (const el of shelf.children) {
       if (el.classList.contains('sect')) run = 0;
       else if (el.classList.contains('tile') && !el.classList.contains('goal')) {
-        // A tile is a slot wide unless the stylesheet says it spans more (a
-        // picker does), read off the style rather than kept as a second list.
+        // A tile's span is read off the style, not kept as a second list.
         // `grid-column: span 2` lands on the start line; the end computes to auto.
         const span = /span (\d+)/.exec(getComputedStyle(el).gridColumnStart);
         most = Math.max(most, run += span ? +span[1] : 1);
@@ -408,41 +261,31 @@ function pinWidth() {
     sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(SHELF_SLOTS, most))));
   }
   sheet.style.width = '';
-  // The used width off the style, not the box: a sheet the width of its words
-  // is a fraction wide, and `offsetWidth` rounds that off and the last word
-  // folds under; a client rect is scaled while the board is still easing open
-  // and reads short by more. Rounded up, since a fraction short is the fold.
+  // The used width off the style, not the box: `offsetWidth` rounds a
+  // fractional width off and the last word folds under; a client rect is
+  // scaled while the board is still easing open. Rounded up, since a fraction
+  // short is the fold.
   sheet.style.width = `${Math.ceil(parseFloat(getComputedStyle(sheet).width))}px`;      // border-box, so this is exact
 }
 
-// The crew list stands beside the board, one card wide. How wide a card is
-// is a fact about the board's layout this frame, so it is read off it here --
-// the door's own width plus the sheet's border and padding -- rather than
-// restated in the stylesheet as a number that would be wrong the day a
-// padding changed. Which side it stands on is `place`'s call, since that is
-// where the seat is known. Nothing to seat while no door is on the open board.
+// The crew list is one card wide, read off the board's layout (the door's width
+// plus the sheet's border and padding) rather than restated in the stylesheet.
+// Which side it stands on is `place`'s call.
 function seatFlyout() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   const door = sheet && sheet.querySelector('.rows > button.door');
   if (!door) return;
   const rows = door.parentElement;
-  // On a shelf the door is one slot, and a slot is too narrow for a list of
-  // names drawn as cards: two slots wide, so the cards in it are the width
-  // they were drawn for.
+  // On a shelf the door is one slot, too narrow for cards: two slots wide.
   if (door.classList.contains('tile')) { crewListEl.style.width = `${2 * door.offsetWidth}px`; return; }
   crewListEl.style.width = `${door.offsetWidth + sheet.offsetWidth - rows.offsetWidth}px`;
 }
 
-// `repin: false` is for the one caller that knows the rows did not move -- a
-// hover rewriting a note, a price ticking over. Re-pinning there would hand the
-// width back to the words, which is the bug.
+// `repin: false` is for the caller that knows the rows did not move (a hover
+// rewriting a note); re-pinning there would hand the width back to the words.
 export function remeasure(repin = true) {
-  // A board nobody is looking at measures nothing: a hidden element is zero by
-  // zero, and taking that as the size would seat the next open board off the
-  // bottom corner of the window. Rows are rebuilt whether or not the panel is
-  // up -- buying a core-priced row grows the lab's list while you are standing
-  // at the bench -- so this has to be able to say no. Opening measures it
-  // again, which is where a board that was rebuilt out of sight gets its size.
+  // A hidden element is zero by zero, and taking that as the size would seat
+  // the next open board off the window. Opening measures again.
   if (panelEl.hidden) return;
   if (repin) pinWidth();
   seatFlyout();
@@ -450,38 +293,23 @@ export function remeasure(repin = true) {
   sized = { w: mainWidth(), h: full.h };
 }
 
-// And it is only written when it actually moves. Assigning the same transform
-// every frame invalidates the layer the menu is drawn on, sixty times a second,
-// over a canvas that is also repainting -- which is a good way to make a menu
-// flicker for no reason anybody can see in the code.
+// The transform is written only when it moves: assigning the same one every
+// frame invalidates the menu's layer over a canvas that is also repainting,
+// and the menu flickers.
 let putX = null, putY = null;
 
 function place(el, at) {
   const { w, h } = measured();
-  // Centred over the station, not hung off its left edge.
-  //
-  // For a building the two are nearly the same thing and nobody noticed. The
-  // farm is not a building: it is a *row*, as wide as however many furrows you
-  // have bought, so a board pinned to its left edge sat a long way off the end
-  // of the plots and read as belonging to whatever was next along. Measuring
-  // from the middle puts every board over the thing it is about, and the farm
-  // stops being the odd one out.
+  // Centered over the station: the farm is a row as wide as its furrows, and a
+  // board pinned to its left edge read as belonging to whatever was next along.
   const mid = at.x + (at.w || 0) / 2;
   const want = (mid - S.camX) * S.zoom - w / 2;
-  // `w` and `h` are the board's own: the crew list stands beside the board, out
-  // of the panel's flow (see the CSS), so nothing about the seat changes when
-  // it comes out. That is the whole point of seating it that way.
+  // `w` and `h` are the board's own; the crew list is out of the panel's flow.
   let x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
-  // Which side the crew list stands on. To the right of the board, the way a
-  // submenu stands beside the menu that opened it; to the left of the purse
-  // (`port`) when the right runs out; and when neither side has the room --
-  // a window narrower than the board, the purse and a card of names together
-  // -- it stays on the right and the board gives ground, just as far as it
-  // must. That last case is the only time opening the list moves the board,
-  // and the alternative was the names standing off the edge of the glass,
-  // which is a list you cannot read. Decided here, every time the seat is,
-  // because the seat is what it depends on.
+  // Which side the crew list stands on: right of the board; left of the purse
+  // (`port`) when the right runs out; and when neither side has the room it
+  // stays right and the board gives ground, just as far as it must.
   const listW = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
   let port = false;
   if (listW && x + w + listW > S.W - GAP) {
@@ -489,54 +317,32 @@ function place(el, at) {
     else x = Math.max(GAP, S.W - GAP - listW - w);
   }
   crewListEl.classList.toggle('port', port);
-  // And when even that is not enough -- a window narrower than the board and
-  // the list together, which a five-slot shelf on a small window is -- the
-  // list slides back over the board's edge by the rest, because a list you
-  // can read over a corner of the board beats a list off the glass.
+  // When even that is not enough, the list slides back over the board's edge
+  // by the rest: readable over a corner beats off the glass.
   const over = listW && !port ? Math.max(0, x + w + listW - (S.W - GAP)) : 0;
   crewListEl.style.marginLeft = over ? `${-over}px` : '';
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
 
-  // Clear of the rosters, which stand in their own strip under the ground line.
-  //
-  // A board is seated just above the station it belongs to, and then held inside
-  // the window -- and a board taller than the room above its station is pushed
-  // back down by that second rule. A short shed feels it first, because its roof
-  // is the lowest anchor point of any station's, so its board starts lowest and
-  // is the first to land on the counters. The counters are how you put somebody
-  // on the job the board is about, so covering them with it is the worst thing
-  // it could land on.
+  // Clear of the rosters, which stand in their own strip under the ground line:
+  // a board taller than the room above its station is pushed down by the
+  // window clamp, and the counters are the worst thing it could land on.
   const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
-  // The top clamp takes the board at the height it actually is -- see
-  // `measured`, which is where the two readings were reconciled.
   const highest = S.H - h - GAP;
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
 
-  // Moved by its *bottom* edge, not its top.
-  //
-  // A board is seated on the bottom edge -- that is what keeps it standing on
-  // its station while the purse beside it grows a row. But it was being moved by
-  // the top-left corner, with the top worked out from the height, and the height
-  // is the one thing about a board that changes the instant you arrive: the
-  // contents are swapped in one frame and the glide across takes a third of a
-  // second. So a walk from the bench to the house -- two stations close enough
-  // that the box barely travels -- put a taller sheet at the old top corner and
-  // hung its bottom through the bench for the whole of the slide.
-  //
-  // Off the bottom, a taller board grows *upwards* into the empty sky, which is
-  // where a menu has room, and the edge it stands on never moves at all.
+  // Moved by its *bottom* edge: the height changes the instant a board swaps
+  // pages, mid-glide, and a sheet moved by its top corner hangs its bottom
+  // through the station for the slide. Off the bottom, a taller board grows
+  // upward into the sky, where a menu has room.
   if (x === putX && bottom === putY) return;    // it has not moved: leave the layer alone
   putX = x;
   putY = bottom;
   el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
-  // The crew list stands on the board's bottom edge and grows upward, so the
-  // room it has is whatever is between that edge and the top of the window --
-  // a long settlement would otherwise put the first names off the glass.
-  // Derived from the seat rather than guessed, and written here because here
-  // is where the seat changes.
+  // The crew list grows upward from the board's bottom edge, so its room is
+  // whatever is between that edge and the top of the window.
   crewListEl.style.maxHeight = `min(46vh, ${S.H - bottom - GAP}px)`;
 }
 
@@ -544,42 +350,21 @@ const GAP = 4;                             // never flush against the edge
 const FLY_GAP = 8;                         // the panel's gap, between the board and the list beside it
 
 // --- the call to build the bench ----------------------------------------------
-// The one button on this page that is not on a board. It stands over the bare
-// patch the bench is going to go on, until it is pressed; after that the fence,
-// the tape and the bar over the site say what is happening, the way they do for
-// every other build. See raise.js for why the bench is built at all.
-//
-// Seated here rather than in raise.js because this is the file that puts things
-// on the page, and because it is the same arithmetic `place` does above: over
-// the middle of the thing it is about, held inside the window, moved by its
-// bottom edge with a transform so the compositor carries it rather than the
-// layout engine.
+// The one button on this page that is not on a board; it stands over the bare
+// patch the bench will go on until it is pressed (raise.js). Seated with the
+// same arithmetic as `place`.
 const raiseEl = document.getElementById('raise');
 raiseEl.addEventListener('click', raiseBench);
 
-// Measured when it appears and not again. Reading `offsetWidth` forces the page
-// to lay itself out, and this button's words never change -- the boards measure
-// every frame because their contents do.
+// Measured when it appears and not again: its words change only for the arrow.
 let callSize = { w: 0, h: 0 };
 const CALL_TEXT = raiseEl.textContent;
 let callAt = { x: null, y: null };
 
-//
-// Over the bench's own ground and nowhere else. It used to clamp to the window
-// when the bench was out of shot, which put it on the left-hand edge over
-// whatever happened to be there: the house board's purse, the quarry roster's
-// plus, the noticeboard's corner, both cutscenes -- and the newcomer pressed
-// it over a bare hole with the bench itself off-screen and nothing visibly
-// happening (docs/critics-2026-09-10.md, C2; four critics). A call you cannot
-// see the site of is not a call, so it is hidden until the bench's own ground
-// is in the window -- and while a board is up, which its z-index was written
-// on the premise of never happening, and while a cutscene has the yard.
-//
-// ...and when the bench's ground is NOT in the window -- a window too narrow
-// to seat the bench and the rock together opens on the rock -- it stays at the
-// edge nearest the bench and says which way, and pressing it turns the view
-// there as well (see `raiseBench`). A call that simply vanished off a narrow
-// window was a first purchase nobody could make.
+// Hidden while a board is up (its z-index assumes that never overlaps) and
+// while a cutscene has the yard. When the bench's ground is off the window
+// (a narrow window opens on the rock) it stays at the edge nearest the bench
+// and says which way; pressing it turns the view there too (`raiseBench`).
 export function seatCall() {
   if (!callOut() || !panelEl.hidden || cutsceneRunning()) {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
@@ -596,13 +381,12 @@ export function seatCall() {
     raiseEl.textContent = say;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
   }
-  // Centered on the bench, and kept inside the window: the opening seat stands
-  // the bench a few cells in from the edge, nearer than half this is wide.
+  // Centered on the bench and kept inside the window: the opening seat stands
+  // the bench nearer the edge than half this is wide.
   const mid = bench.x + bench.w / 2;
   const want = (mid - S.camX) * S.zoom - callSize.w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - callSize.w - GAP)));
-  // Its foot a couple of cells clear of the bench's own top, so it hangs in the
-  // air over the empty patch rather than sitting on the ground it is about.
+  // Its foot a couple of cells clear of the bench's top.
   const stands = S.H - (bench.y - S.camY) * S.zoom + P * 2;
   const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - callSize.h - GAP)));
   if (x === callAt.x && bottom === callAt.y) return;
@@ -611,54 +395,22 @@ export function seatCall() {
 }
 
 // --- the way over to it -------------------------------------------------------
-// The board opens because the cursor is standing at a station, and it stands
-// *above* that station -- so getting to it means crossing a strip of bare canvas
-// that is neither. Aim for a row in the far bottom corner of the sheet and the
-// diagonal takes you out of the station's patch of ground before it takes you
-// into the board, and the thing you were reaching for shuts in your face.
-//
-// The fix is the one every menu that has ever had a submenu uses: while it is
-// open, the whole wedge between the station and the near edge of the board
-// counts as being on it. Move anywhere inside that wedge and you are on your way
-// there; step outside it and you have gone somewhere else.
-//
-// A wedge rather than a box round the pair: a box would hold the board open
-// while the cursor was well off to one side, which is a menu that will not go
-// away. The wedge is exactly the ground you would cross heading for it, and no
-// more -- step out of it sideways and it shuts as it always did.
-//
-// And the submenu is covered by the same wedge without a word being said about
-// it here. The board's rectangle below is the whole panel, and the house's list
-// of people opens as a second sheet *inside* that panel -- so the moment it is
-// out, the rectangle is wider by the width of it and the wedge reaches the far
-// corner of the list, the gap between the two sheets included. Hovering the
-// names, and walking across to them, is being on the board.
-// And the grace either side of it, which is generous on purpose.
-//
-// Twelve pixels is what a rectangle needs and not what a hand needs. A pointer
-// crossing from the board to the names beside it does not travel in a straight
-// line -- it dips below the sheet, overshoots the gap, arcs round the corner --
-// and every one of those is a frame or two spent a few pixels outside a box that
-// is *right there on the screen*. Which shut the board, and took the list with
-// it, while the cursor was plainly on its way into it.
-//
-// Nothing is lost by being generous here. The zone only holds the board open
-// while it is already open; stepping properly away still shuts it, because
-// properly away is further than this.
+// The board stands above the station that opened it, so reaching it means
+// crossing bare canvas that is neither. While it is open the whole wedge
+// between the station and the board counts as being on it: a wedge, not a box
+// round the pair, so the menu still shuts when you step out sideways. The
+// panel rectangle includes the crew list, so the wedge covers the submenu too.
+// The grace is generous on purpose: a hand crossing to the names dips below the
+// sheet and overshoots the gap, and a tight box shut the board mid-journey.
 const SAFE_SLACK = 34;
 
-// Where the board actually is on screen, from the numbers `place` already keeps.
-// `putY` is how far its bottom edge stands above the foot of the window -- that
-// is what the board is seated by, see `place` -- and everything that reads this
-// wants the top corner, so it is turned back here rather than in four places.
+// Where the board is on screen. `putY` is the bottom edge's height above the
+// window's foot; readers want the top corner, so it is turned back here.
 const panelRect = () => {
   if (putX === null) return null;
-  // The full panel, not the seat: the wedge and the tip are about everything on
-  // the page, and the crew list is part of the panel. It stands beside the
-  // board, out of the panel's flow, so it is counted in by hand -- gap and all,
-  // or the strip between the board and the names would be outside the menu and
-  // crossing it would close the board. On the left (`port`) it pushes the
-  // rectangle's left edge out instead of its right.
+  // The crew list is out of the panel's flow, so it is counted in by hand, gap
+  // and all, or the strip between the board and the names would be outside the
+  // menu. On the left (`port`) it pushes the left edge out instead.
   const list = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
   const w = (panelEl.offsetWidth || full.w) + list;
   const h = Math.max(panelEl.offsetHeight || full.h, crewListEl.hidden ? 0 : crewListEl.offsetHeight);
@@ -666,15 +418,11 @@ const panelRect = () => {
   return { x, y: S.H - putY - h, w, h };
 };
 
-// The same rectangle, for whatever is drawn on the canvas underneath it. A board
-// is a real element on the page and everything else in this game is paint, so
-// nothing painted can find out where the menu is standing without being told --
-// and a sheet is opaque, so anything it lands on is simply gone. The counter
-// over the pit is the one reading in the game, and it now shares its patch of
-// air with the books; it asks this and steps aside. Null while nothing is open.
+// The same rectangle for whatever is painted underneath it: the counter over
+// the pit asks this and steps aside. Null while nothing is open.
 export const openBoardRect = () => (panelEl.hidden ? null : panelRect());
 
-// and where the station it belongs to is: the ground under the middle of it
+// where the station is: the ground under the middle of it
 function apexAt(which) {
   const r = anchor(which);
   if (!r) return null;
@@ -683,13 +431,9 @@ function apexAt(which) {
 
 const side = (a, b, px, py) => (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
 
-// The wedge is worked out rather than assumed. It would be easy to say the board
-// stands above the station and take its two bottom corners -- and that is true
-// on a roomy window and false on a short one, where a tall sheet is clamped
-// against the top and the station is somewhere behind it. So: the shape is the
-// board *and* the station and everything between them, which is the convex hull
-// of the rectangle and the point, whichever way round they happen to lie. Five
-// points is not a computation worth being clever about.
+// The wedge is the convex hull of the board and the station, whichever way
+// round they lie: on a short window a tall sheet is clamped against the top
+// and the station is behind it, so "the two bottom corners" is wrong there.
 function hullOf(pts) {
   const ps = pts.slice().sort((u, v) => u.x - v.x || u.y - v.y);
   const half = list => {
@@ -714,9 +458,8 @@ const inHull = (h, px, py) => {
   return !(neg && pos);
 };
 
-// is (px, py) on the menu itself -- the board, the purse, the crew list and
-// the strips between them? No slack: this is the rectangle the sheets are
-// actually drawn on, not the way to it.
+// is (px, py) on the menu itself? No slack: the rectangle the sheets are drawn
+// on, not the way to it.
 export function onMenu(px, py) {
   if (!at) return false;
   const r = panelRect();
@@ -729,10 +472,8 @@ export function inSafeZone(px, py) {
   const r = panelRect();
   const a = apexAt(at);
   if (!r || !a) return false;
-  // A station scrolled off the side of the window is not somewhere you are
-  // walking from. The board is clamped inside the window and the station is not,
-  // so the wedge between them would stretch across the whole screen and hold the
-  // menu open over half the yard. No station in sight, no journey to protect.
+  // A station scrolled off the window is not somewhere you are walking from:
+  // the wedge to it would hold the menu open over half the yard.
   if (a.x < -SAFE_SLACK || a.x > S.W + SAFE_SLACK ||
       a.y < -SAFE_SLACK || a.y > S.H + SAFE_SLACK) {
     return px >= r.x - SAFE_SLACK && px <= r.x + r.w + SAFE_SLACK &&
@@ -746,14 +487,10 @@ export function inSafeZone(px, py) {
   ]), px, py);
 }
 
-// The crew list belongs to the house's board and to nothing else, so it may not
-// outlive it.
-//
-// Closing it was the job of every path that put a board away, which is the kind
-// of rule that holds right up until a path is added that does not know about it
-// -- and then the list hangs in the yard with no board under it and nothing that
-// will ever take it down, because the thing that would have closed it has
-// already run. Said once, every frame, as something that is simply true.
+// The crew list may not outlive the house's board. Said every frame as a fact
+// rather than as a duty of every path that puts a board away, because a path
+// that forgets leaves the list hanging with nothing that will ever take it
+// down.
 export function tidyBoards() {
   if (at !== 'house' && S.crewListOpen) showCrewList(false);
 }
@@ -763,33 +500,26 @@ export function placeBoard() {
   place(panelEl, anchor(at));
 }
 
-// Two readings for the checks. They are plain exports rather than `window.__`
-// handles because this file is loaded by the node checks as well, where
-// `import.meta.env` is a vite word that means nothing -- console.js hangs them
-// on `window` behind the dev gate, and a build drops them, because with
-// console.js gone nothing imports either one.
+// Two readings for the checks. Plain exports rather than `window.__` handles:
+// the node checks load this file too, where `import.meta.env` means nothing.
+// console.js hangs them on `window` behind the dev gate.
 
-// seat both boards wherever they belong, open or not, so a check can look at
-// where they would go without going through the whole opening dance
+// seat the board wherever it belongs, open or not
 export const seatBoard = () => place(panelEl, anchor(at) || bench);
 
-// the size the board is seated by against the size it actually is. They have to
-// agree, or the sheet is standing where a board of some other height would
-// stand -- which is what buying a row out from under it used to do.
+// the size the board is seated by against the size it actually is; they have
+// to agree
 export const boardFit = () => ({ w: sized.w, h: sized.h,
                                  realW: panelEl.offsetWidth, realH: panelEl.offsetHeight });
 
-// The one bit of writing in the yard. Everything else here is a mark you learn,
-// but a station that has stopped needs to say why in words the first time, and a
-// tooltip is the only place words are cheap: it is not on screen until asked for.
+// The one bit of writing in the yard: words are cheap in a tooltip because it
+// is not on screen until asked for.
 const tipEl = document.getElementById('tip');
 let tipFor = null;
-// Where the view was when the tip was seated. A tip is seated in screen
-// space once, off a pointer event, and the view can move under it without the
-// pointer moving: the arrow keys, the opening's own camera, a glide to a new
-// station. 'ROCK' hung over empty sky through the whole opening from a click
-// in the previous game (critics 2026-09-10, C10). A tip whose view has moved
-// is taken down; the next pointer move seats a fresh one.
+// Where the view was when the tip was seated. A tip is seated in screen space
+// once, off a pointer event, and the view can move under it without the
+// pointer moving (arrow keys, the opening's camera, a glide). A tip whose view
+// has moved is taken down; the next pointer move seats a fresh one.
 let tipCam = null;
 export function tipFollowsView() {
   if (tipFor === null || !tipCam) return;
@@ -801,14 +531,10 @@ export function showTip(text, at) {
   showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true);
 }
 
-// The same words, put where a thing on the *page* is rather than where a thing
-// in the yard is. A row on a board is not at a world position and never will be,
-// and the alternative was a second tooltip that looked the same and was not.
-// `over` lets the note stand on the board: a shelf tile's note is a tooltip
-// beside the tile it is about, over whatever tiles are next to it -- the tip
-// is layered above the panel -- where standing clear of the whole board put a
-// left-column tile's note on the far side of the sheet from the tile (the
-// owner, 2026-09-15: "over the content, don't worry about the containers").
+// The same tip, seated in screen space for things on the page. `over` lets the
+// note stand on the board: a shelf tile's note sits beside its tile, over the
+// neighboring tiles, where standing clear of the whole board would put it on
+// the far side of the sheet from the tile.
 export function showTipAt(text, sx, sy, centred, over = false) {
   if (!text) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
@@ -819,30 +545,13 @@ export function showTipAt(text, sx, sy, centred, over = false) {
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   let x = centred ? sx - w / 2 : sx;
 
-  // Off the other side of the row when there is no room on this one.
-  //
-  // A row's note is put to the right of it. On a narrow window there is often
-  // nothing there, and clamping it back inside the glass slid it *under the
-  // board* -- where, being a lower layer than the menu, it was not merely in the
-  // way but invisible. A note nobody can read is worse than no note: the row
-  // looks like it has something to say and says nothing.
-  //
-  // So a note that will not fit on the right goes to the left of the thing it
-  // belongs to, which is what every menu in the world does with a submenu that
-  // has run out of screen. `sx` is the right-hand edge of the row it came from,
-  // so the left-hand side is that edge less the row's own width -- which is not
-  // known here, so the panel's left edge is used: the note stands off the whole
-  // board rather than off the row, and on that side that is the honest anchor.
+  // A row's note stands clear of the whole board on the right, or on the left
+  // when there is no room; clamped back inside the glass it would slide under
+  // the board, where it is invisible. Only when it would actually land on the
+  // sheet: tested on x alone, a yard label anywhere in the board's column was
+  // flung to the far side of the window.
   if (!centred) {
     const r = panelRect();
-    // A note about a row stands clear of the whole board, not just clear of the
-    // row. Anchored on the row's own right edge it lands *inside* the sheet --
-    // over the rows below it -- because the row ends where the board does.
-    //
-    // ...and only when it would actually stand on the sheet: the test was on x
-    // alone, so a yard label anywhere in the board's column of the window was
-    // flung to the far side of it -- 'THE BENCH' drawn on the rock, 'HOUSE'
-    // seven hundred pixels from the house (critics 2026-09-10, C10).
     if (!over && r && !panelEl.hidden && x < r.x + r.w && x + w > r.x && sy < r.y + r.h && sy + h > r.y) {
       const right = r.x + r.w + 8;
       x = right + w <= S.W - GAP ? right
@@ -854,65 +563,28 @@ export function showTipAt(text, sx, sy, centred, over = false) {
   tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(sy, S.H - h - GAP)))}px`;
 }
 
-// One menu for both stations. It is a thing standing in the yard rather than two
-// things blinking on and off: it fades up where you are, and when you walk from
-// the bench to the lab it walks with you.
-//
-// The slide is only switched on while it is actually moving between stations.
-// The menu is re-seated every frame -- it has to be, or scrolling would leave it
-// behind -- and a transition on `left` would turn every one of those into a
-// two-hundred-millisecond lag behind the yard.
+// One menu for every station: it fades up where you are and walks with you.
+// The slide class is on only while it is moving between stations; the menu is
+// re-seated every frame, and a standing transition would lag every scroll.
 let at = null;
 let slide = 0;
 let closing = 0;
-// The pointer has left a station but the board has not been given up on yet.
-//
-// Two stations with bare ground between them is the ordinary case -- there are
-// nine of them along one yard -- and crossing that ground used to take the board
-// off you and give it back: the sheet faded out where it stood, the box jumped
-// to the new station without a transition (the slide only runs when the board
-// knows where it came *from*, and by then it had forgotten), and the new sheet
-// faded in. Three separate animations to walk two paces.
-//
-// So leaving is not decided in the frame it happens. The board holds its place
-// for a moment; arrive somewhere else inside that moment and it is a move, which
-// slides, and walking back to where you were is not even that.
+// The pointer has left a station but the board has not been given up on yet:
+// leaving is decided a moment later, so crossing bare ground to the next
+// station is one slide rather than a fade, a jump and a fade.
 let leaving = 0;
 const LINGER = 130;                    // and how long the moment is
 
 
 // --- the sheet that opens off the house board ---------------------------------
-// The one submenu in the game. It stands beside the board it belongs to, inside
-// the same panel, which is the whole trick: the panel is what carries the
-// transform that seats the menu on the ground, it is what the wedge below is
-// measured from, and it is what the cursor has to leave for anything to close.
-// So a second sheet put inside it walks with the board, fades with the board,
-// and is already part of every answer to "is the pointer still on the menu" --
-// there is no second rule anywhere for the submenu, because to everything that
-// asks, the submenu *is* the menu.
-//
-// The alternative was a floating element of its own, positioned against the
-// board's rectangle every frame. That is two things pretending to be one: it
-// would need its own hover handling to stop the board closing under it, its own
-// copy of the seating, and it would have got them subtly wrong on the day a
-// short window clamped the board and not it.
-// Whatever a row had opened beside the board, put away. Rows that lead somewhere
-// open it by being hovered (see `over` in shop.js), and a row that leads nowhere
-// used to leave the last one standing: you hovered the crew, walked down to the
-// row below, and the names stayed out beside a board that was no longer about
-// them. Hovering anything is an answer to "which row am I reading", and only one
-// row can be the answer.
-//
-// But not on the spot. The list stands beside the board, and the row next to
-// the door is between the door and the list: a pointer heading for the names
-// crosses it, and a close that fired on the crossing made the list impossible
-// to reach -- the submenu that shuts because you went to read it. So a row
-// that leads nowhere asks the list to go, and the list goes a moment later
-// unless the pointer has left the row again by then (`keepSubmenu`, off the
-// row's pointerleave and the list's own pointerenter). The same bargain as
-// LINGER, for the same reason: a journey is not decided in the frame it
-// starts. Standing on the other row is still an answer, it just takes the
-// grace to become one.
+// The one submenu. It is a second sheet *inside* the panel, so it walks and
+// fades with the board and is part of every answer to "is the pointer on the
+// menu" without a second rule anywhere.
+// A row that leads nowhere asks the list to go, and it goes a moment later
+// unless the pointer has left the row again (`keepSubmenu`, off the row's
+// pointerleave and the list's own pointerenter): the row next to the door is
+// between the door and the list, and a close that fired on the crossing made
+// the list impossible to reach.
 let folding = 0;
 export function closeSubmenu() {
   if (folding || !S.crewListOpen) return;
@@ -922,46 +594,36 @@ export function keepSubmenu() { clearTimeout(folding); folding = 0; }
 crewListEl.addEventListener('pointerenter', keepSubmenu);
 
 export function showCrewList(on) {
-  // Only ever out beside the house. Asked for while any other board is up -- or
-  // none -- the answer is no rather than a sheet of names hanging off the lab.
+  // Only ever out beside the house.
   const want = !!on && at === 'house';
-  // Judged against the sheet, not the flag. A new game blanks the flag before
-  // it puts the board away, so at the moment the board leaves the flag already
-  // says "closed" while the list is still standing on the page -- and a check
-  // on the flag alone let it stand there into the next run.
-  // Whichever way it is going, it is going now, and no close is still pending.
+  // Judged against the sheet as well as the flag: a new game blanks the flag
+  // before it puts the board away, and a check on the flag alone left the list
+  // standing into the next run.
   keepSubmenu();
   if (want === S.crewListOpen && crewListEl.hidden === !want) return;
   S.crewListOpen = want;
   crewListEl.hidden = !want;
-  // Filled before it is measured, for the reason opening a board is: an empty
-  // sheet measures narrower than it will be, and the panel is seated by the
-  // size it was last measured at.
+  // Filled before it is measured: an empty sheet measures narrower than it
+  // will be.
   if (want) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
   remeasure();
   placeBoard();
 }
 
 
-// `now` is for a close that was *asked for* rather than wandered out of: a tap
-// on bare ground, a new game, the wheel starting. Those are answers, and an
-// answer that takes a tenth of a second to arrive reads as a control that did
-// not take. Only the pointer drifting off a station gets the benefit of LINGER.
+// `now` is for a close that was *asked for* (a tap on bare ground, a new game,
+// the wheel starting): an answer that takes a tenth of a second reads as a
+// control that did not take. Only the pointer drifting off gets LINGER.
 export function showPanel(want, now = false) {
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
-  // An option list hangs off the body rather than off the board (it has to --
-  // see `showOpts`), so nothing about the board going away takes it with it. It
-  // goes the moment the board is asked to leave, not when the board finally
-  // settles: the board lingers for a breath so that walking to the next station
-  // is one movement, and a menu left standing over the yard for that breath is
-  // exactly what this looked like.
+  // An option list hangs off the body, not the board (`showOpts`), so it goes
+  // the moment the board is asked to leave, not when the linger settles.
   if (!want) shutOpts();
 
-  // Off to bare ground. Hold the board where it is for a moment -- see LINGER --
-  // rather than closing on the spot, so that walking to the next station along
-  // is one movement instead of a close and an open.
+  // Off to bare ground: hold the board for LINGER rather than closing on the
+  // spot.
   if (!want && !now) {
     if (leaving) return;
     leaving = setTimeout(() => { leaving = 0; settle(null); }, LINGER);
@@ -972,15 +634,12 @@ export function showPanel(want, now = false) {
   settle(want);
 }
 
-// What actually moves the board, once it is settled where it is going: the same
-// thing `showPanel` always did, with the question of whether it is really
-// leaving answered above it.
+// What actually moves the board, once it is settled where it is going.
 function settle(want) {
   if (want === at) return;
   shutOpts();                  // and a board swapped for another takes its lists with it
-  // Walking off to another station, or off to nothing, takes the submenu with
-  // it. Done before `at` moves, so the list is put away while it still belongs
-  // to the board it is standing beside.
+  // Before `at` moves, so the list is put away while it still belongs to the
+  // board it is standing beside.
   if (want !== 'house') showCrewList(false);
   const wasAt = at;
   at = want;
@@ -997,10 +656,8 @@ function settle(want) {
   S.shackBoardOpen = want === 'shack';
 
   if (!want) {                                   // fade out where it stands
-    // Closing the board used to mark every row on it seen. It does not any
-    // more: a row is cleared by being hovered, one at a time, because having a
-    // row on the screen is not the same as having read it -- see the listeners
-    // in shop.js's `build`.
+    // Closing does not mark rows seen; a row is cleared by being hovered
+    // (the listeners in shop.js's `build`).
     panelEl.classList.remove('open');
     clearTimeout(closing);
     closing = setTimeout(() => {
@@ -1013,44 +670,30 @@ function settle(want) {
 
   clearTimeout(closing);
   for (const k of Object.keys(pages)) pages[k].hidden = k !== want;
-  // opening the bench reads every heading on it, the same as it always did
+  // opening the bench reads every heading on it
   if (want === 'bench') markSectionsSeen();
   panelEl.hidden = false;
-  // Fill it before measuring it. The rows are written by `refresh`, which runs
-  // in the frame loop -- so a board that was measured the moment it opened was
-  // measured with every row still blank, came out shorter than it would be, and
-  // was seated by that height for as long as it stayed open. It only looked
-  // wrong the first time: the next open measured a board that already had its
-  // words in. Which is why it read as a bug that fixed itself.
+  // Fill it before measuring it: measured with every row still blank, a board
+  // is seated short for as long as it stays open.
   fill(want);
   sayHideDone();          // and the switch under it, before anything is measured
   fillPurse();
   remeasure();
 
-  // Walking from one station to another slides. Arriving at one after the last
-  // board has *gone* does not.
-  //
-  // What decides it is whether there is anything on the screen to slide. A box
-  // standing at the lab that jumps to the casino is the jank; a box that has
-  // already faded out has no place any more, and sliding it means an invisible
-  // sheet travelling the length of the yard and fading up somewhere along the
-  // way -- the board arrives late and from the wrong direction, which reads
-  // worse than the jump did. Gone is gone: it is placed where it belongs and
-  // fades in there.
-  //
-  // `open` is the class the fade hangs off, so it is exactly the question "can
-  // this be seen right now". `hidden` is no good for it -- that is only set a
-  // seventh of a second later, when the fade has finished.
+  // Walking from one station to another slides; arriving after the last board
+  // has faded out does not, or an invisible sheet travels the yard and fades
+  // up somewhere along the way. `open` is the class the fade hangs off, so it
+  // is exactly "can this be seen"; `hidden` is set only when the fade is done.
   const showing = !panelEl.hidden && panelEl.classList.contains('open');
   if (showing) {
     panelEl.classList.add('sliding');
     clearTimeout(slide);
     // a shade longer than the slide itself, so the class is never taken off
-    // mid-glide and the box never finishes the move in one jump
+    // mid-glide
     slide = setTimeout(() => panelEl.classList.remove('sliding'), 340);
   } else {
-    // and it must not be carrying a transition from the last time it moved, or
-    // the placing below is a glide from wherever it happened to be standing
+    // no transition left over from the last move, or the placing below is a
+    // glide from wherever it happened to be standing
     clearTimeout(slide);
     panelEl.classList.remove('sliding');
   }
@@ -1059,11 +702,8 @@ function settle(want) {
 }
 
 
-// Short form everywhere a count is read at a glance: 872, 1.3k, 14k, 1.4m.
-// One decimal while the leading figure is doing the work, none once three
-// digits carry it, and the unit steps up the moment rounding would say "1000k"
-// -- a card in this yard is a reading, not a ledger, and six figures of dust
-// is a number nobody was going to read past the first two anyway.
+// Short form for a count read at a glance: 872, 1.3k, 14k, 1.4m. One decimal
+// while the leading figure is doing the work, none once three digits carry it.
 export const fmt = n => {
   const v = Math.round(n || 0), a = Math.abs(v);
   if (a < 1000) return String(v);
@@ -1077,8 +717,7 @@ export const fmt = n => {
   }
 };
 
-// The dust count as the card shows it, kept on `S` for the report: the run
-// itself is `tween.js`'s, the same as every other number in the yard.
+// The dust count as the card shows it, kept on `S` for the report.
 export function tweenCount(at) {
   S.shownStored = shown('dust', S.stored, at);
 }
@@ -1090,31 +729,19 @@ const headcount = title =>
   title === 'the quarry' ? S.quarriers :
   title === 'the farm' ? S.farmhands : 0;
 
-// The apothecary's headings count the bodies stirring, on the section that is
-// about the pot -- how many stirrers are in there is the one thing you do about
-// that number, so it belongs where you act on it.
 const apothHeads = title => title === 'the pot' ? S.stirrers : 0;
 
-// The grounds' boards the same way: the heading over the plots, the hats and
-// the machine is the heading about who does the work, so it says how many.
 const groundHeads = title =>
   title === JOB.QUARRY ? S[JOB.QUARRY] :
   title === JOB.FARM ? S[JOB.FARM] : 0;
 
-// The numbers on whichever board is open. Pulled out of `hud` so that opening a
-// board can fill it before it is measured, rather than a frame after.
+// The numbers on whichever board is open. Out of `hud` so that opening a board
+// can fill it before it is measured.
 function fill(which) {
-  // The rows first, then the words in them. A board used to be rebuilt only by
-  // whoever had just changed it, and a work landing on its own -- which is how
-  // nearly every row past the bench takes effect now -- has no such whoever:
-  // the row that had just been built stayed on the board at its old price, and
-  // the rows it unlocked were not drawn until something else happened to call
-  // `buildShop`. Asking here costs a handful of `show()` calls on the one board
-  // you are looking at, and no row added after this has to remember anything.
+  // The rows first, then the words in them: a work landing on its own has
+  // nobody to rebuild the board for it, so the open board asks every frame.
   buildBoard(which);
-  // a station's board being open is what reads its news -- the tick over the
-  // building comes down whether the board was already open when the work
-  // finished or you walked over because of the mark
+  // a station's board being open is what reads its news
   markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
@@ -1123,35 +750,22 @@ function fill(which) {
   if (which === 'farm') refresh(farmShopEl, listFor('farm'), groundHeads);
   if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
-  // The books are written every frame they are open, the same as the crew list
-  // and for the same reason: what is on them moves on its own, and a rate that
-  // went stale the moment you opened it would be the board telling you what the
-  // yard used to be earning.
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
   if (which === 'shack') refresh(shackShopEl, shackRows(), null);
-  // rebuilt as well as refreshed: the crew is a list that changes length, and
-  // the other boards are lists that do not
+  // rebuilt as well as refreshed: the crew is a list that changes length
   if (which === 'house') {
     buildCrew();
     refresh(crewShopEl, crewRows(), null);
-    // And the people beside it, while they are out. Where a body is standing is
-    // the one thing on either of these sheets that moves on its own, so the list
-    // is written every frame the same as any other open board -- a name whose
-    // "at the pit" went stale the moment you opened it would be the board
-    // telling you where somebody used to be.
+    // and the list beside it while it is out: where a body stands moves on
+    // its own
     if (S.crewListOpen) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
   }
 }
 
-// What you have to spend, beside the board that is asking for it. Every price on
-// these boards is a mark and a number, and the only place you could see what you
-// *had* of that mark was the counter over the pit -- the other end of the yard,
-// in the corner of the window, and as often as not behind the board itself.
-//
-// A currency appears the first time you have seen one, which is the same rule
-// the counter over the pit goes by: nothing in this game names a thing you have
-// not met.
+// What you have to spend, beside the board asking for it. A currency appears
+// the first time you have seen one: nothing here names a thing you have not
+// met.
 const PURSE = [
   ['dust', () => true, () => S.stored],
   ['core', () => S.seenCore, () => S.cores],
@@ -1160,10 +774,8 @@ const PURSE = [
   ['spark', () => S.seenSpark, () => S.sparks]
 ];
 
-// Written only when it changes. This runs every frame a board is open, and
-// `innerHTML` is a parse: re-parsing four rows sixty times a second for a number
-// that moves when a worker tips a load in is the same waste the shop rows were
-// careful about.
+// Written only when it changes: this runs every frame a board is open, and
+// `innerHTML` is a parse.
 let purseWas = null;
 function fillPurse() {
   let html = '';
@@ -1172,63 +784,42 @@ function fillPurse() {
     html += `<div class="coin"><i class="${mark}"></i><b>${fmt(shown('purse:' + mark, count()))}</b></div>`;
   }
   if (html === purseWas) return;
-  // A row appearing or going makes the panel a different size, and the panel is
-  // seated by the size it was measured at. A digit does not: the count sits in a
-  // slot of its own width so the board cannot twitch as the dust comes in.
+  // A row appearing or going resizes the panel; a digit does not, since the
+  // count sits in a slot of its own width.
   const resized = purseWas === null || purseWas.length !== html.length;
   purseWas = html;
   purseEl.innerHTML = html;
   if (resized) remeasure();
 }
 
-// The switch that folds finished ladders away. It says which way it is pointing
-// rather than what it would do -- a button reading "hide finished" while they
-// are already hidden is a button that has lied about the state of the board.
-//
-// It lives here, under the pages rather than on one of them, because what it is
-// about is whichever board is open, and that is this file's one piece of
-// knowledge. It used to be a button on the bench's page, which made a preference
-// that folds rows on all nine boards reachable from exactly one of them: the
-// lab, the quarry and the rest hid their finished ladders only if you walked
-// back to the bench first and knew the switch standing there meant them too.
+// The switch that folds finished ladders away. It lives under the pages rather
+// than on one of them because it is about whichever board is open, and it
+// stands on every board: a control that came and went would appear under the
+// cursor the moment the last rung was bought.
 const hideEl = document.getElementById('hidedone');
 
-// It stands on every board rather than only on the ones with something finished
-// on them. A control that comes and goes is a control you cannot learn where to
-// find, and it would come and go under your hand: a ladder reaches its top the
-// moment you buy the last rung, which is exactly when the switch would appear
-// and move the board out from under the cursor that had just pressed something.
-//
-// Said rather than written every frame -- `hud` asks on each of them, and a
-// board that had its words rewritten sixty times a second is a board the browser
-// keeps laying out for nothing.
+// Written only when it changes; `hud` asks every frame.
 let said = null;
 export function sayHideDone() {
   if (S.hideDone === said) return;
   said = S.hideDone;
-  // A verb, what pressing does, not a state -- 'finished: shown' read as a
-  // status (critics C13).
+  // A verb, what pressing does, not a state.
   hideEl.textContent = S.hideDone ? 'show finished' : 'hide finished';
   hideEl.classList.toggle('on', S.hideDone);
 }
 
 hideEl.addEventListener('click', () => {
   S.hideDone = !S.hideDone;
-  // Every board, not the open one: the preference is the yard's, and a board
-  // that only rebuilt when you walked up to it would fold its rows away under
-  // your eyes on arrival.
+  // Every board, not the open one: a board that only rebuilt when you walked
+  // up would fold its rows away under your eyes on arrival.
   buildShop();
   sayHideDone();
   S.dirty = true;
 });
 
-// A hand in progress hushes the board wherever it is standing. It is not closed
-// -- nothing has been decided, and it is the same board when it comes back --
-// it is out of the way of the one thing in this game you are meant to watch.
-//
-// From the chip going down, not from the wheel starting: the pot pouring on to
-// the ground is the front half of the same gesture, and a board that stayed up
-// through it would be a board offering rows for a bet already made.
+// A hand in progress hushes the board rather than closing it. From the chip
+// going down, not the wheel starting: the pour is the front half of the same
+// gesture.
 let hushed = false;
 function hush() {
   const want = busy();
@@ -1243,31 +834,22 @@ export function hud() {
   tweenCount(now());
   fillPurse();
   fill(at);
-  // and the switch under it, which is read from state rather than kept in step
-  // with it: a save restored after this file loaded used to leave the button
-  // saying "shown" over a board with its finished rows already folded away.
+  // read from state every frame: a save restored after load would otherwise
+  // leave the button out of step with the board
   sayHideDone();
-  // A row bought out of the list, a body hired into it, or a row that has
-  // started saying something else -- any of the three leaves the sheet a
-  // different size than the one it is seated by. The rows are filled in by
-  // `fill` just above, so by here there is a whole board to measure.
+  // After `fill`, so there is a whole board to measure.
   if (boardMoved()) remeasure();
-  // Words alone are gentler: a hover rewriting a note may not move the board
-  // unless it genuinely changed the sheet's width. So the board is measured --
-  // the words might really have widened it -- and when the width comes back
-  // the same the old seat stands, height nudges and all. (feedback7, items 2-3)
+  // Words alone may not move the board unless they genuinely widened it: the
+  // board is measured, and when the width comes back the same the old seat
+  // stands, height nudges and all.
   else if (boardReworded()) {
     const was = sized;
     remeasure(false);                      // words do not get to set the width
     if (sized.w === was.w) sized = was;
   }
-  // A board is placed when it opens, and it is empty at that moment: its rows
-  // are filled on the next frame, and a board that grew a row after being
-  // seated could end up hanging off the top of a short window. Seating it every
-  // frame is a couple of style writes and it can never be wrong.
+  // Seated every frame: a board is empty when it opens, and one that grew a
+  // row after seating could hang off the top of a short window.
   placeBoard();
-  // ...and the call to build the bench, which is on this page too and stands
-  // over a place in the yard the same way a board does.
   seatCall();
 }
 

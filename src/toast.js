@@ -1,19 +1,11 @@
-// The toast: a notice said out loud, the moment it lands.
-//
-// Everything else the game has to tell you, it tells you with a mark on the
-// ground where the thing is, and asks you to walk over. That rule stands for
-// the yard and bends here, once, for the record (DESIGN.md, "a toast when one
-// lands"): a notice is about you rather than about a station, and the moment
-// the record is written is the one moment worth saying so. So one card comes
-// down from the top edge of the window -- the record's own card, name and
-// note, the thing you will later find on the held sheet -- stays a few
+// The toast: a notice said out loud, the moment it lands (DESIGN.md, "a toast
+// when one lands"). One card comes down from the top edge, stays a few
 // seconds, and goes.
 //
-// It is DOM, and lives in the browser shell with record.js and settings.js:
-// nothing in the simulation frame knows it exists. It reads the record the
-// same way the held sheet does -- `S.wonAt` is the order every notice landed
-// in, and `S.wonShown` is how far through that order this has said -- and it
-// never decides what is earned. notices.js is still the one place that does.
+// It is DOM in the browser shell; nothing in the simulation frame knows it
+// exists. It reads the record the way the held sheet does -- `S.wonAt` is the
+// order every notice landed in, `S.wonShown` how far through that order this
+// has said -- and never decides what is earned; notices.js does.
 
 import { S } from './state.js';
 import { now } from './clock.js';
@@ -28,16 +20,10 @@ const el = document.getElementById('toast');
 const nameEl = el.querySelector('.name');
 const noteEl = el.querySelector('.note');
 
-// One at a time, in the order they landed. A rock can land three notices in
-// one frame, and three cards stacked is a pile, and a pile is read as noise.
-// Every one gets its beat -- the line is never cut short, because a notice
-// that was announced and one that was not are different things to the player.
-//
-// There is no queue of its own here. What is waiting is whatever `S.wonAt`
-// places after `S.wonShown`, read again each frame -- so a yard starting over
-// (which empties `wonAt`) or `hushNotices` (which moves `wonShown` to the end)
-// empties the line without this being told, and nothing said is ever a thing
-// the record has forgotten.
+// One at a time, in the order they landed, and every one gets its beat. No
+// queue of its own: what is waiting is read off `S.wonAt` each frame, so a
+// yard starting over or `hushNotices` empties the line without this being
+// told.
 const pending = () =>
   Object.entries(S.wonAt)
     .filter(([, at]) => at > (S.wonShown | 0))
@@ -48,9 +34,8 @@ let up = null;      // the key on the card now, or null
 let upAt = 0;       // when it went up
 let downAt = 0;     // when the last one came down, for the gap between two
 
-// Pressing the card is asking to see the record: the game is held, and the
-// sheet comes up turned to the achievements page rather than its front.
-// `hold` opens the front and marks the record read; the page is turned after.
+// Pressing the card opens the held sheet on the record page. `hold` opens the
+// front and marks the record read; the page is turned after.
 el.addEventListener('click', () => {
   hold(true);
   showPane('record');
@@ -64,21 +49,17 @@ function show(key) {
   if (!n) return hide();
   nameEl.textContent = n.name;
   noteEl.textContent = n.note;
-  // Under `motion: less` the card appears and disappears in place rather than
-  // sliding; the class is set as it goes up, so flipping the switch mid-card
-  // takes effect on the next one and never mid-slide.
+  // Set as it goes up, so flipping the switch mid-card takes effect on the
+  // next one and never mid-slide.
   el.classList.toggle('still', reducedMotion());
   el.hidden = false;
   // `hidden` off and `up` on in the same style pass would skip the slide, so
-  // the layout is read once between them, which is what makes the browser
-  // start from the hidden pose. Same frame, so the fact and the picture agree.
+  // the layout is read once between them.
   void el.offsetWidth;
   el.classList.add('up');
 }
 
-// Down is the `up` class coming off: the fade runs on that, and the element
-// leaves the tree when the fade is over (or now, if there is no fade to run).
-// The fact of the card is the class, not `hidden` -- `hidden` lags it by one
+// The fact of the card is the class, not `hidden`: `hidden` lags it by one
 // fade, and a card fading out is not a card that is up.
 function hide() {
   el.classList.remove('up');
@@ -91,33 +72,28 @@ el.addEventListener('transitionend', () => {
   if (!el.classList.contains('up')) el.hidden = true;
 });
 
-// Once a frame, from `frame()` in main.js. The clock is the game's, so a held
-// game holds the card where it is, and a check turning the handle sees the
-// card go up and come down on the game's seconds rather than the machine's.
+// Once a frame, from `frame()` in main.js, on the game's clock: a held game
+// holds the card, and a check sees it on the game's seconds.
 export function stepToast() {
   const t = now();
   // A seeded run winds the clock back to nought; a card that went up before
-  // that would otherwise stay up until the clock caught up with it, and a
-  // gap owed from before it is not owed now.
+  // that would otherwise stay up until the clock caught up with it.
   if (upAt > t) upAt = t;
   if (downAt > t) downAt = t - TOAST_GAP_MS;
   if (up) {
-    // The card says a notice the record no longer has -- the yard started
-    // over under it -- or has said its piece.
+    // said its piece, or says a notice the record no longer has
     if (!S.won.includes(up) || t - upAt >= TOAST_MS) hide();
     return;
   }
   const next = pending();
   if (!next.length) return;
-  // A card over a cutscene is a card over the one thing the game has asked
-  // you to watch, so the line holds until the camera is given back.
+  // Not over a cutscene: the line holds until the camera is given back.
   if (cutsceneRunning()) return;
   if (t - downAt < TOAST_GAP_MS) return;
   show(next[0]);
 }
 
-// What is on the card now, for the checks: its name and note, or null while
-// nothing is up (a card fading out counts as down). And how many are waiting.
+// For the checks. A card fading out counts as down.
 export const toastUp = () =>
   up ? { key: up, name: nameEl.textContent, note: noteEl.textContent } : null;
 export const toastWaiting = () => pending().length;

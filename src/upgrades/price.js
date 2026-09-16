@@ -1,45 +1,28 @@
 // What a rung costs and what a coin is worth, on their own so a row file can
-// price itself without importing upgrades.js.
-//
-// upgrades.js strings every row file together, and the station modules
-// (scrubhouse.js, apothecary.js) build their ladders at module load. A ladder
-// helper that imported upgrades.js for these two would close a cycle --
-// upgrades.js -> scrubhouse.js -> tiers.js -> upgrades.js -- and whichever
-// module the entry point happened to reach first would find the helper still
-// uninitialized. Two leaf definitions, re-exported from upgrades.js so nothing
-// that already imports them from there has to move.
+// price itself without importing upgrades.js: the station modules build their
+// ladders at module load, and a helper that imported upgrades.js for these
+// would close a cycle (upgrades.js -> scrubhouse.js -> tiers.js ->
+// upgrades.js) and find itself uninitialized. Re-exported from upgrades.js.
 
 import { S } from '../state.js';
 import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE } from '../config.js';
 
-// What one rung costs, from what the first one costs.
-//
-// Half again a rung, so the top of a ladder is about six times the bottom of it.
-// The old prices doubled and worse -- 1.9 a level on the swing -- which is the
-// arithmetic of a row meant to be bought for ever: the exponent, not the game,
-// decides when you stop. A ladder with an end does not need the price to be the
-// wall, because the end is the wall, so a rung can stay affordable enough to be
-// worth reading all the way up.
-// `rate` is the step, and a ladder may name its own: the Ladder Book's knob.
+// Half again a rung, so the top of a ladder is about six times the bottom. A
+// ladder with an end does not need the price to be the wall. `rate` is the
+// Ladder Book's knob.
 export const RUNG_RATE = 1.6;
 export const rungCost = (first, lvl, rate = RUNG_RATE) => Math.round(first * Math.pow(rate, lvl));
 
-// Sixty to the spark is the line the machines were already sitting on: the
-// tiller exactly, the jaw within a rounding. The rest are set against it by how
-// hard the thing is to come by, and a core -- of which there are nine in the
-// game -- is worth the most of anything. See DUST_PER_SPARK in config.
+// Set against the spark by how hard each coin is to come by (DUST_PER_SPARK in
+// config).
 export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE };
 
-// Where each coin comes from, and whether that place exists yet. A card never
-// asks for a coin the yard has no source for: a bill in ore on a yard with no
-// quarry is not a price, it is a word the player has not met. Spore is the
-// plots and shard is the cut -- the two grounds' own flags rather than
-// `seenSpore`/`seenShard`, because a ground that stands and has not yielded
-// yet is still a place to go and get the coin from. Dust is always there.
-//
-// Each carries the words a card uses to say it is waiting on that place --
-// see `coinNeeds`. Kept beside the flag so the two cannot disagree about what
-// a coin's source is.
+// Where each coin comes from, and whether that place exists yet: a bill in a
+// coin the yard has no source for is a word the player has not met. Spore and
+// shard read the grounds' own flags rather than `seenSpore`/`seenShard`,
+// because a ground that stands and has not yielded yet is still a place to go
+// and get the coin from. Dust is always there. The words a card says while it
+// waits (`coinNeeds`) sit beside the flag so the two cannot disagree.
 const COIN_FROM = {
   spore: { open: () => !!S.farmOpen,   needs: 'needs crops' },
   shard: { open: () => !!S.quarryOpen, needs: 'needs a quarry' },
@@ -49,9 +32,8 @@ const COIN_FROM = {
 export const coinOpen = coin => !COIN_FROM[coin] || COIN_FROM[coin].open();
 export const coinsOpen = coins => coins.every(coinOpen);
 
-// What a card is waiting on, in words, or nothing when every coin on its bill
-// has a source. A card that is a whole ladder cannot leave the board when its
-// bill reaches a coin the yard has not met -- the rungs already bought are on
-// it -- so it stands greyed and says this where its price would go (see
-// `tierRows`, and `fill` in shop.js).
+// What a card is waiting on, in words, or nothing. A ladder card cannot leave
+// the board when its bill reaches a coin the yard has not met (the rungs
+// bought are on it), so it stands greyed and says this where its price would
+// go (`tierRows`; `refresh` in shop.js).
 export const coinNeeds = coins => COIN_FROM[coins.find(c => !coinOpen(c))]?.needs || '';

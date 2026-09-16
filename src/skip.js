@@ -1,15 +1,7 @@
-// Skipping a scene: the space bar, held.
-//
-// Four things take the yard away from the player for a while -- the opening,
-// the reunion after the first rock, the rescue under the dome, and the camera
-// scenes (cutscene.js) -- and each had its own idea about being skipped: the
-// camera scenes on any click, the opening through a dev hook, the other two
-// not at all. One key ends whichever of them is running. Held rather than
-// pressed, because the scenes play once and a rested hand is not a decision;
-// the hold fills a bar under the hint (skiphint.js) so a player who is
-// holding can see it counting, and a player who lets go early has lost
-// nothing. The clock is the game's, so a hold taken into the held sheet is
-// still there when the yard comes back.
+// Skipping a scene: the space bar, held. One key ends whichever scene is
+// running; held rather than pressed, because a rested hand is not a decision.
+// The clock is the game's, so a hold taken into the held sheet is still there
+// when the yard comes back.
 //
 // What a skip does is each scene's own business (`cutIntro`, `skipCutscene`):
 // this only knows that one is running and that the key has been down long
@@ -26,8 +18,8 @@ import { cutsceneRunning, skipCutscene } from './cutscene.js';
 export const skippable = () =>
   (introRunning() && !S.introCut) || cutsceneRunning();
 
-// The key going down and coming up. Down keeps its first time -- the browser
-// repeats a held key -- and up clears it.
+// Down keeps its first time -- the browser repeats a held key -- and up
+// clears it.
 export const holdSkip = on => { S.skipHeldAt = on ? (S.skipHeldAt || now()) : 0; };
 
 // How far through the hold, 0 to 1, for the bar.

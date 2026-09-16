@@ -1,8 +1,7 @@
 // Wiring the mouse, the wheel and the keyboard to the game.
 //
 // Nothing in here decides anything: it turns an event into a call on somebody
-// else's module. If a new site needs a click, it gets a branch here and its own
-// file for the behaviour.
+// else's module.
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H } from './config.js';
@@ -43,18 +42,15 @@ const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
 
 // Every finger currently down, so a second one can mean something different
-// from the first. A mouse only ever has one, so none of this gets in its way.
+// from the first.
 const down = new Map();
 let panning = null;                        // where the fingers were last frame
-// and the same for the middle button, which is a mouse's version of the two
-// fingers: hold it down and the yard slides under the pointer. Kept apart from
-// `panning` because it is one pointer rather than the middle of several, and
-// because it must not be cancelled by the same "fewer than two fingers" rule.
+// The middle button's pan. Apart from `panning` because it is one pointer, and
+// must not be cancelled by the "fewer than two fingers" rule.
 let wheelPan = null;
-// And one finger on a phone, which looks about wherever it is not on dust
-// (see "One finger looks about" in DESIGN.md). Where it pressed and where it
-// was last seen; `live` once it has left the tap's slop, because a tap must
-// not nudge the view and a drag must not jump when it starts.
+// One finger on a phone, off the dust (DESIGN.md, "One finger looks about").
+// `live` once it has left the tap's slop: a tap must not nudge the view and a
+// drag must not jump when it starts.
 let fingerPan = null;
 const TAP_SLOP = 14;                       // pixels a tap may wander and still be a tap
 const TAP_TIME = 500;
@@ -65,8 +61,8 @@ const middle = () => {
   return { x: x / down.size, y: y / down.size };
 };
 
-// a second finger means the player wants to look around, not dig: whatever the
-// first one had started is dropped, and the two of them move the view together
+// a second finger means looking around, not digging: whatever the first one
+// had started is dropped
 function startPan() {
   S.mining = false;
   S.dragging = false;                      // the load stays on the cursor, unthrown
@@ -74,10 +70,8 @@ function startPan() {
 }
 
 // Where the pointer was on the glass last time it moved, for the draught it
-// leaves in the dust. Kept here rather than on S: it is a fact about the mouse
-// between two events, not about the yard, and nothing saves or reads it.
+// leaves in the air; and in the yard's own coordinates, for the smoke.
 let lastSx = null, lastSy = null;
-// and the same for the yard's own coordinates, for the smoke
 let lastWx = null, lastWy = null;
 
 export function pos(e) {
@@ -88,39 +82,29 @@ export function pos(e) {
   };
 }
 
-// The right button belongs to the crew and nothing else, so the menu the browser
-// would put there is not wanted anywhere on the yard.
+// The right button belongs to the crew, so the browser's menu is not wanted.
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-// The middle button scrolls the view sideways, and the browser would rather use
-// it to open its own autoscroll. Taken on `mousedown`, which is the event that
-// starts that, rather than on the pointer events below -- preventing the default
-// on a pointerdown does not stop it.
+// The browser's middle-button autoscroll starts on `mousedown`; preventing the
+// default on a pointerdown does not stop it.
 canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
-// Standing at any station at all. The click handler and the move handler ask the
-// same question of the same list, so a station that answers one answers both.
+// Standing at any station at all; the click and move handlers ask the same
+// list.
 const atStation = (x, y) =>
   nearShack(x, y) || nearBench(x, y) || nearCasino(x, y) ||
   nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearApothecary(x, y) || nearTower(x, y) ||
   nearHouse(x, y) || nearStats(x, y) || nearOuthouse(x, y);
 
 canvas.addEventListener('pointerdown', e => {
-  // Held, the yard does not answer to anything. A paused game you can still
-  // swing at is not a paused game; the only live thing is the sheet saying so,
-  // and that is over the canvas rather than on it.
+  // Held, the yard does not answer to anything.
   if (S.paused) return;
-  // A cutscene running eats the click and ends: any click skips, and the click
-  // does nothing else -- a swing taken while the camera is being handed back
-  // is a swing at whatever happened to be under the cursor.
+  // A click skips a running cutscene and does nothing else: a swing taken
+  // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
-  // The right button picks somebody up and puts them down again, and does
-  // nothing else at all -- see `lift`. It is checked before anything, because
-  // it can never mean any of the things the left button means.
-  // The middle button looks around and does nothing else, the same deal the
-  // right button has with the crew. Checked before the left button's business
-  // for the same reason: it can never mean any of those things.
+  // The middle button looks around and the right button lifts (`lift`);
+  // neither can mean any of the things the left button means.
   if (e.button === 1) {
     wheelPan = e.clientX;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
@@ -141,32 +125,19 @@ canvas.addEventListener('pointerdown', e => {
 
   const p = pos(e);
   S.mouse = p;
-  // A press on the yard puts any open board away, whatever else it goes on to
-  // mean. A board opens by being walked up to and closes by being walked away
-  // from, which is right while the cursor is drifting -- but a *click* is
-  // somebody deciding to do something, and if what they decided to do is swing
-  // at the rock or pick a body up then the sheet in the corner is over.
-  //
-  // Before everything else, so it happens whether or not the click lands on
-  // anything: clicking bare ground is still a decision to stop reading.
+  // A click off a station puts any open board away, whatever else it means:
+  // a click is a decision to stop reading. Before everything else, so it
+  // happens whether or not the click lands on anything.
   if (!atStation(p.x, p.y)) showPanel(null, true);
-  // the sky is checked first, though nothing up there is ever over the rock
+  // the sky first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
-  // then the rosters: they stand well under the ground line, where a click has
-  // nothing else to mean, but they are still controls and go before the yard
-  // A lever on a machine, before the ground behind it. It is the only control in
-  // the yard that is not on a board, and it has to be caught here or a bought
-  // machine can never be switched off by anybody but a dev hook.
+  // then the controls that stand in the yard, before the ground behind them:
+  // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
-  // A cauldron is a control as well as a picture: clicking one drops open the
-  // picker for what that pot brews (item 17). Before the ground behind it, for
-  // the machine lever's reason -- it is a thing you press, and the ground is
-  // what is left when you have not pressed anything.
   if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
-    // The top, at the nearest high point to where you clicked -- the same place
-    // a held swing lands. Clicking is aiming at the rock, not at a cell of it:
-    // a rock is worked from the top down whether you tap or lean on the button.
+    // The nearest high point to the click, the same place a held swing lands:
+    // a rock is worked from the top down.
     const at = topOfRock(p.x) || p;
     knockOff(at.x, at.y, undefined, false);   // your own hands: no smoke
     S.mining = S.autoMine;                      // holding only mines once unlocked
@@ -174,9 +145,8 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
-  // A finger on bare ground or sky is looking about, not sweeping: there is
-  // nothing under it to sweep. A mouse keeps its left button for the sweep
-  // everywhere, because it has a wheel and a middle button for looking.
+  // A finger off the dust is looking about, not sweeping. A mouse keeps its
+  // left button for the sweep everywhere.
   if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) {
     fingerPan = { x0: e.clientX, x: e.clientX, live: false };
     try { canvas.setPointerCapture(e.pointerId); } catch {}
@@ -217,17 +187,15 @@ canvas.addEventListener('pointermove', e => {
     return;
   }
 
-  // The air notices a hand going through it. Measured on the glass rather than in
-  // the yard, because that is where a mote lives: dragging the view along slides
-  // the pointer across the world without moving it across the window, and it
-  // should stir nothing.
+  // The air is stirred on the glass, where a mote lives: dragging the view
+  // slides the pointer across the world without moving it across the window,
+  // and should stir nothing.
   const r = canvas.getBoundingClientRect();
   const sx = e.clientX - r.left, sy = e.clientY - r.top;
   if (lastSx != null) stirAir(sx, sy, sx - lastSx, sy - lastSy);
   lastSx = sx; lastSy = sy;
 
-  // and the smoke, which lives in the yard rather than on the glass -- so it is
-  // stirred in world pixels, off how far the pointer moved across the *yard*
+  // the smoke lives in the yard, so it is stirred in world pixels
   const wm = pos(e);
   if (lastWx != null) stirSmoke(wm.x, wm.y, wm.x - lastWx, wm.y - lastWy);
   lastWx = wm.x; lastWy = wm.y;
@@ -237,60 +205,29 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
-    // wave7-crew: a body under the cursor stands still while it is looked at,
-    // so the card over its head is read off somebody who is not walking away.
-    // The stamp refreshes every move; the stage in crew/step.js does the rest.
+    // a body under the cursor stands still while it is looked at; the stage
+    // in crew/step.js does the rest
     hoverAt(S.mouse.x, S.mouse.y);
-    // A cauldron drops its brew picker open when you stand at it, the same way a
-    // station's board does -- and it does not fight the boards for the cursor,
-    // because the apothecary's board answers to the hut and the pots are the
-    // other end of the building. See potpick.js.
     potHover(S.mouse.x, S.mouse.y);
-    // One menu: whichever station the cursor is standing at, or none -- unless
-    // it is on its way to the one already open, in which case it is still on it.
-    // See `inSafeZone`.
-    // The house goes last, and it is the only one whose order matters. Every
-    // other station is a thing standing on the ground with its own patch around
-    // it; the house is a block that grows a room per body, and its patch reaches
-    // the bench. Whoever you are actually standing at should win, and next to a
-    // wall of rooms that is the smaller thing, not the bigger one.
     const want = boardAt(S.mouse.x, S.mouse.y);
-    // Standing at a station outranks being on the way to the open board.
-    //
-    // These have been swapped round twice now and both extremes are wrong. With
-    // the wedge second, the station next door took the menu off you halfway down
-    // to the corner of an open sheet -- there are six buildings and the walk
-    // crosses whatever is between. With the wedge *first*, which is what it has
-    // been, the board you already had glued itself in place: hover the bench,
-    // then go and stand at the houses, and the bench stayed up because the
-    // houses are inside the wedge on the way to it.
-    //
-    // The distinction is what the cursor is actually over. A station under the
-    // pointer is not a journey, it is an arrival, and it takes the board every
-    // time. The wedge is for the ground *between* things -- which is all it was
-    // ever meant to protect -- so it only gets a say when the answer would
-    // otherwise be "nothing".
-    //
-    // Unless the cursor is on the menu itself. A sheet is opaque and the canvas
-    // under it never hears a pointer that is over it -- but the crew list
-    // stands beside the board, over whatever station is next along, and the
-    // strip between the two is bare canvas. Crossing that strip is not
-    // arriving at the bench; it is reading the menu. So a station under a
-    // point that is on the menu's own rectangle gets no say, which is only
-    // what the page already does everywhere the sheet is in the way.
+    // Standing at a station outranks being on the way to the open board: a
+    // station under the pointer is an arrival, and the wedge is for the ground
+    // *between* things, so it only has a say when the answer would otherwise
+    // be nothing. Unless the cursor is on the menu itself: the strip between
+    // the board and the crew list is bare canvas over whatever station is next
+    // along, and crossing it is reading the menu, not arriving.
     if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
     else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
-    // and whatever the cursor is asking about, which is not the same question:
-    // a board opens because you walked up to a station, a tooltip opens because
-    // you went and looked at a mark
+    // a board opens because you walked up to a station, a tooltip because you
+    // went and looked at a mark
     askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);
     setCursor(S.mouse.x, S.mouse.y);
   }
   // somebody on the cursor goes where the cursor goes
   const up = lifted();
   if (up) {
-    // waggled back and forth rather than carried: counted while it is in your
-    // hand and spent when you let go. See `shakeHeld`.
+    // waggled back and forth: counted in the hand, spent on the drop
+    // (`shakeHeld`)
     if (wasWx != null) shakeHeld(up, S.mouse.x - wasWx);
     up.x = S.mouse.x - WORKER / 2;
     up.y = S.mouse.y - WORKER / 2;
@@ -301,15 +238,11 @@ canvas.addEventListener('pointermove', e => {
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
 
-// The board a point on the ground asks for, if any, in the order that
-// settles which wins where two patches overlap. The house goes last, and it
-// is the only one whose order matters: every other station is a thing
-// standing on the ground with its own patch around it; the house is a block
-// that grows a room per body, and its patch reaches the bench. Whoever you
-// are actually standing at should win, and next to a wall of rooms that is
-// the smaller thing, not the bigger one. The noticeboard is last of all: it
-// stands on the busiest strip in the yard, between the bench and the front
-// doors, so anything else you might actually be pointing at wins over it.
+// The board a point on the ground asks for, in the order that settles which
+// wins where two patches overlap. The house is a block that grows a room per
+// body and its patch reaches the bench, so it goes after every smaller thing
+// you might be standing at; the noticeboard stands on the busiest strip in
+// the yard and goes last of all.
 function boardAt(x, y) {
   return nearCasino(x, y) ? 'casino'
        : nearScrub(x, y) ? 'scrub'
@@ -317,7 +250,7 @@ function boardAt(x, y) {
        : nearFarm(x, y) ? 'farm'
        : nearApothecary(x, y) ? 'apothecary'
        : nearTower(x, y) ? 'tower'
-       // The gang's hut, before the bench it stands in front of.
+       // the hut before the bench it stands in front of
        : nearShack(x, y) ? 'shack'
        : nearBench(x, y) ? 'bench'
        : nearOuthouse(x, y) ? 'outhouse'
@@ -334,13 +267,11 @@ export function endDrag(e) {
   if (down.size < 2) panning = null;
   if (held) fingerPan = null;
 
-  // A tap on a touchscreen is what a hover is on a desk: near the bench it opens
-  // the board, anywhere else it puts it away.
+  // A tap on a touchscreen is what a hover is on a desk: at a station it
+  // opens (or shuts) the board, anywhere else it puts it away.
   if (held && held.kind === 'touch' && !panning &&
       Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
       now() - held.at < TAP_TIME) {
-    // one board at a time: two of them open at once on a phone screen would
-    // simply sit on top of each other
     const p = pos(e);
     if (nearShack(p.x, p.y)) showPanel(S.shackBoardOpen ? null : 'shack', true);
     else if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
@@ -374,10 +305,7 @@ addEventListener('blur', () => {
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
 
-// The cursor leaving the canvas is the cursor leaving everything it could have
-// been asking about, so whatever label was up goes with it -- see D1. Left as
-// a bare clear rather than routed through `askedAbout`: there is no longer a
-// spot in the yard to ask about at all.
+// The cursor leaving the canvas takes any label with it.
 canvas.addEventListener('pointerleave', () => showTipAt(null));
 
 
@@ -400,20 +328,14 @@ resetEl.addEventListener('click', () => {
 });
 
 // --- the hover registry ---------------------------------------------------------
-// D1 in wave-feedback3.md (#1): a label for whatever the cursor is over, in a
-// word. `askedAbout` below already has richer tooltips for the handful of
-// things worth more than a word -- a body's whole card, a stopped station's
-// reason -- and those keep winning: a plain label is only shown once none of
-// them has anything to say.
-//
-// One function, asked for a label and nothing else, and nothing about it draws
-// anything -- it is a question about a spot in the yard, so a check can ask it
-// directly with no mouse anywhere near it.
+// A label for whatever the cursor is over, in a word. The richer tooltips in
+// `askedAbout` (a body's card, a stopped station's reason) keep winning; the
+// label is shown once none of them has anything to say. `whatIsAt` draws
+// nothing, so a check can ask it with no mouse anywhere near it.
 const inRect = (r, x, y) => !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 
-// The cell a grid is holding at a world point, the same lookup `sweep` in
-// hands.js makes for the brush: a column off `colOf`, a row counted up from
-// the grid's own floor rather than down from its top.
+// The cell a grid holds at a world point, the same lookup `sweep` in hands.js
+// makes: a row counted up from the grid's own floor, not down from its top.
 function cellAt(b, wx, wy) {
   if (!b.grid) return 0;
   const c = colOf(b, wx);
@@ -431,11 +353,7 @@ function cellLabel(v) {
   return isDust(v) ? 'pebble' : null;
 }
 
-// Every building that has a name on its own board, plus the two that do not
-// (the rift). `standRect` answers "is it there, and where" for
-// every one of them now -- including the farm and the quarry, whose shed is
-// the whole answer to where you stand, where you click and where the board
-// hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
+// Every building `standRect` (board.js) answers "is it there, and where" for.
 const BUILDING_NAME = {
   shack: 'the shack',
   bench: 'the bench', lab: 'the lab', casino: 'the casino',
@@ -445,17 +363,15 @@ const BUILDING_NAME = {
 function buildingAt(x, y) {
   for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
   if (S.outhouseOpen && inRect(outhouse, x, y)) return "the janitor's closet";
-  // the drowned pit: anywhere over the liquid answers as the abyss -- and
-  // through the torn era, the disc itself answers as the rift
+  // the drowned pit answers as the abyss; through the torn era, the disc
+  // answers as the rift
   if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
   if (riftOpen() && !S.drowned && inRect(rift, x, y)) return 'the rift';
   return null;
 }
 
-// A machine has no rect exported anywhere the way a building does, so this is
-// a padded box round the one point every machine already hands `specOf` --
-// generous rather than exact, which is what the spec asks for on anything
-// here with no cheap hit-test today.
+// A machine has no rect exported, so this is a generous box round the point
+// `specOf` hands out.
 const MACHINE_NAME = { jaw: 'the drill', ram: 'the ram', tiller: 'the tiller', belt: 'the belt' };
 function machineAt(x, y) {
   for (const m of MACHINES) {
@@ -467,10 +383,8 @@ function machineAt(x, y) {
   return null;
 }
 
-// Muck and poop share one layer of columns (see MESS in smog.js) and stack to
-// one height, so which word applies is which of the two is actually sitting
-// there -- a body's own leavings named first, since that is the one a janitor
-// is sent for and the one worth telling apart from what the weather dropped.
+// Muck and poop share one layer of columns (MESS in smog.js) and stack to one
+// height; poop is named first, since it is the one a janitor is sent for.
 function messAt(x, y) {
   const c = colAt(x);
   const poo = poopCols()[c] || 0, muck = muckCols()[c] || 0;
@@ -481,15 +395,11 @@ function messAt(x, y) {
   return poo ? 'poop' : 'muck';
 }
 
-// The pot: a heap of real sand in `table` (see casino.js), in the same shape
-// of grid the floor and the hole are. It is asked the same way they are -- a
-// cell under the cursor -- rather than as the whole strip of ground the grid
-// reserves for it, which runs most of the width of the yard and would tag
-// bare ground as the pot as readily as the pile actually sitting on it.
+// The pot is asked by cell, not by the strip of ground the grid reserves for
+// it, which runs most of the width of the yard.
 const potAt = (x, y) => S.casinoOpen && !!cellAt(table, x, y);
 
-// A balloon's box, built the way `drawBalloons` in render.js draws one: the
-// envelope's crown down to the basket, centred on the craft's own x.
+// A balloon's box, the way `drawBalloons` in render.js draws one.
 function balloonAt(x, y) {
   if (!S.scrubOpen) return false;
   for (let i = 0; i < CRAFT.length; i++) {
@@ -501,8 +411,7 @@ function balloonAt(x, y) {
   return false;
 }
 
-// A plot's crop, once it has actually grown -- the same box `drawFarm` fills
-// with a stalk and a mark, in render.js.
+// A plot's crop once it has grown, the box `drawFarm` in render.js fills.
 function cropAt(x, y) {
   if (!S.farmOpen) return false;
   for (let i = 0; i < S.plots.length; i++) {
@@ -515,11 +424,9 @@ function cropAt(x, y) {
   return false;
 }
 
-// The one function everything above exists for: what is at a spot, in a word,
-// or nothing. Asked in the order a thing would actually catch your eye first --
-// somebody moving, before the ground under them; a grain in a pile, before the
-// building the pile stands beside; the rock and what is working it, before the
-// weather lying on the ground next to them.
+// What is at a spot, in a word, or nothing. Asked in the order a thing would
+// catch your eye: somebody moving before the ground under them, a grain before
+// the building the pile stands beside.
 export function whatIsAt(x, y) {
   const w = lifted() || workerAt(x, y);
   if (w) return w.type;
@@ -529,10 +436,8 @@ export function whatIsAt(x, y) {
   if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
   const building = buildingAt(x, y);
   if (building) return building;
-  // wave7-crew: the mess before the rock it lies on. Poop lands on the rock's
-  // flank as readily as on the yard, and the rock answered first for the whole
-  // of its own footprint -- so the one patch a player is pointing at to have
-  // cleared was the one patch the label refused to name.
+  // the mess before the rock it lies on: poop lands on the rock's flank, and
+  // the rock would otherwise answer for the whole of its footprint
   const mess = messAt(x, y);
   if (mess) return mess;
   if (overBoulder(x, y)) return 'rock';
@@ -545,29 +450,11 @@ export function whatIsAt(x, y) {
   return null;
 }
 
-// Recomputed every fourth call rather than every one: a label costs a handful
-// of rects and a couple of grid lookups, cheap enough once a frame and not
-// worth paying on every one of however many `pointermove` events a fast mouse
-// fires between two of them. The one it last found stands in the gap, which
-// is also what keeps it from flickering off between polls that would only
-// have found the same thing again.
-//
-// But it is an answer about a SPOT, and it may only stand in for the spot it
-// was an answer about. It used to be kept on the call count alone -- three
-// calls in four handed back the last label wherever the cursor had got to --
-// which is harmless while a mouse is drifting a few pixels and wrong the moment
-// it jumps. And it jumps often: the camera glides out from under a still
-// cursor, a touch lands somewhere new, a fresh game starts with the last game's
-// answer still sitting in the variable. That last one is how a hover over bare
-// sky three hundred pixels from the rock answered "the farm" -- the label had
-// been cached over the farm's shed, in a different game, and nothing since had
-// landed on a fourth call to replace it.
-//
-// So the cache is keyed on where it was taken. Within a cell of the same spot
-// it stands, and the poll rate is what it was; a cursor that has moved further
-// than that is asking a different question and gets it answered. A cell is the
-// yard's own unit of "the same place" -- `whatIsAt` reads grains by cell -- so
-// there is nothing to tune here.
+// Recomputed every fourth call, not every `pointermove` a fast mouse fires.
+// The cache is keyed on where it was taken: it is an answer about a SPOT, and
+// kept on the call count alone it answered "the farm" over bare sky after the
+// camera glided or a new game started. Within a cell it stands; a cell is the
+// yard's own unit of "the same place".
 let tipTick = 0, tipWas = null, tipAt = null;
 function polledWhatIsAt(x, y) {
   const same = tipAt && Math.abs(x - tipAt[0]) < P && Math.abs(y - tipAt[1]) < P;
@@ -579,34 +466,19 @@ function polledWhatIsAt(x, y) {
 }
 
 const panelEl = document.getElementById('panel');
-// A board's sheet sits on top of the canvas in screen space, not the yard's --
-// so whether the cursor is over it is a question about the page, and asked of
-// it directly. Cheap because it is only asked while a board is actually open.
+// The sheet is in screen space, so this is a question about the page.
 function overOpenBoard(cx, cy) {
   if (panelEl.hidden || cx == null) return false;
   const r = panelEl.getBoundingClientRect();
   return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
 }
 
-// A stopped station says why, in the one place words are cheap: under the
-// cursor, and only when the cursor goes looking.
-//
-// This stopped being called for a while. The three lines that opened the bench
-// board, the lab board and this became one `showPanel`, and it went with them --
-// the words, the element and the styling all still there, and nothing reaching
-// them. A board opens because you walked up to a station; a tooltip opens
-// because you went and looked at a mark. Two questions, asked separately.
-// What a body has to say for itself: a name, an age, where it spends its time,
-// and what it has shifted. None of it does anything -- there is no number here
-// that feeds a rate -- it is there so that the four on the rock are four people
-// rather than the number four.
+// The tooltip: what the cursor went and looked at. Not the board, which opens
+// because you walked up to a station; two questions, asked separately.
 function askedAbout(x, y, cx, cy) {
-  // Somebody standing under the cursor comes first: they are the only thing in
-  // the yard that moves, so a mark they happen to be over is a mark you can
-  // still read a moment later.
-  // Whoever is in your hand, or whoever is under the cursor. In your hand comes
-  // first: a body being carried is the one you are asking about, and the ones it
-  // is passing over are not.
+  // Somebody first: they are the only thing that moves, so a mark they are
+  // over can still be read a moment later. In your hand before under the
+  // cursor: a body being carried is the one you are asking about.
   const w = lifted() || workerAt(x, y);
   if (w) {
     showTipAt(card(w), (w.x + WORKER + P * 2 - S.camX) * S.zoom,
@@ -623,12 +495,9 @@ function askedAbout(x, y, cx, cy) {
     showTip(doneName(finished), doneMarkAt(finished));
     return true;
   }
-  // Nothing has more to say than a word -- which is `whatIsAt`'s question, not
-  // this one -- unless a board is standing over the same spot on the page, in
-  // which case there is nothing to add to what it is already saying.
+  // A board over the same spot has nothing to add to.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
-  // And the counter says what it counts. The coin had no name on the opening
-  // screen: a stranger read `[] 0` and nothing else called it anything.
+  // The counter says what it counts: nothing else names the coin.
   if (overCount(cx, cy)) {
     const r = countRect();
     showTipAt('pebbles in the pit: what everything costs', r.x + r.w / 2, r.y - P * 5, true);
@@ -644,14 +513,9 @@ function askedAbout(x, y, cx, cy) {
 }
 
 // --- what the cursor says ------------------------------------------------------
-// The yard is one canvas, so nothing drawn in it can carry a cursor of its own
-// the way a button on a page does. Everything in here has to be asked, every
-// time the mouse moves -- which is cheap, and worth it: a game where half the
-// things on screen do something when you click them and none of them say so is a
-// game you have to poke at to find out.
-//
-// Crosshair is the ground state, because the ground state of this game is aiming
-// at a rock. Everything below is something else you can do instead.
+// The yard is one canvas, so nothing drawn in it carries a cursor of its own;
+// everything here is asked on every move. Crosshair is the ground state,
+// because the ground state of this game is aiming at a rock.
 const CURSORS = [
   // carrying something: the hand is closed
   [() => S.heldCore || S.dragging || lifted(), 'grabbing'],
@@ -665,14 +529,11 @@ const CURSORS = [
              nearOuthouse(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
-  // and a bird, which is a thing to notice rather than a thing to farm
   [(x, y) => overBird(x, y), 'pointer']
 ];
 
-// The same three marks `askedAbout` shows a tooltip for, asked without showing
-// one -- the cursor changes on the way *towards* the mark, and a tooltip that
-// appeared at the same moment would be the yard answering a question nobody had
-// finished asking.
+// The marks `askedAbout` shows a tooltip for, asked without showing one: the
+// cursor changes on the way *toward* the mark.
 function overAnyMark(x, y) {
   for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
   return !!overDoneMark(x, y);
@@ -695,11 +556,8 @@ function pan(dx) {
   clampCam();
   if (S.camX === was) return;
   S.dirty = true;                          // where you are looking is worth writing down
-  // A board stays up while its station is in the window and comes down when
-  // you have scrolled it out: it opened because you stood at the station, and
-  // a sheet that follows you two windows off it is a menu that will not go
-  // away -- the house board rode the scroll onto the rock (critics 2026-09-10,
-  // C10). The same rule `pointerleave` already keeps.
+  // A board comes down when its station is scrolled out of the window: a
+  // sheet that follows you two windows off it is a menu that will not go away.
   if (S.boardOpen) {
     const r = standRect(S.boardOpen);
     if (r && (r.x + r.w < S.camX || r.x > S.camX + S.viewW)) showPanel(null, true);
@@ -712,27 +570,18 @@ canvas.addEventListener('wheel', e => {
   pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
 }, { passive: false });
 
-// The cursor leaving the menu closes it -- unless it has left it towards the
-// station it belongs to, which is the same wedge in the other direction: coming
-// back down off the sheet is not walking away from it.
+// The cursor leaving the menu closes it, unless it left toward the station:
+// the same wedge in the other direction.
 document.getElementById('panel').addEventListener('pointerleave', e => {
   if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
 });
 addEventListener('keydown', e => {
-  // ctrl+R is the browser reloading, not the player asking for a new game
+  // ctrl+R is the browser reloading
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  // There is no reset key. There used to be a bare r, dev builds only, and it
-  // wiped a run with no way back for anybody playing off the dev server -- one
-  // slip of a finger reaching for t or e. Erasing everything is the one act in
-  // this game that must never be quicker than two deliberate clicks, so the
-  // armed button in the corner is the whole of it. The checks reset through
-  // __reset, which never went through the keyboard.
-  // The yard stops where it is. Nothing is saved, nothing is skipped: the clock
-  // simply does not advance, so a held game comes back exactly where it was left.
-  // Escape and not space: escape is the key every menu on every machine answers
-  // to, and a sheet in the middle of the window is a menu. A list standing open
-  // on a board answers to the same key first -- one press shuts the list, the
-  // next holds the yard -- so the key never does two things at once.
+  // No reset key: erasing everything must never be quicker than two
+  // deliberate clicks on the armed button. Escape holds the yard; a list
+  // standing open on a board answers to it first, so the key never does two
+  // things at once.
   if (e.key === 'Escape') {
     e.preventDefault();
     if (shutOpts()) return;
@@ -740,10 +589,9 @@ addEventListener('keydown', e => {
   }
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
-  // Space, held, skips whatever scene is running (skip.js). The hold is
-  // counted on the game's clock from the first press; the browser's repeats
-  // are ignored. Not while typing -- the settings sheet has a box a save is
-  // pasted into, and a space in there is a space.
+  // Space, held, skips the running scene (skip.js); the browser's repeats are
+  // ignored. Not while typing: the settings sheet has a box a save is pasted
+  // into.
   if (e.key === ' ' && !typing(e.target)) {
     e.preventDefault();
     if (!e.repeat) holdSkip(true);
@@ -755,16 +603,12 @@ addEventListener('blur', () => holdSkip(false));
 const typing = el =>
   !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 
-// One flag, set here and read everywhere. The sheet that says so is not set
-// here at all -- the frame keeps it in step with the flag, so anything that
-// clears the flag (a reset, say) clears the sheet without knowing it exists.
+// One flag, set here and read everywhere; the frame keeps the sheet in step
+// with it, so anything that clears the flag clears the sheet.
 export function hold(on) {
   S.paused = on;
   (on ? fadeIn : fadeOut)(document.getElementById('held'));   // now, not next frame
-  // The sheet comes up on its front page, whichever page it went down on, and
-  // the record is written as it opens: the count on the button now, the list
-  // when the button is pressed (settings.js). Opening it reads the record:
-  // everything on it counts as looked at from here.
+  // The sheet comes up on its front page, and opening it reads the record.
   if (on) { showPane('main'); markNoticesRead(); sayStore(); }
   S.dirty = true;
 }

@@ -1,27 +1,12 @@
 // The queue card: what the yard is building and what is in line behind it, on
-// one small card in the corner of the window.
+// one small card in the corner of the window (DESIGN.md, "The queue").
 //
-// It is a glance, not a board. One name a line, across every site, in the
-// order things will land; the line at the top of each site's run carries the
-// bar of the thing being built as a row of pips, and the ones below it are
-// plain names. Nothing says which site a name is at -- hover it and the tip
-// does. Every line carries a clock: the front one's is what is left of it at
-// the pace the site is actually going, or its status when nobody is at it
-// (`building` while the builder walks over, `nobody on it` -- the row's own
-// words), and a waiting one's
-// is how long until IT lands, everything ahead of it counted. See DESIGN.md,
-// "The queue".
-//
-// A name waiting its turn is a button, and pressing it hands the work back --
-// through the same `buy` its row goes through, so the card and the board can
-// never disagree about what a press does. The name at the front is committed
-// and is not pressable.
-//
-// The card is absent when nothing is building anywhere. It comes and goes by
-// a fade rather than a pop, and it stands top-left, under the boards: on a
-// short window a board reaches the corner, and the board you walked up to read
-// is the thing that should win it. It is as wide as its longest name and as
-// tall as its line -- a card that sizes to what is on it (the owner's call).
+// One name a line, across every site, in the order things will land; the line
+// at the front of each site's run carries the bar as pips. A waiting name is a
+// button, and pressing it hands the work back through the same `buy` its row
+// goes through, so the card and the board cannot disagree. It stands top-left,
+// under the boards: on a short window a board reaches the corner, and the
+// board you walked up to read should win it.
 
 import { S } from './state.js';
 import { SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
@@ -32,9 +17,8 @@ import { QUEUE_PIPS } from './config.js';
 
 const el = document.getElementById('queue');
 
-// What the card says a site is, when a name on it is hovered. The same words
-// the yard answers with when you point at the building (`BUILDING_NAME` in
-// input.js), because a name on the card is that building's work.
+// The same words the yard answers with when you point at the building
+// (`BUILDING_NAME` in input.js).
 const SITE_NAME = {
   yard: 'the yard', bench: 'the bench',
   quarry: 'the quarry', farm: 'the farm', scrub: 'the scrubbing house',
@@ -42,30 +26,20 @@ const SITE_NAME = {
   shack: 'the shack'
 };
 
-// The pips of the work at the front of a site's line: filled for the share
-// done, hollow for the rest, the same glyphs a ladder is drawn with on a row.
+// The same glyphs a ladder is drawn with on a row.
 const pips = w => {
   const at = Math.round(progressOf(w) * QUEUE_PIPS);
   return '●'.repeat(at) + '○'.repeat(QUEUE_PIPS - at);
 };
 
-// What a line's clock says. A site's line is worked one at a time at one pace,
-// so the time until any work lands is the sum of what is left of everything
-// ahead of it plus its own -- each at the site's own rate (`leftAt`), so a lab
-// line quotes the lab's pace and not the yard's. The front line with nobody at
-// it says so instead of quoting a figure: a clock over a work nobody is doing
-// is a promise the yard is not keeping.
-//
-// The words and the clock are the tile's (DESIGN.md, "A tile being built
-// shows the building"): `m:ss` to the second, and a waiting line says its
-// place in the line -- `next`, `2nd` -- before its clock, the same word its
-// tile wears.
+// A site's line is worked one at a time at one pace, so the time until a work
+// lands is the sum of what is left of everything ahead of it plus its own,
+// each at the site's own rate (`leftAt`). The words are the tile's: a waiting
+// line says its place before its clock.
 const clockOf = (site, list, i) => {
   const going = roomAt(site);
-  // A front line nobody is at says `queued` and no clock: a clock over a
-  // work nobody is doing is a promise the yard is not keeping, and the tile
-  // says the same word -- bought, waiting -- until a body arrives and it
-  // reads `building`.
+  // A front line nobody is at says `queued` and no clock: a clock over a work
+  // nobody is doing is a promise the yard is not keeping.
   if (i < going && stalled(site)) return 'queued';
   let ms = 0;
   for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
@@ -73,9 +47,8 @@ const clockOf = (site, list, i) => {
   return `${place}<i class="clock"></i><b>${leftText(ms)}</b>`;
 };
 
-// The lines are rebuilt only when the set of works changes -- a name arriving,
-// a name leaving, a work stepping up -- and only the pips are rewritten
-// between. A card rebuilt every frame would lose the hover under the cursor.
+// Rebuilt only when the set of works changes; a card rebuilt every frame
+// would lose the hover under the cursor.
 let built = '';
 
 export function fillQueue() {
@@ -111,7 +84,6 @@ export function fillQueue() {
       b.appendChild(c);
       // A press on a waiting name hands the work back, by the row's own path.
       if (!l.front) b.addEventListener('click', () => { const u = rowFor(l.key); if (u) buy(u); });
-      // The station, on hover, in the board's own tip beside the line.
       const say = () => {
         const r = b.getBoundingClientRect();
         showTipAt(SITE_NAME[l.site] || l.site, r.right + 8, r.top - 2);
@@ -129,8 +101,7 @@ export function fillQueue() {
       if (c.innerHTML !== l.clock) c.innerHTML = l.clock;
     }
   }
-  // Present while there is anything to say, and faded rather than removed when
-  // there is not: `hidden` would cut the fade short.
+  // Faded rather than removed: `hidden` would cut the fade short.
   const show = lines.length > 0 && !S.paused;
   if (show && el.hidden) el.hidden = false;
   el.classList.toggle('off', !show);
