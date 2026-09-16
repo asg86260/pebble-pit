@@ -1454,10 +1454,6 @@ export const TESTS = [
     // Its edge is dashed: a thing waiting its turn is pencilled in.
     const queuedTile = shop().querySelector('[data-key="auto"]');
     const edge = queuedTile ? getComputedStyle(queuedTile).borderTopStyle : '';
-    shop().querySelector('[data-key="auto"]')?.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
-    await raf();
-    const tip = document.getElementById('tip')?.textContent || '';
-    shop().querySelector('[data-key="auto"]')?.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true }));
     window.__finish();
     await settle(1);
     window.__board(null);
@@ -1467,7 +1463,6 @@ export const TESTS = [
       ok(/building|queued/.test(said) && pips > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips} pips`),
       ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
       ok(/next/.test(cardLine), 'and the queue card says next on the same line', cardLine || 'no line'),
-      ok(/hand it back/.test(tip), 'and hovering it says a press hands it back', tip || 'no tip'),
       ok(edge === 'dashed', 'and its edge is dashed', edge || 'none'),
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),

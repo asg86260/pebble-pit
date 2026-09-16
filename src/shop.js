@@ -346,12 +346,12 @@ function build(el, list, sections, empty, heads) {
       }
       // A card wears its description inline (`sayNote`); the crew submenu and a
       // shelf tile have no line for it, so the tip carries it. The goal card
-      // keeps its sentence in place. A tile in line says what a press does,
-      // since it is the one press that undoes a purchase.
-      const tells = (inSubmenu || (shelf && !sect.goal)) && (u.note || takesTime(u));
+      // keeps its sentence in place. A tile in line says nothing more than
+      // its note: the dashed edge and the `next` tag already say what it is.
+      const tells = (inSubmenu || (shelf && !sect.goal)) && u.note;
       const say = tells ? () => {
         const r = b.getBoundingClientRect();
-        const words = inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
+        const words = u.note();
         if (!words) { showTipAt(null); return; }
         // Off the board for a card (a note under the board's layer is a note
         // nobody reads), over the neighbors for a shelf tile.

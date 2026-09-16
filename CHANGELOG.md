@@ -12,6 +12,9 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
+- The outhouse comes up at 300 pebbles instead of 900.
+- A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
 
 - The casino is the pour: hold the arm and pebbles pour from your purse into the funnel, a share of what you own a second; tap the sign to drop them; the bins pay in pebbles, crops, ore and sparks out of the foot on to the ground for the crew (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.

@@ -12,10 +12,10 @@ import { NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE } from './config.
 const ladder = (prefix, list, name, note) =>
   list.map((n, i) => ({ key: prefix + i, name: name(n, i), note: note(n, i) }));
 
-export const SAY = ['ten', 'twenty-five', 'fifty', 'a hundred'];
-export const PEBBLE_SAY = ['ten thousand', 'a hundred thousand', 'a million',
-                           'ten million', 'a hundred million'];
-export const CREW_SAY = ['five', 'ten', 'twenty five', 'fifty'];
+export const SAY = ['10', '25', '50', '100'];
+export const PEBBLE_SAY = ['10k', '100k', '1m',
+                           '10m', '100m'];
+export const CREW_SAY = ['5', '10', '25', '50'];
 
 export const CATALOG = [
   // --- what happens on its own -------------------------------------------------
@@ -49,10 +49,10 @@ export const CATALOG = [
             (n, i) => `${CREW_SAY[i]} squares`,
             (n, i) => `hire a crew of ${CREW_SAY[i]}`),
   ...ladder('ore', NOTICE_ORE,
-            (n, i) => i === 0 ? 'a thousand ore out of the cut' : 'ten thousand ore',
-            (n, i) => `dig ${i === 0 ? 'a thousand' : 'ten thousand'} ore out of the quarry`),
-  { key: 'rift1e6', name: 'a million through the rift', note: 'send a million pebbles through the rift' },
-  { key: 'brew100', name: 'a hundred batches', note: 'brew a hundred batches' },
+            (n, i) => i === 0 ? '1k ore out of the cut' : '10k ore',
+            (n, i) => `dig ${i === 0 ? '1k' : '10k'} ore out of the quarry`),
+  { key: 'rift1e6', name: '1m through the rift', note: 'send 1m pebbles through the rift' },
+  { key: 'brew100', name: '100 batches', note: 'brew 100 batches' },
   { key: 'lived1h', name: 'an hour on one clock', note: 'keep one body on the payroll for an hour' },
 
   // --- feats you would have to set out for --------------------------------------

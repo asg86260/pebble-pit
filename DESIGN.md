@@ -8995,23 +8995,23 @@ wanting a played yard and the dev panel: an `export let` with a `TUNABLE` row.
 
 | notice | note | reads |
 |---|---|---|
-| ten rocks | clear ten boulders | `boulderNo >= 10` |
-| twenty-five rocks | clear twenty-five boulders | `boulderNo >= 25` |
-| fifty rocks | clear fifty boulders | `boulderNo >= 50` |
-| a hundred rocks | clear a hundred boulders, thats a lot of rocks | `boulderNo >= 100` |
-| ten thousand pebbles | bank ten thousand pebbles | `banked >= 1e4` |
-| a hundred thousand pebbles | bank a hundred thousand pebbles | `banked >= 1e5` |
-| a million pebbles | bank a million pebbles | `banked >= 1e6` |
-| ten million pebbles | bank ten million pebbles | `banked >= 1e7` |
-| a hundred million pebbles | bank a hundred million pebbles | `banked >= 1e8` |
-| five squares | hire a crew of five | `crew >= 5` |
-| ten squares | hire a crew of ten | `crew >= 10` |
-| twenty five squares | hire a crew of twenty-five | `crew >= 25` |
-| fifty squares | hire a crew of fifty | `crew >= 50` |
-| a thousand ore out of the cut | dig a thousand ore out of the quarry | `quarryTotal >= 1e3` |
-| ten thousand ore | dig ten thousand ore out of the quarry | `quarryTotal >= 1e4` |
-| a million through the rift | send a million pebbles through the rift | `riftAte >= 1e6` |
-| a hundred batches | brew a hundred batches | `brews >= 100` |
+| 10 rocks | clear 10 boulders | `boulderNo >= 10` |
+| 25 rocks | clear 25 boulders | `boulderNo >= 25` |
+| 50 rocks | clear 50 boulders | `boulderNo >= 50` |
+| 100 rocks | clear 100 boulders, thats a lot of rocks | `boulderNo >= 100` |
+| 10k pebbles | bank 10k pebbles | `banked >= 1e4` |
+| 100k pebbles | bank 100k pebbles | `banked >= 1e5` |
+| 1m pebbles | bank 1m pebbles | `banked >= 1e6` |
+| 10m pebbles | bank 10m pebbles | `banked >= 1e7` |
+| 100m pebbles | bank 100m pebbles | `banked >= 1e8` |
+| 5 squares | hire a crew of 5 | `crew >= 5` |
+| 10 squares | hire a crew of 10 | `crew >= 10` |
+| 25 squares | hire a crew of 25 | `crew >= 25` |
+| 50 squares | hire a crew of 50 | `crew >= 50` |
+| 1k ore out of the cut | dig 1k ore out of the quarry | `quarryTotal >= 1e3` |
+| 10k ore | dig 10k ore out of the quarry | `quarryTotal >= 1e4` |
+| 1m through the rift | send 1m pebbles through the rift | `riftAte >= 1e6` |
+| 100 batches | brew 100 batches | `brews >= 100` |
 | an hour on one clock | keep one body on the payroll for an hour | `records.lived`, the eldest |
 
 **Feats you would have to set out for** — seven, and where the work is.
@@ -10713,9 +10713,9 @@ about to fill. Its tag says its place *in the line* -- `next`, then `2nd`,
 `3rd` -- with no clock, since a clock on a thing not yet started would be a
 guess the site cannot keep. In the line, not among the site's works: a
 site building two at once has its first waiting row third in the list and
-next in line, and next is the fact. Hovering it says `in line -- press to
-hand it back`, since that press is the one on a board that undoes a
-purchase and nothing on the tile said so. And the tile's own edge is
+next in line, and next is the fact. Hovering it says no more than any
+tile does (the owner, 2026-09-16: the `press to hand it back` tip is
+gone); the dashed edge and the tag carry it. And the tile's own edge is
 dashed, the whole plate pencilled in (the owner, 2026-09-15: "a more
 distinct look, like a dashed outline") -- it is the one tile on a plank
 that is neither for sale nor being made, and it should read so from
