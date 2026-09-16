@@ -9,6 +9,7 @@ const DEFAULTS = {
   motion: null,      // null = follow the system; true = less; false = full
   muted: false,      // the mute (DESIGN.md, the sound of the yard)
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
+  touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
 };
 
 let prefs = { ...DEFAULTS };
@@ -33,3 +34,21 @@ export function reducedMotion() {
   if (prefs.motion != null) return prefs.motion;
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+// Whether the pointer is a thumb (DESIGN.md, "Playing it on a phone"): the
+// sheet's switch, else what the platform says its primary pointer is. Not
+// the width and not the user agent -- a narrow desk window keeps its wheel
+// and a wide tablet gets the hop, because it is the finger these are for.
+// Asked once of the platform and kept: a pointer does not change kind
+// mid-game, and every seat in the frame asks this.
+let coarsePointer = null;
+export function coarse() {
+  if (forced != null) return forced;
+  if (prefs.touch != null) return prefs.touch;
+  coarsePointer ??= typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  return coarsePointer;
+}
+// A phone stood up for a scene or a check, without writing the player's
+// preference: in memory only, cleared with null.
+let forced = null;
+export const forceCoarse = v => { forced = v; };

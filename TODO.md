@@ -1,5 +1,87 @@
 # Still to do
 
+## Playing it on a phone -- BUILT (2026-09-15)
+
+"Playing it on a phone" at the end of DESIGN.md, with "What building it
+changed" at its foot: four asks from the owner, each its own section, all
+reading one answer for "is this a phone" (`coarse()` in prefs.js off
+`(pointer: coarse)`, with a switch on the settings sheet). Approved: two
+edge arrows when there is a station that way, sheets on a phone only,
+native momentum, undo not confirm. Built on branch `phone-touch`; the
+owner reshaped the scrolling mid-build (the grab bar, below) and added the
+fullscreen button, the skip button, the double-tap and pip fixes, and the
+home-screen install. Left for the owner: the landscape seat of the hop
+arrows (0.42 of a short window is the ground line), and whether a second
+tap inside `UNDO_MS` should undo, since a double tap now buys and takes
+back.
+
+- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15),
+  and from the bottom of the screen only (the owner, later the same day):
+  the grab bar along the bottom edge IS the platform's scroller, with a
+  spacer the width of the world; `camX` reads its `scrollLeft` once a
+  frame and everything that moves the camera writes it. A finger on the
+  yard never scrolls: it sweeps on dust and taps on the rest. No friction
+  knobs. Checks: `selftest/touch.js`, `test/camera.test.mjs`;
+  `tools/fling.mjs` drives a real finger.
+- **A hop between stations.** Two arrows in the mid sky at the window's
+  edges, each wearing the glyph of the next standing station that way, a
+  tap glides there; drawn on a phone only. Recommended over one button
+  opening a glyph strip, and over a permanent rail. `hop.js` (new),
+  `HOP_Y` / `HOP_SIZE` / `HOP_INSET`. Check: `test/hop.test.mjs`.
+- **A tap buys.** Every `:hover` behind `@media (hover: hover)` and the tip
+  and the lean not wired under a coarse pointer, so the first tap is the
+  tap; a row buys on a tap (slop and time, `tap.js`, one definition for
+  the page) and not on a click, so a scroll never buys; the note on a long
+  press; a wrong buy undone from the tag for `UNDO_MS` rather than
+  confirmed. Checks: `selftest/touch.js`, `test/undo-buy.test.mjs`,
+  `test/hover-gate.test.mjs`.
+- **Boards as bottom sheets.** On a phone a board is a full-width sheet
+  from the bottom, top at `SHEET_H` (0.55) with a handle, three stops
+  (down, seat, `SHEET_TALL`), the purse along its top edge inside it, the
+  crew list a page inside it; a second seat in board.js beside `place()`,
+  the desk's popover untouched. Check: `selftest/sheet.js`, a `phonebench`
+  scene.
+
+Shots the calls were made against: `shots/phone/yard.png`,
+`shots/phone/bench.png`, `shots/phone/quarryboard.png`. The cutscene
+framing at a phone's width was a fix and is in CHANGELOG.md
+(`test/phone-view.test.mjs`).
+## The second pass -- DESIGNED (2026-09-15), not built
+
+"The second pass" at the end of DESIGN.md: a measured survey of the tree
+(49% comment lines, a 72-module import cycle pivoting on `upgrades.js`, 42
+dead exports, ~40 pre-release save migrations, 12 `<station>BoardOpen`
+flags) and seven seams to take one branch at a time, in order: the dead-code
+sweep; splitting `upgrades.js` into `levels`/`roster`/`words`/`upgrades`;
+a save floor at v0.1.1 (needs a decision); a station table in board.js;
+saving beside the owner; invalidation off the clock; the comment pass
+(needs a decision on the register). Gated on the reliability freeze holding
+green twice on main. Blocker: the save-floor decision, and the freeze.
+
+Seam 1, the dead-code sweep, is BUILT (2026-09-15): 43 exports nothing
+imported (22 of them config knobs), 132 imported names nothing read,
+`SHIELD_GATES` and its branches, the lab's three state flags, `secondsMark`,
+`staffSheds` (now `stripKit`), the balloon no-op divisor, and the
+`openFloor` ReferenceError (a check and a CHANGELOG line). Removing an
+unused import surfaced the 72-module cycle as a TDZ (`CRAFT_ROW` read at
+load across balloon.js/scrubhouse.js); the row moved to scrubhouse.js. The
+lab building itself (its rect, `TO_LAB`, `LAB_W/H`, the board names and the
+persist branches) waits for the save floor. Found and left: the browser
+`queue` group's "every line has a clock" line is red on main -- it coerces
+the clock text to a number and the text is `next 0:10` since the `m:ss`
+clock.
+
+Seam 7, the comment pass, is BUILT (2026-09-15): the owner's rule was
+"only what you need for logic derivation"; `docs/wave-comments.md` is the
+spec, `tools/comments-check.mjs` the proof. `src/` went from 59,296 lines
+(28,797 comment, 49%) to 43,868 (13,399 comment, 31%), 224 files, no code
+line changed. Two things the pass found and left alone, for the dead-code
+sweep (seam 1): `openFloor` in route.js reads `feet`, which is not in its
+scope (a ReferenceError if `routeFor` is ever called for an x over the
+hole with no `toWay`); and `Math.max(1, laneY(i) ? 1 : 1)` in
+balloon.js is a no-op divisor. `test/`, `tools/` and the html/css were not
+in the pass.
+
 ## The handful: the casino drops dust down a peg board -- BUILT (2026-09-15)
 
 Players find the wheel dull, and the user is not a fan of it. The third plinko:

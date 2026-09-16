@@ -419,6 +419,18 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(1); window.__fast(2); } },
   boards: { about: 'the bench', say: 'a board open with everything on it',
     run: () => { rich(); window.__board('tower'); } },
+  // The phone's board: a sheet from the bottom (DESIGN.md, "Boards as bottom
+  // sheets"), shot with WINDOW=390,844. `__coarse(true)` stands the page up
+  // as a phone without writing the preference; a scene after this one puts
+  // it back. The bench at its fullest, and the two tallest boards.
+  phonebench: { about: 'the bench', say: 'the bench as a bottom sheet, on a phone', page: true,
+    run: () => { rich(); window.__coarse(true); window.__board('bench'); } },
+  phonehouse: { about: 'the bench', say: "the crew's board as a bottom sheet", page: true,
+    run: () => { rich(); window.__coarse(true); window.__board('house'); } },
+  phoneshack: { about: 'the bench', say: "the shack's board as a bottom sheet", page: true,
+    run: () => { rich(); window.__coarse(true); window.__kit({ breakers: 3 }); window.__shack(); window.__board('shack'); } },
+  phoneyard: { about: 'the bench', say: 'the yard on a phone: the hop arrows, the grab bar, the fullscreen button', page: true,
+    run: () => { rich(); window.__coarse(true); window.__look(st().benchX - 600); } },
   // A picture of the card's width: the deepest bills beside the pips.
   benchdeep: { about: 'the bench', say: 'the bench with its ladders on their third cards',
     run: () => { rich(); window.__grant({ shards: 99999, spores: 99999, dust: 9000000 });

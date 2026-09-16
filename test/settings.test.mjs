@@ -61,3 +61,25 @@ test('with no system to ask, the answer is the full picture', async () => {
   m.setPref('motion', null);
   assert.equal(m.reducedMotion(), false);
 });
+
+// The thumb switch (DESIGN.md, "Playing it on a phone"): the same shape as
+// motion. With no `matchMedia` the pointer is a mouse; the switch overrides
+// it either way and remembers; a check or a scene can force it in memory
+// without writing the store.
+test('coarse follows the switch, remembers, and can be forced without being written', async () => {
+  localStorage.removeItem(KEY);
+  const m = await fresh(6);
+  assert.equal(m.coarse(), false, 'no matchMedia: a mouse');
+  m.setPref('touch', true);
+  assert.equal(m.coarse(), true, 'the switch says a thumb');
+  const again = await fresh(7);
+  assert.equal(again.coarse(), true, 'and the next load reads it back');
+  again.setPref('touch', null);
+  assert.equal(again.coarse(), false);
+  again.forceCoarse(true);
+  assert.equal(again.coarse(), true, 'forced in memory');
+  assert.equal(JSON.parse(localStorage.getItem(KEY)).touch, null, 'and nothing was written');
+  again.forceCoarse(null);
+  assert.equal(again.coarse(), false);
+  localStorage.removeItem(KEY);
+});

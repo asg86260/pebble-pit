@@ -291,6 +291,42 @@ export const finger = (type, id, x, y) =>
     buttons: type === 'pointerup' ? 0 : 1, bubbles: true, cancelable: true
   }));
 
+// The touch itself, as the platform raises it before it decides whether to
+// scroll: a `touchstart` on `el` at a spot. Answers whether the page said no
+// (`preventDefault`), which is the whole of what the game decides about a
+// touch (input.js, the `touchstart` gate). A synthetic touch cannot make the
+// platform scroll -- only a real finger does that -- so what a check reads
+// here is the decision, and the coast is the platform's to keep.
+export function touch(type, el, x, y, id = 1) {
+  const t = new Touch({ identifier: id, target: el, clientX: x, clientY: y });
+  const e = new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t],
+                                   targetTouches: type === 'touchend' ? [] : [t],
+                                   bubbles: true, cancelable: true });
+  el.dispatchEvent(e);
+  return e.defaultPrevented;
+}
+
+// A tap, as a finger makes one: the pointer events a touch raises, down and
+// up on the same spot, with the browser's `click` after them -- since a row
+// buys on the click the tap gate lets through (tap.js). `hold` ms between,
+// for a check about a long press; `move` px sideways before the release,
+// for one about the slop.
+export async function tap(el, { hold = 30, move = 0 } = {}) {
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const ev = (type, dx = 0, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
+    clientX: x + dx, clientY: y, pointerId: 7, isPrimary: true, pointerType: 'touch',
+    button: 0, buttons, bubbles: true, cancelable: true }));
+  touch('touchstart', el, x, y, 7);
+  ev('pointerdown');
+  if (move) ev('pointermove', move);
+  await sleep(hold);
+  ev('pointerup', move, 0);
+  touch('touchend', el, x + move, y, 7);
+  // The platform raises no click for a press that moved: it was a scroll.
+  if (!move) el.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+}
+
 // the quarry and the plots, opened without paying for them
 export function S_open() {
   window.__crew(0, 0, 1, 1);      // opens both places

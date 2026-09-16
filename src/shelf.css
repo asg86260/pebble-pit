@@ -187,19 +187,24 @@
 .rows.shelves > .tile .ladder {
   position: absolute; right: 4px; top: 12px;
   display: flex; flex-direction: column-reverse; align-items: center;
+  gap: 4px;                                   /* between bands */
   font-style: normal;
-  font-size: 10px; line-height: 8px;
   opacity: var(--pip-tone, .78);
   pointer-events: none;
 }
-.rows.shelves > .tile .ladder b { writing-mode: vertical-lr; transform: rotate(180deg); font-weight: normal; letter-spacing: -2px; }
-.rows.shelves > .tile .ladder b + b { margin-bottom: 2px; }
+/* A pip is a box a cell across and a band a column of them at a fixed
+   pitch, so no font's idea of a circle can stack two on each other. */
+.rows.shelves > .tile .ladder b { display: flex; flex-direction: column-reverse; gap: 2px; }
+.rows.shelves > .tile .ladder i { display: block; box-sizing: border-box; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
+.rows.shelves > .tile .ladder i.on { background: currentColor; }
 .rows.shelves > .tile .ladder b:nth-child(2) { color: #2e9e4b; }
 .rows.shelves > .tile .ladder b:nth-child(3) { color: #2f5fd0; }
 .rows.shelves > .tile .ladder b:nth-child(4) { color: #d93a25; }
 /* The same share of the way to full ink the cards' pips take on hover. */
-.rows.shelves > button.tile:hover:not(:disabled) .ladder {
-  opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+@media (hover: hover) {
+  .rows.shelves > button.tile:hover:not(:disabled) .ladder {
+    opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+  }
 }
 .rows.shelves > .tile .gain {
   grid-row: 3;
@@ -299,7 +304,10 @@
   cursor: pointer;
   background: linear-gradient(#000, #000) 4px 0 / 1px 9px no-repeat, linear-gradient(#000, #000) 1px 0 / 7px 3px no-repeat;
 }
-.rows.shelves > .tile:hover .pinmark, .rows.shelves > .tile.pinned .pinmark { opacity: 1; }
+.rows.shelves > .tile.pinned .pinmark { opacity: 1; }
+@media (hover: hover) {
+  .rows.shelves > .tile:hover .pinmark { opacity: 1; }
+}
 .rows.shelves > .tile.new::before {
   content: ''; position: absolute; top: 2px; right: 4px;
   border: 4px solid #000; border-left-color: transparent; border-bottom-color: transparent;
@@ -358,7 +366,9 @@
    again with its plate; this is for the ones that do not lift and are not
    disabled -- a row in line, pressable to hand it back -- whose title went
    white on a white tile and vanished under the cursor. */
-.rows.shelves > button.tile:hover:not(:disabled) { color: #000; background-color: #fff; }
+@media (hover: hover) {
+  .rows.shelves > button.tile:hover:not(:disabled) { color: #000; background-color: #fff; }
+}
 /* A tile in line is pencilled in: a dashed edge round the whole tile, on
    the plate's own border, so a thing waiting its turn reads as such from
    across the plank and not only from its tag. It is the one tile on a
@@ -375,7 +385,6 @@
    that floats while its clock runs is that work, seen from the board (the
    owner, 2026-09-15). The same plate, the same drift; it is the hover state,
    held. */
-.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat),
 .rows.shelves > button.tile.building {
   --lift: -2px;
   border-color: #000;
@@ -394,9 +403,32 @@
              shelf-sway-x2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 1.618) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
              shelf-sway-y2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 0.73) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
 }
-.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .cost { opacity: 1; }
-.rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .note { color: inherit; }
+@media (hover: hover) {
+  .rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) {
+    --lift: -2px;
+    border-color: #000;
+    /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
+       and a pseudo-class outranks the firewall's revert. White, the same as at
+       rest, so only the tile's own dots are inside the plate and they move
+       with it; the shorthand would take the dots with it. */
+    background-color: #fff;
+    color: #000;
+    /* The drift: a one-pixel circle through the lifted position, eased, on
+       SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
+       its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
+       hashed off the row's key by the builder) so no two drift in step. */
+    animation: shelf-sway-x  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+               shelf-sway-y  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+               shelf-sway-x2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 1.618) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal),
+               shelf-sway-y2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 0.73) ease-in-out var(--shelf-hover-ms, 120ms) infinite var(--sway-dir, normal);
+  }
+
+  .rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .gain { color: rgba(0, 0, 0, .65); opacity: 1; }
+
+  .rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .cost { opacity: 1; }
+
+  .rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) .note { color: inherit; }
+}
 /* Interference, not a circle: each axis is two sines summed, one on the
    tile's own clock and one at an incommensurate multiple of it (the golden
    ratio one way, .73 the other), so the path beats against itself and never
@@ -572,5 +604,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 /* The pin does not answer the cursor: no lift, no drift, no darkened border.
    It is the resting tile whatever the pointer does; the builder attaches no
    lean to it either. */
-.pin.rows.shelves > button.tile:hover, .pin.rows.shelves > button.tile.building { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
+.pin.rows.shelves > button.tile.building { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
+@media (hover: hover) {
+  .pin.rows.shelves > button.tile:hover { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
+}
 

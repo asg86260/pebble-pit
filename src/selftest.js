@@ -29,6 +29,8 @@ import { TESTS as input } from './selftest/input.js';
 import { TESTS as settings } from './selftest/settings.js';
 import { TESTS as scenes } from './selftest/scenes.js';
 import { TESTS as queue } from './selftest/queue.js';
+import { TESTS as touch } from './selftest/touch.js';
+import { TESTS as sheet } from './selftest/sheet.js';
 
 // Every group there is, in file order.
 const TESTS = [
@@ -49,6 +51,8 @@ const TESTS = [
   ...settings,
   ...scenes,
   ...queue,
+  ...touch,
+  ...sheet,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says
