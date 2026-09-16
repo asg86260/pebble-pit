@@ -7,7 +7,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P } from './helpers.mjs';
 import { floor } from '../src/state.js';
 import { at } from '../src/grid.js';
-import { LADDER } from '../src/config.js';
+import { LADDER, LADDERS } from '../src/config.js';
 
 // One hauler, nothing mining, the floor bare: the only dust in the yard is what
 // the check puts there, and the only body is the one being watched. The grains
@@ -132,12 +132,13 @@ group('a fast body steps on to the next grain, never over it', async () => {
   // The stride is widened only now: a body this fast sweeps a hand's worth
   // off the line during the settle itself, and the trip being watched is the
   // one that starts at the far end with nothing in hand.
+  const pace0 = LADDERS.haulpace.value[0];
   window.__tune('LADDERS.haulpace.value[0]', 2400);   // a stride many columns wide: forty px a frame
   window.__place('hauler', spots[0]);
   run(0.1);
   const cap = state().haulCap;
   const r = firstToss();
-  window.__tune('LADDERS.haulpace.value[0]', 108);
+  window.__tune('LADDERS.haulpace.value[0]', pace0);
   window.__crew(0, 0);
   const want = Math.min(cap, spots.length);
   return [

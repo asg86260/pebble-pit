@@ -23,17 +23,21 @@
 
 export const LADDERS = {
   // --- the bench: you --------------------------------------------------------
-  carry:        { value: [1, 2, 4, 6, 8, 10, 12, 15, 20], dust: [20, 50, 100, 150, 200, 400, 600, 1000] },       // px you can carry
-  speed:        { value: [1, 2, 3, 4, 5, 6, 7, 10, 12], dust: [100, 150, 200, 300, 400, 600, 800, 1200] },      // hits/s, your swing
+  carry:        { value: [1, 2, 3, 4, 6, 8, 10, 15, 20], dust: [20, 50, 100, 150, 200, 400, 600, 1000] },       // px you can carry
+  speed:        { value: [1, 1.5, 2, 2.5, 3, 4, 6, 8, 12], dust: [100, 150, 200, 300, 400, 600, 800, 1200] },      // hits/s, your swing
   pick:         { value: [1, 2, 3, 4, 5, 6, 7, 10, 12], dust: [250, 400, 500, 750, 1000, 1500, 2000, 3000] },    // px your swing takes
   critchance:   { value: [5, 8, 10, 12, 15, 18, 20, 25, 30], dust: [500, 800, 1250, 2000, 3000, 5000, 8000, 12000] },   // % of swings
-  critmult:     { value: [3, 4, 5, 6, 7, 8, 9, 10, 12], dust: [1000, 1500, 2500, 4000, 6000, 10000, 16000, 25000] }, // x a crit is worth
+  critmult:     { value: [2, 3, 4, 5, 6, 7, 8, 9, 10], dust: [1000, 1500, 2500, 4000, 6000, 10000, 16000, 25000] }, // x a crit is worth
   // --- the shack: the gang -----------------------------------------------------
+  // The gang and the haulers are fitted to each other, against a measured
+  // trip: at the foot a digger needs about one and a half haulers, and the
+  // gap opens slowly up the ladders, because the belt is what carries a late
+  // yard. A foot of one px a second and a one-grain load needed five.
   rockhandpick: { value: [1, 2, 3, 4, 5, 6, 7, 8, 9], dust: [1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000] },  // px a rockhand takes
-  rockhandspeed:{ value: [1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5], dust: [200, 300, 400, 600, 800, 1200, 1600, 2400] },     // hits/s, its swing
+  rockhandspeed:{ value: [0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4], dust: [200, 300, 400, 600, 800, 1200, 1600, 2400] },     // hits/s, its swing
   // --- the bench: the haulers ---------------------------------------------------
-  haulcarry:    { value: [1, 2, 4, 6, 8, 10, 12, 14, 16], dust: [150, 200, 300, 400, 500, 750, 1000, 1500] },     // grains a load
-  haulpace:     { value: [100, 150, 200, 250, 300, 350, 400, 500, 600], dust: [200, 300, 400, 500, 600, 900, 1200, 1800] },     // px/s, the walk
+  haulcarry:    { value: [2, 4, 6, 8, 10, 12, 14, 15, 16], dust: [150, 200, 300, 400, 500, 750, 1000, 1500] },     // grains a load
+  haulpace:     { value: [160, 200, 240, 280, 330, 390, 460, 530, 600], dust: [200, 300, 400, 500, 600, 900, 1200, 1800] },     // px/s, the walk
   // --- the scrubbing house -----------------------------------------------------
   fan:          { value: [30, 35, 40, 45, 50, 60, 70, 90, 110], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // motes/s a fan pulls
   // --- the quarry ---------------------------------------------------------------
