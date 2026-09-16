@@ -65,9 +65,9 @@ export const DOOR_H = 4;         // and courses tall
 // is nowhere to put it, and a heap fills soon enough that the crew find their
 // level. The scrubbing house's and the sky's are here so their output heaps
 // under them instead of walking outward over bare ground a grain at a time.
-// The casino's heap is a banked pot tipped out of the building's foot: a big
-// pot is a pile the yard has to deal with, and a full strip holds the chute
-// until the haulers have made room.
+// The casino's heap is a paid hand poured out of the building's foot: a big
+// pot is a pile the yard has to deal with, and the chute holds while the
+// strip is full.
 export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260, casino: 200 };
 
 // What lands on each strip, so the ground can be marked before anything lands

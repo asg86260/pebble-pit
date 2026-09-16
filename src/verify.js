@@ -119,6 +119,22 @@ export function resetVerify() {
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
 
 export function verifyWorld() {
+  // --- rule 13: the purse is never poured below zero, and the stake is
+  // never more than was poured ---------------------------------------------
+  // The casino's hold commits a pebble only while an unspent one covers it
+  // (`stepHold` in casino.js), and a grain of the stake landing spends what
+  // it carries and no more: so no counter goes negative, and what stands in
+  // the funnel plus what is still owed is exactly what was held for.
+  if (S.stored < 0 || S.shards < 0 || S.spores < 0 || S.sparks < 0)
+    fail('a purse is below zero', `pebbles ${S.stored}, ore ${S.shards}, crops ${S.spores}, sparks ${S.sparks}`);
+  if (S.pot) {
+    const { stake, n, owed } = S.pot;
+    if (!(n >= 0 && owed >= 0 && n + owed <= stake + 1e-9 && n <= stake))
+      fail('the stake is more than was poured', `stake ${stake}, landed ${n}, owed ${owed}`);
+    if (owed > S.stored + 1e-9)
+      fail('the funnel is owed more than the purse holds', `owed ${owed}, purse ${S.stored}`);
+  }
+
   // --- rule 12: one beat an owner, and never one that has played -------------
   // Two beats may run at once only with different owners (beats.js), a
   // running key is a row of the table under the owner it names, and a beat

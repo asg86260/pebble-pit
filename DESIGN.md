@@ -788,7 +788,248 @@ the middle and a hoist's height can each move a strike without a recipe of
 their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
 recipe is the rock's hit cut short. Nobody has listened to it yet.
 
-## The stake is a heap you carry, and the casino has no board (built 2026-09-16)
+## The pour (built 2026-09-16)
+
+**The stake has to be a share, not a number.** By the time the casino
+unlocks the yard is a thousand times past any fixed stake: a chip of ten,
+a hundred, a thousand is a rounding error to a purse that the quarry and
+the farm fill by the minute, and every casino that stood here in two days
+-- the board of rows, the twelve heaps, the swept piles, the tapped piles,
+the deck of buttons under the funnel -- lost on that one fact. Chips, dials
+and piles all say a number, and no number is right for long. The other
+thing they had in common was that each was a thing to work out: which row,
+which heap, how many taps, which button. And none of them was a gamble
+sized to the yard; the slot machine was a toy on the side of it.
+
+**And no timers, no cooldowns, no shifts.** They feel awful. Nothing about
+a hand waits on a clock; everything waits on the sand.
+
+**The building.** The funnel is the top of the machine, V-shaped as now and
+open to the sky; the arm on its right; the peg board under the throat;
+eleven bins; the feet with their pays; the tray. Nothing else on the face:
+no buttons, no coin picker, no crank, no sack, no stake piles on the
+ground, no strip. The building says what it does by being a funnel with a
+handle.
+
+**The arm is a tap you hold.** Pull it and hold it: pebbles pour out of the
+yard's stock into the funnel for as long as it is held, at a rate that is a
+slice of what you own -- `POUR_SHARE` of the purse a second, five per cent
+to start, so that everything you have is a twenty-second hold and a fresh
+yard and a rich one feel the same pull. The pile in the funnel is the
+stake: it grows under your hand, and the sign counts it. Let go and the
+arm springs back, the stake stays in the funnel and the sign holds the
+count; hold again and more pours on top. Nothing about the arm drops it.
+**The sign is the drop button:** tap it and the floor splits, the whole
+pile drains into the throat, the sign runs down, and `CASINO_HANDFUL`
+pebbles come out on to the pegs, each carrying its share. Nothing else
+ever drops it. A flick is a small bet; a long pull is the farm; and you can
+look at the number before you commit. Pebbles only -- ore, crops and sparks
+are never staked; they are what the machine can turn pebbles *into*. On a
+phone the hold is a finger held on the arm and the tap on the sign is the
+same tap as anywhere.
+
+**The bins, left to right:** ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ ·
+crop · ore · ✚. The middle five pay pebbles by their multiplier, as the
+handful pays now. The other six convert what lands in them: the pebbles in
+a crop, ore or spark bin come out as that many crops, ore or sparks *by
+worth*, at the exchange every price in the yard already sits on
+(`DUST_PER`), so a pebble converted is a pebble's worth and nothing more,
+in whichever coin the bin is. Sparks are not that rare, and the gamble is
+fair by construction, so there is nothing in it to farm.
+
+**The fairness sum.** A pebble reaches bin *b* with the odds of ten fair
+coins, Pascal's row over 1,024: 1, 10, 45, 120, 210, 252, 210, 120, 45,
+10, 1. The five pebble bins weigh 120, 210, 252, 210, 120 -- 912 of the
+1,024 -- and pay 120×1½ + 210×1 + 252×½ + 210×1 + 120×1½ = 906; the six
+converting bins weigh the other 112 and pay it back by worth. The whole
+table pays 906 + 112 = 1,018 in 1,024: fair to the pebble, the median hand
+under it, and that is the whole of the house's edge. (A ×3 at the shoulders
+was written first and paid 1,266 from the pebble bins alone -- a gift, not
+a gamble -- and was struck.) `test/casino.test.mjs` asserts the sum, so a
+bin cannot be moved on its own.
+
+**Small stakes.** Four rules keep a flick honest and a real stake fair:
+
+- **A converting bin with anything in it pays at least one coin:** its pay
+  is `max(1, round(share / DUST_PER[coin]))`, where `share` is the pebbles
+  that landed in it times what each carries. One pebble in the spark bin is
+  a spark. At real stakes the floor never fires -- a share is many coins'
+  worth -- so the row stays fair; at tiny stakes it is a gift nobody will
+  resent.
+- **The pebble bins round to the nearest whole pebble:** a ×½ on one pebble
+  pays one. Nothing here pays a fraction of a grain.
+- **The handful is `min(CASINO_HANDFUL, stake)` pebbles.** A small stake
+  drops fewer pebbles, never sixteen slivers; each pebble carries
+  `stake / count`, and a stake of three is three pebbles carrying one.
+- **The pour has a floor.** The slice is `POUR_SHARE` of the purse a
+  second, but never less than `POUR_MIN` pebbles a second (sixteen to
+  start), so the shortest tap still stakes a real handful -- unless the
+  purse holds fewer, and the purse is never poured below zero.
+
+`POUR_SHARE` and `POUR_MIN` are config knobs (`config/casino.js`, on the dev
+panel), so both are found by playing rather than argued.
+
+**The sign says the stake, and drops it.** While the funnel is empty the
+sign reads CASINO, is not pressable and has no hover. From the first poured
+pebble until the drop it shows the stake's count instead, in the sign's own
+face -- seven-cell figures in the same stroke as the letters -- and the
+number rolls: it climbs under the hand as the pour runs, holds when the arm
+is let go, and runs down as the pile drains into the throat on the tap,
+never snapping, through the yard's own counter tween (`shown` in tween.js,
+the purse counter's convention, `TWEEN_MIN_MS` to `TWEEN_MAX_MS` off
+`TWEEN_BASE_MS` and `TWEEN_PER_UNIT_MS`). With a count on it the sign is a
+button, and the marquee says so (below); a tap presses the board down a
+cell with the figures grey for the beat (`BUTTON_PRESS_MS`) and the throat
+opens. After the drop the sign goes back to CASINO, flat. So the one number
+in the building is the one you are deciding on, it is on the sign while you
+decide, and the sign is what you press to decide.
+
+**The marquee carries the state.** The sign's border of bulbs says what the
+machine is doing, and it is where the flair lives. Idle, with no stake, it
+is calm: every other bulb lit, the two sets swapping on a slow beat
+(`SIGN_SWAP_MS`, about a second and a half), a marquee at rest that barely
+draws the eye, and the sign reads CASINO. Pouring, with the arm held, a run
+of lit bulbs chases round the border **with the dust**: a step a grain, the
+step's length `1000 / (grains a second)` floored at `SIGN_CHASE_MIN_MS` and
+capped at `SIGN_CHASE_MAX_MS`, so the chase spins up as the pour runs and
+runs down as it eases, while the number climbs. Ready, with a stake standing
+and the arm let go, the sign flashes on a beat (`SIGN_FLASH_MS`) between the
+count and the words DROP IT -- the same words for a pointer and a finger --
+in the sign's own letters, with no rule under either; the "press me" is
+the lights, more excited than idle or pouring without strobing: **every
+bulb on with a sparkle** -- about one in four dropping out, a different
+few each `SIGN_READY_STEP_MS` step (`SIGN_READY_LIGHTS` 'sparkle', the
+owner's pick; 'twin', two runs chasing in opposite directions, stays as
+the alternative on the knob). The tap presses the board a cell
+lower with the figures grey for the beat. Dropping, after the tap, the
+number runs down and the chase keeps spinning with the drain, slowing as the
+last grains land -- the same step off the grains a second, which runs to
+the cap as they stop -- and once the sign reads CASINO again the bulbs go
+back to the idle swap. A win's strobe and a dud's blackout stand over all of
+it as they do now.
+
+**Everything pours out the bottom in its own kind.** When the last pebble
+is still the bins pay into the tray and out of the foot: pebbles from the
+pebble bins, crops from the crop bins, ore from the ore bins, a spark from
+a spark bin -- each as the coin it is, each a real grain -- into the heap
+on the ground the crew already hauls, the way every station's output lands.
+Nothing teleports; nothing is banked on a board; nothing is credited by a
+counter moving on its own. A win is collected, by hands.
+
+**Fanfare.** A spark bin lights the wall ring by ring outward from that bin
+and the spark rolls out on its own, ahead of the rest; a crop or ore bin
+blinks its foot's glyph while its converted coins pour. A bell on any pay.
+Nobody has listened to any of the casino's audio yet, as before.
+
+### What it changes about the handful
+
+The handful stands: `CASINO_HANDFUL` pebbles a drop whatever the stake,
+each a fair draw from the bins, the spread of the hand shrinking with the
+square root of the count (`test/handful.test.mjs` holds it off the
+constant). What changes: the stake is what was held into the funnel rather
+than a chip; six of the eleven bins pay in another coin instead of a
+multiple, and the shoulders pay ×1½ where they paid ×3 and the edges paid
+×39 -- the feet are cut for those pays (a one is a stroke, an inner slot
+nine cells for "1.5" with a clear cell each side, a pitch of ten and `STEP`
+five, the edge slots seven for a coin's mark; the field is 106 cells), so
+the table's fairness is summed by worth across kinds rather
+than in pebbles alone; the pay pours out of the foot instead of standing in
+the tray for a decision, so there is no ride and no take -- the next pull is
+the next bet; and a saved hand comes back a pile in the hopper the size it
+was held to, with the arm live.
+
+### The calls this makes
+
+- **A share a second, not a chip.** The one stake that is the same gesture
+  on a purse of a hundred and a purse of a million.
+- **Two controls, and one of them is the sign.** The arm, held, to stake;
+  the sign, tapped, to drop. Nothing to set, pick, bank or wind, and the
+  stake is never dropped by accident: letting go of the arm is not a
+  decision.
+- **The other coins come out, never go in.** The casino turns pebbles into
+  the yard's other coins at the yard's own rates, and cannot be fed them.
+- **Every converting bin is fair by worth, sparks included.** The casino
+  adds nothing to the yard on average, in any coin.
+- **Paid on to the ground.** Collected by the crew like every other output.
+
+### What is checked
+
+`test/casino.test.mjs`, the player's way (`__holdArm`, the call a press on
+the arm makes; `__tapSign`, the sign's tap): the table sums to 1,018 in
+1,024 off the config; a hold pours `max(POUR_SHARE × purse, POUR_MIN)` a
+second in whole pebbles, the purse spent as the grains land, and held on it
+pours the purse to zero and lets go on its own, never below; a second hold
+adds and a release keeps the stake across a reload, the sand raining back
+to its band; a tap drops exactly `min(CASINO_HANDFUL, stake)` pebbles and
+only the bins with a pebble come up to pay, to the grain by worth; a flick
+drops as many pebbles as it has; the arm and the sign are dead mid-hand and
+the arm pours again while the pay runs out; the pay pours out of the foot
+on to the casino's strip in its own kinds and the haulers carry every kind
+to the hole with each counter moving; a full strip holds the pour; a save
+mid-cascade comes back a stake in the hopper with the sign live. Rules in
+`verify.js`: no purse below zero, and the stake never more than was poured
+(landed plus owed is the stake, and what is owed is covered). The converting
+bins' floor and the rounding are `__binPay` in `test/handful.test.mjs`,
+which also deals four thousand hands and holds the mean at 1,018 in 1,024
+and the spread off `CASINO_HANDFUL`. Browser tier (`selftest/casino.js`): a
+mouse held on the arm pours and a click on the sign drops; a finger held on
+the arm pours and never scrolls the yard, a tap on the sign drops; the empty
+sign is nothing to press; nothing on the building is named under the
+pointer. Scenes: `casinoidle`, `casinopour`, `casinosignready`,
+`casinosignwords`, `casinosigntwin`, `casinosignpressed`, `casino`,
+`casinopaying`, `casinopourout`, `casinopaid`, `casinowin`.
+
+### Cut, and why
+
+Every previous casino, with the reason each fell: the board of rows (a
+menu); the twelve heaps (a menu rebuilt in sand); the swept piles (a grain
+a drag); the tapped piles with the strip and the crank (six things to work
+out); the deck of buttons, in one row and in stacked groups (chips, and a
+fixed number is wrong for a yard a thousand times past it). The funnel, the
+arm, the pebbles, the peg board and the fair bins are what survived all of
+them and are what "The pour" is built on.
+
+### What building it changed
+
+**The pay pours on to the casino's own strip after all.** "No strip" in the
+building paragraph meant the chute-and-crank casino's, with its lever; the
+pay still has to land somewhere the crew reads, and "the heap the crew
+already hauls" is a strip in `S.piles` with a limit (`PILE_LIMIT.casino`)
+and the pile-full mark. A pebble grain off the tray lands as the pebbles it
+is worth and a coin goes out as a grain of that coin, one a coin, ahead of
+the pebbles; `bankDust` credits each kind as the haulers' loads land in
+the hole, so ore, crops and sparks off the table are counted where every
+other coin is.
+
+**The stake is what was held for, and the purse is spent as it lands.** The
+pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
+hold commits a pebble only while an unspent one covers it, the rain's
+grains carry shares of `owed`, and when the picture stands at its band with
+nothing in the air and something still owed -- the shares' rounding, or a
+bowl that took no more -- the rest is spent for the grains standing there.
+That is what lets a save mid-pour keep the stake and spend nothing twice,
+and what rule 13 in `verify.js` watches.
+
+**Only bins with a pebble pay.** On main the pay pass walked every bin, so
+an empty bin's foot inverted and it sounded for nothing; the pass skips
+to the next bin holding a pebble, which is also what makes the converting
+bins' floor safe -- a bin pays at least one coin only when something is in
+it.
+
+**The sign is two things and one drawing.** It reads CASINO, or the stake,
+or DROP IT, off `signState()`, and its bulbs read the same state; the
+count is the stake as held (committed, in the bowl or on its way) so it
+climbs under the hand rather than a second behind it, and while draining it
+is the stake scaled by what is left in the bowl. The chase's step is
+counted rather than read off the clock, so a step that changes length with
+the dust runs on rather than jumping, and the grains a second is read off
+the bowl's count between frames, smoothed.
+
+## The stake is a heap you carry, and the casino has no board (built and cut 2026-09-16)
+
+*Cut the same day, the whole of it -- the heaps, the sweep, the tap, the
+strip and the crank -- for "The machine" above. Kept as the record of what
+each version taught.*
 
 **The chip row is a menu, and nothing else in this yard is bought from a
 menu.** You pick ◾ 10, 100, 1,000 or *all in* from a dial, pick a coin from

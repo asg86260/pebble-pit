@@ -26,8 +26,7 @@ import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
-import { leverHit } from './levers.js';
-import { casinoTap } from './stakes.js';
+import { holdAt, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -149,10 +148,13 @@ canvas.addEventListener('pointerdown', e => {
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
-  if (leverHit(p.x, p.y)) return;
-  // a click on a stake pile or the bowl works it; a finger is judged at the
-  // release, since a press there may be the start of nothing
-  if (e.pointerType !== 'touch' && casinoTap(p.x, p.y)) return;
+  // The casino's arm: a press on it, pointer or finger, starts the pour and
+  // holds it until the release, wherever that is. The sign: a click drops
+  // the stake at once; a finger is judged at the release, through the
+  // page's one tap gate, since a press there may be the start of a scroll.
+  if (holdAt(p.x, p.y)) { try { canvas.setPointerCapture(e.pointerId); } catch {} return; }
+  if (e.pointerType !== 'touch' && tapAt(p.x, p.y)) return;
+
   if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The nearest high point to the click, the same place a held swing lands:
@@ -246,6 +248,8 @@ canvas.addEventListener('pointermove', e => {
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
+  // the arm let go, wherever the pointer has got to
+  releaseArm();
   const up = lifted();
   if (up) { drop(up); return; }
   const held = down.get(e.pointerId);
@@ -259,9 +263,7 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning && e.type === 'pointerup' &&
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
-    // a tap on a stake pile or the bowl works it (anything the press swept
-    // up off the ground is let go where it is)
-    if (casinoTap(p.x, p.y)) { S.mining = false; if (S.dragging) { S.dragging = false; release(p.x, p.y); } return; }
+    if (tapAt(p.x, p.y)) { S.mining = false; return; }
     const which = stationAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);
@@ -281,6 +283,7 @@ addEventListener('blur', () => {
   panning = null;
   wheelPan = null;
   S.mining = false;
+  releaseArm();
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
 
@@ -561,7 +564,9 @@ addEventListener('touchstart', e => {
   if (S.dragging) { e.preventDefault(); return; }
   for (const t of e.changedTouches) {
     const p = pos(t);
-    if (dustUnder(p.x, p.y)) { e.preventDefault(); return; }
+    // ...and a finger on the casino's arm, or on its sign while it is a
+    // button: a hold on the arm must never scroll the page
+    if (dustUnder(p.x, p.y) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { e.preventDefault(); return; }
   }
 }, { passive: false });
 

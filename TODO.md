@@ -1,6 +1,21 @@
 # Still to do
 
-## The stake is a heap you carry, and the casino has no board -- BUILT (2026-09-16)
+## The pour -- BUILT (2026-09-16)
+
+The casino, sized to the yard: hold the arm and pebbles pour from the purse
+into the funnel at `max(POUR_SHARE × purse, POUR_MIN)` a second, the pile
+is the stake and the sign counts it; let go and it stays; tap the sign and
+the handful drops. Bins ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ · crop ·
+ore · ✚, the outer six converting by worth at `DUST_PER` with a floor of one
+coin, only the bins with a pebble paying; the pay pours out of the foot in
+its own kinds on to the casino's strip for the haulers. No buttons, piles,
+crank, sack, timers or cooldowns. DESIGN.md, "The pour (built)", with "What
+building it changed". Left for later: nobody has listened to the casino's
+audio; the spark bin's fanfare (the wall lit ring by ring) and the
+converting bins' blinking feet are not drawn yet, only the bell on any pay
+and the win's strobe.
+
+## The stake is a heap you carry, and the casino has no board -- BUILT AND CUT (2026-09-16)
 
 The casino's board is gone. One pile a coin the yard has handed out stands
 on the ground to the right of the building -- the purse itself at the band

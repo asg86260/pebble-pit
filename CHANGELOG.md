@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
-- The casino has no board: your dust, ore and crops stand in a pile each beside it and a tap on a pile stakes a tenth of it; the arm, the bank button and the crank on the building play the hand; and banking tips the winnings out on to the ground for you to sweep or the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
+- The casino is the pour: hold the arm and pebbles pour from your purse into the funnel, a share of what you own a second; tap the sign to drop them; the bins pay in pebbles, crops, ore and sparks out of the foot on to the ground for the crew (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - A ladder waiting on a coin the yard has no source for shows its price, greyed, instead of "needs crops" (test/ladder-chain.test.mjs).
@@ -32,6 +32,7 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- An empty bin no longer inverts its foot or sounds when the bins pay: only the bins with a pebble in them come up (test/casino.test.mjs).
 - Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).
 - The first haulers carry two grains and walk quicker, the gang swings slower to begin with, and a crit is worth 2x at the foot of its ladder instead of 3x, so a couple of diggers want a couple of haulers rather than eight; your own strength and swing ladders climb in smaller steps at the start (config/rungs.js).
 - The pinned card stands under the gear and the fullscreen button instead of over them (src/selftest/touch.js).

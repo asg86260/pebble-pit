@@ -19,7 +19,6 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
-import { layStakes } from './stakes.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
 import { spriteW, RAM } from './sprites.js';
@@ -564,7 +563,6 @@ export function resize(after) {
   tray.cols = CASINO_W / P - 2;
   tray.rows = TRAY_H;
   tray.y = casino.y + casino.h - TRAY_H * P;
-  layStakes();                                   // and the heaps on the ground at its right
 
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.

@@ -1,16 +1,12 @@
 // Your hands: what a click, a drag and a flick do.
 //
 // Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
-// anything still in the air can be caught on the way past. The casino's
-// piles and its bowl are not swept -- a tap works them (stakes.js) -- but
-// a finger on them is claimed the way a finger on dust is, so it never
-// scrolls the yard.
+// anything still in the air can be caught on the way past.
 
 import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
-import { stakeUnder, bowlUnder } from './stakes.js';
 import { capacity } from './levels.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
@@ -76,7 +72,6 @@ export const overCore = (mx, my) =>
 // a sweep from a look about (DESIGN.md, "One finger looks about").
 export function dustUnder(mx, my) {
   if (overCore(mx, my)) return true;
-  if (stakeUnder(mx, my) || bowlUnder(mx, my)) return true;    // the casino's sand: a tap, never a scroll
   for (const _ of brushCells(mx, my)) return true;
   return false;
 }

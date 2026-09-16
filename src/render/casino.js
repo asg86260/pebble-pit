@@ -7,16 +7,19 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, hopperN } from '../casino.js';
+import { shown } from '../tween.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
-import { S, casino, table, tray, stakes } from '../state.js';
+import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { LEVER_REACH, ARM_LENGTH, ARM_BOSS, BUTTON_RECESS, BUTTON_CAP, BUTTON_SUNK } from '../config.js';
+import { ARM_LENGTH, ARM_BOSS, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
+         SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
+import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -42,7 +45,28 @@ const GLYPH = {
   S: ['0111111', '1000000', '0111110', '0000001', '1111110'],
   I: ['1111111', '0001000', '0001000', '0001000', '1111111'],
   N: ['1100001', '1010001', '1001001', '1000101', '1000011'],
-  O: ['0111110', '1000001', '1000001', '1000001', '0111110']
+  O: ['0111110', '1000001', '1000001', '1000001', '0111110'],
+  // and the figures, in the same stroke, for the stake standing in the
+  // funnel ("The pour": the sign says the stake); 'k' and 'm' for a big one
+  '0': ['0111110', '1000001', '1000001', '1000001', '0111110'],
+  '1': ['0001000', '0011000', '0001000', '0001000', '0111110'],
+  '2': ['0111110', '0000001', '0111110', '1000000', '1111111'],
+  '3': ['1111110', '0000001', '0111110', '0000001', '1111110'],
+  '4': ['1000001', '1000001', '1111111', '0000001', '0000001'],
+  '5': ['1111111', '1000000', '1111110', '0000001', '1111110'],
+  '6': ['0111110', '1000000', '1111110', '1000001', '0111110'],
+  '7': ['1111111', '0000001', '0000010', '0000100', '0001000'],
+  '8': ['0111110', '1000001', '0111110', '1000001', '0111110'],
+  '9': ['0111110', '1000001', '0111111', '0000001', '0111110'],
+  '.': ['0000000', '0000000', '0000000', '0000000', '0001000'],
+  // and the words the ready sign flashes: DROP IT
+  T: ['1111111', '0001000', '0001000', '0001000', '0001000'],
+  D: ['1111100', '1000010', '1000001', '1000010', '1111100'],
+  R: ['1111110', '1000001', '1111110', '1001000', '1000110'],
+  P: ['1111110', '1000001', '1111110', '1000000', '1000000'],
+  ' ': ['000', '000', '000', '000', '000'],
+  'k': ['1000010', '1001100', '1110000', '1001100', '1000010'],
+  'm': ['0000000', '0000000', '1101100', '1010010', '1000010']
 };
 const WORD = 'CASINO';
 const GLYPH_H = 5, GLYPH_W = 7, GLYPH_GAP = 1, SIGN_PAD = 2;
@@ -56,8 +80,41 @@ const SIGN_W = Math.max(SIGN_MIN, BOARD_COLS + CASINO_MARGIN * 2);
 const signX = () => casino.x + casino.w / 2 - (SIGN_W * P) / 2;
 const signY = () => casino.y + (HOPPER_H + GATE_H) * P;
 
+// What the sign says: CASINO, or the stake standing in the funnel -- from
+// the first poured pebble until the drop, rolling through the counter tween
+// so it climbs under the hand and runs down as the pile drains.
+// The sign's state: idle (CASINO), pouring (the arm held, the count
+// climbing), ready (a stake standing, the arm let go), or draining (the
+// floor open, the count running down).
+function signState() {
+  const standing = S.pot && (S.pouring || S.drop || S.holding || hopperN() > 0);
+  if (!standing) return 'idle';
+  if (S.drop) return 'draining';
+  if (S.holding || S.pouring) return 'pouring';
+  return 'ready';
+}
+function signWord() {
+  const state = signState();
+  if (state === 'idle') return { word: WORD, gap: true, state };
+  // ready, the sign flashes between the count and the words, on the beat
+  const face = SIGN_FLASH_FACE ?? Math.floor(now() / SIGN_FLASH_MS) % 2;
+  if (state === 'ready' && face) return { word: 'DROP IT', gap: false, state };
+  // the count is the stake as held -- what has been committed, in the bowl
+  // or on its way -- and, draining, what is left of it in the bowl
+  const d = S.drop;
+  const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.stake;
+  return { word: fmt(Math.round(shown('casino:sign', n))), gap: false, state };
+}
+
 function drawSign() {
-  const x = signX(), y = signY(), w = SIGN_W, h = CASINO_SIGN_H;
+  const x = signX(), w = SIGN_W, h = CASINO_SIGN_H;
+  const { word, gap, state } = signWord();
+  // With a count on it the sign is the drop button -- the marquee says so
+  // -- and a tap presses the board down for a beat: a cell lower, the
+  // figures grey. Reading CASINO it lies flat and is nothing to press.
+  const ready = state === 'ready';
+  const pressed = ready && now() - (S.signPressed || -Infinity) < BUTTON_PRESS_MS;
+  const y = signY() + (pressed ? P : 0);
 
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
@@ -66,15 +123,18 @@ function drawSign() {
   ctx.strokeStyle = '#000';
   ctx.strokeRect(x, y, w * P, h * P);
 
-  // the word, along the board, centered
-  ctx.fillStyle = '#000';
-  let left = (SIGN_W - SIGN_MIN) / 2 + SIGN_PAD;
-  WORD.split('').forEach((ch, n) => {
+  // the word, along the board, centered; the mid gap is the word's, and
+  // a number stands on the gaps alone
+  ctx.fillStyle = pressed ? PEG_SHADE : '#000';
+  const glyphW = ch => GLYPH[ch][0].length;
+  const wordCells = word.split('').reduce((n, ch) => n + glyphW(ch), 0) + (word.length - 1) * GLYPH_GAP + (gap ? MID_GAP - GLYPH_GAP : 0);
+  let left = Math.floor((SIGN_W - wordCells) / 2);
+  word.split('').forEach((ch, n) => {
     const rows = GLYPH[ch];
     for (let r = 0; r < GLYPH_H; r++)
-      for (let c = 0; c < GLYPH_W; c++)
+      for (let c = 0; c < rows[r].length; c++)
         if (rows[r][c] === '1') ctx.fillRect(x + (left + c) * P, y + (SIGN_PAD + r) * P, P, P);
-    left += GLYPH_W + (n === WORD.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
+    left += glyphW(ch) + (gap && n === word.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
   });
 
   // and the lights, walking round the edge. A whole cell at a time, like
@@ -87,8 +147,18 @@ function drawSign() {
   // a dud puts the whole board out and then brings the bulbs back one at a time
   // round the ring, and the chase picks up among the ones that are back. None
   // of it under reduced motion: the chase keeps its step and nothing flashes.
+  // ...and, under "The pour", the marquee carries the state: idle, every
+  // other bulb swapping on a slow beat; pouring or draining, a run chasing
+  // round with the dust, a step a grain; ready, two runs chasing against
+  // each other under the count and every bulb on under the words ('twin'),
+  // or all on with a sparkle dropping out ('sparkle').
   const t = now();
-  const step = Math.floor(t / (busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS));
+  const chasing = state === 'pouring' || state === 'draining';
+  const stepMs = chasing ? Math.max(SIGN_CHASE_MIN_MS, Math.min(SIGN_CHASE_MAX_MS, 1000 / Math.max(0.001, grainsASecond(t))))
+    : state === 'ready' ? SIGN_READY_STEP_MS : busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS;
+  const step = chaseStep(t, stepMs);
+  const swap = Math.floor(t / SIGN_SWAP_MS) % 2;
+  const words = state === 'ready' && (SIGN_FLASH_FACE ?? Math.floor(t / SIGN_FLASH_MS) % 2);
   const age = S.hand ? t - S.hand.at : Infinity;
   const edgeAge = t - (S.tableFx.strobeAt || -Infinity);
   const strobe = mayFlash() && ((S.hand?.won && age < CASINO_WIN_MS) ||
@@ -97,11 +167,41 @@ function drawSign() {
     ? Math.max(0, Math.floor((age - CASINO_DARK_MS) / CASINO_RELIGHT_MS)) : Infinity;
   ringCells(w, h).forEach(([cx, cy], i) => {
     if (strobe) { if (Math.floor(t / CASINO_STROBE_MS) % 2) return; }
-    else if (i >= lit || (i + step) % CHASE_EVERY) return;
+    else if (i >= lit) return;
+    else if (state === 'idle') { if ((i + swap) % 2) return; }
+    else if (state === 'ready') {
+      if (SIGN_READY_LIGHTS === 'sparkle') { if (sparkleOut(i, step)) return; }
+      else if (!words && (i + step) % CHASE_EVERY && (i - step + 1e6) % CHASE_EVERY) return;
+    }
+    else if (chasing && (i + step) % CHASE_EVERY) return;
     ctx.fillRect(x + cx * P, y + cy * P, P, P);
   });
 }
 const CHASE_EVERY = 4;           // how many dark bulbs stand between the lit
+
+// The chase's step is counted, not read off the clock, so a step that
+// changes length with the dust runs on rather than jumping.
+let chaseAt = 0, chaseN = 0;
+function chaseStep(t, ms) {
+  if (t - chaseAt >= ms) { chaseN += Math.floor((t - chaseAt) / ms); chaseAt = t; }
+  return chaseN;
+}
+// How fast the dust is moving through the funnel: grains landing in the
+// bowl a second while pouring, grains leaving it a second while draining,
+// read off the bowl's count between frames and smoothed a little.
+let rateAt = 0, rateN = 0, rate = 0;
+function grainsASecond(t) {
+  const n = hopperN();
+  if (rateAt && t > rateAt) {
+    const r = Math.abs(n - rateN) / ((t - rateAt) / 1000);
+    rate = rate * 0.8 + r * 0.2;
+  }
+  rateAt = t; rateN = n;
+  return rate;
+}
+// a bulb out this step, for the sparkle: about one in four, by a hash of
+// the bulb and the step so it holds for the step and moves on the next
+const sparkleOut = (i, step) => ((i * 2654435761 + step * 40503) >>> 0) % 4 === 0;
 const PEG_SHADE = SHADES[0];     // a peg: the lightest grey the yard has, so a grain reads over it
 const TRAIL_SHADES = [SHADES[3], SHADES[0]];   // the last two cells a falling grain left, nearest first
 const PEG_HIT = 'plain';          // how a peg shows a hit: 'ring' or 'plain'
@@ -127,7 +227,9 @@ function ringCells(w, h) {
 // three-cell slot exactly, which is why a bin is the width it is.
 const DIGIT = {
   '0': ['111', '101', '101', '101', '111'],
-  '1': ['010', '110', '010', '010', '111'],
+  // a one is a stroke: with a foot it was three cells, and "1.5" with air
+  // each side wanted a slot of eleven; as a stroke the widest pay is seven
+  '1': ['1', '1', '1', '1', '1'],
   '2': ['111', '001', '111', '100', '111'],
   '3': ['111', '001', '111', '001', '111'],
   '4': ['101', '101', '111', '001', '001'],
@@ -146,11 +248,11 @@ const DIGIT = {
   '+': ['000', '010', '111', '010', '000'],
   '-': ['000', '000', '111', '000', '000']
 };
-const DIGIT_H = 5;
-const digitW = ch => DIGIT[ch][0].length;
+const glyphRows = ch => DIGIT[ch];
+const digitW = ch => glyphRows(ch)[0].length;
 
 function drawDigit(ch, x, y) {
-  const rows = DIGIT[ch];
+  const rows = glyphRows(ch);
   for (let r = 0; r < DIGIT_H; r++)
     for (let c = 0; c < rows[r].length; c++)
       if (rows[r][c] === '1') ctx.fillRect(x + c * P, y + r * P, P, P);
@@ -172,14 +274,15 @@ const LABEL_ROW = 2;                                     // under the floor line
 // A half is ".5" with its point a clear cell from the five, which is why an
 // inner slot is five cells: ".5" squeezed into three read as a six, and a one
 // over a two in five by five read as a W.
-const labelOf = m => m === 0.5 ? '.5' : String(m);
+const labelOf = m => m === 0.5 ? '.5' : String(m);      // 1.5 is '1.5': the point is a cell
+// a foot's face: a coin's mark, or the multiple
+const faceW = f => typeof f === 'string' ? MARK_CELLS : wordW(labelOf(f));
 
 function drawLabels(fx, fy) {
   const top = fy + (FIELD_H + BIN_H) * P;
   const paying = payingBin();
   CASINO_BINS.forEach((m, b) => {
-    const word = labelOf(m);
-    const col = binLeft(b) + (slotW(b) - wordW(word)) / 2;
+    const col = binLeft(b) + Math.floor((slotW(b) - faceW(m)) / 2);
     // the foot of the bin paying this beat goes white on black, so the eye is
     // led through the settlement from the middle outward
     if (b === paying) {
@@ -187,7 +290,8 @@ function drawLabels(fx, fy) {
       ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
       ctx.fillStyle = '#fff';
     } else ctx.fillStyle = '#000';
-    drawWord(word, fx + col * P, top + LABEL_ROW * P);
+    if (typeof m === 'string') cells(MARK[m], fx + col * P, top + LABEL_ROW * P);
+    else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
 }
@@ -201,17 +305,19 @@ export function drawCasino() {
     const t = now();
     const f = fieldAt();
 
-    // The block, from the hopper floor down. The hopper itself is open to the
-    // sky: two walls and the floor, with the heap standing in it drawn by
-    // `drawPotPile` over the sky, because that is where it stands.
+    // The block, from the hopper floor down. The hopper itself is the top of
+    // the machine, open to the sky: two walls and the floor, with the heap
+    // standing in it drawn by `drawPotPile` over the sky, because that is
+    // where it stands.
+    const hy = y;
     ctx.fillStyle = '#000';
-    ctx.fillRect(x, y + HOPPER_H * P, w, h - HOPPER_H * P);
+    ctx.fillRect(x, hy + HOPPER_H * P, w, h - HOPPER_H * P);
     // The funnel: the walls step in a row at a time along `HOPPER_PROFILE`,
     // the building's own wall plus the inset, so the bowl the heap sits in is
     // the shape the sand rules see.
     HOPPER_PROFILE.forEach((inset, r) => {
-      ctx.fillRect(x, y + r * P, (1 + inset) * P, P);
-      ctx.fillRect(x + w - (1 + inset) * P, y + r * P, (1 + inset) * P, P);
+      ctx.fillRect(x, hy + r * P, (1 + inset) * P, P);
+      ctx.fillRect(x + w - (1 + inset) * P, hy + r * P, (1 + inset) * P, P);
     });
 
     // The floor, open: it splits from the middle over `CASINO_GATE_MS`, the
@@ -222,7 +328,7 @@ export function drawCasino() {
       const k = Math.min(1, (t - S.drop.at) / Math.max(1, CASINO_GATE_MS));
       const open = 1 + 2 * Math.round(k * (GATE_W - 1) / 2);
       ctx.fillStyle = '#fff';
-      ctx.fillRect(x + w / 2 - (open * P) / 2, y + HOPPER_H * P, open * P, GATE_H * P);
+      ctx.fillRect(x + w / 2 - (open * P) / 2, hy + HOPPER_H * P, open * P, GATE_H * P);
     }
 
     drawSign();
@@ -288,8 +394,10 @@ export function drawCasino() {
     };
     divider(f.x - P);
     for (let b = 0; b < CASINO_BINS.length; b++) divider(f.x + (binLeft(b) + slotW(b)) * P);
-    ctx.fillRect(x + P, footTop, w - 2 * P, P);
-    ctx.fillRect(x + P, footTop + (LABEL_H - 1) * P, w - 2 * P, P);
+    // the floor line and the feet's rim run the width of the field, not
+    // the front: past the outer bins the front is the block's face
+    ctx.fillRect(f.x - P, footTop, (BOARD_COLS + 2) * P, P);
+    ctx.fillRect(f.x - P, footTop + (LABEL_H - 1) * P, (BOARD_COLS + 2) * P, P);
 
     drawLabels(f.x, f.y);
 
@@ -297,16 +405,28 @@ export function drawCasino() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
 
-    // The bank chute: while the tray is being tipped out, the foot's left wall
-    // is open at the tray's rows -- a hatch, white, a way through like every
-    // opening here -- and the sand runs out of it on to the ground.
-    if (S.paying) ctx.fillRect(x, tray.y, P, tray.rows * P);
-
-    // The three controls, on the walls, each where its effect is: the arm by
-    // the funnel, the button at the foot by the chute, the crank beside the
-    // tray. Black when it can be worked, grey at rest when it cannot.
+    // The foot's hatch, open while the pay pours out of it on to the
+    // ground: white, a way through like every opening here.
+    if (S.paying) { ctx.fillStyle = '#fff'; ctx.fillRect(x, tray.y + (tray.rows - 3) * P, P, 3 * P); }
+    // The arm on the wall beside the funnel: black while it can be held
+    // (and while it is), grey when it cannot.
     for (const l of LEVERS) drawControl(l);
     ctx.fillStyle = '#000';
+  });
+}
+
+// --- the feet's marks --------------------------------------------------------------
+// The coins' marks at five cells, for the converting bins' feet: the plots'
+// hexagon, the quarry's triangle, the core's four-point spark -- the
+// counter's own shapes.
+const MARK = {
+  spore: ['01110', '11111', '11111', '11111', '01110'],
+  shard: ['00100', '00100', '01110', '01110', '11111'],
+  spark: ['00100', '01110', '11111', '01110', '00100']
+};
+function cells(rows, x0, y0) {
+  rows.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) if (row[c] === '1') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
   });
 }
 
@@ -328,41 +448,24 @@ function drawControl(l) {
   const ink = shape.live ? '#000' : PEG_SHADE;
   ctx.fillStyle = ink;
   ctx.strokeStyle = ink;
-  if (l.kind === 'button') {
-    // face on, set into the wall: a white recess in a cell of black rim on
-    // the wall's outer face -- the recess could not cut into the building,
-    // where the pays' foot is -- with the round cap in it; pressed, the cap
-    // goes grey and shrinks, sunk into the wall
-    const rim = BUTTON_RECESS + 2;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(wall - rim * P, y - rim * P, rim * P, rim * P);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(wall - (rim - 1) * P, y - (rim - 1) * P, BUTTON_RECESS * P, BUTTON_RECESS * P);
-    ctx.fillStyle = shape.pressed ? PEG_SHADE : ink;
-    knob(wall - Math.ceil(rim / 2) * P, y - Math.ceil(rim / 2) * P, shape.pressed ? BUTTON_SUNK : BUTTON_CAP);
-    ctx.fillStyle = '#000';
-    return;
-  }
-  // the arm and the crank both turn about a boss on the wall: the arm's
-  // stem swings from straight up, the ball leading; the crank's handle from
-  // straight out, round and round, down first
-  const reach = (l.kind === 'arm' ? ARM_LENGTH : LEVER_REACH) * P;
-  const a = l.kind === 'arm' ? Math.PI / 2 - shape.angle : -shape.angle;
+  // the arm turns about a boss out from the wall: the stem swings from
+  // straight up, the ball leading
+  const reach = ARM_LENGTH * P;
+  const a = Math.PI / 2 - shape.angle;
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
-  // the arm's boss reaches out from the wall to the pivot
-  if (l.kind === 'arm') ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
+  ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, 2);
   ctx.lineWidth = P;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(ex, ey);
   ctx.stroke();
-  knob(ex, ey, l.kind === 'arm' ? 3 : 2);
+  knob(ex, ey, 3);
   ctx.fillStyle = '#000';
 }
 
 // --- the sand -------------------------------------------------------------------
-// The hopper, the tray and the piles are real plots of sand, so they are blitted
+// The hopper and the tray are real plots of sand, so they are blitted
 // like the yard and the hole rather than drawn a grain at a time. The bins are
 // plots too, but a few dozen cells each, so they and the handful on the pegs
 // are drawn straight, cell for cell in the grain's own shade.
@@ -375,9 +478,6 @@ export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
   if (tray.grid && tray.n) drawGrid(tray);
-  // the piles you stake from, on the ground beside the building: your purse,
-  // a coin a pile
-  for (const h of stakes) if (h.grid && h.n) drawGrid(h);
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;
