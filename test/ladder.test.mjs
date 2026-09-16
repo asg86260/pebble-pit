@@ -11,7 +11,8 @@
 import { group, ok, state, yard, openSites, buyBuilt, climb } from './helpers.mjs';
 
 import { LADDER, TIER_BAND, LADDERS } from '../src/config.js';
-import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
+import { maxed, UPGRADES } from '../src/upgrades.js';
+import { gainText } from '../src/words.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';

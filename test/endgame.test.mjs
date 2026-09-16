@@ -9,7 +9,7 @@
 
 import { yard, group, ok, state, run, runUntil, openSites, haveRock, buyBuilt } from './helpers.mjs';
 import { specOf } from '../src/machines.js';
-import { haulCap } from '../src/upgrades.js';
+import { haulCap } from '../src/levels.js';
 import { beltFrom } from '../src/dust.js';
 
 // A yard with the ram standing and somebody on it.

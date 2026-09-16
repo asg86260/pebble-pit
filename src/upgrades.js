@@ -24,18 +24,6 @@ import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
 import { purse } from './words.js';
 
-// Everything that moved out of this file is still sold from here for one
-// commit, so no importer breaks between the split and the repointing. The
-// integrator removes these once every importer names the file it wants.
-export {
-  swing, capacity, rungCost, DUST_PER, mineRate, mineMs, rockhandRate, rockhandMs,
-  haulCap, haulSpeed, scoopMs, commutePace, homePace, pickCount, rockhandBite,
-  TRADE_OF, JOB_OF, hats, worn, loose, spareKit, capOf, roomAt, handsOf, kitCap,
-  kitFull, gangWorth, machineRate
-} from './levels.js';
-export { JOBS, spareHands, idle, restaff, stripKit, rebalance, hire, assign } from './staffing.js';
-export { MARK, purse, UNITS, unitText, num, gainText, priceText, leftText, ordinal } from './words.js';
-
 import { BENCH_ROWS } from './upgrades/rows-bench.js';
 import { LUCK_ROWS } from './upgrades/rows-luck.js';
 import { ROCK_ROWS } from './upgrades/rows-rock.js';

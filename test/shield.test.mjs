@@ -8,7 +8,7 @@ import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          DOME_BILL, DOME_FLOOR_C, DOME_FADE_MS, P } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { domeOrbitR } from '../src/shield.js';
-import { DUST_PER } from '../src/upgrades.js';
+import { DUST_PER } from '../src/levels.js';
 
 // The dome is priced in everything the yard makes, and the fixture pays for
 // it the way the yard would: dust into the hole, the rest through the grant.

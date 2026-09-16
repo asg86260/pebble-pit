@@ -15,7 +15,7 @@ import { TONICS, tonicOf, takesTonic, tonicShown, doseLive, doses,
          speedBoost, strengthBoost, critBoost, doseComing,
          migrateApothecary } from '../src/apothecary.js';
 import { load } from '../src/crew/hole.js';
-import { haulCap } from '../src/upgrades.js';
+import { haulCap } from '../src/levels.js';
 
 // Open the farm ONLY (the quarry stays shut unless a group opens it), put the
 // apothecary up, and leave spare hands and haulers in the yard for the doses to

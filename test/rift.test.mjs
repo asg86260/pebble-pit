@@ -14,7 +14,7 @@ import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
 // Straight off the modules: `yard.upgrades` is the `__upgrades` hook, and the
 // rift's plot is not among the handles the yard spreads.
-const { JOBS } = await import('../src/upgrades.js');
+const { JOBS } = await import('../src/staffing.js');
 const { TOWER_UPGRADES } = await import('../src/tower.js');
 const { rift } = await import('../src/state.js');
 const { abyssLine, pitDepth } = await import('../src/pit.js');

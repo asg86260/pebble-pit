@@ -27,7 +27,7 @@ import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { bandY } from './dust.js';
 import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
-import { rebalance, JOBS } from './upgrades.js';
+import { rebalance, JOBS } from './staffing.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './stats.js';
 import { catchUpNotices, resetNotices, hushNotices } from './notices.js';

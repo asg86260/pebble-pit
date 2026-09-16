@@ -12,7 +12,7 @@
 
 import { yard, group, ok, run } from './helpers.mjs';
 import { AMBLE_RAMP } from '../src/config.js';
-import { haulSpeed } from '../src/upgrades.js';
+import { haulSpeed } from '../src/levels.js';
 import { ROAM_PACE } from '../src/crew/idle.js';
 
 group('an idle hauler gets going and slows down rather than switching on and off', async () => {

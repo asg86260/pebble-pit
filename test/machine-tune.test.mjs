@@ -16,7 +16,7 @@ import { group, ok, state, yard, buyBuilt, buyNow } from './helpers.mjs';
 // spreads `hooks` over its own handles and the two names collide -- so reaching
 // for the rate function through it silently gets a function that answers a
 // different question.
-const { machineRate } = await import('../src/upgrades.js');
+const { machineRate } = await import('../src/levels.js');
 
 const MACHINES = [
   { key: 'jaw', row: 'tunejaw', job: 'quarriers' },

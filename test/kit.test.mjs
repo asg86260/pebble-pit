@@ -429,7 +429,7 @@ group('a hat is made at its own station, by a body that walked there', async () 
   window.__kit({ learned: true });
   window.__crew(2, 3);
   run(5);
-  const { spareKit } = await import('../src/upgrades.js');
+  const { spareKit } = await import('../src/levels.js');
   const { workAt, handsAt } = await import('../src/works.js');
   const { JOB } = await import('../src/jobs.js');
   const rock = JOB.ROCK;

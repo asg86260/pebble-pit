@@ -13,7 +13,7 @@ import { NOTICES, hasNotice, unreadNotices, markNoticesRead,
 import { CASINO_BIG, LADDER, P, SHAKE_TURNS } from '../src/config.js';
 import { BIRDS, startle } from '../src/weather.js';
 import { release, catchAir } from '../src/hands.js';
-import { capacity } from '../src/upgrades.js';
+import { capacity } from '../src/levels.js';
 import { lift, shakeHeld, drop } from '../src/crew.js';
 import { load } from '../src/crew/hole.js';
 

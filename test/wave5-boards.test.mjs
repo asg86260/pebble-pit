@@ -10,7 +10,8 @@
 // shots -- `node tools/look.mjs bench,books`.
 
 import { group, ok, state, run, yard } from './helpers.mjs';
-import { gainText, unitText, MARK, UPGRADES } from '../src/upgrades.js';
+import { UPGRADES } from '../src/upgrades.js';
+import { gainText, unitText, MARK } from '../src/words.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';

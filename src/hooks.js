@@ -25,10 +25,12 @@ import { now as clockNow } from './clock.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 
 
-import { rebalance, assign as assignJob, kitCap } from './upgrades.js';
+import { rebalance, assign as assignJob } from './staffing.js';
+import { kitCap } from './levels.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, lodgers, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW, gainText } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW } from './upgrades.js';
+import { gainText } from './words.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';

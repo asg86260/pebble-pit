@@ -12,7 +12,7 @@ import { yard, group, ok, state, run, runUntil, WORKER } from './helpers.mjs';
 const { dropTargets, holdTarget } = await import('../src/crew/assign.js');
 const { lift, drop } = await import('../src/crew/pointer.js');
 const { JOB, JOB_OF } = await import('../src/jobs.js');
-const { roomAt } = await import('../src/upgrades.js');
+const { roomAt } = await import('../src/levels.js');
 
 const S = yard.S;
 

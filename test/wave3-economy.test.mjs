@@ -3,7 +3,9 @@
 // "Track A -- economy & fixes" (A1-A8).
 
 import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
-import { priceText, billOf, UPGRADES, rockhandBite } from '../src/upgrades.js';
+import { billOf, UPGRADES } from '../src/upgrades.js';
+import { rockhandBite } from '../src/levels.js';
+import { priceText } from '../src/words.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';

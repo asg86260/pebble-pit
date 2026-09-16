@@ -11,7 +11,7 @@
 // The counters run since wake and never reset, so every group takes a delta.
 
 import { group, ok, state, run, runUntil, haveRock, quickCrew, openSites } from './helpers.mjs';
-import { rockhandMs } from '../src/upgrades.js';
+import { rockhandMs } from '../src/levels.js';
 import { wakeAudio, audioDecisions } from '../src/audio.js';
 
 const snap = () => {

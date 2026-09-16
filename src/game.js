@@ -55,7 +55,9 @@ import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable, wireTray } from './casino.js';
 import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
-import { mineMs, restaff, stripKit, take } from './upgrades.js';
+import { take } from './upgrades.js';
+import { mineMs } from './levels.js';
+import { restaff, stripKit } from './staffing.js';
 // The bench's row is registered by this file being loaded, here rather than
 // by the page, because a yard with no document still has to raise a bench
 // (raise.js).

@@ -14,7 +14,7 @@
 // Every one of those is a number the eye cannot audit at sixty frames a second.
 
 import { group, ok, state, run, runUntil, quickCrew, P, WORKER } from './helpers.mjs';
-import { commutePace } from '../src/upgrades.js';
+import { commutePace } from '../src/levels.js';
 import { FARM_WALK, GRIT_LIFE, BUILD_SHIFT_SPAN, BUILD_SHIFT } from '../src/config.js';
 import { spawnGrit, stepGrit } from '../src/grit.js';
 import { S } from '../src/state.js';

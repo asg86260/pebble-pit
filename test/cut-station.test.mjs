@@ -12,7 +12,7 @@ import { yard } from './helpers.mjs';
 import { S, quarry } from '../src/state.js';
 import { persist } from '../src/persist.js';
 import { cutTop } from '../src/quarry.js';
-import { commutePace } from '../src/upgrades.js';
+import { commutePace } from '../src/levels.js';
 import { QUARRY_WALK } from '../src/config.js';
 
 const quarriers = () => S.workers.filter(w => w.type === 'quarrier');

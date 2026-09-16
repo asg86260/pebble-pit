@@ -12,7 +12,8 @@ import { S } from '../src/state.js';
 import { LADDER, LADDERS } from '../src/config.js';
 const ROCKHAND_PX = LADDERS.rockhandpick.value, CRIT_MULT = LADDERS.critmult.value;
 import { critMult } from '../src/crit.js';
-import { rockhandBite, rebalance } from '../src/upgrades.js';
+import { rockhandBite } from '../src/levels.js';
+import { rebalance } from '../src/staffing.js';
 
 // --- 1. the pickaxe: three integer rungs, bought off the bench -----------------
 group('the pickaxe ladder is whole-pixel rungs off its list, bought like a player', async () => {

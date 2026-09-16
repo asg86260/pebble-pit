@@ -5,7 +5,7 @@
 
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 import { HOME_HURRY } from '../src/config.js';
-const { commutePace, homePace } = await import('../src/upgrades.js');
+const { commutePace, homePace } = await import('../src/levels.js');
 
 // Pixels a body moved over one frame, measured rather than reasoned about.
 const stepOf = w => { const x0 = w.x; run(1 / 60); return Math.abs(w.x - x0); };

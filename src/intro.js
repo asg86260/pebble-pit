@@ -26,7 +26,7 @@ import { makeBoulder, dropZone } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
-import { rebalance } from './upgrades.js';
+import { rebalance } from './staffing.js';
 import { buildShop } from './shop.js';
 import { syncWorkers } from './crew.js';
 import { wayAt, ways, feetOn, climbTo } from './route.js';
