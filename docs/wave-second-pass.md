@@ -589,3 +589,130 @@ needs the key list).
 Branch: `second-pass-M`. Commit title (the second commit; the fixtures'
 re-save is the first): `The save floor is the first public build, and
 every migration is a file`.
+
+---
+
+## Track P: saving beside the owner
+
+Seam 5 of "The second pass" (DESIGN.md), the last. Base:
+`worktree-save-owners` on origin (main after seam 3). A pure move: no
+save changes shape, no field moves list, `saveV` stays 1. **The check
+for this track is that a blob written before and after is identical**
+(sans `savedAt`), and that `restore()` does exactly what it did in
+exactly the order it did it.
+
+### What exists
+
+`blob()` in persist.js writes the plain `SAVED` fields through
+`savedFields()` and then, by hand, every name in state.js's
+`SAVED_BY_HAND` (46 names) in one long object literal; `restore()` (290
+lines) reads them back in an order that the comments in it say is
+load-bearing (the rift before the dust is re-homed; the cut after
+`resetCut`; the crew after `resite`; the pit's grain before the pile;
+`rebalance` after the machines and before the crew). `reset()` blanks
+the same fields by hand a third time. Each of those blocks is about one
+owner -- the machines, the works, the shield, the sky, the casino, the
+crew -- and lives a file away from it.
+
+### The shape
+
+1. **A saver is an object an owner exports**, named `SAVE`:
+   ```
+   export const SAVE = {
+     fields: ['shield', 'shieldsDone'],   // the SAVED_BY_HAND names it owns
+     write(out) { ... },                  // put its fields on the blob
+     read(s) { ... },                     // read them back off a migrated blob
+     blank() { ... }                      // what a fresh yard has (today's reset)
+   };
+   ```
+   `write` is that owner's lines from `blob()`, moved whole with their
+   comments; `read` is that owner's block from `restore()`, moved whole;
+   `blank` is its lines from `reset()`. A saver imports what its block
+   imports today. An owner that already has a load function (`craftLoad`,
+   `skyFromSave`, `pitFromSave`, `restoreCrew`, `restoreGrid`) wraps it,
+   and the function moves into the owner if it is not there already.
+2. **`SAVERS` in persist.js**: the savers, in the order `restore()` reads
+   today. Write that order down as the list, with the comments from
+   `restore()` that say why a block is where it is moved onto the list
+   entries, the way `STEPS` in game.js carries its ordering comments.
+   `blob()` = `savedFields()` plus the stamp (`build`, `saveV`,
+   `savedAt`) plus every saver's `write`; `restore()` = `load`,
+   `migrate`, the fresh-yard arm (which calls every saver's `blank`),
+   else `readSaved(s)` then every saver's `read(s)` in list order, then
+   whatever lines in `restore()` today belong to no owner (say which,
+   and why they stay); `reset()` = `readSaved({})` plus every `blank`
+   plus what remains. persist.js keeps the grid codec (`runs`,
+   `gridFill`, `gridSlide`, `restoreGrid`), `load`/`save` and the tab
+   claim; it should come out well under half its size -- say the number.
+3. **Owners**, from today's blocks (adjust if a block reads as somebody
+   else's; say so): rng.js (`runSeed`, `rngState`); rock.js (`boulder`,
+   `gw`, `gh`, `boulderNo`); world.js or main.js (`camX` -- whichever
+   owns the camera today); core.js (`coreItem`/`core`/`coreLoose`);
+   the clock distances (`danceUntil`, `nextBoulderAt`) go with their
+   owners (crew/dance.js and rock.js); machines.js (`machines`);
+   quarry.js (`quarryCells`, `cut`, `mouth` if it is the cut's); beats.js
+   (`beat`, `beatsDone`); shield.js (`shield`, `shieldsDone`, the
+   re-catch); intro.js (`buried`, `rescued`); works.js (`works`,
+   `buildOrder`); dust.js (`belt`, `chips`); staffing.js or crew.js
+   (`lent`, `who`/`workers`, `restoreCrew`); smog.js (`haze`, `poop`,
+   `skyKinds`/`drops`/`puffs` via `skyFromSave`); rock.js (`rockSand`);
+   casino.js (`pot`, `pouring`, `paying`); farm.js (`plots`, `plotTone`);
+   pit.js (`rift`, `riftHeld`, `pit`, `rehomeDust`, `seedPitCores`);
+   meteor.js (`meteorCells`, `summon`); balloon.js (`craft`); grid/floor
+   (`floor`) stays in persist.js's codec or goes to world.js -- decide
+   and say. `build`, `saveV`, `savedAt` are the stamp and stay in
+   persist.js.
+4. **state.js**: `SAVED_BY_HAND` stays as the declaration (every by-hand
+   name must still be in exactly one of the three lists);
+   `test/persist-roundtrip.test.mjs` gains the rule that the union of
+   every saver's `fields` equals `SAVED_BY_HAND` exactly, and that no two
+   savers claim a name. Owners may not add or remove names; that is a
+   save-shape change and is not this track.
+5. **The proof**: `test/save-owners.test.mjs`, new, node tier: build a
+   rich yard (`__fullSites`, crew, machines, a shield up, a pot on the
+   table, the meteor, a craft, a build in flight, dust on every ground),
+   `persist()` and keep the blob; the same yard on the base tree gives
+   the same blob sans `savedAt` -- do this by hand once with `git
+   archive origin/worktree-save-owners` into a scratch dir (the recipe in
+   track M) and paste both blobs' lengths and a `diff` of their sorted
+   keys in the report; the committed check compares a blob written, read
+   back, and written again (a round trip is byte-equal sans `savedAt`),
+   and that every `SAVERS` entry's `fields` are all present on the blob.
+   Plus: every fixture in `test/fixtures/` still loads and its own
+   check is green.
+6. ARCHITECTURE.md: the "Every new field on `S`" paragraph gains the
+   sentence that a by-hand field is written and read by its owner's
+   `SAVE`, listed in `SAVERS`; "A new site" step 6 ("its fields in
+   persist.js") becomes "its `SAVE`, one line in `SAVERS`". DESIGN.md:
+   seam 5 "as built"; TODO.md: "The second pass" entry closes -- every
+   seam built. No CHANGELOG line.
+
+### The check
+
+`node --check` on every file. Foreground, `--test-concurrency=4`:
+`test/save-owners.test.mjs`, `test/persist-roundtrip.test.mjs`,
+`test/save-floor.test.mjs`, `test/reload.test.mjs`, `test/stuck-yard`,
+`test/pit-edge-stuck`, `test/quarry-rim`, `test/belt-lip`,
+`test/shack-stall` (or whichever reads it), `test/beats`,
+`test/shield`, `test/machines`, `test/casino`, `test/handful`,
+`test/rift`, `test/sky-fan`, `test/balloon`. Paste the summary lines.
+`node tools/cycles.mjs` before and after: persist.js importing an owner
+is an edge that exists today; a new cycle through persist.js is not
+allowed (an owner must not import persist.js). Browser, on a free port
+with a distinct `CDP_PORT`: `--only "saves page"`, `--only settings`,
+`--only "save comes out"`; paste the last lines; tear the server down.
+
+Known intermittent red on main, not yours: `test/machines.test.mjs`
+"smoke rises and goes out".
+
+### Owns / does not touch
+
+Owns: `src/persist.js`, `src/state.js` (comments on the list only),
+every owner file named above (its `SAVE` block and the functions that
+move into it), `test/save-owners.test.mjs`, `test/persist-roundtrip.test.mjs`,
+`ARCHITECTURE.md`, `DESIGN.md`, `TODO.md`. Does not touch:
+`src/migrations/**`, `src/save.js`, `src/render/**`, `src/shop.js`,
+`src/board.js`, `src/hooks.js` (if a hook must change, one line, say so).
+
+Branch: `second-pass-P`. Commit title: `Every saved fact is written and
+read beside its owner; persist.js is the loop and the codec`.
