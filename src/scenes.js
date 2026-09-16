@@ -668,30 +668,55 @@ export const SCENES = {
                  window.__machine('ram', { bought: true }); window.__board('tower'); } },
 
   // --- the casino -------------------------------------------------------------
-  casino: { about: 'the casino', say: 'a hundred on the table, the wheel going',
+  // A hand mid-cascade: a hundred staked into the hopper, let go, and the
+  // handful strung out down the pegs with the first grains in the bins. The
+  // machine is wound to its knobs -- no quicker -- so what the shot shows is
+  // what a player sees.
+  casino: { about: 'the casino', say: 'a hundred let go: the handful on the pegs',
     run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
-                 window.__buy('stakedust'); window.__fast(3);
+                 window.__buy('stakedust');
+                 for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                 window.__buy('letgo'); window.__fast(0.5);
                  window.__look(st().casinoX - 380); } },
-  // The wheel is played until the wanted answer comes up, and the shot is a
-  // beat after the stop.
-  casinowin: { about: 'the casino', say: 'a win: the strobe and the fountain',
+  // The pot standing in the hopper, the let-go open: the stake as a heap on the
+  // roof, and the sign chasing under it.
+  casinohopper: { about: 'the casino', say: 'the stake standing in the hopper',
+    run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+                 window.__buy('stakedust');
+                 for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                 window.__look(st().casinoX - 380); } },
+  // A hand just paid: the tray standing, the box saying the multiple, and the
+  // sign on its strobe or dark, whichever way it went.
+  casinopaid: { about: 'the casino', say: 'the tray paid, the box saying the multiple',
+    run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+                 window.__buy('stakedust');
+                 for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                 window.__buy('letgo');
+                 for (let f = 0; f < 1200 && st().letting; f++) window.__fast(1 / 60);
+                 window.__fast(0.3);
+                 window.__look(st().casinoX - 380); } },
+  // A win: hands are played until one pays more than it took, and the shot is
+  // a beat after -- the strobe on the sign and the fountains in the air.
+  casinowin: { about: 'the casino', say: 'a win: the strobe and the fountains',
     run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
                  for (let i = 0; i < 12; i++) {
-                   if (st().pot) { window.__buy('bank'); window.__fast(3); }
+                   if (st().pot) { window.__buy('bank'); for (let f = 0; f < 400 && (st().paying || st().tableAir); f++) window.__fast(1 / 60); }
                    window.__buy('stakedust');
-                   for (let f = 0; f < 600 && (st().pouring || st().spinning); f++) window.__fast(1 / 60);
+                   for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                   window.__buy('letgo');
+                   for (let f = 0; f < 1200 && st().letting; f++) window.__fast(1 / 60);
                    if (st().hand && st().hand.won) break;
                  }
-                 window.__fast(0.1);
+                 window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
-  casinoloss: { about: 'the casino', say: 'a loss: the sign goes dark and the pot lifts off',
+  // The tray going back up for a drop again: the hoist, mid-arc.
+  casinohoist: { about: 'the casino', say: 'drop again: the tray hoisted back to the roof',
     run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
-                 for (let i = 0; i < 12; i++) {
-                   if (st().pot) { window.__buy('bank'); window.__fast(3); }
-                   window.__buy('stakedust');
-                   for (let f = 0; f < 600 && (st().pouring || st().spinning); f++) window.__fast(1 / 60);
-                   if (st().hand && !st().hand.won) break;
-                 }
+                 window.__buy('stakedust');
+                 for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                 window.__buy('letgo');
+                 for (let f = 0; f < 1200 && (st().letting || st().pouring); f++) window.__fast(1 / 60);
+                 window.__buy('ride'); window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
 
   // --- the pit and the rift ---------------------------------------------------

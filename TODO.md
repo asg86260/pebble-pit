@@ -11,77 +11,20 @@ table with two more columns. Blocker: sign-off on the three decisions at
 the end of the section; then seam 2 first, gates with seam 4, beats in
 parallel.
 
-## Playing it on a phone -- APPROVED, BUILDING (2026-09-15)
+## The handful: the casino drops dust down a peg board -- BUILT (2026-09-15)
 
-"Playing it on a phone" at the end of DESIGN.md: four asks from the owner,
-each its own section, all reading one answer for "is this a phone"
-(`coarse()` in prefs.js off `(pointer: coarse)`, with a switch on the
-settings sheet). Approved: two edge arrows when there is a station that way, sheets on a phone only, native momentum, undo not confirm.
-
-- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
-  the canvas sits fixed in a horizontal scroller with a spacer the width of
-  the world, `camX` reads `scrollLeft` once a frame and everything that
-  moves the camera writes it; a non-passive `touchstart` over dust says no
-  to the scroll so the sweep stands. No friction knobs. Checks:
-  `selftest/touch.js`, `test/camera.test.mjs`.
-- **A hop between stations.** Two arrows in the mid sky at the window's
-  edges, each wearing the glyph of the next standing station that way, a
-  tap glides there; drawn on a phone only. Recommended over one button
-  opening a glyph strip, and over a permanent rail. `hop.js` (new),
-  `HOP_Y` / `HOP_SIZE` / `HOP_INSET`. Check: `test/hop.test.mjs`.
-- **A tap buys.** Every `:hover` behind `@media (hover: hover)` and the tip
-  and the lean not wired under a coarse pointer, so the first tap is the
-  tap; a row buys on a tap (slop and time, `tap.js`, one definition for
-  the page) and not on a click, so a scroll never buys; the note on a long
-  press; a wrong buy undone from the tag for `UNDO_MS` rather than
-  confirmed. Checks: `selftest/touch.js`, `test/undo-buy.test.mjs`,
-  `test/hover-gate.test.mjs`.
-- **Boards as bottom sheets.** On a phone a board is a full-width sheet
-  from the bottom, top at `SHEET_H` (0.55) with a handle, three stops
-  (down, seat, `SHEET_TALL`), the purse along its top edge inside it, the
-  crew list a page inside it; a second seat in board.js beside `place()`,
-  the desk's popover untouched. Check: `selftest/sheet.js`, a `phonebench`
-  scene.
-
-Shots the calls were made against: `shots/phone/yard.png`,
-`shots/phone/bench.png`, `shots/phone/quarryboard.png`. The cutscene
-framing at a phone's width was a fix and is in CHANGELOG.md
-(`test/phone-view.test.mjs`).
-## The second pass -- DESIGNED (2026-09-15), not built
-
-"The second pass" at the end of DESIGN.md: a measured survey of the tree
-(49% comment lines, a 72-module import cycle pivoting on `upgrades.js`, 42
-dead exports, ~40 pre-release save migrations, 12 `<station>BoardOpen`
-flags) and seven seams to take one branch at a time, in order: the dead-code
-sweep; splitting `upgrades.js` into `levels`/`roster`/`words`/`upgrades`;
-a save floor at v0.1.1 (needs a decision); a station table in board.js;
-saving beside the owner; invalidation off the clock; the comment pass
-(needs a decision on the register). Gated on the reliability freeze holding
-green twice on main. Blocker: the save-floor decision, and the freeze.
-
-Seam 1, the dead-code sweep, is BUILT (2026-09-15): 43 exports nothing
-imported (22 of them config knobs), 132 imported names nothing read,
-`SHIELD_GATES` and its branches, the lab's three state flags, `secondsMark`,
-`staffSheds` (now `stripKit`), the balloon no-op divisor, and the
-`openFloor` ReferenceError (a check and a CHANGELOG line). Removing an
-unused import surfaced the 72-module cycle as a TDZ (`CRAFT_ROW` read at
-load across balloon.js/scrubhouse.js); the row moved to scrubhouse.js. The
-lab building itself (its rect, `TO_LAB`, `LAB_W/H`, the board names and the
-persist branches) waits for the save floor. Found and left: the browser
-`queue` group's "every line has a clock" line is red on main -- it coerces
-the clock text to a number and the text is `next 0:10` since the `m:ss`
-clock.
-
-Seam 7, the comment pass, is BUILT (2026-09-15): the owner's rule was
-"only what you need for logic derivation"; `docs/wave-comments.md` is the
-spec, `tools/comments-check.mjs` the proof. `src/` went from 59,296 lines
-(28,797 comment, 49%) to 43,868 (13,399 comment, 31%), 224 files, no code
-line changed. Two things the pass found and left alone, for the dead-code
-sweep (seam 1): `openFloor` in route.js reads `feet`, which is not in its
-scope (a ReferenceError if `routeFor` is ever called for an x over the
-hole with no `toWay`); and `Math.max(1, laneY(i) ? 1 : 1)` in
-balloon.js is a no-op divisor. `test/`, `tools/` and the html/css were not
-in the pass.
+Players find the wheel dull, and the user is not a fan of it. The third plinko:
+thirty-two grains a hand, each carrying a thirty-second of the stake and
+flipping its own coin at every peg, into the drop's fair eleven-bin table; the
+paid bins empty into a tray at the foot, and the tray either banks or rides
+back up to the hopper. DESIGN.md, "The handful" (built), with "What building
+it changed" for the calls the build made. The two cut versions failed on the
+same arithmetic from opposite sides (one rock: no sand; the whole heap: no
+spread), and the design says why the handful is the size where a cascade and a
+bet meet. Supersedes "The casino stays the wheel" below. Left for later: the
+bank row does not wait on a full hole (the rift takes what the hole refuses,
+so the rule the design carried over no longer holds); nobody has listened to
+the peg clatter.
 
 ## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
@@ -437,12 +380,13 @@ alike; a heading per part with a button per scene; a scene never touches the
 player's save. DESIGN.md, "Scenes" (built). Left for later: the scrollbar on
 the block is the browser's grey one, not the sheet's hand.
 
-## The casino stays the wheel (2026-09-11)
+## The casino stays the wheel (2026-09-11) -- SUPERSEDED by "The handful" (2026-09-15)
 
 Two plinko versions were built and cut in a day: a rock carrying the pot down
 a tower on the roof ("The drop"), then the sand itself poured through pegs
 ("The sand board"). Both are in the history and in DESIGN.md as cut sections.
-The wheel is what the player wants.
+The wheel was what the player wanted until the players called it dull; the
+handful is the third go, and the one that kept both the sand and the spread.
 
 ## Nine critics played the game (2026-09-10)
 

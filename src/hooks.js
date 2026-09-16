@@ -39,7 +39,7 @@ import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
-import { CASINO_UPGRADES, pickChip } from './casino.js';
+import { CASINO_UPGRADES, pickChip, dealHand } from './casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -607,11 +607,16 @@ export const buyRowByKey = key => {
   const from = u.from ? u.from() : null;
   const showed = u.show();
   const wasOn = !!workOn(u.key);
+  // ...and a fifth: a decision row that stays on its board and goes dead --
+  // the casino's let-go opens the floor and stands there grey until the hand
+  // is settled, which is the one sign it fired.
+  const wasDead = !!u.dead?.();
   buyRow(u);
   return rungOf(u) > was
       || (u.from && u.from() !== from)
       || (showed && !u.show())
-      || (!wasOn && !!workOn(u.key));
+      || (!wasOn && !!workOn(u.key))
+      || (!wasDead && !!u.dead?.());
 };
 
 
@@ -899,10 +904,22 @@ export const HANDLES = {
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
   // The chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up.
   __chip: (d = 1) => pickChip(d),
-  // The brew is picked at the pot (potpick.js), and a DOM popover is not
-  // something the node tier can press, so this calls the same toggle the
-  // picker does; the route is proved by the browser check that clicks a
-  // cauldron and then a swatch. The first pot when nobody says.
+  // a hand dealt off the rng without the sim -- the bins each grain of a
+  // handful lands in and what they pay on this stake -- for the check that
+  // measures the spread two thousand hands at a time
+  __deal: (stake = 1000) => dealHand(stake),
+  // Setting the pot the way the board does: clicking a tonic row calls its
+  // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
+  // the same functions the pointer calls, so a check that sets the pot this way
+  // sets it the way a player does.
+  //
+  // Except the tonic, which is no longer set from a board at all: the brew is
+  // picked at the pot now (potpick.js), and a DOM popover is not something the
+  // node tier can press. So this calls the same toggle the picker's own
+  // machinery does, and it is setup rather than the route -- the route is proved
+  // by the browser check that clicks a cauldron and then a swatch. The pot is
+  // named as well as the tonic, the first one when nobody says, which is what
+  // every caller written before the pots came apart meant.
   __pot: (key, pot = 0) => {
     if (!S.apothecaryOpen || pot < 0 || pot >= S.apothPots) return false;
     setPotTonic(pot, key);

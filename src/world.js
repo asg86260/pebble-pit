@@ -5,9 +5,19 @@
 // are placed by one walk of the SITES table (config/sites.js), so adding one is
 // a row there and a `seat` in `seatSites`.
 
-import { P, CELL, SKY, SKY_UP, SKY_R, TO_LEDGE, GROUND_LEFT, ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, heapBase, PIT_H, SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR, PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_H, SHAKE_RATE, SHAKE_DECAY, CASINO_H, SCRUB_H, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE, TOWER_H, OUTHOUSE_H, SHACK_H, FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP, APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, BRIDGE_RISE, BRIDGE_RUN, OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
+import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
+        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
+        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, HOPPER_H, TRAY_H,
+        SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
+        FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT,
+        BRIDGE_RISE, BRIDGE_RUN,
+        OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table , tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -541,22 +551,18 @@ export function resize(after) {
 
   seatSites();
 
-  // The ground the pot stands on: from the left-hand end of the world to
-  // whatever stands next along on the casino's right. A heap walks *left*
-  // past the building when the right-hand side is full, because that is
-  // where the empty ground is.
-  //
-  // The far end is DERIVED from the walk, not named: who stands beside the
-  // casino is `siteOrder`'s to decide, and a named neighbor that stops
-  // being seated leaves the table one column wide with nothing said.
-  table.x = 0;
-  const potFrom = casino.x + casino.w;
-  const edges = [...SITES.map(row => (S.placed[row.key] || {}).x),
-                 ...(S.strips || []).map(p => p.from)]
-    .filter(x => x != null && x > potFrom);
-  const potTo = edges.length ? Math.min(...edges) : S.cx;
-  table.cols = Math.max(1, Math.floor((potTo - P * 4) / P));
-  table.y = S.groundY - table.rows * P;
+  // The casino's two plots of sand: the hopper on its roof, where the stake
+  // stands, and the tray at its foot, where the bins pay into. Both are the
+  // building's inner width, a wall in from each side; the hopper is the top of
+  // the block and the tray is the bottom of it. See casino.js.
+  table.x = casino.x + P;
+  table.cols = CASINO_W / P - 2;
+  table.rows = HOPPER_H;
+  table.y = casino.y;
+  tray.x = casino.x + P;
+  tray.cols = CASINO_W / P - 2;
+  tray.rows = TRAY_H;
+  tray.y = casino.y + casino.h - TRAY_H * P;
 
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.
