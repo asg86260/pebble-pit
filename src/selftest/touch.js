@@ -64,6 +64,17 @@ export const TESTS = [
     finger('pointerup', 1, 180, skyY);
     await frames(1);
     const s2 = state();
+    // a board comes down when its station is scrolled off the window, on
+    // every board (the rule was keyed on the bench's flag alone)
+    await haveBench();
+    window.__crew(2, 1);
+    run(0.5);
+    window.__board('house');
+    await frames(3);
+    const houseUp = !document.getElementById('panel').hidden;
+    sc.scrollLeft = sc.scrollWidth;                         // the far end of the world
+    await frames(3);
+    const houseDown = document.getElementById('panel').hidden || !state().houseBoardOpen;
     // a cutscene shuts the band for its run
     const lockedBefore = getComputedStyle(sc).overflowX;
     phone(false);
@@ -77,6 +88,7 @@ export const TESTS = [
       ok(Math.abs(t.width - wantW) <= 6 && Math.abs(t.left - wantX) <= 6, 'the thumb is the view\'s share of the world, where the view is',
          `thumb ${Math.round(t.left)}+${Math.round(t.width)} vs ${Math.round(wantX)}+${Math.round(wantW)}`),
       ok(s2.camX === s1.camX && !s2.dragging, 'a finger dragged across the sky moves nothing', `${s1.camX} -> ${s2.camX}`),
+      ok(houseUp && houseDown, 'a board comes down when its station is scrolled off the window', `up ${houseUp}, down ${houseDown}`),
       ok(lockedBefore === 'auto' || lockedBefore === 'scroll', 'the band is open to a finger with no scene on', lockedBefore),
       ok(scroller().hidden, 'and gone again on a desk'),
     ];

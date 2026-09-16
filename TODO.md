@@ -1,18 +1,28 @@
 # Still to do
 
-## Playing it on a phone -- APPROVED, BUILDING (2026-09-15)
+## Playing it on a phone -- BUILT (2026-09-15)
 
-"Playing it on a phone" at the end of DESIGN.md: four asks from the owner,
-each its own section, all reading one answer for "is this a phone"
-(`coarse()` in prefs.js off `(pointer: coarse)`, with a switch on the
-settings sheet). Approved: two edge arrows when there is a station that way, sheets on a phone only, native momentum, undo not confirm.
+"Playing it on a phone" at the end of DESIGN.md, with "What building it
+changed" at its foot: four asks from the owner, each its own section, all
+reading one answer for "is this a phone" (`coarse()` in prefs.js off
+`(pointer: coarse)`, with a switch on the settings sheet). Approved: two
+edge arrows when there is a station that way, sheets on a phone only,
+native momentum, undo not confirm. Built on branch `phone-touch`; the
+owner reshaped the scrolling mid-build (the grab bar, below) and added the
+fullscreen button, the skip button, the double-tap and pip fixes, and the
+home-screen install. Left for the owner: the landscape seat of the hop
+arrows (0.42 of a short window is the ground line), and whether a second
+tap inside `UNDO_MS` should undo, since a double tap now buys and takes
+back.
 
-- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
-  the canvas sits fixed in a horizontal scroller with a spacer the width of
-  the world, `camX` reads `scrollLeft` once a frame and everything that
-  moves the camera writes it; a non-passive `touchstart` over dust says no
-  to the scroll so the sweep stands. No friction knobs. Checks:
-  `selftest/touch.js`, `test/camera.test.mjs`.
+- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15),
+  and from the bottom of the screen only (the owner, later the same day):
+  the grab bar along the bottom edge IS the platform's scroller, with a
+  spacer the width of the world; `camX` reads its `scrollLeft` once a
+  frame and everything that moves the camera writes it. A finger on the
+  yard never scrolls: it sweeps on dust and taps on the rest. No friction
+  knobs. Checks: `selftest/touch.js`, `test/camera.test.mjs`;
+  `tools/fling.mjs` drives a real finger.
 - **A hop between stations.** Two arrows in the mid sky at the window's
   edges, each wearing the glyph of the next standing station that way, a
   tap glides there; drawn on a phone only. Recommended over one button

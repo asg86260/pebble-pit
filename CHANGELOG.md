@@ -11,6 +11,20 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+**New this release**
+
+- On a phone the yard scrolls from a grab bar along the bottom of the screen, with the phone's own momentum; a finger on the yard itself sweeps or taps and never scrolls (selftest/touch.js, test/camera.test.mjs).
+- Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
+- A tap on a row buys it first time, a scroll or a hold does not, a long press reads its note, and a purchase can be taken back from its tag for a few seconds (test/undo-buy.test.mjs, test/hover-gate.test.mjs, selftest/touch.js).
+- On a phone a board is a sheet from the bottom with a handle: drag it up for the long boards, down to put it away, and the crew list opens inside it (selftest/sheet.js).
+- A double tap on a phone never zooms the page (selftest/touch.js).
+- The yard fills a phone's whole screen, and installs to the home screen (selftest/touch.js).
+- A fullscreen button in the sky's top-right corner, and the same on the settings sheet, wherever the browser can go fullscreen (selftest/touch.js).
+- A touch switch on the settings sheet, for a phone the browser does not report as one, or a desk with a touchscreen that should not be (test/settings.test.mjs).
+
+- The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
+- The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
+- A board comes down when its station is scrolled off the window, on every board and not only the bench's (selftest/touch.js).
 - A body with nothing to do gets going and slows down when it strolls, instead of going from stood still to full pace in one frame and stopping as dead (test/amble.test.mjs).
 - The haulers keep working while the next rock comes down: a body that has stepped out of the footprint gets on with what is on its own side of it, and only one with a load bound for the far side waits at the line (test/haulers-through-the-fall.test.mjs).
 - On a phone held upright a shield's answer is watched whole, and the two of them stay in the picture on the walk out of the house, instead of the arch's feet and the second of the pair standing off the edge of the screen (test/phone-view.test.mjs).
