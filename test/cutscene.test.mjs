@@ -64,15 +64,15 @@ const watch = (kind) => {
     run(1 / 60);
     frames++;
     const s = state();
-    if (s.cine === kind && started == null) started = { frames, rockFall: s.rockFall, zoom: s.zoom };
-    if (s.cine === kind) {
+    if (s.beat.camera === kind && started == null) started = { frames, rockFall: s.rockFall, zoom: s.zoom };
+    if (s.beat.camera === kind) {
       // stood on the span: the seat's center within a body of it, once the glide is in
       if (Math.abs(s.camX + s.viewW / 2 - spanX) < 30) onSpan = true;
       const now = s.workerPos.join(' ');
       if (now !== pos) walked = true;
       pos = now;
     }
-    if (started && !s.cine && ended == null) { ended = { frames, shield: s.shield && s.shield.kind, held: s.rockHeld, rockFall: s.rockFall, zoom: s.zoom }; }
+    if (started && !s.beat.camera && ended == null) { ended = { frames, shield: s.shield && s.shield.kind, held: s.rockHeld, rockFall: s.rockFall, zoom: s.zoom }; }
     if (ended && frames > ended.frames + 120) break;
   }
   return { started, onSpan, walked, ended, seat, zoom0, spanX, camAfter: state().camX + state().viewW / 2 };

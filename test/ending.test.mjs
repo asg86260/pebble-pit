@@ -17,22 +17,23 @@ group('a rescued yard owes the ending until the sheet is put down', async () => 
   run(1);
   const fresh = state();
   // the rescue's own record, as intro.js leaves it: out, and no beat running
-  S.rescued = true; S.buried = false; S.intro = null;
+  S.rescued = true; S.buried = false;
   S.dirty = true;
   yard.persist();
-  S.storyTold = true;                        // scribbled over, to prove the load reads it
+  S.beatsDone.push('ending');                // scribbled over, to prove the load reads it
   yard.restore();
   const back = state();
-  S.storyTold = true; S.dirty = true;         // the button
+  run(1 / 60);                               // the ending beat takes the sheet
+  window.__skipBeat('sheet');                // the button
   yard.persist();
   yard.restore();
   const told = state();
   window.__reset();
   return [
-    ok(!fresh.storyTold && !fresh.rescued, 'a fresh yard has no story to tell yet'),
-    ok(back.rescued && !back.storyTold, 'rescued and not yet told survives a reload, so the sheet comes back',
-       `rescued ${back.rescued} told ${back.storyTold}`),
-    ok(told.storyTold, 'and once put down it stays down')
+    ok(!fresh.beatsDone.includes('ending') && !fresh.rescued, 'a fresh yard has no story to tell yet'),
+    ok(back.rescued && !back.beatsDone.includes('ending'), 'rescued and not yet told survives a reload, so the sheet comes back',
+       `rescued ${back.rescued} done ${back.beatsDone}`),
+    ok(told.beatsDone.includes('ending'), 'and once put down it stays down')
   ];
 });
 
@@ -43,11 +44,12 @@ group('a save from before the sheet, with the rescue behind it, is not owed one'
   const s = JSON.parse(localStorage.getItem(KEY));
   s.rescued = true;
   delete s.storyTold;
+  delete s.beatsDone;                        // a save from before the beats
   localStorage.setItem(KEY, JSON.stringify(s));
   yard.restore();
   const old = state();
   window.__reset();
   return [
-    ok(old.rescued && old.storyTold, 'the ending is taken as read', `told ${old.storyTold}`)
+    ok(old.rescued && old.beatsDone.includes('ending'), 'the ending is taken as read', `done ${old.beatsDone}`)
   ];
 });

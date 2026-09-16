@@ -175,7 +175,7 @@ group('the celebration is jumping, and nothing but jumping', async () => {
   // polish, 2026-09-14, Track A) -- and with the reunion already behind it,
   // since the first rock's finish is otherwise the meeting, where by design
   // (wave 7, item 5) nobody jumps.
-  S.reunionDone = true;
+  S.beatsDone.push('meet', 'part');
   run(2);
   window.__next();                           // the rock goes off; the yard dances
   run(1 / 60);

@@ -183,7 +183,7 @@ group('every field a module writes on S is declared in state.js', async () => {
 // clears the session's fields off the declaration now; this plants a value in
 // each of the ones that leaked and looks for it afterward.
 group('a reset puts down what the save throws away', async () => {
-  const planted = { quarryTotal: 1234, scrubMuck: 5, drop: { stage: 'pay' }, cine: { name: 'tear', at: 1 },
+  const planted = { quarryTotal: 1234, scrubMuck: 5, drop: { stage: 'pay' }, shot: { name: 'tear', at: 1 },
                     riftGulp: 1.8, rescueTo: 5088, smoke: [{ x: 1, y: 1 }], hoisting: { grains: 3 },
                     hand: { won: true }, restaff: { at: 1 } };
   Object.assign(S, planted);

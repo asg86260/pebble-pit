@@ -51,12 +51,12 @@ export const storeChecks = () => { fileReloads = false; };
 
 export function reloadCheck() {
   const S = yard.S;
-  // Not during the opening, or a scene. Neither is written down: a refresh in
-  // the opening starts it again from the door (nothing has been earned yet),
-  // and a refresh in a scene drops the scene (`S.intro = null` on the way in).
-  // Both are the game's decision, and a check about the opening's beats would
-  // only ever be measuring the restart.
-  if (S.intro || !S.introDone) return;
+  // Not during the opening, or a beat that has the yard. Neither is written
+  // down: a refresh in the opening starts it again from the door (nothing has
+  // been earned yet), and a refresh in a scene drops the scene (persist.js
+  // reads no yard beat back). Both are the game's decision, and a check about
+  // the opening's beats would only ever be measuring the restart.
+  if (S.beat.yard || !S.beatsDone.includes('show')) return;
   const before = S.workers.map(w => ({ name: w.name, type: w.type, x: w.x, y: w.y }));
   window.__reload();
   // Matched by place in the list, not by name: the save writes the crew in

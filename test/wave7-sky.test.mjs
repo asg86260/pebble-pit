@@ -58,13 +58,13 @@ group('wave7 A2: the first-rock reunion has no bodies in the air', () => {
   window.__levels({ pickLevel: 8 });          // the walk is the subject, not the mining
   const mined = runUntil(() => state().rock <= 0, 420);
   checks.push(ok(mined, 'the crew mine out the first rock'));
-  const met = runUntil(() => yard.S.intro === 'meet', 30);
+  const met = runUntil(() => yard.S.beat.yard === 'meet', 30);
   checks.push(ok(met, 'and the reunion begins'));
 
   // Through the whole meeting, no body that is not mid-walk is ever off its
   // footing: they duck aside and stand instead of jigging under the camera.
   let rose = null;
-  for (let i = 0; i < 60 && yard.S.intro === 'meet'; i++) {
+  for (let i = 0; i < 60 && yard.S.beat.yard === 'meet'; i++) {
     run(0.1);
     for (const w of yard.S.workers) {
       if (w.walking || w.inside || w.floating) continue;
@@ -75,7 +75,7 @@ group('wave7 A2: the first-rock reunion has no bodies in the air', () => {
     }
   }
   checks.push(ok(!rose, 'no standing body leaves the ground during the meeting', rose || ''));
-  checks.push(ok(yard.S.intro !== 'meet', 'and the meeting ends on its own'));
+  checks.push(ok(yard.S.beat.yard !== 'meet', 'and the meeting ends on its own'));
   return checks;
 });
 

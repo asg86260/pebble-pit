@@ -96,7 +96,7 @@ export const ROWS = [
   { key: 'loopost', part: 1, reach: () => { sites(); window.__loo(); } },
 
   // --- the shields, and the crew's kit ----------------------------------------
-  { key: 'props', part: 1, reach: S => { crew(); S.introDone = true; S.boulderNo = 5; } },
+  { key: 'props', part: 1, reach: S => { crew(); S.boulderNo = 5; } },
   { key: 'net', part: 1, reach: () => { window.__invest(); window.__answered('props'); } },
   { key: 'arch', part: 1, reach: () => { window.__invest(); window.__answered('props', 'net'); } },
   { key: 'dome', part: 1, reach: () => { tower(); window.__wizardHat(1); } },

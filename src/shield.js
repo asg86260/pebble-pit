@@ -14,7 +14,8 @@ import { now, frames } from './clock.js';
 // The yard's one generator, never `Math.random`, or a run cannot be had again
 // from its seed.
 import { rand } from './rng.js';
-import { startRescue, buriedOut } from './intro.js';
+import { buriedOut } from './intro.js';
+import { beatRunning } from './beats.js';
 import { shakeView, rockEdge } from './world.js';
 import { sfx } from './audio.js';
 import { shockAt } from './shock.js';
@@ -192,7 +193,7 @@ function lookUp(ms) {
 // clear (intro.js, `getOut`). A scripted square, not a worker, so `dropZone`
 // cannot move it; the rock waits on it instead.
 const underneath = () => {
-  if (S.intro !== 'rescue') return false;
+  if (!beatRunning('rescue')) return false;
   const b = S.pair[0];
   return !!b && b.x + WORKER > rockEdge(-1) && b.x < rockEdge(1);
 };
@@ -219,9 +220,9 @@ function answer(s, kind) {
   // until the rescue is done it stands for the next one, and then
   // `stepShield` starts the fade.
   if (kind.answer === 'hold') {
-    // The first hold digs out whoever is under that spot; `startRescue` sends
-    // the digger, and where the rock lets itself down to is below.
-    if (S.buried && !S.rescued && S.intro !== 'rescue') startRescue(now());
+    // The first hold digs out whoever is under that spot: the rescue beat
+    // (beats.js) starts on the hold and sends the digger, and where the rock
+    // lets itself down to is below.
     // The spring is the fall run backward, settled by hand at the end so a
     // rounding error cannot leave it a hair off where it was caught.
     if (s.rising) {
@@ -272,7 +273,7 @@ export function stepShield() {
   // The dome comes down once the rescue is over, read off the facts rather
   // than the frame so an older save left standing fades too. It goes into
   // `shieldsDone` like the kinds that broke, so its row never returns.
-  if (kind.answer === 'hold' && S.rescued && S.intro !== 'rescue' && !s.caught && !s.fading) {
+  if (kind.answer === 'hold' && S.rescued && !beatRunning('rescue') && !s.caught && !s.fading) {
     s.fading = now();
     S.dirty = true;
   }

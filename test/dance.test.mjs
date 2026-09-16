@@ -170,7 +170,7 @@ group('the gang on the floor of the cut dance too', async () => {
   window.__fullSites();
   // Rock one is the only rock that gets a dance now (wave polish, A1), and its
   // finish is the reunion unless the reunion is behind it already.
-  yard.S.reunionDone = true;
+  yard.S.beatsDone.push('meet', 'part');
   const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
   const floorOf = () => gang().filter(w => w.y + WORKER > yard.S.groundY + 1);
   const down = runUntil(() => floorOf().length === 4, 120);

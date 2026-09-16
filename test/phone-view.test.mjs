@@ -59,7 +59,7 @@ group("a shield's answer is framed whole at a phone's width", async () => {
     run(1 / 60);
     frames++;
     const s = state();
-    if (s.cine === 'arch' && !s.cineOut) {
+    if (s.beat.camera === 'arch' && !s.shotOut) {
       started ??= frames;
       if (frames - started >= 30) {
         zoomIn ??= s.zoom;
@@ -67,7 +67,7 @@ group("a shield's answer is framed whole at a phone's width", async () => {
         if (span.w > PHONE.W / 0.833) narrow = true;
       }
     }
-    if (started && !s.cine) break;
+    if (started && !s.beat.camera) break;
   }
   return [
     ok(started != null, 'the scene runs', `${started}`),
@@ -87,7 +87,7 @@ group("the pair stay in frame on the walk out at a phone's width", async () => {
   phone();
   window.__reset(true);
   let out = 0, frames = 0, seen = 0;
-  while (frames < 60 * 12 && state().intro === 'leave') {
+  while (frames < 60 * 12 && state().beat.yard === 'leave') {
     run(1 / 60);
     frames++;
     seen++;
@@ -95,7 +95,7 @@ group("the pair stay in frame on the walk out at a phone's width", async () => {
   }
   return [
     ok(seen > 60, 'the walk is watched', `${seen} frames`),
-    ok(state().intro === 'chat', 'and they arrive', state().intro),
+    ok(state().beat.yard === 'chat', 'and they arrive', state().beat.yard),
     ok(out === 0, 'with both of them in the frame the whole way',
        `${out} body-frames off the edge`),
   ];

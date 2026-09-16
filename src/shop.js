@@ -6,6 +6,7 @@
 import { S } from './state.js';
 import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_FADE, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
+import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
@@ -784,7 +785,7 @@ export function fillPin() {
   if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; S.dirty = true; }
   // Not while a scene has the camera: the next shield's row arrives on the
   // frame the last one breaks, mid-cutscene.
-  if (!u && !S.cine) {
+  if (!u && !ownsCamera()) {
     u = goalRow();
     if (u) { S.pinned = u.key; markRowSeen(u); S.dirty = true; }
   }

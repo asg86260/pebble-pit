@@ -36,7 +36,7 @@ group('stepping into an empty slot is the new game, and the yard you left stays'
   run(3);                                        // the interval writes the new slot
   return [
     ok(openSlot() === 2, 'slot 2 is open', `slot ${openSlot()}`),
-    ok(fresh.crew === 0 && fresh.intro, 'and the intro is standing in it', `${fresh.crew} crew, intro ${fresh.intro}`),
+    ok(fresh.crew === 0 && fresh.beat.yard, 'and the intro is standing in it', `${fresh.crew} crew, beat ${fresh.beat.yard}`),
     ok(localStorage.getItem(KEY) === first, 'slot 1 still holds the yard exactly as it was left'),
     ok(!!localStorage.getItem(KEY + '/2'), 'and slot 2 has a blob of its own now')
   ];
@@ -53,7 +53,7 @@ group('the first yard comes back whole from the other slot', async () => {
   const back = state();
   return [
     ok(openSlot() === 1, 'slot 1 is open again'),
-    ok(back.crew === crew && !back.intro, 'with its crew and no intro', `${back.crew} vs ${crew}`),
+    ok(back.crew === crew && !back.beat.yard, 'with its crew and no intro', `${back.crew} vs ${crew}`),
     ok(yard.S.boulderNo === rock, 'and its rock', `${yard.S.boulderNo} vs ${rock}`),
     ok(JSON.parse(slotRaw(2)).crew === 1, 'and slot 2 kept its own yard')
   ];

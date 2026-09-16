@@ -23,7 +23,7 @@ group('a finished rock is worth a moment', async () => {
   // Before this, the check was passing on the reunion: the "hopping" it
   // measured was three fresh bodies easing down out of the sky to the
   // ground they were made above.
-  S.reunionDone = true;
+  S.beatsDone.push('meet', 'part');
   window.__next();                          // the last of it goes
   run(0.5);
   const partying = state();
@@ -173,7 +173,7 @@ group('the crew dance rather than vibrate while the next rock falls', async () =
   // Rock one, because it is the only rock that gets a dance now (wave polish,
   // A1) -- and with the reunion already behind it, since the first rock's
   // finish is otherwise the meeting, which is a beat and not a party.
-  S.reunionDone = true;
+  S.beatsDone.push('meet', 'part');
   haveRock();
   run(6);
   window.__next();
@@ -347,35 +347,35 @@ group('rocks stop growing, because they never stop coming', async () => {
 group('the first rock is worth a moment, and only the first', async () => {
   window.__reset(true);                        // the opening, played out
   run(0.4);
-  runUntil(() => !state().intro, 200);
+  runUntil(() => !state().beat.yard, 200);
   window.__crew(3, 1);
   const before = state();
 
   window.__next();                             // and the first rock is finished
   const seen = [];
   let met = null;
-  for (let i = 0; i < 600 && !state().reunionDone; i++) {
+  for (let i = 0; i < 600 && !state().beatsDone.includes('part'); i++) {
     run(0.1);
     const s = state();
-    if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
-    if (s.intro === 'meet' && s.zoom > 1.9) met = s;
+    if (s.beat.yard && !seen.includes(s.beat.yard)) seen.push(s.beat.yard);
+    if (s.beat.yard === 'meet' && s.zoom > 1.9) met = s;
   }
   const after = state();
 
   // and the next one is just a rock
   window.__next();
   let again = false;
-  for (let i = 0; i < 200; i++) { run(0.1); if (state().intro) again = true; }
+  for (let i = 0; i < 200; i++) { run(0.1); if (state().beat.yard) again = true; }
   const later = state();
     run(0.3);
   return [
-    ok(!before.reunionDone, 'it has not happened yet when the opening ends'),
+    ok(!before.beatsDone.includes('meet'), 'it has not happened yet when the opening ends'),
     ok(seen.join(',') === 'meet,part',
        'the first rock brings them together, and then parts them', seen.join(',')),
     ok(met && met.zoom > 1.9, 'the view comes back in for it',
        met && `zoom ${met.zoom}`),
     ok(met && met.buriedVisible, 'with the one who was under it out on the ground'),
-    ok(after.reunionDone && Math.abs(after.zoom - 0.833) < 0.01,
+    ok(after.beatsDone.includes('part') && Math.abs(after.zoom - 0.833) < 0.01,
        'then it lets go', `${after.zoom}`),
     ok(after.boulderNo === before.boulderNo + 1 && after.rock > 0,
        'and the next rock is down and is the next rock',
@@ -422,21 +422,21 @@ group('the game opens on two squares and a rock lands on one', async () => {
   window.__reset(true);                        // the opening, played out
   run(0.4);
   const open = state();
-  runUntil(() => state().intro !== 'leave', 12);   // the walk over, at the yard's own pace
+  runUntil(() => state().beat.yard !== 'leave', 12);   // the walk over, at the yard's own pace
   run(1);
   const talking = state();
 
   // it runs on its own clock, in phases, and it is deliberately unhurried
-  const seen = [open.intro];
+  const seen = [open.beat.yard];
   let flat = null, up = null;
-  for (let i = 0; i < 900 && state().intro; i++) {
+  for (let i = 0; i < 900 && state().beat.yard; i++) {
     run(0.1);
     const s = state();
-    if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
-    if (s.intro === 'down' && !flat) flat = s;
+    if (s.beat.yard && !seen.includes(s.beat.yard)) seen.push(s.beat.yard);
+    if (s.beat.yard === 'down' && !flat) flat = s;
     // partway through getting up, not the frame it starts: the view eases out
     // over the whole of it and at the first frame it has not moved yet
-    if (s.intro === 'up') up = s;
+    if (s.beat.yard === 'up') up = s;
   }
   const after = state();
 
@@ -470,11 +470,11 @@ group('the game opens on two squares and a rock lands on one', async () => {
   const bare = state();
     run(0.3);
   return [
-    ok(open.intro === 'leave' && open.pair === 2,
+    ok(open.beat.yard === 'leave' && open.pair === 2,
        'it opens on two of them, and no rock', `${open.pair} stood there, rock ${open.rock}`),
     ok(open.rock === 0, 'nothing to mine yet', `${open.rock}`),
     ok(open.zoom > 1, 'and it opens close on them', `zoom ${open.zoom}`),
-    ok(talking.intro === 'chat', 'they are given a moment to be two people'),
+    ok(talking.beat.yard === 'chat', 'they are given a moment to be two people'),
     ok(seen.join(',') === 'leave,chat,fall,down,up,show',
        'a walk out of the house, a rock, a body knocked flat, a body getting up, and the loop shown once',
        seen.join(',')),
@@ -490,7 +490,7 @@ group('the game opens on two squares and a rock lands on one', async () => {
     ok(flat && flat.pair === 1, 'on one of them', flat && `${flat.pair} left standing`),
     ok(up && up.zoom < open.zoom, 'and the view pulls back out as it gets up',
        up && `${open.zoom} -> ${up.zoom}`),
-    ok(after.intro === null && Math.abs(after.zoom - 0.833) < 0.01,
+    ok(after.beat.yard === null && Math.abs(after.zoom - 0.833) < 0.01,
        'all the way back out', `${after.zoom}`),
     ok(after.crew === 1,
        'and the one left standing is the crew -- the first body is not bought',
@@ -582,14 +582,14 @@ group('the one underneath is covered by the rock, not by the making of it', asyn
 // that marches a body off a cliff is wrong wherever it is reached from.
 group('a rockhand with no rock stands where it is', async () => {
   window.__reset(true);                        // the opening, and no rock yet
-  runUntil(() => state().intro === 'chat', 20);
+  runUntil(() => state().beat.yard === 'chat', 20);
   window.__crew(1);
   run(0.5);
   const from = S.workers.find(w => w.type === 'rockhand').x;
   run(6);                                      // inside the chat: it is INTRO_CHAT_MS long
   const w = S.workers.find(w => w.type === 'rockhand');
   return [
-    ok(state().intro === 'chat' && !boulderAlive(), 'the two are still talking and there is no rock', String(state().intro)),
+    ok(state().beat.yard === 'chat' && !boulderAlive(), 'the two are still talking and there is no rock', String(state().beat.yard)),
     ok(w && Math.abs(w.x - from) <= P * 2, 'and the rockhand has not gone anywhere', `${Math.round(from)} -> ${w && Math.round(w.x)}`)
   ];
 });

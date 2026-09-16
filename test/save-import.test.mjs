@@ -144,7 +144,7 @@ group('a save that will not read is kept, and is what save a copy hands over', a
   localStorage.removeItem(BROKEN_KEY());
   yard.S.broken = false;
   return [
-    ok(fresh.crew === 0 && fresh.intro, 'the page boots a fresh game, as it must', `${fresh.crew} crew`),
+    ok(fresh.crew === 0 && fresh.beat.yard, 'the page boots a fresh game, as it must', `${fresh.crew} crew`),
     ok(said, 'but says the save it found would not read'),
     ok(stashed === cut, 'and has put the blob aside untouched', `${(stashed || '').length} of ${cut.length} bytes`),
     ok(handed === cut, 'and save a copy hands that over, not the fresh game',

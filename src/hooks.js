@@ -33,6 +33,7 @@ import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
+import { skipBeat } from './beats.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
@@ -897,6 +898,9 @@ export const HANDLES = {
   __nocine: skipCutscene,
   // The space bar: held down or let go, and the skip it ends in.
   __holdSkip: holdSkip, __skip: skipScene,
+  // One owner's beat cut, the way its own click would (the sheet's button, a
+  // click on a cutscene): the yard's, the camera's or the sheet's.
+  __skipBeat: owner => skipBeat(clockNow(), owner),
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,

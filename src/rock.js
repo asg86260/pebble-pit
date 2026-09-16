@@ -18,6 +18,7 @@ import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
+import { beatRunning } from './beats.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
 import { pickCount, rockhandBite, rockhandMs } from './upgrades.js';
@@ -101,7 +102,7 @@ export function dropZone() {
   // The rock the dome holds for the rescue waits overhead while somebody
   // walks in under it to dig; a footprint to be got out of would walk the
   // digger straight back out. Once they are out it is coming down.
-  if (S.intro === 'rescue' && S.buried) return null;
+  if (beatRunning('rescue') && S.buried) return null;
   if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
   if (boulderAlive()) return null;
   // Nothing is coming while a scene has the yard, so the bare ground is

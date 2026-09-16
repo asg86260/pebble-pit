@@ -124,17 +124,17 @@ group('the intro plays to the end from a still seat', async () => {
   const play = () => {
     window.__seed(3);
     window.__reset(true);
-    const beats = [S.intro];
+    const beats = [S.beat.yard];
     const at = [];
     const moved = [];
     let frames = 0, lastX = S.camX;
-    while (!S.introDone && frames < 60 * 90) {
+    while (!S.beatsDone.includes('show') && frames < 60 * 90) {
       run(1 / 60);
       frames++;
-      if (S.intro && !beats.includes(S.intro)) { beats.push(S.intro); at.push(frames); }
-      if (S.camX !== lastX) { moved.push(`${frames}:${S.intro}`); lastX = S.camX; }
+      if (S.beat.yard && !beats.includes(S.beat.yard)) { beats.push(S.beat.yard); at.push(frames); }
+      if (S.camX !== lastX) { moved.push(`${frames}:${S.beat.yard}`); lastX = S.camX; }
     }
-    return { frames, beats, at, moved, done: S.introDone };
+    return { frames, beats, at, moved, done: S.beatsDone.includes('show') };
   };
 
   less();

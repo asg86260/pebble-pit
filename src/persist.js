@@ -18,9 +18,10 @@ import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { BUILD } from './version.js';
 import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
-import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './world.js';
+import { resite, openingCamX, clampCam, settleShack, overCutMouth, setZoom } from './world.js';
 import { clearCasino } from './casino.js';
-import { startIntro } from './intro.js';
+import { OPENING } from './intro.js';
+import { BEATS, startBeat } from './beats.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { bandY } from './dust.js';
@@ -282,7 +283,7 @@ function blob() {
     // Where the view is, rounded. While a scene has the view pulled in,
     // `camX` is the left edge of a narrower view than the one that comes
     // back, so the seat is written at the yard's own zoom.
-    camX: Math.round(S.cine ? S.camX + S.viewW / 2 - S.W * P / CELL / 2 : S.camX),
+    camX: Math.round(S.shot ? S.camX + S.viewW / 2 - S.W * P / CELL / 2 : S.camX),
     // A core on the cursor is written where the cursor was.
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y }
         : S.heldCore && S.mouse ? { x: S.mouse.x - CORE_SIZE / 2, y: S.groundY - CORE_SIZE } : null,
@@ -319,8 +320,11 @@ function blob() {
     seenSpore: S.seenSpore,
     scholars: S.scholars,
     plotLevel: S.plotLevel,
-    introDone: S.introDone,
-    reunionDone: S.reunionDone,
+    // Only the camera's beat, and only until it has been seen through: a
+    // scene on its way out has let go as far as the player is concerned. The
+    // yard's beats come back by their own triggers (the opening from the
+    // door, the rescue from the dome's next hold) and the sheet by its fact.
+    beat: { camera: S.beat.camera && !(S.shot && S.shot.out) ? S.beat.camera : null },
     rescued: S.rescued,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
                           h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
@@ -486,7 +490,6 @@ export function restore() {
     settleShack();
     clearBoulder();
     S.coreBuried = false;
-    startIntro();
     // A save that would not read has been put aside by `load`, and the sheet
     // offers it for as long as it is there.
     S.broken = !!loadBroken();
@@ -528,6 +531,9 @@ export function restore() {
     S.shieldsDone = [];
     S.rockHeld = false;
     S.rescued = false;
+    // Last, after the blanking above: the opening's pair are stood at the
+    // door before the first frame is drawn.
+    startBeat('leave');
     return;
   }
   // The hut where this save's rock puts it: the yard was laid out with the
@@ -614,10 +620,38 @@ export function restore() {
   // match.
   S.quarryCells = Array.isArray(s.quarryCells) ? s.quarryCells.map(v => +v || 0) : null;
   S.seenSpore = !!s.seenSpore || S.spores > 0;
-  // A save from before the opening existed with nobody hired is a game that
-  // has not started.
-  S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
-  S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
+  // 2026-09-15: the story's progress was six flags; it is the set of beats
+  // that have played (beats.js), read as a plain copy above, and a save from
+  // before the set folds its flags into it. A save from before the opening
+  // existed with nobody hired is a game that has not started; `reunionDone`
+  // came in after the second rock could already have fallen; `storyTold`
+  // came in after the rescue could already have happened, and a sheet weeks
+  // later is not the moment; the rescue's own fact marks its beat. A scene
+  // the last sitting closed the tab on (`cineOwed`, or today's
+  // `beat.camera`) marks nothing and is the running camera beat, played once
+  // over the event as it now stands. A chain of beats (the opening, the
+  // reunion) is one story: a save taken partway through it does not write
+  // the yard's beat down, so the beats it had played come off the set and
+  // the story starts over from its first.
+  const done = new Set(S.beatsDone);
+  if (!Array.isArray(s.beatsDone)) {
+    if (!!s.introDone || (s.crew ?? 0) > 0) for (const k of OPENING) done.add(k);
+    if (s.reunionDone ?? ((s.boulderNo ?? 1) > 1)) { done.add('meet'); done.add('part'); }
+    if (s.rescued) done.add('rescue');
+    if ('storyTold' in s ? !!s.storyTold : !!s.rescued) done.add('ending');
+  }
+  for (const row of BEATS) {
+    let end = row;
+    while (end.next) end = BEATS.find(r => r.key === end.next);
+    if (end !== row && !done.has(end.key)) done.delete(row.key);
+  }
+  S.beatsDone = [...done];
+  const owed = typeof s.beat?.camera === 'string' ? s.beat.camera : s.cineOwed;
+  const camera = BEATS.find(r => r.key === owed && r.owns === 'camera' && !done.has(owed));
+  S.beat = { yard: null, camera: camera ? camera.key : null, sheet: null };
+  // A shot of some other scene is the old yard's; the same scene, still
+  // standing in this process, carries on rather than starting over.
+  if (S.shot && S.shot.name !== S.beat.camera) { S.shot = null; setZoom(1); }
   // The catch is taken again below, once the rock's fall has been read.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
@@ -652,10 +686,9 @@ export function restore() {
       S.rockHeld = true;
     }
   }
-  S.intro = null;
   S.camLockY = null;
   S.pair = [];
-  S.buried = s.buried ?? !!s.introDone;
+  S.buried = s.buried ?? S.beatsDone.includes('show');
   // A save from before the second cap existed built the closet when that was
   // the whole of what it bought.
   S.looPosts = s.looPosts ?? 2;
@@ -663,11 +696,6 @@ export function restore() {
   if (s.labDone) S.siteDone = { ...S.siteDone, lab: s.labDone };
   S.rescued = !!s.rescued;
   if (S.rescued) S.buried = false;
-  // A save from before the ending sheet, with the rescue behind it, has had
-  // its ending and its dance: the sheet is for the moment, not a reload
-  // weeks later.
-  if (!('storyTold' in s)) S.storyTold = S.rescued;
-  if (!('storyDanced' in s)) S.storyDanced = S.storyTold;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // Only jobs this build still has.
@@ -825,7 +853,7 @@ export function restore() {
   // up is a place a body can be lost.
   if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
-  if (!S.introDone) startIntro();
+  if (!S.beatsDone.includes('show')) startBeat('leave');
   restoreGrid(floor, s.floor, floorShift(s.floor));
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   // The rift comes back before the dust is put away, because how much
@@ -989,7 +1017,7 @@ export function reset(fresh = true) {
   makeBoulder();
   settleShack();                   // beside rock one, not sliding in from where it stood
   clearBoulder();
-  startIntro();                    // a reset is a game that has never been played
+  startBeat('leave');              // a reset is a game that has never been played
   buildShop();
   S.dirty = true;
   persist();
@@ -1044,7 +1072,7 @@ export function importSave(raw) {
 // an import boots. An empty slot goes through `reset` rather than the
 // no-save arm of `restore`: that arm is written for a page that has just
 // loaded, and starts the intro over whatever the last yard left in the
-// fields the save does not carry (`introDone` among them, so the intro never
+// fields the save does not carry (`beatsDone` among them, so the intro never
 // came). The new slot is written the instant it is entered.
 export function switchSlot(n) {
   persist();
