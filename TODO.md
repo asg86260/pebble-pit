@@ -10,7 +10,18 @@ sweep; splitting `upgrades.js` into `levels`/`roster`/`words`/`upgrades`;
 a save floor at v0.1.1 (needs a decision); a station table in board.js;
 saving beside the owner; invalidation off the clock; the comment pass
 (needs a decision on the register). Gated on the reliability freeze holding
-green twice on main. Blocker: the two decisions, and the freeze.
+green twice on main. Blocker: the save-floor decision, and the freeze.
+
+Seam 7, the comment pass, is BUILT (2026-09-15): the owner's rule was
+"only what you need for logic derivation"; `docs/wave-comments.md` is the
+spec, `tools/comments-check.mjs` the proof. `src/` went from 59,296 lines
+(28,797 comment, 49%) to 43,868 (13,399 comment, 31%), 224 files, no code
+line changed. Two things the pass found and left alone, for the dead-code
+sweep (seam 1): `openFloor` in route.js reads `feet`, which is not in its
+scope (a ReferenceError if `routeFor` is ever called for an x over the
+hole with no `toWay`); and `Math.max(1, laneY(i) ? 1 : 1)` in
+balloon.js is a no-op divisor. `test/`, `tools/` and the html/css were not
+in the pass.
 
 ## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
