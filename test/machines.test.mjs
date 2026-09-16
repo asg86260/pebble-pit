@@ -596,12 +596,15 @@ group('a jaw pays a dig exactly what a gang would', async () => {
   return [
     ok(digs > 0, 'the jaw digs a hole right out and it falls back in',
        `${digs} digs`),
-    // Within one, and the one is the frame boundary rather than slack in the
-    // arithmetic: the tally is read on the sample that catches a fall-in, and a
-    // find landing in that same frame after the ground has come back is counted
-    // against the next dig. Anything actually wrong with the payout -- a dig
-    // paying twice, or half -- is orders of magnitude outside this.
-    ok(Math.abs(got - digs * seam) <= 1,
+    // Within two, one for each end of the measure: the tally is read on the
+    // sample that catches a fall-in, and a find still in the air at that
+    // sample lands on the far side of it -- at the first boundary that is a
+    // find counted in, at the last one a find counted out. Which side it
+    // falls depends on where the yard is laid (the casino's width moves the
+    // quarry), so the slack is two, not a number found by running it once.
+    // Anything actually wrong with the payout -- a dig paying twice, or half
+    // -- is orders of magnitude outside this.
+    ok(Math.abs(got - digs * seam) <= 2,
        'and each one pays its seam, no more and no less',
        `${got} over ${digs} digs of ${seam}`)
   ];
