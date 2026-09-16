@@ -53,7 +53,7 @@ import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable, wireTray } from './casino.js';
-import { stepStakes, wireStakes, landStakeChip } from './stakes.js';
+import { stepStakes, wireStakes } from './stakes.js';
 import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
@@ -286,15 +286,6 @@ function stepChips(now) {
     if (ch.x > S.worldW - P) {
       ch.x = S.worldW - P;
       ch.vx = -Math.abs(ch.vx) * 0.3;
-    }
-
-    // A grain of a stake pile, or of the hopper, is the casino's before it is
-    // anything else's: into the funnel over the rim, home to its pile off the
-    // ground or off the rim (`landStakeChip`).
-    if (ch.cur) {
-      const sc = Math.max(0, Math.min(floor.cols - 1, colOf(floor, ch.x)));
-      const down = ch.vy > 0 && (ch.y + P >= S.groundY || ch.y >= surfaceY(floor, sc));
-      if (landStakeChip(ch, down)) { S.chips.splice(i, 1); continue; }
     }
 
     // Onto the belt's band, a surface like the ground (`catchBelt` owns every

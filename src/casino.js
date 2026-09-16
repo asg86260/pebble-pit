@@ -45,6 +45,7 @@ import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, f
 import { shakeView, blocked } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld, payTo } from './pit.js';
+import { goHome } from './stakes.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 import { reducedMotion } from './prefs.js';
@@ -70,7 +71,7 @@ export const hoisting = () => !!S.hoisting;
 // A hand is under way, any part of it: the stake coming down, the handful on
 // the pegs, the bins paying, the tray going up or over. Chip, let-go, bank and
 // drop-again are all dead for the whole of it.
-export const busy = () => pouring() || letting() || hoisting() || !!S.paying;
+export const busy = () => pouring() || letting() || hoisting() || !!S.paying || !!S.staking || !!S.unstaking;
 
 // --- the stake -----------------------------------------------------------------
 // What you can stake is what you can see: a pile of each coin -- the purse
@@ -83,13 +84,16 @@ export const purseOf = cur =>
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 export const inTray = () => !!S.pot && S.pot.where === 'tray';
 
-// A grain may go in while no hand is under way and the pot has no other coin
-// in it: one coin a hand, because a mixed pot would need a mixed tray and a
-// mixed pay, and the refusal at the rim is one rule and it is visible. The
-// hopper still walking to the last grain's worth is no bar: a sweep is many
-// grains a second, and each is a stake.
+// A grain may go in while no hand is on the board and the pot has no other
+// coin in it: one coin a hand, because a mixed pot would need a mixed tray
+// and a mixed pay, and the refusal at the rim is one rule and it is visible.
+// The hopper still walking to the last grain's worth is no bar: a sweep is
+// many grains a second, and each is a stake. Nor is a banked pot still
+// running out of the chute or lying on the strip for the haulers: banking
+// ends the hand, and the pile on the ground is the crew's business, not the
+// next stake's. (The arm waits for the tray to empty; the stake does not.)
 export const canStake = cur =>
-  S.casinoOpen && !letting() && !hoisting() && !S.paying && (!S.pot || (inHopper() && S.pot.cur === cur));
+  S.casinoOpen && !letting() && !hoisting() && (!S.pot || (inHopper() && S.pot.cur === cur));
 
 // The pot is standing in the hopper and nothing is moving: the floor can open.
 export const canLet = () => inHopper() && !busy();
@@ -557,7 +561,7 @@ function stepAttract(dt) {
 }
 // The demonstration grain lands in bins of its own, emptied as it leaves.
 const DEMO_BINS = makeBins();
-function stopAttract() {
+export function stopAttract() {
   const g = S.attract?.grain;
   if (g) {
     const { x, y } = worldOf(g);
@@ -942,6 +946,10 @@ export function stepSparks(dt) {
       const plot = k.lands === 'hopper' ? table : tray;
       const c = Math.max(0, Math.min(plot.cols - 1, Math.round((k.x - plot.x) / P)));
       if (k.y >= surfaceY(plot, c)) {
+        // a grain of a pile arriving is the stake: the purse is spent as it
+        // lands, and one the pot will not have (the hand shut on the way)
+        // goes home unspent
+        if (k.cur && !stakeGrain(k.cur, k.worth, 'stake')) { goHome(k, k.cur, 0); S.tableAir.splice(i, 1); continue; }
         if (!addGrain(plot, k.x, null, k.s)) plot.capped = grainsIn(plot);
         sfx(k.lands === 'hopper' ? 'hopper-land' : 'tray-tick', { x: k.x });
         S.tableAir.splice(i, 1);

@@ -5,7 +5,7 @@
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H } from './config.js';
-import { S, bench, floor, pit, table, tray, outhouse, rift, shack } from './state.js';
+import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
@@ -26,8 +26,8 @@ import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
-import { leverHit, leverUnder, leverAt } from './levers.js';
-import { stakeUnder, stakeName } from './stakes.js';
+import { leverHit } from './levers.js';
+import { casinoTap } from './stakes.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -150,6 +150,9 @@ canvas.addEventListener('pointerdown', e => {
   // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
   if (leverHit(p.x, p.y)) return;
+  // a click on a stake pile or the bowl works it; a finger is judged at the
+  // release, since a press there may be the start of nothing
+  if (e.pointerType !== 'touch' && casinoTap(p.x, p.y)) return;
   if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The nearest high point to the click, the same place a held swing lands:
@@ -256,6 +259,9 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning && e.type === 'pointerup' &&
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
+    // a tap on a stake pile or the bowl works it (anything the press swept
+    // up off the ground is let go where it is)
+    if (casinoTap(p.x, p.y)) { S.mining = false; if (S.dragging) { S.dragging = false; release(p.x, p.y); } return; }
     const which = stationAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);
@@ -368,13 +374,6 @@ function messAt(x, y) {
   return poo ? 'poop' : 'muck';
 }
 
-// The pot: a heap of real sand in the casino's hopper or its tray (see
-// casino.js), in the same shape of grid the floor and the hole are. It is
-// asked the same way they are -- a cell under the cursor -- rather than as
-// the whole plot, which would tag the empty hopper as the pot as readily as
-// the heap actually standing in it.
-const potAt = (x, y) => S.casinoOpen && (!!cellAt(table, x, y) || !!cellAt(tray, x, y));
-
 // A balloon's box, the way `drawBalloons` in render.js draws one.
 function balloonAt(x, y) {
   if (!S.scrubOpen) return false;
@@ -420,7 +419,6 @@ export function whatIsAt(x, y) {
   const machine = machineAt(x, y);
   if (machine) return machine;
   if (overBird(x, y)) return 'bird';
-  if (potAt(x, y)) return 'pot';
   if (balloonAt(x, y)) return 'balloon';
   if (cropAt(x, y)) return 'crop';
   return null;
@@ -461,12 +459,6 @@ function askedAbout(x, y, cx, cy) {
                        (w.y - P * 3 - S.camY) * S.zoom);
     return true;
   }
-  // a stake pile says what it is; and a control on the casino is named, the
-  // way a body or a mark is, before the building it stands on
-  const heap = stakeUnder(x, y);
-  if (heap) { showTip(stakeName(heap), { x, y: y - P * 6 }); return true; }
-  const lv = leverUnder(x, y);
-  if (lv) { const at = leverAt(lv); showTip(lv.name, { x: at.x, y: at.y - P * 6 }); return true; }
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));

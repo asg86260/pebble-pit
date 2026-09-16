@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
-- The casino has no board: your dust, ore and crops stand in a pile each beside it and you sweep grains into the funnel to stake them; the arm, the bank button and the crank on the building play the hand; and banking tips the winnings out on to the ground for the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
+- The casino has no board: your dust, ore and crops stand in a pile each beside it and a tap on a pile stakes a tenth of it; the arm, the bank button and the crank on the building play the hand; and banking tips the winnings out on to the ground for you to sweep or the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.

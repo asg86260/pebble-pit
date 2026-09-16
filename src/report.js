@@ -288,7 +288,9 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   stakes: stakes.map(h => ({ cur: h.cur, grains: h.n, want: stakeWant(h), worth: stakeGrainWorth(h),
                              x: Math.round(stakeAt(h).x), y: Math.round(stakeAt(h).y) })),
   // ...and what a sweep has in hand off them, by coin
-  inHand: S.motes.reduce((n, m) => n + (m.cur ? 1 : 0), 0),
+  staking: S.staking ? S.staking.left : 0,
+  unstaking: !!S.unstaking,
+  inFlight: S.tableAir.filter(k => k.lands === 'hopper' && k.cur).length,
   homing: S.tableAir.filter(k => k.lands === 'stake' && k.arc).length,
 
   // The lab, and every kind of smoke over the yard.

@@ -473,7 +473,7 @@ top to bottom, and no second shed past it.
 | **the foot** | eleven bins two cells wide with their pay under them, and under those a tray the paid sand runs into |
 
 Eleven bins by two cells is twenty-two; the building is twenty-six wide today
-and keeps it. Ten peg rows two apart, four cells of air for the stream to fan,
+and keeps it. Ten peg rows three apart, four cells of air for the stream to fan,
 six cells of bin and four of tray: the face stands about thirty-four cells,
 from twelve, which is roughly where the drop's tower topped out. The sign runs
 across the front of the hopper with its chase of lights, where it reads as the
@@ -809,29 +809,32 @@ once the farm does -- at `STAKE_GAP` cells apart, dust nearest. Each pile is
 (`shownFor(purse)`, brim and all), so it grows and shrinks with what you
 have, and each grain of it is worth its band -- the purse over the grains
 shown, the tray's own rule. What you can stake is what you can see, and how
-much of it you stake is how much of it you sweep. A coin the yard has not
+much of it you stake is how many times you tap it. A coin the yard has not
 handed out has no pile. The plots are `STAKE_COINS` in `config/casino.js`,
 `STAKE_COLS` by `STAKE_ROWS` cells each.
 
-**Staking is the ordinary sweep.** The left button on a desk and a finger on
-dust on a phone pick up and drag grains off a pile exactly as they do
-anywhere in the yard -- the throw-into-the-pit gesture, `sweep` and `release`
-in hands.js, over the piles as well as the ground. A grain lifted off a pile
-remembers its coin and its worth; grains dragged over the hopper's rim and
-let go fall into the funnel and become stake, each adding its worth to the
-pot as it lands and the purse down by the same, and the hopper shows the
-stake at its own `shownFor`, walking to it grain by grain. **Nothing
-teleports; the stake still walks**, in your hand. So the stake is however
-much you swept over before you pull the arm, a level-0 hand is one grain at
-a time, and the carry ladder is a bigger stake a sweep.
+**Staking is a tap.** A click on a pile on a desk, or a finger's tap on it
+on a phone (through the page's one tap gate, `isTap`), sends a chunk of the
+pile into the funnel on its own: `STAKE_TAP_SHARE` -- a tenth of that coin's
+purse -- never less than `STAKE_TAP_MIN` and never more than the purse. The
+grains lift off the top of the pile and arc to the rim in a stream, the
+hoist's own lob the other way, each worth its band (the pile's grain worth,
+the last one whatever is left), and land in the bowl as the stake; the purse
+is spent and the pot grows as each lands, never before, and the hopper shows
+the stake at its own `shownFor`, walking to it. **Nothing teleports; the
+stake still walks**, in the air. Taps stack: five is half the purse, ten is
+all in. The stream is `S.staking`; the arm waits for it to land.
 
-**One coin a hand.** Grains of another coin let go over the rim fall back to
-their pile -- they slide off the rim and arc home -- until the hand is over;
-no new mechanism, the same arc home a grain dropped anywhere else makes.
-**Taking it back:** sweep grains out of the hopper's bowl and drop them
-anywhere: they arc home to their pile and the purse rises as each lands.
-The pot is what stands in the bowl. So a wrong drop is undone by the same
-gesture, and no row says *take it back*.
+**One coin a hand.** A tap on another coin's pile while a pot stands is
+nothing -- the pile gives the dud knock -- until the hand is over. **Taking
+it back:** a tap on the bowl sends the whole pot home the same way: grains
+off the top of the bowl, each taking its share of the pot, arcing to the
+pile and paying the purse as they land (`S.unstaking`). No partial take-back.
+The pot is what stands in the bowl. So a wrong tap is undone by the same
+gesture, and no row says *take it back*. Sweeping a pile does nothing: it is
+not floor dust and the sweep passes over it, but a finger on a pile or on
+the bowl is claimed the way a finger on dust is (`dustUnder`), so it never
+scrolls the yard.
 
 **No board.** The casino's board goes entirely -- `chip`, the three stake
 rows, `letgo`, `bank` and `ride` -- and the station keeps no shelf behind the
@@ -843,24 +846,25 @@ where it stands:
 | control | where | what it is | what it does |
 |---|---|---|---|
 | **the arm** | on a boss out from the right wall beside the funnel | a slot machine's arm: a tall stem (`ARM_LENGTH` cells) up from the boss with a ball knob on the end, the biggest knob on the building | opens the floor: the handful goes down the pegs |
-| **bank it** | on the foot's left wall, just above the chute | a push button: a `BUTTON_CAP_W` x `BUTTON_CAP_H` cap standing on a `BUTTON_PLATE_W` x `BUTTON_PLATE_H` plate out from the wall | opens the hatch: the tray runs out on to the ground beside the building |
+| **bank it** | on the foot's left wall, a cell above the hatch | a push button, face on: a `BUTTON_CAP`-cell round cap in a `BUTTON_RECESS`-cell white recess set into the wall, a cell of black rim round it | opens the hatch: the tray runs out on to the ground beside the building |
 | **the crank** | low on the right wall, under the box that says what the hand came to | a crank: a hub on the wall and a `LEVER_REACH`-cell handle with a knob | winds the tray's sand back up into the hopper |
 
 A click or a tap works one. Pulling the arm swings it down through
 `ARM_SWING` (most of a half turn) over `LEVER_SWING_MS`, the ball leading,
 and back up over twice that; dead, it lies at the bottom of its swing in
 grey, and it has the loudest hit box on the building -- the whole of its
-swing. A press sinks the button's cap a cell into the plate for
-`BUTTON_PRESS_MS` and the hatch opens; the cap is black when live and grey
-when dead. The crank's handle turns `CRANK_TURNS` full circles over the
+swing. A press sinks the button's cap into the wall -- it goes grey and shrinks to
+`BUTTON_SUNK` cells for `BUTTON_PRESS_MS` -- and the hatch opens; the cap is
+black when live and grey when dead. The crank's handle turns `CRANK_TURNS` full circles over the
 hoist, driven by the sand going up so it comes to rest as the tray empties,
 black while it turns; grey and still when dead. Each is live for the same
 reasons the rows were: nothing while anything falls, pays or hoists; the arm
-only with a pot in the hopper and nothing pouring; the button and the crank
-only with a pot in the tray. Hover on a desk names the control in the
-tooltip -- *the arm*, *bank it*, *the crank* -- the way a body or a pile
-mark is named, before the building. On a phone every hit box opens out to
-`LEVER_HIT` cells (thumb-sized, `coarse()` only).
+only with a pot in the hopper and nothing streaming or pouring; the button
+and the crank only with a pot in the tray. Nothing on the building has a
+tooltip or a hover state: the live and dead drawing is the whole affordance,
+and the one hover the casino keeps is the pile-full mark's, which every
+strip has. On a phone every hit box opens out to `LEVER_HIT` cells
+(thumb-sized, `coarse()` only).
 
 **Banking is a heap on the ground, and the crew carries it in.** The chute
 opens the tray's floor and the paid sand runs out of the foot of the building
@@ -876,31 +880,39 @@ pile the yard has to deal with -- a full strip stops the chute the way a full
 heap stops a station, and the pot waits in the tray until there is room. That
 is the same rule as before ("a pot has to have somewhere to land") with the
 waiting made visible. A pile the haulers cannot reach yet (no haulers hired)
-simply stands there; nothing is lost and the mark says why.
+simply stands there; nothing is lost and the mark says why. **The pile is
+yours to sweep, or the haulers'**: it is floor dust on the strip, so a sweep
+off it and a throw into the hole credits the counter like any dust. And
+**banking ends the hand**: the moment the button is pressed the pot is gone
+from the building, and a tap on a pile stakes the next hand while the tray
+is still running out and the pile still lies on the ground. Staking and the
+pile on the ground are independent; only a full strip still holds the
+button.
 
 **The box over the building** stays: it is the one word the building says
 about a hand, and it is not a menu.
 
 **The piles are the purse.** They are pictures of what you can afford, not
-a stock: a grain swept off is gone from the pile until it lands somewhere,
-and the moment the purse changes the pile walks to its new band -- rained in
-from the sky the way the stake rains on to the table, faded off the top when
-the purse has shrunk, so it is seen being put back or taken.
+a stock: a grain streaming off is gone from the pile until it lands, and the
+moment the purse changes the pile walks to its new band -- rained in from
+the sky the way the stake rains on to the table, faded off the top when the
+purse has shrunk, so it is seen being put back or taken.
 
-**Shut for the same reasons at the same times.** The bowl cannot be swept
-while a hand is pouring, falling, paying or hoisting; the piles always can,
-but a grain let go over the rim while a hand is on the board is refused and
-goes home. Grains on the cursor when the hand shuts (a save, a cutscene)
-come down where they are and go home.
+**Shut for the same reasons at the same times.** The bowl cannot be tapped
+while a hand is streaming, pouring, falling, paying or hoisting; a pile can
+be tapped whenever no hand is on the board or going up, and a tap that the
+pot will not have is a dud. A stream in flight when the hand shuts (a save)
+is lost from the air, not from the purse: the purse is spent only as grains
+land.
 
 ### The calls this makes
 
-- **The stake is swept, not sized.** The chips were a menu with the rows
-  taken off; the amount is how much of the pile you carry over, and the
-  carry ladder is how much that is a sweep.
+- **The stake is tapped, not sized.** The chips were a menu with the rows
+  taken off; a sweep was a stake built a grain a drag. A tap is a tenth of
+  what you have, and the count of taps is the bet.
 - **One coin a hand, still.** A mixed pot would need a mixed tray and a
   mixed pay; the refusal at the rim is one rule and it is visible.
-- **The gesture is the dust's.** Sand is picked up one way in this yard.
+- **The gesture is the yard's tap.** The same tap that opens a board.
 - **Controls on the building, one per decision, no board at all.** An arm,
   a button and a crank, each a different thing where its effect is; nothing
   about a hand is on a shelf.
@@ -912,23 +924,27 @@ come down where they are and go home.
 
 `test/casino.test.mjs`: one pile a coin, the purse at its band, a grain
 worth its share, standing once the coin's station does and shrinking with
-the purse; a grain swept off the pile and let go over the rim (`__sweep`,
-`__let`: the two calls the pointer makes) is the pot, worth its band, the
-purse down by the same, and each grain after adds to it; a grain of another
-coin arcs home and grains swept out of the bowl and dropped go home with the
-purse rising; the board has no rows; the arm (`__clickLever('casino-gate')`)
-plays the hand; a stake of ten on a purse of a hundred is ten pebbles; the
-button tips the tray on to the casino's strip to the grain and the haulers
-carry it to the hole with the counter moving as loads land; a full strip
-holds the chute; the crank hoists; every control is dead mid-hand and the
-bowl cannot be swept. The casino's strip gets its pile-full mark wherever
-the marks are checked. Browser tier (`selftest/casino.js`): a real drag from
-the dust pile to the rim with the left button on a desk and with a finger on
-a phone each stake what was swept; a finger on the pile never scrolls the
-yard; a tap on each control works it and the tooltip names it. Scenes:
+the purse; a tap on the pile (`__tap`: the call a click and a finger's tap
+make) streams a tenth of the purse into the funnel, landing as the pot to
+the grain with the purse down by the same, and a second tap adds a tenth of
+what is left; a tap on another coin's pile is a dud while a pot stands, and
+a tap on the bowl sends the whole pot home with the purse rising; the board
+has no rows; the arm (`__clickLever('casino-gate')`) plays the hand; a tap on
+a purse of a hundred is ten pebbles; the button tips the tray on to the
+casino's strip to the grain and the haulers carry it to the hole with the
+counter moving as loads land; the next stake goes in while the banked pile
+still lies on the strip; the banked pile can be swept into the hole by hand;
+a full strip holds the chute; the crank hoists; every control is dead
+mid-hand and the bowl cannot be tapped. The casino's strip gets its
+pile-full mark wherever the marks are checked. Browser tier
+(`selftest/casino.js`): a real click on the dust pile on a desk and a
+finger's tap on a phone each stake a tenth of the purse; a finger on the
+pile never scrolls the yard and the stake goes at the release; a tap on each
+control works it; nothing on the building has a tooltip. Scenes:
 `casinostakes` (the piles beside the building, one a coin), `casinocarry`
-(a sweep off the dust pile in flight toward the rim), `casinohopper` (the
-pot in the funnel, the arm up), `casinobank` (the button pressed, the pile
+(the dust pile tapped, a tenth of the purse streaming to the rim),
+`casinohopper` (the pot in the funnel, the arm up), `casinopressed` (the
+button pressed, the cap sunk), `casinobank` (the chute open, the pile
 forming, a hauler on its way), `casinohoist` (the crank turning).
 
 ### What building it changed
@@ -983,6 +999,42 @@ stands out from the wall on a boss because a stem rising along the funnel's
 black wall was invisible against it; the crank's handle rests pointing out
 for the same reason, and the box that says what the hand came to moved up
 the wall to leave the crank clear.
+
+**The sweep-to-stake was built, played and cut the same day, too.** The
+second reading had the stake swept: grains dragged off the pile and let go
+over the rim, a grain a drag at a level-0 hand. Played, it was a chore -- a
+hundred of dust was five drags, and the carry ladder was the only way to
+make a bet in one motion. The tap is what stakes: a tenth of the purse a
+tap, the stream doing the walking, taps stacking into the bet. The sweep's
+claim on the pile stays (a finger there never scrolls) and its take-from-
+the-pile went; the banked pile on the strip, which *is* floor dust, is the
+one thing about the casino a sweep still moves.
+
+**The button was a shelf.** A cap standing on a plate out from the wall, in
+side view, read as a ledge with a box on it. It is face on now, set into the
+wall: a round cap in a square white recess with a cell of black rim, on the
+wall's outer face -- it could not cut into the building, where the pays'
+foot is -- and a press sinks the cap (grey, three cells) rather than
+lowering it.
+
+**Banking used to hold the next stake until the crew had carried the pile
+in.** `canStake` waited on `S.paying`, which stands until the tray has run
+out -- and on a full strip, until the haulers have made room. The hand is
+over the moment the button is pressed; the pile on the ground is the crew's
+business. Only the arm waits for the tray to empty.
+
+**The hovers went.** The piles, the bowl, the controls and the change box
+each had a tooltip; four labels on one building were noise over a drawing
+that already says live or dead. Only the pile-full mark's stays, because
+every strip has one.
+
+**The board was cramped.** Peg rows two cells apart left a two-cell pebble
+on a peg with a cell of air over it. They are three apart now (`PEG_ROW_H`),
+with a row more of air above the first row (`BOARD_AIR`) and, by the same
+arithmetic, below the last. The pebble's pace a cell is unchanged
+(`CASINO_FALL_MS`), so the cascade lengthens with the board: a pebble's trip
+from the throat to the bins is thirty-four cells of fall and ten beats on
+the pegs, about 1.3 seconds (34 x 20 ms + 10 x 60 ms), from 1.06 before.
 
 **A control's box takes a cell of the wall.** The pivot stands on the wall,
 and a pointer over the pivot answered to the building instead of the control

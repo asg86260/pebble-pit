@@ -16,7 +16,7 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray, stakes } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { LEVER_REACH, ARM_LENGTH, ARM_BOSS, BUTTON_PLATE_W, BUTTON_PLATE_H, BUTTON_CAP_W, BUTTON_CAP_H } from '../config.js';
+import { LEVER_REACH, ARM_LENGTH, ARM_BOSS, BUTTON_RECESS, BUTTON_CAP, BUTTON_SUNK } from '../config.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -329,15 +329,17 @@ function drawControl(l) {
   ctx.fillStyle = ink;
   ctx.strokeStyle = ink;
   if (l.kind === 'button') {
-    // a plate out from the wall with the cap standing on it; pressed, the
-    // cap sinks a cell into the plate
-    const px = dir < 0 ? x - BUTTON_PLATE_W * P : x;
-    ctx.fillRect(px, y - BUTTON_PLATE_H * P, BUTTON_PLATE_W * P, BUTTON_PLATE_H * P);
-    const cx = px + Math.floor((BUTTON_PLATE_W - BUTTON_CAP_W) / 2) * P;
-    const sink = shape.pressed ? P : 0;
-    const cy = y - BUTTON_PLATE_H * P - BUTTON_CAP_H * P + sink;
-    ctx.fillRect(cx, cy, BUTTON_CAP_W * P, BUTTON_CAP_H * P - sink);
-    if (shape.pressed) { ctx.fillStyle = '#fff'; ctx.fillRect(cx, y - BUTTON_PLATE_H * P, BUTTON_CAP_W * P, P); }
+    // face on, set into the wall: a white recess in a cell of black rim on
+    // the wall's outer face -- the recess could not cut into the building,
+    // where the pays' foot is -- with the round cap in it; pressed, the cap
+    // goes grey and shrinks, sunk into the wall
+    const rim = BUTTON_RECESS + 2;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(wall - rim * P, y - rim * P, rim * P, rim * P);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(wall - (rim - 1) * P, y - (rim - 1) * P, BUTTON_RECESS * P, BUTTON_RECESS * P);
+    ctx.fillStyle = shape.pressed ? PEG_SHADE : ink;
+    knob(wall - Math.ceil(rim / 2) * P, y - Math.ceil(rim / 2) * P, shape.pressed ? BUTTON_SUNK : BUTTON_CAP);
     ctx.fillStyle = '#000';
     return;
   }
