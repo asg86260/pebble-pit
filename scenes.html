@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>scenes</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { background: #fff; color: #111; display: grid;
+         grid-template-columns: 22em minmax(0, 1fr); grid-template-rows: 100%;
+         font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .list { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid #ddd; }
+  .list h1 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin: 0; padding: 12px 12px 4px; }
+  .list .keys { color: #777; padding: 0 12px 8px; }
+  .list .keys b { color: #111; font-weight: normal; border: 1px solid #bbb; border-radius: 2px; padding: 0 3px; }
+  .list input { margin: 0 12px 8px; font: inherit; padding: 2px 4px; border: 1px solid #bbb; }
+  .parts { overflow: auto; flex: 1; padding-bottom: 12px; }
+  .part .head { color: #777; letter-spacing: .08em; text-transform: uppercase; padding: 10px 12px 2px; }
+  .part[hidden] { display: none; }
+  .row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 8px; align-items: baseline;
+         padding: 1px 12px; cursor: pointer; border: 0; background: none; font: inherit;
+         text-align: left; width: 100%; color: #111; }
+  .row small { color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row:hover { background: #eee; }
+  .row.on { background: #111; color: #fff; }
+  .row.on small { color: #bbb; }
+  .row[hidden] { display: none; }
+  .stage { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+  .bar { display: flex; gap: 8px; align-items: baseline; padding: 6px 12px; border-bottom: 1px solid #ddd; }
+  .bar .name { font-weight: bold; }
+  .bar .say { color: #555; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar .since { color: #777; min-width: 4em; text-align: right; }
+  .bar button { font: inherit; padding: 0 6px; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+</style>
+</head>
+<body>
+<!-- The scene bench: the game in a frame, and every scene in SCENES
+     (src/scenes.js) down the side, so a part of the game can be stood and
+     watched for a while, then the next one, without playing the hour up to
+     either. Open it at /scenes.html; the address carries the scene
+     (/scenes.html#endgame), so a reload lands on the same one.
+
+     The dev panel's `scenes` tab does the same standing, as a wall of buttons
+     over the yard it is standing. This is for the spot check after a large
+     change: dozens of scenes in a row, each looked at for a bit, with a filter
+     and the keys so the hand never leaves the keyboard.
+
+     The frame is play.html?bench: the dev build, so the `__scene` handle is
+     there, and staged from boot (main.js), so it never writes, clears or
+     claims the save -- the game in the next tab does not notice it. -->
+<div class="list">
+  <h1>the scenes</h1>
+  <div class="keys"><b>[</b> <b>]</b> previous, next &middot; <b>r</b> again &middot; <b>/</b> find</div>
+  <input id="find" type="search" placeholder="find a scene" autocomplete="off">
+  <div class="parts" id="parts"></div>
+</div>
+<div class="stage">
+  <div class="bar">
+    <span class="name" id="name">loading</span>
+    <span class="say" id="say"></span>
+    <span class="since" id="since"></span>
+    <button id="again" type="button" title="stand the scene again (r)">again</button>
+    <button data-fast="5" type="button" title="run the yard on five seconds">+5s</button>
+    <button data-fast="30" type="button" title="run the yard on thirty seconds">+30s</button>
+  </div>
+  <iframe id="yard" src="./play.html?bench" title="the yard"></iframe>
+</div>
+<script type="module">
+const frame = document.getElementById('yard');
+const parts = document.getElementById('parts');
+const find = document.getElementById('find');
+const nameEl = document.getElementById('name');
+const sayEl = document.getElementById('say');
+const sinceEl = document.getElementById('since');
+
+// The scene standing, and when it was stood. `since` is wall time: how long
+// you have been watching, which is what "feel it out for a bit" is about.
+let current = null, stood = 0;
+let names = [];              // every scene, in the sheet's order, for the keys
+const rows = new Map();      // name -> its button
+
+const yard = () => frame.contentWindow;
+
+// The dev block's imports are dynamic, so the handles arrive a moment after
+// the frame's load event; the bench waits for the one it drives.
+function ready() {
+  return new Promise(res => {
+    const look = () => yard()?.__scene ? res() : setTimeout(look, 50);
+    look();
+  });
+}
+
+function build() {
+  parts.replaceChildren();
+  names = [];
+  for (const [about, list] of yard().__scenes()) {
+    const part = document.createElement('div');
+    part.className = 'part';
+    part.dataset.about = about;
+    const head = document.createElement('div');
+    head.className = 'head'; head.textContent = about;
+    part.append(head);
+    for (const name of list) {
+      const say = yard().__sceneSay(name) || '';
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'row'; b.title = say;
+      b.dataset.name = name; b.dataset.text = `${name} ${say} ${about}`.toLowerCase();
+      const n = document.createElement('span'); n.textContent = name;
+      const s = document.createElement('small'); s.textContent = say;
+      b.append(n, s);
+      b.addEventListener('click', () => go(name));
+      part.append(b);
+      rows.set(name, b);
+      names.push(name);
+    }
+    parts.append(part);
+  }
+}
+
+// Filter by any word of the name, the sentence or the part; a part with no
+// row left is folded away with its heading.
+function filter() {
+  const words = find.value.toLowerCase().split(/\s+/).filter(Boolean);
+  for (const part of parts.children) {
+    let shown = 0;
+    for (const b of part.querySelectorAll('.row')) {
+      const hit = words.every(w => b.dataset.text.includes(w));
+      b.hidden = !hit;
+      shown += hit;
+    }
+    part.hidden = !shown;
+  }
+}
+const visible = () => names.filter(n => !rows.get(n).hidden);
+
+// The scene is the address: `go` writes the hash and the hash handler stands
+// it, so the back button and a pasted link do the same thing as a click.
+function go(name) {
+  if (location.hash.slice(1) === name) stand(name);
+  else location.hash = name;
+}
+function stand(name) {
+  if (!rows.has(name)) return;
+  rows.get(current)?.classList.remove('on');
+  current = name;
+  stood = performance.now();
+  const b = rows.get(name);
+  b.classList.add('on');
+  b.scrollIntoView({ block: 'nearest' });
+  nameEl.textContent = name;
+  sayEl.textContent = b.title;
+  yard().__scene(name);
+  // The keys and the wheel go to the yard, which is what you are looking at.
+  frame.focus();
+}
+// The next or the previous of the rows the filter left, wrapping at either
+// end; with nothing standing yet, `]` is the first row and `[` the last.
+const wrap = (i, n) => ((i % n) + n) % n;
+function step(by) {
+  const list = visible();
+  if (!list.length) return;
+  const at = list.indexOf(current);
+  go(list[wrap((at < 0 ? (by > 0 ? -1 : 0) : at) + by, list.length)]);
+}
+
+// Bound in both windows: the frame has the focus while you are playing, and
+// the frame's own keys (the arrows pan, space skips) are left to it.
+function keys(e) {
+  const typing = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if (typing) {
+    if (e.key === 'Escape') { find.value = ''; filter(); frame.focus(); }
+    if (e.key === 'Enter') { const v = visible(); if (v.length) go(v[0]); }
+    return;
+  }
+  if (e.key === ']') { e.preventDefault(); step(1); }
+  else if (e.key === '[') { e.preventDefault(); step(-1); }
+  else if (e.key === 'r' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); if (current) stand(current); }
+  else if (e.key === '/') { e.preventDefault(); find.focus(); find.select(); }
+}
+addEventListener('keydown', keys);
+
+find.addEventListener('input', filter);
+document.getElementById('again').addEventListener('click', () => current && stand(current));
+for (const b of document.querySelectorAll('[data-fast]')) {
+  b.addEventListener('click', () => { yard().__fast(+b.dataset.fast); frame.focus(); });
+}
+addEventListener('hashchange', () => stand(location.hash.slice(1)));
+
+setInterval(() => {
+  if (!current) return;
+  const s = Math.floor((performance.now() - stood) / 1000);
+  sinceEl.textContent = s < 60 ? `${s}s` : `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`;
+}, 250);
+
+// The frame reloads itself in a few cases (a yielded save, a crash's reload
+// button), and comes back with no handles and no scene; rebuild and stand the
+// address's scene again each time it comes up.
+async function attach() {
+  await ready();
+  yard().addEventListener('keydown', keys);
+  build();
+  filter();
+  const want = location.hash.slice(1);
+  if (want && rows.has(want)) stand(want);
+  else { nameEl.textContent = 'your yard'; sayEl.textContent = 'as saved; pick a scene'; current = null; }
+}
+frame.addEventListener('load', attach);
+
+// headless.mjs waits for this before it does anything, so say we are here.
+window.__test = () => {};
+</script>
+</body>
+</html>
