@@ -228,15 +228,15 @@ export const CASINO_CHASE_MS = 130;
 // a slow beat. Pouring and draining, a run of bulbs chasing round the
 // border with the dust: a step a grain, its length off the grains a second
 // between a floor and a cap. Ready, the sign flashing between the count and
-// CLICK TO DROP on a beat, the bulbs more excited than either -- two runs
-// chasing in opposite directions under the count and all on under the words
-// ('twin'), or all on with random ones dropping out ('sparkle').
+// DROP IT on a beat, the bulbs more excited than either: all on with a
+// sparkle of random ones dropping out each step ('sparkle'), or two runs
+// chasing in opposite directions under the count ('twin').
 export let SIGN_SWAP_MS = 1500;
 export let SIGN_CHASE_MIN_MS = 40;
 export let SIGN_CHASE_MAX_MS = 400;
 export let SIGN_FLASH_MS = 700;
 export let SIGN_READY_STEP_MS = 60;
-export let SIGN_READY_LIGHTS = 'twin';
+export let SIGN_READY_LIGHTS = 'sparkle';
 export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
 // the flash's face held for a shot: null runs on the beat, 0 the count, 1 the words
 export let SIGN_FLASH_FACE = null;

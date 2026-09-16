@@ -894,13 +894,13 @@ step's length `1000 / (grains a second)` floored at `SIGN_CHASE_MIN_MS` and
 capped at `SIGN_CHASE_MAX_MS`, so the chase spins up as the pour runs and
 runs down as it eases, while the number climbs. Ready, with a stake standing
 and the arm let go, the sign flashes on a beat (`SIGN_FLASH_MS`) between the
-count and the words CLICK TO DROP -- TAP TO DROP on a phone, by `coarse()`
--- in the sign's own letters, with no rule under either; the "press me" is
-the lights, more excited than idle or pouring without strobing: two runs of
-bulbs chasing in opposite directions at `SIGN_READY_STEP_MS` a step under
-the count, and every bulb on under the words (`SIGN_READY_LIGHTS` 'twin'),
-or every bulb on with a sparkle of random ones dropping out each step
-('sparkle'); both are drawn for the choice. The tap presses the board a cell
+count and the words DROP IT -- the same words for a pointer and a finger --
+in the sign's own letters, with no rule under either; the "press me" is
+the lights, more excited than idle or pouring without strobing: **every
+bulb on with a sparkle** -- about one in four dropping out, a different
+few each `SIGN_READY_STEP_MS` step (`SIGN_READY_LIGHTS` 'sparkle', the
+owner's pick; 'twin', two runs chasing in opposite directions, stays as
+the alternative on the knob). The tap presses the board a cell
 lower with the figures grey for the beat. Dropping, after the tap, the
 number runs down and the chase keeps spinning with the drain, slowing as the
 last grains land -- the same step off the grains a second, which runs to

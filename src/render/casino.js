@@ -19,7 +19,6 @@ import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape, deckLayout, deckTop, buttonShape } from '../levers.js';
 import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK, BUTTON_PRESS_MS,
          SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
-import { coarse } from '../prefs.js';
 import { fmt } from '../words.js';
 import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
@@ -61,9 +60,7 @@ const GLYPH = {
   '8': ['0111110', '1000001', '0111110', '1000001', '0111110'],
   '9': ['0111110', '1000001', '0111111', '0000001', '0111110'],
   '.': ['0000000', '0000000', '0000000', '0000000', '0001000'],
-  // and the words the ready sign flashes: CLICK TO DROP, TAP TO DROP
-  L: ['1000000', '1000000', '1000000', '1000000', '1111111'],
-  K: ['1000110', '1011000', '1100000', '1011000', '1000110'],
+  // and the words the ready sign flashes: DROP IT
   T: ['1111111', '0001000', '0001000', '0001000', '0001000'],
   D: ['1111100', '1000010', '1000001', '1000010', '1111100'],
   R: ['1111110', '1000001', '1111110', '1001000', '1000110'],
@@ -102,7 +99,7 @@ function signWord() {
   if (state === 'idle') return { word: WORD, gap: true, state };
   // ready, the sign flashes between the count and the words, on the beat
   const face = SIGN_FLASH_FACE ?? Math.floor(now() / SIGN_FLASH_MS) % 2;
-  if (state === 'ready' && face) return { word: coarse() ? 'TAP TO DROP' : 'CLICK TO DROP', gap: false, state };
+  if (state === 'ready' && face) return { word: 'DROP IT', gap: false, state };
   const d = S.drop;
   const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.n;
   return { word: fmt(Math.round(shown('casino:sign', n))), gap: false, state };

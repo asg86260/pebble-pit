@@ -730,20 +730,24 @@ export const SCENES = {
                  window.__pressButton('chip-1k'); window.__clickLever('casino-gate'); window.__holdArm(true);
                  window.__fast(1.0); window.__fakePour(60); window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
+  // The marquee at rest: the casino open, nothing staked, no hand just
+  // played -- every other bulb, the sets swapping on the slow beat.
+  casinoidle: { about: 'the casino', say: 'the sign idle: CASINO, every other bulb lit',
+    run: () => { window.__casinoStakes(6000); window.__fast(0.5); window.__look(st().casinoX - 380); } },
   // The sign as the drop button: a stake standing in the funnel, the arm
   // let go, the sign raised with the count on it -- and pressed.
   casinosignready: { about: 'the casino', say: 'the sign ready: a stake in the funnel, the count on the raised board',
-    run: () => { window.__signFace(0); window.__readyLights('twin'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+    run: () => { window.__signFace(0); window.__readyLights('sparkle'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
                  window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
                  window.__look(st().casinoX - 380); } },
   // ...its two faces, the count and the words, the bulbs blinking with it;
   // and the same with the bulbs chasing instead.
-  casinosignwords: { about: 'the casino', say: 'the sign ready, on the words: CLICK TO DROP',
-    run: () => { window.__signFace(1); window.__readyLights('twin'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+  casinosignwords: { about: 'the casino', say: 'the sign ready, on the words: DROP IT',
+    run: () => { window.__signFace(1); window.__readyLights('sparkle'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
                  window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
                  window.__look(st().casinoX - 380); } },
-  casinosignsparkle: { about: 'the casino', say: 'the sign ready, the bulbs all on with a sparkle dropping out',
-    run: () => { window.__signFace(0); window.__readyLights('sparkle'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+  casinosigntwin: { about: 'the casino', say: 'the sign ready with the twin chase instead of the sparkle',
+    run: () => { window.__signFace(0); window.__readyLights('twin'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
                  window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
                  window.__look(st().casinoX - 380); } },
   casinosignpressed: { about: 'the casino', say: 'the sign pressed: the board down flat, the figures grey',
