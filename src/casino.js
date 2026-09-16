@@ -528,7 +528,10 @@ export function bank() {
 export function ride() {
   if (!canRide()) return;
   S.pot = { ...S.pot, stake: S.pot.n, where: 'hopper' };
-  S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
+  // A handful of the tray goes up: the hopper's picture is the grains that
+  // will fall. The tray's picture was the paid pot at its band, so what the
+  // hoist does not carry leaves the tray as the pot leaves it.
+  S.hoisting = { grains: Math.max(1, Math.min(tray.n, handfulFor(S.pot.n))), lifted: 0 };
   S.hand = null;
   S.shopStale = true;
 }
@@ -541,7 +544,7 @@ const IN_AIR = 24000;
 
 function hoistStep(dt) {
   const h = S.hoisting;
-  let n = Math.min(tray.n, Math.max(1, Math.ceil(h.grains * (dt / TRICKLE_MS))));
+  let n = Math.min(tray.n, h.grains - h.lifted, Math.max(1, Math.ceil(h.grains * (dt / TRICKLE_MS))));
   while (n-- > 0) {
     const c = topmostColumn(tray);
     if (c < 0) break;
@@ -559,6 +562,8 @@ function hoistStep(dt) {
              k: 0, high: P * 8 + rand() * P * 6, ms: FLIGHT_MS }
     });
   }
+  // and once the handful is on its way, the rest of the tray's picture leaves
+  if (h.lifted >= h.grains && tray.n > 0) drainOut(dt, tray, 0);
   if (tray.n === 0 && airborneTo('hopper') === 0) {
     S.hoisting = false;
     S.pouring = true;                            // and the hopper walks to what the pot says
@@ -673,19 +678,22 @@ export const shownFor = n =>
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
 
-// How much sand should be standing in the hopper: the pot's band while the pot
-// is on the roof, less what the gate has already let out while a hand is being
-// sent, and nothing once the handful is away -- the rest was the picture of a
-// pot that is on the board now. Never more than the plot will actually hold:
+// How much sand should be standing in the hopper: the handful. The hopper's
+// picture of the pot IS the grains that will fall -- a chip of ten is ten
+// grains, everything else is `CASINO_HANDFUL`, each worth its share -- so when
+// the gate opens every grain in the bowl goes down the board and nothing is
+// left to lift off. A heap of the pot's band stood there once, and the rest
+// of it fading when the handful left read as staked sand vanishing. While a
+// hand is being sent it is the handful less what the gate has let out. Never more than the plot will actually hold:
 // the brim is inside what it takes, so that clause is a backstop, but the hand
 // waits on the heap reaching this number, and a plot that refused a grain with
 // no way to say so would be a hand that never came.
 export const tableWant = () => {
   if (!inHopper()) return 0;
-  const band = Math.min(shownFor(pot()), table.capped ?? Infinity);
-  return !S.drop ? band
+  const hand = Math.min(handfulFor(pot()), table.capped ?? Infinity);
+  return !S.drop ? hand
     : S.drop.stage !== 'drop' || S.drop.sent >= S.drop.handful ? 0
-    : Math.max(0, band - S.drop.sent);
+    : Math.max(0, hand - S.drop.sent);
 };
 
 // And the tray: the pot's band while the pot stands in it, or the band of what
@@ -744,8 +752,12 @@ function trickleIn(dt, plot, name, want, from) {
 // Out of the sky a little way up rather than from the top of the world: high
 // enough to read as coming down and near enough that the heap grows while you
 // are watching it.
+// Poured into the middle of the funnel, over the spout, rather than across
+// the whole rim: a grain that lands in the middle of a wide upper step has no
+// drop beside it and stays there, and a handful rained across the rim stood
+// as a scatter on the slopes instead of a heap in the throat.
 const skyOver = () => ({
-  x: potAt().x + (rand() - 0.5) * P * (table.cols - 2),
+  x: potAt().x + (rand() - 0.5) * P * GATE_W * 4,
   y: table.y - P * 24 - rand() * P * 10
 });
 

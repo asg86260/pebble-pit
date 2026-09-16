@@ -48,10 +48,12 @@ export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // The profile is how many cells the wall steps in from each side, rim first;
 // the walls are fixed cells in the hopper's own plot, so the sand heaps
 // against them by the yard's rules, fills from the throat up and sits in the
-// bowl. Four cells a row, because a funnel seventy-two wide has to close to
-// an eight-cell floor inside the rows the roof can spare, and the heap stands up
+// bowl. Steeper toward the throat, because what stands in it is a handful --
+// thirty-two grains, the ones that will fall -- and a handful in a wide flat
+// bowl was a smear a row deep: in a spout four cells at the floor it stands
+// four rows tall and reads as a stake in a funnel from across the yard, and the heap stands up
 // to the rim and no further (`table.ceiling`).
-export const HOPPER_PROFILE = [0, 4, 8, 12, 16, 20, 24, 28, 32];
+export const HOPPER_PROFILE = [0, 6, 12, 18, 24, 28, 31, 33, 34];
 export const HOPPER_H = HOPPER_PROFILE.length;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
 // you let go, to the throat's two cells, the column the handful enters at and
@@ -149,8 +151,9 @@ export let CASINO_ATTRACT_S = 20;
 // a flicker.
 export const TABLE_LIFE = 2.6;
 export const TABLE_GRAV = 0.05;
-// How much sand a pot puts in the hopper -- one grain a unit right up until
-// the numbers stop being numbers. Past the first band the heap is a *reading*
+// How much sand a pot puts in the tray -- one grain a unit right up until
+// the numbers stop being numbers. (The hopper's picture is the handful, not
+// the band: see `tableWant` in casino.js.) Past the first band the heap is a *reading*
 // of the pot rather than a count of it, on a ladder written down here: a
 // tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
 // marks so nothing jumps, and never more than the brim.
@@ -158,7 +161,7 @@ export const TABLE_GRAV = 0.05;
 //   1 - 100      the pot itself, one for one
 //   1,000        250          10,000+      300, the brim
 //
-// The brim is what the bowl holds: the funnel's profile comes to three hundred
+// The brim is what the tray holds: five rows of seventy-two is three hundred
 // and sixty cells, and a heap under a ceiling fills flat, so three hundred
 // stands in it with the rim clear. See `shownFor` in casino.js; what is approximate
 // is the size of the heap and nothing else: the row says the exact pot and

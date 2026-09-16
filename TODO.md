@@ -1,5 +1,17 @@
 # Still to do
 
+## The stake is a heap you carry, and the casino has no board -- DESIGNED, awaiting approval (2026-09-16)
+
+The casino's board goes entirely. Premade heaps of each coin (10, 100,
+1,000, all in) stand on the ground to the right of the building, present only
+when the purse covers them; the body's lift gesture carries one to the
+hopper, where it pours in and adds to the stake; another coin is refused at
+the rim; the hopper's pot can be lifted back out. Three controls on the
+building: the gate lever, the bank chute, the hoist crank. Banking tips the
+tray out on to a casino strip in `S.piles` and the haulers carry it to the
+hole. DESIGN.md, "The stake is a heap you carry, and the casino has no
+board". Blocked on sign-off.
+
 ## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 
 "Beats and gates: one table each" at the end of DESIGN.md. The story's

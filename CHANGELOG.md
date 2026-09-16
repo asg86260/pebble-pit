@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
@@ -27,6 +28,8 @@ feature lives in DESIGN.md.
 - A sheet's rows wear their own scrollbar on a phone, so there is a way to see there is more (selftest/sheet.js).
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
+
+- Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).
 
 - The pinned card stands under the gear and the fullscreen button instead of over them (src/selftest/touch.js).
 - The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
