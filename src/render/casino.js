@@ -18,7 +18,7 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
 import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape, deckLayout, deckTop, buttonShape } from '../levers.js';
 import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK, BUTTON_PRESS_MS,
-         SIGN_SWAP_MS, SIGN_CHASE_MS, SIGN_FLASH_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
+         SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
 import { coarse } from '../prefs.js';
 import { fmt } from '../words.js';
 import { GLYPHS } from '../glyphs.js';
@@ -111,10 +111,9 @@ function signWord() {
 function drawSign() {
   const x = signX(), w = SIGN_W, h = CASINO_SIGN_H;
   const { word, gap, state } = signWord();
-  // With a count on it the sign is the drop button: the count stands on a
-  // rule, the way a pressable thing is underlined here, and a tap presses
-  // the board down for a beat -- the rule gone, the board a cell lower,
-  // the figures grey. Reading CASINO it lies flat and is nothing to press.
+  // With a count on it the sign is the drop button -- the marquee says so
+  // -- and a tap presses the board down for a beat: a cell lower, the
+  // figures grey. Reading CASINO it lies flat and is nothing to press.
   const ready = state === 'ready';
   const pressed = ready && now() - (S.signPressed || -Infinity) < BUTTON_PRESS_MS;
   const y = signY() + (pressed ? P : 0);
@@ -139,8 +138,6 @@ function drawSign() {
         if (rows[r][c] === '1') ctx.fillRect(x + (left + c) * P, y + (SIGN_PAD + r) * P, P, P);
     left += glyphW(ch) + (gap && n === word.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
   });
-  // the rule under the count, a cell out each side of it
-  if (ready && !pressed) ctx.fillRect(x + (left - wordCells - GLYPH_GAP - 1) * P, y + (SIGN_PAD + GLYPH_H) * P, (wordCells + 2) * P, Math.max(1, P / 3));
 
   // and the lights, walking round the edge. A whole cell at a time, like
   // everything that moves in this game: a bulb is on or it is off. The chase
@@ -154,13 +151,16 @@ function drawSign() {
   // of it under reduced motion: the chase keeps its step and nothing flashes.
   // ...and, under "The pour", the marquee carries the state: idle, every
   // other bulb swapping on a slow beat; pouring or draining, a run chasing
-  // round; ready, the bulbs blinking together on the flash's beat (or
-  // chasing, `SIGN_READY_LIGHTS`).
+  // round with the dust, a step a grain; ready, two runs chasing against
+  // each other under the count and every bulb on under the words ('twin'),
+  // or all on with a sparkle dropping out ('sparkle').
   const t = now();
-  const chasing = state === 'pouring' || state === 'draining' || (state === 'ready' && SIGN_READY_LIGHTS === 'chase');
-  const step = Math.floor(t / (chasing ? SIGN_CHASE_MS : busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS));
+  const chasing = state === 'pouring' || state === 'draining';
+  const stepMs = chasing ? Math.max(SIGN_CHASE_MIN_MS, Math.min(SIGN_CHASE_MAX_MS, 1000 / Math.max(0.001, grainsASecond(t))))
+    : state === 'ready' ? SIGN_READY_STEP_MS : busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS;
+  const step = chaseStep(t, stepMs);
   const swap = Math.floor(t / SIGN_SWAP_MS) % 2;
-  const blinkOff = state === 'ready' && !chasing && (SIGN_FLASH_FACE ?? Math.floor(t / SIGN_FLASH_MS) % 2);
+  const words = state === 'ready' && (SIGN_FLASH_FACE ?? Math.floor(t / SIGN_FLASH_MS) % 2);
   const age = S.hand ? t - S.hand.at : Infinity;
   const edgeAge = t - (S.tableFx.strobeAt || -Infinity);
   const strobe = mayFlash() && ((S.hand?.won && age < CASINO_WIN_MS) ||
@@ -171,12 +171,39 @@ function drawSign() {
     if (strobe) { if (Math.floor(t / CASINO_STROBE_MS) % 2) return; }
     else if (i >= lit) return;
     else if (state === 'idle') { if ((i + swap) % 2) return; }
-    else if (blinkOff) return;
+    else if (state === 'ready') {
+      if (SIGN_READY_LIGHTS === 'sparkle') { if (sparkleOut(i, step)) return; }
+      else if (!words && (i + step) % CHASE_EVERY && (i - step + 1e6) % CHASE_EVERY) return;
+    }
     else if (chasing && (i + step) % CHASE_EVERY) return;
     ctx.fillRect(x + cx * P, y + cy * P, P, P);
   });
 }
 const CHASE_EVERY = 4;           // how many dark bulbs stand between the lit
+
+// The chase's step is counted, not read off the clock, so a step that
+// changes length with the dust runs on rather than jumping.
+let chaseAt = 0, chaseN = 0;
+function chaseStep(t, ms) {
+  if (t - chaseAt >= ms) { chaseN += Math.floor((t - chaseAt) / ms); chaseAt = t; }
+  return chaseN;
+}
+// How fast the dust is moving through the funnel: grains landing in the
+// bowl a second while pouring, grains leaving it a second while draining,
+// read off the bowl's count between frames and smoothed a little.
+let rateAt = 0, rateN = 0, rate = 0;
+function grainsASecond(t) {
+  const n = hopperN();
+  if (rateAt && t > rateAt) {
+    const r = Math.abs(n - rateN) / ((t - rateAt) / 1000);
+    rate = rate * 0.8 + r * 0.2;
+  }
+  rateAt = t; rateN = n;
+  return rate;
+}
+// a bulb out this step, for the sparkle: about one in four, by a hash of
+// the bulb and the step so it holds for the step and moves on the next
+const sparkleOut = (i, step) => ((i * 2654435761 + step * 40503) >>> 0) % 4 === 0;
 const PEG_SHADE = SHADES[0];     // a peg: the lightest grey the yard has, so a grain reads over it
 const TRAIL_SHADES = [SHADES[3], SHADES[0]];   // the last two cells a falling grain left, nearest first
 const PEG_HIT = 'plain';          // how a peg shows a hit: 'ring' or 'plain'

@@ -878,28 +878,35 @@ is let go, and runs down as the pile drains into the throat on the tap,
 never snapping, through the yard's own counter tween (`shown` in tween.js,
 the purse counter's convention, `TWEEN_MIN_MS` to `TWEEN_MAX_MS` off
 `TWEEN_BASE_MS` and `TWEEN_PER_UNIT_MS`). With a count on it the sign is a
-button and looks like one: the board stands raised off the front on a cell
-of shadow along its foot and its right edge, the way a cap stands in its
-recess, and a tap presses it down flat -- the shadow gone, the board a cell
-lower, the figures grey for the beat (`BUTTON_PRESS_MS`) -- and the throat
+button, and the marquee says so (below); a tap presses the board down a
+cell with the figures grey for the beat (`BUTTON_PRESS_MS`) and the throat
 opens. After the drop the sign goes back to CASINO, flat. So the one number
 in the building is the one you are deciding on, it is on the sign while you
 decide, and the sign is what you press to decide.
 
 **The marquee carries the state.** The sign's border of bulbs says what the
-machine is doing, and it is where the flair lives. Idle, with no stake, the
-bulbs alternate in place -- every other one lit, swapping on a slow beat
-(`SIGN_SWAP_MS`), a marquee at rest -- and the sign reads CASINO. Pouring,
-with the arm held, a run of lit bulbs chases round the border
-(`SIGN_CHASE_MS` a step, quickening with the pour) while the number climbs.
-Ready, with a stake standing and the arm let go, the sign flashes on a beat
-(`SIGN_FLASH_MS`) between the count and the words CLICK TO DROP -- TAP TO
-DROP on a phone, by `coarse()` -- in the sign's own letters, and the bulbs
-blink all together on the same beat (`SIGN_READY_LIGHTS` picks the blink or
-the chase; both are drawn for the choice). Draining, the number runs down
-as before and the bulbs chase with the drain; and once the sign reads
-CASINO again they go back to the idle swap. A win's strobe and a dud's
-blackout stand over all of it as they do now.
+machine is doing, and it is where the flair lives. Idle, with no stake, it
+is calm: every other bulb lit, the two sets swapping on a slow beat
+(`SIGN_SWAP_MS`, about a second and a half), a marquee at rest that barely
+draws the eye, and the sign reads CASINO. Pouring, with the arm held, a run
+of lit bulbs chases round the border **with the dust**: a step a grain, the
+step's length `1000 / (grains a second)` floored at `SIGN_CHASE_MIN_MS` and
+capped at `SIGN_CHASE_MAX_MS`, so the chase spins up as the pour runs and
+runs down as it eases, while the number climbs. Ready, with a stake standing
+and the arm let go, the sign flashes on a beat (`SIGN_FLASH_MS`) between the
+count and the words CLICK TO DROP -- TAP TO DROP on a phone, by `coarse()`
+-- in the sign's own letters, with no rule under either; the "press me" is
+the lights, more excited than idle or pouring without strobing: two runs of
+bulbs chasing in opposite directions at `SIGN_READY_STEP_MS` a step under
+the count, and every bulb on under the words (`SIGN_READY_LIGHTS` 'twin'),
+or every bulb on with a sparkle of random ones dropping out each step
+('sparkle'); both are drawn for the choice. The tap presses the board a cell
+lower with the figures grey for the beat. Dropping, after the tap, the
+number runs down and the chase keeps spinning with the drain, slowing as the
+last grains land -- the same step off the grains a second, which runs to
+the cap as they stop -- and once the sign reads CASINO again the bulbs go
+back to the idle swap. A win's strobe and a dud's blackout stand over all of
+it as they do now.
 
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the

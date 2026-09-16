@@ -224,14 +224,19 @@ export const CASINO_SAY_MS = 4000;        // how long the hand's multiple stands
 // from the chip going down to the tray standing.
 export const CASINO_CHASE_MS = 130;
 // "The pour": the marquee carries the state (DESIGN.md, "The marquee
-// carries the state"). Idle, every other bulb lit, swapping on this beat;
-// pouring, a run of bulbs chasing round the border a step at a time; ready,
-// the sign flashing between the count and CLICK TO DROP on this beat, the
-// bulbs blinking together ('blink') or chasing ('chase') with it.
-export let SIGN_SWAP_MS = 900;
-export let SIGN_CHASE_MS = 90;
+// carries the state"). Idle, every other bulb lit, the two sets swapping on
+// a slow beat. Pouring and draining, a run of bulbs chasing round the
+// border with the dust: a step a grain, its length off the grains a second
+// between a floor and a cap. Ready, the sign flashing between the count and
+// CLICK TO DROP on a beat, the bulbs more excited than either -- two runs
+// chasing in opposite directions under the count and all on under the words
+// ('twin'), or all on with random ones dropping out ('sparkle').
+export let SIGN_SWAP_MS = 1500;
+export let SIGN_CHASE_MIN_MS = 40;
+export let SIGN_CHASE_MAX_MS = 400;
 export let SIGN_FLASH_MS = 700;
-export let SIGN_READY_LIGHTS = 'blink';
+export let SIGN_READY_STEP_MS = 60;
+export let SIGN_READY_LIGHTS = 'twin';
 export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
 // the flash's face held for a shot: null runs on the beat, 0 the count, 1 the words
 export let SIGN_FLASH_FACE = null;
@@ -306,8 +311,12 @@ export const CASINO_KNOBS = [
     get: () => CASINO_CHASE_LIVE_MS, set: v => { CASINO_CHASE_LIVE_MS = v; } },
   { key: 'SIGN_SWAP_MS', label: 'the idle marquee swap, ms', min: 200, max: 3000, step: 50,
     get: () => SIGN_SWAP_MS, set: v => { SIGN_SWAP_MS = v; } },
-  { key: 'SIGN_CHASE_MS', label: 'the pour chase, ms a step', min: 20, max: 300, step: 5,
-    get: () => SIGN_CHASE_MS, set: v => { SIGN_CHASE_MS = v; } },
+  { key: 'SIGN_CHASE_MIN_MS', label: 'the chase, fastest step ms', min: 10, max: 200, step: 5,
+    get: () => SIGN_CHASE_MIN_MS, set: v => { SIGN_CHASE_MIN_MS = v; } },
+  { key: 'SIGN_CHASE_MAX_MS', label: 'the chase, slowest step ms', min: 100, max: 2000, step: 50,
+    get: () => SIGN_CHASE_MAX_MS, set: v => { SIGN_CHASE_MAX_MS = v; } },
+  { key: 'SIGN_READY_STEP_MS', label: 'the ready chase, ms a step', min: 20, max: 300, step: 5,
+    get: () => SIGN_READY_STEP_MS, set: v => { SIGN_READY_STEP_MS = v; } },
   { key: 'SIGN_FLASH_MS', label: 'the ready flash, ms', min: 200, max: 2000, step: 50,
     get: () => SIGN_FLASH_MS, set: v => { SIGN_FLASH_MS = v; } },
   { key: 'CASINO_ATTRACT_S', label: 'the attract loop, s', min: 5, max: 120, step: 5,
