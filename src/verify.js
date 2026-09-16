@@ -1,45 +1,15 @@
 // The rules the yard keeps, checked on the frame they are broken.
 //
-// Everything in this file was already checked somewhere, and every one of those
-// checks was a *watcher*: a group that built a busy yard, ran it for thirty or
-// forty simulated seconds a sixtieth at a time, looked at every body on every
-// frame, and reported at the end that something had gone through a wall. They
-// work, and they cost more than everything else in the suite put together.
-// Worse, they are only ever as good as the yard they happened to build -- a rule
-// broken by a state the watcher's own scenario never reaches is a rule nobody
-// checks, and there is no way to tell from a green run which of those you have.
+// `fast` in hooks.js calls `verifyWorld` after every frame when the flag is
+// on, which under test is always, so every group in the node tier watches
+// every rule here whatever it was written to look at. A failure throws on the
+// frame it happened and carries the seed, so the run that broke is the run
+// you can start over.
 //
-// So the watching moves into the game. `verifyWorld` is the same set of
-// questions asked once, from the inside, after a frame has been stepped -- and
-// `fast` in hooks.js calls it after every frame when the flag is on, which under
-// test is always. Every group in the node tier is now a watcher for every rule
-// here, whatever it was written to look at: the janitor group watches the
-// ladder, the pit group watches the books, the sky groups watch the roster.
-// Nobody had to write that down. The scenario a group builds is the input, and
-// the rules are checked against whatever it builds.
-//
-// Three things follow, and they are the whole reason this exists:
-//
-//   **A failure names the frame.** A watcher says "somebody left the cut through
-//   the wall at some point in the last twelve seconds". This says which frame,
-//   which body, and by how much -- because it throws on the frame it happened
-//   rather than counting up violations and reporting at the end.
-//
-//   **A failure can be had again.** The message carries the seed (see rng.js).
-//   The run that broke is the run you can start over.
-//
-//   **The watchers can go.** A sampling loop whose predicate is one of the rules
-//   below is now double work. Several of them have been cut back to the scenario
-//   that generated the interesting yard, with the watching taken out.
-//
-// What it must not be is expensive. It runs on every simulated frame of every
-// check, so it is O(bodies + jobs) and nothing else: one `ways()` for the whole
-// crew rather than one each, no walk of the grids, and the one question that
-// genuinely needs sixty thousand cells counted is asked once a second instead of
-// sixty times (see `LEDGER_EVERY`).
-//
-// It is debug-only and off by default. Play never calls it -- nothing in main.js
-// reaches the flag -- so a rule added here costs a player nothing.
+// It runs on every simulated frame of every check, so it is O(bodies + jobs)
+// and nothing else: one `ways()` for the whole crew, no walk of the grids,
+// and the one question that needs the cells counted is asked once a second
+// (`LEDGER_EVERY`). Play never calls it.
 
 import { WORKER } from './config.js';
 import { S, pit, floor, cut } from './state.js';
@@ -50,9 +20,8 @@ import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
 import { count, countDust } from './grid.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 
-// The coins the hole holds, and the counter each one belongs to. The same table
-// `HELD` in pit.js is built from, and it is here rather than imported because
-// this file is the one thing that must not trust the code it is checking.
+// The same table `HELD` in pit.js is built from, written here rather than
+// imported because this file must not trust the code it is checking.
 const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
                     [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
@@ -61,135 +30,86 @@ import { seed } from './rng.js';
 import { now } from './clock.js';
 import { JOB } from './jobs.js';
 
-// The jobs the roster is made of, and the count on S that owns each. This is the
-// same list `syncWorkers` builds the crew from, and it has to be: a job missing
-// from one of them is a job with a count and no bodies, which is the failure
-// rule 4 is here to catch.
+// The jobs the roster is made of, and the count on S that owns each. Must be
+// the same list `syncWorkers` builds the crew from: a job missing from one is
+// a count with no bodies, which is what rule 4 catches.
 const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUARRY,
                         farmhand: JOB.FARM, scholar: JOB.SCHOLAR,
                         purifier: JOB.PURIFY, stirrer: JOB.STIR,
                         janitor: JOB.JANITOR, wizard: JOB.WIZARD,
-                        // Building is not on the roster -- nobody is put on it --
-                        // but it is a count `syncWorkers` builds bodies from, and
-                        // a count this list leaves out is bodies in the yard the
-                        // books do not have. Which is this rule, exactly.
+                        // Nobody is put on building, but `syncWorkers` builds
+                        // bodies from the count all the same.
                         builder: JOB.BUILD };
 
-// How far below the surface of the way it is on a body may be, and for how long.
-//
-// The depth cannot be zero, because a body's feet do not follow the ground
-// instantly: they ease up to it, fourteen per cent of what is left every frame
-// (`climbTo` in crew.js). Meet a sheer step in a mined hill and the body is
-// legitimately inside it for the length of the climb out. A body and a half is
-// the size of an ordinary one of those.
-//
-// And the depth alone still says nothing, which is what the first draft of this
-// rule got wrong: checked on the frame, it fired on eleven groups in the quick
-// tier, every one of them a rockhand part way up a step it was already climbing.
-// What is actually wrong is a body that is inside the hill and *stays* there.
-// Fourteen per cent a frame takes the worst lag seen -- ninety-one pixels, at a
-// step the gang had just cut -- back under the mark in eight frames, so a body
-// still buried a whole second later is not climbing, it is standing in the rock.
+// How far below the surface of its way a body may be, and for how long. Feet
+// ease up to the ground fourteen per cent a frame (`climbTo` in crew.js), so
+// a body is legitimately inside a sheer step for the length of the climb out;
+// the worst lag seen is back under the mark in eight frames, so a body still
+// buried a second later is standing in the rock.
 const BURIED = WORKER * 1.5;
 const BURIED_FRAMES = 60;
 
-// How long each body has been under the surface, if it is. A WeakMap rather
-// than a field on the body: a body is a saved, cloned, snapshotted thing and a
-// debug counter has no business travelling with it, and one that did would have
-// to be remembered by every path that makes a body.
+// A WeakMap rather than a field on the body: a body is a saved, cloned,
+// snapshotted thing and a debug counter has no business travelling with it.
 const sunkSince = new WeakMap();
 
-// How far above the highest thing under it a body may be, and for how long,
-// before it is standing on nothing (rule 9). A body's height, because a hop in
-// a dance clears more than a cell at its top and the feet ease *down* to a cut
-// floor the same way they ease up to a step. The frames are the buried rule's:
-// a dance is on the ground at every beat, and a climb down is done in eight.
+// How far above the highest thing under it a body may be before it is on
+// nothing (rule 9): a body's height, because a hop in a dance clears more than
+// a cell. The frames are the buried rule's; a dance is on the ground at every
+// beat.
 const FLOAT = WORKER;
 const FLOAT_FRAMES = BURIED_FRAMES;
 const floatSince = new WeakMap();
 // How many doses each body was under last frame (rule 11).
 const dosesLast = new WeakMap();
 
-// How far off the column under its middle a body in the cut may stand (rule 10).
-// A course of the floor is a cell, and a course was the whole of the 2026-09-14
-// bug, so the slack has to be less than one.
+// How far off the column under its middle a body in the cut may stand (rule
+// 10). A course of the floor is a cell, so the slack has to be less than one.
 const COURSE = P / 2;
 const offFloorSince = new WeakMap();
 
-// The *lowest* thing under a body, rather than the highest.
-//
-// `standTop` -- the highest surface under any part of a body's three cells -- is
-// where a body walking a slope belongs, and most of the yard puts a body there.
-// The gang on the rock do not: a rockhand stands on the column it is hitting (see
-// `rockTopY(colAtX(...))` in the rockhand's branch), because a body working a face
-// stands on the face and not on the step behind it. Both are right, and on a
-// stepped hill they are a step apart -- so measuring burial against the higher
-// of them calls every working rockhand buried, which is what the first draft of
-// this file did to four groups in the tier.
-//
-// So the question asked is the one both rules agree on: is the body below *even
-// the lowest* of the columns it is standing across? Above that and it is on one
-// of them, whichever rule put it there. Below it and there is nothing under any
-// part of it at all, which is the only thing "buried" can honestly mean.
+// The *lowest* thing under a body. `standTop` (the highest surface under any
+// of a body's three cells) is where a walking body belongs, but a rockhand
+// stands on the column it is hitting, and on a stepped hill the two are a
+// step apart, so measuring burial against the higher calls every working
+// rockhand buried. Below even the lowest column there is nothing under any
+// part of the body, which is the only thing "buried" can honestly mean.
 function deepest(leftX, at) {
   let low = -Infinity;
   for (let x = leftX; x < leftX + WORKER; x += P) low = Math.max(low, at(x));
   return Math.max(low, at(leftX + WORKER - 1));
 }
 
-// What a station has owned since the last time its books were level.
-//
-// `worn <= hats` is not quite an invariant, and the reason is that hats can be
-// taken *away* from a station while they are still on heads. A machine spends
-// them (see `buy` in machines.js), a station's count can be set back by a dev
-// hook, a save from another shape of the game arrives that way, and a station
-// whose kit is a stock rather than a purchase loses the lot the moment the
-// building is shut (`__loo(false)`, and the caps are on two heads). In all of them
-// the bodies then walk over and hand the kit in -- `stepKit` reasserts it -- and
-// for the length of those walks the station is legitimately over.
-//
-// What is never legitimate is the bug the kit table was built to end: one hat
-// counted on two heads, because `worn` was read off the job a body was doing
-// rather than off the hat it was wearing. That one shows up as a station with
-// more kit worn than it has *ever* owned, and this is the mark that says so.
-//
-// It comes back down as soon as the books are level, so it is not a ratchet that
-// forgives everything after one busy moment: the frame the last stray hat is
-// handed in, the mark is the count again.
+// What a station has owned since the last time its books were level. `worn <=
+// hats` is not quite an invariant: hats can be taken away while still on heads
+// (a machine spends them, a hook sets the count back, a stock station is shut)
+// and the bodies then walk them back in. What is never legitimate is more kit
+// worn than the station has *ever* owned: one hat counted on two heads. The
+// mark comes back down the frame the books are level, so it is not a ratchet.
 const everOwned = new Map();
 
-// How far outside the world a body may be. The yard has soft edges -- a station
-// puts its stand a little past the leftmost pile, a throw clears the far wall --
-// so this is not a fence, it is a check that a position is still a position.
-// The failure it catches is a body that has left for the horizon, which is what
-// a NaN or a runaway step looks like once it has been going for a frame or two.
+// The yard has soft edges (a stand past the leftmost pile, a throw over the
+// far wall), so this is not a fence; it catches a body that has left for the
+// horizon, which is what a NaN or a runaway step looks like after a frame or
+// two.
 const OUTSIDE = WORKER * 8;
 
-// The ledgers are the one rule here that cannot be answered without walking the
-// cells, and the pit is sixty thousand of them and the yard floor twice that.
-// Asked every frame it would cost more than the frame does. So it is asked once
-// a second, which is soon enough:
-// `put` is the only thing that moves the count, a `put` that does not is a bug
-// in `put` and not in a caller, and a bug in `put` is wrong on every frame after
-// the first rather than on one unlucky one.
+// The ledgers cannot be answered without walking the cells, and asked every
+// frame they would cost more than the frame. Once a second is soon enough:
+// `put` is the only thing that moves the count, and a bug in `put` is wrong on
+// every frame after the first.
 const LEDGER_EVERY = 60;
 
-// What went wrong, where in the run, and how to have the run again.
-//
-// The seed matters more than anything else in this string. A failure from a
-// forty-second yard used to be a report you read and could not act on; with the
-// seed and the frame it is a place you can stand.
+// The seed is what makes the failure a run you can start over (rng.js).
 function fail(rule, detail) {
   throw new Error(`${rule}: ${detail}  [frame ${S.tick}, seed ${seed()}]`);
 }
 
 const who = w => `${w.name || w.type} (${w.type}) at ${Math.round(w.x)},${Math.round(w.y)}`;
 
-// Forget what the last yard did. The two things kept between frames are about
-// *this* run of the world, and a new game is a new world: a station's high-water
-// mark from the group before is not something to hold this one to. The bodies
-// take care of themselves -- `sunkSince` is keyed on them, and a new game builds
-// new ones -- but the marks are keyed on job names and would carry over.
+// A new game is a new world. The per-body maps take care of themselves (a new
+// game builds new bodies), but the marks are keyed on job names and would
+// carry over.
 export function resetVerify() {
   everOwned.clear();
 }
@@ -202,16 +122,13 @@ export function verifyWorld() {
 
   for (const w of S.workers) {
     // --- rule 6: a position is a position -------------------------------------
-    // First, because every rule after it reads x and y, and a NaN compared with
-    // anything is false -- so a body that has stopped having a place would slip
-    // silently through all of them and be reported as fine.
+    // First, because every rule after it reads x and y, and a NaN compared
+    // with anything is false, so a body with no place would slip through them.
     if (!Number.isFinite(w.x) || !Number.isFinite(w.y))
       fail('a body has no place', `${w.type} at ${w.x},${w.y}`);
-    // And the sway it is drawn with, because that is where the last body at NaN
-    // came from: the janitor was given something to do while it waits, read a
-    // phase nothing had handed it, and multiplied its position by the sine of
-    // `undefined`. Checked one step before the damage rather than after it, so
-    // the report names the missing field instead of the ruined position.
+    // The sway is checked one step before the damage: a position multiplied
+    // by the sine of `undefined` is the NaN above, and this names the missing
+    // field instead.
     if (!Number.isFinite(w.ph) || !Number.isFinite(w.sp))
       fail('a body has no rhythm of its own', `${who(w)} sways ph ${w.ph}, sp ${w.sp}`);
     if (w.x < left || w.x > right)
@@ -219,26 +136,10 @@ export function verifyWorld() {
            `${who(w)}, world runs ${Math.round(left)}..${Math.round(right)}`);
 
     // --- rule 5: a load is a real load -----------------------------------------
-    // `carry` is how many grains are in a body's arms and `load` is what shade
-    // each of them is, and they are not two things kept level with each other:
-    // they are one thing counted and the same thing written out. A grain is
-    // pushed on to `load` and counted on to `carry`; a grain shaken out is
-    // popped and counted off; a load put down empties both. **So a body with a
-    // load array has exactly as many shades in it as it has grains.**
-    //
-    // This used to be asserted one way only -- never fewer shades than grains --
-    // with the other way written off as untidy but harmless, because the one
-    // place that broke it was the spill in `drop`: a body shaken until it let go
-    // had its `carry` zeroed and its `load` left standing. Nothing read past
-    // `carry`, so nothing showed. But "nothing reads past the count" is a
-    // promise about every reader there will ever be, and the fix was one line at
-    // the source. The count and the shades leave together now, so the rule can
-    // be the equality it always meant, and a stale shade is a failure rather
-    // than a shrug.
-    //
-    // A body that has never held anything has no `load` at all -- the factories
-    // hand out `carry: 0` and nothing else -- and that is not a violation of
-    // anything. The rule is about a load array that exists.
+    // `carry` is how many grains are in a body's arms and `load` the shade of
+    // each: one thing counted and the same thing written out, so the two are
+    // equal. A body that has never held anything has no `load` at all, which
+    // is not a violation; the rule is about a load array that exists.
     const carry = w.carry || 0;
     if (!Number.isInteger(carry) || carry < 0)
       fail('a body is carrying a number that is not a count', `${who(w)} carries ${w.carry}`);
@@ -247,10 +148,8 @@ export function verifyWorld() {
            `${who(w)} carries ${carry} with ${w.load.length} in the load`);
 
     // --- rule 3b: a hat is a hat off the table ----------------------------------
-    // `trained` says a body walked to a stand and picked something up, and what
-    // it picked up is named by `kitOf`. A `kitOf` that is not a row of KIT is a
-    // hat nothing can draw, count or hand back in -- the exact shape of the bug
-    // the one table was built to end (see kit.js).
+    // A `kitOf` that is not a row of KIT is a hat nothing can draw, count or
+    // hand back in (kit.js).
     if (w.trained && !KIT[w.kitOf])
       fail('a body is wearing kit that is not in the table',
            `${who(w)} wears ${JSON.stringify(w.kitOf)}`);
@@ -258,49 +157,34 @@ export function verifyWorld() {
       fail('a body is doing a job the roster does not have', `${who(w)}`);
 
     // --- rule 11: a dose is handed over on the ground ---------------------------
-    // A dose lands when a stirrer's hand reaches the body (apothecary.js,
-    // `deal`), and a hand does not reach four hundred pixels up. The stirrer
-    // used to deal by x alone, so a wizard on the ring was dosed from the ground
-    // under it -- the hand-off nobody could see and the buff nobody believed.
-    // Counted on the frame the list grows, so a dose that merely wears off or
-    // is refreshed says nothing. "In the sky" is the feet a body's height or
-    // more over the ground line, not the flag: a wizard that drank and lifted
-    // off in the same frame ends it flagged aloft with its feet on the ground.
-    // A body seen for the first time is only written down: a reload stands
-    // every body up afresh, doses and all, and that is not a hand-off.
+    // A dose lands when a stirrer's hand reaches the body (`deal` in
+    // apothecary.js), and a hand does not reach a wizard on the ring. Counted
+    // on the frame the list grows, so a dose that wears off or is refreshed
+    // says nothing. "In the sky" is the feet a body's height over the ground
+    // line, not the flag: a wizard that drank and lifted off in the same frame
+    // is flagged aloft with its feet on the ground. A body seen for the first
+    // time is only written down: a reload stands every body up afresh, doses
+    // and all.
     const dosesNow = (w.doses || []).filter(d => d.until > now()).length;
     if (dosesLast.has(w) && dosesNow > dosesLast.get(w) && w.aloft && gy - (w.y + WORKER) > WORKER)
       fail('a dose was handed to a body in the sky', `${who(w)} carries ${dosesNow}`);
     dosesLast.set(w, dosesNow);
 
     // --- rules 1 and 2: what is underfoot ---------------------------------------
-    // Both of them are about a body *standing* somewhere, and there are four
-    // states in this game that are not standing anywhere at all: held in the
-    // player's hand, falling out of it, flying (a wizard aloft is four hundred
-    // pixels over the yard on purpose), and indoors. None of those has a surface
-    // under it and none of them is a walk, so neither rule has anything to say.
-    // A body picked up and waved about over the crest of the hill is inside the
-    // rock in the only sense that matters to `standTop`, and that is the gesture
-    // working rather than a wall being crossed.
+    // Four states are not standing anywhere: held, falling, flying and
+    // indoors. None has a surface under it, so neither rule has anything to
+    // say.
     if (w.lifted || w.falling || w.aloft || w.inside) { sunkSince.delete(w); continue; }
 
     const feet = w.y + WORKER;
 
-    // The ladder rule. Below the ground line is down a working, and a working is
-    // reached at its ladder and left at its ladder -- that is not a rule written
-    // anywhere, it is what having exactly one link out means (see route.js). So a
-    // body under the ground line and outside the span of every working did not
-    // walk there: it went through a wall.
-    //
-    // A body's slack on the depth, and a body's slack at each end of the span.
-    //
-    // The ends, because a body is three cells wide and stands with one edge out
-    // over the lip while it steps on and off the head of the ladder. The depth,
-    // because settling on to uneven ground and landing out of a dance both put a
-    // body a few pixels under the line for a frame or two -- seven is the worst
-    // the suite produces -- and a few pixels under the line is not down a hole.
-    // Nothing is given away by allowing it: a working is hundreds of pixels
-    // deep, so a body that has gone through a wall is nowhere near this mark.
+    // The ladder rule: a working is reached and left at its ladder (it has
+    // exactly one link out, route.js), so a body under the ground line and
+    // outside the span of every working went through a wall. A body's slack
+    // at each end, because a body stands with one edge over the lip at the
+    // head of the ladder; a body's slack on the depth, because settling and
+    // landing put a body a few pixels under the line for a frame or two, and
+    // a working is hundreds deep.
     if (feet > gy + WORKER) {
       const down = WORKINGS.some(key => {
         const way = all[key];
@@ -311,11 +195,9 @@ export function verifyWorld() {
              `${who(w)}, feet ${Math.round(feet - gy)}px below the ground line at ${Math.round(gy)}`);
     }
 
-    // Nobody is inside the hill, or inside the floor of the hole. The way a body
-    // is on answers what is under it, and its feet belong on it -- give or take
-    // the climb lag BURIED allows for and the time BURIED_FRAMES allows it. See
-    // `deepest` for why the surface asked about is the lowest column the body
-    // stands across rather than the highest.
+    // Nobody is inside the hill or the floor of the hole, give or take the
+    // climb lag BURIED and BURIED_FRAMES allow. See `deepest` for why the
+    // surface asked about is the lowest column rather than the highest.
     const way = wayAt(w.x, w.y, all);
     const surf = deepest(w.x, way.at);
     if (feet - surf > BURIED) {
@@ -328,14 +210,10 @@ export function verifyWorld() {
     } else sunkSince.delete(w);
 
     // --- rule 9: nothing floats --------------------------------------------------
-    // The mirror of the buried rule, and the one that was missing when the gang
-    // stood a course above the finished floor of the cut and walked out on air
-    // (2026-09-14, three fixes in two releases). A body's feet belong on the
-    // highest column under any part of it; feet held up over even that are on
-    // nothing at all. A body walking a route is excused -- down a ladder, over
-    // the heap, it is between surfaces on purpose -- and so is a hop in a dance,
-    // which is back on the ground at every whole beat: the slack in frames is
-    // longer than any beat, so only a body that *stays* up there is reported.
+    // The mirror of the buried rule: feet held up over the highest column
+    // under any part of a body are on nothing at all. A body walking a route
+    // is between surfaces on purpose, and a hop in a dance is back on the
+    // ground at every beat, so only a body that *stays* up there is reported.
     const top = standTop(w.x, way.at);
     const aboard = S.tick - (w.aboardAt ?? -9) <= 1;   // in a machine's seat, see stepTender
     if (!(w.route && w.route.length) && !w.floating && !aboard && w.jigAt == null && top - feet > FLOAT) {
@@ -349,16 +227,12 @@ export function verifyWorld() {
     } else floatSince.delete(w);
 
     // --- rule 10: the cut is worked from its floor ------------------------------
-    // The floor of the cut is jagged on purpose, and a body standing on it stands
-    // on the column under its middle -- the dig's rule (`stepQuarrier`), and since
-    // 2026-09-14 the walk's too (`feetOn`). Before that the walk used the
-    // highest-of-three rule the yard uses, and over every dip the two disagreed
-    // by a course: the whole gang floating out along the floor to the ladder,
-    // inside rule 9's slack because a course is less than a body. So the rule is
-    // asked to the cell, against `cutTop` itself rather than through `feetOn`,
-    // because a check that reads the answer off the code it is checking is not
-    // a check. Same shape of slack as the others: feet ease to the floor over a
-    // few frames after a column under them is cut away.
+    // A body on the jagged floor of the cut stands on the column under its
+    // middle (`stepQuarrier`, `feetOn`); the yard's highest-of-three rule
+    // disagrees by a course over every dip, which is inside rule 9's slack, so
+    // this is asked to the cell against `cutTop` itself rather than through
+    // `feetOn`. Feet ease to the floor over a few frames after a column under
+    // them is cut away.
     if (way.key === 'cut' && !(w.route && w.route.length)) {
       const floorY = cutTop(w.x + WORKER / 2);
       if (Math.abs(feet - floorY) > COURSE) {
@@ -373,16 +247,11 @@ export function verifyWorld() {
   }
 
   // --- rule 4: the counts are the crew ------------------------------------------
-  // The crew is a set of counts and `syncWorkers` builds bodies from them, so the
-  // two are the same number or one of them is a lie. A count that has gone
-  // negative is worse than wrong: `room[w.type]-- > 0` stands every body of that
-  // type down for ever, and the station runs on the number alone with nobody ever
-  // walking to it.
-  //
-  // This is checked after the frame rather than inside it on purpose. Mid-frame
-  // the two legitimately differ -- a board sets a count and `syncWorkers` walks
-  // the bodies over on the next line -- and every path that changes a count ends
-  // by calling it, so by the end of a frame they agree again.
+  // `syncWorkers` builds bodies from the counts, so the two are the same
+  // number or one is a lie. A negative count is worse than wrong:
+  // `room[w.type]-- > 0` stands every body of that type down for ever.
+  // Checked after the frame: mid-frame the two legitimately differ, and every
+  // path that changes a count ends by calling `syncWorkers`.
   let want = 0;
   for (const key of Object.values(ROSTER_COUNTS)) {
     const n = S[key];
@@ -394,16 +263,8 @@ export function verifyWorld() {
     fail('the crew is not the counts', `${S.workers.length} bodies against ${want} on the books`);
 
   // --- rule 3a: the books balance on hats ----------------------------------------
-  // A hat belongs to the station, so a station cannot have more of its kit out on
-  // heads than it owns -- that was the bug the kit table was built for: `worn`
-  // counted off the job a body was doing rather than off the hat it was wearing,
-  // so a helmet on a hauler's head stopped being counted at the rock and was lent
-  // out again. One helmet, two heads, and books that said all was well.
-  //
-  // Asked against what the station has owned since its books were last level
-  // rather than against what it owns this second, because hats can be taken away
-  // while they are still on heads and the bodies then walk them back. See
-  // `everOwned` for the whole of that.
+  // A station cannot have more of its kit on heads than it has owned since
+  // its books were last level (see `everOwned` for why not "owns now").
   for (const job of KIT_JOBS) {
     const owned = stockOf(job);
     if (!Number.isInteger(owned) || owned < 0)
@@ -419,25 +280,17 @@ export function verifyWorld() {
   }
 
   // --- rule 7: the ledgers --------------------------------------------------------
-  // The hole and the yard floor each keep a running count of their occupied
-  // cells, so that "is there room in the hole" and "how much dust is lying
-  // about" are field reads rather than walks of sixty and a hundred and twenty
-  // thousand cells. A running count is a second copy of a fact, and a second
-  // copy drifts: this is the only thing in the game that would ever notice.
-  //
-  // Which is the whole reason the floor is allowed one at all. It was left
-  // without deliberately -- a second copy drifts -- and what makes it safe now
-  // is not care taken at the six places that write those cells wholesale
-  // (`fillFlat`, `resizeGrid`, `gridFill` through `restoreGrid`, `clearFloor`,
-  // the reset in persist.js) but this line, which catches it if any of them is
-  // ever missed or a seventh is added.
+  // Each grid keeps a running count of its occupied cells so room and dust
+  // are field reads. A running count is a second copy of a fact, and a second
+  // copy drifts; this line is what makes the copy safe, not care taken at the
+  // places that write the cells wholesale.
   if (S.tick % LEDGER_EVERY === 0) {
     for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut]]) {
       if (!b.grid || b.n == null) continue;
       const real = count(b);
       if (b.n !== real)
         fail(`${name} has lost count of itself`, `ledger says ${b.n}, the cells say ${real}`);
-      // and the dust ledger beside it, which the rift swallows against
+      // The dust ledger beside it, which the rift swallows against.
       if (b.d != null) {
         const dust = countDust(b);
         if (b.d !== dust)
@@ -446,14 +299,8 @@ export function verifyWorld() {
     }
 
     // --- rule 8: the coins are in the hole or through the rift ------------------
-    // The oldest rule about the pile is that the number and the picture never say
-    // different things, and the rift keeps it by narrowing what the picture is
-    // about: what you own is what is lying in the hole plus what has gone through.
-    // That holds for every coin the hole takes, not only for dust -- the hole
-    // swallows a shard exactly as it swallows a grain -- so it is checked for
-    // every one of them rather than for the one that happened to be written first.
-    // One walk for all four, not four walks: the hole is forty thousand cells and
-    // this file's own rule is that it costs nothing worth measuring.
+    // What you own is what is lying in the hole plus what has gone through,
+    // for every coin the hole takes. One walk for all four.
     if (pit.grid) {
       const held = S.riftHeld || {};
       const inPile = { cores: 0, shards: 0, spores: 0, sparks: 0 };

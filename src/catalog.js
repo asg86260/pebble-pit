@@ -1,18 +1,14 @@
 // The catalog of notices: what each is called and what earns it, in words.
 //
-// Name and note only -- no `when`, no reach into the yard. The record is read
-// on the held sheet, where the yard is standing, and on the landing page,
-// where nothing is (title.js reads it off a save); a catalog that imported
-// the game to name a notice would drag the boards' DOM into a page that has
-// none. The predicates live with the game in notices.js and are joined to
-// these by key. See DESIGN.md: a record that comments on itself is a record
-// you read twice, so the note says WHAT YOU DID, in the words the yard would
-// use, and never a remark about it.
+// Name and note only, no reach into the yard: the landing page reads this off
+// a save with no game booted, and importing the game would drag the boards'
+// DOM into a page that has none. The predicates live in notices.js, joined by
+// key. The note says what you did, never a remark about it (DESIGN.md).
 
 import { NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE } from './config.js';
 
-// The ladders are built from their tables rather than written out, so the count
-// on the board and the thresholds in config.js cannot drift apart.
+// Built from the config tables so the count on the board and the thresholds
+// cannot drift apart.
 const ladder = (prefix, list, name, note) =>
   list.map((n, i) => ({ key: prefix + i, name: name(n, i), note: note(n, i) }));
 

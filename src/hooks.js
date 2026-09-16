@@ -1,15 +1,7 @@
-// The handles on the game, for checks and for the dev panel.
-//
-// Everything here reaches into the yard and changes it: hire six people, dig the
-// hole out, hand over a thousand dust, run twenty seconds of game in a few
-// milliseconds. None of it is reachable while playing -- the shell hangs these
-// on `window` under `__` names, and the dev panel and the checks call them from
-// there -- and none of it draws or touches the page.
-//
-// They live here rather than in the shell because both tiers of checks need
-// them: the browser suite calls `window.__crew`, and the node checks import
-// `crew` from this file. One implementation, so a hook cannot mean two
-// different things depending on which suite asked.
+// The handles on the game, for checks and for the dev panel. None of it is
+// reachable while playing and none of it touches the page. Both tiers share
+// this one implementation (the browser suite through `window.__`, the node
+// checks by import), so a hook cannot mean two things.
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
@@ -61,18 +53,14 @@ import { verifyWorld, resetVerify } from './verify.js';
 import { JOB, TYPE } from './jobs.js';
 import { dustUnder } from './hands.js';
 
-// clear the yard: the dust lying about and anything the sites have given up and
-// nobody has carried in. Both are 'what is lying around out there'.
 // --- the machines ---------------------------------------------------------------
-// Set a machine's facts outright, for a check that wants one standing without
-// paying for it first. A check about *buying* one must use `__buy` and never
-// this, or it asserts nothing about the gate or the kit.
+// A machine's facts set outright. A check about *buying* one must use `__buy`
+// and never this, or it asserts nothing about the gate or the kit.
 export const machineSet = (which, o = {}) => {
   const m = machine(which);
   if (!m) return null;
-  // Buying and unbuying, and nothing else. There is no `on`: a machine runs when
-  // somebody is standing at it, so a check that wants one stopped takes its
-  // tender off with `__assign` -- through the same button a player would use.
+  // There is no `on`: a machine runs when somebody is standing at it, so a
+  // check that wants one stopped takes its tender off with `__assign`.
   if (o.bought != null) m.bought = !!o.bought;
   if (o.driven != null) m.driven = !!o.driven;
   rebalance();
@@ -82,9 +70,8 @@ export const machineSet = (which, o = {}) => {
   return { ...m };
 };
 
-// Every station given every slot it will ever have, which is what the machines
-// are gated behind. A check that wants to buy one should not have to know that
-// the numbers are five and seven.
+// Every station given every slot it will ever have and a full set of hats,
+// which is what the machines are gated behind.
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
@@ -92,15 +79,10 @@ export const fullSites = () => {
   S.rockhandSpeedLevel = LADDER;
   S.quarryOpen = true;
   S.farmOpen = true;
-  // And a full set of specialists, which is the other half of what a machine is
-  // gated behind. A check that wants a machine should not have to know that the
-  // hats are called breakers, blasters and growers -- nor how many make a set,
-  // which is `kitCap` and is a smaller number than the complement now.
   S.breakers = Math.max(S.breakers, kitCap(JOB.ROCK));
   S.blasters = Math.max(S.blasters, kitCap(JOB.QUARRY));
   S.growers = Math.max(S.growers, kitCap(JOB.FARM));
-  // The shack too: the rock's own rows are sold there now, so a yard with every
-  // other door open and no hut is a yard missing a board rather than a building.
+  // The rock's own rows are sold at the shack.
   S.shackOpen = true;
   resite();
   rebalance();
@@ -120,8 +102,8 @@ export const clearFloor = () => {
 
 export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); S.dirty = true; };
 
-// The hut is settled rather than left to scoot: a jump is many rocks in one
-// frame, and the hut walks out for one rock at a time.
+// The hut is settled rather than left to scoot: it walks out one rock at a
+// time, and a jump is many rocks in one frame.
 export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); S.dirty = true; };
 
 export const preview = n => {
@@ -129,7 +111,7 @@ export const preview = n => {
   S.boulderNo = n;
   const size = rockSize(), d = depthOf();
   S.boulderNo = keep;
-  // a hill w by h, roughly half of that box filled, at about half the full depth
+  // A hill w by h, roughly half of that box filled, at about half the depth.
   return { boulder: n, depth: d, cells: size,
            approxRock: Math.round(size.w * size.h * 0.5 * d * 0.55) };
 };
@@ -138,33 +120,24 @@ export const next = () => { clearBoulder(); S.chips = []; };
 
 export const drop = () => { dropCore(); S.dirty = true; };
 
-// a lot of birds now, rather than in a minute. It clears whatever was still up
-// there first, so a check that asks for a flock gets that flock and not it plus
-// the leavings of the last one.
+// A flock now. Clears whatever was still up there first, so a check gets that
+// flock and not the leavings of the last one.
 export const birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(); return BIRDS.length; };
 
 export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb + wz;
   S.rockhands = m; S.quarriers = sp; S.farmhands = f; S.scholars = lb;
-  // The sky holds one body per hat, so a hook asked for wizards is given the
-  // hats to put them in -- the same way it is given benches for quarriers.
+  // The sky holds one body per hat.
   S.wizardHats = Math.max(S.wizardHats, wz);
   S.wizards = wz;
-  // Every job this hook does not take an argument for goes to nought. It says
-  // what the whole crew is doing, so a count it leaves standing is a count from
-  // whatever ran before it -- and bodies quietly disappear into a station the
-  // caller never mentioned. That is exactly what happened when the scrubbing
-  // house became a real job and this line did not know about it: two bodies a
-  // check never asked for walked off to a building that was not even open, and
-  // twenty checks further down the suite lost their haulers to it.
+  // Every job this hook takes no argument for goes to nought: it says what
+  // the whole crew is doing, and a count left standing from whatever ran
+  // before walks bodies off to a station the caller never mentioned.
   S.purifiers = 0;
   S.janitors = 0;
-  // And every machine goes back in the box. This is the same trap as the
-  // purifiers above, one level worse: a machine left standing by whatever ran
-  // before does not merely move bodies about, it rewrites what the next
-  // `__crew(0, 0, 3)` is *allowed* to mean -- three quarriers asked for, one
-  // machine's worth permitted, and two of them quietly carrying dust while a
-  // check swears it staffed the cut.
+  // Every machine goes back in the box, for the same reason one level worse:
+  // a machine left standing rewrites what the next `__crew(0, 0, 3)` is
+  // allowed to mean.
   for (const m of MACHINES) {
     const r = machine(m.key);
     if (r) { r.bought = false; r.tookKit = false; }
@@ -172,15 +145,12 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   S.lent = [];                    // and nobody is on loan: these counts are the whole crew
   if (wz > 0) openMeteor();
-  // The quarry and the plot only hold so many, so a hook asked for four down the
-  // quarry gets a quarry with four benches in it rather than two of the four
-  // sent back to carrying dust.
+  // A hook asked for four down the quarry gets four benches, not two sent
+  // back to carrying.
   S.benchLevel = Math.max(S.benchLevel, sp - QUARRY_BENCH0);
   S.plotLevel = Math.max(S.plotLevel, f - FARM_PLOTS0);
-  // The places open BEFORE the crew are shared out, because sharing them out is
-  // what reads the room. Harmless while a shut station still reports standing
-  // room in it -- which is what `benches()` does, see the note on `__assign`
-  // below -- and wrong the moment anything asks whether the place is there.
+  // The places open BEFORE the crew are shared out, because sharing them out
+  // is what reads the room.
   if (sp > 0) S.quarryOpen = true;
   if (f > 0) S.farmOpen = true;
   resite();
@@ -189,28 +159,19 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   syncWorkers(); buildShop(); S.dirty = true;
 };
 
-// dev: the story put past a shield without raising it. Each failed shield is
-// what opens the next station (DESIGN.md, "The shields are the spine"), so a
-// check about buying the quarry or the tower the player's way stands its yard
-// here first -- the setup it is not about -- and a check about a shield
-// never touches this, or it asserts nothing about the row.
+// The story put past a shield without raising it: each failed shield opens
+// the next station (DESIGN.md, "The shields are the spine"). A check about a
+// shield never touches this, or it asserts nothing about the row.
 export const answered = (...kinds) => {
   for (const k of kinds) if (!S.shieldsDone.includes(k)) S.shieldsDone.push(k);
   buildShop(); S.dirty = true;
   return [...S.shieldsDone];
 };
 
-// dev: the tower's own two, without paying for either. `openMeteor` is what the
-// row does -- the sky is opened and something is put in it -- and `wizardHat`
-// is the tower finishing one this instant rather than in two minutes.
-// dev: tear the hole open, without filling it first.
-//
-// There is no row that summons one any more -- the hole collapses on its own the
-// first time it cannot take a grain (see `throughRift` in pit.js) -- so a check
-// about what the rift DOES would otherwise have to bank two hundred thousand
-// dust to get one, which is a check about filling a hole.
-// Straight to the end of the arc: torn, fed past the threshold and drowned,
-// with no gulp left to run -- the state every endgame check and scene means.
+// Straight to the end of the arc: torn, drowned, no gulp left to run. The
+// hole tears on its own the first time it cannot take a grain (`throughRift`
+// in pit.js), so a check about the rift would otherwise be a check about
+// filling a hole.
 export const openRift = () => {
   S.riftOpen = true;
   S.drowned = true;
@@ -220,8 +181,7 @@ export const openRift = () => {
   S.dirty = true;
 };
 
-// And the middle of it: the torn era, the disc hanging and growing. `ate`
-// positions it along its growth without waiting for a million grains.
+// The torn era: `ate` positions the disc along its growth.
 export const tearRift = (ate = 0) => {
   S.riftOpen = true;
   S.drowned = false;
@@ -241,15 +201,11 @@ export const openMeteor = () => {
   S.dirty = true;
 };
 
-// dev: put a hat on the go, so the bar and the lit windows can be looked at
-// without waiting two minutes for one.
+// A hat on the go, to look at. The work is the real one (same row, same
+// site, same clock), started without paying.
 export const brewWizard = () => {
   openMeteor();
   S.towerOpen = true;
-  // Put the work on directly rather than through the shop: what this hook is
-  // for is a hat part way along to look at, and making a check bank three
-  // currencies first would be a check about paying rather than about brewing.
-  // The work itself is the real one -- same row, same site, same clock.
   const u = everyRow().find(r => r.key === TYPE.WIZARD);
   if (u && !workOn(TYPE.WIZARD)) start(u.site, u, null);
   S.dirty = true;
@@ -266,10 +222,9 @@ export const wizardHat = (n = 1) => {
   S.dirty = true;
 };
 
-// dev: hand the stations their kit without paying for it. The counts are the
-// hats on the stands; `stepKit` walks the bodies over to wear them. `learned`
-// answers the three shields that open the kit rows (rows-kit.js), for a check
-// that wants to buy a hat the player's way without raising a shield first.
+// The stations' kit without paying: the counts are the hats on the stands,
+// and `stepKit` walks the bodies over. `learned` answers the three shields
+// that open the kit rows (rows-kit.js).
 export const kit = (o = {}) => {
   if (typeof o !== 'object') o = {};
   for (const k of ['breakers', 'carters', 'blasters', 'growers'])
@@ -282,47 +237,29 @@ export const kit = (o = {}) => {
   rebalance(); syncWorkers(); buildShop(); S.dirty = true;
 };
 
-// dev: move one body between jobs, the same way the board does
-//
-// ...and open the place first, which is what `__crew` above already does for
-// the jobs it is handed. The board can only ever send somebody to a station
-// that is standing, because a shut station has no board to press -- so the
-// asymmetry between these two handles was the only way to reach a state the
-// game itself has no route to, and a check reached it: two quarriers were
-// assigned to a quarry nobody had dug, walked to where the cut will be, and
-// stood twenty-four pixels under the ground line inside a working `ways()` has
-// no entry for. `verify.js` reported it as a body under the yard, which is
-// exactly what it was.
-//
-// The deeper reason it was possible is that `benches()` and `plotCount()` count
-// what a quarry or a farm WOULD hold -- they are read by the drawing as much as
-// by the staffing -- so the floor plan reports standing room for a hole in the
-// ground that is not there. Gating `capOfBare` on the place being open is the
-// rule that would say so once for everybody, and it is written down in TODO.md
-// rather than done here: it moves bodies in every check that ever staffed a
-// station before opening it, which is a change worth making on its own and not
-// as a rider on a hook.
+// Move one body between jobs the way the board does, opening the place
+// first: the board can only send somebody to a station that is standing, and
+// `benches()` and `plotCount()` report standing room for a hole that is not
+// there, so without this a body walks to where the cut will be and stands
+// under the ground line (gating `capOfBare` on the place is in TODO.md).
 const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
 export const assign = (job, d = 1) => {
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
   assignJob(job, d);
 };
 
-// dev: rebuild the boards, for a check that changed the game behind their back
+// Rebuild the boards, for a check that changed the game behind their back.
 export const rebuildBoards = () => { buildShop(); };
 
-// dev: and fill the rows in. Building a board makes the row elements; the words
-// and the prices in them are written by the frame loop while the board is open,
-// so a check that wants to read a price off a row it never walked up to has to
-// ask for them.
+// The words and prices in a row are written by the frame loop while the
+// board is open, so a check reading a row it never walked up to asks here.
 export const fillBoard = () => {
   buildShop();
   refresh(document.getElementById('shop'), UPGRADES, null);
 };
 
-// dev: put every plot back to bare earth. A plot nobody is working keeps its crop
-// for ever, so a check that wants to watch one come ripe has to start from a
-// farm that is not already standing full of somebody else's.
+// Every plot back to bare earth; a plot nobody is working keeps its crop for
+// ever.
 export const plots = () => {
   S.plots = S.plots.map(() => 0);
   S.plotTone = S.plotTone.map(() => 0);
@@ -333,8 +270,6 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
   for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'rockhandSpeedLevel',
                    'rockhandPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
-                   // The two grounds' yield ladders, which climb their own
-                   // fields exactly as the speed ones beside them do.
                    'cropLevel', 'seamLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'fanLevel', 'riftLevel',
@@ -345,48 +280,29 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
   buildShop(); S.dirty = true;
 };
 
-// Put a body where you want it. Most of what a check waits for is a worker
-// walking the length of the world, which proves nothing the walking tests do
-// not already prove and costs half a minute a time.
-// look somewhere, for a screenshot or a check that wants to see the far end
 // --- the rules, watched from the inside ---------------------------------------
-// Whether `fast` checks the world's rules after every frame it turns. Off, and
-// off for good, unless somebody asks: play never asks, nothing in main.js
-// reaches this, and the browser suite does not set it either. The node tier
-// turns it on for every group (see test/helpers.mjs), which is what makes every
-// check in it a watcher for every rule in verify.js.
-//
-// It is a flag rather than a wrapper because `fast` is the one door every check
-// runs the yard through, and a rule that is only checked when somebody
-// remembered to wrap the call is a rule that is checked in the files that never
+// Whether `fast` checks the world's rules after every frame it turns. Off
+// unless somebody asks; the node tier turns it on for every group
+// (test/helpers.mjs). A flag rather than a wrapper because `fast` is the one
+// door every check runs the yard through, and a rule only checked where
+// somebody remembered to wrap the call is checked in the files that never
 // broke it.
 let verifying = false;
 export const setVerify = (on = true) => { verifying = !!on; resetVerify(); return verifying; };
 
-// Run the yard forward without waiting for it. Everything that asks the time
-// asks the clock, so this is the same game running, just with the handle turned
-// by hand: a check that wants to watch a worker walk two thousand pixels runs
-// the steps instead of sitting through the seconds, and gets the same answer
-// every time rather than one that depends on how fast the machine is.
-// `hz` is what rate to pretend the machine is drawing at. It defaults to the
-// sixty the game is tuned in, which is what every check has always used and
-// what keeps them all measuring the same numbers -- but the whole point of the
-// yard being on the clock rather than on the frame is that thirty and a hundred
-// and twenty do the same amount of yard per second, and the only way to check
-// that is to be able to ask for them.
+// Run the yard forward without waiting for it: the same game with the handle
+// turned by hand, so a check gets the same answer every time. `hz` is the
+// rate to pretend the machine is drawing at; thirty and a hundred and twenty
+// should do the same amount of yard per second, and this is how to ask.
 export const fast = (seconds = 1, hz = 60) => {
   const frames = Math.max(1, Math.round(seconds * hz));
   const ms = 1000 / hz;
   for (let i = 0; i < frames; i++) {
-    // the same shape as a real frame, held included: a check that presses space
-    // should see what a player pressing space sees
+    // The same shape as a real frame, held included.
     if (S.paused) continue;
     advance(ms);
     step();
-    // and then the rules, if anybody has asked for them. See verify.js: this one
-    // line is what turns every check in the suite into a watcher for every rule
-    // there, and it throws on the frame a rule breaks rather than at the end of
-    // the run, so the report names the frame instead of the scenario.
+    // Throws on the frame a rule breaks, so the report names the frame.
     if (verifying) verifyWorld();
   }
   S.dirty = true;
@@ -394,9 +310,8 @@ export const fast = (seconds = 1, hz = 60) => {
 };
 
 export const setAir = (o = {}) => {
-  // A sky wound up from here was never climbed into, so it is filled in rather
-  // than left for the crew to make -- see `fillSky`. In play nothing appears in
-  // the band that did not go up there.
+  // A sky wound up from here was never climbed into, so it is filled in
+  // (`fillSky`); in play nothing appears in the band that did not go up there.
   if (o.haze != null) { S.haze = o.haze; fillSky(); }
   if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
@@ -414,7 +329,7 @@ export const toss = (kind, x, y = S.groundY - 60) => {
   if (v) spawnChip(x, y, 0, 0, someFind(v));
 };
 
-// take a few grains off a pile, the way a sweep of the brush does
+// A few grains off a pile, the way a sweep of the brush does.
 export const takeFromPile = (key, n) => {
   const p = S.piles.find(q => q.key === key);
   if (!p) return 0;
@@ -438,86 +353,55 @@ export const placeBody = (type, x) => {
   return !!w;
 };
 
-// dev: drop whatever the lab is working on. A group that starts research and
-// walks away leaves every later lab row disabled, which reads as a broken test
-// somewhere else entirely.
+// A group that starts research and walks away leaves every later lab row
+// disabled, which reads as a broken test somewhere else entirely.
 export const abandon = () => { abandonAt('lab'); buildShop(); S.dirty = true; };
 
-// back to a new game, for a check that wants a known state
-// dev: back to a game nobody has played. The opening is skipped unless it is
-// the thing being looked at: five seconds of two squares talking in front of
-// every check in the suite is five seconds of nothing being checked.
-// `fresh` says whether this is a new *run* as well as a new game, and here it is
-// off. That is not an oversight. A player's reset draws a seed of its own -- it
-// is a new run, and `reset` in persist.js does it for the button in the yard --
-// but this is the hook, and the hook is what a check calls in the middle of a
-// seeded run. A group that resets twice and compares the two halves is asking
-// for the same yard both times; drawing a fresh seed under it hands it two
-// different ones and there is nothing it can conclude. So a reset through here
-// clears the game and keeps the run.
+// Back to a game nobody has played, opening skipped unless it is the thing
+// being looked at. `fresh` is off because this is what a check calls in the
+// middle of a seeded run: a group that resets twice and compares the halves
+// wants the same yard both times. A player's reset draws its own seed.
 export const newGame = (intro = false, fresh = false) => {
   resetGame(fresh);
   if (!intro) skipIntro();
   // A yard the last group left held would stall this one: `fast` does
-  // nothing held, and every check and every scene starts here.
+  // nothing held.
   S.paused = false;
 };
 
-// Say which run this is, and start it.
-//
-// A seed is a fact about a whole run, not a setting you can change halfway
-// through one: the yard already standing when the seed arrives was built out of
-// the old chance, so seeding without clearing it gives a game that is half one
-// run and half another, and asking for the same seed again does not give it
-// back. So this does both, always, and there is deliberately no way to do only
-// the first. Hand it a number, get a yard that will do exactly what it did the
-// last time that number was handed over.
-// What it does is boot the game again, in the order the page boots it: the
-// chance from the seed, the clock from nothing, the yard back to what state.js
-// declares (see `BLANK` there -- `reset` alone leaves a dozen fields of the last
-// run behind, which is invisible in play and fatal to a repeat), the world laid
-// out over it, and then the new game. The weather is part of laying the world
-// out, and has to be: the drifting field of motes remembers which camera it last
-// slid from, so a field left over from the last run wraps end to end on the
-// first frame of this one and a hundred and fifty draws go by that did not go by
-// before.
+// Say which run this is, and start it. A seed is a fact about a whole run,
+// so this always clears the yard too; seeding one already standing gives a
+// game half one run and half another. It boots in the order the page boots:
+// the chance, the clock, the yard back to `BLANK` (`reset` alone leaves
+// fields of the last run behind, invisible in play and fatal to a repeat),
+// the world laid out over it (the weather is part of that, and a field left
+// over from the last run wraps on the first frame and draws differently),
+// then the new game.
 export const seedGame = n => {
   seedRng(n);
   restartClock();
   for (const k of Object.keys(BLANK)) S[k] = structuredClone(BLANK[k]);
   resize(settleIntoWorld);
   newGame();
-  // Where the view is left is deliberately not settled here. Restoring BLANK
-  // puts the camera back to nought, which is right for a yard nobody is looking
-  // at -- the node tier draws nothing and never asks -- but wrong for a page,
-  // where the last line of main.js's boot opens the view on the rock. That line
-  // belongs to the page rather than to the game, so the browser suite does it
-  // for itself (see `newRun` in selftest/kit.js) and this stays the game booting.
+  // The view is not settled here: opening it on the rock is the page's line,
+  // so the browser suite does it for itself (`newRun` in selftest/kit.js).
   return seed();
 };
 
-// dev: come back to the game the way a page refresh does -- write what is here,
-// then read it back into an empty yard. Nothing else in the checks can tell the
-// difference between a reload and this.
-// A page that has just been opened: the weather in flight is gone, because the
-// module holding it came back empty, while the save on disk is untouched. The
-// node yard keeps one module alive for a whole file, so without this a check
-// about restoring the sky passes on motes that were simply never cleared.
+// A page just opened has the weather in flight gone, because the module
+// holding it came back empty. The node yard keeps one module alive for a
+// whole file, so without this a check about restoring the sky passes on
+// motes that were never cleared.
 export const coldSky = () => clearSky();
 
+// Come back to the game the way a page refresh does.
 export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 
-// A reload that is actually cold.
-//
-// `reload` above is `persist()` then `restore()` in one process, so anything
-// still standing in `S` survives into the load. That is fine for what it was
-// for and useless for checking the *order* things are restored in: a machine
-// still running in memory made `restore`'s rebalance clamp by accident, and hid
-// the fact that the records were being laid down thirty-seven lines after it.
-//
-// So this blanks what a fresh page would not have, and makes the save do the
-// work. It is a dev hook rather than a path the game takes, which is why it can
-// afford to reach into S like this.
+// A reload that is actually cold. `reload` is `persist()` then `restore()`
+// in one process, so anything still standing in `S` survives into the load,
+// which hides the *order* things are restored in (a machine still running in
+// memory made `restore`'s rebalance clamp by accident). This blanks what a
+// fresh page would not have and makes the save do the work.
 export const coldReload = () => {
   S.dirty = true;                  // or a yard whose last act did not dirty it restores the save before
   persist();
@@ -528,28 +412,17 @@ export const coldReload = () => {
 };
 
 
-// dev: the trestle up, without paying for it.
-//
-// It replaced `__lab`, and the checks that called that one now call this: what
-// they wanted was the multiplier rows on a board, and the construction bench is
-// what gates them since the lab went. See DESIGN.md, "The lab is deleted".
-
-// dev: the shed, without paying for it -- for a look at what the crew do with it
 export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
 
-// dev: the gang's hut, for a check whose subject is what is ON its board rather
-// than how it got there. The check that buys it goes through `unlockshack` on
-// the bench, like a player -- see test/shack.test.mjs.
+// For a check whose subject is what is on the shack's board rather than how
+// it got there; the check that buys it goes through `unlockshack`.
 export const openShack = (open = true) => { S.shackOpen = open; buildShop(); S.dirty = true; };
 
-// dev: the table, without the twenty cores it costs -- for a check about the
-// wheel, which is not a check about how the building gets built
 export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S.dirty = true; };
 
 
-// dev: put a tonic on a body -- a dose on a worker to look at the buff mark, or a
-// dose in a stirrer's hand to look at it being carried. For screenshots only; the
-// real round is `stepStirrer`.
+// A tonic on a body, or in a stirrer's hand, for screenshots only; the real
+// round is `stepStirrer`.
 export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
   const w = S.workers.find(b => b.type === type);
   if (!w) return false;
@@ -557,9 +430,8 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
     w.holding = 1; w.goal = 'out';
     w.dealTo = S.workers.find(b => b.type !== TYPE.STIR) || null;
   } else {
-    // Added to whatever it already carries, the way a dealt one is, so that
-    // `__dose(...)` twice with two tonics gives you a body under both -- which
-    // is the state worth looking at.
+    // Added to whatever it already carries, so two calls give a body under
+    // both tonics.
     w.doses = [...(w.doses || []).filter(d => d.tonic !== tonic),
                { tonic, until: clockNow() + 999999 }];
   }
@@ -567,12 +439,9 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
   return true;
 };
 
-// The investment beat three boards wait on -- see `invested` in
-// upgrades/site.js. A check whose subject is a multiplier, the casino or the
-// tower is not about how you come to have two places and a second rock, so it
-// says so here rather than buying its way there. The boulder is set directly
-// rather than through `jump`, which would make a new rock under a check that
-// may be standing on one.
+// The investment beat three boards wait on (`invested` in upgrades/site.js).
+// The boulder is set directly rather than through `jump`, which would make a
+// new rock under a check that may be standing on one.
 export const invest = () => {
   S.farmOpen = true;
   S.quarryOpen = true;
@@ -585,48 +454,23 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
   if (o.cores) { S.cores += o.cores; S.seenCore = true; }
-  // Red, the same as the rest. It was the one currency this could not hand out,
-  // which meant every check about spending it had to bank spark grains in the
-  // hole by hand first -- and a dev hook that knows three of the four counters
-  // is a hook you have to remember the exception to.
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
-  // And the grains that go with them. Every one of these counters is a *pile*
-  // and not a number, exactly as dust is -- the coin you own is the coin lying
-  // in the hole -- so a handout that moved the counter and not the cells was
-  // the game's central rule broken by its own dev hook, for four coins out of
-  // five. `seedPitCores` lays down what the hole will take and sends the rest
-  // through the rift, which is where it would have gone in play.
+  // Every counter is a *pile*, not a number: the coin you own is the coin
+  // lying in the hole, so the cells move with the counter. `seedPitCores`
+  // lays down what the hole will take and sends the rest through the rift.
   if (o.shards || o.spores || o.cores || o.sparks) seedPitCores();
-  // And dust, which is now the fifth counter and the one every row asks for --
-  // see `billOf` in upgrades.js. The note above about knowing three of the four
-  // applies twice over: a check granting shards to buy a shard row got a row it
-  // still could not afford, and failed as "the row did nothing".
-  //
-  // Through `give` rather than by adding to `S.stored`, because dust is the one
-  // currency that is a *pile* and not a number: the counter and the grains in
-  // the hole are the same fact, and a handout that moved one without the other
-  // would be the game's central rule broken by its own dev hook.
-  //
-  // And whatever the hole will not take goes through the rift, exactly where it
-  // goes in play. Without this a hook asked for two hundred thousand dust handed
-  // over 37,566 of it and no word about the rest -- the hole is the ceiling on
-  // the *pile*, and it stopped being the ceiling on what you own the day the
-  // rift was torn. A check about an endless ladder needs more dust than a hole
-  // holds, which is the whole point of the ladder.
+  // Dust through `give`, for the same reason, and whatever the hole will not
+  // take through the rift, where it goes in play: a check about an endless
+  // ladder needs more dust than a hole holds.
   if (o.dust) {
-    // Only as many grains as the hole could possibly take are offered to it:
-    // `give` banks one at a time, so handing it a million is a million tries for
-    // a hole that stopped taking any after thirty-seven thousand.
-    //
-    // Room in the *pile*, not in the dust account: a core granted a moment ago
-    // sits in the hole taking a cell and is not dust. And the pile's own answer
-    // is the last word: the count credits a few cells the search cannot fill
-    // (a ceiling of 47.0000001 rounds to a row the column never gets), so the
-    // last grains offered can still be refused, and a refusal tears the rift
-    // for real -- the gulp, the shake, and the tearing's cutscene over every
-    // scene that stood on a rich yard. A grant is a handout and the tear is an
-    // event, so the event is dropped the way a save drops it (persist.js): the
-    // rift a grant opens is simply open.
+    // Only as many grains as the hole could take are offered: `give` banks
+    // one at a time, so a million is a million tries on a full hole. Room in
+    // the *pile*, not the dust account, since a granted core takes a cell.
+    // The pile's own answer is the last word (the count credits a few cells
+    // the search cannot fill), and a refusal tears the rift for real, with
+    // the cutscene over every scene on a rich yard; a grant is a handout, so
+    // the event is dropped the way a save drops it and the rift is simply
+    // open.
     const room = pitRoom();
     const gulp = S.riftGulp || 0;
     const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
@@ -639,48 +483,32 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
 
 export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = true; };
 
-// dev: whatever the yard is in the middle of building, standing this instant.
-//
-// Everything past the bench is built rather than had (see works.js), and a
-// *scene* is a picture of a yard rather than a run of one -- `tools/look.mjs`
-// wants the jaw on the floor of the cut, not six minutes of quarriers digging
-// towards it. A check about what a purchase does must still buy it and wait,
-// which is what `buyBuilt` in the checks is for; this is the shortcut, and it is
-// deliberately a separate word so the two can never be confused.
+// Whatever the yard is building, standing this instant. A check about what a
+// purchase does must still buy it and wait (`buyBuilt` in the checks); this
+// is the shortcut for scenes.
 export const finishWorks = () => {
   const done = [];
-  // Every work at every site, not the front one at each: a lab with two benches
-  // has two on the go, and a hook that finished one of them would leave a check
-  // waiting on the other with no way to say so.
+  // Every work at every site, not the front one at each.
   for (const site of SITES) {
     for (const w of worksAt(site)) {
     done.push(w.key);
     // Through the ordinary runner, so a finished work does exactly what a
-    // finished work does: the row's own `buy`, the mark, and the yard re-staffed.
+    // finished work does.
     w.done = w.of;
     }
   }
-  // Only the front of each site's line lands in a step, and the next steps up
-  // behind it -- so it is stepped until nothing filled-in is left standing.
+  // Only the front of each site's line lands in a step, so it is stepped
+  // until nothing filled-in is left standing.
   for (let guard = 0; guard < 99 && SITES.some(site => worksAt(site).some(w => w.done >= w.of)); guard++) stepWorks(0);
   buildShop(); S.dirty = true;
   return done;
 };
 
-// The rows themselves, for a check about what a row *is* rather than about what
-// the board looks like: how far up its ladder it is, whether it is finished, and
-// whether pressing it does anything.
+// The bench's rows raw, rows the board is not showing included.
 export const upgrades = () => UPGRADES;
 
-// Every row on every board, with whether it is actually being offered and what
-// it costs. `upgrades` above hands back the bench's array raw -- rows the board
-// is not showing included -- which is fine for what it was for and useless for
-// asking "is this row on offer yet", which is the whole of what a gate is.
-// Every board, as its rows and its section key-lists, so a check can ask whether
-// the two agree. They are two separate edits and only one of them is where the
-// row is written, which is how five rows came to exist on no board at all.
 // Take one row's key out of every section, to prove a board still draws it.
-// `null` puts them all back. Only a check ever calls this.
+// `null` puts them all back.
 let unsectioned = null;
 export const unsection = key => {
   const all = [SECTIONS, TOWER_SECTIONS,
@@ -703,24 +531,22 @@ export const unsection = key => {
   return found;
 };
 
+// Every board as its rows and its section key-lists, so a check can ask
+// whether the two agree; they are two separate edits.
 export const boards = () => [
-  // What the bench actually draws: everything that has not moved to a board of
-  // its own. A row names its sheet with `board` and the bench takes the rest --
-  // the same question `listFor` in board.js asks. Asking `UPGRADES` flat here
-  // would report the crew's gear and the trestle's ladders as bench rows nobody
-  // had given a heading to, which is the opposite of what happened to them.
+  // What the bench actually draws: a row names its sheet with `board` and the
+  // bench takes the rest, the same question `listFor` in board.js asks.
   { name: 'bench',  keys: UPGRADES.filter(u => !u.board).map(u => u.key),
                                                           sections: SECTIONS.map(x => x.keys) },
   { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
-  // ...and the kit row lodging on each -- see `lodgers` in upgrades.js.
+  // With the kit row lodging on each (`lodgers` in upgrades.js).
   { name: 'quarry', keys: [...QUARRY_UPGRADES, ...lodgers('quarry')].map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
   { name: 'farm',   keys: [...FARM_UPGRADES, ...lodgers('farm')].map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
   { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) },
-  // The rock's board. Its rows are the same objects the bench used to draw, so
-  // they are already in UPGRADES above -- what is checked here is that they are
-  // on this sheet and off that one.
+  // The shack's rows are objects in UPGRADES above; what is checked is that
+  // they are on this sheet and off that one.
   { name: 'shack',  keys: shackRows().map(u => u.key),    sections: shackSections().map(x => x.keys) }
 ];
 
@@ -728,59 +554,33 @@ export const allRows = () => everyRow().map(u => ({
   key: u.key,
   name: u.name,
   // Through the same gate a board uses, not `show` on its own: a row whose
-  // reveal has not fired yet is a row no board would draw, and a check asking
-  // what is on the boards should be told what is on the boards. See `revealed`.
+  // reveal has not fired is a row no board would draw (`revealed`).
   shown: !!revealed(u),
-  // What the row says it gives, as the board prints it -- so a check about the
-  // board's words can read the board's words.
   gain: gainText(u),
-  // What the card says it is waiting on instead of a price -- a ladder whose
-  // next rung is in a coin the yard has no source for yet. See `coinNeeds`.
+  // What the card says it is waiting on instead of a price (`coinNeeds`).
   waits: u.waits?.() || '',
-  // Not every row has a price. A job row moves bodies, a dial sets a number and
-  // a payout row hands something over -- `billOf` would ask all three what they
-  // cost and get an exception.
+  // A job row, a dial and a payout row have no price, and `billOf` would
+  // throw asking.
   bill: (u.bill || u.cost) ? billOf(u).map(([money, n]) => [money, n]) : []
 }));
-// Any board's rows, not just the bench's. A check that wants to press the row
-// that raises a wizard should press *that row*, prices and rules and all, rather
-// than reach past it for the dev handle that sets the flag the row would have
-// set -- which is how a check ends up agreeing with a shortcut instead of with
-// the game.
-// Every row anywhere, for `buyRowByKey`. The two *station* boards were missing
-// from this list -- so `__buy('quarrybench')` answered `false`, and a check
-// written against it would have passed by asserting nothing at all. They are the
-// boards the machines' own rows live on, so it is fixed before there is a
-// machine to get it wrong.
-// The casino's rows are in here too, for the same reason the station boards
-// were added: a check that wants to put a chip down should put it down through
-// the row that puts it down, prices and rules and dead states and all.
+// Every row anywhere, for `buyRowByKey`: a check presses the row itself,
+// prices and rules and dead states and all. A board missing from this list
+// answers `false`, and a check written against it passes by asserting
+// nothing.
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
-                        // The outhouse board's own rows -- `unlockouthouse`
-                        // itself is a bench row in UPGRADES above -- and
-                        // `__buy('loopost')` has to keep reaching them or every
-                        // check that buys a janitor the player's way goes
-                        // quietly false.
                         ...OUTHOUSE_UPGRADES,
                         ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
                         ...CASINO_UPGRADES,
-                        // The house lives on the crew board, not the bench,
-                        // and is otherwise the one row in the game a check
-                        // could not buy the way a player does.
+                        // On the crew board, not the bench.
                         HOUSE_ROW];
 
-// Every bill a row will ever ask, by climbing it: the price now, then the
-// price after each rung is taken outright (`u.buy()`, the finish, not the
-// work) until the row says it is done. A ladder's dearest rung is its ninth,
-// and a check about "the biggest ask in this coin" that read rung one was
-// answering a different question -- the dome was the dearest thing in the
-// game at the foot of every ladder and outbid at the top. The house has no
-// rung and climbs on the crew count, so it is walked a room at a time. Rows
-// with no price -- dials, readings, doors -- come back empty. The bills are
-// as the row states them, clock left off. Dev only, and it leaves the yard
-// climbed: reset after.
+// Every bill a row will ever ask, by climbing it: the price now, then after
+// each rung is taken outright (`u.buy()`, the finish, not the work). The
+// house has no rung and climbs on the crew count, so it is walked a room at
+// a time. Rows with no price come back empty; the clock is left off. Leaves
+// the yard climbed: reset after.
 export const climbRow = (u, read, limit = 40) => {
   if (!(u.bill || u.cost)) return;
   if (u.key === 'house') { for (let i = 0; i < 16; i++) { read(S.crew); S.crew++; } return; }
@@ -802,20 +602,12 @@ export const climbedBills = () => everyRow().map(u => {
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);
   if (!u) return false;
-  // Did it fire? Three ways a row can say so, because there are three shapes of
-  // row. A ladder says so by its rung going up. A row that buys a *thing* says so
-  // by leaving the board. And a station's own rows -- a bench, a plot -- do
-  // neither: they stay put and there is no rung, and what moves is the figure
-  // they report. That last case used to answer `false` however well it had
-  // worked, so a check could take a bench out of the quarry and be told nothing
-  // had happened.
+  // Did it fire? Four ways a row can say so: a ladder's rung goes up, a row
+  // that buys a thing leaves the board, a station's own row moves the figure
+  // it reports, and a row that is built rather than had starts a work.
   const was = rungOf(u);
   const from = u.from ? u.from() : null;
   const showed = u.show();
-  // ...and a fourth, since everything past the bench is built rather than had:
-  // paying starts a work and nothing else moves until it lands, so the press
-  // that started it has plainly done something. Without this a check that buys a
-  // bench is told nothing happened, on the frame the cut started digging it.
   const wasOn = !!workOn(u.key);
   buyRow(u);
   return rungOf(u) > was
@@ -825,19 +617,12 @@ export const buyRowByKey = key => {
 };
 
 
-// Everything bought. Every row on every board is pressed the way a player
-// presses it -- through `buyRowByKey`, prices and rules and all -- until it
-// is at the top of its ladder or off its board, with each work finished as it
-// is started, and the boards are walked again until a whole pass buys nothing:
-// a row that only appears once another has gone is reached on the next pass.
-// The casino is left alone -- a chip put down is a wager, not an upgrade --
-// and rows with no price (jobs, dials, readings) have nothing to press.
-//
-// The machines' tuning ladders have no top (`kind: 'rung'` with no `rung`, see
-// `tuneRow`), so they go last and get `endless` rungs each: walked in board
-// order they drank every spark before the jaw was reached, and a yard with a
-// tuned ram and no jaw is not everything. The yard has to be able to pay, so
-// `grant` first. The return is every key pressed, in order.
+// Everything bought, through `buyRowByKey`, walked again until a whole pass
+// buys nothing (a row that only appears once another has gone is reached on
+// the next pass). The casino is left alone: a chip is a wager. The machines'
+// tuning ladders have no top (`tuneRow`), so they go last and get `endless`
+// rungs each, or they drink every spark before the jaw is reached. `grant`
+// first. Returns every key pressed, in order.
 export const everything = (endless = LADDER, passes = 8) => {
   const bought = [];
   const bottomless = u => u.kind === 'rung' && !u.rung;
@@ -859,8 +644,7 @@ export const everything = (endless = LADDER, passes = 8) => {
   return bought;
 };
 
-// what the pile actually looks like, sampled across the hole: dust arrives at
-// the lip, so the shape of it is the shape of how it got there
+// The pile's shape, sampled across the hole.
 export const pitProfile = (n = 20) => {
   const out = [];
   for (let i = 0; i < n; i++) {
@@ -872,16 +656,12 @@ export const pitProfile = (n = 20) => {
   return out;
 };
 
-// bank at the lip, the way a worker tips it in
-// dev: dig the hole out, so a check does not have to buy it a row at a time
-// The hole is the whole hole from the first frame, so there is nothing to dig.
-// Kept as a no-op because the panel and a check or two still say the word.
+// The hole is the whole hole from the first frame, so there is nothing to
+// dig; a no-op because the panel and a check or two still say the word.
 export const dig = () => {};
 
-// dev: dig the cut out by n cells a column, evenly, so a check can put a body
-// (or a grain) at the bottom of a working quarry without hiring a gang and
-// waiting on the swing. Goes through `digCell`, the same function a quarrier's
-// own swing calls, so the rock in the cut's grid comes out with it.
+// The cut dug out by n cells a column, through `digCell` (the same function
+// a quarrier's swing calls), so the rock in the cut's grid comes out with it.
 export const digCut = (n = 1) => {
   const cells = quarryCells();
   for (let c = 0; c < cells.length; c++)
@@ -890,13 +670,11 @@ export const digCut = (n = 1) => {
   return dugShare();
 };
 
-// dev: drop dust straight into the cut, the way a chip falling through the
-// mouth would, without waiting on a throw to land.
+// Dust straight into the cut, the way a chip falling through the mouth would.
 export const pileCut = (x, n = 1) => { for (let i = 0; i < n; i++) addGrain(cut, x); S.dirty = true; };
 
-// dev: lay dust straight on the hill, the way a chip coming down over the crest
-// does, without waiting on the throw. The rock is ground now -- see `rockSand`
-// in rock.js -- and this is how a check or a scene puts something on it.
+// Dust straight on the hill, the way a chip coming down over the crest does
+// (`rockSand` in rock.js).
 export const pileRock = (x, n = 1) => {
   let put = 0;
   for (let i = 0; i < n; i++) if (restOnRock(x, 3 + (i % 3))) put++;
@@ -904,11 +682,8 @@ export const pileRock = (x, n = 1) => {
   return put;
 };
 
-// One swing of the player's own, through the very call `input.js` makes when you
-// click the hill. It exists so a check can prove the thing DESIGN.md says twice
-// -- that a machine on the rock replaces the crew's hands and never yours -- by
-// measuring a swing rather than by reading a number off the report and comparing
-// it with itself.
+// One swing of the player's own, through the very call `input.js` makes, so
+// a check can measure a swing rather than read a number off the report.
 export const swing = (n = 1) => {
   const before = countRock();
   for (let i = 0; i < n; i++) {
@@ -920,14 +695,11 @@ export const swing = (n = 1) => {
 };
 const countRock = () => S.boulder.flat().reduce((a, b) => a + b, 0);
 
-// dev: turn one of the numbers the panel turns, from a check. Nature is every
-// ten minutes a body now, which is right for playing and useless for a check
-// that has to watch one happen -- so a check can wind it in rather than sitting
-// through it.
+// Turn one of the numbers the panel turns, from a check.
 export const tuneOne = (key, v) => tune(key, v);
 
-// ...and once the hole has said no, the rest goes straight through the rift,
-// for the reason `give` gives below.
+// Bank at the lip the way a worker tips it in; once the hole has said no, the
+// rest goes straight through the rift, for the reason `give` gives below.
 export const tip = (n, shade = 4) => {
   let full = false;
   for (let i = 0; i < n; i++) {
@@ -939,27 +711,12 @@ export const tip = (n, shade = 4) => {
   }
 };
 
-// dev: hand over dust, and dig the room to hold it. The hole turns dust away
-// when it is full, which is the game working -- but a check that wants two
-// thousand dust to spend on something else should not have to buy a pit first.
-//
-// It used to give up the first time a grain would not go in, and a grain is
-// offered to a column picked at random -- so one full column ended the whole
-// handout with the hole half empty, and a check asking for two thousand got a
-// few hundred and then failed somewhere else entirely. A refusal now means fill
-// along instead of throwing at random; only a hole that is genuinely full stops
-// it. The column it reached is kept between grains, because starting the walk
-// over for every one of them is six hundred tries a grain once the hole is
-// nearly full.
-//
-// And once the hole has said no, the rest goes straight through the rift.
-// `bankDust` on a full hole is a search of every column of the pit before the
-// rift takes the grain, and a check handing over two million dust to climb a
-// ladder paid that search two million times over -- a quarter of an hour on a
-// busy machine, on the setup of a check that was about something else. The
-// first refusal is the hole's honest answer and nothing drains between two
-// grains of the same handout, so every grain after it gets the rift's answer
-// without asking the hole again.
+// Hand over dust. A grain is offered to a column at random, so a refusal
+// means fill along instead; the column reached is kept between grains,
+// because restarting the walk is six hundred tries a grain on a nearly full
+// hole. Once the hole has said no the rest goes straight through the rift:
+// `bankDust` on a full hole searches every column first, and a check handing
+// over two million dust paid that search two million times.
 export const give = (n, shade = 4) => {
   let got = 0, col = 0, full = false;
   for (let i = 0; i < n; i++) {
@@ -983,23 +740,17 @@ export const give = (n, shade = 4) => {
 
 // --- the sky, the layer of muck, and where dust is lying ---------------------
 
-// drop one of something where you like, for a check that wants to watch it land
-// the sky, set where you want it: a rain is two hours of honest mining away, and
-// a check should not have to do two hours of honest mining
 export const skyX = () => SKY.map(moteX);
 
-// What the climbing half of the sky is drawn at. There is no fading between a
-// puff and a mote any more -- they are one object -- so this is a check that it
-// stays that way: every speck in the air, climbing or not, is at full weight.
+// A puff and a mote are one object, so every speck in the air, climbing or
+// not, is at full weight; this is the check that it stays that way.
 export const puffFades = () => SKY.filter(m => m.up).map(m => ({ d: false, f: +(m.fade ?? 1).toFixed(2) }));
 
 export const skyFades = () => SKY.map(m => +(m.fade ?? 1).toFixed(2));
 
-// anything at all in that column, at any height
 const surfaceHas = c => { for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) return true; return false; };
 
-// the leftmost and rightmost columns with anything in them, for a check about
-// where dust is allowed to lie
+// The leftmost and rightmost columns with anything in them.
 export const dustSpan = () => {
   let lo = null, hi = null;
   for (let c = 0; c < floor.cols; c++) {
@@ -1011,10 +762,8 @@ export const dustSpan = () => {
            hi: hi === null ? null : Math.round(floor.x + hi * P) };
 };
 
-// grains of ground dust lying over the mouth of the hole, which is a number
-// that should always be nought: nothing rests on an opening. A dig widens the
-// mouth under whatever was piled behind the far wall, and this is the check
-// that the ground let go of it.
+// Ground dust lying over the mouth of the hole, which should always be
+// nought: nothing rests on an opening.
 export const dustOverPit = () => {
   let n = 0;
   for (let c = 0; c < floor.cols; c++) {
@@ -1028,13 +777,11 @@ export const skyJoin = () => SKY.map(m => +(m.eased ?? 1).toFixed(2));
 
 export const skyXY = () => SKY.map(m => [Math.round(moteX(m)), Math.round(moteY(m) - S.camY)]);
 
-// how much of the layer is lying over the mouth of the hole, which is the part
-// nobody can walk onto
 export const pitTop = wx => Math.round(muckTopAt(wx));
 
 export const overPit = c => overPitMouth(c * P + P / 2);
 
-// lay the layer by hand, column by column, for a check about one patch of it
+// The layer laid by hand, column by column.
 export const muckSet = f => {
   const m = S.muck && S.muck.length ? S.muck : (S.muck = new Array(floor.cols).fill(0));
   for (let c = 0; c < m.length; c++) m[c] = f(c) || 0;
@@ -1043,20 +790,14 @@ export const muckSet = f => {
   return m.reduce((n, v) => n + v, 0);
 };
 
-// The other kind of mess, laid by hand. There was a way to set the weather's
-// muck and no way at all to set what a body left, which meant the one condition
-// that tells the two apart -- a yard whose only remaining mess is poop, with
-// nobody to shovel it -- could not be built by a check.
-// Shake somebody, without a pointer. The browser suite waggles a real cursor,
-// which is the honest test of the gesture; this is for the yard checks, which
-// care about what a shaking DOES rather than about how it is performed.
+// Shake somebody without a pointer, for the yard checks; the browser suite
+// waggles a real cursor.
 export const shake = (i = 0) => {
   const w = S.workers[i];
   if (!w) return null;
   w.lifted = true;
-  // Waggled for real, through the same function a cursor drives, so what a check
-  // sees is what a shaking actually does -- the load coming out turn by turn
-  // included. Setting `shook` by hand skipped exactly that.
+  // Waggled through the same function a cursor drives, so the load comes out
+  // turn by turn; setting `shook` by hand skips exactly that.
   const had = w.carry | 0;
   for (let i = 0; i <= SHAKE_TURNS; i++) shakeHeld(w, i % 2 ? 6 : -6);
   const shed = had - (w.carry | 0);
@@ -1064,9 +805,8 @@ export const shake = (i = 0) => {
   return { hatOff: !!w.hatOff, shed, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
 };
 
-// wave7b-assign: hold a body over a spot, through the real lift, for looking
-// at the assignment ring. The scene cannot drive a right-button drag; what it
-// wants to see is only what the yard draws while a body hangs there.
+// Hold a body over a spot through the real lift, for looking at the
+// assignment ring; a scene cannot drive a right-button drag.
 export const hold = (i = 0, x = 0, y = 0) => {
   const w = S.workers[i];
   if (!w) return false;
@@ -1095,27 +835,23 @@ export const muckOverPit = () => {
   return n;
 };
 
-// look somewhere, for a screenshot or a check that wants to see the far end
+// Look somewhere, for a screenshot.
 export const look = x => { S.camX = x; S.camTo = null; clampCam(); S.dirty = true; return Math.round(S.camX); };
 
 // --- getting about ------------------------------------------------------------
-// How a body would get from where it is to a place, in words. The checks ask
-// this rather than watching a walk and guessing at it: a route is a thing the
-// game works out, so it can be read before anybody takes a step.
+// How a body would get from where it is to a place, in words: a route is
+// worked out before anybody takes a step, so a check reads it rather than
+// watching a walk and guessing.
 export const routeOf = (i, toX) => {
   const w = S.workers[i];
   return w ? routeReport(w, toX) : null;
 };
 
-// The highest thing there is to stand on at a place: the ground, the deck of the
-// bridge, or the face of the hill where the hill reaches. Not which *way* that
-// belongs to -- the yard's floor and the hill are two ways now (see route.js),
-// and a check that wants to know whether there is rock in a column asks this and
-// compares it with the ground line.
+// The highest thing there is to stand on at a place, whichever way it
+// belongs to (route.js).
 export const surfaceAt = wx => Math.round(rockTop(wx));
 
-// Every way there is, and every link between them: the connectivity of the
-// world, which is what decides every route in it.
+// Every way there is, and every link between them.
 export const waysNow = () => {
   const all = ways();
   return { ways: Object.keys(all), links: links(all).map(l => ({ name: l.name, x: Math.round(l.x), a: l.a, b: l.b })) };
@@ -1123,16 +859,9 @@ export const waysNow = () => {
 
 
 // --- the handles ---------------------------------------------------------------
-// Every way in, under the name the checks call it by, as one table.
-//
-// There were two of these: one in console.js for the browser suite and one in
-// tools/node/yard.mjs for the node suite, each written out by hand. A hook added
-// to one of them existed in one suite and not the other, and the check that used
-// it failed in a way that had nothing to do with what it was checking.
-//
-// It is the same fault this whole file is full of examples of: a list that has
-// to be kept level with another list is a list that will not be. So there is one
-// list, and the two suites spread it.
+// Every way in, under the name the checks call it by, as one table that both
+// suites spread; a hook in one suite and not the other fails a check in a way
+// that has nothing to do with what it is checking.
 export const HANDLES = {
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
   __preview: preview, __next: next, __drop: drop,
@@ -1140,9 +869,8 @@ export const HANDLES = {
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
   __strike: forceStrike,
-  // Force the crit roll for a check: true always crits, false never, null rolls
-  // for real. A crit is a chance, and a chance a check cannot pin down is a check
-  // that passes or fails on the seed -- see src/crit.js.
+  // The crit roll forced: true always crits, false never, null rolls for real
+  // (crit.js).
   __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
@@ -1152,101 +880,60 @@ export const HANDLES = {
   __rows: allRows, __climbed: climbedBills, __boards: boards, __unsection: unsection,
   __invest: invest, __grant: grant, __dose: dose,
   __spend: spendDust,
-  // Pay a price in any coin, through the very function every row's bill goes
-  // through. Not a way of setting a counter: what a check using this is about
-  // is *how* the payment is taken -- out of the hole first, out of the rift
-  // after -- and a hook that subtracted a number would prove none of it.
+  // Pay a price through the very function every row's bill goes through, for
+  // a check about *how* the payment is taken (the hole first, the rift after).
   __pay: take,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give, __finish: finishWorks, __everything: everything,
   __dustUnder: dustUnder,          // is a press here a sweep or a look about
-  // dev: end whatever scene is running, without pressing anything.
-  //
-  // A press in the yard while a cutscene is on screen skips the scene and does
-  // nothing else, which is the rule and is right. It is also a trap for a check:
-  // a purse granted in setup can overfill the hole, which tears the rift, which
-  // plays a scene -- so a check that banks money and then presses a control an
-  // instant later is really testing the skip. This ends the scene the way its
-  // own clock would, so the press that follows is the press the check meant.
+  // End whatever scene is running. A press while a cutscene is on screen
+  // skips the scene and does nothing else, so a check that banks money (which
+  // can tear the rift, which plays a scene) and then presses a control is
+  // really testing the skip.
   __nocine: skipCutscene,
-  // The space bar, for the checks: held down or let go, and the skip it ends
-  // in, on its own.
+  // The space bar: held down or let go, and the skip it ends in.
   __holdSkip: holdSkip, __skip: skipScene,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __answered: answered, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
-  // the chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up
+  // The chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up.
   __chip: (d = 1) => pickChip(d),
-  // Setting the pot the way the board does: clicking a tonic row calls its
-  // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
-  // the same functions the pointer calls, so a check that sets the pot this way
-  // sets it the way a player does.
-  //
-  // Except the tonic, which is no longer set from a board at all: the brew is
-  // picked at the pot now (potpick.js), and a DOM popover is not something the
-  // node tier can press. So this calls the same toggle the picker's own
-  // machinery does, and it is setup rather than the route -- the route is proved
-  // by the browser check that clicks a cauldron and then a swatch. The pot is
-  // named as well as the tonic, the first one when nobody says, which is what
-  // every caller written before the pots came apart meant.
+  // The brew is picked at the pot (potpick.js), and a DOM popover is not
+  // something the node tier can press, so this calls the same toggle the
+  // picker does; the route is proved by the browser check that clicks a
+  // cauldron and then a swatch. The first pot when nobody says.
   __pot: (key, pot = 0) => {
     if (!S.apothecaryOpen || pot < 0 || pot >= S.apothPots) return false;
     setPotTonic(pot, key);
     return true;
   },
-  // What is standing on a shelf, set outright. The setup a check or a scene is
-  // NOT about: proving that a batch reaches the shelf is `wave5-apothecary`'s
-  // job and it does it by brewing. This is for looking at a full shelf without
-  // waiting twenty batches for one.
+  // What is standing on a shelf, set outright; that a batch reaches the shelf
+  // is proved by brewing.
   __stock: (key, n) => setStock(key, n),
-  // How many batches the place has behind it, set outright. Three of this
-  // board's rows are revealed by the count rather than bought -- the deeper
-  // rungs, the potency ladders, and the second pot at five -- and a check about
-  // what one of those rows *does* would otherwise have to stand a stirrer up,
-  // set a pot, buy the spores and turn the clock through five whole batches to
-  // reach it. That is the setup the check is not about, which is what a handle
-  // is for; the earning itself is proved where it belongs, by the apothecary's
-  // own checks that brew.
-  //
-  // `__potSpot` will answer for a pot the yard does not have, so a check that
-  // wants two cauldrons has to actually get the second one: the picker asks
-  // `S.apothPots` and ignores a point outside it, and the failure looks like a
-  // menu that will not open rather than like a purchase that did not happen.
+  // Batches behind the place, set outright: three rows are revealed by the
+  // count. `__potSpot` answers for a pot the yard does not have, but the
+  // picker asks `S.apothPots` and ignores a point outside it, so a check that
+  // wants two cauldrons has to actually get the second one.
   __brews: n => { S.brews = n; buildShop(); S.dirty = true; return true; },
-  // The recipes there are, and which of them the player can see yet. The pot's
-  // picker draws a row per recipe plus one for nothing, so a check counting
-  // swatches needs the number from the place that decides it -- it was typed
-  // into the check as a 4, and when the book gained two recipes the check said
-  // the picker was broken. The same trap this file's own comments keep naming:
-  // a constant copied into a check only proves that two people copied it.
-  //
-  // `shown` is the second half and not a detail: a shard recipe stays off the
-  // list until the quarry opens, so "how many rows" and "how many rows with a
-  // price to compare" are different questions and a check has to be able to ask
-  // for the one it means.
+  // The recipes there are, from the place that decides it (a constant copied
+  // into a check only proves two people copied it). `shown` matters: a shard
+  // recipe stays off the list until the quarry opens.
   __tonics: () => TONICS.map(t => ({ key: t.key, shown: tonicShown(t) })),
-  // Where a cauldron stands, in world pixels. A check that wants to CLICK a pot
-  // has to aim at it, and the yard is the only thing that knows where it put its
-  // pots -- so it says, and the pointer does the rest.
+  // Where a cauldron stands, in world pixels, for a check that wants to click
+  // one.
   __potSpot: i => potBox(i),
-  // What a batch of a tonic costs, straight off the thing that charges for it.
-  // A check comparing the picker's printed bill against a number it typed out
-  // itself would only be checking that two people copied the same constant.
+  // What a batch costs, straight off the thing that charges for it.
   __brewCost: key => brewCost(key),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: (job, pot = 0) => { choosePotPrefer(pot, job); return true; },
-  __muckOverPit: muckOverPit, __look: look, __hold: hold,   // wave7b-assign
-  // getting about: the surface under a place, the ways there are, and how a
-  // given body would get somewhere
+  __muckOverPit: muckOverPit, __look: look, __hold: hold,
   __route: routeOf, __surface: surfaceAt, __ways: waysNow
 };
 
-// --- wave-release: track B ------------------------------------------------------
-// The motion preference, for a scene or a check: `__motion(true)` asks for less,
-// `false` for the full picture, `null` to follow the system. It answers with
-// what the camera will actually do, which is the only thing worth knowing.
+// The motion preference: `true` asks for less, `false` for the full picture,
+// `null` to follow the system. Answers with what the camera will actually do.
 import { setPref, reducedMotion } from './prefs.js';
 HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
