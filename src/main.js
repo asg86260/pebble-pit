@@ -126,8 +126,9 @@ const demo = params.has('demo');
 // The scene bench's frame (scenes.html): the player's own yard, stood but never
 // written. Staged from boot, so nothing here writes the slot, clears it or
 // puts this page's name beside it -- a bench that claimed the save would make
-// the game in the next tab stand aside and reload.
-const bench = params.has('bench');
+// the game in the next tab stand aside and reload. Dev only, like the scenes
+// themselves: a build folds this to false and drops every branch under it.
+const bench = import.meta.env.DEV && params.has('bench');
 if (demo) {
   document.body.classList.add('demo');
   veil.remove();
