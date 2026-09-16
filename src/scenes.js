@@ -697,6 +697,15 @@ export const SCENES = {
                  window.__buy('stakedust');
                  for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 380); } },
+  // The bins paying, middle outward: a foot inverted for the bin on its beat,
+  // the box counting up, grains running down into the tray.
+  casinopaying: { about: 'the casino', say: 'the bins paying into the tray, a bin a beat',
+    run: () => { window.__reset(); window.__casino(true); window.__give(6000); window.__chip(1);
+                 window.__buy('stakedust');
+                 for (let f = 0; f < 900 && st().pouring; f++) window.__fast(1 / 60);
+                 window.__buy('letgo');
+                 for (let f = 0; f < 1200 && !(st().drop && st().drop.stage === 'pay'); f++) window.__fast(1 / 60);
+                 window.__look(st().casinoX - 380); } },
   // A hand just paid: the tray standing, the box saying the multiple, and the
   // sign on its strobe or dark, whichever way it went.
   casinopaid: { about: 'the casino', say: 'the tray paid, the box saying the multiple',

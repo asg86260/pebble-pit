@@ -125,7 +125,14 @@ try { navigator.storage?.persist?.(); } catch {}
 // The landing page's picture (DESIGN.md, "The landing page"): this same page
 // inside the title's frame, standing a staged yard nobody owns. Staged means
 // never written down: no slot is read, cleared or claimed.
-const demo = new URLSearchParams(location.search).has('demo');
+const params = new URLSearchParams(location.search);
+const demo = params.has('demo');
+// The scene bench's frame (scenes.html): the player's own yard, stood but never
+// written. Staged from boot, so nothing here writes the slot, clears it or
+// puts this page's name beside it -- a bench that claimed the save would make
+// the game in the next tab stand aside and reload. Dev only, like the scenes
+// themselves: a build folds this to false and drops every branch under it.
+const bench = import.meta.env.DEV && params.has('bench');
 if (demo) {
   document.body.classList.add('demo');
   veil.remove();
@@ -149,6 +156,7 @@ if (demo) {
   // spot safe on a window or a world that has since changed size.
   S.camX = S.camWas ?? openingCamX();
   clampCam();
+  if (bench) S.staged = true;
 }
 addEventListener('resize', relayout);
 addEventListener('load', relayout);
@@ -164,8 +172,8 @@ setInterval(persist, 1000);
 // sees the name change under it has been overtaken, stops writing (`persist`
 // yields), and reloads when next looked at, which is the moment it would
 // otherwise have written an hour-old yard over the hour just played.
-if (!demo) claimSave();
-addEventListener('storage', e => { if (!demo && e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
+if (!demo && !bench) claimSave();
+addEventListener('storage', e => { if (!demo && !bench && e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
 document.addEventListener('visibilitychange', () => {
   if (S.yielded && document.visibilityState === 'visible') location.reload();
 });

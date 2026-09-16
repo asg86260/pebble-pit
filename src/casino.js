@@ -222,7 +222,7 @@ const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
 // (negative rows are the gate and the sign band above the field), its ten
 // coins, and its shade. It starts in the gate.
 const makeGrain = (s, demo = false) => ({
-  c: START_COL, r: -(GATE_H + CASINO_SIGN_H), pc: START_COL, pr: -(GATE_H + CASINO_SIGN_H),
+  c: START_COL, r: -(GATE_H + CASINO_SIGN_H), trail: [],
   k: 0, seat: false, beat: 0, acc: 0, path: drawPath(), s, demo, landed: false
 });
 
@@ -305,7 +305,7 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
   g.acc += dt;
   while (g.acc >= CASINO_FALL_MS && !g.landed && !g.seat) {
     g.acc -= CASINO_FALL_MS;
-    g.pc = g.c; g.pr = g.r;                       // where it was, for the trail behind it
+    g.trail = [[g.c, g.r], g.trail[0]].filter(Boolean);   // the last two cells it left, for the trail
     if (g.k < CASINO_PEG_ROWS) {
       const seat = seatRow(g.k);
       if (g.r < seat) {
@@ -341,7 +341,7 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
 // The peg lit on the beat, the grain on it black: one flash, then gone.
 function flashPeg(g) {
   const fx = S.tableFx;
-  fx.pegs = fx.pegs.filter(p => now() - p.at < CASINO_FLASH_MS);
+  fx.pegs = fx.pegs.filter(p => now() - p.at < CASINO_PEG_BEAT_MS);
   fx.pegs.push({ c: g.c, r: g.r + 1, at: now() });
 }
 // And a x39 bin's dividers: white for a beat. `loud` is a grain in it; a near
@@ -427,7 +427,7 @@ function settleHand() {
   S.pot = paid > 0 ? { cur, stake, n: paid, where: 'tray' } : null;
   S.pouring = !!S.pot;                           // the tray walks to what the pot says
   S.drop = null;
-  S.hand = { won, mult, n: paid, cur, at: now(), bursts: 0,
+  S.hand = { won, mult, n: paid, stake, cur, at: now(), bursts: 0,
              fountains: won ? CASINO_BURST_AT.filter(k => mult > k).length : 0, edge: d.edge };
   if (d.edge && won) { S.hand.fountains = CASINO_BURST_AT.length; S.tableFx.strobeAt = now() + CASINO_WIN_MS; }
   // the notices read the difference: fifty thousand up or fifty thousand down
@@ -916,6 +916,17 @@ export const saying = () => S.hand ? (S.hand.won ? 'won' : S.hand.won === false 
 // count so far while the bins are paying, to a tenth.
 export const shownMult = () =>
   S.drop && S.drop.stage === 'pay' ? S.drop.paid / S.pot.stake : S.hand ? S.hand.mult : null;
+// And what the hand has come to in the staked coin, up or down, counting with
+// it: a player who did not watch reads what was won or lost, not only by how
+// much it was multiplied.
+export const shownChange = () =>
+  S.drop && S.drop.stage === 'pay' ? Math.round(S.drop.paid) - S.pot.stake
+    : S.hand ? S.hand.n - S.hand.stake : null;
+export const shownCur = () => S.drop && S.drop.stage === 'pay' ? S.pot.cur : S.hand ? S.hand.cur : null;
+// The bin paying this beat, for its foot to say so.
+export const payingBin = () =>
+  S.drop && S.drop.stage === 'pay' && S.drop.payFrom != null && now() - S.drop.payAt < CASINO_PAY_BEAT_MS
+    ? S.drop.payFrom : null;
 
 // --- the board ---------------------------------------------------------------
 // Three rows to put something down, one to let it go, and two to decide what

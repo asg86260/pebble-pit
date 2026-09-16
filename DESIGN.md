@@ -658,7 +658,7 @@ builds it and a hand pressed through the page's rows settles. The scene is
 
 ### What building it changed
 
-**The building is fifty-six cells wide and sixty-two tall.** The section
+**The building is seventy-four cells wide and sixty-two tall.** The section
 above added up the face at about thirty-four and left the hopper, the sign and
 the labels to the reader. Funnel nine, floor one, sign nine, air three, pegs
 twenty, bins six, feet nine, tray five: a cabinet a little taller than it
@@ -668,16 +668,17 @@ with the sign far above the action.
 
 **The hopper is a funnel, and the funnel is the plot's ground.** A walled
 tray held the stake as a flat bar on the roof, which did not read as a hopper
-at all. The walls step in three cells a row down `HOPPER_PROFILE`, nine rows from
-the building's width at the rim to a six-cell floor over the two-cell throat, and
+at all. The walls step in four cells a row down `HOPPER_PROFILE`, nine rows from
+the building's width at the rim to an eight-cell floor over the two-cell throat, and
 they are `fixed` cells in the hopper's own grid -- the sand board's trick --
 so the yard's settle rules heap the stake against them: it fills from the
 throat up and sits in the bowl, and letting go sags it into the throat. The
 hopper lies flat rather than heaped (`repose` off): on a three-cell step a
 heaped grain has no drop beside it and coated the slopes instead of filling.
 The brim came down to what the bowl holds -- one for one to a hundred, then a
-two hundred (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the profile's
-two hundred and seventy cells with the rim clear. What is approximate is the
+a hundred and fifty a tenfold pot to a brim of three hundred
+(`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the profile's three hundred
+and sixty cells with the rim clear. What is approximate is the
 size of the heap and nothing else, as before.
 
 **A bin is four cells: three of slot and a wall.** The design guessed two,
@@ -693,14 +694,17 @@ with more slots in it.
 number however it was spaced -- one cell between labels is the gap inside
 "39", and two was not enough contrast -- so the labels went back under their
 bins, and the bins' dividers run on down through the band: a row of table
-cells, one under each bin, and a pay can only belong to the bin over it. A
-digit is three cells, so an inner slot is three; the 39s are seven, so the
-two edge bins are cut seven wide (`EDGE_BIN_W`, from `DIGIT_W`) and catch over
-a wider mouth -- the fan's step is unchanged and a grain bound for an edge
-bin lands two cells inside it. Through the feet the dividers thin to a rule,
-because a three-cell digit against a cell-wide wall on both sides is a
-barcode. Each half bin wears its own half, in one three-cell glyph. Fifty-two
-cells of bins; the building is fifty-six wide, and the sign is its width.
+cells, one under each bin, and a pay can only belong to the bin over it. An
+inner slot is five cells (`HALF_W`): the half is ".5" with a clear cell
+between the point and the five, which in three cells read as a six and as a
+one over a two in five by five read as a W. The 39s are seven, so the two
+edge bins are cut seven wide (`EDGE_BIN_W`, from `DIGIT_W`) and catch over a
+wider mouth -- the fan's step, half a bin, is three cells now, and a grain
+bound for an edge bin lands two cells inside it. Through the feet the
+dividers thin to a rule, because a digit against a cell-wide wall on both
+sides is a barcode. Seventy cells of bins; the building is seventy-four
+wide, and the sign is its width -- a casino that cannot be read is not worth
+being narrow.
 
 **The sign is the roof sign's face, across the front, in one word,
 between the funnel and the pegs so nothing stands in front of the bowl.** Six
@@ -719,19 +723,28 @@ shows a heap in the grains' own shades. Counts drawn as two filled columns
 were tried and read as printed paint. The hand settles on the same three
 facts: nothing left to send, nothing on the pegs, no column of a bin awake.
 
-**The grains are the figure and the pegs are the ground.** Black grains
-over black pegs was a stream that vanished into the triangle from across the
-yard. A falling grain is solid black with the cell it just left behind it in
-a lighter grey -- the yard's idiom for a thing in motion -- and a peg is the
-lightest grey the yard has; a hollow peg was the other candidate and at yard
-zoom a six-pixel ring is a dark cell. The grain's own shade waits for the
-bin.
+**In the peg field the falling grains are the only black things that move.**
+Black grains over black pegs was a stream that vanished into the triangle
+from across the yard, and a spark of four black corners on every hit was more
+dust. A falling grain is solid black with the last two cells it left behind
+it, darker then lighter -- the yard's idiom for a thing in motion, and its
+direction -- and a peg is the lightest grey the yard has. On the beat the peg
+goes black under the seated grain, a two-cell bar that a one-cell grain is
+not; a hollow three-cell ring was the other candidate and, shot five frames
+side by side, ten rings at once on a busy board were the clutter the spark
+had been. The grain's own shade waits for the bin. The fall slowed from a
+cell a frame to a cell every twenty milliseconds so the eye keeps up, and
+the grains leave forty milliseconds apart: a handful is on the board about
+two and a half seconds from the first grain leaving to the last landing
+(measured 2.6 s over three seeds), which is the target if the knobs move.
+The x39 bin's flash is the bin going black for the beat.
 
-**A peg does not flash white.** The face it stands on is white, so a peg gone
-white for a frame is a peg gone, not a peg lit. On the beat it throws its
-four corners instead -- a black spark round the grey cell, with the grain
-sitting black on top -- which reads as the hit. The x39 bin's flash is the
-bin going black for the beat, for the same reason.
+**The box says the change as well as the multiple.** "x0.8 -20" with the
+staked coin's mark, or "x1.3 +30", both counting up together as the bins pay:
+a player who did not watch reads what was won or lost, not only by how much
+it was multiplied. And as each bin pays, its foot inverts -- white on black
+for the beat -- so the eye is led through the settlement from the middle
+outward.
 
 **Even is a band, not a point.** A hand at x1.03 showed x1.0 in the box over
 a fountain, and the box and the fanfare disagreed. A hand within

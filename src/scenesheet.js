@@ -104,5 +104,8 @@ if (kept() != null) { S.staged = true; myYard(); }
 Object.assign(window, {
   __scene: scene,
   __scenes: () => byPart(),
+  // The bench (scenes.html) frames this page and reads the list through here
+  // rather than importing scenes.js into a second window.
+  __sceneSay: name => SCENES[name]?.say,
   __myYard: myYard
 });
