@@ -43,16 +43,23 @@ export const CASINO_PEG_ROWS = 10;
 export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 
 // --- the building, in cells, top to bottom -------------------------------------------
-// The hopper on the roof, where the stake stands: walled, and the heap stands
-// up to its rim and then walks sideways (`table.ceiling`), so an all-in is a
-// full hopper rather than a spire. Five rows: it holds the brim (below) with the
-// rim clear, and a hopper any taller stood the sign too far above the pegs.
-export const HOPPER_H = 5;
+// The hopper on the roof, where the stake stands: a funnel, the building's
+// width at the rim and narrowing row by row to a flat floor over the throat.
+// The profile is how many cells the wall steps in from each side, rim first;
+// the walls are fixed cells in the hopper's own plot, so the sand heaps
+// against them by the yard's rules, fills from the throat up and sits in the
+// bowl. Three cells a row, because a funnel forty-six wide has to close to a
+// six-cell floor inside the rows the roof can spare, and the heap stands up
+// to the rim and no further (`table.ceiling`).
+export const HOPPER_PROFILE = [0, 3, 6, 9, 12, 15, 18, 20];
+export const HOPPER_H = HOPPER_PROFILE.length;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
-// you let go, to the three cells over the column the handful enters at.
+// you let go, to the throat's two cells, the column the handful enters at and
+// its neighbor.
 export const GATE_H = 1;
-export const GATE_W = 3;
-// The sign band under the floor: the roof sign's five-row letters across the
+export const GATE_W = 2;
+// The sign band under the floor, between the funnel and the pegs so nothing
+// stands in front of the bowl: the roof sign's five-row letters across the
 // front in one word, a clear cell and the bulbs each side of them.
 export const CASINO_SIGN_H = 9;
 // The face: a band of air for the stream to fan in, then the peg rows two
@@ -65,11 +72,11 @@ export const PEG_ROW_H = 2;
 // steps across a row, so the fan of ten rows reaches the outer bins exactly.
 export const BIN_W = 4;
 export const BIN_H = 6;
-// What a bin pays, written under it in the sign's digits, one row for all
-// eleven: a floor line, a two-digit pay stacked down eleven rows at the edges
-// with the single digits centered on the same middle, a bracket over the three
-// half bins sharing one label, and the tray's rim.
-export const LABEL_H = 13;
+// What a bin pays, written under it in the sign's digits on a plaque the
+// sign's width: a clear row, a row for the bracket over the three half bins,
+// five of glyph, a clear row -- every pay across in one line, the 39s spilling
+// out under the walls where the plaque stands proud of the block.
+export const LABEL_H = 8;
 // The tray at the foot, which the bins pay into: the same walled plot the
 // hopper is, because what stands in it goes back up to the hopper on a drop
 // again.
@@ -143,16 +150,16 @@ export const TABLE_GRAV = 0.05;
 // marks so nothing jumps, and never more than the brim.
 //
 //   1 - 100      the pot itself, one for one
-//   1,000+       200, the brim
+//   1,000+       150, the brim
 //
-// The brim is what the hopper holds: five rows of forty-six is two hundred and
-// thirty cells, and a heap under a ceiling fills flat, so two hundred stands
+// The brim is what the bowl holds: the funnel's profile comes to two hundred
+// cells, and a heap under a ceiling fills flat, so a hundred and fifty stands
 // in it with the rim clear. See `shownFor` in casino.js; what is approximate
 // is the size of the heap and nothing else: the row says the exact pot and
 // the hole is paid the exact pot.
 export const CASINO_PILE_ONE = 100;
-export const CASINO_PILE_BAND = 100;
-export const CASINO_PILE_BRIM = 200;
+export const CASINO_PILE_BAND = 50;
+export const CASINO_PILE_BRIM = 150;
 
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'the handful', min: 4, max: 128, step: 4,

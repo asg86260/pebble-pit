@@ -658,17 +658,27 @@ builds it and a hand pressed through the page's rows settles. The scene is
 
 ### What building it changed
 
-**The building is forty-eight cells wide and sixty-two tall.** The section
+**The building is forty-eight cells wide and sixty tall.** The section
 above added up the face at about thirty-four and left the hopper, the sign and
-the labels to the reader. Hopper five, floor one, sign nine, air three, pegs
-twenty, bins six, labels thirteen, tray five: a cabinet a little taller than
-it is wide, standing beside the tower rather than over it. The first build had
-a fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
-with the sign far above the action; the hopper and the tray came down to what
-the brim needs and the brim came down to what they hold -- one for one to a
-hundred, then two hundred and that is the brim (`CASINO_PILE_BAND`,
-`CASINO_PILE_BRIM`), five rows of forty-six with the rim clear. What is
-approximate is the size of the heap and nothing else, as before.
+the labels to the reader. Funnel eight, floor one, sign nine, air three, pegs
+twenty, bins six, plaque eight, tray five: a cabinet a little taller than it
+is wide, standing beside the tower rather than over it. The first build had a
+fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
+with the sign far above the action.
+
+**The hopper is a funnel, and the funnel is the plot's ground.** A walled
+tray held the stake as a flat bar on the roof, which did not read as a hopper
+at all. The walls step in three cells a row down `HOPPER_PROFILE`, from the
+building's width at the rim to a six-cell floor over the two-cell throat, and
+they are `fixed` cells in the hopper's own grid -- the sand board's trick --
+so the yard's settle rules heap the stake against them: it fills from the
+throat up and sits in the bowl, and letting go sags it into the throat. The
+hopper lies flat rather than heaped (`repose` off): on a three-cell step a
+heaped grain has no drop beside it and coated the slopes instead of filling.
+The brim came down to what the bowl holds -- one for one to a hundred, then a
+hundred and fifty (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the
+profile's two hundred cells with the rim clear. What is approximate is the
+size of the heap and nothing else, as before.
 
 **A bin is four cells: three of slot and a wall.** The design guessed two,
 and two cannot carry a pay: a digit is a three-cell glyph and a bin has to
@@ -679,18 +689,24 @@ forty-four, a white divider and the wall each side make forty-eight -- the
 sand board went to forty-one for seven slots, so this is the same cabinet
 with more slots in it.
 
-**The pays stand in one row, one under each bin.** A single digit sits under
-its slot exactly; the two 39s at the edges stack their digits down the eleven
-rows the band gives them, with the single digits centered on the same middle
-row; and the three half bins -- one region of the board, priced as one --
-share a single `.5` under a bracket spanning the three. Two staggered rows
-with leaders were tried first and read as a smudge.
+**The pays stand in one line on a plaque.** The same boxed strip the sign
+is, without the bulbs, wide enough for every pay written across -- the 39s
+included; stacked digits read as a 3 over a 9 and "felt weird" -- and it is
+as wide as that needs, never narrower than the sign, standing proud of the
+block so the edge labels run out under the walls. Each label wants the middle
+of its slot and the row is settled: pushed apart from the held middle until
+two clear cells stand between neighbors, and back in from the plaque's edges.
+Two clear cells, because one is the gap inside "39", and a row of pays a cell
+apart read as one long number. The three half bins -- one region of the
+board, priced as one -- share a single `.5` under a bar spanning the three.
+Two staggered rows with leaders were tried first and read as a smudge.
 
-**The sign is the roof sign's face, across the front, in one word.** Six of
-the seven-cell letters and their gaps are forty-seven cells, one more than a
-board can center on a building an even number of cells wide, so the gap in the
-middle of the word is two -- and the handful falls through it, from a floor
-that opens to the three cells over it. The board stands two cells proud of the
+**The sign is the roof sign's face, across the front, in one word,
+between the funnel and the pegs so nothing stands in front of the bowl.** Six
+of the seven-cell letters and their gaps are forty-seven cells, one more than
+a board can center on a building an even number of cells wide, so the gap in
+the middle of the word is two -- and the handful falls through it, from the
+throat's two cells directly over it. The board stands two cells proud of the
 block either side, the way a marquee does, so the letters keep their clear
 cell from the bulbs. A three-by-five face was tried to fit the twenty-six-cell
 front and read as a row of fives; the letters DESIGN.md fought for stay.
@@ -702,11 +718,19 @@ shows a heap in the grains' own shades. Counts drawn as two filled columns
 were tried and read as printed paint. The hand settles on the same three
 facts: nothing left to send, nothing on the pegs, no column of a bin awake.
 
+**The grains are the figure and the pegs are the ground.** Black grains
+over black pegs was a stream that vanished into the triangle from across the
+yard. A falling grain is solid black with the cell it just left behind it in
+a lighter grey -- the yard's idiom for a thing in motion -- and a peg is the
+lightest grey the yard has; a hollow peg was the other candidate and at yard
+zoom a six-pixel ring is a dark cell. The grain's own shade waits for the
+bin.
+
 **A peg does not flash white.** The face it stands on is white, so a peg gone
 white for a frame is a peg gone, not a peg lit. On the beat it throws its
-four corners instead -- a spark round the black cell, with the grain sitting
-black on top -- which reads as the hit. The x39 bin's flash is the bin going
-black for the beat, for the same reason.
+four corners instead -- a black spark round the grey cell, with the grain
+sitting black on top -- which reads as the hit. The x39 bin's flash is the
+bin going black for the beat, for the same reason.
 
 **Even is a band, not a point.** A hand at x1.03 showed x1.0 in the box over
 a fountain, and the box and the fanfare disagreed. A hand within
