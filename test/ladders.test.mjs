@@ -267,20 +267,20 @@ group('an old save with a multiplier reads as the spark rung bought', async () =
   window.__reset();
   openSites();
   S.tendLevel = TIER_OWN;
-  S.mult.tend = 2;
-  window.__cold();
-  const tend = S.tendLevel, mult = S.mult.tend;
-
-  // ...and one written mid-research, by hand, since nothing writes one now.
+  S.cropLevel = TIER_OWN;
+  // Written by hand into the save, since nothing writes one now: a rung of
+  // the multiplier, and a piece of research mid-flight. Without its `saveV`
+  // the blob is read through every migration (src/migrations/).
   yard.persist();
   const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
-  raw.cropLevel = TIER_OWN;
+  delete raw.saveV;
+  raw.mult = { tend: 2 };
   raw.works = { ...(raw.works || {}), farm: [{ key: 'labcrop', done: 3, of: 60, at: null }] };
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
   yard.restore();
+  const tend = S.tendLevel;
   return [
     ok(tend === TIER_RUNGS, 'the field goes to the top', `${tend}`),
-    ok(mult === 0, 'and the multiplier is folded away', `${mult}`),
     ok(S.cropLevel === TIER_RUNGS, 'a piece of research in flight lands as the spark rung', `${S.cropLevel}`),
     ok(!Object.values(S.works).flat().some(w => w && w.key === 'labcrop'), 'and is not left on the bench')
   ];

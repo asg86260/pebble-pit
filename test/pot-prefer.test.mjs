@@ -11,7 +11,7 @@
 // picker's clicks land on, and the stirrers assigned through the roster.
 
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { doses, doseCount, preferableFor, potPreferOf, migrateApothecary } from '../src/apothecary.js';
+import { doses, doseCount, preferableFor, potPreferOf } from '../src/apothecary.js';
 
 const S = () => yard.S;
 const wearing = (w, key) => doses(w).some(d => d.tonic === key);
@@ -70,18 +70,5 @@ group('the picker counts who is under the brew out of who there is', async () =>
        JSON.stringify(before)),
     ok(after.of === 3 && after.dosed >= 1, 'and the count climbs as the doses land',
        JSON.stringify(after))
-  ];
-});
-
-group('an old save\'s one dial becomes every pot\'s favor', async () => {
-  window.__reset();
-  S().apothPots = 2;
-  S().potPrefer = 'haulers';
-  S().potPrefers = [];
-  migrateApothecary();
-  return [
-    ok(potPreferOf(0) === 'haulers' && potPreferOf(1) === 'haulers',
-       'both pots favor what the dial said', JSON.stringify(S().potPrefers)),
-    ok(S().potPrefer == null, 'and the dial is spent')
   ];
 });

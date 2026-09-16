@@ -106,7 +106,7 @@ export function markNoticesRead() {
   S.wonSeen = S.won.length;
 }
 
-// `quiet` writes the record without announcing it (`catchUpNotices`).
+// `quiet` writes the record without announcing it.
 export function earn(key, quiet = false) {
   if (!BY_KEY.has(key) || S.won.includes(key)) return false;
   // A fresh array rather than a push: the save notices a new array where it
@@ -140,17 +140,6 @@ export function stepNotices(t) {
 
 // A yard that has been re-made, or a suite starting a fresh game.
 export function resetNotices() { asked = 0; hushNotices(); }
-
-// The first load of a save written before notices existed: every standing
-// fact is earned silently and marked read, rather than thirty ticks at once.
-// The event-hook notices are not caught up; nothing in the save says whether
-// they happened, and a record that guesses is worse than one that starts here.
-export function catchUpNotices() {
-  if (S.noticeMigrated) return;
-  S.noticeMigrated = true;
-  for (const n of NOTICES) if (n.when && n.when()) earn(n.key, true);
-  S.wonSeen = S.won.length;
-}
 
 // --- the witnesses ---------------------------------------------------------------
 // Three flags and a stamp about the rock, cleared when a rock lands; one about

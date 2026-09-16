@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
@@ -45,6 +46,7 @@ feature lives in DESIGN.md.
 - On a phone held upright a shield's answer is watched whole, and the two of them stay in the picture on the walk out of the house, instead of the arch's feet and the second of the pair standing off the edge of the screen (test/phone-view.test.mjs).
 - Sending a body to a spot over the mouth of the hole walks it to the lip instead of crashing the yard (test/route.test.mjs).
 - A crit on the rock takes the top layer across the columns beside it instead of boring straight down the one it hit; a swing shaves the rock, it does not drill it.
+- A storm over a tall rock still in the air no longer crashes the yard when the bolt would have struck inside the rock (test/sky-fan.test.mjs).
 
 ## v0.2.4 — 2026-09-15
 

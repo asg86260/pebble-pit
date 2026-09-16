@@ -9,7 +9,6 @@
 // everything in the hole on the frame the grains land, the counter never moves,
 // and the pile and the rift together are always the counter.
 
-import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
 // Straight off the modules: `yard.upgrades` is the `__upgrades` hook, and the
@@ -309,34 +308,6 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
     ok(grown > young * 10, 'the reach grows with the hole', `${young.toFixed(0)} -> ${grown.toFixed(0)} cells`),
     ok(late < standing / 4, 'and a grown hole eats what the young one left standing',
        `${standing} -> ${late}`)
-  ];
-});
-
-// A save from the build where a body held the rift open. Nobody teleports and
-// nobody is lost: the body comes back as a carter where it stood and walks home.
-group('a save with a rifter in it loses nobody', async () => {
-  const SAVE = readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8');
-  const s = JSON.parse(SAVE);
-  // The old shape: one body of the old trade, standing past the far wall, and
-  // the roster counting it.
-  const bodies = Array.isArray(s.who) ? s.who.length : 0;
-  s.riftOpen = true;
-  s.rifters = 1;
-  s.crew = (s.crew || bodies) + 1;
-  s.who = [...(s.who || []), { type: 'rifter', x: 4200, y: 0, goal: 'in' }];
-  localStorage.setItem('boulder-clicker/v4', JSON.stringify(s));
-  yard.restore();
-  const back = state();
-  const n0 = yard.S.workers.length;
-  const stray = yard.S.workers.find(w => w.type === 'rifter');
-  run(5);                                    // and the yard runs with it, under verify
-  return [
-    ok(n0 === bodies + 1, 'every body in the save is in the yard',
-       `${n0} against ${bodies + 1} saved`),
-    ok(!stray, 'and none of them is a rifter', `${stray?.type}`),
-    ok(yard.S.workers.length === n0, 'nobody is lost once it runs',
-       `${yard.S.workers.length} against ${n0}`),
-    ok(back.riftOpen && back.rift >= 0, 'the rift is still torn', `${back.riftOpen}`)
   ];
 });
 

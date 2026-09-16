@@ -202,8 +202,16 @@ export function isSave(s) {
   // yard rather than a first visit; if the two checks differed, `restore`
   // would quietly boot a new game over a blob this one had passed.
   return typeof s?.stored === 'number' && typeof s?.boulder === 'string' &&
-         s.gw > 0 && s.gh > 0 && s.boulder.length === s.gw * s.gh;
+         s.gw > 0 && s.gh > 0 && s.boulder.length === s.gw * s.gh &&
+         aboveFloor(s);
 }
+
+// The save floor (docs/saves.md): every save the first public build or any
+// build since has written carries `build` (a dev build's is `hash: 'dev'`),
+// so one with no stamp was written before it and by nobody who could have
+// kept it. It is not read; `load` puts it aside under BROKEN_KEY like any
+// other blob that would not read, and the sheet offers it back as a file.
+export const aboveFloor = s => !!s?.build && typeof s.build === 'object';
 
 // A blob that was under KEY and would not read. Answering null for it as for
 // no save at all would start the opening and write a fresh game over the blob

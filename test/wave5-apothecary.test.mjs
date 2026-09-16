@@ -12,7 +12,7 @@
 
 import { group, ok, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { TONICS, tonicOf, tonicVal, doseStock, choosePotTonic,
-         potTonicOf, carryDoses, potencyLevel, migrateApothecary,
+         potTonicOf, carryDoses, potencyLevel,
          speedBoost, critBoost, strengthBoost, doses } from '../src/apothecary.js';
 
 // Open the farm, put the apothecary up, and hand the yard enough coin to brew
@@ -190,34 +190,5 @@ group('and no stirrer ever walks a bracing tonic out to a hauler', async () => {
        `${dosedOthers.length} bodies`),
     ok(dosedHaulers.length === 0, 'and not one hauler',
        `${dosedHaulers.length} haulers under a bracing tonic`)
-  ];
-});
-
-// --- an old save --------------------------------------------------------------
-// The one thing here with no player path: what a save written before this landed
-// turns into. The building's single tonic becomes the first pot's, the doses it
-// was holding land on that tonic's shelf, and every rung of the old strength
-// ladder is kept on every recipe -- taking rungs away because the ladder changed
-// shape is the one thing a refactor may not do to somebody's save.
-group('a save from before the rework is poured into the new shape', async () => {
-  standApothecary();
-  Object.assign(yard.S, {
-    potTonics: [], potSpents: [], shelf: {}, potency: {},
-    potTonic: 'brace', potSpent: true, doseHold: [2, 1], strengthLevel: 3
-  });
-
-  migrateApothecary();
-
-  return [
-    ok(potTonicOf(0) === 'brace', 'the building\'s tonic becomes the first pot\'s',
-       potTonicOf(0)),
-    ok(doseStock('brace') === 3, 'and the doses it held stand on that shelf',
-       String(doseStock('brace'))),
-    ok(TONICS.every(t => potencyLevel(t.key) === 3),
-       'every recipe keeps the rungs the old ladder had bought',
-       TONICS.map(t => `${t.key} ${potencyLevel(t.key)}`).join(', ')),
-    ok(yard.S.potTonic == null && !yard.S.doseHold.length,
-       'and the legacy fields are read once and left empty',
-       `${yard.S.potTonic}, ${yard.S.doseHold.length}`)
   ];
 });

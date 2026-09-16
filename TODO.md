@@ -11,7 +11,7 @@ build made. The gates landed with seam 4 on `second-pass-S`: `STATIONS` in
 on it, read through `open()` / `offered()`; every door row and shield row
 reads `offered` and `shieldOpened` reads the table. `test/gates.test.mjs`
 holds it. The thirteen `<place>Open` booleans stay on `S` until the save
-floor (seam 3).
+floor (seam 3) has moved once more; seam 3 itself is built (below).
 
 ## Playing it on a phone -- BUILT (2026-09-15)
 
@@ -80,6 +80,17 @@ and `crew/assign.js` reads `standRect` from board.js (`tools/cycles.mjs
 --path` names each edge). Seam 6 removes those; it moves ahead of seam 5.
 Also red on main as of 9cb86fd, not from this seam: `test/machines.test.mjs`
 "a jaw pays a dig exactly what a gang would" (838 over 7 digs of 120). At integration `fmt` moved to words.js, `houseRect` to house.js and the four rung helpers to words.js: the sim's ring (71) no longer holds `shop.js`, `board.js` or `upgrades.js`, which are a ring of three on their own; `tools/cycles.mjs --path src/quarry.js src/shop.js` says "no path".
+
+Seam 3, the save floor, is BUILT (2026-09-16): a save with no `build` stamp
+is refused and offered back as a file (`isSave`, save.js); every migration on
+or after v0.1.1 is a dated file in `src/migrations/`, run by `migrate` over
+the raw blob and keyed on `saveV` (`config/saves.js`); everything older is
+deleted, `restore()` reads today's shape only (433 lines to 290), and the
+retired fields left `S`. `test/save-floor.test.mjs`; `docs/saves.md` says how
+to add and archive one. Left: `scholars` stays on `S` at nought because
+staffing.js's `JOBS` still lists the lab's job (the lab building itself, its
+rect and `TO_LAB`, is still the dead-code item above); the thirteen
+`<place>Open` booleans are seam 4's.
 
 Seam 6, invalidation off the clock, is BUILT (2026-09-16): `S.dirty` and
 its 252 lines are gone, the save writes on its one-second clock, and the

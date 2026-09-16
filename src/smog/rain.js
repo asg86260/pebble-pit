@@ -161,6 +161,9 @@ function strike() {
   const y0 = S.camY - P;
   // the fork leans the way the main bolt was not
   run(x0, y0, 1e3, 0);
+  // A column whose floor is already over the top of the window -- a tall rock
+  // in the air -- has nowhere for a bolt to run, so there is none this frame.
+  if (!cells.length) return null;
   const [lo, hi] = BOLT_FORK_AT;
   const at = cells[Math.floor(cells.length * (lo + rand() * (hi - lo)))];
   const way = at[0] < x0 ? 1 : -1;
@@ -205,6 +208,7 @@ export function stepEmbers(secs) {
 export function forceStrike(hold = BOLT_LIFE_S, flash = BOLT_FLASH_S) {
   const had = EMBERS.length;
   S.bolt = strike();
+  if (!S.bolt) return;
   S.bolt.left = hold;
   S.bolt.flash = flash;
   // the embers it threw are held with it, so a shot a second later still has

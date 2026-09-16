@@ -179,9 +179,6 @@ export const S = {
   // the farm first sees the farm nearer the rock. Empty means the fixed order.
   buildOrder: [],
 
-  // --- the lab ---
-  // One piece at a time, and it only moves while somebody is in there.
-  research: null,         // { key, done } -- worker-seconds put in so far
   smoke: [],              // puffs off the chimney while it is being worked
   grit: [],               // chips off a hammer at a building site
   // What a crit left in the air: the ring going out, and the specks the blow
@@ -244,14 +241,6 @@ export const S = {
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read (drawDoneMarks).
   siteDone: {},
-  // When the lab last had somebody in it with nothing to research; a
-  // stopwatch, not worth saving.
-  labIdleAt: 0,
-  // How many the lab let out for want of anything to do; starting research
-  // calls exactly these back.
-  // Multipliers an old save may carry and nothing reads; folded into the
-  // ladders by `restore`. Kept so an old save round-trips; always nought here.
-  mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a
   // count; `haulers` is always the ones left over, never a job you hire into.
@@ -283,8 +272,6 @@ export const S = {
   // been built.
   labKitLevel: 0,
   labRooms: 1,
-  // The second piece being looked into, when there is a bench for it.
-  research2: null,
   // Where the tiller has got to on its run up the row and back, 0..2;
   // everything about the machine is read off it.
   tillerAt: 0,
@@ -300,7 +287,9 @@ export const S = {
   // lands.
   wizSpeedLevel: 0,
   wizPowerLevel: 0,
-  scholars: 0,             // and the ones standing in the lab, working on the research
+  // There is no lab, and nobody is ever a scholar again; the count stays on
+  // the roster (staffing.js) at nought so `spareHands` adds up.
+  scholars: 0,
   farmhands: 0, tendLevel: 0, cropLevel: 0,
 
   // --- the apothecary (apothecary.js; DESIGN.md, "The apothecary") ---
@@ -310,13 +299,8 @@ export const S = {
   stirrers: 0,            // and this many bodies are stirring pots in it
   apothPots: APOTH_POTS0, // standing room for stirrers and tonics up at once
   apothBoardOpen: false,  // its board is open
-  potTonic: null,         // the tonic key the pot is set to, or null for off
   potKeep: true,          // keep brewing (an upkeep) or a one-off (a single batch)
-  potPrefer: null,        // (old saves) one favored job for the whole building; poured into potPrefers on load
   potPrefers: [],         // the job each pot's doses go to first, by pot index, or null for whoever is nearest
-  // A one-off batch has been brewed and the pot is done; only means anything
-  // while `potKeep` is off.
-  potSpent: false,
   brewAt: [],             // worker-milliseconds into the current batch, per pot
   // What each lit batch was paid for, by pot: a batch belongs to the tonic it
   // was bought as, not to whatever the pot is set to when it lands
@@ -324,21 +308,14 @@ export const S = {
   brewKeys: [],
   // Batches ever landed; the building's deeper rows reveal against this.
   brews: 0,
-  doseHold: [],           // doses brewed and not yet carried out, per pot
-  brewLevel: 0,           // brew speed: a retired ladder, kept so old saves load
   lengthLevel: 0,         // buff length: how long a dose lasts on the body
-  strengthLevel: 0,       // buff strength: what a dose is worth while it is up
   dosesLevel: 0,          // doses a brew: how many bodies one batch reaches
 
-  // The per-pot fields. `potTonic`, `potSpent`, `doseHold` and
-  // `strengthLevel` above are kept, saved and read once on load, when
-  // `migrateApothecary` pours each into its new home; nothing writes them
-  // after that.
+  // The per-pot fields.
   potTonics: [],          // the tonic each pot is set to, by pot index, or null for off
   potSpents: [],          // and whether that pot's one-off batch has been put up
   shelf: {},              // doses in stock on the bookshelf, by tonic key
   potency: {},            // how far each tonic's own strength ladder has climbed
-  doseCarryLevel: 0,      // the armful: a retired ladder, kept so old saves load
 
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
@@ -364,7 +341,6 @@ export const S = {
   wonSeq: 0,              // the stamp the last one took; `wonAt` holds one per notice
   wonSeen: 0,             // how many have been looked at; the rest are unread
   wonShown: 0,            // the last one the toast has said (toast.js); not saved
-  noticeMigrated: false,  // the silent catch-up has been run on this save
   // What a notice needs remembered that the yard does not already know; one
   // object, written only by notices.js.
   tally: {},
@@ -496,16 +472,10 @@ export const SAVED = [
   'apothecaryOpen',
   JOB.STIR,
   'apothPots',
-  'potTonic',
   'potKeep',
-  'potPrefer',
-  'potSpent',
   'brewAt',
   'brewKeys',
-  'doseHold',
-  'brewLevel',
   'lengthLevel',
-  'strengthLevel',
   'dosesLevel',
   // The pots' own settings, the stock on the bookshelf, and the ladders.
   'potTonics',
@@ -513,7 +483,6 @@ export const SAVED = [
   'potPrefers',
   'shelf',
   'potency',
-  'doseCarryLevel',
   'casinoOpen',
   'scrubOpen',
   'towerOpen',
@@ -557,13 +526,25 @@ export const SAVED = [
   'wonAt',
   'wonSeq',               // the order notices landed in, which the clock could not keep across a reload
   'wonSeen',
-  'noticeMigrated',
   'tally',
   // The story's progress: which beats have played. An old save's flags fold
   // into it on the way in (persist.js).
   'beatsDone',
   // A reload carries the clock on rather than starting it over.
   'buriedMs',
+  // The counts, the flags and the ladders that were once read by hand for a
+  // rename or a guess; above the save floor every one of them is a plain
+  // copy.
+  'banked',               // every grain ever put in the hole
+  'crew',                 // bodies hired, all told; `haulers` is derived from it
+  JOB.ROCK, JOB.QUARRY, JOB.PURIFY, JOB.SCHOLAR,
+  'rockhandSpeedLevel', 'rockhandPickLevel',
+  'quarryOpen', 'quarryPaceLevel', 'benchLevel', 'plotLevel',
+  'quarryOwed',           // how much of the seam is still in the cut; goes with `quarryCells`
+  'seenCore', 'seenShard', 'seenSpore', 'seenSpark',
+  'looPosts',
+  'coreBuried',           // whether this rock still owes you its core
+  'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
@@ -574,11 +555,8 @@ export const SAVED = [
 // carries that is not a plain copy.
 export const SAVED_BY_HAND = [
   'runSeed',              // the run's name, and the stream it is partway through
-  'banked',               // every grain ever put in the hole; an old save has only `stored`
-  'seenCore',             // ...or a save from before it was written, which any banked core proves
   'camX',                 // rounded out, and read back once, into `camWas`
   'coreItem',             // a core loose in the world: a spot, or the fact of one
-  'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
   'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
@@ -587,53 +565,32 @@ export const SAVED_BY_HAND = [
   // Moments on the clock, written as how far off they are (`danceLeft`,
   // `nextBoulderIn`).
   'danceUntil', 'nextBoulderAt',
-  JOB.ROCK,            // renamed from miners, and read under both names
-  'rockhandSpeedLevel',
-  'rockhandPickLevel',    // and from when one pick row bought both
-  // Nobody is ever a scholar again, but `restore` reads the old count to keep
-  // the headcount right and lands those bodies in the spare pool.
-  JOB.SCHOLAR,
-  'seenShard',
-  'quarryOpen',           // renamed from the cave, along with the three below
-  JOB.QUARRY,
-  'quarryPaceLevel',
-  'benchLevel',           // grandfathered up to the crew already standing in it
   'quarryCells',          // how deep each column has been dug
-  'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save
-  'seenSpore',
-  'plotLevel',            // grandfathered, the way `benchLevel` is
   // Only the camera's is written: a scene cut short by a reload replays over
   // the event as it now stands, while the yard's beats come back by their
   // own triggers and the sheet by its fact.
   'beat',
   'buried',
-  'looPosts',             // a save from before the second cap keeps the two it had
   'machines',             // facts only: bought, driven, tuned, took the kit
   'summon',               // three places, and only meaningful once the tower is open
-  'seenSpark',
   JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
   'belt',                 // what is riding the belt, as [x, shade] pairs
   'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
-  JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
   'rockSand',             // what is lying on the rock, a column at a time
   'pot',                  // the casino: what is on the table, and which plot it stands in...
   'pouring',              // ...whether its stake is still raining down...
   'paying',               // ...and what a taken pot still owes the hole
-  'mult',                 // legacy: folded into the ladders on read, written as noughts
   'plots',                // how far along each plot is, as hundredths
   'plotTone',             // and the spore standing ripe on it
   'boulder',              // the rock, as a run-length string...
   'gw', 'gh',             // ...and the shape that string is read against
   'boulderNo',
-  'coreBuried',           // whether this rock still owes you its core
   'rift',                 // dust through the rift, clamped to the counter it came out of
   'riftHeld',             // and the finds through it, each clamped the same way
-  'riftAte',              // every grain it ever swallowed; old saves seed it -- see persist.js
-  'drowned',              // whether the hole has given way; a pre-arc save derives it there too
   // Written and never read back: haulers are whoever is spare, and
   // `rebalance` works the number out again. It stays in the file because a
   // save is also the thing a bug report arrives as.
@@ -648,8 +605,10 @@ export const SAVED_BY_HAND = [
   'shieldsDone',
   'rescued',
   // Which build wrote the save: the page's own stamp on the way out, read
-  // back into `S.build` with a default (the version boundary in persist.js).
-  'build',
+  // back into `S.build` (the version boundary in persist.js), and the save
+  // floor (save.js). `saveV` beside it is the shape number the migrations
+  // read (src/migrations/); neither is a field on S.
+  'build', 'saveV',
   // When it was written, for the saves page's "5 days ago" (slots.js).
   'savedAt',
   // Not fields on S: the grids, the sky, the chance and the craft.
@@ -700,8 +659,6 @@ export const EPHEMERAL = [
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
   'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx',
-  // stopwatches, and the two the lab keeps behind `works`
-  'labIdleAt', 'research', 'research2',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
