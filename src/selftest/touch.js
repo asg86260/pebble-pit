@@ -11,7 +11,7 @@
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
 import { TAP_SLOP, TAP_TIME, UNDO_MS, UNDO_DEAD_MS, HOP_Y, HOP_SIZE, SKIP_HOLD_MS } from '../config.js';
 import { S } from '../state.js';
-import { purse } from '../upgrades.js';
+import { purse } from '../words.js';
 import { workOn } from '../works.js';
 
 const phone = on => window.__coarse(on ? true : null);
