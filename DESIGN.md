@@ -20,6 +20,33 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
    rather than a milestone the UI announced in advance. Later unlocks can be visible rows in
    the shop; this one should not be.
 
+## Dark mode (built 2026-09-16)
+
+The page turned over: white on black, for a dark room or a system set to
+dark. It follows `prefers-color-scheme` until the switch on the settings
+sheet is pressed, and then remembers, the way the motion switch does
+(`prefs.js`, `dark`).
+
+It is one rule, not a second palette: `html.dark` gets
+`filter: invert(1) hue-rotate(180deg)`. The renderers write black and white
+by name in some five hundred places, and a palette threaded through them all
+would be a week of work for a yard that is, by design, two inks. The hue
+rotation is what makes the trick hold for the coloured marks: an inversion
+alone turns the quarry's blue orange and the farm's green magenta; rotated
+back they stay blue and green, lighter, which is what a dark page wants of a
+mark anyway. Sprites, the boards, the sheet and the veil all go through the
+same filter, so nothing is missed by being drawn a different way.
+
+The class goes on before the first paint by a line in each page's head that
+reads the store directly, so the page never opens white and then goes dark;
+and on the top page only -- the title's picture is a frame of the game, and
+a frame that inverted itself inside an inverted page would come out light.
+The desk's window is still opened white (`electron/main.cjs`), so on the
+desk the first frame flashes; the fix is a window colour read from the
+store, and it is not done.
+
+The scene `dark` is the hill turned over, for the look tool.
+
 ## The opening
 
 The game used to start with a rock already sitting on the ground and a cursor to hit it with.

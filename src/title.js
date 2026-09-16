@@ -6,7 +6,7 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord } from './record.js';
-import { pref, setPref, reducedMotion } from './prefs.js';
+import { pref, setPref, reducedMotion, dark, applyDark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
 import { VEIL_MS, PICTURE_WAIT_MS } from './config.js';
@@ -34,7 +34,7 @@ function showPane(name) {
   front();
   if (name === 'slots') showSlots(document.getElementById('slots'), say, pick, false);
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
-  if (name === 'settings') { sayMotion(); saySound(); volumeEl.value = pref('volume'); }
+  if (name === 'settings') { sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume'); }
 }
 // The front's three lines that read the store.
 function front() {
@@ -72,9 +72,11 @@ addEventListener('keydown', e => {
 
 // --- the settings, as on the held sheet ------------------------------------
 const motionEl = document.getElementById('motion');
+const darkEl = document.getElementById('dark');
 const soundEl = document.getElementById('sound');
 const volumeEl = document.getElementById('volume');
 const sayMotion = () => { motionEl.textContent = reducedMotion() ? 'motion: less' : 'motion: full'; };
+const sayDark = () => { darkEl.textContent = dark() ? 'dark: on' : 'dark: off'; };
 const saySound = () => { soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on'; };
 motionEl.addEventListener('click', () => {
   setPref('motion', !reducedMotion());
@@ -82,6 +84,9 @@ motionEl.addEventListener('click', () => {
   document.body.classList.toggle('still', reducedMotion());
   yard.contentWindow?.location.reload();
 });
+// The picture in the frame is turned over by this page's filter, so it
+// needs no reload for this switch.
+darkEl.addEventListener('click', () => { setPref('dark', !dark()); sayDark(); applyDark(); });
 soundEl.addEventListener('click', () => { setPref('muted', !pref('muted')); saySound(); });
 volumeEl.addEventListener('input', () => setPref('volume', +volumeEl.value));
 

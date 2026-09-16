@@ -164,6 +164,13 @@ export const SCENES = {
   rock: { about: 'the rock', say: 'the hill, and the ram driving into it',
     run: () => { rich(); window.__buy('ram'); window.__finish(); window.__jump(6);
                  window.__look(st().rockLeftX - 200); } },
+  // The same hill turned over (DESIGN.md, "Dark mode"): the one place to see
+  // that the coloured marks come out lighter and the right way round, and
+  // that nothing on the page escaped the root's filter. The page only: the
+  // node yard has no stylesheet to turn.
+  dark: { about: 'the rock', say: 'the hill in dark mode, white on black', page: true,
+    run: () => { rich(); window.__buy('ram'); window.__finish(); window.__jump(6);
+                 window.__look(st().rockLeftX - 200); window.__dark(true); } },
   // The clearance between the hut's wall and a parked ram at a big boulder is
   // the one thing about this layout arithmetic cannot settle.
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',

@@ -10,6 +10,7 @@ const DEFAULTS = {
   muted: false,      // the mute (DESIGN.md, the sound of the yard)
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
+  dark: null,        // null = follow the system; true = white on black; false = black on white
 };
 
 let prefs = { ...DEFAULTS };
@@ -52,3 +53,28 @@ export function coarse() {
 // preference: in memory only, cleared with null.
 let forced = null;
 export const forceCoarse = v => { forced = v; };
+
+// Whether the page is turned over, white on black (DESIGN.md, "Dark mode"):
+// the sheet's switch, else what the system asks for. The node yard has no
+// `matchMedia` and reads "off", which is what every shot is checked against.
+let forcedDark = null;
+export function dark() {
+  if (forcedDark != null) return forcedDark;
+  if (prefs.dark != null) return prefs.dark;
+  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// The class the stylesheets turn the page over on, put on the root of the
+// top page only: a framed page (the title's picture, the scene bench) is
+// turned over by the page around it, and turning it again would put it back.
+// Each page's head puts the same class on from the store before the first
+// paint (play.html, index.html), so the page never opens white and then goes
+// dark; this is the switch and the system changing its mind afterwards.
+export function applyDark() {
+  if (typeof document === 'undefined' || window !== window.top) return;
+  document.documentElement.classList.toggle('dark', dark());
+}
+if (typeof matchMedia === 'function') matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyDark);
+
+// Dark stood up for a scene or a check, without writing the preference.
+export const forceDark = v => { forcedDark = v; applyDark(); };

@@ -2,7 +2,7 @@
 // that is not the yard. This file wires the shelf; escape, resume and the
 // reset's two-click arming are input.js's.
 
-import { setPref, reducedMotion, coarse } from './prefs.js';
+import { setPref, reducedMotion, coarse, dark, applyDark } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
@@ -82,6 +82,18 @@ function sayTouch() {
 touchEl.addEventListener('click', () => {
   setPref('touch', !coarse());
   sayTouch();
+});
+
+// And the dark switch: a desk that asked its system for dark reads "on"
+// before the switch is ever touched.
+const darkEl = document.getElementById('dark');
+function sayDark() {
+  darkEl.textContent = dark() ? 'dark: on' : 'dark: off';
+}
+darkEl.addEventListener('click', () => {
+  setPref('dark', !dark());
+  sayDark();
+  applyDark();
 });
 
 // In the Electron shell the save goes out and comes in through native
@@ -186,6 +198,7 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   if (sheet.hidden) { S.fellBack = false; S.newerSave = null; return; }
   sayMotion();
   sayTouch();
+  sayDark();
   paste.hidden = true;
   box.value = '';
   said.textContent = '';
@@ -193,6 +206,7 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
 sayTouch();
+sayDark();
 
 // The mute and the volume. The wake on the first pointer gesture is the one
 // line outside audio.js that knows a context exists: the browser allows

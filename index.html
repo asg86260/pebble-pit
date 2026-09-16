@@ -12,6 +12,16 @@
 <link rel="icon" href="./icon.png">
 <link rel="stylesheet" href="./src/style.css">
 <link rel="stylesheet" href="./src/title.css">
+<!-- Dark mode before the first paint, straight from the store, so the page
+     never opens white and then goes dark. prefs.js's `applyDark` is the same
+     rule after the boot, and says why the top page only. -->
+<script>
+try {
+  var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')), d = p && p.dark;
+  if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
+  if (d && window === window.top) document.documentElement.classList.add('dark');
+} catch (e) {}
+</script>
 </head>
 <body class="title">
 <!-- The landing page (DESIGN.md, "The landing page"). The picture is the
@@ -48,6 +58,7 @@
        acts on the open slot's blob -->
   <div class="word" data-pane="settings" hidden>settings</div>
   <button id="motion" type="button" data-pane="settings" hidden>motion: full</button>
+  <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
   <div class="pair" data-pane="settings" hidden>

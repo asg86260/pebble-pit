@@ -83,3 +83,23 @@ test('coarse follows the switch, remembers, and can be forced without being writ
   assert.equal(again.coarse(), false);
   localStorage.removeItem(KEY);
 });
+
+// The dark switch (DESIGN.md, "Dark mode"): the same shape again. With no
+// `matchMedia` the page is black on white, so no shot turns over by itself.
+test('dark follows the switch, remembers, and can be forced without being written', async () => {
+  localStorage.removeItem(KEY);
+  const m = await fresh(8);
+  assert.equal(m.dark(), false, 'no matchMedia: black on white');
+  m.setPref('dark', true);
+  assert.equal(m.dark(), true, 'the switch says white on black');
+  const again = await fresh(9);
+  assert.equal(again.dark(), true, 'and the next load reads it back');
+  again.setPref('dark', null);
+  assert.equal(again.dark(), false);
+  again.forceDark(true);
+  assert.equal(again.dark(), true, 'forced in memory');
+  assert.equal(JSON.parse(localStorage.getItem(KEY)).dark, null, 'and nothing was written');
+  again.forceDark(null);
+  assert.equal(again.dark(), false);
+  localStorage.removeItem(KEY);
+});

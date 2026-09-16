@@ -37,7 +37,7 @@ import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
 import { skipBeat } from './beats.js';
-import { forceCoarse } from './prefs.js';
+import { forceCoarse, forceDark } from './prefs.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
@@ -893,6 +893,8 @@ export const HANDLES = {
   __nocine: skipCutscene,
   // A phone stood up for a scene or a check, without writing the preference.
   __coarse: forceCoarse,
+  // The page turned over for a scene, likewise.
+  __dark: forceDark,
   // The space bar: held down or let go, and the skip it ends in.
   __holdSkip: holdSkip, __skip: skipScene,
   // One owner's beat cut, the way its own click would (the sheet's button, a

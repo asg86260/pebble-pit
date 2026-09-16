@@ -14,6 +14,16 @@
 <title>Boulder Clicker</title>
 <link rel="icon" href="./icon.png">
 <link rel="stylesheet" href="./src/style.css">
+<!-- Dark mode before the first paint, straight from the store, so the page
+     never opens white and then goes dark. prefs.js's `applyDark` is the same
+     rule after the boot, and says why the top page only. -->
+<script>
+try {
+  var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')), d = p && p.dark;
+  if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
+  if (d && window === window.top) document.documentElement.classList.add('dark');
+} catch (e) {}
+</script>
 </head>
 <body>
 <!-- One menu, not two. It walks along the ground from the bench to the lab and
@@ -173,6 +183,8 @@
   <!-- the thumb switch: the hop, the sheet and the tap gate follow the
        pointer the platform reports, and this overrides it (prefs.js, coarse) -->
   <button id="touch" type="button" data-pane="settings" hidden>touch: off</button>
+  <!-- white on black (prefs.js, dark): follows the system until pressed -->
+  <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <!-- the whole screen, where the platform will give it (fullscreen.js);
        where it will not -- an iphone -- the line under says what does -->
   <button id="fullscreenrow" type="button" data-pane="settings" hidden>fullscreen: off</button>

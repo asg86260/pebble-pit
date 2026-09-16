@@ -43,6 +43,13 @@ html, body {
    grip the platform may pan is a drag the platform cancels halfway). One
    rule rather than one per element, so the next button
    added is covered before anybody taps it twice. */
+/* Dark mode (DESIGN.md, "Dark mode"): the whole page turned over in one rule
+   rather than a second ink for every fill in the renderers. The hue rotation
+   puts the coloured marks -- the quarry's blue, the farm's green -- back the
+   way round they were, only lighter, which is what a dark page wants of them.
+   The root's own background is painted outside its filter, so it is set by
+   hand; the body's white goes through it and comes out black. */
+html.dark { filter: invert(1) hue-rotate(180deg); background: #000; }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
    "Momentum scrolling"). The spacer inside it is as wide as the world at the
