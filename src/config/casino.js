@@ -48,10 +48,10 @@ export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // The profile is how many cells the wall steps in from each side, rim first;
 // the walls are fixed cells in the hopper's own plot, so the sand heaps
 // against them by the yard's rules, fills from the throat up and sits in the
-// bowl. Three cells a row, because a funnel fifty-four wide has to close to a
-// six-cell floor inside the rows the roof can spare, and the heap stands up
+// bowl. Four cells a row, because a funnel seventy-two wide has to close to
+// an eight-cell floor inside the rows the roof can spare, and the heap stands up
 // to the rim and no further (`table.ceiling`).
-export const HOPPER_PROFILE = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+export const HOPPER_PROFILE = [0, 4, 8, 12, 16, 20, 24, 28, 32];
 export const HOPPER_H = HOPPER_PROFILE.length;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
 // you let go, to the throat's two cells, the column the handful enters at and
@@ -66,14 +66,15 @@ export const CASINO_SIGN_H = 9;
 // apart, then the bins with their pay written under them, then the tray.
 export const BOARD_AIR = 3;
 export const PEG_ROW_H = 2;
-// A bin is four cells on the field: three of slot and a wall on its right. Four
-// rather than the two the design guessed, because a pay is a three-cell glyph
-// and a bin has to carry its own; and four halves to the two cells a grain
-// steps across a row, so the fan of ten rows reaches the outer bins exactly.
-// The two edge bins are wider: their pay is two digits and a gap, and a bin
-// wears its own pay in its own foot, so the mouth is as wide as the word.
+// A bin is six cells on the field: a five-cell slot and a wall on its right.
+// Five, because a bin wears its own pay in its own foot and the half's ".5"
+// -- a point, a clear cell and a digit, the only way it reads at this size --
+// is five cells; and six halves to the three cells a grain steps across a row,
+// so the fan of ten rows reaches the outer bins exactly. The two edge bins
+// are wider still: their pay is two digits and a gap.
 export const DIGIT_W = 3;                      // the pay face's glyph, in cells
-export const BIN_W = DIGIT_W + 1;
+export const HALF_W = DIGIT_W + 2;             // and the half's: a point, air, a digit
+export const BIN_W = HALF_W + 1;
 export const EDGE_BIN_W = DIGIT_W * 2 + 1 + 1;
 export const BIN_H = 6;
 // What a bin pays, written under it in its own foot: the bins' dividers run on
@@ -92,14 +93,15 @@ export const CASINO_MARGIN = 2;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- how a grain moves -----------------------------------------------------------------
-// A grain steps a cell at a time down the face, this often; at sixty frames a
-// second that is a cell a frame, and it is written in time so a slow frame does
-// not slow the machine. Arriving at a peg it sits a beat, and on the beat the
-// peg flashes and ticks. Grains leave the hopper this far apart, so the board
-// carries a stream splitting on the pegs rather than thirty-two dots in step;
-// the last of a handful leaves about a second and a quarter after the first.
-export let CASINO_FALL_MS = 17;
-export let CASINO_PEG_BEAT_MS = 70;
+// A grain steps a cell at a time down the face, this often -- slower than a
+// frame, so the eye can keep up with one -- and it is written in time so a
+// slow frame does not slow the machine. Arriving at a peg it sits a beat, and
+// on the beat the peg rings and ticks. Grains leave the hopper this far apart,
+// so the board carries a procession splitting on the pegs rather than a
+// cloud; a handful is on the board about two and a half seconds from
+// the first grain leaving to the last landing (two and six-tenths, measured).
+export let CASINO_FALL_MS = 20;
+export let CASINO_PEG_BEAT_MS = 60;
 export let CASINO_GRAIN_GAP_MS = 40;
 // The floor splits from the middle over this long before the first grain falls.
 export let CASINO_GATE_MS = 250;
@@ -154,16 +156,16 @@ export const TABLE_GRAV = 0.05;
 // marks so nothing jumps, and never more than the brim.
 //
 //   1 - 100      the pot itself, one for one
-//   1,000+       200, the brim
+//   1,000        250          10,000+      300, the brim
 //
-// The brim is what the bowl holds: the funnel's profile comes to two hundred
-// and seventy cells, and a heap under a ceiling fills flat, so two hundred
+// The brim is what the bowl holds: the funnel's profile comes to three hundred
+// and sixty cells, and a heap under a ceiling fills flat, so three hundred
 // stands in it with the rim clear. See `shownFor` in casino.js; what is approximate
 // is the size of the heap and nothing else: the row says the exact pot and
 // the hole is paid the exact pot.
 export const CASINO_PILE_ONE = 100;
-export const CASINO_PILE_BAND = 100;
-export const CASINO_PILE_BRIM = 200;
+export const CASINO_PILE_BAND = 150;
+export const CASINO_PILE_BRIM = 300;
 
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'the handful', min: 4, max: 128, step: 4,
