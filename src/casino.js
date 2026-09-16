@@ -31,14 +31,14 @@ import { CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
          CASINO_BURST_AT, CASINO_WIN_MS, CASINO_BURST, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
-         CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS,
+         CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS, CASINO_EVEN_BAND,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
 import { S, pit, casino, table, tray } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
-import { addGrain, resizeGrid, settleSome, topRow, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
+import { addGrain, resizeGrid, settleSome, settle, topRow, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld } from './pit.js';
@@ -178,24 +178,38 @@ export function dealHand(stakeN) {
 }
 
 // The face, in cells: where a grain starts and where the pegs stand. Field
-// column 0 is the left edge of the bins; a grain enters at the middle column,
-// and since every row moves it one cell across, its column keeps the parity
-// of its row -- which is why a peg stands under every seat it can reach and
-// nowhere it cannot, and the pegs draw the odds.
-export const START_COL = BOARD_COLS / 2 - 1;
+// column 0 is the left edge of the first bin; a grain enters over the middle
+// bin and every row moves it half a bin across, so ten rows reach the outer
+// bins exactly and a grain's column is always over the slot of the bin its
+// coins add up to. A peg stands under every seat a grain can reach and nowhere
+// it cannot, so the pegs draw the odds.
+export const STEP = BIN_W / 2;                                   // cells across, a row
+export const START_COL = BOARD_COLS / 2;
 export const seatRow = k => BOARD_AIR + k * PEG_ROW_H - 1;      // where a grain sits on peg row k
 export const pegRow = k => BOARD_AIR + k * PEG_ROW_H;           // and where the peg itself is
-export const hasPeg = (k, c) => Math.abs(c - START_COL) <= k && ((c - START_COL + k) & 1) === 0;
+export const hasPeg = (k, c) => {
+  const d = c - START_COL;
+  return d % STEP === 0 && Math.abs(d) <= k * STEP && ((d / STEP + k) & 1) === 0;
+};
 // Where the field stands in the world.
 export const fieldAt = () => ({
   x: casino.x + CASINO_MARGIN * P,
   y: casino.y + (HOPPER_H + GATE_H + CASINO_SIGN_H) * P
 });
-// The cell a grain in bin b at index i is drawn at: two columns, filled flat
-// from the floor, alternating.
-export const binCell = (b, i) => [b * BIN_W + (i % BIN_W), FIELD_H + BIN_H - 1 - Math.floor(i / BIN_W)];
-// Which bin a field column is over.
+// Which bin a field column is over, and the slot column within it: a bin is
+// its slot and the wall on its right.
+export const BIN_COLS = BIN_W - 1;
 const binAt = c => Math.max(0, Math.min(CASINO_BINS.length - 1, Math.floor(c / BIN_W)));
+const slotCol = c => Math.min(BIN_COLS - 1, c - binAt(c) * BIN_W);
+
+// A bin is a plot of sand of its own -- three columns and six rows -- so what
+// lands in it heaps by the yard's rules: a x39 bin with two grains shows two
+// grains and a middle bin shows a heap. Eleven of them, remade for each hand.
+const makeBin = () => ({
+  x: 0, y: 0, cols: BIN_COLS, rows: BIN_H, p: P, grid: new Uint8Array(BIN_COLS * BIN_H),
+  n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: true
+});
+const makeBins = () => CASINO_BINS.map(makeBin);
 
 // A grain about to go down the pegs: its column and row on the face, in cells
 // (negative rows are the gate and the sign band above the field), its ten
@@ -213,7 +227,7 @@ export function letGo() {
   if (!canLet()) return;
   S.drop = {
     at: now(), lastSent: -Infinity, sent: 0, handful: handfulFor(S.pot.n),
-    grains: [], bins: CASINO_BINS.map(() => []),
+    grains: [], bins: makeBins(),
     stage: 'drop', holdAt: 0, payAt: 0, payIdx: 0, paid: 0, edge: false, payFrom: null
   };
   S.hand = null;
@@ -226,14 +240,19 @@ export function letGo() {
 // a grain on the floor -- so what you see is the heap draining into the gap
 // rather than being skimmed off the top. The rest of the column comes down a
 // row by the sand's own rules.
+// The columns the floor is open at: the one the handful enters the field at
+// -- the hopper's middle, a wall in from the field's -- and its neighbors.
 const gateCols = () => {
-  const mid = table.cols / 2;
-  return [mid - GATE_W / 2, mid + GATE_W / 2 - 1].map(Math.floor);
+  const mid = START_COL + CASINO_MARGIN - 1;
+  const out = [mid];
+  for (let d = 1; d <= (GATE_W - 1) / 2; d++) out.push(mid - d, mid + d);
+  return out;
 };
 function takeFromHopper() {
-  const [g0, g1] = gateCols();
+  const gate = gateCols();
   for (let d = 0; d < table.cols; d++) {
-    for (const c of d ? [g0 - d, g1 + d] : [g0, g1]) {
+    const cols = d ? [gate[0] - d, gate[0] + d] : gate;
+    for (const c of cols) {
       if (c < 0 || c >= table.cols) continue;
       const v = at(table, c, 0);
       if (v) { put(table, c, 0, 0); return v; }
@@ -292,19 +311,23 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
       // The near miss is drawn: a grain at the outermost peg of the last row
       // falling inward was one coin from the x39.
       if (g.k === CASINO_PEG_ROWS - 1) {
-        const outer = Math.abs(g.c - START_COL) === CASINO_PEG_ROWS - 1;
+        const outer = Math.abs(g.c - START_COL) === (CASINO_PEG_ROWS - 1) * STEP;
         if (outer && (right === (g.c < START_COL))) flashEdge(g.c < START_COL ? 0 : CASINO_BINS.length - 1, false);
       }
-      g.c += right ? 1 : -1;
+      g.c += right ? STEP : -STEP;
       g.r++;
       g.k++;
       continue;
     }
-    // below the pegs: down into the bin, on to whatever is lying in it
-    const b = binAt(g.c);
-    const floor = FIELD_H + BIN_H - 1 - Math.floor(bins[b].length / BIN_W);
-    if (g.r < floor) g.r++;
-    if (g.r >= floor) { g.landed = true; onLand(g, b); }
+    // below the pegs: down to the bin's rim, and in at the top of its slot,
+    // where the bin's own sand rules take it the rest of the way. A slot full
+    // to the rim keeps the grain waiting over it, which nothing ever fills.
+    if (g.r < FIELD_H) { g.r++; continue; }
+    const b = binAt(g.c), bin = bins[b], col = slotCol(g.c);
+    if (at(bin, col, bin.rows - 1)) break;
+    put(bin, col, bin.rows - 1, g.s);
+    g.landed = true;
+    onLand(g, b);
   }
 }
 
@@ -334,7 +357,6 @@ function pegHit(g) {
 // seconds before the sum comes in.
 function binHit(g, b) {
   const d = S.drop;
-  d.bins[b].push(g.s);
   const mid = Math.floor(CASINO_BINS.length / 2);
   const edge = b === 0 || b === CASINO_BINS.length - 1;
   const x = worldOf(g).x;
@@ -360,18 +382,20 @@ function binHit(g, b) {
 // tray tell the same story at the same moment.
 function payBin(b) {
   const d = S.drop;
-  const grains = d.bins[b];
+  const bin = d.bins[b];
   const f = fieldAt();
-  d.paid += grains.length * CASINO_BINS[b] * grainWorth();
+  d.paid += bin.n * CASINO_BINS[b] * grainWorth();
   d.payFrom = b;
-  grains.forEach((s, i) => {
-    const [c, r] = binCell(b, i);
-    S.tableAir.push({
-      x: f.x + c * P, y: f.y + r * P,
-      vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, lands: 'tray'
-    });
-  });
-  grains.length = 0;
+  for (let c = 0; c < bin.cols; c++)
+    for (let r = 0; r < bin.rows; r++) {
+      const s = at(bin, c, r);
+      if (!s) continue;
+      put(bin, c, r, 0);
+      S.tableAir.push({
+        x: f.x + (b * BIN_W + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
+        vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, lands: 'tray'
+      });
+    }
 }
 
 // Where extra sand for the tray comes from while the bins are paying: the chute
@@ -390,7 +414,9 @@ function settleHand() {
   const cur = S.pot.cur, stake = S.pot.stake;
   const paid = Math.round(d.paid);
   const mult = paid / stake;
-  const won = paid > stake ? true : paid < stake ? false : null;
+  // A hand within the even band is even: quiet, and the box says so. Past it a
+  // win is a win and a dud a dud, so the box and the fanfare never disagree.
+  const won = Math.abs(mult - 1) < CASINO_EVEN_BAND ? null : paid > stake;
   S.pot = paid > 0 ? { cur, stake, n: paid, where: 'tray' } : null;
   S.pouring = !!S.pot;                           // the tray walks to what the pot says
   S.drop = null;
@@ -414,7 +440,13 @@ function stepDrop(dt) {
   if (d.stage === 'drop') {
     sendGrains(dt);
     for (const g of d.grains) stepGrain(g, dt, d.bins, pegHit, binHit);
-    if (d.sent >= d.handful && d.grains.every(g => g.landed)) { d.stage = 'hold'; d.holdAt = t; d.grains = []; }
+    // and the bins heap what has landed in them, a row a frame
+    for (const bin of d.bins) settle(bin);
+    // the hand settles on three facts: nothing left to send, nothing on the
+    // pegs, and no column of a bin still moving
+    if (d.sent >= d.handful && d.grains.every(g => g.landed) && d.bins.every(bin => !bin.awakeN)) {
+      d.stage = 'hold'; d.holdAt = t; d.grains = [];
+    }
     return;
   }
   if (d.stage === 'hold') {
@@ -444,14 +476,16 @@ function stepAttract(dt) {
     a.grain = makeGrain(1 + Math.floor(rand() * SHADES.length), true);
     return;
   }
-  const bins = CASINO_BINS.map(() => []);
-  stepGrain(a.grain, dt, bins, pegHit, g => {
+  stepGrain(a.grain, dt, DEMO_BINS, pegHit, g => {
     const { x, y } = worldOf(g);
     S.tableAir.push({ x, y, vx: (rand() - 0.5) * 0.35, vy: -(0.3 + rand() * 0.5), up: true, fade: true, t: 0, s: g.s });
+    for (const bin of DEMO_BINS) if (bin.n) fillFlat(bin, 0);
     a.grain = null;
     a.next = now() + CASINO_ATTRACT_S * 1000;
   });
 }
+// The demonstration grain lands in bins of its own, emptied as it leaves.
+const DEMO_BINS = makeBins();
 function stopAttract() {
   const g = S.attract?.grain;
   if (g) {

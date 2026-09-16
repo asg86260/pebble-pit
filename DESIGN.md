@@ -658,36 +658,49 @@ builds it and a hand pressed through the page's rows settles. The scene is
 
 ### What building it changed
 
-**The building is seventy-nine cells tall.** The section above added up the
-face at about thirty-four and left the hopper and the tray to the reader; a
-hopper has to hold the brim and a tray has to hold the same brim, because a
-drop again moves one into the other. Fourteen rows of twenty-four each, with
-the sign band, the floor and the labels between, is seventy-nine -- taller
-than the tower by a good way, and the whole of it stands in a window of the
-height the game already asks for. The band ladder came down with it:
-one-for-one to a hundred, eighty grains a tenfold pot past that, and a brim of
-three hundred (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), because three hundred
-is what fourteen rows of twenty-four hold with the rim clear. What is
+**The building is forty-eight cells wide and sixty-two tall.** The section
+above added up the face at about thirty-four and left the hopper, the sign and
+the labels to the reader. Hopper five, floor one, sign nine, air three, pegs
+twenty, bins six, labels thirteen, tray five: a cabinet a little taller than
+it is wide, standing beside the tower rather than over it. The first build had
+a fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
+with the sign far above the action; the hopper and the tray came down to what
+the brim needs and the brim came down to what they hold -- one for one to a
+hundred, then two hundred and that is the brim (`CASINO_PILE_BAND`,
+`CASINO_PILE_BRIM`), five rows of forty-six with the rim clear. What is
 approximate is the size of the heap and nothing else, as before.
 
-**The pays are written in two rows, and the half bins share a label.** A
-glyph is three cells and a bin is two, so eleven labels in one row cannot be
-had. The even bins write theirs on the upper row and the odd bins on the
-lower, the left half leaning right and the right half leaning left so a clear
-cell stands between every pair, a one-cell leader runs from each lower label
-up to its bin's floor, and the three half bins in the middle -- one region of
-the board, and priced as one -- share a single `.5`. The two 39s stack their
-digits down both rows at the edges. The whole sign moved to the same three-
-by-five face for the same reason: six seven-wide letters across a twenty-six-
-wide front is forty-seven cells. The board stands a cell proud of the block
-either side so the letters have air from the bulbs, the way a marquee does.
+**A bin is four cells: three of slot and a wall.** The design guessed two,
+and two cannot carry a pay: a digit is a three-cell glyph and a bin has to
+wear its own. Four also halves to the two cells a grain steps across a row,
+so the fan of ten rows reaches the outer bins exactly and the across-step is
+derived from the bin (`STEP = BIN_W / 2`) rather than written. Eleven bins is
+forty-four, a white divider and the wall each side make forty-eight -- the
+sand board went to forty-one for seven slots, so this is the same cabinet
+with more slots in it.
 
-**The bins are counts, not a sand grid.** Two cells wide and six deep with a
-hairline between, a bin has no heap shape to speak of: a grain lands on the
-shorter of its two columns and that is the settle. Eleven two-column grids
-settling by the yard's rules would have drawn exactly the same picture for
-more machinery. What the design said about the settle rules taking over in
-the bin holds for the hopper and the tray, which are real plots.
+**The pays stand in one row, one under each bin.** A single digit sits under
+its slot exactly; the two 39s at the edges stack their digits down the eleven
+rows the band gives them, with the single digits centered on the same middle
+row; and the three half bins -- one region of the board, priced as one --
+share a single `.5` under a bracket spanning the three. Two staggered rows
+with leaders were tried first and read as a smudge.
+
+**The sign is the roof sign's face, across the front, in one word.** Six of
+the seven-cell letters and their gaps are forty-seven cells, one more than a
+board can center on a building an even number of cells wide, so the gap in the
+middle of the word is two -- and the handful falls through it, from a floor
+that opens to the three cells over it. The board stands two cells proud of the
+block either side, the way a marquee does, so the letters keep their clear
+cell from the bulbs. A three-by-five face was tried to fit the twenty-six-cell
+front and read as a row of fives; the letters DESIGN.md fought for stay.
+
+**The bins are plots of sand.** Each is a three-by-six grid of its own, and a
+grain arriving goes in at the top of its slot and heaps by the yard's rules
+(`repose`), so a x39 bin with two grains shows two grains and a middle bin
+shows a heap in the grains' own shades. Counts drawn as two filled columns
+were tried and read as printed paint. The hand settles on the same three
+facts: nothing left to send, nothing on the pegs, no column of a bin awake.
 
 **A peg does not flash white.** The face it stands on is white, so a peg gone
 white for a frame is a peg gone, not a peg lit. On the beat it throws its
@@ -695,13 +708,10 @@ four corners instead -- a spark round the black cell, with the grain sitting
 black on top -- which reads as the hit. The x39 bin's flash is the bin going
 black for the beat, for the same reason.
 
-**The gate is two cells and every grain enters at one column.** The floor
-opens to the two cells the word leaves clear between the S and the I, so the
-stream falls through the sign; and a grain's column keeps the parity of its
-row, so a grain that entered a cell to one side would meet nine pegs instead
-of ten and a board that was not fair. The heap is drawn from the floor over
-the opening and outward from there, so what you see is the heap sagging into
-the gap, and every grain steps to the middle column as it drops through.
+**Even is a band, not a point.** A hand at x1.03 showed x1.0 in the box over
+a fountain, and the box and the fanfare disagreed. A hand within
+`CASINO_EVEN_BAND` of one (a twentieth) is even: quiet, the box and nothing
+else. Past it a win is a win and a dud a dud.
 
 **Bank is not dead over a full hole.** The design carried the rule over from
 the wheel's day, and the wheel's own code had already dropped it: the hole

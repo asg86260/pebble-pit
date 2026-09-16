@@ -322,7 +322,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   drop: S.drop && { stage: S.drop.stage, sent: S.drop.sent, handful: S.drop.handful,
                     falling: S.drop.grains.filter(g => !g.landed).length,
                     onPegs: S.drop.grains.filter(g => g.seat).length,
-                    bins: S.drop.bins.map(b => b.length),
+                    bins: S.drop.bins.map(b => b.n),
                     paid: Math.round(S.drop.paid), edge: S.drop.edge },
   // the tray on its way back up for a drop again
   hoisting: hoisting(),

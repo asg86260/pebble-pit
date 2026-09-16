@@ -45,35 +45,37 @@ export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // --- the building, in cells, top to bottom -------------------------------------------
 // The hopper on the roof, where the stake stands: walled, and the heap stands
 // up to its rim and then walks sideways (`table.ceiling`), so an all-in is a
-// full hopper rather than a spire. It holds the brim (below) with room for the
-// heap's own shape.
-export const HOPPER_H = 14;
+// full hopper rather than a spire. Five rows: it holds the brim (below) with the
+// rim clear, and a hopper any taller stood the sign too far above the pegs.
+export const HOPPER_H = 5;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
-// you let go.
+// you let go, to the three cells over the column the handful enters at.
 export const GATE_H = 1;
-export const GATE_W = 2;             // cells the floor opens to, about the middle
-// The sign band under the floor: five-cell letters and a cell of air each side,
-// across the whole front, where it reads as the hopper's own edge. The handful
-// falls through the gap in the middle of the word.
-export const CASINO_SIGN_H = 7;
+export const GATE_W = 3;
+// The sign band under the floor: the roof sign's five-row letters across the
+// front in one word, a clear cell and the bulbs each side of them.
+export const CASINO_SIGN_H = 9;
 // The face: a band of air for the stream to fan in, then the peg rows two
 // apart, then the bins with their pay written under them, then the tray.
-export const BOARD_AIR = 4;
+export const BOARD_AIR = 3;
 export const PEG_ROW_H = 2;
-export const BIN_W = 2;              // eleven bins two cells wide is twenty-two
+// A bin is four cells on the field: three of slot and a wall on its right. Four
+// rather than the two the design guessed, because a pay is a three-cell glyph
+// and a bin has to carry its own; and four halves to the two cells a grain
+// steps across a row, so the fan of ten rows reaches the outer bins exactly.
+export const BIN_W = 4;
 export const BIN_H = 6;
-// What a bin pays is written under it in the sign's own three-cell glyphs. A
-// glyph is three cells and a bin is two, so the labels stand in two staggered
-// rows -- even bins on the upper, odd on the lower -- and the three half bins
-// in the middle share one label between them. Two rows of five with a cell of
-// air between, and a cell above and below.
+// What a bin pays, written under it in the sign's digits, one row for all
+// eleven: a floor line, a two-digit pay stacked down eleven rows at the edges
+// with the single digits centered on the same middle, a bracket over the three
+// half bins sharing one label, and the tray's rim.
 export const LABEL_H = 13;
 // The tray at the foot, which the bins pay into: the same walled plot the
 // hopper is, because what stands in it goes back up to the hopper on a drop
 // again.
-export const TRAY_H = 14;
+export const TRAY_H = 5;
 // The field's width, and the whole building's: the bins across, with two cells
-// of block either side.
+// of block either side -- a white divider and the wall.
 export const BOARD_COLS = CASINO_BINS.length * BIN_W;
 export const CASINO_MARGIN = 2;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
@@ -107,7 +109,9 @@ export let CASINO_SETTLE_HOLD_MS = 400;
 export let CASINO_PAY_BEAT_MS = 150;
 // A win is the burst it already was, scaled to the hand: a fountain for every
 // rung of this ladder the pay clears, and a x39 in the hand gets the three and
-// a second strobe.
+// a second strobe. A hand within this much of even is even -- quiet, the box
+// and nothing else -- so the box never says x1.0 over a fountain.
+export let CASINO_EVEN_BAND = 0.05;
 export const CASINO_BURST_AT = [1, 1.5, 3];
 export const CASINO_WIN_MS = 2400;        // the strobe
 export const CASINO_STROBE_MS = 70;       // a bulb on or off, this often
@@ -139,17 +143,16 @@ export const TABLE_GRAV = 0.05;
 // marks so nothing jumps, and never more than the brim.
 //
 //   1 - 100      the pot itself, one for one
-//   1,000        180          100,000+      300, the brim
-//   10,000       260
+//   1,000+       200, the brim
 //
-// The brim is what the hopper holds: fourteen rows of twenty-four is three
-// hundred and thirty-six cells, and a heap under a ceiling fills flat, so three
-// hundred stands in it with the rim clear. See `shownFor` in casino.js; what
-// is approximate is the size of the heap and nothing else: the row says the
-// exact pot and the hole is paid the exact pot.
+// The brim is what the hopper holds: five rows of forty-six is two hundred and
+// thirty cells, and a heap under a ceiling fills flat, so two hundred stands
+// in it with the rim clear. See `shownFor` in casino.js; what is approximate
+// is the size of the heap and nothing else: the row says the exact pot and
+// the hole is paid the exact pot.
 export const CASINO_PILE_ONE = 100;
-export const CASINO_PILE_BAND = 80;
-export const CASINO_PILE_BRIM = 300;
+export const CASINO_PILE_BAND = 100;
+export const CASINO_PILE_BRIM = 200;
 
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'the handful', min: 4, max: 128, step: 4,
@@ -173,5 +176,7 @@ export const CASINO_KNOBS = [
   { key: 'CASINO_CHASE_LIVE_MS', label: 'the live chase, ms', min: 20, max: 260, step: 5,
     get: () => CASINO_CHASE_LIVE_MS, set: v => { CASINO_CHASE_LIVE_MS = v; } },
   { key: 'CASINO_ATTRACT_S', label: 'the attract loop, s', min: 5, max: 120, step: 5,
-    get: () => CASINO_ATTRACT_S, set: v => { CASINO_ATTRACT_S = v; } }
+    get: () => CASINO_ATTRACT_S, set: v => { CASINO_ATTRACT_S = v; } },
+  { key: 'CASINO_EVEN_BAND', label: 'even, within', min: 0, max: 0.3, step: 0.01,
+    get: () => CASINO_EVEN_BAND, set: v => { CASINO_EVEN_BAND = v; } }
 ];
