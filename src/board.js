@@ -12,7 +12,7 @@ import { maxed } from './words.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
-import { CASINO_UPGRADES, busy } from './casino.js';
+import { busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
@@ -30,7 +30,6 @@ import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
 
 const shopEl = document.getElementById('shop');
-const casinoShopEl = document.getElementById('casinoshop');
 const crewShopEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlist');
 const crewListRowsEl = document.getElementById('crewlistrows');
@@ -45,7 +44,6 @@ const shackShopEl = document.getElementById('shackshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'),
-                casino: document.getElementById('casino'),
                 house: document.getElementById('house'),
                 scrub: document.getElementById('scrub'),
                 quarry: document.getElementById('quarryboard'),
@@ -77,7 +75,6 @@ const anchor = which => station(which)?.stand?.();
 const listFor = which =>
   // A row names the sheet it belongs to; the bench takes the rest.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
-  which === 'casino' ? CASINO_UPGRADES :
   which === 'scrub' ? SCRUB_UPGRADES :
   // The grounds' own rows and the kit row that lodges with each (`lodgers`).
   which === 'quarry' ? [...QUARRY_UPGRADES, ...lodgers('quarry')] :
@@ -611,9 +608,10 @@ export function showCrewList(on) {
 // answer that takes a tenth of a second to arrive reads as a control that did
 // not take. Only the pointer drifting off a station gets the benefit of LINGER.
 export function showPanel(want, now = false) {
-  // A key that is not a station (the lab that was) is nowhere to hang a
-  // board: it is asked for as nothing.
-  if (want && !station(want)) want = null;
+  // A key that is not a station (the lab that was), or a station with no
+  // board (the casino, whose decisions are levers on the building), is
+  // nowhere to hang a board: it is asked for as nothing.
+  if (want && !station(want)?.board) want = null;
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
@@ -721,7 +719,6 @@ function fill(which) {
   // a station's board being open is what reads its news
   markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
   if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), groundHeads);
   if (which === 'farm') refresh(farmShopEl, listFor('farm'), groundHeads);

@@ -14,7 +14,6 @@ import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js'
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
-import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
@@ -30,7 +29,6 @@ import { coarse } from './prefs.js';
 
 const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');
-const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlistrows');
 const scrubEl = document.getElementById('scrubshop');
@@ -739,7 +737,6 @@ export function buildCrewList() {
 // not exist yet when this line runs.
 const BOARDS = {
   bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
-  casino: () => [casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table'],
   scrub:  () => [scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit'],
   // Each ground draws the kit row that lodges with it (`lodgers`).
   quarry: () => [quarryEl, [...QUARRY_UPGRADES, ...lodgers('quarry')], QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
@@ -820,4 +817,4 @@ export function fillPin() {
 
 
 
-export { UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };
+export { UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };

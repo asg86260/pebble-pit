@@ -7,14 +7,17 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE } from '../casino.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
-import { S, casino, table, tray } from '../state.js';
+import { S, casino, table, tray, stakes } from '../state.js';
+import { LEVERS, leverAt, leverShape } from '../levers.js';
+import { carriedCone, carriedShade, overRim } from '../stakes.js';
+import { LEVER_REACH } from '../config.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -294,8 +297,49 @@ export function drawCasino() {
     // and the tray, a white plot in the block's foot
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
+
+    // The bank chute: while the tray is being tipped out, the foot's left wall
+    // is open at the tray's rows -- a hatch, white, a way through like every
+    // opening here -- and the sand runs out of it on to the ground.
+    if (S.paying) ctx.fillRect(x, tray.y, P, tray.rows * P);
+
+    // The three controls, on the walls: a stem with a knob, out from the wall,
+    // standing up when it can be pulled and lying flat, grey, when it cannot,
+    // and swinging down and back when pulled. Each where its effect is: the
+    // gate by the throat, the chute at the tray's left, the crank at its right.
+    for (const l of LEVERS) drawLever(l);
+
+    // While a heap is in your hand the rim is marked: a line along the
+    // funnel's top saying where to let go, and a thicker one while the heap
+    // is over it.
+    if (S.carried && !S.carried.returning) {
+      const over = overRim(S.carried.x, S.carried.y);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x, y - P * (over ? 2 : 1), w, P * (over ? 2 : 1));
+    }
     ctx.fillStyle = '#000';
   });
+}
+
+function drawLever(l) {
+  const { x, y, dir } = leverAt(l);
+  const { live, swing } = leverShape(l);
+  const reach = LEVER_REACH * P;
+  // the pivot, a cell on the wall, and the stem from it: up when live, out
+  // flat when dead, and through the swing between when pulled
+  const angle = live ? (Math.PI / 2) * (1 - swing) : 0;
+  const ex = x + dir * Math.cos(angle) * reach, ey = y - Math.sin(angle) * reach;
+  ctx.fillStyle = live ? '#000' : PEG_SHADE;
+  ctx.fillRect(x - P / 2, y - P / 2, P, P);
+  ctx.strokeStyle = live ? '#000' : PEG_SHADE;
+  ctx.lineWidth = P / 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  // and the knob at the end, two cells square, on the grid
+  ctx.fillRect(Math.round((ex - P) / P) * P, Math.round((ey - P) / P) * P, P * 2, P * 2);
+  ctx.fillStyle = '#000';
 }
 
 // --- the sand -------------------------------------------------------------------
@@ -312,6 +356,26 @@ export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
   if (tray.grid && tray.n) drawGrid(tray);
+  // the heaps you stake from, on the ground beside the building
+  for (const h of stakes) if (h.grid && h.n) drawGrid(h);
+  // and the one in your hand: the cone it stood as, under the pointer, in its
+  // coin's shade, mottled cell by cell the way every heap here is
+  const c = S.carried;
+  if (c) {
+    const rows = carriedCone(c);
+    const find = carriedShade(c);
+    const x0 = Math.round(c.x / P) * P, y0 = Math.round(c.y / P) * P;
+    rows.forEach((wide, i) => {
+      for (let k = 0; k < wide; k++) {
+        const cx = x0 + (k - (wide - 1) / 2) * P, cy = y0 - i * P;
+        const tone = (Math.abs(Math.round(cx / P) * 7 + i * 13) % 5);
+        ctx.fillStyle = find ? FIND_COLOR[findKind(find)][tone % FIND_COLOR[findKind(find)].length]
+                             : SHADES[Math.min(SHADES.length - 1, tone + 1)];
+        ctx.fillRect(Math.round(cx), cy, P, P);
+      }
+    });
+    ctx.fillStyle = '#000';
+  }
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;
@@ -319,14 +383,16 @@ export function drawPotPile() {
   // just left behind it in a lighter shade -- the yard's idiom for a thing in
   // motion -- so the stream reads from across the yard. Its own shade waits
   // for the bin.
+  // A pebble is a two-by-two block -- the boulder's own shape, the drop's rock
+  // at a smaller scale -- standing on its cell with its left half over the
+  // peg, so sixteen of them read as sixteen things falling rather than a thin
+  // stream.
+  const pebble = (c, r) => ctx.fillRect(f.x + c * P, f.y + (r - PEBBLE + 1) * P, PEBBLE * P, PEBBLE * P);
   for (const g of demo ? [...grains, demo] : grains) {
     if (g.landed) continue;
-    g.trail.forEach(([c, r], i) => {
-      ctx.fillStyle = TRAIL_SHADES[i];
-      ctx.fillRect(f.x + c * P, f.y + r * P, P, P);
-    });
+    g.trail.forEach(([c, r], i) => { ctx.fillStyle = TRAIL_SHADES[i]; pebble(c, r); });
     ctx.fillStyle = '#000';
-    ctx.fillRect(f.x + g.c * P, f.y + g.r * P, P, P);
+    pebble(g.c, g.r);
   }
   if (S.drop) {
     S.drop.bins.forEach((bin, b) => {
@@ -336,7 +402,7 @@ export function drawPotPile() {
           const s = at(bin, c, r);
           if (!s) continue;
           ctx.fillStyle = shadeOf(s);
-          ctx.fillRect(f.x + (binLeft(b) + c) * P, f.y + (FIELD_H + BIN_H - 1 - r) * P, P, P);
+          ctx.fillRect(f.x + (binLeft(b) + c * PEBBLE) * P, f.y + (FIELD_H + BIN_H - (r + 1) * PEBBLE) * P, PEBBLE * P, PEBBLE * P);
         }
     });
   }

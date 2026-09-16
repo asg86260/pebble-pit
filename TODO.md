@@ -1,16 +1,19 @@
 # Still to do
 
-## The stake is a heap you carry, and the casino has no board -- DESIGNED, awaiting approval (2026-09-16)
+## The stake is a heap you carry, and the casino has no board -- BUILT (2026-09-16)
 
-The casino's board goes entirely. Premade heaps of each coin (10, 100,
-1,000, all in) stand on the ground to the right of the building, present only
-when the purse covers them; the body's lift gesture carries one to the
-hopper, where it pours in and adds to the stake; another coin is refused at
-the rim; the hopper's pot can be lifted back out. Three controls on the
-building: the gate lever, the bank chute, the hoist crank. Banking tips the
-tray out on to a casino strip in `S.piles` and the haulers carry it to the
-hole. DESIGN.md, "The stake is a heap you carry, and the casino has no
-board". Blocked on sign-off.
+The casino's board is gone. Premade heaps of each coin (10, 100, 1,000, all
+in) stand on the ground to the right of the building, present only when the
+purse covers them; the body's lift gesture carries one to the hopper, where
+it pours in and adds to the stake; another coin is refused at the rim; the
+hopper's pot can be lifted back out. Three levers on the building: the gate,
+the bank chute, the hoist crank. Banking tips the tray out on to a casino
+strip in `S.piles` and the haulers carry it to the hole. The handful is the
+third version: the pile at the band drains whole into the throat and sixteen
+pressed pebbles come out. DESIGN.md, "The stake is a heap you carry, and the
+casino has no board" (built), with "What building it changed". Left for
+later: the twelve heaps take two thousand pixels of ground; nobody has
+listened to the pebbles.
 
 ## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 

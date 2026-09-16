@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- The casino has no board: heaps of each coin stand beside it and you carry one to the hopper to stake it, three levers on the building play the hand, and banking tips the winnings out on to the ground for the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.

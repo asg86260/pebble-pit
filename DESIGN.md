@@ -788,7 +788,7 @@ the middle and a hoist's height can each move a strike without a recipe of
 their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
 recipe is the rock's hit cut short. Nobody has listened to it yet.
 
-## The stake is a heap you carry, and the casino has no board (design, not built; 2026-09-16)
+## The stake is a heap you carry, and the casino has no board (built 2026-09-16)
 
 **The chip row is a menu, and nothing else in this yard is bought from a
 menu.** You pick ◾ 10, 100, 1,000 or *all in* from a dial, pick a coin from
@@ -925,6 +925,61 @@ it; a finger on a heap never scrolls the yard; a tap on each lever pulls it
 and the tooltip names it. Scenes: `casinostakes` (the row of heaps beside
 the building), `casinocarry` (a heap under the pointer over the rim),
 `casinobank` (the chute open, the pile forming, a hauler on its way).
+
+### What building it changed
+
+**The handful is the third of three, and the throat is where the pile and
+the bet meet.** The first handful was thirty-two grains whatever the stake,
+with the hopper's picture of the pot at the band ladder and the rest of the
+heap lifting off when the handful left -- and played, the player watched
+sand they had staked vanish. The second made the hopper's picture the
+handful itself, so everything in the bowl fell: honest, and a chip of a
+thousand stood as a pinch. A bucketed handful -- more pebbles for a bigger
+stake -- was written and rejected the same afternoon: it made the bet's
+spread depend on the stake. This is the third: **the pile is honest and the
+spread is a constant.** The hopper's pile is the pot at the band ladder,
+the same picture the tray gives; when the gate opens the whole pile drains
+into the throat -- into the machine, the way dust goes into the hole, gone
+from view because it is inside and never because it faded -- and out of the
+throat come `CASINO_HANDFUL` pressed pebbles, each carrying its share of the
+stake. A pebble is a two-by-two block, the boulder's own shape at a smaller
+scale, and the bins are plots of pebble-sized cells. Sixteen pebbles: one
+pebble's pay has a standard deviation of about 1.9 on the bin table, so a
+hand pays with a spread near half, a typical hand comes back at half to one
+and a half, and one hand in thirty-odd puts a pebble in a x39. The number is
+a knob and what it trades is that spread; `test/handful.test.mjs` holds it
+off the constant, never off the number. The drain runs at the sand's own
+pace and the funnel tips toward the throat as it drains -- a grain on a step
+slides in along it, the sand board's own trick -- so the whole pile goes in
+however big the stake, a big stake is a longer drain, and the cascade is the
+same sixteen every hand.
+
+**The heaps cost two thousand pixels of ground.** Three coins of four sizes
+at the band ladder is twelve cones, the all-in the brim's; laid in a row at
+`STAKE_GAP` that is three hundred and forty cells, reserved on the casino's
+rock side (`right` on its site row, which the walk and `GROUND_LEFT` both
+step past). Old saves slide their ground by `floorShift`, as any widening
+does. The heaps are rained into the middle of their plots rather than across
+them, so they cone up; the yard's slope, not a ceiling, gives them their
+shape.
+
+**A lever's box takes a cell of the wall.** The pivot stands on the wall,
+and a pointer over the pivot answered to the building instead of the lever
+until the box reached a cell in; the lever is named before the building for
+the same reason. On a desk the box is the stem's reach, on a phone
+`LEVER_HIT` cells.
+
+**The chute's pile is counted by the survey, so it lands in the strip's
+middle half.** A grain that walks to the nearest column with room can walk
+off the end of a strip, and the survey counts the strip's columns; the first
+tip lost a grain to the bare ground beside it.
+
+**Drop again hoists the whole tray.** The hopper's picture and the tray's
+are the same band, so the crank carries every grain up and the bowl is the
+picture again; nothing is left to fade. A pot lifted out and let go on the
+ground goes to the purse the way banking used to, over the works and into
+the hole -- the one arc that still credits directly, because the pot never
+left the player's hand.
 
 ## Crew
 

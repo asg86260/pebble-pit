@@ -41,7 +41,8 @@ const REACH = { left: 8, right: 8, up: 8, down: 4 };
 // standing at; the noticeboard, on the busiest strip in the yard, last of all.
 // The shields come after, since they have no ground and answer to no pointer.
 export const STATIONS = [
-  { key: 'casino', open: () => S.casinoOpen, stand: () => casino, board: 'casinoBoardOpen',
+  // No board: the casino's decisions are levers on the building (levers.js).
+  { key: 'casino', open: () => S.casinoOpen, stand: () => casino, board: null,
     after: ['quarry'],
     // The yard has been invested in: a second rock, not any one building.
     needs: () => S.boulderNo >= 2 },
