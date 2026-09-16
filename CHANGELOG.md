@@ -32,6 +32,7 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- The muck on the ground comes back under the same buildings when the yard changes width on a load, instead of standing under the wrong ones and losing its far end (test/wave5-yard.test.mjs, test/sky-fan.test.mjs).
 - A save from before the pour loads with its stake still in the funnel, and a pot it had won or staked in another coin is paid out of the foot instead of lost (test/save-floor.test.mjs, test/reload.test.mjs).
 - An empty bin no longer inverts its foot or sounds when the bins pay: only the bins with a pebble in them come up (test/casino.test.mjs).
 - Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).

@@ -7,6 +7,7 @@ import { P, CELL, SHADES, CORE_SIZE, LOO_POSTS, WORKER, ROCK_SINK, SAVE_V, SHARD
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
+import { slideLayers } from './smog/layer.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
@@ -722,6 +723,7 @@ export function restore() {
   if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!S.beatsDone.includes('show')) startBeat('leave');
   restoreGrid(floor, s.floor, floorShift(s.floor));
+  slideLayers(floorShift(s.floor));   // and the mess on it, by the same columns
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   // The rift comes back before the dust is put away, because how much
   // belongs in the hole depends on how much is already through. Clamped to
