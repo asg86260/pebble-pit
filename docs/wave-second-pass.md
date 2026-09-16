@@ -358,3 +358,101 @@ say so and make the one-line change), `src/world.js`.
 
 Branch: `second-pass-S`. Commit title: `A station is a row in a table,
 and the gates are its columns`.
+
+---
+
+## Track I: invalidation is not a thing every line does
+
+Seam 6 of "The second pass" (DESIGN.md). Base: `worktree-invalidation` on
+origin. Nothing the player sees changes.
+
+### What exists, measured
+
+- `S.dirty = true` is written on 216 lines across the tree. It gates one
+  thing: `persist()` (persist.js), which `main.js` already calls on a
+  one-second interval and on `visibilitychange`/`pagehide`. One `persist()`
+  on a busy yard costs 1.5 ms. The flag saves nothing but the serialize in
+  a yard where nothing moved -- and in play something moves every frame.
+- `buildShop()` is called from 51 lines. `buildBoard` (shop.js) already
+  returns without touching the DOM unless a board's row set changed, and
+  the open board is already rebuilt every frame by the shell. The 51 calls
+  buy same-frame freshness, which only two things need: a dev hook that
+  reads a board straight after a press (`__buy` then `__rows`), and a
+  pointer press on a board whose DOM must answer on that frame.
+- Those calls are what keep the sim inside the import ring with the shop:
+  `pit.js`, `hands.js`, `casino.js`, `intro.js`, `staffing.js`-adjacent
+  callers import `buildShop` from shop.js. `node tools/cycles.mjs --path
+  src/quarry.js src/shop.js` names each chain.
+
+### The build
+
+1. **`S.dirty` goes.** Remove the field from state.js (it is in
+   `EPHEMERAL`), every `S.dirty = true` line, and the `!S.dirty` gate in
+   `persist()`. `persist()` keeps its other gates (`fatal`, `staged`,
+   `yielded`/tab ownership) and keeps `S.unsaved`. hooks.js's `reload`
+   drops its two `S.dirty = true`. If a line was `{ ...; S.dirty = true; }`
+   and is now an empty block or a bare `if`, tidy it. A comment that only
+   said "and it is saved" goes with the line.
+2. **`buildShop()` leaves the sim.** Add `S.shopStale` (boolean,
+   `EPHEMERAL`). Every `buildShop()` call in a file that is not
+   `main.js`, `shop.js`, `board.js`, `input.js`, `roster.js`, `settings.js`,
+   `hooks.js`, `dev.js` or `src/selftest/**` becomes `S.shopStale = true`
+   -- or nothing, where the open board's per-frame rebuild already covers
+   it (a purchase that changes a row set: the frame will see it). The
+   frame drains the flag: in `main.js`, right after `step()` and before the
+   draw, `if (S.shopStale) { S.shopStale = false; buildShop(); }`. The
+   shell files above may keep calling `buildShop()` directly where a press
+   must answer on the same frame; say which calls you kept and why.
+   `hooks.js`: `__buy`, `__rows`, `__build`, `__reload` and any hook the
+   checks read a board through drain the flag themselves (call
+   `buildShop()` first), so a node check that presses then reads sees the
+   board it would see in the browser a frame later.
+3. **The imports follow.** After 2, no file outside the shell list imports
+   `buildShop`. Run `node tools/cycles.mjs` before and after and paste
+   both; the goal is that no file under `src/crew/`, and none of
+   `quarry.js`, `farm.js`, `rock.js`, `dust.js`, `tower.js`,
+   `apothecary.js`, `scrubhouse.js`, `hands.js`, `pit.js`, `casino.js`,
+   `levels.js`, `staffing.js`, `game.js` is in a group with `shop.js` or
+   `board.js`. If one still is, `--path` names the edge; report it and
+   leave it unless it is another `buildShop`/`standRect`-shaped UI call,
+   in which case treat it the same way (`crew/assign.js` reads `standRect`
+   from board.js -- it now lives in stations.js; repoint it).
+4. **`test/invalidation.test.mjs`**, new, node tier: (a) a yard with the
+   bench open, a rung bought through `__buy`, `__rows` shows the next rung
+   on the same call; (b) a work landing by itself (start a build, `run`
+   until it lands, no hook in between) shows on `__rows` after one `run`
+   of a frame; (c) `persist()` writes when nothing has changed and the
+   blob round-trips (`persist-roundtrip` already covers the shape; this
+   covers that the gate is gone). Also: `test/persist-roundtrip.test.mjs`
+   is green with `dirty` gone and `shopStale` in `EPHEMERAL`.
+5. DESIGN.md: seam 6's paragraph in "The second pass" gets an "as built"
+   line; TODO.md's entry says seam 6 built. `ARCHITECTURE.md`: one
+   sentence under "The files" for shop.js: the boards rebuild themselves
+   on the frame; nothing in the sim calls the shop. No CHANGELOG line.
+
+### The check
+
+`node --check` on every file touched. Foreground, `--test-concurrency=4`:
+`test/invalidation.test.mjs`, `test/persist-roundtrip.test.mjs`,
+`test/shop-coverage-1` and `-2`, `test/jobs.test.mjs`,
+`test/machines.test.mjs`, `test/casino.test.mjs` (or the file about the
+handful), `test/beats.test.mjs`, `test/reload.test.mjs`,
+`test/stuck-yard.test.mjs`. Paste the summary lines. Browser, against a
+server on a free port with a distinct `CDP_PORT`: `--only boards`,
+`--only "tap"`, `--only "grow on what they give up"`, `--only casino`;
+paste the last line of each; tear the server down and say the port is
+dead. One shot of the `boards` scene and one of the `casino` scene through
+`look.mjs`; say what each shows.
+
+### Owns / does not touch
+
+Owns: every file with a `S.dirty = true` or `buildShop()` line (the edit
+on each is that line), `src/main.js` (the drain), `src/state.js` (the two
+list edits), `src/persist.js` (the gate), `src/hooks.js`,
+`src/crew/assign.js` (the `standRect` import), `test/invalidation.test.mjs`,
+`ARCHITECTURE.md`, `DESIGN.md` and `TODO.md` (the one paragraph each).
+Does not touch: `src/stations.js`, `src/beats.js`, `src/upgrades.js`
+beyond its `buildShop`/`dirty` lines, anything in `src/render/`.
+
+Branch: `second-pass-I`. Commit title: `The boards rebuild themselves and
+the save runs on the clock: nothing in the sim says so`.
