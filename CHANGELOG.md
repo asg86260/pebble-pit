@@ -18,7 +18,7 @@ feature lives in DESIGN.md.
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
-- A building goes up in the yard the way it does on its shop tile: a cell at a time, bottom course first and left to right, with the rest of it standing as a dotted plan until it is laid.
+- A building goes up in the yard the way it does on its shop tile: a cell at a time, bottom course first and left to right.
 - A tap on a row buys it first time, a scroll or a hold does not, and a long press reads its note (test/hover-gate.test.mjs, selftest/touch.js).
 - On a phone a board is a sheet from the bottom with a handle: drag it up for the long boards, down to put it away, and the crew list opens inside it (selftest/sheet.js).
 - A double tap on a phone never zooms the page (selftest/touch.js).
