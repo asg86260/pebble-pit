@@ -141,6 +141,8 @@
      it in step with the sheet (main.js). -->
 <div id="scrim" class="scrim" hidden></div>
 <div id="held" class="held" hidden>
+  <!-- the grip, on a phone, where the held sheet is a sheet from the bottom (gear.js) -->
+  <i id="heldgrip" class="grip" hidden></i>
   <!-- One sheet, several pages, told apart by data-pane: a space-separated
        list of the pages an element is on. settings.js's showPane shows the
        elements whose list holds the page's name and hides the rest. The
@@ -268,6 +270,10 @@
 <!-- The fullscreen button, top-right in the sky, where the platform can go
      fullscreen at all (fullscreen.js). -->
 <button id="fullscreen" type="button" hidden><i class="frame"></i></button>
+<!-- The gear, on a phone only: the way to the settings where there is no
+     escape key (gear.js). It stands beside the fullscreen button, or in its
+     spot where there is none. -->
+<button id="gear" type="button" hidden><i class="cog"></i></button>
 <div id="hop" hidden>
   <button class="left" type="button" hidden><span class="arrow">&#9664;</span><i class="pic"></i></button>
   <button class="right" type="button" hidden><i class="pic"></i><span class="arrow">&#9654;</span></button>

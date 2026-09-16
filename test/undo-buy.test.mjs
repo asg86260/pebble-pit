@@ -9,12 +9,15 @@
 
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { UNDO_MS } from '../src/config.js';
+import { UNDO_MS, UNDO_DEAD_MS } from '../src/config.js';
 import { purse, billOf, undoable, undoBuy } from '../src/upgrades.js';
 import { rowFor, workOn } from '../src/works.js';
 
-// Enough in the hole for anything on the bench, and a body to build it.
-const stocked = () => { window.__crew(1, 0); window.__give(5000); run(0.1); };
+// The undo is the phone's answer to having no hover and no confirm, so the
+// yard is stood up as a phone; the last group asks the desk.
+const stocked = () => { window.__coarse(true); window.__crew(1, 0); window.__give(5000); run(0.1); };
+// Past the dead zone, in which a second tap is not an undo.
+const beat = () => run(UNDO_DEAD_MS / 1000 + 0.05);
 
 // --- 1. a rung -----------------------------------------------------------------------
 group('a rung pressed twice inside the moment costs nothing', async () => {
@@ -25,6 +28,8 @@ group('a rung pressed twice inside the moment costs nothing', async () => {
   const bought = window.__buy('carry');
   const queued = !!workOn('carry');
   const after = purse('dust');
+  const tooSoon = undoable(u);
+  beat();
   const offered = undoable(u);
   // The same press again, through the row: `buy` sees the undo and takes it.
   const undone = window.__buy('carry');
@@ -33,7 +38,8 @@ group('a rung pressed twice inside the moment costs nothing', async () => {
     ok(bought, 'the rung is bought at the row'),
     ok(queued, 'and is a piece of work at the bench'),
     ok(after === had - bill.find(([m]) => m === 'dust')[1], 'the bill is taken', `${had} -> ${after}`),
-    ok(offered, 'the row offers the way back'),
+    ok(!tooSoon, 'not in the first instant: a fast double tap is one purchase'),
+    ok(offered, 'then the row offers the way back'),
     ok(!undone, 'pressing it again is not a second purchase'),
     ok(!workOn('carry'), 'the work is put down', `${workOn('carry')}`),
     ok(purse('dust') === had, 'and the bill is back in the pit', `${purse('dust')} vs ${had}`),
@@ -48,7 +54,7 @@ group('a build pressed twice inside the moment is handed back whole', async () =
   const bill = billOf(u).filter(([m]) => m !== 'time');
   const had = Object.fromEntries(bill.map(([m]) => [m, purse(m)]));
   const bought = window.__buy('unlockshack');
-  run(0.5);                                   // a few frames of building
+  run(0.5);                                   // a few frames of building, and past the dead zone
   const going = !!workOn('unlockshack');
   const undone = undoBuy();
   run(0.5);
@@ -89,5 +95,21 @@ group('a work that has landed is had, whatever the clock says', async () => {
   return [
     ok(S.carryLevel === level + 1, 'the rung is up', `${level} -> ${S.carryLevel}`),
     ok(!undoable(u) && !undoBuy(), 'and there is no taking it back'),
+  ];
+});
+
+// --- 5. the desk ---------------------------------------------------------------------
+group('on a desk there is no undo: a work at the front is committed', async () => {
+  stocked();
+  window.__coarse(null);
+  const u = rowFor('carry');
+  window.__buy('carry');
+  const after = purse('dust');
+  beat();
+  const offered = undoable(u);
+  const undone = undoBuy();
+  return [
+    ok(!offered, 'the row offers nothing back'),
+    ok(!undone && !!workOn('carry') && purse('dust') === after, 'and the work stays, paid for', `${purse('dust')} vs ${after}`),
   ];
 });

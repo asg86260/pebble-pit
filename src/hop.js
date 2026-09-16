@@ -67,8 +67,11 @@ export function refreshHop() {
   if (want !== shown) { shown = want; hopEl.hidden = !want; }
   if (!want) return;
   // On the same seat every shell element uses: a share of the window's
-  // height, so the sky it stands in is the phone's own.
-  const y = Math.round(S.H * HOP_Y - HOP_SIZE / 2);
+  // height, so the sky it stands in is the phone's own -- and never lower
+  // than the middle of the sky, since a phone on its side has its ground
+  // line above HOP_Y and an arrow on the ground reads as a thing in the yard.
+  const ground = (S.groundY - S.camY) * S.zoom;
+  const y = Math.round(Math.min(S.H * HOP_Y, ground / 2) - HOP_SIZE / 2);
   if (y !== putY) { putY = y; hopEl.style.transform = `translate3d(0, ${y}px, 0)`; }
   for (const dir of [-1, 1]) {
     const el = arrows[dir];
