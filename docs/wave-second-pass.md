@@ -254,3 +254,107 @@ Fixed shape, nothing else:
 4. Decided: what you had to decide that this document did not say.
 5. Wrong: anything you believe is wrong with the design that you
    implemented anyway.
+
+---
+
+## Track S: a station is a row in a table, and the gates are its columns
+
+Seam 4 of "The second pass" plus "The gates table" from "Beats and gates:
+one table each" (DESIGN.md). Runs after U and B landed (main at `de1f1f1`
+or later). Base: `worktree-stations-gates` on origin.
+
+### What exists
+
+`board.js` answers "which station" with `STATIONS` (a list of keys),
+`standing(which)` (a hand-written switch over thirteen `S.<place>Open`
+booleans), `standAt` (a rect a station), twelve `near<Station>` functions
+chained by hand in `input.js` (twice), and forty-odd `which === '...'`
+branches. Each `unlock*` row's `show` (or sticky `once`) is a private
+predicate; `shieldOpened` in shield.js reads a `BEFORE` map. The table
+those predicates encode is written out in DESIGN.md ("What there is
+today", the door table). `upgrades/site.js`'s `site({...})` is the one
+place a door row is built.
+
+### The build
+
+1. **`src/stations.js`**, new: `STATIONS`, one row a station, in yard
+   order, `{ key, open: () => bool, stand: () => rect, board: key,
+   after: [keys], needs: () => bool, sticky: bool }`. `open` reads the
+   boolean that exists today (`S.quarryOpen`; the bench's is `S.seenBench`,
+   the books' `S.banked > 0`, the house's `S.crew > 0`); `stand` is today's
+   `standAt` getter for that key; `after`/`needs`/`sticky` are the door
+   table in DESIGN.md, row for row -- where DESIGN.md's table and a row's
+   current `show` disagree, the row's current `show` is the truth and the
+   report says so. Shields are rows too (`props`, `net`, `arch`, `dome`),
+   with `open: () => shieldDone(kind)` and no `stand`. The rift and the
+   meteor are not stations; leave them out.
+   Readers: `station(key)`, `open(key)`, `offered(key)` =
+   `!open(key) && after.every(open) && needs()` held once true when
+   `sticky` (today's `revealed` in shop.js does the holding; keep using
+   it), `standRect(key)`, `nearStation(key, x, y)` (today's `near` plus
+   the per-station special cases -- read the twelve and keep each one's
+   rule, as a field on the row if it needs one, e.g. the quarry's shed and
+   the house's padding), `stationAt(x, y)` (the first row whose
+   `nearStation` says yes, in yard order -- which is what the two `||`
+   chains in input.js compute), `shieldBefore(kind)` for shield.js.
+2. **board.js**: `STATIONS`, `standing`, `standAt`, `standRect`,
+   `stationFoot` and the twelve `near*` exports become thin reads of
+   stations.js or go, and every `which === '...'` branch that only picks a
+   flag or a rect reads the row instead. Branches that do something
+   station-specific (a board's own build call) stay as they are; count
+   what is left and say the number.
+3. **input.js**: the two `||` chains become `stationAt(x, y)`; the
+   `which ===` ladder at ~line 316 reads the table.
+4. **upgrades/site.js**: `site({...})` takes `key` and reads
+   `offered(key)` for `show`/`once` (sticky rows use `once`, as today);
+   the `open` and `once`/`show` arguments go. Every `rows-*.js` door row
+   drops its private predicate. The shield rows in `rows-shields.js` read
+   `offered` too. `shieldOpened` in shield.js becomes
+   `open(shieldBefore(kind))` and `BEFORE` goes.
+5. **The thirteen booleans stay** on `S` this wave; `open()` is the one
+   reader. (Turning them into one set is a save-shape change and waits for
+   the save floor.)
+6. **`test/gates.test.mjs`**, new, node tier: (a) the table is acyclic
+   and every `after` key is a row; (b) every `unlock*` row and every
+   shield row's `show()` equals `offered(key)` for that row, on a fresh
+   yard and again with every door open (`__fullSites`); (c) for each door
+   with an `after`, a yard that meets `needs` but has an `after` door shut
+   is not offered it -- buy it like a player: `__grant` the coins, `run`,
+   read `__rows().find(r => r.key === 'unlock' + key).shown`; (d)
+   `stationAt(x, y)` over each standing station's `stand` rect returns
+   that station and nowhere else returns a station.
+7. `ARCHITECTURE.md`: "A new site" (the 7-step list) gains "a row in
+   `STATIONS`" and loses the steps the row now covers; say which.
+   DESIGN.md: the gates heading gets `(built)` and an "as built"
+   paragraph; TODO.md's entry likewise. No CHANGELOG line unless a player
+   could see a change (there should be none).
+
+### The check
+
+`node --check` on every file touched. Foreground, `--test-concurrency=4`:
+`test/gates.test.mjs`, `test/door-chain.test.mjs`, `test/shop-coverage-1`
+and `-2`, `test/shield.test.mjs`, `test/boards.test.mjs`,
+`test/door-notes.test.mjs`, `test/persist-roundtrip.test.mjs`. Paste the
+summary lines. Browser, against a server on a free port with a distinct
+`CDP_PORT`: `--only boards`, `--only stations`, `--only places`,
+`--only input`; paste the last line of each; tear the server down and say
+the port is dead. One shot of the `boards` scene through `look.mjs`, and
+say what it shows.
+
+Known red on main, not yours: `test/machines.test.mjs` "a jaw pays a dig
+exactly what a gang would".
+
+### Owns / does not touch
+
+Owns: `src/stations.js` (new), `src/board.js`, `src/input.js`,
+`src/shield.js`, `src/upgrades/site.js`, `src/upgrades/rows-*.js`,
+`src/tower.js` (its door row only), `src/casino.js`/`src/apothecary.js`/
+`src/quarry.js`/`src/farm.js`/`src/scrubhouse.js`/`src/outhouse.js`/
+`src/shack.js` (their door rows only, if any live there), `test/gates.test.mjs`,
+`ARCHITECTURE.md`, `DESIGN.md` (the one section), `TODO.md` (the one
+entry). Does not touch: `src/state.js`, `src/persist.js`, `src/beats.js`,
+`src/game.js`, `src/hooks.js` (read `__rows` etc.; if a hook must change,
+say so and make the one-line change), `src/world.js`.
+
+Branch: `second-pass-S`. Commit title: `A station is a row in a table,
+and the gates are its columns`.
