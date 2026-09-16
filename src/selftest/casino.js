@@ -1,14 +1,8 @@
 // The casino: the stake, the spin, the pot as a real pile, and banking it.
-//
-// 4 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, ok, run, runUntil } from './kit.js';
 
 export const TESTS = [
-  // The one place in the yard that makes nothing. Everywhere else a thing you
-  // buy does something for ever after; this takes what you have and hands some
-  // of it back, and the whole of it is a decision you keep making.
   ['the casino takes a stake and pays a pot', async () => {
     newRun();
     await settle();
@@ -27,9 +21,8 @@ export const TESTS = [
     const row = k => casino().querySelector(`button[data-key="${k}"]`);
     const rows = () => [...casino().querySelectorAll('button[data-key]')].map(b => b.dataset.key);
 
-    // The chips go all the way up to everything you have. Wound back to the
-    // smallest first: the dial is a setting and it keeps whatever an earlier
-    // check left it on.
+    // Wound back to the smallest first: the dial is a setting and it keeps
+    // whatever an earlier check left it on.
     const chips = [];
     const dial = () => casino().querySelector('[data-dial="chip"]');
     for (let i = 0; i < 4; i++) { dial().querySelector('.less').click(); buildShopFromTest(); }
@@ -41,18 +34,15 @@ export const TESTS = [
     const stake = state().stakes.dust;
     row('stakedust').click();
     const down = state();
-    // The whole hand: the stake pours down, and only then does the wheel go
-    // round. Neither half is on a clock this check can count off.
+    // Neither half of the hand is on a clock this check can count off.
     runUntil(() => !state().pouring && !state().spinning, 40);
     buildShopFromTest();
     const settled = state();
     const potRows = settled.pot ? rows() : [];
 
-    // Keep at it until both ways round have come up -- and let the yard go quiet
-    // between hands. Nothing here is instant any more: the stake trickles down
-    // out of the sky, the wheel takes its time, and banking is the whole pot
-    // flying across the works to the hole. A check that reads the counter while
-    // half of it is still in the air is a check reading a number mid-throw.
+    // Keep at it until both ways round have come up, and let the yard go
+    // quiet between hands: a counter read while half the pot is still in the
+    // air is a number mid-throw.
     const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
                                        !state().pouring && !state().spinning, 30);
     let won = null, lost = null;
@@ -75,13 +65,9 @@ export const TESTS = [
     newRun();
     await sleep(300);
     return [
-      // The far end of the walk, asked of every building rather than of the
-      // one that used to stand next to it. It read `casinoX < labX`, and the
-      // lab is deleted -- a building that is gone is never seated, so `labX`
-      // came back 0 and the casino was "not past" a building that is not
-      // there. `siteOrder` pins the casino last on purpose (the one place in
-      // the yard that makes nothing should be a place you went to), and what
-      // that means is exactly this: nothing stands further out.
+      // Asked of every building, not of one neighbor: a building that is gone
+      // is never seated and its x comes back 0. `siteOrder` pins the casino
+      // last, and what that means is exactly this.
       ok(open.casinoOpen, 'cores build it',
          `casino at ${open.casinoX}`),
       ok(Object.entries(open.stands).every(([k, r]) => k === 'casino' || r.x > open.casinoX),
@@ -107,9 +93,6 @@ export const TESTS = [
     ];
   }],
 
-  // A spin is the one moment in this game you are meant to sit and watch, so the
-  // board gets out of the light, the wheel takes its time, and what is on the
-  // table is a heap on the ground rather than a number on a row.
   ['a spin is something to watch', async () => {
     newRun();
     await settle();
@@ -119,7 +102,7 @@ export const TESTS = [
     window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
     // stand at it, so there is a board in the way to get out of the way
     const s0 = state();
@@ -169,9 +152,6 @@ export const TESTS = [
     ];
   }],
 
-  // The pot is a real plot of sand, not a drawing of one: one grain, one of
-  // whatever was staked, settled by the same code the yard and the hole use. A
-  // thousand on the table is a thousand grains lying there.
   ['the pot is a real pile, grain for grain', async () => {
     newRun();
     await settle();
@@ -181,7 +161,7 @@ export const TESTS = [
     window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
@@ -222,10 +202,6 @@ export const TESTS = [
     ];
   }],
 
-  // Nothing here is a number moving from one counter to another. The pot is sand
-  // at the far end of the yard and the hole is at the other, so banking is the
-  // whole of it going over -- and every grain that leaves the heap is a grain
-  // the hole counts when it lands.
   ['banking flies the pot to the hole, grain for grain', async () => {
     newRun();
     await settle();
@@ -235,7 +211,7 @@ export const TESTS = [
     window.__invest();
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');

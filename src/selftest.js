@@ -1,26 +1,15 @@
-// The checks that need a page.
+// The checks that need a page: a pointer dragged across a canvas, a board
+// seating itself against the edge of a window, a cursor changing shape, a
+// cell landing on a whole device pixel. Everything about the yard lives in
+// `test/*.test.mjs` and runs in node.
 //
-// Run it in the browser -- open the game and call `__test()` in the console --
-// or headless with `npm run test:browser`. It resets the save first, so run it
-// on a game you do not mind losing.
+// Run it in the browser (`__test()` in the console) or headless with
+// `npm run test:browser`. It resets the save first.
 //
-// This used to be the whole suite: five hundred and eighty checks, most of them
-// about the yard rather than about the page, all of them going through a browser
-// to find out. The ones about the yard live in `test/*.test.mjs` now and run in
-// node against `step` directly -- see tools/node/yard.mjs. What is left here is
-// what a browser is actually for: a pointer being dragged across a canvas, a
-// board seating itself against the edge of a window, a cursor changing shape, a
-// cell landing on a whole device pixel.
-//
-// Every group starts from a new game (see `runTests`), so any one of them can be
-// run on its own with `__test('some words from the name')`, and the suite can be
-// split across as many browsers as you like.
-//
-// The checks themselves are in src/selftest/, one file to a subject. This file
-// is the order they run in, and the order is not decoration: `--shard 2/6`
-// hands the second sixth of this list to a browser, so the list below is the
-// contract both the sharding and `--only` are cut from. A subject moved up or
-// down here moves in every shard with it.
+// The checks are in src/selftest/, one file to a subject. This file is the
+// order they run in, and the order is a contract: `--shard 2/6` hands the
+// second sixth of this list to a browser, so a subject moved here moves in
+// every shard with it.
 
 import { newRun, settle, sleep, cost } from './selftest/kit.js';
 import { TESTS as opening } from './selftest/opening.js';
@@ -37,7 +26,7 @@ import { TESTS as carry } from './selftest/carry.js';
 import { TESTS as house } from './selftest/house.js';
 import { TESTS as sky } from './selftest/sky.js';
 import { TESTS as input } from './selftest/input.js';
-import { TESTS as settings } from './selftest/settings.js';   // wave-release: track A
+import { TESTS as settings } from './selftest/settings.js';
 import { TESTS as scenes } from './selftest/scenes.js';
 import { TESTS as queue } from './selftest/queue.js';
 
@@ -57,29 +46,17 @@ const TESTS = [
   ...house,
   ...sky,
   ...input,
-  // wave-release: track A
   ...settings,
   ...scenes,
   ...queue,
 ];
 
-// `__test('quarry')` runs only the groups whose name says quarry. The whole suite is
-// two minutes; one group is seconds, which is the difference between checking a
-// change and putting off checking it.
-// `__test()` runs the lot. `__test('casino')` runs one corner of it. `__test('',
-// {i, n})` runs every nth group starting at i, which is how `tools/test.mjs`
-// splits the suite across as many browsers as the machine has room for.
-// Every group starts from a new game.
-//
-// It did not use to. The suite was one long narrative -- the opening first, and
-// a dozen groups afterwards leaning on the yard a neighbour had left behind --
-// which meant a group could only be run where it sat, a failure could belong to
-// any of the groups above it, and the whole thing could not be split across more
-// than a handful of browsers without breaking.
-//
-// A reset is half a second of game and costs nothing, and with it every group is
-// a check you can run on its own. `{ solo: false }` is kept for one purpose: to
-// watch what the suite used to do.
+// `__test()` runs the lot. `__test('casino')` runs the groups whose name says
+// so. `__test('', {i, n})` runs every nth group starting at i, which is how
+// `tools/test.mjs` splits the suite across browsers. Every group starts from
+// a new game, so any one can run on its own and a failure belongs to the
+// group that reports it; `{ solo: false }` is kept only to watch the old
+// narrative order.
 export async function runTests(filter = '', shard = null, opts = {}) {
   const solo = opts.solo !== false;
   const errs = [];
@@ -91,14 +68,9 @@ export async function runTests(filter = '', shard = null, opts = {}) {
 
   const results = [];
   const timing = [];
-  // Cut into blocks, in file order, rather than dealt out round-robin.
-  //
-  // Round-robin balances the slow groups better and was tried first. It also
-  // shuffles the order, and the order is not decoration here: the opening runs
-  // first because it is the only group that can watch the game open, and a dozen
-  // others lean on the yard a neighbour left behind. Dealt out, sixteen checks
-  // failed that pass in sequence. A block keeps everybody next to the group they
-  // were written next to.
+  // Cut into blocks in file order rather than dealt out round-robin: the
+  // opening is the only group that can watch the game open, and a block
+  // keeps every group next to the one it was written next to.
   const all = TESTS.filter(([name]) =>
     !filter || name.toLowerCase().includes(filter.toLowerCase()));
   const per = shard ? Math.ceil(all.length / shard.n) : all.length;

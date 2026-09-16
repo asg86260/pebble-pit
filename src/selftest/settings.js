@@ -1,10 +1,7 @@
 // The held sheet as the settings sheet: what is on it, in what order, and
-// whether each thing on it does what it says.
-//
-// 4 groups (wave-release, track A). Everything here needs the page -- the
-// sheet is DOM, the switch is a button, the save goes through a textarea --
-// which is why it is in this tier and not the node one; the preference store
-// itself is checked in test/settings.test.mjs.
+// whether each thing on it does what it says. The sheet is DOM, the switch
+// is a button, the save goes through a textarea; the preference store itself
+// is checked in test/settings.test.mjs.
 
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
@@ -26,16 +23,14 @@ const press = async () => {
   await raf();
 };
 const resume = () => document.getElementById('resume').click();
-// the settings are a page behind the front now: one press to turn to it
+// the settings are a page behind the front: one press to turn to it
 const settingsPage = () => document.getElementById('settingsbtn').click();
 const said = () => held().querySelector('.said').textContent;
 const motion = () => document.getElementById('motion');
 
-// what a player reads, top to bottom: each child of the sheet that is showing,
-// as its text with the whitespace folded
-// The record's button carries a count that is the yard's doing, and the saves
-// button which yard, so each is read as its name: what the check is about is
-// that the line is there, in its place.
+// What a player reads, top to bottom. The record's button carries a count
+// that is the yard's doing, and the saves button which yard, so each is read
+// as its name: what the check is about is that the line is there.
 const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
   .map(el => el.id === 'recordbtn' ? 'achievements'
@@ -44,10 +39,8 @@ const lines = () => [...held().children]
 
 export const TESTS = [
   // --- the landing page (DESIGN.md, "The landing page") ----------------------
-  // index.html in a frame, the player's way: the labels read off the store,
-  // and `play` takes the frame to play.html with the yard running. The demo
-  // yard the page shows in its own frame boots too, staged, and writes
-  // nothing -- the slot's blob is the same before and after.
+  // index.html in a frame, the player's way. The demo yard the page shows
+  // boots too, staged, and must write nothing.
   ['the landing page reads the store and play opens the game', async () => {
     newRun();
     await settle();
@@ -94,16 +87,13 @@ export const TESTS = [
     ];
   }],
 
-  // The saves page, the player's way: the row for an empty slot, pressed
-  // twice, is the new game with the first yard kept; the first row brings
-  // it back.
   ['the saves page switches yards', async () => {
-    // slot 2 empty before and after, through the store: the save is in
-    // IndexedDB, and a key removed from localStorage by hand left a run's
-    // yard standing there for the next run to find. Setting the slot by hand
-    // skips the claim `switchSlot` makes, so the claim is made here too, and
-    // the database is waited for at the end so the pointer lands before the
-    // harness closes the page.
+    // Slot 2 empty before and after, through the store: the save is in
+    // IndexedDB, and a key removed from localStorage by hand leaves a run's
+    // yard standing for the next run to find. Setting the slot by hand skips
+    // the claim `switchSlot` makes, so the claim is made here too, and the
+    // database is waited for so the pointer lands before the harness closes
+    // the page.
     const emptySlot2 = async () => { setSlot(2); clear(); setSlot(1); claimSave(); S.yielded = false; await storeSettled(); };
     newRun();
     await settle();
@@ -145,11 +135,7 @@ export const TESTS = [
   }],
 
   // --- the save in IndexedDB (DESIGN.md, "The save is in IndexedDB") --------
-  // The one check that runs against the real database: the blob the autosave
-  // wrote is in it, and a localStorage that refuses -- filled to its cap, the
-  // way a shared origin gets -- does not cost the save. The line the sheet
-  // says when the *store* refuses is read off a forced refusal, since a real
-  // one cannot be arranged against IndexedDB.
+  // The one check that runs against the real database.
   ['the save is in the database, and a full localStorage does not cost it', async () => {
     newRun();
     await settle();
@@ -270,9 +256,6 @@ export const TESTS = [
     ];
   }],
 
-  // The save goes out through one button and comes back in through the paste.
-  // Until track C lands, `importSave` throws; the sheet catches that rather
-  // than letting the game stop, and this group reports it as what it is.
   ['a save comes out and goes back in through the sheet', async () => {
     newRun();
     await settle();
@@ -349,9 +332,8 @@ export const TESTS = [
   // The card is DOM and is stepped by the frame, not the sim: `run` turns the
   // game's clock and one `raf` is the frame that reads it.
 
-  // The first notice, the way a player gets it: the rock clicked, the chips
-  // hauled into the hole. The crew and their pace are setup; the earning is
-  // the click and the walk.
+  // The first notice, the way a player gets it: the crew and their pace are
+  // setup; the earning is the click and the walk.
   ['a notice landing is said out loud, in the record\'s words', async () => {
     newRun();
     await settle();

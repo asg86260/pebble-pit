@@ -1,39 +1,21 @@
 // The crew at work: carried and shaken, the cut, the stops, the shovelling,
 // the dance, and the headcount badge.
-//
-// 7 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, run, runUntil } from './kit.js';
 
 export const TESTS = [
-  // A body let go of used to drop straight down however you were moving when you
-  // let go -- the one thing in the yard that fell out of the air with no regard
-  // for the hand that had hold of it. It is thrown now, off the same flick the
-  // dust is thrown with, and waggling one about earns it a moment of not
-  // knowing which way is up.
   ['a body is thrown rather than dropped, and shaking one makes it dizzy', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
     run(2);
 
-    // **The body actually in your hand, by name.**
-    //
-    // This used to click where `workerPos[0]` was standing and then read
-    // `workerPos[0]` for the rest of the throw, on the assumption that the two
-    // were the same body. They are not: `workerAt` lifts whichever body is under
-    // the cursor, and two rockhands working one face routinely overlap -- so the
-    // click picked one up and every reading afterwards was taken off a bystander
-    // standing still nearby. Measured that way the throw carried 7 to 11 pixels
-    // of somebody else's idle drift against a bar of eight, which is a coin toss
-    // rather than a check, while the flick itself was leaving the hand at the cap
-    // (`HURL_MAX`) the whole time.
-    //
-    // `lifted` is the snapshot's own answer to "who is in your hand", and the
-    // name is looked up again on every reading rather than kept as an index,
-    // because the order of the crew is not a promise anybody made.
+    // The body actually in your hand, by name. `workerAt` lifts whichever
+    // body is under the cursor, and two rockhands on one face routinely
+    // overlap, so reading `workerPos[0]` after the click measures a bystander.
+    // `lifted` is the snapshot's own answer, and the name is looked up again
+    // on every reading because the order of the crew is not a promise.
     const seat = name => state().crewNames.split(' ').findIndex(n => n.split('|')[0] === name);
     const posOf = name => {
       const i = seat(name);
@@ -46,18 +28,17 @@ export const TESTS = [
       point('pointerdown', sx, sy, 2, 2);
       return { wx, sx, sy, who: state().lifted };
     };
-    // Where it came to rest, not where it had walked to afterwards: a body picks
-    // its job back up the moment it lands, so a fixed run() after the throw
-    // measures the walk as well as the flight.
+    // Where it came to rest, not where it walked to afterward: a body picks
+    // its job back up the moment it lands.
     const landed = who => {
       for (let i = 0; i < 240 && state().falling > 0; i++) run(1 / 60);
       return posOf(who);
     };
 
-    // Thrown sideways from up in the air. Held at head height it has no time to
-    // travel before it lands, which measures the drop rather than the throw --
-    // so it goes up first, stands still long enough for the climb to go stale,
-    // and is then flicked across.
+    // Thrown sideways from up in the air: held at head height it has no time
+    // to travel before it lands, which measures the drop rather than the
+    // throw. It goes up first, stands still long enough for the climb to go
+    // stale, and is then flicked across.
     const a = grab();
     await sleep(20);
     for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 2); await sleep(16); }
@@ -83,10 +64,9 @@ export const TESTS = [
     run(3);
     const c = grab();
     await sleep(20);
-    // Waggled PAST the threshold, derived from it: n moves alternating sides is
-    // n-1 changes of direction, so the loop runs SHAKE_TURNS + 3 to clear the
-    // bar with margin. Written as the number 8 it silently stopped being a
-    // shaking the day the threshold moved to 8 -- seven turns, no stars.
+    // Derived from the threshold: n moves alternating sides is n-1 changes of
+    // direction, so SHAKE_TURNS + 3 clears the bar with margin. Written as a
+    // number it silently stops being a shaking the day the threshold moves.
     const waggles = (await import('../config.js')).SHAKE_TURNS + 3;
     for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); await sleep(30); }
     point('pointerup', c.sx, c.sy, 0);
@@ -97,22 +77,15 @@ export const TESTS = [
 
     window.__crew(0, 0);
     return [
-      // Measured against each other rather than against a number. How far a
-      // throw carries depends on how long the body is in the air, which depends
-      // on where it was standing when it was picked up -- so what is actually
-      // being claimed is that the flick does something the standstill does not.
-      // Eight pixels, not fifteen: gravity is heavier than it was, so everything
-      // thrown in this yard is in the air for less time and carries less far.
-      // The claim is unchanged -- the flick does something the standstill does
-      // not -- and the margin is what a shorter flight leaves of it.
+      // Measured against each other rather than against a number: how far a
+      // throw carries depends on where the body was standing when picked up.
+      // The claim is that the flick does something the standstill does not,
+      // and the margin is what a short flight leaves of it.
       ok(a.who && b.who, 'a body was picked up to throw', `${a.who} then ${b.who}`),
       ok(carried > dropped + 8, 'a body flicked out of your hand travels while it falls',
          `${carried}px thrown against ${dropped}px let go of`),
-      // Sixteen, not ten. A body let go of from a standstill still comes
-      // straight down -- what it does *after* it lands is walk back to work, and
-      // the crew walk half again as fast as they did, so the same sample taken
-      // the same moment later catches it a few pixels further along. The claim
-      // is about the fall, and the margin is what the walk adds to it.
+      // The claim is about the fall; the margin is what the walk back to work
+      // adds before the sample.
       ok(dropped < 16, 'and one let go of from a standstill comes straight down',
          `${dropped}px across`),
       ok(dizzy.saying > 0, 'shaking one about leaves it seeing stars',
@@ -121,10 +94,6 @@ export const TESTS = [
     ];
   }],
 
-  // Every building used to cost cores, and a core is one whole rock -- so the
-  // opening was four rocks of watching a number climb with nothing to do about
-  // it but swing, and the rarest thing in the game went on doors. Dust buys the
-  // yard now, and a core buys the one thing nothing else can.
   ['a core buys the tower and nothing else', async () => {
     newRun();
     await settle();
@@ -151,20 +120,19 @@ export const TESTS = [
     // The price cells are written by the board's own refresh, not by building the
     // rows, so they are empty until something fills them in.
     refreshShopFromTest();
-    // The coins on a row, and only the coins. Every row past the bench carries a
-    // clock in its bill as well now -- how long a thing takes is part of what it
-    // costs, see works.js -- and what this group is about is which *coins* buy a
-    // place.
+    // The coins on a row, and only the coins: every row past the bench carries
+    // a clock in its bill as well (works.js), and this group is about which
+    // *coins* buy a place.
     const coins = el => [...el.querySelectorAll('.cost i')].map(i => i.className)
                           .filter(c => c !== 'clock');
     const row = k => shop().querySelector(`[data-key="${k}"]`);
     const door = row('unlockfarm');           // the first one the yard offers
     const dustPrice = door && coins(door);
 
-    // And *then* the ground standing, which is what the tower waits on: its row
-    // is the end of the chain now -- what a finished yard buys -- so the plots,
-    // the cut and the lab all have to be up before it is offered. Read in this
-    // order because opening the plots is what takes their own door off the board.
+    // And *then* the ground standing: the tower's row is the end of the
+    // chain, so the plots, the cut and the lab have to be up before it is
+    // offered. Read in this order because opening the plots takes their own
+    // door off the board.
     window.__crew(0, 0, 1, 1);
     window.__invest();
     window.__crew(0, 0);
@@ -184,22 +152,11 @@ export const TESTS = [
       ok(early.every(k => k === '-'), 'the first four rocks give up nothing',
          early.join(',')),
       ok(gotOne, 'and the fifth has a core in it'),
-      // A place is bought with a rock *and* with dust, which is what every bill
-      // above the first tier looks like: the core says this is a place rather
-      // than a rung, and the dust keeps the hill worth digging after it.
-      //
-      // This asserted dust alone for a while, when the two grounds were priced
-      // in dust to keep them cheap and early. What that bought was two places
-      // you could stumble into without noticing, on a currency already pouring
-      // in, and a tier whose one job is buildings with two of its buildings
-      // taken off it.
+      // The core says this is a place rather than a rung, and the dust keeps
+      // the hill worth digging after it.
       ok(!!door && dustPrice.includes('core') && dustPrice.includes('dust'),
          'a place is bought with a rock and with dust', String(dustPrice)),
       ok(!!tower, 'and the tower is on the bench once a core exists'),
-      // A core and dust, and nothing else. It used to ask for all four at once,
-      // which was the only bill in the game that did and the one row you had to
-      // study rather than read -- and it argued with the row's own note, which
-      // says a core is what this is for.
       // A set, not an order: bills are drawn in the yard's coin order, dust first.
       ok(marks && [...marks].sort().join() === 'core,dust',
          'priced in a core and dust', String(marks)),
@@ -210,11 +167,6 @@ export const TESTS = [
     ];
   }],
 
-  // Shards used to trickle: a quarrier swung, and every so often one came off the
-  // face, for ever, at a steady rate -- which makes blue a tap rather than a
-  // find. A cut is full of dirt now. Somebody works down through it, and at the
-  // bottom there is a seam: a handful all at once, thrown up over the rim, then
-  // the climb out and the hole falls in behind them.
   ['a cut gives its stone up while it is being dug, then falls in', async () => {
     newRun();
     await settle();
@@ -222,22 +174,15 @@ export const TESTS = [
     run(2);
     const fresh = state();
 
-    // Down through the ground, and the stone turns up on the way rather than in
-    // a heap at the bottom. This group used to watch for the opposite -- a whole
-    // dig with nothing coming up, then a handful all at once -- which is the
-    // model the cut had before the scatter. See `findShards` in quarry.js.
+    // The stone turns up on the way down rather than in a heap at the bottom
+    // (`findShards` in quarry.js).
     const paid = runUntil(() => state().pileCount.quarry > 0, 180);
     const early = state();
 
-    // The hole is worked right out, and the ground comes back in behind the last
-    // one up the ladder.
-    // Watched for the thing that lasts rather than the frame it happens on: being
-    // *out* of the hole. A body on the ladder is on it for a second or two and
-    // which frame you look on is luck, but a cut that has been worked out and
-    // left is a cut with nobody in it, and that is what the ground coming back
-    // actually waits on. A fixed fifteen-second window used to do this and no
-    // longer reaches: a dig is a longer job than it was when the pay was a lump
-    // at the bottom.
+    // Watched for the thing that lasts rather than the frame it happens on:
+    // a body on the ladder is on it for a second or two and which frame you
+    // look on is luck, but a cut worked out and left has nobody in it, and
+    // that is what the ground coming back waits on.
     const emptied = runUntil(() => state().underground === 0, 240);
     const done = state();
 
@@ -259,18 +204,14 @@ export const TESTS = [
     ];
   }],
 
-  // The yard makes its own work. A body stops now and then, says so, leaves the
-  // same muck the sky rains down, and gets back to it -- so a bigger crew is
-  // more hands and a bigger mess, and the shovelling has something to do that
-  // did not come out of the weather.
   ['a body stops now and then, and somebody clears up after it', async () => {
     newRun();
     await settle();
     window.__crew(4, 0);                       // rockhands only: nobody to shovel it yet
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
-    // Wound in for the check. A body is due about every ten minutes now, which
-    // is right for playing and useless for watching one happen.
+    // Wound in for the check: a body is due about every ten minutes, which is
+    // right for playing and useless for watching one happen.
     window.__tune('LOO_EVERY', 6000);
 
     let said = 0, mucked = 0;
@@ -282,23 +223,14 @@ export const TESTS = [
     }
     const left = state().smog.muck.yard;
 
-    // and now somebody whose job it actually is.
-    //
-    // A crew is no longer that. What the sky drops is everybody's, but what a
-    // body leaves is a post -- so this needs the shed up and somebody put on it,
-    // which is the whole of what the shed buys. See `capOf` and `poopCols`.
+    // What a body leaves is a post, not everybody's: this needs the shed up
+    // and somebody put on it (`capOf`, `poopCols`).
     window.__crew(1, 4);
     window.__loo(true);
     window.__air({ janitors: 2 });
-    // and nothing new while we watch: the crew were going every six seconds for
-    // the sake of the lines above, and a yard being messed while it is cleared
+    // and nothing new while we watch: a yard being messed while it is cleared
     // measures the race rather than the rule
     window.__tune('LOO_EVERY', 600000);
-    // Gaining on it, rather than reaching nought. The crew are still going every
-    // six seconds -- that is what this group turned the interval down for -- so
-    // the yard is being messed up while it is being cleared, and two bodies with
-    // shovels walking the length of it will never see it empty. What is being
-    // checked is that somebody is now *on* it, which is the change.
     const cleared = runUntil(() => state().smog.muck.yard === 0, 150);
     const after = state().smog.muck.yard;
     window.__crew(0, 0);
@@ -314,10 +246,6 @@ export const TESTS = [
     ];
   }],
 
-  // A yard under muck is the one job the whole crew drops everything for, and it
-  // has something to shovel wherever you stand -- so a gang that arrived
-  // together each found work on the spot it arrived on, and the mess was cleared
-  // by one lump you could not count the bodies in.
   ['the crew spread out to shovel rather than clearing it as one lump', async () => {
     newRun();
     await settle();
@@ -347,9 +275,9 @@ export const TESTS = [
          `${onJob} of 6 shovelling`),
       ok(new Set(xs).size === xs.length, 'and no two of them stand on the same spot',
          xs.join(',')),
-      // Three cells, which is what a body is. This file has no imports -- it
-      // reads the yard through __state() and nothing else -- so the width is
-      // written out rather than borrowed from config.
+      // Three cells, which is what a body is. This file reads the yard through
+      // __state() and nothing else, so the width is written out rather than
+      // borrowed from config.
       ok(tightest >= 18, 'each has a body width of ground to work in',
          `closest pair ${tightest}px apart`),
       ok(again.every((x, i) => Math.abs(x - xs[i]) < 12),
@@ -358,12 +286,8 @@ export const TESTS = [
     ];
   }],
 
-  // A rock in the air stops anybody who would have to walk under it, and that is
-  // right. What it must not do is leave anybody under it, or stand a body in
-  // the air where the rock used to be. Every fall used to be danced through;
-  // no fall is a dance now (wave polish, 2026-09-14) -- the crew step clear of
-  // the footprint and stand where they stepped to until the rock is down, then
-  // walk back to work.
+  // No fall is a dance: the crew step clear of the footprint and stand where
+  // they stepped to until the rock is down, then walk back to work.
   ['a rock in the air is stood clear of, and nobody is left under it', async () => {
     newRun();
     await settle();
@@ -372,27 +296,25 @@ export const TESTS = [
     const p = state().piles.find(q => q.key === 'rock');
     for (let x = p.from + 8; x < p.to - 8; x += 8) window.__pile(x, 30);
     window.__jump(2);
-    // ...and settled on it: the jump moves the rock, so the gang re-post first
-    // -- a body mid-commute ducks and walks through the fall, rightly, and
-    // this group is about the ones standing when it starts.
+    // The jump moves the rock, so the gang re-post first: a body mid-commute
+    // ducks and walks through the fall, rightly, and this group is about the
+    // ones standing when it starts.
     for (let i = 0; i < 1800 && state().commuting.length; i++) run(1 / 60);
     window.__next();                             // the rock is off; the next one comes
-    // A frame at a time. `runUntil` moves a whole second at a go, and the fall
-    // is over inside one -- so the coarse loop steps straight across it and
-    // reports a yard that was never held up at all.
+    // A frame at a time: the fall is over inside a second, and `runUntil`
+    // steps straight across it.
     let falling = false;
     for (let i = 0; i < 3600 && !falling; i++) { run(1 / 60); falling = state().rockFall > 0; }
-    // Sampled right through the fall, and only while it is in the air: the
-    // moment it lands the gang walk back to work, and a window that runs past
-    // the landing reads that walk-off as wandering.
+    // Only while it is in the air: the moment it lands the gang walk back to
+    // work, and a window past the landing reads that walk-off as wandering.
     const shots = [];
     for (let i = 0; i < 14 && state().rockFall > 100; i++) { run(5 / 60); shots.push(state()); }
     const hauls = s => s.workerPos.filter(d => d[0] === 'h');
     const xs = s => hauls(s).map(d => d.split(':')[1].split(',')[0]);
     const ys = s => hauls(s).map(d => d.split(':')[1].split(',')[1]);
     // Nobody is asked to hold still: a body with ground to work on away from
-    // the footprint carries on through the fall, and only the ones that had to
-    // step out of it wait. What must be true of all of them is where they are.
+    // the footprint carries on through the fall. What must be true of all of
+    // them is where they are.
     const finite = shots.every(s => ys(s).every(y => Number.isFinite(+y)));
     const zone = shots[0].dropZone;
     const clear = !zone || shots.every(s => xs(s).every(x => +x + 18 <= zone[0] || +x >= zone[1]));
@@ -424,22 +346,17 @@ export const TESTS = [
     await settle(0.5);
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
-    // Enough dust that the plots are on offer, so that there is a heading with
+    // Enough dust that the plots are on offer, so there is a heading with
     // nobody under it to look at: a section is only there while it has a row
-    // under it.
-    //
-    // That heading used to be "the farm" -- the bench carried one per building it
-    // could sell you. The ten of them are one group called "build" now, so the
-    // section with nobody under it is that one. See DESIGN.md, "The bench is a
-    // catch-all".
+    // under it, and the section with nobody is "build".
     window.__give(600);                      // the price of the plots
     window.__build();
     await sleep(50);
     const idle = [...shop().children].find(el => el.dataset.sect === 'build');
     const idleBadge = idle && idle.querySelector('.badge');
-    // The rockhands' rows moved to their hut, and the hut's sheet has one group,
-    // so there is no heading on it for the count to ride: it rides the board's
-    // own title instead. Read standing at the hut, the way a player reads it.
+    // The hut's sheet has one group, so there is no heading for the count to
+    // ride: it rides the board's own title. Read standing at the hut, the way
+    // a player reads it.
     window.__shack();
     await hoverStation('shack');
     const rock = document.querySelector('#shackboard .title');

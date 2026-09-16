@@ -1,18 +1,12 @@
 // The game opening: the bench arriving, the canvas, the ground line, and a
 // rock coming in over the top of the window.
-//
-// 4 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, raf,
          pressRaise, raiseEl, haveRock, asScreen, shop } from './kit.js';
 
 export const TESTS = [
-  // Nothing is shown before it can be used: the bench is not in the yard until
-  // there is a row on it you can afford, and once it is there it says what it
-  // has without being opened.
-  // This one goes first, on the fresh game the suite resets to: the bench only
-  // arrives once, and nothing after here would ever see it missing.
+  // First, on the fresh game the suite resets to: the bench only arrives
+  // once, and nothing after here would ever see it missing.
   ['the bench arrives when there is something to buy', async () => {
     const bare = state();
     window.__give(100);
@@ -25,12 +19,8 @@ export const TESTS = [
     const earned = state();
     await hoverBench();                       // reading the board marks it read
     await sleep(150);
-    // What the board is actually showing, taken off the board while it is open
-    // rather than typed in here. This used to name a heading -- `includes('you')`
-    // -- and renaming that heading turned a check about whether reading marks a
-    // board read into a check about one word. What it is asking is that every
-    // heading the bench just showed you counts as read, and that is a question
-    // the board itself can answer.
+    // Taken off the board while it is open rather than typed in here: a named
+    // heading turns a check about reading into a check about one word.
     const shown = [...shop().children].filter(el => el.dataset.sect)
       .map(el => el.dataset.sect);
     point('pointermove', 4, 4, 0);
@@ -72,8 +62,6 @@ export const TESTS = [
 
   ['ground is pinned to the bottom', async () => {
     const s = state();
-    // the floor of the hole, which is not the top of the plot: the pile is
-    // allowed to heap above the brim, so the plot starts above the ground line
     // the deepest the hole can ever be, not how far it has been dug: the world
     // reserves the whole depth under the ground line from the first frame, so
     // digging never moves the floor of the window
@@ -88,10 +76,8 @@ export const TESTS = [
     ];
   }],
 
-  // A rock that starts halfway up the sky appears out of nothing in the middle of
-  // the window and falls the second half of the way. It has to come in over the
-  // top edge, which means the drop is measured against the window: a tall one has
-  // to be cleared by more than a short one.
+  // The drop is measured against the window: a tall one has to be cleared by
+  // more than a short one.
   ['a new rock comes in over the top of the window', async () => {
     // the first frame of a fall, and how far down the screen its foot is then
     const catchOne = () => {
