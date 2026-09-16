@@ -6,7 +6,7 @@
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TAP_SLOP, TAP_TIME } from './config.js';
 import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
-import { clampCam, unfollow } from './world.js';
+import { clampCam, unfollow, bindScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
@@ -15,7 +15,7 @@ import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
-         showTipAt, inSafeZone, onMenu, standRect } from './board.js';
+         showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -37,6 +37,7 @@ import { skipCutscene } from './cutscene.js';
 import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane } from './settings.js';
+import { coarse } from './prefs.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -48,10 +49,17 @@ let panning = null;                        // where the fingers were last frame
 // The middle button's pan. Apart from `panning` because it is one pointer, and
 // must not be cancelled by the "fewer than two fingers" rule.
 let wheelPan = null;
-// One finger on a phone, off the dust (DESIGN.md, "One finger looks about").
-// `live` once it has left the tap's slop: a tap must not nudge the view and a
-// drag must not jump when it starts.
-let fingerPan = null;
+// On a phone the yard is scrolled from the grab bar along the bottom edge
+// and from nowhere else (DESIGN.md, "Momentum scrolling"): the band is the
+// platform's own scroller, a drag in it coasts the way every list on the
+// phone coasts, and the game reads where it got to (world.js,
+// `readScroll`). A finger on the yard itself sweeps, on dust, or taps, on
+// anything else; it never moves the view, so a long sweep toward the pit
+// cannot turn into a scroll halfway. bar.js draws the band; the elements
+// are bound here because the rule for a view that has moved (`viewTaken`)
+// is this file's.
+const scroller = document.getElementById('scroller');
+const spacer = document.getElementById('spacer');
 
 const middle = () => {
   let x = 0, y = 0;
@@ -118,7 +126,10 @@ canvas.addEventListener('pointerdown', e => {
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
                           at: now(), kind: e.pointerType });
-  if (down.size === 2) { fingerPan = null; startPan(); return; }
+  // Two fingers on a desk's touchscreen look about; on a phone they do not:
+  // scrolling there is the grab bar's alone, so a second finger changes
+  // nothing about the first.
+  if (down.size === 2) { if (!coarse()) startPan(); return; }
   if (down.size > 2) return;
 
   const p = pos(e);
@@ -143,13 +154,10 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
-  // A finger off the dust is looking about, not sweeping. A mouse keeps its
-  // left button for the sweep everywhere.
-  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) {
-    fingerPan = { x0: e.clientX, x: e.clientX, live: false };
-    try { canvas.setPointerCapture(e.pointerId); } catch {}
-    return;
-  }
+  // A finger off the dust is a tap, read at the release, and nothing while
+  // it is down: it does not sweep and it does not move the view. A mouse
+  // keeps its left button for the sweep everywhere.
+  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) return;
   S.dragging = true;
   S.trail = [];
   track(p.x, p.y);
@@ -164,17 +172,6 @@ canvas.addEventListener('pointermove', e => {
   if (wheelPan !== null) {                   // middle button: drag the view along
     pan((wheelPan - e.clientX) / S.zoom);
     wheelPan = e.clientX;
-    return;
-  }
-
-  if (fingerPan && down.size === 1) {        // one finger, off the dust: the same
-    if (!fingerPan.live) {
-      if (Math.abs(e.clientX - fingerPan.x0) < TAP_SLOP) return;
-      fingerPan.live = true;                 // from here, not from the press
-    } else {
-      pan((fingerPan.x - e.clientX) / S.zoom);
-    }
-    fingerPan.x = e.clientX;
     return;
   }
 
@@ -263,7 +260,6 @@ export function endDrag(e) {
   const held = down.get(e.pointerId);
   down.delete(e.pointerId);
   if (down.size < 2) panning = null;
-  if (held) fingerPan = null;
 
   // A tap on a touchscreen is what a hover is on a desk: at a station it
   // opens (or shuts) the board, anywhere else it puts it away.
@@ -298,7 +294,6 @@ addEventListener('blur', () => {
   down.clear();
   panning = null;
   wheelPan = null;
-  fingerPan = null;
   S.mining = false;
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
@@ -554,14 +549,21 @@ function pan(dx) {
   clampCam();
   if (S.camX === was) return;
   S.dirty = true;                          // where you are looking is worth writing down
-  // A board comes down when its station is scrolled out of the window: a
-  // sheet that follows you two windows off it is a menu that will not go away.
-  if (S.boardOpen) {
-    const r = standRect(S.boardOpen);
-    if (r && (r.x + r.w < S.camX || r.x > S.camX + S.viewW)) showPanel(null, true);
-    else placeBoard();
-  }
+  viewTaken();
 }
+
+// The player has moved the view -- by a drag, the wheel, the keys or the
+// platform's own fling (world.js reads that back and calls this). A board
+// comes down when its station is scrolled out of the window: a sheet that
+// follows you two windows off it is a menu that will not go away.
+function viewTaken() {
+  const open = openBoard();
+  if (!open) return;
+  const r = standRect(open);
+  if (r && (r.x + r.w < S.camX || r.x > S.camX + S.viewW)) showPanel(null, true);
+  else placeBoard();
+}
+bindScroller(scroller, spacer, viewTaken);
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();

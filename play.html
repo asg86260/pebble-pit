@@ -232,6 +232,15 @@
 <button id="raise" type="button" hidden>build the bench</button>
 
 <canvas id="c"></canvas>
+<!-- The grab bar, on a phone only (DESIGN.md, "Momentum scrolling"): a band
+     along the bottom edge that IS the platform's scroller -- the spacer
+     inside it is as wide as the world, a drag in it is a native scroll with
+     the platform's own coast, and the game reads where it got to (world.js,
+     `bindScroller`). The track and the thumb are drawn over it by bar.js from
+     `camX` each frame, so the band reads as the scrollbar it is. A finger on
+     the yard above it never scrolls: it sweeps or it taps. -->
+<div id="scroller" hidden><div id="spacer"></div></div>
+<div id="bar" hidden><i class="thumb"></i></div>
 <!-- the way in: white over the yard as the page boots, taken away once the
      first frame has been drawn (main.js), so the game comes up out of the
      white the landing page went to rather than appearing -->

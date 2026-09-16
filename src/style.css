@@ -21,6 +21,9 @@ html, body {
                   - var(--rows-gap)) / 2);
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* The safe area at the foot of the glass (the home indicator, in landscape),
+     written here so a script can read it (bar.js). */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* `hidden` means hidden, whatever the element's own `display` is. The browser's
    rule for the attribute is `display: none` at the lowest priority there is, so
@@ -40,10 +43,59 @@ canvas {
   display: block;
   background: #fff;
   cursor: crosshair;
-  /* every touch on the canvas is the game's: a drag sweeps dust, and the browser
-     does not get to pan or pinch it away */
+  /* every touch on the canvas is the game's: a drag sweeps dust, a tap opens
+     a board, and the browser does not get to pan or pinch it away. Scrolling
+     the yard on a phone is the grab bar's below, and only the bar's. */
   touch-action: none;
 }
+/* The grab bar (DESIGN.md, "Momentum scrolling"): a band along the bottom
+   edge, on a phone only, that IS the platform's scroller. The spacer inside
+   it is as wide as the world at the current zoom (world.js writes the
+   width), so a drag in the band is a native scroll, one for one with the
+   finger and coasting the way every list on the phone coasts, and the game
+   reads `scrollLeft` back once a frame. `pan-x` also refuses the pinch and
+   the double-tap zoom. Its own bar is not drawn -- the platform's overlay
+   bar cannot be grabbed -- and `#bar` under it is the track and the thumb,
+   written from `camX` each frame by bar.js. Both stand above the safe area
+   at the bottom (the home indicator in landscape). */
+#scroller {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar-inset, 0px));
+  height: var(--bar-h);
+  z-index: 3;                  /* over the canvas and the counter, under every sheet */
+  overflow-x: auto;
+  overflow-y: hidden;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  background: transparent;
+}
+#scroller::-webkit-scrollbar { display: none; }
+#spacer { height: 100%; }
+#bar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar-inset, 0px));
+  height: var(--bar-h);
+  z-index: 2;
+  pointer-events: none;        /* the band above it takes the finger */
+  box-sizing: border-box;
+  border-top: 2px solid #000;
+  background: #fff;
+}
+#bar .thumb {
+  position: absolute;
+  top: 4px; bottom: 4px;
+  left: 0;
+  width: 0;                    /* both written by bar.js */
+  background: #000;
+  /* Kept on a layer of its own: it moves every frame the view does. */
+  will-change: transform, width;
+}
+/* Under motion: less the coast is still the platform's -- it is not a glide
+   of ours -- but no smooth scrolling is asked of it. */
+body.still #scroller { scroll-behavior: auto; }
 /* the boards that open at the workbench and at the lab */
 .panel {
   position: fixed;
@@ -1207,8 +1259,9 @@ body.still .veil { transition: none; }
 /* The landing page's picture (main.js, `demo`): the game with nothing but
    the canvas showing -- no boards, no sheet, no toast, no call to build -- and
    nothing under the pointer. The frame it sits in is the title's. */
-body.demo > :not(canvas) { display: none !important; }
+body.demo > :not(#scroller) { display: none !important; }
 body.demo canvas { cursor: default; pointer-events: none; }
+body.demo #scroller { overflow: hidden; pointer-events: none; }
 /* the switch reads as thrown when it is thrown */
 #hidedone.on { opacity: 1; border-style: solid; }
 

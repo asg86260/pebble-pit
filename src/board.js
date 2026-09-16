@@ -494,6 +494,9 @@ export function tidyBoards() {
   if (at !== 'house' && S.crewListOpen) showCrewList(false);
 }
 
+// Which board is up, by name, or null: the pan's rule and the sheet ask.
+export const openBoard = () => at;
+
 export function placeBoard() {
   if (!at) return;
   place(panelEl, anchor(at));

@@ -30,3 +30,10 @@ export const SHEET_TALL = 0.9;
 export const SHEET_DISMISS = 0.33;
 export const SHEET_MS = 220;         // up and down; nought under motion: less
 export const SHEET_HANDLE = [36, 4]; // the bar on its top edge, px
+
+// The grab bar: the band along the bottom edge that the yard is scrolled
+// from on a phone (bar.js). Tall enough for a thumb -- four cells -- above
+// the safe area, with the thumb never thinner than a fingertip can find.
+export const BAR_H = 24;             // px, four cells
+export const BAR_INSET = 0;          // px between the band and the safe area's edge
+export const BAR_THUMB_MIN = 24;     // px, the thumb at its narrowest

@@ -2,7 +2,7 @@
 // dragged about.
 
 import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
-  hoverStation, run, runUntil, buy, asScreen, finger, newRun, settle, haveRock } from './kit.js';
+  hoverStation, run, runUntil, buy, asScreen, finger, touch, newRun, settle, haveRock } from './kit.js';
 
 export const TESTS = [
   ['the opening view is looking at the rock', async () => {
@@ -166,26 +166,29 @@ export const TESTS = [
     ];
   }],
 
-  ['one finger drags the view, unless it is on dust', async () => {
-    // what the yard was doing halfway through, before the finger lets go
-    let mid = null;
+  ['one finger on the yard never scrolls it: it sweeps on dust and taps on the rest', async () => {
+    // Scrolling on a phone is the grab bar's alone (DESIGN.md, "Momentum
+    // scrolling"): a finger dragged across the sky moves nothing, so a long
+    // sweep toward the pit cannot turn into a scroll halfway. The canvas
+    // refuses the platform's pan outright (touch-action), so the touch is
+    // never taken from the game, and a finger on dust sweeps as ever.
     const drag = async (x, y, dx) => {
+      const said = touch('touchstart', canvas(), x, y);
       finger('pointerdown', 1, x, y);
-      for (let i = 1; i <= 8; i++) {
-        finger('pointermove', 1, x + dx * i / 8, y); await sleep(16);
-        if (i === 4) mid = state();
-      }
+      for (let i = 1; i <= 8; i++) { finger('pointermove', 1, x + dx * i / 8, y); await sleep(16); }
+      const mid = state();
       finger('pointerup', 1, x + dx, y);
+      touch('touchend', canvas(), x + dx, y);
       await sleep(50);
+      return { said, mid };
     };
-    // No scene on: a press while one runs skips it and does nothing else, and
-    // the camera it hands back would read as a drag.
+    // No scene on: a press while one runs skips it and does nothing else.
     window.__nocine(); run(0.5);
     // the sky: nothing is ever lying in it
     const s0 = state();
     const skyY = (s0.groundY - 300 - s0.camY) * s0.zoom;
     const before = state();
-    await drag(400, skyY, -120);
+    const sky = await drag(400, skyY, -120);
     const panned = state();
     // a tap is a tap: the view does not move under a finger inside the slop
     finger('pointerdown', 1, 400, skyY); await sleep(30); finger('pointerup', 1, 404, skyY);
@@ -203,31 +206,28 @@ export const TESTS = [
     let spot = null;
     for (let off = d.rockW / 2 + 18; off <= d.rockW * 2 && !spot; off += 6)
       for (const wx of [d.rockX - off, d.rockX + off])
-        // a cell either side too: the press lands off the snapshot's rounded
-        // zoom, and a grain at the very edge of the brush is a coin toss
         if (!spot && [-6, 0, 6].every(k => window.__dustUnder(wx + k, d.groundY - 6) &&
                                           window.__dustUnder(wx, d.groundY - 6 + k))) spot = wx;
-    let swept = null, stayed = null;
+    let dust = null, swept = null, stayed = null;
     if (spot != null) {
-      // The camera follows the body carrying the core after the rock is
-      // worked, so it is parked first: a view that moved by itself would read
-      // as a view the finger dragged.
       window.__nocine();
       window.__look(d.camX);
       const from = state();
-      await drag((spot - from.camX) * from.zoom, (d.groundY - 6 - from.camY) * from.zoom, -60);
-      swept = mid.dragging && (state().held > from.held || state().floor < from.floor);
-      stayed = mid.camX === from.camX;
+      dust = await drag((spot - from.camX) * from.zoom, (d.groundY - 6 - from.camY) * from.zoom, -60);
+      swept = dust.mid.dragging && (state().held > from.held || state().floor < from.floor);
+      stayed = dust.mid.camX === from.camX;
     }
     return [
-      ok(panned.camX > before.camX, 'a finger on the sky drags the view',
+      ok(getComputedStyle(canvas()).touchAction === 'none', 'the platform is refused the yard outright',
+         getComputedStyle(canvas()).touchAction),
+      ok(sky.said === false && panned.camX === before.camX, 'a finger dragged across the sky moves nothing',
          `${before.camX} -> ${panned.camX}`),
       ok(!panned.dragging && panned.held === before.held, 'and sweeps nothing up'),
       ok(tapped.camX === panned.camX, 'a tap does not move it', `${panned.camX} -> ${tapped.camX}`),
       ok(spot != null, 'there is dust on the floor to press on'),
-      ok(swept === true, 'a finger on the dust sweeps it, as it always did',
-         mid && `dragging ${mid.dragging} held ${mid.held}`),
-      ok(stayed === true, 'and does not drag the view', mid && `cam ${mid.camX}`)
+      ok(swept === true, 'a finger on the dust sweeps, as it always did',
+         dust && `dragging ${dust.mid.dragging} held ${dust.mid.held}`),
+      ok(stayed === true, 'and does not drag the view', dust && `cam ${dust.mid.camX}`)
     ];
   }],
 
