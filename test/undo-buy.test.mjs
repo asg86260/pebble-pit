@@ -10,7 +10,8 @@
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { UNDO_MS, UNDO_DEAD_MS } from '../src/config.js';
-import { purse, billOf, undoable, undoBuy } from '../src/upgrades.js';
+import { billOf, undoable, undoBuy } from '../src/upgrades.js';
+import { purse } from '../src/words.js';
 import { rowFor, workOn } from '../src/works.js';
 
 // The undo is the phone's answer to having no hover and no confirm, so the
