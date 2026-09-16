@@ -16,6 +16,7 @@ import { duck, stand } from '../crew.js';
 import { onYard, surfaceUnder } from './body.js';
 import { bridgeSpan } from '../world.js';
 import { buriedAt } from '../intro.js';
+import { beatRunning } from '../beats.js';
 import { MEET_CLEAR } from '../config.js';
 
 // --- the dance ----------------------------------------------------------------
@@ -318,7 +319,7 @@ export function celebrate(w, now, zone) {
   // The reunion is not a party: the camera is moving and a body latched
   // mid-camera-move floats. Everyone but the pair steps clear of the meeting
   // zone as they would a falling rock, and stands.
-  if ((S.intro === 'meet' || S.intro === 'part') && !S.reunionDone) {
+  if (beatRunning('meet') || beatRunning('part')) {
     if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
     if (!w.met && onYard(w)) {
       const at = buriedAt();

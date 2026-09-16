@@ -7,7 +7,12 @@
 // A cutscene is a camera, not a stop. The sim keeps stepping and the moment
 // plays out whether or not it is watched, so any click skips, and skipping
 // releases the camera, never the moment. Nothing is saved but the name of a
-// scene cut short, which a reload plays over the event as it now stands.
+// scene cut short (`S.beat.camera`, persist.js), which a reload plays over
+// the event as it now stands.
+//
+// Which scene plays, and when, is a row of `BEATS` (beats.js) that owns the
+// camera; this file is the framing -- `play` takes the shot, `stepShot` walks
+// it a frame, `release` lets go -- and the two cues the rows watch.
 //
 // Letting go is a stretch, not a frame, and it does not go home: the seat
 // stays on the event and the zoom and the ground line ease out over CUT_OUT_S.
@@ -19,7 +24,8 @@ import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
 import { S, rift, pit } from './state.js';
 import { setZoom, clampCam } from './world.js';
 import { reducedMotion } from './prefs.js';
-import { KINDS, shieldUp } from './shield.js';
+import { beatRunning, skipBeat } from './beats.js';
+import { now } from './clock.js';
 
 // How long a scene may run, how far in it pulls, and where it looks. `spot`
 // is asked every frame where the thing watched moves (the disc grows under
@@ -52,7 +58,7 @@ const SHIELD = {
     if (S.rockHeld) c.held = true;               // it has hold of it
     // ...and has let it down, and the two of them have had their beat under
     // it (shield.js, `answer`): whichever finishes second ends the scene.
-    return !!c.held && !S.rockHeld && S.rockFall <= 0 && S.intro !== 'rescue';
+    return !!c.held && !S.rockHeld && S.rockFall <= 0 && !beatRunning('rescue');
   }
 };
 const sceneOf = name => SCENES[name] || SHIELD;
@@ -63,59 +69,55 @@ const sceneOf = name => SCENES[name] || SHIELD;
 // two lengths is that much too big a step.
 const stepToFill = (world, window) => window * CUT_SHIELD_FILL / (world * CELL / P);
 
-// The triggers are watched, not called: pit.js tears the rift, rift.js
-// drowns the pit and shield.js answers a rock without knowing a camera
-// exists. For the rift it watches the *gulp starting*, which a restored save
-// (its gulp already spent) never shows, so a reload replays nothing; the
-// drowned flag says which of the two moments a fresh gulp is.
+// The two cues the camera's rows watch, read once a frame by `stepBeats`
+// (beats.js) so an edge is seen exactly once. For the rift it is the *gulp
+// starting*, which a restored save (its gulp already spent) never shows, so a
+// reload replays nothing. For a shield it is the rock *leaving the sky*: the
+// timber breaks on the frame the rock reaches it, so a camera that went on
+// the answer would see a wreck.
 let sawGulp = 0;
-// For a shield it watches the rock *leaving the sky* while a finished shield
-// stands: the timber breaks on the frame the rock reaches it, so a camera
-// that went on the answer would see a wreck.
 let sawFall = false;
+export function cameraCues() {
+  const gulp = (S.riftGulp || 0) > sawGulp;
+  sawGulp = S.riftGulp || 0;
+  const falling = S.rockFall > 0 && !S.rockHeld;
+  const fall = falling && !sawFall;
+  sawFall = falling;
+  return { gulp, fall };
+}
 
-const play = name => {
+// The shot: how far in, on what, and how far along it is. Ephemeral -- a
+// reload takes it again from the beat's name.
+export function play(name) {
   const sc = sceneOf(name);
   const zoom = typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
-  S.cine = { name, at: 0, s: sc.s, zoom, from: S.zoom,
+  S.shot = { name, at: 0, s: sc.s, zoom, from: S.zoom,
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
-  S.cineOwed = name;               // until it has been seen through: see `release`
   S.dirty = true;
-};
+}
 
 // A scene on its way out has let go as far as the player is concerned: the
 // click that would have skipped it lands in the yard instead.
-export const cutsceneRunning = () => !!S.cine && !S.cine.out;
+export const cutsceneRunning = () => !!S.shot && !S.shot.out;
 
 // Any click while a scene runs lands here first -- see `input.js`.
 export function skipCutscene() {
   if (!cutsceneRunning()) return false;
-  release();
+  skipBeat(now(), 'camera');
   return true;
 }
 
 const ease = k => 1 - Math.pow(1 - k, 3);
 
-// Whether the shield standing now is owed a scene. The four that fail answer
-// once (`shieldsDone`). The dome answers every rock; only its first hold,
-// the one with the rescue in it, is a scene, and `S.rescued` says it has
-// had it.
-const shieldSceneDue = () =>
-  shieldUp() && (KINDS[S.shield.kind].answer !== 'hold' || (S.buried && !S.rescued));
+// One frame of the camera's beat: true while it still has the camera, the
+// way out included.
+export function stepShot(t) {
+  // A scene the last sitting closed the tab on: the cues never fire for it,
+  // so the save says which was owed (`S.beat.camera`) and it plays once over
+  // the event as it now stands.
+  if (!S.shot) play(S.beat.camera);
 
-export function stepCutscene(t) {
-  if ((S.riftGulp || 0) > sawGulp) play(S.drowned ? 'drown' : 'tear');
-  sawGulp = S.riftGulp || 0;
-  const falling = S.rockFall > 0 && !S.rockHeld;
-  if (falling && !sawFall && !S.cine && shieldSceneDue()) play(S.shield.kind);
-  sawFall = falling;
-  // A scene the last sitting closed the tab on: the triggers above never fire
-  // for it, so the save says which was owed and it plays once over the event
-  // as it now stands.
-  if (S.cineOwed && !S.cine) play(S.cineOwed);
-
-  const c = S.cine;
-  if (!c) return;
+  const c = S.shot;
   const sc = sceneOf(c.name);
   if (!c.at) c.at = t;
   if (!c.out) {
@@ -167,18 +169,19 @@ export function stepCutscene(t) {
   const rest = S.worldH - S.viewH;
   S.camLockY = rest + (close - rest) * into * (1 - out);
   clampCam();
-  if (out >= 1) {
-    S.cine = null;
-    S.camLockY = null;
-    setZoom(1);
-    S.dirty = true;
-  }
+  if (out < 1) return true;
+  S.shot = null;
+  S.camLockY = null;
+  setZoom(1);
+  S.dirty = true;
+  return false;
 }
 
 // Over or skipped: owed nothing more, and on its way out. The camera is
-// still this module's until the way out is walked.
-function release() {
-  S.cineOwed = null;
-  S.cine.out = true;
+// still the beat's until the way out is walked, so the beat carries on
+// (false) rather than ending on the click.
+export function release() {
+  if (S.shot) S.shot.out = true;
   S.dirty = true;
+  return false;
 }

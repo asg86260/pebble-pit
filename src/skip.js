@@ -3,20 +3,20 @@
 // The clock is the game's, so a hold taken into the held sheet is still there
 // when the yard comes back.
 //
-// What a skip does is each scene's own business (`cutIntro`, `skipCutscene`):
-// this only knows that one is running and that the key has been down long
-// enough. It never sets state a scene did not set for itself.
+// What a skip does is each beat's own business (`skip` on its row in
+// beats.js): this only knows that one is running and that the key has been
+// down long enough. It never sets state a beat did not set for itself.
 
 import { S } from './state.js';
 import { now } from './clock.js';
 import { SKIP_HOLD_MS } from './config.js';
-import { introRunning, cutIntro } from './intro.js';
-import { cutsceneRunning, skipCutscene } from './cutscene.js';
+import { ownsYard, skipBeat } from './beats.js';
+import { cutsceneRunning } from './cutscene.js';
 
 // Whether there is anything to skip. A rescue already cut is finishing its
 // walk and is nobody's to hurry.
 export const skippable = () =>
-  (introRunning() && !S.introCut) || cutsceneRunning();
+  (ownsYard() && !S.introCut) || cutsceneRunning();
 
 // Down keeps its first time -- the browser repeats a held key -- and up
 // clears it.
@@ -28,11 +28,7 @@ export const skipHeld = () =>
 
 // Everything running, cut: the camera let go and the scene ended, in that
 // order, since the dome's first hold is both at once. True if anything was.
-export function skipScene() {
-  const camera = skipCutscene();
-  const scene = cutIntro(now());
-  return camera || scene;
-}
+export const skipScene = () => skipBeat(now());
 
 // One frame: a hold with nothing to skip is dropped, so a key held through
 // the end of one scene does not eat the start of the next -- one hold, one

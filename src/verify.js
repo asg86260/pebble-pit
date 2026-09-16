@@ -29,6 +29,7 @@ import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 import { now } from './clock.js';
 import { JOB } from './jobs.js';
+import { BEATS } from './beats.js';
 
 // The jobs the roster is made of, and the count on S that owns each. Must be
 // the same list `syncWorkers` builds the crew from: a job missing from one is
@@ -114,7 +115,22 @@ export function resetVerify() {
   everOwned.clear();
 }
 
+// The story's table, read for its keys and owners only.
+const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
+
 export function verifyWorld() {
+  // --- rule 12: one beat an owner, and never one that has played -------------
+  // Two beats may run at once only with different owners (beats.js), a
+  // running key is a row of the table under the owner it names, and a beat
+  // that has played is never running.
+  for (const [owner, key] of Object.entries(S.beat)) {
+    if (key == null) continue;
+    if (BEAT_OWNS.get(key) !== owner)
+      fail('a beat is running under the wrong owner', `${key} under ${owner}`);
+    if (S.beatsDone.includes(key))
+      fail('a beat that has played is running', `${key}`);
+  }
+
   const all = ways();
   const gy = S.groundY;
   const left = Math.min(0, yardLeft()) - OUTSIDE;

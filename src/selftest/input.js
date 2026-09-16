@@ -65,8 +65,8 @@ export const TESTS = [
     window.__reset();
     return [
       ok(hintUp, 'the hint is up while the opening runs'),
-      ok(tapped.intro && !tapped.introDone, 'a tap of the key changes nothing', `${tapped.intro}`),
-      ok(!cut.intro && cut.introDone, 'held through, the opening is over', `${cut.intro}`),
+      ok(tapped.beat.yard && !tapped.beatsDone.includes('show'), 'a tap of the key changes nothing', `${tapped.beat.yard}`),
+      ok(!cut.beat.yard && cut.beatsDone.includes('show'), 'held through, the opening is over', `${cut.beat.yard}`),
       ok(hintDown, 'and the hint goes with it'),
     ];
   }],

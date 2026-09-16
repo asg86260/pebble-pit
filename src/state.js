@@ -46,10 +46,12 @@ export const S = {
   piles: [],              // each station's strip: { key, from, to }
   pileCount: {},          // what is lying in each of them
   pileFull: {},           // and which of them have stopped their station
-  // --- the opening, and the one under the rock (intro.js) ---
-  intro: null,            // 'leave' while the two of them walk out, 'chat' while they talk, then never again
-  introDone: false,
-  reunionDone: false,     // and the one beat after the first rock, also once only
+  // --- the story (beats.js), and the one under the rock (intro.js) ---
+  // The beat running now, by what it owns: the yard (the opening, the
+  // reunion, the rescue), the camera (the cutscenes) or the sheet (the
+  // ending). A key of `BEATS`, or null.
+  beat: { yard: null, camera: null, sheet: null },
+  beatsDone: [],          // the keys that have played, each once and never again
   // A scene owns the yard: no rock rolls in on its own until the scene drops
   // it. A fact rather than a call into intro.js, so rock.js and core.js can
   // ask without knowing that scenes exist.
@@ -60,8 +62,6 @@ export const S = {
   pair: [],               // the two of them, before the rock
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
-  storyTold: false,       // and the sheet that says so has been read and put down
-  storyDanced: false,     // and the crew have had their dance about it (core.js)
   rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
@@ -114,13 +114,10 @@ export const S = {
   // is the era after.
   riftAte: 0,
   drowned: false,
-  // The cutscene running now, or null: { name, at, s, zoom }. Never saved; a
-  // reload mid-scene comes back to a yard that has already had it
-  // (cutscene.js).
-  cine: null,
-  // The one owed: set when a scene starts and cleared when it has been seen
-  // through, so a reload mid-scene plays it once from the top.
-  cineOwed: null,
+  // The camera's shot of the beat running now, or null: { name, at, s,
+  // zoom }. Never saved; the beat's name is (`beat`), and a reload takes the
+  // shot again over the event as it now stands (cutscene.js).
+  shot: null,
   // The tearing while it happens: seconds of the gulp left, and a knock
   // waiting to be spent on the view. Neither is saved; an event is a moment,
   // not a state.
@@ -557,16 +554,12 @@ export const SAVED = [
   'won',
   'wonAt',
   'wonSeq',               // the order notices landed in, which the clock could not keep across a reload
-  'cineOwed',             // a scene the save cut short, played once on the next boot
   'wonSeen',
   'noticeMigrated',
   'tally',
-  // Set by the ending sheet's one button (ending.js) and never by the sim, so
-  // a reload with the sheet still up brings it back.
-  'storyTold',
-  // Saved so a reload does not throw a second party; a save from before the
-  // field loads with `storyTold`'s value.
-  'storyDanced',
+  // The story's progress: which beats have played. An old save's flags fold
+  // into it on the way in (persist.js).
+  'beatsDone',
   // A reload carries the clock on rather than starting it over.
   'buriedMs',
 ];
@@ -607,8 +600,10 @@ export const SAVED_BY_HAND = [
   'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save
   'seenSpore',
   'plotLevel',            // grandfathered, the way `benchLevel` is
-  'introDone',            // an old save with anybody hired has plainly had its opening
-  'reunionDone',
+  // Only the camera's is written: a scene cut short by a reload replays over
+  // the event as it now stands, while the yard's beats come back by their
+  // own triggers and the sheet by its fact.
+  'beat',
   'buried',
   'looPosts',             // a save from before the second cap keeps the two it had
   'machines',             // facts only: bought, driven, tuned, took the kit
@@ -678,7 +673,7 @@ export const EPHEMERAL = [
   'rockTops', 'tick', 'floorGrains', 'floorMarks', 'piles', 'pileCount', 'pileFull',
   'peakRow',
   // The opening, while it is running.
-  'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
+  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
   'introThrew', 'skipHeldAt', 'introCut',
   // Only read for the spread a rock does on arriving.
   'landAt',
@@ -693,7 +688,7 @@ export const EPHEMERAL = [
   'wonShown',
   // The tearing of the rift is an event, and the cutscene watching it a
   // camera.
-  'riftGulp', 'riftShake', 'cine',
+  'riftGulp', 'riftShake', 'shot',
   'heldCore', 'coreTaker',
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
   'shocks', 'shockMotes',

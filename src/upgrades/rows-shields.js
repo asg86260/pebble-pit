@@ -3,6 +3,7 @@ import { PROP_COST, PROP_FROM, NET_COST, ARCH_COST,
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
+import { beatDone } from '../beats.js';
 
 // The shields: what the yard puts between itself and the sky. Data only;
 // upgrades.js strings the files together into UPGRADES.
@@ -23,7 +24,7 @@ export const SHIELD_ROWS = [
     note: () => 'quickly try to build a barrier to save your sqwife',
     cost: () => PROP_COST,
     buy: () => raiseShield('props'),
-    show: () => !S.shield && !shieldDone('props') && S.introDone && S.boulderNo >= PROP_FROM
+    show: () => !S.shield && !shieldDone('props') && beatDone('show') && S.boulderNo >= PROP_FROM
   },
   {
     key: 'net',

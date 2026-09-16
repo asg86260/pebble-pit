@@ -10929,7 +10929,7 @@ Landscape gets no rule of its own: every measure above is a share of the
 window, and landscape is a wide short window, which the desk's rules
 already fit.
 
-## Beats and gates: one table each (design, not built)
+## Beats and gates: one table each (the beats built 2026-09-15; the gates design, not built)
 
 Seam 8 of "The second pass", and the shape seam 4 takes. Two things that
 look alike from the outside -- "the story happens in order" and "the doors
@@ -11036,6 +11036,52 @@ taken mid-beat; any beat skips on a click and the fact it was about still
 lands; the verify.js rule (no two beats with one owner) holds through a
 run of the whole story. `test/persist-roundtrip.test.mjs` goes red for
 the seven fields that leave `S`.
+
+### As built (2026-09-15): the beats machine
+
+`src/beats.js` is the table and the machine, `stepBeats` the one `STEPS`
+entry (where `cutscene` stood, before `camera`); the bodies stayed where the
+things they move are -- intro.js walks the pair, cutscene.js frames the shot,
+ending.js draws the sheet -- and are called from the rows. The calls the build
+made, none of which the design wrote down:
+
+- **`S.beat` is by owner**, `{ yard, camera, sheet }`, not one key: the rescue
+  and the dome run at once, and one field cannot name two. `beatRunning(key)`
+  asks all three.
+- **A skip finishes the chain.** `skipBeat` marks the beat and every beat its
+  `next`s reach as done, so a skipped chat is a skipped opening and a skipped
+  meeting a skipped parting; a row's `skip` returns false when the beat has to
+  carry on after it -- the rescue cut mid-dig still walks the body out, the
+  camera let go still walks its way out -- and the machine marks nothing
+  until `step` says it is over.
+- **The camera's cues are edges** (the gulp starting, the rock leaving the
+  sky), read once a frame by `stepBeats` and handed to every not-done row's
+  `when`, held owner or not, so an edge nobody looked at is never found still
+  standing when the owner lets go. A shield's answer that falls while the
+  camera is held is not watched, as before.
+- **Only the camera's beat is written to the save**, and only until it has
+  been let go: the yard's beats come back by their own triggers (the opening
+  from the door, the reunion from the first rock dead, the rescue from the
+  dome's hold) and the sheet by its fact. A chain cut by a reload starts over
+  from its first beat: persist.js takes the beats a half-played chain had
+  marked off the set on the way in, since the opening is one story and not
+  six facts.
+- **The boot enters the opening itself** (`startBeat('leave')` where
+  `startIntro()` was called) so the pair stand at the door before the first
+  frame; `leave`'s `when` (no crew, nobody under a rock, the first rock) is
+  the rule, and the eager start is only the seat.
+- **The ending's dance** moved from core.js's `storyTold && !storyDanced`
+  into the beat's `skip`: the button puts the sheet down and the crew have
+  their dance. `storyDanced` is gone; an old save with the sheet down and no
+  dance yet loses that one dance.
+- **The sheet does not pause the frame.** The design's line that a beat
+  owning the sheet pauses the frame was not built: ending.js has always said
+  the held sheet is the one thing that pauses, and this wave changes nothing
+  the player sees. `ownsSheet()` is there for whoever wants it.
+- The camera's working state is `S.shot` (ephemeral), what `S.cine` held less
+  the machine; the checks' `newGame` still skips the opening through
+  `skipIntro(true)` (the played variant, which marks `seenDrag`) rather than
+  the row's skip, which is the player's.
 
 ### The gates table
 

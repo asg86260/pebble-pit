@@ -230,9 +230,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
 
   // What has been opened, and how far through the opening story the yard is.
   quarryOpen: S.quarryOpen,
-  intro: S.intro,
-  introDone: S.introDone,
-  reunionDone: S.reunionDone,
+  beat: { ...S.beat },                       // the running beat by owner (beats.js)
+  beatsDone: [...S.beatsDone],
   pair: S.pair.length,
   pairX: S.pair.map(b => Math.round(b.x)),   // where the two of them are stood, or walking
   doorX: Math.round(doorAt().x),
@@ -241,7 +240,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   buriedDug: S.buriedDug,
   buriedMs: S.buriedMs,
   rescued: S.rescued,
-  storyTold: S.storyTold,
 
   // The shields.
   shield: S.shield && { kind: S.shield.kind, x: Math.round(S.shield.x), w: S.shield.w,
@@ -478,8 +476,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   riftAte: S.riftAte || 0,
   riftCells: riftCells(),
   drowned: !!S.drowned,
-  cine: S.cine ? S.cine.name : null,
-  cineOut: !!(S.cine && S.cine.out),        // let go, and on its way out
+  shotOut: !!(S.shot && S.shot.out),        // the camera's beat let go, and on its way out
   // The coins through it: what you own is what is in the hole plus this.
   riftHeld: { ...(S.riftHeld || {}) },
   // Grains in the air on their way in, with the first few so a check can see

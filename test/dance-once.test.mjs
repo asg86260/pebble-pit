@@ -24,7 +24,7 @@ group('the first rock is worth a dance', async () => {
   // With the reunion already behind it. The first rock's finish is otherwise
   // the meeting (intro.js), which holds the yard for its own beat and is not a
   // party; this is about the rule in core.js, so the rule gets the frame.
-  S.reunionDone = true;
+  S.beatsDone.push('meet', 'part');
   haveRock();
   run(2);
   window.__next();                             // the last of rock one goes
@@ -96,25 +96,26 @@ group('the ending is danced once, when the sheet is put down', async () => {
   haveRock();
   run(1);
   // The rescue is over and the sheet is up; the player puts it down. The
-  // button is DOM (ending.js), so the fact it sets is flipped here, and the
-  // sim's own rule in core.js does the rest.
+  // button is DOM (ending.js), so its skip of the ending beat is called
+  // here, and the beat's own skip does the rest.
   S.rescued = true;
-  S.intro = null;
-  S.storyTold = true;
+  run(1 / 60);                                 // the ending beat takes the sheet
   const t0 = now();
+  window.__skipBeat('sheet');
   run(1 / 60);
-  const on = S.danceUntil, marked = S.storyDanced;
+  const on = S.danceUntil, marked = S.beatsDone.includes('ending');
   let danced = false;
   for (let i = 0; i < 60 && !danced; i++) { run(1 / 60); danced = anyJig(now()); }
 
-  // And a save from before the field existed, with the story already told: an
-  // old finished yard does not throw a party on load.
+  // And a save from before the beats existed, with the story already told:
+  // an old finished yard does not throw a party on load.
   run(DANCE_MS / 1000 + 1);                    // this dance is over
   S.dirty = true;
   yard.persist();
   const s = JSON.parse(localStorage.getItem(KEY));
-  const wrote = 'storyDanced' in s;
-  delete s.storyDanced;
+  const wrote = Array.isArray(s.beatsDone) && s.beatsDone.includes('ending');
+  delete s.beatsDone;
+  s.storyTold = true;
   localStorage.setItem(KEY, JSON.stringify(s));
   yard.restore();
   const t1 = now();
@@ -126,8 +127,8 @@ group('the ending is danced once, when the sheet is put down', async () => {
     ok(marked, 'and the yard remembers it has'),
     ok(danced, 'somebody is off the ground doing it'),
     ok(wrote, 'the memory is written to the save'),
-    ok(S.storyTold && S.storyDanced, 'an older save with the story told loads as already danced',
-       `storyTold ${S.storyTold}, storyDanced ${S.storyDanced}`),
+    ok(S.beatsDone.includes('ending'), 'an older save with the story told loads as already told',
+       `done ${S.beatsDone}`),
     ok(!again, 'and does not dance on load', `danceUntil ${S.danceUntil} against ${t1}`)
   ];
 });

@@ -125,7 +125,7 @@ export const TESTS = [
       ok(listed[0].endsWith('playing') && listed[1] === '2 · empty' && listed[2] === '3 · empty',
          'three rows, the open one playing', JSON.stringify(listed)),
       ok(asked === '2 · start a new yard?', 'an empty row asks first', asked),
-      ok(fresh.crew === 0 && fresh.intro && saidNew === 'a new yard', 'and the second press is the new game',
+      ok(fresh.crew === 0 && fresh.beat.yard && saidNew === 'a new yard', 'and the second press is the new game',
          `${fresh.crew} crew, ${saidNew}`),
       ok(rows2[1].endsWith('playing') && /^1 · rock \d+ · \d+ crew · just now$/.test(rows2[0]),
          'the page reads the swap', JSON.stringify(rows2)),

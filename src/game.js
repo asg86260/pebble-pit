@@ -17,7 +17,7 @@ import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, o
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
-import { stepCutscene } from './cutscene.js';
+import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
 import { stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
@@ -53,7 +53,7 @@ import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable, wireTray } from './casino.js';
-import { stepIntro, stepBuried, stepUnder, maybeReunion } from './intro.js';
+import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
 import { mineMs, restaff, stripKit, take } from './upgrades.js';
 // The bench's row is registered by this file being loaded, here rather than
@@ -174,9 +174,11 @@ export const STEPS = [
   { name: 'piles',   step: layPiles },
   { name: 'clock',   step: startFrame },      // and how long this frame was
   // Before the camera, so a running scene's aim is what the glide obeys this
-  // frame rather than next. The cutscenes are the one system allowed to
-  // point the camera; nothing ad hoc takes it.
-  { name: 'cutscene', step: c => stepCutscene(c.now) },
+  // frame rather than next. The story is one machine (beats.js): the
+  // opening, the reunion, the rescue, the cutscenes and the ending, and a
+  // beat that owns the camera is the one thing allowed to point it; nothing
+  // ad hoc takes it.
+  { name: 'beats',   step: c => stepBeats(c.now) },
   { name: 'camera',  step: c => stepCamera(c.now) },
   { name: 'shake',   step: stepShake },       // and whatever the last landing left
   { name: 'air',     step: stepAir },
@@ -211,9 +213,7 @@ export const STEPS = [
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // the hand: the handful on the pegs, the bins paying
   { name: 'table',        step: c => stepTable(c.dt) },   // and the sand: into the hopper, into the tray, away
-  { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
-  { name: 'intro',        step: c => stepIntro(c.now) },  // and, once and once only, the two of them
-  { name: 'skip',         step: c => stepSkip(c.now) },   // the space bar, held through any of them
+  { name: 'skip',         step: c => stepSkip(c.now) },   // the space bar, held through any beat
   { name: 'buried',       step: c => stepBuried(c.now) }, // and whoever is under the rock, when they can be seen
   { name: 'house',        step: c => stepHouse(c.now) },  // and the crew's own hearth, now and then
   { name: 'core',         step: stepCore },

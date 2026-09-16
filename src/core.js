@@ -14,7 +14,7 @@ import { boulderAlive, makeBoulder, dropZone } from './rock.js';
 import { onYard } from './crew/body.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
-import { introHolds } from './intro.js';
+import { ownsYard, beatDone } from './beats.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 
@@ -67,19 +67,10 @@ const footprintClear = () => {
 };
 
 export function stepCore() {
-  // Nothing rolls in while a scene owns the yard: the opening is empty on
-  // purpose and its second act puts the rock down itself.
-  if (introHolds()) return;
-
-  // The second dance, after the sqwife is saved. It starts when the player
-  // puts the `#saved` sheet down (`storyTold`), not while the sheet hides the
-  // yard. A saved fact so it plays once; a save from before the field existed
-  // loads with it already marked (persist.js).
-  if (S.storyTold && !S.storyDanced) {
-    S.storyDanced = true;
-    if (S.rockhands > 0) S.danceUntil = now() + DANCE_MS;
-    S.dirty = true;
-  }
+  // Nothing rolls in while a beat owns the yard: the opening is empty on
+  // purpose and its second act puts the rock down itself. (The second dance,
+  // after the sqwife is saved, is the ending beat's own -- beats.js.)
+  if (ownsYard()) return;
 
   // The moment the last pixel goes the rock is done with. `coreBuried` really
   // says "this rock still has something to give up", so it comes down even on
@@ -97,11 +88,11 @@ export function stepCore() {
     S.dirty = true;
   }
 
-  // The reunion (`maybeReunion`) needs a moment with the first rock dead and
-  // the next not yet in the sky. The first rocks have no core to roll clear,
-  // so without this the next boulder is built in the same call and the beat
-  // never plays.
-  if (S.introDone && !S.reunionDone && S.boulderNo === 1 && !boulderAlive()) return;
+  // The reunion (`meet` in beats.js) needs a moment with the first rock dead
+  // and the next not yet in the sky. The first rocks have no core to roll
+  // clear, so without this the next boulder is built in the same call and
+  // the beat never plays.
+  if (beatDone('show') && !beatDone('part') && S.boulderNo === 1 && !boulderAlive()) return;
 
   // the next rock rolls in once the core has dropped out of its way
   if (!S.coreBuried && !boulderAlive()) {

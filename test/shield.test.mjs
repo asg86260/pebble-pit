@@ -307,7 +307,7 @@ group('under the dome, the one underneath walks out', async () => {
     if (S.rockFall > held) sprang = true;
     if (sprang && !S.shield.rising) settled = S.rockFall === held;
   }
-  const walking = runUntil(() => state().intro === 'rescue', 30);
+  const walking = runUntil(() => state().beat.yard === 'rescue', 30);
   // ...then comes down with the digging, but never on to whoever is still in
   // the ground: it keeps its courses of daylight over them the whole dig
   const floor = DOME_FLOOR_C * P;
@@ -324,8 +324,8 @@ group('under the dome, the one underneath walks out', async () => {
   const over = lowest >= floor;
   // ...and finishes the way down as they walk out, while the beat is still on:
   // the two of them meet under a rock coming down beside them, not after it
-  const during = state().intro === 'rescue' && state().rescued && state().shield.setting;
-  const out = runUntil(() => state().rescued && !state().intro, 60);
+  const during = state().beat.yard === 'rescue' && state().rescued && state().shield.setting;
+  const out = runUntil(() => state().rescued && !state().beat.yard, 60);
   const after = state();
   const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
   // the clock over them stopped the moment they walked out
@@ -335,13 +335,13 @@ group('under the dome, the one underneath walks out', async () => {
   window.__reset();
   return [
     ok(before.buried, 'somebody has been under every rock until now'),
-    ok(caught && walking, 'the dome holds one and the beat starts', `intro ${state().intro}`),
+    ok(caught && walking, 'the dome holds one and the beat starts', `beat ${state().beat.yard}`),
     ok(sprang && settled, 'the rock springs back up off the dome and settles',
        `held ${held}, sprang ${sprang}, settled ${settled}`),
     ok(dug && crept, 'and comes down with the digging while they are dug out'),
     ok(over, 'but keeps its daylight over them the whole dig', `lowest ${lowest} floor ${floor}`),
     ok(during, 'and is still on its way down as they walk out, before the beat is over',
-       `intro ${state().intro}`),
+       `beat ${state().beat.yard}`),
     ok(out, 'they get out'),
     ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
     ok(after.crew > before.crew, 'they join the crew',
@@ -403,14 +403,15 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
   }
   const stillUp = !!S.shield && S.shield.kind === 'dome';
   // The rock is set down while the two of them are still walking to meet
-  // under it (`S.intro === 'rescue'`), and the dome stands over that walk:
-  // the fade waits for the beat to end, then starts on the next frame.
-  let walkOver = false;
+  // under it (the `rescue` beat), and the dome stands over that walk: the
+  // fade waits for the beat to end, and starts on the frame it does (the
+  // beats step before the shield).
+  let walkOver = false, heldOff = true;
   for (let i = 0; i < 60 * 60 && !walkOver; i++) {
-    if (S.intro !== 'rescue') { walkOver = true; break; }
+    if (S.beat.yard !== 'rescue') { walkOver = true; break; }
+    if (!S.shield || S.shield.fading) heldOff = false;
     run(1 / 60);
   }
-  const heldOff = !!S.shield && !S.shield.fading;
   run(1 / 60);
   const fading = !!S.shield && S.shield.fading > 0;
   const fadeFrom = S.shield && S.shield.fading;

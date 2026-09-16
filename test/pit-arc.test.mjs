@@ -52,8 +52,8 @@ group('the tearing is watched once, and the yard never pauses', async () => {
   const after = state();
 
   return [
-    ok(during.cine === 'tear', 'the tear starts its cutscene', `${during.cine}`),
-    ok(after.cine === null, 'and the camera is given back when it is over'),
+    ok(during.beat.camera === 'tear', 'the tear starts its cutscene', `${during.beat.camera}`),
+    ok(after.beat.camera === null, 'and the camera is given back when it is over'),
     // A cutscene is a camera, not a stop: the crew went on working under it.
     ok(after.rock < rockBefore, 'the yard kept moving while it played',
        `rock ${rockBefore} -> ${after.rock}`)
@@ -109,10 +109,10 @@ group('eating its fill drowns the pit', async () => {
 
   return [
     ok(crossed, 'the threshold drowns the pit'),
-    ok(during.cine === 'drown' || after.cine === null,
-       'the drowning is the second watched moment', `${during.cine}`),
+    ok(during.beat.camera === 'drown' || after.beat.camera === null,
+       'the drowning is the second watched moment', `${during.beat.camera}`),
     ok(after.drowned && after.riftOpen, 'and the abyss era is one-way'),
-    ok(after.cine === null, 'with the camera given back'),
+    ok(after.beat.camera === null, 'with the camera given back'),
     // The abyss as built: the plank at the brim, and the books unmoved.
     ok(pitTop(yard.pit.x + yard.pit.w / 2) === yard.S.groundY,
        'the drowned pit is crossed at the brim'),

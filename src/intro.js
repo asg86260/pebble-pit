@@ -8,6 +8,11 @@
 // only a rock held overhead gives the digging the time it needs. The reunion
 // after the first rock and the rescue under the dome are the same scene
 // machinery. See DESIGN.md, "The opening".
+//
+// Which beat is playing, and when, is the table in beats.js; this file is the
+// bodies: what each beat does to the pair, the crew and the view for as long
+// as it has the yard. Every phase function here is a declaration, not a
+// const, because beats.js reads them at load and imports this file in a ring.
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
@@ -17,7 +22,7 @@ import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS,
          BURIED_DIG_S, BURIED_DIG_BEAT_MS, BURIED_DIG_LONE, BURIED_DIG_LEAD_MS, DUCK_PACE } from './config.js';
 import { S, pit } from './state.js';
 import { now, frames } from './clock.js';
-import { makeBoulder, boulderAlive, dropZone } from './rock.js';
+import { makeBoulder, dropZone } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
@@ -29,28 +34,32 @@ import { stopJig, MOVE_KEYS } from './crew/dance.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
 import { doorAt } from './house.js';
+import { beatDone, beatRunning, ownsYard, markDone } from './beats.js';
 
 // Where the two of them stand: either side of the spot the rock lands on.
 // The one on the left is the one it lands on.
 const pairX = i => Math.round((S.cx + (i ? INTRO_APART : -INTRO_APART) - WORKER / 2) / P) * P;
 
-export const introRunning = () => !!S.intro;
-// The phases that own the yard: nothing rolls in on its own while one of
-// these is running, because the rock arriving is a thing the scene does.
-export const introHolds = () =>
-  S.intro === 'leave' || S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part' ||
-  S.intro === 'rescue';
+// The opening's six beats, in the order they play; skipping any of them is
+// skipping all of them.
+export const OPENING = ['leave', 'chat', 'fall', 'down', 'up', 'show'];
+
+// The pair's word balloons, and the view, for one frame of any beat the
+// opening has. Every phase's step goes through here first.
+function frame(t, key) {
+  hold(t, key);
+  for (const b of S.pair) if (b.say && t >= b.say.until) b.say = null;
+}
 
 // A fresh game, and nothing has happened yet.
 export function startIntro() {
-  if (S.introDone) return;
+  if (beatDone('show')) return;
   // A second playing in one process (a reset, or the checks) would otherwise
   // find the throw mark from the first still set and never throw.
   S.introThrew = 0;
   S.introCut = false;
   // They come out of the house: the house draws its first two rooms before
   // anybody is hired (house.js, `roomsToday`) so that there is a door.
-  S.intro = 'leave';
   S.introAt = now();
   S.introSaid = 0;
   S.introHeart = 0;
@@ -70,10 +79,10 @@ export function startIntro() {
 // off and keeps the one difference: the body that carries on is the one they
 // were watching, stood where it stood.
 export function skipIntro(played = true) {
-  if (!introRunning()) return;
+  if (beatDone('show')) return;
   const from = played || !S.pair.length ? null : S.pair[S.pair.length - 1].x;
-  if (S.intro === 'leave') arrive();
-  if (S.intro === 'chat') crush();
+  if (beatRunning('leave')) arriveChat();
+  if (beatRunning('leave') || beatRunning('chat')) crush();
   S.pair = [];
   S.crew = 1;
   S.rockhands = 1;
@@ -86,52 +95,14 @@ export function skipIntro(played = true) {
   buildShop();                     // the rows that flag opens are on the board from the first frame
 }
 
-// The player's skip, whichever scene has the yard. The rescue finishes its
-// dig and keeps its walk: a square under the rock one frame and stood clear
-// the next is the one thing this game never shows. True if there was a scene
-// to cut.
-export function cutIntro(t) {
-  if (!introRunning() || S.introCut) return false;
-  if (S.intro === 'meet') { parted(t); letGo(); return true; }
-  if (S.intro === 'part') { letGo(); return true; }
-  if (S.intro === 'rescue') {
-    S.introCut = true;
-    if (S.buried) { S.buriedDug = 1; getOut(t); }
-    return true;
-  }
-  skipIntro(false);
-  return true;
-}
-
-// --- one frame of it ----------------------------------------------------------
-
-export function stepIntro(t) {
-  // The ground under the rock is only somewhere to get out of once something
-  // is actually coming down on it -- see `dropZone`.
-  S.sceneHolds = introHolds() && !S.rockFall;
-  if (!S.intro) return;
-  hold(t);
-  for (const b of S.pair) if (b.say && t >= b.say.until) b.say = null;
-
-  if (S.intro === 'leave') return leaving(t);
-  if (S.intro === 'chat') return talking(t);
-  if (S.intro === 'fall') return falling(t);
-  if (S.intro === 'down') return down(t);
-  if (S.intro === 'up') return up(t);
-  if (S.intro === 'show') return show(t);
-  if (S.intro === 'meet') return meet(t);
-  if (S.intro === 'part') return part(t);
-  if (S.intro === 'rescue') return rescue(t);
-}
+// The player's skip of any of the opening's beats: the same yard, the body
+// where they were watching it.
+export function cutOpening() { skipIntro(false); }
 
 // --- the second act -----------------------------------------------------------
 // After the first rock, once: somebody runs over and digs at the one in the
 // ground, they come up a little, and the next rock comes down on them.
-export function maybeReunion(t) {
-  if (S.intro || S.reunionDone || !S.introDone) return;
-  if (S.boulderNo !== 1 || boulderAlive()) return;
-  if (S.coreBuried) return;                    // the core comes out first: it is yours
-  S.intro = 'meet';
+export function startMeet(t) {
   S.introAt = t;
   S.introSaid = 0;
   S.introHeart = 0;
@@ -147,8 +118,6 @@ export function maybeReunion(t) {
 // The dome holds a rock overhead, somebody digs with no rock coming to stop
 // them, and the one underneath walks clear and joins the crew.
 export function startRescue(t) {
-  if (S.rescued || !S.buried) return;
-  S.intro = 'rescue';
   S.introAt = t;
   S.introSaid = 0;
   S.introCut = false;
@@ -200,28 +169,39 @@ function getOut(t) {
   S.dirty = true;
 }
 
+// The player's skip. The rescue finishes its dig and keeps its walk: a square
+// under the rock one frame and stood clear the next is the one thing this
+// game never shows, so the beat carries on (false) until the walk is walked.
+export function cutRescue(t) {
+  if (S.introCut) return false;
+  S.introCut = true;
+  if (S.buried) { S.buriedDug = 1; getOut(t); }
+  return false;
+}
+
 // One frame of it: the digging, the walk out, then the two of them, then back
-// to work.
-function rescue(t) {
+// to work. True while there is more of it.
+export function stepRescue(t) {
+  frame(t, 'rescue');
   // Still in the ground, and the rock waits overhead while somebody digs. If
   // nobody can come (the whole crew aloft, or through a door) it works
   // itself loose, slower, rather than hanging the rock there forever.
   if (S.buried) {
     if (!sendDigger())
       S.buriedDug = Math.min(1, buriedOut() + (frames() / 60) * BURIED_DIG_LONE / BURIED_DIG_S);
-    if (buriedOut() < 1) { S.introAt = t; return; }
+    if (buriedOut() < 1) { S.introAt = t; return true; }
     getOut(t);
-    return;
+    return true;
   }
   const b = S.pair[0];
-  if (!b) { S.intro = null; return; }
+  if (!b) return false;
   const d = S.rescueTo - b.x;
   if (Math.abs(d) > 1) {
     // its own legs, at the pace anybody crosses the yard at
     b.x += Math.sign(d) * Math.min(COMMUTE_PACE * frames(), Math.abs(d));
     b.y = walkY(b.x + WORKER / 2);
     S.introAt = t;                             // the beat starts when it arrives
-    return;
+    return true;
   }
   b.y = walkY(b.x + WORKER / 2);
   if (!S.introCut && t >= (S.introSaid || 0)) {
@@ -230,7 +210,7 @@ function rescue(t) {
     const who = S.workers.find(w => w.met);
     if (who && !who.walking) who.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
   }
-  if (!S.introCut && t - S.introAt < MEET_MS) return;
+  if (!S.introCut && t - S.introAt < MEET_MS) return true;
 
   // And then it is one of the crew, standing where it walked to: the body you
   // were watching is the body that carries on.
@@ -242,13 +222,15 @@ function rescue(t) {
   if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); }
   for (const w of S.workers) { w.met = false; w.say = null; }
   S.pair = [];
-  S.intro = null;
   S.dirty = true;
+  return false;
 }
 
 // Together, and digging: the square in the ground, and whoever was nearest
-// digging at it (`stepDig`); the rest of the crew step clear and watch.
-function meet(t) {
+// digging at it (`stepDig`); the rest of the crew step clear and watch. True
+// while they are.
+export function stepMeet(t) {
+  frame(t, 'meet');
   // Held to the end of the meeting, said once rather than a frame at a time:
   // the dance reads this to know when the yard stops watching, and a horizon
   // re-armed every frame is not one a hop can be planned against.
@@ -259,13 +241,14 @@ function meet(t) {
     S.introSaid = t + INTRO_BEAT * 1.4;
     S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
   }
-  if (t - S.introAt < MEET_MS) return;
-  parted(t);
+  return t - S.introAt < MEET_MS;
 }
 
+// The player's skip of the meeting: the rock comes down and the view lets go.
+export function cutMeet(t) { parted(t); letGo(); }
+
 // and the sky opens again, on somebody half dug out
-function parted(t) {
-  S.intro = 'part';
+export function parted(t) {
   S.introAt = t;
   S.buriedSay = null;
   for (const w of S.workers) { w.met = false; w.say = null; }
@@ -277,14 +260,14 @@ function parted(t) {
 
 // It lands on them again, the crew scatter, and the view lets go. From here
 // on nothing ever stops for a rock.
-function part(t) {
-  if (t - S.introAt < PART_MS) return;
+export function stepPart(t) {
+  frame(t, 'part');
+  if (t - S.introAt < PART_MS) return true;
   letGo();
+  return false;
 }
 
-function letGo() {
-  S.intro = null;
-  S.reunionDone = true;
+export function letGo() {
   S.camLockY = null;
   setZoom(1);
   S.danceUntil = 0;
@@ -296,16 +279,16 @@ const ease = k => 1 - Math.pow(1 - k, 3);
 // The view, for as long as the opening owns it: right in on the pair, and
 // easing back out over the last stretch. Nothing else in this game moves the
 // zoom but the cutscenes.
-function hold(t) {
+function hold(t, key) {
   // The show walks the view with the body at the yard's own size. The rescue
   // happens in a working yard, and whether it is pulled in on is the shield
   // cutscene's call.
-  if (S.intro === 'show' || S.intro === 'rescue') return;
+  if (key === 'show' || key === 'rescue') return;
 
   // The walk out: the seat starts on the door and eases after the pair's
   // midpoint, stopping at the spot where the chat holds it. Under reduced
   // motion every beat is watched from where it ends.
-  if (S.intro === 'leave') {
+  if (key === 'leave') {
     setZoom(INTRO_ZOOM);
     S.camLockY = S.groundY - S.viewH * 0.66;
     const mid = reducedMotion() || !S.pair.length ? S.cx
@@ -325,9 +308,9 @@ function hold(t) {
   // reduced motion the easing goes and the view changes only where one beat
   // hands over to the next.
   const k0 = reducedMotion() ? Infinity : (t - S.introAt);
-  const out = S.intro === 'up' ? ease(Math.min(1, k0 / INTRO_UP_MS))
-            : S.intro === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
-            : S.intro === 'part' ? ease(Math.min(1, k0 / PART_MS))
+  const out = key === 'up' ? ease(Math.min(1, k0 / INTRO_UP_MS))
+            : key === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
+            : key === 'part' ? ease(Math.min(1, k0 / PART_MS))
             : 0;
   const k = INTRO_ZOOM + (1 - INTRO_ZOOM) * out;
 
@@ -346,8 +329,9 @@ function hold(t) {
 
 // Out of the door and over to the spot, talking as they go, at the pace
 // anybody crosses the yard at. The chat starts when the second of them is
-// stood at the spot.
-function leaving(t) {
+// stood at the spot: true while either is still walking.
+export function stepLeave(t) {
+  frame(t, 'leave');
   let there = true;
   for (const [i, b] of S.pair.entries()) {
     const d = pairX(i) - b.x;
@@ -358,22 +342,22 @@ function leaving(t) {
     b.y = walkY(b.x + WORKER / 2);
   }
   say(t);
-  if (there) arrive();
+  return !there;
 }
 
 // Stood at the spot, and the chat begins on its own clock from here.
-function arrive() {
+export function arriveChat() {
   for (const [i, b] of S.pair.entries()) { b.x = pairX(i); b.y = walkY(b.x + WORKER / 2); }
-  S.intro = 'chat';
   S.introAt = now();
 }
 
-// Talking, and every so often one of them says the other thing.
-function talking(t) {
+// Talking, and every so often one of them says the other thing; true until
+// the chat has had its time.
+export function stepChat(t) {
+  frame(t, 'chat');
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
   say(t);
-  if (t - S.introAt < INTRO_CHAT_MS) return;
-  crush();
+  return t - S.introAt < INTRO_CHAT_MS;
 }
 
 // One of them says something, in turn. The walk and the chat share it.
@@ -395,11 +379,10 @@ function say(t) {
 // And it comes down. The one on the left is under it; the one on the right
 // is thrown clear. Nobody is hired here: the first body in this game is
 // somebody who was already standing there.
-function crush() {
+export function crush() {
   const b = S.pair[1];                         // the one on the right
   S.pair = b ? [b] : [];                       // the left-hand one is gone
   S.buried = true;
-  S.intro = 'fall';
   S.introAt = now();
   makeBoulder(true);                           // out of the sky, on to the spot
 
@@ -432,35 +415,38 @@ function fly(b) {
   b.down = true;                               // and drawn on its side while it is
 }
 
-// While the rock is in the air, nothing else happens.
-function falling(t) {
+// While the rock is in the air, nothing else happens: true until it has
+// landed and the one thrown clear is on its back.
+export function stepFall(t) {
+  frame(t, 'fall');
   const b = S.pair[0];
   fly(b);
-  if (S.rockFall > 0 || !(b && b.down)) return;
-  S.intro = 'down';
-  S.introAt = t;
+  return S.rockFall > 0 || !(b && b.down);
 }
 
 // Landed, and lying there for a moment doing nothing at all.
-function down(t) {
+export function startDown(t) { S.introAt = t; }
+export function stepDown(t) {
+  frame(t, 'down');
+  fly(S.pair[0]);
+  return t - S.introAt < INTRO_DOWN_MS;
+}
+
+// Up, staring at it, while the view pulls back out.
+export function startUp(t) {
   const b = S.pair[0];
-  fly(b);
-  if (t - S.introAt < INTRO_DOWN_MS) return;
   if (b) {
     b.down = false;
     b.flung = false;
     b.say = { mark: 'bang', until: t + INTRO_UP_MS * 0.7 };
   }
-  S.intro = 'up';
   S.introAt = t;
 }
-
-// Up, staring at it, while the view pulls back out.
-function up(t) {
+export function stepUp(t) {
+  frame(t, 'up');
   const b = S.pair[0];
   if (b) b.y = walkY(b.x + WORKER / 2);
-  if (t - S.introAt < INTRO_UP_MS) return;
-  begin(t);
+  return t - S.introAt < INTRO_UP_MS;
 }
 
 // --- and then it shows you ----------------------------------------------------
@@ -468,12 +454,11 @@ function up(t) {
 // pixels come off, and one is thrown into the hole. It *is* the game; the
 // opening only decides when to change the body's mind and where to point the
 // camera.
-function begin(t) {
+export function begin(t) {
   // The body that walks to the rock is *this* body: a rockhand made from
   // nothing put a fresh square on the rock in the frame the watched one
   // disappeared.
   const from = S.pair[0] ? S.pair[0].x : S.cx;
-  S.intro = 'show';
   S.introAt = t;
   S.pair = [];
   S.crew = 1;
@@ -498,9 +483,11 @@ function begin(t) {
 // It knocks a couple of cells off and throws one into the hole. Thrown, not
 // carried: a grain thrown properly carries the six hundred pixels, and the
 // first half-minute of the game spent watching somebody walk is dreadful.
-function show(t) {
+// True while it is still being shown.
+export function stepShow(t) {
+  frame(t, 'show');
   const w = S.workers[0];
-  if (!w) { finish(); return; }
+  if (!w) { finish(); return false; }
 
   // Watching the body while it works and the grain once it is in the air.
   // Under reduced motion the view sits halfway between the rock and the
@@ -535,17 +522,18 @@ function show(t) {
   }
 
   // Over when the grain is in the hole, or when it has plainly missed.
-  if (S.stored >= 1) { finish(); return; }
-  if (S.introThrew && t - S.introThrew > 6000) { finish(); return; }
-  if (t - S.introAt >= INTRO_SHOW_MAX) finish();
+  if (S.stored >= 1 || (S.introThrew && t - S.introThrew > 6000) || t - S.introAt >= INTRO_SHOW_MAX) {
+    finish();
+    return false;
+  }
+  return true;
 }
 
 // And it is left carrying (DESIGN.md, "The opening"): a one-body yard with
 // that body on the rock is a yard where nothing is carried, the counter sits
 // at 1, and no row ever lights. A body on no roster job is a hauler.
 function finish() {
-  S.intro = null;
-  S.introDone = true;
+  markDone(...OPENING);
   S.buried = true;
   S.pair = [];
   S.crew = Math.max(1, S.crew);
@@ -615,7 +603,7 @@ export function sendDigger() {
 // and downs tools then. A scene holds the rock itself; a held rock is not
 // coming.
 function timeToDig(x, t, zone = dropZone()) {
-  if (S.intro) return true;
+  if (ownsYard()) return true;
   if (!zone) return t < S.danceUntil;
   const out = Math.min(x + WORKER - zone.from, zone.to - x) + WORKER;
   const need = (out / DUCK_PACE) * (1000 / 60) + BURIED_DIG_LEAD_MS;
@@ -627,7 +615,7 @@ function timeToDig(x, t, zone = dropZone()) {
 // and then the body is the crew's again.
 export function stepDig(w, c) {
   if (!w.dig) return false;
-  const coming = S.rockFall > 0 && !(S.rockHeld && S.intro === 'rescue');
+  const coming = S.rockFall > 0 && !(S.rockHeld && beatRunning('rescue'));
   if (coming || !buriedVisible() || buriedOut() >= 1 || !timeToDig(w.x, c.now, c.zone)) {
     w.dig = false;
     w.lunge = 0;
@@ -681,12 +669,12 @@ export function stepBuried(t) {
     return;
   }
   // Whoever is nearest goes to dig in every ordinary gap between rocks, not
-  // only the scenes' (`maybeReunion`, `startRescue`), so the yard is seen
+  // only the scenes' (`startMeet`, `startRescue`), so the yard is seen
   // trying all game. Only while the dance has the dig's walk out left in it:
   // with nobody dancing the next rock is made the moment the ground is
   // clear, and a body sent then walks into a footprint with a rock on its
   // way down.
-  if (!S.intro && !S.rockFall && timeToDig(buriedAt().x, t)) sendDigger();
+  if (!ownsYard() && !S.rockFall && timeToDig(buriedAt().x, t)) sendDigger();
   if (S.buriedSay && t < S.buriedSay.until) return;
   S.buriedSay = t < (S.buriedSayAt || 0) ? null
     : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };

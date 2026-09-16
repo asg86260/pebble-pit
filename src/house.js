@@ -10,6 +10,7 @@ import { S, bench } from './state.js';
 import { puff } from './puff.js';
 import { rockLeft } from './world.js';
 import { rand } from './rng.js';
+import { beatDone } from './beats.js';
 
 // The middle of the plot, off the same walk that places everything else, and
 // it never moves.
@@ -41,7 +42,7 @@ const courseWide = () => HOUSE_COLS;
 // that has had its opening and has nobody in it (the checks get there; the
 // game does not) has no house.
 export const roomsToday = () =>
-  S.crew > 0 ? S.crew + 1 : (S.introDone ? 0 : 2);
+  S.crew > 0 ? S.crew + 1 : (beatDone('show') ? 0 : 2);
 
 export function cubes(nOverride) {
   const n = nOverride != null ? nOverride : roomsToday();
