@@ -231,6 +231,8 @@ export const S = {
   attract: null,          // { grain, next }
   // The lever just pulled on the building, for its swing.
   leverPulled: null,      // { key, at }
+  staking: null,          // { cur, stake, left } -- a tap's chunk still to lift off a pile
+  unstaking: null,        // { cur, stake } -- the pot on its way home from the bowl
   // What the machine is flashing right now: a peg lit on the beat, a divider
   // lit for a x39 or a near miss, the sign on a strobe for a x39.
   tableFx: { pegs: [], edge: null, strobeAt: 0 },
@@ -657,7 +659,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled',
+  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'staking', 'unstaking',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',

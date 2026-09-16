@@ -1,27 +1,26 @@
-// The stake is dust you sweep.
+// The stake is a pile you tap.
 //
 // To the right of the casino, on the ground, one pile a coin the yard has
 // handed out: the purse itself, drawn at the table's own band ladder, so it
 // grows and shrinks with what you have, and each grain of it is worth its
-// band -- the tray's own rule. Staking is the ordinary sweep: the left button
-// on a desk, a finger on dust on a phone, picks grains up off the pile the
-// way it picks up any dust in the yard, and grains let go over the hopper's
-// rim fall into the funnel and become stake. One coin a hand: grains of
-// another coin dropped over the rim slide off and arc home. Taking it back is
-// the same sweep out of the bowl, dropped anywhere: the grains arc home and
-// the purse rises. The pot is what stands in the bowl. See DESIGN.md, "The
-// stake is a heap you carry, and the casino has no board".
+// band -- the tray's own rule. Staking is a tap: a tap on a pile sends a
+// tenth of the purse streaming off the top of it, over the rim and into the
+// funnel, and taps stack. One coin a hand: a tap on another coin's pile
+// while a hand stands is a dud knock. Taking it back is a tap on the bowl:
+// the whole pot streams home and the purse rises as it lands. The pot is
+// what stands in the bowl. See DESIGN.md, "The stake is a heap you carry,
+// and the casino has no board".
 //
-// Owns the three plots, what stands on each, and what a swept grain of them
-// does when it lands. casino.js owns the pot once the grains are in the
-// funnel; hands.js does the sweeping.
+// Owns the three plots, what stands on each, and the streams between them
+// and the bowl. casino.js owns the pot once the grains are in the funnel.
 
 import { P, SHADES, someFind, STAKE_COINS, STAKE_GAP, STAKE_ROWS, STAKE_COLS,
-         shownFor, HOPPER_H } from './config.js';
+         shownFor, STAKE_TAP_SHARE, STAKE_TAP_MIN } from './config.js';
 import { S, casino, table, stakes } from './state.js';
 import { makePainter } from './painter.js';
-import { addGrain, resizeGrid, settleSome, at, put, bottomY, surfaceY } from './grid.js';
-import { purseOf, busy, inHopper, stakeGrain, refundGrain, potShade, hopperN } from './casino.js';
+import { addGrain, resizeGrid, settleSome, at, put, bottomY, surfaceY, colOf, inside } from './grid.js';
+import { purseOf, busy, inHopper, canStake, unstakeGrain, refundGrain, potShade, hopperN, potAt, stopAttract } from './casino.js';
+import { sfx } from './audio.js';
 import { rand } from './rng.js';
 
 // --- the plots ------------------------------------------------------------------------
@@ -91,7 +90,8 @@ function rainIn(dt, h, i, want) {
 }
 
 let drainAt = 0;
-const topGrain = (h, c) => { for (let r = h.rows - 1; r >= 0; r--) if (at(h, c, r)) return r; return -1; };
+// the top grain of a column; a wall of the bowl is never a grain
+const topGrain = (h, c) => { for (let r = h.rows - 1; r >= 0; r--) if (at(h, c, r) && !(h.fixed && h.fixed(c, r))) return r; return -1; };
 function topmostColumn(h) {
   let best = -1, high = -1;
   for (let i = 0; i < h.cols; i++) {
@@ -129,7 +129,7 @@ function stepRain(dt) {
     if (k.lands !== 'stake') continue;
     if (k.arc) {
       const a = k.arc;
-      a.k = Math.min(1, a.k + dt / HOME_MS);
+      a.k = Math.min(1, a.k + dt / (a.ms || HOME_MS));
       k.x = a.x0 + (a.x1 - a.x0) * a.k;
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k < 1) continue;
@@ -150,6 +150,8 @@ function stepRain(dt) {
 
 export function stepStakes(dt) {
   if (!S.casinoOpen) return;
+  stepStaking(dt);
+  stepUnstaking(dt);
   stepRain(dt);
   stakes.forEach((h, i) => {
     if (!h.grid) return;
@@ -160,65 +162,142 @@ export function stepStakes(dt) {
   });
 }
 
-// --- the sweep ------------------------------------------------------------------------
-// The plots a sweep may take from besides the ground: the piles, and the
-// hopper's bowl while a pot stands in it and nothing is moving. Each says
-// what a grain lifted off it is, so the grain knows where it belongs when it
-// comes down: the pile's coin and worth, or the hopper's.
-export function sweepablePlots() {
-  if (!S.casinoOpen) return [];
-  const out = stakes.filter(h => h.grid && h.n).map(h => ({ plot: h, cur: h.cur, from: 'stake', worth: () => stakeGrainWorth(h) }));
-  if (inHopper() && !busy() && hopperN() > 0) {
-    out.push({ plot: table, cur: S.pot.cur, from: 'hopper', worth: () => hopperGrainWorth(), fixed: table.fixed });
-  }
-  return out;
-}
-// A grain swept out of the bowl takes its share of the pot with it, the
-// rounding riding on the last: the pot is what stands in the bowl.
-const hopperGrainWorth = () => Math.max(1, Math.min(S.pot.n, Math.round(S.pot.n / Math.max(1, hopperN()))));
+// --- the tap ----------------------------------------------------------------------------
+// Staking is a tap. A tap on a pile sends a chunk of it into the funnel on
+// its own: a tenth of the coin's purse (`STAKE_TAP_SHARE`), never less than
+// `STAKE_TAP_MIN` and never more than there is, lifted off the top of the
+// pile grain by grain and lobbed over the rim in a stream -- the hoist's own
+// arc, the other way -- each grain worth its band, landing in the bowl as
+// the stake. Taps stack: five is half the purse, ten is all in. A tap on the
+// bowl sends the whole pot back the same way. A stake built a grain a drag
+// was a chore; a tap is a decision.
+//
+// What is in flight is `S.staking` (a chunk still to lift off a pile) and
+// `S.unstaking` (the pot on its way home); the purse and the pot move as
+// grains land, never before, so a save mid-stream loses nothing.
 
-// Somewhere over the funnel's mouth: between its walls, at or below the rim.
-export const overRim = (x, y) =>
-  x >= casino.x && x < casino.x + casino.w && y >= casino.y - P && y < casino.y + HOPPER_H * P;
-
-// A grain of a pile, or of the hopper, coming down: into the funnel and the
-// pot if it is over the rim and the pot will have it; home to its pile
-// otherwise -- off the rim if it was refused, off the ground wherever else it
-// fell. True when the grain has been dealt with. Called by the chip loop for
-// every grain that carries a coin, before the ground gets it.
-export function landStakeChip(ch, onGround) {
-  if (ch.vy > 0 && overRim(ch.x, ch.y) && ch.y >= casino.y - P) {
-    if (stakeGrain(ch.cur, ch.worth, ch.from)) { addGrain(table, ch.x, null, ch.s); return true; }
-    goHome(ch, 0);
-    return true;
-  }
-  if (!onGround) return false;
-  goHome(ch, ch.from === 'hopper' ? ch.worth : 0);
-  return true;
-}
-// The arc home: to the middle of the pile of its coin, paying the purse on
-// landing what a hopper grain took with it.
-function goHome(ch, worth) {
-  const h = stakeOf(ch.cur);
-  const i = stakes.indexOf(h);
-  const to = stakeAt(h);
-  S.tableAir.push({
-    x: ch.x, y: ch.y, s: ch.s, t: 0, lands: 'stake', stake: i, worth,
-    arc: { x0: ch.x, y0: ch.y, x1: to.x + (rand() - 0.5) * P * 8, y1: to.y - P * 8, k: 0, high: P * 10 }
-  });
-}
-
-// The tooltip's word for a pile: the purse it is.
-export const stakeName = h => {
-  const mark = h.cur === 'shard' ? 'ore' : h.cur === 'spore' ? 'crops' : 'pebbles';
-  return `your ${mark}: ${purseOf(h.cur)} -- sweep some into the funnel to stake it`;
-};
+// The pile or the bowl under a point, for the tap and for the phone's claim
+// on a touch there (`dustUnder` in hands.js asks, so a finger on a pile
+// never scrolls the yard).
 export function stakeUnder(x, y) {
   for (const h of stakes) {
     if (!h.grid || !h.n) continue;
     if (x < h.x || x >= h.x + h.cols * P || y < h.y || y >= h.y + h.rows * P) continue;
-    const c = Math.floor((x - h.x) / P), r = Math.floor((bottomY(h) - y) / P);
-    if (r >= 0 && r < h.rows && at(h, c, r)) return h;
+    // the pile's own outline, with a cell of air over it so a tap on its crown lands
+    if (y >= surfaceY(h, colOf(h, x)) - P) return h;
   }
   return null;
+}
+export function bowlUnder(x, y) {
+  if (!S.casinoOpen || !table.grid || !hopperN()) return false;
+  if (x < table.x || x >= table.x + table.cols * P || y < table.y || y >= bottomY(table)) return false;
+  const c = colOf(table, x), r = Math.floor((bottomY(table) - y) / P);
+  return inside(table, c, r) && !!at(table, c, r) && !(table.fixed && table.fixed(c, r));
+}
+
+// What one tap on a pile is worth: a tenth of the purse, floored and capped.
+export const tapShare = cur => {
+  const purse = purseOf(cur);
+  return Math.min(purse, Math.max(STAKE_TAP_MIN, Math.round(purse * STAKE_TAP_SHARE)));
+};
+
+// A tap on a pile: a chunk of that coin joins what is already on its way.
+// Refused -- a hand on the board, another coin's pot standing -- the pile
+// gives the dud knock and nothing moves.
+export function tapStake(h) {
+  const i = stakes.indexOf(h);
+  if (!canStake(h.cur) || purseOf(h.cur) <= 0) { sfx('dud', { x: stakeAt(h).x }); return false; }
+  const share = tapShare(h.cur);
+  if (S.staking && S.staking.stake === i) S.staking.left += share;
+  else S.staking = { cur: h.cur, stake: i, left: share };
+  stopAttract();
+  return true;
+}
+
+// A tap on the bowl: the whole pot goes home. Only with a pot standing and
+// nothing moving; a tap mid-hand is nothing.
+export function tapBowl() {
+  if (!inHopper() || busy() || !hopperN()) return false;
+  S.unstaking = { cur: S.pot.cur, stake: stakes.indexOf(stakeOf(S.pot.cur)) };
+  return true;
+}
+
+// A tap anywhere: the pile or the bowl under it, worked. The same call the
+// pointer makes on a desk and at a finger's release on a phone.
+export function casinoTap(x, y) {
+  if (!S.casinoOpen) return false;
+  const h = stakeUnder(x, y);
+  if (h) return tapStake(h);
+  if (bowlUnder(x, y)) return tapBowl();
+  return false;
+}
+
+// One grain off the top of a plot, for the streams.
+function liftTop(plot) {
+  const c = topmostColumn(plot);
+  if (c < 0) return null;
+  const r = topGrain(plot, c);
+  const v = at(plot, c, r);
+  put(plot, c, r, 0);
+  return { x: plot.x + c * P, y: bottomY(plot) - (r + 1) * P, s: v };
+}
+
+// The stream a tap set going: grains off the pile, over the rim, into the
+// bowl -- the hoist's lob the other way. The rate is the hoist's. A grain's
+// worth is the pile's grain worth, the last one whatever is left; the purse
+// is spent as each lands (`stakeGrain`, called by the landing in casino.js).
+function stepStaking(dt) {
+  const st = S.staking;
+  if (!st) return;
+  const h = stakes[st.stake];
+  if (!h || !h.grid || st.left <= 0 || !canStake(st.cur)) { S.staking = null; return; }
+  const worth = stakeGrainWorth(h);
+  const grains = Math.ceil(st.left / worth);
+  let n = Math.min(grains, Math.max(1, Math.ceil(grains * (dt / STREAM_MS))));
+  while (n-- > 0 && st.left > 0) {
+    const g = liftTop(h);
+    if (!g) break;                                 // the pile has not caught up: next frame
+    const w = Math.min(worth, st.left);
+    st.left -= w;
+    S.tableAir.push({
+      x: g.x, y: g.y, s: g.s, t: 0, lands: 'hopper', cur: st.cur, worth: w,
+      arc: { x0: g.x, y0: g.y, x1: potAt().x + (rand() - 0.5) * P * 8, y1: table.y - P * 3,
+             k: 0, high: P * 12 + rand() * P * 6, ms: STREAM_FLIGHT_MS }
+    });
+  }
+  if (st.left <= 0) S.staking = null;
+}
+
+// The pot going home: grains off the top of the bowl, each taking its share
+// of the pot with it (`unstakeGrain`), arcing to the pile and paying the
+// purse as they land (`refundGrain`, in `stepRain`).
+function stepUnstaking(dt) {
+  const u = S.unstaking;
+  if (!u) return;
+  if (!S.pot || !hopperN()) { S.unstaking = null; return; }
+  const grains = hopperN();
+  let n = Math.min(grains, Math.max(1, Math.ceil(grains * (dt / STREAM_MS))));
+  while (n-- > 0 && S.pot && hopperN()) {
+    const worth = Math.max(1, Math.min(S.pot.n, Math.round(S.pot.n / Math.max(1, hopperN()))));
+    const g = liftTop(table);
+    if (!g) break;
+    unstakeGrain(worth);
+    goHome(g, u.cur, worth, STREAM_FLIGHT_MS);
+  }
+  if (!S.pot || !hopperN()) { S.unstaking = null; if (S.pot) S.pot = null; }
+}
+const STREAM_MS = 1500;
+const STREAM_FLIGHT_MS = 1700;
+
+// The arc home: to the middle of the pile of its coin, paying the purse on
+// landing what the grain took with it. A grain refused at the rim goes home
+// too, worth nothing, since nothing was spent for it.
+export function goHome(g, cur, worth, ms = HOME_MS) {
+  const h = stakeOf(cur);
+  const i = stakes.indexOf(h);
+  const to = stakeAt(h);
+  S.tableAir.push({
+    x: g.x, y: g.y, s: g.s, t: 0, lands: 'stake', stake: i, worth,
+    arc: { x0: g.x, y0: g.y, x1: to.x + (rand() - 0.5) * P * 8, y1: to.y - P * 8, k: 0, high: P * 10, ms }
+  });
 }

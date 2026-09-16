@@ -46,7 +46,7 @@ import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, p
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { dealHand, potAt } from './casino.js';
 import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
-import { stakeOf, stakeWant } from './stakes.js';
+import { stakeOf, stakeWant, casinoTap } from './stakes.js';
 import { stakes, table } from './state.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -906,52 +906,53 @@ export const HANDLES = {
   // a lever on the casino pulled by name, the same call the pointer makes:
   // `__clickLever('casino-gate')`, 'casino-chute', 'casino-crank'
   __clickLever: pullLever,
+  // a control held mid-motion for a scene: its pull timestamped a minute ahead
+  __holdControl: key => { S.leverPulled = { key, at: clockNow() + 60000 }; },
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
   __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
   // The sweep, one step in from the pointer: what a press-and-drag does at a
   // point and what letting go there does, the same two calls input.js makes.
   __sweep: (x, y) => { sweep(x, y); return S.held; },
   __let: (x, y) => { release(x, y); },
-  // A point on a stake pile's sand, in the middle of its plot, and one over
-  // the hopper's rim: the two ends of a stake.
+  // A tap at a point, the same call a click on a desk and a finger's tap on
+  // a phone make: a stake pile sends a tenth of its purse to the funnel, the
+  // bowl sends the pot home.
+  __tap: casinoTap,
+  // A point on a stake pile's sand, in the middle of its plot; on the sand
+  // standing in the bowl; and over the hopper's rim.
   __stakeAt: (cur = 'dust') => {
     const h = stakeOf(cur);
     if (!h || !h.grid) return null;
     const x = h.x + Math.floor(h.cols / 2) * P;
-    return { x, y: surfaceY(h, colOf(h, x)) + P };
+    return { x, y: surfaceY(h, colOf(h, x)) + P * 1.5 };
   },
-  __rim: () => ({ x: potAt().x, y: potAt().y - P * 3 }),
-  // and a point on the sand standing in the bowl, to sweep it out again
   __bowlAt: () => {
     if (!table.grid || !table.n) return null;
     const x = table.x + Math.floor(table.cols / 2) * P;
-    return { x, y: surfaceY(table, colOf(table, x)) + P };
+    return { x, y: surfaceY(table, colOf(table, x)) + P * 1.5 };
   },
-  // the pointer, for a scene that wants the sweep drawn under it
+  __rim: () => ({ x: potAt().x, y: potAt().y - P * 3 }),
+  // the pointer, for a scene that wants the cursor somewhere
   __mouseAt: (x, y) => { S.mouse.x = x; S.mouse.y = y; },
   // The table stood up the way the scenes and the checks want it: open, dust
-  // in the hole, the piles rained in; some grains swept off a pile and let go
-  // over the rim, a drag a grain (a level-0 hand is one grain); a hand
-  // played through the gate to the tray standing. Each waits on the sand.
+  // in the hole, the piles rained in; a pile tapped this many times and the
+  // stream landed and the pour settled; a hand played through the gate to
+  // the tray standing. Each waits on the sand.
   __casinoStakes: (dust = 6000) => {
     newGame(); openCasino(true); give(dust); rebuildBoards();
     for (let f = 0; f < 60 * 20 && !stakes.every(h => h.n >= stakeWant(h)); f++) fast(1 / 60);
   },
-  __casinoStake: (grains = 1, cur = 'dust') => {
+  __casinoStake: (taps = 1, cur = 'dust') => {
     if (!S.casinoOpen) { newGame(); openCasino(true); give(6000); rebuildBoards(); }
     const h = stakeOf(cur);
     for (let f = 0; f < 60 * 20 && h && h.n < stakeWant(h); f++) fast(1 / 60);
-    const rim = { x: potAt().x, y: potAt().y - P * 3 };
     let done = 0;
-    while (done < grains) {
+    for (let t = 0; t < taps; t++) {
       const x = h.x + Math.floor(h.cols / 2) * P;
-      sweep(x, surfaceY(h, colOf(h, x)) + P);
-      if (!S.held) break;
-      done += S.held;
-      release(rim.x, rim.y);
-      for (let f = 0; f < 60 * 5 && S.chips.some(c => c.cur); f++) fast(1 / 60);
+      if (casinoTap(x, surfaceY(h, colOf(h, x)) + P * 1.5)) done++;
     }
-    for (let f = 0; f < 60 * 30 && S.pouring; f++) fast(1 / 60);
+    const flying = () => S.staking || S.tableAir.some(k => k.lands === 'hopper' && k.cur);
+    for (let f = 0; f < 60 * 30 && (flying() || S.pouring); f++) fast(1 / 60);
     return done;
   },
   __casinoHand: () => {

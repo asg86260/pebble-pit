@@ -67,10 +67,13 @@ export const GATE_W = 2;
 // stands in front of the bowl: the roof sign's five-row letters across the
 // front in one word, a clear cell and the bulbs each side of them.
 export const CASINO_SIGN_H = 9;
-// The face: a band of air for the stream to fan in, then the peg rows two
-// apart, then the bins with their pay written under them, then the tray.
-export const BOARD_AIR = 3;
-export const PEG_ROW_H = 2;
+// The face: a band of air for the stream to fan in, then the peg rows three
+// apart -- two was cramped: a pebble two cells tall on a peg had a cell of
+// air over it -- then the bins with their pay written under them, then the
+// tray. The rows below the last peg, `PEG_ROW_H - 1` of them, are the air
+// over the bins.
+export const BOARD_AIR = 4;
+export const PEG_ROW_H = 3;
 // A bin is six cells on the field: a five-cell slot and a wall on its right.
 // Five, because a bin wears its own pay in its own foot and the half's ".5"
 // -- a point, a clear cell and a digit, the only way it reads at this size --
@@ -102,9 +105,10 @@ export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 // machine's: a tall stem up from a boss on the wall by the funnel with a ball
 // on the end, the biggest knob on the building, that swings down through most
 // of a half turn when pulled and comes back up slower; dead, it lies at the
-// bottom of its swing. The bank is a push button on the foot by the chute, a
-// cap on a plate, that sinks a cell when pressed. The crank is a hub with a
-// bar for a handle that turns while the tray goes up. A thumb needs more than
+// bottom of its swing. The bank is a push button set into the foot's wall by
+// the chute, face on: a round cap in a square recess, that sinks into the
+// wall when pressed. The crank is a hub with a bar for a handle that turns
+// while the tray goes up. A thumb needs more than
 // a stem to find, so on a phone every hit box opens out to `LEVER_HIT` cells.
 export const ARM_LENGTH = 8;              // the arm's stem, in cells
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
@@ -113,8 +117,9 @@ export const LEVER_REACH = 3;             // the crank's handle, in cells
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
 export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
 export const BUTTON_PRESS_MS = 200;       // the cap stays sunk this long
-export const BUTTON_PLATE_W = 6, BUTTON_PLATE_H = 2;   // the plate out from the wall, in cells
-export const BUTTON_CAP_W = 4, BUTTON_CAP_H = 3;       // the cap standing on it
+export const BUTTON_RECESS = 7;           // the square recess in the wall, in cells
+export const BUTTON_CAP = 5;              // the cap in it, corners off
+export const BUTTON_SUNK = 3;             // what the cap shrinks to, pressed
 export const CRANK_TURNS = 3;             // full turns of the handle over one hoist
 
 // --- how a grain moves -----------------------------------------------------------------
@@ -207,6 +212,10 @@ export const STAKE_COLS = Math.ceil(2 * Math.sqrt(CASINO_PILE_BRIM)) + 2;
 // The ground the row takes, for the walk to reserve beside the building: a
 // pile a coin, with a gap before each.
 export const STAKE_COINS = ['dust', 'shard', 'spore'];
+// A tap on a pile stakes this share of the coin's purse, never less than the
+// minimum and never more than the purse; taps stack.
+export const STAKE_TAP_SHARE = 0.1;
+export const STAKE_TAP_MIN = 10;
 export const STAKES_W = STAKE_COINS.length * (STAKE_GAP + STAKE_COLS);
 
 export const CASINO_KNOBS = [

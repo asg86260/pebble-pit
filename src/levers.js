@@ -10,7 +10,7 @@
 // and the hit test; render/casino.js draws them off `leverShape`.
 
 import { P, HOPPER_H, TRAY_H, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_REACH, LEVER_HIT, LEVER_SWING_MS,
-         BUTTON_PRESS_MS, BUTTON_PLATE_W, BUTTON_PLATE_H, BUTTON_CAP_H, CRANK_TURNS } from './config.js';
+         BUTTON_PRESS_MS, BUTTON_RECESS, CRANK_TURNS } from './config.js';
 import { S, casino } from './state.js';
 import { canLet, letGo, canBank, bank, canRide, ride } from './casino.js';
 import { now } from './clock.js';
@@ -23,7 +23,7 @@ export const LEVERS = [
   { key: 'casino-gate', name: 'the arm', kind: 'arm',
     side: 'right', row: () => HOPPER_H - 2, live: canLet, pull: letGo },
   { key: 'casino-chute', name: 'bank it', kind: 'button',
-    side: 'left', row: () => casino.h / P - TRAY_H, live: canBank, pull: bank },
+    side: 'left', row: () => casino.h / P - TRAY_H - 1, live: canBank, pull: bank },
   { key: 'casino-crank', name: 'the crank', kind: 'crank',
     side: 'right', row: () => casino.h / P - LEVER_REACH, live: canRide, pull: ride }
 ];
@@ -31,9 +31,10 @@ export const LEVERS = [
 // Where a control's pivot is, in the world: on the wall, `row` cells down
 // from the roof, and which way it reaches out. The arm's pivot stands out
 // from the wall on its boss, so the stem rises beside the funnel's wall
-// rather than along it. The button's plate sits against the wall just above
-// the hatch, so its pivot is the plate's inner bottom corner; the crank
-// turns low on the wall, under the box that says what the hand came to.
+// rather than along it. The button sits on the wall's outer face a cell
+// above the hatch, so its pivot is its bottom right corner on the wall; the
+// crank turns low on the wall, under the box that says what the hand came
+// to.
 export function leverAt(l) {
   const dir = l.side === 'left' ? -1 : 1;
   const wall = l.side === 'left' ? casino.x : casino.x + casino.w;
@@ -68,19 +69,22 @@ export function leverShape(l) {
 }
 
 // The box a pointer has to be in. The arm's is the whole of its swing, the
-// loudest target on the building; the button's is its plate and cap; the
-// crank's the circle its handle turns through. Each opens out to
-// `LEVER_HIT` cells on a phone so a thumb can find it, and each takes in a
-// cell of the wall, since the pivot stands on it.
+// loudest target on the building; the button's is its recess; the crank's
+// the circle its handle turns through. Each opens out to `LEVER_HIT` cells
+// on a phone so a thumb can find it, and each takes in a cell of the wall,
+// since the pivot stands on it.
 export function leverBox(l) {
-  const { x, y, dir } = leverAt(l);
+  const { y, dir, wall } = leverAt(l);
   const grow = coarse() ? LEVER_HIT : 0;
+  if (l.kind === 'button') {
+    const rim = BUTTON_RECESS + 2;
+    const out = Math.max(rim, grow), up = Math.max(rim, grow), down = Math.max(0, grow / 2);
+    return { x: wall - out * P, y: y - up * P, w: (out + 1) * P, h: (up + down) * P };
+  }
   let out, up, down;
   if (l.kind === 'arm') { out = ARM_LENGTH + ARM_BOSS + 2; up = ARM_LENGTH + 2; down = Math.ceil(ARM_LENGTH * Math.sin(ARM_SWING - Math.PI / 2)) + 2; }
-  else if (l.kind === 'button') { out = BUTTON_PLATE_W; up = BUTTON_PLATE_H + BUTTON_CAP_H; down = 0; }
   else { out = LEVER_REACH + 1; up = LEVER_REACH + 1; down = LEVER_REACH + 1; }
   out = Math.max(out, grow); up = Math.max(up, grow); down = Math.max(down, grow / 2);
-  const { wall } = leverAt(l);
   const left = dir < 0 ? wall - out * P : wall - P;
   return { x: left, y: y - up * P, w: (out + 1) * P, h: (up + down) * P };
 }

@@ -4,19 +4,21 @@
 
 The casino's board is gone. One pile a coin the yard has handed out stands
 on the ground to the right of the building -- the purse itself at the band
-ladder, a grain worth its share -- and staking is the ordinary sweep: grains
-dragged off a pile and let go over the hopper's rim are the stake; another
-coin slides off the rim and arcs home; grains swept out of the bowl and
-dropped go home and the purse rises. Three controls on the building: the
-arm by the funnel, the bank button on the foot by the chute, the crank by
-the tray. Banking tips the tray out on to a casino strip in `S.piles` and
-the haulers carry it to the hole. The handful is the third version: the pile
-at the band drains whole into the throat and sixteen pressed pebbles come
-out. The twelve chip-sized heaps of the first reading were built, played and
-cut the same day. DESIGN.md, "The stake is a heap you carry, and the casino
-has no board" (built), with "What building it changed". Left for later:
-nobody has listened to the pebbles; the arm snaps back up when it goes live
-again after a hand rather than rising.
+ladder, a grain worth its share -- and staking is a tap: a tap on a pile
+streams a tenth of the purse into the funnel, taps stack, a tap on another
+coin is a dud while a pot stands, and a tap on the bowl sends the pot home.
+Three controls on the building: the arm by the funnel, the face-on bank
+button on the foot by the chute, the crank by the tray; no tooltips on any
+of it. Banking ends the hand and tips the tray out on to a casino strip in
+`S.piles` -- floor dust, yours to sweep or the haulers' to carry -- and the
+next stake goes in at once. The handful is the third version: the pile at
+the band drains whole into the throat and sixteen pressed pebbles come out,
+down a board three cells a row. The twelve chip-sized heaps and then the
+sweep-to-stake were each built, played and cut the same day. DESIGN.md, "The
+stake is a heap you carry, and the casino has no board" (built), with "What
+building it changed". Left for later: nobody has listened to the pebbles;
+the arm snaps back up when it goes live again after a hand rather than
+rising.
 
 ## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 
