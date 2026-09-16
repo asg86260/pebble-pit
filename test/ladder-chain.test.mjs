@@ -73,9 +73,10 @@ group("a ground ladder's spark rung is the top of the one card", async () => {
 // it, and when this gate took the card off the board it took the three rungs
 // you had just bought with it -- a ladder that vanished the moment its first
 // band was done, which the player read as the board losing purchases. So the
-// card stands, says what it is waiting on where the price was, and sells
-// nothing until the ground is broken -- with the coin in the purse, since the
-// point is the source and not the balance. See coinNeeds in upgrades/price.js.
+// card stands, greyed with its price up, and sells nothing until the ground
+// is broken -- with the coin in the purse, since the point is the source and
+// not the balance. `waits` is the reason in words, read here but not shown.
+// See coinNeeds in upgrades/price.js.
 group("a card waits, still on the board, while its bill names a coin the yard cannot get", async () => {
   window.__reset();
   window.__crew(1, 0);

@@ -1319,11 +1319,8 @@ export const TESTS = [
     for (let i = 0; i < 12; i++) { await settle(0.5); seen.add(size()); }
     // Every card on every board, tried with every word in the vocabulary in
     // the state a status is shown in: the gain column is `1fr` against the
-    // bill's `auto`, and the margin on the tightest card is a pixel. The
-    // "needs" words are what a ladder says while its next rung is priced in
-    // a coin the yard has no source for (coinNeeds in upgrades/price.js).
-    const SAYS = ['queued', 'building',
-                  'needs crops', 'needs a quarry', 'needs a core', 'needs a spark'];
+    // bill's `auto`, and the margin on the tightest card is a pixel.
+    const SAYS = ['queued', 'building'];
     const spills = [];
     for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
                          'outhouse', 'house']) {

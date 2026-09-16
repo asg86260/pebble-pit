@@ -34,6 +34,6 @@ export const coinsOpen = coins => coins.every(coinOpen);
 
 // What a card is waiting on, in words, or nothing. A ladder card cannot leave
 // the board when its bill reaches a coin the yard has not met (the rungs
-// bought are on it), so it stands greyed and says this where its price would
-// go (`tierRows`; `refresh` in shop.js).
+// bought are on it), so it stands greyed with its price up, and the words are
+// the reason for a test to read (`tierRows`; `refresh` in shop.js).
 export const coinNeeds = coins => COIN_FROM[coins.find(c => !coinOpen(c))]?.needs || '';

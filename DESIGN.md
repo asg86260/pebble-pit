@@ -2270,10 +2270,10 @@ out: the rock is there from the first click, the plots are the first thing a
 core buys (`FARM_DUST` 600), the quarry the second (`QUARRY_DUST` 2000). A
 card never asks for a coin the yard has no source for (`coinsOpen` in
 upgrades/price.js -- spore is the plots, shard is the cut, spark the sky, core
-the first one banked). A bill in crops on a yard without plots is not a price
-the player can read, so it is not shown: the ladder's card **stays on the
-board, greyed, with "needs crops" where the price was** (`coinNeeds`) until
-the plots are broken, and then prices its next rung. It stays because the
+the first one banked). A bill in crops on a yard without plots cannot be paid,
+so the ladder's card **stays on the board, greyed, with its price up**
+(`coinNeeds` is the reason, kept for the tests) until the plots are broken,
+and then sells its next rung. It stays because the
 card is the whole ladder -- when each band was a card of its own the band-two
 card simply went, and once the bands became one card that same gate took the
 three rungs you had bought off the board with it. A card that is *only* a bill
