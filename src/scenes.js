@@ -714,6 +714,12 @@ export const SCENES = {
   casinodeck2m: { about: 'the casino', say: 'the deck, the window saying 2.4m',
     run: () => { window.__casinoStakes(100); window.__crew(0, 0, 1); window.__grant({ shards: 2400000 });
                  window.__pressButton('coin-shard'); window.__pressButton('chip-all'); window.__look(st().casinoX - 380); } },
+  // A won pot standing at the foot: the thousand chip played three times
+  // over, riding, so the tray holds a real heap.
+  casinotray: { about: 'the casino', say: 'the tray after the thousand chip three times over: the heap at the foot',
+    run: () => { window.__casinoStakes(6000); window.__pressButton('chip-1k');
+                 for (let i = 0; i < 3; i++) { window.__clickLever('casino-gate'); window.__casinoHand(); }
+                 window.__fast(2); window.__look(st().casinoX - 380); } },
   // The stake raining in: the arm pulled, the sand coming down out of the
   // sky into the funnel.
   casinopour: { about: 'the casino', say: 'the arm pulled: the stake raining into the funnel',

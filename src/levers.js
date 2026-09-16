@@ -7,9 +7,9 @@
 // and the hit test; render/casino.js draws them off `leverShape` and
 // `panelLayout`.
 
-import { P, HOPPER_H, GATE_H, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_HIT, LEVER_SWING_MS, BUTTON_PRESS_MS,
-         PANEL_COINS, CASINO_CHIPS, MARK_CELLS, GLYPH_CELLS, WINDOW_CELLS, CAP_PAD, CAP_ROWS, DIGIT_H,
-         DECK_GROUP_GAP, DECK_BUTTON_GAP, DECK_PAD, DECK_GROUPS_W, GROUP_H, LABEL_ROWS, DECK_TWO_ROWS } from './config.js';
+import { P, HOPPER_H, GATE_H, wordCells, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_HIT, LEVER_SWING_MS, BUTTON_PRESS_MS,
+         PANEL_COINS, CASINO_CHIPS, MARK_CELLS, GLYPH_CELLS, WINDOW_CELLS, CAP_PAD, DIGIT_H,
+         DECK_GROUP_GAP, DECK_BUTTON_GAP, DECK_PAD, GROUP_H, LABEL_ROWS, GROUP_LABELS } from './config.js';
 import { S, casino } from './state.js';
 import { canLet, letGo, canBank, bank, canPick, pickCoin, pickChip, coinOpen, chipCovered, sameBet, canSame } from './casino.js';
 import { now } from './clock.js';
@@ -40,58 +40,73 @@ export const BUTTONS = [
     face: { word: chipLabel(chip) }, w: wordCells(chipLabel(chip)), h: DIGIT_H,
     shown: () => true, live: () => canPick() && chipCovered(chip), on: () => S.chip === i, pull: () => pickChip(i)
   })),
-  { key: 'window', name: null, group: 1, face: { window: true }, w: WINDOW_CELLS - 2 * CAP_PAD, h: DIGIT_H + 2,
+  { key: 'window', name: null, group: 1, face: { window: true }, w: WINDOW_CELLS - 2 * CAP_PAD, h: DIGIT_H + 2, tall: true,
     shown: () => true, live: () => true, on: () => false, pull: null },
   { key: 'same', name: 'same bet', group: 2, face: { glyph: 'again' }, w: GLYPH_CELLS, h: GLYPH_CELLS,
     shown: () => true, live: canSame, on: () => false, pull: sameBet },
   { key: 'bank', name: 'bank', group: 2, face: { glyph: 'sack' }, w: GLYPH_CELLS, h: GLYPH_CELLS,
     shown: () => true, live: canBank, on: () => false, pull: bank }
 ];
-export const GROUP_LABELS = ['COIN', 'BET', 'PLAY'];
 
-// The digit face is three cells a figure and a cell of air between (the
-// sign's, see render/casino.js); 'k' and the letters are the same width.
-function wordCells(word) { return word.length * 3 + (word.length - 1); }
 
 // Where the deck's band stands on the building: under the funnel's floor.
 export const deckTop = () => casino.y + (HOPPER_H + GATE_H) * P;
 
 // Where each group and each cap stands. The groups are laid left to right
-// with `DECK_GROUP_GAP` between and the row centered on the front -- or, in
-// two rows, COIN and BET above and PLAY below under the window's end. A
-// group's recess is as wide as its caps need; the caps stand in it a gap
-// apart, each centered on the recess's height. A coin the yard has not
-// handed out has no cap, and its group is that much narrower. Returns
-// { groups: [{ label, x, y, w, h }], caps: [{ button, x, y, w, h }] } in
-// world pixels; a cap's box is its face and pad.
+// with `DECK_GROUP_GAP` between and the row centered on the front; inside a
+// group the caps stack two rows deep, two to a row for the coins and the
+// chips, one for same bet over the sack, and the window stands beside the
+// chips across both rows. A coin the yard has not handed out has no cap,
+// and the coins close up over it. Returns { groups: [{ label, x, y, w, h }],
+// caps: [{ button, x, y, w, h }] } in world pixels; a cap's box is its face
+// and pad.
+const GROUP_COLS = [2, 2, 1];
 export function deckLayout() {
   const groups = [], caps = [];
-  const shownIn = g => BUTTONS.filter(b => b.group === g && b.shown());
-  const widthOf = g => {
-    const bs = shownIn(g);
-    return bs.reduce((n, b) => n + b.w + 2 * CAP_PAD, 0) + (bs.length - 1) * DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
+  const capW = b => (b.w + 2 * CAP_PAD) * P, capH = b => (b.h + 2 * CAP_PAD) * P;
+  const plan = g => {
+    const cols = GROUP_COLS[g];
+    const grid = BUTTONS.filter(b => b.group === g && b.shown() && !b.tall);
+    const tall = BUTTONS.filter(b => b.group === g && b.shown() && b.tall);
+    const colW = [], rowH = [];
+    grid.forEach((b, i) => {
+      colW[i % cols] = Math.max(colW[i % cols] || 0, capW(b));
+      rowH[Math.floor(i / cols)] = Math.max(rowH[Math.floor(i / cols)] || 0, capH(b));
+    });
+    const gridW = colW.reduce((n, w) => n + w, 0) + (colW.length - 1) * DECK_BUTTON_GAP * P;
+    const gridH = rowH.reduce((n, h) => n + h, 0) + (rowH.length - 1) * DECK_BUTTON_GAP * P;
+    const tallW = tall.reduce((n, b) => n + DECK_BUTTON_GAP * P + capW(b), 0);
+    // never narrower than its label wants; the caps stand centered in it
+    const w = Math.max(gridW + tallW + 2 * (DECK_PAD + 1) * P, (wordCells(GROUP_LABELS[g]) + 2) * P);
+    return { cols, grid, tall, colW, rowH, gridW, gridH, tallW, w };
   };
-  const rowY = r => deckTop() + P + r * (GROUP_H + LABEL_ROWS) * P;
-  const lay = (g, x, y) => {
-    const w = widthOf(g) * P, h = GROUP_H * P;
-    groups.push({ label: GROUP_LABELS[g], x, y, w, h });
-    let cx = x + (1 + DECK_PAD) * P;
-    for (const b of shownIn(g)) {
-      const cw = (b.w + 2 * CAP_PAD) * P, ch = (b.h + 2 * CAP_PAD) * P;
-      caps.push({ button: b, x: cx, y: y + P + Math.floor((GROUP_H - 2 - (b.h + 2 * CAP_PAD)) / 2) * P, w: cw, h: ch });
-      cx += cw + DECK_BUTTON_GAP * P;
+  const plans = [0, 1, 2].map(plan);
+  const cells = plans.reduce((n, p) => n + p.w, 0) + 2 * DECK_GROUP_GAP * P;
+  let x = casino.x + Math.floor((casino.w / P - cells / P) / 2) * P;
+  const y = deckTop() + P;
+  plans.forEach((p, g) => {
+    const h = GROUP_H * P;
+    groups.push({ label: GROUP_LABELS[g], x, y, w: p.w, h });
+    // the grid, centered on the recess's height, its rows and columns
+    // aligned on the widest and tallest of each
+    const top = y + P + Math.floor((GROUP_H - 2 - p.gridH / P) / 2) * P;
+    let ry = top;
+    p.grid.forEach((b, i) => {
+      const c = i % p.cols, r = Math.floor(i / p.cols);
+      if (c === 0 && i) ry += p.rowH[r - 1] + DECK_BUTTON_GAP * P;
+      const inset = x + Math.floor((p.w - p.gridW - p.tallW) / 2 / P) * P;
+      const cx = inset + p.colW.slice(0, c).reduce((n, w) => n + w + DECK_BUTTON_GAP * P, 0);
+      caps.push({ button: b, x: cx + Math.floor((p.colW[c] - capW(b)) / 2 / P) * P, y: ry + Math.floor((p.rowH[r] - capH(b)) / 2 / P) * P, w: capW(b), h: capH(b) });
+    });
+    // and the window, standing beside the grid across both rows
+    let tx = x + Math.floor((p.w - p.gridW - p.tallW) / 2 / P) * P + p.gridW;
+    for (const b of p.tall) {
+      tx += DECK_BUTTON_GAP * P;
+      caps.push({ button: b, x: tx, y: top, w: capW(b), h: p.gridH });
+      tx += capW(b);
     }
-    return w;
-  };
-  const top = DECK_TWO_ROWS ? [0, 1] : [0, 1, 2];
-  const cells = top.reduce((n, g) => n + widthOf(g), 0) + (top.length - 1) * DECK_GROUP_GAP;
-  let x = casino.x + Math.floor((casino.w / P - cells) / 2) * P;
-  for (const g of top) x += lay(g, x, rowY(0)) + DECK_GROUP_GAP * P;
-  if (DECK_TWO_ROWS) {
-    // PLAY under the window: its right edge on BET's
-    const bet = groups[1];
-    lay(2, bet.x + bet.w - widthOf(2) * P, rowY(1));
-  }
+    x += p.w + DECK_GROUP_GAP * P;
+  });
   return { groups, caps };
 }
 export const panelLayout = () => deckLayout().caps;

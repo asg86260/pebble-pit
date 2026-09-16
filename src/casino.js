@@ -30,7 +30,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, DECK_H, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, DECK_H, shownFor, trayShownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -143,8 +143,10 @@ export function letGo() {
   S.armed = true;
   S.hand = null;                                 // the last one is old news now
   stopAttract();                                 // the machine has a player
-  // the tray's picture goes up whole: the hopper's picture is the same band
-  if (riding) S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
+  // the hopper's picture of the tray goes up -- the tray's band is deeper
+  // than the bowl's -- and what the hoist does not carry leaves the tray as
+  // the pot leaves it
+  if (riding) S.hoisting = { grains: Math.max(1, Math.min(tray.n, shownFor(riding + chip))), lifted: 0 };
   else S.pouring = true;
   S.shopStale = true;
 }
@@ -640,7 +642,9 @@ function hoistStep(dt) {
              k: 0, high: P * 8 + rand() * P * 6, ms: FLIGHT_MS }
     });
   }
-  if (tray.n === 0 && airborneTo('hopper') === 0) {
+  // done when the hopper's picture is up; what the hoist did not carry
+  // leaves the tray on its own (`drainOut`), the pot having left it
+  if ((h.lifted >= h.grains || tray.n === 0) && airborneTo('hopper') === 0) {
     S.hoisting = false;
     S.pouring = true;                            // and the hopper walks to what the pot says
   }
@@ -768,8 +772,8 @@ export const tableWant = () => {
 // And the tray: the pot's band while the pot stands in it, or the band of what
 // the bins have paid so far while they are paying.
 export const trayWant = () => {
-  const want = inTray() ? shownFor(pot())
-    : S.drop && S.drop.stage === 'pay' ? shownFor(Math.round(S.drop.paid))
+  const want = inTray() ? trayShownFor(pot())
+    : S.drop && S.drop.stage === 'pay' ? trayShownFor(Math.round(S.drop.paid))
     : 0;
   return Math.min(want, tray.capped ?? Infinity);
 };

@@ -90,9 +90,8 @@ export const BIN_H = 6;
 // glyph, a clear row, and the tray's rim.
 export const LABEL_H = 9;
 // The tray at the foot, which the bins pay into: the same walled plot the
-// hopper is, because what stands in it goes back up to the hopper on a drop
-// again.
-export const TRAY_H = 5;
+// hopper is, but deeper, so a won pot stands as a real heap at the foot.
+export const TRAY_H = 12;
 // The field's width: the bins across. The building is wider by a margin
 // either side -- two cells at least, a white divider and the wall, and more
 // when the panel of buttons under the feet is wider than the field, since
@@ -121,16 +120,12 @@ export const DECK_GROUP_GAP = 4;          // clear cells between the groups
 export const DECK_BUTTON_GAP = 1;         // clear cells between caps in a group
 export const DECK_PAD = 1;                // clear cells between a group's caps and its rim
 export const CAP_PAD = 1;                 // clear cells between a face and its cap's edge
-export const CAP_ROWS = 8 + 2 * CAP_PAD;  // the tallest cap: a shelf glyph and its pad
 export const MARK_CELLS = 5;              // a coin's mark on its cap, in cells square
 export const GLYPH_CELLS = 8;             // the sack and the same-bet turn: a shelf glyph, a cell a pixel
 export const WINDOW_CHARS = 5;            // the stake window: this many figures of the digit face, "12.5k"
 export const DECK_LABELS = true;          // COIN / BET / PLAY under the groups, in the small face
-// Whether the PLAY group drops to a second row under the window rather than
-// standing beside BET -- the narrower deck.
-export let DECK_TWO_ROWS = false;
-export const setDeckRows = two => { DECK_TWO_ROWS = !!two; };
 export const PANEL_COINS = ['dust', 'spore', 'shard', 'spark'];
+
 // How a chip the purse cannot cover is drawn: a hollow cap, or grey like an
 // unchosen one.
 export let CHIP_DEAD_HOLLOW = true;
@@ -139,24 +134,31 @@ export const setDeadLook = hollow => { CHIP_DEAD_HOLLOW = !!hollow; };
 // three cells a figure and a cell of air between.
 export const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
 export const wordCells = word => word.length * DIGIT_W + (word.length - 1);
-// The groups' widths, in cells: each cap is its face and a pad each side,
-// the caps a gap apart, a pad and a rim round the lot.
+// Each group stacks its caps two rows deep inside its recess: the coins two
+// by two, the chips two by two with the window standing beside them across
+// both rows, same bet over the sack. A group's width is its columns (each
+// as wide as its widest cap), the gaps between, the window if it has one,
+// and a pad and a rim round the lot; its height the two rows, the gap, and
+// the same pad and rim -- every group the tallest group's height.
 const capW = face => face + 2 * CAP_PAD;
-const groupW = faces => faces.reduce((n, f) => n + capW(f), 0) + (faces.length - 1) * DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
 export const WINDOW_CELLS = WINDOW_CHARS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS + 2;
+const columns = (faces, cols) => {
+  const w = [];
+  faces.forEach((f, i) => { w[i % cols] = Math.max(w[i % cols] || 0, capW(f)); });
+  return w.reduce((n, c) => n + c, 0) + (w.length - 1) * DECK_BUTTON_GAP;
+};
+// ...and never narrower than its label wants, a cell of air each side.
+export const GROUP_LABELS = ['COIN', 'BET', 'PLAY'];
+const atLeastLabel = (w, i) => Math.max(w, wordCells(GROUP_LABELS[i]) + 2);
 export const DECK_GROUPS_W = [
-  groupW(PANEL_COINS.map(() => MARK_CELLS)),
-  groupW(CASINO_CHIPS.map(c => wordCells(chipLabel(c))).concat([WINDOW_CELLS])),
-  groupW([GLYPH_CELLS, GLYPH_CELLS])
-];
-export const DECK_CELLS = DECK_TWO_ROWS
-  ? DECK_GROUPS_W[0] + DECK_GROUP_GAP + DECK_GROUPS_W[1]
-  : DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP;
-// A group's recess: rim, pad, the tallest cap, pad, rim; the label under
-// it; and the deck: a clear row, one or two rows of groups, a clear row.
-export const GROUP_H = CAP_ROWS + 2 * (DECK_PAD + 1);
+  columns(PANEL_COINS.map(() => MARK_CELLS), 2) + 2 * (DECK_PAD + 1),
+  columns(CASINO_CHIPS.map(c => wordCells(chipLabel(c))), 2) + DECK_BUTTON_GAP + WINDOW_CELLS + 2 * (DECK_PAD + 1),
+  columns([GLYPH_CELLS, GLYPH_CELLS], 1) + 2 * (DECK_PAD + 1)
+].map(atLeastLabel);
+export const DECK_CELLS = DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP;
+export const GROUP_H = 2 * capW(GLYPH_CELLS) + DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
 export const LABEL_ROWS = DECK_LABELS ? DIGIT_H + 1 : 0;
-export const DECK_H = 1 + (GROUP_H + LABEL_ROWS) * (DECK_TWO_ROWS ? 2 : 1) + 1;
+export const DECK_H = 1 + GROUP_H + LABEL_ROWS + 1;
 // ...which is what sets the building's margin past the field, and with it
 // the hopper's width and its funnel's profile: the walls step in evenly
 // from the rim to the floor.
@@ -247,6 +249,17 @@ export const shownFor = n =>
     : Math.min(CASINO_PILE_BRIM,
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
+// The tray's ladder is steeper and its brim higher: the tray is twelve rows
+// deep so that a won pot stands as a real heap at the foot, and a thousand
+// should look like a thousand there. Nine hundred is what its rows hold
+// with the rim clear.
+export const CASINO_TRAY_BAND = 400;
+export const CASINO_TRAY_BRIM = 900;
+export const trayShownFor = n =>
+  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
+    : Math.min(CASINO_TRAY_BRIM,
+               Math.round(CASINO_PILE_ONE +
+                          CASINO_TRAY_BAND * Math.log10(n / CASINO_PILE_ONE)));
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },

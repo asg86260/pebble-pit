@@ -392,9 +392,10 @@ function drawDeck() {
       ctx.fillStyle = stake > 0 ? '#000' : PEG_SHADE;
       const word = fmt(stake);
       const right = fx + (WINDOW_CHARS * (DIGIT_W + 1) - 1) * P;
-      drawWord(word, right - wordW(word) * P, fy + P);
+      const ty = at.y + Math.floor((at.h / P - DIGIT_H) / 2) * P;
+      drawWord(word, right - wordW(word) * P, ty);
       const cur = inTray() ? S.pot.cur : S.coin;
-      cells(MARK[cur], right + P, fy + P);
+      cells(MARK[cur], right + P, ty);
       continue;
     }
     const shape = buttonShape(b);
