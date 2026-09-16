@@ -28,7 +28,7 @@
 // It costs the game one thing: you start with a body rather than buying the
 // first with a core. That is what the story costs and it is worth paying.
 
-import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
+import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
@@ -397,7 +397,10 @@ function hold(t) {
     const mid = reducedMotion() || !S.pair.length ? S.cx
               : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
     const want = Math.min(mid, S.cx) - S.viewW / 2;
-    S.camX = reducedMotion() ? want : S.camX + (want - S.camX) * 0.06;
+    // ...and never so far behind that they leave the frame: the lag is a
+    // distance, and a phone's frame is not wide enough to hold it.
+    S.camX = reducedMotion() ? want
+           : Math.max(S.camX + (want - S.camX) * 0.06, want - S.viewW * INTRO_LEAD);
     S.camTo = null;
     clampCam();
     return;

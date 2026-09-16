@@ -25,7 +25,7 @@
 // ease out to the yard's own over CUT_OUT_S, the way the opening lets go of
 // its pair; the player scrolls away when they are done looking.
 
-import { P, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
+import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
          CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE } from './config.js';
 import { S, rift, pit } from './state.js';
@@ -56,14 +56,22 @@ const SCENES = {
 // rock's height over it and a little sky fill the frame, so the arch's crown
 // is in the picture and the timber's lid is close. The ground sits low, since
 // everything watched here happens above it.
+//
+// Measured across as well as up. The height alone was right on a desk, where
+// any window is wider than a shield, and wrong on a phone stood upright, where
+// none is: the arch's feet stood off both sides of the frame and the dome's
+// ring ran out of the picture. Whichever of the two is the tighter fit says
+// how far in the view goes.
 const SHIELD = {
   s: CUT_SHIELD_MAX_S, tail: CUT_SHIELD_TAIL_S, ground: CUT_SHIELD_GROUND,
   zoom: () => {
     const s = S.shield;
     if (!s) return 1;
-    // the rock over the span, and a little sky
-    const over = S.gh + 4;
-    return Math.min(CUT_SHIELD_ZOOM, S.H * CUT_SHIELD_FILL / ((s.h + over) * P));
+    // the span, the rock over it, and a little sky
+    const up = (s.h + S.gh + 4) * P;
+    // and the span across, or the rock if it is the wider thing coming down
+    const across = Math.max(s.w, S.gw * P);
+    return Math.min(CUT_SHIELD_ZOOM, stepToFill(up, S.H), stepToFill(across, S.W));
   },
   over: c => {
     if (!S.shield) return true;                  // it broke: the four that fail
@@ -75,6 +83,12 @@ const SHIELD = {
   }
 };
 const sceneOf = name => SCENES[name] || SHIELD;
+
+// The zoom step at which a world length fills CUT_SHIELD_FILL of a window
+// length. A step is a multiple of the yard's own scale, and the yard's own is
+// CELL / P screen pixels a world pixel (`setZoom`), so the bare ratio of the
+// two lengths is that much too big a step.
+const stepToFill = (world, window) => window * CUT_SHIELD_FILL / (world * CELL / P);
 
 // The triggers are watched rather than called: pit.js tears the rift,
 // rift.js drowns the pit and shield.js answers a rock without any of them

@@ -7,6 +7,12 @@
 // and it only ever happens once, and what it is buying is the rest of the game
 // having a reason in it -- so nothing in here is hurried.
 export const INTRO_ZOOM = 2.4;    // how far in the view starts
+// The seat eases after the two of them on the walk out, a beat behind, and
+// the beat is a distance: at a phone's width, pulled in this far, it was a
+// third of the frame and the second of them walked off the right-hand edge.
+// So the pair may get no further ahead of the seat's center than this share
+// of the view's width, whatever the window is.
+export const INTRO_LEAD = 0.15;
 export const INTRO_CHAT_MS = 9000;   // two of them, talking, before anything happens
 export const INTRO_HEART_MS = 1900;  // and how often one of them says the other thing
 export const INTRO_DOWN_MS = 2200;   // flat on its back after the rock lands
