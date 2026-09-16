@@ -11409,3 +11409,20 @@ panel and the held sheet, with the same handle, stops, follow-the-finger
 drag, pull-to-dismiss and tap outside; the held sheet slides off the foot
 and does not fade, and carries no rail since it is its own scroller (a rail
 inside it would scroll with the rows).
+
+**And again (2026-09-16, later).** The settings sheet flew in from
+mid-screen: the seat placed it a frame after the desk's centered card had
+been shown, so the transition ran from there. The seat has one way in now
+-- stood below the foot with no transition, laid out, then let ease up --
+and the gear seats the sheet in the same task it shows it; the check
+compares both sheets' computed transforms frame by frame. Dismiss by
+scrolling is two gestures, as native sheets are: the hand-over is decided
+at `touchstart` (the list already at its top), never mid-gesture, so a
+scroll that reaches the top stops there. The settings rows had lost the
+desk's gap: the shared `.bottom` rule set `gap: 0` for the panel and took
+the held sheet's with it -- the seat positions a sheet and never restyles
+its contents, so the gap is the panel's own rule now and the pitch is
+checked equal to the desk's. And the purse's coins shuffled as a count
+crossed a thousand: a phone rule had let the number's slot go; the slot is
+the widest count `fmt` writes (five figures, tabular) on the desk and the
+phone alike, one rule.

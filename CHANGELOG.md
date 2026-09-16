@@ -34,7 +34,10 @@ feature lives in DESIGN.md.
 - The hop arrows are thumb-sized, and on a phone held sideways they stand in the middle of the sky rather than on the ground line (selftest/touch.js).
 - A scroll of a sheet's rows that lifts the finger over the yard leaves the sheet up, instead of shutting it as a tap outside (selftest/sheet.js, tools/sheetpull.mjs).
 - A sheet dragged between its stops follows the finger without stutter, and the platform no longer takes the drag off the handle halfway (selftest/sheet.js, tools/sheetpull.mjs).
-- The settings sheet on a phone is a sheet like the boards': the same handle, the same stops, and it slides off the foot when pulled down instead of fading (selftest/sheet.js).
+- The settings sheet on a phone is a sheet like the boards': the same handle, the same stops, it comes up from below the foot the way a board does instead of flying in from mid-screen, and it slides off the foot when pulled down instead of fading (selftest/sheet.js).
+- The settings rows on a phone keep the desk's spacing instead of touching (selftest/sheet.js).
+- Pulling a sheet's rows down is two gestures, as on every phone: a scroll that reaches the top stops there, and only a new touch from the top pulls the sheet (selftest/sheet.js).
+- The coins along a sheet's top edge keep their places when a count grows or loses a digit, on the desk and the phone alike (selftest/sheet.js).
 - A notice's card slides beside a building that reaches the top of the window instead of over it, which a tall settlement on a phone held sideways did (selftest/touch.js).
 
 - A body with nothing to do gets going and slows down when it strolls, instead of going from stood still to full pace in one frame and stopping as dead (test/amble.test.mjs).

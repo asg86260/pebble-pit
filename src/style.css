@@ -1528,9 +1528,14 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .panel.open .purse { opacity: 1; transform: none; }
 .purse:empty { display: none; }
 .purse .coin { display: flex; align-items: center; gap: 6px; }
-/* the number sits in a slot of its own width, so banking a grain does not make
-   the whole board twitch sideways a pixel */
-.purse .coin b { font-weight: normal; min-width: 3.8em; text-align: right; }
+/* The number sits in a slot of its own width -- the widest a count ever is
+   (`fmt` in board.js: "99.9k", five figures) in the tabular hand -- so a
+   count growing a digit moves nothing beside it, on the desk or along a
+   sheet's top edge. A slot was once let go on a phone to save the width,
+   and every coin shuffled sideways when one crossed a thousand. */
+.purse .coin b { font-weight: normal; min-width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
+
+
 
 
 .panel .sheet {
@@ -1648,7 +1653,6 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
     transform-origin: 0 100%;
   }
   .purse .coin { gap: 4px; }
-  .purse .coin b { min-width: 0; }
   .panel .sheet {
     padding: 8px var(--sheet-pad-x);
     /* The ceiling is the glass, less the panel's margins. */
@@ -1692,7 +1696,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   width: 100%;
   box-sizing: border-box;
   flex-direction: column;
-  gap: 0;
+  /* the seat positions a sheet; what is inside keeps its own spacing (the
+     panel sets its own gap below, the held sheet keeps the desk's) */
   background: #fff;
   border: 0;
   border-top: 2px solid #000;
@@ -1700,7 +1705,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
      only the transform ever eases, and never under a finger. */
   transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
 }
-#panel.bottom { align-items: stretch; overflow: hidden; }
+#panel.bottom { align-items: stretch; overflow: hidden; gap: 0; }
 #panel.bottom.dragging, #held.bottom.dragging, body.still #panel.bottom, body.still #held.bottom { transition: none; }
 #panel.bottom > * { flex-shrink: 1; }
 #panel.bottom .purse, #panel.bottom > .sheet {

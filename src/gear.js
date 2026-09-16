@@ -21,7 +21,9 @@ const gear = document.getElementById('gear');
 const held = document.getElementById('held');
 const scrim = document.getElementById('scrim');
 
-onTap(gear, () => { hold(true); showPane('settings'); });
+// Seated in the same task as it is shown, so the first frame it paints is
+// already the sheet from below and not the desk's card for a frame.
+onTap(gear, () => { hold(true); showPane('settings'); refreshHeldSeat(); });
 
 // Seated every frame like the rest of the shell. It takes the fullscreen
 // button's spot when there is none, and the pin gives the corner up to

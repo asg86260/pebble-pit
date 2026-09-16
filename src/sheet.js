@@ -81,14 +81,21 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
 
   // --- the seat ---------------------------------------------------------------------
   function place() {
+    const b = tallHeight();
     if (!el.classList.contains('bottom')) {
-      el.classList.add('bottom');
+      // The one way in, for every sheet: stood below the foot with no
+      // transition, laid out there, and only then let ease up to its stop.
+      // Without the reflow the slide would start from wherever the element
+      // last stood -- the desk's centered card, flying in from mid-screen.
+      el.classList.add('bottom', 'dragging');
       handle.hidden = false;
-      el.style.transform = '';
-      put = null;
+      box = b;
+      el.style.height = `${b}px`;
+      el.style.transform = put = `translate3d(0, ${b}px, 0)`;
+      void el.offsetHeight;
+      el.classList.remove('dragging');
       enter?.();
     }
-    const b = tallHeight();
     if (b !== box) { box = b; el.style.height = `${b}px`; }
     const seat = stopHeight();
     // Off the foot by however much of the box is not showing: all of it

@@ -158,9 +158,14 @@ export const TESTS = [
     window.__nocine();
     await haveBench();
     phone(true);
-    // the bench, dragged tall then back, and the transforms it lands on
+    // the way in, a frame at a time: the y of the computed transform for the
+    // first twenty frames after each is opened
+    const yOf = el => { const m = getComputedStyle(el).transform.match(/matrix\(([^)]*)\)/); return m ? Math.round(+m[1].split(',')[5]) : 0; };
+    const enterOf = async el => { const ys = []; for (let i = 0; i < 20; i++) { ys.push(yOf(el)); await raf(); } return ys; };
     window.__board('bench');
+    const boardIn = await enterOf(panel());
     await settled();
+    // the bench, dragged tall then back, and the transforms it lands on
     const tf = () => panel().style.transform;
     const seatBoard = tf();
     await dragHandle(-160);
@@ -170,10 +175,19 @@ export const TESTS = [
     window.__board(null);
     await settled();
     // the settings sheet, the very same gestures on its own handle
-    await tap(document.getElementById('gear'));
-    await frames(2); await sleep(SHEET_MS + 60);
     const held = document.getElementById('held'), hh = document.getElementById('heldhandle');
+    tap(document.getElementById('gear'));
+    await sleep(40);
+    const heldIn = await enterOf(held);
+    await sleep(SHEET_MS + 60);
     const seatHeld = held.style.transform;
+    // the same way in: from below the foot, up to the seat, frame for frame
+    // (aligned on the first frame each moves: the board's `open` comes a
+    // frame or two after the settings' `on`)
+    const from = ys => { const i = ys.findIndex((y, k) => k > 0 && y !== ys[0]); return i < 0 ? ys : ys.slice(i - 1); };
+    const bi = from(boardIn), hi = from(heldIn), n = Math.min(bi.length, hi.length);
+    const slid = boardIn[0] > boardIn[boardIn.length - 1] && heldIn[0] > heldIn[heldIn.length - 1];
+    const same = n >= 8 && bi.slice(0, n).every((y, i) => Math.abs(y - hi[i]) <= 8);
     await dragHandle(-160, hh);
     const tallHeld = held.style.transform;
     await dragHandle(held.getBoundingClientRect().height * SHEET_DISMISS + 30, hh);
@@ -188,6 +202,93 @@ export const TESTS = [
       ok(tallBoard === tallHeld && tallBoard !== seatBoard, 'dragged up, both reach the same tall stop', `${tallBoard} vs ${tallHeld}`),
       ok(backBoard === backHeld && backBoard === seatBoard, 'and dragged down a third, both come back to the seat', `${backBoard} vs ${backHeld}`),
       ok(gone, 'and from the seat the same pull puts the settings away'),
+      ok(slid && same, 'and both come in the same way, from below the foot up to the seat, frame for frame',
+         `board ${boardIn.join(' ')} | settings ${heldIn.join(' ')}`),
+    ];
+  }],
+
+  ['the settings rows keep the desk\'s spacing on a phone', async () => {
+    window.__nocine();
+    const pitchOf = () => { const a = document.getElementById('motion').getBoundingClientRect(), b = document.getElementById('sound').getBoundingClientRect(); return b.top - a.top; };
+    // the desk: escape holds, and the settings page
+    phone(false);
+    await frames(2);
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    document.getElementById('settingsbtn').click();
+    await frames(2); await sleep(220);
+    const desk = pitchOf();
+    document.getElementById('resume').hidden = false;
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await frames(2); await sleep(220);
+    // the phone: the gear
+    phone(true);
+    await frames(2);
+    await tap(document.getElementById('gear'));
+    await frames(2); await sleep(SHEET_MS + 60);
+    const phonePitch = pitchOf();
+    const heldGap = getComputedStyle(document.getElementById('held')).rowGap;
+    await dragHandle(document.getElementById('held').getBoundingClientRect().height * SHEET_DISMISS + 30, document.getElementById('heldhandle'));
+    phone(false);
+    await frames(2);
+    return [
+      ok(desk > 24, 'the desk keeps air between its rows', `${desk}px`),
+      ok(Math.abs(phonePitch - desk) <= 1, 'and the phone\'s rows are pitched the same', `${phonePitch} vs ${desk} (gap ${heldGap})`),
+    ];
+  }],
+
+  ['a coin along the sheet\'s top edge keeps its place when a count grows a digit', async () => {
+    window.__nocine();
+    await haveBench();
+    window.__give(1005 - state().stored);
+    window.__grant({ shards: 5, spores: 5 });          // more than one coin along the edge
+    phone(true);
+    window.__board('bench');
+    await settled();
+    const lefts = () => [...document.querySelectorAll('#purse .coin')].map(c => Math.round(c.getBoundingClientRect().left));
+    const words = () => [...document.querySelectorAll('#purse .coin b')].map(b => b.textContent);
+    const before = lefts(), said = words();
+    // the carry rung costs twenty: a thousand becomes hundreds, one digit fewer
+    await tap(document.querySelector('#shop button[data-key="carry"]'));
+    await settle(1.5);
+    const after = lefts(), saidAfter = words();
+    window.__board(null);
+    phone(false);
+    return [
+      ok(said[0] !== saidAfter[0] && said[0].length !== saidAfter[0].length, 'the dust count changed its digits', `${said[0]} -> ${saidAfter[0]}`),
+      ok(before.length > 1 && before.join() === after.join(), 'and no coin moved', `${before.join(' ')} -> ${after.join(' ')}`),
+    ];
+  }],
+
+  ['a scroll that reaches the top stops there; only a new touch from the top pulls the sheet', async () => {
+    window.__nocine();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    run(0.5);
+    phone(true);
+    window.__board('bench');
+    await settled();
+    const el = list();
+    el.scrollTop = 300;
+    await raf();
+    // one gesture: from 300 to the top and 150 px further
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + 30;
+    touch('touchstart', el, x, y, 6);
+    let took = false;
+    for (let i = 1; i <= 6; i++) { el.scrollTop = Math.max(0, 300 - 75 * i); took = touch('touchmove', el, x, y + 75 * i, 6) || took; await raf(); }
+    touch('touchend', el, x, y + 450, 6);
+    await settled();
+    const stayed = !panel().hidden && el.scrollTop === 0;
+    const tf = panel().style.transform;
+    // a second touch, begun with the list at its top, pulls the sheet
+    const took2 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const gone = panel().hidden;
+    phone(false);
+    await frames(2);
+    return [
+      ok(!took && stayed, 'the one gesture scrolled the list to its top and left the sheet at its stop', `took ${took}, scrollTop ${el.scrollTop}, ${tf}`),
+      ok(took2 && gone, 'a new touch from the top pulls it down and away', `took ${took2}, hidden ${gone}`),
     ];
   }],
 
