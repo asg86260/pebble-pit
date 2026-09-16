@@ -668,8 +668,8 @@ with the sign far above the action.
 
 **The hopper is a funnel, and the funnel is the plot's ground.** A walled
 tray held the stake as a flat bar on the roof, which did not read as a hopper
-at all. The walls step in four cells a row down `HOPPER_PROFILE`, nine rows from
-the building's width at the rim to an eight-cell floor over the two-cell throat, and
+at all. The walls step in down `HOPPER_PROFILE`, nine rows from the building's width
+at the rim, steepening to a four-cell floor over the two-cell throat, and
 they are `fixed` cells in the hopper's own grid -- the sand board's trick --
 so the yard's settle rules heap the stake against them: it fills from the
 throat up and sits in the bowl, and letting go sags it into the throat. The
@@ -738,6 +738,22 @@ the grains leave forty milliseconds apart: a handful is on the board about
 two and a half seconds from the first grain leaving to the last landing
 (measured 2.6 s over three seeds), which is the target if the knobs move.
 The x39 bin's flash is the bin going black for the beat.
+
+**Everything in the hopper goes down the board.** Played, the design's
+"the rest of the heap lifts off and fades" read as a bug: the player watched
+sand they had staked vanish. So the hopper's picture of the pot is the
+handful itself -- a chip of ten is ten grains, everything else is
+`CASINO_HANDFUL`, each worth its share -- and when the gate opens every grain
+in the bowl is one of the grains that falls; the bowl empties into the board
+and nothing fades. The band ladder is the tray's alone. The stake is poured
+into the spout rather than across the rim, because a grain landing in the
+middle of a wide upper step has no drop beside it and stays there, and the
+funnel steepens toward a four-cell floor so thirty-two grains stand four rows
+tall in the throat rather than a row deep across a wide bowl. On a drop again
+the hoist carries a handful of the tray up; the rest of the tray's picture --
+the paid pot at its band -- leaves as the pot leaves it, which is the one
+place a grain still fades, and it is the tray re-scaling to the next stake
+rather than a stake going missing.
 
 **The box says the change as well as the multiple.** "x0.8 -20" with the
 staked coin's mark, or "x1.3 +30", both counting up together as the bins pay:

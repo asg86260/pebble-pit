@@ -28,6 +28,8 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).
+
 - The pinned card stands under the gear and the fullscreen button instead of over them (src/selftest/touch.js).
 - The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
 - The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
