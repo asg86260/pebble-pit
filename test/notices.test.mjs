@@ -9,7 +9,7 @@
 import { group, ok, state, run, runUntil, yard, haveRock, quickCrew, makeItRain } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { NOTICES, hasNotice, unreadNotices, markNoticesRead,
-         noteHand, noteRockCleared, noteBite, catchUpNotices } from '../src/notices.js';
+         noteHand, noteRockCleared, noteBite } from '../src/notices.js';
 import { CASINO_BIG, LADDER, P, SHAKE_TURNS } from '../src/config.js';
 import { BIRDS, startle } from '../src/weather.js';
 import { release, catchAir } from '../src/hands.js';
@@ -184,35 +184,6 @@ group('a big hand at the table is noticed, either way', async () => {
     ok(won, 'winning big is noticed'),
     ok(lost, 'and losing big is noticed'),
     ok(!hasNotice('tablebeaten'), 'a hand under the mark is not')
-  ];
-});
-
-group('a veteran save comes back with its record already written and read', async () => {
-  // A yard that has plainly done things, on a save that predates the record.
-  S.won = [];
-  S.wonAt = {};
-  S.wonSeen = 0;
-  S.noticeMigrated = false;
-  S.banked = 5e4;
-  S.boulderNo = 30;
-  S.crew = 12;
-
-  catchUpNotices();
-
-  const earned = keys().length;
-  const unread = unreadNotices();
-  // and it does not guess at the feats: nothing in a save says whether a rock
-  // was ever cleared with an empty payroll
-  const guessed = keys().filter(k =>
-    ['nobodyhired', 'ownhand', 'nevertouched', 'underminute',
-     'tablebeaten', 'tableruin'].includes(k));
-
-  return [
-    ok(earned > 5, 'the rules it has plainly passed are all on the record', String(earned)),
-    ok(unread === 0, 'and every one of them is already read', String(unread)),
-    ok(!guessed.length, 'the feats are not guessed at', guessed.join(',')),
-    ok(hasNotice('rock1'), 'thirty rocks covers the twenty-five rung'),
-    ok(!hasNotice('rock3'), 'but not the hundred')
   ];
 });
 

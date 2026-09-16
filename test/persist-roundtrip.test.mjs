@@ -47,6 +47,9 @@ function sentinel(blank, n) {
 // cannot.
 const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                'stirrers', 'janitors',
+               // the house holds one body and a mouth a balloon, and there
+               // is no lab: both are clamped to their caps on the way in
+               'purifiers', 'scholars',
                // wave7b-build: derived before the bench is open (which this
                // check's nonsense flags may or may not say), clamped to its
                // posts after -- either way rebalance's answer, not the save's
@@ -135,7 +138,8 @@ group('every field on S is accounted for', async () => {
     ...Object.entries(lists).map(([name, list]) => {
       // ...and `mouth`, where the cut's mouth was: a fact about the layout the
       // crew were saved on, read by `restoreCrew` and kept by nothing.
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs'];
+      // ...and `saveV`, the shape number the migrations read off the blob.
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'saveV'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })

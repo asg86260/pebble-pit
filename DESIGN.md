@@ -10573,7 +10573,7 @@ the cycle script will say. The six setters in game.js come out one at a
 time as each stops being needed. A pure move: no check changes, no shot
 changes; the cycle count is the check.
 
-**3. The save floor.** *Needs a decision.* The first public build was
+**3. The save floor.** *Built 2026-09-16; "as built" below.* The first public build was
 v0.1.1 (itch, 2026-09-12). A save written before that has never been on a
 player's machine. If the game refuses to read one -- the sheet already
 offers a broken blob back as a file -- then every "a save from before X"
@@ -10586,6 +10586,28 @@ lose nothing. Migrations newer than the floor stay, and from here on a
 migration is dated in its comment so the next floor can find it. Check:
 `persist-roundtrip`, the fixture checks, and every node group (each is a
 reload check). Roughly 250 lines out of persist.js and state.js.
+
+*As built (track M, `second-pass-M`).* The floor is the `build` stamp:
+`isSave` (save.js) refuses a blob with none, `load` puts it aside under
+`BROKEN_KEY` and the sheet offers it back as a file, the path that already
+existed. Every migration on or after the floor is its own dated file in
+`src/migrations/` -- the spark rung (2026-09-14), the school (2026-09-14), the
+beats, the three brews and the handful (2026-09-15) -- run in order by
+`migrate` over the raw blob before `restore()` reads a field, keyed on
+`saveV` (`config/saves.js`, today `1`; a save with none gets every migration).
+Archiving one is deleting the file. Everything dated before the floor went:
+the renames, `research`/`research2`, `hatShelf`, the harness and boots fold,
+`labDone`, the `wonAt` renumbering, the crew-from-counts, the grandfathered
+benches and plots, the `coreBuried` and `quarryOwed` guesses, the notice
+catch-up, `migrateApothecary`'s single-pot pour. `restore()` went from 433
+lines to 290 and persist.js from 1095 to 907; the retired fields (`mult`,
+`scholars` stays -- staffing.js's roster reads it -- `brewLevel`,
+`doseCarryLevel`, `potPrefer`, `potTonic`, `potSpent`, `doseHold`,
+`strengthLevel`, `noticeMigrated`, `research`, `research2`, `labIdleAt`) left
+`S` and its lists, and twenty-one by-hand fields that were only ever a rename
+or a guess are plain copies on `SAVED`. The three unstamped fixtures were
+re-saved through the base tree first, in their own commit. docs/saves.md is
+the rule for the next migration and the next floor.
 
 **4. A station is a row in a table.** `STATIONS` in board.js becomes
 `{ key, open: () => S.quarryOpen, stand: () => standAt.quarry, ... }`; the

@@ -82,22 +82,6 @@ group('the outhouse starts at one post, and loopost buys the second', async () =
   ];
 });
 
-group('a save from before the second cap keeps both', async () => {
-  window.__reset();
-  window.__loo(true);
-  yard.persist();
-  const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
-  delete raw.looPosts;                          // the field a pre-wave save never wrote
-  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
-  yard.restore();
-
-  return [
-    ok(state().roster.find(r => r.job === 'janitors').hats === 2,
-       'a save with no looPosts arrives with both caps, not one',
-       state().roster.find(r => r.job === 'janitors').hats)
-  ];
-});
-
 // --- A4: worker speed at the start --------------------------------------------
 group('the crew starts quicker: haul base and commute pace are up', async () => {
   const { COMMUTE_PACE } = await import('../src/config.js');

@@ -12,8 +12,7 @@
 
 import { group, ok, run, runUntil, openSites, yard } from './helpers.mjs';
 import { TONICS, tonicOf, takesTonic, tonicShown, doseLive, doses,
-         speedBoost, strengthBoost, critBoost, doseComing,
-         migrateApothecary } from '../src/apothecary.js';
+         speedBoost, strengthBoost, critBoost, doseComing } from '../src/apothecary.js';
 import { load } from '../src/crew/hole.js';
 import { haulCap } from '../src/levels.js';
 
@@ -187,17 +186,26 @@ group('no two brews cost the same, and the bracing tonic takes sparks', async ()
 });
 
 // --- a five-brew save folds into three ------------------------------------------
+// Through the save, the way a player's five-brew yard arrives: the blob is
+// written by today's game, put back to the five-brew shape with its `saveV`
+// stripped, and read back through the migrations (src/migrations/).
 group('a save from the five-brew book folds into the three', async () => {
   window.__reset();
   window.__crew(1, 1);
-  // The shape a five-brew save restores into: the speed brew and the mana brew
-  // on the ladders, the shelf, a pot and a body.
-  S().potency = { stew: 2, brace: 1, strong: 0, swift: 4, gleam: 3 };
-  S().shelf = { stew: 4, brace: 0, strong: 2, swift: 3, gleam: 1 };
-  S().potTonics = ['swift', 'gleam'];
-  const h = S().workers.find(w => w.type === 'hauler');
-  h.doses = [{ tonic: 'swift', until: 9e12 }];
-  migrateApothecary();
+  run(1);
+  yard.persist();
+  const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
+  delete raw.saveV;
+  // The shape a five-brew save carries: the speed brew and the mana brew on
+  // the ladders, the shelf, a pot and a body.
+  raw.potency = { stew: 2, brace: 1, strong: 0, swift: 4, gleam: 3 };
+  raw.shelf = { stew: 4, brace: 0, strong: 2, swift: 3, gleam: 1 };
+  raw.potTonics = ['swift', 'gleam'];
+  const who = raw.who.find(w => w.type === 'hauler');
+  who.doses = [{ tonic: 'swift', left: 9e9 }];
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
+  yard.restore();
+  const h = S().workers.find(w => w.name === who.name);
   return [
     ok(S().potency.stew === 4 && S().potency.strong === 3 && S().potency.brace === 1,
        'each folded ladder keeps the deeper of its two rungs', JSON.stringify(S().potency)),
@@ -206,7 +214,7 @@ group('a save from the five-brew book folds into the three', async () => {
        'stock joins the shelf its brew joined', JSON.stringify(S().shelf)),
     ok(S().potTonics[0] === 'stew' && S().potTonics[1] === 'strong',
        'a pot on an old brew is set to the new one', S().potTonics.join(',')),
-    ok(h.doses[0].tonic === 'stew' && speedBoost(h) > 1.2,
-       'and a live dose is renamed and still read', JSON.stringify(h.doses))
+    ok(!!h && h.doses[0].tonic === 'stew' && speedBoost(h) > 1.2,
+       'and a live dose is renamed and still read', JSON.stringify(h && h.doses))
   ];
 });

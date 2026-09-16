@@ -3,16 +3,15 @@
 // dealt out again on the way back in: a value per cell would be megabytes
 // written every second.
 
-import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER, TIER_RUNGS, ROCK_SINK } from './config.js';
+import { P, CELL, SHADES, CORE_SIZE, LOO_POSTS, WORKER, ROCK_SINK, SAVE_V } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
-import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
-import { resetCut, squareCut, seamShards, dugShare, cutTop } from './quarry.js';
+import { SITES, rowFor, busyBuilderSites } from './works.js';
+import { resetCut, squareCut, cutTop } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
@@ -20,18 +19,18 @@ import { BUILD } from './version.js';
 import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite, openingCamX, clampCam, settleShack, overCutMouth, setZoom } from './world.js';
 import { clearCasino } from './casino.js';
-import { OPENING } from './intro.js';
 import { BEATS, startBeat } from './beats.js';
-import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
+import { gridToString, gridFromString, makeBoulder, clearBoulder } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { bandY } from './dust.js';
 import { KINDS } from './shield.js';
-import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
+import { syncWorkers, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './staffing.js';
 import { resetRates } from './stats.js';
-import { catchUpNotices, resetNotices, hushNotices } from './notices.js';
+import { resetNotices, hushNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
-import { JOB, TYPE } from './jobs.js';
+import { TYPE } from './jobs.js';
+import { migrate } from './migrations/index.js';
 import { snapShown } from './tween.js';
 
 // A pile is nearly all long runs of the same value, so store the runs
@@ -262,23 +261,21 @@ function blob() {
     ...savedFields(),
     // The page's own stamp, not `S.build` (whoever wrote the save this yard
     // was read out of): the comparison against the app that opens a save only
-    // means something if every save says who wrote it.
+    // means something if every save says who wrote it. The stamp is also the
+    // save floor: a blob with none is not read (save.js).
     build: BUILD,
+    // Which shape the save is in, for the migrations (src/migrations/).
+    saveV: SAVE_V,
     // For the saves page; read by nothing that boots a yard.
     savedAt: Date.now(),
     // The seed alone would start the stream over on every reload, so the
     // generator's one word of state goes with it (rng.js).
     runSeed: S.runSeed,
     rngState: rngState(),
-    banked: S.banked,
-    seenCore: S.seenCore,
     // The one part of the pile that is not in the pile: `stored` counts it,
     // the hole does not hold it.
     rift: S.rift,
     riftHeld: S.riftHeld,
-    // Losing these would reload a drowned yard back into its disc era.
-    riftAte: S.riftAte,
-    drowned: S.drowned,
     // Where the view is, rounded. While a scene has the view pulled in,
     // `camX` is the left edge of a narrower view than the one that comes
     // back, so the seat is written at the yard's own zoom.
@@ -287,7 +284,6 @@ function blob() {
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y }
         : S.heldCore && S.mouse ? { x: S.mouse.x - CORE_SIZE / 2, y: S.groundY - CORE_SIZE } : null,
     coreLoose: S.heldCore || !!S.coreItem,
-    crew: S.crew,
     // Moments on the clock are written as distances, because the clock starts
     // again with the page.
     danceLeft: Math.max(0, Math.round(S.danceUntil - clockNow())),
@@ -299,26 +295,11 @@ function blob() {
     // Where the mouth of the cut was under them, so a load can tell a layout
     // that moved from one that did not (`restoreCrew`).
     mouth: S.quarryOpen ? quarry.x : null,
-    rockhands: S.rockhands,
     // Worked out again on the way in; written for a save arriving as a bug
     // report.
     haulers: S.haulers,
-    rockhandSpeedLevel: S.rockhandSpeedLevel,
-    rockhandPickLevel: S.rockhandPickLevel,
-    seenShard: S.seenShard,
-    quarryOpen: S.quarryOpen,
-    quarriers: S.quarriers,
-    quarryPaceLevel: S.quarryPaceLevel,
-    benchLevel: S.benchLevel,
     // So the cut's sand (below) is read against the floor it was lying on.
     quarryCells: S.quarryCells ? Array.from(S.quarryCells) : null,
-    // Goes with `quarryCells`: a fresh seam is only laid on ground nobody has
-    // broken into (`quarryOwed <= 0 && !dugShare()`), so a part-dug floor
-    // read back without this has nothing left to find in it.
-    quarryOwed: S.quarryOwed,
-    seenSpore: S.seenSpore,
-    scholars: S.scholars,
-    plotLevel: S.plotLevel,
     // Only the camera's beat, and only until it has been seen through: a
     // scene on its way out has let go as far as the player is concerned. The
     // yard's beats come back by their own triggers (the opening from the
@@ -332,7 +313,6 @@ function blob() {
                           caughtAgo: S.shield.caught ? Math.max(0, Math.round(clockNow() - S.shield.caught)) : null },
     shieldsDone: [...S.shieldsDone],
     buried: S.buried,
-    looPosts: S.looPosts,
     // The machines as facts only; whether one is *running* is whether anybody
     // is standing at it, and the crew is rebuilt from the counts on the way
     // in.
@@ -350,7 +330,6 @@ function blob() {
     // again.
     meteorCells: sky.cells ? Array.from(sky.cells) : null,
     summon: +(S.summon || 0).toFixed(3),
-    seenSpark: S.seenSpark,
     // Worker-seconds rather than a deadline: `now()` starts wherever the page
     // started, so an absolute time saved in one session means nothing in the
     // next.
@@ -364,7 +343,6 @@ function blob() {
     buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
-    purifiers: S.purifiers,
     // The lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
     haze: Math.round(S.haze),
@@ -393,14 +371,12 @@ function blob() {
     // heap, so in that window the arcs alone are owed, in dust, which is what
     // an arc lands as.
     paying: payingOwed(),
-    mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
     plotTone: [...S.plotTone],
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
     boulderNo: S.boulderNo,
-    coreBuried: S.coreBuried,
     // `cx` is the ground's anchor: the yard is laid out leftwards from it, so
     // a save read into a world whose left-hand ground has since widened knows
     // how far its dust has to slide (`floorShift`).
@@ -473,14 +449,16 @@ const floorShift = saved =>
 
 export function restore() {
   const s = load();
+  // The raw save is brought up to today's shape before a field of it is read
+  // (src/migrations/); everything below reads today's shape and nothing else.
+  if (s) migrate(s);
   // The seed and the stream first, before anything below draws on it. A save
   // with neither keeps the stream the generator seeded itself with (rng.js)
   // and is told what it is called.
   S.runSeed = Number.isFinite(s?.runSeed) ? s.runSeed >>> 0 : seed();
   if (Number.isFinite(s?.rngState)) setRngState(s.rngState);
   S.boulderNo = s?.boulderNo || 1;
-  // Read at boot and nowhere else; an old save has none, and gets the
-  // opening view.
+  // Read at boot and nowhere else.
   S.camWas = Number.isFinite(s?.camX) ? s.camX : null;
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     // A game that has never been played starts with two people, and the rock
@@ -488,42 +466,25 @@ export function restore() {
     makeBoulder();
     settleShack();
     clearBoulder();
-    S.coreBuried = false;
-    // A save that would not read has been put aside by `load`, and the sheet
-    // offers it for as long as it is there.
+    // A save that would not read, or one from below the floor, has been put
+    // aside by `load`, and the sheet offers it for as long as it is there.
     S.broken = !!loadBroken();
     S.newerSave = null;             // no save, so no build to be newer than this one
     // The same one line as reading a save, so the two cannot drift apart.
     readSaved({});
     blankByHand();
-    S.banked = 0;
     S.shownStored = 0; snapShown();
-    S.crew = 0;
-    S.seenCore = false;
     S.riftGulp = 0; S.riftShake = 0;   // an event is not a state: see state.js
     S.rift = 0;
     S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
     S.coreItem = null;
-    S.rockhands = 0;
     S.haulers = 0;
-    S.rockhandSpeedLevel = 0;
-    S.rockhandPickLevel = 0;
-    S.seenShard = false;
-    S.quarryOpen = false;
-    S.quarriers = 0;
-    S.quarryPaceLevel = 0;
-    S.benchLevel = 0;
     S.machines = freshMachines();   // a new yard has no machines in it
-    S.seenSpore = false;
-    S.scholars = 0;
-    S.plotLevel = 0;
     S.pot = null;
     S.paying = null;
     S.pouring = false;
     clearCasino();
-    S.quarryOwed = 0;
     S.buildOrder = [];
-    for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
     S.plotTone = [];
     S.shield = null;
@@ -544,12 +505,10 @@ export function restore() {
   // The version boundary: a save from a newer build is loaded anyway, and the
   // sheet says so once. Dates compare as strings because they are written as
   // YYYY-MM-DD; a dev build has no date and never says anything.
-  S.build = s.build && typeof s.build === 'object' ? { hash: String(s.build.hash ?? ''), date: String(s.build.date ?? '') } : null;
+  S.build = { hash: String(s.build.hash ?? ''), date: String(s.build.date ?? '') };
   S.savedAt = Number.isFinite(s.savedAt) ? s.savedAt : null;
-  S.newerSave = S.build?.date && BUILD.date && S.build.date > BUILD.date ? S.build.date : null;
-  S.banked = s.banked || s.stored || 0;
+  S.newerSave = S.build.date && BUILD.date && S.build.date > BUILD.date ? S.build.date : null;
   S.shownStored = S.stored; snapShown();
-  S.seenCore = !!s.seenCore || S.cores > 0;
   // The hole is the whole hole at one grain size for ever; a save written at
   // a finer grain will not fit this plot, and `rehomeDust` below puts that
   // dust back where it goes.
@@ -566,21 +525,6 @@ export function restore() {
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
       : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
-  // Renamed jobs are read under both names, old as the fallback.
-  S.rockhands = s.rockhands ?? s.miners ?? 0;
-  S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
-  // The growing sites are grandfathered up to the crew already standing in
-  // them: the game does not take a body off a plot it used to have.
-  S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
-  S.plotLevel = Math.max(+s.plotLevel || 0, (s.farmhands || 0) - FARM_PLOTS0);
-  // Nobody is a scholar any more, but the bodies are read so the headcount
-  // adds up; `rebalance` below hands them to the spare pool.
-  S.scholars = 0;
-  const wasScholars = s.scholars ?? s.labbers ?? 0;
-  // A save from before the crew was one pool has a headcount per job and no
-  // total.
-  S.crew = s.crew ?? (s.rockhands ?? s.miners ?? 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0)
-                     + wasScholars;
   // Before `rebalance()`: a restored machine changes what its station's cap
   // *is*, and a rebalance against the old cap leaves five bodies at a cut
   // that now holds one, with nothing recomputing it per frame. The dev
@@ -591,61 +535,34 @@ export function restore() {
     const r = (s.machines && s.machines[m.key]) || {};
     const rec = S.machines[m.key];
     rec.bought = !!r.bought;
-    // A save's `on` and `was` are dropped: a machine is worked by whoever is
-    // standing at it.
+    // A machine is worked by whoever is standing at it, so only the fact of
+    // the lever is read.
     rec.driven = !!r.driven;
     rec.tune = Math.max(0, Math.round(+r.tune || 0));
-    // A bought machine with no record took a full set. A machine that does
-    // not take kit never took any, whatever the save says: a stale `true`
-    // has `stripKit` empty the stand every frame under a row still selling
-    // carts.
-    rec.tookKit = rec.bought && kitDisplaced(m.job)
-      ? (r.tookKit == null ? true : !!r.tookKit) : false;
+    // A machine that does not take kit never took any, whatever the save
+    // says: a stale `true` has `stripKit` empty the stand every frame under a
+    // row still selling carts.
+    rec.tookKit = rec.bought && kitDisplaced(m.job) && !!r.tookKit;
     if (Number.isFinite(r.beatIn)) rec.beatAt = clockNow() + r.beatIn;
     if (Number.isFinite(r.workedAgo)) rec.workedAt = clockNow() - r.workedAgo;
   }
   rebalance();
-  // A save carrying the old harness or boots ladder folds it into the one
-  // ladder, trimmed to the top.
-  S.haulCarryLevel = Math.min(LADDER, (S.haulCarryLevel || 0) + (+s.harnessLevel || 0));
-  S.haulPaceLevel = Math.min(LADDER, (S.haulPaceLevel || 0) + (+s.bootsLevel || 0));
-  S.rockhandSpeedLevel = s.rockhandSpeedLevel ?? s.minerSpeedLevel ?? 0;
-  // A save from when one pick row bought both keeps what its rock hands had.
-  S.rockhandPickLevel = s.rockhandPickLevel ?? s.minerPickLevel ?? (s.pickLevel || 0);
-  S.seenShard = !!s.seenShard || S.shards > 0;
-  S.quarryOpen = !!(s.quarryOpen ?? s.caveOpen);
-  S.quarryPaceLevel = s.quarryPaceLevel ?? s.cavePaceLevel ?? 0;
   // Null is an unbroken floor, which `resetCut` below lays fresh rock to
   // match.
   S.quarryCells = Array.isArray(s.quarryCells) ? s.quarryCells.map(v => +v || 0) : null;
-  S.seenSpore = !!s.seenSpore || S.spores > 0;
-  // 2026-09-15: the story's progress was six flags; it is the set of beats
-  // that have played (beats.js), read as a plain copy above, and a save from
-  // before the set folds its flags into it. A save from before the opening
-  // existed with nobody hired is a game that has not started; `reunionDone`
-  // came in after the second rock could already have fallen; `storyTold`
-  // came in after the rescue could already have happened, and a sheet weeks
-  // later is not the moment; the rescue's own fact marks its beat. A scene
-  // the last sitting closed the tab on (`cineOwed`, or today's
-  // `beat.camera`) marks nothing and is the running camera beat, played once
-  // over the event as it now stands. A chain of beats (the opening, the
-  // reunion) is one story: a save taken partway through it does not write
-  // the yard's beat down, so the beats it had played come off the set and
-  // the story starts over from its first.
+  // A chain of beats (the opening, the reunion) is one story: a save taken
+  // partway through it does not write the yard's beat down, so the beats it
+  // had played come off the set and the story starts over from its first.
   const done = new Set(S.beatsDone);
-  if (!Array.isArray(s.beatsDone)) {
-    if (!!s.introDone || (s.crew ?? 0) > 0) for (const k of OPENING) done.add(k);
-    if (s.reunionDone ?? ((s.boulderNo ?? 1) > 1)) { done.add('meet'); done.add('part'); }
-    if (s.rescued) done.add('rescue');
-    if ('storyTold' in s ? !!s.storyTold : !!s.rescued) done.add('ending');
-  }
   for (const row of BEATS) {
     let end = row;
     while (end.next) end = BEATS.find(r => r.key === end.next);
     if (end !== row && !done.has(end.key)) done.delete(row.key);
   }
   S.beatsDone = [...done];
-  const owed = typeof s.beat?.camera === 'string' ? s.beat.camera : s.cineOwed;
+  // A scene the last sitting closed the tab on is the running camera beat,
+  // played once over the event as it now stands.
+  const owed = typeof s.beat?.camera === 'string' ? s.beat.camera : null;
   const camera = BEATS.find(r => r.key === owed && r.owns === 'camera' && !done.has(owed));
   S.beat = { yard: null, camera: camera ? camera.key : null, sheet: null };
   // A shot of some other scene is the old yard's; the same scene, still
@@ -687,30 +604,15 @@ export function restore() {
   }
   S.camLockY = null;
   S.pair = [];
-  S.buried = s.buried ?? S.beatsDone.includes('show');
-  // A save from before the second cap existed built the closet when that was
-  // the whole of what it bought.
-  S.looPosts = s.looPosts ?? 2;
-  // `labDone` is the same news under the per-site name.
-  if (s.labDone) S.siteDone = { ...S.siteDone, lab: s.labDone };
+  S.buried = !!s.buried;
   S.rescued = !!s.rescued;
   if (S.rescued) S.buried = false;
-  S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // Only jobs this build still has.
   S.lent = Array.isArray(s.lent) ? s.lent.filter(j => JOBS.includes(j)) : [];
   // Empty is the fixed order. `placeSites` (world.js) drops an unrecognized
   // key, since it already knows which keys are real places.
   S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
-  // A save whose record was stamped off the clock has page-relative
-  // milliseconds, any one of which outranks a sequence number: renumber them
-  // in the order they had.
-  const stamps = Object.entries(S.wonAt || {});
-  if (stamps.some(([, v]) => v > 100000)) {
-    stamps.sort((a, b) => a[1] - b[1]);
-    S.wonAt = Object.fromEntries(stamps.map(([k], i) => [k, i + 1]));
-    S.wonSeq = stamps.length;
-  }
   S.chips = Array.isArray(s.chips)
     ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
         .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
@@ -718,31 +620,19 @@ export function restore() {
   S.belt = Array.isArray(s.belt)
     ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
     : [];
-  // A list a site; a save holding one object a site is read as a list of
-  // one. Walked by the save's own keys rather than today's `SITES`, because a
-  // site can stop existing between builds and the work filed under it is
-  // re-homed below rather than dropped.
+  // A list a site. Only rows the board still sells, each under the site its
+  // row says today, so a work whose row has moved sites does not come back
+  // blocking a site that is not there.
   S.works = {};
-  for (const site of Object.keys(s.works || {})) {
-    const was = s.works[site];
-    const list = Array.isArray(was) ? was : was ? [was] : [];
+  for (const [site, list] of Object.entries(s.works || {})) {
+    if (!Array.isArray(list)) continue;
     for (const w of list) {
       if (!(w && w.key && rowFor(w.key) && w.of > 0)) continue;
-      // Under the site the row says today, so a work whose row has moved
-      // sites does not come back blocking a site that is not there.
       const home = rowFor(w.key).site || site;
       if (!SITES.includes(home)) continue;
       (S.works[home] ||= []).push({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
                                     of: w.of, at: w.at ?? null });
     }
-  }
-  // The lab's own two fields, from before its research was ordinary work.
-  for (const was of [s.research, s.research2]) {
-    if (!was || !was.key || !rowFor(was.key)) continue;
-    const of = workFor(rowFor(was.key));
-    if (!(of > 0)) continue;
-    (S.works.lab ||= []).push({ key: was.key, done: Math.max(0, Math.min(of, +was.done || 0)),
-                                of, at: null });
   }
   if (S.meteorOpen) {
     makeMeteor();
@@ -753,7 +643,6 @@ export function restore() {
     }
     S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
-  S.purifiers = s.purifiers ?? s.scrubbers ?? 0;
   craftLoad(s.craft);
   S.haze = s.haze || 0;
   S.scrubBank = 0;
@@ -761,7 +650,7 @@ export function restore() {
   // `stormFor` are plain saved fields); the bolt is a flash of a few frames
   // and is not.
   S.bolt = null;
-  S.poop =Array.isArray(s.poop) ? s.poop.slice() : [];
+  S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
   S.rockSand = Array.isArray(s.rockSand)
     ? s.rockSand.map(a => String(a || '').split(',').filter(Boolean).map(Number))
     : null;
@@ -773,8 +662,7 @@ export function restore() {
   // A pot left in its plot is still in it. The sand itself is never saved, so
   // it comes back pouring in again whatever it was doing -- a hand caught on
   // the pegs comes back a pot in the hopper with the let-go open again, a tray
-  // caught mid-hoist comes back a pot in the hopper. A save from the wheel's day
-  // has no `where`, and a pot with no plot named stands where a stake stands.
+  // caught mid-hoist comes back a pot in the hopper.
   S.pot = s.pot && s.pot.cur
     ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0,
         where: s.pot.where === 'tray' ? 'tray' : 'hopper' }
@@ -784,26 +672,15 @@ export function restore() {
   S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
   S.hoisting = false;
   S.attract = null;
-  // A pot you have already taken comes back still owed to you.
-  //
-  // Every other field in this building has an argument for what it does on a
-  // reload; this one had none, and what it did was throw the pot away. `bank()`
-  // takes the pot off the table on the frame you press it and pays it into the
-  // hole one landing grain at a time, so between the press and the last grain
-  // the whole of your winnings live in `S.paying` and nowhere else -- and this
-  // line used to be `S.paying = null`.
-  //
-  // Crediting it here instead was the other way to write this, and it is the
-  // wrong one: the pot going over the yard is the *point* of taking it, and a
-  // refresh should not be a way to skip the walk. So the payout comes back a
-  // payout. The table is empty, which `payOutStep` already copes with -- it
-  // throws from the pot's spot when there is no heap left to lift off -- and the
-  // sand flies again, the same way `pouring` below sends a bet's sand down out
-  // of an empty sky.
-  //
-  // The grain count is only how many throws the money is split across, so a save
-  // with a number where there should be none is worth nothing rather than owed
-  // for ever: a payout with nothing left in it is no payout.
+  // A pot you have already taken comes back still owed to you. `bank()` takes
+  // the pot off the table on the frame you press it and pays it into the hole
+  // one landing grain at a time, so between the press and the last grain the
+  // whole of your winnings live in `S.paying` and nowhere else; crediting it
+  // here would make a refresh a way to skip the walk. The table is empty,
+  // which `payOutStep` copes with (it throws from the pot's spot when there
+  // is no heap left to lift off), and the sand flies again. The grain count
+  // is only how many throws the money is split across, so a payout with
+  // nothing left in it is no payout.
   S.paying = s.paying && s.paying.cur && +s.paying.left >= 1
     ? { cur: s.paying.cur,
         left: Math.round(+s.paying.left),
@@ -814,20 +691,6 @@ export function restore() {
   // as was not saved.
   S.pouring = S.casinoOpen && !!S.pot;
   S.hand = null;                // a hand that settled before you closed the tab is old news
-  // The old multipliers fold into their ladders' spark rung (DESIGN.md, "The
-  // spark band is the top of the ladder"): a save with any of one had climbed
-  // the whole ladder under it, and a `lab*` work still in flight lands the
-  // same way, since there is no row left to finish it and the sparks were
-  // paid. The quarry's answered to `cave` before the place was renamed.
-  const FOLD = { crop: 'cropLevel', seam: 'seamLevel', tend: 'tendLevel', quarry: 'quarryPaceLevel' };
-  const LAB = { labcrop: 'crop', labseam: 'seam', labtend: 'tend', labcave: 'quarry' };
-  const flying = new Set([...Object.values(s.works || {}).flatMap(w => Array.isArray(w) ? w : w ? [w] : []),
-                          s.research, s.research2].map(w => w?.key && LAB[w.key]).filter(Boolean));
-  for (const [k, field] of Object.entries(FOLD)) {
-    const had = +(s.mult?.[k] ?? (k === 'quarry' ? s.mult?.cave : 0)) || 0;
-    if (had > 0 || flying.has(k)) S[field] = TIER_RUNGS;
-  }
-  for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   if (Array.isArray(s.plots)) S.plots = s.plots.map(b => (+b || 0) / 100);
   if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
   resite();                    // the quarry is as deep and the plot as wide as it was
@@ -839,11 +702,6 @@ export function restore() {
   // `rebalance` is where `S.haulers` comes from.
   if (S.workers.length > S.crew) { S.crew = S.workers.length; rebalance(); }
   syncWorkers();               // and anybody the counts say is missing
-  // Only a save from before the record existed is caught up, and that is
-  // asked of the save rather than a flag on S: running the catch-up on a
-  // save that carries `won` would mark every unread notice as read.
-  if (!(s && 'won' in s)) catchUpNotices();
-  S.noticeMigrated = true;
   hushNotices();               // what this save already earned is on the sheet, not in the air
   // A site with no gang of its own that was busy when the tab shut needs its
   // builders sent again: only a build starting turns spare hands into
@@ -851,7 +709,6 @@ export function restore() {
   // because a second `rebalance` over a roster whose numbers never quite add
   // up is a place a body can be lost.
   if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
-  if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
   if (!S.beatsDone.includes('show')) startBeat('leave');
   restoreGrid(floor, s.floor, floorShift(s.floor));
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
@@ -859,24 +716,12 @@ export function restore() {
   // belongs in the hole depends on how much is already through. Clamped to
   // the counter: a rift holding more than you own leaves `inHole` reading
   // nought against a pile that plainly has dust in it.
-  S.seenFullPit = !!s.seenFullPit;
-  S.riftOpen = !!s.riftOpen;
   S.riftGulp = 0; S.riftShake = 0;     // a save comes back after the tearing, never in it
   S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
-  S.riftLevel = Math.max(0, Math.round(+s.riftLevel || 0));
   // The coins through it, clamped to their own counters the same way.
   S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
   for (const k of ['cores', 'shards', 'spores', 'sparks'])
     S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
-  // A save with no `riftAte` but a torn rift was written when the tear and
-  // the drowning were the same moment, so it comes back drowned, its eaten
-  // count seeded from what is through and floored at the threshold so the
-  // disc size and the drowning trigger agree with the era.
-  S.drowned = s.riftAte !== undefined ? !!s.drowned : !!s.riftOpen;
-  S.riftAte = Math.max(0, Math.round(+s.riftAte || 0));
-  if (s.riftAte === undefined && S.riftOpen)
-    S.riftAte = (S.rift || 0) + Object.values(S.riftHeld).reduce((a, b) => a + b, 0);
-  if (S.drowned) S.riftAte = Math.max(S.riftAte, ABYSS_AT);
   rehomeDust();
   seedPitCores();
   // Rock laid fresh to the depth just restored, then the dust that was lying
@@ -891,34 +736,11 @@ export function restore() {
     recount(cut);
     if (cut.painter) cut.painter.repaint();
   }
-  // After the cut, because an old save that never wrote the number is
-  // guessed from how much ground is left, and there is no ground to measure
-  // until the lines above have laid it.
-  S.quarryOwed = Number.isFinite(+s.quarryOwed)
-    ? Math.max(0, Math.round(+s.quarryOwed))
-    : Math.round(seamShards() * Math.max(0, 1 - dugShare()));
-  // The guess is only for an old save, and counts a core in a hauler's hands:
-  // a rock dead with its core walking to the hole would otherwise drop a
-  // second.
-  S.coreBuried = typeof s.coreBuried === 'boolean'
-    ? s.coreBuried
-    : boulderAlive() || !(s.coreLoose || S.heldCore || S.workers.some(w => w.hasCore));
 }
 
 // The crew, put back. Each body is made by its own factory, so it has every
 // field its job expects whatever has changed since the save, and then handed
 // back the things that are *it* rather than its job.
-// Old names for a type. A job that stopped existing (the rift-holder, the
-// scholar under both its names) comes back as a hauler rather than being
-// dropped, which is a body lost out of somebody's save.
-const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
-                   labber: TYPE.HAUL, scholar: TYPE.HAUL,
-                   scrubber: TYPE.PURIFY };
-// The same renaming on `kitOf`, which is a job name: a hat no station keeps
-// is kit not in the table, and `verifyWorld` calls that out.
-const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.HAUL, scholars: JOB.HAUL,
-                  scrubbers: JOB.PURIFY };
-
 function restoreCrew(who, mouth = null) {
   // Whether the ground under the crew is the ground they were saved on, and
   // if the cut has moved, by how much: the yard re-walks when a station grows
@@ -929,18 +751,9 @@ function restoreCrew(who, mouth = null) {
   if (!Array.isArray(who)) return;
   for (const k of who) {
     if (!k.type) continue;
-    const type = OLD_TYPE[k.type] || k.type;
-    const made = FACTORY(type);
+    const made = FACTORY(k.type);
     if (!made.type) continue;                  // a trade this build does not have
-    let rec = OLD_JOB[k.kitOf] ? { ...k, kitOf: OLD_JOB[k.kitOf] } : k;
-    // A body saved inside the lab would load under the ground line at the
-    // door of a building that is not there, so its position goes and the
-    // factory's own puts it on its feet. `labber` has no constant: it is a
-    // name from before the rename, like the keys of the maps above.
-    if (k.type === TYPE.SCHOLAR || k.type === 'labber') {
-      const { x, y, goal, inside, site, ...rest } = rec;
-      rec = rest;
-    }
+    let rec = k;
     // A body down in the cut when the cut moved goes with the cut, or it
     // comes back in solid ground with no working under it (verify.js rule 1).
     // A body at ground height over the mouth on a layout that moved stands at
@@ -957,7 +770,7 @@ function restoreCrew(who, mouth = null) {
     }
     if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
-      if (type === TYPE.QUARRY && rec.goal === 'work') {
+      if (k.type === TYPE.QUARRY && rec.goal === 'work') {
         rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };
       } else {
         const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
@@ -1000,7 +813,6 @@ export function reset(fresh = true) {
   clearCraft();
   S.rockSand = null;
   seedSmog();
-  for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   syncWorkers();
   resetRates();
   resetNotices();

@@ -42,6 +42,7 @@ group('a save from before the sheet, with the rescue behind it, is not owed one'
   yard.persist();
   const s = JSON.parse(localStorage.getItem(KEY));
   s.rescued = true;
+  delete s.saveV;                            // so the blob is read through the migrations
   delete s.storyTold;
   delete s.beatsDone;                        // a save from before the beats
   localStorage.setItem(KEY, JSON.stringify(s));

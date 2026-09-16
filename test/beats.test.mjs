@@ -157,6 +157,7 @@ group('a save from before the table loads with its beats done, and plays none', 
   run(1);
   yard.persist();
   const s = JSON.parse(localStorage.getItem(KEY));
+  delete s.saveV;                            // so the blob is read through the migrations
   delete s.beatsDone;
   delete s.beat;
   s.introDone = true;

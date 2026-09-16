@@ -389,7 +389,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   potTonics: S.potTonics,
   potPrefers: S.potPrefers,
   potKeep: S.potKeep,
-  potSpent: S.potSpent,
   apothPots: S.apothPots,
   // Batches ever finished; three rows on the board are revealed by it.
   brews: S.brews,

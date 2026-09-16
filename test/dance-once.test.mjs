@@ -113,6 +113,7 @@ group('the ending is danced once, when the sheet is put down', async () => {
   yard.persist();
   const s = JSON.parse(localStorage.getItem(KEY));
   const wrote = Array.isArray(s.beatsDone) && s.beatsDone.includes('ending');
+  delete s.saveV;                              // so the blob is read through the migrations
   delete s.beatsDone;
   s.storyTold = true;
   localStorage.setItem(KEY, JSON.stringify(s));

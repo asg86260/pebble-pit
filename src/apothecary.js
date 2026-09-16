@@ -75,9 +75,6 @@ export const TONICS = [
     base: TONIC_BRACE_CRIT,      unit: 'crit',     color: '#e04848', short: 'tonic',
     jobs: ROLLERS }                                                              // red
 ];
-// Keys a save may still carry, each folded into the brew that carries its
-// axis now. Read by `migrateApothecary` and nowhere else.
-const FOLDED = { swift: 'stew', gleam: 'strong' };
 // A recipe is hidden until its reagent has been seen: a brew priced in a
 // currency the player has never met is a row about nothing. Asked by the
 // picker and by the potency rows alike.
@@ -192,69 +189,6 @@ export const setStock = (key, n) => {
   S.shelf[key] = Math.max(0, n | 0);
   return S.shelf[key];
 };
-
-// --- an old save, poured into the new shape -----------------------------------
-// The building's old single figures (one tonic, one spent flag, one heap of
-// doses, one strength ladder) become the first pot's, the brewing tonic's
-// shelf, and a rung on each tonic. Runs off the legacy field being non-null
-// and blanks it once read, so it happens exactly once however many frames
-// later the building opens. A player keeps every rung they climbed.
-export function migrateApothecary() {
-  // The maps are written back out whole, so a tonic added after a save was
-  // written gets its key stood up here once.
-  S.potency = S.potency || {};
-  S.shelf = S.shelf || {};
-  S.brewKeys = S.brewKeys || [];
-  // Folded brews: the potency is the deeper of the two rungs (the player
-  // bought two things that are now one), the stock joins the shelf, a pot on
-  // the old brew is set to the new one, and a live dose keeps its clock.
-  for (const [old, to] of Object.entries(FOLDED)) {
-    if (S.potency[old] != null) {
-      S.potency[to] = Math.max(S.potency[to] | 0, S.potency[old] | 0);
-      delete S.potency[old];
-    }
-    if (S.shelf[old] != null) {
-      S.shelf[to] = (S.shelf[to] | 0) + (S.shelf[old] | 0);
-      delete S.shelf[old];
-    }
-  }
-  const fold = key => FOLDED[key] || key;
-  S.potTonics = (S.potTonics || []).map(fold);
-  S.brewKeys = S.brewKeys.map(fold);
-  for (const w of S.workers)
-    for (const d of w.doses || []) d.tonic = fold(d.tonic);
-  for (const t of TONICS) {
-    if (S.potency[t.key] == null) S.potency[t.key] = 0;
-    if (S.shelf[t.key] == null) S.shelf[t.key] = 0;
-  }
-  if (S.potTonic != null && !(S.potTonics || []).length) {
-    S.potTonics = [S.potTonic];
-    S.potTonic = null;
-  }
-  if (S.potSpent && !(S.potSpents || []).length) {
-    S.potSpents = [true];
-    S.potSpent = false;
-  }
-  // One favored job for the whole building becomes every pot's.
-  S.potPrefers = S.potPrefers || [];
-  if (S.potPrefer) {
-    for (let i = 0; i < Math.max(1, S.apothPots | 0); i++) S.potPrefers[i] = S.potPrefer;
-    S.potPrefer = null;
-  }
-  const held = (S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
-  if (held > 0) {
-    // Old doses have no tonic of their own, so they land on the shelf of
-    // whatever the building was brewing.
-    const key = potTonicOf(0) || TONICS[0].key;
-    S.doseHold = [];
-    shelve(key, held);
-  }
-  if (S.strengthLevel > 0) {
-    for (const t of TONICS)
-      if (!potencyLevel(t.key)) S.potency[t.key] = S.strengthLevel;
-    S.strengthLevel = 0;
-  }
-}
 
 // --- the crew of the pot ------------------------------------------------------
 export function newStirrer() {
@@ -508,9 +442,6 @@ export function stepDoseMotes(dt) {
 }
 
 export function stepApothecary(dt) {
-  // Before the early return: a save whose building is shut still carries the
-  // ladder rungs it bought, and they must be there the moment it opens again.
-  migrateApothecary();
   if (!S.apothecaryOpen) return;
   const list = stirrers();
   for (let i = 0; i < S.apothPots; i++) {

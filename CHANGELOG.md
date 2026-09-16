@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
