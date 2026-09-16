@@ -44,6 +44,7 @@ feature lives in DESIGN.md.
 - The haulers keep working while the next rock comes down: a body that has stepped out of the footprint gets on with what is on its own side of it, and only one with a load bound for the far side waits at the line (test/haulers-through-the-fall.test.mjs).
 - On a phone held upright a shield's answer is watched whole, and the two of them stay in the picture on the walk out of the house, instead of the arch's feet and the second of the pair standing off the edge of the screen (test/phone-view.test.mjs).
 - Sending a body to a spot over the mouth of the hole walks it to the lip instead of crashing the yard (test/route.test.mjs).
+- A crit on the rock takes the top layer across the columns beside it instead of boring straight down the one it hit; a swing shaves the rock, it does not drill it.
 
 ## v0.2.4 — 2026-09-15
 
