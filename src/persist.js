@@ -7,6 +7,7 @@ import { P, CELL, SHADES, CORE_SIZE, LOO_POSTS, WORKER, ROCK_SINK, SAVE_V, SHARD
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
+import { slideLayers } from './smog/layer.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
@@ -221,7 +222,8 @@ let lastBlob = null;
 // What the ground is still owed by the casino: the hand being poured out,
 // plus every grain already in the air toward the strip, by kind.
 function payingOwed() {
-  const arcs = (S.tableAir || []).filter(k => k.arc && k.lands === 'strip');
+  // on its arc out of the hatch, or still falling through the foot toward it
+  const arcs = (S.tableAir || []).filter(k => k.lands === 'strip' && (k.arc || k.then));
   const left = { dust: 0, spore: 0, shard: 0, spark: 0, ...(S.paying ? S.paying.left : {}) };
   for (const k of arcs) {
     const kind = findKind(k.s) === SHARD_CELL ? 'shard' : findKind(k.s) === SPORE_CELL ? 'spore' : findKind(k.s) === SPARK_CELL ? 'spark' : 'dust';
@@ -663,10 +665,11 @@ export function restore() {
   // for an hour. Safe here because the world is laid out before the save is
   // read (main.js), so there is a width to spread it across.
   skyFromSave(s.skyKinds, s.drops, s.puffs);
-  // A pot left in its plot is still in it. The sand itself is never saved, so
-  // it comes back pouring in again whatever it was doing -- a hand caught on
-  // the pegs comes back a pot in the hopper with the let-go open again, a tray
-  // caught mid-hoist comes back a pot in the hopper.
+  // A pot left in the funnel is still in it. The sand itself is never saved,
+  // so it comes back pouring in again whatever it was doing -- a hand caught
+  // on the pegs comes back a pot in the hopper with the sign live again, and
+  // a hand caught paying comes back with the unpaid bins' pebbles in it, the
+  // paid ones being on the ground or owed (`paying`).
   // `owed` is what the purse has still to pay for a stake caught raining in:
   // spent as the grains land, so what was not yet spent is spent on the way
   // back in, and a save mid-pour costs nothing twice.
@@ -679,15 +682,11 @@ export function restore() {
   S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
 
   S.attract = null;
-  // A pot you have already taken comes back still owed to you. `bank()` takes
-  // the pot off the table on the frame you press it and pays it into the hole
-  // one landing grain at a time, so between the press and the last grain the
-  // whole of your winnings live in `S.paying` and nowhere else; crediting it
-  // here would make a refresh a way to skip the walk. The table is empty,
-  // which `payOutStep` copes with (it throws from the pot's spot when there
-  // is no heap left to lift off), and the sand flies again. The grain count
-  // is only how many throws the money is split across, so a payout with
-  // nothing left in it is no payout.
+  // A pay caught in the air comes back still owed to you: what had left the
+  // bins and not landed is written as `paying`, and `payOutStep` throws it
+  // out of the hatch again, so a refresh is never a way to skip the walk or
+  // to lose the pay. The grain count is only how many throws the pebbles are
+  // split across, so a payout with nothing left in it is no payout.
   // (an older save's `left` was one number of dust; the pour's is a count a
   // kind)
   const left = s.paying && s.paying.left;
@@ -722,6 +721,7 @@ export function restore() {
   if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!S.beatsDone.includes('show')) startBeat('leave');
   restoreGrid(floor, s.floor, floorShift(s.floor));
+  slideLayers(floorShift(s.floor));   // and the mess on it, by the same columns
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   // The rift comes back before the dust is put away, because how much
   // belongs in the hole depends on how much is already through. Clamped to
@@ -807,7 +807,7 @@ export function reset(fresh = true) {
   // ...and everything the save throws away, for the same reason: what was in
   // the air, on the belt, on the pegs or on the camera is the old yard's too.
   blankEphemeral();
-  clearCasino();                   // the hopper and the tray stand empty
+  clearCasino();                   // the hopper stands empty
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;

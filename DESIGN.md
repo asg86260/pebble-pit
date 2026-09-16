@@ -909,7 +909,8 @@ back to the idle swap. A win's strobe and a dud's blackout stand over all of
 it as they do now.
 
 **Everything pours out the bottom in its own kind.** When the last pebble
-is still the bins pay into the tray and out of the foot: pebbles from the
+is still the bins pay out through the foot (built: straight out, no tray --
+see "What building it changed"): pebbles from the
 pebble bins, crops from the crop bins, ore from the ore bins, a spark from
 a spark bin -- each as the coin it is, each a real grain -- into the heap
 on the ground the crew already hauls, the way every station's output lands.
@@ -995,11 +996,45 @@ them and are what "The pour" is built on.
 building paragraph meant the chute-and-crank casino's, with its lever; the
 pay still has to land somewhere the crew reads, and "the heap the crew
 already hauls" is a strip in `S.piles` with a limit (`PILE_LIMIT.casino`)
-and the pile-full mark. A pebble grain off the tray lands as the pebbles it
-is worth and a coin goes out as a grain of that coin, one a coin, ahead of
-the pebbles; `bankDust` credits each kind as the haulers' loads land in
-the hole, so ore, crops and sparks off the table are counted where every
-other coin is.
+and the pile-full mark. A pebble off a bin lands as the pebbles it is
+worth and a coin goes out as a grain of that coin, one a coin; `bankDust`
+credits each kind as the haulers' loads land in the hole, so ore, crops and
+sparks off the table are counted where every other coin is.
+
+**The tray is gone: the pay falls straight out of the foot.** Built first
+with the bins paying into a tray at the foot that then ran out of the
+hatch, which was the plinko's tray kept for no reason -- a heap standing
+in the building for a second and a half that nobody could do anything with.
+Now each bin, on its beat, drops what it holds: its pebbles fall through
+the foot to the building's floor and lob out of the hatch on to the strip,
+each carrying its share of the bin's pay, and a converting bin's pay falls
+as the coin itself, one grain a coin in its color, so what lands is what
+was won. A full strip holds the bin that is due -- its foot lit, its
+pebbles in it -- rather than a tray filling; the pot's ledger shrinks bin
+by bin as each pays, so a save mid-pay comes back with the unpaid bins'
+pebbles in the funnel and what was in the air owed and thrown again.
+`FOOT_H` is the foot's height; `trayShownFor` and its band knobs went with
+the tray.
+
+**The box lists what was won, by kind.** "x0.8 -20" was a number about the
+bet; what the player sees land is pebbles, crops, ore and sparks, so the box
+beside the foot is a line a coin -- the coin's mark in its color and the
+count, for the kinds that paid and no other -- and the change against the
+stake under them. No multiple anywhere on the building; the multiple is
+still on the snapshot for the checks.
+
+**The pebbles fall.** Built first stepping a cell at a time on a fixed
+clock -- a straight-line slide between rows and a sideways jump at a peg
+-- and on the phone that read as funky. Now a pebble is under gravity
+(`CASINO_GRAV`, cells a second squared), speeding up between rows, and off
+a peg it hops -- up `CASINO_HOP` cells and across to the next seat in one
+arc, worked out to land on the seat the coin names, so the bounce is an
+arc the eye can see and the odds are still the picture. Each pebble's hop
+is a little higher or lower (`CASINO_HOP_VARY`) so no two share a path in
+step, and the throat lets them out `CASINO_GRAIN_GAP_MS` apart give or take
+`CASINO_GRAIN_JITTER`, a procession rather than a clump. The black pebble
+with its two-cell trail over grey pegs stays. `tools/node/strip.mjs` and
+`stitch.py` shoot a frame strip of the drop for this kind of round.
 
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
@@ -1024,6 +1059,16 @@ is the stake scaled by what is left in the bowl. The chase's step is
 counted rather than read off the clock, so a step that changes length with
 the dust runs on rather than jumping, and the grains a second is read off
 the bowl's count between frames, smoothed.
+
+**The rate is set when the arm is pressed, and held flat.** Five per cent
+of what is left, read every frame, is a decay: the first second pours fifty
+of a thousand and the twentieth pours nineteen, and a long hold crawls
+toward a purse it never empties. Played on the phone that read as the
+machine tiring. The hold reads the purse once, at the press
+(`S.pourAt`), and pours that many a second until it lets go or the purse is
+dry, so a purse empties in `1/POUR_SHARE` seconds however long it stood; a
+second hold reads the purse again, so the share is still of what you own,
+and `POUR_MIN` still floors it.
 
 ## The stake is a heap you carry, and the casino has no board (built and cut 2026-09-16)
 

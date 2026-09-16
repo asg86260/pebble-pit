@@ -27,8 +27,9 @@ import school from './2026-09-14-school.js';
 import beats from './2026-09-15-beats.js';
 import threeBrews from './2026-09-15-three-brews.js';
 import handful from './2026-09-15-handful.js';
+import pour from './2026-09-16-pour.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

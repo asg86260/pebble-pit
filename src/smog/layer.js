@@ -38,6 +38,25 @@ export function cols(kind) {
   return S[kind];
 }
 
+// A saved layer lines up with the floor it was written over, and the floor
+// slides on the way back in when the yard has changed width (`floorShift`,
+// persist.js): the mess slides with it, by the same columns, so what lay
+// under a station still does. Read column by column without this, a save
+// from a wider yard stood its muck under the wrong buildings and lost the
+// far end of it off the edge.
+export function slideLayers(shift) {
+  if (!shift) return;
+  for (const kind of KINDS) {
+    const was = S[kind] || [];
+    const next = new Array(floor.cols).fill(0);
+    for (let i = 0; i < was.length; i++) {
+      const c = i + shift;
+      if (c >= 0 && c < floor.cols) next[c] = was[i] || 0;
+    }
+    S[kind] = next;
+  }
+}
+
 // They hand back the layer itself, so a check laying mess by hand writes to
 // the same cells the yard reads.
 export const muckCols = () => cols('muck');

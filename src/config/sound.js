@@ -196,8 +196,6 @@ export const SOUNDS = {
   'bin-thud':     { label: 'a grain lands in a bin',                    cls: 'each',  recipe: 'dust-gain' },
   'edge-hit':     { label: 'a grain lands in a x39 bin',                cls: 'punct', recipe: 'stone 2' },
   'hopper-land':  { label: 'a grain of the stake lands in the hopper',  cls: 'each',  recipe: 'dust-gain' },
-  'tray-tick':    { label: 'a paid grain lands in the tray',            cls: 'each',  recipe: 'dust-gain' },
-  'hoist-tick':   { label: 'a grain of the tray lifts for a drop again', cls: 'each', recipe: 'dust-gain' },
   'jackpot':      { label: 'the hand pays more than it took',           cls: 'punct', recipe: null },
   'dud':          { label: 'the hand pays less than it took',           cls: 'hand',  recipe: null },
   'work-land':    { label: 'a building comes down on its ground',       cls: 'punct', recipe: null },

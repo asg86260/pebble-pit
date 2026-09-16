@@ -725,8 +725,8 @@ export const SCENES = {
     run: () => { window.__casinoStakes(6000); window.__casinoStake(200); window.__tapSign(); window.__fast(0.9);
                  window.__look(st().casinoX - 380); } },
   // The bins paying, middle outward: a foot inverted for the bin on its beat,
-  // the box counting up, pebbles running down into the tray.
-  casinopaying: { about: 'the casino', say: 'the bins paying into the tray, a bin a beat',
+  // the box counting up, its pebbles falling through the foot and out.
+  casinopaying: { about: 'the casino', say: 'the bins paying out of the foot, a bin a beat',
     run: () => { window.__casinoStakes(6000); window.__casinoStake(200); window.__tapSign();
                  for (let f = 0; f < 1200 && !(st().drop && st().drop.stage === 'pay'); f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 380); } },

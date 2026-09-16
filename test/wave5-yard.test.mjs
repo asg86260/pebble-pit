@@ -256,6 +256,10 @@ group('a save from a world wider than today keeps its dust where it lay', () => 
   localStorage.setItem('boulder-clicker/v4', raw);
   yard.restore();
   const want = columns();
+  // ...and the muck lying on it, which is written column for column too
+  const muckWas = (S.muck || []).slice();
+  const muckAt = () => new Map((S.muck || []).map((d, c) => [c, d]).filter(([, d]) => d > 0));
+  const wantMuck = muckAt();
 
   // ...and now the same ground as it would have been written down in a world
   // nineteen columns wider: everything shifted along by nineteen, with the
@@ -274,9 +278,11 @@ group('a save from a world wider than today keeps its dust where it lay', () => 
 
   const save = JSON.parse(raw);
   save.floor = { cols, rows: floor.rows, cx: S.cx + GAVE * P, cells: packed };
+  save.muck = [...new Array(GAVE).fill(0), ...muckWas];
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   yard.restore();
   const got = columns();
+  const gotMuck = muckAt();
 
   const sum = m => [...m.values()].reduce((a, b) => a + b, 0);
   const same = want.m.size === got.m.size
@@ -293,7 +299,12 @@ group('a save from a world wider than today keeps its dust where it lay', () => 
     // Re-packed flat, every grain comes back as one middling grey. What the
     // shades say is what the ground is made of.
     ok(got.shades.size > 1, 'still made of what it was made of',
-       [...got.shades].join(','))
+       [...got.shades].join(',')),
+    // The mess slides with the ground it lies on: read column for column it
+    // stood under the wrong stations and lost its far end off the edge.
+    ok(wantMuck.size > 0 && gotMuck.size === wantMuck.size && [...wantMuck].every(([c, d]) => gotMuck.get(c) === d),
+       'and the muck on it lies under the same columns',
+       `${gotMuck.size} columns of muck, wanted ${wantMuck.size}`)
   ];
 });
 

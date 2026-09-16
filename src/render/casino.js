@@ -2,20 +2,21 @@
 // on the roof with the stake standing in it, the floor that splits when you let
 // go, the sign across the front with its chase of lights, the white face knocked
 // out of the block with the pegs standing in it and the handful falling through
-// them, the bins with their pay written under them, and the tray at the foot.
+// them, the bins with their pay written under them, and the foot the pay
+// falls through and out of.
 // Owns drawCasino, drawPotPile, drawSparks, casinoMarkAt, drawCasinoMark and
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, hopperN } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownPays, shownChange, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
-import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
-         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
+import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, findKind,
+         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, FOOT_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
-import { S, casino, table, tray } from '../state.js';
+import { S, casino, table } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
 import { ARM_LENGTH, ARM_BOSS, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
          SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
@@ -23,7 +24,6 @@ import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
-import { drawMark } from './marks.js';
 import { rising as risingAt, withRise } from './rise.js';
 
 // --- the sign -----------------------------------------------------------------
@@ -243,8 +243,7 @@ const DIGIT = {
   // must not say.
   '.': ['0', '0', '0', '0', '1'],
 
-  // times: the mark before a multiple; and up or down, before the change
-  'x': ['000', '101', '010', '101', '000'],
+  // up or down, before the change
   '+': ['000', '010', '111', '010', '000'],
   '-': ['000', '000', '111', '000', '000']
 };
@@ -290,7 +289,9 @@ function drawLabels(fx, fy) {
       ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
       ctx.fillStyle = '#fff';
     } else ctx.fillStyle = '#000';
-    if (typeof m === 'string') cells(MARK[m], fx + col * P, top + LABEL_ROW * P);
+    // a converting bin's foot wears its coin's own color -- the tone the
+    // purse counter and the sky's motes use for it -- lit or not
+    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(MARK[m], fx + col * P, top + LABEL_ROW * P); }
     else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
@@ -323,7 +324,7 @@ export function drawCasino() {
     // The floor, open: it splits from the middle over `CASINO_GATE_MS`, the
     // middle cell first and then the one either side, and the hole shows white
     // -- a way through, like every opening in this yard. It stays open for the
-    // hand and shuts when the tray is paid.
+    // hand and shuts when the last bin has paid.
     if (S.drop) {
       const k = Math.min(1, (t - S.drop.at) / Math.max(1, CASINO_GATE_MS));
       const open = 1 + 2 * Math.round(k * (GATE_W - 1) / 2);
@@ -374,7 +375,7 @@ export function drawCasino() {
 
     // The bins: eleven slots with a cell of wall between, the dividers running
     // on down through the feet the pays are written in, a floor line between
-    // slot and foot, and the tray's rim under the lot. A x39 bin goes black for
+    // slot and foot, and the feet's rim under the lot. A x39 bin goes black for
     // a beat when a grain lands in it -- and, without the sound, when a grain
     // one coin off falls inward instead.
     const binTop = f.y + FIELD_H * P, footTop = binTop + BIN_H * P;
@@ -401,13 +402,15 @@ export function drawCasino() {
 
     drawLabels(f.x, f.y);
 
-    // and the tray, a white plot in the block's foot
+    // and the foot: a white room in the block under the bins, a wall in from
+    // each side, that the pay falls through
+    const footY = y + h - FOOT_H * P;
     ctx.fillStyle = '#fff';
-    ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
+    ctx.fillRect(x + P, footY, w - 2 * P, FOOT_H * P);
 
-    // The foot's hatch, open while the pay pours out of it on to the
-    // ground: white, a way through like every opening here.
-    if (S.paying) { ctx.fillStyle = '#fff'; ctx.fillRect(x, tray.y + (tray.rows - 3) * P, P, 3 * P); }
+    // The foot's hatch, open while the pay goes out of it on to the ground:
+    // white, a way through like every opening here.
+    if (hatchOpen()) { ctx.fillStyle = '#fff'; ctx.fillRect(x, footY + (FOOT_H - 3) * P, P, 3 * P); }
     // The arm on the wall beside the funnel: black while it can be held
     // (and while it is), grey when it cannot.
     for (const l of LEVERS) drawControl(l);
@@ -419,6 +422,8 @@ export function drawCasino() {
 // The coins' marks at five cells, for the converting bins' feet: the plots'
 // hexagon, the quarry's triangle, the core's four-point spark -- the
 // counter's own shapes.
+const COIN_CELL = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
+const coinTone = kind => FIND_COLOR[COIN_CELL[kind]][0];
 const MARK = {
   spore: ['01110', '11111', '11111', '11111', '01110'],
   shard: ['00100', '00100', '01110', '01110', '11111'],
@@ -465,10 +470,10 @@ function drawControl(l) {
 }
 
 // --- the sand -------------------------------------------------------------------
-// The hopper and the tray are real plots of sand, so they are blitted
-// like the yard and the hole rather than drawn a grain at a time. The bins are
-// plots too, but a few dozen cells each, so they and the handful on the pegs
-// are drawn straight, cell for cell in the grain's own shade.
+// The hopper is a real plot of sand, so it is blitted like the yard and the
+// hole rather than drawn a grain at a time. The bins are plots too, but a few
+// dozen cells each, so they and the handful on the pegs are drawn straight,
+// cell for cell in the grain's own shade.
 const shadeOf = s => {
   const find = findKind(s);
   return find ? FIND_COLOR[find][s - find] : SHADES[Math.min(SHADES.length, s) - 1];
@@ -477,7 +482,6 @@ const shadeOf = s => {
 export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
-  if (tray.grid && tray.n) drawGrid(tray);
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;
@@ -526,32 +530,35 @@ export function drawSparks() {
 }
 
 // --- what the hand came to ----------------------------------------------------------
-// The multiple and the change, standing beside the tray: "x0.8 -20" with the
-// staked coin's mark, or "x1.3 +30" -- the multiple to a tenth, or whole past
-// ten -- both counting up as the bins pay and then standing for a few seconds,
-// so a board you were not watching still tells you how it went and what it
-// cost. A box wide enough for its words, in the same paper-and-edge as the
-// lab's tick.
-const multText = m => m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toFixed(1);
+// What was won, by kind, standing beside the foot: a line a coin -- the
+// coin's mark in its color and the count -- for the kinds that paid and no
+// other, and under them the change against the stake, up or down; all
+// counting up as the bins pay and then standing for a few seconds, so a
+// board you were not watching still tells you how it went and what it cost.
+// No multiple: a multiple is a number about the bet, and what you see is
+// what landed on the ground. A box wide enough for its words, in the same
+// paper-and-edge as the lab's tick.
 const changeText = d => (d < 0 ? '-' : '+') + String(Math.abs(d));
+const PAY_LINES = ['dust', 'spore', 'shard', 'spark'];
 
-// Its left edge two cells clear of the building's wall, above the crank and
-// the tray, so the box grows away from the building rather than into it.
+// Its left edge two cells clear of the building's wall, above the foot, so
+// the box grows away from the building rather than into it.
 export function casinoMarkAt() {
   return { x: Math.round((casino.x + casino.w + P * 2) / P) * P,
-           y: Math.round((tray.y - P * 9) / P) * P };
+           y: Math.round((casino.y + casino.h - FOOT_H * P - P * 9) / P) * P };
 }
 
 export function drawCasinoMark() {
   if (!S.casinoOpen) return;
-  const m = shownMult();
-  if (m == null) return;
+  const pays = shownPays();
+  if (!pays) return;
+  const lines = PAY_LINES.filter(k => pays[k] > 0).map(k => ({ kind: k, text: String(Math.round(pays[k])) }));
+  const change = changeText(shownChange());
   const at = casinoMarkAt();
   const y = at.y + Math.round(Math.sin(now() / 500)) * P;
-  const mult = 'x' + multText(m), change = changeText(shownChange());
-  const cur = shownCur();
-  // the multiple, two cells of air, the change, a cell, and the coin's mark
-  const w = wordW(mult) + 2 + wordW(change) + 1 + 1 + 2, h = DIGIT_H + 2;
+  // a mark, a cell of air, the count; the change line under the lot
+  const w = 1 + Math.max(change.length ? wordW(change) : 0, ...lines.map(l => MARK_CELLS + 1 + wordW(l.text))) + 1;
+  const h = (lines.length + 1) * (DIGIT_H + 1) + 1;
   const left = at.x, top = y - Math.floor(h / 2) * P;
 
   ctx.fillStyle = '#fff';
@@ -559,10 +566,19 @@ export function drawCasinoMark() {
   ctx.lineWidth = Math.max(1, P / 3);
   ctx.strokeStyle = '#000';
   ctx.strokeRect(left, top, w * P, h * P);
+  lines.forEach((l, i) => {
+    const ly = top + (1 + i * (DIGIT_H + 1)) * P;
+    if (l.kind === 'dust') {
+      // a pebble is the counter's square: three cells, black
+      ctx.fillStyle = '#000';
+      ctx.fillRect(left + 2 * P, ly + P, 3 * P, 3 * P);
+    } else {
+      ctx.fillStyle = coinTone(l.kind);
+      cells(MARK[l.kind], left + P, ly);
+    }
+    ctx.fillStyle = '#000';
+    drawWord(l.text, left + (1 + MARK_CELLS + 1) * P, ly);
+  });
   ctx.fillStyle = '#000';
-  drawWord(mult, left + P, top + P);
-  const cx = left + (1 + wordW(mult) + 2) * P;
-  drawWord(change, cx, top + P);
-  drawMark(cur === 'shard' ? SHARD_CELL : cur === 'spore' ? SPORE_CELL : 4,
-           cx + (wordW(change) + 1) * P + P / 2, top + P + (DIGIT_H * P) / 2);
+  drawWord(change, left + P, top + (1 + lines.length * (DIGIT_H + 1)) * P);
 }

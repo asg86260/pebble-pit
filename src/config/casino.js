@@ -11,8 +11,10 @@
 
 // What goes on the roof is what you hold the arm for: pebbles pour out of
 // the purse into the funnel for as long as the arm is held, a slice of what
-// you own a second -- never less than a floor, so the shortest tap stakes a
-// real handful -- and the pile is the stake. See DESIGN.md, "The pour".
+// you own a second -- the purse as it stood at the press, held flat, so a
+// hold empties it in 1/POUR_SHARE seconds rather than crawling; never less
+// than a floor, so the shortest tap stakes a real handful -- and the pile is
+// the stake. See DESIGN.md, "The pour".
 export let POUR_SHARE = 0.05;             // of the purse, a second
 export let POUR_MIN = 16;                 // pebbles a second, at least
 
@@ -97,9 +99,10 @@ export const BIN_H = 6;
 // and no pay can be read as its neighbor's. A floor line, a clear row, five of
 // glyph, a clear row, and the tray's rim.
 export const LABEL_H = 9;
-// The tray at the foot, which the bins pay into: the same walled plot the
-// hopper is, but deeper, so a won pot stands as a real heap at the foot.
-export const TRAY_H = 12;
+// The foot under the bins: the pay falls through it to the building's floor
+// and out of the hatch in its left wall on to the ground. Nothing stands in
+// it.
+export const FOOT_H = 12;
 // The field's width: the bins across.
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
@@ -127,17 +130,25 @@ export const HOPPER_COLS = BOARD_COLS + 2 * CASINO_MARGIN - 2;
 export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
   Math.round(r * ((HOPPER_COLS - HOPPER_FLOOR) / 2) / (HOPPER_H - 1)));
 // --- how a grain moves -----------------------------------------------------------------
-// A grain steps a cell at a time down the face, this often -- slower than a
-// frame, so the eye can keep up with one -- and it is written in time so a
-// slow frame does not slow the machine. Arriving at a peg it sits a beat, and
-// on the beat the peg rings and ticks. Grains leave the hopper this far apart,
-// so the board carries a procession splitting on the pegs rather than a
-// cloud; a handful is on the board about two and a half seconds from
-// the first grain leaving to the last landing (two and six-tenths, measured).
-export let CASINO_FALL_MS = 20;
+// A pebble falls under gravity, in cells a second squared: it speeds up
+// between rows, and off a peg it hops -- up `CASINO_HOP` cells and across
+// to the next seat in one arc, the hop a little higher or lower for each
+// pebble so no two share a path in step. On a peg it sits a beat, and on
+// the beat the peg rings and ticks. Written in time, so a slow frame does
+// not slow the machine. Grains leave the throat this far apart, give or
+// take the jitter, so the board carries a procession splitting on the pegs
+// rather than a clump, and the eye can follow one; a handful is on the
+// board about four and a half seconds from the first leaving to the last landing (measured).
+export let CASINO_GRAV = 300;
+export let CASINO_HOP = 0.6;
+export let CASINO_HOP_VARY = 0.3;              // how much a hop's height varies, pebble to pebble
 export let CASINO_PEG_BEAT_MS = 60;
-export let CASINO_GRAIN_GAP_MS = 40;
-// The floor splits from the middle over this long before the first grain falls.
+export let CASINO_GRAIN_GAP_MS = 100;
+export let CASINO_GRAIN_JITTER = 0.6;          // of the gap, either way
+// The floor splits from the middle over this long: the middle cell is open
+// on the frame of the tap and the pile is draining through it that frame --
+// a quarter second of nothing after the tap read as a hitch on the phone --
+// and the cells either side follow.
 export let CASINO_GATE_MS = 250;
 
 // --- how a hand is felt ---------------------------------------------------------------
@@ -226,17 +237,6 @@ export const shownFor = n =>
     : Math.min(CASINO_PILE_BRIM,
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
-// The tray's ladder is steeper and its brim higher: the tray is twelve rows
-// deep so that a won pot stands as a real heap at the foot, and a thousand
-// should look like a thousand there. Nine hundred is what its rows hold
-// with the rim clear.
-export const CASINO_TRAY_BAND = 400;
-export const CASINO_TRAY_BRIM = 900;
-export const trayShownFor = n =>
-  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
-    : Math.min(CASINO_TRAY_BRIM,
-               Math.round(CASINO_PILE_ONE +
-                          CASINO_TRAY_BAND * Math.log10(n / CASINO_PILE_ONE)));
 export const CASINO_KNOBS = [
   { key: 'POUR_SHARE', label: 'the pour, of the purse a second', min: 0.005, max: 0.5, step: 0.005,
     get: () => POUR_SHARE, set: v => { POUR_SHARE = v; } },
@@ -244,8 +244,14 @@ export const CASINO_KNOBS = [
     get: () => POUR_MIN, set: v => { POUR_MIN = v; } },
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },
-  { key: 'CASINO_FALL_MS', label: 'a cell of fall, ms', min: 8, max: 60, step: 1,
-    get: () => CASINO_FALL_MS, set: v => { CASINO_FALL_MS = v; } },
+  { key: 'CASINO_GRAV', label: 'gravity on the pegs, cells a second squared', min: 40, max: 600, step: 10,
+    get: () => CASINO_GRAV, set: v => { CASINO_GRAV = v; } },
+  { key: 'CASINO_HOP', label: 'a hop off a peg, cells up', min: 0, max: 3, step: 0.05,
+    get: () => CASINO_HOP, set: v => { CASINO_HOP = v; } },
+  { key: 'CASINO_HOP_VARY', label: 'the hop\'s variation, pebble to pebble', min: 0, max: 1, step: 0.05,
+    get: () => CASINO_HOP_VARY, set: v => { CASINO_HOP_VARY = v; } },
+  { key: 'CASINO_GRAIN_JITTER', label: 'the throat\'s jitter, of the gap', min: 0, max: 1, step: 0.05,
+    get: () => CASINO_GRAIN_JITTER, set: v => { CASINO_GRAIN_JITTER = v; } },
   { key: 'CASINO_PEG_BEAT_MS', label: 'a beat on a peg, ms', min: 0, max: 300, step: 10,
     get: () => CASINO_PEG_BEAT_MS, set: v => { CASINO_PEG_BEAT_MS = v; } },
   { key: 'CASINO_GRAIN_GAP_MS', label: 'between grains, ms', min: 0, max: 200, step: 5,
