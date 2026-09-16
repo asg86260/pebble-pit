@@ -1,17 +1,7 @@
 // --- the yard at rest ---------------------------------------------------------
-// Where a body with nothing to do wanders to.
-//
-// It used to be a number a few hundred pixels either side of where it already
-// was, which is a random walk: no destination, no reason, and six of them doing
-// it at once reads as insects rather than as people. A stroll wants somewhere to
-// go, and this yard has somewhere -- the rock, the lip of the hole, and whoever
-// else is standing about.
-//
-// So a spot is chosen from a handful of real ones, weighted. Most of the time it
-// is still just a few steps, because most of what anybody does when they are
-// waiting is shuffle a few steps; but often enough it is *over to somebody*,
-// which is what turns two bodies standing near each other into the conversation
-// the break code was already able to have and almost never got the chance to.
+// Where a body with nothing to do wanders to: a spot chosen from a handful of
+// real ones, weighted. A random walk with no destination reads as insects;
+// going over to somebody is what gives the break code its conversations.
 
 import { WORKER, ROCK_CLEAR } from '../config.js';
 import { S, pit, shack } from '../state.js';
@@ -49,17 +39,15 @@ export function strollTo(w) {
   // and the things in this yard worth going and looking at
   add(2, rockLeft() - ROCK_CLEAR - WORKER * 2);
   add(2, pit.x - WORKER * 3);
-  // The gang's hut, once there is one: a door people go in and out of is
-  // somewhere to stand about near, and a building nobody ever drifts past reads
-  // as scenery however carefully it is drawn. Weighted like the other two.
+  // The gang's hut, once there is one: a building nobody drifts past reads as
+  // scenery.
   add(2, S.shackOpen ? shack.x + shack.w + WORKER : null);
 
   const lo = yardLeft(), hi = pit.x - WORKER;
   return Math.max(lo, Math.min(hi, spots[Math.floor(rand() * spots.length)]));
 }
 
-// Nobody stands inside anybody. Two idlers who end up on the same spot drift
-// apart a little, the way the gang on the rock and the crew down the quarry do.
+// Nobody stands inside anybody: two idlers on the same spot drift apart.
 export function elbowIdle(w) {
   for (const o of S.workers) {
     if (o === w || o.type !== TYPE.HAUL || o.inside || o.goal !== 'idle') continue;

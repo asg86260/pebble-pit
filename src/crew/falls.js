@@ -23,11 +23,9 @@ export function stepHat(w) {
   h.y += h.vy * f;
   const floor = standTop(h.x, rockTop);     // the ground, or the hill's outline
   if (h.y >= floor) {
-    // It rests where somebody can STAND to pick it up. A cart flung over the
-    // mouth of the hole would otherwise lie on the opening's own line -- fresh
-    // air with a surface reading -- and its owner would walk to the lip and
-    // push against the clamp for the rest of the run. The same slide the mess
-    // makes off loose ground: to the nearest solid footing, and only then down.
+    // It rests where somebody can STAND to pick it up: a cart lying on the
+    // hole's mouth has its owner pushing against the lip's clamp for the rest
+    // of the run. The same slide the mess makes off loose ground.
     if (footing(h.x) !== SOLID) {
       const at = solidNear(h.x, 200);
       if (at != null) { h.x = at; h.y = standTop(h.x, rockTop); }
@@ -40,31 +38,15 @@ export function stepHat(w) {
 }
 
 
-// Where a dropped body comes to rest: the highest thing under it, hill included.
+// Where a dropped body comes to rest: the highest thing under it, hill
+// included. Falling is physics, not routing, so this is the one place that
+// asks about the world by x alone; `wayAt` then reads the landing off the
+// feet, so a body landed on the hill is on the hill.
 //
-// Falling is physics and not routing, so this is the one place that still asks
-// about the world by x alone -- a body in the air is not on any way, and what
-// stops it is whatever it hits. Throw somebody at the hill and they land on the
-// hill; throw them past it and they land on the ground.
-//
-// Landing on the hill is then a body standing on the hill, because `wayAt` asks
-// how high the feet are and gets its answer from where the fall put them. So the
-// next errand routes down a flank and walks off, rather than the body being
-// dropped back to the ground line the moment it is given something to do.
-// ...on the hill or the ground as it always did -- except over the mouth of
-// the hole, where the floor is the pile. `rockTop` knows nothing of the hole,
-// so a body falling over the mouth landed at the ground line: inside the pile
-// when the pile stood proud of it, in mid-air over the mouth when it did not.
-// Landed inside the pile, it read as standing on the yard, and its next route
-// to the patch ten pixels away went back across the yard and up the near
-// ladder -- the reported lap out along the pile, down to "ground level", back
-// to the yard and out again.
-//
-// Deliberately NOT the general "whatever way is over this spot": that was
-// tried, and a kitted gang mining deep notches fell through them to the ground
-// line instead of landing on the neighbouring rock the way `standTop` has
-// always caught them, and the rock's own throughput dropped by a quarter. The
-// hill keeps its old landing to the pixel; only the mouth changes.
+// Over the mouth of the hole the floor is the pile, which `rockTop` knows
+// nothing of. Deliberately NOT the general "whatever way is over this spot":
+// a kitted gang mining deep notches fell through them to the ground line
+// instead of landing on the neighboring rock the way `standTop` catches them.
 const landing = w => {
   const mid = w.x + WORKER / 2;
   const h = ways().hole;
@@ -74,30 +56,16 @@ const landing = w => {
 
 // one frame of that fall, and what happens when it stops
 export function fall(w) {
-  // It travels while it falls now, and the ground it is going to land on is
-  // whatever is under it *there* -- so the foot is read after the step, not
-  // before it, or a body thrown onto the rock would stop in the air where the
-  // rock was not.
-  // Falling, in frames rather than in frames' worth of arithmetic. Speeds are
-  // pixels a frame and gravity is pixels a frame a frame, so both are stepped by
-  // however long this frame was; the drag is a proportion of what is left, so it
-  // is raised to that power instead. At sixty all three come out exactly as they
-  // were written.
+  // The foot is read after the x step, or a body thrown onto the rock stops
+  // in the air where the rock was not. Speeds are pixels a frame, gravity
+  // pixels a frame a frame, and the drag a proportion of what is left, so it
+  // is raised to the frame count instead of multiplied by it.
   const f = frames();
   if (w.vx) {
     w.x += w.vx * f;
     w.vx *= HURL_DRAG ** f;
-    // The yard has ends. A body thrown at one bumps off it rather than sailing
-    // out of the world and walking back in from nowhere.
-    //
-    // The ends are the WORLD's -- the floor's own left edge and the ground past
-    // the pit -- not `yardLeft`. That is the first heap, which is where the crew
-    // stop *walking* for dust, and it lies out past the farm's plots: the farm's
-    // own hands stand left of it, and so do the tower, the scrubbing house and
-    // whoever is on their way to any of them. Read as a wall it snapped a body
-    // let go anywhere left of the heap to the heap's edge on the frame it left
-    // your hand -- picked up beside the farm shed with the least flick, and
-    // stood four hundred pixels to the right of it.
+    // The ends are the WORLD's, not `yardLeft`: that is the first heap, and
+    // the farm, the tower and the scrubbing house all stand left of it.
     const lo = floor.x, hi = pit.x + pit.w - WORKER;
     if (w.x < lo) { w.x = lo; w.vx = -w.vx * 0.4; }
     if (w.x > hi) { w.x = hi; w.vx = -w.vx * 0.4; }
@@ -118,11 +86,8 @@ export function fall(w) {
     w.say = { mark: 'dizzy', until: w.dizzyUntil };
     w.dizzyFor = 0;
     w.landedAt = w.x;                       // what it wobbles about
-    // Whatever it was carrying, on the ground under it.
-    // Shaken loose, and it lands where the body is standing -- which, for a
-    // rockhand, is on top of the hill. The rock is a surface now, so what a shaken
-    // body drops there stays there instead of walking eighty columns out from
-    // under the footprint to find ground that would take it.
+    // Whatever it was carrying lands where the body is standing, hill
+    // included.
     if (w.spill) {
       for (let i = 0; i < w.spill; i++) {
         const x = w.x + WORKER / 2;
@@ -130,24 +95,14 @@ export function fall(w) {
       }
       w.spill = 0;
     }
-    // And its hat where it fell, to be picked up when the stars clear. It is
-    // NOT put back on here: the body has to go and get it, the same as it has
-    // to walk everywhere else.
+    // The hat is NOT put back on here: the body has to go and get it.
     S.dirty = true;                         // the hat is on its own arc already
     return;                                 // it is in no state to be given a job
   }
-  // Straight back to it if this is where it works, and a walk if it is not --
-  // unless it fell in the middle of a shovelling errand, in which case the
-  // errand is still its and it picks the trip up from where it came down.
-  //
-  // Falls are routine now, not catastrophes: a full pit's pile undulates, and a
-  // body crossing it steps off a two-cell dip and lands a body's height lower
-  // on the same pile. Re-tasking on every landing sent that body home across
-  // half the world, its claim still held so nobody else could take the patch,
-  // and its errand marched it straight back to the same dip -- a lap of the
-  // yard per fall, for ever, which from outside is "the whole crew is stuck".
-  // The mess stage steers a body with a claim on every frame, so all a landing
-  // has to do is drop the stale route and let it.
+  // Straight back to it if this is where it works, a walk if not -- unless it
+  // fell mid-errand with a claim held, in which case only the stale route is
+  // dropped and the mess stage steers it on. Re-tasking that body sends it
+  // home across the world and straight back to the same dip, a lap a fall.
   if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
   else if (w.goal === 'muck' && w.muckAt != null) w.route = null;
   else retask(w, w.type);

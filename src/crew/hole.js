@@ -13,37 +13,23 @@ import { now } from '../clock.js';
 import { rand } from '../rng.js';
 
 // --- down the hole, and out the other side ---------------------------------------
-// Muck that fell in the hole lies on the dust at the bottom of it, and muck that
-// fell past the hole lies on ground the crew can only get to by going through.
-// Both are the same errand, and neither of them is written out here any more.
-//
-// This was a five-state machine -- `to`, `down`, `dig`, `cross`, `up`, with a
-// `w.side` and a `w.farSide` and a lip clamp with two sides to it -- sitting
-// beside a routing system that does all of that generically for everybody else,
-// and beside a hole whose two ladders were already rows in the links table. Two
-// systems doing one job, and the copy that drifts is always the one that is not
-// the general one.
-//
-// So the body asks for a route and walks it, exactly as a quarrier does since
-// the cut stopped having its own way out. Nothing below says "ladder", "side"
-// or "across": the ladders are the only edges out of the hole, and the strip of
-// ground past the far wall is joined to the world only through it -- see `ways`
-// and `links` in route.js -- so a body that gets to either at all gets there
-// that way, and one asked to go somewhere no route reaches stays where it is.
-//
-// What stays is the digging, because digging is work and not getting about.
+// Muck in the hole and muck on the ground past it are the same errand: the
+// body asks for a route and walks it. Nothing here says "ladder", "side" or
+// "across" -- the ladders are the only edges out of the hole and the far
+// ground is joined to the world only through it (`ways` and `links` in
+// route.js), so a body asked to go somewhere no route reaches stays put.
+// What stays here is the digging, because digging is work and not getting
+// about.
 export function downTheHole(w, to) {
   const all = ways();
-  // Nothing to go for means coming home, and home is the near lip: the yard is
-  // over there. This is what fetches a body back off the far ground once the
-  // last of the muck out there has been shifted -- which used to be a rule of
-  // its own called `marooned`, because the crossing only ever ran while there
-  // was muck to chase and the last body out there was stranded for good.
+  // Nothing to go for means coming home to the near lip. This is what fetches
+  // a body back off the far ground once the last of the muck out there is
+  // shifted; without it the last body out there is stranded for good.
   const at = to == null ? pit.x - WORKER : to - WORKER / 2;
   const on = to == null ? all.yard : wayOver(at, all);
-  // Still on the way: a couple of cells short is arrived, the same slack
-  // `takeMuck` allows up top, so a body settling on to a patch is not walked
-  // back a pixel at a time every time it plants its feet on a whole cell.
+  // A couple of cells short is arrived, the same slack `takeMuck` allows up
+  // top, so a body planting its feet on a whole cell is not walked back a
+  // pixel at a time.
   if (Math.abs(at - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
     if (!keepTo(w, at, on)) return;
     if (stepRoute(w, commutePace())) return;
@@ -53,13 +39,10 @@ export function downTheHole(w, to) {
   w.route = null;
   if (to == null) return;
 
-  // Arrived. The same swing as up top -- see `takeMuck`. Feet planted, a cell to
-  // a stroke, rather than a heap quietly melting under a shaking body.
-  //
-  // `now` is the clock *function* in here -- this one is not handed the frame
-  // time the way the yard's branches are -- so it has to be called. Compared
-  // against the function it is never greater, and the body stood over the heap
-  // swinging at nothing at all.
+  // Arrived. The same swing as up top (`takeMuck`). `now` is the clock
+  // *function* in here, not the frame time the yard's branches are handed, so
+  // it has to be called; compared against the function nothing is ever
+  // greater.
   const t = now();
   w.x = Math.round(w.x / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
@@ -71,12 +54,9 @@ export function downTheHole(w, to) {
 }
 
 // --- down the ladder, for a load of the cut's own dust -------------------------
-// Grains that fell in through the cut's mouth lie on the floor of the working
-// and have to be carried out like anything else on the yard -- down the one
-// ladder there is, out with a claim on a column exactly the way the yard's own
-// dust is claimed, and banked at the pit like any other load. Mirrors
-// `downTheHole`: a column rather than a body, and a route rather than a walk
-// written out by hand.
+// Grains on the floor of the cut are carried out like anything else on the
+// yard: down the ladder, with a claim on a column, banked at the pit. Mirrors
+// `downTheHole` with a column in place of a spot.
 export function downTheCut(w, col) {
   const all = ways();
   const spot = col == null ? quarry.x - WORKER : cut.x + col * P + P / 2 - WORKER / 2;
@@ -91,8 +71,8 @@ export function downTheCut(w, col) {
   w.route = null;
   if (col == null) return;
 
-  // Arrived at the column it claimed. Feet planted, and a scoop at a time --
-  // the same cadence `haulSpeed`'s own fetching keeps on the yard.
+  // Arrived at the column it claimed: a scoop at a time, at the yard's own
+  // fetching cadence.
   w.x = Math.round(w.x / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
   if (now() < (w.next || 0)) return;
@@ -106,12 +86,9 @@ export function downTheCut(w, col) {
   S.dirty = true;
 }
 
-// The nearest column of the cut's own dust that nobody else has gone for, by
-// the same rule `nearestDust` keeps for the yard's own piles: one column, one
-// worker. Only a hauler ever calls this -- it is the one trade whose branch
-// routes down the ladder for it -- so the claim it makes is already held to
-// `nearestMuck`'s own rule: nobody stands on the floor of the cut who cannot
-// walk down to it.
+// The nearest column of the cut's own dust nobody else has gone for: one
+// column, one worker, as `nearestDust` keeps for the yard's piles. Only a
+// hauler calls this, the one trade whose branch routes down the ladder.
 export function nearestCutDust(x, taken) {
   if (!cut.grid) return -1;
   const from = Math.max(0, Math.min(cut.cols - 1, colOf(cut, x)));
@@ -127,24 +104,17 @@ export function nearestCutDust(x, taken) {
 
 // --- booking the trip ---------------------------------------------------------
 // A hauler says how much it is going for *before* it goes: a trip is
-// `w.booked` grains and no more, and `w.took` is how many of them are in hand.
+// `w.booked` grains and no more, and `w.took` is how many are in hand.
 //
-// The room in the hole those grains will take is never in question. A grain
-// the pile has no cell for tears the hole open and goes through the rift (see
-// `throughRift` in pit.js), so a trip always has somewhere to end and the
-// queue is as long as the trip, never as short as the hole.
-//
-// It used to be booked against the hole: the room the count said was left,
-// less what the other trips had spoken for, and none once the count said
-// full. That was a wall with a gap in it. The count credits a few cells the
-// pile never fills, so a hole a few grains short of the count said "none" by
-// the count while no grain ever reached the pile to tear it -- and every
-// hauler stood down at the lip, for good, because the one thing that would
-// have opened the rift was the trip nobody was allowed to make.
+// The room in the hole is never in question: a grain the pile has no cell for
+// tears the hole open and goes through the rift (`throughRift` in pit.js).
+// Booked against the hole's count instead, every hauler stood down at the lip
+// for good, because the one trip that would have opened the rift was the one
+// nobody was allowed to make.
 export const pitFree = () => Infinity;
 
-// what one body carries in a trip -- a cart holds twice, and a strong brew adds
-// its half on top of that for as long as the dose is worn (see apothecary.js)
+// what one body carries in a trip: a cart holds twice, and a strong brew adds
+// its half on top for as long as the dose is worn (apothecary.js)
 export const load = w => stronger(w, Math.round(haulCap() * (w.trained ? 2 : 1)));
 
 // what it may still take this trip, and taking one more off it
@@ -158,12 +128,9 @@ export function bookRoom(w, want = load(w)) {
   return roomOnBoard(w);
 }
 
-// Whether this body may take one more, asking the hole again if it has to.
-//
-// A booking is made once, with the hands empty -- and a spent one is asked
-// again for what the hands have left rather than a whole load, because `took`
-// stays in the booking: a re-book for a full load on top of two already in
-// hand would speak for two grains nothing was ever going to carry.
+// Whether this body may take one more. A spent booking is asked again for
+// what the hands have left rather than a whole load, because `took` stays in
+// the booking and a full re-book would speak for grains nothing carries.
 export const roomToTake = w =>
   (w.carry || 0) < load(w) &&
   (roomOnBoard(w) > 0 || bookRoom(w, load(w) - (w.carry || 0)) > 0);

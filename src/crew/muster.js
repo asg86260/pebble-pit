@@ -16,19 +16,12 @@ import { FACTORY, TYPES, wanted } from './jobs.js';
 import { atTower } from '../wizard.js';
 
 // --- who is actually at a site ------------------------------------------------
-// The one question works.js cannot answer for itself, registered here the same
-// way the machines register what only the stations know: a count is not a body,
-// and a station idles until somebody is *actually standing there*.
-//
-// Arrived, not assigned. `S.quarriers` counts everybody the cut has been given
-// and one of them may still be crossing the yard, and a bench that came out
-// while its gang was halfway down the ladder would be the building claiming
-// something the crew deny.
+// The one question works.js cannot answer for itself: a count is not a body,
+// and a station idles until somebody is *actually standing there*. Arrived,
+// not assigned: `S.quarriers` counts a body still crossing the yard.
 const ARRIVED = {
   purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',
-  // A wizard's work is four hundred pixels up and the walk is to the ground
-  // under it; either way it is at the tower -- and it has to *be* there, not
-  // merely be one. See `atTower`.
+  // At the tower, on the ground under it or aloft, and it has to *be* there.
   wizards: w => w.type === TYPE.WIZARD && atTower(w),
   builders: w => w.type === TYPE.BUILD && w.goal === 'at',
 };
@@ -36,44 +29,24 @@ const ARRIVED = {
 setHands(site => {
   const at = ARRIVED[SITE_JOB[site]];
   if (!at) return 0;
-  // A builder is at *its* site and no other: three sites can be busy at once
-  // and a body at the bench is not putting up the lab.
-  //
-  // ...and a builder standing at a station counts there too, whoever the
-  // station's own gang is. The yard sends spare hands to a station with nobody
-  // in it (see `busyBuilderSites`), and until they counted, the body walked
-  // over, stood at the tower and did nothing: the work it had been sent for was
-  // asking how many WIZARDS were there, and the answer was the nought that had
-  // sent for it.
+  // A builder is at *its* site and no other. And a builder standing at a
+  // station counts there whoever the station's gang is, or the work it was
+  // sent for asks how many WIZARDS are there and gets the nought that sent
+  // for it.
   const helping = w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
   const there = S.workers.filter(w => helping(w)
                                    || (at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
-  // One pair of hands on a piece of work, whoever owns the site.
-  //
-  // `BUILD_GANG` already said this for the yard and the bench -- one spare body
-  // is retasked to a build, not three. It did not say it for the four sites
-  // that have a gang of their own: a cut with five quarriers in it took its
-  // next bench out five times as fast, and the tower went up at the speed of
-  // however many wizards happened to be standing in it. So the same row cost a
-  // wildly different amount of time depending on which board it sat on, which
-  // is not a difficulty curve, it is an accident of staffing.
-  //
-  // Capped here rather than in each station because this is the one function
-  // that answers "how many hands are on this", and a cap written four times is
-  // four things to keep in step. The gang is not idle meanwhile -- the others
-  // go on quarrying, farming and scrubbing; what they no longer do is stack up
-  // on the one piece of work.
-  // A builder-manned site with several works on the go holds one pair of hands
-  // PER WORK, because each body is at exactly one of them (see `handsOn`
-  // below). Everywhere else the cap stays at one.
+  // One pair of hands on a piece of work, whoever owns the site, or the same
+  // row costs a different time on every board depending on staffing. Capped
+  // here because this is the one function that answers "how many hands are on
+  // this". A builder-manned site holds one pair PER WORK on the go, because
+  // each body is at exactly one of them (`handsOn`).
   const cap = builderManned(site) ? Math.max(1, onTheGo(site).length) : 1;
   return Math.min(cap, there);
 });
 
-// The hands at ONE work of a site's several -- only ever asked
-// about builder-manned sites, so only builders answer. A body counts toward the
-// work it was given (`w.workKey`, see `slotFor` in builders.js); one with no
-// key yet is still walking and counts toward nothing.
+// The hands at ONE work of a site's several; only builders answer. A body
+// with no `workKey` yet is still walking and counts toward nothing.
 setHandsOn((site, key) =>
   S.workers.filter(w => w.type === TYPE.BUILD && w.goal === 'at'
                      && w.site === site && w.workKey === key).length);
@@ -83,21 +56,16 @@ setHandsOn((site, key) =>
 setStaff(() => { rebalance(); syncWorkers(); });
 
 export function syncWorkers() {
-  // Every job, and the registry is the one list that decides whether a job
-  // exists at all. A job missing from there has a count on the boards and no
-  // bodies in the yard: `room[w.type]` comes back undefined, every body of that
-  // type is stood down on the frame it is made, and the station runs on the
-  // number alone with nobody ever walking to it. See `wanted` in crew/jobs.js.
+  // The registry is the one list that decides whether a job exists at all
+  // (`wanted` in crew/jobs.js).
   const want = wanted();
-  // Bodies are moved between jobs, not bought and sold, so one that is stood
-  // down is usually one that has just been put on something else. Whatever it
-  // was carrying goes on the ground at its feet: every pixel is worth one dust
-  // wherever it came from, and losing a load to a reshuffle would break that.
+  // A body stood down is usually one just put on something else. Whatever it
+  // was carrying goes on the ground at its feet: every pixel is worth one
+  // dust wherever it came from.
   const room = { ...want };                 // want, counted down as bodies are kept
   const keep = [], stood = [];
-  // A body lent to a build is the one its station gives up -- `rebalance` picked
-  // it for being nearest -- so it is considered last and therefore stood down
-  // first. Everybody else keeps their order.
+  // A body lent to a build is the one its station gives up, so it is
+  // considered last and therefore stood down first.
   const ordered = [...S.workers.filter(w => !w.lentFrom), ...S.workers.filter(w => w.lentFrom)];
   for (const w of ordered) (room[w.type]-- > 0 ? keep : stood).push(w);
   for (const w of stood) {
@@ -121,10 +89,8 @@ export function syncWorkers() {
   // creates half of them
   const have = t => S.workers.filter(w => w.type === t).length;
 
-  // A body stood down from one job while another is short of one has not been
-  // sacked and replaced -- it is the same person, and it walks over. So the
-  // surplus is spent before anything is made from nothing, and the only bodies
-  // pushed here are the ones the crew has actually grown by.
+  // A body stood down while another job is short is the same person, and it
+  // walks over: the surplus is spent before anything is made from nothing.
   for (const type of TYPES) {
     for (let short = want[type] - have(type); short > 0; short--) {
       const spare = stood.shift();
@@ -142,21 +108,14 @@ export function syncWorkers() {
     if (!w.next) w.next = now() + rockhandMs() * (w.slot / Math.max(1, S.rockhands));
   }
 
-  // Nothing here hands out hats. A hat is on a head because that body walked
-  // over and picked it up, and it comes off because it walked back and put it
-  // down -- see `retask` and `stepKit`. A brand new body starts bare-headed and
-  // goes and gets one like everybody else.
+  // Nothing here hands out hats: a hat is on a head because that body walked
+  // over and picked it up (`retask`, `stepKit`).
 }
 
 // --- coming back to it --------------------------------------------------------
-// Bodies are not saved: the crew is a set of counts, and `syncWorkers` builds
-// the people from them when the game comes back. So who was wearing what is not
-// saved either, and everybody used to walk back in bare-headed with the stands
-// piled high -- a shift's worth of errands to redo for nothing.
-//
-// The rule is the obvious one: you left them at work in it, so they are at work
-// in it. Each station's hats go on that many of the bodies standing at it, and
-// the rest stay on the stand. Nobody walks for these: they never took them off.
+// Bodies are not saved, so neither is who was wearing what. You left them at
+// work in it, so they are at work in it: each station's hats go on that many
+// of the bodies standing at it, and nobody walks for these.
 export function wearKitOnLoad() {
   for (const job of KIT_JOBS) {
     let left = hats(job);
