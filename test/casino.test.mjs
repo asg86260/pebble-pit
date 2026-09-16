@@ -36,19 +36,22 @@ function staked() {
 
 // A hand from the let-go to the tray standing, watching the bins on the way:
 // the counts the moment the last grain is still, so the pay can be checked to
-// the grain against them.
+// the grain against them -- and whether any grain ever left the field by
+// fading rather than by falling, which none may.
 function playHand() {
+  const stood = state().table;
   const let_ = window.__buy('letgo');
-  let bins = null, sent = 0, fell = 0;
+  let bins = null, sent = 0, fell = 0, faded = 0;
   for (let f = 0; f < 60 * 30 && (state().letting || state().pouring); f++) {
     run(1 / 60);
     const d = state().drop;
     if (!d) continue;
     sent = Math.max(sent, d.sent);
     fell = Math.max(fell, d.falling);
+    if (d.stage === 'drop') faded += yard.S.tableAir.filter(k => k.fade).length;
     if (d.stage === 'hold' && !bins) bins = d.bins.slice();
   }
-  return { let_, bins, sent, fell, s: state() };
+  return { let_, bins, sent, fell, faded, stood, s: state() };
 }
 
 // What the bins owe on a stake: each grain its share of the stake times its
@@ -96,13 +99,13 @@ group('the stake rains into the hopper and stands there as the pot', async () =>
     ok(down.pouring, 'and it is still in the sky'),
     ok(sawAir > 0, 'the stake is really in the air on the way down',
        `${sawAir} of ${poured} frames with a grain flying`),
-    ok(!stood.pouring && stood.table === stake && stood.tableAir === 0,
-       'and then it is lying in the hopper, grain for grain',
-       `${stood.table} of ${stake} down, ${stood.tableAir} in the air`),
-    ok(stood.tableWant === shownFor(stake) && shownFor(stake) === stake,
-       'a stake at the first band is the pot itself, one for one'),
-    // the written ladder: one for one to the first band, then a tenfold pot for
-    // a band more, never past the brim
+    ok(!stood.pouring && stood.table === Math.min(stake, CASINO_HANDFUL) && stood.tableAir === 0,
+       'and then it is lying in the hopper as the handful that will fall',
+       `${stood.table} for ${stake}, ${stood.tableAir} in the air`),
+    ok(stood.tableWant === Math.min(stake, CASINO_HANDFUL),
+       'the hopper wants the handful and nothing over it'),
+    // the written ladder, which is the tray's: one for one to the first band,
+    // then a tenfold pot for a band more, never past the brim
     ok(shownFor(CASINO_PILE_ONE * 10) === CASINO_PILE_ONE + CASINO_PILE_BAND &&
        shownFor(CASINO_PILE_ONE * 100) === Math.min(CASINO_PILE_BRIM, CASINO_PILE_ONE + 2 * CASINO_PILE_BAND) &&
        shownFor(1e9) === CASINO_PILE_BRIM,
@@ -130,6 +133,10 @@ group('a handful goes down the pegs and the bins pay into the tray', async () =>
     ok(hand.fell > 1, 'as a stream, several on the board at once', `${hand.fell} at most`),
     ok(hand.bins && hand.bins.reduce((a, b) => a + b, 0) === hand.sent,
        'every grain lands in a bin', hand.bins && hand.bins.join(',')),
+    ok(hand.bins && hand.bins.reduce((a, b) => a + b, 0) === hand.stood,
+       'and the grains that reach the bins are the grains that stood in the hopper',
+       `${hand.stood} stood, ${hand.bins && hand.bins.reduce((a, b) => a + b, 0)} landed`),
+    ok(hand.faded === 0, 'and no grain fades in the field', `${hand.faded} fading frames`),
     ok(!s.letting && !s.pouring, 'and the hand settles on its own'),
     ok(s.pot && s.pot.where === 'tray' && s.pot.on === expect,
        'to the sum of each grain\'s bin, to the grain',
@@ -167,8 +174,8 @@ group('drop again hoists the tray back to the hopper and the next hand is off th
        `${lifted} frames hoisting, ${arcs} with a grain in the air`),
     ok(up.pot && up.pot.where === 'hopper' && up.pot.on === on && up.pot.stake === on,
        'and stands in the hopper as the stake for the next hand', JSON.stringify(up.pot)),
-    ok(up.table === shownFor(on) && up.tray === 0,
-       'grain for grain, with the tray bare', `${up.table} up, ${up.tray} left`),
+    ok(up.table === Math.min(on, CASINO_HANDFUL) && up.tray === 0,
+       'as the handful that will fall, with the tray bare', `${up.table} up, ${up.tray} left`),
     ok(second.let_ && !s.letting,
        'the second hand is let go and settles'),
     ok(second.sent === Math.min(on, CASINO_HANDFUL),
@@ -255,8 +262,8 @@ group('a save mid-cascade comes back a pot in the hopper with the decision open'
     ok(mid.letting && mid.drop.falling > 0, 'the handful is on the pegs when the save is taken'),
     ok(!back.letting && back.pot && back.pot.where === 'hopper' && back.pot.on === 100,
        'it comes back a pot in the hopper, the path in flight forgotten', JSON.stringify(back.pot)),
-    ok(back.pouring && back.table < 100, 'pouring in again out of the sky', `${back.table} down`),
-    ok(stood.table === 100 && !stood.pouring, 'until it stands as it did', `${stood.table}`),
+    ok(back.pouring && back.table < CASINO_HANDFUL, 'pouring in again out of the sky', `${back.table} down`),
+    ok(stood.table === CASINO_HANDFUL && !stood.pouring, 'until it stands as it did', `${stood.table}`),
     ok(back.stored === held - 100, 'and the purse is as it was', `${back.stored}`),
     ok(rows.includes('letgo') && let_, 'with the let-go open again', rows.join(','))
   ];
