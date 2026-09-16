@@ -9,7 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { MACHINE_PUFF_LIFE, LADDER } from '../src/config.js';
+import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT } from '../src/config.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
@@ -217,6 +217,11 @@ group('smoke rises and goes out, and does not pile up', async () => {
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
   buyBuilt('jaw');
+  // A heap the jaw cannot fill in the minute below: it stops the moment the
+  // quarry's heap is full, and at its rate that is a few seconds, so the smoke
+  // read here would be the tail of its last puff -- or nothing, by a beat.
+  const limit = PILE_LIMIT.quarry;
+  PILE_LIMIT.quarry = 5000;
 
   await run(7);
   // The most in the air over a few seconds, not the count at one instant: the
@@ -242,6 +247,7 @@ group('smoke rises and goes out, and does not pile up', async () => {
   const cleared = state().machSmoke;
 
   window.__crew(0, 0, 0);
+  PILE_LIMIT.quarry = limit;
   return [
     ok(early > 0, 'a working machine puts smoke in the air', `${early} motes`),
     ok(late <= early * 2, 'and four times as long later there is not four times as much',

@@ -17,7 +17,7 @@ group("a heap's grains past its strip come home with the heap's", async () => {
   openSites();
   window.__crew(0, 0);
   quickCrew();
-  window.__levels({ haulCarryLevel: 2 });     // four a load
+  window.__levels({ haulCarryLevel: 1 });     // four a load
   window.__clearFloor();
   run(0.3);
   const q = state().piles.find(p => p.key === 'quarry');
