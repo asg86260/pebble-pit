@@ -6,7 +6,7 @@ import { site } from './site.js';
 const FARM = site({
   key: 'farm', name: 'build the farm',
   note: () => 'grow some crops',
-  blurb: 'crops, green coin',
+  blurb: 'grow crops',
   cores: FARM_CORES, dust: FARM_DUST, job: JOB.FARM,
   at: () => farm.x + farm.w / 2                    // show them what they just bought
 });
