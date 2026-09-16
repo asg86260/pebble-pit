@@ -34,7 +34,7 @@
 import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, PILE_LIMIT, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, FOOT_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
-         CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS,
+         CASINO_GRAV, CASINO_HOP, CASINO_HOP_VARY, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GRAIN_JITTER,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
          CASINO_BURST_AT, CASINO_WIN_MS, CASINO_BURST, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
          CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS, CASINO_EVEN_BAND,
@@ -267,12 +267,14 @@ const makeBin = b => ({
 });
 const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
 
-// A grain about to go down the pegs: its column and row on the face, in cells
-// (negative rows are the gate and the sign band above the field), its ten
-// coins, and its shade. It starts in the gate.
+// A grain about to go down the pegs: where it is on the face, in cells
+// (`x`, `y` exact, `c`, `r` the cell it is drawn in; negative rows are the
+// gate and the sign band above the field), its speed, the column it is
+// making for, its ten coins, and its shade. It starts in the gate, at rest.
 const makeGrain = (s, demo = false) => ({
+  x: START_COL, y: -(GATE_H + CASINO_SIGN_H), vx: 0, vy: 0, to: START_COL,
   c: START_COL, r: -(GATE_H + CASINO_SIGN_H), trail: [],
-  k: 0, seat: false, beat: 0, acc: 0, path: drawPath(), s, demo, landed: false
+  k: 0, seat: false, beat: 0, path: drawPath(), s, demo, landed: false
 });
 
 // Let it go. The floor splits from the middle and a handful of the heap comes
@@ -365,19 +367,46 @@ function sendGrains(dt) {
   const d = S.drop;
   if (d.sent >= d.handful || !d.drained) return;
   const t = now();
-  if (t - d.lastSent < CASINO_GRAIN_GAP_MS) return;
+  if (t - d.lastSent < (d.nextGap ?? 0)) return;
   d.grains.push(makeGrain(d.shade || 1));
   d.sent++;
   d.lastSent = t;
+  // the next one a gap later, give or take: sixteen on an even beat left the
+  // throat as a clump the eye could not pick one out of
+  d.nextGap = CASINO_GRAIN_GAP_MS * (1 + (rand() * 2 - 1) * CASINO_GRAIN_JITTER);
 }
 
 // --- a grain on the pegs ------------------------------------------------------------
-// One cell of fall: down the gate and the sign band, on to the first peg, a
-// beat, then off it -- one cell down and one across in the same step, so it
-// reads as a bounce -- and on to the next, ten times, and then down into its
-// bin. The beat and the fall are both written in time, so a slow frame does not
-// slow the machine.
+// Down the gate and the sign band under gravity on to the first peg, a beat,
+// then off it in a hop -- up a little and across, one arc from this seat to
+// the next, so the bounce is seen -- and on to the next peg, ten times, and
+// then down into its bin. The coin only says which way the hop goes; the
+// arc is worked out to land on the seat the coin names, so the odds are
+// the picture and the picture is a fall. Written in time, so a slow frame
+// does not slow the machine.
 const worldOf = g => { const f = fieldAt(); return { x: f.x + g.c * P, y: f.y + g.r * P }; };
+
+// Off the peg: the coin says which way, and the hop is the arc from here to
+// the next seat -- up `CASINO_HOP` cells, give or take, and down on to it.
+// Past the last row the seat is the bin's rim.
+function hop(g) {
+  const right = g.path[g.k];
+  // The near miss is drawn: a grain at the outermost peg of the last row
+  // falling inward was one coin from the x39.
+  if (g.k === CASINO_PEG_ROWS - 1) {
+    const outer = Math.abs(g.c - START_COL) === (CASINO_PEG_ROWS - 1) * STEP;
+    if (outer && (right === (g.c < START_COL))) flashEdge(g.c < START_COL ? 0 : CASINO_BINS.length - 1, false);
+  }
+  g.k++;
+  g.to = g.c + (right ? STEP : -STEP);
+  const down = (g.k < CASINO_PEG_ROWS ? seatRow(g.k) : FIELD_H) - g.y;
+  const up = CASINO_HOP * (1 + (rand() * 2 - 1) * CASINO_HOP_VARY);
+  g.vy = -Math.sqrt(2 * CASINO_GRAV * up);
+  // when it comes down on the next seat, and the sideways speed that puts
+  // it there on that frame
+  const t = (-g.vy + Math.sqrt(g.vy * g.vy + 2 * CASINO_GRAV * down)) / CASINO_GRAV;
+  g.vx = (g.to - g.x) / t;
+}
 
 function stepGrain(g, dt, bins, onPeg, onLand) {
   if (g.landed) return;
@@ -385,42 +414,38 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
     g.beat -= dt;
     if (g.beat > 0) return;
     g.seat = false;
-    g.acc = 0;
+    hop(g);
   }
-  g.acc += dt;
-  while (g.acc >= CASINO_FALL_MS && !g.landed && !g.seat) {
-    g.acc -= CASINO_FALL_MS;
+  const s = dt / 1000;
+  g.vy += CASINO_GRAV * s;
+  g.x += g.vx * s;
+  g.y += g.vy * s;
+  const c = Math.round(g.x), r = Math.round(g.y);
+  if (c !== g.c || r !== g.r) {
     g.trail = [[g.c, g.r], g.trail[0]].filter(Boolean);   // the last two cells it left, for the trail
-    if (g.k < CASINO_PEG_ROWS) {
-      const seat = seatRow(g.k);
-      if (g.r < seat) {
-        g.r++;
-        if (g.r === seat) { g.seat = true; g.beat = CASINO_PEG_BEAT_MS; onPeg(g); }
-        continue;
-      }
-      // off the peg: the coin says which way
-      const right = g.path[g.k];
-      // The near miss is drawn: a grain at the outermost peg of the last row
-      // falling inward was one coin from the x39.
-      if (g.k === CASINO_PEG_ROWS - 1) {
-        const outer = Math.abs(g.c - START_COL) === (CASINO_PEG_ROWS - 1) * STEP;
-        if (outer && (right === (g.c < START_COL))) flashEdge(g.c < START_COL ? 0 : CASINO_BINS.length - 1, false);
-      }
-      g.c += right ? STEP : -STEP;
-      g.r++;
-      g.k++;
-      continue;
-    }
-    // below the pegs: down to the bin's rim, and in at the top of its slot,
-    // where the bin's own sand rules take it the rest of the way. A slot full
-    // to the rim keeps the grain waiting over it, which nothing ever fills.
-    if (g.r < FIELD_H) { g.r++; continue; }
-    const b = binAt(g.c), bin = bins[b], col = Math.min(bin.cols - 1, Math.floor(slotCol(g.c) / PEBBLE));
-    if (at(bin, col, bin.rows - 1)) break;
-    put(bin, col, bin.rows - 1, g.s);
-    g.landed = true;
-    onLand(g, b);
+    g.c = c; g.r = r;
   }
+  if (g.k < CASINO_PEG_ROWS) {
+    // on to the seat: the arc was aimed at it, so coming down to its row is
+    // arriving on it
+    if (g.vy > 0 && g.y >= seatRow(g.k)) {
+      g.x = g.to; g.y = seatRow(g.k); g.c = g.to; g.r = seatRow(g.k);
+      g.vx = 0; g.vy = 0;
+      g.seat = true; g.beat = CASINO_PEG_BEAT_MS;
+      onPeg(g);
+    }
+    return;
+  }
+  // below the pegs: down to the bin's rim, and in at the top of its slot,
+  // where the bin's own sand rules take it the rest of the way. A slot full
+  // to the rim keeps the grain waiting over it, which nothing ever fills.
+  if (g.y < FIELD_H) return;
+  g.x = g.to; g.c = g.to; g.y = FIELD_H; g.r = FIELD_H; g.vx = 0; g.vy = 0;
+  const b = binAt(g.c), bin = bins[b], col = Math.min(bin.cols - 1, Math.floor(slotCol(g.c) / PEBBLE));
+  if (at(bin, col, bin.rows - 1)) return;
+  put(bin, col, bin.rows - 1, g.s);
+  g.landed = true;
+  onLand(g, b);
 }
 
 // The peg lit on the beat, the grain on it black: one flash, then gone.

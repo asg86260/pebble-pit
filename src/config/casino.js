@@ -130,16 +130,21 @@ export const HOPPER_COLS = BOARD_COLS + 2 * CASINO_MARGIN - 2;
 export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
   Math.round(r * ((HOPPER_COLS - HOPPER_FLOOR) / 2) / (HOPPER_H - 1)));
 // --- how a grain moves -----------------------------------------------------------------
-// A grain steps a cell at a time down the face, this often -- slower than a
-// frame, so the eye can keep up with one -- and it is written in time so a
-// slow frame does not slow the machine. Arriving at a peg it sits a beat, and
-// on the beat the peg rings and ticks. Grains leave the hopper this far apart,
-// so the board carries a procession splitting on the pegs rather than a
-// cloud; a handful is on the board about two and a half seconds from
-// the first grain leaving to the last landing (two and six-tenths, measured).
-export let CASINO_FALL_MS = 20;
+// A pebble falls under gravity, in cells a second squared: it speeds up
+// between rows, and off a peg it hops -- up `CASINO_HOP` cells and across
+// to the next seat in one arc, the hop a little higher or lower for each
+// pebble so no two share a path in step. On a peg it sits a beat, and on
+// the beat the peg rings and ticks. Written in time, so a slow frame does
+// not slow the machine. Grains leave the throat this far apart, give or
+// take the jitter, so the board carries a procession splitting on the pegs
+// rather than a clump, and the eye can follow one; a handful is on the
+// board about four and a half seconds from the first leaving to the last landing (measured).
+export let CASINO_GRAV = 300;
+export let CASINO_HOP = 0.6;
+export let CASINO_HOP_VARY = 0.3;              // how much a hop's height varies, pebble to pebble
 export let CASINO_PEG_BEAT_MS = 60;
-export let CASINO_GRAIN_GAP_MS = 40;
+export let CASINO_GRAIN_GAP_MS = 100;
+export let CASINO_GRAIN_JITTER = 0.6;          // of the gap, either way
 // The floor splits from the middle over this long: the middle cell is open
 // on the frame of the tap and the pile is draining through it that frame --
 // a quarter second of nothing after the tap read as a hitch on the phone --
@@ -239,8 +244,14 @@ export const CASINO_KNOBS = [
     get: () => POUR_MIN, set: v => { POUR_MIN = v; } },
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },
-  { key: 'CASINO_FALL_MS', label: 'a cell of fall, ms', min: 8, max: 60, step: 1,
-    get: () => CASINO_FALL_MS, set: v => { CASINO_FALL_MS = v; } },
+  { key: 'CASINO_GRAV', label: 'gravity on the pegs, cells a second squared', min: 40, max: 600, step: 10,
+    get: () => CASINO_GRAV, set: v => { CASINO_GRAV = v; } },
+  { key: 'CASINO_HOP', label: 'a hop off a peg, cells up', min: 0, max: 3, step: 0.05,
+    get: () => CASINO_HOP, set: v => { CASINO_HOP = v; } },
+  { key: 'CASINO_HOP_VARY', label: 'the hop\'s variation, pebble to pebble', min: 0, max: 1, step: 0.05,
+    get: () => CASINO_HOP_VARY, set: v => { CASINO_HOP_VARY = v; } },
+  { key: 'CASINO_GRAIN_JITTER', label: 'the throat\'s jitter, of the gap', min: 0, max: 1, step: 0.05,
+    get: () => CASINO_GRAIN_JITTER, set: v => { CASINO_GRAIN_JITTER = v; } },
   { key: 'CASINO_PEG_BEAT_MS', label: 'a beat on a peg, ms', min: 0, max: 300, step: 10,
     get: () => CASINO_PEG_BEAT_MS, set: v => { CASINO_PEG_BEAT_MS = v; } },
   { key: 'CASINO_GRAIN_GAP_MS', label: 'between grains, ms', min: 0, max: 200, step: 5,

@@ -1023,6 +1023,19 @@ count, for the kinds that paid and no other -- and the change against the
 stake under them. No multiple anywhere on the building; the multiple is
 still on the snapshot for the checks.
 
+**The pebbles fall.** Built first stepping a cell at a time on a fixed
+clock -- a straight-line slide between rows and a sideways jump at a peg
+-- and on the phone that read as funky. Now a pebble is under gravity
+(`CASINO_GRAV`, cells a second squared), speeding up between rows, and off
+a peg it hops -- up `CASINO_HOP` cells and across to the next seat in one
+arc, worked out to land on the seat the coin names, so the bounce is an
+arc the eye can see and the odds are still the picture. Each pebble's hop
+is a little higher or lower (`CASINO_HOP_VARY`) so no two share a path in
+step, and the throat lets them out `CASINO_GRAIN_GAP_MS` apart give or take
+`CASINO_GRAIN_JITTER`, a procession rather than a clump. The black pebble
+with its two-cell trail over grey pegs stays. `tools/node/strip.mjs` and
+`stitch.py` shoot a frame strip of the drop for this kind of round.
+
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
 hold commits a pebble only while an unspent one covers it, the rain's
