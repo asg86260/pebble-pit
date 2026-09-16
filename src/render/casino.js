@@ -7,7 +7,8 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, nextStake, inTray } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, nextStake, inTray, hopperN } from '../casino.js';
+import { shown } from '../tween.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
@@ -44,7 +45,22 @@ const GLYPH = {
   S: ['0111111', '1000000', '0111110', '0000001', '1111110'],
   I: ['1111111', '0001000', '0001000', '0001000', '1111111'],
   N: ['1100001', '1010001', '1001001', '1000101', '1000011'],
-  O: ['0111110', '1000001', '1000001', '1000001', '0111110']
+  O: ['0111110', '1000001', '1000001', '1000001', '0111110'],
+  // and the figures, in the same stroke, for the stake standing in the
+  // funnel ("The pour": the sign says the stake); 'k' and 'm' for a big one
+  '0': ['0111110', '1000001', '1000001', '1000001', '0111110'],
+  '1': ['0001000', '0011000', '0001000', '0001000', '0111110'],
+  '2': ['0111110', '0000001', '0111110', '1000000', '1111111'],
+  '3': ['1111110', '0000001', '0111110', '0000001', '1111110'],
+  '4': ['1000001', '1000001', '1111111', '0000001', '0000001'],
+  '5': ['1111111', '1000000', '1111110', '0000001', '1111110'],
+  '6': ['0111110', '1000000', '1111110', '1000001', '0111110'],
+  '7': ['1111111', '0000001', '0000010', '0000100', '0001000'],
+  '8': ['0111110', '1000001', '0111110', '1000001', '0111110'],
+  '9': ['0111110', '1000001', '0111111', '0000001', '0111110'],
+  '.': ['0000000', '0000000', '0000000', '0000000', '0001000'],
+  'k': ['1000010', '1001100', '1110000', '1001100', '1000010'],
+  'm': ['0000000', '0000000', '1101100', '1010010', '1000010']
 };
 const WORD = 'CASINO';
 const GLYPH_H = 5, GLYPH_W = 7, GLYPH_GAP = 1, SIGN_PAD = 2;
@@ -58,8 +74,20 @@ const SIGN_W = Math.max(SIGN_MIN, BOARD_COLS + CASINO_MARGIN * 2);
 const signX = () => casino.x + casino.w / 2 - (SIGN_W * P) / 2;
 const signY = () => casino.y + (HOPPER_H + GATE_H + DECK_H) * P;
 
+// What the sign says: CASINO, or the stake standing in the funnel -- from
+// the first poured pebble until the drop, rolling through the counter tween
+// so it climbs under the hand and runs down as the pile drains.
+function signWord() {
+  const standing = S.pot && S.pot.where === 'hopper' && (S.pouring || S.armed || S.drop || S.leverHeld || hopperN() > 0);
+  if (!standing) { return { word: WORD, gap: true }; }
+  const d = S.drop;
+  const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.n;
+  return { word: fmt(Math.round(shown('casino:sign', n))), gap: false };
+}
+
 function drawSign() {
   const x = signX(), y = signY(), w = SIGN_W, h = CASINO_SIGN_H;
+  const { word, gap } = signWord();
 
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
@@ -68,15 +96,17 @@ function drawSign() {
   ctx.strokeStyle = '#000';
   ctx.strokeRect(x, y, w * P, h * P);
 
-  // the word, along the board, centered
+  // the word, along the board, centered; the mid gap is the word's, and
+  // a number stands on the gaps alone
   ctx.fillStyle = '#000';
-  let left = (SIGN_W - SIGN_MIN) / 2 + SIGN_PAD;
-  WORD.split('').forEach((ch, n) => {
+  const wordCells = word.length * GLYPH_W + (word.length - 1) * GLYPH_GAP + (gap ? MID_GAP - GLYPH_GAP : 0);
+  let left = Math.floor((SIGN_W - wordCells) / 2);
+  word.split('').forEach((ch, n) => {
     const rows = GLYPH[ch];
     for (let r = 0; r < GLYPH_H; r++)
       for (let c = 0; c < GLYPH_W; c++)
         if (rows[r][c] === '1') ctx.fillRect(x + (left + c) * P, y + (SIGN_PAD + r) * P, P, P);
-    left += GLYPH_W + (n === WORD.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
+    left += GLYPH_W + (gap && n === word.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
   });
 
   // and the lights, walking round the edge. A whole cell at a time, like

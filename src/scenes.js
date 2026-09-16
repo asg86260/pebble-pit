@@ -751,7 +751,7 @@ export const SCENES = {
   // A hand just paid: the tray standing, the box saying the multiple and the
   // change, the sack live, the window saying the tray rides on the next pull.
   casinopaid: { about: 'the casino', say: 'the tray paid, the box saying the multiple and the change',
-    run: () => { window.__casinoStake(); window.__casinoHand(); window.__fast(0.3); window.__look(st().casinoX - 380); } },
+    run: () => { window.__casinoStakes(6000); window.__casinoStake(); window.__casinoHand(); window.__fast(0.3); window.__look(st().casinoX - 380); } },
   // A win: hands are played until one pays more than it took, and the shot is
   // a beat after -- the strobe on the sign and the fountains in the air.
   casinowin: { about: 'the casino', say: 'a win: the strobe and the fountains',

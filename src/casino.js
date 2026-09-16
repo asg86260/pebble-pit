@@ -300,6 +300,7 @@ const makeGrain = (s, demo = false) => ({
 // picture of the pot and the pot is on the board now.
 function openGate() {
   S.drop = {
+    hopperAt: hopperN(),                          // what stood in the bowl, for the sign running down
     at: now(), lastSent: -Infinity, sent: 0, handful: handfulFor(S.pot.n), drained: 0, shade: 0,
     grains: [], bins: makeBins(),
     stage: 'drop', holdAt: 0, payAt: 0, payIdx: 0, paid: 0, edge: false, payFrom: null
