@@ -154,11 +154,20 @@ group('a strip can still hold everything its station may pile on it', () => {
 // but where each grain lies and what it is -- a shard in the quarry's heap is
 // not the same object as a grey grain at the foot of the yard -- and re-packing
 // the floor flat, which is what a shape change used to mean, loses both.
+//
+// The fixture is written at today's width (every fixture was re-saved at the
+// save floor), so the narrower world is made from it the way the wider one is
+// made below: the same ground with its first columns cut off and its anchor
+// moved by exactly as many. Nothing stands in those columns -- they are the
+// bare YARD_MARGIN ground -- so the two describe the same yard.
 group('a save from before the world widened keeps its dust where it lay', () => {
   const raw = readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8');
   const was = JSON.parse(raw).floor;
-  // The saved cells, unpacked the way persist.js unpacks them, as the columns
-  // that had anything standing in them.
+  const TOOK = 19;
+  const cols = was.cols - TOOK;
+  // The saved cells, unpacked the way persist.js unpacks them, then the
+  // columns that had anything standing in them, as the narrower world would
+  // have written them down.
   const cells = new Uint8Array(was.cols * was.rows);
   let i = 0;
   for (const part of was.cells.split('.')) {
@@ -167,14 +176,26 @@ group('a save from before the world widened keeps its dust where it lay', () => 
     if (v) cells.fill(v, i, i + len);
     i += len;
   }
+  const narrow = new Uint8Array(cols * was.rows);
   const held = new Map();                    // column -> how many grains stood in it
+  let lost = 0;
   for (let r = 0; r < was.rows; r++)
-    for (let c = 0; c < was.cols; c++)
-      if (cells[r * was.cols + c]) held.set(c, (held.get(c) || 0) + 1);
+    for (let c = 0; c < was.cols; c++) {
+      const v = cells[r * was.cols + c];
+      if (!v) continue;
+      if (c < TOOK) { lost++; continue; }
+      narrow[r * cols + c - TOOK] = v;
+      held.set(c - TOOK, (held.get(c - TOOK) || 0) + 1);
+    }
+  let packed = '', v = narrow[0], n = 0;      // run-length, the way persist.js writes it
+  for (const x of narrow) { if (x === v) n++; else { packed += `${v}x${n}.`; v = x; n = 1; } }
+  packed += `${v}x${n}`;
 
-  localStorage.setItem('boulder-clicker/v4', raw);
+  const save = JSON.parse(raw);
+  save.floor = { cols, rows: was.rows, cx: was.cx - TOOK * P, cells: packed };
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   yard.restore();
-  const dx = floor.cols - was.cols;          // the columns the world gained, all on its left
+  const dx = floor.cols - cols;              // the columns the world gained, all on its left
   const now = new Map();
   const shades = new Set();
   for (let r = 0; r < floor.rows; r++)
@@ -188,8 +209,9 @@ group('a save from before the world widened keeps its dust where it lay', () => 
   const grains = [...now.values()].reduce((a, b) => a + b, 0);
   const total = [...held.values()].reduce((a, b) => a + b, 0);
   return [
+    ok(lost === 0, 'the columns cut off held nothing', `${lost} grains stood in them`),
     ok(dx > 0, 'the world this save was written in was narrower than today\'s',
-       `${was.cols} columns then, ${floor.cols} now`),
+       `${cols} columns then, ${floor.cols} now`),
     ok(grains === total, 'every grain it was carrying came back',
        `${grains} of ${total}`),
     ok(moved, 'and each one is the same distance along, in the same column of the yard',
