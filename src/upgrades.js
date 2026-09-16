@@ -4,7 +4,8 @@
 // row never holds a stale number. `SECTIONS` decides the order and the grouping
 // on the board.
 
-import { P, RUNGS, LADDER, rungValue, HAUL_MS, UNDO_MS } from './config.js';
+import { P, RUNGS, LADDER, rungValue, HAUL_MS, UNDO_MS, UNDO_DEAD_MS } from './config.js';
+import { coarse } from './prefs.js';
 import { fmt } from './board.js';
 
 import { craftCount } from './balloon.js';
@@ -636,13 +637,19 @@ export function buy(u) {
 // down unbuilt and the bill back in the pit -- the bill as it was charged,
 // since a rung's next bill is dearer than the one just paid. A work that has
 // landed is had, and is not offered back.
+// Under a thumb only: the undo is the phone's answer to having no hover and
+// no confirm. A desk keeps the committed rule (a work at the front stays).
+// And not in the first UNDO_DEAD_MS, so a fast double tap buys once and
+// keeps it rather than buying and taking back.
 export const undoable = u =>
-  !!S.undo && S.undo.key === u.key && now() - S.undo.at <= UNDO_MS && !!workOn(u.key);
+  coarse() && !!S.undo && S.undo.key === u.key && !!workOn(u.key) &&
+  now() - S.undo.at >= UNDO_DEAD_MS && now() - S.undo.at <= UNDO_MS;
 
 export function undoBuy() {
   const last = S.undo;
   if (!last) return false;
-  if (now() - last.at > UNDO_MS || !workOn(last.key)) { S.undo = null; return false; }
+  if (!coarse() || now() - last.at > UNDO_MS || !workOn(last.key)) { S.undo = null; return false; }
+  if (now() - last.at < UNDO_DEAD_MS) return false;
   const u = rowFor(last.key);
   const box = siteBox(last.site, workOn(last.key));
   if (!u || !abandonAt(last.site, last.key)) { S.undo = null; return false; }

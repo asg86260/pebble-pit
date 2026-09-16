@@ -11076,3 +11076,36 @@ the view's left edge as it did and writes the band through `clampCam`; the
 "point under the pointer" the design named has no pointer in this game,
 since nobody zooms with one. The queue card's line for a work just bought
 is the same press as the tile, so it undoes too.
+
+**The second round, played (the owner, 2026-09-15, evening).** Six asks
+from playing the build on the phone, and one red on main. The sheet
+dismisses by scrolling: a pull down on the rows with the list at its very
+top is the sheet's (the touch is taken from the list at the move and
+handed to the handle's drag; `overscroll-behavior: contain` keeps the
+page from rubber-banding in its stead), while a pull with the list scrolled
+only scrolls it. The rows wear their own scrollbar, a rail down the right
+edge with a thumb the viewport's share of the content, since a phone's
+overlay bar is invisible until the list moves (`SHEET_RAIL_W`,
+`SHEET_RAIL_INSET`). The grab bar is eight cells tall and lifted twelve
+pixels off the safe area (`BAR_H`, `BAR_INSET`): on iOS a swipe up from the
+very edge is the system's, and a band on the edge caught the finger meant
+for it; the counter and the skip hint move up with it through `barRoom()`.
+The hop squares are eight cells (`HOP_SIZE`), and stand no lower than the
+middle of the sky, so a phone on its side has them over the sky and not on
+the ground line. The undo is the phone's alone -- `undoable` asks
+`coarse()` -- so the desk keeps its committed rule (a work at the front
+stays; test/queue.test.mjs), and it waits `UNDO_DEAD_MS` after the buy, so
+a fast double tap buys once and keeps it; the tag is one word, "undo",
+since a tag is one word and a sentence ran off the card. A gear beside the
+fullscreen button opens the held sheet on its settings page, and on a phone
+the held sheet is a sheet from the bottom with a grip, dismissed by a drag
+on the grip or a tap on the wash -- its own seat in gear.js rather than
+board.js's `placeSheet`, which is bound to the boards' panel; the same
+stops would have meant lifting that seat out of board.js, which is a later
+pass. And the notice card (the toast) slides beside a building that reaches
+into the sky it lands in rather than over it: a tall settlement in a short
+window (a phone on its side) had the card over its top floors, on main
+before this branch as much as after -- the card's rule was "the top edge,
+centered", which never asked what was under it. It asks now, through the
+stations' own rectangles and the two corner squares, so a new station is
+dodged without being named.

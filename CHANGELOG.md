@@ -21,11 +21,19 @@ feature lives in DESIGN.md.
 - The yard fills a phone's whole screen, and installs to the home screen (selftest/touch.js).
 - A fullscreen button in the sky's top-right corner, and the same on the settings sheet, wherever the browser can go fullscreen (selftest/touch.js).
 - A touch switch on the settings sheet, for a phone the browser does not report as one, or a desk with a touchscreen that should not be (test/settings.test.mjs).
+- A gear in the sky's corner on a phone opens the settings as a sheet from the bottom, since there is no escape key to hold the yard with (selftest/touch.js).
+- A sheet's rows wear their own scrollbar on a phone, so there is a way to see there is more (selftest/sheet.js).
+- A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
 - The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
 - The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
 - A board comes down when its station is scrolled off the window, on every board and not only the bench's (selftest/touch.js).
+- The grab bar is taller and stands clear of the bottom edge, so a thumb aiming at it does not fire the phone's own swipe-up (selftest/touch.js).
+- The hop arrows are thumb-sized, and on a phone held sideways they stand in the middle of the sky rather than on the ground line (selftest/touch.js).
+- A fast double tap on a row buys it once and keeps it; the undo waits a beat, and is the phone's alone -- on a desk a work at the front is committed as before (test/undo-buy.test.mjs, test/queue.test.mjs).
+- The undo tag is one word and stays inside its card (selftest/touch.js).
+- A notice's card slides beside a building that reaches the top of the window instead of over it, which a tall settlement on a phone held sideways did (selftest/touch.js).
 
 - A body with nothing to do gets going and slows down when it strolls, instead of going from stood still to full pace in one frame and stopping as dead (test/amble.test.mjs).
 - The haulers keep working while the next rock comes down: a body that has stepped out of the footprint gets on with what is on its own side of it, and only one with a load bound for the far side waits at the line (test/haulers-through-the-fall.test.mjs).

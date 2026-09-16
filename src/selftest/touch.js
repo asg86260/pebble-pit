@@ -9,7 +9,7 @@
 // writing the preference, and every group puts it back.
 
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
-import { TAP_SLOP, TAP_TIME, UNDO_MS, HOP_Y, HOP_SIZE, SKIP_HOLD_MS } from '../config.js';
+import { TAP_SLOP, TAP_TIME, UNDO_MS, UNDO_DEAD_MS, HOP_Y, HOP_SIZE, SKIP_HOLD_MS } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../upgrades.js';
 import { workOn } from '../works.js';
@@ -100,10 +100,13 @@ export const TESTS = [
     const had = purse('dust');
     const lean = !!carry && !carry.style.getPropertyValue('--sway-rate');   // no lean wired under a thumb
     await tap(carry);
-    await settle(0.2);
+    await settle(UNDO_DEAD_MS / 1000 + 0.1);      // past the dead zone, so the tag is the way back
     const bought = !!workOn('carry');
     const spent = purse('dust') < had;
-    const tag = carry.querySelector('.tag .time')?.textContent || '';
+    const tag = carry.querySelector('.tag .time')?.textContent.trim() || '';
+    // and the tag fits its card: one word, inside the tile's own box
+    const inCard = (() => { const t = carry.querySelector('.tag').getBoundingClientRect(), c = carry.getBoundingClientRect();
+      return t.left >= c.left - 1 && t.right <= c.right + 1 && t.top >= c.top - 1 && t.bottom <= c.bottom + 1; })();
     // a press that moved past the slop is a scroll, and buys nothing
     await tap(auto, { move: TAP_SLOP + 10 });
     await settle(0.2);
@@ -127,7 +130,8 @@ export const TESTS = [
       ok(!!carry && !!auto && !!shack, 'the three rows are on the bench'),
       ok(lean, 'no lean is wired under a thumb'),
       ok(bought && spent, 'a tap buys the rung', `work ${bought}, ${had} -> ${purse('dust')}`),
-      ok(/undo/.test(tag), 'and the tag offers the way back', tag),
+      ok(tag === 'undo', 'and the tag offers the way back, in one word', tag),
+      ok(inCard, 'inside the card'),
       ok(scrolled, 'a press that moved past the slop buys nothing'),
       ok(tipBefore && tipDuring && held, 'a press held past the time brings up the note and buys nothing',
          `tip ${tipDuring}, bought ${!held}`),
@@ -148,9 +152,9 @@ export const TESTS = [
     await settle(0.2);
     low = Math.min(low, purse('dust'));
     const scale1 = visualViewport.scale;
-    // The second tap, inside the moment, is the undo: bought once, then
-    // taken back, and never twice.
-    const once = purse('dust') === had && !workOn('auto');
+    // The second tap lands inside the dead zone, so it is not the undo:
+    // bought once and kept, never twice.
+    const once = purse('dust') < had && purse('dust') === low && !!workOn('auto');
     // and every tappable thing on the page says so to the platform
     const auto_ = [...document.querySelectorAll('button, #scroller, #handle, .panel, .held, #pin, #queue, .toast')]
       .filter(el => el.offsetParent !== null || el.id === 'scroller')
@@ -161,9 +165,107 @@ export const TESTS = [
     window.__board(null);
     return [
       ok(scale0 === 1 && scale1 === 1, 'the page is not zoomed by the double tap', `${scale0} -> ${scale1}`),
-      ok(once && low >= had - 1000, 'bought once and taken back, never twice', `${had} -> ${low} -> ${purse('dust')}`),
+      ok(once && low >= had - 1000, 'bought once and kept, never twice', `${had} -> ${low} -> ${purse('dust')}`),
       ok(auto_.length === 0, 'every tappable element refuses the platform\'s double-tap zoom', auto_.map(a => a.join(':')).join(', ')),
       ok(/maximum-scale=1/.test(meta), 'and the viewport says so too', meta),
+    ];
+  }],
+
+  ['the undo tag fits inside its card on every board', async () => {
+    phone(true);
+    window.__nocine();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    run(0.5);
+    const bad = [], seen = [];
+    for (const which of Object.keys(state().stands)) {
+      window.__board(which);
+      await settle(0.3);
+      // the first tile on the board that a press buys
+      const row = [...document.querySelectorAll('#panel .page:not([hidden]) .rows button.tile:not(:disabled):not(.stat):not(.door)')]
+        .find(b => b.dataset.key && !b.classList.contains('off'));
+      if (!row) continue;
+      await tap(row);
+      await settle(UNDO_DEAD_MS / 1000 + 0.1);
+      const time = row.querySelector('.tag .time');
+      if (!time || time.textContent.trim() !== 'undo') continue;
+      seen.push(which);
+      const t = row.querySelector('.tag').getBoundingClientRect(), c = row.getBoundingClientRect();
+      if (t.right > c.right + 1 || t.left < c.left - 1 || t.bottom > c.bottom + 1) bad.push(`${which}/${row.dataset.key} ${Math.round(t.right - c.right)}px past`);
+    }
+    window.__board(null);
+    phone(false);
+    return [
+      ok(seen.length >= 3, 'several boards showed the way back', seen.join(' ')),
+      ok(bad.length === 0, 'and on every one the tag stays inside its card', bad.join('; ')),
+    ];
+  }],
+
+  ['a notice stands clear of a building that reaches into the sky', async () => {
+    // A settlement tall enough to reach the top edge, where the card lands;
+    // the card slides to the clearer side rather than over the rooms.
+    window.__nocine();
+    window.__crew(35, 30, 0, 0);
+    run(3);
+    const h = state().stands.house;
+    window.__look(h.x + h.w / 2 - state().viewW / 2);
+    await frames(3);
+    for (let i = 0; i < 40 && document.getElementById('toast').hidden; i++) await frames(1);
+    await sleep(450);                       // the card's slide is a real transition
+    const s = state();
+    const t = document.getElementById('toast').getBoundingClientRect();
+    const hr = { x: (h.x - s.camX) * s.zoom, y: (h.y - s.camY) * s.zoom, w: h.w * s.zoom, h: h.h * s.zoom };
+    const reaches = hr.y < t.bottom;
+    const meets = t.left < hr.x + hr.w && hr.x < t.right && t.top < hr.y + hr.h && hr.y < t.bottom;
+    window.__crew(0, 0);
+    return [
+      ok(!document.getElementById('toast').hidden, 'a notice is up'),
+      ok(reaches, 'and the house reaches the sky the card lands in', `house top ${Math.round(hr.y)}, card bottom ${Math.round(t.bottom)}`),
+      ok(!meets, 'so the card stands beside it, not over it', `card ${Math.round(t.left)}..${Math.round(t.right)}, house ${Math.round(hr.x)}..${Math.round(hr.x + hr.w)}`),
+      ok(t.left >= 0 && t.right <= s.W, 'inside the window'),
+    ];
+  }],
+
+  ['the gear opens the settings as a sheet on a phone, and a drag down closes it', async () => {
+    window.__nocine();
+    phone(false);
+    await frames(2);
+    const deskHidden = document.getElementById('gear').hidden;
+    phone(true);
+    await frames(2);
+    const gear = document.getElementById('gear');
+    const present = !gear.hidden;
+    const r = gear.getBoundingClientRect();
+    const corner = r.top < 80 && r.right > state().W - 120 && r.width >= 44;
+    await tap(gear);
+    await frames(2);
+    await sleep(250);
+    const held = document.getElementById('held');
+    const open = state().paused && !held.hidden && held.classList.contains('bottom');
+    const rows = ['touch', 'motion', 'fullscreenrow', 'savecopy'].map(id => document.getElementById(id))
+      .filter(el => el && !el.hidden && el.getBoundingClientRect().height > 0);
+    const hr = held.getBoundingClientRect();
+    const asSheet = Math.abs(hr.width - state().W) <= 2 && Math.abs(hr.bottom - state().H) <= 1;
+    // the grip dragged down past a third of the sheet
+    const grip = document.getElementById('heldgrip');
+    const gr = grip.getBoundingClientRect();
+    const ev = (type, y, buttons = 1) => grip.dispatchEvent(new PointerEvent(type, { clientX: gr.left + gr.width / 2, clientY: y, pointerId: 8, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
+    ev('pointerdown', gr.top + 5);
+    for (let i = 1; i <= 5; i++) { ev('pointermove', gr.top + 5 + hr.height * 0.5 * i / 5); await raf(); }
+    ev('pointerup', gr.top + 5 + hr.height * 0.5, 0);
+    await frames(2);
+    await sleep(250);
+    const closed = !state().paused && held.hidden;
+    phone(false);
+    await frames(2);
+    return [
+      ok(deskHidden, 'on a desk there is no gear'),
+      ok(present && corner, 'on a phone it stands in the top-right corner', `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}`),
+      ok(open, 'a tap holds the yard with the settings up, as a sheet from the bottom'),
+      ok(rows.length >= 3 && rows.some(el => el.id === 'touch') && rows.some(el => el.id === 'savecopy'), 'with its rows showing', rows.map(e => e.id).join(' ')),
+      ok(asSheet, 'the window\'s width, on the foot', `${Math.round(hr.width)}x${Math.round(hr.height)} at ${Math.round(hr.bottom)}`),
+      ok(closed, 'and a drag down on the grip puts it away'),
     ];
   }],
 
@@ -198,7 +300,9 @@ export const TESTS = [
     const stripUp = !document.getElementById('hop').hidden && !right.hidden;
     const r = right.getBoundingClientRect();
     const s0 = state();
-    const atY = Math.abs((r.top + r.height / 2) - s0.H * HOP_Y) <= 2;
+    // at HOP_Y of the window, or the middle of the sky where that is higher
+    const wantY = Math.min(s0.H * HOP_Y, (s0.groundY - s0.camY) * s0.zoom / 2);
+    const atY = Math.abs((r.top + r.height / 2) - wantY) <= 2;
     const wears = right.dataset.to;
     const before = s0.camX;
     await tap(right);
@@ -216,7 +320,7 @@ export const TESTS = [
     return [
       ok(deskHidden, 'on a desk there are no arrows'),
       ok(stripUp, 'on a phone the right arrow is up at the far left of the world', `camX ${s0.camX}, to ${right.dataset.to}`),
-      ok(atY, 'at HOP_Y of the window', `${Math.round(r.top + r.height / 2)} vs ${Math.round(s0.H * HOP_Y)}`),
+      ok(atY, 'at HOP_Y of the window, or the middle of the sky if that is higher', `${Math.round(r.top + r.height / 2)} vs ${Math.round(wantY)}`),
       ok(r.width >= HOP_SIZE && r.height >= HOP_SIZE, 'a thumb\'s size', `${Math.round(r.width)}x${Math.round(r.height)}`),
       ok(!!wears && !!s0.stands[wears], 'wearing a standing station\'s glyph', wears),
       ok(moving, 'and a tap on it moves the view that way', `${before} -> ${s1.camX}`),
