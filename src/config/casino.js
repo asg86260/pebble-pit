@@ -118,24 +118,39 @@ export const LEVER_HIT = 8;               // the tap target on a phone, in cells
 export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
 export const BUTTON_PRESS_MS = 200;       // a pressed button reads pressed this long
 export const PANEL_ROWS = 9;              // a button's recess is this tall, glyph and air
-export const PANEL_H = PANEL_ROWS + 4;    // the band: the recess, its rims, a clear row above and below
 export const PANEL_GAP = 1;               // clear cells between a glyph and its recess's rim
 export const MARK_CELLS = 5;              // a coin's mark on a button, in cells square
 export const GLYPH_CELLS = 8;             // the sack and the same-bet turn: a shelf glyph, a cell a pixel
 export const WINDOW_DIGITS = 4;           // the stake window shows up to this many figures ("12k" past that)
+// The panel is the machine's head: a boxed band the building's width
+// standing above the funnel, the funnel's rim its floor, the arm's boss on
+// its right wall. Two layouts are drawn: 'A' one row, the building as wide
+// as the row needs; 'B' two rows -- coins and chips above, the window, same
+// bet and the sack below -- and the building as wide as its field.
+export let PANEL_LAYOUT = 'A';
+// How a chip the purse cannot cover is drawn: grey like an unchosen one, or
+// a hollow cap -- a black rim inside the recess round a white center.
+export let CHIP_DEAD_HOLLOW = false;
+export const setDeadLook = hollow => { CHIP_DEAD_HOLLOW = !!hollow; };
+export const PANEL_COINS = ['dust', 'spore', 'shard', 'spark'];
 // A chip's figure on its button, and a figure's width in the sign's face:
 // three cells a figure and a cell of air between.
 export const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
 export const wordCells = word => word.length * DIGIT_W + (word.length - 1);
-// The panel's width: every button's recess -- its face and a cell of air
-// each side -- and the rims between and around them.
+// The panel's rows: every button's recess -- its face and a cell of air
+// each side -- and the rims between and around them; the widest row is
+// what sets the building's margin past the field.
 const PANEL_FACES = [
-  MARK_CELLS, MARK_CELLS, MARK_CELLS,
-  ...CASINO_CHIPS.map(c => wordCells(chipLabel(c))),
-  WINDOW_DIGITS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS,
-  GLYPH_CELLS, GLYPH_CELLS
+  PANEL_COINS.map(() => MARK_CELLS).concat(CASINO_CHIPS.map(c => wordCells(chipLabel(c)))),
+  [WINDOW_DIGITS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS, GLYPH_CELLS, GLYPH_CELLS]
 ];
-export const PANEL_CELLS = PANEL_FACES.reduce((n, w) => n + w + 2 * PANEL_GAP + 1, 1);
+const rowCells = faces => faces.reduce((n, w) => n + w + 2 * PANEL_GAP + 1, 1);
+export const PANEL_ROWS_N = PANEL_LAYOUT === 'A' ? 1 : 2;
+export const PANEL_CELLS = PANEL_LAYOUT === 'A' ? rowCells(PANEL_FACES[0].concat(PANEL_FACES[1]))
+  : Math.max(...PANEL_FACES.map(rowCells));
+// The head: a clear row, the rows of buttons with their rims shared, a
+// clear row; and the funnel's rim under it.
+export const HEAD_H = 2 + PANEL_ROWS_N * (PANEL_ROWS + 1) + 1;
 // ...which is what sets the building's margin past the field, and with it
 // the hopper's width and its funnel's profile: the walls step in evenly
 // from the rim to the floor.

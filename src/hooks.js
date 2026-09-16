@@ -48,6 +48,7 @@ import { dealHand, potAt } from './casino.js';
 import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
 import { table } from './state.js';
 import { pressButton, BUTTONS, panelLayout } from './levers.js';
+import { setDeadLook } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -911,6 +912,8 @@ export const HANDLES = {
   __pressButton: pressButton,
   // a control held mid-motion for a scene: its pull timestamped a minute ahead
   __holdControl: key => { S.leverPulled = { key, at: clockNow() + 60000 }; },
+  // the dead chip's look, for the shots that put the two side by side
+  __deadLook: hollow => setDeadLook(hollow),
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
   __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
   // where a button stands, in the world: the middle of its recess

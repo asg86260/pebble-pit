@@ -695,6 +695,20 @@ export const SCENES = {
     run: () => { window.__casinoStakes(500); window.__crew(0, 0, 1); window.__grant({ shards: 50 });
                  window.__casinoStake('chip-100'); window.__casinoHand(); window.__fast(0.3); window.__spend(400);
                  window.__look(st().casinoX - 380); } },
+  // The head with every state on it: all four coins (sparks by a torn
+  // rift), a chip chosen, one live, one the purse cannot cover, a hand
+  // played so same bet and the sack are live, the sack pressed.
+  casinohead: { about: 'the casino', say: 'the head: every button in every state',
+    run: () => { window.__casinoStakes(6000); window.__crew(0, 0, 1, 1); window.__grant({ shards: 200, spores: 200, sparks: 3 });
+                 window.__casinoStake('chip-10'); window.__casinoHand();
+                 window.__spend(5500); window.__pressButton('chip-100'); window.__holdControl('bank');
+                 window.__look(st().casinoX - 380); } },
+  // ...and the same with the dead chip drawn hollow.
+  casinoheaddead: { about: 'the casino', say: 'the head, a dead chip drawn as a hollow cap',
+    run: () => { window.__deadLook(true); window.__casinoStakes(6000); window.__crew(0, 0, 1, 1); window.__grant({ shards: 200, spores: 200, sparks: 3 });
+                 window.__casinoStake('chip-10'); window.__casinoHand();
+                 window.__spend(5500); window.__pressButton('chip-100');
+                 window.__look(st().casinoX - 380); } },
   // The stake raining in: the arm pulled, the sand coming down out of the
   // sky into the funnel.
   casinopour: { about: 'the casino', say: 'the arm pulled: the stake raining into the funnel',

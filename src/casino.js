@@ -30,7 +30,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, HEAD_H, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -79,10 +79,10 @@ export const busy = () => pouring() || letting() || hoisting();
 // What the next pull stakes is set on the panel: a coin, and one of the four
 // chips, `all` being the whole purse. The purse each coin comes out of.
 export const purseOf = cur =>
-  cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : S.stored;
+  cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : cur === 'spark' ? S.sparks : S.stored;
 // A coin the yard has not handed out yet has no button: ore once the quarry
 // stands, crops once the farm does.
-export const coinOpen = cur => cur === 'shard' ? S.quarryOpen : cur === 'spore' ? S.farmOpen : true;
+export const coinOpen = cur => cur === 'shard' ? S.quarryOpen : cur === 'spore' ? S.farmOpen : cur === 'spark' ? S.riftOpen || S.sparks > 0 : true;
 
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 export const inTray = () => !!S.pot && S.pot.where === 'tray';
@@ -258,7 +258,7 @@ export const hasPeg = (k, c) => {
 // Where the field stands in the world.
 export const fieldAt = () => ({
   x: casino.x + CASINO_MARGIN * P,
-  y: casino.y + (HOPPER_H + GATE_H + CASINO_SIGN_H) * P
+  y: casino.y + (HEAD_H + HOPPER_H + GATE_H + CASINO_SIGN_H) * P
 });
 // Which bin a field column is over, and the slot column within it: a bin is
 // its slot and the wall on its right.

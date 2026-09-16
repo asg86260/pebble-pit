@@ -1,5 +1,5 @@
 import { P } from './yard.js';
-import { BOARD_COLS, CASINO_MARGIN, HOPPER_H, GATE_H, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, PANEL_H, TRAY_H } from './casino.js';
+import { BOARD_COLS, CASINO_MARGIN, HEAD_H, HOPPER_H, GATE_H, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H } from './casino.js';
 
 // The casino sits in the margin the world keeps at its left-hand end, the last
 // building before the rock: a narrow strip, which suits the one building that
@@ -35,7 +35,7 @@ export const TOWER_SHAFT = 8;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // The casino is as wide as its bins and as tall as the machine: the hopper on
 // the roof, its floor, the sign band, the air the stream fans in, ten rows of
-// pegs, the bins, their pay, the panel of buttons, and the tray at the foot, added up rather than
+// pegs, the bins, their pay, and the tray at the foot, with the head of buttons over the hopper, added up rather than
 // tried. Eleven bins two cells wide is twenty-two, and two cells of block
 // either side keep it at the twenty-six it was. See config/casino.js for the
 // parts, and DESIGN.md, "The handful".
@@ -43,7 +43,7 @@ export const TOWER_H = P * 34;       // tall and thin: the one building that goe
 // It is the widest thing on the ground and by some way the tallest, which suits
 // the one building here that produces nothing.
 export const CASINO_W = P * (BOARD_COLS + CASINO_MARGIN * 2);
-export const CASINO_H = P * (HOPPER_H + GATE_H + CASINO_SIGN_H + FIELD_H + BIN_H + LABEL_H + PANEL_H + TRAY_H);
+export const CASINO_H = P * (HEAD_H + HOPPER_H + GATE_H + CASINO_SIGN_H + FIELD_H + BIN_H + LABEL_H + TRAY_H);
 
 // --- the shack at the rock ----------------------------------------------------
 // The rockhands' hut, standing off the rock's left flank. See DESIGN.md, "The

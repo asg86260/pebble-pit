@@ -813,6 +813,10 @@ in the hole -- and the hand is over the moment the button is pressed: the
 next stake can be set and the arm pulled at once, while the last winnings
 are still in the air.
 
+*Being drawn (2026-09-16): the panel's place is moving to a head on top of
+the machine, over the funnel, with a fourth coin button for sparks; two
+layouts are shot for the owner before this section is settled.*
+
 **The panel.** Under the bins' feet, across the building's front, one row of
 face-on push buttons in the idiom already built -- a cap in a white recess
 with a cell of black rim, rims shared along the row like the feet's

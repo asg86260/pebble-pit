@@ -15,8 +15,8 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
-import { LEVERS, leverAt, leverShape, panelLayout, panelTop, buttonShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, PANEL_H, PANEL_ROWS, PANEL_GAP, MARK_CELLS, GLYPH_CELLS, WINDOW_DIGITS, DIGIT_W } from '../config.js';
+import { LEVERS, leverAt, leverShape, panelLayout, buttonShape } from '../levers.js';
+import { ARM_LENGTH, ARM_BOSS, HEAD_H, PANEL_ROWS, PANEL_GAP, MARK_CELLS, GLYPH_CELLS, WINDOW_DIGITS, DIGIT_W, CHIP_DEAD_HOLLOW } from '../config.js';
 import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
@@ -55,7 +55,7 @@ const MID_GAP = 2;
 const SIGN_MIN = WORD.length * GLYPH_W + (WORD.length - 1) * GLYPH_GAP + (MID_GAP - GLYPH_GAP) + SIGN_PAD * 2;
 const SIGN_W = Math.max(SIGN_MIN, BOARD_COLS + CASINO_MARGIN * 2);
 const signX = () => casino.x + casino.w / 2 - (SIGN_W * P) / 2;
-const signY = () => casino.y + (HOPPER_H + GATE_H) * P;
+const signY = () => casino.y + (HEAD_H + HOPPER_H + GATE_H) * P;
 
 function drawSign() {
   const x = signX(), y = signY(), w = SIGN_W, h = CASINO_SIGN_H;
@@ -203,17 +203,28 @@ export function drawCasino() {
     const t = now();
     const f = fieldAt();
 
-    // The block, from the hopper floor down. The hopper itself is open to the
-    // sky: two walls and the floor, with the heap standing in it drawn by
-    // `drawPotPile` over the sky, because that is where it stands.
+    // The head: a boxed band the building's width over the funnel, the
+    // panel of buttons in it, its floor the funnel's rim. Then the block,
+    // from the hopper floor down. The hopper itself is open to the sky
+    // between: two walls and the floor, with the heap standing in it drawn
+    // by `drawPotPile` over the sky, because that is where it stands.
+    const hy = y + HEAD_H * P;
     ctx.fillStyle = '#000';
-    ctx.fillRect(x, y + HOPPER_H * P, w, h - HOPPER_H * P);
+    ctx.fillRect(x, y, w, HEAD_H * P);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + P, y + P, w - 2 * P, (HEAD_H - 2) * P);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, hy, w, h - HEAD_H * P - HOPPER_H * P + 0);
+    ctx.fillRect(x, hy + HOPPER_H * P, w, h - (HEAD_H + HOPPER_H) * P);
     // The funnel: the walls step in a row at a time along `HOPPER_PROFILE`,
     // the building's own wall plus the inset, so the bowl the heap sits in is
     // the shape the sand rules see.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x, hy, w, HOPPER_H * P);
+    ctx.fillStyle = '#000';
     HOPPER_PROFILE.forEach((inset, r) => {
-      ctx.fillRect(x, y + r * P, (1 + inset) * P, P);
-      ctx.fillRect(x + w - (1 + inset) * P, y + r * P, (1 + inset) * P, P);
+      ctx.fillRect(x, hy + r * P, (1 + inset) * P, P);
+      ctx.fillRect(x + w - (1 + inset) * P, hy + r * P, (1 + inset) * P, P);
     });
 
     // The floor, open: it splits from the middle over `CASINO_GATE_MS`, the
@@ -224,7 +235,7 @@ export function drawCasino() {
       const k = Math.min(1, (t - S.drop.at) / Math.max(1, CASINO_GATE_MS));
       const open = 1 + 2 * Math.round(k * (GATE_W - 1) / 2);
       ctx.fillStyle = '#fff';
-      ctx.fillRect(x + w / 2 - (open * P) / 2, y + HOPPER_H * P, open * P, GATE_H * P);
+      ctx.fillRect(x + w / 2 - (open * P) / 2, hy + HOPPER_H * P, open * P, GATE_H * P);
     }
 
     drawSign();
@@ -301,7 +312,7 @@ export function drawCasino() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
 
-    // The panel of buttons under the feet, and the arm beside the funnel:
+    // The panel of buttons in the head, and the arm on its right wall:
     // black when it can be worked or is the chosen one, grey when it cannot.
     drawPanel();
     for (const l of LEVERS) drawControl(l);
@@ -327,7 +338,8 @@ const LETTER = {
 const MARK = {
   dust:  ['11111', '11111', '11111', '11111', '11111'],
   shard: ['00100', '00100', '01110', '01110', '11111'],
-  spore: ['01110', '11111', '11111', '11111', '01110']
+  spore: ['01110', '11111', '11111', '11111', '01110'],
+  spark: ['00100', '00100', '11111', '00100', '00100']
 };
 
 function cells(rows, x0, y0) {
@@ -348,10 +360,6 @@ const windowText = n => n < 10 ** WINDOW_DIGITS ? String(Math.round(n))
 LETTER['M'] = ['10001', '11011', '10101', '10001', '10001'];
 
 function drawPanel() {
-  const top = panelTop();
-  // the band the panel sits in, white, a clear row above and below the rims
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(casino.x + P, top, casino.w - 2 * P, PANEL_H * P);
   for (const at of panelLayout()) {
     const b = at.button;
     // the rim, and the recess in it
@@ -377,6 +385,14 @@ function drawPanel() {
       continue;
     }
     const shape = buttonShape(b);
+    // a chip the purse cannot cover, drawn hollow: a black rim a cell inside
+    // the recess round a white center, the figure grey in it
+    if (CHIP_DEAD_HOLLOW && f.word && !shape.live && !shape.pressed) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(at.x + P, at.y + P, at.w - 2 * P, at.h - 2 * P);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(at.x + 2 * P, at.y + 2 * P, at.w - 4 * P, at.h - 4 * P);
+    }
     ctx.fillStyle = shape.pressed || !shape.live ? PEG_SHADE : (f.word || f.mark) && !shape.on ? PEG_SHADE : '#000';
     if (f.mark) cells(MARK[f.mark], fx, fy);
     else if (f.glyph) cells(GLYPHS[f.glyph], fx, fy);
