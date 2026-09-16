@@ -17,7 +17,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, LAND_HOP_MS } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
 
@@ -140,6 +140,17 @@ export const SCENES = {
     } },
   // The beat the view eases back out over: with the full picture the view is
   // still on its way; under reduced motion it is already the yard's framing.
+  // The first rock halfway down: the one it is coming down on is still stood
+  // there, and the other is already in the air. The whole fall is shorter than
+  // the second the shot tool runs after a scene, so this stops in the chat,
+  // with a second less half the fall (`dropMs`) of talking left.
+  introfall: { about: 'the story', say: 'the opening, the first rock on its way down',
+    run: () => {
+      window.__motion(false); window.__reset(true);
+      for (let i = 0; i < 1800 && S.beat.yard !== 'chat'; i++) window.__fast(1 / 60);
+      const lead = 1000 - dropMs() / 2;
+      for (let i = 0; i < 900 && INTRO_CHAT_MS - (now() - S.introAt) > lead; i++) window.__fast(1 / 60);
+    } },
   introup: { about: 'the story', say: 'the opening, the one left standing getting up',
     run: () => { window.__motion(false); window.__reset(true); window.__fast(12.5); } },
   introstill: { about: 'the story', say: 'the same beat under reduced motion',

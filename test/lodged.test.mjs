@@ -79,3 +79,23 @@ group('the dig is longer than any gap the rocks leave', () => {
     ok(BURIED_DIG_S > meet, 'and longer than the reunion', `${BURIED_DIG_S}s vs ${meet}s`)
   ];
 });
+
+// The first rock, on its way down: the one it is coming down on is still stood
+// there until it lands. The lodged square used to show through the ground the
+// moment the rock was made, seconds before it arrived.
+group('the first rock falls on somebody stood there, not on somebody already in the ground', () => {
+  const checks = [];
+  window.__reset(true);                        // the opening, playing
+  // Frame by frame: the whole fall is shorter than a second.
+  const until = (done, s) => { for (let i = 0; i < s * 60; i++) { run(1 / 60); if (done()) return true; } return false; };
+  const fell = until(() => state().beat.yard === 'fall', 20);
+  checks.push(ok(fell, 'the rock is on its way'));
+  checks.push(ok(state().buried && !state().buriedVisible, 'nobody in the ground yet', `visible ${state().buriedVisible}`));
+  checks.push(ok(state().pair === 2, 'both of them still stood there', `pair ${state().pair}`));
+  run(1 / 60);
+  checks.push(ok(!state().buriedVisible && state().pair === 2, 'and a frame on, the same'));
+  const landed = until(() => state().beat.yard === 'down', 10);
+  checks.push(ok(landed, 'and it lands'));
+  checks.push(ok(state().pair === 1, 'on one of them', `pair ${state().pair}`));
+  return checks;
+});
