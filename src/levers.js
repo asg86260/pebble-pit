@@ -7,71 +7,94 @@
 // and the hit test; render/casino.js draws them off `leverShape` and
 // `panelLayout`.
 
-import { P, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_HIT, LEVER_SWING_MS,
-         BUTTON_PRESS_MS, PANEL_ROWS, PANEL_ROWS_N, PANEL_GAP, PANEL_COINS, WINDOW_DIGITS, CASINO_CHIPS } from './config.js';
+import { P, HOPPER_H, GATE_H, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_HIT, LEVER_SWING_MS, BUTTON_PRESS_MS,
+         PANEL_COINS, CASINO_CHIPS, MARK_CELLS, GLYPH_CELLS, WINDOW_CELLS, CAP_PAD, CAP_ROWS, DIGIT_H,
+         DECK_GROUP_GAP, DECK_BUTTON_GAP, DECK_PAD, DECK_GROUPS_W, GROUP_H, LABEL_ROWS, DECK_TWO_ROWS } from './config.js';
 import { S, casino } from './state.js';
 import { canLet, letGo, canBank, bank, canPick, pickCoin, pickChip, coinOpen, chipCovered, sameBet, canSame } from './casino.js';
 import { now } from './clock.js';
 import { coarse } from './prefs.js';
 
 // The arm: which wall it is on, how far down the building its boss sits, and
-// the two halves of a decision -- may it, and do it. It stands on the head's
-// right wall, the top-right thing on the machine.
+// the two halves of a decision -- may it, and do it. It stands on the deck's
+// right wall, under the funnel's rim.
 export const LEVERS = [
   { key: 'casino-gate', name: 'the arm', kind: 'arm',
-    side: 'right', row: () => 4, live: canLet, pull: letGo }
+    side: 'right', row: () => HOPPER_H + GATE_H + 3, live: canLet, pull: letGo }
 ];
 
-// The panel, left to right: the coins, the chips, the window, same bet, the
-// sack. Each button says what it wears (`face`) and how wide its recess is,
-// in cells -- the glyph plus a cell of air each side -- so the row is as
-// wide as its words and no wider. `live` is whether it may be pressed,
-// `on` whether it is the chosen one.
+// The deck's buttons, in their groups: COIN, BET with the window, PLAY.
+// Each says what it wears (`face`) and how wide and tall its face is, in
+// cells; the cap round it is the face and a pad. `live` is whether it may be
+// pressed, `on` whether it is the chosen one.
 const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
 const COIN_NAME = { dust: 'pebbles', spore: 'crops', shard: 'ore', spark: 'sparks' };
 export const BUTTONS = [
   ...PANEL_COINS.map(cur => ({
-    key: `coin-${cur}`, name: COIN_NAME[cur], row: 0,
-    face: { mark: cur }, w: 5 + 2 * PANEL_GAP,
+    key: `coin-${cur}`, name: COIN_NAME[cur], group: 0,
+    face: { mark: cur }, w: MARK_CELLS, h: MARK_CELLS,
     shown: () => coinOpen(cur), live: () => canPick(), on: () => S.coin === cur, pull: () => pickCoin(cur)
   })),
   ...CASINO_CHIPS.map((chip, i) => ({
-    key: `chip-${chipLabel(chip).toLowerCase()}`, name: chip === 'all' ? 'all in' : String(chip), row: 0,
-    face: { word: chipLabel(chip) }, w: wordCells(chipLabel(chip)) + 2 * PANEL_GAP,
+    key: `chip-${chipLabel(chip).toLowerCase()}`, name: chip === 'all' ? 'all in' : String(chip), group: 1,
+    face: { word: chipLabel(chip) }, w: wordCells(chipLabel(chip)), h: DIGIT_H,
     shown: () => true, live: () => canPick() && chipCovered(chip), on: () => S.chip === i, pull: () => pickChip(i)
   })),
-  { key: 'window', name: null, row: 1, face: { window: true }, w: WINDOW_DIGITS * 4 + 5 + 2 * PANEL_GAP,
+  { key: 'window', name: null, group: 1, face: { window: true }, w: WINDOW_CELLS - 2 * CAP_PAD, h: DIGIT_H + 2,
     shown: () => true, live: () => true, on: () => false, pull: null },
-  { key: 'same', name: 'same bet', row: 1, face: { glyph: 'again' }, w: 8 + 2 * PANEL_GAP,
+  { key: 'same', name: 'same bet', group: 2, face: { glyph: 'again' }, w: GLYPH_CELLS, h: GLYPH_CELLS,
     shown: () => true, live: canSame, on: () => false, pull: sameBet },
-  { key: 'bank', name: 'bank', row: 1, face: { glyph: 'sack' }, w: 8 + 2 * PANEL_GAP,
+  { key: 'bank', name: 'bank', group: 2, face: { glyph: 'sack' }, w: GLYPH_CELLS, h: GLYPH_CELLS,
     shown: () => true, live: canBank, on: () => false, pull: bank }
 ];
+export const GROUP_LABELS = ['COIN', 'BET', 'PLAY'];
 
 // The digit face is three cells a figure and a cell of air between (the
 // sign's, see render/casino.js); 'k' and the letters are the same width.
 function wordCells(word) { return word.length * 3 + (word.length - 1); }
 
-// Where each button stands in the head: the shown ones laid left to right,
-// rims shared, each row centered on the front -- one row, or two with the
-// coins and chips above and the window, same bet and the sack below (the
-// rows share their rim too). Returns [{ button, x, y, w, h }] in world
-// pixels, the box being the recess plus its rim.
-export function panelLayout() {
-  const out = [];
-  for (let r = 0; r < PANEL_ROWS_N; r++) {
-    const shown = BUTTONS.filter(b => b.shown() && (PANEL_ROWS_N === 1 || b.row === r));
-    const cells = shown.reduce((n, b) => n + b.w + 1, 1);
-    const left = casino.x + Math.floor((casino.w / P - cells) / 2) * P;
-    const y = casino.y + P + r * (PANEL_ROWS + 1) * P;
-    let x = left;
-    for (const b of shown) {
-      out.push({ button: b, x, y, w: (b.w + 2) * P, h: (PANEL_ROWS + 2) * P });
-      x += (b.w + 1) * P;
+// Where the deck's band stands on the building: under the funnel's floor.
+export const deckTop = () => casino.y + (HOPPER_H + GATE_H) * P;
+
+// Where each group and each cap stands. The groups are laid left to right
+// with `DECK_GROUP_GAP` between and the row centered on the front -- or, in
+// two rows, COIN and BET above and PLAY below under the window's end. A
+// group's recess is as wide as its caps need; the caps stand in it a gap
+// apart, each centered on the recess's height. A coin the yard has not
+// handed out has no cap, and its group is that much narrower. Returns
+// { groups: [{ label, x, y, w, h }], caps: [{ button, x, y, w, h }] } in
+// world pixels; a cap's box is its face and pad.
+export function deckLayout() {
+  const groups = [], caps = [];
+  const shownIn = g => BUTTONS.filter(b => b.group === g && b.shown());
+  const widthOf = g => {
+    const bs = shownIn(g);
+    return bs.reduce((n, b) => n + b.w + 2 * CAP_PAD, 0) + (bs.length - 1) * DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
+  };
+  const rowY = r => deckTop() + P + r * (GROUP_H + LABEL_ROWS) * P;
+  const lay = (g, x, y) => {
+    const w = widthOf(g) * P, h = GROUP_H * P;
+    groups.push({ label: GROUP_LABELS[g], x, y, w, h });
+    let cx = x + (1 + DECK_PAD) * P;
+    for (const b of shownIn(g)) {
+      const cw = (b.w + 2 * CAP_PAD) * P, ch = (b.h + 2 * CAP_PAD) * P;
+      caps.push({ button: b, x: cx, y: y + P + Math.floor((GROUP_H - 2 - (b.h + 2 * CAP_PAD)) / 2) * P, w: cw, h: ch });
+      cx += cw + DECK_BUTTON_GAP * P;
     }
+    return w;
+  };
+  const top = DECK_TWO_ROWS ? [0, 1] : [0, 1, 2];
+  const cells = top.reduce((n, g) => n + widthOf(g), 0) + (top.length - 1) * DECK_GROUP_GAP;
+  let x = casino.x + Math.floor((casino.w / P - cells) / 2) * P;
+  for (const g of top) x += lay(g, x, rowY(0)) + DECK_GROUP_GAP * P;
+  if (DECK_TWO_ROWS) {
+    // PLAY under the window: its right edge on BET's
+    const bet = groups[1];
+    lay(2, bet.x + bet.w - widthOf(2) * P, rowY(1));
   }
-  return out;
+  return { groups, caps };
 }
+export const panelLayout = () => deckLayout().caps;
 
 // Where a control's pivot is, in the world: on the wall, `row` cells down
 // from the roof, and which way it reaches out. The arm's pivot stands out

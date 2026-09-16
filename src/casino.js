@@ -30,7 +30,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, HEAD_H, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, DECK_H, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -258,7 +258,7 @@ export const hasPeg = (k, c) => {
 // Where the field stands in the world.
 export const fieldAt = () => ({
   x: casino.x + CASINO_MARGIN * P,
-  y: casino.y + (HEAD_H + HOPPER_H + GATE_H + CASINO_SIGN_H) * P
+  y: casino.y + (HOPPER_H + GATE_H + DECK_H + CASINO_SIGN_H) * P
 });
 // Which bin a field column is over, and the slot column within it: a bin is
 // its slot and the wall on its right.
@@ -288,7 +288,7 @@ const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
 // (negative rows are the gate and the sign band above the field), its ten
 // coins, and its shade. It starts in the gate.
 const makeGrain = (s, demo = false) => ({
-  c: START_COL, r: -(GATE_H + CASINO_SIGN_H), trail: [],
+  c: START_COL, r: -(GATE_H + DECK_H + CASINO_SIGN_H), trail: [],
   k: 0, seat: false, beat: 0, acc: 0, path: drawPath(), s, demo, landed: false
 });
 

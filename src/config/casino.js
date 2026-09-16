@@ -78,6 +78,7 @@ export const PEG_ROW_H = 3;
 // steps across a row, so the fan of ten rows reaches the outer bins exactly.
 // The two edge bins are wider still: their pay is two digits and a gap.
 export const DIGIT_W = 3;                      // the pay face's glyph, in cells
+export const DIGIT_H = 5;
 export const HALF_W = DIGIT_W + 2;             // and the half's: a point, air, a digit
 export const PAY_AIR = 1;                      // clear cells each side of a pay
 export const BIN_W = HALF_W + 2 * PAY_AIR + 1;
@@ -101,60 +102,65 @@ export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- the controls on the building ---------------------------------------------------
 // The arm is a slot machine's: a tall stem up from a boss on the wall by the
-// funnel with a ball on the end, the biggest knob on the building, that
-// swings down through most of a half turn when pulled and comes back up
-// slower; dead, it lies at the bottom of its swing. The panel under the
-// bins' feet is a row of face-on push buttons: each a white recess with a
-// cell of black rim, rims shared along the row, wearing what it does -- a
-// coin's mark, a chip's figure, the sack, the same-bet turn -- black when
-// live or chosen, grey when dead or not, and grey for a beat when pressed.
-// Between the chips and the sack a boxed window says what the pull stakes.
-// A thumb needs more than a stem to find, so on a phone every hit box opens
-// out to `LEVER_HIT` cells.
+// deck with a ball on the end, the biggest knob on the building, that swings
+// down through most of a half turn when pulled and comes back up slower;
+// dead, it lies at the bottom of its swing. The deck is the band under the
+// funnel: three boxed groups with air between them the way a real button
+// deck is clustered -- COIN, BET with the stake window, PLAY -- each button
+// a cap in its group's recess, black when chosen or live, grey when not,
+// hollow when the purse cannot cover it, and a small label under each
+// group. A thumb needs more than a stem to find, so on a phone every hit box
+// opens out to `LEVER_HIT` cells.
 export const ARM_LENGTH = 8;              // the arm's stem, in cells
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
 export const ARM_SWING = (2 * Math.PI) / 3;   // how far down it swings
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
 export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
 export const BUTTON_PRESS_MS = 200;       // a pressed button reads pressed this long
-export const PANEL_ROWS = 9;              // a button's recess is this tall, glyph and air
-export const PANEL_GAP = 1;               // clear cells between a glyph and its recess's rim
-export const MARK_CELLS = 5;              // a coin's mark on a button, in cells square
+export const DECK_GROUP_GAP = 4;          // clear cells between the groups
+export const DECK_BUTTON_GAP = 1;         // clear cells between caps in a group
+export const DECK_PAD = 1;                // clear cells between a group's caps and its rim
+export const CAP_PAD = 1;                 // clear cells between a face and its cap's edge
+export const CAP_ROWS = 8 + 2 * CAP_PAD;  // the tallest cap: a shelf glyph and its pad
+export const MARK_CELLS = 5;              // a coin's mark on its cap, in cells square
 export const GLYPH_CELLS = 8;             // the sack and the same-bet turn: a shelf glyph, a cell a pixel
-export const WINDOW_DIGITS = 4;           // the stake window shows up to this many figures ("12k" past that)
-// The panel is the machine's head: a boxed band the building's width
-// standing above the funnel, the funnel's rim its floor, the arm's boss on
-// its right wall. Two layouts are drawn: 'A' one row, the building as wide
-// as the row needs; 'B' two rows -- coins and chips above, the window, same
-// bet and the sack below -- and the building as wide as its field.
-export let PANEL_LAYOUT = 'A';
-// How a chip the purse cannot cover is drawn: grey like an unchosen one, or
-// a hollow cap -- a black rim inside the recess round a white center.
-export let CHIP_DEAD_HOLLOW = false;
-export const setDeadLook = hollow => { CHIP_DEAD_HOLLOW = !!hollow; };
+export const WINDOW_CHARS = 5;            // the stake window: this many figures of the digit face, "12.5k"
+export const DECK_LABELS = true;          // COIN / BET / PLAY under the groups, in the small face
+// Whether the PLAY group drops to a second row under the window rather than
+// standing beside BET -- the narrower deck.
+export let DECK_TWO_ROWS = false;
+export const setDeckRows = two => { DECK_TWO_ROWS = !!two; };
 export const PANEL_COINS = ['dust', 'spore', 'shard', 'spark'];
+// How a chip the purse cannot cover is drawn: a hollow cap, or grey like an
+// unchosen one.
+export let CHIP_DEAD_HOLLOW = true;
+export const setDeadLook = hollow => { CHIP_DEAD_HOLLOW = !!hollow; };
 // A chip's figure on its button, and a figure's width in the sign's face:
 // three cells a figure and a cell of air between.
 export const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
 export const wordCells = word => word.length * DIGIT_W + (word.length - 1);
-// The panel's rows: every button's recess -- its face and a cell of air
-// each side -- and the rims between and around them; the widest row is
-// what sets the building's margin past the field.
-const PANEL_FACES = [
-  PANEL_COINS.map(() => MARK_CELLS).concat(CASINO_CHIPS.map(c => wordCells(chipLabel(c)))),
-  [WINDOW_DIGITS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS, GLYPH_CELLS, GLYPH_CELLS]
+// The groups' widths, in cells: each cap is its face and a pad each side,
+// the caps a gap apart, a pad and a rim round the lot.
+const capW = face => face + 2 * CAP_PAD;
+const groupW = faces => faces.reduce((n, f) => n + capW(f), 0) + (faces.length - 1) * DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
+export const WINDOW_CELLS = WINDOW_CHARS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS + 2;
+export const DECK_GROUPS_W = [
+  groupW(PANEL_COINS.map(() => MARK_CELLS)),
+  groupW(CASINO_CHIPS.map(c => wordCells(chipLabel(c))).concat([WINDOW_CELLS])),
+  groupW([GLYPH_CELLS, GLYPH_CELLS])
 ];
-const rowCells = faces => faces.reduce((n, w) => n + w + 2 * PANEL_GAP + 1, 1);
-export const PANEL_ROWS_N = PANEL_LAYOUT === 'A' ? 1 : 2;
-export const PANEL_CELLS = PANEL_LAYOUT === 'A' ? rowCells(PANEL_FACES[0].concat(PANEL_FACES[1]))
-  : Math.max(...PANEL_FACES.map(rowCells));
-// The head: a clear row, the rows of buttons with their rims shared, a
-// clear row; and the funnel's rim under it.
-export const HEAD_H = 2 + PANEL_ROWS_N * (PANEL_ROWS + 1) + 1;
+export const DECK_CELLS = DECK_TWO_ROWS
+  ? DECK_GROUPS_W[0] + DECK_GROUP_GAP + DECK_GROUPS_W[1]
+  : DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP;
+// A group's recess: rim, pad, the tallest cap, pad, rim; the label under
+// it; and the deck: a clear row, one or two rows of groups, a clear row.
+export const GROUP_H = CAP_ROWS + 2 * (DECK_PAD + 1);
+export const LABEL_ROWS = DECK_LABELS ? DIGIT_H + 1 : 0;
+export const DECK_H = 1 + (GROUP_H + LABEL_ROWS) * (DECK_TWO_ROWS ? 2 : 1) + 1;
 // ...which is what sets the building's margin past the field, and with it
 // the hopper's width and its funnel's profile: the walls step in evenly
 // from the rim to the floor.
-export const CASINO_MARGIN = Math.max(2, Math.ceil((PANEL_CELLS + 2 - BOARD_COLS) / 2));
+export const CASINO_MARGIN = Math.max(2, Math.ceil((DECK_CELLS + 2 - BOARD_COLS) / 2));
 export const HOPPER_COLS = BOARD_COLS + 2 * CASINO_MARGIN - 2;
 export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
   Math.round(r * ((HOPPER_COLS - HOPPER_FLOOR) / 2) / (HOPPER_H - 1)));
