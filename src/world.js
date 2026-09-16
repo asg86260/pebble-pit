@@ -235,6 +235,7 @@ export function refreshPiles() {
     // strip only *appears* once the site is standing, because until then
     // nothing pays out on to it.
     ...(S.strips || []).filter(p => (p.key !== 'scrub' || S.scrubOpen)
+                                 && (p.key !== 'casino' || S.casinoOpen)
                                  && (p.key !== 'sky' || S.meteorOpen)),
     // and the rock's, worked out fresh every time, because the rock it stands
     // off from is a different size for every boulder

@@ -11,8 +11,8 @@
 // the chip row, the let-go row, the two decisions. The spread the design hangs
 // on is measured two thousand hands at a time in handful.test.mjs.
 
-import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
-import { CASINO_BINS, CASINO_HANDFUL, CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM } from '../src/config.js';
+import { yard, group, ok, state, run, runUntil, quickCrew } from './helpers.mjs';
+import { CASINO_BINS, CASINO_HANDFUL, CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, PILE_LIMIT } from '../src/config.js';
 import { shownFor } from '../src/casino.js';
 
 // The table, opened without the dust it costs, with dust in the hole to stake
@@ -186,28 +186,71 @@ group('drop again hoists the tray back to the hopper and the next hand is off th
   ];
 }, { reload: false });
 
-group('bank it pays the hole to the grain', async () => {
+// Banking is a heap on the ground, and the crew carries it in. The chute
+// tips the tray on to the casino's strip -- a tray grain lands as the grains
+// it is worth -- and the counter moves as the haulers' loads land in the hole.
+group('the chute tips the tray on to the strip and the haulers carry it to the hole', async () => {
   atTheTable();
   window.__dig(23);                                  // room for it
   staked();
   const s = playHand().s;
   const on = s.pot ? s.pot.on : 0;
   const held = state().stored;
+  const strip = state().piles.find(p => p.key === 'casino');
   const took = window.__buy('bank');
   run(0.6);
   const flying = state();
   runUntil(() => state().tableAir === 0 && !state().paying, 30);
+  const tipped = state();
+  const onGround = tipped.pileCount.casino;
+  window.__crew(0, 4);                               // and now somebody to carry it
+  quickCrew();
+  const carried = runUntil(() => state().stored >= held + on, 240);
   const landed = state();
   return [
-    ok(on > 0 && took, 'there is a pot to take, and taking it goes through its row', `${on}`),
+    ok(on > 0 && took, 'there is a pot to take, and the chute opens through its row', `${on}`),
+    ok(!!strip && strip.to <= s.casinoX, 'the casino has a strip on the ground at its left',
+       strip && `${strip.from}..${strip.to}, building at ${s.casinoX}`),
     ok(flying.tableAir > 0 && flying.paying !== null,
-       'taking it puts the tray in the air', `${flying.tableAir} flying, ${flying.paying} still to go`),
-    ok(flying.stored < held + on, 'and the counter does not move until it gets there',
-       `${flying.stored} vs ${held + on}`),
-    ok(landed.stored === held + on, 'every grain that set off is counted when it lands',
-       `${held} + ${on} -> ${landed.stored}`),
-    ok(landed.tray === 0 && landed.pot === null, 'and nothing is left behind',
-       `${landed.tray} in the tray`)
+       'opening it puts the tray in the air', `${flying.tableAir} flying, ${flying.paying} still to go`),
+    ok(flying.stored === held, 'and the counter does not move for it',
+       `${flying.stored} vs ${held}`),
+    ok(onGround === on, 'the pot lies on the strip to the grain',
+       `${onGround} on the ground for a pot of ${on}`),
+    ok(tipped.tray === 0 && tipped.pot === null, 'and the tray is bare',
+       `${tipped.tray} in the tray`),
+    ok(carried && landed.stored === held + on,
+       'and the haulers carry it to the hole, the counter moving as each load lands',
+       `${held} + ${on} -> ${landed.stored}`)
+  ];
+}, { reload: false });
+
+// A pot has to have somewhere to land: a full strip holds the chute, the pot
+// waits in the tray, and the mark over the strip says why.
+group('a full strip holds the chute', async () => {
+  atTheTable();
+  window.__dig(23);
+  staked();
+  const s = playHand().s;
+  const on = s.pot ? s.pot.on : 0;
+  const strip = state().piles.find(p => p.key === 'casino');
+  window.__pile((strip.from + strip.to) / 2, PILE_LIMIT.casino);
+  run(0.5);
+  const full = state();
+  const took = window.__buy('bank');
+  run(3);
+  const held = state();
+  window.__clearFloor();
+  runUntil(() => !state().paying && state().tableAir === 0, 30);
+  const after = state();
+  return [
+    ok(on > 0 && took, 'the chute is pulled on a pot', `${on}`),
+    ok(full.pileMarks.includes('casino'), 'the strip is full and its mark stands',
+       full.pileMarks.join(',')),
+    ok(held.paying === on && held.tray > 0, 'so the pot waits in the tray',
+       `${held.paying} still to go, ${held.tray} in the tray`),
+    ok(after.paying === null && after.pileCount.casino === on,
+       'and runs out once there is room', `${after.pileCount.casino} on the ground`)
   ];
 }, { reload: false });
 

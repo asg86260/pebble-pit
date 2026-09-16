@@ -25,7 +25,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
+import { PILE_LIMIT, CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -35,11 +35,11 @@ import { CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
-import { S, pit, casino, table, tray } from './state.js';
+import { S, pit, casino, table, tray, floor } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
-import { shakeView } from './world.js';
+import { shakeView, blocked } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld } from './pit.js';
 import { rand } from './rng.js';
@@ -97,13 +97,11 @@ export const canStake = cur =>
 // The pot is standing in the hopper and nothing is moving: the floor can open.
 export const canLet = () => inHopper() && !busy();
 
-// A pot can be taken whenever it is standing in the tray and nothing is still
-// moving. It used to wait for the hole to have room for the whole of it, from
-// when a full hole turned grains away and a pot with nowhere to land was a pot
-// lost. The hole does not refuse any more -- the first grain it cannot take
-// tears the rift and goes through it, see `throughRift` in pit.js -- so a
-// winnings row that stayed dead over a full hole was a bet you had won and
-// could not collect, for a rule about sand that no longer holds.
+// A pot can be tipped out whenever it is standing in the tray and nothing is
+// still moving. Where it goes is the ground beside the building, and that
+// ground has a limit: the chute holds while the casino's strip is full (see
+// `chuteOpen`), and the pot waits in the tray until the haulers have made
+// room -- a pot has to have somewhere to land, with the waiting visible.
 export const canBank = () => inTray() && !busy();
 
 // And putting the same pot back on the roof.
@@ -502,23 +500,31 @@ function stopAttract() {
 }
 
 // --- taking it, or dropping it again -------------------------------------------------
-// Taking it is not a number moving from one counter to another. The pot is sand
-// in the tray at the far end of the yard and the hole is at the other end, so
-// what banking looks like is the whole of it going over: grain by grain, off
-// the tray, up over the works in a long arc, and down into the hole where
-// everything else in this game ends up. Every grain that leaves is a grain the
-// hole counts when it lands -- nothing is added at this end and nothing arrives
-// that did not set off.
+// Banking is a heap on the ground, and the crew carries it in. The chute
+// opens the tray's floor and the paid sand runs out of the foot of the
+// building on to the casino's strip, where it heaps as a real pile of the
+// staked coin: a tray grain is worth its band, and it lands as that many
+// grains, so what lies on the ground IS the pot, and the counter moves as the
+// haulers' loads land in the hole. A win is collected, not credited -- it was
+// the one thing in the yard still credited rather than carried.
 export function bank() {
   if (!canBank()) return;
-  // What flies is the heap that is there -- which past the first band is fewer
-  // squares than the pot is units -- and each of them carries its share of the
-  // number. `left` is the pot itself and it is paid out to the grain.
+  // `left` is the pot itself and it is paid out to the grain, however the
+  // rounding of a grain's worth falls.
   S.paying = { cur: S.pot.cur, left: pot(), grains: Math.max(1, tray.n) };
   S.pot = null;
   S.hand = null;                                 // taken: there is nothing to report
   S.shopStale = true;
 }
+
+// The casino's strip, and whether the chute may let another grain out on to
+// it: what lies there plus what is already in the air toward it has to stay
+// under the strip's limit, or the ground would refuse a grain and the hole
+// would be paid for a grain nobody carried.
+const casinoStrip = () => S.piles.find(p => p.key === 'casino');
+const toStrip = () => S.tableAir.reduce((n, k) => n + (k.lands === 'strip' ? (k.worth || 1) : 0), 0);
+export const chuteOpen = () =>
+  !!casinoStrip() && (S.pileCount?.casino || 0) + toStrip() < PILE_LIMIT.casino;
 
 // Put the whole of it back on the roof. The tray's grains lift in a rising arc
 // up the face of the building and drop into the hopper, sounding the pour's
@@ -572,10 +578,11 @@ function hoistStep(dt) {
 
 function payOutStep(dt) {
   const p = S.paying;
+  const strip = casinoStrip();
   let n = Math.min(p.grains, Math.max(1, Math.ceil(p.grains * (dt / TRICKLE_MS))));
   const find = potShade(p.cur);
-  while (n-- > 0 && p.grains > 0) {
-    let x = tray.x + tray.cols * P / 2, y = S.groundY - P, v = find ? someFind(find) : 4;
+  while (n-- > 0 && p.grains > 0 && chuteOpen()) {
+    let x = tray.x, y = S.groundY - P, v = find ? someFind(find) : 4;
     const c = topmostColumn(tray);                 // off the heap if there is any left
     if (c >= 0) {
       const r = topGrain(tray, c);
@@ -594,17 +601,18 @@ function payOutStep(dt) {
       : p.left;
     p.left -= worth;
     p.grains--;
+    // out of the hatch in the foot's left wall and a short lob on to the strip
     S.tableAir.push({
-      x, y, s: v, t: 0, worth,
-      // Not a ballistic lob: the hole is three thousand pixels away and the arc
-      // that gets there under gravity is one that leaves the sky. This is a
-      // thrown line with a hump in it, which is what a long throw looks like.
-      arc: { x0: x, y0: y, x1: pit.x + rand() * Math.min(700, pit.w),
-             y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30, ms: FLIGHT_MS }
+      x, y, s: v, t: 0, worth, lands: 'strip',
+      // inside the strip's own columns, a cell in from either end, so the ground
+      // it lands on is the ground the survey counts as the casino's
+      arc: { x0: x, y0: y, x1: strip.from + P + rand() * (strip.to - strip.from - P * 2),
+             y1: S.groundY - P, k: 0, high: P * 4 + rand() * P * 4, ms: CHUTE_MS }
     });
   }
   if (p.grains < 1 && p.left < 1) { S.paying = null; }
 }
+const CHUTE_MS = 700;
 
 // --- the two plots ---------------------------------------------------------------------
 // Both are walled: a heap stands up to the rim and then walks sideways, so an
@@ -847,9 +855,19 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         if (k.lands === 'hopper') { k.arc = null; k.vx = 0; k.vy = 0.5; continue; }
-        // One square off the heap is worth its band, and the hole takes the
-        // whole of it: down there the pile *is* the dust, and that rule outranks
-        // the reading over here.
+        // One square off the tray is worth its band, and on the ground it is
+        // that many grains: the pile IS the pot, for the haulers to carry. The
+        // chute holds while the strip is full, so the ground takes them; a
+        // grain it still refuses goes to the hole rather than nowhere.
+        if (k.lands === 'strip') {
+          for (let w = k.worth ?? 1; w > 0; w--) if (!addGrain(floor, a.x1, blocked, k.s)) bankDust(a.x1, k.s);
+          sfx('grain-land', { x: a.x1 });
+          S.tableAir.splice(i, 1);
+          continue;
+        }
+        // A pot lifted out of the hopper and let go on the ground goes back to
+        // the purse the way banking used to: over the works and into the hole,
+        // and down there the pile *is* the dust.
         for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
         S.tableAir.splice(i, 1);
       }
