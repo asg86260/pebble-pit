@@ -88,7 +88,7 @@ export const GLYPH_OF = {
   props: ['planks'], net: ['net'], arch: ['arch'], askwizards: ['point'],
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
   critchance: ['spark'], critmult: ['cracked'],
-  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], belt: ['belt'], tunebelt: ['belt', 'plus'],
+  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], belt: ['belt'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockscrub: ['fan'],
   // the house and the closet

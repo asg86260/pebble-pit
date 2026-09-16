@@ -2752,11 +2752,18 @@ to do with it.
 Red buys them, and dust like every other row. The rungs live on the board of the
 building the machine stands in -- the jaw's at the quarry, the tiller's at the
 farm, the ram's under `the rock` -- which is the rule the boards were always
-supposed to follow. The belt's is the exception the rule allows for: carrying
-has no station, so the belt and its ladder sit on the bench under the haulers'
-heading, with the rest of what a hauler is issued. (It was sold at the house
-for a while as the crew's machine, which put a shelf of machinery on the sheet
-you go to for a roof.)
+supposed to follow. The belt is the exception the rule allows for: carrying
+has no station, so the belt sits on the bench under the haulers' heading, with
+the rest of what a hauler is issued. (It was sold at the house for a while as
+the crew's machine, which put a shelf of machinery on the sheet you go to for
+a roof.)
+
+The belt has **no ladder**. It had one, and the rung bought nothing you could
+see: the belt's scoop only lifts what is lying loose, the rock's spoil lands on
+the band straight off the shovel (`catchBelt`) without a beat being spent, and
+the band runs at one pace. The belt is limited by what the ram drops, not by
+its own clock, so a faster scoop found nothing faster. Three ladders are sink
+enough.
 
 **Endless is load-bearing, not decoration.** A five-rung ladder has a finite
 total cost, and a finite total cost puts the surplus straight back where it was.
