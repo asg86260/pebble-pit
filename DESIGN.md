@@ -788,110 +788,113 @@ the middle and a hoist's height can each move a strike without a recipe of
 their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
 recipe is the rock's hit cut short. Nobody has listened to it yet.
 
-## The machine (design, 2026-09-16)
+## The pour (design, not built)
 
-**Played, the building was unusable: nothing on it said what it did.** Four
-casinos stood here in two days, each built, played and cut: the board of
-rows (a menu, and nothing else in the yard is bought from a menu); the
-twelve heaps of the chip sizes carried to the rim (twelve cones of ground
-for a menu rebuilt in sand); the purse as three piles swept a grain a drag
-into the funnel (a chore); the same piles tapped for a tenth a tap, with the
-winnings tipped out of a hatch on to a strip for the haulers and a crank to
-wind them back (six things to work out on one building, none of them named).
-What each got right is kept: the funnel and the pebbles, the arm, the
-face-on button, the sand that rains and drains and never teleports. What
-none of them got right is that **a machine says what it does on its face.**
-This is a slot machine: you set the bet on a panel of buttons, you pull the
-arm, and you take your winnings or let them ride. Nothing on the ground,
-nothing to carry, nothing to sweep, nothing to find.
+**The stake has to be a share, not a number.** By the time the casino
+unlocks the yard is a thousand times past any fixed stake: a chip of ten,
+a hundred, a thousand is a rounding error to a purse that the quarry and
+the farm fill by the minute, and every casino that stood here in two days
+-- the board of rows, the twelve heaps, the swept piles, the tapped piles,
+the deck of buttons under the funnel -- lost on that one fact. Chips, dials
+and piles all say a number, and no number is right for long. The other
+thing they had in common was that each was a thing to work out: which row,
+which heap, how many taps, which button. And none of them was a gamble
+sized to the yard; the slot machine was a toy on the side of it.
 
-**No piles, no strip, no crank.** The stake piles, the casino's strip in
-`S.piles` with its hatch and chute, and the crank with its hoist lever go.
-Banking is the arc to the hole again -- the tray's grains lobbed across the
-yard one by one, each carrying its share, the counter moving as each lands
-in the hole -- and the hand is over the moment the button is pressed: the
-next stake can be set and the arm pulled at once, while the last winnings
-are still in the air.
+**And no timers, no cooldowns, no shifts.** They feel awful. Nothing about
+a hand waits on a clock; everything waits on the sand.
 
-*Being drawn (2026-09-16): the panel's place is moving to a head on top of
-the machine, over the funnel, with a fourth coin button for sparks; two
-layouts are shot for the owner before this section is settled.*
+**The building.** The funnel is the top of the machine, V-shaped as now and
+open to the sky; the arm on its right; the peg board under the throat;
+eleven bins; the feet with their pays; the tray. Nothing else on the face:
+no buttons, no coin picker, no crank, no sack, no stake piles on the
+ground, no strip. The building says what it does by being a funnel with a
+handle.
 
-**The panel.** Under the bins' feet, across the building's front, one row of
-face-on push buttons in the idiom already built -- a cap in a white recess
-with a cell of black rim, rims shared along the row like the feet's
-dividers -- laid out left to right:
+**The arm is a tap you hold.** Pull it and hold it: pebbles pour out of the
+yard's stock into the funnel for as long as it is held, at a rate that is a
+slice of what you own -- `POUR_SHARE` of the purse a second, five per cent
+to start, so that everything you have is a twenty-second hold and a fresh
+yard and a rich one feel the same pull. The pile in the funnel is the
+stake: it grows under your hand, and no number is drawn anywhere. Let go
+and it drops: the floor splits, the whole pile drains into the throat, and
+`CASINO_HANDFUL` pebbles come out on to the pegs, each carrying its share.
+A flick is a small bet; a long pull is the farm. Pebbles only -- ore, crops
+and sparks are never staked; they are what the machine can turn pebbles
+*into*. On a phone the hold is a finger held on the arm, the same gesture.
 
-| button | wears | does |
-|---|---|---|
-| **three coin buttons** | the coins' own marks: ■ dust, ● ore, ▲ crops | pick the coin of the bet. A coin the yard has not handed out is absent; the chosen one is black, the others grey |
-| **four chip buttons** | `10` `100` `1k` `ALL` in the sign's digit face | pick the size. The chosen one is black, the rest grey; a chip the purse cannot cover is grey and dead, and cannot be chosen |
-| **the stake window** | a boxed readout: `120 ■` | says what the next pull stakes, coin mark and all -- the chip, plus whatever is standing in the tray |
-| **same bet** | the ↻ glyph | sets coin and chip to the last hand's and pulls the arm, in one press |
-| **bank** | the sack (the bank row's own glyph) | takes the tray to the hole |
+**The bins, left to right:** ✚ · ore · crop · ×3 · ×1 · ×½ · ×1 · ×3 · crop
+· ore · ✚. The middle five pay pebbles by their multiplier, as the handful
+pays now. A crop bin or an ore bin converts what lands in it: the pebbles
+in it come out as that many crops or ore *by worth*, at the exchange every
+price in the yard already sits on (`DUST_PER`), so a pebble converted is a
+pebble's worth and nothing more. A spark bin pays **exactly one spark a
+drop**, however much lands in it -- one pebble or a hundred -- so a long
+pull cannot farm the machines' currency: sparks are bought with the rift
+and the machines' own ladders (CLAUDE.md, "Sparks are the machines'
+currency"), and the casino can only ever add a pebble's-chance one.
 
-The arm stays where it is, on its boss beside the funnel. Hover names
-exactly these -- *bank*, *same bet*, each chip by its value and each coin by
-its name -- and nothing else on the building has a tooltip. On a phone the
-hit boxes open out to `LEVER_HIT` cells. The chosen coin and chip are saved
-(`S.coin`, `S.chip`); the last hand's are `S.lastBet`.
+**The fairness sum.** A pebble reaches bin *b* with the odds of ten fair
+coins, Pascal's row over 1,024: 1, 10, 45, 120, 210, 252, 210, 120, 45,
+10, 1. The five pebble bins weigh 120, 210, 252, 210, 120 -- 912 of the
+1,024 -- and with the row as written they pay 120×3 + 210×1 + 252×½ + 210×1
++ 120×3 = 1,266 pebbles for the 1,024 staked: 1.24 back from the pebble
+bins alone, and with the crop and ore bins paying their 110 by worth, 1.34
+in all before the sparks. That is not a house edge; it is a gift. The row
+that pays one from the pebble bins is ×1½ · ×1 · ×½ · ×1 · ×1½: 120×1.5 +
+210 + 126 + 210 + 120×1.5 = 906, and with the converts' 110 the whole
+table pays 1,016 in 1,024 -- fair to the pebble, the median hand under it,
+the two sparks in 1,024 the only thing riding above the line. **Open
+question for the owner: keep ×3 at the shoulders and accept a table that
+pays 1.34, or take ×1½.** `test/casino.test.mjs` asserts the sum either
+way, so a bin cannot be moved on its own.
 
-**Pulling the arm stakes and plays.** One pull is the whole hand: the
-chosen stake pours out of the sky into the funnel -- the original stake
-rain, the hopper walking to `shownFor(stake)` -- and the purse is spent as
-the grains land in the bowl, each carrying its share, the remainder on the
-last; when the bowl is still the floor opens on its own, the pile drains
-through the throat, and sixteen pebbles cascade. If the tray holds winnings
-from the last hand, the pull hoists them into the funnel first (the hoist's
-own arc, no crank) and they are added to the stake: that is *ride it*. The
-sack is *take it*. The stake window says what will be staked, tray and all.
-A hand saved mid-cascade comes back as it always has: a pot in the hopper,
-the path in flight forgotten, the arm live.
+**Everything pours out the bottom in its own kind.** When the last pebble
+is still the bins pay into the tray and out of the foot: pebbles from the
+pebble bins, crops from the crop bins, ore from the ore bins, a spark from
+a spark bin -- each as the coin it is, each a real grain -- into the heap
+on the ground the crew already hauls, the way every station's output lands.
+Nothing teleports; nothing is banked on a board; nothing is credited by a
+counter moving on its own. A win is collected, by hands.
 
-**Only bins with pebbles pay.** The pay pass walks the bins that hold
-pebbles; an empty bin never inverts its foot, never sounds, never pays.
+**Fanfare.** A spark bin lights the wall ring by ring outward from that bin
+and the spark rolls out on its own, ahead of the rest; a crop or ore bin
+blinks its foot's glyph while its converted coins pour. A bell on any pay.
+Nobody has listened to any of the casino's audio yet, as before.
 
-**The cascade feels like falling.** A pebble is no longer stepped a cell a
-beat off a table. It accelerates under `CASINO_GRAV` between pegs, meets
-its peg with a small hop -- `CASINO_HOP` cells up, then down and across to
-the next column -- ticks, and falls on. The path is still drawn first, off
-the seeded rng, so the odds are exactly what they were and the bin count
-holds; only the timing changes, and it comes from the motion. Both knobs
-are in config and on the dev panel. A pebble's trip from the throat to the
-bins is written down under "What building it changed" once measured.
+### What it changes about the handful
 
-**The slots read.** A clear cell each side of every pay and a clear row
-above and below it in the feet: inner slots seven cells (a pitch of eight),
-edge slots nine, `STEP` four, and the building widens with them, so every
-pay is separated from its neighbors by a rule and a clear cell.
+The handful stands: `CASINO_HANDFUL` pebbles a drop whatever the stake,
+each a fair draw from the bins, the spread of the hand shrinking with the
+square root of the count (`test/handful.test.mjs` holds it off the
+constant). What changes: the stake is what was held into the funnel rather
+than a chip; six of the eleven bins pay in another coin instead of a
+multiple, so the table's fairness is summed by worth across kinds rather
+than in pebbles alone; the pay pours out of the foot instead of standing in
+the tray for a decision, so there is no ride and no take -- the next pull is
+the next bet; and a saved hand comes back a pile in the hopper the size it
+was held to, with the arm live.
 
 ### The calls this makes
 
-- **A panel, not a board.** Buttons on the machine are the machine; a sheet
-  beside it is a menu. The chips are the four this casino has always sold.
-- **One pull is the hand.** Stake, pour, drain, cascade: the arm does all
-  of it, so there is one thing to pull and one thing to press.
-- **Ride is the arm, take is the sack.** Two verbs, two controls, both on
-  the face.
-- **Banking credits the counter directly, by the arc.** The haulers' strip
-  made a win a chore to collect; the arc is the one flight that still pays
-  the hole straight, because the pot never left the player's hand.
+- **A share a second, not a chip.** The one stake that is the same gesture
+  on a purse of a hundred and a purse of a million.
+- **One control.** The arm, held. Nothing to set, pick, bank or wind.
+- **The other coins come out, never go in.** The casino turns pebbles into
+  the yard's other coins at the yard's own rates, and cannot be fed them.
+- **A spark is one, ever, a drop.** The machines' currency stays the
+  machines'.
+- **Paid on to the ground.** Collected by the crew like every other output.
 
-### What is checked
+### Cut, and why
 
-`test/casino.test.mjs`, around the buttons (`__pressButton('chip-100')`,
-`__pressButton('coin-dust')`, `__pressButton('bank')`, `__pressButton('same')`,
-`__clickLever('casino-gate')`): a stake chosen and the arm pulled pours
-exactly the stake and spends the purse by it, plays sixteen pebbles, pays
-only the bins that landed one (an empty bin's foot never inverts and it
-pays nothing), and the sack banks to the hole to the grain; same bet
-repeats the last hand's coin and chip and pulls; the arm with a tray hoists
-the tray and adds it to the stake; a dead chip cannot be chosen; a save
-mid-hand comes back a pot in the hopper. `selftest/casino.js`: a click and a
-phone tap on each button and on the arm, and tooltips only where named.
-Scenes: `casinopanel` (the buttons), `casinopour` (the stake raining in),
-`casinohopper`, `casino`, `casinopaying`, `casinopaid`, `casinowin`,
-`casinobank`, `casinohoist` (the tray going up on a pull).
+Every previous casino, with the reason each fell: the board of rows (a
+menu); the twelve heaps (a menu rebuilt in sand); the swept piles (a grain
+a drag); the tapped piles with the strip and the crank (six things to work
+out); the deck of buttons, in one row and in stacked groups (chips, and a
+fixed number is wrong for a yard a thousand times past it). The funnel, the
+arm, the pebbles, the peg board and the fair bins are what survived all of
+them and are what "The pour" is built on.
 
 ## The stake is a heap you carry, and the casino has no board (built and cut 2026-09-16)
 
