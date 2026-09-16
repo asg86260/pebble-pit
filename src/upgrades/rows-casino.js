@@ -1,7 +1,7 @@
 import { CASINO_DUST } from '../config.js';
 import { S, casino } from '../state.js';
 import { lookAt } from '../world.js';
-import { invested } from './site.js';
+import { offered } from '../stations.js';
 
 // The bench's casino rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -14,6 +14,6 @@ export const CASINO_ROWS = [
     blurb: 'double or nothing',
     cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
-    show: () => invested() && !S.casinoOpen
+    show: () => offered('casino')
   }
 ];

@@ -1,8 +1,8 @@
-import { LOO_MUCK, OUTHOUSE_DUST } from '../config.js';
+import { OUTHOUSE_DUST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { S, outhouse } from '../state.js';
 import { staffDoor } from './site.js';
-import { poopLeft } from '../smog.js';
+import { offered } from '../stations.js';
 import { lookAt } from '../world.js';
 
 // The bench's outhouse row. Data only: upgrades.js strings the files together
@@ -18,8 +18,6 @@ export const OUTHOUSE_ROWS = [
     blurb: 'poop, cleaned up',
     cost: () => OUTHOUSE_DUST,
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); staffDoor(JOB.JANITOR); },
-    // Offered once you have seen why you want one: five patches of mess nobody
-    // is clearing up. It stays once seen.
-    show: () => !S.outhouseOpen && (S.seenMess || poopLeft() >= LOO_MUCK * 5)
+    show: () => offered('outhouse')
   }
 ];

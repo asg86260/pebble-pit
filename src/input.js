@@ -14,8 +14,9 @@ import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
-import { nearBench, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
+import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
+import { station, stationAt } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -98,11 +99,8 @@ canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault
 canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
 // Standing at any station at all; the click and move handlers ask the same
-// list.
-const atStation = (x, y) =>
-  nearShack(x, y) || nearBench(x, y) || nearCasino(x, y) ||
-  nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearApothecary(x, y) || nearTower(x, y) ||
-  nearHouse(x, y) || nearStats(x, y) || nearOuthouse(x, y);
+// table.
+const atStation = (x, y) => stationAt(x, y) !== null;
 
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything.
@@ -205,7 +203,8 @@ canvas.addEventListener('pointermove', e => {
     // in crew/step.js does the rest
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
-    const want = boardAt(S.mouse.x, S.mouse.y);
+    // The table's order settles which wins where two patches overlap.
+    const want = stationAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
     // station under the pointer is an arrival, and the wedge is for the ground
     // *between* things, so it only has a say when the answer would otherwise
@@ -234,26 +233,6 @@ canvas.addEventListener('pointermove', e => {
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
 
-// The board a point on the ground asks for, in the order that settles which
-// wins where two patches overlap. The house is a block that grows a room per
-// body and its patch reaches the bench, so it goes after every smaller thing
-// you might be standing at; the noticeboard stands on the busiest strip in
-// the yard and goes last of all.
-function boardAt(x, y) {
-  return nearCasino(x, y) ? 'casino'
-       : nearScrub(x, y) ? 'scrub'
-       : nearQuarry(x, y) ? 'quarry'
-       : nearFarm(x, y) ? 'farm'
-       : nearApothecary(x, y) ? 'apothecary'
-       : nearTower(x, y) ? 'tower'
-       // the hut before the bench it stands in front of
-       : nearShack(x, y) ? 'shack'
-       : nearBench(x, y) ? 'bench'
-       : nearOuthouse(x, y) ? 'outhouse'
-       : nearHouse(x, y) ? 'house'
-       : nearStats(x, y) ? 'stats' : null;
-}
-
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
   const up = lifted();
@@ -267,18 +246,9 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning &&
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
-    if (nearShack(p.x, p.y)) showPanel(S.shackBoardOpen ? null : 'shack', true);
-    else if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
-    else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino', true);
-    else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub', true);
-    else if (nearQuarry(p.x, p.y)) showPanel(S.quarryBoardOpen ? null : 'quarry', true);
-    else if (nearFarm(p.x, p.y)) showPanel(S.farmBoardOpen ? null : 'farm', true);
-    else if (nearApothecary(p.x, p.y)) showPanel(S.apothBoardOpen ? null : 'apothecary', true);
-    else if (nearTower(p.x, p.y)) showPanel(S.towerBoardOpen ? null : 'tower', true);
-    else if (nearHouse(p.x, p.y)) showPanel(S.houseBoardOpen ? null : 'house', true);
-    else if (nearOuthouse(p.x, p.y)) showPanel(S.looBoardOpen ? null : 'outhouse', true);
-    else if (nearStats(p.x, p.y)) showPanel(S.statsBoardOpen ? null : 'stats', true);
-    else showPanel(null, true);
+    const which = stationAt(p.x, p.y);
+    // A second tap on the station whose board is up puts it away.
+    showPanel(which && !S[station(which).board] ? which : null, true);
   }
 
   S.mining = false;
@@ -519,10 +489,7 @@ const CURSORS = [
   [(x, y) => overCore(x, y), 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
-  [(x, y) => nearShack(x, y) || nearBench(x, y) || nearCasino(x, y) ||
-             nearHouse(x, y) || nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) ||
-             nearApothecary(x, y) || nearTower(x, y) || nearStats(x, y) ||
-             nearOuthouse(x, y), 'pointer'],
+  [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
   [(x, y) => overBird(x, y), 'pointer']

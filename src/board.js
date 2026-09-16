@@ -3,9 +3,9 @@
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS,
          SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_HANDLE, SHEET_RAIL_W, SHEET_RAIL_INSET, TAP_SLOP } from './config.js';
-import { S, bench, lab, apothecary, casino, scrub, tower, outhouse, shack } from './state.js';
-import { farmShed, quarryShed } from './world.js';
-import { crewRows, crewList, houseRect } from './crewboard.js';
+import { S, bench } from './state.js';
+import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
+import { crewRows, crewList } from './crewboard.js';
 import { UPGRADES, lodgers, markSectionsSeen, canPay, maxed, inLine } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
@@ -14,7 +14,7 @@ import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
-import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
+import { APOTHECARY_UPGRADES } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
@@ -63,25 +63,11 @@ for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHE
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);
-// Where you stand to read the books: the noticeboard.
-const booksRect = () => S.noticeboard;
-// Where you stand to open each board. The house grows a room per body, so its
-// rectangle is read live. The farm and the quarry stand at their shed, which is
-// what looks like the sign: the hover target, the click target and the anchor
-// the board hangs from are all the shed.
-const standAt = { bench, lab, casino, scrub, tower, shack,
-                  // The hut, not the whole plot: a board centered over hut,
-                  // shelves and pots hangs off the window on a narrow view.
-                  get apothecary() { return apothHut(); },
-                  outhouse,
-                  get stats() { return booksRect(); },
-                  get quarry() { return quarryShed(); },
-                  get farm() { return farmShed(); },
-                  get house() { return houseRect(); } };
-
-// Where the board goes up: the same place you stand, for every station today.
-const boardAt = which => standAt[which];
-const anchor = which => boardAt(which);
+// Where you stand to open each board, and where the board goes up: the same
+// place, for every station today, read off the table in stations.js. The
+// house grows a room per body and the sheds move with the grounds, so a
+// rectangle is read live, never gathered.
+const anchor = which => station(which)?.stand?.();
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
 // whichever list had not been reached yet.
@@ -102,37 +88,15 @@ const listFor = which =>
 
 // Every station that has a board; what is true of all of them (the mark under
 // the foot, for one) is written once against this list.
-export const STATIONS = ['bench', 'casino', 'scrub', 'quarry',
-                         'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
-                         'shack'];
+export { BOARDS as STATIONS } from './stations.js';
 
 // whether a station is there at all yet
-const standing = which =>
-  which === 'bench' ? S.seenBench :
-  which === 'casino' ? S.casinoOpen :
-  which === 'scrub' ? S.scrubOpen :
-  which === 'quarry' ? S.quarryOpen :
-  which === 'farm' ? S.farmOpen :
-  which === 'apothecary' ? S.apothecaryOpen :
-  which === 'tower' ? S.towerOpen :
-  which === 'outhouse' ? S.outhouseOpen :
-  which === 'shack' ? S.shackOpen :
-  // The books open once the hole has had something in it: a rate measured over
-  // a yard that has never earned anything is a column of noughts.
-  which === 'stats' ? S.banked > 0 :
-  which === 'house' ? S.crew > 0 : false;
+const standing = which => open(which);
 
-// The ground a station stands on, for the checks, so where you have to be to
-// open a board is not arithmetic written out again in a check.
-export function standRect(which) {
-  if (!standing(which)) return null;
-  const r = standAt[which];
-  return r && { x: r.x, y: r.y, w: r.w, h: r.h };
-}
+export { standRect };
 
 export function stationFoot(which) {
-  if (!standing(which)) return null;
-  const r = standAt[which];
+  const r = standRect(which);
   return r && r.x + r.w / 2;
 }
 
@@ -149,50 +113,11 @@ export function hasOffer(which) {
                                   canPay(u) && !inLine(u));
 }
 
-// near enough to a thing on the ground to be interested in it
-const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
-                          y > r.y - P * 8 && y < r.y + r.h + P * 4;
-
-export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
-export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
-export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-// The hut, not the plot: a pot answers to its own picker (potpick.js), and a
-// pointer near a cauldron must not throw the shop menu over it.
-export const nearApothecary = (x, y) =>
-  S.apothecaryOpen && near(standAt.apothecary, x, y);
-// The shed is the only way in; the hole is a hole. The ramp side keeps a tight
-// margin: `SHED_GAP` is much narrower than `BRIDGE_RUN`, so `near()`'s eight
-// cells would reach from the shed onto the ramp and open the board there.
-export const nearQuarry = (x, y) => {
-  if (!S.quarryOpen) return false;
-  const r = quarryShed();
-  return x > r.x - P * 8 && x < r.x + r.w + P &&
-         y > r.y - P * 8 && y < r.y + r.h + P * 4;
-};
-export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
-export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
-export const nearOuthouse = (x, y) => S.outhouseOpen && near(outhouse, x, y);
-// Asked BEFORE the rock in the cascade (input.js): the hut stands on ground
-// the rock's own reach covers.
-export const nearShack = (x, y) => S.shackOpen && near(shack, x, y);
-// Asked after every building in the cascade (input.js): a patch of open air
-// loses to anything actually built.
-export const nearStats = (x, y) => standing('stats') && near(S.noticeboard, x, y);
-// The house's right edge is padded two cells, not eight: the gap to the bench
-// is eight cells exactly, and padded like the rest the house claimed the ground
-// the cursor crosses on its way to the bench's board. The strip between them
-// belongs to neither, which is what the safe wedge needs.
-const HOUSE_PAD_IN = P * 2;
-// The whole structure, roof included. The block grows, and its region reaches
-// up into the air the boards hang in; that is safe only because `nearHouse` is
-// asked last in input.js's cascade, so a cursor inside another station's patch
-// answers to that station first.
-export const nearHouse = (x, y) => {
-  if (S.crew < 1) return false;
-  const r = houseRect();
-  return x > r.x - P * 8 && x < r.x + r.w + HOUSE_PAD_IN &&
-         y > r.y && y < S.groundY + P * 4;
-};
+// Near enough to a station to be interested in it, for the checks that ask
+// by name; the pointer asks `stationAt` (stations.js) instead.
+export const nearQuarry = (x, y) => nearStation('quarry', x, y);
+export const nearFarm = (x, y) => nearStation('farm', x, y);
+export const nearHouse = (x, y) => nearStation('house', x, y);
 
 // The board's size, measured when it opens, changes page or the window changes,
 // never every frame: reading `offsetWidth` forces a layout.
@@ -818,6 +743,9 @@ export function showCrewList(on) {
 // answer that takes a tenth of a second to arrive reads as a control that did
 // not take. Only the pointer drifting off a station gets the benefit of LINGER.
 export function showPanel(want, now = false) {
+  // A key that is not a station (the lab that was) is nowhere to hang a
+  // board: it is asked for as nothing.
+  if (want && !station(want)) want = null;
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
@@ -846,17 +774,8 @@ function settle(want) {
   if (want !== 'house') showCrewList(false);
   const wasAt = at;
   at = want;
-  S.boardOpen = want === 'bench';
-  S.casinoBoardOpen = want === 'casino';
-  S.houseBoardOpen = want === 'house';
-  S.scrubBoardOpen = want === 'scrub';
-  S.quarryBoardOpen = want === 'quarry';
-  S.farmBoardOpen = want === 'farm';
-  S.apothBoardOpen = want === 'apothecary';
-  S.towerBoardOpen = want === 'tower';
-  S.statsBoardOpen = want === 'stats';
-  S.looBoardOpen = want === 'outhouse';
-  S.shackBoardOpen = want === 'shack';
+  // Each station's own flag, for the save and the checks that read one.
+  for (const r of ROWS) if (r.board) S[r.board] = want === r.key;
 
   if (!want) {                                   // fade out where it stands
     // Closing does not mark rows seen; a row is cleared by being hovered

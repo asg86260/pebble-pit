@@ -38,7 +38,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `audio.js` | the sound: the only file that names an `AudioContext`. Modules name the event (`sfx('rock-hit', { x, hard, big })`) and it decides what survives the fold window, the ceiling and the voice cap; `SOUNDS` in `config/sound.js` maps each event to its class and a recipe in `RECIPES` (or null: counted, silent), a strike is that recipe rendered sample by sample into a buffer, the same arithmetic as the hit bench, and there is no bed of any kind. The dev panel's `sounds` tab lays the bench's mapping JSON over the table live (`applySounds`). The decision half runs with no context, which is what `test/sound.test.mjs` holds; every number is `SND_*` in `config/sound.js` | yes |
 | `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board | yes |
-| `board.js` | the one menu: where it stands, and the counter above the pit | yes |
+| `stations.js` | the station table: a row a place -- whether it stands (`open`), where you stand to open its board (`stand`), and its gate (`after`, `needs`, `sticky`, read through `offered`); the shields are rows with no ground. `stationAt(x, y)` is the pointer's one question | a row a station |
+| `board.js` | the one menu: where it stands, and the counter above the pit; whose it is comes off `stations.js` | yes |
 | `tween.js` | a count on its way: every number drawn -- the card, a purse, a roster, a price -- is read through `shown(name, value)` and runs to its value instead of jumping | rarely |
 | `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |
@@ -124,11 +125,18 @@ can see.
 
 1. a distance from the rock and its own tuning numbers in `config.js`
 2. its rect and its state in `state.js`, its placement in `layout` in `world.js`
-3. one new file for the behaviour
-4. a hire row via `crew({...})` in `upgrades.js`, and an unlock row priced in cores
-5. a `draw` in `render.js`, in painting order, and a step in `main.js`
-6. its fields in `persist.js` — nothing warns you if you forget
-7. checks in `selftest/`, in the file for the subject
+3. a row in `STATIONS` (`stations.js`): its `open` flag, where you stand,
+   which flag says its board is up, and its gate -- the doors before it and
+   the facts it needs. That row is what the pointer, the boards' list, the
+   hop, the flags and the door's `show` all read, so none of them is edited.
+4. one new file for the behaviour
+5. a hire row via `crew({...})` in `upgrades.js`, and a door row through
+   `site({ key, ... })` in `upgrades/site.js` -- no `show` of its own; the
+   gate is the row in 3
+6. a `draw` in `render.js`, in painting order, and a step in `main.js`
+7. its fields in `persist.js` — nothing warns you if you forget
+8. checks in `selftest/`, in the file for the subject, and a line in
+   `test/shop-rows.mjs` for the door
 
 Sites are placed by their distance from the rock, so adding one moves nothing
 else. Unlocking one should `lookAt()` it: it is several cores and a row in a

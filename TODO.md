@@ -1,15 +1,17 @@
 # Still to do
 
-## Beats and gates: one table each -- the beats BUILT (2026-09-15), the gates not
+## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 
 "Beats and gates: one table each" at the end of DESIGN.md. The story's
 three machines (`S.intro`, `S.cine`, the ending) and six done-flags are one
 `BEATS` registry (`src/beats.js`) with `S.beat` and `S.beatsDone`, built on
 `second-pass-B`; "As built" at the end of the section names the calls the
-build made. Still to do: the thirteen doors' hand-written `show` predicates
-become one `GATES` table (`after`, `needs`, `sticky`) read through `open()`
-/ `offered()`, which is seam 4's station table with two more columns; it
-lands with seam 4.
+build made. The gates landed with seam 4 on `second-pass-S`: `STATIONS` in
+`src/stations.js` is a row a station with `after`, `needs` and `sticky`
+on it, read through `open()` / `offered()`; every door row and shield row
+reads `offered` and `shieldOpened` reads the table. `test/gates.test.mjs`
+holds it. The thirteen `<place>Open` booleans stay on `S` until the save
+floor (seam 3).
 
 ## Playing it on a phone -- BUILT (2026-09-15)
 
