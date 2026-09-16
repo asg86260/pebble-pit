@@ -506,16 +506,28 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   const crit = critRoll(critBoost(body));
   if (crit > 1) want *= crit;
 
-  const reach = Math.ceil(Math.sqrt(want)) + 1;
+  // A swing shaves the rock, it does not bore it: a cell is ranked first by
+  // how much deeper it sits under its own column's surface than the struck
+  // cell does, and only then by distance. On a hill the cells beside a
+  // surface strike are air and the nearest stone is straight down, so
+  // ranking by distance alone sent a crit down a column; this way it takes
+  // the top layer across the neighbouring columns before it goes under.
+  // The search reaches further sideways than down for the same reason.
+  const down = Math.ceil(Math.sqrt(want)) + 1;
+  const wide = Math.min(Math.ceil(want / 2) + 1, S.gw);
+  const tops = S.rockTops || [];
+  const topOf = (x, y) => (tops[x] >= 0 ? tops[x] : y);
+  const struck = c.y - topOf(c.x, c.y);
   const near = [];
-  for (let dy = -reach; dy <= reach; dy++) {
-    for (let dx = -reach; dx <= reach; dx++) {
+  for (let dy = -down; dy <= down; dy++) {
+    for (let dx = -wide; dx <= wide; dx++) {
       const x = c.x + dx, y = c.y + dy;
       if (!S.boulder[y]?.[x]) continue;
-      near.push({ x, y, d: dx * dx + dy * dy });
+      const deep = Math.max(0, y - topOf(x, y) - struck);
+      near.push({ x, y, deep, d: dx * dx + dy * dy });
     }
   }
-  near.sort((a, b) => a.d - b.d);
+  near.sort((a, b) => a.deep - b.deep || a.d - b.d);
 
   const took = Math.min(want, near.length);
   // How deep the nearest cell still is, as a share of the rock's full thickness:
