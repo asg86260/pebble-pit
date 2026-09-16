@@ -12,22 +12,30 @@
 // What goes on the roof. Four chips and one of them is everything you have:
 // the size of the bet is most of what a bet feels like, and a stake worked out
 // for you as a share of your holdings is a stake nobody chose. `all` is the one
-// that is not a number, and it is the one the whole thing is for.
+// that is not a number, and it is the one the whole thing is for. They are
+// heaps on the ground beside the building now (`CASINO_STAKES`, stakes.js),
+// one a size a coin, lifted and carried to the hopper.
 export const CASINO_CHIPS = [10, 100, 1000, 'all'];
+export const CASINO_STAKES = CASINO_CHIPS;
+// The row of heaps: laid from the building's right wall this many cells apart,
+// dust nearest, each on a plot of its own tall enough for the brim's cone.
+export const STAKE_GAP = 3;
+export const STAKE_ROWS = 20;
 
 // --- the handful ------------------------------------------------------------------
-// How many grains go down the board a hand, whatever the stake: each carries a
-// thirty-second of it. The count is what makes this a bet at all -- every grain
-// is a fair draw from the bins, a pour of N pays the mean of N draws, and the
-// spread of a mean shrinks with the square root of N. A hundred grains pay
-// between 0.8 and 1.2 nearly every hand; two hundred and fifty pay one. Thirty-
-// two pay with a spread of about a third, put a grain in a x39 bin one hand in
-// eight, and lose the median hand, which is plinko's actual feel. Sixteen is a
-// rock and a half and too few to read as a cascade; sixty-four pays within a
-// quarter nearly every hand. A chip smaller than this is one grain a coin.
-// `test/handful.test.mjs` measures the spread, and is where this moves if it
-// moves.
-export let CASINO_HANDFUL = 32;
+// How many pebbles come out of the throat a hand, whatever the stake: the
+// whole of the hopper's pile drains into the machine when the gate opens, and
+// what the machine drops is this many pressed pebbles, each carrying its share
+// of the stake. The count is what makes this a bet at all -- every pebble is
+// a fair draw from the bins, a hand pays the mean of N draws, and the spread
+// of a mean shrinks with the square root of N. One pebble's pay has a
+// standard deviation of about 1.9 on the bin table, so sixteen pay with a
+// spread near half: a typical hand comes back at half to one and a half, and
+// one hand in sixty puts a pebble in a x39. Sixteen two-by-two pebbles is
+// enough to read as a cascade; the number is a knob and what it trades is
+// the spread, which `test/handful.test.mjs` holds off the constant. A chip
+// smaller than this is one pebble a coin.
+export let CASINO_HANDFUL = 16;
 
 // --- the bins -----------------------------------------------------------------------
 // Ten rows of pegs and eleven bins. A grain at a peg goes left or right and
@@ -48,12 +56,11 @@ export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // The profile is how many cells the wall steps in from each side, rim first;
 // the walls are fixed cells in the hopper's own plot, so the sand heaps
 // against them by the yard's rules, fills from the throat up and sits in the
-// bowl. Steeper toward the throat, because what stands in it is a handful --
-// thirty-two grains, the ones that will fall -- and a handful in a wide flat
-// bowl was a smear a row deep: in a spout four cells at the floor it stands
-// four rows tall and reads as a stake in a funnel from across the yard, and the heap stands up
-// to the rim and no further (`table.ceiling`).
-export const HOPPER_PROFILE = [0, 6, 12, 18, 24, 28, 31, 33, 34];
+// bowl. What stands in it is the stake at the band ladder -- a chip of ten is
+// ten grains, an all-in is the brim -- and the bowl is sized to the brim: nine
+// rows stepping in four a row come to three hundred and sixty cells. The heap
+// stands up to the rim and no further (`table.ceiling`).
+export const HOPPER_PROFILE = [0, 4, 8, 12, 16, 20, 24, 28, 32];
 export const HOPPER_H = HOPPER_PROFILE.length;
 // Its floor, one cell thick, which is the gate: it splits from the middle when
 // you let go, to the throat's two cells, the column the handful enters at and
@@ -93,6 +100,15 @@ export const TRAY_H = 5;
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const CASINO_MARGIN = 2;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
+
+// --- the controls on the building ---------------------------------------------------
+// Three levers, one a decision, each where its effect is: a stem with a knob
+// standing out from the wall, up when it can be pulled and flat when it
+// cannot, swinging down and back when pulled. A thumb needs more than a stem
+// to find, so on a phone the hit box opens out to `LEVER_HIT` cells.
+export const LEVER_REACH = 4;             // the stem, in cells out from the wall
+export const LEVER_HIT = 8;               // the tap target on a phone, in cells
+export const LEVER_SWING_MS = 300;
 
 // --- how a grain moves -----------------------------------------------------------------
 // A grain steps a cell at a time down the face, this often -- slower than a
@@ -151,9 +167,8 @@ export let CASINO_ATTRACT_S = 20;
 // a flicker.
 export const TABLE_LIFE = 2.6;
 export const TABLE_GRAV = 0.05;
-// How much sand a pot puts in the tray -- one grain a unit right up until
-// the numbers stop being numbers. (The hopper's picture is the handful, not
-// the band: see `tableWant` in casino.js.) Past the first band the heap is a *reading*
+// How much sand a pot puts in the hopper or the tray -- one grain a unit
+// right up until the numbers stop being numbers. Past the first band the heap is a *reading*
 // of the pot rather than a count of it, on a ladder written down here: a
 // tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
 // marks so nothing jumps, and never more than the brim.
@@ -161,17 +176,35 @@ export const TABLE_GRAV = 0.05;
 //   1 - 100      the pot itself, one for one
 //   1,000        250          10,000+      300, the brim
 //
-// The brim is what the tray holds: five rows of seventy-two is three hundred
-// and sixty cells, and a heap under a ceiling fills flat, so three hundred
-// stands in it with the rim clear. See `shownFor` in casino.js; what is approximate
+// The brim is what the tray holds and what the bowl holds: five rows of
+// seventy-two, or the funnel's profile, is three hundred and sixty cells, and
+// a heap under a ceiling fills flat, so three hundred stands in either with
+// the rim clear. The stake heaps stand at the same ladder,
+// as cones on open ground: `stakeCols` is the plot a cone of the band needs.
+//
+// The ladder is arithmetic on three numbers and nothing else, so it lives
+// here where the numbers do, and the plots are sized off it at layout. See `shownFor` in casino.js; what is approximate
 // is the size of the heap and nothing else: the row says the exact pot and
 // the hole is paid the exact pot.
 export const CASINO_PILE_ONE = 100;
 export const CASINO_PILE_BAND = 150;
 export const CASINO_PILE_BRIM = 300;
+export const shownFor = n =>
+  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
+    : Math.min(CASINO_PILE_BRIM,
+               Math.round(CASINO_PILE_ONE +
+                          CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
+// A cone of n grains at the yard's own slope stands sqrt(n) tall and twice
+// that wide; a cell of bare ground either side keeps it its own heap. The
+// all-in heap is the brim's.
+export const stakeCols = chip => Math.ceil(2 * Math.sqrt(chip === 'all' ? CASINO_PILE_BRIM : shownFor(chip))) + 2;
+// The ground the whole row takes, for the walk to reserve beside the building:
+// three coins of every size, with a gap before each.
+export const STAKE_COINS = ['dust', 'shard', 'spore'];
+export const STAKES_W = STAKE_COINS.length * CASINO_STAKES.reduce((w, c) => w + STAKE_GAP + stakeCols(c), 0);
 
 export const CASINO_KNOBS = [
-  { key: 'CASINO_HANDFUL', label: 'the handful', min: 4, max: 128, step: 4,
+  { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },
   { key: 'CASINO_FALL_MS', label: 'a cell of fall, ms', min: 8, max: 60, step: 1,
     get: () => CASINO_FALL_MS, set: v => { CASINO_FALL_MS = v; } },

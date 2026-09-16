@@ -7,7 +7,7 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE } from '../casino.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
@@ -319,14 +319,16 @@ export function drawPotPile() {
   // just left behind it in a lighter shade -- the yard's idiom for a thing in
   // motion -- so the stream reads from across the yard. Its own shade waits
   // for the bin.
+  // A pebble is a two-by-two block -- the boulder's own shape, the drop's rock
+  // at a smaller scale -- standing on its cell with its left half over the
+  // peg, so sixteen of them read as sixteen things falling rather than a thin
+  // stream.
+  const pebble = (c, r) => ctx.fillRect(f.x + c * P, f.y + (r - PEBBLE + 1) * P, PEBBLE * P, PEBBLE * P);
   for (const g of demo ? [...grains, demo] : grains) {
     if (g.landed) continue;
-    g.trail.forEach(([c, r], i) => {
-      ctx.fillStyle = TRAIL_SHADES[i];
-      ctx.fillRect(f.x + c * P, f.y + r * P, P, P);
-    });
+    g.trail.forEach(([c, r], i) => { ctx.fillStyle = TRAIL_SHADES[i]; pebble(c, r); });
     ctx.fillStyle = '#000';
-    ctx.fillRect(f.x + g.c * P, f.y + g.r * P, P, P);
+    pebble(g.c, g.r);
   }
   if (S.drop) {
     S.drop.bins.forEach((bin, b) => {
@@ -336,7 +338,7 @@ export function drawPotPile() {
           const s = at(bin, c, r);
           if (!s) continue;
           ctx.fillStyle = shadeOf(s);
-          ctx.fillRect(f.x + (binLeft(b) + c) * P, f.y + (FIELD_H + BIN_H - 1 - r) * P, P, P);
+          ctx.fillRect(f.x + (binLeft(b) + c * PEBBLE) * P, f.y + (FIELD_H + BIN_H - (r + 1) * PEBBLE) * P, PEBBLE * P, PEBBLE * P);
         }
     });
   }

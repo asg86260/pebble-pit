@@ -20,6 +20,7 @@ import { BUILD } from './version.js';
 import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite, openingCamX, clampCam, settleShack, overCutMouth, setZoom } from './world.js';
 import { clearCasino } from './casino.js';
+import { putDownCarried } from './stakes.js';
 import { OPENING } from './intro.js';
 import { BEATS, startBeat } from './beats.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
@@ -779,8 +780,9 @@ export function restore() {
     ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0,
         where: s.pot.where === 'tray' ? 'tray' : 'hopper' }
     : null;
-  clearCasino();                // both plots start empty; the pot pours again
+  clearCasino();                // every plot starts empty; the pot and the heaps pour again
   S.tableAir = [];
+  S.carried = null; S.pourFrom = null; S.refund = null;
   S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
   S.hoisting = false;
   S.attract = null;

@@ -26,6 +26,8 @@ import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
+import { leverHit, leverUnder, leverAt } from './levers.js';
+import { stakeUnder, potUnder, liftStake, liftPot, dropCarried, carriedName, stakeName } from './stakes.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -99,6 +101,13 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
+// A stake heap or the pot under the point comes up into the hand.
+const liftHeap = (x, y) => {
+  const h = stakeUnder(x, y);
+  if (h) return liftStake(h, x, y);
+  return potUnder(x, y) && liftPot(x, y);
+};
+
 // Standing at any station at all; the click and move handlers ask the same
 // table.
 const atStation = (x, y) => stationAt(x, y) !== null;
@@ -117,11 +126,16 @@ canvas.addEventListener('pointerdown', e => {
     return;
   }
   if (e.button === 2) {
-    const w = workerAt(...Object.values(pos(e)));
+    const p = pos(e);
+    const w = workerAt(p.x, p.y);
     if (w) {
       lift(w);
       try { canvas.setPointerCapture(e.pointerId); } catch {}
+      return;
     }
+    // ...or a stake heap, or the pot in the hopper: the same gesture picks
+    // up a heap of sand, and it goes where the pointer goes until let go
+    if (liftHeap(p.x, p.y)) { try { canvas.setPointerCapture(e.pointerId); } catch {} }
     return;
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
@@ -145,6 +159,7 @@ canvas.addEventListener('pointerdown', e => {
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
+  if (leverHit(p.x, p.y)) return;
   if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The nearest high point to the click, the same place a held swing lands:
@@ -153,6 +168,14 @@ canvas.addEventListener('pointerdown', e => {
     knockOff(at.x, at.y, undefined, false);   // your own hands: no smoke
     S.mining = S.autoMine;                      // holding only mines once unlocked
     S.nextHit = now() + MINE_DELAY;
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
+  // A finger on a stake heap, or on the pot in the hopper, lifts it: claimed
+  // the way a finger on dust is, so it never scrolls, and carried until it
+  // is let go. A tap on one that never moves lets go where it stood, which
+  // puts it back.
+  if (e.pointerType === 'touch' && liftHeap(p.x, p.y)) {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
@@ -221,6 +244,13 @@ canvas.addEventListener('pointermove', e => {
     askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);
     setCursor(S.mouse.x, S.mouse.y);
   }
+  // a heap in your hand goes where the pointer goes, and is let go where the
+  // button is
+  if (S.carried && !S.carried.returning) {
+    S.carried.x = S.mouse.x; S.carried.y = S.mouse.y;
+    if (e.pointerType !== 'touch' && !(e.buttons & 2)) dropCarried(S.mouse.x, S.mouse.y);
+    return;
+  }
   // somebody on the cursor goes where the cursor goes
   const up = lifted();
   if (up) {
@@ -238,6 +268,7 @@ canvas.addEventListener('pointermove', e => {
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
+  if (S.carried && !S.carried.returning) { const p = pos(e); dropCarried(p.x, p.y); down.delete(e.pointerId); return; }
   const up = lifted();
   if (up) { drop(up); return; }
   const held = down.get(e.pointerId);
@@ -461,6 +492,13 @@ function askedAbout(x, y, cx, cy) {
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
+  // a heap in your hand, or one on the ground, says what it is
+  if (S.carried) { showTip(carriedName(), { x: S.carried.x, y: S.carried.y - P * 8 }); return true; }
+  const heap = stakeUnder(x, y);
+  if (heap) { showTip(stakeName(heap), { x, y: y - P * 6 }); return true; }
+  // a lever on the casino is named, the way a body or a mark is
+  const lv = leverUnder(x, y);
+  if (lv) { const at = leverAt(lv); showTip(lv.name, { x: at.x, y: at.y - P * 6 }); return true; }
   const finished = overDoneMark(x, y);
   if (finished) {
     showTip(doneName(finished), doneMarkAt(finished));
@@ -557,7 +595,8 @@ addEventListener('touchstart', e => {
   if (S.dragging) { e.preventDefault(); return; }
   for (const t of e.changedTouches) {
     const p = pos(t);
-    if (dustUnder(p.x, p.y)) { e.preventDefault(); return; }
+    // a heap to stake, or the pot in the hopper, is the game's the same way
+    if (dustUnder(p.x, p.y) || stakeUnder(p.x, p.y) || potUnder(p.x, p.y)) { e.preventDefault(); return; }
   }
 }, { passive: false });
 

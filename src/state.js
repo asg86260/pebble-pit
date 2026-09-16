@@ -215,7 +215,6 @@ export const S = {
   // banked or dropped again. `stake` is what the hand went down as, so the
   // settled hand can say its multiple.
   casinoOpen: false,
-  casinoBoardOpen: false,
   pot: null,              // { cur, stake, n, where }
   // A chip is down and the stake is still raining into its plot. Nothing can be
   // let go, banked or dropped until the heap has stopped moving. See `pouring`
@@ -223,7 +222,6 @@ export const S = {
   pouring: false,
   tableAir: [],           // the casino's grains in the air: arriving, leaving, hoisted, or on their way to the hole
   paying: null,           // { cur, left, grains } -- a banked pot on its way across the yard to the pit
-  chip: 0,                // which of CASINO_CHIPS is on the table
   // The hand under way: the gate open, the grains on the pegs, the bins filling,
   // then the bins paying into the tray. Null when nothing is falling. A path in
   // flight is ephemeral -- a reload comes back a pot in the hopper with the
@@ -234,6 +232,16 @@ export const S = {
   // The machine selling itself: one grain ticking down the pegs with nothing
   // riding on it, every so often, while nobody is at the table.
   attract: null,          // { grain, next }
+  // The lever just pulled on the building, for its swing.
+  leverPulled: null,      // { key, at }
+  // A heap in your hand: a stake off the ground, or the pot out of the hopper,
+  // and where it is; `returning` while it arcs back to its spot. Never saved:
+  // a hand shut with a heap in it puts the heap back (stakes.js).
+  carried: null,          // { kind, cur, n, grains, from, x, y, returning }
+  // Where a heap let go over the rim pours into the hopper from.
+  pourFrom: null,         // { x, y }
+  // A pot handed back to the purse, on its way over the works to the hole.
+  refund: null,           // { cur, left, grains, x, y }
   // What the machine is flashing right now: a peg lit on the beat, a divider
   // lit for a x39 or a near miss, the sign on a strobe for a x39.
   tableFx: { pegs: [], edge: null, strobeAt: 0 },
@@ -545,7 +553,6 @@ export const SAVED = [
   'quarryTotal',
   'recycled',
   'muck',                 // what came down and has not been cleared
-  'chip',                 // which of CASINO_CHIPS is on the table
   // Reseated by the layout at boot; saved so the roundtrip test sees it.
   'noticeboard',
   // Derived by `rebalance` and re-derived on restore; saved like every other
@@ -699,11 +706,11 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx',
+  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'carried', 'pourFrom', 'refund',
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // Which boards are open, and what the pointer is doing.
-  'boardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
+  'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',
@@ -764,6 +771,9 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The stake heaps on the ground to its right: a plot a coin a size, laid out
+// and filled by stakes.js.
+export const stakes = [];
 // And the tray at its foot, where the bins pay into and the pot stands after.
 export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a

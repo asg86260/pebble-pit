@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, stakes, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -34,7 +34,8 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, pouring, letting, hoisting, stakeOf, chipName, potAt, tableWant, trayWant, shownMult, hopperN } from './casino.js';
+import { pot, pouring, letting, hoisting, potAt, tableWant, trayWant, shownMult, hopperN } from './casino.js';
+import { amountOf, standing, stakeWant, stakeAt } from './stakes.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -257,7 +258,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // The casino: the stake in the hopper, the handful on the pegs, the bins,
   // the tray.
   casinoOpen: S.casinoOpen,
-  casinoBoardOpen: S.casinoBoardOpen,
   pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot(), where: S.pot.where },
   // the stake is still coming down into its plot
   pouring: pouring(),
@@ -283,8 +283,13 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   tray: tray.n,
   trayWant: trayWant(),
   paying: S.paying && S.paying.left,
-  chip: chipName(),
-  stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') },
+  // The heaps you stake from: what each is, whether it stands, and how much
+  // sand lies on its plot against what it should; and the heap in your hand.
+  stakes: stakes.map(h => ({ cur: h.cur, chip: h.chip, n: amountOf(h), standing: standing(h),
+                             grains: h.n, want: stakeWant(h), x: Math.round(stakeAt(h).x) })),
+  inHand: S.carried && { kind: S.carried.kind, cur: S.carried.cur, n: S.carried.n,
+                          returning: !!S.carried.returning, x: Math.round(S.carried.x), y: Math.round(S.carried.y) },
+  refund: S.refund && S.refund.left,
 
   // The lab, and every kind of smoke over the yard.
   skyShown: S.skyShown,

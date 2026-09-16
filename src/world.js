@@ -19,6 +19,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
+import { layStakes } from './stakes.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
 import { spriteW, RAM } from './sprites.js';
@@ -189,7 +190,9 @@ export function placeSites() {
     // so the bare ground between one drawn thing and the next is STATION_GAP
     // everywhere.
     const pad = padOf(row);
-    const near = row.side === 'left' ? 0 : pad;     // on the rock side of the wall
+    // ...and what a site keeps on its rock side past its heap: the casino's
+    // row of stake heaps.
+    const near = (row.side === 'left' ? 0 : pad) + (row.right ? snap(row.right()) : 0);
     const left = snap(x - near - w);
     at[row.key] = { x: left, w };
     if (pileW) {
@@ -204,7 +207,7 @@ export function placeSites() {
         strips.push({ key: row.pile, from, to: from + pileW });
       }
     }
-    x = snap(left - (pad - near) - hangOf(row) - STATION_GAP);
+    x = snap(left - (row.side === 'left' ? pad : 0) - hangOf(row) - STATION_GAP);
   }
 
   // The rock's own spoil is NOT in here: the rock is a different size for
@@ -561,6 +564,7 @@ export function resize(after) {
   tray.cols = CASINO_W / P - 2;
   tray.rows = TRAY_H;
   tray.y = casino.y + casino.h - TRAY_H * P;
+  layStakes();                                   // and the heaps on the ground at its right
 
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.

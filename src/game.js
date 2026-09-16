@@ -53,6 +53,7 @@ import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable, wireTray } from './casino.js';
+import { stepStakes, wireStakes } from './stakes.js';
 import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
@@ -104,6 +105,7 @@ export function settleIntoWorld() {
   wireCut();                               // the cut's own sand, sized off the quarry
   wireTable();                             // the hopper on the casino's roof
   wireTray();                              // and the tray at its foot
+  wireStakes();                            // and the stake heaps beside it
   resizeGrid(floor);
   if (!pit.grid) setPitGrain();            // the pit never changes with the window
   seedAir();
@@ -215,6 +217,7 @@ export const STEPS = [
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // the hand: the handful on the pegs, the bins paying
   { name: 'table',        step: c => stepTable(c.dt) },   // and the sand: into the hopper, into the tray, away
+  { name: 'stakes',       step: c => stepStakes(c.dt) },  // and the heaps you stake from, standing or carried
   { name: 'skip',         step: c => stepSkip(c.now) },   // the space bar, held through any beat
   { name: 'buried',       step: c => stepBuried(c.now) }, // and whoever is under the rock, when they can be seen
   { name: 'house',        step: c => stepHouse(c.now) },  // and the crew's own hearth, now and then

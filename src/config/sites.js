@@ -3,6 +3,7 @@ import { CASINO_W, OUTHOUSE_W, SHACK_W, TOWER_W } from './buildings.js';
 import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
+import { STAKES_W } from './casino.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 
 import { SCRUB_W } from './scrub.js';
@@ -111,7 +112,9 @@ export const SITES = [
   { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
   // The casino tips a banked pot out of its foot on to the ground at its
   // left, away from the rock, and the haulers carry it in like any heap.
-  { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: 'casino', side: 'left' },
+  // ...and its stake heaps stand on the ground at its right, toward the rock.
+  { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: 'casino', side: 'left',
+    right: () => STAKES_W * P },
   // The tower carries the star's ground on its own far side, which is what
   // puts the star beside it: the rind the star drops has to land on ground
   // somebody has reserved, or it walks the yard looking for a column with room.
@@ -185,7 +188,9 @@ export const YARD_MARGIN = P * 10;
 // a standing yard is a world where every grain on the ground is in a column
 // that means something else. Growing it at all is a migration -- see
 // `floorShift` in persist.js.
-const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row), 0)
+// ...and what a site keeps on its rock side past its heap (`right`: the
+// casino's row of stake heaps), which the walk steps past the same way.
+const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row) + (row.right ? row.right() : 0), 0)
   + STATION_GAP * (SITES.length - 1);
 export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1

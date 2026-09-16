@@ -44,7 +44,10 @@ import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
-import { CASINO_UPGRADES, pickChip, dealHand } from './casino.js';
+import { dealHand, potAt } from './casino.js';
+import { pullLever } from './levers.js';
+import { liftStake, liftPot, dropCarried, stakeAt, overRim } from './stakes.js';
+import { stakes } from './state.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -566,7 +569,6 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
-                        ...CASINO_UPGRADES,
                         // On the crew board, not the bench.
                         HOUSE_ROW];
 
@@ -628,7 +630,7 @@ export const buyRowByKey = key => {
 export const everything = (endless = LADDER, passes = 8) => {
   const bought = [];
   const bottomless = u => u.kind === 'rung' && !u.rung;
-  const rows = everyRow().filter(u => !CASINO_UPGRADES.includes(u) && (u.bill || u.cost));
+  const rows = everyRow().filter(u => u.bill || u.cost);
   const order = [...rows.filter(u => !bottomless(u)), ...rows.filter(bottomless)];
   for (let p = 0; p < passes; p++) {
     let any = false;
@@ -900,8 +902,20 @@ export const HANDLES = {
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __answered: answered, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
-  // The chip dial, wound the way its two buttons wind it: `__chip(2)` is two nudges up.
-  __chip: (d = 1) => pickChip(d),
+  // a lever on the casino pulled by name, the same call the pointer makes:
+  // `__clickLever('casino-gate')`, 'casino-chute', 'casino-crank'
+  __clickLever: pullLever,
+  // The heaps, handled the way the pointer handles them: lift one by coin and
+  // chip (`__liftStake('dust', 100)`), lift the pot out of the hopper, carry
+  // to a point, and let go there; `__rim()` is a point over the hopper's rim
+  // and `__stakeAt` a heap's own spot.
+  __liftStake: (cur, chip) => { const h = stakes.find(s => s.cur === cur && s.chip === chip); const at = h && stakeAt(h); return !!h && liftStake(h, at.x, at.y); },
+  __liftPot: () => liftPot(potAt().x, potAt().y),
+  __carryTo: (x, y) => { if (S.carried) { S.carried.x = x; S.carried.y = y; } return !!S.carried; },
+  __dropAt: (x, y) => dropCarried(x, y),
+  __rim: () => ({ x: potAt().x, y: potAt().y - P * 3 }),
+  __stakeAt: (cur, chip) => { const h = stakes.find(s => s.cur === cur && s.chip === chip); return h ? stakeAt(h) : null; },
+  __overRim: overRim,
   // a hand dealt off the rng without the sim -- the bins each grain of a
   // handful lands in and what they pay on this stake -- for the check that
   // measures the spread two thousand hands at a time

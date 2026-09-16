@@ -25,7 +25,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { PILE_LIMIT, CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
+import { PILE_LIMIT, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
@@ -35,7 +35,7 @@ import { PILE_LIMIT, CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
-import { S, pit, casino, table, tray, floor } from './state.js';
+import { S, pit, casino, table, tray, floor, stakes } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
@@ -67,32 +67,23 @@ export const hoisting = () => !!S.hoisting;
 // A hand is under way, any part of it: the stake coming down, the handful on
 // the pegs, the bins paying, the tray going up or over. Chip, let-go, bank and
 // drop-again are all dead for the whole of it.
-export const busy = () => pouring() || letting() || hoisting() || !!S.paying;
+export const busy = () => pouring() || letting() || hoisting() || !!S.paying || !!S.refund;
 
-// --- the chip -----------------------------------------------------------------
-// How much goes down is chosen, not worked out for you. Four chips, and the last
-// of them is not a number: `all` is everything you are holding of whatever you
-// stake, and it is the one the whole place is really for.
+// --- the stake -----------------------------------------------------------------
+// What you can stake is what you can see: heaps of each coin in the chip sizes
+// stand on the ground beside the building (stakes.js), and a heap carried to
+// the hopper is the stake. The purse each comes out of.
 export const purseOf = cur =>
   cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : S.stored;
 
-export const chip = () => CASINO_CHIPS[Math.max(0, Math.min(CASINO_CHIPS.length - 1, S.chip))];
-export const chipName = () => (chip() === 'all' ? 'all in' : String(chip()));
+export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
+export const inTray = () => !!S.pot && S.pot.where === 'tray';
 
-// A chip you cannot cover is a chip you cannot put down, so the row goes pale
-// rather than quietly staking less than it says.
-export const stakeOf = cur => chip() === 'all' ? purseOf(cur) : chip();
-
-export function pickChip(d) {
-  S.chip = Math.max(0, Math.min(CASINO_CHIPS.length - 1, S.chip + d));
-  S.shopStale = true;
-}
-
-const inHopper = () => !!S.pot && S.pot.where === 'hopper';
-const inTray = () => !!S.pot && S.pot.where === 'tray';
-
+// A heap may go in while nothing is moving and the hand has no other coin on
+// it: one coin a hand, because a mixed pot would need a mixed tray and a mixed
+// pay, and the refusal at the rim is one rule and it is visible.
 export const canStake = cur =>
-  S.casinoOpen && !S.pot && !busy() && stakeOf(cur) > 0 && purseOf(cur) >= stakeOf(cur);
+  S.casinoOpen && !busy() && (!S.pot || (inHopper() && S.pot.cur === cur)) && purseOf(cur) > 0;
 
 // The pot is standing in the hopper and nothing is moving: the floor can open.
 export const canLet = () => inHopper() && !busy();
@@ -107,28 +98,55 @@ export const canBank = () => inTray() && !busy();
 // And putting the same pot back on the roof.
 export const canRide = () => inTray() && !busy();
 
-// The chip goes down and the stake comes down: one gesture. What happens now is
-// that the pot rains out of the sky into the hopper -- see `trickleIn` -- and
-// the let-go opens the moment the heap is lying still.
-export function stake(cur) {
-  if (!canStake(cur)) return;
-  const n = stakeOf(cur);
+// A heap let go over the rim: it comes out of the purse there and then, and
+// pours into the hopper from where it was dropped -- see `trickleIn` -- adding
+// to whatever pot is standing there, so the stake is however many heaps you
+// carried over before you pull the lever. The let-go opens the moment the
+// heap is lying still.
+export function addStake(cur, n, from) {
+  if (!canStake(cur) || n <= 0 || n > purseOf(cur)) return false;
   if (cur === 'dust') spend(n);
   // Out of the hole first, and off what the rift holds for the rest: a stake is
   // spending like any other. See `spendHeld` in pit.js.
   else if (cur === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (cur === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
-  S.pot = { cur, stake: n, n, where: 'hopper' };
+  const on = S.pot ? S.pot.n : 0;
+  S.pot = { cur, stake: on + n, n: on + n, where: 'hopper' };
   S.hand = null;                                 // the last one is old news now
   S.pouring = true;
+  S.pourFrom = from ? { x: from.x, y: from.y } : null;
   stopAttract();                                 // the machine has a player
   S.shopStale = true;
+  return true;
+}
+
+// And a pot lifted out of the hopper again, whole, before the lever: back into
+// the hopper if it is let go over the rim, or to the purse anywhere else --
+// over the works and into the hole, the counter moving as each grain lands
+// (`refundStep`). No row says take it back; the same lift undoes a drop.
+export function takePot() {
+  if (!inHopper() || busy()) return null;
+  const took = { cur: S.pot.cur, n: S.pot.n };
+  S.pot = null;
+  layWalls();
+  S.pourFrom = null;
+  return took;
+}
+export function returnPot(cur, n, from) {
+  S.pot = { cur, stake: n, n, where: 'hopper' };
+  S.pouring = true;
+  S.pourFrom = from ? { x: from.x, y: from.y } : null;
+}
+export function refundPot(cur, n, from) {
+  S.refund = { cur, left: n, grains: Math.max(1, shownFor(n)), x: from.x, y: from.y };
 }
 
 // --- the handful ------------------------------------------------------------------
-// How many grains go down the board for this pot: the handful, or the whole pot
-// when the pot is smaller than a handful, because a grain cannot carry less
-// than one.
+// How many pebbles come out of the throat for this pot: the handful, or the
+// whole pot when the pot is smaller than a handful, because a pebble cannot
+// carry less than one. The hopper's pile is the pot's band, and the whole of
+// it drains into the machine; the pebbles are what the machine presses out
+// of it.
 export const handfulFor = n => Math.max(1, Math.min(CASINO_HANDFUL, Math.floor(n)));
 
 // What one grain of the handful carries: its share of the stake. This is the
@@ -210,8 +228,14 @@ const slotCol = c => Math.min(slotW(binAt(c)) - 1, c - binLeft(binAt(c)));
 // what lands in it heaps by the yard's rules: a x39 bin with two grains shows
 // two grains and a middle bin shows a heap. Eleven of them, remade for each
 // hand.
+// A bin holds pebbles, and a pebble is two cells square (`PEBBLE`), so a bin
+// is a plot of pebble-sized cells: two across a five-cell slot, and five deep
+// -- more than the slot is drawn, so a hand that puts most of its pebbles in
+// one bin stands proud of the rim rather than waiting over it for ever.
+export const PEBBLE = 2;
+const binCols = b => Math.max(1, Math.floor(slotW(b) / PEBBLE));
 const makeBin = b => ({
-  x: 0, y: 0, cols: slotW(b), rows: BIN_H, p: P, grid: new Uint8Array(slotW(b) * BIN_H),
+  x: 0, y: 0, cols: binCols(b), rows: CASINO_HANDFUL, p: P * PEBBLE, grid: new Uint8Array(binCols(b) * CASINO_HANDFUL),
   n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: true
 });
 const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
@@ -231,7 +255,7 @@ const makeGrain = (s, demo = false) => ({
 export function letGo() {
   if (!canLet()) return;
   S.drop = {
-    at: now(), lastSent: -Infinity, sent: 0, handful: handfulFor(S.pot.n),
+    at: now(), lastSent: -Infinity, sent: 0, handful: handfulFor(S.pot.n), drained: 0, shade: 0,
     grains: [], bins: makeBins(),
     stage: 'drop', holdAt: 0, payAt: 0, payIdx: 0, paid: 0, edge: false, payFrom: null
   };
@@ -271,15 +295,46 @@ function takeFromHopper() {
   return v;
 }
 
+// The gate is open: every frame the grains on the floor over the throat drop
+// through it, into the machine -- gone from view because they are inside,
+// never because they faded -- and the heap above sags into the gap at the
+// sand's own pace. The whole pile goes in, however big the stake. The pebbles
+// are pressed out of the throat separately: the first once the first sand has
+// gone through, and one every `CASINO_GRAIN_GAP_MS` after, sixteen whatever
+// the pile was, so a big stake is a longer drain and the same cascade.
+function drainGate(d) {
+  for (const c of gateCols()) {
+    if (wallAt(c, 0)) continue;
+    const v = at(table, c, 0);
+    if (!v) continue;
+    put(table, c, 0, 0);
+    d.drained++;
+    if (!d.shade) d.shade = v;
+  }
+  // and the funnel tips toward the throat: a grain lying on a step slides in
+  // along it when the cell beside it is free, the way the sand board's floor
+  // tipped toward its gate, because the sand's own rules only take a grain
+  // down a drop and a step's outer cells have none -- and the whole pile has
+  // to go in.
+  const mid = Math.floor(table.cols / 2);
+  for (let r = 0; r < table.rows; r++) {
+    for (let c = mid - 1; c > 0; c--) {
+      const v = at(table, c - 1, r);
+      if (v && !wallAt(c - 1, r) && !at(table, c, r) && !wallAt(c, r)) { put(table, c - 1, r, 0); put(table, c, r, v); }
+    }
+    for (let c = mid; c < table.cols - 1; c++) {
+      const v = at(table, c + 1, r);
+      if (v && !wallAt(c + 1, r) && !at(table, c, r) && !wallAt(c, r)) { put(table, c + 1, r, 0); put(table, c, r, v); }
+    }
+  }
+}
+
 function sendGrains(dt) {
   const d = S.drop;
-  if (d.sent >= d.handful) return;
+  if (d.sent >= d.handful || !d.drained) return;
   const t = now();
-  if (t - d.at < CASINO_GATE_MS) return;                  // the floor is still opening
   if (t - d.lastSent < CASINO_GRAIN_GAP_MS) return;
-  const v = takeFromHopper();
-  if (!v) return;                                         // the heap has not slid in yet
-  d.grains.push(makeGrain(v));
+  d.grains.push(makeGrain(d.shade || 1));
   d.sent++;
   d.lastSent = t;
 }
@@ -328,7 +383,7 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
     // where the bin's own sand rules take it the rest of the way. A slot full
     // to the rim keeps the grain waiting over it, which nothing ever fills.
     if (g.r < FIELD_H) { g.r++; continue; }
-    const b = binAt(g.c), bin = bins[b], col = slotCol(g.c);
+    const b = binAt(g.c), bin = bins[b], col = Math.min(bin.cols - 1, Math.floor(slotCol(g.c) / PEBBLE));
     if (at(bin, col, bin.rows - 1)) break;
     put(bin, col, bin.rows - 1, g.s);
     g.landed = true;
@@ -397,8 +452,8 @@ function payBin(b) {
       if (!s) continue;
       put(bin, c, r, 0);
       S.tableAir.push({
-        x: f.x + (binLeft(b) + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
-        vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, lands: 'tray'
+        x: f.x + (binLeft(b) + c * PEBBLE) * P, y: f.y + (FIELD_H + BIN_H - (r + 1) * PEBBLE) * P,
+        vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, big: true, lands: 'tray'
       });
     }
 }
@@ -442,13 +497,14 @@ function stepDrop(dt) {
   const d = S.drop;
   const t = now();
   if (d.stage === 'drop') {
+    if (t - d.at >= CASINO_GATE_MS) drainGate(d);           // once the floor has opened
     sendGrains(dt);
     for (const g of d.grains) stepGrain(g, dt, d.bins, pegHit, binHit);
     // and the bins heap what has landed in them, a row a frame
     for (const bin of d.bins) settle(bin);
-    // the hand settles on three facts: nothing left to send, nothing on the
-    // pegs, and no column of a bin still moving
-    if (d.sent >= d.handful && d.grains.every(g => g.landed) && d.bins.every(bin => !bin.awakeN)) {
+    // the hand settles on four facts: the hopper drained, nothing left to
+    // send, nothing on the pegs, and no column of a bin still moving
+    if (hopperN() === 0 && d.sent >= d.handful && d.grains.every(g => g.landed) && d.bins.every(bin => !bin.awakeN)) {
       d.stage = 'hold'; d.holdAt = t; d.grains = [];
     }
     return;
@@ -534,10 +590,9 @@ export const chuteOpen = () =>
 export function ride() {
   if (!canRide()) return;
   S.pot = { ...S.pot, stake: S.pot.n, where: 'hopper' };
-  // A handful of the tray goes up: the hopper's picture is the grains that
-  // will fall. The tray's picture was the paid pot at its band, so what the
-  // hoist does not carry leaves the tray as the pot leaves it.
-  S.hoisting = { grains: Math.max(1, Math.min(tray.n, handfulFor(S.pot.n))), lifted: 0 };
+  // The whole of the tray's picture goes up: the hopper's picture is the same
+  // band, and every grain of it will drain into the machine.
+  S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
   S.hand = null;
   S.shopStale = true;
 }
@@ -568,12 +623,34 @@ function hoistStep(dt) {
              k: 0, high: P * 8 + rand() * P * 6, ms: FLIGHT_MS }
     });
   }
-  // and once the handful is on its way, the rest of the tray's picture leaves
-  if (h.lifted >= h.grains && tray.n > 0) drainOut(dt, tray, 0);
   if (tray.n === 0 && airborneTo('hopper') === 0) {
     S.hoisting = false;
     S.pouring = true;                            // and the hopper walks to what the pot says
   }
+}
+
+// A pot handed back: grains thrown from where the heap was let go, over the
+// works and into the hole, each carrying its share of the pot -- the walk
+// banking used to be, kept for the one thing that still goes straight to the
+// purse. The rounding rides on the last grain, so the purse is paid the pot.
+function refundStep(dt) {
+  const r = S.refund;
+  let n = Math.min(r.grains, Math.max(1, Math.ceil(r.grains * (dt / TRICKLE_MS))));
+  const find = potShade(r.cur);
+  while (n-- > 0 && r.grains > 0) {
+    const worth = r.grains > 1
+      ? Math.max(1, Math.min(r.left - (r.grains - 1), Math.round(r.left / r.grains)))
+      : r.left;
+    r.left -= worth;
+    r.grains--;
+    const s = find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length);
+    S.tableAir.push({
+      x: r.x, y: r.y, s, t: 0, worth,
+      arc: { x0: r.x, y0: r.y, x1: pit.x + rand() * Math.min(700, pit.w),
+             y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30, ms: FLIGHT_MS }
+    });
+  }
+  if (r.grains < 1 && r.left < 1) S.refund = null;
 }
 
 function payOutStep(dt) {
@@ -604,9 +681,9 @@ function payOutStep(dt) {
     // out of the hatch in the foot's left wall and a short lob on to the strip
     S.tableAir.push({
       x, y, s: v, t: 0, worth, lands: 'strip',
-      // inside the strip's own columns, a cell in from either end, so the ground
-      // it lands on is the ground the survey counts as the casino's
-      arc: { x0: x, y0: y, x1: strip.from + P + rand() * (strip.to - strip.from - P * 2),
+      // into the middle half of the strip, so a grain that walks to the nearest
+      // column with room stays on the ground the survey counts as the casino's
+      arc: { x0: x, y0: y, x1: strip.from + (strip.to - strip.from) * (0.25 + rand() * 0.5),
              y1: S.groundY - P, k: 0, high: P * 4 + rand() * P * 4, ms: CHUTE_MS }
     });
   }
@@ -666,6 +743,7 @@ export function wireTray() {
 // The sand itself is never saved: a reset or a reload starts the building
 // empty, and a pot comes back pouring into whichever plot it stood in.
 export function clearCasino() {
+  for (const h of stakes) if (h.grid) fillFlat(h, 0);
   if (table.grid) layWalls();
   if (tray.grid) fillFlat(tray, 0);
   table.capped = null;
@@ -680,11 +758,7 @@ export function clearCasino() {
 // than a count of it -- a tenfold pot for `CASINO_PILE_BAND` more grains, on
 // the log of the pot so nothing jumps, and never more than the brim. See
 // config/casino.js for the ladder itself.
-export const shownFor = n =>
-  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
-    : Math.min(CASINO_PILE_BRIM,
-               Math.round(CASINO_PILE_ONE +
-                          CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
+export { shownFor };
 
 // How much sand should be standing in the hopper: the handful. The hopper's
 // picture of the pot IS the grains that will fall -- a chip of ten is ten
@@ -697,11 +771,8 @@ export const shownFor = n =>
 // waits on the heap reaching this number, and a plot that refused a grain with
 // no way to say so would be a hand that never came.
 export const tableWant = () => {
-  if (!inHopper()) return 0;
-  const hand = Math.min(handfulFor(pot()), table.capped ?? Infinity);
-  return !S.drop ? hand
-    : S.drop.stage !== 'drop' || S.drop.sent >= S.drop.handful ? 0
-    : Math.max(0, hand - S.drop.sent);
+  if (!inHopper() || S.drop) return 0;
+  return Math.min(shownFor(pot()), table.capped ?? Infinity);
 };
 
 // And the tray: the pot's band while the pot stands in it, or the band of what
@@ -764,10 +835,12 @@ function trickleIn(dt, plot, name, want, from) {
 // the whole rim: a grain that lands in the middle of a wide upper step has no
 // drop beside it and stays there, and a handful rained across the rim stood
 // as a scatter on the slopes instead of a heap in the throat.
-const skyOver = () => ({
-  x: potAt().x + (rand() - 0.5) * P * GATE_W * 4,
-  y: table.y - P * 24 - rand() * P * 10
-});
+// -- or from the heap in your hand, when a carried heap was let go over the
+// rim: the heap under the pointer drains into the funnel from where it was
+// dropped, and the stake still walks.
+const skyOver = () => S.pourFrom
+  ? { x: S.pourFrom.x + (rand() - 0.5) * P * 4, y: S.pourFrom.y + (rand() - 0.5) * P * 2 }
+  : { x: potAt().x + (rand() - 0.5) * P * GATE_W * 4, y: table.y - P * 24 - rand() * P * 10 };
 
 // And going the other way: grains lifted off the top of the heap, one at a
 // time, each fading out on its way up. A pot that vanished in a frame was a
@@ -826,7 +899,9 @@ export function stepTable(dt) {
   const hw = tableWant(), tw = trayWant();
   // the hopper: the stake raining in, or the rest of a let-go heap leaving. Not
   // while the tray is being hoisted into it -- that is the pour, the other way up.
-  if (!S.hoisting) {
+  // ...and not while a hand is on the board: what leaves the hopper then
+  // leaves through the gate, and only through the gate.
+  if (!S.hoisting && !S.drop) {
     if (hopperN() + airborneTo('hopper') < hw) trickleIn(dt, table, 'hopper', hw, skyOver);
     else if (hopperN() > hw) drainOut(dt, table, hw);
   }
@@ -873,6 +948,7 @@ export function stepSparks(dt) {
       }
       continue;
     }
+    if (k.lands === 'stake') continue;          // the heaps' rain: stakes.js lands it
     if (!k.up) k.vy += TABLE_GRAV * f;
     k.x += k.vx * f;
     k.y += k.vy * f;
@@ -903,7 +979,8 @@ export function stepCasino(dt) {
   if (!S.casinoOpen) return;
   stepSparks(dt);
   // The pot is standing in its plot: the pour is over, and the decision is open.
-  if (S.pouring && settledInPile()) { S.pouring = false; S.shopStale = true; }
+  if (S.pouring && settledInPile()) { S.pouring = false; S.pourFrom = null; S.shopStale = true; }
+  if (S.refund) refundStep(dt);
   if (S.drop) stepDrop(dt);
   stepAttract(dt);
   // A win's fountains go up a beat apart rather than all at once: three bursts
@@ -958,92 +1035,10 @@ export const payingBin = () =>
   S.drop && S.drop.stage === 'pay' && S.drop.payFrom != null && now() - S.drop.payAt < CASINO_PAY_BEAT_MS
     ? S.drop.payFrom : null;
 
-// --- the board ---------------------------------------------------------------
-// Three rows to put something down, one to let it go, and two to decide what
-// happens to what came back -- and never both sets at once: a table with a pot
-// on it is not a table you can stake at.
-//
-// A stake row is priced like any other row on any other board -- a mark and a
-// number -- because that is exactly what it is: this much, out of your hands,
-// now. The decisions are not priced at all, so they carry what they are about.
-const STAKES = [
-  // Named by the coin: three cards all reading STAKE differed by a seven-pixel
-  // mark in the price column (critics 2026-09-10, C6).
-  { key: 'stakedust', name: 'stake pebbles', cur: 'dust' },
-  { key: 'stakeshard', name: 'stake ore', cur: 'shard' },
-  { key: 'stakespore', name: 'stake crops', cur: 'spore' }
-];
-
-const seen = cur => cur === 'shard' ? S.seenShard : cur === 'spore' ? S.seenSpore : true;
-
-// the mark of whatever is on the table, written the way the boards write marks
-const MARKOF = cur => `<i class="${cur || 'dust'}"></i>`;
-
-export const CASINO_UPGRADES = [
-  // How much goes down, on a dial rather than as four rows a currency. It is the
-  // one row on this board that spends nothing, exactly like the roster's job
-  // rows: a setting between two buttons, not a purchase.
-  {
-    key: 'chip',
-    name: 'chips',
-    dial: true,
-    value: chipName,
-    less: () => pickChip(-1),
-    more: () => pickChip(1),
-    lo: () => S.chip <= 0,
-    hi: () => S.chip >= CASINO_CHIPS.length - 1,
-    show: () => S.casinoOpen && !S.pot && !busy()
-  },
-  // A stake is written like a price -- a mark and a number, this much out of
-  // your hands, now -- but it is not a purchase and it does not go through the
-  // buying machinery: `stake` takes what it takes, and the row is dead when it
-  // could not.
-  ...STAKES.map(t => ({
-    key: t.key,
-    name: t.name,
-    price: () => `${MARKOF(t.cur)} ${stakeOf(t.cur)}`,
-    cost: () => stakeOf(t.cur),
-    currency: t.cur,
-    dead: () => !canStake(t.cur),
-    buy: () => stake(t.cur),
-    // A row for a currency you have never seen is a row naming a thing you have
-    // not met, which is the one rule every board in this game keeps.
-    show: () => S.casinoOpen && !S.pot && !busy() && seen(t.cur)
-  })),
-  // Let it go: the floor opens and the handful comes down. It carries the pot,
-  // which is what is going down the board and the number the decision is
-  // about; what it might come back as is written on the bins.
-  {
-    key: 'letgo',
-    name: 'let it go',
-    price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
-    cost: () => 0,
-    dead: () => !canLet(),
-    buy: letGo,
-    show: () => S.casinoOpen && inHopper()
-  },
-  {
-    key: 'bank',
-    name: 'bank it',
-    price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
-    cost: () => 0,
-    dead: () => !canBank(),
-    buy: bank,
-    show: () => S.casinoOpen && inTray()
-  },
-  {
-    key: 'ride',
-    name: 'drop again',
-    // What goes back up to the roof, which is what the next hand is played for.
-    price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
-    cost: () => 0,
-    dead: () => !canRide(),
-    buy: ride,
-    show: () => S.casinoOpen && inTray()
-  }
-];
-
-export const CASINO_SECTIONS = [
-  { title: 'the hopper', keys: ['chip', 'stakedust', 'stakeshard', 'stakespore', 'letgo'] },
-  { title: 'the tray', keys: ['bank', 'ride'] }
-];
+// --- no board ------------------------------------------------------------------
+// The casino sells nothing from a shelf. The chip and the stake are heaps you
+// carry (`stakes.js`); the gate, the chute and the crank are levers on the
+// building (levers.js). The two lists stay, empty, for everything that walks
+// every board and expects a station to answer.
+export const CASINO_UPGRADES = [];
+export const CASINO_SECTIONS = [];
