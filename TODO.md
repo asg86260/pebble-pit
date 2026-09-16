@@ -7,12 +7,12 @@ each its own section, all reading one answer for "is this a phone"
 (`coarse()` in prefs.js off `(pointer: coarse)`, with a switch on the
 settings sheet). Waiting on approval before any code.
 
-- **Momentum scrolling.** A finger that lifts while moving leaves the view
-  coasting (`S.camV`, `EPHEMERAL`, walked in `stepCamera`, friction a
-  frame); stopped by a finger landing, a `lookAt`, a cutscene or the world's
-  edge; no coast under reduced motion. `config/touch.js` (new) takes
-  `PAN_FRICTION`, `PAN_STOP`, `FLICK_MIN`, `FLICK_SAMPLE`, and `TAP_SLOP` /
-  `TAP_TIME` move there out of input.js. Check: `test/momentum.test.mjs`.
+- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
+  the canvas sits fixed in a horizontal scroller with a spacer the width of
+  the world, `camX` reads `scrollLeft` once a frame and everything that
+  moves the camera writes it; a non-passive `touchstart` over dust says no
+  to the scroll so the sweep stands. No friction knobs. Checks:
+  `selftest/touch.js`, `test/camera.test.mjs`.
 - **A hop between stations.** Two arrows in the mid sky at the window's
   edges, each wearing the glyph of the next standing station that way, a
   tap glides there; drawn on a phone only. Recommended over one button

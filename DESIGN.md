@@ -10290,56 +10290,83 @@ wide on a desk and six on a phone; getting from the bench to the tower is
 six full-width drags, and every one of them stops like a cart hitting a
 wall. Every other thing on a phone coasts.
 
-**The rule.** A finger that lifts while moving leaves the view moving.
-The view carries a velocity, `S.camV` (world pixels a frame, `EPHEMERAL`),
-set on `pointerup` from the finger's last few moves -- the drag already
-keeps `fingerPan.x`; it keeps the last `FLICK_SAMPLE` positions with their
-times and the release velocity is the slope over them, so one slow final
-move does not kill a fast flick and one jittery one does not launch a slow
-drag. `stepCamera` in world.js walks it: `camX += camV`, then
-`camV *= PAN_FRICTION` a frame, to nought under `PAN_STOP`. It goes through
-`pan()` so the rule that closes a board whose station has scrolled out
-keeps holding, and it is stopped by the same things a drag is: a finger
-landing (`pointerdown` sets `camV = 0`, so a flick is caught by putting a
-finger down, the way every list on a phone is caught), a `lookAt` (the yard
-sending the view somewhere wins over a coast), a cutscene, and `clampCam`
-at either end of the world (the coast dies at the wall rather than pressing
-on it). Under reduced motion there is no coast: the view stops where the
-finger left it, which is what the motion switch promises about every glide.
+**The rule: the browser scrolls the yard, and the game reads where it got
+to.** Not a velocity of the game's own with a friction knob -- the owner's
+call (2026-09-15) is to use the platform's momentum, and it is the right
+one: every list on the phone flings, decelerates and rubber-bands by one
+curve the player's thumb already knows, and a curve of the game's own would
+be a second one to learn and a set of knobs to get wrong. So the canvas is
+not the thing that is dragged. It sits fixed inside a **scroller**, a
+horizontal `overflow-x: auto` element the size of the window, with a spacer
+inside it as wide as the world at the current zoom (`S.worldW * S.zoom`);
+`S.camX` is `scroller.scrollLeft / S.zoom`, read once a frame in
+`stepCamera`, and every place that moves the camera -- a drag, `pan()`,
+`lookAt`, a cutscene, `clampCam` -- writes `scrollLeft` instead of `camX`.
+The clamp is the scroller's own edges; the rubber band at the end of the
+world is the platform's. `touch-action` on the scroller is `pan-x`, from
+`none` today.
 
-Two fingers coast too, off the middle's velocity, since two fingers is the
-way along a floor full of dust. The mouse's middle button does not: a
-mouse has a wheel, and a wheel drag that coasts is a wheel that overshoots.
+**One finger on dust sweeps, on anything else looks about** -- that rule
+stands (DESIGN.md, "One finger looks about"), and it is the one place the
+platform has to be told what a touch is before it decides for itself. The
+browser commits to scrolling on `touchstart`, so the game decides there
+too: a non-passive `touchstart` listener that finds dust under the finger
+(`dustUnder`) calls `preventDefault`, which cancels native scrolling for
+that touch and nothing else, and the sweep runs on the pointer events as
+now; a touch on anything else is left to the browser, which scrolls. The
+same listener says no to a touch on a hop arrow or on the sheet's handle.
+Two fingers scroll too, natively, since two fingers is the way along a
+floor full of dust.
 
-**The knobs** (`config/touch.js`, new -- the phone's numbers together, and
-`TAP_SLOP` and `TAP_TIME` move there from input.js, where they are the two
-magic numbers the house style forbids): `PAN_FRICTION` (~0.94 a frame, so a
-flick runs about a second), `PAN_STOP` (0.5 px a frame, under which it is
-stopped), `FLICK_MIN` (a release slower than this is a stop, not a flick),
-`FLICK_SAMPLE` (the last 80 ms of moves). Frame-rate honest the way the
-shake is: the friction is raised to `frames()`.
+**A desk is unchanged in feel.** A mouse drag is not a native scroll, so
+the middle-button and two-finger-trackpad pan keep their code and write
+`scrollLeft`; the wheel scrolls the scroller directly, which is what it did
+by hand before. A trackpad's two-finger swipe becomes the platform's, with
+its own momentum, for free.
+
+**Zoom, glide and the camera's owners.** A zoom step resizes the spacer and
+rewrites `scrollLeft` in the same frame so the point under the pointer
+stays put (`setZoom` already computes that point; it writes one more
+number). A `lookAt` glide keeps the game's own ease (`camTo`, 0.12 a frame)
+by writing `scrollLeft` each frame -- `scrollTo({behavior: 'smooth'})` was
+considered and turned down, since its curve and duration are the
+platform's and differ across them, and the yard's glide is a tested
+promise. A cutscene sets `overflow: hidden` on the scroller for its run so
+a fling in flight cannot fight the camera, and puts it back on release. A
+fling is caught by a finger landing, which is the platform's own rule.
+Under reduced motion the scroller gets `scroll-behavior: auto` and nothing
+else changes: a coast is the platform's, not a glide of ours, and the
+motion switch promises about the yard's own animation.
+
+**The knobs.** None of the game's: there is no friction, no stop speed, no
+flick threshold, which is the point. `config/touch.js` (new) still takes
+`TAP_SLOP` and `TAP_TIME` out of input.js, where they are the two magic
+numbers the house style forbids, and the tap gate for the boards below.
 
 **The calls.**
-1. *Velocity from the last moves, not the last move.* The alternative --
-   the last `pointermove`'s delta -- is one event, and on a phone the last
-   event before `pointerup` is often a stall or a sideways twitch.
-2. *Friction, not a fixed distance.* A fixed overshoot (drag plus half a
-   window) is predictable but feels the same for a nudge and a throw; a
-   flick should go further than a shove, or it is not a flick.
-3. *The coast stops on a touch.* Not on a tap through to a control: a finger
-   landing on the yard while it coasts stops it and does nothing else that
-   frame (the tap's own business runs on `pointerup`, as now), so a player
-   can catch a fast coast without swinging at whatever went by.
+1. *Native, not simulated.* A simulated coast (`S.camV` and `PAN_FRICTION`,
+   the first draft of this section) was one more curve and four knobs; the
+   platform's is the one the thumb expects. The cost is that the camera is
+   now a DOM fact read back, which is one line in `stepCamera`.
+2. *A scroller with a spacer, not a scrolling canvas.* The canvas stays the
+   size of the window and draws the slice under `camX`, as now; only the
+   scroll position is delegated. A canvas as wide as the world would be
+   megapixels of nothing.
+3. *The sweep says no at `touchstart`.* The alternative -- making the sweep
+   a different gesture on a phone (a long press, two fingers) -- changes a
+   rule the yard has and this design promised not to touch.
 
-**Files:** `input.js` (release velocity, the stop on landing), `world.js`
-(`stepCamera` carries `camV`), `state.js` (`camV` in `EPHEMERAL`),
-`config/touch.js` (new). **Check:** `test/momentum.test.mjs`, node tier --
-a drag released at speed leaves `camX` moving on the frames after and
-stopped within a second; released slowly it does not move; a `lookAt` and a
-touch each kill it; the coast never crosses `clampCam`'s edge; under reduced
-motion `camV` is never set. The pointer itself is the browser tier's
-(`selftest/touch.js`, new): two synthetic touches, a fast and a slow, and
-the view after each.
+**Files:** `main.js` (the scroller and the spacer round the canvas),
+`world.js` (`stepCamera` reads `scrollLeft`; `pan`, `lookAt`, `clampCam`,
+`setZoom` write it), `input.js` (the `touchstart` gate, `touch-action`),
+`cutscene.js` (locks the scroller for a scene), `style.css`. **Check:**
+browser tier (`selftest/touch.js`, new -- the pointer is the page's): a
+synthetic fling on bare ground leaves `scrollLeft` moving on the frames
+after and `S.camX` following it; the same touch on dust sweeps and does not
+scroll; a `lookAt` lands where it said; a zoom step keeps the point under
+the pointer. Node tier: `test/camera.test.mjs` -- `camX` in the node yard,
+which has no scroller, still clamps and glides as before, so the sim's
+camera is the same fact with or without a DOM to read it from.
 
 ### A hop between stations
 
