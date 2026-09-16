@@ -6,11 +6,40 @@
 // finished (`maxed`), because a finished row has nothing left to promise.
 
 import { S } from './state.js';
-import { fmt } from './board.js';
-import { maxed } from './upgrades.js';
+import { RUNGS } from './config.js';
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet. Time is a price like the coins and reads the same way.
+// Short form for a count read at a glance: 872, 1.3k, 14k, 1.4m. One decimal
+// while the leading figure is doing the work, none once three digits carry it.
+// A row with no `rung` is not a ladder (a building, a one-off, a job) and is
+// never finished.
+export const rungOf = u => (u.rung ? u.rung() : 0);
+// `RUNGS` unless the row says otherwise (the kit ladders are `KIT_MAX`). Read
+// through one function because the pips, the count, "done" and the fold all
+// ask, and a cap only some of them know about is a row that says 3/5 and
+// cannot be bought.
+export const rungsOf = u => (u.rungs ? u.rungs() : RUNGS);
+export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
+
+// Whether a finished row may be folded off its board by "finished: hidden".
+// A kit row says `keep`: it is the only place to read how many hats a station
+// owns, and that fact becomes final exactly when the ladder finishes.
+export const folds = u => maxed(u) && !u.keep;
+
+export const fmt = n => {
+  const v = Math.round(n || 0), a = Math.abs(v);
+  if (a < 1000) return String(v);
+  for (const [d, s] of [[1e9, 'b'], [1e6, 'm'], [1e3, 'k']]) {
+    if (a < d) continue;
+    const q = Math.abs(v) / d;
+    const t = q >= 99.95 ? Math.round(q) : Math.round(q * 10) / 10;
+    // 999.96k rounds to "1000k"; that reading belongs to the next unit up
+    if (t >= 1000) return (v < 0 ? '-' : '') + 1 + { k: 'm', m: 'b', b: 't' }[s];
+    return (v < 0 ? '-' : '') + t + s;
+  }
+};
+
 export const MARK = {
   dust: '<i class="dust"></i>',
   core: '<i class="core"></i>',

@@ -79,7 +79,7 @@ No sim file imports the shop any more, but the ring does not shrink yet:
 and `crew/assign.js` reads `standRect` from board.js (`tools/cycles.mjs
 --path` names each edge). Seam 6 removes those; it moves ahead of seam 5.
 Also red on main as of 9cb86fd, not from this seam: `test/machines.test.mjs`
-"a jaw pays a dig exactly what a gang would" (838 over 7 digs of 120).
+"a jaw pays a dig exactly what a gang would" (838 over 7 digs of 120). At integration `fmt` moved to words.js, `houseRect` to house.js and the four rung helpers to words.js: the sim's ring (71) no longer holds `shop.js`, `board.js` or `upgrades.js`, which are a ring of three on their own; `tools/cycles.mjs --path src/quarry.js src/shop.js` says "no path".
 
 Seam 6, invalidation off the clock, is BUILT (2026-09-16): `S.dirty` and
 its 252 lines are gone, the save writes on its one-second clock, and the

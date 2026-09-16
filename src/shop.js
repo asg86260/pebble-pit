@@ -8,7 +8,8 @@ import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, building, inLine, lineAt } from './upgrades.js';
+import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';

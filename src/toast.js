@@ -16,7 +16,7 @@ import { reducedMotion } from './prefs.js';
 import { hold } from './input.js';
 import { showPane } from './settings.js';
 import { STATIONS, standRect } from './board.js';
-import { houseRect } from './crewboard.js';
+import { houseRect } from './house.js';
 
 const el = document.getElementById('toast');
 const nameEl = el.querySelector('.name');

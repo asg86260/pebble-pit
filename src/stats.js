@@ -10,7 +10,7 @@
 import { STATS_WINDOW_S, STATS_SAMPLE_S, STATS_FLOOR } from './config.js';
 import { S } from './state.js';
 import { MARK } from './words.js';
-import { fmt } from './board.js';
+import { fmt } from './words.js';
 
 // What the books watch, in board order. Dust is read off `banked` because it
 // has a lifetime total; the rest are balances. A currency appears once you

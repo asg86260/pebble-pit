@@ -4,8 +4,7 @@
 // same rows as the shop so it reads as the same game's menu.
 
 import { S } from './state.js';
-import { cubes, houseLeft } from './house.js';
-import { HOUSE_CUBE } from './config.js';
+import { houseRect } from './house.js';
 import { JOB_OF as JOBS_AT } from './levels.js';
 import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
@@ -16,21 +15,6 @@ import { POINT_MS } from './config.js';
 import { WORKER } from './config.js';
 import { JOB } from './jobs.js';
 import { minding } from './crew/tenders.js';
-
-// The block as a rectangle to stand near: what is actually built, not the
-// plot. The left edge is the plot's, because the settlement fills its ground
-// from one end and must not slide as it grows (`cubes`); the width and height
-// are the rooms themselves, or the board's arrow points at bare ground beside
-// the house.
-export function houseRect() {
-  const stack = cubes();
-  const top = stack.length ? Math.min(...stack.map(c => c.y)) : S.groundY;
-  const left = houseLeft();
-  // The ground course is the widest, so the far side of the block is the far
-  // side of whichever room reaches furthest.
-  const right = stack.length ? Math.max(...stack.map(c => c.x)) + HOUSE_CUBE : left;
-  return { x: left, y: top, w: right - left, h: S.groundY - top };
-}
 
 // Where a body is, in the yard's words. Every job needs a line here: one
 // without reads as `undefined` on its row.

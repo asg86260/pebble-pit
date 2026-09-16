@@ -17,7 +17,7 @@
 import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER, LADDERS } from '../src/config.js';
-import { rungOf, rungsOf } from '../src/upgrades.js';
+import { rungOf, rungsOf } from '../src/words.js';
 import { capacity, pickCount, haulCap } from '../src/levels.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
 import { cellMs, seamDig, quarryMs, QUARRY_UPGRADES } from '../src/quarry.js';

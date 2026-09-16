@@ -17,7 +17,7 @@
 import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW } from './config.js';
 import { S, bench, casino, scrub, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
-import { houseRect } from './crewboard.js';
+import { houseRect } from './house.js';
 import { apothHut } from './apothecary.js';
 import { shieldDone } from './shield.js';
 import { beatDone } from './beats.js';

@@ -3,10 +3,12 @@
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS,
          SHEET_MS } from './config.js';
+import { fmt } from './words.js';
 import { S, bench } from './state.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows, crewList } from './crewboard.js';
-import { UPGRADES, lodgers, markSectionsSeen, canPay, maxed, inLine } from './upgrades.js';
+import { UPGRADES, lodgers, markSectionsSeen, canPay, inLine } from './upgrades.js';
+import { maxed } from './words.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
@@ -691,21 +693,6 @@ function settle(want) {
   requestAnimationFrame(() => panelEl.classList.add('open'));
 }
 
-
-// Short form for a count read at a glance: 872, 1.3k, 14k, 1.4m. One decimal
-// while the leading figure is doing the work, none once three digits carry it.
-export const fmt = n => {
-  const v = Math.round(n || 0), a = Math.abs(v);
-  if (a < 1000) return String(v);
-  for (const [d, s] of [[1e9, 'b'], [1e6, 'm'], [1e3, 'k']]) {
-    if (a < d) continue;
-    const q = Math.abs(v) / d;
-    const t = q >= 99.95 ? Math.round(q) : Math.round(q * 10) / 10;
-    // 999.96k rounds to "1000k"; that reading belongs to the next unit up
-    if (t >= 1000) return (v < 0 ? '-' : '') + 1 + { k: 'm', m: 'b', b: 't' }[s];
-    return (v < 0 ? '-' : '') + t + s;
-  }
-};
 
 // The dust count as the card shows it, kept on `S` for the report.
 export function tweenCount(at) {

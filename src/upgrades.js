@@ -9,8 +9,9 @@
 // imports those and never this, so a station's load order does not run
 // through the shop.
 
-import { P, RUNGS } from './config.js';
+import { P } from './config.js';
 import { S } from './state.js';
+import { maxed } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
@@ -38,21 +39,6 @@ import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
-
-// A row with no `rung` is not a ladder (a building, a one-off, a job) and is
-// never finished.
-export const rungOf = u => (u.rung ? u.rung() : 0);
-// `RUNGS` unless the row says otherwise (the kit ladders are `KIT_MAX`). Read
-// through one function because the pips, the count, "done" and the fold all
-// ask, and a cap only some of them know about is a row that says 3/5 and
-// cannot be bought.
-export const rungsOf = u => (u.rungs ? u.rungs() : RUNGS);
-export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
-
-// Whether a finished row may be folded off its board by "finished: hidden".
-// A kit row says `keep`: it is the only place to read how many hats a station
-// owns, and that fact becomes final exactly when the ladder finishes.
-export const folds = u => maxed(u) && !u.keep;
 
 // A ladder sold in more than one row shows one row at a time: a row naming
 // `after` stays off every board until that row's ladder is finished. Wraps

@@ -217,3 +217,18 @@ export function houseReport() {
     cells: cs.map(c => `${c.x},${c.y}`)
   };
 }
+
+// The block as a rectangle to stand near: what is actually built, not the
+// plot. The left edge is the plot's, because the settlement fills its ground
+// from one end and must not slide as it grows (`cubes`); the width and height
+// are the rooms themselves, or the board's arrow points at bare ground beside
+// the house.
+export function houseRect() {
+  const stack = cubes();
+  const top = stack.length ? Math.min(...stack.map(c => c.y)) : S.groundY;
+  const left = houseLeft();
+  // The ground course is the widest, so the far side of the block is the far
+  // side of whichever room reaches furthest.
+  const right = stack.length ? Math.max(...stack.map(c => c.x)) + HOUSE_CUBE : left;
+  return { x: left, y: top, w: right - left, h: S.groundY - top };
+}

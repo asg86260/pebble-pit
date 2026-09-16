@@ -10,7 +10,7 @@
 
 import { group, ok, openSites, climb } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { maxed } from '../src/upgrades.js';
+import { maxed } from '../src/words.js';
 import { LADDER, TIER_OWN, TIER_BAND } from '../src/config.js';
 
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);

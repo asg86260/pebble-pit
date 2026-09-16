@@ -1,7 +1,8 @@
 // The counter: the one thing here read rather than looked at, drawn in screen
 // pixels. Owns digits, drawCount and the counter's remembered marks.
 
-import { fmt, openBoardRect } from '../board.js';
+import { openBoardRect } from '../board.js';
+import { fmt } from '../words.js';
 import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';

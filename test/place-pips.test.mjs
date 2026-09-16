@@ -6,7 +6,7 @@
 // bench's should climb with the rung the way its price does.
 
 import { group, ok, run, yard } from './helpers.mjs';
-import { rungOf, rungsOf } from '../src/upgrades.js';
+import { rungOf, rungsOf } from '../src/words.js';
 import { workFor } from '../src/works.js';
 import { QUARRY_BENCH0, QUARRY_BENCH_MAX, FARM_PLOTS0, FARM_PLOTS_MAX, WORK_STEP } from '../src/config.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
