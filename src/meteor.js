@@ -191,26 +191,12 @@ export function takeCell(c, r) {
   return kind;
 }
 
-// A spot off a cell, on the side away from the middle. Off the *cell*, not
-// the disc: measured from the original radius a wizard went on hanging where
-// the outside used to be, twenty cells from the last of it.
-export function hoverSpot(cell, off) {
-  const mid = (sky.cols - 1) / 2;
-  const dx = cell.c - mid, dy = cell.r - mid;
-  const d = Math.hypot(dx, dy) || 1;
-  return { x: cellX(cell.c) + sky.p / 2 + (dx / d) * off,
-           y: cellY(cell.r) + sky.p / 2 + (dy / d) * off };
-}
-
 // --- calling one down -------------------------------------------------------------
 // An empty sky is a job, not a wait: the wizards pour light into the middle
 // of it. One body takes `SUMMON_MS`, two take half; nobody up there and the
 // charge holds where it is.
 export const summoning = () => S.meteorOpen && sky.n === 0;
 export const summonAt = () => Math.max(0, Math.min(1, S.summon || 0));
-
-// where the new one is being made, which is where the last one was
-export const summonSpot = () => ({ x: sky.x, y: sky.y });
 
 export function summon(hands, secs) {
   if (!summoning() || hands <= 0) return;

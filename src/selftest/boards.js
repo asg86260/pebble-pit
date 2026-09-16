@@ -793,7 +793,6 @@ export const TESTS = [
     // one sweep guaranteed never to see them.
     St.towerOpen = false;
     St.casinoOpen = false;
-    St.labOpen = false;
     St.outhouseOpen = false;
     St.scrubOpen = false;
     window.__build();

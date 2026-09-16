@@ -12,8 +12,7 @@ const FARM = site({
   at: () => farm.x + farm.w / 2,                   // show them what they just bought
   // `once`, not `show`: `nearly` reads the dust in the hole, and as a `show`
   // the door came and went every time you spent (`revealed` in shop.js). Not
-  // before the props have failed: the farm is what they open (DESIGN.md, "The
-  // shields are the spine"), unless SHIELD_GATES is off.
+  // before the place before it stands (`shieldOpened`).
   once: () => shieldOpened('props') && seenACore() && nearly(FARM_DUST),
   show: () => !S.farmOpen
 });

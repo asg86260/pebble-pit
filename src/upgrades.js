@@ -4,36 +4,23 @@
 // row never holds a stale number. `SECTIONS` decides the order and the grouping
 // on the board.
 
-import {
-  P, RUNGS, LADDER, LOO_MUCK, LOO_POSTS, rungValue,
-  HAUL_MS,
-  QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
-  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST
-} from './config.js';
+import { P, RUNGS, LADDER, rungValue, HAUL_MS } from './config.js';
 import { fmt } from './board.js';
-import { scrubCost } from './scrubhouse.js';
+
 import { craftCount } from './balloon.js';
-import { poopLeft } from './smog.js';
-import { S, pit, quarry, farm, lab, apothecary, casino, scrub, tower, outhouse } from './state.js';
-import { spend, spendHeld, pitCapacity, payTo, refund } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY,
-         APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
-import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy, MACHINES, UNMANNED, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
-import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
-         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
-         HOUSE_COST0, HOUSE_RATE,
-         MACHINE_TUNE,
-         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
-import { critChance, critMult } from './crit.js';
+
+import { S, pit, quarry, farm, apothecary, casino, scrub, tower, outhouse } from './state.js';
+import { spend, spendHeld, payTo, refund } from './pit.js';
+import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY } from './config.js';
+import { benches, plotCount } from './world.js';
+import { machineFor, MACHINES, UNMANNED, machine, JOB_MACHINE, tuneGain } from './machines.js';
+import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, SPELL_DRIVE, SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
+
 import { spelled } from './tower.js';
-import { makeMeteor } from './meteor.js';
+
 import { syncWorkers } from './crew.js';
 import { buildShop } from './shop.js';
-import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
-         busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
+import { takesTime, workOn, workFor, leftAt, start, registerRows, busyBuilderSites, siteX, siteBox, waiting, placeOf, pullOut } from './works.js';
 import { nextHouseAt } from './house.js';
 
 // A rate ladder from `base` to `floor` in a fixed number of rungs, eased so the
@@ -143,9 +130,7 @@ export const UNITS = {
 // A second is written 's' wherever it is a unit; the clock glyph is the bill's
 // alone, because the same glyph meaning "per second" on the gain line and "a
 // price in time" on the bill forty pixels below it read as two things.
-export const secondsMark = text => text;
-
-export const unitText = unit => secondsMark(UNITS[unit] || unit);
+export const unitText = unit => UNITS[unit] || unit;
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 
@@ -306,8 +291,6 @@ export const gangWorth = job => {
   return n + hatted;
 };
 
-export const kitMult = job => gangWorth(job) / handsOf(job);
-
 // A machine's rate is measured against the gang a full set of hats made
 // (`gangWorth`), so the specialists are the thing you finish before the
 // machine and the machine is worth `MACHINE_GAIN` over them. Every machine's
@@ -335,18 +318,13 @@ export function restaff(job, want) {
 // place allowed to move counts about, and because a save can arrive with
 // both a machine and a full set. `stepKit` walks any head still wearing one
 // over to hand it in.
-function stripKit() {
+export function stripKit() {
   for (const m of MACHINES) {
     const r = machine(m.key);
     if (!r || !r.bought || !r.tookKit) continue;
     const trade = TRADE_OF[m.job];
     if (trade && S[trade] > 0) { S[trade] = 0; S.dirty = true; }
   }
-}
-
-// Nothing staffs itself: every station stays where the roster put it.
-export function staffSheds() {
-  stripKit();
 }
 
 export function rebalance() {

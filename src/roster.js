@@ -4,13 +4,13 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, shack } from './state.js';
+import { S, quarry, farm, apothecary, scrub, sky, outhouse, shack } from './state.js';
 import { groundAt, kitX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 import { KIT_MARK, TRADE_OF } from './kit.js';
-import { JOB, jobSaid } from './jobs.js';
+import { JOB } from './jobs.js';
 import { shown } from './tween.js';
 
 

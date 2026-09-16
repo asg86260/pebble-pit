@@ -8,7 +8,7 @@ import './shelf.css';   // the boards are shelves (DESIGN.md, "The shelf"); the 
 import { fatal } from './crash.js';
 import { S } from './state.js';
 import { step, settleIntoWorld } from './game.js';
-import { at } from './grid.js';
+
 import { openingCamX, resize, clampCam } from './world.js';
 import { syncWorkers } from './crew.js';
 import { draw, asPicture } from './render.js';

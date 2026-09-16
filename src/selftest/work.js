@@ -1,7 +1,6 @@
 // Putting people to work, taking them off again, and startling a bird.
 
-import { sleep, state, ok, canvas, board, panel, point, onScreen, hoverBench, hoverStation,
-  run, runUntil, haveRock, put, asScreen } from './kit.js';
+import { sleep, state, ok, point, onScreen, hoverBench, run, haveRock, put } from './kit.js';
 
 export const TESTS = [
   ['a worker put on the rock works it', async () => {

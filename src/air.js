@@ -63,15 +63,6 @@ function floorAt(x) {
 // because a worker is a thing the game saves and this is a thing the air wants.
 const wasAt = new WeakMap();
 
-// Whether somebody is moving this frame, to the same tolerance the dust uses.
-// Exported because the crew's card asks exactly this question. A body's own
-// `walking` flag is no help: it is set for the errand legs and not for a
-// hauler's whole working day, which is walking and nothing else.
-export const onTheMove = w => {
-  const was = wasAt.get(w);
-  return was !== undefined && Math.abs(w.x - was) >= 0.3;
-};
-
 function offAWalker() {
   const crew = S.workers;
   if (!crew.length) return null;

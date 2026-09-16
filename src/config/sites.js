@@ -4,7 +4,7 @@ import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
-import { LAB_W } from './lab.js';
+
 import { SCRUB_W } from './scrub.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';

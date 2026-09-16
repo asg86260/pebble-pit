@@ -1,4 +1,4 @@
-import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SCRUB_PULL, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
+import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { speedBoost, strengthBoost } from '../apothecary.js';
 import { S, scrub } from '../state.js';

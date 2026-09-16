@@ -6,14 +6,6 @@
 // the bottom. The plots come before the quarry: food makes bodies and stone
 // makes tools, and a body has to exist before its tool means anything.
 export const FARM_CORES = 1;       // the plots, and the first thing a core buys
-// Whether a shield's failure is what opens the next door -- the props the
-// farm, the net the quarry, the arch the tower, and each the kit of the trade
-// that made it (DESIGN.md, "The shields are the spine"). Off: the doors are
-// priced in cores and dust alone, the shields still stand and fail in their
-// order but open nothing, and each door waits on the place before it instead
-// (farm, then quarry, then tower). `shieldOpened` in shield.js is the one
-// place that reads it.
-export const SHIELD_GATES = false;
 // One core, not two: a second core is a second rock's worth of *waiting*,
 // which nothing the player does can hurry. The dust half carries the weight
 // instead ("The grind pass" in DESIGN.md) -- a bill you can push on.
@@ -28,7 +20,6 @@ export const QUARRY_DUST = 2000;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
 export const LAB_DUST = 12000;     // the lab
-export const LAB_SPORES = 100;      // and a taste of the ground it multiplies
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
 // A row shows once you are within this much of affording it: a price you have

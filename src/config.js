@@ -78,7 +78,7 @@ import { WEATHER_KNOBS } from './config/weather.js';
 import { ROCK_KNOBS } from './config/rocks.js';
 import { EFFECT_KNOBS } from './config/effects.js';
 import { RIFT_KNOBS } from './config/rift.js';
-import { NOTICE_KNOBS } from './config/notices.js';
+
 import { SOUND_KNOBS } from './config/sound.js';
 import { RUNG_KNOBS } from './config/rungs.js';
 

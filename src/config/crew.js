@@ -22,7 +22,6 @@ export const LOO_MS = 1700;      // how long it takes
 export const LOO_MUCK = 2;       // and how much is left behind
 
 export let SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
-export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss
 export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big

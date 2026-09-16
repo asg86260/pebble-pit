@@ -5,16 +5,7 @@
 // bill: `dropZone` has walked the crew clear, and the wreck mines back as
 // dust.
 import { S } from './state.js';
-import {
-  P, ROCK_CLEAR, ROCK_FLANK_CLEAR,
-  SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST,
-  PROP_FROM, PROP_COST, PROP_PLANKS,
-  NET_COST, NET_ROPES, NET_SLOW,
-  ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE,
-  DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE,
-  DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER,
-  SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES, SHIELD_GATES
-} from './config.js';
+import { P, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
 import { spawnSpoil } from './dust.js';
@@ -43,19 +34,17 @@ export const KINDS = {
           cast: true, work: DOME_WORK, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
 };
 
-export const shieldKind = () => S.shield && KINDS[S.shield.kind];
 export const shieldUp = () => !!S.shield && S.shield.laid >= KINDS[S.shield.kind].pieces;
 export const shieldDone = kind => S.shieldsDone.includes(kind);
-// Whether the door a shield opens is open: the shield has failed, or, with
-// the shields not doors (SHIELD_GATES), the place before it stands. Every
-// station and kit gate reads this rather than `shieldDone`, so the pacing is
-// one knob. BEFORE keeps the chain (props -> farm -> net -> quarry -> arch ->
-// tower) with the gates off; answering yes to everything put the farm, the
-// quarry and the tower on the bench together off a single core.
+// Whether the door a shield stands before is open: the shields are not
+// doors, so it is whether the place before it stands. Every station and kit
+// gate reads this rather than `shieldDone`, so the pacing is one knob. BEFORE
+// keeps the chain (props -> farm -> net -> quarry -> arch -> tower); answering
+// yes to everything put the farm, the quarry and the tower on the bench
+// together off a single core.
 const BEFORE = { props: () => true, net: () => S.farmOpen,
                  arch: () => S.quarryOpen, dome: () => S.towerOpen };
-export const shieldOpened = kind =>
-  SHIELD_GATES ? shieldDone(kind) : (BEFORE[kind] || (() => true))();
+export const shieldOpened = kind => (BEFORE[kind] || (() => true))();
 
 // The top of whatever is standing: the thing the rock reaches first.
 export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;

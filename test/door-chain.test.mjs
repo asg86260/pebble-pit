@@ -1,9 +1,8 @@
 // The doors open one at a time, each earned by the last: the farm, then the
-// quarry, then the tower. The shields carried that order while they were the
-// gates; with SHIELD_GATES off every door answered to the first core at once,
-// and "build the quarry" and "discover the tower" stood on the bench beside
-// the farm before a plot had been broken. `shieldOpened` in shield.js keeps
-// the chain either way, and this is the check on it.
+// quarry, then the tower. Without the chain every door answered to the first
+// core at once, and "build the quarry" and "discover the tower" stood on the
+// bench beside the farm before a plot had been broken. `shieldOpened` in
+// shield.js keeps the chain, and this is the check on it.
 //
 // Every door is bought the way a player buys it -- through its own row -- and
 // the yard is rich, so the money is never what hides a row here.

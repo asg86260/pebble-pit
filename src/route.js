@@ -375,15 +375,11 @@ export const routeFor = (w, toX, toWay = null) => {
 };
 
 // The floor at a place. Over the mouth of a hole there is no floor, and a
-// caller naming a bare x means the lip it would stand at; within two cells of
-// the pile's surface by either reading (see `wayAt`) it means the pile.
+// caller naming a bare x means the lip it would stand at: a bare x has no
+// height, so whether it means the pile cannot be asked of it (a caller that
+// means the pile names the way).
 const openFloor = (x, all) => {
   const on = floorWay(x, all);
-  if (on === all.hole) {
-    const under = standTop(x, on.at);
-    const mid = on.at(x + WORKER / 2);
-    if (Math.min(Math.abs(feet - under), Math.abs(feet - mid)) <= P * 2) return on;
-  }
   return on === all.hole ? all.yard : on;
 };
 

@@ -8,11 +8,11 @@ import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
          DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
 import { raiseShield, shieldDone } from './shield.js';
-import { now } from './clock.js';
+
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
-import { registerRows, workOn, leftAt, progressOf } from './works.js';
+import { registerRows, workOn, progressOf } from './works.js';
 import { TYPE } from './jobs.js';
 import { MACHINES, machine } from './machines.js';
 
@@ -27,7 +27,6 @@ export const wizCost = () => {
 // Whether a hat is on the go, and how far along it is: an ordinary work at
 // the tower, so somebody has to be up there.
 export const brewing = () => !!workOn(TYPE.WIZARD);
-export const brewLeft = () => leftAt('tower', TYPE.WIZARD);
 export const brewAt = () => { const w = workOn(TYPE.WIZARD); return w ? progressOf(w) : 0; };
 
 // A minute and a half is a long time to look at a number of milliseconds.

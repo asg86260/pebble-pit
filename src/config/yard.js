@@ -5,7 +5,6 @@ export const P = 6;              // pixel size, in world units
 // whole number of *device* pixels, so the screen's own ratio is rounded
 // against this rather than against P.
 export let CELL = 5;
-export const TARGET = 1000000;   // dust in the hole: the whole point
 // The place is built once and never moves. The pit floor sits on the bottom of
 // the viewport, the ground line a fixed height above it, and the rock, the
 // bench and the lip keep their distances; a bigger window is only more sky
@@ -20,11 +19,6 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // Every site stands on the one ground line, measured out from the rock. The
 // world runs away to the left as sites are unlocked; the pit is the one fixed
 // end, out to the right.
-// Rock center to the thing in the sky: out past the tower, at the far end of
-// the walk, because the tower is what calls it down and what makes the body
-// that can reach it, so a wizard coming out of the tower door has a few steps
-// to take rather than the length of the yard. See meteor.js.
-export const TO_SKY = -3468;
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
 export const TO_FARM = -2106;    // rock center to the near edge of the farm

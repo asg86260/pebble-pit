@@ -1,7 +1,6 @@
 // The house board and the crew submenu hung off it.
 
-import { sleep, newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point,
-  hoverBench, hoverHouse, openCrewList, hoverAway, run, buy, asScreen } from './kit.js';
+import { sleep, newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point, hoverBench, hoverHouse, openCrewList, hoverAway, run, buy } from './kit.js';
 
 export const TESTS = [
   ['another house is bought where the houses are', async () => {

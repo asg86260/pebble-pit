@@ -1,12 +1,5 @@
 // --- the tower ----------------------------------------------------------------
-// What a core is for.
 // --- the meteor, and the wizards who work it ------------------------------------
-// The tower calls the meteor down out of the far sky and it hangs there over
-// the yard, grey rind and a red middle, until somebody who can reach it goes
-// and works it. Cores, because calling a rock out of the sky should cost the
-// rarest thing on the ground.
-export const METEOR_CORES = 3;
-export const METEOR_DUST = 6000;
 // How much of the meteor is core, as a share of the radius: a dig you can see
 // the end of, the grey shrinking until red shows through.
 export const METEOR_CORE = 0.44;
@@ -102,10 +95,6 @@ export const RAY_MIN = 2;            // cells long at their shortest
 export const RAY_MAX = 5;            // and at their longest
 export const RAY_BEAT = 1.7;         // seconds for one breath of the corona
 export const CORE_FLICK = 260;       // ms a core cell holds a tone before it shifts
-
-// How near the meteor a wizard works from: it hangs off the rind rather than
-// inside it, so what it is taking apart is not behind it.
-export const WIZ_STANDOFF = 16;
 
 // A core and a thousand dust, and nothing else: a bill with four lines on it
 // is a row you have to study rather than read.

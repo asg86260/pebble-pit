@@ -1,7 +1,7 @@
 import { P, SCRUB_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
-import { DROPS, SKY, climbing, drift, intake, raining, resetDrift, scrubbing } from './band.js';
-import { gullet, resetGullet } from './house.js';
+import { DROPS, SKY, climbing, intake, raining, resetDrift, scrubbing } from './band.js';
+import { resetGullet } from './house.js';
 import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
 import { EMBERS, dryFor, rainOdds, resetRain } from './rain.js';
 import { clearSky, cloudR, moteX, moteY } from './sky.js';

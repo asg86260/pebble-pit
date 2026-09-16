@@ -5,7 +5,7 @@
 import { group, ok, state, run, runUntil, openSites, yard, buyBuilt } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         DOME_BILL, DOME_FLOOR_C, DOME_FADE_MS, P, SHIELD_GATES } from '../src/config.js';
+         DOME_BILL, DOME_FLOOR_C, DOME_FADE_MS, P } from '../src/config.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { domeOrbitR } from '../src/shield.js';
 import { DUST_PER } from '../src/upgrades.js';
@@ -231,9 +231,9 @@ group('the net slows the rock and lets it through anyway', async () => {
 // every coin already in hand, so the only thing standing between the yard
 // and each door is the shield before it. Nothing here opens a place by hand:
 // the farm, the quarry and the tower are bought through their rows, and the
-// shields are raised and answered. With the shields not doors (SHIELD_GATES
-// off) the same walk finds every door already offered, and the shields still
-// answer in their order.
+// shields are raised and answered. The shields are not doors, so the walk
+// finds every door already offered, and the shields still answer in their
+// order.
 group('each shield that fails opens the next station', async () => {
   ready();
   window.__grant({ cores: 12 });
@@ -257,8 +257,8 @@ group('each shield that fails opens the next station', async () => {
   const towerUp = build('unlocktower');
 
   window.__reset();
-  const gated = (early, after) => SHIELD_GATES ? !early && after : early && after;
-  const when = SHIELD_GATES ? 'only once' : 'before and after';
+  const gated = (early, after) => early && after;
+  const when = 'before and after';
   return [
     ok(gated(farmEarly, farmAfter), `the farm is offered ${when} the timber has failed`,
        `${farmEarly} -> ${farmAfter}`),

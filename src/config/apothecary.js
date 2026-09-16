@@ -99,12 +99,6 @@ export const APOTH_POT_STAND = P * 2;  // a keeper stands this far left of its p
 export const APOTHECARY_W = APOTH_POT_ROW
                           + POT_PITCH * (APOTH_POTS_MAX - 1) + POT_W;
 
-// The mark on a dosed body fades on the dose's own clock; this is only how
-// many cells it stands in when full.
-export const DOSE_MARK_CELLS = 3;      // the mark on a buffed body, in cells
-// An errand pace: quicker than the farmhand's amble between plots and slower
-// than a laden hauler's trudge.
-export const APOTH_WALK = 2.4;
 
 // The tonic burning off a dosed body -- a plume of colored motes off the head.
 // See `stepDoseMotes` in apothecary.js.

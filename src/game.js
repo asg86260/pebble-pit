@@ -12,14 +12,14 @@ import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
-import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor, tickGrid } from './grid.js';
+import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, pitFull, riftCatch, abyssLine } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepCutscene } from './cutscene.js';
 import { wireCut } from './quarry.js';
-import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
+import { stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
@@ -55,7 +55,7 @@ import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, stepUnder, maybeReunion } from './intro.js';
 import { stepSkip } from './skip.js';
-import { mineMs, restaff, staffSheds, take } from './upgrades.js';
+import { mineMs, restaff, stripKit, take } from './upgrades.js';
 // The bench's row is registered by this file being loaded, here rather than
 // by the page, because a yard with no document still has to raise a bench
 // (raise.js).
@@ -133,9 +133,9 @@ function countTick() {
   // four times a second: this is what tells a station it has room again, and
   // waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();
-  // A decision about the roster, which does not need revisiting sixty times a
+  // A fact about the roster, which does not need revisiting sixty times a
   // second.
-  if (S.tick % 15 === 7) staffSheds();
+  if (S.tick % 15 === 7) stripKit();
   // A heap finding its angle is a slow thing and nobody is watching a cell.
   if (S.tick % 12 === 3) slumpMess();
 }

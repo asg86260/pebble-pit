@@ -253,11 +253,6 @@ export function applySounds(map) {
   return n;
 }
 
-// The renderer, for the bench and tools/listen.mjs: no context, no jitter.
-export function renderStrike(spec, o = {}, shape = { level: spec.gain, widen: 1, detune: 0 }) {
-  return render(spec, o, shape);
-}
-
 // --- the context half ------------------------------------------------------------
 // Nothing below runs without a context, and nothing above depends on it.
 

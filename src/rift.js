@@ -114,6 +114,4 @@ function gulp(dt) {
   const take = left <= 0 ? have : Math.ceil(have * Math.min(1, (was - left) / was));
   return swallow(take, RIFT_GULP_SHOW, true);
 }
-
-// How long a tear has left to run, nought to one, for anything drawing it.
-export const riftTearing = () => Math.max(0, Math.min(1, (S.riftGulp || 0) / RIFT_GULP));
+

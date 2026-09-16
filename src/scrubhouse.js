@@ -5,14 +5,14 @@
 // rather than a purchase because the bodies in it are bodies not on the rock
 // (DESIGN.md).
 
-import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
+import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS, BALLOON_RUNGS } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
-import { idle, assign } from './upgrades.js';
+
 import { airRows, airSection } from './airboard.js';
-import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
+import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
 import { TYPE } from './jobs.js';
 
@@ -80,6 +80,24 @@ const FAN = tierRows({
   show: () => S.scrubOpen,
   bands: named('fan', 'fan power')
 });
+
+// The craft the house sells: a finite ladder on the building that owns the
+// number. Written here rather than in balloon.js because this list reads it
+// at load, and balloon.js and this file are in one import cycle -- a row
+// read across the cycle at load is a TDZ error whichever way the entry
+// happens to walk it. The calls are wrapped for the same reason.
+const CRAFT_ROW = {
+  key: 'balloon',
+  // Built at the scrubbing house, where it is moored, in a machine's time.
+  kind: 'machine', site: 'scrub',
+  name: 'the balloon',
+  note: () => 'rides the sky and drops what it catches under itself',
+  rung: () => CRAFT.length,
+  cost: () => craftCost(),
+  currency: 'dust',
+  buy: () => buyCraft(),
+  show: () => S.scrubOpen && CRAFT.length < BALLOON_RUNGS
+};
 
 export const SCRUB_UPGRADES = [
   ...FAN,

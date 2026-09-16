@@ -230,7 +230,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
 
   // What has been opened, and how far through the opening story the yard is.
   quarryOpen: S.quarryOpen,
-  labOpen: S.labOpen,
   intro: S.intro,
   introDone: S.introDone,
   reunionDone: S.reunionDone,
@@ -289,7 +288,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // The boards: which one is up, what each has to offer, and where you stand to
   // open it.
   boardOpen: S.boardOpen,
-  labBoardOpen: S.labBoardOpen,
   houseBoardOpen: S.houseBoardOpen,
   crewListOpen: S.crewListOpen,
   scrubBoardOpen: S.scrubBoardOpen,

@@ -12,8 +12,7 @@ const CAVE = site({
   blurb: 'ore, blue coin',
   cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
-  // The net's failure opens it; `shieldOpened` keeps the chain whether or not
-  // the shields are doors (SHIELD_GATES).
+  // `shieldOpened` keeps the door chain: the farm before the quarry.
   show: () => shieldOpened('net') && S.seenCore && !S.quarryOpen,
   job: JOB.QUARRY
 });

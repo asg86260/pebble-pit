@@ -18,8 +18,6 @@ export const DRAUGHT_PER_S = 18;     // specks a second, per body inside
 export const DRAUGHT_FROM = 190;     // how far out they come in from
 export const DRAUGHT_PACE = 96;      // and pixels a second they close at
 export const DRAUGHT_INK = 0.55;     // against the haze's own weight
-export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
-                                     // top of the house and down the middle of it
 // How far either side of the fan a climbing puff is close enough to be taken.
 // Generous, because a plume goes up in a column and the house wants the whole
 // of it, not the one mote that happened to line up with the throat.

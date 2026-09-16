@@ -11,7 +11,7 @@
 // The two files call each other's functions and neither reads the other's
 // values at load time, which is what keeps the import ring from biting.
 
-import { P, WORKER, FARM_WALK, BALLOON_RUNGS, BALLOON_DUST, BALLOON_RATE,
+import { P, WORKER, FARM_WALK, BALLOON_DUST, BALLOON_RATE,
          BALLOON_PACE, BALLOON_LIFT, BALLOON_W, BALLOON_H, BALLOON_BASKET,
          BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
@@ -143,14 +143,6 @@ export function dismount(w) {
   if (w.goal === 'aloft') w.goal = 'to';
 }
 
-// And out of the job altogether. A berth left on a body gone to the rock
-// keeps a balloon empty for the rest of the run.
-export function leaveBerth(w) {
-  w.berth = null;
-  w.craft = null;
-  if (w.goal === 'aloft') { w.goal = 'to'; w.aloft = false; }
-}
-
 // --- the wander ------------------------------------------------------------------
 // What keeps a craft from reading as a tram: it leans on the wind, rises and
 // settles on its own breath, and never quite repeats. All derived off the
@@ -210,7 +202,7 @@ export function stepBalloons() {
 
     // Up when somebody is aboard, down when not, eased either way: watching
     // it go up is half of knowing somebody got in.
-    const step = BALLOON_LIFT * f / Math.max(1, laneY(i) ? 1 : 1);
+    const step = BALLOON_LIFT * f;
     if (c.lift < want) c.lift = Math.min(want, c.lift + step);
     else if (c.lift > want) c.lift = Math.max(want, c.lift - step);
 
@@ -295,19 +287,5 @@ export function craftLoad(list) {
 }
 
 export const clearCraft = () => { CRAFT.length = 0; };
-
-// A finite ladder on the building that owns the number.
-export const CRAFT_ROW = {
-  key: 'balloon',
-  // Built at the scrubbing house, where it is moored, in a machine's time.
-  kind: 'machine', site: 'scrub',
-  name: 'the balloon',
-  note: () => 'rides the sky and drops what it catches under itself',
-  rung: () => CRAFT.length,
-  cost: craftCost,
-  currency: 'dust',
-  buy: buyCraft,
-  show: () => S.scrubOpen && CRAFT.length < BALLOON_RUNGS
-};
 
 export { BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H };

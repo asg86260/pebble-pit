@@ -1,9 +1,9 @@
 // The lab and the smoke that says it is being worked.
 
-import { DOOR_H, DOOR_W, LAB_FLUE, P, SMOKE_LIFE } from '../config.js';
-import { S, lab } from '../state.js';
+import { P, SMOKE_LIFE } from '../config.js';
+import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { rising as risingAt, withRise } from './rise.js';
+
 import { drawDoseMote } from './effects.js';
 
 // Smoke off the lab's chimney, and off a cigarette at a little over half the
@@ -32,40 +32,5 @@ export function drawSmoke() {
     }
   }
   ctx.fillStyle = '#000';
-}
-
-// The lab: a tall body with one chimney. Whole cells throughout, read off the
-// cells it is made of rather than fractions of its width, so a lab a course
-// taller draws right: LAB_FLUE courses of chimney against the sky, the body
-// under it.
-export function drawLab() {
-  const rising = risingAt('lab') && 'lab';
-  if (!S.labOpen && !rising) return;
-  const { x, y, w, h } = lab;
-  withRise(rising, x, S.groundY, w, h, () => {
-    const across = Math.round(w / P);
-    const c = (n) => x + P * n;                              // cell n across the front
-    const r = (n) => y + P * n;                              // and cell n down it
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x, r(LAB_FLUE), w, h - P * LAB_FLUE);       // the body
-    ctx.fillRect(c(2), y, P * 3, P * LAB_FLUE);              // a chimney
-    // A second, small stack at the far end of the roof: a line with a hat on
-    // beside the solid block, which is what says works rather than a box with
-    // a chimney.
-    ctx.fillRect(c(across - 4), r(LAB_FLUE - 3), P, P * 3);
-    ctx.fillRect(c(across - 5), r(LAB_FLUE - 3), P * 3, P);
-    ctx.fillStyle = '#fff';
-    // The window off to one side, because the middle of the front belongs to
-    // the door: a clear cell off the jamb and two off the far corner, since a
-    // hole on a building's edge is a bite out of the silhouette. Two cells
-    // square, the window of a crew room; three beside a four-course door is
-    // two holes rather than a wall with things in it.
-    ctx.fillRect(c(across - 4), r(LAB_FLUE + 1), P * 2, P * 2);   // a window
-    // The way in, DOOR_W by DOOR_H, dead in the middle of the front. lab.js
-    // walks a scholar to the middle of it (labDoor), so the hole in the wall
-    // and the place a body disappears are one thing.
-    ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
-    ctx.fillStyle = '#000';
-  });
 }
 

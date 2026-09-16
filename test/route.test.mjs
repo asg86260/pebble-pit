@@ -396,3 +396,24 @@ group('a body is never put at the height of a hole it is not in', async () => {
        `feet ${Math.round(feet)} against a surface of ${top}`)
   ];
 });
+
+// A bare x over the mouth of the hole names the lip. Nothing carries a height
+// with an x, so the question "is it the pile" cannot be asked of one; a caller
+// that means the pile says so with a way. This used to throw (`feet` was not
+// in scope), which no caller reached because every walk into the hole names
+// its way -- the rule is stated here so the first one that does not, does not
+// take the yard down with it.
+group('a bare x over the mouth of the hole routes to the lip', async () => {
+  window.__reset();
+  window.__crew(0, 2);
+  run(2);
+  const s = state();
+  let out = null, threw = null;
+  try { out = window.__route(0, s.pitX + s.pitW / 2); } catch (e) { threw = String(e); }
+  return [
+    ok(!threw, 'asking for a route over the mouth does not throw', threw),
+    ok(out && out.legs.length >= 1 && out.legs.every(l => !l.includes('climb')),
+       'and it is a walk along the yard to the lip, not a climb into the hole',
+       JSON.stringify(out))
+  ];
+});

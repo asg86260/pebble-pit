@@ -33,10 +33,6 @@ export const BOOKS_STAND_W = 10;
 export const BOOKS_STAND_H = 5;
 
 // --- the clock ---------------------------------------------------------------
-// Seconds are a clock face, never the letter s. On a board it is the `.clock`
-// mark (`MARK.time` in upgrades.js); on a card in the yard, which is one
-// monospace text node and can hold no markup, it is this glyph.
-export const CLOCK_GLYPH = '◴';
 
 // --- a count on its way ------------------------------------------------------
 // Every number read off the yard runs to its new value rather than jumping to
@@ -82,7 +78,6 @@ export const SHELF_BADGE_HALO = 1;  // px of white round a badge's ink, cut out 
 export const SHELF_BADGE_CELL = 2;  // screen px a badge cell: finer than the drawing's, for a mark a third its size
 export const SHELF_BADGE_CELLS = 5; // cells a badge is square
 export const SHELF_PLANK = 5;       // px, the plank's thickness
-export const SHELF_DOT_INK = 0.14;  // the ground's dot, half the held sheet's .28
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six
 export const SHELF_HOVER_MS = 120;  // the plate and the lift easing in under the cursor
 export const SHELF_FLOAT_MS = 2400; // one turn of a lifted tile's drift, a one-pixel circle in eight stops

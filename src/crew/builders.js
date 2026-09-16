@@ -69,19 +69,6 @@ function buildStationX(w) {
   return nearestIn(box, w.x);
 }
 
-// The door predicate, the shape every station's presence rule takes
-// (`inScrub`, `inLab`): a builder is "in" its site when it has arrived and is
-// inside its own work's box, padded by the span the work jig shuffles across.
-// Output already depends on presence through `handsAt`; this is the same fact
-// for checks to read.
-export function inBuildSite(w) {
-  if (w.type !== TYPE.BUILD || w.goal !== 'at' || !w.site) return false;
-  const box = ownBox(w);
-  if (!box) return true;              // nowhere in particular: at work where it stands
-  const pad = BUILD_SHIFT_SPAN;
-  return w.x >= box.x - pad && w.x <= box.x + box.w + pad;
-}
-
 export function stepBuilder(w) {
   const to = buildStationX(w);
   if (to !== null) {

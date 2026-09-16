@@ -9,7 +9,7 @@ import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs, haulCap } from './upgrades.js';
-import { pitFull } from './pit.js';
+
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { shockAt } from './shock.js';
@@ -81,7 +81,6 @@ export function aim(x, y, land, size, rise = null) {
   const t = (pop + Math.sqrt(Math.max(0, pop * pop + 2 * GRAV * (target - y)))) / GRAV;
   return { vx: (land - x) / t, vy: -pop };
 }
-
 
 
 // --- the belt -------------------------------------------------------------------

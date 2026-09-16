@@ -9,12 +9,12 @@ import { PLOT_COST, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, rungVal
 import { P, WORKER, FARM_GAP, FARM_H, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
-import { FARM_FOUL } from './config.js';
+
 import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
 import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance, kitFull, commutePace, rungCost } from './upgrades.js';
+import { rebalance, kitFull, commutePace } from './upgrades.js';
 import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';

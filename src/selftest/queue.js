@@ -4,7 +4,7 @@
 // name hands that work back. The mechanics of the line itself are the node
 // tier's (test/queue.test.mjs).
 
-import { sleep, newRun, raf, settle, state, ok, panel, run } from './kit.js';
+import { newRun, raf, settle, state, ok, panel, run } from './kit.js';
 
 const card = () => document.getElementById('queue');
 const names = () => [...card().querySelectorAll('button .name')].map(n => n.textContent);

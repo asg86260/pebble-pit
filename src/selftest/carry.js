@@ -1,6 +1,6 @@
 // Picking a body up and putting it down again.
 
-import { sleep, newRun, settle, state, buildShopFromTest, ok, point, run, runUntil, put } from './kit.js';
+import { sleep, newRun, settle, state, ok, point, run, runUntil, put } from './kit.js';
 
 export const TESTS = [
 

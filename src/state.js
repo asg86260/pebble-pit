@@ -208,7 +208,6 @@ export const S = {
   seenSpark: false,       // and whether one has ever come down
   wizardHats: 0,          // hats the tower has finished
   wizards: 0,             // bodies up there wearing one
-  labOpen: false,
 
   // --- the casino ---
   // One table, one pot: `n` of `cur`, the same currencies as everything else.
@@ -229,7 +228,6 @@ export const S = {
   // The hand that just settled, kept for a few seconds so a wheel you were not
   // watching still tells you which way it went.
   hand: null,             // { won, n, cur, at, bursts }
-  labBoardOpen: false,
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read (drawDoneMarks).
   siteDone: {},
@@ -238,7 +236,6 @@ export const S = {
   labIdleAt: 0,
   // How many the lab let out for want of anything to do; starting research
   // calls exactly these back.
-  labLeft: 0,
   // Multipliers an old save may carry and nothing reads; folded into the
   // ladders by `restore`. Kept so an old save round-trips; always nought here.
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
@@ -478,7 +475,6 @@ export const SAVED = [
   // A work that finished while you were away is still news when you come
   // back.
   'siteDone',
-  'labLeft',
   'tendLevel',
   'cropLevel',            // and what one cut off a plot is worth
   // A plain number, so it belongs here and not on the by-hand list, where a
@@ -506,7 +502,6 @@ export const SAVED = [
   'shelf',
   'potency',
   'doseCarryLevel',
-  'labOpen',
   'casinoOpen',
   'scrubOpen',
   'towerOpen',
@@ -694,7 +689,7 @@ export const EPHEMERAL = [
   // Stopwatches, and the two the lab keeps behind `works`.
   'labIdleAt', 'research', 'research2',
   // Which boards are open, and what the pointer is doing.
-  'boardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
+  'boardOpen', 'apothBoardOpen', 'casinoBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',

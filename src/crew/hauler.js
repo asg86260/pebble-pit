@@ -7,7 +7,7 @@
 import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
-import { walkY, pileAt } from '../world.js';
+import { walkY } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
@@ -20,8 +20,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 import { duck, stand, hireSpot, sideOf } from './body.js';
-import { downTheHole, downTheCut, nearestCutDust, load, roomOnBoard,
-         roomToTake, tookOne, bookRoom, unbook } from './hole.js';
+import { downTheHole, downTheCut, nearestCutDust, load, roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, amble, ROAM_PACE } from './idle.js';
 

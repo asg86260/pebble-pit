@@ -4,7 +4,7 @@
 //
 // A glyph is the thing, never the effect. A row with no glyph of its own gets
 // the crate, so a missing one is visible on the shelf rather than a blank.
-import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_BADGE_CELLS as BCELLS, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP, SHELF_HAND_SLIDE as HAND_SLIDE } from './config.js';
+import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP, SHELF_HAND_SLIDE as HAND_SLIDE } from './config.js';
 
 // The drawings, by the object's name; the review sheet (glyphs.html) says
 // which are still wearing the crate.

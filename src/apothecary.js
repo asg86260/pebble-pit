@@ -16,14 +16,7 @@
 //  * Potency is climbed one tonic at a time; batch speed, dose length, batch
 //    size and carry are the building's.
 
-import { LADDER,
-         BREW_BILL, BREW_MS, rungValue,
-         TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT,
-         APOTH_POTS_MAX, POT_COST, POT_RATE,
-         DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
-         POT_W, POT_H,
-         APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
-         DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
+import { LADDER, BREW_BILL, BREW_MS, rungValue, TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT, APOTH_POTS_MAX, POT_COST, POT_RATE, DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH, POT_W, POT_H, WORKER, APOTH_HUT_W, APOTH_HUT_H, DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
 import { posts } from './roster.js';
 import { now, frames } from './clock.js';
@@ -133,8 +126,6 @@ const kindOf = (w, kind) => liveOf(w).find(d => {
   return t && t.kind === kind && takesTonic(w, t);
 });
 export const doseTonics = w => liveOf(w).map(d => tonicOf(d.tonic)).filter(Boolean);
-// Every tonic on it, for the card that lists a body's state.
-export const doseName = w => doseTonics(w).map(t => t.name).join(', ');
 // For the vial on the shelf and in a stirrer's hands; a body may be under
 // several, so the plume asks `doseTonics` instead.
 export const tonicColor = key => { const t = tonicOf(key); return t ? t.color : '#fff'; };
@@ -491,13 +482,6 @@ export const brewFracOf = i => {
   if (!potBoiling(i)) return 0;
   return Math.min(1, (S.brewAt[i] || 0) / Math.max(1, brewMs()));
 };
-// The most-advanced pot in the building, for anything that wants one figure.
-export const brewFrac = () => {
-  let best = 0;
-  for (let i = 0; i < S.apothPots; i++) best = Math.max(best, brewFracOf(i));
-  return best;
-};
-
 // The tonic burning off a dosed body: colored motes let go from the head into
 // the *yard* (puff.js), so a walking body leaves a trail and a standing one
 // stands in its own column. Full strength for the dose's whole life: a plume
@@ -708,11 +692,6 @@ export function doseCount(i, job) {
   const dosed = t ? bodies.filter(w => doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind)) : [];
   return { dosed: dosed.length, of: bodies.length };
 }
-
-// What it costs to put the place up: the farm's own shape, because it stands
-// right after the farm.
-export const apothecaryCost = () => APOTHECARY_DUST;
-export const apothecaryCores = () => APOTHECARY_CORES;
 
 // The brew clock is stepped here, not by `stepWorks`, because a brew is an
 // upkeep and not a build. So the site claims no `room` of its own: brews never

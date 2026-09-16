@@ -2,10 +2,10 @@
 // stands there, and steps its stroke.
 
 import { frames, now } from '../clock.js';
-import { CLIMB_PACE, MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
+import { MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
 import { JOB_MACHINE, MACHINES, UNMANNED, machine, specOf } from '../machines.js';
 import { sfx } from '../audio.js';
-import { quarryFace } from '../quarry.js';
+
 import { inWorking, keepTo, stepRoute, ways } from '../route.js';
 import { foul } from '../smog.js';
 import { S, floor } from '../state.js';

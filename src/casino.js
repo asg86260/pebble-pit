@@ -243,10 +243,6 @@ export const shownFor = n =>
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
 
-// What one grain of the heap is worth. Lives in the picture only: `payOutStep`
-// pays the hole the exact pot however the rounding falls.
-export const grainWorth = () => pot() / Math.max(1, tableWant());
-
 // The band, and never more than the ground will hold. The wheel waits on the
 // heap reaching this number, so a ground that refused a grain with no way to
 // say so would be a wheel that never went round: the first grain refused sets

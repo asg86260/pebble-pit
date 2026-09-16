@@ -12,6 +12,19 @@ saving beside the owner; invalidation off the clock; the comment pass
 (needs a decision on the register). Gated on the reliability freeze holding
 green twice on main. Blocker: the save-floor decision, and the freeze.
 
+Seam 1, the dead-code sweep, is BUILT (2026-09-15): 43 exports nothing
+imported (22 of them config knobs), 132 imported names nothing read,
+`SHIELD_GATES` and its branches, the lab's three state flags, `secondsMark`,
+`staffSheds` (now `stripKit`), the balloon no-op divisor, and the
+`openFloor` ReferenceError (a check and a CHANGELOG line). Removing an
+unused import surfaced the 72-module cycle as a TDZ (`CRAFT_ROW` read at
+load across balloon.js/scrubhouse.js); the row moved to scrubhouse.js. The
+lab building itself (its rect, `TO_LAB`, `LAB_W/H`, the board names and the
+persist branches) waits for the save floor. Found and left: the browser
+`queue` group's "every line has a clock" line is red on main -- it coerces
+the clock text to a number and the text is `next 0:10` since the `m:ss`
+clock.
+
 Seam 7, the comment pass, is BUILT (2026-09-15): the owner's rule was
 "only what you need for logic derivation"; `docs/wave-comments.md` is the
 spec, `tools/comments-check.mjs` the proof. `src/` went from 59,296 lines

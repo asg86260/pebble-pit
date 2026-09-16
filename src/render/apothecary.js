@@ -2,12 +2,7 @@
 // pots on their fires. Owns the HUT and CAULDRON pictures, the shelf, and the
 // count badges over it.
 
-import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
-         APOTH_SHELF_ROWS, APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
-         BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP,
-         SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD,
-         FLAME_HOT, FLAME_TIP, FLAME_STEAM,
-         POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
+import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_ROWS, APOTH_GAP, BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP, SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD, FLAME_HOT, FLAME_TIP, FLAME_STEAM, POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
 import { APOTH_SMOKE } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';

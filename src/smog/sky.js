@@ -4,7 +4,7 @@ import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { gust } from '../wind.js';
 import { ACTIVE, DROPS, SKY, bandLow, bandTop, creep, drift } from './band.js';
-import { motesWanted, reckon, skyMote, spread } from './vents.js';
+import { motesWanted, reckon, skyMote } from './vents.js';
 
 // --- how the sky is arranged -------------------------------------------------
 // Nothing is ever pushed anywhere. Each mote is given a place in the band when

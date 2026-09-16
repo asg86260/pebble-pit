@@ -5,7 +5,7 @@ import { BUILD_SHAKE, HOUSE_CUBE } from '../config.js';
 import { cubes as houseCubes } from '../house.js';
 import { puff } from '../puff.js';
 import { farmShed, quarryShed, shakeView } from '../world.js';
-import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
+import { casino, lab, outhouse, scrub, tower } from '../state.js';
 import { rising as risingAt } from './rise.js';
 
 // The frame a rising place lands: a puff over the middle of the roof and a

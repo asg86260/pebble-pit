@@ -4,7 +4,7 @@
 // the store directly (save.js).
 
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
-import { slotLabels, playLabel, slotsLabel, showSlots } from './slots.js';
+import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord } from './record.js';
 import { pref, setPref, reducedMotion } from './prefs.js';
 import { version } from './version.js';

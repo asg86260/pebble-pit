@@ -5,7 +5,7 @@
 import { KIT_JOBS, TYPE_OF } from '../kit.js';
 import { S } from '../state.js';
 import { JOB_OF, hats, rebalance, roomAt, spareKit, worn } from '../upgrades.js';
-import { kitX } from '../world.js';
+
 import { errand, nextLeg, retask, stationX, syncWorkers } from '../crew.js';
 import { JOB, TYPE } from '../jobs.js';
 

@@ -218,19 +218,6 @@ export const ABYSS_WISP_MS = 2400;    // and how long the climb takes
 // second, slow enough not to strobe. Wavelength is in cells.
 export const ABYSS_BRIDGE_MS = 1300;   // one wave's travel
 export const ABYSS_BRIDGE_WAVE = 0.48; // radians a cell, about thirteen cells a crest
-// What tearing one costs. Red, because it is the one plainly magic thing acting
-// on the one plainly dirt thing, and dust like every other row in the game.
-export const RIFT_BILL = [['spark', 360], ['dust', 20000]];
-// Grains a second a fresh rift swallows, and what each widening multiplies
-// that by. Under a well-run yard's income on purpose: the rift arrives behind
-// the works and you buy it forward, so the row means something the day you
-// build it.
-export const RIFT_RATE0 = 12;
-export const RIFT_RATE = 1.6;
-// What a widening costs, in red, growing the same way. The dust half is the
-// dust-to-the-spark line every other price sits on (DUST_PER in upgrades.js).
-export const RIFT_RATE_COST = 75;
-export const RIFT_RATE_UP = 1.5;
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 
 // The dev panel's rows for the growth dials above; a row lives beside the

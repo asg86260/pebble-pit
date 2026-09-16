@@ -7,13 +7,12 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
-import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
+import { workOn, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
-import { bankDust, throughRift, spend as spendFromPit, pitFull, pitTop as muckTopAt,
-         pitRoom, seedPitCores } from './pit.js';
+import { bankDust, throughRift, spend as spendFromPit, pitTop as muckTopAt, pitRoom, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
 import { SKY, fillSky, forceStrike, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
@@ -24,9 +23,9 @@ import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
 import { now as clockNow } from './clock.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
-import { rosterReport, rosterHit } from './roster.js';
-import { JOB_MACHINE } from './machines.js';
-import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
+
+
+import { rebalance, assign as assignJob, kitCap } from './upgrades.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
 import { UPGRADES, lodgers, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW, gainText } from './upgrades.js';
@@ -142,7 +141,6 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
     const r = machine(m.key);
     if (r) { r.bought = false; r.tookKit = false; }
   }
-  S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   S.lent = [];                    // and nobody is on loan: these counts are the whole crew
   if (wz > 0) openMeteor();
   // A hook asked for four down the quarry gets four benches, not two sent

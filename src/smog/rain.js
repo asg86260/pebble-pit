@@ -34,8 +34,6 @@ export const markStorm = n => { stormMarked = n; };
 // One for a shower in full voice down to nought as the last marked motes
 // fall; the wash over the sky reads it.
 let tail = 1;
-export const stormTail = () => tail;
-
 export function pour(secs) {
   if (!SKY.length) { S.raining = false; tail = 0; return; }
 

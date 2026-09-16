@@ -9,14 +9,12 @@ import { BENCH_COST, BENCH_RATE, rungValue,
          QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
 import { shockAt } from './shock.js';
-import { P, WORKER, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
-         QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
-         CLIMB_PACE, SHARD_CELL, someFind, findKind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
+import { P, WORKER, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG, SHARD_CELL, someFind, findKind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
-import { QUARRY_FOUL } from './config.js';
+
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
-import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
+import { groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
@@ -28,7 +26,7 @@ import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
-import { rebalance, kitFull, commutePace, rungCost } from './upgrades.js';
+import { rebalance, kitFull, commutePace } from './upgrades.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { rand } from './rng.js';

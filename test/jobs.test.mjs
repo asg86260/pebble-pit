@@ -224,7 +224,6 @@ group('the save keeps what matters', async () => {
     ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),
     ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
     ok(Array.isArray(raw.plots), 'and how far along every plot is'),
-    ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
     ok(raw.scholars === s.scholars, 'who is in the lab', `${raw?.scholars} vs ${s.scholars}`),
     ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
        'the rock is saved cell by cell')

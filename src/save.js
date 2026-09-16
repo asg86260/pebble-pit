@@ -260,10 +260,6 @@ function stash(raw) {
 export function loadBroken() {
   return web.get(BROKEN_KEY());
 }
-export function clearBroken() {
-  web.remove(BROKEN_KEY());
-}
-
 // Whether it was written; the caller says so when it was not.
 export function save(state) {
   return saveRaw(JSON.stringify(state));

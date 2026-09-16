@@ -50,7 +50,6 @@ export const SITE_JOB = {
 // Registered by the station rather than imported from it: works.js is read by
 // every board in the game and may not read one back.
 const SITE_SAYS = {};
-export const registerSite = (site, says) => { SITE_SAYS[site] = { ...SITE_SAYS[site], ...says }; };
 export const roomAt = site => Math.max(1, Math.round(SITE_SAYS[site]?.room?.() ?? 1));
 export const effortAt = site => Math.max(0, SITE_SAYS[site]?.effort?.() ?? BUILD_EFFORT);
 
@@ -250,7 +249,6 @@ export const fullAt = site => worksAt(site).length >= roomAt(site);
 
 // how far along it is, 0..1 -- for a bar over the site
 export const progressOf = w => (w && w.of > 0 ? Math.min(1, w.done / w.of) : 0);
-export const progressAt = site => progressOf(workAt(site));
 // One particular work's, for a site with several: each rising building is
 // clipped to ITS work's progress, not the head's.
 export const progressOfKey = (site, key) =>

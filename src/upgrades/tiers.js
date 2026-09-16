@@ -7,7 +7,7 @@
 // written a rung at a time in config/rungs.js.
 
 import { S } from '../state.js';
-import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP, LADDERS, rungDust } from '../config.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, WORK_BASE, WORK_STEP, rungDust } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 
 // Clamped on read: a save from a longer ladder may hold any level, and it
