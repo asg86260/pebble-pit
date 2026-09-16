@@ -5,13 +5,13 @@
 The casino, sized to the yard: the arm is a tap you hold, pebbles pour from
 the purse into the funnel at `POUR_SHARE` of it a second for as long as it
 is held, and the pile is the stake; let go and the handful drops. Bins
-left to right ✚ · ore · crop · ×3 · ×1 · ×½ · ×1 · ×3 · crop · ore · ✚: the
-middle pay pebbles, crop and ore bins convert by worth, a spark bin pays one
-spark a drop. Everything pours out of the foot in its own kind on to the
+left to right ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ · crop · ore · ✚:
+the middle pay pebbles, the crop, ore and spark bins convert by worth at
+`DUST_PER`. Everything pours out of the foot in its own kind on to the
 ground for the crew. No buttons, piles, strip, crank, sack, timers or
 cooldowns. DESIGN.md, "The pour (design, not built)", with the fairness sum
-and one open question (the ×3 shoulders pay 1.34; ×1½ pays one). The deck
-of buttons on the branch is drawn, not built, and goes when the pour is.
+(906 + 112 = 1,018 in 1,024). The deck of buttons on the branch is drawn,
+not built, and goes when the pour is.
 
 ## The stake is a heap you carry, and the casino has no board -- BUILT AND CUT (2026-09-16)
 

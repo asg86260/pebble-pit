@@ -823,31 +823,25 @@ A flick is a small bet; a long pull is the farm. Pebbles only -- ore, crops
 and sparks are never staked; they are what the machine can turn pebbles
 *into*. On a phone the hold is a finger held on the arm, the same gesture.
 
-**The bins, left to right:** ✚ · ore · crop · ×3 · ×1 · ×½ · ×1 · ×3 · crop
-· ore · ✚. The middle five pay pebbles by their multiplier, as the handful
-pays now. A crop bin or an ore bin converts what lands in it: the pebbles
-in it come out as that many crops or ore *by worth*, at the exchange every
-price in the yard already sits on (`DUST_PER`), so a pebble converted is a
-pebble's worth and nothing more. A spark bin pays **exactly one spark a
-drop**, however much lands in it -- one pebble or a hundred -- so a long
-pull cannot farm the machines' currency: sparks are bought with the rift
-and the machines' own ladders (CLAUDE.md, "Sparks are the machines'
-currency"), and the casino can only ever add a pebble's-chance one.
+**The bins, left to right:** ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ ·
+crop · ore · ✚. The middle five pay pebbles by their multiplier, as the
+handful pays now. The other six convert what lands in them: the pebbles in
+a crop, ore or spark bin come out as that many crops, ore or sparks *by
+worth*, at the exchange every price in the yard already sits on
+(`DUST_PER`), so a pebble converted is a pebble's worth and nothing more,
+in whichever coin the bin is. Sparks are not that rare, and the gamble is
+fair by construction, so there is nothing in it to farm.
 
 **The fairness sum.** A pebble reaches bin *b* with the odds of ten fair
 coins, Pascal's row over 1,024: 1, 10, 45, 120, 210, 252, 210, 120, 45,
 10, 1. The five pebble bins weigh 120, 210, 252, 210, 120 -- 912 of the
-1,024 -- and with the row as written they pay 120×3 + 210×1 + 252×½ + 210×1
-+ 120×3 = 1,266 pebbles for the 1,024 staked: 1.24 back from the pebble
-bins alone, and with the crop and ore bins paying their 110 by worth, 1.34
-in all before the sparks. That is not a house edge; it is a gift. The row
-that pays one from the pebble bins is ×1½ · ×1 · ×½ · ×1 · ×1½: 120×1.5 +
-210 + 126 + 210 + 120×1.5 = 906, and with the converts' 110 the whole
-table pays 1,016 in 1,024 -- fair to the pebble, the median hand under it,
-the two sparks in 1,024 the only thing riding above the line. **Open
-question for the owner: keep ×3 at the shoulders and accept a table that
-pays 1.34, or take ×1½.** `test/casino.test.mjs` asserts the sum either
-way, so a bin cannot be moved on its own.
+1,024 -- and pay 120×1½ + 210×1 + 252×½ + 210×1 + 120×1½ = 906; the six
+converting bins weigh the other 112 and pay it back by worth. The whole
+table pays 906 + 112 = 1,018 in 1,024: fair to the pebble, the median hand
+under it, and that is the whole of the house's edge. (A ×3 at the shoulders
+was written first and paid 1,266 from the pebble bins alone -- a gift, not
+a gamble -- and was struck.) `test/casino.test.mjs` asserts the sum, so a
+bin cannot be moved on its own.
 
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the
@@ -869,7 +863,11 @@ each a fair draw from the bins, the spread of the hand shrinking with the
 square root of the count (`test/handful.test.mjs` holds it off the
 constant). What changes: the stake is what was held into the funnel rather
 than a chip; six of the eleven bins pay in another coin instead of a
-multiple, so the table's fairness is summed by worth across kinds rather
+multiple, and the shoulders pay ×1½ where they paid ×3 and the edges paid
+×39 -- the feet are cut for those pays (a one is a stroke, an inner slot
+nine cells for "1.5" with a clear cell each side, a pitch of ten and `STEP`
+five, the edge slots seven for a coin's mark; the field is 106 cells), so
+the table's fairness is summed by worth across kinds rather
 than in pebbles alone; the pay pours out of the foot instead of standing in
 the tray for a decision, so there is no ride and no take -- the next pull is
 the next bet; and a saved hand comes back a pile in the hopper the size it
@@ -882,8 +880,8 @@ was held to, with the arm live.
 - **One control.** The arm, held. Nothing to set, pick, bank or wind.
 - **The other coins come out, never go in.** The casino turns pebbles into
   the yard's other coins at the yard's own rates, and cannot be fed them.
-- **A spark is one, ever, a drop.** The machines' currency stays the
-  machines'.
+- **Every converting bin is fair by worth, sparks included.** The casino
+  adds nothing to the yard on average, in any coin.
 - **Paid on to the ground.** Collected by the crew like every other output.
 
 ### Cut, and why

@@ -129,7 +129,9 @@ function ringCells(w, h) {
 // three-cell slot exactly, which is why a bin is the width it is.
 const DIGIT = {
   '0': ['111', '101', '101', '101', '111'],
-  '1': ['010', '110', '010', '010', '111'],
+  // a one is a stroke: with a foot it was three cells, and "1.5" with air
+  // each side wanted a slot of eleven; as a stroke the widest pay is seven
+  '1': ['1', '1', '1', '1', '1'],
   '2': ['111', '001', '111', '100', '111'],
   '3': ['111', '001', '111', '001', '111'],
   '4': ['101', '101', '111', '001', '001'],
@@ -174,7 +176,7 @@ const LABEL_ROW = 2;                                     // under the floor line
 // A half is ".5" with its point a clear cell from the five, which is why an
 // inner slot is five cells: ".5" squeezed into three read as a six, and a one
 // over a two in five by five read as a W.
-const labelOf = m => m === 0.5 ? '.5' : String(m);
+const labelOf = m => m === 0.5 ? '.5' : String(m);      // 1.5 is '1.5': the point is a cell
 // a foot's face: a coin's mark, or the multiple
 const faceW = f => typeof f === 'string' ? MARK_CELLS : wordW(labelOf(f));
 

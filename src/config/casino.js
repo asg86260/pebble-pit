@@ -41,11 +41,10 @@ export let CASINO_HANDFUL = 16;
 export const CASINO_PEG_ROWS = 10;
 export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
 // "The pour" (design, not built): what each bin's foot wears. A coin's name
-// is a bin that pays in that coin -- a spark bin one spark a drop, a crop
-// or ore bin the pebbles in it converted by worth -- and a number is a
-// multiple on pebbles. Drawn on the feet now; the pays above are still what
+// is a bin that converts the pebbles in it to that coin by worth, and a
+// number is a multiple on pebbles. Drawn on the feet now; the pays above are still what
 // the machine pays until the pour is built.
-export const CASINO_BIN_FACE = ['spark', 'shard', 'spore', 3, 1, 0.5, 1, 3, 'spore', 'shard', 'spark'];
+export const CASINO_BIN_FACE = ['spark', 'shard', 'spore', 1.5, 1, 0.5, 1, 1.5, 'spore', 'shard', 'spark'];
 
 // --- the building, in cells, top to bottom -------------------------------------------
 // The hopper on the roof, where the stake stands: a funnel, the building's
@@ -83,12 +82,14 @@ export const PEG_ROW_H = 3;
 // or it reads as its neighbor's; and eight halves to the four cells a grain
 // steps across a row, so the fan of ten rows reaches the outer bins exactly.
 // The two edge bins are wider still: their pay is two digits and a gap.
-export const DIGIT_W = 3;                      // the pay face's glyph, in cells
+export const DIGIT_W = 3;                      // the pay face's glyph, in cells (a one is a stroke)
 export const DIGIT_H = 5;
-export const HALF_W = DIGIT_W + 2;             // and the half's: a point, air, a digit
 export const PAY_AIR = 1;                      // clear cells each side of a pay
-export const BIN_W = HALF_W + 2 * PAY_AIR + 1;
-export const EDGE_BIN_W = DIGIT_W * 2 + 1 + 2 * PAY_AIR + 1;
+// The widest pay on the feet is "1.5": a stroke, air, the point, air, a
+// five -- seven cells -- and the edge bins wear a coin's mark.
+export const PAY_W = 1 + 1 + 1 + 1 + DIGIT_W;
+export const BIN_W = PAY_W + 2 * PAY_AIR + 1;
+export const EDGE_BIN_W = 5 + 2 * PAY_AIR + 1;
 export const BIN_H = 6;
 // What a bin pays, written under it in its own foot: the bins' dividers run on
 // down through this band, so it is a row of table cells, one under each bin,
