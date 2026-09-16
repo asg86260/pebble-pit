@@ -816,12 +816,17 @@ yard's stock into the funnel for as long as it is held, at a rate that is a
 slice of what you own -- `POUR_SHARE` of the purse a second, five per cent
 to start, so that everything you have is a twenty-second hold and a fresh
 yard and a rich one feel the same pull. The pile in the funnel is the
-stake: it grows under your hand, and no number is drawn anywhere. Let go
-and it drops: the floor splits, the whole pile drains into the throat, and
-`CASINO_HANDFUL` pebbles come out on to the pegs, each carrying its share.
-A flick is a small bet; a long pull is the farm. Pebbles only -- ore, crops
-and sparks are never staked; they are what the machine can turn pebbles
-*into*. On a phone the hold is a finger held on the arm, the same gesture.
+stake: it grows under your hand, and the sign counts it. Let go and the
+arm springs back, the stake stays in the funnel and the sign holds the
+count; hold again and more pours on top. Nothing about the arm drops it.
+**The sign is the drop button:** tap it and the floor splits, the whole
+pile drains into the throat, the sign runs down, and `CASINO_HANDFUL`
+pebbles come out on to the pegs, each carrying its share. Nothing else
+ever drops it. A flick is a small bet; a long pull is the farm; and you can
+look at the number before you commit. Pebbles only -- ore, crops and sparks
+are never staked; they are what the machine can turn pebbles *into*. On a
+phone the hold is a finger held on the arm and the tap on the sign is the
+same tap as anywhere.
 
 **The bins, left to right:** ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ ·
 crop · ore · ✚. The middle five pay pebbles by their multiplier, as the
@@ -864,16 +869,22 @@ bin cannot be moved on its own.
 `POUR_SHARE` and `POUR_MIN` are config knobs (`config/casino.js`, on the dev
 panel), so both are found by playing rather than argued.
 
-**The sign says the stake.** While the funnel is empty the sign reads
-CASINO. From the first poured pebble until the drop it shows the stake's
-count instead, in the sign's own face -- seven-cell figures in the same
-stroke as the letters -- and the number rolls: it climbs under the hand as
-the pour runs and runs down as the pile drains into the throat on release,
+**The sign says the stake, and drops it.** While the funnel is empty the
+sign reads CASINO, is not pressable and has no hover. From the first poured
+pebble until the drop it shows the stake's count instead, in the sign's own
+face -- seven-cell figures in the same stroke as the letters -- and the
+number rolls: it climbs under the hand as the pour runs, holds when the arm
+is let go, and runs down as the pile drains into the throat on the tap,
 never snapping, through the yard's own counter tween (`shown` in tween.js,
 the purse counter's convention, `TWEEN_MIN_MS` to `TWEEN_MAX_MS` off
-`TWEEN_BASE_MS` and `TWEEN_PER_UNIT_MS`). After the drop the sign goes back
-to CASINO. So the one number in the building is the one you are deciding
-on, and it is on the sign while you decide.
+`TWEEN_BASE_MS` and `TWEEN_PER_UNIT_MS`). With a count on it the sign is a
+button and looks like one: the board stands raised off the front on a cell
+of shadow along its foot and its right edge, the way a cap stands in its
+recess, and a tap presses it down flat -- the shadow gone, the board a cell
+lower, the figures grey for the beat (`BUTTON_PRESS_MS`) -- and the throat
+opens. After the drop the sign goes back to CASINO, flat. So the one number
+in the building is the one you are deciding on, it is on the sign while you
+decide, and the sign is what you press to decide.
 
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the
@@ -909,7 +920,10 @@ was held to, with the arm live.
 
 - **A share a second, not a chip.** The one stake that is the same gesture
   on a purse of a hundred and a purse of a million.
-- **One control.** The arm, held. Nothing to set, pick, bank or wind.
+- **Two controls, and one of them is the sign.** The arm, held, to stake;
+  the sign, tapped, to drop. Nothing to set, pick, bank or wind, and the
+  stake is never dropped by accident: letting go of the arm is not a
+  decision.
 - **The other coins come out, never go in.** The casino turns pebbles into
   the yard's other coins at the yard's own rates, and cannot be fed them.
 - **Every converting bin is fair by worth, sparks included.** The casino

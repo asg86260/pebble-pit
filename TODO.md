@@ -4,7 +4,8 @@
 
 The casino, sized to the yard: the arm is a tap you hold, pebbles pour from
 the purse into the funnel at `POUR_SHARE` of it a second for as long as it
-is held, and the pile is the stake; let go and the handful drops. Bins
+is held, and the pile is the stake; the sign counts it and, tapped, drops
+it -- letting go of the arm drops nothing. Bins
 left to right ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ · crop · ore · ✚:
 the middle pay pebbles, the crop, ore and spark bins convert by worth at
 `DUST_PER`. Everything pours out of the foot in its own kind on to the
