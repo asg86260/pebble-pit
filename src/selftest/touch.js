@@ -1,5 +1,5 @@
-// The game under a thumb (DESIGN.md, "Playing it on a phone"): the grab bar
-// the yard is scrolled from, the tap that buys and the press that does not,
+// The game under a thumb (DESIGN.md, "Playing it on a phone"): the scroller
+// the yard lives in, the tap that buys and the press that does not,
 // the undo, the hop, the skip, the whole screen and the page's own shape.
 // Everything here needs the page -- a pointer, a scroller, a stylesheet --
 // which is why it is in this tier; the targets and the refunds themselves
@@ -16,7 +16,6 @@ import { workOn } from '../works.js';
 
 const phone = on => window.__coarse(on ? true : null);
 const scroller = () => document.getElementById('scroller');
-const thumb = () => document.querySelector('#bar .thumb');
 const tile = key => document.querySelector(`#shop button[data-key="${key}"]`);
 const frames = async n => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
 
@@ -33,20 +32,16 @@ async function benchOnPhone() {
 }
 
 export const TESTS = [
-  ['the grab bar is the yard\'s one scroll on a phone, and the yard reads it back', async () => {
+  ['one finger on the yard scrolls it, the platform\'s way, and a finger on dust sweeps', async () => {
     window.__nocine();
-    phone(false);
-    await frames(2);
-    const deskHidden = scroller().hidden;
-    phone(true);
     window.__look(1200);
     await frames(2);
     const sc = scroller();
     const s0 = state();
-    const shownOnPhone = !sc.hidden;
     const action = getComputedStyle(sc).touchAction;
+    const holds = document.getElementById('c').parentElement.parentElement === sc;
     const wrote = Math.abs(sc.scrollLeft - s0.camX * s0.zoom) <= 1;
-    // The platform's scroll, stood in for: a finger in the band moves
+    // The platform's scroll, stood in for: a finger on bare ground moves
     // `scrollLeft`, and the camera follows it on the next frame. No script
     // can make the platform coast; tools/fling.mjs drives a real finger.
     const left = sc.scrollLeft + 200;
@@ -54,16 +49,35 @@ export const TESTS = [
     await frames(2);
     const s1 = state();
     const followed = Math.abs(s1.camX - left / s1.zoom) <= 1;
-    // and the thumb is the view's share of the world, where the view is
-    const t = thumb().getBoundingClientRect();
-    const wantW = Math.max(24, s1.W * s1.viewW / s1.worldW), wantX = s1.W * s1.camX / s1.worldW;
-    // a finger dragged across the sky moves nothing
+    // a finger on the sky is left to the platform (touchstart not refused);
+    // the game itself moves nothing under it
     const skyY = (s1.groundY - 300 - s1.camY) * s1.zoom;
+    const skySaid = touch('touchstart', canvas(), 300, skyY);
     finger('pointerdown', 1, 300, skyY);
     for (let i = 1; i <= 6; i++) { finger('pointermove', 1, 300 - i * 20, skyY); await sleep(16); }
     finger('pointerup', 1, 180, skyY);
+    touch('touchend', canvas(), 180, skyY);
     await frames(1);
     const s2 = state();
+    // a finger on dust is the game's: the platform is told no, and the sweep runs
+    window.__pile(s2.camX + s2.viewW / 2, 40);
+    run(2);
+    const s3 = state();
+    let spot = null;
+    for (let dx = -60; dx <= 60 && spot == null; dx += 6) if ([-6, 0, 6].every(k => window.__dustUnder(s3.camX + s3.viewW / 2 + dx + k, s3.groundY - 6) && window.__dustUnder(s3.camX + s3.viewW / 2 + dx, s3.groundY - 6 + k))) spot = s3.camX + s3.viewW / 2 + dx;
+    let dustSaid = null, swept = null, stayed = null;
+    if (spot != null) {
+      const [dx, dy] = [(spot - s3.camX) * s3.zoom, (s3.groundY - 6 - s3.camY) * s3.zoom];
+      dustSaid = touch('touchstart', canvas(), dx, dy);
+      finger('pointerdown', 1, dx, dy);
+      for (let i = 1; i <= 6; i++) { finger('pointermove', 1, dx - i * 12, dy); await sleep(16); }
+      const mid = state();
+      swept = mid.dragging && (mid.held > s3.held || mid.floor < s3.floor);
+      stayed = mid.camX === s3.camX;
+      finger('pointerup', 1, dx - 72, dy);
+      touch('touchend', canvas(), dx - 72, dy);
+      await frames(1);
+    }
     // a board comes down when its station is scrolled off the window, on
     // every board (the rule was keyed on the bench's flag alone)
     await haveBench();
@@ -75,22 +89,17 @@ export const TESTS = [
     sc.scrollLeft = sc.scrollWidth;                         // the far end of the world
     await frames(3);
     const houseDown = document.getElementById('panel').hidden || !state().houseBoardOpen;
-    // a cutscene shuts the band for its run
     const lockedBefore = getComputedStyle(sc).overflowX;
-    phone(false);
-    await frames(1);
     return [
-      ok(deskHidden, 'on a desk there is no band'),
-      ok(shownOnPhone, 'on a phone there is'),
-      ok(action === 'pan-x', 'and it pans sideways and nothing else', action),
-      ok(wrote, 'a lookAt writes the band\'s position', `${sc.scrollLeft} vs ${s0.camX * s0.zoom}`),
-      ok(followed, 'and the camera follows where the band is scrolled to', `${s1.camX} vs ${left / s1.zoom}`),
-      ok(Math.abs(t.width - wantW) <= 6 && Math.abs(t.left - wantX) <= 6, 'the thumb is the view\'s share of the world, where the view is',
-         `thumb ${Math.round(t.left)}+${Math.round(t.width)} vs ${Math.round(wantX)}+${Math.round(wantW)}`),
-      ok(s2.camX === s1.camX && !s2.dragging, 'a finger dragged across the sky moves nothing', `${s1.camX} -> ${s2.camX}`),
+      ok(holds && action === 'pan-x', 'the yard sits in a scroller that pans sideways and nothing else', `${holds} ${action}`),
+      ok(wrote, 'a lookAt writes the scroller\'s position', `${sc.scrollLeft} vs ${s0.camX * s0.zoom}`),
+      ok(followed, 'and the camera follows where the scroller is taken', `${s1.camX} vs ${left / s1.zoom}`),
+      ok(skySaid === false && s2.camX === s1.camX && !s2.dragging, 'a finger on the sky is the platform\'s to scroll, and the game moves nothing under it', `refused ${skySaid}, ${s1.camX} -> ${s2.camX}`),
+      ok(spot != null, 'there is dust on the floor to press on'),
+      ok(dustSaid === true, 'a finger on dust is the game\'s: the platform is told no', `refused ${dustSaid}`),
+      ok(swept === true && stayed === true, 'and it sweeps without moving the view', `swept ${swept}, stayed ${stayed}`),
       ok(houseUp && houseDown, 'a board comes down when its station is scrolled off the window', `up ${houseUp}, down ${houseDown}`),
-      ok(lockedBefore === 'auto' || lockedBefore === 'scroll', 'the band is open to a finger with no scene on', lockedBefore),
-      ok(scroller().hidden, 'and gone again on a desk'),
+      ok(lockedBefore === 'auto' || lockedBefore === 'scroll', 'the scroller is open to a finger with no scene on', lockedBefore),
     ];
   }],
 
@@ -309,12 +318,11 @@ export const TESTS = [
     await frames(3);
     const s1 = state();
     const moving = s1.camX > before;
-    // and the thumb followed the hop
+    // and the glide lands with the scroller agreeing
     let frames_ = 0;
     while (S.camTo !== null && frames_++ < 120) await frames(1);
     const s2 = state();
-    const t = thumb().getBoundingClientRect();
-    const thumbX = s2.W * s2.camX / s2.worldW;
+    const agrees = Math.abs(scroller().scrollLeft - s2.camX * s2.zoom) <= 1;
     phone(false);
     await frames(1);
     return [
@@ -324,7 +332,7 @@ export const TESTS = [
       ok(r.width >= HOP_SIZE && r.height >= HOP_SIZE, 'a thumb\'s size', `${Math.round(r.width)}x${Math.round(r.height)}`),
       ok(!!wears && !!s0.stands[wears], 'wearing a standing station\'s glyph', wears),
       ok(moving, 'and a tap on it moves the view that way', `${before} -> ${s1.camX}`),
-      ok(Math.abs(t.left - thumbX) <= 6, 'with the grab bar\'s thumb following', `${Math.round(t.left)} vs ${Math.round(thumbX)}`),
+      ok(agrees, 'with the scroller agreeing where it landed', `${scroller().scrollLeft} vs ${s2.camX * s2.zoom}`),
       ok(document.getElementById('hop').hidden, 'and gone again on a desk'),
     ];
   }],
@@ -334,31 +342,31 @@ export const TESTS = [
     // the way a click does.
     window.__scene('tear');
     await frames(2);
-    const running = state().cine && !state().cineOut;
+    const running = !!state().beat.camera && !state().shotOut;
     const s = state();
     finger('pointerdown', 1, s.W / 2, s.H / 3);
     finger('pointerup', 1, s.W / 2, s.H / 3);
     await frames(2);
-    const tapped = state().cineOut || !state().cine;
+    const tapped = state().shotOut || !state().beat.camera;
     // The opening, which a click does not skip: the hint is a button, held.
     window.__reset(true);
     await frames(2);
     const skip = document.getElementById('skip');
-    const introOn = state().intro === 'leave';
+    const introOn = state().beat.yard === 'leave';
     const shown = !skip.hidden && getComputedStyle(skip).pointerEvents !== 'none';
     skip.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 3, isPrimary: true, pointerType: 'touch', button: 0, buttons: 1, bubbles: true, cancelable: true }));
     run(SKIP_HOLD_MS / 1000 + 0.2);
     await raf();
     skip.dispatchEvent(new PointerEvent('pointerup', { pointerId: 3, isPrimary: true, pointerType: 'touch', button: 0, buttons: 0, bubbles: true }));
     await frames(2);
-    const cut = state().intro !== 'leave';
+    const cut = state().beat.yard !== 'leave';
     window.__scene('yard');
     window.__nocine();
     return [
       ok(running, 'a scene has the yard'),
       ok(tapped, 'a tap on the yard lets it go, as a click does'),
-      ok(introOn && shown, 'the opening runs with the skip hint up as a button', `${state().intro}`),
-      ok(cut, 'and holding it for SKIP_HOLD_MS cuts the opening', `${state().intro}`),
+      ok(introOn && shown, 'the opening runs with the skip hint up as a button', `${state().beat.yard}`),
+      ok(cut, 'and holding it for SKIP_HOLD_MS cuts the opening', `${state().beat.yard}`),
     ];
   }],
 

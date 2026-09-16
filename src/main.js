@@ -9,7 +9,7 @@ import { fatal } from './crash.js';
 import { S } from './state.js';
 import { step, settleIntoWorld } from './game.js';
 
-import { openingCamX, resize, clampCam } from './world.js';
+import { openingCamX, resize, clampCam, measureSafeArea } from './world.js';
 import { syncWorkers } from './crew.js';
 import { draw, asPicture } from './render.js';
 import { hud, remeasure } from './board.js';
@@ -20,7 +20,6 @@ import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
 import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { refreshBar, measureSafeArea } from './bar.js';   // the grab bar along a phone's bottom edge
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
 import { refreshGear, refreshHeldSeat } from './gear.js';    // and the way to the settings on a phone
@@ -89,7 +88,6 @@ function frame() {
     draw();
     const t2 = mark();
     hud();
-    refreshBar();
     refreshHop();
     refreshFullscreen();
     refreshGear();

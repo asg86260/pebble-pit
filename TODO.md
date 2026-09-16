@@ -28,13 +28,14 @@ arrows (0.42 of a short window is the ground line), and whether a second
 tap inside `UNDO_MS` should undo, since a double tap now buys and takes
 back.
 
-- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15),
-  and from the bottom of the screen only (the owner, later the same day):
-  the grab bar along the bottom edge IS the platform's scroller, with a
-  spacer the width of the world; `camX` reads its `scrollLeft` once a
-  frame and everything that moves the camera writes it. A finger on the
-  yard never scrolls: it sweeps on dust and taps on the rest. No friction
-  knobs. Checks: `selftest/touch.js`, `test/camera.test.mjs`;
+- **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
+  the canvas sits inside a scroller with a spacer the width of the world;
+  one finger anywhere on the yard scrolls it, with the platform's coast and
+  rubber band, `camX` reads `scrollLeft` once a frame and everything that
+  moves the camera writes it; a finger that lands on dust is refused to the
+  platform at `touchstart` and sweeps for its whole length. A grab bar along
+  the bottom edge was built, played and cut in between (2026-09-16; DESIGN.md).
+  No friction knobs. Checks: `selftest/touch.js`, `test/camera.test.mjs`;
   `tools/fling.mjs` drives a real finger.
 - **A hop between stations.** Two arrows in the mid sky at the window's
   edges, each wearing the glyph of the next standing station that way, a

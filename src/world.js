@@ -524,10 +524,8 @@ export function resize(after) {
   const fit = Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H)));
   S.dpr = Math.max(1, Math.round(CELL * fit)) / CELL;
 
-  canvas.style.position = 'fixed';
-  canvas.style.left = '0';
-  canvas.style.top = '0';
-  canvas.style.zIndex = '0';
+  // Where it stands is the stylesheet's (stuck to the scroller's left edge);
+  // how big it is is written here.
   canvas.style.width = `${S.W}px`;
   canvas.style.height = `${S.H}px`;
   canvas.width = Math.round(S.W * S.dpr);
@@ -631,16 +629,15 @@ export const openingCamX = () => {
 };
 
 // --- the scroller ---------------------------------------------------------------
-// On a phone the platform holds the camera's x (DESIGN.md, "Momentum
-// scrolling"): the grab bar along the bottom edge is a horizontal scroller
-// with a spacer as wide as the world, a finger drags or flings it with the
+// On a page the platform holds the camera's x (DESIGN.md, "Momentum
+// scrolling"): the canvas sits stuck inside a horizontal scroller with a
+// spacer as wide as the world, a finger flings the scroller with the
 // platform's own coast, and the game reads where it got to. `S.camX` stays
 // the fact everything draws by; `scrollLeft` is where the platform keeps it.
 // Every writer of the camera comes through `clampCam`, which writes the
 // scroller, and `stepCamera` reads it back once a frame, so a fling and a
-// glide cannot disagree for longer than a frame. On a desk the band is
-// hidden and both halves stand down; the node yard binds no scroller at
-// all; either way the camera is the same fact without one.
+// glide cannot disagree for longer than a frame. The node yard binds no
+// scroller and the camera is the same fact without one.
 let scroller = null, spacer = null;
 let wroteLeft = -1, spacerW = -1;
 // What to do when the platform has moved the view: input.js hangs the
@@ -656,12 +653,8 @@ export function bindScroller(el, sp, onTaken) {
 export function lockScroller(on) {
   if (scroller) scroller.style.overflowX = on ? 'hidden' : '';
 }
-// A hidden element has no scroll position to keep, so the band shown again
-// (the switch on the sheet) is written afresh rather than trusted.
-const bandUp = () => scroller && !scroller.hidden;
-export function resyncScroller() { wroteLeft = -1; spacerW = -1; writeScroll(); }
 function writeScroll() {
-  if (!bandUp()) return;
+  if (!scroller) return;
   const w = Math.round(S.worldW * S.zoom);
   if (w !== spacerW) { spacerW = w; spacer.style.width = `${w}px`; }
   const left = S.camX * S.zoom;
@@ -673,10 +666,10 @@ function writeScroll() {
   wroteLeft = scroller.scrollLeft;
 }
 // The platform's move, if it made one since the last write: a drag or a
-// fling in the band. The seat is taken back from whatever was gliding it,
-// the way `pan` does for a drag.
+// fling on the yard, a trackpad's swipe. The seat is taken back from
+// whatever was gliding it, the way `pan` does for a drag.
 function readScroll() {
-  if (!bandUp()) return;
+  if (!scroller) return;
   const left = scroller.scrollLeft;
   if (left === wroteLeft) return;
   wroteLeft = left;
@@ -716,6 +709,15 @@ export function setZoom(k) {
   S.viewH = S.H / S.zoom;
   clampCam();
 }
+
+// The safe area at the foot of the glass (the home indicator, in landscape),
+// read off the page when it is laid out: the counter stands above it.
+let safeFoot = 0;
+export function measureSafeArea() {
+  if (typeof getComputedStyle !== 'function') return;
+  safeFoot = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
+}
+export const safeBottom = () => safeFoot;
 
 export function clampCam() {
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));

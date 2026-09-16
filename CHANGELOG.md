@@ -14,7 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 
 - The phone's settings button is a cog.
-- On a phone the yard scrolls from a grab bar along the bottom of the screen, with the phone's own momentum; a finger on the yard itself sweeps or taps and never scrolls (selftest/touch.js, test/camera.test.mjs).
+- On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
 - A tap on a row buys it first time, a scroll or a hold does not, a long press reads its note, and a purchase can be taken back from its tag for a few seconds (test/undo-buy.test.mjs, test/hover-gate.test.mjs, selftest/touch.js).
 - On a phone a board is a sheet from the bottom with a handle: drag it up for the long boards, down to put it away, and the crew list opens inside it (selftest/sheet.js).
@@ -31,7 +31,6 @@ feature lives in DESIGN.md.
 - The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
 - The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
 - A board comes down when its station is scrolled off the window, on every board and not only the bench's (selftest/touch.js).
-- The grab bar is taller and stands clear of the bottom edge, so a thumb aiming at it does not fire the phone's own swipe-up (selftest/touch.js).
 - The hop arrows are thumb-sized, and on a phone held sideways they stand in the middle of the sky rather than on the ground line (selftest/touch.js).
 - A fast double tap on a row buys it once and keeps it; the undo waits a beat, and is the phone's alone -- on a desk a work at the front is committed as before (test/undo-buy.test.mjs, test/queue.test.mjs).
 - The undo tag is one word and stays inside its card (selftest/touch.js).

@@ -7,7 +7,7 @@ import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { shown } from '../tween.js';
-import { barRoom } from '../bar.js';
+import { safeBottom } from '../world.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -73,8 +73,8 @@ export function drawCount() {
   x = Math.max(EDGE, x);
   // `y` is the bottom row's baseline and the box hangs above it, so the card's
   // own bottom edge is `y + PAD`.
-  // Above the grab bar on a phone, which stands on the floor of the glass.
-  const y = S.H - barRoom() - EDGE - PAD;
+  // Above the safe area, where a phone has one.
+  const y = S.H - safeBottom() - EDGE - PAD;
 
   const box = { x: Math.round(x - PAD), y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
                 w: wide, h: tall };
