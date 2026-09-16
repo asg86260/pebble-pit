@@ -7,13 +7,13 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, binLeft, slotW } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW } from '../casino.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
-         CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS } from '../config.js';
+         CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
@@ -101,7 +101,8 @@ function drawSign() {
 }
 const CHASE_EVERY = 4;           // how many dark bulbs stand between the lit
 const PEG_SHADE = SHADES[0];     // a peg: the lightest grey the yard has, so a grain reads over it
-const TRAIL_SHADE = SHADES[1];   // and the cell a falling grain just left
+const TRAIL_SHADES = [SHADES[3], SHADES[0]];   // the last two cells a falling grain left, nearest first
+const PEG_HIT = 'plain';          // how a peg shows a hit: 'ring' or 'plain'
 
 // every cell round the border of the sign, in order, so a light walking the
 // list walks the edge
@@ -137,12 +138,11 @@ const DIGIT = {
   // tried at this size and read as a zero, which on a bin is the one thing it
   // must not say.
   '.': ['0', '0', '0', '0', '1'],
-  // and a half in one glyph, for a three-cell foot: a five two cells wide,
-  // which is the one digit that still reads at two, and the point beside its
-  // foot, a row up so the two do not run into one shape
-  'h': ['011', '010', '011', '101', '011'],
-  // times: the mark before a multiple
-  'x': ['000', '101', '010', '101', '000']
+
+  // times: the mark before a multiple; and up or down, before the change
+  'x': ['000', '101', '010', '101', '000'],
+  '+': ['000', '010', '111', '010', '000'],
+  '-': ['000', '000', '111', '000', '000']
 };
 const DIGIT_H = 5;
 const digitW = ch => DIGIT[ch][0].length;
@@ -167,16 +167,27 @@ function drawWord(s, x, y) {
 // inner slot is three; the edge bins' 39 is seven, and their slots are cut
 // that wide for it. The half bins each wear their own half, in one glyph.
 const LABEL_ROW = 2;                                     // under the floor line and a clear row
-const labelOf = m => m === 0.5 ? 'h' : String(m);
+// A half is ".5" with its point a clear cell from the five, which is why an
+// inner slot is five cells: ".5" squeezed into three read as a six, and a one
+// over a two in five by five read as a W.
+const labelOf = m => m === 0.5 ? '.5' : String(m);
 
 function drawLabels(fx, fy) {
   const top = fy + (FIELD_H + BIN_H) * P;
-  ctx.fillStyle = '#000';
+  const paying = payingBin();
   CASINO_BINS.forEach((m, b) => {
     const word = labelOf(m);
     const col = binLeft(b) + (slotW(b) - wordW(word)) / 2;
+    // the foot of the bin paying this beat goes white on black, so the eye is
+    // led through the settlement from the middle outward
+    if (b === paying) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
+      ctx.fillStyle = '#fff';
+    } else ctx.fillStyle = '#000';
     drawWord(word, fx + col * P, top + LABEL_ROW * P);
   });
+  ctx.fillStyle = '#000';
 }
 
 // --- the building -------------------------------------------------------------
@@ -231,12 +242,26 @@ export function drawCasino() {
       for (let c = 0; c < BOARD_COLS; c++)
         if (hasPeg(k, c)) ctx.fillRect(f.x + c * P, f.y + pegRow(k) * P, P, P);
     ctx.fillStyle = '#000';
+    // A peg on the beat rings: it swells from its grey dot to a hollow ring
+    // three cells across -- black outline, white center -- and back. A ring
+    // cannot be mistaken for a grain, and in the field the falling grains are
+    // the only black things that move. (`PEG_HIT` 'plain' is the other
+    // candidate, the peg going black for the beat; see DESIGN.md.)
     if (mayFlash()) {
       for (const p of S.tableFx.pegs || []) {
-        if (t - p.at >= CASINO_FLASH_MS) continue;
-        for (const [dc, dr] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
-          ctx.fillRect(f.x + (p.c + dc) * P, f.y + (p.r + dr) * P, P, P);
+        if (t - p.at >= CASINO_PEG_BEAT_MS) continue;
+        const px = f.x + p.c * P, py = f.y + p.r * P;
+        if (PEG_HIT === 'ring') {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(px - P, py - P, 3 * P, 3 * P);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(px, py, P, P);
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(px, py, P, P);
+        }
       }
+      ctx.fillStyle = '#000';
     }
 
     // The bins: eleven slots with a cell of wall between, the dividers running
@@ -296,10 +321,10 @@ export function drawPotPile() {
   // for the bin.
   for (const g of demo ? [...grains, demo] : grains) {
     if (g.landed) continue;
-    if (g.pc !== g.c || g.pr !== g.r) {
-      ctx.fillStyle = TRAIL_SHADE;
-      ctx.fillRect(f.x + g.pc * P, f.y + g.pr * P, P, P);
-    }
+    g.trail.forEach(([c, r], i) => {
+      ctx.fillStyle = TRAIL_SHADES[i];
+      ctx.fillRect(f.x + c * P, f.y + r * P, P, P);
+    });
     ctx.fillStyle = '#000';
     ctx.fillRect(f.x + g.c * P, f.y + g.r * P, P, P);
   }
@@ -333,14 +358,19 @@ export function drawSparks() {
 }
 
 // --- what the hand came to ----------------------------------------------------------
-// The multiple, standing beside the tray: x0.7, x1.3, x2.6 -- to a tenth, or
-// whole past ten -- counting up as the bins pay and then standing for a few
-// seconds, so a board you were not watching still tells you how it went. A
-// box wide enough for its word, in the same paper-and-edge as the lab's tick.
+// The multiple and the change, standing beside the tray: "x0.8 -20" with the
+// staked coin's mark, or "x1.3 +30" -- the multiple to a tenth, or whole past
+// ten -- both counting up as the bins pay and then standing for a few seconds,
+// so a board you were not watching still tells you how it went and what it
+// cost. A box wide enough for its words, in the same paper-and-edge as the
+// lab's tick.
 const multText = m => m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toFixed(1);
+const changeText = d => (d < 0 ? '-' : '+') + String(Math.abs(d));
 
+// Its left edge two cells clear of the building's wall, beside the tray, so
+// the box grows away from the building rather than into it.
 export function casinoMarkAt() {
-  return { x: Math.round((casino.x + casino.w + P * 8) / P) * P,
+  return { x: Math.round((casino.x + casino.w + P * 2) / P) * P,
            y: Math.round((tray.y - P * 4) / P) * P };
 }
 
@@ -350,20 +380,21 @@ export function drawCasinoMark() {
   if (m == null) return;
   const at = casinoMarkAt();
   const y = at.y + Math.round(Math.sin(now() / 500)) * P;
-  const word = 'x' + multText(m);
-  const w = wordW(word) + 2, h = DIGIT_H + 2;
+  const mult = 'x' + multText(m), change = changeText(shownChange());
+  const cur = shownCur();
+  // the multiple, two cells of air, the change, a cell, and the coin's mark
+  const w = wordW(mult) + 2 + wordW(change) + 1 + 1 + 2, h = DIGIT_H + 2;
+  const left = at.x, top = y - Math.floor(h / 2) * P;
 
   ctx.fillStyle = '#fff';
-  ctx.fillRect(at.x - Math.floor(w / 2) * P, y - Math.floor(h / 2) * P, w * P, h * P);
+  ctx.fillRect(left, top, w * P, h * P);
   ctx.lineWidth = Math.max(1, P / 3);
   ctx.strokeStyle = '#000';
-  ctx.strokeRect(at.x - Math.floor(w / 2) * P, y - Math.floor(h / 2) * P, w * P, h * P);
+  ctx.strokeRect(left, top, w * P, h * P);
   ctx.fillStyle = '#000';
-  drawWord(word, at.x - Math.floor(w / 2) * P + P, y - Math.floor(h / 2) * P + P);
-
-  // and what is in the tray now, under the box, in the mark of whatever was
-  // staked -- a hand that came back is a number as much as a multiple
-  if (!S.hand || !S.hand.n) return;
-  drawMark(S.hand.cur === 'shard' ? SHARD_CELL : S.hand.cur === 'spore' ? SPORE_CELL : 4,
-           at.x - P * 2, y + Math.floor(h / 2) * P + P * 1.5);
+  drawWord(mult, left + P, top + P);
+  const cx = left + (1 + wordW(mult) + 2) * P;
+  drawWord(change, cx, top + P);
+  drawMark(cur === 'shard' ? SHARD_CELL : cur === 'spore' ? SPORE_CELL : 4,
+           cx + (wordW(change) + 1) * P + P / 2, top + P + (DIGIT_H * P) / 2);
 }
