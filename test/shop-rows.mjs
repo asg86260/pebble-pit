@@ -47,7 +47,9 @@ const apothecary = () => { sites(); window.__buy('unlockapothecary'); window.__f
 // A purse rather than the flood: banking a pot needs room in the hole for it.
 // The machine is wound quick -- no beat on a peg, no gap between grains --
 // because a hand at its played pace is longer than the reload harness's five
-// seconds, and a reload mid-hand puts the pot back in the hopper.
+// seconds. The two rows that follow a pot into the tray (`bank`, `ride`) run
+// without the harness: the sand is never saved, so a reload puts the pot
+// back pouring into its plot and both rows are rightly dead for the pour.
 const casino = () => {
   window.__fullSites(); crew();
   window.__grant({ dust: 2e4, shards: 1e4, spores: 1e4 });
@@ -163,8 +165,8 @@ export const ROWS = [
   // Letting go leaves the row where it is and goes dead for the hand, which
   // `__buy` reads as the press having fired.
   { key: 'letgo', part: 2, reach: hopper, purse: true },
-  { key: 'bank', part: 2, reach: staked, purse: true },
+  { key: 'bank', part: 2, reach: staked, purse: true, reload: false },
   // Dropping again leaves the row where it is and starts the hoist, which is
   // the one sign `__buy` cannot read for itself.
-  { key: 'ride', part: 2, reach: staked, purse: true, fired: S => !!(S.hoisting || (S.pot && S.pot.where === 'hopper')) },
+  { key: 'ride', part: 2, reach: staked, purse: true, reload: false, fired: S => !!(S.hoisting || (S.pot && S.pot.where === 'hopper')) },
 ];
