@@ -6,10 +6,7 @@ import { tierRows, named } from './tiers.js';
 // into UPGRADES, in this order.
 //
 // Two ladders in bands (CLAUDE.md, "Decided"): what a hauler carries, and how
-// fast it walks. Each was two -- load then a harness, pace then boots -- and
-// two rows over one number read as the same thing for sale twice. One ladder
-// each now, to the top the pair reached; what each rung is worth and costs is
-// in config/rungs.js.
+// fast it walks. What each rung is worth and costs is in config/rungs.js.
 const CARRY = tierRows({
   field: 'haulCarryLevel',
   unit: 'px', does: 'carry',

@@ -14,7 +14,6 @@ export const CASINO_ROWS = [
     blurb: 'double or nothing',
     cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
-    // The yard's "you have invested in this place" beat -- see `invested`.
     show: () => invested() && !S.casinoOpen
   }
 ];

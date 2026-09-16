@@ -7,19 +7,15 @@ import { site } from './site.js';
 // into UPGRADES, in this order.
 export const APOTHECARY_ROWS = [
 
-  // The apothecary: a pot on a fire, standing right after the farm whose crop it
-  // takes. It opens once the plots are broken -- it is the reason they are worth
-  // breaking -- and it is priced the farm's way, a core and a little dust, because
-  // it stands early, not late. See DESIGN.md, "The apothecary".
+  // Opens once the plots are broken; it is the reason they are worth breaking
+  // (DESIGN.md, "The apothecary").
   site({
     key: 'unlockapothecary', name: 'build the apothecary',
     note: () => 'brew temporary boosts for your sqworkers',
     blurb: 'brews crew tonics',
     cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen', job: JOB.STIR,
-    // Built at the hut, not at the middle of the plot. The building is the hut;
-    // the shelves and the row of pots to its right are what the hut goes on to
-    // fill, and the middle of all that is bare ground with nothing standing on
-    // it (item 17).
+    // Built at the hut, not the middle of the plot, which is bare ground
+    // between the hut and the pots.
     at: () => apothecary.x + APOTH_HUT_W / 2,
     show: () => !S.apothecaryOpen && S.farmOpen && S.seenSpore
   })
