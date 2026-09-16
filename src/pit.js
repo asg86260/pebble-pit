@@ -15,6 +15,7 @@ import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, 
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { rand } from './rng.js';
+import { bell } from './dust.js';
 import { sfx } from './audio.js';
 
 // --- how big the hole is -----------------------------------------------------
@@ -60,6 +61,17 @@ export function abyssLine() {
 }
 
 // Where the plot sits and how many cells it is. The near lip never moves.
+// Where a handful thrown at the hole is aimed: most near the lip, tailing
+// down the hole; or the disc with the rift open, since `riftCatch` takes
+// every grain at the mouth and a spread across a floor that is not there is
+// two motions. A little scatter either way, or grains on one pixel go round
+// in single file. The haulers and your own held hand (`tossAtHole`) share it.
+export function holeLanding() {
+  if (S.riftOpen && !S.drowned) return rift.x + rift.w / 2 + bell() * rift.w * 0.4;
+  const far = pit.x + Math.max(P, pit.w - P * 2);
+  return Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+}
+
 export function shapePit() {
   pit.w = pitWidth();
   pit.h = pitDepth() + PIT_HEAP;         // the hole, and room to heap over it

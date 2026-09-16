@@ -48,6 +48,11 @@ export const ROWS = [
   // --- the bench --------------------------------------------------------------
   { key: 'carry', fresh: true, part: 1 },
   { key: 'auto', fresh: true, part: 1 },
+  // Gated like the carry row, on having dragged, which the yard has from the first frame here.
+  { key: 'autotoss', fresh: true, part: 1 },
+  // Both sit beside the sweep once the throwing is automatic.
+  { key: 'toss', part: 1, reach: S => { S.autoToss = true; } },
+  { key: 'reach', part: 1, reach: S => { S.autoToss = true; } },
   // Both sit beside the swing once the swinging is automatic.
   { key: 'speed', part: 1, reach: S => { S.autoMine = true; } },
   { key: 'pick', part: 1, reach: S => { S.autoMine = true; } },

@@ -274,7 +274,8 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'cropLevel', 'seamLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'fanLevel', 'riftLevel',
-                   'critChanceLevel', 'critMultLevel', 'dosesLevel', 'lengthLevel']) {
+                   'critChanceLevel', 'critMultLevel', 'dosesLevel', 'lengthLevel',
+                   'tossSpeedLevel', 'tossReachLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();

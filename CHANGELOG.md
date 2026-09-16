@@ -22,6 +22,7 @@ feature lives in DESIGN.md.
 - A dark switch on the settings sheet, on the landing page and in the game: the yard white on black, following the system's setting until pressed (test/settings.test.mjs, scene `dark`).
 
 - The casino is the pour: hold the arm and pebbles pour from your purse into the funnel, a share of what you own a second; tap the sign to drop them; the bins pay in pebbles, crops, ore and sparks, each falling out of its bin through the foot on to the ground for the crew (test/casino.test.mjs, selftest/casino.js).
+- "Hold to toss" on the bench: hold the button on a heap and the hand keeps sweeping it up and throwing each handful at the hole by itself, with a pace ladder and a reach ladder beside it; a heap further off than the reach is thrown that far toward the hole and lies there for the next hold (test/hold-to-toss.test.mjs).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - A ladder waiting on a coin the yard has no source for shows its price, greyed, instead of "needs crops" (test/ladder-chain.test.mjs).

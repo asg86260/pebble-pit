@@ -48,7 +48,7 @@ setRooms(houseCubes);
 setSheds({ quarry: quarryShed, farm: farmShed, apothecary: apothHut });
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
-import { catchAir } from './hands.js';
+import { catchAir, sweep, dustUnder, tossAtHole } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
@@ -56,7 +56,7 @@ import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
-import { mineMs } from './levels.js';
+import { mineMs, tossMs, capacity } from './levels.js';
 import { restaff, stripKit } from './staffing.js';
 // The bench's row is registered by this file being loaded, here rather than
 // by the page, because a yard with no document still has to raise a bench
@@ -164,6 +164,20 @@ function holdToMine(now) {
   }
 }
 
+// Hold to toss: a hand held down on dust keeps sweeping what is under it,
+// and once it is full, or the ground under it is bare, lets the handful go
+// at the hole (`tossAtHole`). Paced like the swing, so a sweep and a flick
+// is still yours: nothing leaves the hand before `TOSS_DELAY`, and then a
+// handful every `tossMs`, the bench's pace ladder.
+function holdToToss(now) {
+  if (!S.dragging || !S.autoToss) return;
+  sweep(S.mouse.x, S.mouse.y);
+  if (now < S.nextToss || !S.held) return;
+  if (S.held < capacity() && dustUnder(S.mouse.x, S.mouse.y)) return;
+  tossAtHole(S.mouse.x, S.mouse.y);
+  S.nextToss = now + tossMs();
+}
+
 export const STEPS = [
   // The plots are dug when the ground is broken, not when the first farmhand
   // walks up. Asked every frame rather than hooked onto the sale, so a save,
@@ -235,6 +249,7 @@ export const STEPS = [
   // swinging does not catch its own spray
   { name: 'catch', step: () => { if (S.dragging) catchAir(S.mouse.x, S.mouse.y); } },
   { name: 'mining', step: c => holdToMine(c.now) },
+  { name: 'tossing', step: c => holdToToss(c.now) },
   // The belt's band before the chips: a load that runs off the head becomes a
   // chip this same frame and should fall on the frame it left.
   { name: 'belt',  step: c => stepBelt(c.now, frames()) },

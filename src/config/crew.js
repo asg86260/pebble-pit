@@ -26,6 +26,7 @@ export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
+export const TOSS_DELAY = 260;   // and before a held sweep starts throwing (hold to toss)
 // How many rungs there are on every ladder in the game: one number, so "how
 // far along is this" has one answer wherever it is asked. What changes between
 // ladders is what a rung costs and is bought with (config/rungs.js; "The
@@ -100,6 +101,10 @@ export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands
 export const TOSS_RISE = 70;         // world px the average grain peaks at
 export const TOSS_RISE_VARY = 0.55;  // share of that it varies by, either way
 export const TOSS_SPREAD = P * 2;    // how far apart the hands let go
+// Your own throw at the hole (`tossAtHole`) peaks at this share of the way
+// there, never lower than a hauler's: a handful from the far end of the
+// yard sails over the rock rather than into it.
+export const HAND_ARC = 0.3;
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.

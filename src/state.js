@@ -147,6 +147,9 @@ export const S = {
   speedLevel: 0,
   pickLevel: 0,
   autoMine: false,
+  autoToss: false,        // a held sweep throws at the hole by itself
+  tossSpeedLevel: 0,      // and how often, and how far (config/rungs.js)
+  tossReachLevel: 0,
 
   // --- crits ---
   // Two ladders for the whole yard, not a station apiece: how often a unit of
@@ -383,6 +386,7 @@ export const S = {
   poop: [],               // what `muck` was before it had kinds; the save still carries it, nothing reads it
   dragging: false,
   nextHit: 0,
+  nextToss: 0,            // when a held sweep next lets its handful go
   seenBench: false,       // the bench has been earned and stays from then on
   seenDrag: false,        // you have swept dust up by hand, so the row about it shows
   seenSects: [],          // headings that were on the board last time it was open
@@ -439,6 +443,7 @@ export const SAVED = [
   'carryLevel',
   'speedLevel',
   'autoMine',
+  'autoToss', 'tossSpeedLevel', 'tossReachLevel',
   'cores',
   'seenBench', 'seenDrag',
   'seenSects',
@@ -673,7 +678,7 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',
   'shackBoardOpen',
-  'nextHit', 'resetArmed',
+  'nextHit', 'nextToss', 'resetArmed',
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // The weather, and the part-grain the house is partway through.

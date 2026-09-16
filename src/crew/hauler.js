@@ -10,6 +10,7 @@ import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
+import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs, homePace } from '../levels.js';
@@ -382,14 +383,8 @@ export function haulerWork(w, c) {
         w.hasCore = false;
       }
       for (let i = 0; i < w.carry; i++) {
-        // Onto the pile: most near the lip, tailing down the hole. Into the
-        // drain: at the disc, since with the rift open `riftCatch` takes every
-        // grain at the mouth and a spread across a floor that is not there is
-        // two motions. A little scatter either way, or grains on one pixel go
-        // round in single file.
-        const land = S.riftOpen && !S.drowned
-          ? rift.x + rift.w / 2 + bell() * rift.w * 0.4
-          : Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+        // Onto the pile, or into the drain (`holeLanding` in pit.js).
+        const land = holeLanding();
         // A hand's throw, not a nozzle's: the hands are a span and each grain
         // gets its own peak, so they land spread in time as well as place.
         const fx = from + (rand() - 0.5) * TOSS_SPREAD;

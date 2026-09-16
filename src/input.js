@@ -4,7 +4,7 @@
 // else's module.
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H } from './config.js';
+         FARM_H, TOSS_DELAY } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -171,6 +171,7 @@ canvas.addEventListener('pointerdown', e => {
   // for the sweep everywhere.
   if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) return;
   S.dragging = true;
+  S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
   S.trail = [];
   track(p.x, p.y);
   try { canvas.setPointerCapture(e.pointerId); } catch {}

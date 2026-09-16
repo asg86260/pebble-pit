@@ -2,7 +2,7 @@ import { BELT_BILL, RAM_BILL, LADDER } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
-import { kitFull, mineRate, capacity, pickCount } from '../levels.js';
+import { kitFull, mineRate, capacity, pickCount, tossRate, tossReach } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { tierRows, named } from './tiers.js';
 
@@ -30,6 +30,27 @@ const YOU_SWING = tierRows({
   // faster swings only read as an upgrade once the swinging is automatic
   show: () => S.autoMine,
   bands: named('speed', 'auto swing')
+});
+
+// --- hold to toss's two ladders ---------------------------------------------
+// How often a held hand lets go, and how far the handful carries. Both wait
+// on the holding being automatic, like the swing waits on the swinging.
+const YOU_TOSS = tierRows({
+  field: 'tossSpeedLevel',
+  unit: 'throws/s', pct: true, does: 'throw',
+  value: lvl => tossRate(lvl),
+  site: 'bench',
+  show: () => S.autoToss,
+  bands: named('toss', 'throw pace')
+});
+
+const YOU_REACH = tierRows({
+  field: 'tossReachLevel',
+  unit: 'px', does: 'reach',
+  value: lvl => tossReach(lvl),
+  site: 'bench',
+  show: () => S.autoToss,
+  bands: named('reach', 'throw reach')
 });
 
 // --- what a swing takes ---------------------------------------------------
@@ -80,6 +101,20 @@ export const BENCH_ROWS = [
                        () => S.haulCarryLevel >= LADDER && S.haulPaceLevel >= LADDER,
                        () => kitFull(JOB.HAUL))
   },
+  {
+    key: 'autotoss',
+    kind: 'rung', site: 'bench',
+    name: 'hold to toss',
+    // What it gives is the pace ladder's foot.
+    unit: 'throws/s',
+    to: () => tossRate(0),
+    cost: () => 40,
+    buy: () => { S.autoToss = true; },
+    // once you have dragged, like the carry row: a row about a thing you have done
+    show: () => S.seenDrag && !S.autoToss
+  },
+  ...YOU_TOSS,
+  ...YOU_REACH,
   {
     key: 'auto',
     kind: 'rung', site: 'bench',

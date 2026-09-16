@@ -1874,6 +1874,24 @@ The rows stay declarative about it. Each one still knows its current value and i
 that is the one place the maths for that upgrade lives — and the difference between them is taken
 in a single function that every board shares. Adding an upgrade is still adding an object.
 
+## Hold to toss (built)
+
+The sweep's answer to hold to mine. Once bought, a button held on dust keeps sweeping what is
+under it, and when the hand is full, or the ground under it is bare, the handful leaves the hand
+where it is, aimed at the mouth of the hole on the arc the haulers throw on. Nothing leaves before
+the same pause hold to mine keeps, so a sweep and a flick is still yours; and a handful the held
+hand let go is not caught back by the hand it left from.
+
+Two ladders, and it starts small and slow on both. **Throw pace** is how often a handful goes,
+half a throw a second at the foot. **Throw reach** is how far one carries: a hole further off
+than that gets the handful thrown that far toward it, to land on the ground and be picked up from
+there on the next hold. The foot of the reach ladder covers only the end of the rock's own strip;
+the top reaches the lab's pile at the far end of the yard. Both ladders wait on hold to toss
+being bought, the way the swing ladders wait on hold to mine, and the row itself waits on having
+dragged once, like the carry row. Numbers: `toss` and `reach` in `config/rungs.js`;
+`holdToToss` in game.js, `tossAtHole` in hands.js, and the landing spot the haulers share,
+`holeLanding` in pit.js.
+
 ## The workbench
 
 The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground just off

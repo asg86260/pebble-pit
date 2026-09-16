@@ -39,6 +39,11 @@ const scoopGap = swing(HAUL_MS, 30, LADDER);
 
 export const mineRate = (lvl = S.speedLevel) => rungValue('speed', lvl);
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, Math.round(1000 / mineRate(lvl)));
+// Hold to toss: how often a held hand lets a handful go, and how far it
+// carries (a handful aimed past that lands short, on the ground).
+export const tossRate = (lvl = S.tossSpeedLevel) => rungValue('toss', lvl);
+export const tossMs = (lvl = S.tossSpeedLevel) => Math.max(1, Math.round(1000 / tossRate(lvl)));
+export const tossReach = (lvl = S.tossReachLevel) => rungValue('reach', lvl);
 export const rockhandRate = (lvl = S.rockhandSpeedLevel) => rungValue('rockhandspeed', lvl);
 export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, Math.round(1000 / rockhandRate(lvl)));
 export const haulCap = (lvl = S.haulCarryLevel) => rungValue('haulcarry', lvl);

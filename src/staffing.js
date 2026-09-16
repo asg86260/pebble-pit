@@ -61,7 +61,8 @@ export function rebalance() {
   // Hats are not clamped to bodies -- the kit belongs to the place.
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel', 'critMultLevel',
-                   'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel'])
+                   'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
+                   'tossSpeedLevel', 'tossReachLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
   // Builders are derived, one a site, never the whole yard: a build that
   // swallowed every idle body would stop the dust moving.

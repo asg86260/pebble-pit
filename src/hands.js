@@ -1,13 +1,15 @@
 // Your hands: what a click, a drag and a flick do.
 //
-// Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
+// Sweeping lifts dust off the ground onto the cursor, a flick throws it (or a
+// held hand lets it go at the hole by itself, once that is bought), and
 // anything still in the air can be caught on the way past.
 
-import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER } from './config.js';
+import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
-import { spawnChip } from './dust.js';
-import { capacity } from './levels.js';
+import { spawnChip, aim, bell } from './dust.js';
+import { holeLanding } from './pit.js';
+import { capacity, tossReach } from './levels.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
@@ -35,6 +37,9 @@ export function catchAir(mx, my) {
   const reach = (BRUSH + 2) * P;      // forgiving: dust falls quickly
   for (let i = S.chips.length - 1; i >= 0 && room > 0; i--) {
     const ch = S.chips[i];
+    // not what the held hand itself just let go, or the toss would come
+    // straight back off the cursor it left from
+    if (ch.auto) continue;
     if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
     S.chips.splice(i, 1);
     S.held++;
@@ -122,6 +127,30 @@ export function release(x, y) {
               S.motes[i]?.s || 1);
   }
   noteThrow(S.chips.slice(from), full);
+  S.held = 0;
+  S.motes = [];
+}
+
+// Hold to toss: the handful leaves the hand where it is, aimed at the hole
+// on the arc the haulers throw on (`holdToToss` in game.js decides when).
+// The hand has a reach (the bench's ladder): a hole further off than that
+// gets the handful thrown that far toward it, to land on the ground and be
+// picked up again from there. The peak grows with the distance, so a throw
+// from the far side of the rock clears it. Not a juggle: nothing here is
+// thrown to be caught.
+export function tossAtHole(x, y) {
+  if (!S.held) return;
+  const from = S.chips.length;
+  for (let i = 0; i < S.held; i++) {
+    const fx = x + (rand() - 0.5) * P * 6, fy = y + (rand() - 0.5) * P * 6;
+    const hole = holeLanding();
+    const land = Math.abs(hole - fx) <= tossReach() ? hole : fx + Math.sign(hole - fx) * tossReach();
+    const rise = Math.max(TOSS_RISE, Math.abs(land - fx) * HAND_ARC) * (1 + bell() * TOSS_RISE_VARY * 0.4);
+    const v = aim(fx, fy, land, P, rise);
+    spawnChip(fx, fy, v.vx, v.vy, S.motes[i]?.s || 1);
+    S.chips[S.chips.length - 1].auto = true;      // past the hand that threw it (catchAir)
+  }
+  noteThrow(S.chips.slice(from), false);
   S.held = 0;
   S.motes = [];
 }

@@ -214,6 +214,17 @@ export const SCENES = {
                  const s = st();
                  for (let c = 6; c < s.gw - 6; c++) window.__pileRock(s.rockLeftX + c * 6 + 3, 3);
                  window.__fast(1); window.__look(st().rockLeftX - 180); } },
+  // The button held on a heap out along the strip, hold to toss bought and its
+  // reach topped: handfuls in the air on their way to the hole. Held from here
+  // rather than through the glass, since a scene has no pointer to hold.
+  tossing: { about: 'the bench', say: 'a held hand throwing at the hole',
+    run: () => { window.__reset(); window.__fast(1); S.autoToss = true;
+                 window.__levels({ carryLevel: 4, tossSpeedLevel: 5, tossReachLevel: LADDER });
+                 const x = st().pitX - 300;
+                 for (let d = -60; d < 60; d += 12) window.__pile(x + d, 40);
+                 window.__fast(1);
+                 S.mouse = { x, y: S.groundY - 12 }; S.dragging = true; S.nextToss = 0;
+                 window.__look(x - 340); } },
   apron: { about: 'the rock', say: 'the bare strip in front of the hill',
     run: () => { rich(); window.__jump(4);
                  const x = st().rockLeftX;
