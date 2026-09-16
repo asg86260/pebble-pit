@@ -10262,7 +10262,16 @@ is verified by nothing else.
 when there is a station that way; boards as bottom sheets on a phone only,
 the desk keeps its popover; the platform's momentum, not a simulated coast;
 a wrong tap-buy is undone from the tag rather than confirmed (the
-recommendation, not overturned).
+recommendation, not overturned). **And, later the same day: on a phone the
+yard scrolls only from the bottom of the screen.** A band along the bottom
+edge is the native scroller -- a drag there is the platform's scroll with its
+momentum, and a track and thumb are drawn in it so it reads as the grab bar
+the owner asked for -- and a finger on the yard itself never scrolls: it
+sweeps on dust and taps on anything else, one finger or two. The complaint
+this answers is a long sweep toward the pit turning into a scroll partway.
+The "Momentum scrolling" section below predates this and should be read with
+the scroller moved from behind the canvas to the band; the `touchstart` dust
+gate it describes is no longer needed, since the canvas does not scroll.
 
 Four asks from playing the yard on a phone (the owner, 2026-09-15), taken
 together because they share one premise: **on a phone the window is
