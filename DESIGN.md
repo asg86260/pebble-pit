@@ -10256,7 +10256,13 @@ None of this starts until the reliability freeze has held -- the node tier
 green twice running on main (TODO.md). A refactor on a suite that is not
 reliably green cannot tell a regression from a flake, and every seam above
 is verified by nothing else.
-## Playing it on a phone (design, not built)
+## Playing it on a phone (design, approved 2026-09-15; building)
+
+**Decided by the owner, 2026-09-15:** two edge arrows for the hop, drawn only
+when there is a station that way; boards as bottom sheets on a phone only,
+the desk keeps its popover; the platform's momentum, not a simulated coast;
+a wrong tap-buy is undone from the tag rather than confirmed (the
+recommendation, not overturned).
 
 Four asks from playing the yard on a phone (the owner, 2026-09-15), taken
 together because they share one premise: **on a phone the window is

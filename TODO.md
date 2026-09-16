@@ -1,11 +1,11 @@
 # Still to do
 
-## Playing it on a phone -- DESIGN, NOT BUILT (2026-09-15)
+## Playing it on a phone -- APPROVED, BUILDING (2026-09-15)
 
 "Playing it on a phone" at the end of DESIGN.md: four asks from the owner,
 each its own section, all reading one answer for "is this a phone"
 (`coarse()` in prefs.js off `(pointer: coarse)`, with a switch on the
-settings sheet). Waiting on approval before any code.
+settings sheet). Approved: two edge arrows when there is a station that way, sheets on a phone only, native momentum, undo not confirm.
 
 - **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
   the canvas sits fixed in a horizontal scroller with a spacer the width of
