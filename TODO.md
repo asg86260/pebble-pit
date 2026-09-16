@@ -1,6 +1,17 @@
 # Still to do
 
-## The stake is a heap you carry, and the casino has no board -- BUILT (2026-09-16)
+## The machine -- DESIGNED (2026-09-16), building
+
+The casino's interaction model, reset: no piles, no strip, no crank. A panel
+of face-on buttons under the bins' feet -- coin, chip, a stake window, same
+bet, bank (the sack) -- and the arm does the whole hand: the stake pours
+from the sky, drains, sixteen pebbles cascade under gravity with a hop at
+each peg; winnings in the tray ride on the next pull or go to the hole by
+the arc on the sack. Only bins with pebbles pay; the slots get a clear cell
+each side of every pay. DESIGN.md, "The machine (design, 2026-09-16)".
+Built in the numbered order there, a push a step.
+
+## The stake is a heap you carry, and the casino has no board -- BUILT AND CUT (2026-09-16)
 
 The casino's board is gone. One pile a coin the yard has handed out stands
 on the ground to the right of the building -- the purse itself at the band
