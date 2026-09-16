@@ -1,21 +1,8 @@
-// The dev panel. It is not part of the game.
-//
-// Everything in here is a shortcut to something the console hooks already do --
-// but a slider you can push while watching the yard tells you things a number
-// typed into a console never will, and most of the numbers in this game were
-// found by sitting with it rather than by working them out.
-//
-// It is loaded only under `vite dev`: main.js reaches for it behind
-// `import.meta.env.DEV`, so a build never sees this file at all. Backtick or
-// tilde -- the same key, shift or no shift -- opens and closes it; it starts
-// closed and remembers which you chose.
-//
-// It is five tabs, because one column of everything ran off the bottom of the
-// window once the sliders and the scenes were on it. `yard` is the things you
-// do to the yard, `dials` the numbers, `scenes` the places (scenesheet.js
-// hangs its block there), `sounds` which event plays which recipe, `frame`
-// what the machine is doing about it. The tab you were on is remembered with
-// the open flag.
+// The dev panel: shortcuts to what the console hooks already do, loaded only
+// under `vite dev` (main.js, behind `import.meta.env.DEV`). Backtick opens
+// and closes it. Five tabs: `yard` the things you do to the yard, `dials` the
+// numbers, `scenes` the places (scenesheet.js hangs its block there),
+// `sounds` which event plays which recipe, `frame` what the machine is doing.
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
@@ -31,9 +18,8 @@ el.id = 'dev';
 el.hidden = localStorage.getItem(KEY) !== '1';
 document.body.appendChild(el);
 
-// The tab strip, and one pane under it per tab. A pane is made the first time
-// it is asked for, in the order asked, so a module that hangs its own block on
-// a tab of its own (scenesheet.js) gets a tab without this file naming it.
+// A pane is made the first time it is asked for, so a module that hangs its
+// own block on a tab (scenesheet.js) gets one without this file naming it.
 const strip = document.createElement('div');
 strip.className = 'devtabs';
 el.appendChild(strip);
@@ -87,7 +73,7 @@ const button = (box, text, fn) => {
 
 into = devPane('yard');
 
-// how many of each job, straight off, with the same call the checks use
+// The same call the checks use.
 const crew = [JOB.ROCK, JOB.HAUL, JOB.QUARRY, JOB.FARM];
 const jobs = { rockhands: 'rock', haulers: 'carry', quarriers: 'quarry', farmhands: 'farm' };
 const hire = (which, d) => {
@@ -109,18 +95,12 @@ for (const k of crew) {
 
 line('give', box => {
   button(box, 'dust', () => window.__give(1000));
-  // The hole holds about thirty-seven thousand now, and a building is priced
-  // against that rather than against a scrape -- so there is a button that fills
-  // it rather than only one that tops it up.
   button(box, 'fill', () => window.__give(999999));
   button(box, 'core', () => window.__grant({ cores: 5 }));
   button(box, 'shard', () => window.__grant({ shards: 5 }));
   button(box, 'spore', () => window.__grant({ spores: 5 }));
 });
 
-// Every building, not the three that happened to be here first. The quarry and the
-// plots carry their own boards now, and the casino, the house and the table are
-// all places you walk to -- so all of them open from one line.
 line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
   button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
@@ -137,13 +117,9 @@ line('open too', box => {
   button(box, 'sky', () => { S.skyShown = !S.skyShown; });
 });
 
-// The mess, and the crew who have to shovel it. A yard under muck is the one
-// job everybody drops everything for, and it is worth being able to make one
-// without waiting for the sky to rain.
 line('muck', box => {
-  // A depth in cells, laid across every column -- and a column never holds more
-  // than six. Sixty was ten times what the worst downpour can leave, which is
-  // why "a little" buried the yard.
+  // A depth in cells, laid across every column; a column never holds more
+  // than six.
   button(box, 'a little', () => window.__air({ muck: 1 }));
   button(box, 'a lot', () => window.__air({ muck: 4 }));
   button(box, 'haze', () => window.__air({ haze: 700 }));
@@ -165,15 +141,9 @@ line('run on', box => {
 });
 
 line('', box => {
-  // The whole thing, opening included, on a seed of its own: this is the
-  // player's "reset progress" and not the hook the scenes use, which skips
-  // the opening and keeps the run so a check can compare two halves.
+  // The player's "reset progress": opening included, on a seed of its own.
+  // The scenes' hook skips the opening and keeps the run.
   button(box, 'reset the game', () => window.__reset(true, true));
-  // Your whole yard, on the clipboard. A report about something the yard is
-  // doing wrong is only as good as the yard it happened in, and "open the
-  // console and type this" is a thing to get wrong at the end of a sentence
-  // about something else. This is one button: press it, paste it, and whoever
-  // is looking has your game rather than a description of it.
   button(box, 'copy save', async () => {
     const raw = localStorage.getItem('boulder-clicker/v4') || '';
     const say = n => { n.textContent = raw ? 'copied ' + Math.round(raw.length / 1024) + 'kb' : 'nothing saved yet'; };
@@ -181,8 +151,7 @@ line('', box => {
       await navigator.clipboard.writeText(raw);
       say(document.querySelector('[data-said]'));
     } catch {
-      // Not every page is allowed the clipboard. Put it somewhere you can get
-      // at it by hand rather than failing silently.
+      // Not every page is allowed the clipboard.
       window.__save = raw;
       document.querySelector('[data-said]').textContent = 'in window.__save';
     }
@@ -192,16 +161,10 @@ line('', box => {
   box.appendChild(said);
 });
 
-// The story's beats and the shields used to be rows of buttons here. They
-// are scenes now -- src/scenes.js, drawn on the `scenes` tab by scenesheet.js
-// under "the story" and "the shields" -- because a scene is a place and a
-// place is pressed, not dialed; what stays on this tab is dials.
 into = devPane('dials');
 
-// the numbers themselves. Anything in TUNABLE turns up here without this file
-// being told about it, which is the point of the table living in config: a row
-// carries its own label, its own ends, and its own way of reading the number,
-// so a slider is built out of the row and nothing here knows any knob by name.
+// Anything in TUNABLE turns up here without this file being told: a row
+// carries its own label, ends and way of reading the number.
 for (const t of TUNABLE) {
   line(t.label, box => {
     const slider = document.createElement('input');
@@ -213,9 +176,8 @@ for (const t of TUNABLE) {
     const shown = document.createElement('b');
     shown.textContent = t.get();
     slider.addEventListener('input', () => {
-      // The row's own pair, which is exactly what `tune` in config.js does --
-      // written here so the sound's rows, which config.js does not know, move
-      // the same way as everything else's.
+      // The row's own pair rather than `tune` in config.js, so the sound's
+      // rows, which config.js does not know, move the same way.
       t.set(+slider.value);
       shown.textContent = t.get();
       if (t.layout) relayout();
@@ -226,18 +188,15 @@ for (const t of TUNABLE) {
   });
 }
 
-// The scenes' tab is made here so the strip reads yard, dials, scenes, sounds,
-// frame whichever order the two modules happen to load in; scenesheet.js
-// fills it.
+// Made here so the strip's order does not depend on which module loads first;
+// scenesheet.js fills it.
 devPane('scenes');
 into = devPane('sounds');
 
-// The mapping: the bench's JSON -- `{ "rock-hit": { ...recipe }, "footstep":
-// null, ... }` -- pasted here is laid over SOUNDS live and kept in this
-// browser, so a sound is heard in place before it is written into config. The
-// list under the box is the table as it stands, one line an event, so what is
-// silent and what is not can be read off. `clear` drops the paste and puts the
-// shipped table back on the next load.
+// The bench's JSON (`{ "rock-hit": { ...recipe }, "footstep": null, ... }`)
+// pasted here is laid over SOUNDS live and kept in this browser. The list
+// under the box is the table as it stands. `clear` puts the shipped table back
+// on the next load.
 const SOUNDS_KEY = 'boulder-clicker/sounds';
 const soundsBox = document.createElement('textarea');
 soundsBox.rows = 4;
@@ -289,28 +248,18 @@ saySounds();
 
 into = devPane('frame');
 
-// Which run this is. Read-only on purpose: a seed is a fact about a whole run
-// and not a setting -- typing a new one into the yard already standing would
-// give a game that is half one run and half another (see `seedGame` in
-// hooks.js). It is here because the number is otherwise invisible, and it is
-// worth being able to say which yard you were looking at when something went
-// wrong in it. A new game draws a new one; a reload comes back to this one.
+// The seed. Read-only: typing a new one into a yard already standing would
+// give a game that is half one run and half another (`seedGame` in hooks.js).
 line('this run', box => {
   const out = document.createElement('b');
   out.dataset.seed = '1';
   box.appendChild(out);
 });
 
-// What the yard is actually running at, on the machine it is actually running
-// on. This exists because the question cannot be answered anywhere else: the
-// headless shell the checks run in has no graphics card, so every frame it
-// draws is rasterised by the processor and the number it reports is a floor
-// rather than a measurement. Sixty here and twenty-six there is the same game.
-//
-// A rolling second of real frames, plus the two numbers that explain it: how
-// many device pixels the page is painting, and how many specks are in the sky.
-// Frame rate in this game tracks the first of those almost exactly -- it is
-// filling pixels, not thinking -- so a slow window is nearly always a big one.
+// The frame rate on the machine it is actually running on: the headless shell
+// has no graphics card, so its number is a floor rather than a measurement.
+// Shown with the device pixels painted and the specks in the sky, because the
+// rate tracks the first almost exactly (filling pixels, not thinking).
 const meter = { at: performance.now(), n: 0, fps: 0 };
 function frameSeen() {
   meter.n++;
@@ -330,23 +279,16 @@ line('running at', box => {
   box.appendChild(out);
 });
 
-// And where the frame went. Three numbers and a worst, because a rate on its own
-// says a frame was slow and never says which part of it was: the yard thinking,
-// the yard being drawn, or the page being written. The worst is the last five
-// seconds, so it is a hitch you can still remember happening.
+// Where the frame went; the worst is the last five seconds.
 line('spent on', box => {
   const out = document.createElement('span');
   out.dataset.beat = '1';
   box.appendChild(out);
 });
 
-// What is doing the drawing. Asked once, because it cannot change while the page
-// is open, and shown here because it is the first thing worth knowing when the
-// frame rate is wrong: this game is fill-rate bound, so a browser quietly
-// rendering it on the processor -- hardware acceleration switched off, a driver
-// on a blocklist, a remote desktop -- is slow at any size, and nothing in the
-// yard is the reason. Measured on a card, every scene the dev panel can build
-// runs at over a hundred and fifty frames a second at three million pixels.
+// What is doing the drawing: the first thing to know when the frame rate is
+// wrong, because a browser rendering on the processor is slow at any size and
+// nothing in the yard is the reason.
 line('drawn by', box => {
   const out = document.createElement('span');
   let name = 'no webgl at all';
@@ -356,8 +298,7 @@ line('drawn by', box => {
     if (info) name = String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL));
     else if (gl) name = String(gl.getParameter(gl.RENDERER));
   } catch { name = 'no webgl at all'; }
-  // The names to worry about. SwiftShader and llvmpipe are Chrome drawing the
-  // page with the processor because it has decided it cannot use the card.
+  // SwiftShader and llvmpipe are Chrome drawing with the processor.
   const soft = /swiftshader|llvmpipe|software|basic render/i.test(name);
   out.textContent = soft ? `${name}  -- ON THE PROCESSOR, not the card` : name;
   box.appendChild(out);
@@ -380,9 +321,8 @@ setInterval(refresh, 250);
 refresh();
 
 addEventListener('keydown', e => {
-  // The key, not the character on it: backtick and tilde are the same key with
-  // and without shift, and a panel that opened on one and not the other is a
-  // panel that does not open when you hold shift by accident.
+  // The key, not the character: backtick and tilde are the same key with and
+  // without shift.
   if (e.key !== '`' && e.key !== '~' && e.code !== 'Backquote') return;
   el.hidden = !el.hidden;
   localStorage.setItem(KEY, el.hidden ? '0' : '1');

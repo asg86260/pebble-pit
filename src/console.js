@@ -1,14 +1,8 @@
 // The handles, hung on `window` where the checks and the dev panel look for
-// them -- and nowhere near a build.
-//
-// main.js reaches for this behind `import.meta.env.DEV`, the same gate the dev
-// panel is behind, so a production build drops this file and everything it
-// imports: the hooks, the yard's own account of itself, and the browser suite.
-// None of it is code a player has any use for, and it was most of what they
-// were being asked to download.
-//
-// The names are `__` names because they are not an interface. They are a way in
-// for a check and for the panel, and the game itself never calls one.
+// them. main.js reaches for this behind `import.meta.env.DEV`, so a production
+// build drops this file and everything it imports: the hooks, the report and
+// the browser suite. The `__` names are not an interface; the game itself
+// never calls one.
 
 import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
@@ -21,41 +15,24 @@ import { siteBox } from './works.js';
 Object.assign(window, {
   ...hooks.HANDLES,
   __placeBoard: seatBoard, __boardFit: boardFit,
-  // dev: open a board without walking to the building and tapping it, for a
-  // check or a look at how a sheet lays out. Now, both ways: a hook asking a
-  // board to go is an answer, not a pointer drifting off a station, so it
-  // gets no linger -- a check that put the board away and hovered a pot found
-  // the board still up for a tenth of a second and the picker refusing to open
-  // under it.
+  // Open or close a board without walking to it. No linger either way: a check
+  // that put the board away and hovered a pot found the board still up for a
+  // tenth of a second and the picker refusing to open under it.
   __board: which => showPanel(which, true)
 });
 
-// What the checks read. The yard's own account of itself comes from report.js,
-// which both suites share; the two lines added here are facts about the page
-// rather than about the game, and there is no page in the other suite.
-// Where a site's bar hangs and what it hangs over, so a check can ask whether
-// the one is clear of the other rather than reading it off a screenshot.
+// Facts about the page rather than the game, which is why they are here and
+// not in report.js. Each reads the function that places the thing: a check
+// that copies the layout goes red the next time the layout is right.
 window.__barAt = barSpot;
 window.__siteBox = siteBox;
-// Where a station's pile-full mark hangs, from the function that puts it there.
-// A check had the spot written into it -- the station's x, seven cells under the
-// ground -- and that was true until the mark moved under the PILE, which is a
-// different x for every station and not the station's at all. The check then
-// hovered over bare ground and reported that the mark says nothing. The same
-// rule as `__barAt` above and for the same reason: a check that copies the
-// layout is a check that goes red the next time the layout is right.
 window.__pileMarkAt = pileMarkAt;
 
 window.__state = () => ({
   ...snapshot(),
   hushed: document.getElementById('panel').classList.contains('hushed'),
-  // The people, off the sheet they now live on -- the house board itself is the
-  // block and the door through to them, and a check reading the crew wants the
-  // crew. Read out of the DOM rather than off the game so that a list which
-  // never made it onto the page reads as no list at all.
-  // Off the sheet only while the sheet is out: the rows are built once and kept,
-  // so a folded-away list still has every name in it, and a check asking what
-  // the crew list says would have been told about a list nobody can see.
+  // Read out of the DOM, and only while the sheet is out: the rows are built
+  // once and kept, so a folded-away list still has every name in it.
   crewRows: [...document.querySelectorAll('#crewlist:not([hidden]) [data-key^="who"]')]
               .map(r => r.textContent),
   // and the two rows on the board itself: what you can put up, and the way in

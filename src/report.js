@@ -1,17 +1,7 @@
-// What the yard looks like from outside it: one flat object with every number a
-// check could want to read.
-//
-// It exists because a check should not have to know which module keeps which
-// fact. `stored` is the pit's, `crew` is the roster's, `rockFoot` is worked out
-// from three of them -- and a check that reached into each of those directly
-// would break every time one of them moved house.
-//
-// It is read by both suites. The browser one asks for it through
-// `window.__state()` and gets this plus the two things that are facts about the
-// page rather than about the game; the node checks import `snapshot` and read it
-// in the same process the game is running in.
-//
-// Nothing here changes anything. Every line is a reading.
+// What the yard looks like from outside it: one flat object with every number
+// a check could want to read, so a check need not know which module keeps
+// which fact. Read by both suites (`window.__state()` in the browser, the
+// import in node). Nothing here changes anything.
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
@@ -23,16 +13,15 @@ import { BOLTS, SPARKLE } from './meteor.js';
 import { callOut, raising } from './raise.js';
 import { riftCells } from './rift.js';
 
-// how much of the meteor is still up there, rind or core
+// How much of the meteor is still up there, rind or core.
 const skyLeft = kind => {
   if (!sky.cells) return 0;
   let n = 0;
   for (const v of sky.cells) if (v === kind) n++;
   return n;
 };
-// The ledgers, not the walks: verify.js checks the ledger against the cells
-// every few frames of every check, so a reading off it is the cells' answer
-// at a fortieth of the cost -- the hole alone is forty thousand cells.
+// The ledgers, not the walks: verify.js checks the ledger against the cells,
+// so a reading off it is the cells' answer at a fortieth of the cost.
 import { grainsIn, dustIn } from './grid.js';
 import { wayAt } from './route.js';
 import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX, plotSlots, farmShed, quarryShed } from './world.js';
@@ -62,13 +51,9 @@ import { TYPE } from './jobs.js';
 
 // The floor, a column at a time: how many grains are lying in each, and how
 // tall it stands (the row above the topmost grain, so an empty column is 0).
-//
-// One walk of the grid, shared by the four reports under it. Each of them
-// walked the whole floor for itself, and a snapshot took the four of them --
-// six hundred columns of ninety rows, six times over -- so a check that read
-// the yard every frame spent forty frames of sim on each reading. The reports
-// still answer alone, for anybody who asks one of them on its own; the
-// snapshot surveys once and hands the survey to each.
+// One walk of the grid, shared by the reports under it: the snapshot surveys
+// once and hands the survey to each, or a check reading the yard every frame
+// spends forty frames of sim on each reading.
 export function floorSurvey() {
   const { cols, rows, grid } = floor;
   const n = new Uint16Array(cols), h = new Uint16Array(cols);
@@ -79,9 +64,7 @@ export function floorSurvey() {
   return { n, h };
 }
 
-// Dust that got past the hole. Everything thrown at the pit is thrown from the
-// near lip, so anything lying on the ground beyond the far wall is a throw that
-// sailed over a hole it should have landed in.
+// Dust beyond the far wall: a throw that sailed over the hole.
 export function dustPastPit(survey = floorSurvey()) {
   let n = 0;
   for (let c = 0; c < floor.cols; c++) {
@@ -91,13 +74,8 @@ export function dustPastPit(survey = floorSurvey()) {
   return n;
 }
 
-// How the banks sit against the rock: nothing under the boulder itself, and the
-// first column of dust outside it only a grain or two tall, so the ground ramps
-// away from the foot of the hill instead of standing up against it.
-//
-// It used to measure from the apron, because the apron was barred ground. The
-// clearance holds dust now and the footprint is the only thing that does not,
-// so `inApron` is what is standing inside the rock -- which is nought, always.
+// How the banks sit against the rock. `inApron` is what is standing inside
+// the rock's footprint, which is nought, always.
 export function apronReport(survey = floorSurvey()) {
   let inApron = 0, tallest = 0, crest = 0;
   const near = rockLeft(), far = rockLeft() + S.gw * P;
@@ -112,13 +90,8 @@ export function apronReport(survey = floorSurvey()) {
   return { inApron, tallest, crest };
 }
 
-// Dust lying across the mouth of the cut, which is a number that should always
-// be nought: a grain over an opening is a grain lying on nothing.
-//
-// It used to count everything off the left-hand end of the yard instead, back
-// when that ground was barred and anything out there was dust that had gone
-// somewhere nobody could reach. That ground is ordinary ground now, so counting
-// it says nothing -- and the mouth it was named for was never being looked at.
+// Dust lying across the mouth of the cut, which should always be nought: a
+// grain over an opening is a grain lying on nothing.
 export function dustAtQuarry(survey = floorSurvey()) {
   if (!S.quarryOpen) return 0;
   let n = 0;
@@ -130,10 +103,8 @@ export function dustAtQuarry(survey = floorSurvey()) {
   return n;
 }
 
-// How the ground either side of the hill reads: what is lying behind it, and
-// what is standing under it. The second is the invariant -- nothing may ever be
-// under the rock -- and the first is a measure of how much of the yard's dust
-// has ended up on the far side of the boulder from the crew.
+// What is lying behind the hill and what is standing under it; nothing may
+// ever be under the rock.
 export function strandedDust(survey = floorSurvey()) {
   let left = 0, under = 0;
   const l = rockLeft(), r = l + S.gw * P;
@@ -145,43 +116,30 @@ export function strandedDust(survey = floorSurvey()) {
   return { left, under };
 }
 
-// One machine's account of itself: whether it has been bought, whether it is
-// running, and the hands, kit and rate behind it. `machine()` returns nothing
-// for a machine that is not in the yard yet, so the whole thing is nothing.
-//
-// It reads as a field of the snapshot below, and it was one -- a five-hundred
-// character line of nested arrows. It is only up here to be readable.
+// One machine's account of itself; nothing for a machine not in the yard yet.
 const machineReport = m => (r => r && ({
   bought: !!r.bought, driven: !!r.driven,
   working: !!r.working, workedAt: r.workedAt | 0,
   job: m.job, kitFull: kitFull(m.job), kit: hats(m.job),
-  // Whether it is running is not a field: it is `manned`, which is whether the
-  // station has anybody at it, which is the whole of the rule now.
+  // Whether it is running is whether the station has anybody at it.
   manned: (S[m.job] | 0) > 0,
   hands: handsOf(m.job), rate: +machineRate(m.job).toFixed(2),
   cap: (c => c === Infinity ? null : c)(capOf(m.job))
 }))(machine(m.key));
 
-// Every number the yard has to say about itself, in one object.
-//
-// The floor is walked once (`floorSurvey`) and every report that reads it is
-// handed the survey; the air is reported once too. They were called once per
-// field -- `apronReport()` four times over, and each call every cell of a
-// six-hundred-column ground -- so a snapshot cost forty frames of sim, and a
-// check reading the yard on every frame of a thirty-second run at three frame
-// rates spent eighty seconds reading and a fifth of one running.
+// Every number the yard has to say about itself, in one object. The floor is
+// walked once and every report that reads it is handed the survey; the air is
+// reported once too.
 export const snapshot = () => {
   const survey = floorSurvey();
   return snapshotOf(survey, apronReport(survey), strandedDust(survey), airReport());
 };
 const snapshotOf = (survey, apron, stranded, air) => ({
-  // Which run this is. Every wobble in the yard was worked out from this number
-  // (see rng.js), so a check that fails and prints its snapshot has named the
-  // run that failed rather than describing a yard nobody can build again.
+  // Which run this is (rng.js): a failing check that prints its snapshot has
+  // named a run that can be built again.
   seed: seed(),
-  // And the seed the *run* was started from, which is the same number in a
-  // seeded check and is the one a player's yard can be named by: it is written
-  // down with the save and comes back with it. See `runSeed` in state.js.
+  // The seed the run was started from, saved with the yard (`runSeed` in
+  // state.js).
   runSeed: S.runSeed,
 
   // The settlement: the blocks put up, and every row that has been paid for.
@@ -194,8 +152,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   H: S.H,
   cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4),
 
-  // The dust banked around the rock: what is in the apron, how high the bank
-  // stands, and what has ended up somewhere nobody can shovel it.
+  // The dust banked around the rock.
   apronDust: apron.inApron,
   apronClear: apron.inApron === 0,
   heapAtRock: apron.tallest,
@@ -219,9 +176,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()),
   dancing: clockNow() < S.danceUntil,
   waves: S.shocks.filter(s => s.ms).length,     // rings in the air that are not a crit's: a shield's fanfare
-  // How many bodies are actually in the dance -- holding a mark. `dancing` is
-  // the yard's mood; this is who has joined in, and a fall where it stays at
-  // nought is a crew grinding at the zone's wall instead of celebrating.
+  // Who has joined in; `dancing` is the yard's mood.
   jigging: S.workers.filter(w => w.jigAt != null).length,
 
   // The view: how far in, and how much of the world it covers.
@@ -229,19 +184,14 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   viewW: Math.round(S.viewW),
   viewH: Math.round(S.viewH),
 
-  // The air: the motes, the draught the cursor leaves in them, and the one wind
-  // the whole yard leans on.
+  // The air: the motes, the draught the cursor leaves in them, and the wind.
   air: AIR.length,
-  // how many motes are still carrying a draught the cursor left in them, and how
-  // far the strongest of them is being carried
   airStirred: AIR.filter(m => m.sx || m.sy).length,
   airStirTop: +Math.max(0, ...AIR.map(m => Math.hypot(m.sx || 0, m.sy || 0))).toFixed(2),
   airPos: AIR.slice(0, 60).map(m => `${Math.round(m.x)},${Math.round(m.y)}`),
-  // Which way the yard is leaning this instant, and where the motes are to a
-  // tenth of a pixel. There is one wind over the yard -- see `wind.js` -- and a check on
-  // that has to be able to see a far-band mote move: at a third of the near
-  // band's pace that is a tenth of a pixel in a frame, and rounded to whole
-  // pixels, as `airPos` is, most of the field reads as standing perfectly still.
+  // The motes to a hundredth of a pixel: a far-band mote moves a tenth of a
+  // pixel a frame, and rounded to whole pixels as `airPos` is, the field reads
+  // as standing still.
   wind: +windAt(clockNow()).toFixed(3),
   airX: AIR.slice(0, 80).map(m => +m.x.toFixed(2)),
   airUnder: air.under,
@@ -276,10 +226,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   cores: S.cores,
   shards: S.shards,
   seenShard: S.seenShard,
-  // Whether the sky's reading is showing. It was only ever handed back by the
-  // lab's own hook, because buying it at the lab was the only way to get it;
-  // the first rain sets it now, so it is a fact about the yard like the other
-  // two beside it.
   seenAir: S.seenAir,
 
   // What has been opened, and how far through the opening story the yard is.
@@ -298,8 +244,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   rescued: S.rescued,
   storyTold: S.storyTold,
 
-  // The shields: what is standing over the landing spot, how much of it is up,
-  // and whether it currently has a rock off the ground.
+  // The shields.
   shield: S.shield && { kind: S.shield.kind, x: Math.round(S.shield.x), w: S.shield.w,
                         h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
                         pieces: KINDS[S.shield.kind].pieces, caught: !!S.shield.caught,
@@ -315,14 +260,14 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   casinoBoardOpen: S.casinoBoardOpen,
   pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() },
   spinning: spinning(),
-  // the beat before the spin: the stake is still coming down out of the sky
+  // The beat before the spin: the stake is still coming down.
   pouring: pouring(),
   tableAir: S.tableAir.length,
   hand: S.hand && { won: S.hand.won, n: S.hand.n },
   potAt: Math.round(potAt().x),
   table: table.n,
-  // how many grains that pot is meant to put on the ground, which past the first
-  // band is fewer than the pot itself -- see `shownFor` in casino.js
+  // How many grains the pot puts on the ground, fewer than the pot itself past
+  // the first band (`shownFor` in casino.js).
   tableWant: tableWant(),
   paying: S.paying && S.paying.left,
   chip: chipName(),
@@ -337,7 +282,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,
   shutters: [...S.shutters].sort((a, b) => a - b),
-  // per-site now; `labDone` is kept as the lab's own reading of it
+  // Per site; `labDone` is the lab's own reading of it.
   siteDone: S.siteDone,
   labDone: S.siteDone?.lab ?? null,
 
@@ -351,18 +296,16 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   quarryBoardOpen: S.quarryBoardOpen,
   farmBoardOpen: S.farmBoardOpen,
   towerBoardOpen: S.towerBoardOpen,
-  statsBoardOpen: S.statsBoardOpen,       // Track F3 (wave5): the books over the pit
+  statsBoardOpen: S.statsBoardOpen,       // the books over the pit
   looBoardOpen: S.looBoardOpen,
   shackBoardOpen: S.shackBoardOpen,
   towerOpen: S.towerOpen,
   towerX: Math.round(tower.x),
   outhouseOpen: S.outhouseOpen,
   outhouseX: Math.round(outhouse.x),
-  // The gang's hut, and where it stands: a check about the rock's own board and
-  // about the walk having moved out to make room for it reads both from here.
   shackOpen: S.shackOpen,
   shackX: Math.round(shack.x),
-  // the noticeboard, and how much of the record is on it
+  // The noticeboard, and how much of the record is on it.
   noticesX: Math.round(S.noticeboard.x),
   noticesY: Math.round(S.noticeboard.y),
   won: (S.won || []).length,
@@ -396,28 +339,22 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   janitors: S.janitors,
   brewing: !!workOn(TYPE.WIZARD),
 
-  // What the yard is in the middle of building, site by site: the row, how much
-  // of the work is in, and how much it takes. A check that buys something past
-  // the bench has to be able to see that it *started*, and then watch it land.
+  // What each site is building at the front of its line.
   works: Object.fromEntries(SITES.map(site => [site, workAt(site)
     ? { key: workAt(site).key, done: +workAt(site).done.toFixed(2), of: workAt(site).of,
         hands: handsAt(site) }
     : null]).filter(([, w]) => w)),
-  // ...and the whole of each site's line behind that, in the order it will be
-  // built. `works` above is the front alone, which is what every check written
-  // before there was a line reads; a check about the line reads this.
+  // The whole of each site's line, in the order it will be built.
   line: Object.fromEntries(SITES.map(site => [site, worksAt(site)
     .map(w => ({ key: w.key, done: +w.done.toFixed(2), of: w.of }))]).filter(([, l]) => l.length)),
   builders: S.builders || 0,
-  // The order the yard's own buildings were bought in -- see C7 in
-  // wave-feedback3.md.
+  // The order the yard's own buildings were bought in.
   buildOrder: [...(S.buildOrder || [])],
   lent: [...(S.lent || [])],
   aloft: S.workers.filter(w => w.aloft).length,
   wizardY: S.workers.filter(w => w.type === TYPE.WIZARD).map(w => Math.round(w.y)),
-  // A wizard down on the ground for a dose, with the stirrer nearly at it:
-  // the `manabrew` scene runs to this frame, so the shot is the two of them
-  // meeting rather than a body alone on the ground.
+  // A wizard down on the ground for a dose with the stirrer nearly at it; the
+  // `manabrew` scene runs to this frame.
   doseMeeting: S.workers.some(w => w.type === TYPE.WIZARD && !w.aloft && doseComing(w) &&
     S.workers.some(s => s.type === TYPE.STIR && s.dealTo === w && Math.abs(s.x - w.x) < 240)),
 
@@ -442,12 +379,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   potKeep: S.potKeep,
   potSpent: S.potSpent,
   apothPots: S.apothPots,
-  // How many batches the place has ever finished. Three rows on this board are
-  // revealed by it -- the deeper rungs, the potency ladders and the second pot
-  // -- so a check that wants one of them has to be able to see how close the
-  // craft is to earning it. Without this the only way to reach an earned row
-  // was to set the count by hand, which proves nothing about how a player gets
-  // there.
+  // Batches ever finished; three rows on the board are revealed by it.
   brews: S.brews,
   casinoX: Math.round(casino.x),
   wheel: +S.wheel.toFixed(2),
@@ -455,7 +387,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // What is lying on the floor waiting to be found.
   finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
     [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
-  // reported by the cell they are in, not the middle of the mark drawn on it
+  // By the cell they are in, not the middle of the mark drawn on it.
   findAll: S.floorMarks.map(m =>
     `${Math.round(m.x - P / 2)},${Math.round(S.groundY - m.y - P / 2)}`),
   findCells: S.floorMarks.map(m => ({ v: m.v, x: Math.round(m.x - P / 2),
@@ -476,8 +408,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   ladder: (l => ({ x: Math.round(l.x), top: Math.round(l.top), foot: Math.round(l.foot) }))(ladder()),
   benches: benches(),
   benchLevel: S.benchLevel,
-  // The two sheds -- see C5. Only meaningful once the station they belong to is
-  // standing, the same as everything else about it.
+  // The sheds are only meaningful once their station is standing.
   quarryShed: S.quarryOpen ? quarryShed() : null,
   quarryDug: +dugShare().toFixed(3),
   quarryTotal: S.quarryTotal || 0,
@@ -501,9 +432,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   farmW: farm.w,
   farmShed: S.farmOpen ? farmShed() : null,
   plotCount: plotCount(),
-  // How wide the row is laid out, whether or not every furrow in it has been
-  // broken -- see C6 in wave-feedback3.md. `plotCount` above is the mechanical
-  // one and keeps meaning "bought"; this is what the fence actually brackets.
+  // What the fence brackets, whether or not every furrow has been broken;
+  // `plotCount` means "bought".
   plotSlots: plotSlots(),
   plotLevel: S.plotLevel,
   plots: S.plots.map(b => +b.toFixed(2)),
@@ -522,39 +452,34 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   seenBench: S.seenBench,
   seenSects: [...S.seenSects],
   benchMark: benchMark(),
-  // The call to build the bench: whether it is standing there to be pressed,
-  // and whether the bench is going up. Both derived (see raise.js), so this is
-  // the only place a check can read them.
+  // Both derived (raise.js), so this is the only place a check can read them.
   benchCall: callOut(),
   benchRising: raising(),
 
   // The dust in the pit, grain by grain.
   pitGrains: grainsIn(pit),
   pitDust: dustIn(pit),
-  // And the dust that is not in the pit, because it is not in this dimension.
-  // `stored` is the two of them together -- see `inHole` in pit.js.
+  // The dust through the rift; `stored` is the two together (`inHole` in
+  // pit.js).
   rift: S.rift || 0,
   riftOpen: !!S.riftOpen,
   riftLevel: S.riftLevel || 0,
-  // the arc: how much it has eaten, the disc size that derives, and whether
-  // the hole has given way into the abyss
   riftAte: S.riftAte || 0,
   riftCells: riftCells(),
   drowned: !!S.drowned,
   cine: S.cine ? S.cine.name : null,
   cineOut: !!(S.cine && S.cine.out),        // let go, and on its way out
-  // and the coins through it, which the counters do not distinguish: what you
-  // own is what is in the hole plus what is in here
+  // The coins through it: what you own is what is in the hole plus this.
   riftHeld: { ...(S.riftHeld || {}) },
-  // and how many grains are in the air on their way into it, with the first
-  // few of them, so a check can see the orbit rather than only the count
+  // Grains in the air on their way in, with the first few so a check can see
+  // the orbit.
   gulped: (S.gulped || []).length,
   gulpedAt: (S.gulped || []).slice(0, 4).map(m => ({ t: +m.t.toFixed(2), x: Math.round(m.x), y: Math.round(m.y) })),
 
-  // And the dust lying in the cut, fallen down the mouth and not yet fetched.
+  // The dust lying in the cut, not yet fetched.
   cutDust: dustIn(cut),
 
-  // And what has come down on top of the rock and not yet been thrown off it.
+  // What has come down on top of the rock and not yet been thrown off it.
   rockDust: (S.rockSand || []).reduce((n, a) => n + (a ? a.length : 0), 0),
 
   // The crew, counted, and the roster board that moves them about.
@@ -581,8 +506,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   haulPaceLevel: S.haulPaceLevel,
   haulCap: haulCap(),
 
-  // The shovelling: who has claimed which stretch of floor, and what they are
-  // carrying.
+  // The shovelling: who has claimed which stretch of floor, and what they
+  // carry.
   claims: S.workers.filter(w => w.type === TYPE.HAUL).map(w => w.claim),
   floorX: floor.x,
   pitFree: pitFree(),
@@ -591,35 +516,28 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2), commute: +commutePace().toFixed(2) },
   rockhandMs: rockhandMs(),
 
-  // The bodies themselves: where they are, what they are saying, and what is
-  // being dragged.
-  // Where the muck actually is, in columns, so a check can ask *where* a thing
-  // came down rather than only how much of it there is. The balloon's whole
-  // claim is about where.
+  // The bodies themselves.
+  // Where the muck is, in columns, so a check can ask *where* a thing came
+  // down.
   muckAt: (() => {
     const m = muckCols();
     const out = [];
     for (let c = 0; c < m.length; c++) if (m[c]) out.push([c, m[c]]);
     return out;
   })(),
-  // Anybody currently under a canopy, having stepped out of a balloon. A count
-  // and their heights, so a check can watch one actually come down.
-  // Specks a mouth has taken that are still fading where they stood. Not haze --
-  // they left the sky on the frame they were swallowed -- so this is a count of
-  // a picture, and it is here so a check can tell a fade from a pop.
+  // Specks a mouth has taken that are still fading where they stood: a count
+  // of a picture, so a check can tell a fade from a pop.
   going: GOING.length,
+  // Anybody under a canopy, with their heights.
   brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
-  // The bodies on the purifiers, which is the one station whose people are in
-  // two quite different places: through a door, or several hundred pixels up in
-  // a basket. `berth` is -1 for the house and the craft's index otherwise.
+  // The purifiers are through a door or up in a basket; `berth` is -1 for the
+  // house and the craft's index otherwise.
   scrubCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
     name: w.name, x: Math.round(w.x), y: Math.round(w.y),
     berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
   })),
   workers: S.workers.length,
   workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
-  // and what each of them is up to, for a check about the yard settling rather
-  // than about where anybody is standing
   workerGoals: S.workers.map(w => `${w.type}:${w.goal || '-'}`),
   crewNames: S.workers.map(w => `${w.name}|${w.type[0]}|${Math.round((w.lived||0)/1000)}s|m${w.mined||0}|q${w.quarried||0}|g${w.farmed||0}|s${w.stored||0}`).join(' '),
   crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}|p${wayAt(w.x, w.y).key}|w${w.trained ? (w.kitOf || '?')[0] : '-'}|y${Math.round(w.y)}`),
@@ -640,10 +558,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
 
   // The yard's floor and the piles standing on it.
   floor: survey.n.reduce((a, b) => a + b, 0),
-  // The craft the scrubbing house has sold: where each one is, how far up, and
-  // whether anybody is in it. `up` is the one worth reading -- a crewed craft
-  // still climbing off the mast is not working yet, the same rule the house has
-  // always run on.
+  // The craft: `up` is the one worth reading, since a crewed craft still
+  // climbing off the mast is not working yet.
   craft: CRAFT.map((c, i) => ({
     x: Math.round(c.x), dir: c.dir, lift: +c.lift.toFixed(3),
     y: Math.round(craftY(i)), crewed: crewed(i), up: working(i)
@@ -671,9 +587,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
 
   // The casino chips in flight.
   chips: S.chips.length,
-  // What is riding the belt, and how far along. A check that wants to know the
-  // dust *travelled* rather than being thrown over the top of the band has to be
-  // able to see it on the band.
+  // What is riding the belt, and how far along.
   belt: S.belt.length,
   beltX: S.belt.slice(0, 8).map(b => Math.round(b.x)),
   chipShades: S.chips.slice(0, 8).map(c => c.s),

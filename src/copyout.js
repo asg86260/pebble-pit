@@ -1,9 +1,7 @@
-// The save, out of the browser and into your hand.
-//
-// The clipboard is not allowed on every page; when it is not, the text is
-// left where the console can reach it, and the sheet says so. One copy of
-// the fallback, shared by the settings sheet, the crashed sheet and the
-// landing page, so no two of them can answer differently.
+// The save, out of the browser and into your hand. The clipboard is not
+// allowed on every page; when it is not, the text is left where the console
+// can reach it. One copy of the fallback, shared by the settings sheet, the
+// crashed sheet and the landing page.
 export async function copyOut(raw, sayEl) {
   if (!raw) { sayEl.textContent = 'nothing saved yet'; return; }
   try {

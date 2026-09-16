@@ -1,34 +1,16 @@
-// The record: what the yard has done, and what it says about it.
+// The record: what the yard has done (DESIGN.md, "The noticeboard, and the
+// record on it").
 //
-// The yard has counted its own rocks, pebbles and bodies since the first frame
-// and never said any of it back. This is the forty-nine things it now says. See
-// DESIGN.md, "The noticeboard, and the record on it", which is the approved
-// catalog and where every one of these names was argued over.
-//
-// **Recognition, and nothing else.** No notice pays out, unlocks a row or makes
-// anything faster. It is the same bargain records.js strikes with the crew's own
-// histories: no number here feeds a rate. That is the one rule this file must
-// never break -- a record that pays is a quest log.
-//
-// A notice is earned one of three ways, and which one is a fact about the thing
-// being recognized rather than a style:
+// Recognition and nothing else: no notice pays out, unlocks a row or makes
+// anything faster. A notice is earned one of three ways:
 //
 //   a standing fact   `when` is a predicate over S, asked twice a second.
-//                     Thirty-one of the forty-nine. Nothing is remembered for these
-//                     because the yard already remembers it.
-//   an event hook     no `when`. Something that happens calls `earn(key)` where
-//                     it happens -- a hand settling, a rock coming off. The
-//                     notice list is itself the record, so there is nothing
-//                     further to keep.
-//   a witness         a per-rock flag or a stamp in `S.tally`, because the
-//                     question is about a stretch of time rather than a moment.
-//                     Three of them about the rock, cleared when a rock lands,
-//                     and one about the last hand thrown, cleared by the next.
+//   an event hook     no `when`; the moment calls `earn(key)` where it happens.
+//   a witness         a flag or stamp in `S.tally`, because the question is
+//                     about a stretch of time rather than a moment.
 //
-// The rule that keeps this file from growing a counter per notice: a witness is
-// a KEY in the one `S.tally` object, bumped at the one place the event happens.
-// It is never a new field on `S`, and there is never a second place that knows
-// about notices.
+// A witness is a key in the one `S.tally` object, bumped at the one place the
+// event happens; never a new field on `S`.
 
 import {
   NOTICE_TICK_S, NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE,
@@ -41,13 +23,9 @@ import { now } from './clock.js';
 import { JOB } from './jobs.js';
 
 // --- the catalog ---------------------------------------------------------------
-// The names and notes are catalog.js's -- data a page with no yard can read
-// (the landing page's record). What is here is how each is earned: a
-// predicate by key, joined to the catalog below. The four feats, the two
-// casino notices and six of the seven things done by hand carry no `when`:
-// they are moments, and the moment calls `earn` where it happens. `every job
-// staffed` is the one feat that is simply true or not true at any instant, so
-// it is a predicate, and so is a rain: the yard counts its rains already.
+// The names and notes are catalog.js's; here is how each is earned, a
+// predicate by key. A notice with no `when` is a moment, earned where it
+// happens.
 
 // The ladders' thresholds, from the same tables the catalog names them from.
 const ladder = (prefix, list, fact) =>
@@ -65,17 +43,11 @@ const allBuilt = () =>
   S.quarryOpen && S.farmOpen && S.apothecaryOpen && S.casinoOpen &&
   S.shackOpen && S.outhouseOpen && S.towerOpen && S.scrubOpen;
 
-// A body on every post there is, read off the JOB word list rather than off a
-// list written out here -- so a job added tomorrow is counted without this
-// being touched.
-//
-// It is `jobs.js` (the words) and NOT `crew/jobs.js` (the registry), and that
-// is not a preference. The registry reaches rockhand.js, which reaches
-// rock.js, which now reaches this file: a ring. Under that ring the quarry
-// came back from a reload with nobody at the face -- a failure a long way
-// from anything to do with notices, and one that would have been a puzzle to
-// anybody who found it later. The words module imports nothing at all, so it
-// can be read from anywhere.
+// A body on every post, read off the JOB word list so a new job is counted
+// without this being touched. It must be `jobs.js` (the words) and not
+// `crew/jobs.js` (the registry): the registry reaches rock.js, which reaches
+// this file, and under that ring the quarry came back from a reload with
+// nobody at the face.
 const everyJobStaffed = () =>
   Object.values(JOB).every(j => (S[j] | 0) > 0);
 
@@ -92,8 +64,7 @@ const WHEN = {
   firstspore: () => S.seenSpore,
   firstspark: () => S.seenSpark,
   // Nine tenths full, not full: the first grain the hole cannot take is the
-  // tear, so 'full' and 'torn' landed on the same frame with two notes for one
-  // act (critics 2026-09-10, C15). This one lands as the hole is about to.
+  // tear, so 'full' and 'torn' would land on the same frame.
   holefull: () => S.seenFullPit || pit.n >= pitCapacity() * 0.9,
   rifttorn: () => S.riftOpen,
   drowned: () => S.drowned,
@@ -125,10 +96,8 @@ export const hasNotice = key => S.won.includes(key);
 export const noticeCount = () => S.won.length;
 export const noticeTotal = () => NOTICES.length;
 
-// Notices earned but not yet looked at. This is what puts the bobbing tick over
-// the board, and it is a subtraction rather than a second list: the list of what
-// you have is already saved, and a count of how much of it you have read is one
-// number that cannot fall out of step with it.
+// Notices earned but not yet looked at, which puts the tick over the board. A
+// subtraction rather than a second list, so it cannot fall out of step.
 export const unreadNotices = () => Math.max(0, S.won.length - S.wonSeen);
 
 // The board has been opened: everything on it now counts as read.
@@ -138,17 +107,14 @@ export function markNoticesRead() {
   S.dirty = true;
 }
 
-// Earn one. `quiet` is the veteran save's pass -- see `catchUpNotices` -- and is
-// the difference between a record being written and a record being announced.
+// `quiet` writes the record without announcing it (`catchUpNotices`).
 export function earn(key, quiet = false) {
   if (!BY_KEY.has(key) || S.won.includes(key)) return false;
-  // A fresh array rather than a push: `won` is a saved field, and the save
-  // notices a new array where it can miss a mutation in place -- the same
-  // reasoning as `seenRows` in shop.js.
+  // A fresh array rather than a push: the save notices a new array where it
+  // can miss a mutation in place.
   S.won = [...S.won, key];
-  // In order, not on the clock: `now()` starts again with every page, so a
-  // notice earned ten minutes into the second sitting sorted under one earned
-  // two hours into the first (critics 2026-09-10, C14). A count only goes up.
+  // A sequence, not the clock: `now()` starts again with every page, so a
+  // notice earned in the second sitting would sort under one from the first.
   S.wonSeq = (S.wonSeq || 0) + 1;
   S.wonAt = { ...S.wonAt, [key]: S.wonSeq };
   if (quiet) { S.wonSeen = S.won.length; hushNotices(); }
@@ -156,21 +122,15 @@ export function earn(key, quiet = false) {
   return true;
 }
 
-// Nothing earned so far is announced. The toast (toast.js) says every notice
-// whose place in the order is past `wonShown`, so moving that up to the end of
-// the record is how a save coming back, a yard starting over and the veteran
-// catch-up all stay quiet: what was earned before this sitting is on the
-// sheet, not in the air. Every one of those calls this rather than writing
-// the field, so there is one line that knows what silence is.
+// Nothing earned so far is announced: the toast says every notice past
+// `wonShown`. The one line that knows what silence is.
 export function hushNotices() { S.wonShown = S.wonSeq | 0; }
 
 // --- the sampler ----------------------------------------------------------------
 
 let asked = 0;
 
-// Asked twice a second, not sixty times. Only rules with a `when` are asked, and
-// only ones not already earned -- so a yard with everything on the board does no
-// work at all here.
+// Asked twice a second, not sixty times.
 export function stepNotices(t) {
   if (t - asked < NOTICE_TICK_S * 1000) return;
   asked = t;
@@ -183,15 +143,10 @@ export function stepNotices(t) {
 // A yard that has been re-made, or a suite starting a fresh game.
 export function resetNotices() { asked = 0; hushNotices(); }
 
-// The first load of a save written before any of this existed. Forty rocks in,
-// thirty rules are true at once, and thirty ticks is a feature introducing
-// itself by shouting. So they are all earned SILENTLY and marked already read:
-// you open the board and find your record already written, which is what it
-// should say -- these are things you did, and the board is late, not you.
-//
-// The event-hook notices are deliberately NOT caught up. Nothing in the save
-// says whether a rock was ever cleared with an empty payroll, and a record that
-// guesses is worse than a record that starts from here.
+// The first load of a save written before notices existed: every standing
+// fact is earned silently and marked read, rather than thirty ticks at once.
+// The event-hook notices are not caught up; nothing in the save says whether
+// they happened, and a record that guesses is worse than one that starts here.
 export function catchUpNotices() {
   if (S.noticeMigrated) return;
   S.noticeMigrated = true;
@@ -200,12 +155,11 @@ export function catchUpNotices() {
 }
 
 // --- the witnesses ---------------------------------------------------------------
-// Three flags and a stamp, all about one event, all cleared when a rock lands.
-// This is the whole of what this feature remembers that the yard did not already
-// know, and it is one object.
+// Three flags and a stamp about the rock, cleared when a rock lands; one about
+// the last hand thrown, cleared by the next.
 
-// Somebody took a bite out of the rock. `who` is 'you', 'crew' or 'machine' --
-// see `knockOff` in rock.js, which is the one place a bite happens.
+// `who` is 'you', 'crew' or 'machine'; `knockOff` in rock.js is the one place
+// a bite happens.
 export function noteBite(who) {
   const t = S.tally;
   if (who === 'crew') { if (!t.rockCrew) { t.rockCrew = true; S.dirty = true; } }
@@ -213,38 +167,31 @@ export function noteBite(who) {
   else if (!t.rockYou) { t.rockYou = true; S.dirty = true; }
 }
 
-// A rock has come off, and this is the only place that asks what the last one
-// was like. Everything the witnesses were keeping is spent here and cleared.
+// A rock has come off: the rock's witnesses are spent here and cleared.
 export function noteRockCleared() {
   const t = S.tally;
 
   if (S.crew === 0) earn('nobodyhired');
-  // "your own hand alone" -- nothing but you touched it. A machine is not a
-  // worker, but it is not your hand either, so it disqualifies too.
+  // A machine is not a worker, but it is not your hand either.
   if (t.rockYou && !t.rockCrew && !t.rockMachine) earn('ownhand');
-  // ...and the other way round: you never swung at it once.
   if (!t.rockYou && (t.rockCrew || t.rockMachine)) earn('nevertouched');
   if (t.rockAt && now() - t.rockAt < NOTICE_FAST_ROCK_S * 1000) earn('underminute');
 
-  // The hand's witness is the one thing not spent here: a throw is not about
-  // the rock, and a full hand caught across the moment a rock comes off is
-  // still a full hand caught.
+  // The hand's witness is kept: a full hand caught across the moment a rock
+  // comes off is still a full hand caught.
   S.tally = { rockAt: now(), throwNo: t.throwNo | 0, throwOf: t.throwOf | 0, caught: t.caught | 0 };
   S.dirty = true;
 }
 
-// A hand has settled at the table. Big either way is worth a notice; the size is
-// read where the hand settles, so nothing is carried between hands.
+// A hand has settled at the table; big either way is worth a notice.
 export function noteHand(won, n, big) {
   if (n < big) return;
   earn(won ? 'tablebeaten' : 'tableruin');
 }
 
-// A full hand has been thrown. Every grain of it is stamped with this throw's
-// number so a catch can tell which throw it came out of: the notice is about
-// catching *all of one throw*, and a cursor that caught the tail of one and
-// the head of the next has done something else. Only a full hand is stamped;
-// a smaller throw is not the feat and leaves nothing to count.
+// Every grain of a full hand is stamped with this throw's number so a catch
+// can tell which throw it came out of: the notice is about catching all of
+// one throw. A smaller throw is not the feat and leaves nothing to count.
 export function noteThrow(chips, full) {
   const t = S.tally;
   t.throwNo = (t.throwNo | 0) + 1;
@@ -255,9 +202,8 @@ export function noteThrow(chips, full) {
   S.dirty = true;
 }
 
-// A grain has been caught out of the air. Only the current throw's grains
-// count; one that has been lying about since an earlier hand, or that came off
-// a bird, carries no stamp and is just dust in the hand.
+// Only the current throw's grains count; one from an earlier hand or off a
+// bird carries no stamp.
 export function noteCatch(ch) {
   const t = S.tally;
   if (!t.throwOf || ch.thrown !== t.throwNo) return;
