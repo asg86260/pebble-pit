@@ -1,7 +1,7 @@
-// The casino on the page: the bench row builds it, a heap is dragged to the
-// hopper with the right button on a desk and with a finger on a phone -- a
-// finger on a heap never scrolls the yard -- and a tap on each lever pulls it
-// and the tooltip names it.
+// The casino on the page: the bench row builds it, grains are swept off the
+// dust pile and dragged to the hopper with the left button on a desk and
+// with a finger on a phone -- a finger on the pile never scrolls the yard --
+// and a tap on each control works it and the tooltip names it.
 //
 // What the hand *does* is the node tier's (test/casino.test.mjs, handful.test.mjs);
 // this is the pointer and the page. 3 groups, in the order they have always
@@ -13,8 +13,8 @@ const phone = on => window.__coarse(on ? true : null);
 const frames = async n => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
 const tipText = () => { const t = document.getElementById('tip'); return t && !t.hidden ? t.textContent.trim() : ''; };
 
-// The casino bought through the bench and stood up, the heaps standing, the
-// view on it: a heap's spot and the rim, on screen.
+// The casino bought through the bench and stood up, the piles standing, the
+// view on it: a point on the dust pile's sand and the rim, on screen.
 async function atTheCasino() {
   newRun();
   await settle();
@@ -31,40 +31,49 @@ async function atTheCasino() {
   window.__look(s.casinoX + 100);
   await frames(2);
   const t = state();
-  const spot = window.__stakeAt('dust', 100), rim = window.__rim();
+  const spot = window.__stakeAt('dust'), rim = window.__rim();
   const sx = [(spot.x - t.camX) * t.zoom, (spot.y - t.camY) * t.zoom];
   const rx = [(rim.x - t.camX) * t.zoom, (rim.y - t.camY) * t.zoom];
   return { s: t, sx, rx };
 }
 
+// A drag from the pile to the rim in a few steps, paused before letting go
+// so it is a drop and not a throw. `move` is the pointer for the desk or the
+// finger for the phone.
+async function dragToRim(sx, rx, move) {
+  const steps = 8;
+  for (let i = 1; i <= steps; i++) {
+    move(sx[0] + (rx[0] - sx[0]) * i / steps, sx[1] + (rx[1] - sx[1]) * i / steps);
+    await sleep(16); await frames(1);
+  }
+  await sleep(150);
+}
+
 export const TESTS = [
-  ['the casino takes a heap dragged to the hopper with the right button', async () => {
+  ['the casino takes grains swept off the pile and dragged to the hopper', async () => {
     const { s, sx, rx } = await atTheCasino();
     const rows = window.__rows().filter(r => ['chip', 'stakedust', 'letgo', 'bank', 'ride'].includes(r.key));
     const held = s.stored;
-    // the right button held on the heap, dragged to the rim, let go there
-    point('pointerdown', sx[0], sx[1], 2, 2);
+    const worth = s.stakes[0].worth;
+    // the left button held on the pile, dragged to the rim, let go there
+    point('pointerdown', sx[0], sx[1]);
     await frames(1);
     const lifted = state();
-    const steps = 8;
-    for (let i = 1; i <= steps; i++) {
-      point('pointermove', sx[0] + (rx[0] - sx[0]) * i / steps, sx[1] + (rx[1] - sx[1]) * i / steps, 2, 2);
-      await frames(1);
-    }
-    const over = state();
-    point('pointerup', rx[0], rx[1], 0, 2);
+    await dragToRim(sx, rx, (x, y) => point('pointermove', x, y));
+    point('pointerup', rx[0], rx[1]);
     await frames(1);
+    runUntil(() => state().chips === 0 && !state().inHand, 5);
     const dropped = state();
     runUntil(() => !state().pouring, 30);
     const stood = state();
-    // and the gate lever, tapped, plays the hand
-    const gate = window.__leverAt('casino-gate');
-    const gx = [(gate.x - stood.camX) * stood.zoom, (gate.y - P * 2 - stood.camY) * stood.zoom];
-    point('pointermove', gx[0], gx[1]);
+    // and the arm, clicked, plays the hand
+    const arm = window.__leverAt('casino-gate');
+    const gx = [(arm.x - stood.camX) * stood.zoom, (arm.y - P * 4 - stood.camY) * stood.zoom];
+    point('pointermove', gx[0], gx[1], 0);
     await frames(1);
     const named = tipText();
     point('pointerdown', gx[0], gx[1]);
-    point('pointerup', gx[0], gx[1], 0);
+    point('pointerup', gx[0], gx[1]);
     await frames(1);
     const pulled = state();
     runUntil(() => !state().letting && !state().pouring, 40);
@@ -74,39 +83,35 @@ export const TESTS = [
     return [
       ok(s.casinoOpen, 'the bench row builds it', `casino at ${s.casinoX}`),
       ok(rows.length === 0, 'and it has no rows on any board', rows.map(r => r.key).join(',')),
-      ok(lifted.inHand && lifted.inHand.kind === 'stake' && lifted.inHand.n === 100,
-         'the right button held on a heap lifts it', JSON.stringify(lifted.inHand)),
-      ok(over.inHand && Math.abs(over.inHand.x - window.__rim().x) < 2,
-         'and it goes where the pointer goes', over.inHand && `${over.inHand.x}`),
-      ok(!dropped.inHand && dropped.pot && dropped.pot.on === 100 && dropped.stored === held - 100,
-         'let go over the rim it is the pot, out of the purse', JSON.stringify(dropped.pot)),
+      ok(lifted.held > 0 && lifted.inHand === lifted.held,
+         'the left button held on the pile sweeps grains of it on to the cursor', `${lifted.held} held, ${lifted.inHand} of the pile`),
+      ok(!dropped.inHand && dropped.pot && dropped.pot.on === worth * lifted.held && dropped.stored === held - worth * lifted.held,
+         'let go over the rim they are the pot, out of the purse', JSON.stringify(dropped.pot)),
       ok(stood.table > 0 && !stood.pouring, 'and it stands in the funnel', `${stood.table}`),
-      ok(/gate/.test(named), 'hovering the gate lever names it', named),
+      ok(/arm/.test(named), 'hovering the arm names it', named),
       ok(pulled.letting, 'and a click on it opens the floor'),
       ok(paid.pot && paid.pot.where === 'tray', 'so the hand plays out to the tray')
     ];
   }],
 
-  ['a finger on a heap lifts it and never scrolls the yard', async () => {
+  ['a finger on the pile sweeps it and never scrolls the yard', async () => {
     const { s, sx, rx } = await atTheCasino();
+    const worth = s.stakes[0].worth;
     phone(true);
     await frames(1);
     const sc = document.getElementById('scroller');
     const camX = state().camX, scrollX = sc.scrollLeft;
-    // the platform asks at touchstart: a finger on a heap is the game's
+    // the platform asks at touchstart: a finger on the pile is the game's
     const said = touch('touchstart', canvas(), sx[0], sx[1]);
     finger('pointerdown', 1, sx[0], sx[1]);
     await frames(1);
     const lifted = state();
-    const steps = 8;
-    for (let i = 1; i <= steps; i++) {
-      finger('pointermove', 1, sx[0] + (rx[0] - sx[0]) * i / steps, sx[1] + (rx[1] - sx[1]) * i / steps);
-      await sleep(16); await frames(1);
-    }
-    const mid = state();
+    await dragToRim(sx, rx, (x, y) => finger('pointermove', 1, x, y));
+    const mid = state(), midScroll = sc.scrollLeft;
     finger('pointerup', 1, rx[0], rx[1]);
     touch('touchend', canvas(), rx[0], rx[1]);
     await frames(1);
+    runUntil(() => state().chips === 0 && !state().inHand, 5);
     const dropped = state();
     // and a finger on the sky beside it is left to the platform
     const skySaid = touch('touchstart', canvas(), sx[0], sx[1] - 200);
@@ -115,22 +120,28 @@ export const TESTS = [
     newRun();
     await sleep(300);
     return [
-      ok(said, 'the touch on a heap is claimed at touchstart, so the platform never scrolls it'),
-      ok(lifted.inHand && lifted.inHand.kind === 'stake', 'and the finger has the heap', JSON.stringify(lifted.inHand)),
-      ok(mid.camX === camX && sc.scrollLeft === scrollX, 'the yard did not move under the drag',
-         `${mid.camX} vs ${camX}, ${sc.scrollLeft} vs ${scrollX}`),
-      ok(!dropped.inHand && dropped.pot && dropped.pot.on === 100, 'and lifting the finger over the rim stakes it',
+      ok(said, 'the touch on the pile is claimed at touchstart, so the platform never scrolls it'),
+      ok(lifted.held > 0 && lifted.inHand === lifted.held, 'and the finger has grains of the pile', `${lifted.held} held`),
+      ok(mid.camX === camX && midScroll === scrollX, 'the yard did not move under the drag',
+         `${mid.camX} vs ${camX}, ${midScroll} vs ${scrollX}`),
+      ok(!dropped.inHand && dropped.pot && dropped.pot.on === worth * lifted.held, 'and lifting the finger over the rim stakes them',
          JSON.stringify(dropped.pot)),
       ok(!skySaid, 'while a finger on the sky is still the platform\'s to scroll')
     ];
   }],
 
-  ['a tap on each lever pulls it and the tooltip names it', async () => {
+  ['a tap on each control works it and the tooltip names it', async () => {
     const { s } = await atTheCasino();
     phone(true);
-    window.__casinoStake(100);
+    window.__casinoStake(5);
     await frames(1);
-    const at = key => { const l = window.__leverAt(key); const t = state(); return [(l.x - t.camX) * t.zoom, (l.y - P * 2 - t.camY) * t.zoom]; };
+    // a point on each: up the arm's stem, on the button's cap, on the crank's hub
+    const at = key => {
+      const l = window.__leverAt(key); const t = state();
+      const dy = key === 'casino-gate' ? -P * 4 : key === 'casino-chute' ? -P * 3 : 0;
+      const dx = key === 'casino-chute' ? -P * 3 : 0;
+      return [(l.x + dx - t.camX) * t.zoom, (l.y + dy - t.camY) * t.zoom];
+    };
     const tapLever = async key => {
       const [x, y] = at(key);
       finger('pointerdown', 1, x, y);
@@ -138,7 +149,7 @@ export const TESTS = [
       await frames(1);
     };
     await tapLever('casino-gate');
-    const gate = state();
+    const arm = state();
     runUntil(() => !state().letting && !state().pouring, 40);
     await tapLever('casino-crank');
     const crank = state();
@@ -146,27 +157,26 @@ export const TESTS = [
     await tapLever('casino-gate');
     runUntil(() => !state().letting && !state().pouring, 40);
     await tapLever('casino-chute');
-    const chute = state();
+    const button = state();
     runUntil(() => !state().paying, 40);
     phone(false);
     // and on a desk, each is named under the pointer
     const names = [];
     for (const key of ['casino-gate', 'casino-chute', 'casino-crank']) {
       const [x, y] = at(key);
-      point('pointermove', x, y);
+      point('pointermove', x, y, 0);
       await frames(1);
       names.push(tipText());
     }
     newRun();
     await sleep(300);
     return [
-      ok(gate.letting, 'a tap on the gate lever opens the floor'),
+      ok(arm.letting, 'a tap on the arm opens the floor'),
       ok(crank.hoisting || (crank.pot && crank.pot.where === 'hopper'), 'a tap on the crank hoists the tray',
          JSON.stringify(crank.pot)),
-      ok(chute.paying != null, 'and a tap on the chute tips the tray out', `${chute.paying}`),
-      ok(/gate/.test(names[0]) && /chute/.test(names[1]) && /crank/.test(names[2]),
+      ok(button.paying != null, 'and a tap on the button tips the tray out', `${button.paying}`),
+      ok(names[0] === 'the arm' && names[1] === 'bank it' && names[2] === 'the crank',
          'each is named under the pointer', names.join(' | '))
     ];
   }]
 ];
-

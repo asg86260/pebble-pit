@@ -2,18 +2,21 @@
 
 ## The stake is a heap you carry, and the casino has no board -- BUILT (2026-09-16)
 
-The casino's board is gone. Premade heaps of each coin (10, 100, 1,000, all
-in) stand on the ground to the right of the building, present only when the
-purse covers them; the body's lift gesture carries one to the hopper, where
-it pours in and adds to the stake; another coin is refused at the rim; the
-hopper's pot can be lifted back out. Three levers on the building: the gate,
-the bank chute, the hoist crank. Banking tips the tray out on to a casino
-strip in `S.piles` and the haulers carry it to the hole. The handful is the
-third version: the pile at the band drains whole into the throat and sixteen
-pressed pebbles come out. DESIGN.md, "The stake is a heap you carry, and the
-casino has no board" (built), with "What building it changed". Left for
-later: the twelve heaps take two thousand pixels of ground; nobody has
-listened to the pebbles.
+The casino's board is gone. One pile a coin the yard has handed out stands
+on the ground to the right of the building -- the purse itself at the band
+ladder, a grain worth its share -- and staking is the ordinary sweep: grains
+dragged off a pile and let go over the hopper's rim are the stake; another
+coin slides off the rim and arcs home; grains swept out of the bowl and
+dropped go home and the purse rises. Three controls on the building: the
+arm by the funnel, the bank button on the foot by the chute, the crank by
+the tray. Banking tips the tray out on to a casino strip in `S.piles` and
+the haulers carry it to the hole. The handful is the third version: the pile
+at the band drains whole into the throat and sixteen pressed pebbles come
+out. The twelve chip-sized heaps of the first reading were built, played and
+cut the same day. DESIGN.md, "The stake is a heap you carry, and the casino
+has no board" (built), with "What building it changed". Left for later:
+nobody has listened to the pebbles; the arm snaps back up when it goes live
+again after a hand rather than rising.
 
 ## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 
