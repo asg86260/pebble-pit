@@ -523,6 +523,100 @@ would have been a rule with one exception.
 by shade. The bins' pay is written, and a heap in a ×39 bin is a heap in a
 ×39 bin.
 
+### It has to feel like a machine, or there is no point
+
+A plinko that is thirty-two dots moving down a grid is the wheel with more
+dots. The whole reason to build it is that a real one is *loud* — every peg is
+a hit, the bin is a thud, the edge bin is a siren — and this yard already has
+the grammar for all of it: hits-only audio, the knock, the chase of lights,
+the fountains. Every beat below is a named event in `sfx` and a named moment in
+the render, and none of it is optional. Where a number is written it is a knob
+in `config/casino.js`.
+
+**Before you play — the machine sells itself.** A casino nobody is at is not
+dark. The sign chases as it does now, and every so often (`CASINO_ATTRACT_S`,
+about twenty seconds) a single grain drops from the hopper, ticks its way down
+the pegs and lands in a bin, then lifts and fades — a demonstration hand with
+nothing riding on it, the way a real machine runs its attract loop. It costs
+nothing, it pays nothing, and it is the only moving thing out past the lab, so
+from the far end of the yard the building is visibly *doing* something and
+asking you to come and see. It stops the moment a chip is down.
+
+**The chip goes down — the machine wakes.** The sign's chase quickens for the
+pour (`CASINO_CHASE_LIVE_MS`, half its idle step), and the stake rains into the
+hopper grain by grain with the landing tick the hole's grains already make. The
+hopper is a walled tray and the heap stands in it, visible from across the
+yard: what you are about to risk is *sitting on the roof*.
+
+**Let it go — the floor opens.** The hopper floor is drawn; it splits from the
+middle over a quarter of a second (`CASINO_GATE_MS`), the heap sags into the
+gap, and the first grains fall. The heap does not vanish and reappear as a
+stream — the bottom of it goes first and the top settles down after, by the
+sand's own rules, so it *drains*. Grains leave a few frames apart
+(`CASINO_GRAIN_GAP_MS`, about forty) so the board carries a stream; the last
+grain leaves about a second and a half after the first.
+
+**Every peg is a hit.** A grain arriving at a peg pauses a beat
+(`CASINO_PEG_BEAT_MS`, about seventy), and on the beat: the peg flashes — one
+frame white, the grain sitting on it black — and a short hard tick sounds
+(`peg-hit`), its pitch stepping up a row at a time so the stream falling
+through ten rows *rises* toward the bins the way a plinko's clatter climbs. It
+is the rock's own hit recipe cut short; thirty-two grains over ten rows is
+three hundred and twenty ticks in a second and a half, which is exactly the
+sound a plinko makes, and the mixer's voice cap thins it to a clatter rather
+than a wall. The grain steps off the peg with a one-frame diagonal — down and
+across in the same frame — so it reads as a bounce, not a slide.
+
+**The bins take the grain with a thud.** A grain landing in a bin knocks the
+view a hair (`CASINO_BIN_KNOCK`, a third of the wheel's stop) and sounds the
+hole's dull landing knock, pitched by bin — low in the middle, higher toward
+the edges — so you can *hear* a grain reaching a ×5 without looking. A grain
+into a ×39 bin is its own event (`edge-hit`): the bin's dividers flash white
+for a beat, the knock is the wheel's win knock, and the sign goes to a
+one-second strobe on the spot, before the hand has settled. A ×39 is one
+grain in a thousand and the machine should shout the second it happens, not
+four seconds later when the sum comes in.
+
+**The near miss is drawn.** A grain that reaches the last peg row at the
+outermost peg and falls *inward* — one coin from the ×39 — gets the edge-bin
+dividers a single flash without the sound, the way a slot shows the seven one
+notch off the line. It costs a line of code and it is the thing that makes the
+next drop happen.
+
+**The count comes in as sand, not as a number.** When the last grain is still
+there is a held beat (`CASINO_SETTLE_HOLD_MS`, four hundred) with the board
+full and quiet, and then the bins pay from the middle outward, a bin a beat
+(`CASINO_PAY_BEAT_MS`, a hundred and fifty), each grain running down its
+chute into the tray with a soft tick — so the ×½ bins go first and the tray
+fills slowly, and the good bins go last and the tray *jumps* when they land.
+The hand's multiple in the box over the building counts up as the bins pay
+rather than appearing settled, so the box and the tray tell the same story at
+the same moment. The order is the drama: you already know what is in the edge
+bins; the machine makes you wait for them.
+
+**A win is the burst it already is, scaled to the hand.** Pay over one gets
+the strobe and the fountains — one fountain at up to ×1.5, two to ×3, three
+above that (`CASINO_BURST_AT`, a written ladder), and a hand with a ×39 in it
+gets the three plus a second strobe. Pay under one is the dud: the sign goes
+dark and relights bulb by bulb. Dead even is quiet. The noticeboard keeps its
+two fifty-thousand lines.
+
+**Bank it is a procession; drop again is a hoist.** Banking arcs the tray to
+the hole grain by grain as it does now, the counter moving as each lands.
+*Drop again* is the picture the sand board never had: the tray's grains lift
+in a rising arc up the face of the building, past the pegs, and drop into the
+hopper, sounding the pour's tick in reverse — rising pitch — and the sign's
+chase quickens again as they land. It takes as long as a pour takes. A player
+who watches their winnings climb back up to the roof knows exactly what they
+are about to risk, which is the whole of the bet.
+
+**Motion honors the motion setting.** Everything here that flashes, strobes or
+knocks goes through the same `motion` gate the wheel's fanfare does; with
+motion off the pegs still click and the bins still fill, and nothing flashes.
+
+**The board hushes for the hand,** as it does now, and comes back when the
+tray is standing.
+
 ### The calls this makes
 
 - **The wheel goes, and nothing stands beside the board.** Two games in one
