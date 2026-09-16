@@ -10123,3 +10123,287 @@ nothing new goes on `S`.
   bills and the five-key fold), `test/pot-prefer.test.mjs` and the browser's
   "a pot says who it is for" for the list. `test/wave7-brew.test.mjs` and
   `test/mana-brew.test.mjs` went with the recipes they were about.
+
+## Playing it on a phone (design, not built)
+
+Four asks from playing the yard on a phone (the owner, 2026-09-15), taken
+together because they share one premise: **on a phone the window is
+narrower than the yard is tall, the pointer is a thumb, and there is no
+hover.** Every control in the game was written against a desk, where a
+board stands beside its station, a row tells you what it is by being crossed,
+and the view is a wheel away from anywhere. The rules below are the same
+game under a thumb; nothing in the yard changes, only how you get at it.
+The cutscene framing at a phone's width is a fix, not a design, and is in
+CHANGELOG.md (`test/phone-view.test.mjs`).
+
+**What decides "a phone".** Not the width, and not the user agent: the
+pointer. `matchMedia('(pointer: coarse)')` says whether the primary pointer
+is a finger, read once in `prefs.js` beside `reducedMotion()` as `coarse()`,
+and the settings sheet gets a switch that overrides it the way the motion
+switch does. Every rule below that says "on a phone" reads that one answer.
+A narrow desk window keeps its popovers and its wheel; a wide tablet gets
+the sheet and the hop, because it is the thumb that these are for.
+
+The shots the calls below were made against: `shots/phone/yard.png` (the
+yard at 390x844, the call to build the bench pinned mid-left, the counter
+bottom right), `shots/phone/bench.png` and `shots/phone/quarryboard.png`
+(a board as it stands today on a phone: a column down the left, half the
+width and the whole height, the purse along the top).
+
+### Momentum scrolling
+
+**What is wrong.** A finger drags the yard exactly as far as it moves and
+stops dead when it lifts (`fingerPan` in input.js). The yard is two windows
+wide on a desk and six on a phone; getting from the bench to the tower is
+six full-width drags, and every one of them stops like a cart hitting a
+wall. Every other thing on a phone coasts.
+
+**The rule.** A finger that lifts while moving leaves the view moving.
+The view carries a velocity, `S.camV` (world pixels a frame, `EPHEMERAL`),
+set on `pointerup` from the finger's last few moves -- the drag already
+keeps `fingerPan.x`; it keeps the last `FLICK_SAMPLE` positions with their
+times and the release velocity is the slope over them, so one slow final
+move does not kill a fast flick and one jittery one does not launch a slow
+drag. `stepCamera` in world.js walks it: `camX += camV`, then
+`camV *= PAN_FRICTION` a frame, to nought under `PAN_STOP`. It goes through
+`pan()` so the rule that closes a board whose station has scrolled out
+keeps holding, and it is stopped by the same things a drag is: a finger
+landing (`pointerdown` sets `camV = 0`, so a flick is caught by putting a
+finger down, the way every list on a phone is caught), a `lookAt` (the yard
+sending the view somewhere wins over a coast), a cutscene, and `clampCam`
+at either end of the world (the coast dies at the wall rather than pressing
+on it). Under reduced motion there is no coast: the view stops where the
+finger left it, which is what the motion switch promises about every glide.
+
+Two fingers coast too, off the middle's velocity, since two fingers is the
+way along a floor full of dust. The mouse's middle button does not: a
+mouse has a wheel, and a wheel drag that coasts is a wheel that overshoots.
+
+**The knobs** (`config/touch.js`, new -- the phone's numbers together, and
+`TAP_SLOP` and `TAP_TIME` move there from input.js, where they are the two
+magic numbers the house style forbids): `PAN_FRICTION` (~0.94 a frame, so a
+flick runs about a second), `PAN_STOP` (0.5 px a frame, under which it is
+stopped), `FLICK_MIN` (a release slower than this is a stop, not a flick),
+`FLICK_SAMPLE` (the last 80 ms of moves). Frame-rate honest the way the
+shake is: the friction is raised to `frames()`.
+
+**The calls.**
+1. *Velocity from the last moves, not the last move.* The alternative --
+   the last `pointermove`'s delta -- is one event, and on a phone the last
+   event before `pointerup` is often a stall or a sideways twitch.
+2. *Friction, not a fixed distance.* A fixed overshoot (drag plus half a
+   window) is predictable but feels the same for a nudge and a throw; a
+   flick should go further than a shove, or it is not a flick.
+3. *The coast stops on a touch.* Not on a tap through to a control: a finger
+   landing on the yard while it coasts stops it and does nothing else that
+   frame (the tap's own business runs on `pointerup`, as now), so a player
+   can catch a fast coast without swinging at whatever went by.
+
+**Files:** `input.js` (release velocity, the stop on landing), `world.js`
+(`stepCamera` carries `camV`), `state.js` (`camV` in `EPHEMERAL`),
+`config/touch.js` (new). **Check:** `test/momentum.test.mjs`, node tier --
+a drag released at speed leaves `camX` moving on the frames after and
+stopped within a second; released slowly it does not move; a `lookAt` and a
+touch each kill it; the coast never crosses `clampCam`'s edge; under reduced
+motion `camV` is never set. The pointer itself is the browser tier's
+(`selftest/touch.js`, new): two synthetic touches, a fast and a slow, and
+the view after each.
+
+### A hop between stations
+
+**What is wrong.** The yard is six phone-widths wide and the stations are
+one-of-each along it. A player who wants the farm from the tower drags
+five times past things they did not want, and a player who has not learned
+that the yard extends does not drag at all -- which is the defect "One
+finger looks about" was about, and it is still true after that fix for
+anybody who has not tried. The mid sky is empty by design (`sky0`), and it
+is the one part of a phone's screen a thumb reaches without moving the
+hand.
+
+**The rule.** Two arrows stand in the mid sky, one at each edge of the
+window (`▶` right, `◀` left), and a tap on one glides the view
+(`lookAt`) to the next standing station in that direction -- the next
+`STATIONS` entry whose `standing()` is true and whose `standRect` is past
+the view's center, sorted by x. Each arrow wears the glyph of the station
+it would take you to (`glyphFor(station)`), the way the pinned card wears
+its row's, so the button is a signpost ("the quarry is this way") and not a
+control you have to try. An arrow with nothing past it is not drawn: the
+edges of the world are the edges of the yard. The arrows are `#hop` in
+play.html, seated by a new `hop.js` at `HOP_Y` of the window's height on
+the same `translate3d` seat every other shell element uses, and refreshed
+when `S.camX`, the placed sites or the window change -- the same triggers
+`placeBoard` answers to. They are drawn on a phone only (`coarse()`); on a
+desk the wheel is the hop.
+
+Where a station's board is open, the hop closes it (through `pan()`'s
+existing rule -- the station has left the window) and arrives with none
+open: a hop is looking, not shopping, and the tap on the station opens the
+board as now.
+
+**Three shapes, and the pick.** Against `shots/phone/yard.png`:
+- *(a) Two edge arrows, glyph on each* -- one tap, no menu, the linear yard
+  read as the linear thing it is, and each arrow says there is more that
+  way. **This.** It is two buttons where the ask said one; the one thing the
+  ask wanted, a thumb's reach to the next station, is what both give.
+- *(b) One button, mid-right, opening a strip of station glyphs across the
+  sky* -- a direct jump to any station, at the cost of a second tap, a
+  second thing to draw and a strip of glyphs that reads as a toolbar in a
+  game that has no toolbar.
+- *(c) A permanent glyph rail under the purse* -- always visible, always in
+  the way of the one thing the purse is for, and the top of a phone is the
+  part a thumb does not reach.
+
+**The knobs** (`config/touch.js`): `HOP_Y` (0.42 of the window's height:
+the mid sky, above the call to build the bench and clear of the counter),
+`HOP_SIZE` (a 44-px square, the thumb's minimum), `HOP_INSET` (from the
+edge). **Files:** `hop.js` (new), `play.html` (`#hop`), `style.css` (the
+two buttons, black frame, white ground, the glyph at three cells), `main.js`
+(one `refreshHop()` in the frame beside `placeBoard`). **Check:** node tier
+`test/hop.test.mjs` -- the target from a given `camX` is the next standing
+station and never one behind or one not yet bought; at either end there is
+none; the glide is `lookAt`'s, so it obeys reduced motion. Browser tier
+(`selftest/touch.js`): the button is in the DOM only under a coarse
+pointer, stands at `HOP_Y`, and a click on it moves the view.
+
+### A tap buys
+
+**What is wrong.** A row already buys on `click` (shop.js), so on paper a
+tap buys today. In the hand it does not, for two reasons, and they pull in
+opposite directions:
+- *The hover eats the first tap.* A row does three things when the pointer
+  arrives: the tile lifts and drifts (`leanToCursor`, `:hover` in
+  shelf.css), the description comes up in the tip (`say` on `pointerenter`),
+  and the `.note` and `.cost` change tone. A phone browser that sees content
+  change on hover treats the first tap as the hover and waits for a second
+  to click (iOS's rule, and the one that makes half the web's menus need
+  two taps). So a purchase is two taps, and the first one looks like nothing.
+- *Nothing tells a tap from a scroll.* A board on a phone is taller than the
+  window (`shots/phone/bench.png`); a finger scrolling it lands on a row,
+  and a `click` fires on any press-and-release on the same element. Once
+  the hover is out of the way, that is a purchase for every scroll that
+  ends where it started.
+
+**The rule.** *Every hover rule is behind `@media (hover: hover)`*, in
+both stylesheets -- the lift, the drift, the tone changes, the pin's fade-in
+-- and `say` and `leanToCursor` are not wired under `coarse()`. A finger
+never sees a hover state, so the browser has none to wait for and the first
+tap is the tap. The description a row had on hover moves to a *long press*
+(`TAP_TIME` and longer, still within `TAP_SLOP`): the tip comes up over the
+row and the release does not buy. That is the one gesture a phone has for
+"tell me about this" and it is the one the yard already uses for nothing.
+
+*A row buys on a tap, not on a click.* The row's `click` handler becomes the
+same tap gate the yard's `pointerup` uses: `pointerdown` records the press,
+`pointerup` within `TAP_SLOP` and under `TAP_TIME` buys, and anything else
+-- a drag past the slop, a hold past the time -- does not. One definition
+of a tap for the whole page (`tap.js`, new: `onTap(el, fn, { long })`),
+so the yard, the rows, the hop and the sheet's handle all agree on what a
+tap is, and the two numbers live in `config/touch.js`. On a mouse a click
+is a tap by construction and nothing changes.
+
+*A wrong tap is undone, not prevented.* The tile just bought shows a
+`bought -- tap to undo` in its tag for `UNDO_MS` (~4 s), and a tap on it in
+that window refunds through the queue's existing hand-back
+(`handBack` in queue.js for a build; a refund of the bill for a rung, which
+`buy` already knows how to price since it just charged it). Not a confirm:
+the ask is one tap, and an arm-and-fire is two by definition. The undo
+covers the case the gate cannot -- a clean tap on the wrong tile -- at the
+price of one word in the tag for four seconds.
+
+**The calls.**
+1. *Long press for the note, not a (i) button.* A button on every tile is
+   forty more targets on a board that is already the whole screen.
+2. *Undo over confirm.* Above.
+3. *The tap gate is one function.* The yard's `endDrag` has its own copy of
+   the slop-and-time test today; it moves into `tap.js` too, or the two
+   drift.
+
+**Files:** `tap.js` (new), `shop.js` (rows through `onTap`; `say` and
+`leanToCursor` gated), `style.css` and `shelf.css` (`@media (hover:
+hover)` around every `:hover`), `queue.js`/`upgrades.js` (the refund),
+`config/touch.js` (`UNDO_MS`). **Check:** browser tier, `selftest/touch.js`:
+a synthetic touch tap on a row buys it (the row count and the purse agree);
+a press that moves past `TAP_SLOP` does not; a press held past `TAP_TIME`
+shows the tip and does not buy; a tap on the tag within `UNDO_MS` puts the
+bill back. Node tier, `test/undo-buy.test.mjs`: the refund is the bill
+charged, for a rung and for a build, and a refund after `UNDO_MS` is
+refused. The stylesheets' gating is a grep in `test/hover-gate.test.mjs`:
+no `:hover` outside a `(hover: hover)` block in either file, so the next
+hover rule written is caught.
+
+### Boards as bottom sheets
+
+**What is wrong.** A board is a popover: it stands over its station,
+centered on it, held inside the window, moved by its bottom edge
+(`place()` in board.js). On a desk that is the whole idea -- the sheet is
+*at* the thing it is about, and you open it by walking up. On a phone
+(`shots/phone/bench.png`, `shots/phone/quarryboard.png`) the same rule
+gives a column down the left half of the screen, top to bottom, with the
+purse along the top and the station it belongs to hidden under it or off
+the edge; the crew list beside it goes off the glass; and there is no
+gesture to put it away but a tap on the yard, which on a phone is a tap on
+the one sliver of yard still showing.
+
+**The rule.** On a phone a board is a *sheet from the bottom*: full width,
+its top edge at `SHEET_H` of the window (0.55 -- the ground line and the
+station stay in the picture above it, which is the popover's one virtue
+kept), a handle bar centered on its top edge, the board's title beside the
+handle, and the rows scrolling inside it. The purse lies along its top edge
+inside the sheet, where the eye reads it before the price, the same reason
+it stands to the left on a desk. The crew list is a page *inside* the sheet
+rather than a card beside it (the house board's `who` rows open it in
+place, a `◀` at the top comes back), since beside it there is no room and
+never will be.
+
+It comes up from the bottom over `SHEET_MS` and goes down the same way --
+`fade.js`'s sheet-up-and-down is already this motion for the held sheet and
+is reused, with `translate3d` on the y axis instead of opacity. It goes
+down on: a drag on the handle past `SHEET_DISMISS` (a third of its height),
+a tap on the yard above it (as now), the station scrolling out of the
+window (as now, through `pan()`), and a hop. Dragging the handle *up* past
+its seat makes it tall (`SHEET_TALL`, 0.9 of the window) for a long board,
+and back down to its seat before dismissing; three stops, no free height.
+The desk keeps its popover, `place()` and all: the sheet is a second seat
+in board.js chosen by `coarse()`, not a rewrite of the first, so the two
+share `showPanel`, `settle`, the linger, the pinned card and every row.
+
+**What does not change.** Which board opens, when, and what is on it. The
+station-open rule, the linger, the pin, `LINGER`, the tap-outside close,
+and every check that reads a board's rows through `__state()` read the
+same rows. The popover is not touched on a desk.
+
+**Three shapes, and the pick.**
+- *(a) A half-height sheet with a handle, three stops (down, seat, tall),
+  the purse along its top edge inside it.* **This.** The station stays in
+  view above it; the handle is the gesture every phone already teaches;
+  the purse is where the price is read.
+- *(b) A full-screen page with a close button.* Simplest to build and it
+  loses the one thing a board is for here: seeing the yard change when you
+  buy. It also puts the close where a thumb is not.
+- *(c) The popover kept, made full-width and scrollable.* It is what is
+  there now with the column widened; it still hides the station and still
+  has no way down but a tap on the yard.
+
+**The knobs** (`config/touch.js`): `SHEET_H` (0.55), `SHEET_TALL` (0.9),
+`SHEET_DISMISS` (0.33 of its height), `SHEET_MS` (220 ms; 0 under reduced
+motion), `SHEET_HANDLE` (the bar: 36 by 4 px). **Files:** `board.js` (the
+second seat, the handle's drag through `tap.js`'s press tracking, the crew
+list as a page), `style.css` (`#panel.sheet` and the handle), `play.html`
+(the handle element in `#panel`), the purse's seat inside the sheet
+(`pinWidth` reads `--sheet-room` as the window's width). **Check:** browser
+tier, `selftest/sheet.js` (new): under a coarse pointer the panel's rect is
+full width with its top at `SHEET_H`; a synthetic drag on the handle past
+`SHEET_DISMISS` closes it and one past the seat makes it `SHEET_TALL`; the
+purse is inside the panel's rect; the crew list opens inside the sheet and
+never outside the window; and the desk's `boardFit` and `seatBoard`
+readings are unchanged with `coarse()` false. The look is a shot: a
+`phonebench` scene in `scenes.js` shot with `WINDOW=390,844`.
+
+### What is not in this design
+
+Pinch to zoom. The zoom steps by whole device pixels a cell on purpose
+(`setZoom`), and a pinch that snaps every few percent is a pinch that
+judders; a phone finds its scale through the device-pixel ladder already.
+Landscape gets no rule of its own: every measure above is a share of the
+window, and landscape is a wide short window, which the desk's rules
+already fit.
