@@ -9,7 +9,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
-        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, HOPPER_H, TRAY_H,
         SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
@@ -17,7 +17,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table , tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -881,32 +881,18 @@ export function resize(after) {
 
   seatSites();
 
-  // And the ground the pot stands on: everything from the left-hand end of the
-  // world to whatever stands next along on the casino's right. A heap goes down
-  // beside the building and walks *left* past it when the right-hand side is
-  // full, because that is where the empty ground is -- and a heap walking into
-  // somebody's wall is a heap drawn through a building.
-  //
-  // The far end is DERIVED from the walk rather than named. It used to be the
-  // lab, and then the lab or the scrubbing house, whichever came first -- two
-  // buildings named by hand as the casino's neighbour, when who stands beside
-  // the casino is a thing `siteOrder` decides from what the player bought. When
-  // the lab was deleted it stopped being seated at all, so `lab.x` stayed 0,
-  // `potTo` came back 0, and the table was ONE COLUMN wide: a hundred-grain pot
-  // put twenty grains on the ground, the wheel waited for a pile that could
-  // never arrive, and nothing in the yard said a word about it.
-  //
-  // So it is the nearest edge to the casino's right, of anybody's box or
-  // anybody's heap. A new station out that way narrows the table by standing
-  // there, which is the right answer without anyone having to remember.
-  table.x = 0;
-  const potFrom = casino.x + casino.w;
-  const edges = [...SITES.map(row => (S.placed[row.key] || {}).x),
-                 ...(S.strips || []).map(p => p.from)]
-    .filter(x => x != null && x > potFrom);
-  const potTo = edges.length ? Math.min(...edges) : S.cx;
-  table.cols = Math.max(1, Math.floor((potTo - P * 4) / P));
-  table.y = S.groundY - table.rows * P;
+  // The casino's two plots of sand: the hopper on its roof, where the stake
+  // stands, and the tray at its foot, where the bins pay into. Both are the
+  // building's inner width, a wall in from each side; the hopper is the top of
+  // the block and the tray is the bottom of it. See casino.js.
+  table.x = casino.x + P;
+  table.cols = CASINO_W / P - 2;
+  table.rows = HOPPER_H;
+  table.y = casino.y;
+  tray.x = casino.x + P;
+  tray.cols = CASINO_W / P - 2;
+  tray.rows = TRAY_H;
+  tray.y = casino.y + casino.h - TRAY_H * P;
 
   // The world is the size of the finished works, not of today's. It is laid out
   // around the hole the pit can ever be, so digging widens the hole and not the

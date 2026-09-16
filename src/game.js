@@ -66,7 +66,7 @@ import { catchAir } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
-import { stepCasino, stepTable, wireTable } from './casino.js';
+import { stepCasino, stepTable, wireTable, wireTray } from './casino.js';
 import { stepIntro, stepBuried, stepUnder, maybeReunion } from './intro.js';
 import { stepSkip } from './skip.js';
 import { mineMs, restaff, staffSheds, take } from './upgrades.js';
@@ -122,7 +122,8 @@ export function settleIntoWorld() {
   wireGround();
   wirePit();
   wireCut();                               // the cut's own sand, sized off the quarry
-  wireTable();                             // the ground the pot piles up on
+  wireTable();                             // the hopper on the casino's roof
+  wireTray();                              // and the tray at its foot
   resizeGrid(floor);
   if (!pit.grid) setPitGrain();            // the pit never changes with the window
   seedAir();
@@ -262,8 +263,8 @@ export const STEPS = [
   { name: 'smoke',        step: c => stepSmoke(c.dt) },   // and every mote of it climbing and going out
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
-  { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table
-  { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
+  { name: 'casino',       step: c => stepCasino(c.dt) },  // the hand: the handful on the pegs, the bins paying
+  { name: 'table',        step: c => stepTable(c.dt) },   // and the sand: into the hopper, into the tray, away
   { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
   { name: 'intro',        step: c => stepIntro(c.now) },  // and, once and once only, the two of them
   { name: 'skip',         step: c => stepSkip(c.now) },   // the space bar, held through any of them

@@ -65,8 +65,8 @@ export const CATALOG = [
   { key: 'nevertouched', name: 'never touched it', note: 'clear a boulder without swinging at it once yourself' },
   { key: 'underminute', name: 'a rock off in under a minute', note: 'clear a boulder in under a minute' },
   { key: 'everyjob', name: 'every job staffed at once', note: 'put at least one body on every job at once' },
-  { key: 'tablebeaten', name: "we're so back", note: 'win 50k in a single spin at the casino' },
-  { key: 'tableruin', name: 'time to get a loan', note: 'lose a 50k stake in a single spin at the casino' },
+  { key: 'tablebeaten', name: "we're so back", note: 'come out 50k up on a single hand at the casino' },
+  { key: 'tableruin', name: 'time to get a loan', note: 'come out 50k down on a single hand at the casino' },
 
   // --- things you do with your hands ---------------------------------------------
   { key: 'bird', name: 'get off my land', note: 'startle a bird' },

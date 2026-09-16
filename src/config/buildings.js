@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { BOARD_COLS, CASINO_MARGIN, HOPPER_H, GATE_H, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H } from './casino.js';
 
 export const TO_CASINO = -3078;
 // Past the casino: the far end of the walk, and the last thing on the ground.
@@ -56,23 +57,17 @@ export const TOWER_W = P * 13;
 // is the only way they agree.
 export const TOWER_SHAFT = 8;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
-// Twenty-six across, and it was eighteen. The wheel is set by the height rather
-// than the width -- it is as big as the block is short, and widening the block
-// does not grow it -- so at eighteen the doorway at the far end of the front was
-// cut straight through the rim, and a way in that runs into the works is the
-// fault the scrubbing house's chute was moved off the door to avoid.
+// The casino is as wide as its bins and as tall as the machine: the hopper on
+// the roof, its floor, the sign band, the air the stream fans in, ten rows of
+// pegs, the bins, their pay, and the tray at the foot, added up rather than
+// tried. Eleven bins two cells wide is twenty-two, and two cells of block
+// either side keep it at the twenty-six it was. See config/casino.js for the
+// parts, and DESIGN.md, "The handful".
 //
-// Twenty-six is what the front actually has to hold, added up rather than tried:
-// half a wheel and the white disc it is set in is thirteen cells from the middle
-// of the block, then a clear cell, then the four of DOOR_W, then two of wall to
-// the corner. Anything less and the two touch -- twenty-four looks like it works
-// and does not, because the disc stands a cell proud of the rim all the way
-// round and that cell is easy to leave out of the sum.
-//
-// It makes this the widest thing on the ground, ahead of the school's twenty,
-// which suits the one building here that produces nothing.
-export const CASINO_W = P * 26;
-export const CASINO_H = P * 12;
+// It is the widest thing on the ground and by some way the tallest, which suits
+// the one building here that produces nothing.
+export const CASINO_W = P * (BOARD_COLS + CASINO_MARGIN * 2);
+export const CASINO_H = P * (HOPPER_H + GATE_H + CASINO_SIGN_H + FIELD_H + BIN_H + LABEL_H + TRAY_H);
 
 // --- the shack at the rock ----------------------------------------------------
 // The rockhands' hut, standing off the rock's left flank. The gang was the one

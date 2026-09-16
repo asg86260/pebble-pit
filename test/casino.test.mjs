@@ -1,21 +1,23 @@
-// The wheel waits for the sand.
+// The handful: a casino that drops dust down a peg board.
 //
-// Putting the chip down is still one gesture -- the whole point of the place is
-// that you do not stake and then press a second thing to find out what happened
-// -- but a stake is not a number leaving a counter. It is a pot raining out of
-// the sky on to the ground beside the building, and it takes a second and a half
-// to get there. The wheel used to be spinning the whole time it was falling,
-// which is a wheel spinning for something that is not on the table yet.
+// The stake rains into the hopper on the roof and stands there as the pot. You
+// let it go, and a handful of it -- thirty-two grains, each carrying a thirty-
+// second of the stake -- comes out of the heap and down ten rows of pegs into
+// eleven bins, every grain flipping its own coin at every peg. The bins pay into
+// the tray at the foot, and what stands in the tray is the pot again: bank it,
+// or hoist it back up and drop it again. See DESIGN.md, "The handful".
 //
-// So: the chip goes down, the sand comes down, and the wheel goes round when the
-// last grain of it is lying still. What "lying still" means is a fact about the
-// ground and not a length of time -- nothing left to send, nothing in the air,
-// no column of the heap still moving -- and that is what these check.
+// These check the mechanism a hand at a time, bought the way a player buys it:
+// the chip row, the let-go row, the two decisions. The spread the design hangs
+// on is measured two thousand hands at a time in handful.test.mjs.
 
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
+import { CASINO_BINS, CASINO_HANDFUL, CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM } from '../src/config.js';
+import { shownFor } from '../src/casino.js';
 
-// The table, opened without the twenty cores it costs, with dust in the hole to
-// stake out of and the chip wound up to a pot worth watching arrive.
+// The table, opened without the dust it costs, with dust in the hole to stake
+// out of and the chip wound to a hundred: a heap worth watching arrive, and a
+// stake a whole handful comes out of.
 function atTheTable(chip = 1) {
   window.__reset();
   window.__casino(true);
@@ -25,246 +27,237 @@ function atTheTable(chip = 1) {
   run(0.5);
 }
 
-group('the wheel does not go round until the stake has landed', async () => {
+// The stake into the hopper, the pour settled: the let-go is open.
+function staked() {
+  const put = window.__buy('stakedust');
+  runUntil(() => !state().pouring, 30);
+  return put;
+}
+
+// A hand from the let-go to the tray standing, watching the bins on the way:
+// the counts the moment the last grain is still, so the pay can be checked to
+// the grain against them.
+function playHand() {
+  const let_ = window.__buy('letgo');
+  let bins = null, sent = 0, fell = 0;
+  for (let f = 0; f < 60 * 30 && (state().letting || state().pouring); f++) {
+    run(1 / 60);
+    const d = state().drop;
+    if (!d) continue;
+    sent = Math.max(sent, d.sent);
+    fell = Math.max(fell, d.falling);
+    if (d.stage === 'hold' && !bins) bins = d.bins.slice();
+  }
+  return { let_, bins, sent, fell, s: state() };
+}
+
+// What the bins owe on a stake: each grain its share of the stake times its
+// bin's pay, summed and rounded once.
+const owed = (bins, stakeN) => {
+  const grains = bins.reduce((a, b) => a + b, 0);
+  return Math.round(bins.reduce((sum, n, b) => sum + n * CASINO_BINS[b] * (stakeN / grains), 0));
+};
+
+group('the bin table is fair to the grain', async () => {
+  // Ten fair coins: the odds of each bin are a row of Pascal's triangle over
+  // two to the ten, and weighted by them the table pays exactly one.
+  const rows = CASINO_BINS.length - 1;
+  const choose = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - i + 1) / i; return r; };
+  const paid = CASINO_BINS.reduce((sum, m, b) => sum + m * choose(rows, b), 0);
+  const total = Math.pow(2, rows);
+  return [
+    ok(CASINO_BINS.length === 11, 'eleven bins', `${CASINO_BINS.length}`),
+    ok(Math.abs(paid - total) < 1e-9, 'pay 1,024 in 1,024 off the config',
+       `${paid} in ${total}`),
+    ok(CASINO_BINS.join(',') === [...CASINO_BINS].reverse().join(','), 'and read the same from either end')
+  ];
+});
+
+group('the stake rains into the hopper and stands there as the pot', async () => {
   atTheTable();
   const stake = state().stakes.dust;
   const held = state().stored;
   const put = window.__buy('stakedust');
   const down = state();
-
-  // Watch it come down. Nothing about the wheel may be in earnest while there is
-  // still a grain of the stake in the air or a column of the heap still moving.
-  let spunWithAirborne = 0, spunShort = 0, sawAir = 0, poured = 0;
-  let began = null, idled = false;
-  const from = down.wheel;
-  for (let i = 0; i < 900 && !began; i++) {
+  let sawAir = 0, poured = 0;
+  for (let i = 0; i < 600 && state().pouring; i++) {
     run(1 / 60);
-    const s = state();
-    if (s.pouring) {
-      poured++;
-      if (s.tableAir > 0) sawAir++;
-      if (s.spinning) spunWithAirborne++;
-      if (s.table < stake) spunShort += s.spinning ? 1 : 0;
-      if (s.wheel !== from) idled = true;         // the slow turn, which carries on
-    }
-    if (s.spinning) began = s;
+    poured++;
+    if (state().tableAir > 0) sawAir++;
   }
-
-  // and then it is a spin like any other: it goes round, it stops, and what it
-  // stopped on is what happened to the pot
-  const turning = runUntil(() => state().wheel !== (began ? began.wheel : 0), 5);
-  runUntil(() => !state().spinning && !state().pouring, 30);
-  const done = state();
-
+  const stood = state();
+  const rows = window.__rows().filter(r => r.shown && r.key !== 'unlockcasino').map(r => r.key);
   return [
     ok(put, 'the chip goes down through the row that puts it down'),
     ok(down.stored === held - stake, 'and it comes out of your hands there and then',
        `${held} - ${stake} -> ${down.stored}`),
-    ok(down.pot && down.pot.on === stake, 'the pot is on the table the moment it is staked',
-       down.pot && `${down.pot.on}`),
-    ok(down.pouring && !down.spinning,
-       'and the wheel is not spinning yet: the sand is still in the sky'),
+    ok(down.pot && down.pot.on === stake && down.pot.where === 'hopper',
+       'the pot is on the roof the moment it is staked', JSON.stringify(down.pot)),
+    ok(down.pouring, 'and it is still in the sky'),
     ok(sawAir > 0, 'the stake is really in the air on the way down',
        `${sawAir} of ${poured} frames with a grain flying`),
-    ok(spunWithAirborne === 0, 'and the wheel never spins while a grain is still flying',
-       `${spunWithAirborne} frames`),
-    ok(spunShort === 0, 'nor while the heap is short of the pot', `${spunShort} frames`),
-    ok(idled, 'it keeps its idle turn through the pour rather than sitting dead'),
-    ok(!!began, 'and then it goes round in earnest'),
-    ok(began && began.tableAir === 0 && began.table >= stake,
-       'starting only once the whole stake is lying in the pile',
-       began && `${began.table} of ${stake} down, ${began.tableAir} in the air`),
-    ok(turning, 'the spin actually turns the wheel'),
-    ok(!done.spinning && !done.pouring, 'and it comes to rest on its own'),
-    ok(done.hand !== null, 'and says which way it went'),
-    ok(done.pot ? done.pot.on === stake * 2 : done.stored === held - stake,
-       'a win doubles what is on the table and a loss leaves nothing there',
-       done.pot ? `${done.pot.on} on ${stake}` : 'gone')
+    ok(!stood.pouring && stood.table === stake && stood.tableAir === 0,
+       'and then it is lying in the hopper, grain for grain',
+       `${stood.table} of ${stake} down, ${stood.tableAir} in the air`),
+    ok(stood.tableWant === shownFor(stake) && shownFor(stake) === stake,
+       'a stake at the first band is the pot itself, one for one'),
+    // the written ladder: one for one to the first band, then a tenfold pot for
+    // a band more, never past the brim
+    ok(shownFor(CASINO_PILE_ONE * 10) === CASINO_PILE_ONE + CASINO_PILE_BAND &&
+       shownFor(CASINO_PILE_ONE * 100) === Math.min(CASINO_PILE_BRIM, CASINO_PILE_ONE + 2 * CASINO_PILE_BAND) &&
+       shownFor(1e9) === CASINO_PILE_BRIM,
+       'and past it the heap reads off the band ladder',
+       `${shownFor(1000)}, ${shownFor(10000)}, ${shownFor(1e9)}`),
+    ok(rows.some(r => r === 'letgo'), 'with the let-go open', rows.join(','))
   ];
 });
 
-group('a pot still pouring is a bet already made', async () => {
+// A hand is longer than the reload harness's five seconds and is one particular
+// handful on the pegs -- a save writes the pot down and a load pours it back
+// into the hopper -- so these three follow it without the harness.
+group('a handful goes down the pegs and the bins pay into the tray', async () => {
   atTheTable();
   const stake = state().stakes.dust;
-  window.__buy('stakedust');
-  run(0.3);                                       // half of it still falling
-  const mid = state();
-
-  // Neither decision is open while it comes down. The pour is the front half of
-  // the spin, not a window before it: a second stake here would be a double
-  // stake, and banking here would be taking a bet back off the table.
-  const again = window.__buy('stakedust');
-  const took = window.__buy('bank');
-  const after = state();
-
-  runUntil(() => !state().spinning && !state().pouring, 30);
-  const done = state();
-
+  const put = staked();
+  const hand = playHand();
+  const s = hand.s;
+  const expect = hand.bins ? owed(hand.bins, stake) : -1;
   return [
-    ok(mid.pouring && mid.tableAir > 0, 'it is still coming down',
-       `${mid.table} down, ${mid.tableAir} in the air`),
-    ok(!again, 'a second stake will not go down on a pot that is still landing'),
-    ok(!took, 'and it cannot be banked out from under the wheel'),
-    ok(after.paying === null, 'nothing sets off for the hole', `${after.paying}`),
-    ok(after.pot && after.pot.on === stake && after.stored === mid.stored,
-       'the pot and the purse are exactly where they were',
-       after.pot && `${after.pot.on} on the table, ${after.stored} held`),
-    ok(!done.pouring, 'and the hand plays itself out from there')
+    ok(put && hand.let_, 'the chip goes down and the floor opens through their rows'),
+    ok(hand.sent === Math.min(stake, CASINO_HANDFUL),
+       'exactly a handful of grains goes down the pegs',
+       `${hand.sent} of ${Math.min(stake, CASINO_HANDFUL)}`),
+    ok(hand.fell > 1, 'as a stream, several on the board at once', `${hand.fell} at most`),
+    ok(hand.bins && hand.bins.reduce((a, b) => a + b, 0) === hand.sent,
+       'every grain lands in a bin', hand.bins && hand.bins.join(',')),
+    ok(!s.letting && !s.pouring, 'and the hand settles on its own'),
+    ok(s.pot && s.pot.where === 'tray' && s.pot.on === expect,
+       'to the sum of each grain\'s bin, to the grain',
+       `${s.pot && s.pot.on} on the row, ${expect} owed by ${hand.bins && hand.bins.join(',')}`),
+    ok(s.table === 0, 'the hopper is empty again', `${s.table}`),
+    ok(s.tray === shownFor(expect) && s.trayWant === shownFor(expect),
+       'and the tray stands at the band of what was paid',
+       `${s.tray} grains for ${expect}`),
+    ok(s.hand && Math.abs(s.hand.mult - expect / stake) < 0.01,
+       'and the box says the multiple', s.hand && `${s.hand.mult}`)
   ];
-});
+}, { reload: false });
 
-// A pot caught mid-pour is a bet that was made, so it survives the tab shutting.
-// The sand itself does not -- the table's grid is never saved -- so what comes
-// back is the pot on the board, the pour starting again out of the sky, and the
-// spin it was owed still owed.
-group('a save mid-pour comes back mid-pour', async () => {
+group('drop again hoists the tray back to the hopper and the next hand is off the new stake', async () => {
   atTheTable();
-  const stake = state().stakes.dust;
+  staked();
+  const first = playHand().s;
+  const on = first.pot ? first.pot.on : 0;
+  const rode = window.__buy('ride');
+  let lifted = 0, arcs = 0;
+  for (let f = 0; f < 60 * 30 && (state().hoisting || state().pouring); f++) {
+    run(1 / 60);
+    const t = state();
+    if (t.hoisting) lifted++;
+    if (t.tableAir > 0) arcs++;
+  }
+  const up = state();
+  const second = playHand();
+  const s = second.s;
+  const expect = second.bins ? owed(second.bins, on) : -1;
+  return [
+    ok(on > 0, 'there is a pot in the tray to put back', `${on}`),
+    ok(rode, 'and drop again goes through its row'),
+    ok(lifted > 0 && arcs > 0, 'the tray goes up grain by grain rather than appearing',
+       `${lifted} frames hoisting, ${arcs} with a grain in the air`),
+    ok(up.pot && up.pot.where === 'hopper' && up.pot.on === on && up.pot.stake === on,
+       'and stands in the hopper as the stake for the next hand', JSON.stringify(up.pot)),
+    ok(up.table === shownFor(on) && up.tray === 0,
+       'grain for grain, with the tray bare', `${up.table} up, ${up.tray} left`),
+    ok(second.let_ && !s.letting,
+       'the second hand is let go and settles'),
+    ok(second.sent === Math.min(on, CASINO_HANDFUL),
+       'a handful of the new stake', `${second.sent} of ${on}`),
+    ok(s.pot ? s.pot.on === expect : expect === 0,
+       'and pays off the new stake, to the grain',
+       `${s.pot && s.pot.on} on the row, ${expect} owed`)
+  ];
+}, { reload: false });
+
+group('bank it pays the hole to the grain', async () => {
+  atTheTable();
+  window.__dig(23);                                  // room for it
+  staked();
+  const s = playHand().s;
+  const on = s.pot ? s.pot.on : 0;
+  const held = state().stored;
+  const took = window.__buy('bank');
+  run(0.6);
+  const flying = state();
+  runUntil(() => state().tableAir === 0 && !state().paying, 30);
+  const landed = state();
+  return [
+    ok(on > 0 && took, 'there is a pot to take, and taking it goes through its row', `${on}`),
+    ok(flying.tableAir > 0 && flying.paying !== null,
+       'taking it puts the tray in the air', `${flying.tableAir} flying, ${flying.paying} still to go`),
+    ok(flying.stored < held + on, 'and the counter does not move until it gets there',
+       `${flying.stored} vs ${held + on}`),
+    ok(landed.stored === held + on, 'every grain that set off is counted when it lands',
+       `${held} + ${on} -> ${landed.stored}`),
+    ok(landed.tray === 0 && landed.pot === null, 'and nothing is left behind',
+       `${landed.tray} in the tray`)
+  ];
+}, { reload: false });
+
+group('every row is shut mid-hand', async () => {
+  atTheTable();
+  const shut = {};
+  const tryAll = when => {
+    shut[when] = ['stakedust', 'letgo', 'bank', 'ride'].filter(k => window.__buy(k));
+  };
   window.__buy('stakedust');
-  run(0.3);
+  run(0.3);                                          // the stake still falling
+  tryAll('pouring');
+  runUntil(() => !state().pouring, 30);
+  const before = state();
+  window.__buy('letgo');
+  run(0.8);                                          // grains on the pegs
+  const mid = state();
+  tryAll('cascading');
+  runUntil(() => state().drop && state().drop.stage === 'pay', 20);
+  tryAll('paying');
+  runUntil(() => !state().letting && !state().pouring, 30);
+  const after = state();
+  return [
+    ok(before.pot && before.pot.on === 100 && before.stored === after.stored,
+       'the purse and the pot are where they were'),
+    ok(mid.letting && mid.drop && mid.drop.falling > 0, 'the hand is on the board when asked',
+       JSON.stringify(mid.drop)),
+    ok(shut.pouring.length === 0, 'nothing fires while the stake is pouring', shut.pouring.join(',')),
+    ok(shut.cascading.length === 0, 'nor while the handful is on the pegs', shut.cascading.join(',')),
+    ok(shut.paying.length === 0, 'nor while the bins are paying', shut.paying.join(',')),
+    ok(after.pot && after.pot.where === 'tray', 'and the hand plays itself out from there')
+  ];
+}, { reload: false });
+
+// A save mid-cascade is a bet that was made: the pot is written down and the
+// path in flight is not, so it comes back a pot in the hopper with the let-go
+// open again -- the way a wheel mid-spin did.
+group('a save mid-cascade comes back a pot in the hopper with the decision open', async () => {
+  atTheTable();
+  const held = state().stored;
+  staked();
+  window.__buy('letgo');
+  run(0.8);
+  const mid = state();
   window.__reload();
   const back = state();
-  const spun = runUntil(() => state().spinning, 30);
-  const at = state();
-  runUntil(() => !state().spinning && !state().pouring, 30);
-  const done = state();
-
+  runUntil(() => !state().pouring, 30);
+  const stood = state();
+  const rows = window.__rows().filter(r => r.shown && r.key !== 'unlockcasino').map(r => r.key);
+  const let_ = window.__buy('letgo');
   return [
-    ok(back.pot && back.pot.on === stake, 'the pot is still on the table',
-       back.pot && `${back.pot.on}`),
-    ok(back.pouring, 'and the spin it was owed is still owed'),
-    ok(spun, 'so the wheel goes round when the sand has settled again'),
-    ok(at.table >= stake, 'with the whole pot in the pile by then',
-       `${at.table} of ${stake}`),
-    ok(!done.pouring && !done.spinning, 'and the hand finishes')
+    ok(mid.letting && mid.drop.falling > 0, 'the handful is on the pegs when the save is taken'),
+    ok(!back.letting && back.pot && back.pot.where === 'hopper' && back.pot.on === 100,
+       'it comes back a pot in the hopper, the path in flight forgotten', JSON.stringify(back.pot)),
+    ok(back.pouring && back.table < 100, 'pouring in again out of the sky', `${back.table} down`),
+    ok(stood.table === 100 && !stood.pouring, 'until it stands as it did', `${stood.table}`),
+    ok(back.stored === held - 100, 'and the purse is as it was', `${back.stored}`),
+    ok(rows.includes('letgo') && let_, 'with the let-go open again', rows.join(','))
   ];
-});
-
-
-// Past a thousand the heap stops being a count of the pot and becomes a reading
-// of it, on a ladder written down in config.js. The numbers stay exact -- the
-// row, the credit and the hole all say the pot -- and what gets smaller is the
-// sand, which is the only thing here that was ever expensive.
-//
-// The ladder itself, worked out the way DESIGN.md writes it. A check that read
-// the game's own function for the answer would agree with anything.
-const band = n => n <= 100 ? n : Math.min(700, Math.round(100 + 150 * Math.log10(n / 100)));
-
-group('the heap past the first band is a reading of the pot', async () => {
-  atTheTable(2);                                 // the thousand chip
-  // Fund the whole loop below. The table's 6000 covers six spins at this chip
-  // against 40% odds -- a losing streak the seeded rng actually dealt once
-  // wave 7's motes started drawing on the same stream -- while the loop is
-  // written for forty. The check is about the heap, not the bankroll.
-  window.__give(40000);
-  const stake = state().stakes.dust;
-
-  // Play it until a win, so the pot on the table is two thousand -- which is the
-  // first number in this building that is not drawn one for one.
-  let won = null, air = 0;
-  for (let i = 0; i < 40 && !won; i++) {
-    if (state().pot) { window.__buy('bank'); runUntil(() => !state().paying && state().tableAir === 0, 30); }
-    window.__buy('stakedust');
-    for (let f = 0; f < 3600 && (state().pouring || state().spinning); f++) {
-      run(1 / 60);
-      air = Math.max(air, state().tableAir);
-    }
-    if (state().pot) won = state();
-  }
-
-  // and it settles to the band rather than to the number
-  const rested = runUntil(() => state().table === state().tableWant && !state().tableAir, 30);
-  const settled = state();
-  const on = settled.pot ? settled.pot.on : 0;
-  const held = settled.stored;
-
-  // taking it is still worth exactly what the row said, however few squares fly
-  window.__buy('bank');
-  const flying = state();
-  runUntil(() => !state().paying && state().tableAir === 0, 40);
-  const landed = state();
-
-  return [
-    ok(!!won && on === stake * 2, 'a win off the thousand chip puts two thousand on the table',
-       `${on}`),
-    ok(settled.tableWant === band(on), 'and the heap it asks for is the band, not the pot',
-       `${settled.tableWant} grains for ${on}, band says ${band(on)}`),
-    ok(band(on) < on, 'which is less sand than the pot has units',
-       `${band(on)} of ${on}`),
-    ok(rested && settled.table === settled.tableWant, 'the heap settles to it',
-       `${settled.table} of ${settled.tableWant}`),
-    ok(air <= 700 + 200, 'and nothing near the old cloud is ever in the air at once',
-       `${air} at the worst`),
-    ok(flying.paying === on, 'banking still sets off with the whole pot',
-       `${flying.paying} of ${on}`),
-    ok(landed.stored === held + on, 'and the hole is paid the pot to the grain',
-       `${held} + ${on} -> ${landed.stored}`),
-    ok(landed.table === 0 && landed.tableAir === 0, 'with nothing left on the ground',
-       `${landed.table} left`)
-  ];
-});
-
-// The ladder itself: every rung of it, against the game's own reading of a pot
-// it is actually holding. The pot is set by playing the table up to it -- there
-// is no way to hold ten million dust in a hole that does not fit it -- so this
-// reads the function through the one number the yard reports.
-group('the ladder is the one written down', async () => {
-  atTheTable(0);
-  const rungs = [10, 100, 200, 1000, 10000, 100000, 1000000, 10000000, 100000000];
-  const said = [];
-  for (const n of rungs) {
-    yard.S.pot = { cur: 'dust', stake: n, n };
-    said.push(state().tableWant);
-  }
-  yard.S.pot = null;
-  return [
-    ok(said.every((v, i) => v === band(rungs[i])),
-       'every rung reads as the ladder says it should',
-       said.map((v, i) => `${rungs[i]}->${v}`).join(' ')),
-    ok(said[said.length - 1] === 700, 'and it stops at the brim', `${said[said.length - 1]}`),
-    ok(said[0] === 10 && said[1] === 100,
-       'while everything up to a hundred is still one grain a unit',
-       `${said[0]}, ${said[1]}`)
-  ];
-});
-
-// A pot won over a full hole can be taken. The winnings row used to wait for
-// the hole to have room for the whole pot, from when a full hole turned grains
-// away; the hole now tears the rift and takes them through it, so the row
-// staying dead was a won bet you could not collect.
-group('winnings can be banked into a hole with no room', async () => {
-  atTheTable(2);
-  // Fill the hole to a hair under the brim -- no further, or the filling tears
-  // the rift (the count credits a few cells the pile cannot fill) and an open
-  // rift drains room back during the spin -- then play until a hand comes in.
-  // A loss takes the stake out of the hole, so it is topped back up before the
-  // next go and the pot, when it lands, is always bigger than the room there is.
-  let won = false;
-  for (let go = 0; go < 30 && !won; go++) {
-    window.__give(state().pitCapacity - state().stored - 500);
-    if (!window.__buy('stakedust')) break;
-    won = runUntil(() => handIn(), 30);
-  }
-  const before = state();
-  const took = window.__buy('bank');
-  run(8);                                        // the whole pot's trip to the hole
-  const after = state();
-
-  return [
-    ok(won && before.pot && before.pot.on > before.pitCapacity - before.stored,
-       'a pot bigger than the room in the hole is on the table',
-       before.pot && `${before.pot.on} won, ${before.pitCapacity - before.stored} cells free`),
-    ok(!before.riftOpen, 'over a hole that has not given way yet'),
-    ok(took, 'and the winnings row takes it'),
-    ok(after.riftOpen, 'the hole gives way under it'),
-    ok(before.pot && after.stored === before.stored + before.pot.on,
-       'and every grain of it is counted',
-       before.pot && `${before.stored} + ${before.pot.on} = ${after.stored}`)
-  ];
-});
-
-// the wheel has stopped and there is a pot on the table
-function handIn() {
-  const s = state();
-  return !!s.pot && !s.spinning && !s.pouring && s.paying === null;
-}
+}, { reload: false });

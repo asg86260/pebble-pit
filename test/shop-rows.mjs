@@ -45,20 +45,27 @@ const scrub = () => { sites(); window.__air({ open: true }); };
 // behind it -- the extra pot's own count is on its line.
 const apothecary = () => { sites(); window.__buy('unlockapothecary'); window.__finish(); window.__brews(3); };
 // A purse rather than the flood: banking a pot needs room in the hole for it.
+// The machine is wound quick -- no beat on a peg, no gap between grains --
+// because a hand at its played pace is longer than the reload harness's five
+// seconds, and a reload mid-hand puts the pot back in the hopper.
 const casino = () => {
   window.__fullSites(); crew();
   window.__grant({ dust: 2e4, shards: 1e4, spores: 1e4 });
   window.__casino();
+  for (const k of ['CASINO_GRAIN_GAP_MS', 'CASINO_PEG_BEAT_MS', 'CASINO_GATE_MS',
+                   'CASINO_SETTLE_HOLD_MS', 'CASINO_PAY_BEAT_MS']) window.__tune(k, 0);
 };
-// A pot on the table and the wheel stopped: the two rows about a pot are
-// closed while it spins, and a lost spin takes the pot with it, so the chip
-// goes down again until one stands.
-const staked = (S, run) => {
+// A pot standing in the hopper: the stake poured and settled, the let-go open.
+const hopper = (S, run) => {
   casino();
-  for (let i = 0; i < 12 && !(S.pot && !S.spinUntil && !S.pouring); i++) {
-    window.__buy('stakedust');
-    run(20);
-  }
+  window.__buy('stakedust');
+  for (let i = 0; i < 12 && S.pouring; i++) run(1);
+};
+// A pot standing in the tray: a hand played out, the two decisions open.
+const staked = (S, run) => {
+  hopper(S, run);
+  window.__buy('letgo');
+  for (let i = 0; i < 20 && !(S.pot && S.pot.where === 'tray' && !S.pouring && !S.drop); i++) run(1);
 };
 
 
@@ -153,8 +160,11 @@ export const ROWS = [
   { key: 'stakedust', part: 2, reach: casino },
   { key: 'stakeshard', part: 2, reach: casino },
   { key: 'stakespore', part: 2, reach: casino },
+  // Letting go leaves the row where it is and goes dead for the hand, which
+  // `__buy` reads as the press having fired.
+  { key: 'letgo', part: 2, reach: hopper, purse: true },
   { key: 'bank', part: 2, reach: staked, purse: true },
-  // Riding leaves the row where it is and sets the wheel going, which is the
-  // one sign `__buy` cannot read for itself.
-  { key: 'ride', part: 2, reach: staked, purse: true, fired: S => !!(S.pouring || S.spinUntil) },
+  // Dropping again leaves the row where it is and starts the hoist, which is
+  // the one sign `__buy` cannot read for itself.
+  { key: 'ride', part: 2, reach: staked, purse: true, fired: S => !!(S.hoisting || (S.pot && S.pot.where === 'hopper')) },
 ];

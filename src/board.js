@@ -944,7 +944,7 @@ export function showCrewList(on) {
 
 
 // `now` is for a close that was *asked for* rather than wandered out of: a tap
-// on bare ground, a new game, the wheel starting. Those are answers, and an
+// on bare ground, a new game, the floor opening. Those are answers, and an
 // answer that takes a tenth of a second to arrive reads as a control that did
 // not take. Only the pointer drifting off a station gets the benefit of LINGER.
 export function showPanel(want, now = false) {
@@ -1226,9 +1226,10 @@ hideEl.addEventListener('click', () => {
 // -- nothing has been decided, and it is the same board when it comes back --
 // it is out of the way of the one thing in this game you are meant to watch.
 //
-// From the chip going down, not from the wheel starting: the pot pouring on to
-// the ground is the front half of the same gesture, and a board that stayed up
-// through it would be a board offering rows for a bet already made.
+// From the chip going down, not from the floor opening: the pot pouring into
+// the hopper is the front half of the same gesture, and a board that stayed up
+// through it would be a board offering rows for a bet already made. It comes
+// back when the tray is standing.
 let hushed = false;
 function hush() {
   const want = busy();

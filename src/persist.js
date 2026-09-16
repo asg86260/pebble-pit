@@ -6,7 +6,7 @@
 // megabytes written every second.
 
 import { P, CELL, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, LOO_POSTS,
-         ABYSS_AT, WORKER, LADDER, TIER_RUNGS, ROCK_SINK, CASINO_SPIN_MS } from './config.js';
+         ABYSS_AT, WORKER, LADDER, TIER_RUNGS, ROCK_SINK } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
@@ -21,6 +21,7 @@ import { now as clockNow } from './clock.js';
 import { BUILD } from './version.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite, openingCamX, clampCam, settleShack, overCutMouth } from './world.js';
+import { clearCasino } from './casino.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
@@ -218,7 +219,7 @@ function blankByHand() {
 // The session's fields, for a yard that is starting over. A reset used to name
 // the ones it cleared -- the chips in the air, the belt, the weather -- and,
 // like the two by-hand lists before it, the naming was where the leaks were: a
-// casino wheel mid-spin, a cutscene half played, the quarry's running total
+// casino hand mid-cascade, a cutscene half played, the quarry's running total
 // and the muck the house was partway through all stood through a reset because
 // nobody had thought to write them down. So the answer is the declaration
 // again, less the few that are not the yard's at all: what was measured off
@@ -347,7 +348,6 @@ function blob() {
     // (the same turn doses and a body's moments take, crew/records.js).
     danceLeft: Math.max(0, Math.round(S.danceUntil - clockNow())),
     nextBoulderIn: Math.max(0, Math.round(S.nextBoulderAt - clockNow())),
-    spinLeft: Math.max(0, Math.round(S.spinUntil - clockNow())),
     // The crew itself, not just how many of them there are. A body has a name
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
@@ -473,10 +473,11 @@ function blob() {
     // bottom grain first.
     rockSand: (S.rockSand || []).map(a => (a || []).join(',')),
     pot: S.pot && { ...S.pot },
-    // A pot that was still pouring when the tab shut is a bet that was made. The
-    // sand itself is not saved -- the table's grid never is -- so what comes back
-    // is the pot on the board and the pour starting again from the sky, and the
-    // wheel goes round when it has landed, exactly as it would have.
+    // The sand itself is not saved -- neither plot's grid ever is -- so a pot
+    // comes back pouring into whichever plot it stood in, whatever it was doing:
+    // a hand caught mid-cascade comes back a pot in the hopper with the let-go
+    // open again, the way a wheel mid-spin used to. The bet that was made is
+    // the chip, and the chip is what comes back.
     pouring: !!S.pouring,
     // ...and a pot you have already taken is money, not sand.
     //
@@ -681,6 +682,7 @@ export function restore() {
     S.pot = null;
     S.paying = null;
     S.pouring = false;
+    clearCasino();
     S.quarryOwed = 0;
     S.buildOrder = [];
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
@@ -734,12 +736,6 @@ export function restore() {
   S.coreTaker = null;
   S.danceUntil = Number.isFinite(s.danceLeft) && s.danceLeft > 0 ? clockNow() + s.danceLeft : 0;
   S.nextBoulderAt = Number.isFinite(s.nextBoulderIn) && s.nextBoulderIn > 0 ? clockNow() + s.nextBoulderIn : 0;
-  // A spin picks up where it was: the wheel carries on to the mark it was
-  // already turning toward, and stops when it would have.
-  if (Number.isFinite(s.spinLeft) && s.spinLeft > 0) {
-    S.spinUntil = clockNow() + s.spinLeft;
-    S.spinAt = S.spinUntil - CASINO_SPIN_MS;
-  } else { S.spinUntil = 0; S.spinAt = 0; }
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -1010,12 +1006,20 @@ export function restore() {
   // than made. Safe here because the world is laid out before the save is read
   // (see the boot order in main.js), so there is a width to spread it across.
   skyFromSave(s.skyKinds, s.drops, s.puffs);
-  // A pot left on the table is still on it. It comes back ripe -- the clock it
-  // was climbing on is wall time, and a hand you left an hour ago is a hand you
-  // left long enough.
-  S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
-  // (`spinUntil` is read back above, from `spinLeft`: a spin in flight goes on.)
+  // A pot left in its plot is still in it. The sand itself is never saved, so
+  // it comes back pouring in again whatever it was doing -- a hand caught on
+  // the pegs comes back a pot in the hopper with the let-go open again, a tray
+  // caught mid-hoist comes back a pot in the hopper. A save from the wheel's day
+  // has no `where`, and a pot with no plot named stands where a stake stands.
+  S.pot = s.pot && s.pot.cur
+    ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0,
+        where: s.pot.where === 'tray' ? 'tray' : 'hopper' }
+    : null;
+  clearCasino();                // both plots start empty; the pot pours again
   S.tableAir = [];
+  S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
+  S.hoisting = false;
+  S.attract = null;
   // A pot you have already taken comes back still owed to you.
   //
   // Every other field in this building has an argument for what it does on a
@@ -1041,10 +1045,10 @@ export function restore() {
         left: Math.round(+s.paying.left),
         grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
     : null;
-  // A bet made is a bet made: a pot caught mid-pour comes back mid-pour, the
-  // sand falls again out of an empty table, and the spin it was owed is still
-  // owed. A pot that had already been spun for comes back a pot and nothing more.
-  S.pouring = S.casinoOpen && !!S.pot && !!s.pouring;
+  // A bet made is a bet made: a pot comes back pouring into its plot, whether
+  // it was still arriving or already standing there, because the sand it stood
+  // as was not saved.
+  S.pouring = S.casinoOpen && !!S.pot;
   S.hand = null;                // a hand that settled before you closed the tab is old news
   // The grounds' multipliers, folded into their ladders. The last band of each
   // ground's ladder was `S.mult.<key>`, the lab's quarter-again over the top of
@@ -1353,8 +1357,9 @@ export function reset(fresh = true) {
   readSaved({});
   blankByHand();
   // ...and everything the save throws away, for the same reason: what was in
-  // the air, on the belt, on the wheel or on the camera is the old yard's too.
+  // the air, on the belt, on the pegs or on the camera is the old yard's too.
   blankEphemeral();
+  clearCasino();                   // the hopper and the tray stand empty
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;

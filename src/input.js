@@ -6,7 +6,7 @@
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H } from './config.js';
-import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
+import { S, bench, floor, pit, table, tray, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
@@ -481,12 +481,12 @@ function messAt(x, y) {
   return poo ? 'poop' : 'muck';
 }
 
-// The pot: a heap of real sand in `table` (see casino.js), in the same shape
-// of grid the floor and the hole are. It is asked the same way they are -- a
-// cell under the cursor -- rather than as the whole strip of ground the grid
-// reserves for it, which runs most of the width of the yard and would tag
-// bare ground as the pot as readily as the pile actually sitting on it.
-const potAt = (x, y) => S.casinoOpen && !!cellAt(table, x, y);
+// The pot: a heap of real sand in the casino's hopper or its tray (see
+// casino.js), in the same shape of grid the floor and the hole are. It is
+// asked the same way they are -- a cell under the cursor -- rather than as
+// the whole plot, which would tag the empty hopper as the pot as readily as
+// the heap actually standing in it.
+const potAt = (x, y) => S.casinoOpen && (!!cellAt(table, x, y) || !!cellAt(tray, x, y));
 
 // A balloon's box, built the way `drawBalloons` in render.js draws one: the
 // envelope's crown down to the basket, centred on the craft's own x.

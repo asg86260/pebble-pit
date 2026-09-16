@@ -247,27 +247,39 @@ export const S = {
   labOpen: false,
 
   // --- the casino ---
-  // One table, one pot. `pot` is null until something is staked, and what is on
-  // it is `n` of `cur` -- the same currencies everything else in the game is
-  // priced in, because a chip you can only use here would be a fifth currency.
+  // One hopper, one tray, one pot. `pot` is null until something is staked,
+  // and what is on it is `n` of `cur` -- the same currencies everything else in
+  // the game is priced in, because a chip you can only use here would be a
+  // fifth currency. `where` says which plot the pot is standing in: the hopper
+  // on the roof, waiting to be let go, or the tray at the foot, waiting to be
+  // banked or dropped again. `stake` is what the hand went down as, so the
+  // settled hand can say its multiple.
   casinoOpen: false,
   casinoBoardOpen: false,
-  pot: null,              // { cur, stake, n, at } -- what is on the table
-  wheel: 0,               // where the wheel has turned to
-  spinAt: 0,              // when the wheel was set going
-  spinFrom: 0, spinTo: 0, // and the mark it is turning from and to
-  spinUntil: 0,           // and until when it is being spun in earnest
-  // A chip is down and the stake is still raining on to the table. The wheel is
-  // owed a spin and does not start it until the heap has stopped moving, so this
-  // is the beat between the gesture and the wheel. See `pouring` in casino.js.
+  pot: null,              // { cur, stake, n, where }
+  // A chip is down and the stake is still raining into its plot. Nothing can be
+  // let go, banked or dropped until the heap has stopped moving. See `pouring`
+  // in casino.js.
   pouring: false,
-  tableAir: [],           // the table's grains in the air: arriving, leaving, or on their way to the hole
-  paying: null,           // { cur, left } -- a pot on its way across the yard to the pit
-  spinWon: false,         // what it is about to land on, decided when it starts
+  tableAir: [],           // the casino's grains in the air: arriving, leaving, hoisted, or on their way to the hole
+  paying: null,           // { cur, left, grains } -- a banked pot on its way across the yard to the pit
   chip: 0,                // which of CASINO_CHIPS is on the table
-  // The hand that just settled, kept for a few seconds so a wheel you were not
-  // watching still tells you which way it went.
-  hand: null,             // { won, n, cur, at, bursts }
+  // The hand under way: the gate open, the grains on the pegs, the bins filling,
+  // then the bins paying into the tray. Null when nothing is falling. A path in
+  // flight is ephemeral -- a reload comes back a pot in the hopper with the
+  // let-go open again. See `letGo` in casino.js.
+  drop: null,             // { at, sent, grains, bins, stage, ... }
+  // The tray going back up to the hopper, grain by grain, for a drop again.
+  hoisting: false,
+  // The machine selling itself: one grain ticking down the pegs with nothing
+  // riding on it, every so often, while nobody is at the table.
+  attract: null,          // { grain, next }
+  // What the machine is flashing right now: a peg lit on the beat, a divider
+  // lit for a x39 or a near miss, the sign on a strobe for a x39.
+  tableFx: { pegs: [], edge: null, strobeAt: 0 },
+  // The hand that just settled, kept for a few seconds so a board you were not
+  // watching still tells you how it went.
+  hand: null,             // { won, mult, n, cur, at, bursts, edge }
   labBoardOpen: false,
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read. It was the lab's alone --
@@ -557,10 +569,6 @@ export const BLANK = JSON.parse(JSON.stringify(S));
 // they say why a field is worth keeping, which is the part that is not obvious.
 export const SAVED = [
   'stored',               // dust in the hole: the whole point
-  // a spin in flight: where the wheel is, where it is going and what it will
-  // say when it stops. A refresh mid-spin used to leave the stake on the table
-  // with a wheel that never came to rest. The moments are by hand (`spinLeft`).
-  'wheel', 'spinFrom', 'spinTo', 'spinWon',
   'carryLevel',
   'speedLevel',
   'autoMine',
@@ -726,7 +734,6 @@ export const SAVED_BY_HAND = [
   // the celebration for the last rock and the backstop for the next: moments
   // on the clock, written as how far off they are (`danceLeft`, `nextBoulderIn`)
   'danceUntil', 'nextBoulderAt',
-  'spinUntil',            // as `spinLeft`: how much of the spin is left; `spinAt` is worked back from it
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
@@ -760,7 +767,7 @@ export const SAVED_BY_HAND = [
   JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
   'rockSand',             // what is lying on the rock, a column at a time
-  'pot',                  // the casino: what is on the table...
+  'pot',                  // the casino: what is on the table, and which plot it stands in...
   'pouring',              // ...whether its stake is still raining down...
   'paying',               // ...and what a taken pot still owes the hole
   'mult',                 // legacy: folded into the ladders on read, written as noughts
@@ -810,7 +817,7 @@ export const SAVED_BY_HAND = [
 
 // And everything else: this session's own, deliberately thrown away on a
 // reload. A moment rather than a fact (the tearing of the rift, a shower, a
-// spin), something worked out again on the way in (the layout, the rock tops,
+// hand on the pegs), something worked out again on the way in (the layout, the rock tops,
 // what is lying in each pile), or something in flight that a reload has no
 // beginning for. Named rather than assumed, so that adding a field and not
 // thinking about it is a failing test.
@@ -860,9 +867,11 @@ export const EPHEMERAL = [
   // beginning for a reload to come back to
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',
-  // the wheel, and a hand that settled before you closed the tab
-  // the stake still in the air, and a hand that settled before you closed the tab
-  'tableAir', 'hand', 'spinAt',
+  // the stake still in the air, a hand on the pegs, the tray on its way back up,
+  // the demonstration grain, what the machine is flashing, and a hand that
+  // settled before you closed the tab: a reload comes back a pot in its plot
+  // with the decision open again
+  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx',
   // stopwatches, and the two the lab keeps behind `works`
   'labIdleAt', 'research', 'research2',
   // which boards are open, and what the pointer is doing
@@ -953,10 +962,12 @@ export const tower = { x: 0, y: 0, w: 0, h: 0 };
 // used to be a second shed for the tools (the janitor's closet); one trade gets
 // one building.
 export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
-// The ground the pot piles up on: a real plot of sand, like the yard and the
-// hole, on the ground either side of the casino. A pot is grains, not a drawing
+// The hopper on the casino's roof, where the pot stands before it is let go: a
+// real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
-export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// And the tray at its foot, where the bins pay into and the pot stands after.
+export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.
