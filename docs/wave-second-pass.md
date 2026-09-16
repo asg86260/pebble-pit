@@ -456,3 +456,136 @@ beyond its `buildShop`/`dirty` lines, anything in `src/render/`.
 
 Branch: `second-pass-I`. Commit title: `The boards rebuild themselves and
 the save runs on the clock: nothing in the sim says so`.
+
+---
+
+## Track M: the save floor, and migrations as files
+
+Seam 3 of "The second pass" (DESIGN.md), approved by the owner
+2026-09-16 with one shape added: **every migration is its own dated
+file, and archiving one is deleting the file.** Base:
+`worktree-save-floor` on origin, after track I has landed (both edit
+persist.js).
+
+### The floor
+
+**A save this game reads was written by v0.1.1 (2026-09-12, the first
+public build) or later.** Every such save carries `build` (`{ version,
+hash, date }`, written by `blob()` since wave-desk-sound); a dev build's
+stamp is `{ version: '', hash: 'dev', date: '' }` and counts as above the
+floor. A save with no `build` at all is below the floor: `load` in
+save.js puts it aside under `BROKEN_KEY` exactly as an unreadable blob is
+today, `S.broken` says so, and the sheet offers it back as a file -- no
+new UI, the path that exists. Nothing is ever silently discarded.
+
+### The shape
+
+1. **`src/migrations/`**, new. One file a migration, named by its date
+   and its subject: `2026-09-12-harness-and-boots.js`,
+   `2026-09-15-beats.js`, `2026-09-15-three-brews.js`, and so on. Each
+   exports one thing:
+   ```
+   export default {
+     since: '2026-09-15',        // the day the shape changed
+     says: 'the six story flags became the set of beats',
+     apply(s) { ... }            // the raw save object, in place; returns nothing
+   };
+   ```
+   `apply` reads the old fields off `s` and writes the new ones, on the
+   raw object, before `restore()` reads a single field. It is the
+   paragraph persist.js has today for that migration, moved whole, with
+   its comment (to the comment register: what it folds and why, no
+   story). It may import config for a constant; it imports nothing that
+   evaluates the yard.
+2. **`src/migrations/index.js`**: `MIGRATIONS`, the files in date order,
+   and `migrate(s)`: runs every `apply` in order and stamps `s.saveV`
+   (below). Archiving a migration is deleting its file and its line
+   here; the head comment says so, and says the rule for when: a
+   migration may go once every save it could apply to is below the floor.
+3. **`saveV`**: `blob()` writes `saveV: SAVE_V` (a config constant,
+   `config/saves.js`, today `1`). `migrate` skips any migration whose
+   `since` is not after the save's own `build.date`... no: dates are the
+   wrong key for a dev build with no date. **`saveV` is the key.** A save
+   with no `saveV` is "everything before today" and gets every migration
+   in the list; a migration written from today on carries `v: N` (the
+   `SAVE_V` it raises the save to) and runs only on saves whose `saveV`
+   is below it. So the list is: the migrations from 2026-09-12 to today,
+   all with `v: 1`, and every future one with `v: 2, 3, ...`. Write this
+   rule into the index's head comment.
+4. **persist.js**: `restore()` calls `migrate(s)` once, right after
+   `load()`, and then reads today's shape and nothing else. Every "a
+   save from before X" branch goes: either it is below the floor (the
+   renames -- miners, spelunkers, labbers, scrubbers, rifters, cave;
+   `OLD_TYPE`, `OLD_JOB`; `research`/`research2`; `hatShelf`; `labDone`;
+   the clock-stamped `wonAt`; `mult` and the `lab*` works; `coreLoose`
+   guessing; `scholars`; anything else whose commit is before
+   2026-09-12 -- `git log -S` the field to date it) and is deleted, or it
+   is on or after the floor and moves to a migration file. The two lines
+   that derive a flag from a count (`introDone || crew > 0` and the
+   like) are migrations too. `migrateApothecary` in apothecary.js
+   becomes `2026-09-15-three-brews.js`; `noticeMigrated` and its
+   catch-up become `2026-09-1x-notices.js` if on or after the floor,
+   else go. `restore()` after this is today's fields only; say its
+   length before and after.
+5. **state.js**: the retired fields go -- `brewLevel`, `doseCarryLevel`,
+   `potPrefer`, `mult`, `scholars`, `noticeMigrated`, `labLeft` if still
+   there, and any other field whose only reader was a migration. Every
+   removed field leaves the three lists. `persist-roundtrip` is the
+   check.
+6. **The fixtures**: every file in `test/fixtures/` with no `build`
+   stamp (`player-yard.json`, `stuck-yard.json`, `shack-stall.json` at
+   least) is loaded ONCE by the tree as it stands before your deletions
+   (the base commit: `git stash` is not allowed; use `git worktree`-free
+   means -- `git archive origin/worktree-save-floor | tar -x -C
+   <tmp>` and run there), saved by `persist()`, and the blob written back
+   over the fixture in today's shape with a `build` stamp. The checks
+   that read those fixtures must stay green and must still assert what
+   they assert (read each; if a check's premise was the old shape, say
+   so). Commit the re-saved fixtures in their own commit, first.
+7. **`test/save-floor.test.mjs`**, new, node tier: (a) a save with no
+   `build` is refused: after `restore()` the yard is fresh, `S.broken`
+   is true, and the blob is under `BROKEN_KEY` byte for byte; (b) a save
+   with a dev stamp and no `saveV` loads and gets every migration (build
+   one from a fresh yard's blob, strip `saveV`, set the pre-migration
+   fields for two of the migrations, restore, assert the new fields); (c)
+   a save with `saveV: SAVE_V` gets no migration (a migration with a
+   counter in a test-only list, or `migrate` returning the list it ran);
+   (d) `MIGRATIONS` is in date order and every `v` is `<= SAVE_V`.
+8. `docs/saves.md`, new, short: the floor, the `saveV` rule, how to add a
+   migration (one file, one line), how to archive one, and the date of
+   the floor. `ARCHITECTURE.md` gains a line for `src/migrations/`.
+   DESIGN.md: seam 3's paragraph gets "as built"; TODO.md's entry says
+   seam 3 built. CHANGELOG.md, under **New this release**: one line --
+   saves from before the first public build are no longer read, and are
+   offered back as a file.
+
+### The check
+
+`node --check` on every file. Foreground, `--test-concurrency=4`:
+`test/save-floor.test.mjs`, `test/persist-roundtrip.test.mjs`,
+`test/reload.test.mjs`, `test/stuck-yard.test.mjs`,
+`test/pit-edge-stuck.test.mjs`, `test/shack-stall.test.mjs` (if it
+exists; else whichever check reads that fixture), `test/beats.test.mjs`,
+`test/three-brews.test.mjs`, `test/apothecary.test.mjs`,
+`test/save-import.test.mjs`, `test/jobs.test.mjs`. Paste the summary
+lines. Browser, against a server on a free port with a distinct
+`CDP_PORT`: `--only "saves page"`, `--only settings`, `--only "load a
+save"` (whichever groups exist about the sheet's save/load); paste the
+last lines; tear the server down and say the port is dead.
+
+### Owns / does not touch
+
+Owns: `src/migrations/**` (new), `src/config/saves.js` (new),
+`src/persist.js`, `src/save.js`, `src/state.js`, `src/apothecary.js`
+(`migrateApothecary` and its callers only), `src/notices.js` (the
+catch-up only), `src/report.js` (fields that go), `src/hooks.js` (fields
+that go), `src/selftest/**` (readers of fields that go), `test/**`
+(fixtures and readers of fields that go), `docs/saves.md`,
+`ARCHITECTURE.md`, `DESIGN.md`, `TODO.md`, `CHANGELOG.md` (the lines
+named). Does not touch: anything under `src/render/`, `src/crew/`,
+`src/stations.js`, `src/beats.js` (import `BEATS` if the beats migration
+needs the key list).
+
+Branch: `second-pass-M`. Commit title (the second commit; the fixtures'
+re-save is the first): `The save floor is the first public build, and
+every migration is a file`.
