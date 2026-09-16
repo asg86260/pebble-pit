@@ -60,7 +60,7 @@ function fakePour(n) {
   }
   S.pouringOut = true;
 }
-import { setDeadLook } from './config/casino.js';
+import { setDeadLook, setReadyLights, setFlashFace } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -929,6 +929,10 @@ export const HANDLES = {
   // the arm held down, for a scene of the pour
   // (held, the floor does not open: the drop is the release)
   __holdArm: on => { S.leverHeld = on ? 'casino-gate' : null; if (on) S.armed = false; },
+  // the sign pressed, for a scene: held down a minute ahead like a control
+  __pressSign: () => { S.signPressed = clockNow() + 60000; },
+  __readyLights: how => setReadyLights(how),
+  __signFace: f => setFlashFace(f),
   // a pour out of the foot faked for a scene: grains of every kind lobbed
   // out of the hatch on to the ground at the building's left
   __fakePour: (n = 40) => fakePour(n),

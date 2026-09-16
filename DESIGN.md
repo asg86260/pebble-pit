@@ -886,6 +886,21 @@ opens. After the drop the sign goes back to CASINO, flat. So the one number
 in the building is the one you are deciding on, it is on the sign while you
 decide, and the sign is what you press to decide.
 
+**The marquee carries the state.** The sign's border of bulbs says what the
+machine is doing, and it is where the flair lives. Idle, with no stake, the
+bulbs alternate in place -- every other one lit, swapping on a slow beat
+(`SIGN_SWAP_MS`), a marquee at rest -- and the sign reads CASINO. Pouring,
+with the arm held, a run of lit bulbs chases round the border
+(`SIGN_CHASE_MS` a step, quickening with the pour) while the number climbs.
+Ready, with a stake standing and the arm let go, the sign flashes on a beat
+(`SIGN_FLASH_MS`) between the count and the words CLICK TO DROP -- TAP TO
+DROP on a phone, by `coarse()` -- in the sign's own letters, and the bulbs
+blink all together on the same beat (`SIGN_READY_LIGHTS` picks the blink or
+the chase; both are drawn for the choice). Draining, the number runs down
+as before and the bulbs chase with the drain; and once the sign reads
+CASINO again they go back to the idle swap. A win's strobe and a dud's
+blackout stand over all of it as they do now.
+
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the
 pebble bins, crops from the crop bins, ore from the ore bins, a spark from

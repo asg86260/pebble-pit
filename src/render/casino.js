@@ -17,7 +17,9 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape, deckLayout, deckTop, buttonShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK } from '../config.js';
+import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK, BUTTON_PRESS_MS,
+         SIGN_SWAP_MS, SIGN_CHASE_MS, SIGN_FLASH_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
+import { coarse } from '../prefs.js';
 import { fmt } from '../words.js';
 import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
@@ -59,6 +61,14 @@ const GLYPH = {
   '8': ['0111110', '1000001', '0111110', '1000001', '0111110'],
   '9': ['0111110', '1000001', '0111111', '0000001', '0111110'],
   '.': ['0000000', '0000000', '0000000', '0000000', '0001000'],
+  // and the words the ready sign flashes: CLICK TO DROP, TAP TO DROP
+  L: ['1000000', '1000000', '1000000', '1000000', '1111111'],
+  K: ['1000110', '1011000', '1100000', '1011000', '1000110'],
+  T: ['1111111', '0001000', '0001000', '0001000', '0001000'],
+  D: ['1111100', '1000010', '1000001', '1000010', '1111100'],
+  R: ['1111110', '1000001', '1111110', '1001000', '1000110'],
+  P: ['1111110', '1000001', '1111110', '1000000', '1000000'],
+  ' ': ['000', '000', '000', '000', '000'],
   'k': ['1000010', '1001100', '1110000', '1001100', '1000010'],
   'm': ['0000000', '0000000', '1101100', '1010010', '1000010']
 };
@@ -77,17 +87,37 @@ const signY = () => casino.y + (HOPPER_H + GATE_H + DECK_H) * P;
 // What the sign says: CASINO, or the stake standing in the funnel -- from
 // the first poured pebble until the drop, rolling through the counter tween
 // so it climbs under the hand and runs down as the pile drains.
-function signWord() {
+// The sign's state: idle (CASINO), pouring (the arm held, the count
+// climbing), ready (a stake standing, the arm let go), or draining (the
+// floor open, the count running down).
+function signState() {
   const standing = S.pot && S.pot.where === 'hopper' && (S.pouring || S.armed || S.drop || S.leverHeld || hopperN() > 0);
-  if (!standing) { return { word: WORD, gap: true }; }
+  if (!standing) return 'idle';
+  if (S.drop) return 'draining';
+  if (S.leverHeld || S.pouring) return 'pouring';
+  return 'ready';
+}
+function signWord() {
+  const state = signState();
+  if (state === 'idle') return { word: WORD, gap: true, state };
+  // ready, the sign flashes between the count and the words, on the beat
+  const face = SIGN_FLASH_FACE ?? Math.floor(now() / SIGN_FLASH_MS) % 2;
+  if (state === 'ready' && face) return { word: coarse() ? 'TAP TO DROP' : 'CLICK TO DROP', gap: false, state };
   const d = S.drop;
   const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.n;
-  return { word: fmt(Math.round(shown('casino:sign', n))), gap: false };
+  return { word: fmt(Math.round(shown('casino:sign', n))), gap: false, state };
 }
 
 function drawSign() {
-  const x = signX(), y = signY(), w = SIGN_W, h = CASINO_SIGN_H;
-  const { word, gap } = signWord();
+  const x = signX(), w = SIGN_W, h = CASINO_SIGN_H;
+  const { word, gap, state } = signWord();
+  // With a count on it the sign is the drop button: the count stands on a
+  // rule, the way a pressable thing is underlined here, and a tap presses
+  // the board down for a beat -- the rule gone, the board a cell lower,
+  // the figures grey. Reading CASINO it lies flat and is nothing to press.
+  const ready = state === 'ready';
+  const pressed = ready && now() - (S.signPressed || -Infinity) < BUTTON_PRESS_MS;
+  const y = signY() + (pressed ? P : 0);
 
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
@@ -98,16 +128,19 @@ function drawSign() {
 
   // the word, along the board, centered; the mid gap is the word's, and
   // a number stands on the gaps alone
-  ctx.fillStyle = '#000';
-  const wordCells = word.length * GLYPH_W + (word.length - 1) * GLYPH_GAP + (gap ? MID_GAP - GLYPH_GAP : 0);
+  ctx.fillStyle = pressed ? PEG_SHADE : '#000';
+  const glyphW = ch => GLYPH[ch][0].length;
+  const wordCells = word.split('').reduce((n, ch) => n + glyphW(ch), 0) + (word.length - 1) * GLYPH_GAP + (gap ? MID_GAP - GLYPH_GAP : 0);
   let left = Math.floor((SIGN_W - wordCells) / 2);
   word.split('').forEach((ch, n) => {
     const rows = GLYPH[ch];
     for (let r = 0; r < GLYPH_H; r++)
-      for (let c = 0; c < GLYPH_W; c++)
+      for (let c = 0; c < rows[r].length; c++)
         if (rows[r][c] === '1') ctx.fillRect(x + (left + c) * P, y + (SIGN_PAD + r) * P, P, P);
-    left += GLYPH_W + (gap && n === word.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
+    left += glyphW(ch) + (gap && n === word.length / 2 - 1 ? MID_GAP : GLYPH_GAP);
   });
+  // the rule under the count, a cell out each side of it
+  if (ready && !pressed) ctx.fillRect(x + (left - wordCells - GLYPH_GAP - 1) * P, y + (SIGN_PAD + GLYPH_H) * P, (wordCells + 2) * P, Math.max(1, P / 3));
 
   // and the lights, walking round the edge. A whole cell at a time, like
   // everything that moves in this game: a bulb is on or it is off. The chase
@@ -119,8 +152,15 @@ function drawSign() {
   // a dud puts the whole board out and then brings the bulbs back one at a time
   // round the ring, and the chase picks up among the ones that are back. None
   // of it under reduced motion: the chase keeps its step and nothing flashes.
+  // ...and, under "The pour", the marquee carries the state: idle, every
+  // other bulb swapping on a slow beat; pouring or draining, a run chasing
+  // round; ready, the bulbs blinking together on the flash's beat (or
+  // chasing, `SIGN_READY_LIGHTS`).
   const t = now();
-  const step = Math.floor(t / (busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS));
+  const chasing = state === 'pouring' || state === 'draining' || (state === 'ready' && SIGN_READY_LIGHTS === 'chase');
+  const step = Math.floor(t / (chasing ? SIGN_CHASE_MS : busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS));
+  const swap = Math.floor(t / SIGN_SWAP_MS) % 2;
+  const blinkOff = state === 'ready' && !chasing && (SIGN_FLASH_FACE ?? Math.floor(t / SIGN_FLASH_MS) % 2);
   const age = S.hand ? t - S.hand.at : Infinity;
   const edgeAge = t - (S.tableFx.strobeAt || -Infinity);
   const strobe = mayFlash() && ((S.hand?.won && age < CASINO_WIN_MS) ||
@@ -129,7 +169,10 @@ function drawSign() {
     ? Math.max(0, Math.floor((age - CASINO_DARK_MS) / CASINO_RELIGHT_MS)) : Infinity;
   ringCells(w, h).forEach(([cx, cy], i) => {
     if (strobe) { if (Math.floor(t / CASINO_STROBE_MS) % 2) return; }
-    else if (i >= lit || (i + step) % CHASE_EVERY) return;
+    else if (i >= lit) return;
+    else if (state === 'idle') { if ((i + swap) % 2) return; }
+    else if (blinkOff) return;
+    else if (chasing && (i + step) % CHASE_EVERY) return;
     ctx.fillRect(x + cx * P, y + cy * P, P, P);
   });
 }

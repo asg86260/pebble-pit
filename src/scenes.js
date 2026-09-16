@@ -730,6 +730,26 @@ export const SCENES = {
                  window.__pressButton('chip-1k'); window.__clickLever('casino-gate'); window.__holdArm(true);
                  window.__fast(1.0); window.__fakePour(60); window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
+  // The sign as the drop button: a stake standing in the funnel, the arm
+  // let go, the sign raised with the count on it -- and pressed.
+  casinosignready: { about: 'the casino', say: 'the sign ready: a stake in the funnel, the count on the raised board',
+    run: () => { window.__signFace(0); window.__readyLights('blink'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+                 window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
+                 window.__look(st().casinoX - 380); } },
+  // ...its two faces, the count and the words, the bulbs blinking with it;
+  // and the same with the bulbs chasing instead.
+  casinosignwords: { about: 'the casino', say: 'the sign ready, on the words: CLICK TO DROP',
+    run: () => { window.__signFace(1); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+                 window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
+                 window.__look(st().casinoX - 380); } },
+  casinosignchase: { about: 'the casino', say: 'the sign ready, the bulbs chasing instead of blinking',
+    run: () => { window.__signFace(0); window.__readyLights('chase'); window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+                 window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3);
+                 window.__look(st().casinoX - 380); } },
+  casinosignpressed: { about: 'the casino', say: 'the sign pressed: the board down flat, the figures grey',
+    run: () => { window.__casinoStakes(6000); window.__pressButton('chip-1k'); window.__clickLever('casino-gate');
+                 window.__holdArm(true); window.__fast(1.4); window.__holdArm(false); window.__fast(3); window.__pressSign(); window.__fast(0.05);
+                 window.__look(st().casinoX - 380); } },
   // The stake raining in: the arm pulled, the sand coming down out of the
   // sky into the funnel.
   casinopour: { about: 'the casino', say: 'the arm pulled: the stake raining into the funnel',

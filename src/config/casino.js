@@ -223,6 +223,19 @@ export const CASINO_SAY_MS = 4000;        // how long the hand's multiple stands
 // The sign's chase: its idle step, and the quicker one for the whole of a hand,
 // from the chip going down to the tray standing.
 export const CASINO_CHASE_MS = 130;
+// "The pour": the marquee carries the state (DESIGN.md, "The marquee
+// carries the state"). Idle, every other bulb lit, swapping on this beat;
+// pouring, a run of bulbs chasing round the border a step at a time; ready,
+// the sign flashing between the count and CLICK TO DROP on this beat, the
+// bulbs blinking together ('blink') or chasing ('chase') with it.
+export let SIGN_SWAP_MS = 900;
+export let SIGN_CHASE_MS = 90;
+export let SIGN_FLASH_MS = 700;
+export let SIGN_READY_LIGHTS = 'blink';
+export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
+// the flash's face held for a shot: null runs on the beat, 0 the count, 1 the words
+export let SIGN_FLASH_FACE = null;
+export const setFlashFace = f => { SIGN_FLASH_FACE = f; };
 export let CASINO_CHASE_LIVE_MS = 65;
 // The machine sells itself. Every so often, with nobody at it, one grain drops
 // from the hopper and ticks its way down to a bin, then lifts and fades -- a
@@ -291,6 +304,12 @@ export const CASINO_KNOBS = [
     get: () => CASINO_EDGE_STROBE_MS, set: v => { CASINO_EDGE_STROBE_MS = v; } },
   { key: 'CASINO_CHASE_LIVE_MS', label: 'the live chase, ms', min: 20, max: 260, step: 5,
     get: () => CASINO_CHASE_LIVE_MS, set: v => { CASINO_CHASE_LIVE_MS = v; } },
+  { key: 'SIGN_SWAP_MS', label: 'the idle marquee swap, ms', min: 200, max: 3000, step: 50,
+    get: () => SIGN_SWAP_MS, set: v => { SIGN_SWAP_MS = v; } },
+  { key: 'SIGN_CHASE_MS', label: 'the pour chase, ms a step', min: 20, max: 300, step: 5,
+    get: () => SIGN_CHASE_MS, set: v => { SIGN_CHASE_MS = v; } },
+  { key: 'SIGN_FLASH_MS', label: 'the ready flash, ms', min: 200, max: 2000, step: 50,
+    get: () => SIGN_FLASH_MS, set: v => { SIGN_FLASH_MS = v; } },
   { key: 'CASINO_ATTRACT_S', label: 'the attract loop, s', min: 5, max: 120, step: 5,
     get: () => CASINO_ATTRACT_S, set: v => { CASINO_ATTRACT_S = v; } },
   { key: 'CASINO_EVEN_BAND', label: 'even, within', min: 0, max: 0.3, step: 0.01,
