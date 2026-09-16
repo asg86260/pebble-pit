@@ -185,7 +185,11 @@ beside `dev.js` -- draws a button per scene under a heading per part on the
 dev panel's `scenes` tab (`devPane` in dev.js hands out a tab by name; the
 panel is `yard`, `dials`, `scenes`, `frame`). A scene never touches the
 player's save: the first press keeps the store's blob aside, `S.staged` stops
-`persist()` writing, and `my yard` on the tab puts it back. Nothing of it
+`persist()` writing, and `my yard` on the tab puts it back. `scenes.html`
+is the same list as a page of its own: the game framed as `play.html?bench`
+(staged from boot, so the frame never writes, clears or claims the save)
+and every scene down the side, with a filter, `[` `]` to step and the scene
+in the address. Nothing of it
 ships.
 
 ## The desk

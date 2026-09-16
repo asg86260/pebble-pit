@@ -38,6 +38,12 @@ The same list is drawn as buttons on the dev panel's `scenes` tab (backtick) in
 a dev build, so a scene written once is a button and a shot the same day. Add a scene rather
 than hand-driving the same setup twice.
 
+For the **spot check after a large change**, `scenes.html` is the scene bench:
+the game in a frame with every scene down the side -- a filter, `[` and `]`
+to step through them, `r` to stand one again, and the scene in the address
+(`/scenes.html#endgame`). The frame is staged from boot, so it never touches
+the save in the game's own tab.
+
 For anything on a **board**, `cards.html` is the card bench: it draws rows
 from plain objects through the real builder and stylesheet, no yard behind
 them, so a card at its worst bill is a five-second shot
