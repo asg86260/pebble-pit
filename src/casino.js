@@ -989,7 +989,9 @@ export const shownMult = () =>
 export const shownChange = () =>
   S.drop && S.drop.stage === 'pay' ? Math.round(S.drop.paid) - S.drop.stake
     : S.hand ? S.hand.n - S.hand.stake : null;
-export const shownCur = () => 'dust';
+// What the hand has paid so far, by kind, for the box to list.
+export const shownPays = () =>
+  S.drop && S.drop.stage === 'pay' ? S.drop.pays : S.hand ? S.hand.pays : null;
 // The bin paying this beat, for its foot to say so -- or the bin held at a
 // full strip, lit until it can pay.
 export const payingBin = () => {

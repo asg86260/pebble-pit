@@ -8,7 +8,7 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownPays, shownChange, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, findKind,
@@ -24,7 +24,6 @@ import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
-import { drawMark } from './marks.js';
 import { rising as risingAt, withRise } from './rise.js';
 
 // --- the sign -----------------------------------------------------------------
@@ -244,8 +243,7 @@ const DIGIT = {
   // must not say.
   '.': ['0', '0', '0', '0', '1'],
 
-  // times: the mark before a multiple; and up or down, before the change
-  'x': ['000', '101', '010', '101', '000'],
+  // up or down, before the change
   '+': ['000', '010', '111', '010', '000'],
   '-': ['000', '000', '111', '000', '000']
 };
@@ -532,14 +530,16 @@ export function drawSparks() {
 }
 
 // --- what the hand came to ----------------------------------------------------------
-// The multiple and the change, standing beside the foot: "x0.8 -20" with the
-// staked coin's mark, or "x1.3 +30" -- the multiple to a tenth, or whole past
-// ten -- both counting up as the bins pay and then standing for a few seconds,
-// so a board you were not watching still tells you how it went and what it
-// cost. A box wide enough for its words, in the same paper-and-edge as the
-// lab's tick.
-const multText = m => m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toFixed(1);
+// What was won, by kind, standing beside the foot: a line a coin -- the
+// coin's mark in its color and the count -- for the kinds that paid and no
+// other, and under them the change against the stake, up or down; all
+// counting up as the bins pay and then standing for a few seconds, so a
+// board you were not watching still tells you how it went and what it cost.
+// No multiple: a multiple is a number about the bet, and what you see is
+// what landed on the ground. A box wide enough for its words, in the same
+// paper-and-edge as the lab's tick.
 const changeText = d => (d < 0 ? '-' : '+') + String(Math.abs(d));
+const PAY_LINES = ['dust', 'spore', 'shard', 'spark'];
 
 // Its left edge two cells clear of the building's wall, above the foot, so
 // the box grows away from the building rather than into it.
@@ -550,14 +550,15 @@ export function casinoMarkAt() {
 
 export function drawCasinoMark() {
   if (!S.casinoOpen) return;
-  const m = shownMult();
-  if (m == null) return;
+  const pays = shownPays();
+  if (!pays) return;
+  const lines = PAY_LINES.filter(k => pays[k] > 0).map(k => ({ kind: k, text: String(Math.round(pays[k])) }));
+  const change = changeText(shownChange());
   const at = casinoMarkAt();
   const y = at.y + Math.round(Math.sin(now() / 500)) * P;
-  const mult = 'x' + multText(m), change = changeText(shownChange());
-  const cur = shownCur();
-  // the multiple, two cells of air, the change, a cell, and the coin's mark
-  const w = wordW(mult) + 2 + wordW(change) + 1 + 1 + 2, h = DIGIT_H + 2;
+  // a mark, a cell of air, the count; the change line under the lot
+  const w = 1 + Math.max(change.length ? wordW(change) : 0, ...lines.map(l => MARK_CELLS + 1 + wordW(l.text))) + 1;
+  const h = (lines.length + 1) * (DIGIT_H + 1) + 1;
   const left = at.x, top = y - Math.floor(h / 2) * P;
 
   ctx.fillStyle = '#fff';
@@ -565,10 +566,19 @@ export function drawCasinoMark() {
   ctx.lineWidth = Math.max(1, P / 3);
   ctx.strokeStyle = '#000';
   ctx.strokeRect(left, top, w * P, h * P);
+  lines.forEach((l, i) => {
+    const ly = top + (1 + i * (DIGIT_H + 1)) * P;
+    if (l.kind === 'dust') {
+      // a pebble is the counter's square: three cells, black
+      ctx.fillStyle = '#000';
+      ctx.fillRect(left + 2 * P, ly + P, 3 * P, 3 * P);
+    } else {
+      ctx.fillStyle = coinTone(l.kind);
+      cells(MARK[l.kind], left + P, ly);
+    }
+    ctx.fillStyle = '#000';
+    drawWord(l.text, left + (1 + MARK_CELLS + 1) * P, ly);
+  });
   ctx.fillStyle = '#000';
-  drawWord(mult, left + P, top + P);
-  const cx = left + (1 + wordW(mult) + 2) * P;
-  drawWord(change, cx, top + P);
-  drawMark(cur === 'shard' ? SHARD_CELL : cur === 'spore' ? SPORE_CELL : 4,
-           cx + (wordW(change) + 1) * P + P / 2, top + P + (DIGIT_H * P) / 2);
+  drawWord(change, left + P, top + (1 + lines.length * (DIGIT_H + 1)) * P);
 }

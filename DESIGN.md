@@ -1016,6 +1016,13 @@ pebbles in the funnel and what was in the air owed and thrown again.
 `FOOT_H` is the foot's height; `trayShownFor` and its band knobs went with
 the tray.
 
+**The box lists what was won, by kind.** "x0.8 -20" was a number about the
+bet; what the player sees land is pebbles, crops, ore and sparks, so the box
+beside the foot is a line a coin -- the coin's mark in its color and the
+count, for the kinds that paid and no other -- and the change against the
+stake under them. No multiple anywhere on the building; the multiple is
+still on the snapshot for the checks.
+
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
 hold commits a pebble only while an unspent one covers it, the rain's
