@@ -67,9 +67,9 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
     work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, level())),
     buy: () => { step(); after?.(); },
     // While the band's bill names a coin the yard cannot yet get, the card
-    // stays (the rungs bought are on it), greyed, and says what it waits on
-    // where the price would go: `waits` is the words, `dead` stops the press
-    // (`refresh` in shop.js, `coinNeeds`).
+    // stays (the rungs bought are on it), greyed, with its price up: `waits`
+    // is the reason in words, `dead` stops the press (`refresh` in shop.js,
+    // `coinNeeds`).
     waits: () => coinNeeds(coinsAt()),
     dead: () => !coinsOpen(coinsAt()),
     show: () => show() && (bands[bandAt()].gate ? bands[bandAt()].gate() : true)

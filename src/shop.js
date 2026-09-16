@@ -640,16 +640,10 @@ export function refresh(el, list, headcount) {
       grey(row, true); row.classList.add('off');
       continue;
     }
-    // A next rung priced in a coin the yard has no source for yet says what it
-    // is waiting on where the status goes, with no price: a bill in a coin the
-    // player has not met is not a price (`coinNeeds`).
-    if (waits) {
-      row.classList.add('waiting');
-      sayHTML(gain, waits);
-      sayHTML(price, ''); sayHTML(time, '');
-      grey(row, true); row.classList.add('off');
-      continue;
-    }
+    // A next rung priced in a coin the yard has no source for yet shows its
+    // price like any other and stays greyed: the bill is the news, and the
+    // coin on it is the thing to go and get (`coinNeeds`).
+    if (waits) row.classList.add('waiting');
     // On a shelf the gain is the number alone -- the name is the verb.
     const g = gainText(u);
     sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
@@ -657,7 +651,7 @@ export function refresh(el, list, headcount) {
     // The casino's decisions are the only ones: none costs anything, and the
     // number each is about is the pot.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
-    const off = u.price ? !!u.dead?.() : !canPay(u);
+    const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
     grey(row, off);
     // The hover, the lift and the lean key off `off`, never off `disabled`.
     row.classList.toggle('off', off);

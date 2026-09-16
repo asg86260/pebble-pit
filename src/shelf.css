@@ -247,9 +247,8 @@
 .rows.shelves > .tile .tag .cost, .rows.shelves > .tile .tag .time { display: flex; align-items: center; height: 16px; }
 .rows.shelves > .tile .tag .cost { gap: 6px; padding: 0 6px; }
 .rows.shelves > .tile .tag .cost:empty { display: none; }
-/* A tag with nothing in it -- a row waiting on a coin the yard has no
-   source for says so on its gain line and carries no price -- is no tag at
-   all, not an empty box drawn as a dot. */
+/* A tag with nothing in it -- a row with no bill and no clock -- is no tag
+   at all, not an empty box drawn as a dot. */
 .rows.shelves > .tile .tag:has(.cost:empty):has(.time:empty) { display: none; }
 .rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
@@ -266,7 +265,7 @@
    are: a climbed ladder and a site under construction are not "you cannot
    afford this". A ladder waiting on a coin the yard has no source for yet
    (`locked`, set by the board) is, near enough: it is not yours to press
-   either, and says what it needs where its price would go. */
+   either, and its price names the coin to go and get. */
 .rows.shelves > button.tile:has(.tag .short) .what,
 .rows.shelves > button.tile.locked .what { color: #8c8c8c; }
 /* A bill of two or more coins wraps inside its tag, two a line, and the

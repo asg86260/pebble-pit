@@ -16,6 +16,7 @@ feature lives in DESIGN.md.
 - The casino has no board: your dust, ore and crops stand in a pile each beside it and a tap on a pile stakes a tenth of it; the arm, the bank button and the crank on the building play the hand; and banking tips the winnings out on to the ground for you to sweep or the haulers to carry in (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
+- A ladder waiting on a coin the yard has no source for shows its price, greyed, instead of "needs crops" (test/ladder-chain.test.mjs).
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
