@@ -102,7 +102,7 @@ retired fields left `S`. `test/save-floor.test.mjs`; `docs/saves.md` says how
 to add and archive one. Left: `scholars` stays on `S` at nought because
 staffing.js's `JOBS` still lists the lab's job (the lab building itself, its
 rect and `TO_LAB`, is still the dead-code item above); the thirteen
-`<place>Open` booleans are seam 4's.
+`<place>Open` booleans are seam 4's. Red on main at d679e7a, not from this seam: `test/machines.test.mjs` "smoke rises and goes out" (a working jaw puts 0 motes in the air) -- came in with the belt-ladder/stake-heaps landing.
 
 Seam 6, invalidation off the clock, is BUILT (2026-09-16): `S.dirty` and
 its 252 lines are gone, the save writes on its one-second clock, and the
