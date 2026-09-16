@@ -720,6 +720,16 @@ export const SCENES = {
     run: () => { window.__casinoStakes(6000); window.__pressButton('chip-1k');
                  for (let i = 0; i < 3; i++) { window.__clickLever('casino-gate'); window.__casinoHand(); }
                  window.__fast(2); window.__look(st().casinoX - 380); } },
+  // "The pour", drawn before it is built: the arm held down with the stake
+  // piling up in the funnel under it, the eleven feet wearing the coins'
+  // marks and the multiples, and the last hand's pay pouring out of the
+  // foot's hatch in its own kinds on to the heap at the building's left.
+  casinopourdesign: { about: 'the casino', say: 'the pour: the arm held, the stake piling in the funnel, the pay pouring out of the foot',
+    run: () => { window.__casinoStakes(6000);
+                 for (let i = 0; i < 4; i++) { window.__fakePour(60); window.__fast(1.2); }
+                 window.__pressButton('chip-1k'); window.__clickLever('casino-gate'); window.__holdArm(true);
+                 window.__fast(1.0); window.__fakePour(60); window.__fast(0.4);
+                 window.__look(st().casinoX - 380); } },
   // The stake raining in: the arm pulled, the sand coming down out of the
   // sky into the funnel.
   casinopour: { about: 'the casino', say: 'the arm pulled: the stake raining into the funnel',

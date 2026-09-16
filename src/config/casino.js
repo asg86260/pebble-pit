@@ -40,6 +40,12 @@ export let CASINO_HANDFUL = 16;
 // asserts the sum, so a bin cannot be moved on its own.
 export const CASINO_PEG_ROWS = 10;
 export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
+// "The pour" (design, not built): what each bin's foot wears. A coin's name
+// is a bin that pays in that coin -- a spark bin one spark a drop, a crop
+// or ore bin the pebbles in it converted by worth -- and a number is a
+// multiple on pebbles. Drawn on the feet now; the pays above are still what
+// the machine pays until the pour is built.
+export const CASINO_BIN_FACE = ['spark', 'shard', 'spore', 3, 1, 0.5, 1, 3, 'spore', 'shard', 'spark'];
 
 // --- the building, in cells, top to bottom -------------------------------------------
 // The hopper on the roof, where the stake stands: a funnel, the building's
@@ -155,10 +161,13 @@ export const DECK_GROUPS_W = [
   columns(CASINO_CHIPS.map(c => wordCells(chipLabel(c))), 2) + DECK_BUTTON_GAP + WINDOW_CELLS + 2 * (DECK_PAD + 1),
   columns([GLYPH_CELLS, GLYPH_CELLS], 1) + 2 * (DECK_PAD + 1)
 ].map(atLeastLabel);
-export const DECK_CELLS = DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP;
+// The deck is drawn for the record and no longer stands: "The pour" has no
+// buttons, and the building is the field's width.
+export const CASINO_DECK = false;
+export const DECK_CELLS = CASINO_DECK ? DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP : 0;
 export const GROUP_H = 2 * capW(GLYPH_CELLS) + DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
 export const LABEL_ROWS = DECK_LABELS ? DIGIT_H + 1 : 0;
-export const DECK_H = 1 + GROUP_H + LABEL_ROWS + 1;
+export const DECK_H = CASINO_DECK ? 1 + GROUP_H + LABEL_ROWS + 1 : 0;
 // ...which is what sets the building's margin past the field, and with it
 // the hopper's width and its funnel's profile: the walls step in evenly
 // from the rim to the floor.

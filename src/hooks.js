@@ -48,6 +48,18 @@ import { dealHand, potAt } from './casino.js';
 import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
 import { table } from './state.js';
 import { pressButton, BUTTONS, panelLayout } from './levers.js';
+import { tray } from './state.js';
+import { SPARK_CELL } from './config.js';
+function fakePour(n) {
+  const kinds = [1, 2, 3, 4, SHARD_CELL, SPORE_CELL, SPARK_CELL];
+  for (let i = 0; i < n; i++) {
+    const k = i % 5 === 0 ? SHARD_CELL : i % 7 === 0 ? SPORE_CELL : i === 3 ? SPARK_CELL : kinds[i % 4];
+    const x = tray.x, y = tray.y + tray.rows * P - P;
+    S.tableAir.push({ x, y, s: k, t: 0, worth: 1, lands: 'ground', big: true,
+      arc: { x0: x, y0: y, x1: x - P * (6 + (i % 9) * 3), y1: S.groundY - P, k: (i % 10) / 16, high: P * (4 + (i % 4) * 2), ms: 2400 } });
+  }
+  S.pouringOut = true;
+}
 import { setDeadLook } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -914,6 +926,12 @@ export const HANDLES = {
   __holdControl: key => { S.leverPulled = { key, at: clockNow() + 60000 }; },
   // the dead chip's look, for the shots that put the two side by side
   __deadLook: hollow => setDeadLook(hollow),
+  // the arm held down, for a scene of the pour
+  // (held, the floor does not open: the drop is the release)
+  __holdArm: on => { S.leverHeld = on ? 'casino-gate' : null; if (on) S.armed = false; },
+  // a pour out of the foot faked for a scene: grains of every kind lobbed
+  // out of the hatch on to the ground at the building's left
+  __fakePour: (n = 40) => fakePour(n),
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
   __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
   // where a button stands, in the world: the middle of its recess

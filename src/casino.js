@@ -40,11 +40,11 @@ import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, CASINO_CHIPS, DECK_H, sho
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
-import { S, pit, casino, table, tray } from './state.js';
+import { S, pit, casino, table, tray, floor } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
-import { shakeView } from './world.js';
+import { shakeView, blocked } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld } from './pit.js';
 import { rand } from './rng.js';
@@ -924,6 +924,9 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         if (k.lands === 'hopper') { k.arc = null; k.vx = 0; k.vy = 0.5; continue; }
+        // a grain poured out of the foot lands on the ground as what it is
+        // (drawn for the design; the pour itself is not built)
+        if (k.lands === 'ground') { addGrain(floor, a.x1, blocked, k.s); S.tableAir.splice(i, 1); continue; }
         // One square off the tray is worth its band, and the hole is paid
         // that many grains as it lands: down there the pile *is* the dust.
         for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;

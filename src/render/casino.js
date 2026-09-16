@@ -11,12 +11,12 @@ import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownC
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
-         BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
+         BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_BIN_FACE, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape, deckLayout, deckTop, buttonShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW } from '../config.js';
+import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK } from '../config.js';
 import { fmt } from '../words.js';
 import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
@@ -175,13 +175,14 @@ const LABEL_ROW = 2;                                     // under the floor line
 // inner slot is five cells: ".5" squeezed into three read as a six, and a one
 // over a two in five by five read as a W.
 const labelOf = m => m === 0.5 ? '.5' : String(m);
+// a foot's face: a coin's mark, or the multiple
+const faceW = f => typeof f === 'string' ? MARK_CELLS : wordW(labelOf(f));
 
 function drawLabels(fx, fy) {
   const top = fy + (FIELD_H + BIN_H) * P;
   const paying = payingBin();
-  CASINO_BINS.forEach((m, b) => {
-    const word = labelOf(m);
-    const col = binLeft(b) + (slotW(b) - wordW(word)) / 2;
+  CASINO_BIN_FACE.forEach((m, b) => {
+    const col = binLeft(b) + Math.floor((slotW(b) - faceW(m)) / 2);
     // the foot of the bin paying this beat goes white on black, so the eye is
     // led through the settlement from the middle outward
     if (b === paying) {
@@ -189,7 +190,8 @@ function drawLabels(fx, fy) {
       ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
       ctx.fillStyle = '#fff';
     } else ctx.fillStyle = '#000';
-    drawWord(word, fx + col * P, top + LABEL_ROW * P);
+    if (typeof m === 'string') cells(MARK[m], fx + col * P, top + LABEL_ROW * P);
+    else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
 }
@@ -303,9 +305,13 @@ export function drawCasino() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
 
-    // The deck of buttons under the funnel, and the arm on its right wall:
-    // black when it can be worked or is the chosen one, grey when it cannot.
-    drawDeck();
+    // The foot's hatch, open while the pay pours out of it on to the
+    // ground: white, a way through like every opening here.
+    if (S.pouringOut) { ctx.fillStyle = '#fff'; ctx.fillRect(x, tray.y + (tray.rows - 3) * P, P, 3 * P); }
+    // The arm on the wall beside the funnel, black when it can be pulled
+    // (and while it is held), grey when it cannot; the deck of buttons
+    // only if it still stands.
+    if (CASINO_DECK) drawDeck();
     for (const l of LEVERS) drawControl(l);
     ctx.fillStyle = '#000';
   });

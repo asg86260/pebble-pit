@@ -9,7 +9,7 @@
 
 import { P, HOPPER_H, GATE_H, wordCells, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_HIT, LEVER_SWING_MS, BUTTON_PRESS_MS,
          PANEL_COINS, CASINO_CHIPS, MARK_CELLS, GLYPH_CELLS, WINDOW_CELLS, CAP_PAD, DIGIT_H,
-         DECK_GROUP_GAP, DECK_BUTTON_GAP, DECK_PAD, GROUP_H, LABEL_ROWS, GROUP_LABELS } from './config.js';
+         DECK_GROUP_GAP, DECK_BUTTON_GAP, DECK_PAD, GROUP_H, LABEL_ROWS, GROUP_LABELS, CASINO_DECK } from './config.js';
 import { S, casino } from './state.js';
 import { canLet, letGo, canBank, bank, canPick, pickCoin, pickChip, coinOpen, chipCovered, sameBet, canSame } from './casino.js';
 import { now } from './clock.js';
@@ -20,7 +20,7 @@ import { coarse } from './prefs.js';
 // right wall, under the funnel's rim.
 export const LEVERS = [
   { key: 'casino-gate', name: 'the arm', kind: 'arm',
-    side: 'right', row: () => HOPPER_H + GATE_H + 3, live: canLet, pull: letGo }
+    side: 'right', row: () => HOPPER_H - 2, live: canLet, pull: letGo }
 ];
 
 // The deck's buttons, in their groups: COIN, BET with the window, PLAY.
@@ -63,6 +63,7 @@ export const deckTop = () => casino.y + (HOPPER_H + GATE_H) * P;
 const GROUP_COLS = [2, 2, 1];
 export function deckLayout() {
   const groups = [], caps = [];
+  if (!CASINO_DECK) return { groups, caps };
   const capW = b => (b.w + 2 * CAP_PAD) * P, capH = b => (b.h + 2 * CAP_PAD) * P;
   const plan = g => {
     const cols = GROUP_COLS[g];
@@ -130,6 +131,9 @@ const since = key => S.leverPulled && S.leverPulled.key === key ? now() - S.leve
 // and lying at the bottom of the swing when dead.
 export function leverShape(l) {
   const live = l.live();
+  // held down: the arm at the bottom of its swing, black, for as long as
+  // the hand is on it ("The pour": the stake pours while it is held)
+  if (S.leverHeld === l.key) return { live: true, angle: ARM_SWING };
   const t = since(l.key) / LEVER_SWING_MS;
   // the pull itself is drawn black to the bottom of the swing whether or
   // not the hand it let go has already made the arm dead; a dead arm then
