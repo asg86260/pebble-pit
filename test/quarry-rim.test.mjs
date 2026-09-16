@@ -37,8 +37,11 @@ group('the gang from the rim-refresh save goes into the cut, not off across the 
   ok(quarriers().every(w => !inCut(w)), 'the save has them out of the cut to begin with');
   // Nobody keeps walking away from the cut. Before the fix the gang headed for
   // x=0 and just kept going -- hundreds of pixels further left every second,
-  // never turning round. The cut's own left wall, less a body's saved lead-in,
-  // is the line a body on its way IN never crosses.
+  // never turning round. The cut is to the gang's right, so a body on its way
+  // IN is never further left than where the save stood it, give or take an
+  // elbow. Measured off the save rather than off the cut's wall, because the
+  // wall moves with the yard's layout and the save's bodies do not.
+  const startLeft = Math.min(...quarriers().map(w => w.x));
   let leftmost = Infinity;
   for (let i = 0; i < 40; i++) { run(0.25); leftmost = Math.min(leftmost, ...quarriers().map(w => w.x)); }
   // They are down in the cut and digging: the count climbs over a window short
@@ -48,7 +51,7 @@ group('the gang from the rim-refresh save goes into the cut, not off across the 
   const went = runUntil(() => (S_.quarryTotal || 0) > before + 3, 6);
   return [
     ok(quarriers().length === 5, 'all five come back', `${quarriers().length}`),
-    ok(leftmost > quarry.x - 700, 'none runs off across the yard', `leftmost ${Math.round(leftmost)} vs cut left ${Math.round(quarry.x)}`),
+    ok(leftmost >= startLeft - WORKER * 2, 'none runs off across the yard', `leftmost ${Math.round(leftmost)} vs started at ${Math.round(startLeft)}`),
     ok(working >= 4, 'they end up down in the cut', `${working} of 5 in the walls`),
     ok(went, 'and the cut is being dug', `${before} -> ${dug()}`)
   ];
