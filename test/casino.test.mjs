@@ -1,50 +1,63 @@
-// The stake is a heap you carry, and the casino has no board.
+// The stake is dust you sweep, and the casino has no board.
 //
-// Heaps of each coin stand beside the building in the chip sizes; you lift
-// one the way you lift a body, carry it to the hopper and let it go over the
-// rim, and it pours in. The gate lever opens the floor: the whole pile drains
-// into the machine and a handful of pebbles comes out of the throat and down
-// the pegs, each carrying its share of the stake, into the drop's fair bins.
-// The bins pay into the tray; the chute tips the tray out on to the ground
-// for the haulers, or the crank winds it back up for another hand. See
-// DESIGN.md, "The handful" and "The stake is a heap you carry".
+// One pile a coin stands beside the building: the purse itself, at the
+// table's band ladder, each grain worth its band. You sweep grains off it
+// the way you sweep dust anywhere in the yard and let them go over the
+// hopper's rim, and they are the stake. The arm opens the floor: the whole
+// pile drains into the machine and a handful of pebbles comes out of the
+// throat and down the pegs, each carrying its share of the stake, into the
+// drop's fair bins. The bins pay into the tray; the button tips the tray out
+// on to the ground for the haulers, or the crank winds it back up for
+// another hand. See DESIGN.md, "The handful" and "The stake is a heap you
+// carry".
 //
 // These check the mechanism a hand at a time, done the way a player does it:
-// the lift, the carry, the drop, the three levers. The spread the bet hangs on
-// is measured two thousand hands at a time in handful.test.mjs.
+// the sweep off the pile, the let-go at the rim, the three controls. The
+// sweep here is the two calls the pointer makes (`__sweep`, `__let`); the
+// real drag on a desk and on a phone is in selftest/casino.js. The spread
+// the bet hangs on is measured two thousand hands at a time in
+// handful.test.mjs.
 
 import { yard, group, ok, state, run, runUntil, quickCrew } from './helpers.mjs';
 import { CASINO_BINS, CASINO_HANDFUL, CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, PILE_LIMIT,
          shownFor } from '../src/config.js';
 
 // The table, opened without the dust it costs, with dust in the hole to stake
-// out of, and the heaps rained in and standing.
+// out of, and the piles rained in and standing.
 function atTheTable(dust = 6000) {
   window.__reset();
   window.__casino(true);
   window.__give(dust);
   window.__build();
-  runUntil(() => heaps().every(h => !h.standing || h.grains >= h.want), 20);
+  runUntil(() => piles().every(h => h.grains >= h.want), 20);
 }
-const heaps = () => state().stakes;
-const heap = (cur, chip) => heaps().find(h => h.cur === cur && h.chip === chip);
+const piles = () => state().stakes;
+const pile = cur => piles().find(h => h.cur === cur);
 
-// A heap lifted, carried to the rim and let go there, and the pour settled:
-// the pot standing in the hopper, the gate lever live.
-function stakeHeap(cur, chip) {
-  const up = window.__liftStake(cur, chip);
+// One grain swept off a pile and let go over the rim, the way a drag does
+// it, and the grain down: true when it went into the funnel.
+function sweepOne(cur = 'dust') {
+  const at = window.__stakeAt(cur);
   const rim = window.__rim();
-  window.__carryTo(rim.x, rim.y);
-  const dropped = window.__dropAt(rim.x, rim.y);
-  runUntil(() => !state().pouring, 30);
-  return up && dropped;
+  const held = window.__sweep(at.x, at.y);
+  window.__let(rim.x, rim.y);
+  runUntil(() => !state().inHand && state().chips === 0, 5);
+  return held > 0;
 }
 
-// A hand from the gate lever to the tray standing, watching the bins on the
-// way: the counts the moment the last pebble is still, so the pay can be
-// checked against them; and whether any grain ever faded, anywhere, while
-// the hand was on the board, which none may -- sand leaves the hopper through
-// the gate and nowhere else.
+// This many grains swept in, a drag a grain, and the pour settled: the pot
+// standing in the hopper, the arm live.
+function stakeGrains(n, cur = 'dust') {
+  const got = window.__casinoStake(n, cur);
+  runUntil(() => !state().pouring, 30);
+  return got === n;
+}
+
+// A hand from the arm to the tray standing, watching the bins on the way:
+// the counts the moment the last pebble is still, so the pay can be checked
+// against them; and whether any grain ever faded, anywhere, while the hand
+// was on the board, which none may -- sand leaves the hopper through the gate
+// and nowhere else.
 function playHand() {
   const stood = state().table;
   const pulled = window.__clickLever('casino-gate');
@@ -55,7 +68,8 @@ function playHand() {
     if (!d) continue;
     sent = Math.max(sent, d.sent);
     fell = Math.max(fell, d.falling);
-    if (d.stage === 'drop') faded += yard.S.tableAir.filter(k => k.fade).length;
+    // (a pile beside the building fading to a smaller purse is its own affair)
+    if (d.stage === 'drop') faded += yard.S.tableAir.filter(k => k.fade && k.stake == null).length;
     if (d.stage === 'hold' && !bins) bins = d.bins.slice();
   }
   return { pulled, bins, sent, fell, faded, stood, s: state() };
@@ -82,129 +96,132 @@ group('the bin table is fair to the pebble', async () => {
   ];
 });
 
-group('the heaps stand only when the purse covers them', async () => {
+group('one pile a coin: the purse at its band, a grain worth its share', async () => {
   atTheTable(6000);
-  const before = heaps();
-  const dust = h => h.cur === 'dust';
+  const fresh = piles();
+  const dust = pile('dust');
   const gone = ['chip', 'stakedust', 'stakeshard', 'stakespore', 'letgo', 'bank', 'ride'];
   const rows = window.__rows().filter(r => gone.includes(r.key)).map(r => r.key);
-  // the pour spends a hundred; the heap stands again after, since the purse
-  // still covers it, rained back in
-  stakeHeap('dust', 100);
-  runUntil(() => heap('dust', 100).grains >= heap('dust', 100).want, 20);
-  const after = heap('dust', 100);
+  const at = window.__stakeAt('dust');
+  const underHand = window.__dustUnder(at.x, at.y);
+  // the quarry stands and ore is a coin: a pile of it rains in
+  window.__crew(0, 0, 1);
+  window.__grant({ shards: 500 });
+  runUntil(() => pile('shard').grains >= pile('shard').want && pile('shard').want > 0, 20);
+  const ore = pile('shard');
+  // the purse shrinks and the pile fades to the new band
+  window.__grant({ shards: -450 });
+  runUntil(() => pile('shard').grains <= pile('shard').want, 20);
+  const less = pile('shard');
   return [
-    ok(before.filter(dust).every(h => h.standing), 'every dust heap stands on six thousand',
-       before.filter(dust).map(h => `${h.chip}:${h.standing}`).join(',')),
-    ok(before.filter(dust).every(h => h.grains === h.want && h.want === shownFor(h.n)),
-       'each at the band of what it is', before.filter(dust).map(h => `${h.chip}:${h.grains}/${h.want}`).join(',')),
-    ok(heap('dust', 1000).grains > heap('dust', 100).grains && heap('dust', 'all').grains >= heap('dust', 1000).grains,
-       'the thousand visibly bigger than the hundred, and the all-in the biggest'),
-    ok(before.filter(h => !dust(h)).every(h => !h.standing && h.grains === 0),
-       'and no heap of a coin the yard has not handed out'),
-    ok(after.standing && after.grains === after.want, 'a heap staked stands again after the pour',
-       `${after.grains} of ${after.want}`),
+    ok(fresh.length === 3 && fresh.map(h => h.cur).join(',') === 'dust,shard,spore', 'three plots, one a coin',
+       fresh.map(h => h.cur).join(',')),
+    ok(dust.grains === dust.want && dust.want === shownFor(6000), 'the dust pile is the purse at the band',
+       `${dust.grains} of ${dust.want}`),
+    ok(dust.worth === Math.round(6000 / shownFor(6000)), 'and a grain of it is worth its share', `${dust.worth}`),
+    ok(fresh.filter(h => h.cur !== 'dust').every(h => h.grains === 0 && h.want === 0),
+       'no pile of a coin the yard has not handed out'),
+    ok(underHand, 'a finger on the pile finds dust to sweep'),
+    ok(ore.grains === shownFor(500) && ore.worth === Math.round(500 / shownFor(500)),
+       'ore stands once the quarry does, at its band', `${ore.grains} worth ${ore.worth}`),
+    ok(less.grains === shownFor(50) && less.want === shownFor(50), 'and shrinks with the purse', `${less.grains}`),
     ok(!rows.length, 'and the casino has no rows on any board', rows.join(','))
   ];
-});
+}, { reload: false });                                // sand is never saved: a reload re-rains the piles
 
-group('a heap let go over the rim pours the pot in, to the grain', async () => {
+group('grains swept off the pile and let go over the rim are the stake, to the grain', async () => {
   atTheTable();
   const held = state().stored;
-  const up = window.__liftStake('dust', 100);
+  const worth = pile('dust').worth;
+  const at = window.__stakeAt('dust');
+  const up = window.__sweep(at.x, at.y);
   const lifted = state();
   const rim = window.__rim();
-  window.__carryTo(rim.x, rim.y);
-  const dropped = window.__dropAt(rim.x, rim.y);
+  window.__let(rim.x, rim.y);
+  runUntil(() => state().pot !== null, 5);
   const down = state();
   let sawAir = 0;
   for (let i = 0; i < 600 && state().pouring; i++) { run(1 / 60); if (state().tableAir > 0) sawAir++; }
-  const stood = state();
+  const one = state();
+  const more = stakeGrains(4);
+  const five = state();
   return [
-    ok(up && lifted.inHand && lifted.inHand.n === 100 && lifted.stakes.some(h => h.chip === 100 && h.cur === 'dust' && !h.standing && h.grains === 0),
-       'the heap comes up into the hand and the ground where it stood goes bare',
-       JSON.stringify(lifted.inHand)),
-    ok(dropped && down.pot && down.pot.on === 100 && down.pot.where === 'hopper' && down.stored === held - 100,
-       'let go over the rim it is the pot, and the purse is down by the same', JSON.stringify(down.pot)),
-    ok(down.pouring && sawAir > 0, 'and it pours in, grain by grain', `${sawAir} frames with a grain flying`),
-    ok(stood.table === shownFor(100) && stood.tableWant === shownFor(100),
-       'until the pile in the funnel is the pot at the band', `${stood.table}`),
+    ok(up === 1 && lifted.inHand === 1 && lifted.stakes[0].grains === shownFor(6000) - 1,
+       'the sweep lifts a grain off the pile on to the cursor', `${up} held, ${lifted.stakes[0].grains} left`),
+    ok(down.pot && down.pot.on === worth && down.pot.where === 'hopper' && down.pot.cur === 'dust',
+       'let go over the rim it is the pot, worth its band', JSON.stringify(down.pot)),
+    ok(down.stored === held - worth, 'and the purse is down by the same', `${down.stored} vs ${held - worth}`),
+    ok(down.pouring && sawAir > 0, 'and the hopper walks to it, grain by grain', `${sawAir} frames with a grain flying`),
+    ok(one.table === shownFor(worth) && one.tableWant === shownFor(worth),
+       'until the pile in the funnel is the pot at the band', `${one.table}`),
+    ok(more && five.pot.on === worth * 5 && five.pot.stake === worth * 5 && five.stored === held - worth * 5,
+       'each grain after adds its worth to the pot', JSON.stringify(five.pot)),
+    ok(five.table === shownFor(worth * 5), 'and the funnel grows to the band of the sum', `${five.table}`),
+    ok(pile('dust').grains === pile('dust').want, 'the pile stands again, rained back to its band',
+       `${pile('dust').grains} of ${pile('dust').want}`),
     // the written ladder: one for one to the first band, then a tenfold pot for
     // a band more, never past the brim
     ok(shownFor(CASINO_PILE_ONE * 10) === CASINO_PILE_ONE + CASINO_PILE_BAND && shownFor(1e9) === CASINO_PILE_BRIM,
        'which reads off the band ladder', `${shownFor(1000)}, ${shownFor(1e9)}`),
-    ok(window.__clickLever('casino-gate') !== undefined && state().letting === true,
-       'and the gate lever is live')
+    ok(window.__clickLever('casino-gate') && state().letting === true, 'and the arm is live')
   ];
 }, { reload: false });
 
-group('two heaps make one pot of their sum, and another coin is refused', async () => {
-  atTheTable();
-  window.__crew(0, 0, 1);                             // the quarry stands: ore is a coin
-  window.__grant({ shards: 500 });
-  runUntil(() => heap('shard', 100).grains >= heap('shard', 100).want, 20);
-  const held = state().stored, ore = state().shards;
-  stakeHeap('dust', 100);
-  stakeHeap('dust', 10);
-  const two = state();
-  const rim = window.__rim();
-  const up = window.__liftStake('shard', 100);
-  window.__carryTo(rim.x, rim.y);
-  window.__dropAt(rim.x, rim.y);
-  const refused = state();
-  runUntil(() => !state().inHand, 10);
-  runUntil(() => heap('shard', 100).grains >= heap('shard', 100).want, 20);
-  const back = state();
-  return [
-    ok(two.pot && two.pot.on === 110 && two.pot.stake === 110 && two.stored === held - 110,
-       'a second heap adds to the pot standing in the hopper', JSON.stringify(two.pot)),
-    ok(two.table === shownFor(110), 'and the pile grows to the band of the sum', `${two.table}`),
-    ok(up && refused.inHand && refused.inHand.returning,
-       'a heap of another coin bounces off the rim', JSON.stringify(refused.inHand)),
-    ok(refused.pot.on === 110 && refused.pot.cur === 'dust' && refused.shards === ore,
-       'the pot and the ore are as they were'),
-    ok(!back.inHand && heap('shard', 100).standing && heap('shard', 100).grains === heap('shard', 100).want,
-       'and it goes back where it came from')
-  ];
-}, { reload: false });
-
-group("the hopper's pot lifted out again returns the purse", async () => {
+group('another coin is refused at the rim, and grains swept out of the bowl go home', async () => {
   atTheTable();
   window.__dig(23);
-  const held = state().stored;
-  stakeHeap('dust', 100);
-  const up = window.__liftPot();
+  window.__crew(0, 0, 1);                             // the quarry stands: ore is a coin
+  window.__grant({ shards: 500 });
+  runUntil(() => pile('shard').grains >= pile('shard').want && pile('shard').want > 0, 20);
+  const held = state().stored, ore = state().shards;
+  stakeGrains(5);
+  const pot = state().pot.on;
+  // a grain of ore over the rim
+  const at = window.__stakeAt('shard');
+  const rim = window.__rim();
+  const up = window.__sweep(at.x, at.y);
+  window.__let(rim.x, rim.y);
+  let arcs = 0;
+  for (let f = 0; f < 60 * 5 && (state().inHand || state().chips || state().homing); f++) { run(1 / 60); if (state().homing) arcs++; }
+  const refused = state();
+  // and a grain of the pot swept out of the bowl and dropped on the ground
+  const bowl = window.__bowlAt();
+  const out = window.__sweep(bowl.x, bowl.y);
   const lifted = state();
-  const spot = window.__stakeAt('dust', 1000);
-  window.__carryTo(spot.x, spot.y - 60);
-  window.__dropAt(spot.x, spot.y - 60);
-  run(0.5);
-  const flying = state();
-  runUntil(() => state().refund == null && state().tableAir === 0, 30);
+  window.__let(at.x - 60, at.y - 120);
+  let home = 0;
+  for (let f = 0; f < 60 * 5 && (state().inHand || state().chips || state().homing); f++) { run(1 / 60); if (state().homing) home++; }
+  runUntil(() => !state().pouring, 30);
   const back = state();
   return [
-    ok(up && lifted.inHand && lifted.inHand.kind === 'pot' && lifted.inHand.n === 100 && lifted.pot === null && lifted.table === 0,
-       'the whole pot comes up out of the hopper and the bowl is bare', JSON.stringify(lifted.inHand)),
-    ok(flying.tableAir > 0 && flying.refund > 0, 'let go on the ground it flies to the hole',
-       `${flying.tableAir} in the air, ${flying.refund} to go`),
-    ok(back.stored === held, 'and the purse is as it was, to the grain', `${back.stored} vs ${held}`),
-    ok(back.pot === null && !back.inHand, 'with nothing on the table')
+    ok(pot === pile('dust').worth * 5, 'five grains of dust are the pot', `${pot}`),
+    ok(up === 1 && arcs > 0, 'a grain of ore let go over the rim arcs home to its pile', `${up} held, ${arcs} frames homing`),
+    ok(refused.pot.on === pot && refused.pot.cur === 'dust' && refused.shards === ore,
+       'the pot and the ore are as they were', JSON.stringify(refused.pot)),
+    ok(pile('shard').grains === pile('shard').want, 'and the ore pile stands as it did'),
+    ok(out === 1 && lifted.pot.on === pot - 1 && lifted.table === shownFor(pot) - 1,
+       'a grain swept out of the bowl takes its worth off the pot', `${lifted.pot.on} on, ${lifted.table} in the bowl`),
+    ok(home > 0 && back.stored === held - pot + 1, 'dropped on the ground it goes home and the purse rises',
+       `${home} frames homing, ${back.stored} vs ${held - pot + 1}`),
+    ok(back.pot.on === pot - 1 && back.table === shownFor(pot - 1), 'and the pot is what stands in the bowl',
+       `${back.pot.on}, ${back.table}`)
   ];
 }, { reload: false });
 
 // A hand is longer than the reload harness's five seconds and is one
 // particular handful on the pegs -- a save writes the pot down and a load
 // pours it back into the hopper -- so these follow it without the harness.
-group('the gate lever plays the hand: a handful of pebbles for every stake', async () => {
+group('the arm plays the hand: a handful of pebbles for every stake', async () => {
   atTheTable();
-  stakeHeap('dust', 100);
+  stakeGrains(5);
+  const on = state().pot.on;
   const hand = playHand();
   const s = hand.s;
-  const expect = hand.bins ? owed(hand.bins, 100) : -1;
+  const expect = hand.bins ? owed(hand.bins, on) : -1;
   return [
-    ok(hand.pulled, 'the gate lever opens the floor'),
-    ok(hand.stood === shownFor(100), 'on a pile at the band of the stake', `${hand.stood}`),
-    ok(hand.sent === Math.min(100, CASINO_HANDFUL) && hand.bins && hand.bins.reduce((a, b) => a + b, 0) === CASINO_HANDFUL,
+    ok(hand.pulled, 'the arm opens the floor'),
+    ok(hand.stood === shownFor(on), 'on a pile at the band of the stake', `${hand.stood}`),
+    ok(hand.sent === Math.min(on, CASINO_HANDFUL) && hand.bins && hand.bins.reduce((a, b) => a + b, 0) === CASINO_HANDFUL,
        'and exactly a handful of pebbles reaches the bins', `${hand.sent} sent, ${hand.bins && hand.bins.join(',')}`),
     ok(hand.fell > 1, 'as a cascade, several on the board at once', `${hand.fell} at most`),
     ok(hand.faded === 0, 'and nothing fades, in the field or over the hopper: the pile drains through the gate',
@@ -214,32 +231,37 @@ group('the gate lever plays the hand: a handful of pebbles for every stake', asy
        "to the sum of each pebble's bin, to the grain",
        `${s.pot && s.pot.on} on the row, ${expect} owed by ${hand.bins && hand.bins.join(',')}`),
     ok(s.tray === shownFor(expect), 'and the tray stands at the band of what was paid', `${s.tray} for ${expect}`),
-    ok(s.hand && Math.abs(s.hand.mult - expect / 100) < 0.01, 'and the box says the multiple', s.hand && `${s.hand.mult}`)
+    ok(s.hand && Math.abs(s.hand.mult - expect / on) < 0.01, 'and the box says the multiple', s.hand && `${s.hand.mult}`)
   ];
 }, { reload: false });
 
-group('a chip of ten is ten pebbles, and a big stake the same handful', async () => {
-  atTheTable(60000);
-  stakeHeap('dust', 10);
+group('a stake of ten is ten pebbles, and a big stake the same handful', async () => {
+  // on a purse of a hundred a grain is one, so ten grains are a stake of ten
+  atTheTable(100);
+  stakeGrains(10);
   const ten = playHand();
   runUntil(() => !state().pouring, 20);
   window.__clickLever('casino-chute');
   runUntil(() => !state().paying && state().tableAir === 0, 30);
   window.__clearFloor();
-  stakeHeap('dust', 1000);
+  // and on a rich one a grain is worth two hundred
+  window.__give(60000);
+  runUntil(() => pile('dust').grains >= pile('dust').want && pile('dust').worth > 100, 20);
+  stakeGrains(5);
+  const on = state().pot.on;
   const big = playHand();
   return [
-    ok(ten.stood === 10 && ten.bins && ten.bins.reduce((a, b) => a + b, 0) === 10, 'ten pebbles for the ten chip',
+    ok(ten.stood === 10 && ten.bins && ten.bins.reduce((a, b) => a + b, 0) === 10, 'ten pebbles for a stake of ten',
        `${ten.stood} stood, ${ten.bins && ten.bins.join(',')}`),
-    ok(big.stood === shownFor(1000) && big.bins && big.bins.reduce((a, b) => a + b, 0) === CASINO_HANDFUL,
-       'a thousand stands as its band and drops the handful', `${big.stood} stood, ${big.bins && big.bins.join(',')}`),
+    ok(on >= 900 && big.stood === shownFor(on) && big.bins && big.bins.reduce((a, b) => a + b, 0) === CASINO_HANDFUL,
+       'a thousand stands as its band and drops the handful', `${on} staked, ${big.stood} stood, ${big.bins && big.bins.join(',')}`),
     ok(ten.faded === 0 && big.faded === 0, 'nothing fades either time')
   ];
 }, { reload: false });
 
 group('the crank hoists the tray back to the hopper and the next hand is off the new stake', async () => {
   atTheTable();
-  stakeHeap('dust', 100);
+  stakeGrains(5);
   const first = playHand().s;
   const on = first.pot ? first.pot.on : 0;
   const wound = window.__clickLever('casino-crank');
@@ -266,13 +288,13 @@ group('the crank hoists the tray back to the hopper and the next hand is off the
   ];
 }, { reload: false });
 
-// Banking is a heap on the ground, and the crew carries it in. The chute
+// Banking is a heap on the ground, and the crew carries it in. The button
 // tips the tray on to the casino's strip -- a tray grain lands as the grains
 // it is worth -- and the counter moves as the haulers' loads land in the hole.
-group('the chute tips the tray on to the strip and the haulers carry it to the hole', async () => {
+group('the button tips the tray on to the strip and the haulers carry it to the hole', async () => {
   atTheTable();
   window.__dig(23);
-  stakeHeap('dust', 100);
+  stakeGrains(5);
   const s = playHand().s;
   const on = s.pot ? s.pot.on : 0;
   const held = state().stored;
@@ -288,7 +310,7 @@ group('the chute tips the tray on to the strip and the haulers carry it to the h
   const carried = runUntil(() => state().stored >= held + on, 240);
   const landed = state();
   return [
-    ok(on > 0 && took, 'there is a pot to take, and the chute lever opens it', `${on}`),
+    ok(on > 0 && took, 'there is a pot to take, and the button opens the chute', `${on}`),
     ok(!!strip && strip.to <= s.casinoX, 'the casino has a strip on the ground at its left',
        strip && `${strip.from}..${strip.to}, building at ${s.casinoX}`),
     ok(flying.tableAir > 0 && flying.paying !== null, 'opening it puts the tray in the air',
@@ -307,7 +329,7 @@ group('the chute tips the tray on to the strip and the haulers carry it to the h
 group('a full strip holds the chute', async () => {
   atTheTable();
   window.__dig(23);
-  stakeHeap('dust', 100);
+  stakeGrains(5);
   const s = playHand().s;
   const on = s.pot ? s.pot.on : 0;
   const strip = state().piles.find(p => p.key === 'casino');
@@ -319,27 +341,27 @@ group('a full strip holds the chute', async () => {
   const held = state();
   window.__clearFloor();
   runUntil(() => !state().paying && state().tableAir === 0, 30);
+  run(0.5);                                          // the ground is counted four times a second
   const after = state();
   return [
-    ok(on > 0 && took, 'the chute is pulled on a pot', `${on}`),
+    ok(on > 0 && took, 'the button is pressed on a pot', `${on}`),
     ok(full.pileMarks.includes('casino'), 'the strip is full and its mark stands', full.pileMarks.join(',')),
     ok(held.paying === on && held.tray > 0, 'so the pot waits in the tray', `${held.paying} still to go, ${held.tray} in the tray`),
     ok(after.paying === null && after.pileCount.casino === on, 'and runs out once there is room', `${after.pileCount.casino} on the ground`)
   ];
 }, { reload: false });
 
-group('every lever is dead mid-hand, and no heap can be lifted', async () => {
+group('every control is dead mid-hand, and the bowl cannot be swept', async () => {
   atTheTable();
   const shut = {};
   const tryAll = when => {
     shut[when] = ['casino-gate', 'casino-chute', 'casino-crank'].filter(k => window.__clickLever(k));
-    if (window.__liftStake('dust', 10)) shut[when].push('lift');
+    const bowl = window.__bowlAt();
+    if (bowl && window.__sweep(bowl.x, bowl.y)) shut[when].push('sweep');
   };
-  const rim = window.__rim();
-  window.__liftStake('dust', 100);
-  window.__carryTo(rim.x, rim.y);
-  window.__dropAt(rim.x, rim.y);
-  run(0.3);                                          // the stake still pouring
+  stakeGrains(5);
+  sweepOne();                                        // one more, still pouring in
+  run(0.2);
   tryAll('pouring');
   runUntil(() => !state().pouring, 30);
   const before = state();
@@ -352,7 +374,8 @@ group('every lever is dead mid-hand, and no heap can be lifted', async () => {
   runUntil(() => !state().letting && !state().pouring, 30);
   const after = state();
   return [
-    ok(before.pot && before.pot.on === 100 && before.stored === after.stored, 'the purse and the pot are where they were'),
+    ok(before.pot && before.pot.on === pile('dust').worth * 6 && before.stored === after.stored,
+       'the purse and the pot are where they were', `${before.pot && before.pot.on}`),
     ok(mid.letting && mid.drop && mid.drop.falling > 0, 'the hand is on the board when asked', JSON.stringify(mid.drop)),
     ok(shut.pouring.length === 0, 'nothing fires while the stake is pouring', shut.pouring.join(',')),
     ok(shut.cascading.length === 0, 'nor while the handful is on the pegs', shut.cascading.join(',')),
@@ -362,12 +385,13 @@ group('every lever is dead mid-hand, and no heap can be lifted', async () => {
 }, { reload: false });
 
 // A save mid-cascade is a bet that was made: the pot is written down and the
-// path in flight is not, so it comes back a pot in the hopper with the gate
-// lever live again -- the way a wheel mid-spin did.
+// path in flight is not, so it comes back a pot in the hopper with the arm
+// live again -- the way a wheel mid-spin did.
 group('a save mid-cascade comes back a pot in the hopper with the decision open', async () => {
   atTheTable();
   const held = state().stored;
-  stakeHeap('dust', 100);
+  stakeGrains(5);
+  const on = state().pot.on;
   window.__clickLever('casino-gate');
   run(0.8);
   const mid = state();
@@ -378,11 +402,11 @@ group('a save mid-cascade comes back a pot in the hopper with the decision open'
   const pulled = window.__clickLever('casino-gate');
   return [
     ok(mid.letting && mid.drop.falling > 0, 'the handful is on the pegs when the save is taken'),
-    ok(!back.letting && back.pot && back.pot.where === 'hopper' && back.pot.on === 100,
+    ok(!back.letting && back.pot && back.pot.where === 'hopper' && back.pot.on === on,
        'it comes back a pot in the hopper, the path in flight forgotten', JSON.stringify(back.pot)),
-    ok(back.pouring && back.table < shownFor(100), 'pouring in again out of the sky', `${back.table} down`),
-    ok(stood.table === shownFor(100) && !stood.pouring, 'until it stands as it did', `${stood.table}`),
-    ok(back.stored === held - 100, 'and the purse is as it was', `${back.stored}`),
-    ok(pulled, 'with the gate lever live again')
+    ok(back.pouring && back.table < shownFor(on), 'pouring in again out of the sky', `${back.table} down`),
+    ok(stood.table === shownFor(on) && !stood.pouring, 'until it stands as it did', `${stood.table}`),
+    ok(back.stored === held - on, 'and the purse is as it was', `${back.stored}`),
+    ok(pulled, 'with the arm live again')
   ];
 }, { reload: false });

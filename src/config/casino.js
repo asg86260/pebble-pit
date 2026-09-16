@@ -9,17 +9,13 @@
 // first and the wheel aimed at it, so you were watching a picture of a decision
 // already made. Here nothing is decided until a grain is on a peg.
 
-// What goes on the roof. Four chips and one of them is everything you have:
-// the size of the bet is most of what a bet feels like, and a stake worked out
-// for you as a share of your holdings is a stake nobody chose. `all` is the one
-// that is not a number, and it is the one the whole thing is for. They are
-// heaps on the ground beside the building now (`CASINO_STAKES`, stakes.js),
-// one a size a coin, lifted and carried to the hopper.
-export const CASINO_CHIPS = [10, 100, 1000, 'all'];
-export const CASINO_STAKES = CASINO_CHIPS;
-// The row of heaps: laid from the building's right wall this many cells apart,
-// dust nearest, each on a plot of its own tall enough for the brim's cone.
-export const STAKE_GAP = 3;
+// What goes on the roof is what you sweep into it. One pile a coin stands on
+// the ground beside the building -- the purse itself, drawn at the band
+// ladder -- and staking is the ordinary sweep: pick grains up off the pile
+// and let them go over the rim (stakes.js). The row is laid from the
+// building's right wall this many cells apart, dust nearest, each pile on a
+// plot wide enough for the brim's cone and tall enough for it.
+export const STAKE_GAP = 5;
 export const STAKE_ROWS = 20;
 
 // --- the handful ------------------------------------------------------------------
@@ -102,13 +98,24 @@ export const CASINO_MARGIN = 2;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- the controls on the building ---------------------------------------------------
-// Three levers, one a decision, each where its effect is: a stem with a knob
-// standing out from the wall, up when it can be pulled and flat when it
-// cannot, swinging down and back when pulled. A thumb needs more than a stem
-// to find, so on a phone the hit box opens out to `LEVER_HIT` cells.
-export const LEVER_REACH = 4;             // the stem, in cells out from the wall
+// Three controls, one a decision, each where its effect is. The arm is a slot
+// machine's: a tall stem up from a boss on the wall by the funnel with a ball
+// on the end, the biggest knob on the building, that swings down through most
+// of a half turn when pulled and comes back up slower; dead, it lies at the
+// bottom of its swing. The bank is a push button on the foot by the chute, a
+// cap on a plate, that sinks a cell when pressed. The crank is a hub with a
+// bar for a handle that turns while the tray goes up. A thumb needs more than
+// a stem to find, so on a phone every hit box opens out to `LEVER_HIT` cells.
+export const ARM_LENGTH = 8;              // the arm's stem, in cells
+export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
+export const ARM_SWING = (2 * Math.PI) / 3;   // how far down it swings
+export const LEVER_REACH = 3;             // the crank's handle, in cells
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
-export const LEVER_SWING_MS = 300;
+export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
+export const BUTTON_PRESS_MS = 200;       // the cap stays sunk this long
+export const BUTTON_PLATE_W = 6, BUTTON_PLATE_H = 2;   // the plate out from the wall, in cells
+export const BUTTON_CAP_W = 4, BUTTON_CAP_H = 3;       // the cap standing on it
+export const CRANK_TURNS = 3;             // full turns of the handle over one hoist
 
 // --- how a grain moves -----------------------------------------------------------------
 // A grain steps a cell at a time down the face, this often -- slower than a
@@ -179,13 +186,13 @@ export const TABLE_GRAV = 0.05;
 // The brim is what the tray holds and what the bowl holds: five rows of
 // seventy-two, or the funnel's profile, is three hundred and sixty cells, and
 // a heap under a ceiling fills flat, so three hundred stands in either with
-// the rim clear. The stake heaps stand at the same ladder,
-// as cones on open ground: `stakeCols` is the plot a cone of the band needs.
+// the rim clear. The stake piles stand at the same ladder, as cones on open
+// ground: `STAKE_COLS` is the plot the brim's cone needs.
 //
 // The ladder is arithmetic on three numbers and nothing else, so it lives
-// here where the numbers do, and the plots are sized off it at layout. See `shownFor` in casino.js; what is approximate
-// is the size of the heap and nothing else: the row says the exact pot and
-// the hole is paid the exact pot.
+// here where the numbers do, and the plots are sized off it at layout. What
+// is approximate is the size of the heap and nothing else: the row says the
+// exact pot and the hole is paid the exact pot.
 export const CASINO_PILE_ONE = 100;
 export const CASINO_PILE_BAND = 150;
 export const CASINO_PILE_BRIM = 300;
@@ -195,13 +202,12 @@ export const shownFor = n =>
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
 // A cone of n grains at the yard's own slope stands sqrt(n) tall and twice
-// that wide; a cell of bare ground either side keeps it its own heap. The
-// all-in heap is the brim's.
-export const stakeCols = chip => Math.ceil(2 * Math.sqrt(chip === 'all' ? CASINO_PILE_BRIM : shownFor(chip))) + 2;
-// The ground the whole row takes, for the walk to reserve beside the building:
-// three coins of every size, with a gap before each.
+// that wide; a cell of bare ground either side keeps it its own heap.
+export const STAKE_COLS = Math.ceil(2 * Math.sqrt(CASINO_PILE_BRIM)) + 2;
+// The ground the row takes, for the walk to reserve beside the building: a
+// pile a coin, with a gap before each.
 export const STAKE_COINS = ['dust', 'shard', 'spore'];
-export const STAKES_W = STAKE_COINS.length * CASINO_STAKES.reduce((w, c) => w + STAKE_GAP + stakeCols(c), 0);
+export const STAKES_W = STAKE_COINS.length * (STAKE_GAP + STAKE_COLS);
 
 export const CASINO_KNOBS = [
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,

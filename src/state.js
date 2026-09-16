@@ -231,14 +231,6 @@ export const S = {
   attract: null,          // { grain, next }
   // The lever just pulled on the building, for its swing.
   leverPulled: null,      // { key, at }
-  // A heap in your hand: a stake off the ground, or the pot out of the hopper,
-  // and where it is; `returning` while it arcs back to its spot. Never saved:
-  // a hand shut with a heap in it puts the heap back (stakes.js).
-  carried: null,          // { kind, cur, n, grains, from, x, y, returning }
-  // Where a heap let go over the rim pours into the hopper from.
-  pourFrom: null,         // { x, y }
-  // A pot handed back to the purse, on its way over the works to the hole.
-  refund: null,           // { cur, left, grains, x, y }
   // What the machine is flashing right now: a peg lit on the beat, a divider
   // lit for a x39 or a near miss, the sign on a strobe for a x39.
   tableFx: { pegs: [], edge: null, strobeAt: 0 },
@@ -665,7 +657,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'carried', 'pourFrom', 'refund',
+  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
@@ -728,8 +720,8 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
-// The stake heaps on the ground to its right: a plot a coin a size, laid out
-// and filled by stakes.js.
+// The stake piles on the ground to its right: a plot a coin, the purse drawn
+// at the band ladder, laid out and filled by stakes.js.
 export const stakes = [];
 // And the tray at its foot, where the bins pay into and the pot stands after.
 export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };

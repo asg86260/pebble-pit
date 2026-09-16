@@ -1,12 +1,17 @@
 // Your hands: what a click, a drag and a flick do.
 //
 // Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
-// anything still in the air can be caught on the way past.
+// anything still in the air can be caught on the way past. The casino's
+// stake piles and its hopper are swept the same way: a grain off one of
+// them remembers whose coin it is and what it is worth, and the chip loop
+// sends it into the funnel or home when it comes down (stakes.js).
 
 import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
+import { sweepablePlots } from './stakes.js';
+import { unstakeGrain } from './casino.js';
 import { capacity } from './levels.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
@@ -40,13 +45,38 @@ export function catchAir(mx, my) {
     S.held++;
     room--;
     noteCatch(ch);
-    S.motes.push({
-      s: ch.s,
-      a: rand() * Math.PI * 2,
-      d: P * (1 + rand() * 2.6),
-      spin: (rand() - 0.5) * 0.03,
-      bob: rand() * Math.PI * 2
-    });
+    S.motes.push(mote(ch.s, ch));
+  }
+}
+
+// One grain on the cursor. A grain of a stake pile or of the hopper keeps
+// its coin, its worth and where it came from, so it can be let go into the
+// funnel or find its way home.
+function mote(s, tag) {
+  const m = { s, a: rand() * Math.PI * 2, d: P * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 };
+  if (tag && tag.cur) { m.cur = tag.cur; m.worth = tag.worth; m.from = tag.from; }
+  return m;
+}
+
+// Everything a sweep may take from: the ground, and whatever the casino
+// says is lying loose (its piles, the bowl of its hopper). The ground first,
+// so a grain on the ground in front of a pile is still the ground's.
+const plots = () => [{ plot: floor }, ...sweepablePlots()];
+
+// The cells of one plot within the brush, in the order the brush walks
+// them; a wall of the hopper is never a grain.
+function* brushCells(e, mx, my) {
+  const g = e.plot;
+  const c0 = colOf(g, mx);
+  const r0 = Math.floor((bottomY(g) - my) / P);
+  for (let dr = -BRUSH; dr <= BRUSH; dr++) {
+    for (let dc = -BRUSH; dc <= BRUSH; dc++) {
+      if (dc * dc + dr * dr > BRUSH * BRUSH) continue;
+      const c = c0 + dc, r = r0 + dr;
+      if (!inside(g, c, r) || !at(g, c, r)) continue;
+      if (e.fixed && e.fixed(c, r)) continue;
+      yield [c, r];
+    }
   }
 }
 
@@ -62,15 +92,7 @@ export const overCore = (mx, my) =>
 // a sweep from a look about (DESIGN.md, "One finger looks about").
 export function dustUnder(mx, my) {
   if (overCore(mx, my)) return true;
-  const c0 = colOf(floor, mx);
-  const r0 = Math.floor((bottomY(floor) - my) / P);
-  for (let dr = -BRUSH; dr <= BRUSH; dr++) {
-    for (let dc = -BRUSH; dc <= BRUSH; dc++) {
-      if (dc * dc + dr * dr > BRUSH * BRUSH) continue;
-      const c = c0 + dc, r = r0 + dr;
-      if (inside(floor, c, r) && at(floor, c, r)) return true;
-    }
-  }
+  for (const e of plots()) for (const _ of brushCells(e, mx, my)) return true;
   return false;
 }
 
@@ -87,18 +109,21 @@ export function sweep(mx, my) {
   if (room <= 0) return;
 
   let taken = 0;
-  const lifted = [];
-
-  const c0 = colOf(floor, mx);
-  const r0 = Math.floor((bottomY(floor) - my) / P);
-  for (let dr = -BRUSH; dr <= BRUSH && room > 0; dr++) {
-    for (let dc = -BRUSH; dc <= BRUSH && room > 0; dc++) {
-      const c = c0 + dc, r = r0 + dr;
-      const v = inside(floor, c, r) ? at(floor, c, r) : 0;
-      if (!v) continue;
-      if (dc * dc + dr * dr > BRUSH * BRUSH) continue;
-      put(floor, c, r, 0);
-      lifted.push(v);
+  // One coin a hand: once a grain of a pile is on the cursor the sweep takes
+  // only more of that coin, or plain dust off the ground, which carries no
+  // coin and falls wherever it is thrown.
+  const holding = S.motes.find(m => m.cur)?.cur;
+  for (const e of plots()) {
+    if (room <= 0) break;
+    if (e.cur && holding && e.cur !== holding) continue;
+    for (const [c, r] of brushCells(e, mx, my)) {
+      if (room <= 0) break;
+      const v = at(e.plot, c, r);
+      // a grain out of the bowl takes its share of the pot with it
+      const worth = e.worth ? e.worth() : 0;
+      if (e.from === 'hopper') unstakeGrain(worth);
+      put(e.plot, c, r, 0);
+      S.motes.push(mote(v, e.cur ? { cur: e.cur, worth, from: e.from } : null));
       taken++;
       room--;
     }
@@ -107,15 +132,6 @@ export function sweep(mx, my) {
     S.held += taken;
     // The bench's 'strength' row appears the first time this happens.
     if (!S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
-    for (let i = 0; i < taken; i++) {
-      S.motes.push({
-        s: lifted[i],
-        a: rand() * Math.PI * 2,
-        d: P * (1 + rand() * 2.6),
-        spin: (rand() - 0.5) * 0.03,
-        bob: rand() * Math.PI * 2
-      });
-    }
   }
 }
 
@@ -135,6 +151,9 @@ export function release(x, y) {
               vx + (rand() - 0.5) * 1.4,
               vy + (rand() - 0.5) * 1.4,
               S.motes[i]?.s || 1);
+    // a stake grain keeps its coin through the throw
+    const m = S.motes[i];
+    if (m && m.cur) Object.assign(S.chips[S.chips.length - 1], { cur: m.cur, worth: m.worth, from: m.from });
   }
   noteThrow(S.chips.slice(from), full);
   S.held = 0;

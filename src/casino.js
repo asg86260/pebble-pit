@@ -44,7 +44,7 @@ import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
 import { shakeView, blocked } from './world.js';
 import { now, frames } from './clock.js';
-import { spend, bankDust, spendHeld } from './pit.js';
+import { spend, bankDust, spendHeld, payTo } from './pit.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 import { reducedMotion } from './prefs.js';
@@ -70,23 +70,26 @@ export const hoisting = () => !!S.hoisting;
 // A hand is under way, any part of it: the stake coming down, the handful on
 // the pegs, the bins paying, the tray going up or over. Chip, let-go, bank and
 // drop-again are all dead for the whole of it.
-export const busy = () => pouring() || letting() || hoisting() || !!S.paying || !!S.refund;
+export const busy = () => pouring() || letting() || hoisting() || !!S.paying;
 
 // --- the stake -----------------------------------------------------------------
-// What you can stake is what you can see: heaps of each coin in the chip sizes
-// stand on the ground beside the building (stakes.js), and a heap carried to
-// the hopper is the stake. The purse each comes out of.
+// What you can stake is what you can see: a pile of each coin -- the purse
+// itself, at the band ladder -- stands on the ground beside the building
+// (stakes.js), and what you sweep off it into the funnel is the stake. The
+// purse each comes out of.
 export const purseOf = cur =>
   cur === 'shard' ? S.shards : cur === 'spore' ? S.spores : S.stored;
 
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 export const inTray = () => !!S.pot && S.pot.where === 'tray';
 
-// A heap may go in while nothing is moving and the hand has no other coin on
-// it: one coin a hand, because a mixed pot would need a mixed tray and a mixed
-// pay, and the refusal at the rim is one rule and it is visible.
+// A grain may go in while no hand is under way and the pot has no other coin
+// in it: one coin a hand, because a mixed pot would need a mixed tray and a
+// mixed pay, and the refusal at the rim is one rule and it is visible. The
+// hopper still walking to the last grain's worth is no bar: a sweep is many
+// grains a second, and each is a stake.
 export const canStake = cur =>
-  S.casinoOpen && !busy() && (!S.pot || (inHopper() && S.pot.cur === cur)) && purseOf(cur) > 0;
+  S.casinoOpen && !letting() && !hoisting() && !S.paying && (!S.pot || (inHopper() && S.pot.cur === cur));
 
 // The pot is standing in the hopper and nothing is moving: the floor can open.
 export const canLet = () => inHopper() && !busy();
@@ -101,47 +104,52 @@ export const canBank = () => inTray() && !busy();
 // And putting the same pot back on the roof.
 export const canRide = () => inTray() && !busy();
 
-// A heap let go over the rim: it comes out of the purse there and then, and
-// pours into the hopper from where it was dropped -- see `trickleIn` -- adding
-// to whatever pot is standing there, so the stake is however many heaps you
-// carried over before you pull the lever. The let-go opens the moment the
-// heap is lying still.
-export function addStake(cur, n, from) {
-  if (!canStake(cur) || n <= 0 || n > purseOf(cur)) return false;
-  if (cur === 'dust') spend(n);
-  // Out of the hole first, and off what the rift holds for the rest: a stake is
-  // spending like any other. See `spendHeld` in pit.js.
-  else if (cur === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
-  else if (cur === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
+// A grain let go over the rim, carrying its band's worth: it comes out of the
+// purse there and then -- lifted out of the hole to the funnel, so the purse
+// is seen leaving -- and joins the pot standing in the bowl. A grain that was
+// swept out of the bowl and dropped back brings its share back with it; the
+// purse was never paid. The bowl walks to the pot's band (`trickleIn`) and
+// the arm is live the moment it is lying still. False when the pot will not
+// have it: another coin, or a hand under way.
+export function stakeGrain(cur, worth, from) {
+  if (!canStake(cur)) return false;
+  let take = worth;
+  if (from !== 'hopper') {
+    take = Math.min(worth, purseOf(cur));
+    if (take <= 0) return false;
+    if (cur === 'dust') { payTo(potAt().x, potAt().y - P * 4); spend(take); payTo(); }
+    // Out of the hole first, and off what the rift holds for the rest: a stake
+    // is spending like any other. See `spendHeld` in pit.js.
+    else if (cur === 'shard') { S.shards -= take; spendHeld(take, SHARD_CELL); }
+    else if (cur === 'spore') { S.spores -= take; spendHeld(take, SPORE_CELL); }
+  }
   const on = S.pot ? S.pot.n : 0;
-  S.pot = { cur, stake: on + n, n: on + n, where: 'hopper' };
+  S.pot = { cur, stake: on + take, n: on + take, where: 'hopper' };
   S.hand = null;                                 // the last one is old news now
   S.pouring = true;
-  S.pourFrom = from ? { x: from.x, y: from.y } : null;
   stopAttract();                                 // the machine has a player
   S.shopStale = true;
   return true;
 }
 
-// And a pot lifted out of the hopper again, whole, before the lever: back into
-// the hopper if it is let go over the rim, or to the purse anywhere else --
-// over the works and into the hole, the counter moving as each grain lands
-// (`refundStep`). No row says take it back; the same lift undoes a drop.
-export function takePot() {
-  if (!inHopper() || busy()) return null;
-  const took = { cur: S.pot.cur, n: S.pot.n };
-  S.pot = null;
-  layWalls();
-  S.pourFrom = null;
-  return took;
+// A grain swept out of the bowl takes its share of the pot with it: the pot
+// is what stands in the bowl. Nothing is paid back until it lands somewhere
+// -- back in the bowl, or home on its pile (`refundGrain`).
+export function unstakeGrain(worth) {
+  if (!inHopper()) return;
+  S.pot.n = Math.max(0, S.pot.n - worth);
+  S.pot.stake = S.pot.n;
+  if (S.pot.n === 0) { S.pot = null; S.hand = null; }
+  S.pouring = true;                              // the bowl walks to the pot again
+  S.shopStale = true;
 }
-export function returnPot(cur, n, from) {
-  S.pot = { cur, stake: n, n, where: 'hopper' };
-  S.pouring = true;
-  S.pourFrom = from ? { x: from.x, y: from.y } : null;
-}
-export function refundPot(cur, n, from) {
-  S.refund = { cur, left: n, grains: Math.max(1, shownFor(n)), x: from.x, y: from.y };
+
+// A grain of the pot come home to its pile: the purse rises by what it
+// carried, into the hole where the purse lives, as it lands.
+export function refundGrain(cur, worth) {
+  const find = potShade(cur);
+  for (let w = 0; w < worth; w++) bankDust(pit.x + rand() * Math.min(700, pit.w), find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length));
+  S.shopStale = true;
 }
 
 // --- the handful ------------------------------------------------------------------
@@ -632,30 +640,6 @@ function hoistStep(dt) {
   }
 }
 
-// A pot handed back: grains thrown from where the heap was let go, over the
-// works and into the hole, each carrying its share of the pot -- the walk
-// banking used to be, kept for the one thing that still goes straight to the
-// purse. The rounding rides on the last grain, so the purse is paid the pot.
-function refundStep(dt) {
-  const r = S.refund;
-  let n = Math.min(r.grains, Math.max(1, Math.ceil(r.grains * (dt / TRICKLE_MS))));
-  const find = potShade(r.cur);
-  while (n-- > 0 && r.grains > 0) {
-    const worth = r.grains > 1
-      ? Math.max(1, Math.min(r.left - (r.grains - 1), Math.round(r.left / r.grains)))
-      : r.left;
-    r.left -= worth;
-    r.grains--;
-    const s = find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length);
-    S.tableAir.push({
-      x: r.x, y: r.y, s, t: 0, worth,
-      arc: { x0: r.x, y0: r.y, x1: pit.x + rand() * Math.min(700, pit.w),
-             y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30, ms: FLIGHT_MS }
-    });
-  }
-  if (r.grains < 1 && r.left < 1) S.refund = null;
-}
-
 function payOutStep(dt) {
   const p = S.paying;
   const strip = casinoStrip();
@@ -838,12 +822,7 @@ function trickleIn(dt, plot, name, want, from) {
 // the whole rim: a grain that lands in the middle of a wide upper step has no
 // drop beside it and stays there, and a handful rained across the rim stood
 // as a scatter on the slopes instead of a heap in the throat.
-// -- or from the heap in your hand, when a carried heap was let go over the
-// rim: the heap under the pointer drains into the funnel from where it was
-// dropped, and the stake still walks.
-const skyOver = () => S.pourFrom
-  ? { x: S.pourFrom.x + (rand() - 0.5) * P * 4, y: S.pourFrom.y + (rand() - 0.5) * P * 2 }
-  : { x: potAt().x + (rand() - 0.5) * P * GATE_W * 4, y: table.y - P * 24 - rand() * P * 10 };
+const skyOver = () => ({ x: potAt().x + (rand() - 0.5) * P * GATE_W * 4, y: table.y - P * 24 - rand() * P * 10 });
 
 // And going the other way: grains lifted off the top of the heap, one at a
 // time, each fading out on its way up. A pot that vanished in a frame was a
@@ -982,8 +961,7 @@ export function stepCasino(dt) {
   if (!S.casinoOpen) return;
   stepSparks(dt);
   // The pot is standing in its plot: the pour is over, and the decision is open.
-  if (S.pouring && settledInPile()) { S.pouring = false; S.pourFrom = null; S.shopStale = true; }
-  if (S.refund) refundStep(dt);
+  if (S.pouring && settledInPile()) { S.pouring = false; S.shopStale = true; }
   if (S.drop) stepDrop(dt);
   stepAttract(dt);
   // A win's fountains go up a beat apart rather than all at once: three bursts

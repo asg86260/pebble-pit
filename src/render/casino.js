@@ -16,8 +16,7 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray, stakes } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { carriedCone, carriedShade, overRim } from '../stakes.js';
-import { LEVER_REACH } from '../config.js';
+import { LEVER_REACH, ARM_LENGTH, ARM_BOSS, BUTTON_PLATE_W, BUTTON_PLATE_H, BUTTON_CAP_W, BUTTON_CAP_H } from '../config.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -303,47 +302,65 @@ export function drawCasino() {
     // opening here -- and the sand runs out of it on to the ground.
     if (S.paying) ctx.fillRect(x, tray.y, P, tray.rows * P);
 
-    // The three controls, on the walls: a stem with a knob, out from the wall,
-    // standing up when it can be pulled and lying flat, grey, when it cannot,
-    // and swinging down and back when pulled. Each where its effect is: the
-    // gate by the throat, the chute at the tray's left, the crank at its right.
-    for (const l of LEVERS) drawLever(l);
-
-    // While a heap is in your hand the rim is marked: a line along the
-    // funnel's top saying where to let go, and a thicker one while the heap
-    // is over it.
-    if (S.carried && !S.carried.returning) {
-      const over = overRim(S.carried.x, S.carried.y);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(x, y - P * (over ? 2 : 1), w, P * (over ? 2 : 1));
-    }
+    // The three controls, on the walls, each where its effect is: the arm by
+    // the funnel, the button at the foot by the chute, the crank beside the
+    // tray. Black when it can be worked, grey at rest when it cannot.
+    for (const l of LEVERS) drawControl(l);
     ctx.fillStyle = '#000';
   });
 }
 
-function drawLever(l) {
-  const { x, y, dir } = leverAt(l);
-  const { live, swing } = leverShape(l);
-  const reach = LEVER_REACH * P;
-  // the pivot, a cell on the wall, and the stem from it: up when live, out
-  // flat when dead, and through the swing between when pulled
-  const angle = live ? (Math.PI / 2) * (1 - swing) : 0;
-  const ex = x + dir * Math.cos(angle) * reach, ey = y - Math.sin(angle) * reach;
-  ctx.fillStyle = live ? '#000' : PEG_SHADE;
-  ctx.fillRect(x - P / 2, y - P / 2, P, P);
-  ctx.strokeStyle = live ? '#000' : PEG_SHADE;
-  ctx.lineWidth = P / 2;
+// A round knob on the grid: a square of `n` cells with its corners knocked
+// off, centered on a cell.
+function knob(cx, cy, n) {
+  const x0 = Math.round(cx / P) * P - Math.floor(n / 2) * P, y0 = Math.round(cy / P) * P - Math.floor(n / 2) * P;
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) {
+      const corner = (c === 0 || c === n - 1) && (r === 0 || r === n - 1);
+      if (n > 2 && corner) continue;
+      ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
+    }
+}
+
+function drawControl(l) {
+  const { x, y, dir, wall } = leverAt(l);
+  const shape = leverShape(l);
+  const ink = shape.live ? '#000' : PEG_SHADE;
+  ctx.fillStyle = ink;
+  ctx.strokeStyle = ink;
+  if (l.kind === 'button') {
+    // a plate out from the wall with the cap standing on it; pressed, the
+    // cap sinks a cell into the plate
+    const px = dir < 0 ? x - BUTTON_PLATE_W * P : x;
+    ctx.fillRect(px, y - BUTTON_PLATE_H * P, BUTTON_PLATE_W * P, BUTTON_PLATE_H * P);
+    const cx = px + Math.floor((BUTTON_PLATE_W - BUTTON_CAP_W) / 2) * P;
+    const sink = shape.pressed ? P : 0;
+    const cy = y - BUTTON_PLATE_H * P - BUTTON_CAP_H * P + sink;
+    ctx.fillRect(cx, cy, BUTTON_CAP_W * P, BUTTON_CAP_H * P - sink);
+    if (shape.pressed) { ctx.fillStyle = '#fff'; ctx.fillRect(cx, y - BUTTON_PLATE_H * P, BUTTON_CAP_W * P, P); }
+    ctx.fillStyle = '#000';
+    return;
+  }
+  // the arm and the crank both turn about a boss on the wall: the arm's
+  // stem swings from straight up, the ball leading; the crank's handle from
+  // straight out, round and round, down first
+  const reach = (l.kind === 'arm' ? ARM_LENGTH : LEVER_REACH) * P;
+  const a = l.kind === 'arm' ? Math.PI / 2 - shape.angle : -shape.angle;
+  const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
+  // the arm's boss reaches out from the wall to the pivot
+  if (l.kind === 'arm') ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
+  knob(x, y, 2);
+  ctx.lineWidth = P;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(ex, ey);
   ctx.stroke();
-  // and the knob at the end, two cells square, on the grid
-  ctx.fillRect(Math.round((ex - P) / P) * P, Math.round((ey - P) / P) * P, P * 2, P * 2);
+  knob(ex, ey, l.kind === 'arm' ? 3 : 2);
   ctx.fillStyle = '#000';
 }
 
 // --- the sand -------------------------------------------------------------------
-// The two heaps are real plots of sand -- see casino.js -- so they are blitted
+// The hopper, the tray and the piles are real plots of sand, so they are blitted
 // like the yard and the hole rather than drawn a grain at a time. The bins are
 // plots too, but a few dozen cells each, so they and the handful on the pegs
 // are drawn straight, cell for cell in the grain's own shade.
@@ -356,26 +373,9 @@ export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
   if (tray.grid && tray.n) drawGrid(tray);
-  // the heaps you stake from, on the ground beside the building
+  // the piles you stake from, on the ground beside the building: your purse,
+  // a coin a pile
   for (const h of stakes) if (h.grid && h.n) drawGrid(h);
-  // and the one in your hand: the cone it stood as, under the pointer, in its
-  // coin's shade, mottled cell by cell the way every heap here is
-  const c = S.carried;
-  if (c) {
-    const rows = carriedCone(c);
-    const find = carriedShade(c);
-    const x0 = Math.round(c.x / P) * P, y0 = Math.round(c.y / P) * P;
-    rows.forEach((wide, i) => {
-      for (let k = 0; k < wide; k++) {
-        const cx = x0 + (k - (wide - 1) / 2) * P, cy = y0 - i * P;
-        const tone = (Math.abs(Math.round(cx / P) * 7 + i * 13) % 5);
-        ctx.fillStyle = find ? FIND_COLOR[findKind(find)][tone % FIND_COLOR[findKind(find)].length]
-                             : SHADES[Math.min(SHADES.length - 1, tone + 1)];
-        ctx.fillRect(Math.round(cx), cy, P, P);
-      }
-    });
-    ctx.fillStyle = '#000';
-  }
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;
@@ -433,11 +433,11 @@ export function drawSparks() {
 const multText = m => m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toFixed(1);
 const changeText = d => (d < 0 ? '-' : '+') + String(Math.abs(d));
 
-// Its left edge two cells clear of the building's wall, beside the tray, so
-// the box grows away from the building rather than into it.
+// Its left edge two cells clear of the building's wall, above the crank and
+// the tray, so the box grows away from the building rather than into it.
 export function casinoMarkAt() {
   return { x: Math.round((casino.x + casino.w + P * 2) / P) * P,
-           y: Math.round((tray.y - P * 4) / P) * P };
+           y: Math.round((tray.y - P * 9) / P) * P };
 }
 
 export function drawCasinoMark() {

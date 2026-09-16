@@ -35,7 +35,7 @@ import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
 import { pot, pouring, letting, hoisting, potAt, tableWant, trayWant, shownMult, hopperN } from './casino.js';
-import { amountOf, standing, stakeWant, stakeAt } from './stakes.js';
+import { stakeWant, stakeAt, stakeGrainWorth } from './stakes.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -285,11 +285,11 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   paying: S.paying && S.paying.left,
   // The heaps you stake from: what each is, whether it stands, and how much
   // sand lies on its plot against what it should; and the heap in your hand.
-  stakes: stakes.map(h => ({ cur: h.cur, chip: h.chip, n: amountOf(h), standing: standing(h),
-                             grains: h.n, want: stakeWant(h), x: Math.round(stakeAt(h).x) })),
-  inHand: S.carried && { kind: S.carried.kind, cur: S.carried.cur, n: S.carried.n,
-                          returning: !!S.carried.returning, x: Math.round(S.carried.x), y: Math.round(S.carried.y) },
-  refund: S.refund && S.refund.left,
+  stakes: stakes.map(h => ({ cur: h.cur, grains: h.n, want: stakeWant(h), worth: stakeGrainWorth(h),
+                             x: Math.round(stakeAt(h).x), y: Math.round(stakeAt(h).y) })),
+  // ...and what a sweep has in hand off them, by coin
+  inHand: S.motes.reduce((n, m) => n + (m.cur ? 1 : 0), 0),
+  homing: S.tableAir.filter(k => k.lands === 'stake' && k.arc).length,
 
   // The lab, and every kind of smoke over the yard.
   skyShown: S.skyShown,

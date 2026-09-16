@@ -1,58 +1,88 @@
-// The casino's three controls, on the building itself: the gate lever beside
-// the funnel's throat, the bank chute at the foot's left wall, the hoist
-// crank beside the tray. No board -- every decision about a hand is a thing
-// you do to the building, placed where the thing it does happens, so a
-// control says what it is by where it stands. A click or a tap pulls one; it
-// stands up when it can be pulled and lies flat when it cannot, for the
+// The casino's three controls, on the building itself: the arm beside the
+// funnel, the bank button at the foot by the chute, the hoist crank beside
+// the tray. No board -- every decision about a hand is a thing you do to the
+// building, placed where the thing it does happens, so a control says what
+// it is by where it stands. A click or a tap works one; each stands ready
+// when it can be worked and goes grey, at rest, when it cannot, for the
 // reasons the rows were dead. See DESIGN.md, "The stake is a heap you carry".
 //
-// Owns where each lever stands, whether it is live, what pulling it does, and
-// the hit test; render/casino.js draws them off `leverShape`.
+// Owns where each control stands, whether it is live, what working it does,
+// and the hit test; render/casino.js draws them off `leverShape`.
 
-import { P, HOPPER_H, TRAY_H, LEVER_REACH, LEVER_HIT, LEVER_SWING_MS } from './config.js';
+import { P, HOPPER_H, TRAY_H, ARM_LENGTH, ARM_BOSS, ARM_SWING, LEVER_REACH, LEVER_HIT, LEVER_SWING_MS,
+         BUTTON_PRESS_MS, BUTTON_PLATE_W, BUTTON_PLATE_H, BUTTON_CAP_H, CRANK_TURNS } from './config.js';
 import { S, casino } from './state.js';
 import { canLet, letGo, canBank, bank, canRide, ride } from './casino.js';
 import { now } from './clock.js';
 import { coarse } from './prefs.js';
 
-// Each lever: which wall it stands out from, how far down the building its
-// pivot is, and the two halves of a decision -- may it, and do it. The gate
-// stands at the throat's height; the chute and the crank at the tray's.
+// Each control: what it is, which wall it is on, how far down the building
+// it sits, and the two halves of a decision -- may it, and do it. The arm
+// stands at the throat's height; the button and the crank at the tray's.
 export const LEVERS = [
-  { key: 'casino-gate', name: 'the gate lever: let it go',
+  { key: 'casino-gate', name: 'the arm', kind: 'arm',
     side: 'right', row: () => HOPPER_H - 2, live: canLet, pull: letGo },
-  { key: 'casino-chute', name: 'the bank chute: tip the tray out',
+  { key: 'casino-chute', name: 'bank it', kind: 'button',
     side: 'left', row: () => casino.h / P - TRAY_H, live: canBank, pull: bank },
-  { key: 'casino-crank', name: 'the hoist crank: drop it again',
-    side: 'right', row: () => casino.h / P - TRAY_H, live: canRide, pull: ride }
+  { key: 'casino-crank', name: 'the crank', kind: 'crank',
+    side: 'right', row: () => casino.h / P - LEVER_REACH, live: canRide, pull: ride }
 ];
 
-// Where a lever's pivot is, in the world: on the wall, `row` cells down from
-// the roof, and which way its stem reaches.
+// Where a control's pivot is, in the world: on the wall, `row` cells down
+// from the roof, and which way it reaches out. The arm's pivot stands out
+// from the wall on its boss, so the stem rises beside the funnel's wall
+// rather than along it. The button's plate sits against the wall just above
+// the hatch, so its pivot is the plate's inner bottom corner; the crank
+// turns low on the wall, under the box that says what the hand came to.
 export function leverAt(l) {
-  const x = l.side === 'left' ? casino.x : casino.x + casino.w;
-  return { x, y: casino.y + l.row() * P, dir: l.side === 'left' ? -1 : 1 };
+  const dir = l.side === 'left' ? -1 : 1;
+  const wall = l.side === 'left' ? casino.x : casino.x + casino.w;
+  const x = wall + (l.kind === 'arm' ? dir * ARM_BOSS * P : 0);
+  return { x, y: casino.y + l.row() * P, dir, wall };
 }
 
-// The stem's angle: up when live, flat when dead, and swinging down and back
-// over `LEVER_SWING_MS` when it has just been pulled.
+// How far along its motion a control is, from the moment it was worked.
+const since = l => S.leverPulled && S.leverPulled.key === l.key ? now() - S.leverPulled.at : Infinity;
+
+// The shape to draw. The arm: its angle from straight up, swinging down
+// through `ARM_SWING` over `LEVER_SWING_MS` and back up over twice that,
+// and lying at the bottom of the swing when dead. The button: whether its
+// cap is sunk. The crank: how far its handle has turned, a few full turns
+// over the hoist, driven by the sand so it comes to rest as the tray
+// empties.
 export function leverShape(l) {
   const live = l.live();
-  const p = S.leverPulled && S.leverPulled.key === l.key ? (now() - S.leverPulled.at) / LEVER_SWING_MS : 2;
-  const swing = p < 1 ? Math.sin(p * Math.PI) : 0;          // out and back
-  return { live, swing };
+  if (l.kind === 'arm') {
+    const t = since(l) / LEVER_SWING_MS;
+    // the pull itself is drawn black to the bottom of the swing whether or
+    // not the hand it let go has already made the arm dead; a dead arm then
+    // lies where the pull left it
+    const k = t < 1 ? t : !live ? 1 : t < 3 ? 1 - (t - 1) / 2 : 0;
+    return { live: live || t < 1, angle: ARM_SWING * k };
+  }
+  if (l.kind === 'button') return { live, pressed: since(l) < BUTTON_PRESS_MS };
+  // black while it turns, too: a crank being wound is being worked
+  const h = S.hoisting;
+  const turn = h ? (h.lifted / Math.max(1, h.grains)) * CRANK_TURNS : 0;
+  return { live: live || !!h, angle: (turn % 1) * Math.PI * 2 };
 }
 
-// The box a pointer has to be in: the stem's reach out from the wall and up
-// from the pivot, opened out to `LEVER_HIT` cells on a phone so a thumb can
-// find it. Clear of the heaps and the rim by where the levers stand, so a
-// lift and a pull cannot be confused.
+// The box a pointer has to be in. The arm's is the whole of its swing, the
+// loudest target on the building; the button's is its plate and cap; the
+// crank's the circle its handle turns through. Each opens out to
+// `LEVER_HIT` cells on a phone so a thumb can find it, and each takes in a
+// cell of the wall, since the pivot stands on it.
 export function leverBox(l) {
   const { x, y, dir } = leverAt(l);
-  const reach = (coarse() ? Math.max(LEVER_HIT, LEVER_REACH) : LEVER_REACH) * P;
-  // a cell of the wall itself is in the box too: the pivot stands on it
-  const left = dir < 0 ? x - reach : x - P;
-  return { x: left, y: y - reach, w: reach + P, h: reach + P * 2 };
+  const grow = coarse() ? LEVER_HIT : 0;
+  let out, up, down;
+  if (l.kind === 'arm') { out = ARM_LENGTH + ARM_BOSS + 2; up = ARM_LENGTH + 2; down = Math.ceil(ARM_LENGTH * Math.sin(ARM_SWING - Math.PI / 2)) + 2; }
+  else if (l.kind === 'button') { out = BUTTON_PLATE_W; up = BUTTON_PLATE_H + BUTTON_CAP_H; down = 0; }
+  else { out = LEVER_REACH + 1; up = LEVER_REACH + 1; down = LEVER_REACH + 1; }
+  out = Math.max(out, grow); up = Math.max(up, grow); down = Math.max(down, grow / 2);
+  const { wall } = leverAt(l);
+  const left = dir < 0 ? wall - out * P : wall - P;
+  return { x: left, y: y - up * P, w: (out + 1) * P, h: (up + down) * P };
 }
 
 export function leverUnder(x, y) {
@@ -64,8 +94,8 @@ export function leverUnder(x, y) {
   return null;
 }
 
-// Pull one, by key: true when it was live and did its thing. The same call
-// the pointer makes, so a check that pulls a lever pulls it the player's way.
+// Work one, by key: true when it was live and did its thing. The same call
+// the pointer makes, so a check that pulls the arm pulls it the player's way.
 export function pullLever(key) {
   const l = LEVERS.find(x => x.key === key);
   if (!l || !S.casinoOpen || !l.live()) return false;

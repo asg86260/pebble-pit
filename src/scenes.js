@@ -680,35 +680,36 @@ export const SCENES = {
                  window.__machine('ram', { bought: true }); window.__board('tower'); } },
 
   // --- the casino -------------------------------------------------------------
-  // The table stood up, its heaps rained in, and a hundred carried to the
-  // hopper and let go: the same gesture a player makes, through the same
-  // calls the pointer makes.
-  //   window.__casinoStakes(dust)    the casino open with the heaps standing
-  //   window.__casinoStake(chip)     ...and one of them poured into the hopper
-  //   window.__casinoHand()          ...and the gate pulled, the hand played out
-  // The row of heaps beside the building: three sizes and the all-in, dust
-  // only on a fresh yard, each at the band of what it is.
-  casinostakes: { about: 'the casino', say: 'the heaps you stake from, standing beside the building',
+  // The table stood up, its piles rained in, and grains swept off the dust
+  // pile and let go over the rim: the same gesture a player makes, through
+  // the same calls the pointer makes.
+  //   window.__casinoStakes(dust)    the casino open with the piles standing
+  //   window.__casinoStake(grains)   ...and this many grains swept into the hopper
+  //   window.__casinoHand()          ...and the arm pulled, the hand played out
+  // The piles beside the building: one a coin the yard has handed out, dust
+  // only on a fresh yard, each the purse at its band.
+  casinostakes: { about: 'the casino', say: 'the piles you stake from, one a coin, beside the building',
     run: () => { window.__casinoStakes(6000); window.__look(st().casinoX - 200); } },
-  // A heap in the hand, over the rim: the ground where it stood bare, the rim
-  // marked, the cone under the pointer.
-  casinocarry: { about: 'the casino', say: 'a heap carried to the rim, the rim marked',
-    run: () => { window.__casinoStakes(6000); window.__liftStake('dust', 100);
-                 const rim = window.__rim(); window.__carryTo(rim.x + 40, rim.y - 30);
-                 window.__mouseAt(rim.x + 40, rim.y - 30); window.__fast(0.2);
+  // A sweep in flight: grains off the dust pile on the cursor, halfway to
+  // the rim.
+  casinocarry: { about: 'the casino', say: 'a sweep off the dust pile, on its way to the rim',
+    run: () => { window.__casinoStakes(6000); window.__levels({ carryLevel: 8 });
+                 const at = window.__stakeAt('dust'), rim = window.__rim();
+                 for (let i = 0; i < 6; i++) window.__sweep(at.x + (i - 3) * 6, at.y - i * 6);
+                 window.__mouseAt((at.x + rim.x) / 2, rim.y - 60); window.__fast(0.2);
                  window.__look(st().casinoX - 380); } },
-  // The pot standing in the hopper, the gate lever live.
-  casinohopper: { about: 'the casino', say: 'the stake standing in the funnel, the gate lever up',
-    run: () => { window.__casinoStake(100); window.__look(st().casinoX - 380); } },
+  // The pot standing in the hopper, the arm up.
+  casinohopper: { about: 'the casino', say: 'the stake standing in the funnel, the arm up',
+    run: () => { window.__casinoStake(5); window.__look(st().casinoX - 380); } },
   // A hand mid-cascade: the pile draining into the throat, the pebbles on the
   // pegs with the first in the bins.
-  casino: { about: 'the casino', say: 'the gate pulled: the pile draining, the pebbles on the pegs',
-    run: () => { window.__casinoStake(100); window.__clickLever('casino-gate'); window.__fast(0.9);
+  casino: { about: 'the casino', say: 'the arm pulled: the pile draining, the pebbles on the pegs',
+    run: () => { window.__casinoStake(5); window.__clickLever('casino-gate'); window.__fast(0.9);
                  window.__look(st().casinoX - 380); } },
   // The bins paying, middle outward: a foot inverted for the bin on its beat,
   // the box counting up, pebbles running down into the tray.
   casinopaying: { about: 'the casino', say: 'the bins paying into the tray, a bin a beat',
-    run: () => { window.__casinoStake(100); window.__clickLever('casino-gate');
+    run: () => { window.__casinoStake(5); window.__clickLever('casino-gate');
                  for (let f = 0; f < 1200 && !(st().drop && st().drop.stage === 'pay'); f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 380); } },
   // A hand just paid: the tray standing, the box saying the multiple and the
@@ -721,21 +722,21 @@ export const SCENES = {
     run: () => { window.__casinoStakes(60000);
                  for (let i = 0; i < 12; i++) {
                    if (st().pot) { window.__clickLever('casino-chute'); for (let f = 0; f < 400 && (st().paying || st().tableAir); f++) window.__fast(1 / 60); window.__clearFloor(); }
-                   window.__casinoStake(100); window.__casinoHand();
+                   window.__casinoStake(5); window.__casinoHand();
                    if (st().hand && st().hand.won) break;
                  }
                  window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
   // The chute open: the tray running out of the foot's hatch on to the strip,
   // the pile forming, a hauler on its way for it.
-  casinobank: { about: 'the casino', say: 'the chute open, the pile forming on the ground, a hauler coming',
+  casinobank: { about: 'the casino', say: 'the button pressed: the chute open, the pile forming, a hauler coming',
     run: () => { window.__casinoStakes(6000); window.__crew(0, 3); window.__levels({ haulPaceLevel: 8 });
-                 window.__casinoStake(100); window.__casinoHand();
+                 window.__casinoStake(5); window.__casinoHand();
                  window.__clickLever('casino-chute'); window.__fast(1.2);
                  window.__look(st().casinoX - 300); } },
   // The crank wound: the tray going back up for a drop again, mid-arc.
-  casinohoist: { about: 'the casino', say: 'the crank wound: the tray hoisted back to the roof',
-    run: () => { window.__casinoStake(100); window.__casinoHand();
+  casinohoist: { about: 'the casino', say: 'the crank turning: the tray hoisted back to the roof',
+    run: () => { window.__casinoStake(5); window.__casinoHand();
                  window.__clickLever('casino-crank'); window.__fast(0.4);
                  window.__look(st().casinoX - 380); } },
 
