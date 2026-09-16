@@ -16,7 +16,7 @@ a file. Nothing is ever silently discarded. The date of the floor is
 
 ## The shape number
 
-`blob()` writes `saveV: SAVE_V` (`config/saves.js`, today `1`). Every
+`blob()` writes `saveV: SAVE_V` (`config/saves.js`, today `2`). Every
 migration carries `v`, the `SAVE_V` it raises a save to, and runs only on a
 save whose `saveV` is below it. A save with no `saveV` is "everything before
 today" and gets every migration in the list. Dates are not the key, because a

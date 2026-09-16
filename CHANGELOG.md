@@ -32,6 +32,7 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- A save from before the pour loads with its stake still in the funnel, and a pot it had won or staked in another coin is paid out of the foot instead of lost (test/save-floor.test.mjs, test/reload.test.mjs).
 - An empty bin no longer inverts its foot or sounds when the bins pay: only the bins with a pebble in them come up (test/casino.test.mjs).
 - Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).
 - The first haulers carry two grains and walk quicker, the gang swings slower to begin with, and a crit is worth 2x at the foot of its ladder instead of 3x, so a couple of diggers want a couple of haulers rather than eight; your own strength and swing ladders climb in smaller steps at the start (config/rungs.js).

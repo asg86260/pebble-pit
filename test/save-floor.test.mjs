@@ -78,6 +78,36 @@ group('a save with a dev stamp and no saveV gets every migration', async () => {
   ];
 });
 
+// The plinko's pot was a chip already taken from the purse, its `n` the
+// grains the picture showed (two a pebble in the player's yard) and its
+// place the hopper or the tray; the pour's is pebbles held for, spent as
+// they land. A stake standing in the hopper is still the player's stake; a
+// pot won and standing in the tray, or one in a coin the pour does not take,
+// is paid out of the foot, since the bank button it waited for is gone.
+group('a pot from the plinko comes back a stake, or is paid out', async () => {
+  const s = blobOf();
+  s.saveV = 1;
+  s.casinoOpen = true;
+  s.pot = { cur: 'dust', stake: 300, n: 600, where: 'hopper' };
+  put(s);
+  yard.restore();
+  const staked = S.pot && { ...S.pot };
+  const t = blobOf();
+  t.saveV = 1;
+  t.casinoOpen = true;
+  t.pot = { cur: 'shard', stake: 7, n: 14, where: 'tray' };
+  t.paying = { left: 40, grains: 8 };
+  put(t);
+  yard.restore();
+  const paid = S.paying && { ...S.paying.left };
+  return [
+    ok(staked && staked.stake === 300 && staked.n === 300 && staked.owed === 0 && staked.where === 'hopper',
+       'a stake in the hopper is the pour\'s stake, spent and standing', JSON.stringify(staked)),
+    ok(!S.pot && paid && paid.shard === 7 && paid.dust === 40,
+       'a pot won in ore is owed out of the foot with what was already on its way', JSON.stringify(paid))
+  ];
+});
+
 group('a save at today\'s saveV gets no migration', async () => {
   const s = blobOf();
   s.mult = { tend: 2 };                          // a stray old field is left alone

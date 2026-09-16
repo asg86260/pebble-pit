@@ -13,7 +13,6 @@
 import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
-const { stake, canStake, letGo, canLet, bank, canBank, pot } = await import('../src/casino.js');
 const { dugShare } = await import('../src/quarry.js');
 const { boulderAlive } = await import('../src/rock.js');
 const { doseLive, doseLeftMs } = await import('../src/apothecary.js');
@@ -93,44 +92,43 @@ group('a refresh does not send the gang back down the ladder', async () => {
 
 // --- and the three things a refresh used to take off you ----------------------
 
-// A pot you have taken is money. `bank()` empties the table on the frame you
-// press it and pays the winnings into the hole one flying grain at a time, so
-// for the second and a half in between the whole of it lives in `S.paying` --
-// and `S.paying` was the one field in that building nobody wrote down. A refresh
-// during the arc came back on a cleared payout and an empty sky, and four
-// thousand dust was simply gone.
+// A hand paid is money on its way out of the foot: the pay runs out of the
+// building one flying grain at a time on to the casino's strip, so for the
+// second or two in between the whole of it lives in `S.paying` and the arcs
+// -- and `S.paying` was once the one field in that building nobody wrote
+// down. A refresh during the run came back on a cleared payout and an empty
+// sky, and four thousand dust was simply gone.
 group('a refresh in the middle of a payout does not eat the pot', async () => {
   const S = yard.S;
   window.__crew(2, 4);
   window.__casino(true);
-  window.__tip(2000);
+  window.__give(6000);
   run(1);
-  S.chip = 2;
-  // A hand pays at least half of what went down, so one is enough: the stake
-  // into the hopper, let go, and the tray standing. The check is not about the
-  // odds, only about what is in the tray being taken whole.
-  if (canStake('dust')) stake('dust');
-  runUntil(() => canLet(), 30);
-  letGo();
-  const spun = runUntil(() => canBank(), 30);
-  const won = pot(), before = S.stored;
-  bank();
-  run(0.4);                                    // grains off the heap, most still in the air
-  const owed = S.paying && S.paying.left, air = S.tableAir.length;
+  // A stake held for, and the sign tapped: the hand plays out and the pay
+  // starts out of the foot. The check is not about the odds, only about
+  // what is owed being paid whole.
+  window.__casinoStake(400);
+  const dropped = window.__tapSign();
+  const played = runUntil(() => !!S.paying, 40);
+  const won = S.hand ? Object.entries(S.hand.pays).reduce((n, [k, v]) => n + v, 0) : 0;
+  const before = S.stored, floorBefore = S.floorGrains, heldBefore = held();
+  run(0.3);                                    // grains out of the hatch, most still in the air
+  const owed = state().payLeft, air = S.tableAir.length;
+  const inAir = S.tableAir.reduce((n, k) => n + (k.arc ? (k.worth || 1) : 0), 0);
 
   window.__reload();
-  const back = S.paying && S.paying.left;
-  run(8);                                      // and let the sand finish its trip
-  const paid = S.stored - before;
+  const back = state().payLeft;
+  run(8);                                      // and let the grains finish their trip
+  const landed = (S.floorGrains - floorBefore) + (held() - heldBefore) + (S.stored - before);
 
   return [
-    ok(spun && won > 0, 'there was a pot to take', `${won}`),
+    ok(dropped && played && won > 0, 'there was a pay to run out', `${won}`),
     ok(air > 0 && owed < won, 'and the reload caught it in the air',
-       `${air} grains flying, ${owed} of ${won} still on the table`),
-    ok(back === won, 'the whole of it is still owed the moment the page comes back',
-       `${won} banked, ${back} owed`),
-    ok(paid >= won, 'and the hole is paid every last grain of it',
-       `${won} taken, ${paid} landed`)
+       `${air} grains flying, ${owed} of ${won} still in the building`),
+    ok(back === owed + inAir, 'the whole of it is still owed the moment the page comes back',
+       `${owed} in the building and ${inAir} in the air, ${back} owed`),
+    ok(!S.paying && landed >= won, 'and the ground is paid every last grain of it',
+       `${won} won, ${landed} landed, carried or banked`)
   ];
 // One particular hand across more than five seconds, and a reload of its own
 // in the middle: the harness's would put the pot back in the hopper.

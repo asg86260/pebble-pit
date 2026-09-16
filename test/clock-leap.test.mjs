@@ -100,21 +100,20 @@ group('a dose bought before tabbing out is still live after', async () => {
   ];
 });
 
-// The hand is staked and let go through the rows the player presses, and the
-// handful is on the pegs -- every grain's beat and fall written in time -- when
-// the tab goes dark. An hour away is one frame's leap to the clock, so the
-// grains that were on the board are still on it when you come back, a beat
-// further on and no more, and the hand settles in its own time.
+// The hand is staked and dropped the way the player does it -- the arm held,
+// the sign tapped -- and the handful is on the pegs, every grain's beat and
+// fall written in time, when the tab goes dark. An hour away is one frame's
+// leap to the clock, so the grains that were on the board are still on it
+// when you come back, a beat further on and no more, and the hand settles
+// in its own time.
 group('a hand in flight resolves after its own time, not on return', async () => {
   window.__reset();
   window.__casino(true);
   window.__give(6000);
-  yard.S.chip = 1;
   window.__build();
   run(0.5);
-  const staked = window.__buy('stakedust');
-  runUntil(() => !state().pouring, 15);
-  const let_ = window.__buy('letgo');
+  const staked = window.__casinoStake(100) > 0;
+  const dropped = window.__tapSign();
   run(0.8);
   const before = state();
 
@@ -129,12 +128,12 @@ group('a hand in flight resolves after its own time, not on return', async () =>
   const rested = runUntil(() => !state().letting, 10);
 
   return [
-    ok(staked && let_, 'the chip goes down and the floor opens through their rows'),
-    ok(before.letting && before.drop.falling > 0, 'with the handful on the pegs',
+    ok(staked && dropped, 'the stake goes in on the arm and the floor opens on the sign'),
+    ok(before.letting && before.drop && before.drop.falling > 0, 'with the handful on the pegs',
        before.drop && `${before.drop.falling} falling`),
     ok(after.letting && after.drop && after.drop.sent <= before.drop.sent + 1,
        'an hour away moves the hand on by a frame, not an hour',
-       `${before.drop.sent} sent before, ${after.drop && after.drop.sent} after`),
+       `${before.drop && before.drop.sent} sent before, ${after.drop && after.drop.sent} after`),
     ok(after.drop && after.drop.falling > 0, 'so the grains are still on the board when you come back',
        after.drop && `${after.drop.falling} falling`),
     ok(rested, 'and the hand settles when its own time is up')
