@@ -33,6 +33,7 @@ import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
+import { forceCoarse } from './prefs.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
@@ -890,6 +891,8 @@ export const HANDLES = {
   // can tear the rift, which plays a scene) and then presses a control is
   // really testing the skip.
   __nocine: skipCutscene,
+  // A phone stood up for a scene or a check, without writing the preference.
+  __coarse: forceCoarse,
   // The space bar: held down or let go, and the skip it ends in.
   __holdSkip: holdSkip, __skip: skipScene,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,

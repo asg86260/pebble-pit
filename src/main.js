@@ -22,6 +22,7 @@ import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { refreshBar, measureSafeArea } from './bar.js';   // the grab bar along a phone's bottom edge
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
+import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
 
 // The veil comes off one frame after the first, so the frame is painted under
 // it before it starts to go.
@@ -89,6 +90,7 @@ function frame() {
     hud();
     refreshBar();
     refreshHop();
+    refreshFullscreen();
     fillQueue();
     fillPin();
     stepToast();

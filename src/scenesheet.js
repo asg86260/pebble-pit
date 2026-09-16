@@ -8,6 +8,7 @@
 // the blob back, and so does a reload while staged.
 
 import { S } from './state.js';
+import { forceCoarse } from './prefs.js';
 import { SCENES, byPart } from './scenes.js';
 import { hold } from './input.js';
 import { restore, bootYard } from './persist.js';
@@ -41,6 +42,8 @@ export function scene(name) {
   if (!sc) return false;
   if (!S.staged) { keep(loadRaw()); S.staged = true; }
   hold(false);          // the clock runs from the first frame of the scene
+  // A scene that stood the page up as a phone does not leave it one.
+  forceCoarse(null);
   sc.run();
   refresh();
   return true;

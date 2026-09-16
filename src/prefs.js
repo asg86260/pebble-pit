@@ -43,7 +43,12 @@ export function reducedMotion() {
 // mid-game, and every seat in the frame asks this.
 let coarsePointer = null;
 export function coarse() {
+  if (forced != null) return forced;
   if (prefs.touch != null) return prefs.touch;
   coarsePointer ??= typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   return coarsePointer;
 }
+// A phone stood up for a scene or a check, without writing the player's
+// preference: in memory only, cleared with null.
+let forced = null;
+export const forceCoarse = v => { forced = v; };

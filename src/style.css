@@ -130,9 +130,39 @@ canvas {
   font: 12px ui-monospace, "Courier New", monospace;
   cursor: pointer;
 }
-#hop button.left { left: var(--hop-inset); }
-#hop button.right { right: var(--hop-inset); }
+#hop button.left { left: calc(var(--hop-inset) + env(safe-area-inset-left, 0px)); }
+#hop button.right { right: calc(var(--hop-inset) + env(safe-area-inset-right, 0px)); }
 #hop .pic { display: block; line-height: 0; }
+/* The fullscreen button (fullscreen.js): the hop's square in the sky's
+   top-right corner, inside the safe area. Its glyph is drawn here: a frame
+   with the corners marked to go in, the corners turned inward to come out. */
+#fullscreen {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
+  right: calc(env(safe-area-inset-right, 0px) + var(--fs-inset));
+  width: var(--fs-size); height: var(--fs-size);
+  z-index: 4;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #000;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  padding: 0;
+  cursor: pointer;
+}
+#fullscreen .frame {
+  display: block; position: relative; width: 18px; height: 18px; box-sizing: border-box;
+  border: 2px solid #000;
+}
+/* the corners: the frame with the middle of each edge painted out by two
+   white bars laid over it, so four brackets are left pointing outward */
+#fullscreen .frame::before, #fullscreen .frame::after {
+  content: ''; position: absolute; background: #fff;
+}
+#fullscreen .frame::before { top: -2px; bottom: -2px; left: 4px; right: 4px; }
+#fullscreen .frame::after { left: -2px; right: -2px; top: 4px; bottom: 4px; }
+/* in fullscreen: the corners turned inward, which is a square in the middle */
+#fullscreen[data-on="1"] .frame { border-color: transparent; background: #000; }
+#fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
 /* a glyph is a canvas too, and the yard-window rule above is undone for it */
 #hop .pic canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block; background: none; cursor: inherit; image-rendering: pixelated; }
 /* Under motion: less the coast is still the platform's -- it is not a glide
@@ -449,7 +479,9 @@ body.still #scroller { scroll-behavior: auto; }
    the dev panel's corner, which is dev only. */
 .pin {
   position: fixed;
-  right: 8px; top: 8px;
+  /* under the fullscreen button where there is one (fullscreen.js writes
+     --fs-room), and inside the safe area */
+  right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(8px + env(safe-area-inset-top, 0px) + var(--fs-room, 0px));
   z-index: 9;
   display: block;
   width: var(--card-w);
@@ -706,11 +738,19 @@ body.still #scroller { scroll-behavior: auto; }
      `PIP_TONE` in config/boards.js, written on to the root by board.js: the
      pips are on nine boards and every one of them wants the same answer. */
   font-size: var(--pip-em, 1em);
-  letter-spacing: .22em;
   line-height: 1;
   opacity: var(--pip-tone, .78);
+  display: inline-flex; align-items: center; gap: .5em;
 }
-.rows .ladder b { font-weight: normal; }
+/* A pip is a box in the ladder's own em, filled when the rung is bought;
+   a band is a row of them (shelf.css stands the same pips in a column). */
+.rows .ladder b { font-weight: normal; display: inline-flex; gap: .22em; }
+.rows .ladder i {
+  display: block; box-sizing: border-box;
+  width: .6em; height: .6em;
+  border: 1px solid currentColor; border-radius: 50%;
+}
+.rows .ladder i.on { background: currentColor; }
 .rows .ladder b:nth-child(2) { color: #2e9e4b; }   /* the farm's green, as the spore mark */
 .rows .ladder b:nth-child(3) { color: #2f5fd0; }   /* the quarry's blue, as the shard mark */
 .rows .ladder b:nth-child(4) { color: #d93a25; }   /* the spark's red: the grounds' last rung */
@@ -1234,7 +1274,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    holds the very first frame. */
 .queue {
   position: fixed;
-  left: 8px; top: 8px;
+  left: calc(8px + env(safe-area-inset-left, 0px)); top: calc(8px + env(safe-area-inset-top, 0px));
   z-index: 9;
   display: flex;
   flex-direction: column;
@@ -1624,6 +1664,77 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #hidedone { padding: 6px 8px; }
 }
+
+/* The board as a sheet from the bottom, on a phone (board.js, `placeSheet`;
+   DESIGN.md, "Boards as bottom sheets"). The panel is the sheet: the width
+   of the glass, standing on its foot, its height written by the seat and its
+   slide up and down a translate on y over SHEET_MS. Inside it, top to
+   bottom: the handle (the grip, the board's name, the way back from the
+   crew list), the purse along the top edge, and the rows, which scroll. The
+   popover's inner fades are turned off here: the sheet moves as one thing.
+   Every rule carries the id, so it outranks the popover's whatever the order. */
+#panel.bottom {
+  left: 0; right: 0; bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  background: #fff;
+  border-top: 2px solid #000;
+  overflow: hidden;
+  transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1),
+              height var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
+}
+#panel.bottom.dragging, body.still #panel.bottom { transition: none; }
+#panel.bottom > * { flex-shrink: 1; }
+#panel.bottom .purse, #panel.bottom > .sheet {
+  opacity: 1; transform: none; transition: none;
+}
+#handle {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 12px 6px;
+  letter-spacing: .1em; text-transform: uppercase;
+  cursor: grab;
+  touch-action: none;                   /* the drag is ours: it is the sheet's own gesture */
+  -webkit-user-select: none; user-select: none;
+}
+#handle .grip {
+  position: absolute; top: 4px; left: 50%;
+  width: var(--sheet-grip-w, 36px); height: var(--sheet-grip-h, 4px);
+  margin-left: calc(var(--sheet-grip-w, 36px) / -2);
+  background: #000;
+}
+#handle .name { font-size: 12px; }
+#listback { padding: 2px 8px; border: 2px solid #000; background: #fff; color: #000; font: inherit; cursor: pointer; }
+#panel.bottom .purse {
+  flex: 0 0 auto;
+  flex-direction: row; justify-content: space-between;
+  gap: 8px; padding: 4px 12px 6px;
+  border: 0; border-bottom: 2px solid #000;
+}
+#panel.bottom > .sheet {
+  flex: 1 1 auto; min-height: 0;
+  width: 100%; max-width: none;
+  border: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;                  /* the rows scroll; a sideways drag is nothing */
+}
+/* the board's own title is the handle's now */
+#panel.bottom .page .title { display: none; }
+/* The crew list as a page inside the sheet: the board's rows step aside for
+   it, and the way back is the arrow beside the grip. */
+#panel.bottom .flyout {
+  position: static; flex: 1 1 auto; min-height: 0;
+  width: 100%; max-width: none; margin: 0;
+  border: 0; overflow-y: auto;
+  opacity: 1; transform: none; transition: none;
+}
+#panel.bottom.listing > .sheet:not(.flyout) { display: none; }
+/* the grab bar under it is spoken for; nothing else has to move */
 
 /* Narrow glass, whatever the height: one card across. Two columns on a sheet
    the width of a phone are cards of 180 pixels, and a bill of six coins in

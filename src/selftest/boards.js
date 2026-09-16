@@ -1444,7 +1444,7 @@ export const TESTS = [
     await settle(1);
     shop().querySelector('[data-key="carry"]')?.click();
     await settle(1);
-    const pips = shop().querySelector('[data-key="carry"] .ladder')?.textContent || '';
+    const pips = shop().querySelector('[data-key="carry"] .ladder')?.querySelectorAll('i').length || 0;
     const said = shop().querySelector('[data-key="carry"] .gain')?.textContent || '';
     // A second press on the same board goes in line behind it: its tag says
     // its place in the line, the queue card says the same word, and the tile
@@ -1467,7 +1467,7 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(whole > 0 && atStart < whole, 'pressing a build row draws its glyph as a ghost', `${whole} -> ${atStart}`),
-      ok(/building|queued/.test(said) && pips.length > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips || 'none'}`),
+      ok(/building|queued/.test(said) && pips > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips} pips`),
       ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
       ok(/next/.test(cardLine), 'and the queue card says next on the same line', cardLine || 'no line'),
       ok(/hand it back/.test(tip), 'and hovering it says a press hands it back', tip || 'no tip'),
@@ -1590,7 +1590,7 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(!!pips && pips.textContent.length === 3, 'the blaster row has three pips', pips?.textContent || 'none'),
+      ok(!!pips && pips.querySelectorAll('i').length === 3, 'the blaster row has three pips', String(pips?.querySelectorAll('i').length)),
       ok(!!box && box.height > box.width, 'and they stand in a column', box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
       ok(!!bandedEl && mine === theirs, "the same distance in from the edge as a banded ladder's", `${mine} vs ${theirs}`),
     ];

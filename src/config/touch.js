@@ -21,6 +21,11 @@ export const HOP_Y = 0.42;           // below the purse and the pin, above the c
 export const HOP_SIZE = 44;          // px; the thumb's minimum
 export const HOP_INSET = 6;          // px in from the edge
 
+// The fullscreen button, top-right in the sky (fullscreen.js): the hop's
+// square, the hop's inset, inside the safe area.
+export const FS_SIZE = 44;
+export const FS_INSET = 6;
+
 // A board as a sheet from the bottom, on a phone only. Its top edge at this
 // share of the window down, so the ground line and the station stay in the
 // picture above it; dragged up past its seat it grows to `SHEET_TALL`, and

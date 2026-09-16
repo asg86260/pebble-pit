@@ -187,13 +187,16 @@
 .rows.shelves > .tile .ladder {
   position: absolute; right: 4px; top: 12px;
   display: flex; flex-direction: column-reverse; align-items: center;
+  gap: 4px;                                   /* between bands */
   font-style: normal;
-  font-size: 10px; line-height: 8px;
   opacity: var(--pip-tone, .78);
   pointer-events: none;
 }
-.rows.shelves > .tile .ladder b { writing-mode: vertical-lr; transform: rotate(180deg); font-weight: normal; letter-spacing: -2px; }
-.rows.shelves > .tile .ladder b + b { margin-bottom: 2px; }
+/* A pip is a box a cell across and a band a column of them at a fixed
+   pitch, so no font's idea of a circle can stack two on each other. */
+.rows.shelves > .tile .ladder b { display: flex; flex-direction: column-reverse; gap: 2px; }
+.rows.shelves > .tile .ladder i { display: block; box-sizing: border-box; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
+.rows.shelves > .tile .ladder i.on { background: currentColor; }
 .rows.shelves > .tile .ladder b:nth-child(2) { color: #2e9e4b; }
 .rows.shelves > .tile .ladder b:nth-child(3) { color: #2f5fd0; }
 .rows.shelves > .tile .ladder b:nth-child(4) { color: #d93a25; }

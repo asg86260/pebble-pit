@@ -570,15 +570,18 @@ export function refresh(el, list, headcount) {
       // (`rungsOf`).
       const at = u.rung ? rungOf(u) : 0;
       const of = rungsOf(u);
-      const pips = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
+      // A pip is an element, not a glyph: the circles were text once (●○)
+      // and their pitch was a letter-spacing tuned to one font, which on a
+      // phone's font stacked them on top of each other. A box is the same
+      // size in every font, and the stylesheet sets the pitch.
+      const pip = i => (i < at ? '<i class="on"></i>' : '<i></i>');
+      const pips = u.rung ? Array.from({ length: of }, (_, i) => pip(i)) : [];
       // A banded ladder draws its pips a group a band, each an element so the
-      // stylesheet can tint it in the band's coin. A band one pip wide gets no
-      // gap: there is nothing inside it to set apart, and with one the row
-      // read as three marks rather than one row. A ladder with no bands is one
-      // group, since the shelf sets its pips by the group element.
-      const want = u.group && pips
-        ? pips.match(new RegExp(`.{1,${u.group}}`, 'g')).map(g => `<b>${g}</b>`).join(u.group > 1 ? ' ' : '')
-        : pips ? `<b>${pips}</b>` : '';
+      // stylesheet can tint it in the band's coin. A ladder with no bands is
+      // one group, since the shelf sets its pips by the group element.
+      const groups = [];
+      if (pips.length) for (let i = 0; i < pips.length; i += u.group || pips.length) groups.push(`<b>${pips.slice(i, i + (u.group || pips.length)).join('')}</b>`);
+      const want = groups.join('');
       if (ladder.innerHTML !== want) ladder.innerHTML = want;
     }
 
