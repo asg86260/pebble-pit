@@ -909,7 +909,8 @@ back to the idle swap. A win's strobe and a dud's blackout stand over all of
 it as they do now.
 
 **Everything pours out the bottom in its own kind.** When the last pebble
-is still the bins pay into the tray and out of the foot: pebbles from the
+is still the bins pay out through the foot (built: straight out, no tray --
+see "What building it changed"): pebbles from the
 pebble bins, crops from the crop bins, ore from the ore bins, a spark from
 a spark bin -- each as the coin it is, each a real grain -- into the heap
 on the ground the crew already hauls, the way every station's output lands.
@@ -995,11 +996,25 @@ them and are what "The pour" is built on.
 building paragraph meant the chute-and-crank casino's, with its lever; the
 pay still has to land somewhere the crew reads, and "the heap the crew
 already hauls" is a strip in `S.piles` with a limit (`PILE_LIMIT.casino`)
-and the pile-full mark. A pebble grain off the tray lands as the pebbles it
-is worth and a coin goes out as a grain of that coin, one a coin, ahead of
-the pebbles; `bankDust` credits each kind as the haulers' loads land in
-the hole, so ore, crops and sparks off the table are counted where every
-other coin is.
+and the pile-full mark. A pebble off a bin lands as the pebbles it is
+worth and a coin goes out as a grain of that coin, one a coin; `bankDust`
+credits each kind as the haulers' loads land in the hole, so ore, crops and
+sparks off the table are counted where every other coin is.
+
+**The tray is gone: the pay falls straight out of the foot.** Built first
+with the bins paying into a tray at the foot that then ran out of the
+hatch, which was the plinko's tray kept for no reason -- a heap standing
+in the building for a second and a half that nobody could do anything with.
+Now each bin, on its beat, drops what it holds: its pebbles fall through
+the foot to the building's floor and lob out of the hatch on to the strip,
+each carrying its share of the bin's pay, and a converting bin's pay falls
+as the coin itself, one grain a coin in its color, so what lands is what
+was won. A full strip holds the bin that is due -- its foot lit, its
+pebbles in it -- rather than a tray filling; the pot's ledger shrinks bin
+by bin as each pays, so a save mid-pay comes back with the unpaid bins'
+pebbles in the funnel and what was in the air owed and thrown again.
+`FOOT_H` is the foot's height; `trayShownFor` and its band knobs went with
+the tray.
 
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the

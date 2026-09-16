@@ -92,43 +92,41 @@ group('a refresh does not send the gang back down the ladder', async () => {
 
 // --- and the three things a refresh used to take off you ----------------------
 
-// A hand paid is money on its way out of the foot: the pay runs out of the
-// building one flying grain at a time on to the casino's strip, so for the
-// second or two in between the whole of it lives in `S.paying` and the arcs
-// -- and `S.paying` was once the one field in that building nobody wrote
-// down. A refresh during the run came back on a cleared payout and an empty
-// sky, and four thousand dust was simply gone.
+// A hand paid is money on its way out of the foot: each bin's pay falls
+// through the building and out of the hatch on to the casino's strip, so for
+// the second or two in between the whole of it is in the air -- and the
+// field that wrote it down was once the one field in that building nobody
+// wrote. A refresh mid-pay came back on an empty sky, and four thousand dust
+// was simply gone. Now what is flying comes back owed and is thrown again,
+// and the bins that had not paid come back as a stake in the funnel.
 group('a refresh in the middle of a payout does not eat the pot', async () => {
   const S = yard.S;
   window.__crew(2, 4);
   window.__casino(true);
   window.__give(6000);
   run(1);
-  // A stake held for, and the sign tapped: the hand plays out and the pay
-  // starts out of the foot. The check is not about the odds, only about
-  // what is owed being paid whole.
-  window.__casinoStake(400);
-  const dropped = window.__tapSign();
-  const played = runUntil(() => !!S.paying, 40);
-  const won = S.hand ? Object.entries(S.hand.pays).reduce((n, [k, v]) => n + v, 0) : 0;
+  const s0 = window.__casinoStake(120);
   const before = S.stored, floorBefore = S.floorGrains, heldBefore = held();
-  run(0.3);                                    // grains out of the hatch, most still in the air
-  const owed = state().payLeft, air = S.tableAir.length;
-  const inAir = S.tableAir.reduce((n, k) => n + (k.arc ? (k.worth || 1) : 0), 0);
+  const dropped = window.__tapSign();
+  // into the pay, with something out of a bin and in the air
+  const paying = runUntil(() => state().drop && state().drop.stage === 'pay' && state().toStrip > 0, 40);
+  const mid = state();
 
   window.__reload();
-  const back = state().payLeft;
+  const back = state();
   run(8);                                      // and let the grains finish their trip
   const landed = (S.floorGrains - floorBefore) + (held() - heldBefore) + (S.stored - before);
 
   return [
-    ok(dropped && played && won > 0, 'there was a pay to run out', `${won}`),
-    ok(air > 0 && owed < won, 'and the reload caught it in the air',
-       `${air} grains flying, ${owed} of ${won} still in the building`),
-    ok(back === owed + inAir, 'the whole of it is still owed the moment the page comes back',
-       `${owed} in the building and ${inAir} in the air, ${back} owed`),
-    ok(!S.paying && landed >= won, 'and the ground is paid every last grain of it',
-       `${won} won, ${landed} landed, carried or banked`)
+    ok(s0 > 0 && dropped && paying, 'a hand is paying with its pay in the air', `${mid.toStrip} in the air`),
+    ok(mid.pot && mid.pot.stake < s0 && mid.drop.paid > 0, "and the bins that paid have left the funnel's ledger",
+       `${mid.pot && mid.pot.stake} of ${s0} unpaid, ${mid.drop && mid.drop.paid} paid`),
+    ok(back.payLeft === mid.toStrip, 'what was in the air is owed the moment the page comes back',
+       `${mid.toStrip} flying, ${back.payLeft} owed`),
+    ok(back.pot && back.pot.stake === mid.pot.stake && !back.letting, 'and the bins that had not paid are a stake in the funnel again',
+       JSON.stringify(back.pot)),
+    ok(!S.paying && landed >= mid.drop.paid, 'and the ground is paid every grain that had left a bin',
+       `${mid.drop.paid} paid out, ${landed} landed, carried or banked`)
   ];
 // One particular hand across more than five seconds, and a reload of its own
 // in the middle: the harness's would put the pot back in the hopper.

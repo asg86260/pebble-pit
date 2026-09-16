@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -34,7 +34,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, pouring, letting, holding, potAt, tableWant, trayWant, shownMult, hopperN, pourRate, payLeft, canDrop, payingBin } from './casino.js';
+import { pot, pouring, letting, holding, potAt, tableWant, shownMult, hopperN, pourRate, payLeft, canDrop, payingBin } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -255,7 +255,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   rockHeld: S.rockHeld,
 
   // The casino: the stake in the hopper, the handful on the pegs, the bins,
-  // the tray.
+  // the pay out of the foot.
   casinoOpen: S.casinoOpen,
   pot: S.pot && { stake: S.pot.stake, on: pot(), owed: S.pot.owed, where: S.pot.where },
   // the stake is still coming down into its plot
@@ -277,13 +277,13 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   tableAir: S.tableAir.length,
   mult: shownMult(),
   potAt: Math.round(potAt().x),
-  // the grains in the hopper and the tray, and how many each is meant to hold,
-  // which past the first band is fewer than the pot itself -- see `shownFor`
+  // the grains in the hopper and how many it is meant to hold, which past
+  // the first band is fewer than the pot itself -- see `shownFor`
   table: hopperN(),
   tableWant: tableWant(),
-  tray: tray.n,
-  trayWant: trayWant(),
-  // what a paid hand still has to run out of the foot, by kind
+  // what a paid hand caught by a reload still has to run out of the foot, by
+  // kind; and how much of the pay is in the air on its way to the strip
+  toStrip: S.tableAir.reduce((n, k) => n + (k.lands === 'strip' ? (k.worth || 1) : 0), 0),
   paying: S.paying ? { ...S.paying.left } : null,
   payLeft: payLeft(),
   hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: +S.hand.mult.toFixed(3), edge: S.hand.edge, pays: S.hand.pays },

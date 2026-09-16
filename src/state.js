@@ -204,13 +204,10 @@ export const S = {
   wizards: 0,             // bodies up there wearing one
 
   // --- the casino ---
-  // One hopper, one tray, one pot. `pot` is null until something is staked,
-  // and what is on it is `n` of `cur` -- the same currencies everything else in
-  // the game is priced in, because a chip you can only use here would be a
-  // fifth currency. `where` says which plot the pot is standing in: the hopper
-  // on the roof, waiting to be let go, or the tray at the foot, waiting to be
-  // banked or dropped again. `stake` is what the hand went down as, so the
-  // settled hand can say its multiple.
+  // One hopper, one pot. `pot` is null until something is staked: `stake`
+  // is the pebbles held for, `n` those landed and spent, `owed` what the
+  // purse has still to pay (`where` is always the hopper now; it stays for
+  // the saves that wrote it).
   casinoOpen: false,
   pot: null,              // { cur, stake, n, owed, where } -- the stake in the funnel: poured, landed, still to spend
   // The arm is held: the stake is pouring, whole pebbles as the fraction
@@ -224,7 +221,7 @@ export const S = {
   tableAir: [],           // the casino's grains in the air: arriving, leaving, or on their way out of the foot
   paying: null,           // { left: { dust, spore, shard, spark }, grains } -- a paid hand on its way out of the foot
   // The hand under way: the gate open, the grains on the pegs, the bins filling,
-  // then the bins paying into the tray. Null when nothing is falling. A path in
+  // then the bins paying out of the foot. Null when nothing is falling. A path in
   // flight is ephemeral -- a reload comes back a pot in the hopper with the
   // sign live again. See `openGate` in casino.js.
   drop: null,             // { at, sent, grains, bins, stage, ... }
@@ -724,8 +721,6 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
-// And the tray at its foot, where the bins pay into and the pot stands after.
-export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

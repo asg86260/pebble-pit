@@ -1,5 +1,5 @@
 import { P } from './yard.js';
-import { BOARD_COLS, CASINO_MARGIN, HOPPER_H, GATE_H, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H } from './casino.js';
+import { BOARD_COLS, CASINO_MARGIN, HOPPER_H, GATE_H, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, FOOT_H } from './casino.js';
 
 // The casino sits in the margin the world keeps at its left-hand end, the last
 // building before the rock: a narrow strip, which suits the one building that
@@ -43,7 +43,7 @@ export const TOWER_H = P * 34;       // tall and thin: the one building that goe
 // It is the widest thing on the ground and by some way the tallest, which suits
 // the one building here that produces nothing.
 export const CASINO_W = P * (BOARD_COLS + CASINO_MARGIN * 2);
-export const CASINO_H = P * (HOPPER_H + GATE_H + CASINO_SIGN_H + FIELD_H + BIN_H + LABEL_H + TRAY_H);
+export const CASINO_H = P * (HOPPER_H + GATE_H + CASINO_SIGN_H + FIELD_H + BIN_H + LABEL_H + FOOT_H);
 
 // --- the shack at the rock ----------------------------------------------------
 // The rockhands' hut, standing off the rock's left flank. See DESIGN.md, "The

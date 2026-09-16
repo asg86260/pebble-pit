@@ -162,9 +162,11 @@ group('holding again adds to the stake, and a release keeps it across a reload',
 // A hand is longer than the reload harness's five seconds and is one
 // particular handful on the pegs -- a save writes the stake down and a load
 // pours it back into the hopper -- so these follow it without the harness.
+// (A hand's pay has to fit on the strip, since nobody here carries it: a
+// stake under the strip's limit, so the bins never hold.)
 group('a tap on the sign drops exactly a handful, and only the bins with a pebble pay', async () => {
   atTheTable();
-  const s0 = stake(1.5);
+  const s0 = stake(0.4);
   const hand = playHand();
   const s = hand.s;
   const expect = hand.bins ? owed(hand.bins, s0) : -1;
@@ -205,7 +207,7 @@ group('a small stake drops as many pebbles as it has', async () => {
 
 group('the arm and the sign are dead mid-hand', async () => {
   atTheTable();
-  stake(1);
+  stake(0.4);
   const shut = {};
   const tryAll = when => { shut[when] = [hold(true) && 'arm', tap() && 'sign'].filter(Boolean); hold(false); };
   tap();
@@ -230,7 +232,7 @@ group('the arm and the sign are dead mid-hand', async () => {
 // coin as a grain of that coin, and the counters move as the loads land.
 group('the pay pours out of the foot on to the strip in its own kinds, and the haulers carry it to the hole', async () => {
   atTheTable();
-  const s0 = stake(1);
+  const s0 = stake(0.4);
   const hand = playHand();
   const paid = hand.s.hand.n, pays = hand.s.hand.pays;
   const held = state().stored, ore = state().shards, crops = state().spores, sparks = state().sparks;
@@ -258,26 +260,30 @@ group('the pay pours out of the foot on to the strip in its own kinds, and the h
   ];
 }, { reload: false });
 
-// A pay has to have somewhere to land: a full strip holds the chute, the pay
-// waits in the tray, and the mark over the strip says why.
-group('a full strip holds the pour', async () => {
+// A pay has to have somewhere to land: a full strip holds the bin that is
+// due, its foot lit and its pebbles in it, and the mark over the strip says
+// why; when the haulers make room the hand goes on.
+group('a full strip holds the bins', async () => {
   atTheTable();
   stake(0.4);
-  const hand = playHand();
-  const paid = hand.s.hand.n;
   const strip = state().piles.find(p => p.key === 'casino');
   window.__pile((strip.from + strip.to) / 2, PILE_LIMIT.casino);
+  tap();
+  runUntil(() => state().drop && state().drop.stage === 'pay', 30);
   run(3);
   const full = state();
   window.__clearFloor();
-  runUntil(() => !state().paying && state().tableAir === 0, 30);
+  runUntil(() => !state().letting && state().tableAir === 0, 30);
   run(0.5);
   const after = state();
   return [
-    ok(paid > 0, 'there is a pay to pour', `${paid}`),
     ok(full.pileMarks.includes('casino'), 'the strip is full and its mark stands', full.pileMarks.join(',')),
-    ok(full.payLeft > 0, 'so the pay waits in the building', `${full.payLeft} still to go`),
-    ok(after.paying === null && after.pileCount.casino > 0, 'and runs out once there is room', `${after.pileCount.casino} on the ground`)
+    ok(full.letting && full.drop.stage === 'pay' && full.drop.paying != null && full.drop.bins.reduce((a, b) => a + b, 0) > 0,
+       'so a bin holds its pebbles with its foot lit', full.drop && `bin ${full.drop.paying} lit, ${full.drop.bins.join(',')} in the bins`),
+    ok(full.toStrip === 0 && full.pileCount.casino <= PILE_LIMIT.casino, 'and nothing more is on its way to the strip',
+       `${full.toStrip} in the air, ${full.pileCount.casino} on the ground`),
+    ok(after.hand && after.hand.n > 0 && after.pileCount.casino > 0, 'and pays out once there is room',
+       `${after.hand && after.hand.n} paid, ${after.pileCount.casino} on the ground`)
   ];
 }, { reload: false });
 

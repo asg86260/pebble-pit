@@ -99,9 +99,10 @@ export const BIN_H = 6;
 // and no pay can be read as its neighbor's. A floor line, a clear row, five of
 // glyph, a clear row, and the tray's rim.
 export const LABEL_H = 9;
-// The tray at the foot, which the bins pay into: the same walled plot the
-// hopper is, but deeper, so a won pot stands as a real heap at the foot.
-export const TRAY_H = 12;
+// The foot under the bins: the pay falls through it to the building's floor
+// and out of the hatch in its left wall on to the ground. Nothing stands in
+// it.
+export const FOOT_H = 12;
 // The field's width: the bins across.
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
@@ -228,17 +229,6 @@ export const shownFor = n =>
     : Math.min(CASINO_PILE_BRIM,
                Math.round(CASINO_PILE_ONE +
                           CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
-// The tray's ladder is steeper and its brim higher: the tray is twelve rows
-// deep so that a won pot stands as a real heap at the foot, and a thousand
-// should look like a thousand there. Nine hundred is what its rows hold
-// with the rim clear.
-export const CASINO_TRAY_BAND = 400;
-export const CASINO_TRAY_BRIM = 900;
-export const trayShownFor = n =>
-  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
-    : Math.min(CASINO_TRAY_BRIM,
-               Math.round(CASINO_PILE_ONE +
-                          CASINO_TRAY_BAND * Math.log10(n / CASINO_PILE_ONE)));
 export const CASINO_KNOBS = [
   { key: 'POUR_SHARE', label: 'the pour, of the purse a second', min: 0.005, max: 0.5, step: 0.005,
     get: () => POUR_SHARE, set: v => { POUR_SHARE = v; } },
