@@ -843,6 +843,27 @@ was written first and paid 1,266 from the pebble bins alone -- a gift, not
 a gamble -- and was struck.) `test/casino.test.mjs` asserts the sum, so a
 bin cannot be moved on its own.
 
+**Small stakes.** Four rules keep a flick honest and a real stake fair:
+
+- **A converting bin with anything in it pays at least one coin:** its pay
+  is `max(1, round(share / DUST_PER[coin]))`, where `share` is the pebbles
+  that landed in it times what each carries. One pebble in the spark bin is
+  a spark. At real stakes the floor never fires -- a share is many coins'
+  worth -- so the row stays fair; at tiny stakes it is a gift nobody will
+  resent.
+- **The pebble bins round to the nearest whole pebble:** a ×½ on one pebble
+  pays one. Nothing here pays a fraction of a grain.
+- **The handful is `min(CASINO_HANDFUL, stake)` pebbles.** A small stake
+  drops fewer pebbles, never sixteen slivers; each pebble carries
+  `stake / count`, and a stake of three is three pebbles carrying one.
+- **The pour has a floor.** The slice is `POUR_SHARE` of the purse a
+  second, but never less than `POUR_MIN` pebbles a second (sixteen to
+  start), so the shortest tap still stakes a real handful -- unless the
+  purse holds fewer, and the purse is never poured below zero.
+
+`POUR_SHARE` and `POUR_MIN` are config knobs (`config/casino.js`, on the dev
+panel), so both are found by playing rather than argued.
+
 **Everything pours out the bottom in its own kind.** When the last pebble
 is still the bins pay into the tray and out of the foot: pebbles from the
 pebble bins, crops from the crop bins, ore from the ore bins, a spark from
