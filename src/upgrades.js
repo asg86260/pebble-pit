@@ -1112,13 +1112,14 @@ export function buy(u) {
   // bill checks for the same reason, because the two lists say the same thing.
   if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
   // A row with a payout on it instead of a price is not a purchase: nothing is
-  // taken, and what it does is its own business. The casino's two decisions are
-  // the only ones in the game.
+  // taken, and what it does is its own business. The casino's decisions -- let
+  // it go, bank it, drop again -- are the only ones in the game.
   if (u.price) {
     if (!u.show() || u.dead?.()) return false;
     u.buy(); S.dirty = true; buildShop();
-    // A payout row is the casino's two decisions: it is a thing you do at the
-    // table, not a thing you take away, so the board stays up for the next hand.
+    // A payout row is one of the casino's decisions: it is a thing you do at
+    // the table, not a thing you take away, so the board stays up for the next
+    // hand.
     return false;
   }
   // A row bought and waiting its turn: pressing it again hands it back. The

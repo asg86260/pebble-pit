@@ -202,7 +202,13 @@ a minute is a decision.
 It keeps no books. Rates and totals belong on the counter and in the upgrade rows, where the number
 is next to the thing it is about.
 
-## The casino
+## The casino (built, then cut for the handful, 2026-09-15)
+
+*The wheel described here is gone: the building is a plinko now, and the
+section after this one says how and why. What still stands from this section
+is the bargain -- the one place that makes nothing, the stake as a real heap of
+sand, the band ladder, the sign, the strobe and the dud, the noticeboard's two
+lines -- and the rest is the history of the wheel.*
 
 **The one place in the yard that makes nothing.** Everywhere else, a thing you buy does something
 for ever after. This takes what you have and hands some of it back, and the whole of it is a
@@ -387,7 +393,7 @@ the whole of the building rather than a detail on it. It turns while there is a 
 spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
 says whether anything is happening.
 
-## The handful (design, not built; 2026-09-15)
+## The handful (built 2026-09-15)
 
 **The wheel is a coin.** Half doubles, half takes, and every hand at the table has
 exactly two shapes. The players say it is dull, and they are right for a reason
@@ -649,6 +655,74 @@ between a quarter and a half — the number the whole design hangs on, held by a
 test rather than by a note. Browser tier (`selftest/casino.js`): the bench row
 builds it and a hand pressed through the page's rows settles. The scene is
 `casino`, taken mid-cascade.
+
+### What building it changed
+
+**The building is seventy-nine cells tall.** The section above added up the
+face at about thirty-four and left the hopper and the tray to the reader; a
+hopper has to hold the brim and a tray has to hold the same brim, because a
+drop again moves one into the other. Fourteen rows of twenty-four each, with
+the sign band, the floor and the labels between, is seventy-nine -- taller
+than the tower by a good way, and the whole of it stands in a window of the
+height the game already asks for. The band ladder came down with it:
+one-for-one to a hundred, eighty grains a tenfold pot past that, and a brim of
+three hundred (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), because three hundred
+is what fourteen rows of twenty-four hold with the rim clear. What is
+approximate is the size of the heap and nothing else, as before.
+
+**The pays are written in two rows, and the half bins share a label.** A
+glyph is three cells and a bin is two, so eleven labels in one row cannot be
+had. The even bins write theirs on the upper row and the odd bins on the
+lower, the left half leaning right and the right half leaning left so a clear
+cell stands between every pair, a one-cell leader runs from each lower label
+up to its bin's floor, and the three half bins in the middle -- one region of
+the board, and priced as one -- share a single `.5`. The two 39s stack their
+digits down both rows at the edges. The whole sign moved to the same three-
+by-five face for the same reason: six seven-wide letters across a twenty-six-
+wide front is forty-seven cells. The board stands a cell proud of the block
+either side so the letters have air from the bulbs, the way a marquee does.
+
+**The bins are counts, not a sand grid.** Two cells wide and six deep with a
+hairline between, a bin has no heap shape to speak of: a grain lands on the
+shorter of its two columns and that is the settle. Eleven two-column grids
+settling by the yard's rules would have drawn exactly the same picture for
+more machinery. What the design said about the settle rules taking over in
+the bin holds for the hopper and the tray, which are real plots.
+
+**A peg does not flash white.** The face it stands on is white, so a peg gone
+white for a frame is a peg gone, not a peg lit. On the beat it throws its
+four corners instead -- a spark round the black cell, with the grain sitting
+black on top -- which reads as the hit. The x39 bin's flash is the bin going
+black for the beat, for the same reason.
+
+**The gate is two cells and every grain enters at one column.** The floor
+opens to the two cells the word leaves clear between the S and the I, so the
+stream falls through the sign; and a grain's column keeps the parity of its
+row, so a grain that entered a cell to one side would meet nine pegs instead
+of ten and a board that was not fair. The heap is drawn from the floor over
+the opening and outward from there, so what you see is the heap sagging into
+the gap, and every grain steps to the middle column as it drops through.
+
+**Bank is not dead over a full hole.** The design carried the rule over from
+the wheel's day, and the wheel's own code had already dropped it: the hole
+does not refuse a grain any more, the first one it cannot take tears the rift
+and goes through, and a tray that stayed where it was over a full hole would
+be a hand you had won and could not collect for a rule about sand that no
+longer holds.
+
+**A reload mid-pay is a redo.** A save taken while the bins are paying comes
+back a pot in the hopper at the stake the hand went down as, the same as a
+save mid-cascade, because the pot is written down and the pay in progress is
+not. It is the wheel's own rule -- a spin mid-flight came back a pot on the
+table -- made no stricter, and a player who refreshes to take a bad hand
+back is a player who has found the one rule with an exception; it is noted
+rather than closed.
+
+**The strike learned a pitch.** `sfx` takes `cents` beside `x`, `hard` and
+`big`, added to the recipe's own jitter, so a peg row, a bin's distance from
+the middle and a hoist's height can each move a strike without a recipe of
+their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
+recipe is the rock's hit cut short. Nobody has listened to it yet.
 
 ## Crew
 

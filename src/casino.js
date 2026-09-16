@@ -898,13 +898,13 @@ export const CASINO_UPGRADES = [
     // not met, which is the one rule every board in this game keeps.
     show: () => S.casinoOpen && !S.pot && !busy() && seen(t.cur)
   })),
-  // Let it go: the floor opens and the handful comes down. It carries what the
-  // hand would pay if every grain found a x39, which is the number the machine
-  // is shouting about. The odds are on the board.
+  // Let it go: the floor opens and the handful comes down. It carries the pot,
+  // which is what is going down the board and the number the decision is
+  // about; what it might come back as is written on the bins.
   {
     key: 'letgo',
     name: 'let it go',
-    price: () => `${MARKOF(S.pot?.cur)} ${Math.floor(pot() * CASINO_BINS[0])}`,
+    price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
     cost: () => 0,
     dead: () => !canLet(),
     buy: letGo,

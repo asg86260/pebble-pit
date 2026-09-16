@@ -120,7 +120,7 @@ export const GLYPH_OF = {
   fan: ['fan'], balloon: ['balloon'], recycler: ['lever'],
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
-  bank: ['sack', 'dust'], ride: ['die'],
+  letgo: ['lever'], bank: ['sack', 'dust'], ride: ['die'],
 };
 
 // A row's picture: its drawing with its badge laid into the top-right

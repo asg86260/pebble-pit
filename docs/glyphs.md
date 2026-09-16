@@ -40,7 +40,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
 | boot            | `haulpace` +up                                                                         |
-| lever           | `auto`, `recycler`                                                                     |
+| lever           | `auto`, `recycler`, `letgo`                                                            |
 | cart            | `carter`                                                                               |
 | belt            | `belt`, `tunebelt` +plus                                                             |
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
