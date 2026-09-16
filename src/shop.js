@@ -7,7 +7,7 @@ import { S } from './state.js';
 import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_FADE, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, leftText, ordinal, undoable } from './upgrades.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
@@ -22,6 +22,8 @@ import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 import { shown } from './tween.js';
+import { onTap } from './tap.js';
+import { coarse } from './prefs.js';
 
 const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');
@@ -323,8 +325,10 @@ function build(el, list, sections, empty, heads) {
         : '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
           '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
-      // A readout (`u.read`) and the pinned card do not answer the cursor.
-      if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl) leanToCursor(b, u.key); }
+      // A readout (`u.read`) and the pinned card do not answer the cursor;
+      // nor does any tile under a thumb, which has no cursor to answer
+      // (DESIGN.md, "A tap buys": a hover a phone can see is a tap it eats).
+      if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl && !coarse()) leanToCursor(b, u.key); }
       // The goal card wears its section's title as a sign on its own frame
       // (shelf.css), since the goal heading itself is not drawn on a shelf.
       if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
@@ -340,14 +344,30 @@ function build(el, list, sections, empty, heads) {
         pin.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
         b.appendChild(pin);
       }
+      // A card wears its description inline (`sayNote`); the crew submenu and a
+      // shelf tile have no line for it, so the tip carries it. The goal card
+      // keeps its sentence in place. A tile in line says what a press does,
+      // since it is the one press that undoes a purchase.
+      const tells = (inSubmenu || (shelf && !sect.goal)) && (u.note || takesTime(u));
+      const say = tells ? () => {
+        const r = b.getBoundingClientRect();
+        const words = undoable(u) ? 'just bought -- press to take it back' : inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
+        if (!words) { showTipAt(null); return; }
+        // Off the board for a card (a note under the board's layer is a note
+        // nobody reads), over the neighbors for a shelf tile.
+        showTipAt(words, r.right + 8, r.top - 2, false, shelf);
+      } : null;
       if (u.read) b.classList.add('stat');
       // A purchase leaves the board up: a site takes a line (DESIGN.md, "The
       // queue"), and the point of a line is pressing the next row from here.
-      else b.addEventListener('click', () => {
+      // A tap, not a click (tap.js): a press that scrolled the board or
+      // lingered on it buys nothing, and a long press asks about the row
+      // instead, which is what a hover did for a mouse.
+      else onTap(b, () => {
         tookLook();                            // anything the yard sent earlier
         buy(u);
         tookLook();                            // and whatever this purchase sent
-      });
+      }, { long: say });
       // A door opens what is behind it on the way in, not on the press; the
       // press is wired too (on the row itself) because a finger cannot hover.
       // Every other board row, hovered, puts away whatever the last door led
@@ -365,23 +385,15 @@ function build(el, list, sections, empty, heads) {
       // press clears it too.
       b.addEventListener('pointerenter', () => markRowSeen(u));
       b.addEventListener('pointerdown', () => markRowSeen(u));
-      // A card wears its description inline (`sayNote`); the crew submenu and a
-      // shelf tile have no line for it, so the tip carries it. The goal card
-      // keeps its sentence in place. A tile in line says what a press does,
-      // since it is the one press that undoes a purchase.
-      if ((inSubmenu || (shelf && !sect.goal)) && (u.note || takesTime(u))) {
-        const say = () => {
-          const r = b.getBoundingClientRect();
-          const words = inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
-          if (!words) { showTipAt(null); return; }
-          // Off the board for a card (a note under the board's layer is a note
-          // nobody reads), over the neighbors for a shelf tile.
-          showTipAt(words, r.right + 8, r.top - 2, false, shelf);
-        };
+      // On a desk the tip comes up under the cursor; under a thumb there is
+      // no cursor, and the long press above is the way to ask.
+      if (say && !coarse()) {
         b.addEventListener('pointerenter', say);
         b.addEventListener('pointermove', say);
         b.addEventListener('pointerleave', () => showTipAt(null));
       }
+      // A note brought up by a long press goes with the finger.
+      if (say) b.addEventListener('pointerup', () => { if (coarse()) showTipAt(null); });
       el.appendChild(b);
     }
   }
@@ -591,12 +603,18 @@ export function refresh(el, list, headcount) {
         // site's works: a site building two at once has its first waiting row
         // third in the list and next in line.
         sayHTML(price, '');
-        sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
+        // For a moment after the press the tag is the way back (DESIGN.md,
+        // "A tap buys"): a tap on it puts the bill back. The clock takes
+        // over when the moment is up.
+        const undo = undoable(u);
+        sayHTML(time, undo ? '<span class="have">bought -- tap to undo</span>'
+                     : `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
+        if (row.classList.contains('undo') !== undo) row.classList.toggle('undo', undo);
         // Greyed while being built; live while it waits, so a press can pull
-        // it back out.
-        grey(row, !queued);
+        // it back out -- and live while it can be undone.
+        grey(row, !queued && !undo);
         // Pressable but not on offer: `off` keeps the shelf's hover away.
         row.classList.add('off');
         continue;
@@ -604,6 +622,7 @@ export function refresh(el, list, headcount) {
     }
     if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
     if (row.classList.contains('building')) row.classList.remove('building');
+    if (row.classList.contains('undo')) row.classList.remove('undo');
     if (row.classList.contains('queued')) row.classList.remove('queued');
     if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
 

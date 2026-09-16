@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<!-- Installed to a phone's home screen the page runs with no browser bars at
+     all, which is the only way a web page loses them (DESIGN.md, "Playing it
+     on a phone"). The manifest and the apple tags are that; the desk
+     (Electron) reads none of them. -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./icon.png">
 <title>Boulder Clicker</title>
 <link rel="icon" href="./icon.png">
 <link rel="stylesheet" href="./src/style.css">
@@ -118,7 +126,7 @@
 <!-- The skip hint: up at the bottom edge while a scene has the yard, with a
      bar that fills under the words for as long as space is held. See
      skiphint.js. -->
-<div id="skip" class="skip" hidden><span class="bar"></span><span class="say">hold space to skip</span></div>
+<button id="skip" class="skip" type="button" hidden><span class="bar"></span><span class="say">hold space to skip</span></button>
 <!-- the wash behind the held sheet: the yard, dimmed and stippled, so the
      sheet reads as over something rather than pasted on it. The frame keeps
      it in step with the sheet (main.js). -->
@@ -240,6 +248,14 @@
      `camX` each frame, so the band reads as the scrollbar it is. A finger on
      the yard above it never scrolls: it sweeps or it taps. -->
 <div id="scroller" hidden><div id="spacer"></div></div>
+<!-- The hop, on a phone only (DESIGN.md, "A hop between stations"): an arrow
+     at each edge of the mid sky, wearing the glyph of the next standing
+     station that way, and a tap glides the view there. hop.js seats and
+     dresses them; an arrow with nothing past it is not drawn. -->
+<div id="hop" hidden>
+  <button class="left" type="button" hidden><span class="arrow">&#9664;</span><i class="pic"></i></button>
+  <button class="right" type="button" hidden><i class="pic"></i><span class="arrow">&#9654;</span></button>
+</div>
 <div id="bar" hidden><i class="thumb"></i></div>
 <!-- the way in: white over the yard as the page boots, taken away once the
      first frame has been drawn (main.js), so the game comes up out of the

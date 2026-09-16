@@ -1,0 +1,12 @@
+{
+  "name": "Pebble Pit",
+  "short_name": "Pebble Pit",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff",
+  "theme_color": "#000",
+  "icons": [
+    { "src": "./icon.png", "sizes": "64x64", "type": "image/png" }
+  ]
+}

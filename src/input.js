@@ -4,7 +4,7 @@
 // else's module.
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TAP_SLOP, TAP_TIME } from './config.js';
+         FARM_H } from './config.js';
 import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -38,6 +38,7 @@ import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane } from './settings.js';
 import { coarse } from './prefs.js';
+import { isTap } from './tap.js';   // one definition of a tap for the whole page
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -264,8 +265,7 @@ export function endDrag(e) {
   // A tap on a touchscreen is what a hover is on a desk: at a station it
   // opens (or shuts) the board, anywhere else it puts it away.
   if (held && held.kind === 'touch' && !panning &&
-      Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
-      now() - held.at < TAP_TIME) {
+      isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
     if (nearShack(p.x, p.y)) showPanel(S.shackBoardOpen ? null : 'shack', true);
     else if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);

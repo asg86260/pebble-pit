@@ -51,6 +51,9 @@ export function refreshBar() {
     shown = want;
     scroller.hidden = !want;
     bar.hidden = !want;
+    // and whatever else stands at the foot of the glass (the skip hint) is
+    // told how much of it the band has
+    document.documentElement.style.setProperty('--bar-room', want ? `${barRoom()}px` : '0px');
     // Shown again, the band has no position of its own to trust: it is
     // written from the camera afresh.
     if (want) resyncScroller();

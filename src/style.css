@@ -1,5 +1,7 @@
 html, body {
-  margin: 0; height: 100%;
+  /* The whole of what the browser gives the page: on a phone the dynamic
+     height follows the bar as it collapses (world.js, `resize`, reads it). */
+  margin: 0; height: 100%; height: 100dvh;
   background: #fff; color: #000;
   overflow: hidden;
   /* on a phone: no rubber-banding or pull-to-refresh behind the game */
@@ -33,6 +35,13 @@ html, body {
    attribute set. One rule with the weight to win, and the attribute can be
    trusted everywhere. */
 [hidden] { display: none !important; }
+/* A double tap on a phone zooms the page unless the thing under it says
+   otherwise, and a tap on a board that zoomed instead of buying is the worst
+   thing a tap can do. Everything that takes a tap says so; the yard refuses
+   the platform every gesture (canvas, below) and the grab bar keeps its one
+   (#scroller). One rule rather than one per element, so the next button
+   added is covered before anybody taps it twice. */
+body :not(canvas):not(#scroller):not(#spacer) { touch-action: manipulation; }
 /* the canvas is the window, whatever happens to the script */
 canvas {
   position: fixed;
@@ -93,6 +102,39 @@ canvas {
   /* Kept on a layer of its own: it moves every frame the view does. */
   will-change: transform, width;
 }
+/* The hop (hop.js): a square at each edge of the mid sky, black frame on
+   white ground, the arrow and the glyph of the station it leads to side by
+   side. The strip itself takes no touch; the two buttons do. Seated by
+   translate3d like every other shell element. */
+#hop {
+  position: fixed;
+  left: 0; right: 0; top: 0;
+  height: var(--hop-size);
+  z-index: 4;
+  pointer-events: none;
+}
+#hop button {
+  pointer-events: auto;
+  position: absolute;
+  top: 0;
+  height: var(--hop-size);
+  min-width: var(--hop-size);
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  font: 12px ui-monospace, "Courier New", monospace;
+  cursor: pointer;
+}
+#hop button.left { left: var(--hop-inset); }
+#hop button.right { right: var(--hop-inset); }
+#hop .pic { display: block; line-height: 0; }
+/* a glyph is a canvas too, and the yard-window rule above is undone for it */
+#hop .pic canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block; background: none; cursor: inherit; image-rendering: pixelated; }
 /* Under motion: less the coast is still the platform's -- it is not a glide
    of ours -- but no smooth scrolling is asked of it. */
 body.still #scroller { scroll-behavior: auto; }
@@ -293,7 +335,9 @@ body.still #scroller { scroll-behavior: auto; }
   padding: 6px 8px 18px;
   cursor: pointer;
 }
-.rows button:hover:not(:disabled) { color: #fff; background: #000; }
+@media (hover: hover) {
+  .rows button:hover:not(:disabled) { color: #fff; background: #000; }
+}
 /* The tonic the pot is set to, marked on the menu: it reads inverted, the way a
    chosen thing does, so a glance at the board says what is on the boil. The word
    "brewing" sits where a price would, filled in by the board. */
@@ -387,11 +431,16 @@ body.still #scroller { scroll-behavior: auto; }
   opacity: .35;
   cursor: pointer;
 }
-.rows button:hover .pinmark, .rows button.pinned .pinmark { opacity: 1; }
+.rows button.pinned .pinmark { opacity: 1; }
+@media (hover: hover) {
+  .rows button:hover .pinmark { opacity: 1; }
+}
 .rows button.pinned .pinmark {
   clip-path: polygon(0 0, 9px 0, 9px 2px, 7px 2px, 7px 6px, 2px 6px, 2px 2px, 0 2px);
 }
-.rows button .pinmark:hover { transform: scale(1.3); }
+@media (hover: hover) {
+  .rows button .pinmark:hover { transform: scale(1.3); }
+}
 
 /* The corner: the one pinned card, top-right, drawn by the same builder as
    the boards and in the same frame as the goal card, because that is what it
@@ -598,8 +647,10 @@ body.still #scroller { scroll-behavior: auto; }
 /* On an inverted row -- one under the cursor, or the tonic the pot is set to --
    the words go white with the rest of the row, so the description stays readable
    on the black rather than turning to ink on ink. */
-.rows button:hover:not(:disabled) .note,
 .rows button.pick.on .note { color: #fff; opacity: .9; }
+@media (hover: hover) {
+  .rows button:hover:not(:disabled) .note { color: #fff; opacity: .9; }
+}
 
 /* The count and its two buttons, held in the one cell that a price would fill,
    so that a row which moves bodies and a row which spends dust are the same
@@ -666,14 +717,18 @@ body.still #scroller { scroll-behavior: auto; }
 /* The hover is a share of the way from the resting tone to full black rather
    than a second tone found by hand -- two hand-tuned numbers would part company
    the moment either was retuned. */
-.rows button:hover:not(:disabled) .ladder {
-  opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+@media (hover: hover) {
+  .rows button:hover:not(:disabled) .ladder {
+    opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+  }
 }
 /* A card with no ladder simply has nothing in that corner: the bill keeps the
    third line on its own, so the card is the same three lines with or without
    pips. */
-.rows button:hover:not(:disabled) .gain,
-.rows button:hover:not(:disabled) .cost { opacity: 1; }
+@media (hover: hover) {
+  .rows button:hover:not(:disabled) .gain,
+  .rows button:hover:not(:disabled) .cost { opacity: 1; }
+}
 
 /* A job row: a count of bodies between a less and a more. It spends nothing, so
    it is not a price row and does not look like one. */
@@ -753,8 +808,10 @@ body.still #scroller { scroll-behavior: auto; }
    thing reads everywhere else on these boards: inverted. A dot in the margin was
    a mark this game does not use anywhere, and it made the list look like a
    document rather than a menu. */
-.optspop .opt:hover,
 .optspop .opt.on { color: #fff; background: #000; }
+@media (hover: hover) {
+  .optspop .opt:hover { color: #fff; background: #000; }
+}
 /* The picker at the pot lays its rows out like a board row rather than like a
    plain option: the name on the left, what a batch of it costs on the right, and
    the column of bills lining up down the list. Scoped to the picker's own list,
@@ -788,8 +845,10 @@ body.still #scroller { scroll-behavior: auto; }
   line-height: 1.3;
   margin-top: .1em;
 }
-.optspop[data-potpick] .opt:hover .note,
 .optspop[data-potpick] .opt.on .note { opacity: .6; }
+@media (hover: hover) {
+  .optspop[data-potpick] .opt:hover .note { opacity: .6; }
+}
 .optspop[data-potpick] .opt .note:empty { display: none; }
 /* Who the pot's doses go to first, under the brews: a heading in the note
    register, then rows that read like the brew rows -- the job on the left, how
@@ -818,11 +877,15 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .optspop[data-potpick] .for .who { flex: 1 1 auto; }
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
-.optspop[data-potpick] .for:hover,
 .optspop[data-potpick] .for.on { color: #fff; background: #000; }
+@media (hover: hover) {
+  .optspop[data-potpick] .for:hover { color: #fff; background: #000; }
+}
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
 .optspop[data-potpick] .for.only { cursor: default; }
-.optspop[data-potpick] .for.only:hover { color: #000; background: none; }
+@media (hover: hover) {
+  .optspop[data-potpick] .for.only:hover { color: #000; background: none; }
+}
 
 /* A block of the brew's own color, for the picker at the pot. The color itself
    is set on the element, because which color is data about the tonic and not a
@@ -838,8 +901,10 @@ body.still #scroller { scroll-behavior: auto; }
 /* On a row that has a second line under it, the block belongs beside the NAME
    rather than halfway down the whole row. */
 .optspop[data-potpick] .opt .swatch { margin-top: 3px; }
-.optspop .opt.on .swatch,
-.optspop .opt:hover .swatch { border-color: #fff; }
+.optspop .opt.on .swatch { border-color: #fff; }
+@media (hover: hover) {
+  .optspop .opt:hover .swatch { border-color: #fff; }
+}
 .rows .job button {
   display: block;
   grid-template-columns: none;
@@ -956,8 +1021,11 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .toast.up { opacity: 1; transform: translate(-50%, 0);
             transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
 .toast.still { transition: none; transform: translate(-50%, 0); }
-.toast:hover { color: #000; background: #fff; border-color: #000; outline-color: #fff; }
-.toast:hover .note { color: #000; }
+@media (hover: hover) {
+  .toast:hover { color: #000; background: #fff; border-color: #000; outline-color: #fff; }
+
+  .toast:hover .note { color: #000; }
+}
 .toast .name { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
 .toast .note { color: #aaa; }
 /* the ring: a one-pixel edge that starts on the card's own and swells out as
@@ -1021,7 +1089,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .pair { align-self: stretch; }
 .held .slots { align-self: stretch; }
 .held .slot { min-width: 0; }
-.held button:hover { color: #fff; background: #000; }
+@media (hover: hover) {
+  .held button:hover { color: #fff; background: #000; }
+}
 /* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
    track and a square for the thumb, the same square everything else here is
    made of. Both engines want the parts named separately. */
@@ -1091,9 +1161,13 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    still a button in the markup -- the row shape and the hover note both hang off
    that -- and it has no click on it. */
 .rows button.stat { cursor: default; }
-.rows button.stat:hover:not(:disabled) { color: #000; background: none; }
-.rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
-.rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
+@media (hover: hover) {
+  .rows button.stat:hover:not(:disabled) { color: #000; background: none; }
+
+  .rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
+
+  .rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
+}
 #crewshop button .cost, #crewlist button .cost { text-align: right; }
 
 /* --- the house board's submenu ------------------------------------------------
@@ -1146,7 +1220,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .rows > button.door { grid-column: 1; }
 .rows > button.door + button, .rows > button.door + .job { grid-column: 1; }
 .rows button.door .what::after { content: ' \203A'; opacity: .5; }
-.rows button.door:hover .what::after { opacity: 1; }
+@media (hover: hover) {
+  .rows button.door:hover .what::after { opacity: 1; }
+}
 
 /* The queue card (queue.js): one name a line, top-left, in the boards' own
    paper, and a layer UNDER them: the boards stand bottom-left and on a short
@@ -1199,9 +1275,13 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    the card as one column; "3 min" is the widest it says. */
 .queue button .left b { font-weight: inherit; min-width: 5ch; text-align: right; }
 .queue button .left em { font-style: normal; }
-.queue button.wait:hover .left { opacity: 1; }
+@media (hover: hover) {
+  .queue button.wait:hover .left { opacity: 1; }
+}
 .queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
-.queue button.wait:hover { color: #fff; background: #000; }
+@media (hover: hover) {
+  .queue button.wait:hover { color: #fff; background: #000; }
+}
 
 #tip {
   position: fixed;
@@ -1234,14 +1314,18 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   opacity: .7;
   cursor: pointer;
 }
-#hidedone:hover { opacity: 1; }
+@media (hover: hover) {
+  #hidedone:hover { opacity: 1; }
+}
 /* The reset lives on the held sheet now (wave-release, track A) and keeps the
    look it had on the bench: dashed and faded, the one button on the sheet you
    are not meant to reach for, and solid black once it is armed and asking. */
 /* Seven tenths, not a third: a third read as the same 'cannot press' the rows
    use for the opposite meaning (critics 2026-09-10, C13). */
 #reset { border-style: dashed; opacity: .7; }
-#reset:hover { opacity: 1; }
+@media (hover: hover) {
+  #reset:hover { opacity: 1; }
+}
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
 /* The saves page: one row a yard, the open one inert and said so. An empty
    row is armed like the reset before it starts a yard. */
@@ -1286,7 +1370,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: fixed;
   right: 4px; top: 4px;
   z-index: 4;
-  max-height: calc(100vh - 8px);
+  max-height: calc(100dvh - 8px);
   overflow-y: auto;
   padding: 5px 7px;
   background: #fff;
@@ -1332,7 +1416,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: 0 4px;
   cursor: pointer;
 }
-#dev button:hover { color: #fff; background: #000; }
+@media (hover: hover) {
+  #dev button:hover { color: #fff; background: #000; }
+}
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: #000; }
 #dev select {
@@ -1462,7 +1548,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   backface-visibility: hidden;
 }
 /* Under the cursor it inverts, the same offer a board's row makes. */
-#raise:hover { background: #fff; color: #000; }
+@media (hover: hover) {
+  #raise:hover { background: #fff; color: #000; }
+}
 
 /* wave-release: track F */
 /* The same headcount, worn on the title of a board with a single group -- the
@@ -1515,7 +1603,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
     max-width: var(--sheet-w);
     /* in landscape there may be less room above the bench than the board wants:
        it scrolls inside itself rather than running off the top */
-    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
     overflow-y: auto;
     letter-spacing: .06em;
   }
@@ -1530,7 +1618,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   }
   .rows .job { padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
-  .rows button:hover:not(:disabled) { color: #000; background: none; }
+  @media (hover: hover) {
+    .rows button:hover:not(:disabled) { color: #000; background: none; }
+  }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #hidedone { padding: 6px 8px; }
 }
@@ -1555,7 +1645,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .skip {
   position: fixed;
   z-index: 11;
-  left: 50%; bottom: 14px;
+  /* above the grab bar, where there is one (bar.js writes --bar-room) */
+  left: 50%; bottom: calc(14px + var(--bar-room, 0px));
   transform: translateX(-50%);
   padding: 6px 14px 5px;
   background: #000;
@@ -1565,7 +1656,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   letter-spacing: .14em;
   text-transform: uppercase;
   color: #fff;
-  pointer-events: none;
+  /* A button, since a phone has no space bar: held, it is the key held. */
+  cursor: pointer;
+  touch-action: manipulation;
   opacity: 0;
   transition: opacity .18s linear;   /* SHEET_FADE_MS in config/view.js */
 }
