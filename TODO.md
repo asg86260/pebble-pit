@@ -1,5 +1,41 @@
 # Still to do
 
+## Playing it on a phone -- DESIGN, NOT BUILT (2026-09-15)
+
+"Playing it on a phone" at the end of DESIGN.md: four asks from the owner,
+each its own section, all reading one answer for "is this a phone"
+(`coarse()` in prefs.js off `(pointer: coarse)`, with a switch on the
+settings sheet). Waiting on approval before any code.
+
+- **Momentum scrolling.** A finger that lifts while moving leaves the view
+  coasting (`S.camV`, `EPHEMERAL`, walked in `stepCamera`, friction a
+  frame); stopped by a finger landing, a `lookAt`, a cutscene or the world's
+  edge; no coast under reduced motion. `config/touch.js` (new) takes
+  `PAN_FRICTION`, `PAN_STOP`, `FLICK_MIN`, `FLICK_SAMPLE`, and `TAP_SLOP` /
+  `TAP_TIME` move there out of input.js. Check: `test/momentum.test.mjs`.
+- **A hop between stations.** Two arrows in the mid sky at the window's
+  edges, each wearing the glyph of the next standing station that way, a
+  tap glides there; drawn on a phone only. Recommended over one button
+  opening a glyph strip, and over a permanent rail. `hop.js` (new),
+  `HOP_Y` / `HOP_SIZE` / `HOP_INSET`. Check: `test/hop.test.mjs`.
+- **A tap buys.** Every `:hover` behind `@media (hover: hover)` and the tip
+  and the lean not wired under a coarse pointer, so the first tap is the
+  tap; a row buys on a tap (slop and time, `tap.js`, one definition for
+  the page) and not on a click, so a scroll never buys; the note on a long
+  press; a wrong buy undone from the tag for `UNDO_MS` rather than
+  confirmed. Checks: `selftest/touch.js`, `test/undo-buy.test.mjs`,
+  `test/hover-gate.test.mjs`.
+- **Boards as bottom sheets.** On a phone a board is a full-width sheet
+  from the bottom, top at `SHEET_H` (0.55) with a handle, three stops
+  (down, seat, `SHEET_TALL`), the purse along its top edge inside it, the
+  crew list a page inside it; a second seat in board.js beside `place()`,
+  the desk's popover untouched. Check: `selftest/sheet.js`, a `phonebench`
+  scene.
+
+Shots the calls were made against: `shots/phone/yard.png`,
+`shots/phone/bench.png`, `shots/phone/quarryboard.png`. The cutscene
+framing at a phone's width was a fix and is in CHANGELOG.md
+(`test/phone-view.test.mjs`).
 ## The second pass -- DESIGNED (2026-09-15), not built
 
 "The second pass" at the end of DESIGN.md: a measured survey of the tree

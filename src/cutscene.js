@@ -13,7 +13,7 @@
 // stays on the event and the zoom and the ground line ease out over CUT_OUT_S.
 // The player scrolls away when they are done looking.
 
-import { P, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
+import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
          CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE } from './config.js';
 import { S, rift, pit } from './state.js';
@@ -34,14 +34,18 @@ const SCENES = {
 // (the shield gone, or a held rock set down) plus a tail to see the wreck fly.
 // The ceiling is a safety. The pull-in is measured so the span, a rock's
 // height over it and a little sky fill the frame.
+// Measured across as well as up: a desk's window is wider than any shield, a
+// phone stood upright is not, and the tighter of the two fits says how far in.
 const SHIELD = {
   s: CUT_SHIELD_MAX_S, tail: CUT_SHIELD_TAIL_S, ground: CUT_SHIELD_GROUND,
   zoom: () => {
     const s = S.shield;
     if (!s) return 1;
-    // the rock over the span, and a little sky
-    const over = S.gh + 4;
-    return Math.min(CUT_SHIELD_ZOOM, S.H * CUT_SHIELD_FILL / ((s.h + over) * P));
+    // the span, the rock over it, and a little sky
+    const up = (s.h + S.gh + 4) * P;
+    // and the span across, or the rock if it is the wider thing coming down
+    const across = Math.max(s.w, S.gw * P);
+    return Math.min(CUT_SHIELD_ZOOM, stepToFill(up, S.H), stepToFill(across, S.W));
   },
   over: c => {
     if (!S.shield) return true;                  // it broke: the four that fail
@@ -52,6 +56,12 @@ const SHIELD = {
   }
 };
 const sceneOf = name => SCENES[name] || SHIELD;
+
+// The zoom step at which a world length fills CUT_SHIELD_FILL of a window
+// length. A step is a multiple of the yard's own scale, and the yard's own is
+// CELL / P screen pixels a world pixel (`setZoom`), so the bare ratio of the
+// two lengths is that much too big a step.
+const stepToFill = (world, window) => window * CUT_SHIELD_FILL / (world * CELL / P);
 
 // The triggers are watched, not called: pit.js tears the rift, rift.js
 // drowns the pit and shield.js answers a rock without knowing a camera
