@@ -34,7 +34,7 @@
 import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, PILE_LIMIT, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, FOOT_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
-         CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
+         CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
          CASINO_BURST_AT, CASINO_WIN_MS, CASINO_BURST, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
          CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS, CASINO_EVEN_BAND,
@@ -557,7 +557,7 @@ function stepDrop(dt) {
   const d = S.drop;
   const t = now();
   if (d.stage === 'drop') {
-    if (t - d.at >= CASINO_GATE_MS) drainGate(d);           // once the floor has opened
+    drainGate(d);                                          // the throat is open from the frame of the tap
     sendGrains(dt);
     for (const g of d.grains) stepGrain(g, dt, d.bins, pegHit, binHit);
     // and the bins heap what has landed in them, a row a frame

@@ -48,10 +48,11 @@ function stake(s) {
 function playHand() {
   const stood = state().table;
   const dropped = tap();
-  let bins = null, sent = 0, fell = 0, faded = 0;
+  let bins = null, sent = 0, fell = 0, faded = 0, movedAt = -1;
   const paid = new Set();
   for (let f = 0; f < 60 * 60 && (state().letting || state().pouring); f++) {
     run(1 / 60);
+    if (movedAt < 0 && state().table < stood) movedAt = f;
     const d = state().drop;
     if (!d) continue;
     sent = Math.max(sent, d.sent);
@@ -60,7 +61,7 @@ function playHand() {
     if (d.stage === 'hold' && !bins) bins = d.bins.slice();
     if (d.stage === 'pay' && d.paying != null) paid.add(d.paying);
   }
-  return { dropped, bins, sent, fell, faded, stood, paid, s: state() };
+  return { dropped, bins, sent, fell, faded, stood, paid, movedAt, s: state() };
 }
 
 // What the bins owe on a stake, by worth: each bin's pebbles times their
@@ -174,6 +175,7 @@ group('a tap on the sign drops exactly a handful, and only the bins with a pebbl
   return [
     ok(s0 >= CASINO_HANDFUL && hand.dropped, 'a stake is standing and the sign drops it', `${s0}`),
     ok(hand.stood === shownFor(s0), 'the stake stood at the band before the floor opened', `${hand.stood}`),
+    ok(hand.movedAt === 0, 'and the pile is draining on the very next frame after the tap', `moved on frame ${hand.movedAt}`),
     ok(hand.sent === CASINO_HANDFUL && hand.bins && hand.bins.reduce((a, b) => a + b, 0) === CASINO_HANDFUL,
        'and exactly a handful of pebbles reaches the bins', `${hand.sent} sent, ${hand.bins && hand.bins.join(',')}`),
     ok(hand.fell > 1, 'as a cascade, several on the board at once', `${hand.fell} at most`),

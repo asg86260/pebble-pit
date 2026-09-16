@@ -140,7 +140,10 @@ export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
 export let CASINO_FALL_MS = 20;
 export let CASINO_PEG_BEAT_MS = 60;
 export let CASINO_GRAIN_GAP_MS = 40;
-// The floor splits from the middle over this long before the first grain falls.
+// The floor splits from the middle over this long: the middle cell is open
+// on the frame of the tap and the pile is draining through it that frame --
+// a quarter second of nothing after the tap read as a hitch on the phone --
+// and the cells either side follow.
 export let CASINO_GATE_MS = 250;
 
 // --- how a hand is felt ---------------------------------------------------------------
