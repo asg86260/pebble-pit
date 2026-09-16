@@ -1,18 +1,14 @@
 // The boards: what a row is, how wide a column goes, what a price says, and
 // where a board seats itself.
-//
-// 15 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
 import { TIER_OWN, SHELF_HAND_FADE } from '../config.js';
 
-// The ink standing in the band of sky over a station -- where nothing else
+// The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
-// pixels the yard really paints, because a mark the yard does not actually
-// draw is a mark nobody sees. Shared, so the two flag groups below are asking
-// the canvas the same question.
+// pixels the yard really paints. Shared, so the two flag groups below are
+// asking the canvas the same question.
 const flagInk = which => {
   const s = state(), r = s.stands[which];
   if (!r) return 0;
@@ -29,10 +25,8 @@ const flagInk = which => {
 };
 
 export const TESTS = [
-  // Kit is sold where it is worn: each hat's row is on the board of the
-  // station that wears it, and the shields open them. Read off the sheets
-  // themselves rather than the row list, because what is claimed is where a
-  // player finds the row.
+  // Read off the sheets themselves rather than the row list, because what is
+  // claimed is where a player finds the row.
   ['each hat is sold on its own station\'s board', async () => {
     window.__crew(2, 2, 2, 2);
     window.__grant({ shards: 200, dust: 5000 });
@@ -75,12 +69,8 @@ export const TESTS = [
     ];
   }],
 
-  // A name is one line, and a name too long for it is clipped inside its
-  // card rather than allowed to wrap or to widen anything. It used to wrap,
-  // taking the card a line taller; the card is three lines now, the same three
-  // on every card, and the name shares its line only with the pips (see the
-  // card in style.css). The words a board carries are short on purpose; this
-  // is the check that a long one cannot break the shape.
+  // A name too long for its line is clipped inside its card rather than
+  // allowed to wrap or to widen anything (the card in style.css).
   ['a longer name stays on its line and inside its card', async () => {
     newRun();
     await settle();
@@ -120,29 +110,23 @@ export const TESTS = [
     ];
   }],
 
-  // What a card gives you is the reason to press it, and a bill is allowed to
-  // cost the card another line but never a word of that.
-  //
-  // It went the other way for a while and nothing said so: the gain sat in a
-  // `1fr` track against the bill's `auto`, so on a card whose bill runs to six
-  // coins -- a ground ladder's spark rung -- the bill took
-  // the whole card and the gain cell came out exactly nought pixels wide. The
-  // line was still in the markup, still in the DOM, and simply not on the
-  // screen; every check about statuses passed, because a status spans the card
-  // and never sits in that track. So this is the check that reads the gain
-  // cards actually carry, in a yard rich enough to have the deep bills in it.
+  // A bill is allowed to cost the card another line but never a word of the
+  // gain: a gain in a `1fr` track against a six-coin bill's `auto` comes out
+  // nought pixels wide, still in the DOM and not on the screen, and no status
+  // check sees it. So this reads the gain in a yard rich enough for the deep
+  // bills.
   ['no card ever eats the line that says what it gives', async () => {
     newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 900, spores: 900, sparks: 999 });
     window.__crew(4, 3, 2, 2);
-    // Every station standing, because a board nobody has built sells nothing
-    // and a card that is not on a board cannot be measured.
+    // Every station standing: a card that is not on a board cannot be
+    // measured.
     window.__fullSites();
     window.__invest();
-    // The spark rung of the ground ladders on offer, which is where the bills
-    // get wide enough to squeeze the card -- the state the defect actually needed.
+    // The spark rung of the ground ladders, where the bills get wide enough
+    // to squeeze the card.
     window.__levels({ cropLevel: TIER_OWN, tendLevel: TIER_OWN, seamLevel: TIER_OWN });
     run(20);
     const bad = [];
@@ -168,11 +152,9 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      // Named rather than counted: the card the defect was found on is the one
-      // this check exists for, so a setup that stops putting it on the board
-      // should fail here rather than quietly measure ten easy cards instead.
-      // Eight or more: a ladder is one card now, where it was up to three, so
-      // a board carries fewer gain lines than it did and the same deep bills.
+      // Named rather than counted: a setup that stops putting the deep card
+      // on the board should fail here rather than quietly measure ten easy
+      // cards instead.
       ok(seen.has('crop') && seen.size >= 8,
          'the deep bills are on the boards to read',
          `${seen.size} lines${seen.has('crop') ? '' : ', no crop'}`),
@@ -181,21 +163,10 @@ export const TESTS = [
     ];
   }],
 
-  // Down the sheet as well as across it. A board whose cards are all different
-  // heights is a board you read one card at a time, because there is no rhythm
-  // to run your eye down.
-  //
-  // A card is three lines -- the name, the gain, the pips and the bill -- and
-  // only one thing may make it taller: a title longer than the card, which
-  // takes a second line. No title in the game is, now that the bill has a line
-  // of its own and the name has the whole of the first; for a while the two
-  // shared a line and the name gave way to the bill, and this check was the
-  // one that said a card could be taller for that reason and no other. It
-  // still says so, because everything else that used to make cards ragged was
-  // a bug: a bill that stacked to fit a column too narrow for it, a card with
-  // no gain dropping the line its neighbor held, a pips corner that came and
-  // went. All of those are failures here, which is what the whole-lines rule
-  // says.
+  // A card is three lines, and only a title longer than the card may make it
+  // taller. Everything else that makes cards ragged is a bug: a bill stacked
+  // to fit a narrow column, a card with no gain dropping the line its
+  // neighbor held, a pips corner that comes and goes.
   ['a card is only ever taller by a whole line of title', async () => {
     newRun();
     await settle();
@@ -203,13 +174,9 @@ export const TESTS = [
     window.__grant({ cores: 9, shards: 900, spores: 900 });
     window.__crew(4, 3, 2, 2);
     window.__air({ janitors: 1 });
-    // The shack stands, so its door is off the bench and the rock's gear is on
-    // the shack's own sheet, where it is measured with the rest. The door is
-    // the one card under this purse that carries a note -- a description line
-    // under the row, by design (see `.rows .note` in style.css) -- and a note
-    // is a second thing that makes a card taller, which the rule below does not
-    // yet say anything about. The rows measured here are the ones the rule was
-    // written about; a note card's rhythm is a call still to be made.
+    // The shack stands, so its door (the one card under this purse with a
+    // note, which is a second thing that makes a card taller and which the
+    // rule does not yet cover) is off the bench.
     window.__shack();
     run(20);
     const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'scrub',
@@ -226,9 +193,8 @@ export const TESTS = [
       if (rows.length < 2) continue;
       seen += rows.length;
       const h = e => Math.round(e.getBoundingClientRect().height);
-      // How many lines the title of a card takes. Measured off the words rather
-      // than assumed from the height, so the two readings are independent and
-      // the check is not comparing a number with itself.
+      // Measured off the words rather than assumed from the height, so the
+      // check is not comparing a number with itself.
       const lines = e => {
         const t = e.querySelector('.what');
         if (!t) return 1;
@@ -236,25 +202,17 @@ export const TESTS = [
         r.selectNodeContents(t);
         return Math.max(1, r.getClientRects().length);
       };
-      // The cards stand two to a line of the sheet, and a line of the sheet is
-      // as tall as the taller of its two -- that is what a grid does, and the
-      // alternative, cards of different heights side by side with ragged
-      // bottoms, is the very thing this check exists to keep off the boards.
-      // So the rule is read a line of the sheet at a time: its height is the
-      // step plus a line per line of the *longest* title on it, and every card
-      // on it is that height.
-      // A line of the sheet with a note card on it is left out: a note is a
-      // description under the row, by design (see `.rows .note` in style.css),
-      // and it is a second thing that makes a card taller which this rule does
-      // not yet say anything about. Its neighbor is stretched to match it,
-      // bill pinned to the bottom, which is the card doing what it should.
+      // A line of the sheet is as tall as the taller of its two cards, so the
+      // rule is read a line at a time: the step plus a line per line of the
+      // *longest* title on it, and every card on it is that height. A line
+      // with a note card (`.rows .note` in style.css) is left out: a note is a
+      // second thing that makes a card taller, and this rule does not yet
+      // cover it.
       const top = e => Math.round(e.getBoundingClientRect().top);
       const shelves = [...new Set(rows.map(top))].map(t => rows.filter(e => top(e) === t))
         .filter(shelf => !shelf.some(e => e.querySelector('.note')));
       const longest = shelf => Math.max(...shelf.map(lines));
       // A line of the sheet whose titles are all one line is the board's step.
-      // Anything taller has to be taller by exactly the lines its longest title
-      // gained.
       const one = shelves.filter(s => longest(s) === 1).flatMap(s => s.map(h));
       if (!one.length) continue;
       const step = Math.min(...one);
@@ -282,18 +240,12 @@ export const TESTS = [
     ];
   }],
 
-  // A bill of two coins is a row you cannot press for either of two reasons, and
-  // "you are short of something" is not the same news as "you are short of
-  // *this*". Dimmed alike, a player holding the stone but not the dust reads the
-  // same row as one holding neither, and has to go and count both piles to find
-  // out which half to go and fix.
   ['a bill you can half afford says which half', async () => {
     newRun();
     await settle();
-    // The farm's door is the two-coin row on an early bench (a core and dust),
-    // and it is offered once the props have fallen and a core has been seen.
-    // Dust enough, the core not: the training grounds' shard-and-dust bill
-    // used to be the row here, and the grounds is gone.
+    // The farm's door is the two-coin row on an early bench (a core and
+    // dust), offered once the props have fallen and a core has been seen.
+    // Dust enough, the core not.
     window.__give(3000);
     const St = (await import('/src/state.js')).S;
     St.shieldsDone = ['props'];
@@ -315,10 +267,9 @@ export const TESTS = [
     }
     window.__board(null);
     window.__crew(0, 0);
-    // The emphasis is the other way up since the critics measured the pale
-    // (docs/critics-2026-09-10.md, C1): the coin you are short of is the one
-    // number you came to read, so it is the black one; what you have is grey
-    // with the rest of the row -- a readable grey, never the old pale.
+    // The coin you are short of is the one number you came to read, so it is
+    // the black one; what you have is a readable gray with the rest of the
+    // row.
     const grey = c => { const m = c.match(/\d+/g); return m && +m[0] === +m[1] && +m[0] > 0 && +m[0] < 200; };
     return [
       ok(dim.length > 0 && lit.length > 0,
@@ -333,47 +284,35 @@ export const TESTS = [
     ];
   }],
 
-  // Time is a price. A thing that takes two minutes costs you two minutes, and
-  // saying so in a note meant a second sheet opening beside the row to carry one
-  // number -- so it is in the bill with the coins, under a clock, and the row
-  // itself says everything about itself.
+  // Time is a price, in the bill with the coins under a clock.
   ['what a thing costs in waiting is priced with the rest of it', async () => {
     newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
     window.__answered('props', 'net', 'arch');  // the shields that open the doors below
-    // The ground first. The tower is the end of the chain now -- it is what a
-    // finished yard buys -- so its row does not appear until the plots, the cut
-    // and the lab are all standing.
+    // The ground first: the tower is the end of the chain, so its row does not
+    // appear until the plots, the cut and the lab are all standing.
     window.__crew(0, 0, 1, 1);
     window.__invest();
     window.__crew(0, 0);
     run(30);
     window.__build();
     window.__buy('unlocktower');
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     window.__build();
     window.__board('tower');
     await sleep(500);
     const row = document.querySelector('#towershop button[data-key="wizard"]');
     // The coins are the bill and the clock is a cell of its own beside the
-    // gain (see the card in style.css): the waiting is priced with the rest,
-    // read across the two cells.
+    // gain (the card in style.css), so the waiting is read across two cells.
     const coins = row && [...row.querySelectorAll('.cost i, .time i')].map(i => i.className);
     const said = row && row.querySelector('.time').textContent.trim();
     const tall = row && Math.round(row.getBoundingClientRect().height);
-    // A bill wraps inside its cell once it is longer than the card can hold --
-    // the stylesheet says so, and names the wizard among the handful of rows
-    // wide enough to do it. So what is pinned is not that four coins sit on one
-    // line (they did, until the coins got dearer) but that the wrap is the one
-    // the design promises: every coin inside the cell's right edge, nothing
-    // clipped, and the card grown to hold the second line rather than the bill
-    // running out of the card.
-    //
-    // Measured rather than asked of a class name. There used to be a `.split`
-    // class, put on by counting the coins, and this checked for it -- so it was
-    // really checking that somebody had counted to four, not that the words fit.
+    // A bill wraps inside its cell once it is longer than the card can hold,
+    // so what is pinned is the wrap the design promises: every coin inside
+    // the cell, nothing clipped, the card grown to hold the second line.
+    // Measured rather than asked of a class name put on by counting coins.
     const cell = row && row.querySelector('.cost');
     const box = cell && cell.getBoundingClientRect();
     const card = row && row.getBoundingClientRect();
@@ -395,13 +334,8 @@ export const TESTS = [
     ];
   }],
 
-  // One mark, under the station, for the one question worth asking from across
+  // One mark over the station for the one question worth asking from across
   // the yard: is there anything on that board.
-  //
-  // It is drawn *below* the ground line, which is otherwise empty -- everything
-  // over a roof is about what a place is doing, and this is about what it is
-  // offering. Measured in the pixels it is really drawn in, because a mark the
-  // yard does not actually paint is a mark nobody sees.
   ['a flag over a station says it has something for you', async () => {
     newRun();
     await settle();
@@ -414,19 +348,13 @@ export const TESTS = [
     await hoverAway();
     await sleep(200);
 
-    // The offer sign is the flag now: a pole off the station's top with a
-    // pennant on it. Ink is counted in the band of sky over the station --
-    // where nothing else black stands -- rather than under it, where the old
-    // diamond hung.
     // nothing in the purse: the shack sells gear and kit and cannot sell you any
     const broke = { has: state().offers.includes('shack'), ink: flagInk('shack') };
-    // Stone AND dust. Every row in the game is priced in both -- see `billOf` in
-    // upgrades.js -- so "money in the purse" stopped meaning one coin, and a
-    // check that filled only half the purse was still a check about a yard that
-    // could not afford anything.
+    // Stone AND dust: every row is priced in both (`billOf` in upgrades.js),
+    // so half a purse is still a yard that can afford nothing.
     window.__grant({ shards: 900, dust: 30000 });
-    // The flag raises on the game's own clock (see `raised` in render/aura.js),
-    // and under headless rAF the sim does not advance on its own -- so turn the
+    // The flag raises on the game's own clock (`raised` in render/aura.js),
+    // and under headless rAF the sim does not advance on its own: turn the
     // clock past the whole raise, then give the page a beat to paint it.
     run(2);
     await sleep(300);
@@ -449,29 +377,23 @@ export const TESTS = [
       ok(rich.has === true, 'money in the purse and it has something for you'),
       ok(rich.ink > broke.ink + 150, 'and a flag goes up over it',
          `${broke.ink} -> ${rich.ink} px`),
-      // and it stays up while you are standing there. Taking it down read as the
-      // mark flickering off under the cursor, and what it says is still true.
+      // taking it down under the cursor reads as the mark flickering off
       ok(there > broke.ink + 150, 'and stays up while you are standing there reading it',
          `${there} px`)
     ];
   }],
 
-  // The flag means one thing, and the bench is not allowed a second meaning for
-  // it. The bench used to answer the offer question through its own older mark,
-  // which counts a heading you have never read as well -- so a bench with an
-  // empty purse and an unopened board flew a flag saying there was something
-  // down there to buy, and there was not. One rule for every station now
-  // (`hasOffer`), and this is the case that told the two rules apart: headings
-  // unread throughout, purse full and then spent.
+  // One rule for every station (`hasOffer`); the bench's own older mark also
+  // counts a heading never read, and this is the case that tells the two
+  // apart: headings unread throughout, purse full and then spent.
   ['a flag is about the purse, not about what you have read', async () => {
     newRun();
     await settle();
     await hoverAway();
 
-    // The bench is built with the first row you can afford, so a purse is what
-    // starts it -- and its headings have still never been opened. It has no
-    // stand box at all before it is up, which is why the view is aimed at it
-    // after the build rather than before. See raise.js.
+    // The bench is built with the first row you can afford, and has no stand
+    // box before it is up, which is why the view is aimed at it after the
+    // build (raise.js).
     window.__grant({ dust: 3000 });
     run(2);
     await haveBench();
@@ -479,11 +401,9 @@ export const TESTS = [
     await sleep(300);
     const rich = { has: state().offers.includes('bench'), ink: flagInk('bench') };
 
-    // Spend it back down through the rows themselves, until the boards will
-    // sell nothing. The headings stay unread: nothing here opens a board.
-    // Each purchase is finished on the spot, as `buy` does: a rung is five
-    // worker-seconds at the bench, and a loop that stopped at "site busy"
-    // stopped with coin still in the purse.
+    // Spend it back down through the rows themselves; nothing here opens a
+    // board. Each purchase is finished on the spot, as `buy` does: a loop
+    // that stops at "site busy" stops with coin still in the purse.
     for (let i = 0; i < 40 && state().offers.includes('bench'); i++) {
       if (!window.__rows().some(r => r.shown && window.__buy(r.key))) break;
       window.__finish();
@@ -500,34 +420,20 @@ export const TESTS = [
       ok(broke.has === false, 'and spending it takes the offer away'),
       ok(rich.ink > broke.ink + 150, 'and the flag comes down with it',
          `${rich.ink} -> ${broke.ink} px`),
-      // The bench's own older mark still says 'flag' here -- that is exactly the
-      // reading the pole is no longer allowed to take.
+      // The bench's own older mark still says 'flag' here, which is exactly
+      // the reading the pole may not take.
       ok(unread === 'flag', 'with the headings still unread the whole way through',
          `${unread}`)
     ];
   }],
 
-  // The quarry is the hole, and a bridge crosses it: a ramp up, a deck straight
-  // over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
-  // the mouth meant aiming at the deck, so walking a hauler over the quarry
-  // opened the quarry's board on the way past. What you point at is the ground
-  // that is missing.
+  // A bridge crosses the quarry and the crew walk every foot of it, so the
+  // deck must not open the board on the way past. `stands.quarry` is the
+  // shed (`standAt` in board.js), so the mouth is asked for by name.
   //
-  // The shed beside it is a second way in now (#1, "Wave 3.1") -- the hole
-  // still answers exactly as it did, but the shed also does, which is what
-  // makes it worth hovering: before this it was scenery that did nothing when
-  // you pointed at it despite carrying the sign. `stands.quarry` is the shed
-  // now (see `standAt` in board.js), so the mouth itself is asked for by name
-  // -- `quarryX`/`quarryW` -- rather than through `standRect`.
-  //
-  // The ramp sample moved from forty pixels out to ten. The shed stands only
-  // `SHED_GAP` (three cells) off the mouth, a lot narrower than the ramp's own
-  // eleven-cell run, so at forty pixels out the point this check used to call
-  // "the ramp" is now standing inside the shed itself -- not near it, inside
-  // it, the same pixel `nearQuarryShed` in board.js has to carve its own
-  // padding back from. Ten pixels out is still short of the mouth and clear of
-  // the shed's own footprint. `deckWalk` (report.js) is the same table this
-  // number comes from, so the two cannot drift apart.
+  // The ramp sample is ten pixels out, not forty: the shed stands only
+  // `SHED_GAP` off the mouth, and forty pixels out is inside the shed itself.
+  // `deckWalk` (report.js) is the table this number comes from.
   ['the quarry is opened by its hole, or by the shed beside it, not by the bridge', async () => {
     newRun();
     await settle();
@@ -557,21 +463,14 @@ export const TESTS = [
     return [
       ok(deck === false, 'crossing the deck does not open it'),
       ok(ramp === false, 'nor does the ramp up to it'),
-      // The shack is the door, and the only one. This asked for the hole as
-      // well, from when the hole was the target and the shed was being added
-      // beside it; the shed is the station now -- it is where the board hangs,
-      // where you stand to open it, and where its signs hang (see `standAt` in
-      // board.js and `markAnchor` in render.js). A hole in the ground that also
-      // opened a shop was the thing being moved away from, and a check still
-      // asking for it is the old arrangement outliving the change.
+      // The shed is the station: where the board hangs, where you stand to
+      // open it, and where its signs hang (`standAt`, `markAnchor`).
       ok(hole === false, 'the hole itself is a hole, not a shop counter'),
       ok(shack === true, 'the shed beside it is what opens it')
     ];
   }],
 
-  // A board opens by being walked up to and closes by being walked away from,
-  // which is right while the cursor is drifting. A click is not drifting: it is
-  // somebody deciding to do something else, and the sheet in the corner is over.
+  // A click is not drifting: it is somebody deciding to do something else.
   ['a press on the yard puts an open board away', async () => {
     newRun();
     await settle();
@@ -605,28 +504,22 @@ export const TESTS = [
     ];
   }],
 
-  // Folding the finished ladders away. The switch flipped and the label changed
-  // and the board did not move: the board only rebuilds when the *set* of rows
-  // it would build has changed, and the thing that works that set out was asking
-  // a different question from the thing that builds it -- so it said "same rows
-  // as last time" for ever.
+  // The board only rebuilds when the *set* of rows it would build has
+  // changed, and the thing that works that set out has to ask the same
+  // question as the thing that builds it.
   ['hiding the finished ladders takes them off the board', async () => {
     newRun();
     await settle();
-    // The same million every other check in the suite asks for, not a hundred
-    // of them. `__give` banks one grain per turn of its loop and the hole no
-    // longer refuses one: since the pit gives way instead of saying no, an
-    // over-large number is not a harmless "make me rich", it is that many
-    // iterations. This check asked for a hundred million and took a quarter of
-    // an hour, which is why the whole browser tier never finished -- see
-    // TODO.md. A million is already far more than eighteen rungs cost.
+    // A million, not a hundred million: `__give` banks one grain per turn of
+    // its loop and the hole never refuses one, so an over-large number is
+    // that many iterations (a quarter of an hour).
     window.__give(999999);
     // Every coin: the last rung of each is the spark's.
     window.__grant({ cores: 9, shards: 9000, spores: 9000, sparks: 9000 });
     window.__invest();                        // the grounds stand: rungs past the first are priced in their coins
     run(20);
-    // Two ladders to their tops, each one card pressed past its length. The pick
-    // waits on the swing being automatic.
+    // Two ladders to their tops, each one card pressed past its length. The
+    // pick waits on the swing being automatic.
     window.__buy('auto');
     for (let i = 0; i < 12; i++) {
       for (const key of ['carry', 'pick']) { window.__buy(key); window.__finish(); }
@@ -658,17 +551,9 @@ export const TESTS = [
     ];
   }],
 
-  // ...but a finished *kit* row stays. It is the exception to the switch above
-  // and the only one, and it is here because it broke the day the kit got a
-  // ceiling: these rows had never had a ladder, so `maxed` was never true of
-  // them and the fold could not see them. Three rungs is quickly done, so what
-  // the player saw was the row they had just bought vanishing under their hand.
-  //
-  // The reason it stays is the board's own: every row in this game says what
-  // buying it *gives* you and never what you have, which leaves this row as the
-  // only place to read how many helmets are on the rock -- and that is the whole
-  // question of a kit row. Folding it away deletes the fact at the moment the
-  // fact becomes final.
+  // The one exception to the switch above: a kit row is the only place to
+  // read how many helmets are on the rock, and folding it away deletes the
+  // fact at the moment it becomes final.
   ['a finished kit row stays on the board when the finished rows are hidden', async () => {
     newRun();
     await settle();
@@ -678,13 +563,9 @@ export const TESTS = [
     window.__board('shack');
     await sleep(400);
 
-    // Bought the way a player buys it: the row is pressed until it will not be
-    // pressed again. Setting the count through a hook would prove nothing about
-    // the thing that goes wrong, which is what the board does on the purchase.
-    //
-    // The board is re-opened before each press. It used to be put away by the
-    // purchase (feedback8 item 1) and stays up now (DESIGN.md, "The queue");
-    // opening it again either way is what keeps the loop about the press.
+    // Pressed until it will not be pressed again: what goes wrong is what the
+    // board does on the purchase, which a hook would not exercise. The board
+    // is re-opened before each press so the loop stays about the press.
     const row = () => [...document.querySelectorAll('#shackshop button[data-key]')]
       .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
     let presses = 0;
@@ -694,9 +575,8 @@ export const TESTS = [
       const b = row();
       if (!b || b.disabled) break;
       b.click();
-      // A hat is taught rather than handed over -- see works.js -- and the row
-      // is greyed until it has been. This group is about what the *board* does
-      // with a finished row, so it takes the shortcut.
+      // A hat is taught rather than handed over (works.js); this group is
+      // about what the *board* does with a finished row.
       window.__finish();
       presses++;
       await sleep(120);
@@ -723,13 +603,9 @@ export const TESTS = [
     ];
   }],
 
-  // What the crew leave is on the screen while it lies there.
-  //
-  // The yard keeps two stacks -- what the weather drops, which everybody clears,
-  // and what a body leaves, which only a janitor clears -- and the drawing knew
-  // about the first and no more. So the crew's own piled up in the count, held
-  // open the row that sells the outhouse, and never appeared anywhere: which looks
-  // exactly like somebody going round and tidying it away.
+  // The yard keeps two stacks (the weather's and the crew's own), and the
+  // drawing has to know about both, or the crew's piles up in the count and
+  // never appears anywhere.
   ['what the crew leave is drawn where they left it', async () => {
     newRun();
     await settle();
@@ -765,15 +641,9 @@ export const TESTS = [
     ];
   }],
 
-  // The mark for a card nobody has read is made OF the card: a turned-down
-  // corner, inside its own border. It was a dot hung nine pixels off the left of
-  // the title, which was right while the rows were names in one shared column
-  // with no boxes round them -- the mark stood in the margin the column left.
-  // A row is a card now and that margin is the card's own edge, so the dot
-  // landed on the line and read as a blemish on the box. What this guards is
-  // that the mark belongs to the card and takes nothing from the title: a mark
-  // that cost the title room would re-wrap a name the moment it stopped being
-  // new, and the card would change shape for a reason the player cannot see.
+  // The mark for a card nobody has read is a turned-down corner made OF the
+  // card. It must take nothing from the title: a mark that cost the title
+  // room would re-wrap a name the moment it stopped being new.
   ['the new-card mark is a corner of the card itself', async () => {
     newRun();
     await settle();
@@ -789,15 +659,13 @@ export const TESTS = [
     const anchored = row && getComputedStyle(row).position;
     const card = row && row.getBoundingClientRect();
     const title = what && what.getBoundingClientRect();
-    // The notch is drawn out of two borders, so its size is the border width
-    // rather than a width and a height -- and the face of it is the same ink as
-    // the words, which is what makes it invert with the card under the cursor.
+    // The notch is drawn out of two borders, so its size is the border width;
+    // its face is the words' ink, which is what makes it invert with the card.
     const size = corner ? parseFloat(corner.borderTopWidth) : 0;
     const ink = corner ? corner.borderTopColor : '';
     const words = row ? getComputedStyle(row).color : '';
-    // Where the title starts is set by the card's padding alone. If the mark
-    // ever took room in the flow this would move, and every name on the board
-    // would sit at a different place depending on whether it was new.
+    // Set by the card's padding alone; if the mark took room in the flow this
+    // would move.
     const inset = card && title ? Math.round(title.left - card.left) : -1;
     row.classList.remove('new');
     await raf();
@@ -818,11 +686,7 @@ export const TESTS = [
     ];
   }],
 
-  // And it comes off the card you went and looked at, not off every card on the
-  // board when the board shuts. "It was on the screen" is not "you read it": on
-  // a board of a dozen, the one row you came for is the one you looked at, and
-  // clearing the rest throws away the answer to "what is new here" for every
-  // card you scrolled past.
+  // "It was on the screen" is not "you read it".
   ['a card stops being new when you hover it, and only then', async () => {
     newRun();
     await settle();
@@ -837,8 +701,7 @@ export const TESTS = [
     const key = mark && mark.dataset.key;
     const others = before - 1;
 
-    // Hovered for real -- the listener is on `pointerenter`, and the point of
-    // the check is that the hover is what does it.
+    // the listener is on `pointerenter`, and the hover is what does it
     mark.dispatchEvent(new PointerEvent('pointerenter',
       { pointerId: 1, isPrimary: true, bubbles: false }));
     await raf();
@@ -895,11 +758,9 @@ export const TESTS = [
     const bad = [];
     let rows = 0;
     for (const [name, sel] of Object.entries(boards)) {
-      // Opened rather than unhidden. A board's rows are built empty and filled
-      // when it opens -- so a check that reveals the box by hand measures a
-      // column of blank cells and finds nothing wrong with any of them, which is
-      // how the first two versions of this passed while the tower's names were
-      // sitting on its prices.
+      // Opened rather than unhidden: a board's rows are built empty and
+      // filled when it opens, so a box revealed by hand is a column of blank
+      // cells with nothing wrong with any of them.
       window.__board(name);
       await raf();
       await raf();
@@ -910,13 +771,11 @@ export const TESTS = [
           const text = cell.textContent.trim();
           if (!text || cell.offsetParent === null) continue;
           rows++;
-          // What overlaps is the *text*, not the boxes. These rows are a grid, so
-          // the cells never overlap however long their contents are -- the words
-          // run out of the cell and are painted across the next one, because the
-          // sheet is nowrap. `scrollWidth` does not see it either: on a grid item
-          // with visible overflow it comes back equal to `clientWidth`. So the
-          // text is measured where it is actually painted, with a range round
-          // the cell's contents.
+          // What overlaps is the *text*, not the boxes: the rows are a grid,
+          // so the cells never overlap and the words run out across the next
+          // one. `scrollWidth` does not see it either (on a grid item with
+          // visible overflow it equals `clientWidth`), so the text is
+          // measured where it is painted.
           const range = document.createRange();
           range.selectNodeContents(cell);
           const ink = range.getBoundingClientRect();
@@ -929,11 +788,9 @@ export const TESTS = [
         }
       }
     }
-    // And again with the buildings *unbought*, because a row that sells a
-    // building is only on the board while you have not got one -- so the sweep
-    // above, which opens everything so that every board has rows, is the one
-    // sweep guaranteed never to see them. "Raise the tower" ran over its price
-    // for exactly this reason.
+    // And again with the buildings *unbought*: a row that sells a building is
+    // only on the board while you have not got one, so the sweep above is the
+    // one sweep guaranteed never to see them.
     St.towerOpen = false;
     St.casinoOpen = false;
     St.labOpen = false;
@@ -971,14 +828,10 @@ export const TESTS = [
   }],
 
   ['shop opens at the bench and is not buried', async () => {
-    // The first time the board has been opened since the page loaded, which is
-    // the case that used to be wrong: it was seated by the height it had before
-    // its rows were written, so it hung low until you closed it and opened it
-    // again. Nothing after this check ever sees a board opening for the first
-    // time, so if this is not where it is caught it is not caught at all.
-    //
-    // Its own yard, so the bench it reads is a fresh bench with the rows a
-    // hundred dust puts on it, whichever neighbor ran before it in the shard.
+    // The first time the board has been opened since the page loaded: a
+    // board seated by the height it had before its rows were written hangs
+    // low until closed and opened again, and nothing after this check ever
+    // sees a first opening.
     newRun();
     await settle();
     await hoverBench();
@@ -992,10 +845,8 @@ export const TESTS = [
     const r = b.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const rows = [...shop().children];
-    // A row's description, when it has one, is a line under the row and spans
-    // the whole card (`.rows .note`, style.css) -- it is not a column, and the
-    // shack's door is the one row on a fresh bench that carries one.
-    // ...and the pin in the card's corner is a control, not a cell.
+    // A row's note spans the whole card (`.rows .note`, style.css) and is not
+    // a column; the pin in the card's corner is a control, not a cell.
     const cells = rows.filter(el => !el.dataset.sect)
                       .map(el => [...el.children].filter(sp => !sp.classList.contains('note') &&
                                                                !sp.classList.contains('pinmark'))
@@ -1008,33 +859,16 @@ export const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      // Three columns: name, gain, price. The pips saying how far up the ladder a
-      // row is live inside the name -- under the title rather than beside it --
-      // so they are not a column at all.
-      // Name, gain, clock, bill: the four cells of a card.
+      // Name, gain, clock, bill: the four cells of a card. The pips live
+      // inside the name and are not a column.
       ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are four cells',
          JSON.stringify(cells[0])),
-      // name, rung, gain, price -- so the two that must never be empty are the
-      // first and the last
       ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
          JSON.stringify(cells)),
-      // What a row says in the middle is either where a count is going -- "4 -> 5"
-      // -- or what share a rate gains, "+30%".
-      //
-      // It used to be the gain and only the gain, on the rule that no row states
-      // a value the game is keeping. That is right for a rate, which is already
-      // a comparison, and wrong for a count: "+1" tells you what the row does and
-      // nothing about whether it is worth having, because going from one to two
-      // doubles what you can carry and going from eleven to twelve does not, and
-      // the row read the same either way. The number you have is the one thing
-      // the board could not tell you and the yard could not either -- it is on
-      // your cursor, not on a counter.
-      //
-      // And the verb in front, when the row's name is a thing rather than a stat
-      // -- "walk +30%", "carry 1 -> 2" -- with the amount written in no-break
-      // spaces so it never splits across the line. See `gainText`.
-      // A row that gives a thing outright rather than a step -- hold to mine,
-      // "1 hit/s" -- says the thing: one figure and its unit.
+      // A count says where it is going ("4 -> 5"), a rate what share it gains
+      // ("+30%"), a gift the thing itself ("1 hit/s"), each with a verb in
+      // front when the row's name is a thing rather than a stat. See
+      // `gainText`.
       ok(cells.every(c => !c[1] || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+ → |[\d,.]+ [a-z\/]+$)/.test(c[1])),
          'a count says where it is going, a rate says what it gains, a gift says what it is',
          JSON.stringify(cells.map(c => c[1]))),
@@ -1045,13 +879,9 @@ export const TESTS = [
     ];
   }],
 
-  // A setting with a list of named options is picked off the list rather than
-  // stepped onto with two buttons -- seven stations was six presses to reach the
-  // last one, and one press past it went all the way round. Pressed the way a
-  // player presses it: the board is opened, the shut control is clicked, and an
-  // option is chosen. The hooks here only stand the building up, which is the
-  // part this check is not about. (The seven-station dial has since moved to
-  // the pot's own picker; "keep brewing" is the list that is left on the board.)
+  // Pressed the way a player presses it: the board is opened, the shut
+  // control is clicked, and an option is chosen. The hooks only stand the
+  // building up.
   ['a setting with named options is picked off a list', async () => {
     newRun();
     await settle();
@@ -1059,11 +889,9 @@ export const TESTS = [
     window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
-    // `anotherpot` is the row this check watches for movement, and it is an
-    // earned one -- five batches, or it is not on the board at all. When it was
-    // missing the two measurements below were taken off nothing and the check
-    // reported `NaN -> NaN`, which says the row did not move and means the row
-    // was not there.
+    // `anotherpot` is the row watched for movement, and it is earned: five
+    // batches, or it is not on the board and the measurement reads NaN -> NaN,
+    // which passes as "did not move".
     window.__brews(5);
     window.__board('apothecary');
     await sleep(120);
@@ -1073,9 +901,8 @@ export const TESTS = [
     const opts = row?._opts;                       // out on the body, not in the row
     const under = document.querySelector('[data-key="anotherpot"]');
     const shutFirst = !!opts?.hidden;
-    // Measured against the row itself, not the window: the board is seated on
-    // its station and the camera is still gliding to it, so the whole sheet
-    // drifts a few pixels between the two readings whatever the list does.
+    // Against the row itself, not the window: the camera is still gliding to
+    // the station, so the whole sheet drifts between the two readings.
     const below = () => under && row ? under.getBoundingClientRect().top - row.getBoundingClientRect().top : NaN;
     const wasAt = below();
 
@@ -1083,9 +910,8 @@ export const TESTS = [
     await sleep(40);
     const dropped = !opts?.hidden;
     const listed = opts ? opts.querySelectorAll('.opt').length : 0;
-    // The list is laid over the board, so the rows under it do not budge. It was
-    // folded into the sheet once, and opening it shoved everything below it down
-    // -- past the place you had already aimed at.
+    // The list is laid over the board, so the rows under it do not budge past
+    // the place you had already aimed at.
     const stillAt = below();
     const c = chosen?.getBoundingClientRect(), o = opts?.getBoundingClientRect();
     const placed = !!c && !!o && o.top >= c.bottom - 1 && Math.abs(o.right - c.right) <= 2;
@@ -1095,8 +921,8 @@ export const TESTS = [
     const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
 
-    // The cursor wandering off puts it away -- after a breath, so that crossing
-    // the gap between the control and the list does not shut it under you.
+    // After a breath, so that crossing the gap between the control and the
+    // list does not shut it under you.
     chosen?.click();
     opts?.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
     await sleep(120);
@@ -1104,8 +930,8 @@ export const TESTS = [
     await sleep(600);
     const wanderedOff = !!opts?.hidden;
 
-    // And it never outlives the board it belongs to: it hangs off the body, so
-    // the board closing does not take it with it unless something says so.
+    // It hangs off the body, so the board closing does not take it with it
+    // unless something says so.
     chosen?.click();
     const upAgain = !opts?.hidden;
     window.__board(null);
@@ -1132,11 +958,8 @@ export const TESTS = [
     ];
   }],
 
-  // A picker on a plank is a tile like the rest, but what it shows is a
-  // sentence -- "batch after batch" -- not a number. It stands two slots wide
-  // so the name and the control each keep to one line, and it wears its
-  // drawing like any other tile. It once took the card's two-column layout onto the plank: the
-  // name was squeezed to "KEE..." beside a control folded onto three lines.
+  // A picker on a plank shows a sentence, not a number, so it stands two
+  // slots wide and wears its drawing like any other tile.
   ['a picker tile keeps its name and its control on one line each', async () => {
     newRun();
     await settle();
@@ -1167,16 +990,9 @@ export const TESTS = [
     ];
   }],
 
-  // Track F3 (wave5). The books are the one board in the game that belongs to no
-  // building: they hang over the pit mouth, where the counter card already
-  // floats, because the counter says what you have and this says how fast it is
-  // arriving. Walked up to with a real pointer, like every other board -- the
-  // node tier can say what the rows compute, and only this tier can say that
-  // standing there opens them.
-  // The outhouse, walked up to. Its board arrives with the building, like every
-  // station's -- the row that puts the building up is on the bench, because a
-  // row that opens a place cannot live on the board of the place it opens --
-  // and what the board carries is the rest of the janitor's ladder.
+  // The row that puts the building up is on the bench, because a row that
+  // opens a place cannot live on the board of the place it opens; the board
+  // carries the rest of the janitor's ladder.
   [`the outhouse carries the janitor's board, and walking up to it opens it`, async () => {
     newRun();
     await settle();
@@ -1222,18 +1038,11 @@ export const TESTS = [
     const dust = document.querySelector('#statsshop [data-key="ratedust"]');
     const said = dust ? dust.querySelector('.cost').innerHTML : '';
     // "a second" is the heading's word, said once over the rates rather than
-    // as a clock on every line (the books are a ledger; DESIGN.md, "The
-    // shelf", the books).
+    // as a clock on every line.
     const heading = [...document.querySelectorAll('#statsshop [data-sect]')].map(h => h.dataset.sect).join(' | ');
-    // Away has to mean away, and which way is away has changed. These used to
-    // stand at the pit mouth, off on their own, so the top-left corner of the
-    // screen was away from everything -- which is what `hoverAway` points at.
-    // They hang on the noticeboard now, well to the LEFT of the rock the view
-    // opens on, so their sheet opens on that side and the top-left corner is
-    // squarely on the way to it. The safe wedge holds the board up, quite
-    // rightly (see the note by the cascade in input.js).
-    //
-    // So this walks away to the other corner, which is the one that means it.
+    // The books hang well to the LEFT of the rock, so the top-left corner
+    // `hoverAway` points at is squarely inside the safe wedge on the way to
+    // their sheet (input.js). The other corner is the one that means away.
     point('pointermove', canvas().clientWidth - 4, 4, 0);
     await sleep(250);
     const shut = !state().statsBoardOpen;
@@ -1250,14 +1059,10 @@ export const TESTS = [
     ];
   }],
 
-  // A cauldron is a control: clicking one drops open the picker for what THAT
-  // pot brews (item 17). Done the way a player does it -- the pointer goes to
-  // the pot, the swatch is clicked -- because the whole point of the feature is
-  // that you do not have to go and find a board, and a check that set the tonic
-  // through a hook would prove nothing about the route.
-  //
-  // Two pots, so the check can say the thing that matters: the picker sets the
-  // pot you clicked and leaves the other one exactly where it was.
+  // Done the way a player does it (the pointer at the pot, the swatch
+  // clicked), since a tonic set through a hook proves nothing about the
+  // route. Two pots, so the picker can be shown to set the one you clicked
+  // and leave the other where it was.
   ['standing at a pot picks what that pot brews', async () => {
     newRun();
     await settle();
@@ -1265,49 +1070,39 @@ export const TESTS = [
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
-    // The second pot is an earned row: it does not appear until the craft has
-    // five batches behind it. Without this the purchase below quietly bought
-    // nothing, the yard kept one cauldron, and the check failed further down
-    // with a menu that would not open -- because `__potSpot` answers for a pot
-    // the yard does not have, so the hover was aimed at bare ground.
+    // The second pot is an earned row (five batches); without them the
+    // purchase buys nothing and `__potSpot` answers for a pot the yard does
+    // not have, so the hover is aimed at bare ground.
     window.__brews(5);
     window.__buy('anotherpot'); window.__finish();
     window.__pot('stew', 0);                     // the first pot is set and stays set
     window.__look(state().apothecaryX - 200);    // both pots on the glass
     await raf();
 
-    // Asked again every time, never held. `onScreen` is a world point through
-    // the camera, and the camera moves -- opening a board and buying a rung
-    // between two hovers was enough to slide it, and the second half of this
-    // check was then pointing at bare ground several thousand pixels from the
-    // pots while reading a picker that had simply never reopened. The yard says
-    // where its pots are; a check that copies the answer down is holding a copy
-    // of the layout, which is the thing kit.js exists to stop.
+    // Asked again every time, never held: the camera moves between hovers
+    // (opening a board and buying a rung is enough), and a held screen point
+    // is then bare ground thousands of pixels from the pots.
     const mid = b => onScreen(b.x + b.w / 2, b.y + b.h / 2);
     const one = () => mid(window.__potSpot(0));
     const two = () => mid(window.__potSpot(1));
     const pop = () => document.querySelector('[data-potpick]');
 
-    // Standing at the second cauldron is enough: no press, the way a station's
-    // board opens when you walk up to it.
+    // Standing at the second cauldron is enough: no press.
     point('pointermove', ...two(), 0);
     await sleep(40);
     const open = !!pop() && !pop().hidden;
     const swatches = pop() ? pop().querySelectorAll('.opt .swatch').length : 0;
     const marked = pop()?.querySelector('.opt.on')?.dataset.opt;
 
-    // What each row says a batch costs, against what the thing that charges for
-    // a batch says it costs. Both read off the page: a check with the numbers
-    // typed into it would only be proving that two people copied the same
-    // constant out of config.
+    // What each row says a batch costs, against what the thing that charges
+    // for a batch says: both read off the page, since typed numbers would
+    // only prove two people copied the same constant.
     const billOfRow = row => [...row.querySelectorAll('.bill span')]
       .map(sp => `${sp.querySelector('i')?.className} ${sp.textContent.trim()}`);
     const said = k => `${k}: ${billOfRow(pop().querySelector(`.opt[data-opt="${k}"]`)).join(', ')}`;
     const charged = k => `${k}: ${window.__brewCost(k).map(([m, n]) => `${m} ${n}`).join(', ')}`;
-    // The recipes the yard says it has, rather than three keys typed in here.
-    // Only the shown ones have a bill to compare: a shard recipe is off the
-    // list until the quarry opens, and asking a hidden row what it costs is
-    // asking about a row that is not on the picker.
+    // Only the shown recipes have a bill to compare: a shard recipe is off
+    // the list until the quarry opens.
     const priced = window.__tonics().filter(t => t.shown).map(t => t.key);
     const wrong = priced.filter(k => said(k) !== charged(k));
     const free = billOfRow(pop().querySelector('.opt[data-opt=""]')).length;
@@ -1326,9 +1121,8 @@ export const TESTS = [
     const after = state();
     const shut = !!pop() && pop().hidden;
 
-    // Wandering off puts it away -- after a breath, not on the instant, because
-    // the gap between a control and its list is a place the pointer is briefly
-    // outside both. Same grace the boards' own dials run on.
+    // After a breath, not on the instant: the gap between a control and its
+    // list is a place the pointer is briefly outside both.
     point('pointermove', ...two(), 0);
     await sleep(40);
     const upAgain = !!pop() && !pop().hidden;
@@ -1338,24 +1132,17 @@ export const TESTS = [
     await sleep(700);
     const wanderedOff = !!pop() && pop().hidden;
 
-    // And a press still opens it, which is the only way in on a touchscreen.
-    //
-    // With no scene running. The purse this check grants in setup is more than
-    // the hole holds, so it tears the rift and the tear plays -- and a press
-    // during a scene skips the scene and does nothing else, which is the rule
-    // (see the note over `skipCutscene` in input.js). Left standing, this check
-    // pressed the skip and reported that a press does not open the picker.
+    // A press, the only way in on a touchscreen. With no scene running: the
+    // purse granted above tears the rift, and a press during a scene skips
+    // the scene and does nothing else (`skipCutscene` in input.js).
     window.__nocine();
     point('pointerdown', ...two());
     point('pointerup', ...two());
     await sleep(60);
     const pressed = !!pop() && !pop().hidden;
 
-    // What each brew does, said on the row -- and it has to follow the ladder.
-    // A potency rung bought on one recipe is a deeper stew and nothing else, so
-    // the stew's line has to move next time the list opens and the other two
-    // have to sit exactly where they were. Bought the way a player buys it: the
-    // board is opened and the row is pressed.
+    // A potency rung bought on one recipe is a deeper stew and nothing else,
+    // so the stew's line moves next time the list opens and no other does.
     const linesNow = () => Object.fromEntries(
       [...pop().querySelectorAll('.opt')]
         .filter(o => o.dataset.opt)
@@ -1378,16 +1165,11 @@ export const TESTS = [
     const deeper = linesNow();
     const moved = priced.filter(k => before[k] !== deeper[k]);
 
-    // Only what the purse can pay for is on the list. The crop is paid away
-    // through the same `take` every bill goes through, so the rows priced in it
-    // go -- all but the one this pot is already on, which stays so it can be
-    // seen and turned off. Read off the page against the bills the yard says it
-    // charges, so the check does not know which recipes want crop (every one
-    // of them does: crop is the base of the book, which is what makes it the
-    // coin to drain here). "Shown" is whether the row takes up room, not
-    // whether its `hidden` attribute is set: the rows are `display: flex`, which
-    // beat the browser's own rule for the attribute, and every brew stayed on
-    // the list with `hidden` faithfully set on three of them.
+    // Only what the purse can pay for is on the list, all but the brew this
+    // pot is already on, which stays so it can be turned off. Crop is the
+    // base of every recipe, which makes it the coin to drain. "Shown" is
+    // whether the row takes up room, not its `hidden` attribute: the rows are
+    // `display: flex`, which beats the browser's own rule for the attribute.
     const shown = () => [...pop().querySelectorAll('.opt')]
       .filter(o => o.dataset.opt && o.offsetHeight > 0).map(o => o.dataset.opt);
     const shownBefore = shown();
@@ -1435,13 +1217,8 @@ export const TESTS = [
          `${shownBefore.join(',')} -> ${shownAfter.join(',')}, wanted ${expect.join(',')}`)
     ];
   }],
-  // Under the brews, the picker says who THIS pot's doses go to first, with
-  // how many of that job are under the brew out of how many there are. Only
-  // the trades the set brew can reach whose station stands are offered, and a
-  // click sets that pot and
-  // no other -- it was one dial on the board for the whole building, which
-  // with two pots on two brews could not hold two answers. Done the player's
-  // way: the pointer at the cauldron, the row clicked.
+  // Who THIS pot's doses go to first is the pot's own, not the building's:
+  // two pots on two brews cannot share one answer.
   ['a pot says who it is for, and counts them', async () => {
     newRun();
     await settle();
@@ -1472,8 +1249,7 @@ export const TESTS = [
     pop()?.querySelector('.for[data-for="rockhands"]')?.click();
     await sleep(40);
     const setStew = state().potPrefers?.[0];
-    // ...and the list stays up with the new row marked: who it is for is a
-    // tweak to the pot you are looking at, not the end of the errand.
+    // the list stays up: who it is for is a tweak, not the end of the errand
     const stillUp = !!pop() && !pop().hidden;
     const markedNow = pop()?.querySelector('.for.on')?.dataset.for;
 
@@ -1511,21 +1287,12 @@ export const TESTS = [
     ];
   }],
 
-  // A board does not change size while it is saying something.
-  //
-  // This is the page half of "A board has a size" in DESIGN.md. The sheet is
-  // `white-space: nowrap` and used to be content-sized, so any word that arrived
-  // anywhere on it set the width of the whole panel -- and `place` re-seats the
-  // panel by that width, so a card telling you the site was busy walked the
-  // board sideways and took every row out from under the cursor. Measured on the
-  // bench at the time: a status naming two works took the sheet from 525 pixels
-  // to 731, and three took it to 1167, and it all snapped back when the build
-  // landed.
-  //
-  // Bought the player's way, through the row, because what starts the status is
-  // a purchase and a `__` hook that set a work would prove nothing about the
-  // press. The size is read off the page rather than off the game, because it is
-  // a fact about layout and there is nothing in the yard that knows it.
+  // The page half of "A board has a size" in DESIGN.md. The sheet is
+  // `white-space: nowrap`, and a content-sized sheet lets any word that
+  // arrives on it set the width of the whole panel, which `place` re-seats
+  // by, walking the board sideways out from under the cursor. Bought through
+  // the row, because what starts the status is a purchase; the size is read
+  // off the page, because nothing in the yard knows it.
   ['a board holds its size while a build is running', async () => {
     window.__crew(3, 2, 0, 0, 2);
     window.__grant({ shards: 60, dust: 20000, cores: 6 });
@@ -1536,10 +1303,8 @@ export const TESTS = [
     const size = () => `${sheet.offsetWidth}x${sheet.offsetHeight}`;
     const before = size();
 
-    // A row that has to be built, pressed the way a finger presses it. The
-    // board is opened again after the press (it stays up now, but this check
-    // is about the board being seated afresh over a build, so it is asked for
-    // anew rather than relied on).
+    // The board is asked for anew after the press: this check is about the
+    // board being seated afresh over a build.
     const row = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockouthouse');
     row?.click();
@@ -1549,23 +1314,15 @@ export const TESTS = [
     const back = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockouthouse');
     const status = back?.querySelector('.gain')?.textContent || '';
-    // Sampled across the build rather than looked at once: the status is
-    // rewritten every frame -- the clock in the bill is counting down -- so the
-    // question is whether ANY of those writes moved the board, not whether the
-    // first and the last happen to agree.
+    // Sampled across the build: the status is rewritten every frame, so the
+    // question is whether ANY write moved the board.
     const seen = new Set([size()]);
     for (let i = 0; i < 12; i++) { await settle(0.5); seen.add(size()); }
-    // ...and no card on ANY board can be given a status it cannot hold.
-    //
-    // Not the bench alone, and not the statuses that happen to be up: every card
-    // in the game, tried with every word in the vocabulary, in the state a
-    // status is actually shown in. The gain column is `1fr` against the bill's
-    // `auto`, so a card with a wide bill leaves it very little -- five cards
-    // measured narrower than "nobody on it" before the status was given the
-    // whole of the card's second line, and the margin on the tightest of them is
-    // one pixel now. A number that close is not a thing to leave to a comment.
-    // ...and the words a ladder says while its next rung is priced in a coin
-    // the yard has no source for yet (see coinNeeds in upgrades/price.js).
+    // Every card on every board, tried with every word in the vocabulary in
+    // the state a status is shown in: the gain column is `1fr` against the
+    // bill's `auto`, and the margin on the tightest card is a pixel. The
+    // "needs" words are what a ladder says while its next rung is priced in
+    // a coin the yard has no source for (coinNeeds in upgrades/price.js).
     const SAYS = ['queued', 'building',
                   'needs crops', 'needs a quarry', 'needs a core', 'needs a spark'];
     const spills = [];
@@ -1592,11 +1349,9 @@ export const TESTS = [
     await settle(0.5);
     const spill = spills.length;
 
-    // ...and the guarantee under the wording. `busy (3)` is short by design, so
-    // the check above would pass on the wording alone even with the sheet still
-    // sizing itself to its content. This is the other half: a line nobody would
-    // write, put straight into the cell, to prove that the box does not grow for
-    // it. Without `pinWidth` this takes the bench from 525 pixels to over 1100.
+    // The guarantee under the wording: the real statuses are short by design,
+    // so a line nobody would write is put straight into the cell to prove the
+    // box does not grow for it (`pinWidth`).
     const anyGain = shop().querySelector('button[data-key] .gain');
     const said = anyGain.textContent;
     anyGain.textContent = 'busy: build the farm, build the training grounds, the next furrow';
@@ -1621,32 +1376,23 @@ export const TESTS = [
       ok(spill === 0,
          'and no card on any board is given a status it cannot hold',
          spills.join(', ') || 'none spill'),
-      // The WIDTH, and only the width. What a card gives you is never truncated
-      // now -- its column has a `min-content` floor under it (style.css) -- so
-      // an impossible line takes the room it needs and the bill beside it wraps
-      // to another line, which makes that one card a line taller. That is the
-      // right way round: a card growing a line is a card you can still read,
-      // where the same room taken out of the gain is words nobody ever sees.
-      // The board getting WIDER is the thing `pinWidth` exists to stop, and it
-      // still does: without it this line takes the bench from 525 to over 1100.
+      // The WIDTH, and only the width: the gain column has a `min-content`
+      // floor (style.css), so an impossible line makes that one card a line
+      // taller, and a card you can still read is the right way round. The
+      // board getting WIDER is what `pinWidth` exists to stop.
       ok(shouted.split('x')[0] === before.split('x')[0],
          'a line far too long for a card cannot widen the board either',
          `${before} -> ${shouted}`),
-      // And then the row goes, which is a change to what the board HOLDS rather
-      // than to what it is saying -- so the board is allowed to resize for it,
-      // and that is the whole distinction this design rests on.
+      // The row going is a change to what the board HOLDS rather than to what
+      // it is saying, so the board may resize for it.
       ok(rowsNow === rowsThen - 1,
          'the row leaves when the build lands, and that is the one thing that may resize it',
          `${rowsThen} rows -> ${rowsNow}`)
     ];
   }],
 
-  // A tile being built shows the building (DESIGN.md): the glyph is drawn to
-  // the share done and fills in while a hand is at the site, the tag holds a
-  // clock to the second that falls while the site is going, a tile in line
-  // is all ghost with its place in the tag. Bought the player's way, through
-  // the row; the counts are read off the canvas, since the fill is pixels and
-  // nothing in the yard knows how many are inked.
+  // The counts are read off the canvas, since the fill is pixels and nothing
+  // in the yard knows how many are inked.
   ['a tile being built fills in, and its clock counts down', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
@@ -1675,9 +1421,9 @@ export const TESTS = [
     const atStart = inked(), clockAt = clock();
     await settle(20);
     const later = inked(), clockLater = clock();
-    // The tile being built is up on its plate the whole time, cursor or no
-    // cursor -- the hover state, held -- and sits back down when the site
-    // stalls. Read as the lift, which is what the hover sets.
+    // The tile being built holds the hover state, cursor or no cursor, and
+    // sits back down when the site stalls. Read as the lift, which is what
+    // the hover sets.
     const lift = () => (tile() ? getComputedStyle(tile()).getPropertyValue('--lift').trim() : '');
     const liftGoing = lift();
     const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
@@ -1737,10 +1483,6 @@ export const TESTS = [
     ];
   }],
 
-  // The hand on the tile (DESIGN.md, "A hand on the tile"): while a body is
-  // at the site, the yard's builder is drawn beside the glyph, off its left
-  // edge, swinging on the yard's own beat; nobody at the site is nobody on
-  // the tile, with the built cells holding; a row in line draws no body.
   // Read off the canvas: ink left of the picture is the hand, and the hand's
   // lowest black row moving between frames is the swing.
   ['a hand on a tile being built swings with the body at the site', async () => {
@@ -1779,9 +1521,8 @@ export const TESTS = [
     // the swing runs on the frame clock: watch a few frames
     const feet = new Set();
     for (let i = 0; i < 24; i++) { window.__fast(1 / 60); await raf(); feet.add(read('jaw').foot); }
-    // some cells up, then nobody at the site: the hand fades out over a few
-    // frames of the frame clock (still there on the first, gone after), and
-    // the cells hold
+    // some cells up, then nobody at the site: the hand fades out over
+    // SHELF_HAND_FADE frames of the frame clock, and the cells hold
     await settle(8);
     window.__crew(0, 0, 0, 0);
     await settle(3);
@@ -1803,9 +1544,8 @@ export const TESTS = [
     await settle(2);
     const queued = read('auto');
     const queuedSaid = tile('auto')?.querySelector('.gain')?.textContent || '';
-    // ...and when a rung's work lands, the row stays for its next rung and
-    // the hand fades out over the finished drawing rather than going with
-    // the ghost: still there on the first frame after, gone after the fade.
+    // when a rung's work lands the row stays for its next rung, and the hand
+    // fades out over the finished drawing rather than going with the ghost
     for (let i = 0; i < 40 && !(state().jigging > 0); i++) await settle(0.5);
     await settle(0.5);
     window.__finish();
@@ -1829,10 +1569,9 @@ export const TESTS = [
     ];
   }],
 
-  // The kit's ladder has no bands, and its pips went flat on the shelf while
-  // every banded ladder's stood in a column: the shelf sets the pips by their
-  // group element, and an ungrouped run was bare text. Measured, not read:
-  // a column is taller than it is wide.
+  // The kit's ladder has no bands, and the shelf sets the pips by their
+  // group element, so an ungrouped run is bare text. Measured, not read: a
+  // column is taller than it is wide.
   ["a kit row's pips stand in a column like every other ladder's", async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
@@ -1859,11 +1598,8 @@ export const TESTS = [
   }],
 
   // The pips stand down the tile's right edge out of its flow, so a long
-  // title or a two-coin bill and its clock on one line ran under them. The
-  // tile keeps its sides clear of the column, and a bill of two coins wraps.
-  // Every ladder at a different band, so the bills are one, two, three and
-  // four coins wide across one plank. Measured: nothing in the tile's flow
-  // reaches a pip's left edge.
+  // title or a wide bill can run under them. Every ladder at a different
+  // band, so the bills are one to four coins wide across one plank.
   ['nothing on a shelf tile runs under its pips', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
@@ -1893,9 +1629,8 @@ export const TESTS = [
     ];
   }],
 
-  // A name wider than its slot folds to a second line instead of being clipped
-  // with an ellipsis, and the plank's rows are shared: every tile beside it
-  // drops its gain and its tag by the same line, so the tags stay level.
+  // The plank's rows are shared: every tile beside a two-line name drops its
+  // tag by the same line, so the tags stay level.
   ['a long name on a shelf tile wraps, and its neighbors keep level with it', async () => {
     newRun();
     await settle();
@@ -1926,10 +1661,8 @@ export const TESTS = [
     ];
   }],
 
-  // The pin: one card in the top-right corner, chosen by its pushpin, drawn
-  // by the same builder as the board's, buying when pressed and coming down
-  // when the row retires. The shield on offer pins itself while it is news,
-  // and the player's pin wins over it. DESIGN.md, "The shields are the spine".
+  // The shield on offer pins itself while it is news, and the player's pin
+  // wins over it (DESIGN.md, "The shields are the spine").
   ['a pinned card stands in the corner, buys, and comes down when the row goes', async () => {
     newRun();
     await settle();

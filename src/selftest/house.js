@@ -1,16 +1,9 @@
 // The house board and the crew submenu hung off it.
-//
-// 12 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point,
   hoverBench, hoverHouse, openCrewList, hoverAway, run, buy, asScreen } from './kit.js';
 
 export const TESTS = [
-  // A hire has always *been* a room -- the settlement is drawn straight off the
-  // headcount -- so the bench selling "workers" from the far end of the yard was
-  // the shop describing something the houses were already doing. You put the
-  // next one up where it goes up.
   ['another house is bought where the houses are', async () => {
     newRun();
     await settle();
@@ -27,14 +20,9 @@ export const TESTS = [
     row?.click();
     await sleep(60);
     run(1);
-    // Paid, but not built. A house is a timed build now -- C1 in
-    // docs/wave-feedback3.md: the dust goes at the press, a builder walks out to
-    // the block and puts it up over a couple of minutes, and only then is
-    // there a room and somebody to live in it. So the dust reads on this
-    // snapshot and the body and the room read on the next, after the build has
-    // landed. Waited for rather than timed, because how long a build takes is
-    // the works' business and a check that guessed would break the day it was
-    // tuned.
+    // Paid, but not built: the dust goes at the press, the body and the room
+    // arrive when the build lands. Waited for rather than timed, because how
+    // long a build takes is the works' business.
     const paid = state();
     for (let i = 0; i < 400 && state().crew <= paid.crew; i++) run(1);
     const after = state();
@@ -44,8 +32,7 @@ export const TESTS = [
       ok(!!row, 'the house board does'),
       ok(before.houseRow && /^another house/.test(before.houseRow),
          'and the row is a house rather than a headcount', before.houseRow),
-      // a count, so it says where the count is going -- see the note on the
-      // bench's rows about why "+1" was not enough
+      // a count, so it says where the count is going
       ok(before.houseRow && /\d → \d/.test(before.houseRow),
          'saying where it takes you, like every other count', before.houseRow),
       ok(after.crew === before.crew + 1, 'buying one takes somebody on',
@@ -60,8 +47,6 @@ export const TESTS = [
     ];
   }],
 
-  // The house is the one board that sells nothing. Standing at it lists who
-  // lives there, where each of them is right now, and what each has done.
   ['the house lists who lives there', async () => {
     newRun();
     await settle();
@@ -84,9 +69,8 @@ export const TESTS = [
     // clicking a name says which one it is, for a few seconds and no longer
     row?.click();
     const picked = state();
-    // A body walks. The view is asked where it is now rather than where it was
-    // standing when the row was clicked, so a couple of seconds of yard later
-    // the two of them are still together.
+    // A body walks: a couple of seconds of yard later the view and the body
+    // should still be together.
     run(2);
     const kept = state();
     run(5);
@@ -101,8 +85,7 @@ export const TESTS = [
          open.crewRows.some(r => r.includes('at the pit')),
          'saying where that body is standing, not what its job is called',
          JSON.stringify(open.crewRows)),
-      // The whole card is the slim card now (feedback7, item 17): name, age,
-      // doing, and nothing else. The tallies this asked for went with the wave.
+      // The slim card: name, age, doing, and nothing else.
       ok(/^age {7}/m.test(said) && /^doing {5}/m.test(said)
          && said.split(String.fromCharCode(10)).length === 3,
          'and hovering one gives that body its whole card', JSON.stringify(said)),
@@ -122,15 +105,8 @@ export const TESTS = [
     ];
   }],
 
-  // The names used to be poured out under the buy row, which is a board at four
-  // bodies and a column taller than the window at twenty. They are a submenu
-  // now -- and a submenu is only worth having if you can get to it: the board it
-  // hangs off must not shut while the cursor is crossing to it, and neither of
-  // them may shut while the cursor is on it.
-  // One row at a time is the row you are reading. A submenu opens because a row
-  // was hovered; hovering a different row is the answer changing, and the old
-  // sheet has no business still standing beside a board that is no longer about
-  // it.
+  // A submenu opens because a row was hovered; hovering a different row is
+  // the answer changing.
   ['reading another row puts the submenu away', async () => {
     newRun();
     await settle();
@@ -177,27 +153,6 @@ export const TESTS = [
     ];
   }],
 
-  // A row's note is readable, which means it is not underneath the board the row
-  // is on. It sat at a lower layer than the menu, so a note with nowhere to
-  // stand did not overlap the board -- it disappeared into it, and the row
-  // looked like it had something to say and said nothing.
-  // Getting to the names is possible with a hand rather than with a ruler.
-  //
-  // The path from the door on the house board to a body's row in the list beside
-  // it crosses a strip of bare canvas -- and a real pointer does not cross it in
-  // a straight line: it dips under the sheet, overshoots the gap, cuts the
-  // corner. Every one of those is a frame spent a little outside the panel, and
-  // the board used to shut on it and take the list with it, which made the
-  // submenu impossible to reach.
-  // Reading a name does not put the names away.
-  //
-  // Hovering a row on a *board* closes whatever submenu the last row opened --
-  // one row at a time is the row you are reading. The rows inside the submenu
-  // are made by the same builder, and without an exception every name in the
-  // crew list carried an instruction to close the crew list: hovering a body to
-  // read it shut the sheet the body was written on. Which made the list
-  // unusable, since reading it is the only thing it is for.
-  // Picking a name is the end of reading the list.
   ['picking a name takes the view to them and folds the list away', async () => {
     newRun();
     await settle();
@@ -222,26 +177,20 @@ export const TESTS = [
     ];
   }],
 
-  // Buying leaves the board up, rung or place. It put the board away for a
-  // while (feedback8 item 1) so what you bought could be watched in the yard
-  // the sheet covers; a site takes a line now (DESIGN.md, "The queue") and the
-  // point of a line is pressing the next row without walking back up.
-  //
-  // A press that buys NOTHING leaves it up too -- no money, maxed out, a row
-  // already being built -- and that half is still worth guarding: the two
-  // cases must look the same from the board and different from the purse.
+  // A site takes a line (DESIGN.md, "The queue"), and the point of a line is
+  // pressing the next row without walking back up. A press that buys nothing
+  // must look the same from the board and different from the purse.
   ['buying leaves the board up, and so does a press that buys nothing', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(200000);
-    // ...and rocks finished, because a place is bought with one now as well as
-    // with dust.
+    // a place is bought with a core as well as with dust
     window.__grant({ cores: 5 });
     window.__answered('props');                 // the shield that opens the plots
     run(20);
     // Each press reports what it cost as well as what the board did, because
-    // the rule is about the pair: up either way, and the purse the only tell.
+    // the rule is about the pair.
     const press = async key => {
       await hoverBench();                    // stand at the bench (still there after a press)
       await sleep(250);
@@ -254,14 +203,9 @@ export const TESTS = [
     };
 
     const bought = await press('carry');
-    // The row the yard is now building is committed (see DESIGN.md, "The
-    // queue"), so pressing it again is a press that cannot go through. That is
-    // the refusal this needs, and it is a truer one than an empty purse: the
-    // money is there, and the yard still says no.
-    //
-    // It used to press `auto`, the next rung at the bench, which the bench
-    // refused while it was busy with the first. The bench takes a line now,
-    // so that press is a purchase.
+    // The row the yard is now building is committed, so pressing it again
+    // cannot go through: a truer refusal than an empty purse, since the money
+    // is there and the yard still says no.
     const refused = await press('carry');
     const place = await press('unlockfarm');
 
@@ -283,22 +227,18 @@ export const TESTS = [
     ];
   }],
 
-  // The board comes out above the house and the cursor comes up from the house,
-  // so the bottom row of the sheet is the one it walks through -- and while that
-  // was the door to the settlement, going to put another block up threw the list
-  // of names open every single time, which is a sheet doubling in width under a
-  // cursor that was aiming at something else.
+  // The cursor comes up from the house, so the bottom row of the sheet is the
+  // one it walks through.
   ['walking up to the block does not open the settlement on the way', async () => {
     newRun();
     await settle();
-    // Plenty for a block, and short of the abyss: a million grains is more
-    // than the hole holds, the rest tears through the rift, and the drowning
-    // is a scene that takes the camera to the pit mid-walk.
+    // Plenty for a block, and short of the abyss: more than the hole holds
+    // tears through the rift, and the drowning takes the camera to the pit
+    // mid-walk.
     window.__give(30000);
     window.__grant({ cores: 9 });
     window.__crew(6, 3);
     run(20);
-    // stood at the house, which is what puts the board up in the first place --
     // the walk has to start from where a hand actually starts
     const from = await hoverHouse();
     await sleep(400);
@@ -307,11 +247,9 @@ export const TESTS = [
     const box = buy.getBoundingClientRect();
     const x = Math.round(box.left + box.width / 2);
     let opened = false;
-    // Up from the house, a few pixels at a time, the way a hand moves -- and
-    // crossing into a row has to *say* so. A synthetic pointermove raises no
-    // enter and no leave of its own, and a row opens its list on being entered,
-    // so a walk that only moves is a walk that can never trip the thing this is
-    // looking for.
+    // A synthetic pointermove raises no enter and no leave of its own, and a
+    // row opens its list on being entered, so a walk that only moves can never
+    // trip the thing this is looking for.
     let was = null;
     for (let y = Math.round(from.y); y >= Math.round(box.top + 8); y -= 6) {
       const el = document.elementFromPoint(x, y) || document.querySelector('canvas');
@@ -329,12 +267,9 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      // The rule, stated directly rather than as a row count: whatever the
-      // cursor crosses first coming in off the yard must not be the door
-      // through to the settlement, because that one opens on hover and would
-      // throw the sheet open sideways on every walk up to the block. The board
-      // used to be two rows, so "the last one is `house`" said the same thing;
-      // it carries the crew's gear now and the count no longer describes it.
+      // Stated directly rather than as a row count: whatever the cursor
+      // crosses first coming in off the yard must not be the door, which
+      // opens on hover.
       ok(rows.length > 0 && rows[rows.length - 1].dataset.key !== 'crewlist',
          'the row nearest the yard is not the one that opens the settlement',
          rows.map(r => r.dataset.key).join(' then ')),
@@ -387,11 +322,10 @@ export const TESTS = [
 
     // the ugliest crossing there is: out of the bottom of the board, along the
     // bottom edge of the panel, and up into the list. Along the edge and not
-    // eighteen pixels under it: the house board sits deeper since the bar rode
-    // the rising roof, and the ground that far below it is the bench's own
-    // stand -- where a station under the pointer takes the board every time, by
-    // design ("an arrival, not a journey", input.js). The wedge protects the
-    // crossing between a board and its list, not a stroll over the neighbors.
+    // under it: the ground that far below the house board is the bench's own
+    // stand, where a station under the pointer takes the board every time
+    // (input.js). The wedge protects the crossing between a board and its
+    // list, not a stroll over the neighbors.
     const dip = document.getElementById('panel').getBoundingClientRect().bottom - 10;
     const path = [
       [dr.right - 6, dr.bottom - 2],
@@ -418,17 +352,15 @@ export const TESTS = [
   }],
 
   ['a row wears its description inline, not on a hover', async () => {
-    // A board row that has something to say now says it in its own line under
-    // the row, not in a sheet that opens on hover -- so the menu reads without a
-    // mouse and without waiting. The crew submenu is the one exception (a roster
-    // of a dozen bodies keeps the hover; see shop.js), and this is a board.
+    // The crew submenu is the one exception (a roster of a dozen bodies keeps
+    // the hover; see shop.js), and this is a board.
     newRun();
     await settle();
     window.__crew(4, 2);
     window.__give(40000);
     window.__grant({ shards: 400, spores: 1300, cores: 9 });
     // The ground up, so the rows that carry a note are on the bench: the tower
-    // is one of them and it is the last thing the chain offers now.
+    // is one of them and it is the last thing the chain offers.
     window.__crew(0, 0, 1, 1);
     window.__invest();
     window.__crew(4, 2);
@@ -457,17 +389,12 @@ export const TESTS = [
     ];
   }],
 
-  // The list stands beside the board it came out of, on the board's bottom
-  // edge, the panel's gap away: to the right, or to the left of the purse when
-  // the right runs out. The board does not move for it -- it stood beside the
-  // board once as a flex sibling and hovering the door threw the whole board
-  // into the corner of the glass to make room -- except on a window too narrow
-  // for the board, the purse and the list together, where the board gives
-  // ground by exactly the shortfall and the list ends inside the window. The
-  // headless window is 800 wide, which is that case: so the board is measured
-  // before and after and the move, if any, is proved to be the shortfall and
-  // nothing more. The list is two slots wide when the door is a tile on a
-  // shelf and one card wide when it is a card.
+  // The list stands beside the board on its bottom edge, the panel's gap
+  // away: to the right, or to the left of the purse when the right runs out.
+  // The board does not move for it, except on a window too narrow for the
+  // three together, where it gives ground by exactly the shortfall. The
+  // headless window is 800 wide, which is that case, so the move, if any, is
+  // proved to be the shortfall and nothing more.
   ['the list opens beside the board', async () => {
     newRun();
     await settle();
@@ -536,11 +463,9 @@ export const TESTS = [
     const listed = list.getBoundingClientRect();
     const board = sheet.getBoundingClientRect();
 
-    // The whole of the list, and the strip of nothing between it and the board
-    // it came out of. These go to the canvas, which is where the game decides
-    // whether the cursor has walked off: over the real page the panel is in the
-    // way and the canvas never hears about any of it, so this is the harder
-    // question of the two and the only one worth asking.
+    // These go to the canvas, where the game decides whether the cursor has
+    // walked off: over the real page the panel is in the way and the canvas
+    // never hears any of it, so this is the harder question.
     const probes = [
       [listed.left + listed.width / 2, listed.top + listed.height / 2],
       [listed.right - 4, listed.bottom - 4],
@@ -555,15 +480,12 @@ export const TESTS = [
     }
     const onIt = state();
 
-    // and it still goes away when you actually walk off. Straight up off the top
-    // of it, which is out of the wedge in the one direction that cannot be
-    // mistaken for anything else: the ground is below, the sky is not a station,
-    // and the whole of the menu is between the cursor and where it came from.
+    // Straight up off the top: out of the wedge in the one direction that
+    // cannot be mistaken for anything else, since the sky is not a station.
     point('pointermove', listed.left + listed.width / 2,
           Math.min(listed.top, board.top) - 160, 0);
-    // long enough for the board to give up on the station it was standing at:
-    // leaving one lingers for a moment so that arriving at the next is a move
-    // rather than a close and an open. See LINGER in board.js.
+    // past LINGER (board.js): leaving a station lingers so that arriving at
+    // the next is a move rather than a close and an open
     await sleep(240);
     const left = state();
     await hoverAway();
@@ -601,23 +523,10 @@ export const TESTS = [
     ];
   }],
 
-  // A board is seated by the size it was measured at, and a board changes size
-  // under you -- so it has to measure itself again, or the sheet stands where a
-  // board of some other size would have stood.
-  //
-  // It changes size two ways, and this used to know about one of them. A row
-  // arriving or leaving is the obvious one. The other is a row that stays put
-  // and starts saying something else: a row past the bench does not hand you the
-  // thing any more, it starts the yard building it -- and from that moment the
-  // row says what is happening where its gain was and carries a clock in its
-  // bill. Same rows, wider board, and nothing said the board had moved.
-  //
-  // This check used to press that row and expect the *set* of rows to change,
-  // and it did -- but only because the board had been standing stale since
-  // before it was opened, and the press was what made it catch up. A board is
-  // built from what the yard is offering this frame now, so the press changes
-  // the words and nothing else, which is the case the seating was getting wrong
-  // underneath the one this was watching.
+  // A board changes size two ways: a row arriving or leaving, and a row that
+  // stays put and starts saying something else (a pressed row says what the
+  // yard is building and carries a clock in its bill). Same rows, wider
+  // board, and the seating has to notice.
   ['a board that changes under you is seated by its new size', async () => {
     newRun();
     await settle();
@@ -626,9 +535,8 @@ export const TESTS = [
     run(0.5);
     await sleep(80);
 
-    // What is drawn, against what the yard says it is offering. Nothing has been
-    // pressed: a board you have walked up to shows what is on offer, rather than
-    // whatever was on offer the last time somebody happened to rebuild it.
+    // What is drawn, against what the yard says it is offering, with nothing
+    // pressed.
     const bench = new Set(window.__boards().find(b => b.name === 'bench').keys);
     const offered = window.__rows().filter(r => r.shown && bench.has(r.key)).map(r => r.key);
     const drawn = [...shop().querySelectorAll('[data-key]')].map(e => e.dataset.key);
@@ -636,11 +544,9 @@ export const TESTS = [
     const ghosts = drawn.filter(k => !bench.has(k) || !offered.includes(k));
     const grew = window.__boardFit();
 
-    // ...and now a row that starts a piece of work. The purchase puts the board
-    // away (feedback8 item 1), so this walks back up to it -- and the row is
-    // still there, saying what it is doing, which is a different width of row.
-    // Re-queried rather than kept: the board is rebuilt on the way back in, so
-    // the element from before the press is a stale one hanging off nothing.
+    // ...and now a row that starts a piece of work. Re-queried after the walk
+    // back up rather than kept: the board is rebuilt on the way in, so the
+    // element from before the press hangs off nothing.
     const row = shop().querySelector('[data-key="auto"]');
     row?.click();
     run(0.5);

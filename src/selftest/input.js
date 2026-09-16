@@ -1,8 +1,5 @@
 // The keyboard and the cursor: holding the yard still, and what a shape says a
 // press will do.
-//
-// 5 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
          runUntil, haveBench } from './kit.js';
@@ -11,8 +8,8 @@ import { SHEET_FADE_MS, SKIP_HOLD_MS } from '../config.js';
 import { fatal } from '../crash.js';
 
 export const TESTS = [
-  // Escape stops the clock. Not a flag every system checks -- the clock simply
-  // does not advance, so nothing in the yard can tell the difference.
+  // Escape stops the clock itself, so nothing in the yard can tell the
+  // difference.
   ['escape holds the whole yard still', async () => {
     newRun();
     await settle();
@@ -44,9 +41,8 @@ export const TESTS = [
     ];
   }],
 
-  // Space, held, skips the scene that has the yard -- through the key itself,
-  // since the node tier can only hold it through the hook. The hint under it
-  // is up while the opening runs and down once it is over.
+  // Through the key itself, since the node tier can only hold it through the
+  // hook.
   ['space held skips the opening, and a tap does not', async () => {
     newRun();
     window.__reset(true);                      // the opening, playing
@@ -75,11 +71,6 @@ export const TESTS = [
     ];
   }],
 
-  // The record hangs on the held sheet, a page behind the front: holding the
-  // game reads it (the tick over the noticeboard comes down) and puts the
-  // count on the button, the button turns the page to the list, and none of
-  // the list is a button or lights up under the cursor -- it is a page, not a
-  // board. Back is the front again, resume and all.
   ['the achievements are a page of cards on the held sheet, read by holding', async () => {
     newRun();
     await settle();
@@ -119,18 +110,15 @@ export const TESTS = [
     ];
   }],
 
-  // The board opens because the cursor is at a station and it stands above that
-  // station, so getting to it means crossing bare canvas that is neither. Aim
-  // for a row in the far corner of the sheet and the diagonal used to take you
-  // out of the station's patch of ground before it took you into the board.
+  // The board stands above the station that opens it, so getting to it means
+  // crossing bare canvas that is neither.
   ['the board does not shut on the way to it', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(400);
     run(2);
-    // The bench is built rather than delivered now (raise.js), and this check is
-    // about walking up to one: the dust alone only puts the call up.
+    // the dust alone only puts the call up (raise.js)
     await haveBench();
     const panel = document.getElementById('panel');
     // looking at the bench, which is where you are when you walk up to it: the
@@ -154,12 +142,9 @@ export const TESTS = [
     }
     const corner = state().boardOpen;
 
-    // and it still shuts when you actually walk away -- after a moment. The board
-    // holds its place briefly when the pointer leaves a station (see LINGER in
-    // board.js), so that crossing the bare ground to the next station along is
-    // one movement rather than a close and an open. Walking off is the same
-    // gesture with nowhere at the end of it, so the answer arrives a tenth of a
-    // second later than it used to.
+    // and it still shuts when you walk away, after LINGER (board.js): the
+    // board holds its place briefly when the pointer leaves a station, so
+    // walking off is answered a moment late.
     const leave = async (cx, cy) => {
       point('pointermove', cx, cy, 0);
       await sleep(220);
@@ -168,9 +153,8 @@ export const TESTS = [
     move(bx, by);
     const aside = await leave(r.x + r.width + 400, by);
     move(bx, by);
-    // Below the *panel*, not a pinned distance below the bench: the board has
-    // grown rows since this probe was written, and 200px down landed on the
-    // sheet itself -- where holding open is the rule, not the failure.
+    // Below the *panel*, not a pinned distance below the bench: a fixed
+    // distance lands on the sheet itself as the board grows rows.
     const below = await leave(bx, Math.max(by + 200, r.y + r.height + 40));
     move(s.W - 4, 4);                           // and out of the way for the next check
     await hoverAway();
@@ -187,8 +171,7 @@ export const TESTS = [
   }],
 
   // The yard is one canvas, so nothing drawn in it carries a cursor of its own
-  // the way a button on a page does. Half the things on screen do something when
-  // you click them, and without this none of them say so.
+  // the way a button on a page does.
   ['the cursor says what a thing will do', async () => {
     newRun();
     await settle();
@@ -211,14 +194,10 @@ export const TESTS = [
     const bench = at(s0.benchX + 20, s0.groundY - 30);
     const minus = at(r.less[0], r.less[1]);
 
-    // A loose core is the one thing in this yard you pick up yourself -- and it
-    // takes a rock that has one in it, which the first four do not.
+    // a rock that has a core in it, which the first four do not
     window.__jump(5);
     window.__next();
-    // Until there is one, not for three seconds and a hope. Building the bench
-    // above turns the clock twenty seconds further than this check used to, and
-    // a fixed wait after that landed either side of the core coming free -- the
-    // rock is a fact about the game, so wait for the fact.
+    // until there is one, not for a fixed wait that lands either side of it
     runUntil(() => !!state().coreItem, 30);
     const k = state().coreItem;
     const core = k ? at(k.x + 9, k.y + 9) : null;
@@ -247,23 +226,18 @@ export const TESTS = [
       ok(at((r.less[0] + r.more[0]) / 2, r.less[1]) !== 'pointer',
          'and the count between them is still not a button'),
       ok(core === 'grab', 'a loose core is a thing to pick up', `${core}`),
-      // The hole used to carry a pile-full mark and a help cursor to go with
-      // it. It cannot stop anything now -- the first grain it refuses tears
-      // the rift -- so there is no mark, no question, and the spot is plain
-      // aim like the rest of the ground. The stations still carry their marks,
-      // and the stations group hovers one for the tooltip half of this rule.
+      // The hole cannot stop anything (the first grain it refuses tears the
+      // rift), so it carries no mark and no help cursor. The stations still
+      // carry their marks; the stations group hovers one for the tooltip half.
       ok(warn === 'crosshair',
          'and the hole, which cannot stop any more, is not a thing to ask', warn)
     ];
   }],
 
-  // A throw puts the stopped sheet up with the browser's own line about it,
-  // and the save can be taken from the sheet. The throw is handed to `fatal`
-  // rather than thrown: a real uncaught error is what the suite's own listener
-  // counts as a failed run, and a throw inside a frame would stop the loop for
-  // every group after this one, which is the point of it. The autosave guard
-  // is checked in the node tier (test/crash.test.mjs); this is the half that
-  // needs a page.
+  // Handed to `fatal` rather than thrown: a real uncaught error is what the
+  // suite's own listener counts as a failed run, and a throw inside a frame
+  // would stop the loop for every group after this one. The autosave guard is
+  // checked in the node tier (test/crash.test.mjs).
   ['a throw stops the game and offers the save', async () => {
     newRun();
     await settle();

@@ -1,13 +1,10 @@
-// The dust hanging in the air. It rises off whatever is lying about, so a big
-// pit visibly gives off more than a bare one, it leans on a wind that never
-// quite settles, and it passes at its own rate as the view scrolls -- which is
-// how movement reads with nothing in the background to move against.
+// The dust hanging in the air. It rises off whatever is lying about, leans on
+// the wind, and passes at its own rate as the view scrolls, which is how
+// movement reads with nothing in the background to move against.
 //
 // Motes are kept in *screen* pixels rather than world ones. They are weather,
-// not scenery: what they have to do is be in front of you, and a mote with a
-// place in the world spends nearly all of the game outside the window, which is
-// exactly where the old ones went. What ties them to the yard is where they are
-// born -- off the top of a real pile -- and after that they belong to the air.
+// not scenery: a mote with a place in the world spends nearly all of the game
+// outside the window. What ties them to the yard is where they are born.
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_LEAN, AIR_STREAK, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
@@ -46,11 +43,10 @@ function pickBand() {
 // where the ground line is on the screen, which is where dust hangs thickest
 const groundOnScreen = () => (S.groundY - S.camY) * S.zoom;
 
-// How far a mote may sink at a given place on the screen before it has landed.
-// The ground stops it -- dust does not drift about inside solid ground -- except
-// where the ground is open. The pit mouth and the quarry are holes with air in
-// them, and the pit is the biggest dust source in the game: culling at the
-// ground line would kill every mote it gave off in the frame it was born.
+// How far a mote may sink at a place on the screen before it has landed. The
+// ground stops it except where the ground is open: the pit is the biggest
+// dust source in the game, and culling at the ground line would kill every
+// mote it gave off in the frame it was born.
 function floorAt(x) {
   const g = groundOnScreen();
   // the line is off the top of the window: you are looking down the hole, and
@@ -63,18 +59,14 @@ function floorAt(x) {
   return g;
 }
 
-// A spot at the feet of somebody who is actually walking, in screen pixels.
-// Where each of them was last frame is kept out here rather than on the worker,
+// Where each walker was last frame, kept out here rather than on the worker,
 // because a worker is a thing the game saves and this is a thing the air wants.
 const wasAt = new WeakMap();
 
 // Whether somebody is moving this frame, to the same tolerance the dust uses.
-// Exported because the crew's card asks exactly this question -- is it walking
-// or is it standing at its work -- and the alternative was a second record of
-// last frame's position kept somewhere else and drifting out of step with this
-// one. A body's own `walking` flag is no help: it is set for the errand legs
-// (a break, a trip to the kit stand) and not for a hauler's whole working day,
-// which is walking and nothing else.
+// Exported because the crew's card asks exactly this question. A body's own
+// `walking` flag is no help: it is set for the errand legs and not for a
+// hauler's whole working day, which is walking and nothing else.
 export const onTheMove = w => {
   const was = wasAt.get(w);
   return was !== undefined && Math.abs(w.x - was) >= 0.3;
@@ -116,17 +108,12 @@ function offAPile() {
   return null;
 }
 
-// What the air is made of over a given place on the screen. The yard is dust;
-// the quarry and the plots give off their own, and a little past their edges
-// too, because a hole in the ground does not stop breathing at its rim. A site
-// that is not open yet is bare ground and gives off nothing but dust.
-//
-// This is asked of a mote every frame rather than once when it is born. The
-// colour is a property of the air over a place, not of a speck: motes live for
-// thousands of frames, so a field that took its colours at birth would take
-// minutes to turn blue after the quarry opened, and would then carry that blue
-// out over the rest of the world on the wind. Asked every frame, the haze over
-// a site is its colour the moment you look at it, and stays put.
+// What the air is made of over a place on the screen: the quarry and the
+// plots give off their own, a little past their edges too. Asked of a mote
+// every frame rather than once at birth: the color is a property of the air
+// over a place, not of a speck, and a field that took its colors at birth
+// would take minutes to turn blue after the quarry opened and then carry the
+// blue out over the world on the wind.
 const OVER = P * 6;                // how far past a site's edge its air reaches
 
 function kindAt(sx) {
@@ -136,10 +123,9 @@ function kindAt(sx) {
   return 'dust';
 }
 
-// A site gives off its own air whether or not anybody is standing in it: the
-// quarry breathes out of the ground, the plots off the crop. Without this the
-// only coloured motes are the ones a walker happens to kick up, and a farmhand
-// stood at a plot is not walking, so the plots gave off nothing at all.
+// A site gives off its own air whether or not anybody is standing in it: a
+// farmhand stood at a plot is not walking, so off walkers alone the plots
+// gave off nothing.
 function offASite() {
   const open = [];
   if (S.quarryOpen) open.push(quarry);
@@ -152,15 +138,12 @@ function offASite() {
   return { x, y };
 }
 
-// Put a mote somewhere it can be seen. `anywhere` scatters it across the whole
-// window, which is what a seeded field wants; without it a mote comes in low --
-// off a pile if there is one, otherwise off the ground line -- because dust
-// gets into the air by being kicked into it, and starting them all at random
-// heights reads as snow.
+// Put a mote somewhere it can be seen. `anywhere` scatters it across the
+// whole window, for a seeded field; otherwise it comes in low, because dust
+// gets into the air by being kicked into it, and random heights read as snow.
 function place(m, anywhere) {
-  // boots first: the crew crossing the yard stir up more than the yard does by
-  // sitting there, and dust at somebody's feet is the one bit of the air that
-  // is plainly caused by something you are watching
+  // boots first: dust at somebody's feet is the one bit of the air plainly
+  // caused by something you are watching
   const from = anywhere ? null
              : (rand() < AIR_SITE ? offASite() : null)
                || offAWalker() || (dustAbout() > 20 ? offAPile() : null);
@@ -185,18 +168,14 @@ function born(anywhere) {
     b,
     grit,                                        // heavier: it sinks instead of climbing
     vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + rand() * 0.8),
-    // How much of the wind this one takes, fixed for its life. A fifth either
-    // way, and less again if it is grit, which is heavy. It used to be a phase
-    // and a period -- its own cosine, its own beat -- and that is what made the
-    // field look shaken rather than blown: a mote leaning the opposite way to
-    // the one beside it says there is no wind, whatever else is going on.
+    // How much of the wind this one takes, fixed for its life; less if it is
+    // grit. A share of one wind, not a phase of its own: a mote leaning the
+    // opposite way to the one beside it says there is no wind.
     lean: give(rand(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
   }, anywhere);
 }
 
-// How many motes the yard is asking for, before the cap. A well-stocked pit
-// asks for far more than the screen can carry -- the cap is what stops the air
-// turning to soup -- so this is the number that actually answers the yard.
+// How many motes the yard is asking for, before the cap.
 const appetite = () => AIR_FLOOR + Math.round(dustAbout() / AIR_PER_DUST);
 
 export function stepAir() {
@@ -216,26 +195,21 @@ export function stepAir() {
   if (AIR.length < want) AIR.push(born(false));
   else if (AIR.length > want + 8) AIR.splice(Math.floor(rand() * AIR.length), 1);
 
-  // Everything below is written as pixels a frame, so it is stepped by however
-  // long this frame was -- and the easing, being a proportion of what is left
-  // rather than a distance, is raised to that power. See `frames` in clock.js.
+  // Everything below is pixels a frame, stepped by however long this frame
+  // was; the easing, a proportion of what is left, is raised to that power.
+  // See `frames` in clock.js.
   const f = frames();
   const keep = Math.max(0, 1 - AIR_STIR_EASE / 60) ** f;
   const suck = riftOnGlass();
   for (const m of AIR) {
-    // The one wind, times what this band takes of it, times this mote's share.
-    // The band is the depth: a far band leans less than a near one on the same
-    // gust, which is the parallax the bands are there for and is the reason the
-    // shared wind is scaled per band rather than each band being given a wind of
-    // its own -- two winds would have had the far dust drifting one way while
-    // the near dust went the other, and depth would have read as disagreement.
+    // The one wind, scaled per band rather than a wind per band: two winds
+    // would have the far dust drifting one way while the near went the
+    // other, and depth would read as disagreement.
     m.x += (wind * m.b.pace * m.lean) * f - dx * m.b.take;
     m.y += m.vy * f - dy * m.b.take;
 
-    // and whatever draught the cursor left behind it, dying away. A real wind
-    // for a moment rather than a shove: the mote keeps moving after the pointer
-    // has gone by, and slows, which is what air does once something has been
-    // through it.
+    // the cursor's draught, dying away: the mote keeps moving after the
+    // pointer has gone by, which is what air does
     if (m.sx || m.sy) {
       m.x += m.sx * f;
       m.y += m.sy * f;
@@ -245,8 +219,7 @@ export function stepAir() {
       if (Math.abs(m.sy) < 0.02) m.sy = 0;
     }
 
-    // and whatever the rift is pulling on it, which is the one force in the air
-    // that is not weather. A mote that reaches the middle is gone and put back
+    // A mote that reaches the middle of the rift is gone and put back
     // somewhere else, so this frame's work on it is finished.
     if (suck && intoTheRift(m, suck, f)) continue;
 
@@ -267,24 +240,14 @@ export function stepAir() {
 }
 
 // --- what the rift does to the air ---------------------------------------------
-// The hole pulls the dust down itself.
+// The one thing acting on a mote that is not weather: a black hole that does
+// not visibly pull is a black circle. No books here; a mote drawn into the
+// middle is put back by `place` in the same frame, so the field holds exactly
+// the number the yard has earned.
 //
-// This is the one thing acting on a mote that is not weather, and it earns the
-// exception: a rift swallowing a dozen grains a second puts about seventeen
-// specks in the air at a time, which is nothing to look at, and a black hole
-// that does not visibly pull is a black circle. The dust is already everywhere
-// and already moving. Turning some of it down the hole costs nothing and is the
-// plainest possible picture of what the thing is.
-//
-// It is honest about the books because there are no books here: a mote is
-// weather, not stock. One drawn into the middle is put back by `place` in the
-// same frame, so the field holds exactly the number the yard has earned, and
-// the haze reads the same whether or not there is a rift under it.
-//
-// Where the disc is on the glass. Motes live in screen pixels and the rift lives
-// in the world, so the world has to be converted once a frame rather than each
-// mote being converted back -- and it is the same transform the yard is drawn
-// with, shake and all, so the pull stays on the disc while the view is rocking.
+// Where the disc is on the glass, converted once a frame with the same
+// transform the yard is drawn with, shake and all, so the pull stays on the
+// disc while the view is rocking.
 function riftOnGlass() {
   if (!S.riftOpen) return null;
   const z = S.zoom;
@@ -293,9 +256,8 @@ function riftOnGlass() {
            r: rift.w * 0.5 * z };
 }
 
-// Where a mote goes once the rift has had it. Most of them come back at the edge
-// of its reach, which is what gives the pull something to pull on -- see
-// RIFT_FEED in config.js for why most rather than all.
+// Where a mote goes once the rift has had it. Most come back at the edge of
+// its reach, which gives the pull something to pull on (RIFT_FEED).
 function reborn(m, s) {
   if (rand() > RIFT_FEED) return place(m, false);
   const a = rand() * Math.PI * 2;
@@ -306,26 +268,12 @@ function reborn(m, s) {
   return m;
 }
 
-// One mote's share of it. True when the mote was eaten and is somewhere else now.
-//
-// **It is gravity, not a swirl.** The rift pulls, an inverse square quoted at
-// one disc radius, and the pull goes into the mote's own speed rather than
-// into its position. What happens next is the mote's business: one drifting
-// past on the wind is bent and swings round, one that comes in slowly falls
-// straight down the hole, and the whole field turns because the wind is
-// carrying it sideways past something heavy -- not because anything here told
-// it to turn.
-//
-// It used to be a shove: a fraction of the way toward the middle each frame,
-// plus a fixed share of that pushed sideways (RIFT_SPIN) to make it look like
-// a vortex. That is a drawn swirl with the arithmetic of a swirl behind it,
-// and it moved a mote the same way whatever the mote had been doing. This
-// costs the same and is the real thing.
-//
-// The speed goes in `sx, sy` -- the same pair the cursor's draught uses, which
-// already decays -- so orbits lose energy and come in instead of circling for
-// ever, and a mote that escapes the reach keeps the swing it was given and
-// carries it back out into the sky.
+// One mote's share of it. True when the mote was eaten and is somewhere else
+// now. Gravity, not a swirl: an inverse square quoted at one disc radius,
+// into the mote's own speed rather than its position, so a mote drifting
+// past on the wind swings round and one coming in slowly falls straight down.
+// The speed goes in `sx, sy`, the pair the cursor's draught uses, which
+// already decays, so orbits lose energy and come in.
 function intoTheRift(m, s, f) {
   const dx = s.x - m.x, dy = s.y - m.y;
   const d = Math.hypot(dx, dy);
@@ -336,15 +284,9 @@ function intoTheRift(m, s, f) {
   // middle and would throw a mote across the yard in one frame.
   const g = RIFT_PULL * (s.r * s.r) / Math.max(d * d, s.r * s.r);
   const k = g * m.b.take * f;
-  // Clamped to AIR_STIR_CAP, the same ceiling the cursor's draught keeps.
-  //
-  // Without it this pulls a mote to a terminal speed of the pull over the
-  // decay -- about thirteen pixels a frame, which crosses the window in a
-  // second. What that looked like was the sky being flung past the hole and
-  // off the bottom of the screen. A force added to a *speed* needs a ceiling
-  // in a way a shove straight into a position never did, and the air already
-  // had the ceiling: this is the second thing to push a mote about and it
-  // obeys the same limit as the first.
+  // Clamped to AIR_STIR_CAP, the ceiling the cursor's draught keeps: a force
+  // added to a speed needs one, and without it the terminal speed crosses
+  // the window in a second.
   const cap = AIR_STIR_CAP;
   m.sx = Math.max(-cap, Math.min(cap, (m.sx || 0) + (dx / d) * k));
   m.sy = Math.max(-cap, Math.min(cap, (m.sy || 0) + (dy / d) * k));
@@ -352,24 +294,14 @@ function intoTheRift(m, s, f) {
 }
 
 // --- the draught off the cursor ------------------------------------------------
-// Something moving through still air moves the air. The dust is the one thing in
-// this yard the pointer passes through without touching anything, and a field
-// that takes no notice of a hand going through it is a picture of dust rather
-// than dust.
+// A mote is dragged the way the cursor is *going*, not away from where it is:
+// a wake, not a repulsion, with a little speed of its own that dies away.
 //
-// A mote is dragged the way the cursor is *going*, not away from where it is: a
-// wake, not a repulsion. It is given a little speed of its own that then dies
-// away, so the air keeps moving after the pointer has gone by and slows -- which
-// is the difference between stirring a room and pushing a wall through it.
-//
-// Screen pixels, because that is what a mote is in. These are weather rather
-// than scenery: they have no place in the yard, so the cursor has to be asked
-// for its place on the *glass*, and dragging the view along -- which moves the
-// pointer over the world without moving it over the screen -- rightly stirs
-// nothing.
-//
-// The near band takes the most of it, the far band almost none, on the same
-// share they take of the camera: what is close to you is what your hand is in.
+// Screen pixels, because that is what a mote is in: the cursor is asked for
+// its place on the *glass*, so dragging the view along, which moves the
+// pointer over the world without moving it over the screen, rightly stirs
+// nothing. The near band takes the most of it, on the same share it takes of
+// the camera.
 export function stirAir(sx, sy, dx, dy) {
   const speed = Math.hypot(dx, dy);
   if (speed < 0.5 || !AIR.length) return 0;
@@ -383,11 +315,9 @@ export function stirAir(sx, sy, dx, dy) {
     // hardest right under the cursor, nothing at all at the edge of its reach
     const fall = 1 - d / AIR_STIR_R;
     const k = push * fall * fall * m.b.take;
-    // Each mote leans its own way off the cursor's heading -- picked once when
-    // the wake first touches it, kept while it is still coasting, dropped when
-    // the draught has died so the next pass deals it a fresh one. All the motes
-    // taking the exact heading was what made the wake slide as one stiff sheet;
-    // the spread is what lets a pass billow the dust open like air.
+    // Each mote leans its own way off the cursor's heading, picked when the
+    // wake first touches it and kept while it coasts; all of them on the
+    // exact heading slide as one stiff sheet.
     if (!m.sx && !m.sy) m.st = (rand() * 2 - 1) * AIR_STIR_SCATTER;
     const cs = Math.cos(m.st || 0), sn = Math.sin(m.st || 0);
     const px = ux * cs - uy * sn, py = ux * sn + uy * cs;
@@ -398,35 +328,23 @@ export function stirAir(sx, sy, dx, dy) {
   return moved;
 }
 
-// Behind the world. Drawn in screen pixels, which is the point of the whole
-// exercise: these have no size in the yard and do not zoom with it.
+// Behind the world, in screen pixels: these have no size in the yard and do
+// not zoom with it.
 export function drawAir() {
   paint(false);
 }
 
-// And in front of it -- the near band only, so the yard has something between
+// And in front of it, the near band only, so the yard has something between
 // you and the rock.
 export function drawAirNear() {
   paint(true);
 }
 
-// Band by band, and within a band one color at a time -- but as one path a
-// band-and-kind rather than one call a mote.
-//
-// Depth is what the bands are for, so the pass order is by band and then by
-// kind: a near green mote is drawn over a far grey one, not under it. That
-// order is kept exactly. What is not kept is the walk: this used to be nine
-// passes over the whole field to pick out the motes of one band and one kind,
-// three and a half thousand steps to draw four hundred squares, and then four
-// hundred separate `fillRect`s. It is one pass now -- every mote dropped into
-// the bucket it belongs to -- and one `fill` a bucket.
-//
-// A bucket is a plain array of coordinates that is refilled every frame rather
-// than rebuilt, because the field is the same four hundred motes frame after
-// frame and the only thing that changes is where they are. Every tint is opaque
-// (see AIR_TINTS), so a path holding two overlapping squares of one color puts
-// down exactly what two overlapping fills would have: the batching is invisible,
-// and that is checked by hashing the frame.
+// Band by band, and within a band one color at a time, as one path a
+// band-and-kind rather than one call a mote. The order (band, then kind) is
+// the depth and is kept exactly. Every tint is opaque (AIR_TINTS), so a path
+// holding two overlapping squares puts down exactly what two fills would;
+// the batching is invisible, and that is checked by hashing the frame.
 const KI = { dust: 0, shard: 1, spore: 2 };
 const BUCKET = AIR_BANDS.map(() => AIR_KINDS.map(() => ({ n: 0, xy: new Float64Array(AIR_CAP * 2) })));
 
@@ -444,16 +362,10 @@ function paint(front) {
     b.n++;
   }
 
-  // How hard it is blowing, once for the frame. A square has no direction in
-  // it: whatever the wind was doing the field looked identical, and the only
-  // thing telling a gust from a calm was a creep too slow for the eye to read
-  // as being blown. A speck smeared along its own travel says the speed in a
-  // still frame, which is what the eye actually needs -- motion alone is not
-  // enough at these sizes, and neither is the streak alone.
+  // A square has no direction in it; a speck smeared along its own travel
+  // says the speed in a still frame, which motion alone cannot at these sizes.
   const g = gust();
-  // The streak trails BEHIND, because it is where the mote just was. Blowing
-  // right, it reaches back to the left of the mote's own square; blowing left,
-  // the square stays put and the tail runs off the other side.
+  // The streak trails BEHIND, because it is where the mote just was.
   const back = g > 0;
 
   for (let i = 0; i < AIR_BANDS.length; i++) {
@@ -465,10 +377,8 @@ function paint(front) {
       // the fill style is the expensive thing to change, and it is set once a
       // bucket -- and not at all for a bucket with nothing in it
       ctx.fillStyle = AIR_TINTS[AIR_KINDS[k]][i];
-      // A band's own reach: its size times how much of the wind it takes, which
-      // is the same one number the band's pallor, pace and parallax already come
-      // off. The far band works out at nothing and stays square without being
-      // told to.
+      // A band's own reach, off the same number its pallor, pace and parallax
+      // come off; the far band works out at nothing and stays square.
       const tail = Math.round(AIR_STREAK * Math.abs(g) * band.pace * band.size);
       const from = back ? -tail : 0;
       ctx.beginPath();
@@ -481,9 +391,8 @@ function paint(front) {
 }
 
 
-// What the air is doing, for the checks: how much of it there is, how much of
-// it is in the band drawn in front of the yard, and whether any of it has got in
-// under the ground -- which is the one thing that would look plainly wrong.
+// For the checks: how much air there is, how much is in the front band, and
+// whether any has got in under the ground.
 export function airReport() {
   let under = 0, front = 0;
   const kinds = { dust: 0, shard: 0, spore: 0 };
@@ -496,13 +405,9 @@ export function airReport() {
 }
 
 
-// How much dust is lying about. This only sets how many motes drift in the air.
-//
-// It used to walk both grids -- a hundred and sixty thousand cells -- every four
-// hundred milliseconds, which is a millisecond-and-a-bit spike four times a
-// second for ever. Both plots keep a live count of their occupied cells now
-// (see grid.js `put` and verify.js rule 7), so the question is two field reads
-// and there is nothing left to refresh.
+// How much dust is lying about; only sets how many motes drift in the air.
+// Both plots keep a live count of their occupied cells (grid.js `put`,
+// verify.js rule 7), so this is two field reads, never a walk of the grids.
 export function dustAbout() {
   return (floor.n || 0) + (pit.n || 0);
 }

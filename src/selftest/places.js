@@ -1,7 +1,4 @@
 // The places: revealed one at a time, and growing on what they give up.
-//
-// 2 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, ok, shop, S_open } from './kit.js';
 
@@ -14,20 +11,15 @@ export const TESTS = [
     await settle();
     const fresh = rows();
 
-    // Dust opens the places now, not cores -- a core buys the tower and nothing
-    // else. A door shows once you are within half its price of affording it, so
-    // what reveals the quarry is having most of what it costs.
+    // A door shows once you are within reach of affording it.
     window.__give(600);                      // the plots' own price, past the reveal's seven tenths
-    // And a rock finished, because a place costs one. The plots are not offered
-    // on a pile of dust alone any more: until a core has been seen at all, the
-    // price is in a currency you have no idea exists.
+    // And a core, because a place costs one and the price is in a currency
+    // you have no idea exists until one has been seen.
     window.__grant({ cores: 3 });
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
-    // ...and not until the timber has failed, either: each shield's failure is
-    // what opens the next place (DESIGN.md, "The shields are the spine"), so
-    // the dust and the core alone offer nothing, and the props answered offer
-    // the plots.
+    // Each shield's failure is what opens the next place (DESIGN.md, "The
+    // shields are the spine"), so the dust and the core alone offer nothing.
     const withDustOnly = { farm: has('unlockfarm') };
     window.__answered('props');
     await sleep(150);
@@ -41,10 +33,8 @@ export const TESTS = [
     await sleep(150);
     const withPlots = { quarry: has('unlockquarry'), casino: has('unlockcasino') };
 
-    // The third beat was the lab, revealed by the first shard. The lab is gone
-    // and so is the trestle that stood in for it; what sits at that tier now is
-    // the casino, revealed by the yard having been invested in -- two places
-    // bought and a rock behind you. See `invested` in upgrades/site.js.
+    // The casino is revealed by the yard having been invested in (`invested`
+    // in upgrades/site.js).
     window.__invest();
     window.__build();                      // as above: the yard moved, the sheet has not
     await sleep(150);
@@ -64,10 +54,8 @@ export const TESTS = [
     ];
   }],
 
-  // A site is bought with cores and then paid for by itself. What the quarry
-  // gives up takes the quarry down another bench, and what the plots give up breaks
-  // another plot -- and a bench and a plot are each a place for one body, so the
-  // thing the site's own currency buys first is room for somebody to work it.
+  // A bench and a plot are each a place for one body, so the thing a site's
+  // own currency buys first is room for somebody to work it.
   ['the quarry and the farm grow on what they give up', async () => {
     newRun();
     await settle();
@@ -82,13 +70,11 @@ export const TESTS = [
 
     const { BENCH_COST } = await import('../config.js');
     window.__grant({ shards: 40, spores: BENCH_COST });
-    // And dust, which the farm's rows are priced in now: the plots open before
-    // the cut, so pricing them in shards priced the earlier place in a currency
-    // the later one has not started making yet.
+    // And dust, which the farm's rows are priced in: the plots open before
+    // the cut.
     window.__tip(20000);
     buildShopFromTest();
-    // Each is on the board at its own site now, not on the bench: see
-    // 'the quarry and the plots are bought where they are'.
+    // Each is on the board at its own site, not on the bench.
     const rows = [...document.querySelectorAll('#quarryshop [data-key], #farmshop [data-key]')]
       .map(b => b.dataset.key);
     const deep = state().quarryH, wide = state().farmW;

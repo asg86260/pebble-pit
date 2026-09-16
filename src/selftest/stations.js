@@ -1,23 +1,11 @@
 // The stations: bought where they stand, the kit on them, whose board is
 // whose, and why one has stopped.
-//
-// 5 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, fmt, buildShopFromTest, ok, P, board, shop, point,
   onScreen, hoverBench, hoverStation, hoverAway, run, runUntil } from './kit.js';
 
 export const TESTS = [
-  // The same badge, on the other board, counting the other thing. A row says
-  // what buying it gives you and what it costs, which leaves nowhere to read
-  // what you already have -- and kit is the one purchase where that is the whole
-  // question: a helmet is worth buying because of how many are already on the
-  // rock.
-  // A decision about a place is made at the place. The quarry and the plots used to
-  // be sold from the bench, under headings naming a hole and a field on the far
-  // side of the yard: you bought a bench you could not see, priced in a currency
-  // that comes out of ground you were not standing on. The lab and the casino
-  // are buildings you walk to for exactly this reason.
+  // A decision about a place is made at the place.
   ['the quarry and the plots are bought where they are', async () => {
     newRun();
     await settle();
@@ -27,10 +15,10 @@ export const TESTS = [
     window.__give(500000);
     buildShopFromTest();
     shop().querySelector('[data-key="unlockfarm"]')?.click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
     shop().querySelector('[data-key="unlockquarry"]')?.click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
     const bench = [...shop().querySelectorAll('[data-key]')].map(b => b.dataset.key);
 
@@ -58,29 +46,23 @@ export const TESTS = [
          !bench.includes('farmplot') && !bench.includes('tend'),
          'the bench sells neither of them any more', bench.join(',')),
       ok(atQuarry.quarryBoardOpen, 'standing at the quarry opens its own board'),
-      // A place row and the first card of each of the cut's two ladders. Only
-      // the band you are on is ever drawn, so a fresh cut shows band one of
-      // each and nothing else. See DESIGN.md, "What the two grounds sell".
+      // A place row and the first card of each of the cut's two ladders: only
+      // the band you are on is ever drawn.
       ok(quarryRows.join(',') === 'quarrybench,seam,quarrypace',
          'holding how deep it goes, what a dig turns up and how fast it works',
          quarryRows.join(',')),
       ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      // ...and the grower's brim, sold where it is worn since the school came
-      // down (the net has been answered here, which is what opens it). The
-      // blaster's lamp is the quarry's the same way, behind the arch, which
-      // this yard has not met -- so the cut's board has no kit row yet.
+      // ...and the grower's brim, sold where it is worn, opened by the net
+      // answered above. The blaster's lamp is behind the arch, which this
+      // yard has not met, so the cut's board has no kit row yet.
       ok(plotRows.join(',') === 'farmplot,crop,tend,grower',
          'holding the next plot, what a cut is worth, how fast a plot comes on, and the brim',
          plotRows.join(','))
     ];
   }],
 
-  // Three boards slide into the same spot and differ only in their rows, so
-  // each one says whose it is. And a board with nothing on it says that too:
-  // the quarry runs out of benches on purpose, and an empty sheet is a bug you
-  // have to rule out before you can believe it.
   ['every board says whose it is, even an empty one', async () => {
     // Counted apart, so a page that grew without a title is a missing name
     // rather than a shorter list nobody notices.
@@ -89,10 +71,8 @@ export const TESTS = [
 
     window.__crew(2, 2);
     window.__grant({ shards: 40 });
-    // The way to a board with nothing on it is a board whose rows are not open
-    // yet: the quarry's, before the quarry is dug. What is being checked is
-    // the sheet, not the quarry: a board that renders blank is a bug you have
-    // to rule out before you can believe it.
+    // The way to a board with nothing on it is a board whose rows are not
+    // open yet: the quarry's, before the quarry is dug.
     const St = (await import('/src/state.js')).S;
     St.quarryOpen = false;
     buildShopFromTest();
@@ -106,21 +86,10 @@ export const TESTS = [
     window.__crew(0, 0);
     St.quarryOpen = false;
     return [
-      // The rule, not the roll-call.
-      //
-      // This pinned the nine names there were, in the order they happened to be
-      // written in the page, and every board added since has failed it for
-      // being new rather than for being wrong: the apothecary, and then the
-      // books. A list of names somebody typed cannot be right about a board
-      // nobody has written yet, which is the whole of what the check is meant
-      // to be about -- "even an empty one" is a promise about the *next* board.
-      //
-      // So it asks the thing it means: every page has a name of its own, and no
-      // two pages share one. Both halves matter. A page with no title is a
-      // sheet that opens over the yard saying nothing about where you are
-      // standing; two pages with the same title is the same failure a frame
-      // later, when you walk from one to the other and cannot tell that the
-      // board changed under you.
+      // The rule, not the roll-call: a list of names somebody typed cannot be
+      // right about a board nobody has written yet. Both halves matter: two
+      // pages with the same title is a board that changed under you without
+      // saying so.
       ok(pages.length > 8 && titles.length === pages.length,
          'every board carries a name', `${titles.length} names on ${pages.length} boards`),
       ok(titles.every(t => t.trim().length > 0) &&
@@ -132,15 +101,9 @@ export const TESTS = [
     ];
   }],
 
-  // Every price on a board is a mark and a number, and what you *had* of that
-  // mark was only ever written over the pit -- the other end of the yard, in the
-  // corner of the window, and as often as not behind the board itself.
-  // This went missing for a while and nobody noticed. The three lines that
-  // opened the bench board, the lab board and the tooltip became one call that
-  // opened a board, and the tooltip went with them -- the words, the element and
-  // the styling all still there, and nothing reaching them. A board opens
-  // because you walked up to a station; a tooltip opens because you went and
-  // looked at a mark. This check is the difference between those two.
+  // A board opens because you walked up to a station; a tooltip opens because
+  // you went and looked at a mark. This check is the difference between those
+  // two.
   ['a stopped station says why when you look at it', async () => {
     const tip = document.getElementById('tip');
     const hover = async (wx, wy) => {
@@ -161,8 +124,8 @@ export const TESTS = [
       run(1);
     }
     runUntil(() => state().pileFull.rock, 60);
-    // Asked of the thing that places it. The mark hangs under the rock's PILE
-    // now, not under the rock, so the station's own x is bare ground.
+    // Asked of the thing that places it: the mark hangs under the rock's
+    // pile, not under the rock, so the station's own x is bare ground.
     const spot = window.__pileMarkAt('rock');
     const onMark = await hover(spot.x, spot.y);
     const away = await hover(state().rockX - 300, state().groundY - P * 20);
@@ -182,11 +145,9 @@ export const TESTS = [
       ok(onMark === 'pile is full', 'the mark over a stopped station says so',
          String(onMark)),
       ok(away === null, 'and only where the mark is', String(away)),
-      // The hole used to carry the same warning. It cannot stop anything any
-      // more -- the first grain it will not take tears it open, and the rest
-      // goes through the rift -- so there is nothing over it to hover and
-      // nothing to explain. A station's pile still stops its gang, which is why
-      // that mark stays.
+      // The hole cannot stop anything (the first grain it will not take tears
+      // it open), so there is nothing over it to hover. A station's pile still
+      // stops its gang, which is why that mark stays.
       ok(onPit === null, 'and the hole, which cannot stop any more, carries none',
          String(onPit))
     ];

@@ -1,21 +1,11 @@
 // The sky: the scrubbing house and the reading that is not a button.
-//
-// 2 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy } from './kit.js';
 
 export const TESTS = [
-  // The problem, then the cure. The rain has to have come down on you once, and
-  // something that dirties the sky has to be running, before the yard will sell
-  // you anything to do about it.
-  //
-  // It used to be three things: the rain, a readout bought at the lab, and a
-  // machine. The lab is gone and the readout is not bought any more -- the first
-  // rain is what shows you the sky's reading, because rain on your head is
-  // meeting the thing, and nothing in this game is named before you have met one.
-  // So the first two conditions are one condition now. See DESIGN.md, "The lab is
-  // deleted".
+  // The problem, then the cure: the rain has to have come down on you once,
+  // and something that dirties the sky has to be running, before the yard
+  // will sell you anything to do about it.
   ['the scrubbing house is offered after the rain and a machine', async () => {
     newRun();
     await settle();
@@ -28,22 +18,15 @@ export const TESTS = [
     const clean = has();
     const blind = state().seenAir;
 
-    // it has rained, which is also how you come to be reading the sky
     // To the brim rather than a hair over the line: a sky at the line only
-    // *might* rain now -- the yard takes a look every few seconds and rolls for
-    // it -- and a sky at the brim is certain to break at the next look.
+    // *might* rain at the next look, and a sky at the brim is certain to.
     window.__air({ haze: state().smog.cap });
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
     const rained = has();
     const told = state().seenAir;
 
-    // ...and the second thing: a machine running. Hand labour dirties the sky
-    // slowly, and a house sold against that is a cure for a number that was
-    // creeping. A machine dirties it three times over per unit of work, so the
-    // house is the bill for the thing you have just switched on -- problem and
-    // answer in the same part of the game, which is what the smoke curve in
-    // DESIGN.md is arranging.
+    // ...and the second thing: a machine running.
     window.__fullSites();
     window.__machine('jaw', { bought: true });
     const both = has();
@@ -63,30 +46,22 @@ export const TESTS = [
   }],
 
 
-  // The one row in the game that is a reading rather than a purchase. It sits on
-  // a board of things you press, so the only way to say it is not one of them is
-  // to give up everything that says it is.
   ['the pollution reading is not a button', async () => {
     newRun();
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
     window.__invest();
-    // To the brim rather than a hair over the line: a sky at the line only
-    // *might* rain now -- the yard takes a look every few seconds and rolls for
-    // it -- and a sky at the brim is certain to break at the next look.
+    // the brim, so the rain is certain at the next look
     window.__air({ haze: state().smog.cap });
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
-    // ...and a machine running, which is the third thing the house waits on now.
-    // Hand labour dirties the sky slowly; a machine dirties it three times over
-    // per unit of work, and the house is the bill for the thing you switched on
-    // rather than a cure sold ahead of the disease.
+    // ...and a machine running, which the house waits on
     window.__fullSites();
     window.__machine('jaw', { bought: true });
     buildShopFromTest();
     shop().querySelector('[data-key="unlockscrub"]').click();
-    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
+    window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
 
     const row = document.getElementById('scrubshop').querySelector('[data-key="airrate"]');

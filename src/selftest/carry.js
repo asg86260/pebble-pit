@@ -1,26 +1,11 @@
 // Picking a body up and putting it down again.
-//
-// 4 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, ok, point, run, runUntil, put } from './kit.js';
 
 export const TESTS = [
-  // The lab empties itself when there is nothing to research. That is the game
-  // tidying up after you, and making you go and undo it before anything can
-  // happen is a chore rather than a decision.
-  // A group about the lab stood here: a body put in it stayed in it whether
-  // there was research on or not, because the building must not overrule the
-  // roster. The lab is gone -- research is a build now, done by builders at the
-  // construction bench, and a build with nobody assigned waits, fenced, which is
-  // the same promise kept by the same means. Covered by wave7b-build.test.mjs.
-  // See DESIGN.md, "The lab is deleted".
 
 
-  // Picking somebody up moves them and does nothing else. It is the right
-  // button because the left one is the whole game -- swinging, sweeping,
-  // catching -- and a body is eighteen pixels walking about on top of the dust
-  // you are trying to sweep.
+  // The right button, because the left one is the whole game.
   ['a body can be picked up, and walks back to work', async () => {
     newRun();
     await settle();
@@ -51,10 +36,8 @@ export const TESTS = [
     const home = state();
     window.__crew(0, 0);
     return [
-      // The slim card (wave 7, item 17): the name, the age, what it is doing
-      // this second, and nothing else. The full lined-up column of tallies and
-      // headings was cut on request -- the card answers "who is this and what
-      // is it at", and the rest was a spreadsheet over a body's head.
+      // The slim card: the name, the age, what it is doing this second, and
+      // nothing else.
       ok(said.includes('digging the rock') && /^age\b/m.test(said) && /^doing\b/m.test(said),
          'hovering one says who it is and what it is doing',
          JSON.stringify(said)),
@@ -67,9 +50,7 @@ export const TESTS = [
       ok(heldSaid.startsWith(up.lifted), 'and it keeps saying who it is while you hold it',
          JSON.stringify(heldSaid.slice(0, 40))),
       ok(up.rock === s.rock, 'and does not swing at what it was standing on'),
-      // whichever rockhand is on the cursor, not whichever is first in the list:
-      // there are two of them and the order they are stored in is not a fact
-      // about which one you picked up
+      // whichever rockhand is on the cursor, not whichever is first in the list
       ok(carried.workerPos.some(p => p[0] === 'r' &&
            Math.abs(+p.split(':')[1].split(',')[0] - away[0]) < 30),
          'it goes where the cursor goes',
@@ -84,9 +65,6 @@ export const TESTS = [
     ];
   }],
 
-  // Put down where it already works, there is nothing to walk to, so it should
-  // not walk: the commute that gets a body home from the far end of the yard is
-  // exactly the wrong thing when you have just set it on its own rock.
   ['a body dropped on its own station gets straight back to it', async () => {
     newRun();
     await settle();
@@ -117,15 +95,12 @@ export const TESTS = [
     ];
   }],
 
-  // A body put down on the rock should be standing on the rock, not standing on
-  // the ground under it and then appearing on top a frame later.
   ['a body dropped on the rock lands on the rock and climbs from there', async () => {
     newRun();
     await settle();
     window.__crew(1, 1);
     window.__give(400);
-    // wait for the hauler to actually have something in its hands, so the drop
-    // below is a drop of a loaded body rather than an empty one
+    // the drop below has to be a drop of a loaded body, not an empty one
     const laden = () => state().crewDetail.find(d => d[0] === 'h' && !/\|c0\|/.test(d));
     runUntil(() => laden(), 40);
     const s = state();
@@ -137,15 +112,12 @@ export const TESTS = [
     const tipEl = document.getElementById('tip');
     const hauled = tipEl.hidden ? '' : tipEl.textContent;
 
-    // Two drops from the same height: one over bare ground, one over the middle
-    // of the rock. What the ground one lands at is what "fell to the ground"
-    // means here, so the rock one can be measured against it rather than against
-    // a number picked out of the air.
+    // Two drops from the same height, one over bare ground and one over the
+    // rock, so the rock one is measured against the ground one rather than
+    // against a number picked out of the air.
     const sky = s.groundY - 400;
-    // Carried to a spot and *put down* there, which since bodies became throwable
-    // means coming to a stop before letting go: a hand still travelling throws,
-    // and this check is about where a body lands, not about how far it can be
-    // flung. Two moves to the same place, a beat apart, is a hand at rest.
+    // A hand still travelling throws, so two moves to the same place a beat
+    // apart put the body down at rest.
     const dropAt = async (tag, wx) => {
       const w = state().workerPos.find(p => p[0] === tag).split(':')[1].split(',').map(Number);
       point('pointerdown', ...scr(w[0] + 9, w[1] + 9), 2, 2);
@@ -163,18 +135,11 @@ export const TESTS = [
     };
     const ground = await dropAt('h', s.rockX - 500);
     const carriedAfter = +(state().crewDetail.find(d => d[0] === 'h') || '|||c0').split('|')[3].slice(1);
-    // Over the middle of it. `rockX` is the rock's centre, so the old
-    // `rockX + rockW / 2` was its right-hand *edge* -- a body let go exactly
-    // above the last column of the hill, which lands on the rock or beside it
-    // depending on how far it drifts on the way down. It caught the edge while
-    // gravity was gentle enough to let it drift inward, and stopped catching it
-    // when gravity went up. The question is whether a body dropped over the rock
-    // lands on the rock, and the middle is where that is asked.
+    // `rockX` is the rock's center; `rockX + rockW / 2` is its edge, where a
+    // body lands on the rock or beside it depending on how far it drifts.
     const landed = await dropAt('r', s.rockX);
     window.__crew(0, 0);
     return [
-      // The slim card (wave 7, item 17) says the job and no cargo manifest --
-      // what a hauler holds is visible in its hands in the yard itself.
       ok(/^doing\b/m.test(hauled) && !/^carrying/m.test(hauled),
          'a hauler card says what it is doing and skips the manifest',
          JSON.stringify(hauled)),

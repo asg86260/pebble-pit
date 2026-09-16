@@ -1,7 +1,4 @@
 // Dust as money: mined, thrown in, spent, counted, and the core banked.
-//
-// 5 groups, in the order they have always run in --
-// see src/selftest.js, which is where the order lives.
 
 import { rungDust } from '../config.js';
 import { sleep, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUntil, haveRock,
@@ -14,9 +11,7 @@ export const TESTS = [
     const b = boulderWorld();
     const [x, y] = onScreen(b.x, b.y);
     for (let i = 0; i < 12; i++) { point('pointerdown', x, y); point('pointerup', x, y); run(0.05); }
-    // Long enough for the last chip off the last swing to land. Turned by hand,
-    // so it is however long the arc takes and not however long the check felt
-    // like sitting there.
+    // however long the last chip's arc takes, not a guessed sleep
     runUntil(() => state().chips === 0, 20);
     const after = state();
     return [

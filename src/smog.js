@@ -1,27 +1,11 @@
 // The air, and what it costs.
 //
-// Every grain taken out of the ground puts a mote of it into the sky, and that
-// mote is a real thing for the whole of its life. It comes off the swing where
-// the swing happened, climbs, reaches the band and stays up there. It drifts. It
-// finds the other motes and clumps with them, so the sky thickens into banks
-// that were never drawn as banks -- they are only where the motes ended up. When
-// there are enough of them they start coming down, one at a time, and land as
-// muck. The house pulls them out of the sky one at a time as well.
+// Every grain taken out of the ground is a mote in the sky for the whole of
+// its life: it climbs from the swing, settles in the band, drifts, clumps, and
+// comes down one at a time as muck or leaves through the scrubbing house. There
+// is no cloud sprite; the sky is the dust you put there.
 //
-// There is no cloud sprite in this file and no cloud shape. The sky is the dust
-// you put there and it looks like whatever that dust has done. That is the only
-// honest version: everything else in this yard is grains you can count, and a
-// painted cloud over the top would be the one thing in the game that was a
-// picture of something rather than the thing itself. It is also the only version
-// that has no shelves or right angles in it, because nobody drew any.
-//
-// The answer to it is a building with somebody in it. An empty scrubbing house is
-// a shed. Put a body in it and motes start leaving the sky for its intake -- the
-// same motes, on a different errand. More bodies pull harder. The cost of clean
-// air is bodies not on the rock, and the recycler turns what they catch back into
-// dust on the ground.
-//
-// The file is a directory now, one part per section it used to carry:
+// The parts, one file each:
 //
 //   band.js     the lists everything else works on, and where the sky sits
 //   vents.js    what goes up, and what a speck looks like
@@ -63,16 +47,13 @@ import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
 import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
-// A save coming back, under whatever weather it was saved under. The band is
-// rebuilt out of the haze (see sky.js); if a storm was brewing or pouring
-// when the save was written, the rebuilt sky is marked as that storm's --
-// "everything settled up there belongs to this storm", the same rule the
-// roll applies -- so the shower goes on coming down rather than finding no
-// mote it is allowed to drop and calling itself over.
+// A save coming back. The band is rebuilt out of the haze (sky.js); a storm
+// brewing or pouring at the save marks the rebuilt sky as its own, the same
+// rule the roll applies, or the shower finds no mote it may drop and calls
+// itself over.
 export function skyFromSave(kinds = null, drops = null, puffs = null) {
-  // The band is filled to the haze, and the haze counts the plume too, so
-  // what the plume will put back is taken off first and the count is
-  // reckoned again once it is up.
+  // The haze counts the plume too, so what the plume will put back is taken
+  // off before the fill and reckoned again once it is up.
   const climbing = Array.isArray(puffs) ? puffs.filter(q => Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1])) : [];
   S.haze = Math.max(0, S.haze - climbing.length * SMOG_PER_MOTE);
   rebuildSky();
@@ -92,11 +73,9 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
     for (const d of drops)
       if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1]))
         DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL });
-  // ...of the kinds it was made of. The rebuild makes dust; the save says
-  // how much of the band was soot, spore and the rest, and that share of
-  // the rebuilt motes is relabelled, look and all, so the readout that
-  // says which part of the works dirtied the sky says the same thing after
-  // a refresh as before it.
+  // The rebuild makes dust; the saved share of soot, spore and the rest is
+  // relabelled onto it, look and all, so the readout of what dirtied the sky
+  // survives a refresh.
   if (kinds && SKY.length) {
     const total = Object.values(kinds).reduce((n, v) => n + (+v || 0), 0);
     if (total > 0) {
@@ -131,38 +110,22 @@ export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
 export function stepSmog(dt) {
   const secs = dt / 1000;
   stepPuffs(secs);
-  // The draught, or the sky letting go of it again. The house takes motes; it
-  // used to take motes *and* dock the number by what the fan was worth, which is
-  // the same dirt subtracted twice.
+  // The house takes motes and nothing else docks the number for the fan: that
+  // is the same dirt subtracted twice.
   if (scrubbing()) { pull(secs); breathe(secs); }
   else { DRAUGHT.length = 0; }
-  // The craft take their own, wherever they happen to be. After the house, so a
-  // mote in the throat is the house's rather than being fought over.
+  // After the house, so a mote in the throat is the house's rather than
+  // fought over.
   pullCraft(secs);
-  // The number is worked out from the sky before anything asks whether it should
-  // be raining, because the answer to that question has to be about what is
-  // actually overhead.
+  // Before the rain roll, which has to be about what is actually overhead.
   reckon();
-  // A roll that succeeds starts a *brew*, not a shower (wave6-sky, item 5):
-  // the sky darkens for STORM_BREW_S and only then does the drizzle begin --
-  // see `stepStorm`. The marking happens now, at the roll: everything settled
-  // up there right now belongs to this storm. Anything that arrives after this
-  // frame does not, and will still be there when it stops -- which is what a
-  // sky that keeps being dirtied ought to look like.
+  // A roll that succeeds starts a brew, not a shower (`stepStorm`). The
+  // marking happens at the roll: everything settled now belongs to this
+  // storm, and what arrives after does not and stays up when it stops.
   if (breaks(secs)) {
     S.stormFor = 0; S.rains++;
-    // The first rain is what shows you the sky's reading.
-    //
-    // It used to be bought, at the lab, as "watch the sky" -- and when the lab
-    // was deleted that row went with it and nothing set `seenAir` at all, which
-    // left the scrubbing house gated on a flag no longer reachable: an entire
-    // building, and the whole pollution arc behind it, unreachable in a real
-    // game. See DESIGN.md, "The lab is deleted".
-    //
-    // Told rather than sold, which is the rule every currency on these boards
-    // already goes by: nothing is named until you have met one. Rain on your
-    // head is meeting it -- you do not need to have paid somebody to notice
-    // that the sky has just emptied itself on the yard.
+    // The first rain is what shows you the sky's reading; nothing else sets
+    // `seenAir`, and the scrubbing house is gated on it.
     if (!S.seenAir) { S.seenAir = true; S.dirty = true; }
     let marked = 0;
     for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
