@@ -144,34 +144,58 @@ export const TESTS = [
     return checks;
   }],
 
-  ['two fingers drag the view', async () => {
+  ['a second finger on a sweep looks about through the game; two on bare ground are the platform\'s', async () => {
+    // Since the yard became a scroller (DESIGN.md, "Momentum scrolling") two
+    // fingers on bare ground scroll natively, which no page script can raise;
+    // what the game keeps is the pair that started as a sweep, since the
+    // touchstart gate claimed both from the platform.
+    window.__nocine();
+    const s0 = state();
+    window.__pile(s0.camX + s0.viewW / 2, 40);
+    run(2);
+    const s = state();
+    let spot = null;
+    for (let dx = -60; dx <= 60 && spot == null; dx += 6) if ([-6, 0, 6].every(k => window.__dustUnder(s.camX + s.viewW / 2 + dx + k, s.groundY - 6) && window.__dustUnder(s.camX + s.viewW / 2 + dx, s.groundY - 6 + k))) spot = s.camX + s.viewW / 2 + dx;
+    const [x, y] = [(spot - s.camX) * s.zoom, (s.groundY - 6 - s.camY) * s.zoom];
     const before = state();
-    finger('pointerdown', 1, 300, 300);
-    finger('pointerdown', 2, 400, 300);
+    finger('pointerdown', 1, x, y);
+    finger('pointermove', 1, x - 6, y); await sleep(16);
+    const sweeping = state().dragging;
+    const second = touch('touchstart', canvas(), x + 100, y - 100, 2);   // refused: the pair are the game's
+    finger('pointerdown', 2, x + 100, y - 100);
     for (let i = 1; i <= 8; i++) {
-      finger('pointermove', 1, 300 - i * 12, 300);
-      finger('pointermove', 2, 400 - i * 12, 300);
+      finger('pointermove', 1, x - 6 - i * 12, y);
+      finger('pointermove', 2, x + 100 - i * 12, y - 100);
       await sleep(16);
     }
-    finger('pointerup', 1, 204, 300);
-    finger('pointerup', 2, 304, 300);
+    finger('pointerup', 1, x - 102, y);
+    finger('pointerup', 2, x + 4, y - 100);
     await sleep(100);
     const after = state();
+    // and two fingers on bare sky are not the game's at all
+    const skyY = (s.groundY - 300 - s.camY) * s.zoom;
+    const bare = touch('touchstart', canvas(), 300, skyY, 3);
+    const cam = state().camX;
+    finger('pointerdown', 3, 300, skyY); finger('pointerdown', 4, 400, skyY);
+    for (let i = 1; i <= 4; i++) { finger('pointermove', 3, 300 - i * 12, skyY); finger('pointermove', 4, 400 - i * 12, skyY); await sleep(16); }
+    finger('pointerup', 3, 252, skyY); finger('pointerup', 4, 352, skyY);
+    touch('touchend', canvas(), 252, skyY, 3);
+    await sleep(50);
     return [
-      ok(after.camX > before.camX, 'the view moves with the fingers',
-         `${before.camX} -> ${after.camX}`),
-      ok(!after.dragging, 'and it is not left mid-sweep'),
-      ok(after.held === before.held, 'a pan does not sweep dust up',
-         `${before.held} -> ${after.held}`)
+      ok(spot != null && sweeping, 'the first finger is sweeping'),
+      ok(second === true, 'the second finger is claimed from the platform too'),
+      ok(after.camX > before.camX, 'and the pair drag the view', `${before.camX} -> ${after.camX}`),
+      ok(!after.dragging, 'with the sweep dropped'),
+      ok(bare === false && state().camX === cam, 'two fingers on bare sky are the platform\'s, and the game moves nothing', `refused ${bare}`),
     ];
   }],
 
-  ['one finger on the yard never scrolls it: it sweeps on dust and taps on the rest', async () => {
-    // Scrolling on a phone is the grab bar's alone (DESIGN.md, "Momentum
-    // scrolling"): a finger dragged across the sky moves nothing, so a long
-    // sweep toward the pit cannot turn into a scroll halfway. The canvas
-    // refuses the platform's pan outright (touch-action), so the touch is
-    // never taken from the game, and a finger on dust sweeps as ever.
+  ['one finger on the yard is the platform\'s to scroll, unless it lands on dust', async () => {
+    // The yard is a scroller (DESIGN.md, "Momentum scrolling"): a finger off
+    // the dust is left to the platform at touchstart and scrolls natively,
+    // which page script cannot raise, so the game itself moves nothing under
+    // it here; a finger on dust is claimed at touchstart and sweeps for its
+    // whole length, so a long sweep toward the pit never turns into a scroll.
     const drag = async (x, y, dx) => {
       const said = touch('touchstart', canvas(), x, y);
       finger('pointerdown', 1, x, y);
@@ -218,14 +242,15 @@ export const TESTS = [
       stayed = dust.mid.camX === from.camX;
     }
     return [
-      ok(getComputedStyle(canvas()).touchAction === 'none', 'the platform is refused the yard outright',
-         getComputedStyle(canvas()).touchAction),
-      ok(sky.said === false && panned.camX === before.camX, 'a finger dragged across the sky moves nothing',
+      ok(getComputedStyle(document.getElementById('scroller')).touchAction === 'pan-x', 'the yard pans sideways and nothing else',
+         getComputedStyle(document.getElementById('scroller')).touchAction),
+      ok(sky.said === false && panned.camX === before.camX, 'a finger on the sky is the platform\'s, and the game moves nothing under it',
          `${before.camX} -> ${panned.camX}`),
       ok(!panned.dragging && panned.held === before.held, 'and sweeps nothing up'),
       ok(tapped.camX === panned.camX, 'a tap does not move it', `${panned.camX} -> ${tapped.camX}`),
       ok(spot != null, 'there is dust on the floor to press on'),
-      ok(swept === true, 'a finger on the dust sweeps, as it always did',
+      ok(dust && dust.said === true, 'a finger on the dust is claimed from the platform', dust && `refused ${dust.said}`),
+      ok(swept === true, 'and sweeps, as it always did',
          dust && `dragging ${dust.mid.dragging} held ${dust.mid.held}`),
       ok(stayed === true, 'and does not drag the view', dust && `cam ${dust.mid.camX}`)
     ];

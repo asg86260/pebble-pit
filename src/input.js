@@ -33,11 +33,10 @@ import { MACHINES, running, specOf } from './machines.js';
 import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
-import { skipCutscene } from './cutscene.js';
+import { skipCutscene, cutsceneRunning } from './cutscene.js';
 import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane } from './settings.js';
-import { coarse } from './prefs.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
 
 const canvas = document.getElementById('c');
@@ -50,15 +49,16 @@ let panning = null;                        // where the fingers were last frame
 // The middle button's pan. Apart from `panning` because it is one pointer, and
 // must not be cancelled by the "fewer than two fingers" rule.
 let wheelPan = null;
-// On a phone the yard is scrolled from the grab bar along the bottom edge
-// and from nowhere else (DESIGN.md, "Momentum scrolling"): the band is the
-// platform's own scroller, a drag in it coasts the way every list on the
-// phone coasts, and the game reads where it got to (world.js,
-// `readScroll`). A finger on the yard itself sweeps, on dust, or taps, on
-// anything else; it never moves the view, so a long sweep toward the pit
-// cannot turn into a scroll halfway. bar.js draws the band; the elements
-// are bound here because the rule for a view that has moved (`viewTaken`)
-// is this file's.
+// One finger on the yard scrolls it, with the platform's own momentum
+// (DESIGN.md, "Momentum scrolling"): the canvas sits inside a scroller, a
+// finger the game did not claim at `touchstart` scrolls it natively, coast
+// and rubber band and all, and the game reads where it got to (world.js,
+// `readScroll`). The one decision here is which touches are the game's, and
+// it is made at `touchstart` below, where the platform commits: a finger
+// that lands on dust is a sweep for its whole length, whatever it passes
+// over, so a long sweep toward the pit never turns into a scroll halfway.
+// The elements are bound here because the rule for a view that has moved
+// (`viewTaken`) is this file's.
 const scroller = document.getElementById('scroller');
 const spacer = document.getElementById('spacer');
 
@@ -127,10 +127,10 @@ canvas.addEventListener('pointerdown', e => {
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
                           at: now(), kind: e.pointerType });
-  // Two fingers on a desk's touchscreen look about; on a phone they do not:
-  // scrolling there is the grab bar's alone, so a second finger changes
-  // nothing about the first.
-  if (down.size === 2) { if (!coarse()) startPan(); return; }
+  // A second finger while a sweep is on: the pair look about through the
+  // game's own pan (the touchstart gate has claimed both from the platform).
+  // With no sweep on, two fingers are the platform's and scroll natively.
+  if (down.size === 2) { if (S.dragging) startPan(); return; }
   if (down.size > 2) return;
 
   const p = pos(e);
@@ -155,9 +155,9 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
-  // A finger off the dust is a tap, read at the release, and nothing while
-  // it is down: it does not sweep and it does not move the view. A mouse
-  // keeps its left button for the sweep everywhere.
+  // A finger off the dust is the platform's: it scrolls the view if it
+  // moves, and a tap is read at the release. A mouse keeps its left button
+  // for the sweep everywhere.
   if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) return;
   S.dragging = true;
   S.trail = [];
@@ -568,9 +568,35 @@ function viewTaken() {
 }
 bindScroller(scroller, spacer, viewTaken);
 
+// --- which touches are the game's --------------------------------------------
+// The platform commits to scrolling at `touchstart`, so the game decides
+// there too: a finger on dust is a sweep and the touch is claimed, which
+// cancels the platform's scroll for that touch and nothing else, however far
+// it then travels; a finger on anything else is left to the platform, which
+// scrolls. A second finger landing while a sweep is on is claimed too, so
+// two fingers on a heap pan through the game's own `panning` rather than
+// half through the platform. Not passive, on purpose: a passive listener
+// cannot say no -- and on the window rather than the canvas: a listener on
+// the canvas alone left the platform treating the touch as uncancelable
+// (measured over the protocol, tools/fling.mjs), and only a blocking
+// listener at the window made the touch the page's to refuse.
+addEventListener('touchstart', e => {
+  if (e.target !== canvas) return;
+  if (S.paused || cutsceneRunning()) return;
+  if (S.dragging) { e.preventDefault(); return; }
+  for (const t of e.changedTouches) {
+    const p = pos(t);
+    if (dustUnder(p.x, p.y)) { e.preventDefault(); return; }
+  }
+}, { passive: false });
+
+// The wheel: a vertical wheel is the yard's own sideways pan, as it always
+// was. A sideways delta -- a trackpad's two-finger swipe -- is left to the
+// platform, which scrolls the scroller with its own momentum.
 canvas.addEventListener('wheel', e => {
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
   e.preventDefault();
-  pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
+  pan(e.deltaY * 0.8);
 }, { passive: false });
 
 // The cursor leaving the menu closes it, unless it left toward the station:

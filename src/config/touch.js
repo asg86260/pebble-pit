@@ -44,12 +44,3 @@ export const SHEET_HANDLE = [36, 4]; // the bar on its top edge, px
 export const SHEET_RAIL_W = 6;       // px, a cell
 export const SHEET_RAIL_INSET = 4;   // px in from the edge
 
-// The grab bar: the band along the bottom edge that the yard is scrolled
-// from on a phone (bar.js). Tall enough for a thumb -- four cells -- above
-// the safe area, with the thumb never thinner than a fingertip can find.
-// Tall and lifted off the edge: on a phone a swipe up from the very bottom
-// is the system's own gesture, and a band on the edge caught the finger
-// meant for it.
-export const BAR_H = 48;             // px, eight cells
-export const BAR_INSET = 12;         // px between the band and the safe area's edge
-export const BAR_THUMB_MIN = 24;     // px, the thumb at its narrowest

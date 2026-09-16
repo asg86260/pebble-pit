@@ -5,7 +5,7 @@
 
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
-import { pref, setPref, reducedMotion } from '../prefs.js';
+import { pref, setPref, reducedMotion, coarse } from '../prefs.js';
 import { disarmReset } from '../input.js';
 import { setSlot, storeSettled, clear, slotRaw } from '../save.js';
 import { S } from '../state.js';
@@ -198,6 +198,9 @@ export const TESTS = [
     const wantPage = [
       'settings',
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
+      'touch: ' + (coarse() ? 'on' : 'off'),  // the thumb switch -- see prefs.js
+      // the whole screen, where the platform can give it -- see fullscreen.js
+      ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
       'save a copy load a save',

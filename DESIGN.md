@@ -11313,3 +11313,23 @@ its `after` doors shut is not offered it whatever `needs` says.
    seam 1; the gates table lands with seam 4; the beats machine (seam 8)
    touches intro.js, cutscene.js, ending.js, state.js and persist.js only,
    and can run in parallel with 2.
+
+**Built, played, and cut: the grab bar (2026-09-16).** For a day the yard
+scrolled only from a band along the bottom edge -- the owner's call after
+a long sweep toward the pit had turned into a scroll halfway -- and the band
+was built, taken up, and played: "the bar is weird, it didn't work out how I
+thought." The band asked the thumb to leave the yard to move it, which is
+not how a phone works, and it stood where iOS keeps its own swipe. So the
+scrolling is back to the design as written above: the canvas sits inside
+the scroller, one finger anywhere on the yard scrolls with the platform's
+momentum, two fingers scroll natively, and the sweep is kept by the
+`touchstart` gate -- a finger that lands on dust is refused to the platform
+and is a sweep for its whole length, however far it travels and whatever
+it passes over, which is the same complaint answered the other way round.
+One thing measured on the way (tools/fling.mjs, a real finger over the
+protocol): a blocking `touchstart` listener on the canvas alone left the
+platform treating the touch as uncancelable, and only a blocking listener
+on the window made the touch the page's to refuse; and a touch that lands
+during a fling is never cancelable -- it catches the fling, which is the
+platform's rule and the design's. `bar.js`, `#bar` and the `BAR_*` knobs are
+gone; the counter and the skip hint stand above the safe area alone.
