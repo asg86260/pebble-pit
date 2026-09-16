@@ -4,7 +4,7 @@
 // else's module.
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H } from './config.js';
+         FARM_H, TAP_SLOP, TAP_TIME } from './config.js';
 import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -52,8 +52,6 @@ let wheelPan = null;
 // `live` once it has left the tap's slop: a tap must not nudge the view and a
 // drag must not jump when it starts.
 let fingerPan = null;
-const TAP_SLOP = 14;                       // pixels a tap may wander and still be a tap
-const TAP_TIME = 500;
 
 const middle = () => {
   let x = 0, y = 0;

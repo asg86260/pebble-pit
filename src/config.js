@@ -42,6 +42,7 @@ export * from './config/crits.js';
 export * from './config/apothecary.js';
 export * from './config/boards.js';
 export * from './config/effects.js';
+export * from './config/touch.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.
