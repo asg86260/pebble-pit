@@ -3,7 +3,7 @@
 // dealt out again on the way back in: a value per cell would be megabytes
 // written every second.
 
-import { P, CELL, SHADES, CORE_SIZE, LOO_POSTS, WORKER, ROCK_SINK, SAVE_V } from './config.js';
+import { P, CELL, SHADES, CORE_SIZE, LOO_POSTS, WORKER, ROCK_SINK, SAVE_V, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
@@ -218,15 +218,17 @@ function blankEphemeral() {
 // when the store would not take it, rather than the store's stale copy.
 let lastBlob = null;
 
-// What the hole is still owed by the casino: the pot being paid out, plus
-// every grain already in the air toward it.
+// What the ground is still owed by the casino: the hand being poured out,
+// plus every grain already in the air toward the strip, by kind.
 function payingOwed() {
-  // (a grain arcing up into the hopper is the stake's, not the hole's)
-  const arcs = (S.tableAir || []).filter(k => k.arc && !k.lands);
-  const inAir = arcs.reduce((n, k) => n + (k.worth || 0), 0);
-  if (S.paying) return { cur: S.paying.cur, left: S.paying.left + inAir, grains: S.paying.grains + arcs.length };
-  if (!arcs.length) return null;
-  return { cur: 'dust', left: inAir, grains: arcs.length };
+  const arcs = (S.tableAir || []).filter(k => k.arc && k.lands === 'strip');
+  const left = { dust: 0, spore: 0, shard: 0, spark: 0, ...(S.paying ? S.paying.left : {}) };
+  for (const k of arcs) {
+    const kind = findKind(k.s) === SHARD_CELL ? 'shard' : findKind(k.s) === SPORE_CELL ? 'spore' : findKind(k.s) === SPARK_CELL ? 'spark' : 'dust';
+    left[kind] += k.worth || 1;
+  }
+  if (!S.paying && !arcs.length) return null;
+  return { left, grains: (S.paying ? S.paying.grains : 0) + arcs.length };
 }
 
 export function persist() {
@@ -675,7 +677,7 @@ export function restore() {
   clearCasino();                // every plot starts empty; the pot pours again
   S.tableAir = [];
   S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
-  S.hoisting = false;
+
   S.attract = null;
   // A pot you have already taken comes back still owed to you. `bank()` takes
   // the pot off the table on the frame you press it and pays it into the hole
@@ -686,10 +688,14 @@ export function restore() {
   // is no heap left to lift off), and the sand flies again. The grain count
   // is only how many throws the money is split across, so a payout with
   // nothing left in it is no payout.
-  S.paying = s.paying && s.paying.cur && +s.paying.left >= 1
-    ? { cur: s.paying.cur,
-        left: Math.round(+s.paying.left),
-        grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
+  // (an older save's `left` was one number of dust; the pour's is a count a
+  // kind)
+  const left = s.paying && s.paying.left;
+  const kinds = left && typeof left === 'object'
+    ? { dust: Math.round(+left.dust) || 0, spore: Math.round(+left.spore) || 0, shard: Math.round(+left.shard) || 0, spark: Math.round(+left.spark) || 0 }
+    : { dust: Math.round(+left) || 0, spore: 0, shard: 0, spark: 0 };
+  S.paying = s.paying && Object.values(kinds).some(n => n >= 1)
+    ? { left: kinds, grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
     : null;
   // A bet made is a bet made: a pot comes back pouring into its plot, whether
   // it was still arriving or already standing there, because the sand it stood

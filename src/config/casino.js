@@ -9,9 +9,12 @@
 // first and the wheel aimed at it, so you were watching a picture of a decision
 // already made. Here nothing is decided until a grain is on a peg.
 
-// What goes on the roof is the bet set on the panel: a coin and a chip, the
-// four chips this casino has always sold. `all` is the whole purse.
-export const CASINO_CHIPS = [10, 100, 1000, 'all'];
+// What goes on the roof is what you hold the arm for: pebbles pour out of
+// the purse into the funnel for as long as the arm is held, a slice of what
+// you own a second -- never less than a floor, so the shortest tap stakes a
+// real handful -- and the pile is the stake. See DESIGN.md, "The pour".
+export let POUR_SHARE = 0.05;             // of the purse, a second
+export let POUR_MIN = 16;                 // pebbles a second, at least
 
 // --- the handful ------------------------------------------------------------------
 // How many pebbles come out of the throat a hand, whatever the stake: the
@@ -32,19 +35,17 @@ export let CASINO_HANDFUL = 16;
 // Ten rows of pegs and eleven bins. A grain at a peg goes left or right and
 // nothing else, so where it lands is ten fair coins added up: the odds are the
 // pegs, and the bins say what they pay. Written out rather than worked from a
-// formula so the numbers can be read off the board -- and chosen so that,
-// weighted by how often a grain reaches each one (1, 10, 45, 120, 210, 252 in
-// 1,024, and back), the table pays exactly one. Fair to the grain, and that is
-// the whole of the house's edge: the mean of a hand is one and the median is
-// under it, so a pot ridden for ever still ends at nothing. `test/casino.test.mjs`
-// asserts the sum, so a bin cannot be moved on its own.
+// formula so the numbers can be read off the board. A number is a multiple
+// on the pebbles that land in the bin; a coin's name is a bin that converts
+// what lands in it to that coin by worth, at the exchange every price sits
+// on (`DUST_PER`), and never less than one coin. Weighted by how often a
+// grain reaches each bin (1, 10, 45, 120, 210, 252 in 1,024, and back) the
+// five pebble bins pay 906 and the six converting bins their 112 by worth:
+// 1,018 in 1,024, fair to the pebble, the median hand under it, and that is
+// the whole of the house's edge. `test/casino.test.mjs` asserts the sum, so
+// a bin cannot be moved on its own.
 export const CASINO_PEG_ROWS = 10;
-export const CASINO_BINS = [39, 5, 3, 1, 0.5, 0.5, 0.5, 1, 3, 5, 39];
-// "The pour" (design, not built): what each bin's foot wears. A coin's name
-// is a bin that converts the pebbles in it to that coin by worth, and a
-// number is a multiple on pebbles. Drawn on the feet now; the pays above are still what
-// the machine pays until the pour is built.
-export const CASINO_BIN_FACE = ['spark', 'shard', 'spore', 1.5, 1, 0.5, 1, 1.5, 'spore', 'shard', 'spark'];
+export const CASINO_BINS = ['spark', 'shard', 'spore', 1.5, 1, 0.5, 1, 1.5, 'spore', 'shard', 'spark'];
 
 // --- the building, in cells, top to bottom -------------------------------------------
 // The hopper on the roof, where the stake stands: a funnel, the building's
@@ -99,84 +100,32 @@ export const LABEL_H = 9;
 // The tray at the foot, which the bins pay into: the same walled plot the
 // hopper is, but deeper, so a won pot stands as a real heap at the foot.
 export const TRAY_H = 12;
-// The field's width: the bins across. The building is wider by a margin
-// either side -- two cells at least, a white divider and the wall, and more
-// when the panel of buttons under the feet is wider than the field, since
-// the front has to hold the panel (see below).
+// The field's width: the bins across.
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- the controls on the building ---------------------------------------------------
-// The arm is a slot machine's: a tall stem up from a boss on the wall by the
-// deck with a ball on the end, the biggest knob on the building, that swings
-// down through most of a half turn when pulled and comes back up slower;
-// dead, it lies at the bottom of its swing. The deck is the band under the
-// funnel: three boxed groups with air between them the way a real button
-// deck is clustered -- COIN, BET with the stake window, PLAY -- each button
-// a cap in its group's recess, black when chosen or live, grey when not,
-// hollow when the purse cannot cover it, and a small label under each
-// group. A thumb needs more than a stem to find, so on a phone every hit box
+// Two, and one of them is the sign. The arm is a slot machine's: a tall stem
+// up from a boss on the wall by the funnel with a ball on the end, held down
+// while the stake pours and springing back up when let go; dead, it lies at
+// the bottom of its swing. The sign is the drop button while a stake stands
+// in the funnel: a tap presses it down a cell for a beat and the floor
+// opens. A thumb needs more than a stem to find, so on a phone every hit box
 // opens out to `LEVER_HIT` cells.
 export const ARM_LENGTH = 8;              // the arm's stem, in cells
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
 export const ARM_SWING = (2 * Math.PI) / 3;   // how far down it swings
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
 export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
-export const BUTTON_PRESS_MS = 200;       // a pressed button reads pressed this long
-export const DECK_GROUP_GAP = 4;          // clear cells between the groups
-export const DECK_BUTTON_GAP = 1;         // clear cells between caps in a group
-export const DECK_PAD = 1;                // clear cells between a group's caps and its rim
-export const CAP_PAD = 1;                 // clear cells between a face and its cap's edge
-export const MARK_CELLS = 5;              // a coin's mark on its cap, in cells square
-export const GLYPH_CELLS = 8;             // the sack and the same-bet turn: a shelf glyph, a cell a pixel
-export const WINDOW_CHARS = 5;            // the stake window: this many figures of the digit face, "12.5k"
-export const DECK_LABELS = true;          // COIN / BET / PLAY under the groups, in the small face
-export const PANEL_COINS = ['dust', 'spore', 'shard', 'spark'];
-
-// How a chip the purse cannot cover is drawn: a hollow cap, or grey like an
-// unchosen one.
-export let CHIP_DEAD_HOLLOW = true;
-export const setDeadLook = hollow => { CHIP_DEAD_HOLLOW = !!hollow; };
-// A chip's figure on its button, and a figure's width in the sign's face:
-// three cells a figure and a cell of air between.
-export const chipLabel = c => c === 'all' ? 'ALL' : c === 1000 ? '1k' : String(c);
-export const wordCells = word => word.length * DIGIT_W + (word.length - 1);
-// Each group stacks its caps two rows deep inside its recess: the coins two
-// by two, the chips two by two with the window standing beside them across
-// both rows, same bet over the sack. A group's width is its columns (each
-// as wide as its widest cap), the gaps between, the window if it has one,
-// and a pad and a rim round the lot; its height the two rows, the gap, and
-// the same pad and rim -- every group the tallest group's height.
-const capW = face => face + 2 * CAP_PAD;
-export const WINDOW_CELLS = WINDOW_CHARS * (DIGIT_W + 1) - 1 + 1 + MARK_CELLS + 2;
-const columns = (faces, cols) => {
-  const w = [];
-  faces.forEach((f, i) => { w[i % cols] = Math.max(w[i % cols] || 0, capW(f)); });
-  return w.reduce((n, c) => n + c, 0) + (w.length - 1) * DECK_BUTTON_GAP;
-};
-// ...and never narrower than its label wants, a cell of air each side.
-export const GROUP_LABELS = ['COIN', 'BET', 'PLAY'];
-const atLeastLabel = (w, i) => Math.max(w, wordCells(GROUP_LABELS[i]) + 2);
-export const DECK_GROUPS_W = [
-  columns(PANEL_COINS.map(() => MARK_CELLS), 2) + 2 * (DECK_PAD + 1),
-  columns(CASINO_CHIPS.map(c => wordCells(chipLabel(c))), 2) + DECK_BUTTON_GAP + WINDOW_CELLS + 2 * (DECK_PAD + 1),
-  columns([GLYPH_CELLS, GLYPH_CELLS], 1) + 2 * (DECK_PAD + 1)
-].map(atLeastLabel);
-// The deck is drawn for the record and no longer stands: "The pour" has no
-// buttons, and the building is the field's width.
-export const CASINO_DECK = false;
-export const DECK_CELLS = CASINO_DECK ? DECK_GROUPS_W.reduce((n, w) => n + w, 0) + 2 * DECK_GROUP_GAP : 0;
-export const GROUP_H = 2 * capW(GLYPH_CELLS) + DECK_BUTTON_GAP + 2 * (DECK_PAD + 1);
-export const LABEL_ROWS = DECK_LABELS ? DIGIT_H + 1 : 0;
-export const DECK_H = CASINO_DECK ? 1 + GROUP_H + LABEL_ROWS + 1 : 0;
-// ...which is what sets the building's margin past the field, and with it
-// the hopper's width and its funnel's profile: the walls step in evenly
-// from the rim to the floor.
-export const CASINO_MARGIN = Math.max(2, Math.ceil((DECK_CELLS + 2 - BOARD_COLS) / 2));
+export const BUTTON_PRESS_MS = 200;       // the sign reads pressed this long
+export const MARK_CELLS = 5;              // a coin's mark on a bin's foot, in cells square
+// The building is the field's width and a margin either side: a white
+// divider and the wall. The hopper's funnel steps in evenly from that width
+// to its floor.
+export const CASINO_MARGIN = 2;
 export const HOPPER_COLS = BOARD_COLS + 2 * CASINO_MARGIN - 2;
 export const HOPPER_PROFILE = Array.from({ length: HOPPER_H }, (_, r) =>
   Math.round(r * ((HOPPER_COLS - HOPPER_FLOOR) / 2) / (HOPPER_H - 1)));
-
 // --- how a grain moves -----------------------------------------------------------------
 // A grain steps a cell at a time down the face, this often -- slower than a
 // frame, so the eye can keep up with one -- and it is written in time so a
@@ -238,14 +187,14 @@ export let SIGN_FLASH_MS = 700;
 export let SIGN_READY_STEP_MS = 60;
 export let SIGN_READY_LIGHTS = 'sparkle';
 export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
-// the flash's face held for a shot: null runs on the beat, 0 the count, 1 the words
+// the flash's face held for a scene's shot: null runs on the beat, 0 the count, 1 the words
 export let SIGN_FLASH_FACE = null;
 export const setFlashFace = f => { SIGN_FLASH_FACE = f; };
 export let CASINO_CHASE_LIVE_MS = 65;
 // The machine sells itself. Every so often, with nobody at it, one grain drops
 // from the hopper and ticks its way down to a bin, then lifts and fades -- a
 // demonstration with nothing riding on it, and the only moving thing out past
-// the lab. It stops the moment a chip is down.
+// the lab. It stops the moment the arm is held.
 export let CASINO_ATTRACT_S = 20;
 // Grains leaving -- a lost heap lifting off, a demonstration grain going --
 // drift up and fade, because a thing that arrives or leaves in three frames is
@@ -289,6 +238,10 @@ export const trayShownFor = n =>
                Math.round(CASINO_PILE_ONE +
                           CASINO_TRAY_BAND * Math.log10(n / CASINO_PILE_ONE)));
 export const CASINO_KNOBS = [
+  { key: 'POUR_SHARE', label: 'the pour, of the purse a second', min: 0.005, max: 0.5, step: 0.005,
+    get: () => POUR_SHARE, set: v => { POUR_SHARE = v; } },
+  { key: 'POUR_MIN', label: 'the pour, pebbles a second at least', min: 1, max: 200, step: 1,
+    get: () => POUR_MIN, set: v => { POUR_MIN = v; } },
   { key: 'CASINO_HANDFUL', label: 'pebbles a hand', min: 4, max: 64, step: 1,
     get: () => CASINO_HANDFUL, set: v => { CASINO_HANDFUL = v; } },
   { key: 'CASINO_FALL_MS', label: 'a cell of fall, ms', min: 8, max: 60, step: 1,

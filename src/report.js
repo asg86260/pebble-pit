@@ -34,7 +34,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, pouring, letting, hoisting, potAt, tableWant, trayWant, shownMult, hopperN, nextStake } from './casino.js';
+import { pot, pouring, letting, holding, potAt, tableWant, trayWant, shownMult, hopperN, pourRate, payLeft, canDrop, payingBin } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -257,7 +257,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // The casino: the stake in the hopper, the handful on the pegs, the bins,
   // the tray.
   casinoOpen: S.casinoOpen,
-  pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot(), where: S.pot.where },
+  pot: S.pot && { stake: S.pot.stake, on: pot(), owed: S.pot.owed, where: S.pot.where },
   // the stake is still coming down into its plot
   pouring: pouring(),
   // a hand is on the board: the gate open, the grains falling, the bins paying
@@ -266,13 +266,15 @@ const snapshotOf = (survey, apron, stranded, air) => ({
                     falling: S.drop.grains.filter(g => !g.landed).length,
                     onPegs: S.drop.grains.filter(g => g.seat).length,
                     bins: S.drop.bins.map(b => b.n),
-                    paid: Math.round(S.drop.paid), edge: S.drop.edge },
-  // the tray on its way back up for a drop again
-  hoisting: hoisting(),
+                    paid: Math.round(S.drop.paid), edge: S.drop.edge, paying: payingBin() },
+  // the arm held, and what it pours a second
+  holding: holding(),
+  pourRate: pourRate(),
+  // the sign is live: a stake stands still in the funnel
+  canDrop: canDrop(),
   // the demonstration grain, ticking down with nothing riding on it
   attract: !!(S.attract && S.attract.grain),
   tableAir: S.tableAir.length,
-  hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: +S.hand.mult.toFixed(3), edge: S.hand.edge },
   mult: shownMult(),
   potAt: Math.round(potAt().x),
   // the grains in the hopper and the tray, and how many each is meant to hold,
@@ -281,12 +283,10 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   tableWant: tableWant(),
   tray: tray.n,
   trayWant: trayWant(),
-  paying: S.paying && S.paying.left,
-  // The bet on the panel: the coin, the chip, and what the next pull stakes
-  // (the chip plus the tray); and whether the arm has been pulled with the
-  // stake still on its way in.
-  coin: S.coin, chip: S.chip, lastBet: S.lastBet, nextStake: nextStake(), armed: S.armed,
-  owed: S.pot ? S.pot.owed || 0 : 0,
+  // what a paid hand still has to run out of the foot, by kind
+  paying: S.paying ? { ...S.paying.left } : null,
+  payLeft: payLeft(),
+  hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: +S.hand.mult.toFixed(3), edge: S.hand.edge, pays: S.hand.pays },
 
   // The lab, and every kind of smoke over the yard.
   skyShown: S.skyShown,

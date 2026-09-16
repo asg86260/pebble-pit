@@ -1,18 +1,19 @@
 # Still to do
 
-## The pour -- DESIGNED (2026-09-16), not built
+## The pour -- BUILT (2026-09-16)
 
-The casino, sized to the yard: the arm is a tap you hold, pebbles pour from
-the purse into the funnel at `POUR_SHARE` of it a second for as long as it
-is held, and the pile is the stake; the sign counts it and, tapped, drops
-it -- letting go of the arm drops nothing. Bins
-left to right ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ · crop · ore · ✚:
-the middle pay pebbles, the crop, ore and spark bins convert by worth at
-`DUST_PER`. Everything pours out of the foot in its own kind on to the
-ground for the crew. No buttons, piles, strip, crank, sack, timers or
-cooldowns. DESIGN.md, "The pour (design, not built)", with the fairness sum
-(906 + 112 = 1,018 in 1,024). The deck of buttons on the branch is drawn,
-not built, and goes when the pour is.
+The casino, sized to the yard: hold the arm and pebbles pour from the purse
+into the funnel at `max(POUR_SHARE × purse, POUR_MIN)` a second, the pile
+is the stake and the sign counts it; let go and it stays; tap the sign and
+the handful drops. Bins ✚ · ore · crop · ×1½ · ×1 · ×½ · ×1 · ×1½ · crop ·
+ore · ✚, the outer six converting by worth at `DUST_PER` with a floor of one
+coin, only the bins with a pebble paying; the pay pours out of the foot in
+its own kinds on to the casino's strip for the haulers. No buttons, piles,
+crank, sack, timers or cooldowns. DESIGN.md, "The pour (built)", with "What
+building it changed". Left for later: nobody has listened to the casino's
+audio; the spark bin's fanfare (the wall lit ring by ring) and the
+converting bins' blinking feet are not drawn yet, only the bell on any pay
+and the win's strobe.
 
 ## The stake is a heap you carry, and the casino has no board -- BUILT AND CUT (2026-09-16)
 

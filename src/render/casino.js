@@ -7,20 +7,19 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, nextStake, inTray, hopperN } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, hopperN } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
-         BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_BIN_FACE, CASINO_GATE_MS,
+         BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
-import { LEVERS, leverAt, leverShape, deckLayout, deckTop, buttonShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, DECK_H, CAP_PAD, DIGIT_W, DIGIT_H, MARK_CELLS, WINDOW_CHARS, LABEL_ROWS, CHIP_DEAD_HOLLOW, CASINO_DECK, BUTTON_PRESS_MS,
+import { LEVERS, leverAt, leverShape } from '../levers.js';
+import { ARM_LENGTH, ARM_BOSS, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
          SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
 import { fmt } from '../words.js';
-import { GLYPHS } from '../glyphs.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
@@ -79,7 +78,7 @@ const MID_GAP = 2;
 const SIGN_MIN = WORD.length * GLYPH_W + (WORD.length - 1) * GLYPH_GAP + (MID_GAP - GLYPH_GAP) + SIGN_PAD * 2;
 const SIGN_W = Math.max(SIGN_MIN, BOARD_COLS + CASINO_MARGIN * 2);
 const signX = () => casino.x + casino.w / 2 - (SIGN_W * P) / 2;
-const signY = () => casino.y + (HOPPER_H + GATE_H + DECK_H) * P;
+const signY = () => casino.y + (HOPPER_H + GATE_H) * P;
 
 // What the sign says: CASINO, or the stake standing in the funnel -- from
 // the first poured pebble until the drop, rolling through the counter tween
@@ -88,10 +87,10 @@ const signY = () => casino.y + (HOPPER_H + GATE_H + DECK_H) * P;
 // climbing), ready (a stake standing, the arm let go), or draining (the
 // floor open, the count running down).
 function signState() {
-  const standing = S.pot && S.pot.where === 'hopper' && (S.pouring || S.armed || S.drop || S.leverHeld || hopperN() > 0);
+  const standing = S.pot && (S.pouring || S.drop || S.holding || hopperN() > 0);
   if (!standing) return 'idle';
   if (S.drop) return 'draining';
-  if (S.leverHeld || S.pouring) return 'pouring';
+  if (S.holding || S.pouring) return 'pouring';
   return 'ready';
 }
 function signWord() {
@@ -100,8 +99,10 @@ function signWord() {
   // ready, the sign flashes between the count and the words, on the beat
   const face = SIGN_FLASH_FACE ?? Math.floor(now() / SIGN_FLASH_MS) % 2;
   if (state === 'ready' && face) return { word: 'DROP IT', gap: false, state };
+  // the count is the stake as held -- what has been committed, in the bowl
+  // or on its way -- and, draining, what is left of it in the bowl
   const d = S.drop;
-  const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.n;
+  const n = d ? S.pot.stake * hopperN() / Math.max(1, d.hopperAt || hopperN()) : S.pot.stake;
   return { word: fmt(Math.round(shown('casino:sign', n))), gap: false, state };
 }
 
@@ -247,7 +248,7 @@ const DIGIT = {
   '+': ['000', '010', '111', '010', '000'],
   '-': ['000', '000', '111', '000', '000']
 };
-const glyphRows = ch => DIGIT[ch] || LETTER[ch];
+const glyphRows = ch => DIGIT[ch];
 const digitW = ch => glyphRows(ch)[0].length;
 
 function drawDigit(ch, x, y) {
@@ -280,7 +281,7 @@ const faceW = f => typeof f === 'string' ? MARK_CELLS : wordW(labelOf(f));
 function drawLabels(fx, fy) {
   const top = fy + (FIELD_H + BIN_H) * P;
   const paying = payingBin();
-  CASINO_BIN_FACE.forEach((m, b) => {
+  CASINO_BINS.forEach((m, b) => {
     const col = binLeft(b) + Math.floor((slotW(b) - faceW(m)) / 2);
     // the foot of the bin paying this beat goes white on black, so the eye is
     // led through the settlement from the middle outward
@@ -406,119 +407,27 @@ export function drawCasino() {
 
     // The foot's hatch, open while the pay pours out of it on to the
     // ground: white, a way through like every opening here.
-    if (S.pouringOut) { ctx.fillStyle = '#fff'; ctx.fillRect(x, tray.y + (tray.rows - 3) * P, P, 3 * P); }
-    // The arm on the wall beside the funnel, black when it can be pulled
-    // (and while it is held), grey when it cannot; the deck of buttons
-    // only if it still stands.
-    if (CASINO_DECK) drawDeck();
+    if (S.paying) { ctx.fillStyle = '#fff'; ctx.fillRect(x, tray.y + (tray.rows - 3) * P, P, 3 * P); }
+    // The arm on the wall beside the funnel: black while it can be held
+    // (and while it is), grey when it cannot.
     for (const l of LEVERS) drawControl(l);
     ctx.fillStyle = '#000';
   });
 }
 
-// --- the deck -------------------------------------------------------------------
-// Three boxed groups across the band under the funnel, air between them
-// and a divider line in the air, each a white recess in a cell of black rim
-// with its caps inside and its name under it in the small face: COIN, BET
-// with the window, PLAY. A cap is the button: black with its face knocked
-// out white when chosen (or, for same bet and the sack, live), grey with a
-// black face when live but not chosen, hollow -- a black rim round white
-// with the face grey -- when the purse cannot cover it, and grey for the
-// beat it is pressed. The window is a fixed-width
-// readout in the digit face: the stake through the yard's own `fmt`, right
-// aligned beside the coin's mark, so no stake ever widens it.
-// the letters the deck needs, in the digits' face
-const LETTER = {
-  'k': ['100', '101', '110', '101', '101'],
-  'm': ['000', '000', '111', '111', '101'],
-  'b': ['100', '100', '111', '101', '111'],
-  't': ['010', '111', '010', '010', '011'],
-  'A': ['111', '101', '111', '101', '101'],
-  'L': ['100', '100', '100', '100', '111'],
-  'C': ['111', '100', '100', '100', '111'],
-  'O': ['111', '101', '101', '101', '111'],
-  'I': ['111', '010', '010', '010', '111'],
-  'N': ['101', '111', '111', '111', '101'],
-  'B': ['110', '101', '110', '101', '110'],
-  'E': ['111', '100', '110', '100', '111'],
-  'T': ['111', '010', '010', '010', '010'],
-  'P': ['111', '101', '111', '100', '100'],
-  'Y': ['101', '101', '010', '010', '010']
-};
-// the coins' marks at five cells: the square of dust, the plots' hexagon,
-// the quarry's triangle, the core's four-point spark -- the counter's own
-// shapes
+// --- the feet's marks --------------------------------------------------------------
+// The coins' marks at five cells, for the converting bins' feet: the plots'
+// hexagon, the quarry's triangle, the core's four-point spark -- the
+// counter's own shapes.
 const MARK = {
-  dust:  ['11111', '11111', '11111', '11111', '11111'],
   spore: ['01110', '11111', '11111', '11111', '01110'],
   shard: ['00100', '00100', '01110', '01110', '11111'],
   spark: ['00100', '01110', '11111', '01110', '00100']
 };
-
 function cells(rows, x0, y0) {
   rows.forEach((row, r) => {
-    for (let c = 0; c < row.length; c++) if (row[c] === '1' || row[c] === '#') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
+    for (let c = 0; c < row.length; c++) if (row[c] === '1') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
   });
-}
-// a cap: a block with its corners knocked off
-function cap(x, y, w, h) {
-  ctx.fillRect(x + P, y, w - 2 * P, h);
-  ctx.fillRect(x, y + P, w, h - 2 * P);
-}
-
-function drawDeck() {
-  const { groups, caps } = deckLayout();
-  // the band, white, under the funnel's floor
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(casino.x + P, deckTop(), casino.w - 2 * P, DECK_H * P);
-  ctx.fillStyle = '#000';
-  // the groups' recesses and the dividers in the air between them
-  groups.forEach((g, i) => {
-    ctx.fillRect(g.x, g.y, g.w, g.h);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(g.x + P, g.y + P, g.w - 2 * P, g.h - 2 * P);
-    ctx.fillStyle = '#000';
-    if (LABEL_ROWS) drawWord(g.label, g.x + Math.floor((g.w / P - wordW(g.label)) / 2) * P, g.y + g.h + P);
-    const next = groups[i + 1];
-    if (next && next.y === g.y) ctx.fillRect(Math.round((g.x + g.w + next.x) / 2 / P) * P - P / 2, g.y, Math.max(1, P / 3), g.h);
-  });
-  for (const at of caps) {
-    const b = at.button, f = b.face;
-    const fx = at.x + CAP_PAD * P, fy = at.y + CAP_PAD * P;
-    if (f.window) {
-      // the window: a boxed readout, the stake right-aligned beside the
-      // coin's mark, black while there is a stake to play and grey while
-      // there is none
-      ctx.fillStyle = '#000';
-      ctx.fillRect(at.x, at.y, at.w, at.h);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(at.x + P, at.y + P, at.w - 2 * P, at.h - 2 * P);
-      const stake = nextStake();
-      ctx.fillStyle = stake > 0 ? '#000' : PEG_SHADE;
-      const word = fmt(stake);
-      const right = fx + (WINDOW_CHARS * (DIGIT_W + 1) - 1) * P;
-      const ty = at.y + Math.floor((at.h / P - DIGIT_H) / 2) * P;
-      drawWord(word, right - wordW(word) * P, ty);
-      const cur = inTray() ? S.pot.cur : S.coin;
-      cells(MARK[cur], right + P, ty);
-      continue;
-    }
-    const shape = buttonShape(b);
-    const dead = !shape.live && !shape.pressed;
-    const hollow = dead && CHIP_DEAD_HOLLOW;
-    // the cap, and the face on it
-    // chosen: a black cap, the face white on it; live: a grey cap, the
-    // face black; dead: hollow, the face grey; pressed: grey, sunk
-    const on = shape.on || (!f.word && !f.mark && shape.live && !shape.pressed);
-    ctx.fillStyle = hollow || on ? '#000' : PEG_SHADE;
-    cap(at.x, at.y, at.w, at.h);
-    if (hollow) { ctx.fillStyle = '#fff'; cap(at.x + P, at.y + P, at.w - 2 * P, at.h - 2 * P); }
-    ctx.fillStyle = on ? '#fff' : hollow ? PEG_SHADE : '#000';
-    if (f.mark) cells(MARK[f.mark], fx, fy);
-    else if (f.glyph) cells(GLYPHS[f.glyph], fx, fy);
-    else drawWord(f.word, fx, fy);
-  }
-  ctx.fillStyle = '#000';
 }
 
 // A round knob on the grid: a square of `n` cells with its corners knocked
@@ -581,13 +490,8 @@ export function drawPotPile() {
   // peg, so sixteen of them read as sixteen things falling rather than a thin
   // stream.
   const pebble = (c, r) => ctx.fillRect(f.x + c * P, f.y + (r - PEBBLE + 1) * P, PEBBLE * P, PEBBLE * P);
-  const deckY0 = deckTop(), deckY1 = deckY0 + DECK_H * P;
   for (const g of demo ? [...grains, demo] : grains) {
     if (g.landed) continue;
-    // through the deck it is inside the machine: not drawn until it comes
-    // out under the band
-    const gy = f.y + g.r * P;
-    if (gy >= deckY0 - P && gy < deckY1) continue;
     g.trail.forEach(([c, r], i) => { ctx.fillStyle = TRAIL_SHADES[i]; pebble(c, r); });
     ctx.fillStyle = '#000';
     pebble(g.c, g.r);

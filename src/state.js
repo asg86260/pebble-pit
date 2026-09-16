@@ -212,36 +212,28 @@ export const S = {
   // banked or dropped again. `stake` is what the hand went down as, so the
   // settled hand can say its multiple.
   casinoOpen: false,
-  pot: null,              // { cur, stake, n, where }
-  // The bet set on the panel: which coin and which of CASINO_CHIPS; and the
-  // last hand's, for the same-bet button.
-  coin: 'dust',
-  chip: 1,
-  lastBet: null,          // { coin, chip }
-  // The arm has been pulled and the stake is still on its way into the bowl:
-  // the floor opens on its own the moment the heap is still.
-  armed: false,
-  // A chip is down and the stake is still raining into its plot. Nothing can be
-  // let go, banked or dropped until the heap has stopped moving. See `pouring`
-  // in casino.js.
+  pot: null,              // { cur, stake, n, owed, where } -- the stake in the funnel: poured, landed, still to spend
+  // The arm is held: the stake is pouring, whole pebbles as the fraction
+  // adds up (`stepHold` in casino.js).
+  holding: false,
+  pourAcc: 0,
+  // The stake is still raining into the funnel. Nothing can be dropped until
+  // the heap has stopped moving. See `pouring` in casino.js.
   pouring: false,
-  tableAir: [],           // the casino's grains in the air: arriving, leaving, hoisted, or on their way to the hole
-  paying: null,           // { cur, left, grains } -- a banked pot on its way across the yard to the pit
+  tableAir: [],           // the casino's grains in the air: arriving, leaving, or on their way out of the foot
+  paying: null,           // { left: { dust, spore, shard, spark }, grains } -- a paid hand on its way out of the foot
   // The hand under way: the gate open, the grains on the pegs, the bins filling,
   // then the bins paying into the tray. Null when nothing is falling. A path in
   // flight is ephemeral -- a reload comes back a pot in the hopper with the
-  // let-go open again. See `letGo` in casino.js.
+  // sign live again. See `openGate` in casino.js.
   drop: null,             // { at, sent, grains, bins, stage, ... }
-  // The tray going back up to the hopper, grain by grain, for a drop again.
-  hoisting: false,
   // The machine selling itself: one grain ticking down the pegs with nothing
   // riding on it, every so often, while nobody is at the table.
   attract: null,          // { grain, next }
-  // The lever just pulled on the building, for its swing.
+  // The arm just let go, for its swing back up; and the sign just tapped,
+  // for its press-down.
   leverPulled: null,      // { key, at }
-  leverHeld: null,        // the arm held down, by key (drawn at the bottom of its swing)
-  signPressed: 0,         // when the sign was last tapped, for its press-down (drawn; the drop is not built)
-  pouringOut: false,      // the foot's hatch open, the pay pouring out (drawn; the pour is not built)
+  signPressed: 0,
   // What the machine is flashing right now: a peg lit on the beat, a divider
   // lit for a x39 or a near miss, the sign on a strobe for a x39.
   tableFx: { pegs: [], edge: null, strobeAt: 0 },
@@ -495,7 +487,6 @@ export const SAVED = [
   'shelf',
   'potency',
   'casinoOpen',
-  'coin', 'chip', 'lastBet',   // the bet set on the casino's panel, and the last hand's
   'scrubOpen',
   'towerOpen',
   'outhouseOpen',
@@ -594,7 +585,7 @@ export const SAVED_BY_HAND = [
   'rockSand',             // what is lying on the rock, a column at a time
   'pot',                  // the casino: what is on the table, and which plot it stands in...
   'pouring',              // ...whether its stake is still raining down...
-  'paying',               // ...and what a taken pot still owes the hole
+  'paying',               // ...and what a paid hand still owes the ground
   'plots',                // how far along each plot is, as hundredths
   'plotTone',             // and the spore standing ripe on it
   'boulder',              // the rock, as a run-length string...
@@ -669,7 +660,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'hoisting', 'attract', 'tableFx', 'leverPulled', 'leverHeld', 'signPressed', 'pouringOut', 'armed',
+  'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'pourAcc',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',

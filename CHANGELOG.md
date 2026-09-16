@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
-- The casino has no board: a panel of buttons on its face sets the bet -- a coin, a chip, same bet, the sack -- and the arm plays the hand; winnings ride on the next pull or fly to the hole on the sack (test/casino.test.mjs, selftest/casino.js).
+- The casino is the pour: hold the arm and pebbles pour from your purse into the funnel, a share of what you own a second; tap the sign to drop them; the bins pay in pebbles, crops, ore and sparks out of the foot on to the ground for the crew (test/casino.test.mjs, selftest/casino.js).
 - The belt's tuning ladder is gone: the rung bought nothing you could see, since the belt only ever moves what the ram drops.
 - A save from before the first public build (v0.1.1) is no longer read: it is kept aside and offered back as a file from the settings sheet (test/save-floor.test.mjs).
 - The phone's settings button is a cog.
@@ -31,6 +31,7 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- An empty bin no longer inverts its foot or sounds when the bins pay: only the bins with a pebble in them come up (test/casino.test.mjs).
 - Every grain staked into the casino's hopper goes down the board: the funnel holds the handful that falls, and none of it lifts off and vanishes when you let go (test/casino.test.mjs).
 
 - The pinned card stands under the gear and the fullscreen button instead of over them (src/selftest/touch.js).

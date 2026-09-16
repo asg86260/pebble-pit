@@ -44,23 +44,10 @@ import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
-import { dealHand, potAt } from './casino.js';
-import { pullLever, LEVERS, leverAt, leverUnder } from './levers.js';
-import { table } from './state.js';
-import { pressButton, BUTTONS, panelLayout } from './levers.js';
-import { tray } from './state.js';
-import { SPARK_CELL } from './config.js';
-function fakePour(n) {
-  const kinds = [1, 2, 3, 4, SHARD_CELL, SPORE_CELL, SPARK_CELL];
-  for (let i = 0; i < n; i++) {
-    const k = i % 5 === 0 ? SHARD_CELL : i % 7 === 0 ? SPORE_CELL : i === 3 ? SPARK_CELL : kinds[i % 4];
-    const x = tray.x, y = tray.y + tray.rows * P - P;
-    S.tableAir.push({ x, y, s: k, t: 0, worth: 1, lands: 'ground', big: true,
-      arc: { x0: x, y0: y, x1: x - P * (6 + (i % 9) * 3), y1: S.groundY - P, k: (i % 10) / 16, high: P * (4 + (i % 4) * 2), ms: 2400 } });
-  }
-  S.pouringOut = true;
-}
-import { setDeadLook, setReadyLights, setFlashFace } from './config/casino.js';
+import { dealHand, binPay, potAt } from './casino.js';
+import { LEVERS, leverAt, leverUnder, holdAt, releaseArm, tapAt, signBox } from './levers.js';
+import { holdArm, dropIt } from './casino.js';
+import { setReadyLights, setFlashFace } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
@@ -916,31 +903,21 @@ export const HANDLES = {
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __answered: answered, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
-  // The arm pulled and a button on the panel pressed by key, the same calls
-  // the pointer makes: `__clickLever('casino-gate')`; `__pressButton('chip-100')`,
-  // 'coin-dust', 'coin-shard', 'coin-spore', 'chip-10', 'chip-1k', 'chip-all',
-  // 'same', 'bank'. Both answer false when the control is dead.
-  __clickLever: pullLever,
-  __pressButton: pressButton,
-  // a control held mid-motion for a scene: its pull timestamped a minute ahead
-  __holdControl: key => { S.leverPulled = { key, at: clockNow() + 60000 }; },
-  // the dead chip's look, for the shots that put the two side by side
-  __deadLook: hollow => setDeadLook(hollow),
-  // the arm held down, for a scene of the pour
-  // (held, the floor does not open: the drop is the release)
-  __holdArm: on => { S.leverHeld = on ? 'casino-gate' : null; if (on) S.armed = false; },
-  // the sign pressed, for a scene: held down a minute ahead like a control
-  __pressSign: () => { S.signPressed = clockNow() + 60000; },
-  __readyLights: how => setReadyLights(how),
-  __signFace: f => setFlashFace(f),
-  // a pour out of the foot faked for a scene: grains of every kind lobbed
-  // out of the hatch on to the ground at the building's left
-  __fakePour: (n = 40) => fakePour(n),
+  // The arm held and let go, and the sign tapped: the same calls the
+  // pointer makes. `__holdArm(true)` starts the pour and `__holdArm(false)`
+  // ends it; `__tapSign()` drops the stake; each answers false when the
+  // control is dead. `__holdAt` and `__tapAt` are the hit tests, by point.
+  __holdArm: on => holdArm(!!on),
+  __tapSign: () => dropIt(),
+  __holdAt: (x, y) => holdAt(x, y),
+  __releaseArm: () => releaseArm(),
+  __tapAt: (x, y) => tapAt(x, y),
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },
   __leverUnder: (x, y) => leverUnder(x, y)?.key || null,
-  // where a button stands, in the world: the middle of its recess
-  __buttonAt: key => { const at = panelLayout().find(a => a.button.key === key); return at ? { x: at.x + at.w / 2, y: at.y + at.h / 2 } : null; },
-  __buttons: () => BUTTONS.filter(b => b.shown()).map(b => ({ key: b.key, live: b.live(), on: b.on() })),
+  __signAt: () => { const b = signBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; },
+  // the sign's look for a scene: the ready lights, and the flash's face held
+  __readyLights: how => setReadyLights(how),
+  __signFace: f => setFlashFace(f),
   // The sweep, one step in from the pointer: what a press-and-drag does at a
   // point and what letting go there does, the same two calls input.js makes.
   __sweep: (x, y) => { sweep(x, y); return S.held; },
@@ -949,28 +926,31 @@ export const HANDLES = {
   // the pointer, for a scene that wants the cursor somewhere
   __mouseAt: (x, y) => { S.mouse.x = x; S.mouse.y = y; },
   // The table stood up the way the scenes and the checks want it: open, with
-  // dust in the hole; a bet set on the panel and the arm pulled, the stake
-  // rained in and standing; a hand played through to the tray standing.
-  // Each waits on the sand.
+  // dust in the hole; the arm held until the stake is this many, let go and
+  // the pour settled; a hand played through to the pay run out. Each waits
+  // on the sand.
   __casinoStakes: (dust = 6000) => {
     newGame(); openCasino(true); give(dust); rebuildBoards();
   },
-  __casinoStake: (chip = 'chip-100', coin = 'coin-dust') => {
+  __casinoStake: (stake = 100) => {
     if (!S.casinoOpen) { newGame(); openCasino(true); give(6000); rebuildBoards(); }
-    pressButton(coin); pressButton(chip);
-    const pulled = pullLever('casino-gate');
-    // the stake raining in, and the floor about to open: stop the frame before it does
-    for (let f = 0; f < 60 * 30 && (S.hoisting || S.pouring) && !S.drop; f++) { fast(1 / 60); if (S.armed && !S.pouring && !S.hoisting) break; }
-    return pulled;
+    holdArm(true);
+    for (let f = 0; f < 60 * 60 && S.holding && (!S.pot || S.pot.stake < stake); f++) fast(1 / 60);
+    holdArm(false);
+    for (let f = 0; f < 60 * 30 && S.pouring; f++) fast(1 / 60);
+    return S.pot ? S.pot.stake : 0;
   },
   __casinoHand: () => {
-    if (!S.pot) pullLever('casino-gate');
-    for (let f = 0; f < 60 * 60 && (S.armed || S.drop || S.pouring || S.hoisting); f++) fast(1 / 60);
+    const dropped = dropIt();
+    for (let f = 0; f < 60 * 60 && (S.drop || S.pouring); f++) fast(1 / 60);
+    return dropped;
   },
   // a hand dealt off the rng without the sim -- the bins each grain of a
   // handful lands in and what they pay on this stake -- for the check that
   // measures the spread two thousand hands at a time
   __deal: (stake = 1000) => dealHand(stake),
+  // and what one bin pays for the pebbles in it, by kind
+  __binPay: (b, pebbles, worth) => binPay(b, pebbles, worth),
   // Setting the pot the way the board does: clicking a tonic row calls its
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
   // the same functions the pointer calls, so a check that sets the pot this way
