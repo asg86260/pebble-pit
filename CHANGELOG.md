@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 
+- The phone's settings button is a cog.
 - On a phone the yard scrolls from a grab bar along the bottom of the screen, with the phone's own momentum; a finger on the yard itself sweeps or taps and never scrolls (selftest/touch.js, test/camera.test.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
 - A tap on a row buys it first time, a scroll or a hold does not, a long press reads its note, and a purchase can be taken back from its tag for a few seconds (test/undo-buy.test.mjs, test/hover-gate.test.mjs, selftest/touch.js).
@@ -26,6 +27,7 @@ feature lives in DESIGN.md.
 - A sheet scrolled to its top and pulled further down comes down, the way every phone's sheets do (selftest/sheet.js).
 - The casino is a plinko: the stake stands in a hopper on the roof, a handful of it goes down ten rows of pegs into eleven bins that pay into a tray, and the tray banks or goes back up for another drop -- the wheel is gone (test/casino.test.mjs, test/handful.test.mjs).
 
+- The pinned card stands under the gear and the fullscreen button instead of over them (src/selftest/touch.js).
 - The opening can be skipped on a phone: the skip hint is a button, held (selftest/touch.js).
 - The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
 - A board comes down when its station is scrolled off the window, on every board and not only the bench's (selftest/touch.js).

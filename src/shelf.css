@@ -589,7 +589,9 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    in the sheet's frame, one slot wide. No plank: the pin is its own heading,
    and a shelf under one thing is a shelf with nothing to say. */
 .pin.rows.shelves {
-  position: fixed; right: 8px; top: 8px; left: auto;   /* over `.rows.shelves { position: relative }` */
+  /* over `.rows.shelves { position: relative }`; the corner itself (top and
+     right, under the fullscreen and gear buttons) is `.pin`'s, said once */
+  position: fixed; left: auto;
   box-sizing: border-box;
   width: calc(var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x, 8px) + 2 * var(--sheet-border, 2px));
   max-width: calc(100vw - 16px);

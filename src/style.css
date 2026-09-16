@@ -164,7 +164,8 @@ canvas {
 #fullscreen[data-on="1"] .frame { border-color: transparent; background: #000; }
 #fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
 /* The gear (gear.js): the same square, beside the fullscreen button or in
-   its spot. The cog is a ring over a cross. */
+   its spot. The cog is a thirteen-cell pixel drawing at two screen pixels a
+   cell: a ring two cells thick, hollow, with eight teeth. */
 #gear {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
@@ -179,16 +180,9 @@ canvas {
   cursor: pointer;
 }
 #gear .cog {
-  display: block; position: relative; width: 14px; height: 14px; box-sizing: border-box;
-  border: 3px solid #000; border-radius: 50%;
+  display: block; width: 26px; height: 26px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Cpath d='M5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM12 7h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 26px 26px;
 }
-#gear .cog::before, #gear .cog::after {
-  content: ''; position: absolute; background: #000; left: 50%; top: 50%;
-}
-#gear .cog::before { width: 22px; height: 4px; margin: -2px 0 0 -11px; }
-#gear .cog::after { width: 4px; height: 22px; margin: -11px 0 0 -2px; }
-#gear .cog { background: #fff; background-clip: padding-box; z-index: 0; }
-#gear .cog::before, #gear .cog::after { z-index: -1; }   /* behind the ring: teeth, not a crosshair */
 /* The held sheet as a sheet from the bottom, on a phone (gear.js): the
    window's width, standing on the foot, scrolling inside, with a grip on
    its top edge. The desk's centered card is untouched. */

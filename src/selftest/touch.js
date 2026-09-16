@@ -380,4 +380,31 @@ export const TESTS = [
       ok(!able || row.dataset.pane === 'settings', 'and the settings sheet has the same row', row.dataset.pane),
     ];
   }],
+  ['the pinned card stands under the corner buttons, not over them', async () => {
+    // The gear is a phone's only way to the settings, and the story pins the
+    // goal card into the same corner by itself: a pin drawn at the top of the
+    // window covered the gear and the fullscreen button. The pin gives the
+    // corner up by `--fs-room`, and only `.pin` may say where the corner is.
+    newRun();
+    await settle();
+    phone(true);
+    window.__crew(2, 1);
+    window.__jump(4);                           // the goal card pins itself from the fourth rock
+    window.__give(200);
+    window.__build();
+    await frames(30);
+    const pin = document.getElementById('pin');
+    const gear = document.getElementById('gear');
+    const under = () => {
+      const p = pin.getBoundingClientRect(), g = gear.getBoundingClientRect();
+      return p.top >= g.bottom;
+    };
+    const out = [
+      ok(!pin.hidden && pin.querySelector('button[data-key]'), 'a card is pinned in the corner'),
+      ok(!gear.hidden, 'and the gear is up on a phone'),
+      ok(under(), 'and the card stands under it', `pin ${Math.round(pin.getBoundingClientRect().top)} vs gear ${Math.round(gear.getBoundingClientRect().bottom)}`)
+    ];
+    phone(false);
+    return out;
+  }],
 ];
