@@ -1,15 +1,11 @@
-// Workers assigned by hand (wave7b-assign, feedback7 item 16): dropping a held
-// body onto a station retrains it. The counters and their buttons stay; this is
-// the same move -- the ask moves at the drop, exactly what a button press does
-// -- reached through the body instead of through the boards. The body then
-// walks its own retraining: old hat down, new hat on at the kit stand, in
-// through the door. Nothing teleports; only the number moves at the drop.
+// Workers assigned by hand: dropping a held body onto a station retrains it.
+// Only the ask moves at the drop, exactly as a roster button does; the body
+// then walks its own retraining, old hat down, new hat on, in through the door.
 //
-// This file owns the target map and the drop's meaning. The pointer (drop in
-// crew/pointer.js) asks assignDrop first and only throws the body if nothing
-// here took it; the aura (render/aura.js) asks holdTarget so the ring on the
-// station under a held body is read off the same table the drop will consult.
-// One table, so the ring and the deal cannot disagree.
+// This file owns the target map and the drop's meaning. `drop` in pointer.js
+// asks assignDrop first and only throws the body if nothing here took it; the
+// aura asks holdTarget off the same table, so the ring and the deal cannot
+// disagree.
 
 import { standRect } from '../board.js';
 import { ASSIGN_PAD, P, WORKER } from '../config.js';
@@ -21,37 +17,26 @@ import { retask } from './commute.js';
 import { joinJob } from './kitwalk.js';
 import { lifted } from './pointer.js';
 
-// Which job a drop on a station means. The same shape pilemarks reads its
-// under-staffed mark off: only the stations whose headcount is a gang's. The
-// bench, the house, the books hire nobody, so a body dropped on them is a body
-// thrown at a building, which is today's throw.
+// Which job a drop on a station means: only the stations that hire. A body
+// dropped on the bench or the house is a body thrown at a building.
 const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, scrub: JOB.PURIFY,
                  tower: JOB.WIZARD, apothecary: JOB.STIR,
                  outhouse: JOB.JANITOR };
 
 // Every place a held body can be dropped to mean something, as {key, job, rect}.
-//
-// A station's rect is where you have to stand to open its board, padded out by
-// ASSIGN_PAD -- a body is a bigger thing than a cursor, and a drop that has to
-// land pixel-perfect on a doorway is a control nobody hits twice. standRect is
-// null until the station is standing, so a place not yet built is not a target.
-//
-// The rock is a target too -- rockhands are hired by count like everybody else
-// -- and its box is the boulder's own footprint, the same box a swing reads.
-// No target for haulers: carrying is the remainder, rebalance()'s to give, and
-// there is nowhere to drop a body to ask for it.
+// standRect is null until the station is standing, so a place not yet built is
+// not a target. The rock's box is the boulder's own footprint. No target for
+// haulers: carrying is the remainder, rebalance()'s to give.
 export function dropTargets() {
   const out = [];
   for (const key of Object.keys(JOB_AT)) {
     const r = standRect(key);
     if (!r) continue;
-    // rect is the drop's hit box, padded; ring is the station's own ground,
-    // unpadded, for the aura to stroke -- a ring on the padded box floats in
-    // the white sky around the building, which on this palette is invisible.
-    // The hit box runs from the top of the sky down to the station's foot: a
-    // held body hangs off the cursor well above the ground, so asking the hand
-    // to land it on the building itself was asking for a stoop every time.
-    // Anywhere in the air over the station means the station.
+    // rect is the hit box, padded by ASSIGN_PAD and running from the top of
+    // the sky down to the station's foot, because a held body hangs off the
+    // cursor well above the ground. ring is the station's own ground, unpadded,
+    // for the aura: a ring on the padded box floats in the white sky and is
+    // invisible on this palette.
     out.push({ key, job: JOB_AT[key], ring: r,
                rect: { x: r.x - ASSIGN_PAD, y: 0,
                        w: r.w + ASSIGN_PAD * 2, h: r.y + r.h + ASSIGN_PAD } });
@@ -70,11 +55,10 @@ const inRect = (x, y, r) =>
   x >= r.rect.x && x <= r.rect.x + r.rect.w &&
   y >= r.rect.y && y <= r.rect.y + r.rect.h;
 
-// The target a drop at (x, y) would join, or null. A target is only a target
-// if the deal would go through: the job is not the body's own (dropping a
-// farmhand on the farm is putting a farmhand down, not hiring one) and the
-// station has room. No room, no target -- the ring and the drop read this one
-// answer, so a station that shows no ring takes no body.
+// The target a drop at (x, y) would join, or null: only where the deal would
+// go through (not the body's own job, and the station has room). The ring
+// and the drop read this one answer, so a station that shows no ring takes no
+// body.
 function targetAt(w, x, y) {
   for (const t of dropTargets()) {
     if (!inRect(x, y, t)) continue;
@@ -86,34 +70,25 @@ function targetAt(w, x, y) {
 }
 
 // The target under the cursor while a body is held, for the aura to ring.
-// Asked off S.mouse rather than off the body, because the body hangs off the
-// cursor -- they are the same spot -- and the mouse is the fact state.js keeps.
 export function holdTarget() {
   const w = lifted();
   if (!w) return null;
   return targetAt(w, S.mouse.x, S.mouse.y);
 }
 
-// Every target the held body could join, wherever the cursor is -- for the
-// markers the yard shows while a body is up, so the hand knows its options
-// before it wanders. Same table, same two vetoes as the drop itself.
+// Every target the held body could join, for the markers shown while a body
+// is up. Same table, same two vetoes as the drop itself.
 export function holdOptions() {
   const w = lifted();
   if (!w) return [];
   return dropTargets().filter(t => t.job !== JOB_OF[w.type] && roomAt(t.job) >= 1);
 }
 
-// The drop itself. Called by drop() in pointer.js before the throw physics;
-// true means the body was taken and the throw must not happen.
-//
-// The ask moves here, at the drop -- that is what the roster buttons do today,
-// and the drop is the same purchase made with a hand. The old job's count comes
-// down first (a hauler's does not: carrying is derived, there is no ask to
-// return), then joinJob moves the body's type and the new count together and
-// rebalances, so the crew rebuild finds everybody where it wants them. Then
-// retask walks the body through its retraining on foot. It is still in the air
-// when retask is called; the fall stage holds the walk until it lands, and a
-// landing away from the new station re-issues the same walk anyway.
+// The drop itself. True means the body was taken and the throw must not
+// happen. The old job's count comes down first (a hauler's does not: carrying
+// is derived, there is no ask to return), then joinJob moves the type and the
+// new count together and rebalances. The body is still in the air when retask
+// is called; the fall stage holds the walk until it lands.
 export function assignDrop(w) {
   const t = targetAt(w, w.x + WORKER / 2, w.y + WORKER / 2);
   if (!t) return false;
@@ -121,8 +96,8 @@ export function assignDrop(w) {
   const paid = old && old !== JOB.HAUL && S[old] > 0;
   if (paid) S[old] -= 1;
   if (!joinJob(w, t.job)) {
-    // joinJob said no after all (the counts can move between the ring and the
-    // release). The old ask goes back where it was and the drop is a throw.
+    // The counts can move between the ring and the release: the old ask goes
+    // back and the drop is a throw.
     if (paid) S[old] += 1;
     return false;
   }

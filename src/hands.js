@@ -13,9 +13,6 @@ import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
 
-// in config.js now, so they can be turned while the game is running -- see the
-// note there about what the clock did to them
-
 export function track(x, y) {
   S.trail.push({ x, y, t: now() });
   if (S.trail.length > 5) S.trail.shift();
@@ -55,18 +52,16 @@ export function catchAir(mx, my) {
   }
 }
 
-// pick up floor dust inside the brush, up to what the cursor can carry
-// A core lying about, under the cursor: it can be picked up and carried, which
-// is the one thing in this yard you handle yourself.
+// A loose core under the cursor, the one thing in this yard you handle
+// yourself.
 export const overCore = (mx, my) =>
   !!S.coreItem && !S.heldCore &&
   Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
   Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE;
 
-// Whether a sweep here would find anything: a grain within the brush, or a
-// loose core under the hand. The same reach `sweep` uses, asked without
-// taking anything. A finger on a phone asks it once, on the press, to tell a
-// sweep from a look about -- see "One finger looks about" in DESIGN.md.
+// Whether a sweep here would find anything, at the same reach `sweep` uses,
+// without taking it. A finger on a phone asks it once, on the press, to tell
+// a sweep from a look about (DESIGN.md, "One finger looks about").
 export function dustUnder(mx, my) {
   if (overCore(mx, my)) return true;
   const c0 = colOf(floor, mx);
@@ -113,8 +108,7 @@ export function sweep(mx, my) {
   }
   if (taken) {
     S.held += taken;
-    // The bench's 'strength' row is about this, and appears the first time it
-    // happens -- so the shop is built again, as it is when the first core lands.
+    // The bench's 'strength' row appears the first time this happens.
     if (!S.seenDrag) { S.seenDrag = true; buildShop(); }
     for (let i = 0; i < taken; i++) {
       S.motes.push({
@@ -137,9 +131,8 @@ export function release(x, y) {
     S.dirty = true;
   }
   if (!S.held) return;
-  // The whole hand, for the record's sake -- and only a hand at the top of
-  // its ladder. A level-0 hand is one grain, and throwing one grain and
-  // catching it is not juggling; the notice is for the biggest hand there is.
+  // The juggling notice is for the biggest hand there is: a level-0 hand is
+  // one grain, and throwing one grain is not juggling.
   const full = S.carryLevel >= LADDER && S.held >= capacity();
   const from = S.chips.length;
   for (let i = 0; i < S.held; i++) {

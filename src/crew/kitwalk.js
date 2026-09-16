@@ -1,11 +1,6 @@
 // The kit economy: who wants a hat, who may claim one lying spare, and the
-// book-keeping that stops two bodies grabbing the same one. Extracted verbatim
-// from crew.js; behavior unchanged. Owns canRun/bareAt/hattedIn/claimed/kitFree,
-// the claim helpers (mayWear, looseHats, ownerRacing, holdClaims, grabErrand,
-// joinJob, grabHat, dispossessed) and stepKit. It leans on four spine helpers
-// (errand, nextLeg, retask, stationX), imported from crew.js; the spine calls
-// grabHat (from arrive), kitFree, dispossessed and stepKit (a STAGE) back. The
-// walk itself -- nextLeg, arrive -- stays in the spine.
+// book-keeping that stops two bodies grabbing the same one. The walk itself
+// (nextLeg, arrive) is commute.js's.
 
 import { KIT_JOBS, TYPE_OF } from '../kit.js';
 import { S } from '../state.js';
@@ -14,112 +9,58 @@ import { kitX } from '../world.js';
 import { errand, nextLeg, retask, stationX, syncWorkers } from '../crew.js';
 import { JOB, TYPE } from '../jobs.js';
 
-// A body already at work whose station has a hat lying spare, and which is free
-// to go and get it: hands empty, not walking anywhere, not indoors. One at a
-// time per station, so buying four helmets is four trips rather than the whole
-// gang filing down the hill at once.
-// The wizards are in here too, and theirs is the one hat the job cannot be done
-// without: a body sent to the sky with nothing on its head walks to the tower,
-// picks up what the tower has made, and only then goes up. Everywhere else the
-// hat is a doubling; here it is the whole trade.
-//
-// Read off the kit table rather than written out again: a job is on this list if
-// it has kit at all -- somewhere its hats come from -- and every row does. The
-// janitor is on it now. Its cap used to appear on its head the moment it was put
-// on the job, which made it the one hat in the yard that belonged to nobody; the
-// outhouse keeps the caps on a stand outside the door, and a body sent to sweep
-// walks over and picks one up like everybody else. See kit.js.
-
-// somebody on that job who could go on an errand right now: hands empty, not
-// already walking, and not indoors
-// ...and not one that is off the ground. A wizard aloft is the one body here a
-// walk cannot be handed to: `stepCommute` puts a body on the ground line for the
-// length of the walk, which for that one is a four-hundred-pixel drop mid-frame.
-// It comes down on its own when it has nothing to do -- see wizard.js -- and
-// that is when it can be sent for a hat.
+// Somebody who could go on an errand right now. Not one off the ground: a
+// wizard aloft cannot be handed a walk, because `stepCommute` puts a body on
+// the ground line for the length of it, a four-hundred-pixel drop mid-frame.
 const canRun = o => !o.walking && !o.inside && !o.aloft && !o.carry && !o.hasCore;
 
 // Somebody on that job standing bare-headed, who could go and get one.
 const bareAt = job => S.workers.find(o => JOB_OF[o.type] === job && !o.trained && canRun(o));
 
-// Somebody wearing that station's kit, whoever it is and whatever it is doing
-// now. Asked by `kitOf` and not by job, because the whole point of the two
-// questions below is bodies whose job and whose hat have come apart.
+// Somebody wearing that station's kit, whatever it is doing now. Asked by
+// `kitOf` and not by job, because the questions below are about bodies whose
+// job and hat have come apart.
 const hattedIn = job => S.workers.find(o => o.trained && o.kitOf === job && canRun(o));
 
-// Kit already spoken for by somebody on their way to it. Without this, two
-// bodies put on the rock in the same breath both set off for the last helmet
-// and one of them arrives at an empty stand.
+// Kit already spoken for by somebody on their way to it, or two bodies put on
+// the rock in the same breath both set off for the last helmet.
 const claimed = job => S.workers.filter(o => o.wanting === job).length;
 export const kitFree = job => spareKit(job) - claimed(job);
 
 // --- a hat on the ground is anybody's ------------------------------------------
-// A knocked-off hat used to belong to the head it came off: it lay where it fell
-// until its owner had finished seeing stars and walked back for it, and nobody
-// else in the yard so much as looked at it. But a hat belongs to the STATION and
-// not to the head under it -- that sentence is what the whole kit is built on --
-// and a helmet lying in the dirt is the plainest case of it there is. So it is
-// anybody's who is entitled to wear one, and the nearest of them gets it.
-//
-// Who is entitled:
-//   * somebody already on that job, bare-headed. Its own station's kit, on the
-//     ground, in front of it.
-//   * any BARE hauler. Carrying is what a body does when it is on nothing, so
-//     there is nothing to put down first and nothing to walk home: picking the
-//     hat up is the whole of the move -- and the job comes with it, because the
-//     hat IS the job.
-//
-// A carter with its cart still on is deliberately NOT on that list. Its cart is
-// the lip's kit and no head wears two stations' hats, so it would have to hand
-// the cart in first -- and it already can: put it on another job and `stepKit`'s
-// stray rule walks it to the stand, and it is bare-handed and eligible on the
-// way back. One rule, and no cross-kit special case anywhere.
+// A hat belongs to the STATION, not the head under it, so a knocked-off hat is
+// anybody's who is entitled to wear one, and the nearest gets it. Entitled:
+// somebody already on that job, bare-headed; or any BARE hauler, because
+// carrying has nothing to put down first and the hat IS the job. A carter with
+// its cart on is not on the list: no head wears two stations' hats, and the
+// stray rule in `stepKit` already walks the cart in if it is put on another
+// job.
 const bareHauler = o => o.type === TYPE.HAUL && !o.trained;
 
-// Could this body wear that hat if it were standing over it? Somebody on the job
-// needs nothing but a bare head. Anybody else needs somewhere to stand at the
-// station, because putting the hat on is joining it.
-//
-// Entitlement only. Whether it is free to set off is `canRun`, and the two are
-// deliberately separate questions: `canRun` is false for a body that is walking,
-// which is every claimant from the moment it sets off -- ask them together and a
-// claim is cancelled by the walk it started.
+// Could this body wear that hat if it were standing over it? Anybody not on
+// the job needs room at the station, because putting the hat on is joining
+// it. Entitlement only: `canRun` is false for every claimant from the moment
+// it sets off, so asked together a claim is cancelled by the walk it started.
 const mayWear = (o, job) => !o.trained &&
   (JOB_OF[o.type] === job || (bareHauler(o) && roomAt(job) >= 1));
 
-// The station's hats lying loose and at rest. In flight they are nobody's: a hat
-// still in the air has not landed anywhere anybody could walk to, and its owner
-// is the only body that waits about for it.
+// The station's hats lying loose and at rest; in flight they are nobody's.
 const looseHats = job => S.workers.filter(o => o.hatOff && o.hatOff.rest && o.hatOff.of === job);
 
-// The owner is a racer too -- but it joins the race when its stars clear, not
-// before. That is the whole of what makes the hat up for grabs: it is lying
-// there because somebody turned its owner upside down, and the owner spends the
-// next second and a half rocking where it landed.
+// The owner joins the race when its stars clear, not before.
 const ownerRacing = o => !o.dizzyUntil && !o.dizzyFor && !o.lifted && !o.falling && !o.inside;
 
-// A claim is held every frame or it is not a claim. `claimHat` is the body whose
-// hat this one is walking for -- a claim on the thing, not on the station -- and
-// this drops it the instant the thing is not there to be claimed: the owner got
-// to it first, somebody else did, the walk was abandoned for a rock coming down,
-// or the claimant put something else on on the way. A body that loses its claim
-// stops walking for it and goes back to what it was doing.
-//
-// It also re-states `fetching`, which is what `stepKit` reads to keep a station
-// to one errand at a time: a claimant is that station's errand while it walks.
+// A claim is held every frame or it is not a claim. `claimHat` is the body
+// whose hat this one is walking for, dropped the instant the thing is not
+// there to be claimed. It also re-states `fetching`, which keeps a station to
+// one errand at a time.
 function holdClaims() {
   for (const w of S.workers) {
-    // A wear claim is held the same way, or it is not a claim. `wanting` counts
-    // against the stand -- `kitFree` subtracts every body carrying it -- and it
-    // is only put back by finishing the walk (`arrive`) or by a full `retask`.
-    // Anything that kills the walk without passing through either -- a stage
-    // dropping the body's legs, a hand picking it up, a rock knocking it flat --
-    // left the claim standing on a body that was no longer coming, and one
-    // stale claim wedges one hat for the rest of the run: the station reads
-    // spare minus claimed as nothing to hand out, for ever. So a claim is only
-    // honored while its walk is actually being walked; otherwise it is dropped
-    // here and the ordinary dispatch below re-issues the errand to whoever can
-    // run it -- usually the same body, one frame later.
+    // A wear claim likewise: `wanting` counts against the stand and is only
+    // put back by `arrive` or a full `retask`, so anything that kills the walk
+    // without either (a stage dropping the legs, a hand, a rock) leaves a
+    // stale claim that wedges one hat for the rest of the run. Dropped here,
+    // the dispatch below re-issues the errand a frame later.
     if (w.wanting && !(w.walking &&
         (w.leg === 'wear' || (w.legs || []).some(l => l.do === 'wear'))))
       w.wanting = null;
@@ -133,9 +74,8 @@ function holdClaims() {
   }
 }
 
-// Off to pick up somebody else's hat. The same shape as `errand`: a leg to the
-// thing and a leg back to the work, and `fetching` set so the station does not
-// send a second body after the same hat.
+// Off to pick up somebody else's hat, with `fetching` set so the station does
+// not send a second body after the same hat.
 function grabErrand(w, owner) {
   w.claimHat = owner;
   w.fetching = owner.hatOff.of;
@@ -144,23 +84,13 @@ function grabErrand(w, owner) {
   nextLeg(w);
 }
 
-// Put a body on the job whose kit it has just picked up off the ground.
-//
-// The body's `type` and the station's count move on the same line, and that is
-// the whole of the care this needs: `syncWorkers` REBUILDS the crew from the
-// counts, so a type changed without the count is a body stood straight back
-// down, and a count changed without the type stands somebody ELSE down instead.
-// Changed together, the rebuild finds everybody where it wants them and does
-// nothing at all. `rebalance` takes the body off the carriers afterwards,
-// because carrying is whoever is left over.
-// Exported for the hand-assignment drop (crew/assign.js), which is the same
-// move made by a hand instead of by a picked-up hat: one body onto one job,
-// type and count together. wave7b-assign.
+// Put a body on a job: `type` and the station's count on the same line,
+// because `syncWorkers` REBUILDS the crew from the counts, and either one
+// changed alone stands a body down. `rebalance` takes it off the carriers
+// afterwards. Also the hand-assignment drop's move (crew/assign.js).
 export function joinJob(w, job) {
   const type = TYPE_OF[job];
-  // Carrying is not a station you can join by putting something on -- it is what
-  // is left when you are on nothing -- and nothing reaches here asking to: a
-  // loose cart is only ever claimable by a hauler, who is on that job already.
+  // Carrying is what is left when you are on nothing, not a station to join.
   if (!type || job === JOB.HAUL || roomAt(job) < 1) return false;
   w.type = type;
   S[job] += 1;
@@ -178,34 +108,22 @@ export function grabHat(w) {
   if (!h || !h.rest) return false;              // somebody got there first
   const job = h.of;
   const joining = JOB_OF[w.type] !== job;
-  // The counts can move while somebody walks. If the station has no room left by
-  // the time it arrives, it does not join: the hat stays lying where it is, for
-  // its owner or for the next body along, and this one walks back to carrying
-  // with nothing on its head. Asked here as well as at the claim because a claim
-  // is a plan and this is the moment.
+  // The counts can move while somebody walks; a claim is a plan and this is
+  // the moment.
   if (joining && roomAt(job) < 1) return false;
   o.hatOff = null;
   w.trained = true;
   w.kitOf = job;
-  // The body it came off has lost the job with it -- see `dispossessed`. Marked
-  // rather than moved, because the owner may still be seeing stars, or still in
-  // your hand, and a body is not retasked out from under either of those.
+  // The body it came off has lost the job with it (`dispossessed`). Marked
+  // rather than moved: the owner may still be seeing stars or in your hand.
   if (joining) { o.robbed = true; joinJob(w, job); }
   retask(w, w.type);                            // and away to the work in it
   return true;
 }
 
-// Robbed: it came round to find its hat on somebody else's head.
-//
-// If the station has another one on the stand, nothing has been lost but the
-// walk, and the ordinary books send it over for that -- which is `retask`: to
-// the stand if there is anything on it, and to the work if there is not.
-//
-// If there is nothing for it, the swap stands. Somebody who was carrying is at
-// this station now, wearing this station's hat, so the station has a pair of
-// hands more than it had and the yard a carrier fewer -- and the body with
-// nothing on its head is the one that moves. It goes carrying. One shake, one
-// swap: the headcount does not move, and the hat took the job with it both ways.
+// Robbed: it came round to find its hat on somebody else's head. Another on
+// the stand and `retask` sends it over; otherwise the swap stands and the
+// bare body goes carrying. One shake, one swap: the headcount does not move.
 export function dispossessed(w) {
   const job = JOB_OF[w.type];
   if (w.trained || w.type === TYPE.HAUL || !S[job] || kitFree(job) > 0) {
@@ -220,39 +138,25 @@ export function dispossessed(w) {
   S.dirty = true;
 }
 
-// Three ways a hat can be somewhere it should not be, checked every pass.
-//
-// `retask` already walks a body's kit back to its stand when it is moved off a
-// job, and that is still the tidy path -- but it is a list of legs, and a list of
-// legs is abandoned the moment a rock falls, a mess lands, or somebody picks the
-// body up and shakes it. So the leaving rule cannot only live there. It lives
-// here as well, as an invariant this reasserts: whatever happened to the walk, a
-// station's kit ends up either on somebody standing at that station or on its
-// stand, and it gets there on foot.
-//
-// One errand at a time per station, so buying four helmets is four trips rather
-// than the whole gang filing down the hill at once.
+// The invariant, reasserted every pass: a station's kit ends up on somebody
+// standing at that station or on its stand, and gets there on foot. `retask`
+// walks kit back too, but its legs are abandoned by a rock, a mess or a hand.
+// One errand at a time per station, so buying four helmets is four trips.
 export function stepKit() {
   holdClaims();
   for (const job of KIT_JOBS) {
     if (S.workers.some(o => o.walking && o.fetching === job)) continue;   // one errand a station
 
-    // Kit that has walked off the job it belongs to. A body moved from the rock
-    // to carrying is still in the rock's helmet, and it takes it off the way it
-    // put it on: it walks to the stand and puts it down. This is what "the kit
-    // stays where the work is" means when the walk is watched rather than
-    // assumed, and it is checked before anything is handed out -- a helmet on
-    // the wrong head is not a helmet the rock can lend to anybody else.
+    // Kit that has walked off the job it belongs to goes back to the stand,
+    // checked before anything is handed out: a helmet on the wrong head is
+    // not one the station can lend.
     const stray = S.workers.find(o => o.trained && o.kitOf === job &&
                                       JOB_OF[o.type] !== job && canRun(o));
     if (stray) { errand(stray, job, 'drop'); continue; }
 
-    // A hat of this station's lying in the dirt, and the nearest body entitled
-    // to it goes and gets it. The owner is in that race on the same terms as
-    // everybody else once its stars have cleared -- and if the owner is the
-    // nearest, nothing is issued here at all: its own recovery walk (see the
-    // stages) is already that walk, and a second one is the same hat fetched
-    // twice by two bodies.
+    // A hat lying in the dirt goes to the nearest body entitled to it. If the
+    // owner is nearest nothing is issued: its own recovery walk is already
+    // that walk.
     const hat = looseHats(job)[0];
     if (hat) {
       const near = o => Math.abs(o.x - hat.hatOff.x);
@@ -272,11 +176,8 @@ export function stepKit() {
       const w = bareAt(job);
       if (w) { errand(w, job, 'wear'); continue; }
     }
-    // Or the other way about: a head wearing kit the station does not own any
-    // more. That cannot happen by playing -- hats are never sold -- but a
-    // machine taking a station's kit does it, and so does a save from another
-    // shape of the game or a dev hook. A body walking about in a helmet nobody
-    // paid for is a helmet counted twice.
+    // A head wearing kit the station no longer owns (a machine taking its kit,
+    // an old save, a dev hook) is a helmet counted twice.
     if (worn(job) > hats(job)) {
       const w = hattedIn(job);
       if (w) errand(w, job, 'drop');

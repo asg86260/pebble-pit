@@ -1,8 +1,6 @@
-// Who a body is: its name, its age and the record of what it has done -- none of
-// which feeds a rate, so it is bookkeeping, not behavior. Extracted verbatim
-// from crew.js; behavior unchanged. Owns NAMES/newName, newRecord, KEEPS,
-// keepOf, wearRecord, outOfYard, stepRecords and mainlyAt. It calls nothing back
-// in crew.js -- every name it uses comes from the modules imported below.
+// Who a body is: its name, its age and the record of what it has done. None of
+// it feeds a rate; it is so the four on the rock are four people rather than
+// the number four.
 
 import { S } from '../state.js';
 import { now } from '../clock.js';
@@ -11,20 +9,6 @@ import { inHouse } from '../scrubhouse.js';
 import { JOB_OF } from '../upgrades.js';
 
 // --- who they are --------------------------------------------------------------
-// A body used to be a slot: the crew was four counts, `syncWorkers` made people
-// out of them when it needed people, and coming back to a saved game made a
-// fresh set who happened to be standing in the same places. That was the point
-// for a long while -- a job is a count and a body is whichever body happens to
-// be doing it -- and it is what lets a hat belong to a station rather than to a
-// head.
-//
-// It is not the point any more. This game opens on two squares who are somebody,
-// and a crew of interchangeable slots underneath that story was the yard
-// disagreeing with its own first minute. So a body has a name, an age and a
-// record: how much rock it has taken, how much it has found, how much it has put
-// in the hole, and where it has spent its time. None of it does anything -- no
-// number here feeds a rate -- it is only so that the four on the rock are four
-// people rather than the number four.
 const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',
                'jax', 'kit', 'lom', 'mo', 'nell', 'ora', 'pip', 'rue', 'sid',
                'tam', 'vic', 'wren', 'yaz', 'zeb', 'bram', 'cleo', 'flo', 'gus',
@@ -53,100 +37,50 @@ export const newRecord = () => ({
   at: {}                           // and time spent on each job
 });
 
-// The fields that are *this body* rather than what it is doing this second.
-// Everything else is rebuilt by the factory for whatever job it is on.
-// ...and what is in its hands. A load is not "what it is doing this second": it
-// is dust the yard has already dug and lifted, and a save that dropped it threw
-// it away -- fifteen carters' worth of it, on every reload. What the player saw
-// was the yard standing about: everybody empty-handed at once, with a floor that
-// had already been swept, so there was nothing to fetch until the rock gave up
-// something new. That is the reported stall, and the dust was gone as well.
-// ...and what it was in the middle of. `goal` is the yard's own word for that
-// -- the steppers set it and read it every frame -- and without it every body
-// came back rebuilt as `goal: 'to'`, which means "walk to your station" even to
-// somebody already standing on the floor of the cut. A quarrier so restored
-// walked to the head of the ladder and climbed back down a hole it was already
-// in before it could swing again.
-//
-// Safe because a goal names a *state*, not a plan somebody has to remember: the
-// claims that go with one -- a column of dust, a patch of muck, a seat in the
-// cut -- are worked out fresh every frame and are deliberately not saved, and
-// every stepper already copes with finding them gone, because a body can lose a
-// claim mid-play.
-// ...and which job it owes its way back to, if it was borrowed for a build.
-//
-// A loan is a body and it is saved with the body. It used to be a list of job
-// names on its own (`S.lent`), saved while the flag on the body was not -- so a
-// yard reloaded mid-build came back owing a debt that no worker in it was
-// carrying, and the two could only ever drift further apart. See `rebalance` in
-// upgrades.js.
+// The fields that are *this body* and what it is in the middle of; everything
+// else is rebuilt by the factory. A load is dust already dug, and a save that
+// drops it throws it away. `goal` names a state, not a plan: the claims that
+// go with one are re-picked every frame and deliberately not saved, and a
+// body rebuilt as `goal: 'to'` on the floor of the cut climbs out and back
+// down. `lentFrom` is the loan, saved with the body it is on (`rebalance` in
+// upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
-                      // and the doses in a stirrer's arms, and which tonic
-                      // they are. A stirrer saved out on a round came back
-                      // with `goal: 'out'` and empty hands: the doses were
-                      // gone -- not dealt, not shelved -- and the body stood
-                      // in the yard with a goal nothing steps. Who it was
-                      // walking to is a body, not a fact, and is picked again
-                      // (the round already copes with a target that has gone).
+                      // the doses in a stirrer's arms, or a stirrer saved on a
+                      // round comes back with `goal: 'out'` and empty hands
                       'holding', 'carryTonic',
-                      // and the room a carter has booked in the hole and how
-                      // much of it it has taken (crew/hole.js). The hole's
-                      // book is the sum over the bodies, so a load that
-                      // forgot them came back with a full armful and no
-                      // booking behind it -- more carried than was spoken
-                      // for, into a hole that had counted on the number.
+                      // the room a carter booked in the hole and how much it
+                      // took: the hole's book is the sum over the bodies
                       'booked', 'took',
-                      // and whether it was in the air, and how it was moving:
-                      // a body saved mid-arc came back at its saved height and
-                      // was stood on the ground in one frame, two hundred
-                      // pixels in a sixtieth of a second (critics C14)
+                      // mid-arc, or a body comes back at its saved height and
+                      // is stood on the ground in one frame
                       'falling', 'vx', 'vy',
-                      // and whether it is behind a door. A body that had
-                      // knocked off came back standing at the doorstep.
+                      // behind a door, or it comes back on the doorstep
                       'inside',
-                      // and whether it is in the air on its own account -- a
-                      // wizard climbing to the ring, or coming down under a
-                      // brolly -- and the spot it took off from. A wizard saved
-                      // three hundred pixels up came back with `aloft` off,
-                      // fell to the ground and started the climb again, on
-                      // every refresh; a star was never worked.
+                      // in the air on its own account, or a wizard saved aloft
+                      // falls and starts the climb again on every refresh
                       'aloft', 'floating', 'brolly', 'spot',
-                      // and which craft it is aboard (balloon.js: "who is
-                      // aboard is a fact about the body", and it was not written),
-                      // and the berth a purifier was dealt -- the house, or a
-                      // craft -- which is what puts it back in the same basket
+                      // which craft it is aboard, and the berth a purifier was
+                      // dealt, which puts it back in the same basket
                       'craft', 'berth',
-                      // and the plot a farmhand is working along the row. It
-                      // came back on plot nought every time, so the far end of
-                      // a long row was never reached between refreshes.
+                      // the plot a farmhand is working, or the far end of a
+                      // long row is never reached between refreshes
                       'plot',
-                      // and the commute it is on: where it is walking to and
-                      // why, and the legs still to go (crew/commute.js). Dropped,
-                      // a body retasked mid-walk finished the walk at its
-                      // station's amble, a quarter of the commute's pace, and
-                      // one sent for a hat came back without one.
+                      // the commute it is on (crew/commute.js), or a body
+                      // sent for a hat comes back without one
                       'walking', 'walkTo', 'leg', 'legs', 'wanting', 'fetching', 'fromHome',
-                      // and the dance it is in the middle of -- its mark, its
-                      // move and where its feet are -- so a refresh mid-hop
-                      // lands the hop rather than dropping the body from it.
-                      // (`moveAt` is a moment, below.)
+                      // the dance it is in the middle of, so a refresh mid-hop
+                      // lands the hop (`moveAt` is a moment, below)
                       'jigAt', 'jigDir', 'jigRate', 'jigBeat', 'jigDown', 'move', 'moveFrom', 'moveBeats', 'foot', 'footAt',
-                      // and the mess it is on, and where it planted its shovel:
-                      // a shoveller re-picked its patch on every refresh and
-                      // walked, and a janitor against a fouling crew never won.
+                      // the mess it is on and where it planted its shovel, or
+                      // a janitor against a fouling crew never wins
                       'muckAt', 'shovelAt'];
 
-// Moments on a body's clock -- when its next break comes round, when it has
-// stood about long enough to knock off -- kept the way doses are (below):
-// as how far off they are, because the clock starts again with the page. A
-// refresh used to start every one of them over, so a yard refreshed now and
-// then never took a break and never went home. The name is the field's, the
-// value written is `field - now()`, and the way back in is the reverse.
-// ...and the clocks of the work itself: the next swing, stoop, cut and
-// stroke. Without them every refresh handed every body a free swing -- five
-// quarriers dug a cut a sixth faster under a refresh every five seconds.
+// Moments on a body's clock, kept as how far off they are because the clock
+// starts again with the page: written as `field - now()`, read back the
+// reverse. The work's own clocks are in here too, or every refresh hands
+// every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
                  'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt'];
 const momentsOf = w => {
@@ -155,16 +89,9 @@ const momentsOf = w => {
   return out;
 };
 
-// Live doses are kept too, and they are the one thing on a body that cannot be
-// written down as they stand. A dose's `until` is a moment on the clock, and the
-// clock starts again when the page does -- so a dose saved as "until 94,000"
-// comes back either already spent or good for another minute and a half,
-// depending on how long you were gone. What is true either way is how much of it
-// is *left*, so that is what is written, and the moment it runs out is worked
-// out again on the way back in.
-//
-// It is out here rather than in KEEPS because KEEPS is a straight copy, and this
-// is the one field that has to be turned round on both journeys.
+// Live doses, written as how much is *left* rather than `until`, for the same
+// reason as the moments. Out here rather than in KEEPS because KEEPS is a
+// straight copy and this has to be turned round on both journeys.
 const doseKeep = w => (w.doses || [])
   .filter(d => d.until > now())
   .map(d => ({ tonic: d.tonic, left: Math.round(d.until - now()) }));
@@ -183,18 +110,13 @@ export function keepOf(w) {
 export function wearRecord(w, from) {
   const hasGoal = 'goal' in w;
   for (const k of KEEPS) if (from[k] != null) w[k] = from[k];
-  // A goal is only worn by a body whose job has one. The factory made `w` a
-  // moment ago, so what it carries is the job's own starting goal -- `to` for
-  // the trades that walk to a post, nothing for a rockhand -- and a saved word
-  // the job has no stepper for would ride along unread for ever. Saves written
-  // under the old shed claim hold rockhands marked `to` that no shack work
-  // could claim; this is what puts them right on the way in.
+  // A goal is only worn by a body whose job has one: the factory's `w` carries
+  // the job's own starting goal, and a saved word the job has no stepper for
+  // would ride along unread for ever.
   if (!hasGoal) delete w.goal;
-  // A save written before tonics stacked has one `dose` rather than a list of
-  // them; it is read as a list of one. Either way a dose with no `left` on it is
-  // older still -- it was written as a moment on a clock that has since started
-  // again -- and it is not worth guessing what that moment meant, so a body
-  // carrying one comes back sober.
+  // An old save has one `dose` rather than a list; older still, a dose with no
+  // `left` was written as a moment on a clock since restarted, and the body
+  // comes back sober.
   const had = from.doses || (from.dose ? [from.dose] : []);
   const on = had.filter(d => d && d.left > 0)
                 .map(d => ({ tonic: d.tonic, until: now() + d.left }));
@@ -205,19 +127,9 @@ export function wearRecord(w, from) {
   return w;
 }
 
-// Not in the yard: at home behind its own front door, through the lab's or the
-// scrubbing house's, or up in the balloon. One list, because two things ask it
-// -- the celebration (a body that is not here cannot dance in it) and the loo
-// clock below -- and a second copy of it is a second copy to keep in step.
-//
-// ...and off the ground on the cursor, which is the same fact by a different
-// road. A body you have picked up is not at work: it is in the air, then it is
-// falling, then it is standing where it landed seeing stars, and it does not
-// mine, carry or shovel through any of it. The loo clock is an hour of *work*
-// (see below), and it went on running through all three -- so carrying somebody
-// across the yard and putting them down made them overdue on the spot, which is
-// exactly the bug that was just fixed for a body asleep behind its own door,
-// arriving by a road that fix did not cover.
+// Not in the yard: behind a door, up in the balloon, or on the cursor and
+// what follows it (in the air, falling, seeing stars). One list, asked by the
+// celebration and by the loo clock below.
 export const outOfYard = w =>
   !!(w.inside || w.aloft || inHouse(w) ||
      w.lifted || w.falling || w.dizzyUntil);
@@ -227,17 +139,10 @@ export function stepRecords(dt) {
   for (const w of S.workers) {
     if (w.lived == null) Object.assign(w, newRecord());
     w.lived += dt;
-    // The loo clock is an hour of WORK, not an hour of the world.
-    //
-    // It is a deadline -- a moment on the clock -- and it went on sliding into
-    // the past while a body was asleep at home, so it was overdue the instant
-    // the body stepped back out. A shift that knocked off together came back
-    // together and every one of them went on the doorstep, which is what got
-    // reported: they all poop when they come out of the house.
-    //
-    // Held rather than re-armed: what a body has already waited still counts,
-    // so somebody who was nearly due when it went in is nearly due when it
-    // comes out -- it simply does not owe for the hours it spent indoors.
+    // The loo clock is an hour of WORK, not of the world: a deadline that
+    // slides into the past while a body is asleep at home has the whole shift
+    // go on the doorstep on the way out. Held rather than re-armed, so what
+    // it has already waited still counts.
     if (w.looAt && outOfYard(w)) w.looAt += dt;
     const job = JOB_OF[w.type];
     w.at[job] = (w.at[job] || 0) + dt;
