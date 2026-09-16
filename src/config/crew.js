@@ -9,6 +9,11 @@ import { P } from './yard.js';
 // a share of a commute an idling janitor stood dead still and then scooted a
 // few cells in a blink, and raising the crew's boots made loitering frantic.
 export const IDLE_PACE = 0.28;
+// Frames from a standstill to an amble's full pace, and -- the same number the
+// other way -- how long it takes to stop. A body that went from stood still to
+// its top speed in one frame and stopped as dead read as a sprite being slid
+// about; legs take a step or two to get going. See `amble` in crew/idle.js.
+export const AMBLE_RAMP = 18;
 export const JANITOR_PROP = 7000;
 export let LOO_EVERY = 600000;   // how often a body is about due, on average
 export const LOO_SPREAD = 0.55;  // and how much that wanders, either side
@@ -84,10 +89,6 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HOUSE_COST0 = 45;          // the first house
 export const HOUSE_RATE = 1.30;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
-// An experiment, off: a carter's target is the column whose grain has lain
-// longest, anywhere in the yard, rather than a find, the fullest heap or the
-// nearest dust. Compared with `tools/node/carters.mjs --fifo`.
-export let HAUL_FIFO = 0;
 
 // --- tipping a load into the hole ---------------------------------------------
 // The throw is a hand's throw: the peak varies grain by grain and the load does
@@ -108,8 +109,6 @@ export const CREW_KNOBS = [
     get: () => SPOIL_POP, set: v => { SPOIL_POP = v; } },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1,
     get: () => SPOIL_SIDE, set: v => { SPOIL_SIDE = v; } },
-  { key: 'HAUL_FIFO', label: 'carry oldest first', min: 0, max: 1, step: 1,
-    get: () => HAUL_FIFO, set: v => { HAUL_FIFO = v; } },
   // The piles are fields of one object rather than bindings of their own, so
   // their pairs read and write a field.
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50,

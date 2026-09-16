@@ -11,8 +11,25 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
-- The haulers split themselves between two backed-up heaps instead of all walking to the same one while the heap beside the hole fills up unattended (test/hauler-spread.test.mjs).
+- A body with nothing to do gets going and slows down when it strolls, instead of going from stood still to full pace in one frame and stopping as dead (test/amble.test.mjs).
+- The haulers keep working while the next rock comes down: a body that has stepped out of the footprint gets on with what is on its own side of it, and only one with a load bound for the far side waits at the line (test/haulers-through-the-fall.test.mjs).
+
+## v0.2.4 — 2026-09-15
+
+- The belt runs on its own from the moment it is bought: no hauler is posted at it, so a hauler arriving at the lip with a load tips it instead of standing there for the rest of the game (test/belt-lip.test.mjs).
+
+## v0.2.3 — 2026-09-15
+
+**New this release**
+
+- The haulers spread themselves over the whole yard: each sets off for the resource farthest from where the others are headed, wherever on the ground it lies -- out past the tower included -- fills its hands with whatever is nearest, and comes home taking what it walks over (test/hauler-spread.test.mjs, test/far-ground.test.mjs, test/jobs.test.mjs).
+- The shield on offer stands out on the bench: a heavy frame with "the sky" on a plate over it, the name set like a sign (`node tools/look.mjs shieldrow`).
+
+- A hauler stood at a few grains takes all of them, instead of one and leaving the rest for somebody a yard away who had set off for them (test/cluster-trip.test.mjs).
+- A hauler with room in hand takes whatever lies nearest, including what a heap has shed past the end of its own pile, instead of stepping over it on the way home (test/heap-fringe.test.mjs).
+- A wizard at the top of its breath no longer drops its pouring for a frame every few frames, so two wizards summon twice as fast as one (test/sky-work.test.mjs).
 - The hauler standing at the belt's post on the lip of the hole is minding the belt, and its card says so instead of "looking for pebbles" (test/pit-edge-stuck.test.mjs).
+- The diggers walk to the last few cells of a rock at the pace they cross the yard, instead of ambling the width of the hill while the next rock waits (test/rock-tail.test.mjs).
 
 ## v0.2.2 — 2026-09-15
 

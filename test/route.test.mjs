@@ -129,7 +129,10 @@ group('the hill is a workplace, not a road', async () => {
   // the same side of the rock, and the check below has nothing to look at.
   const left = state().rockLeftX, right = left + state().gw * 6;
   window.__muckSet(c => (c * 6 < left - 60 && c % 4 === 0 ? 3 : 0));
-  run(4);
+  // Watched from the frame the mess is laid. A four-second run here, to let
+  // the haulers pick the errand up, was long enough for every one of them to
+  // pick it up AND cross the footprint before anybody was looking -- which
+  // read as no hauler ever crossing, the first time the crew's timing shifted.
 
   const gy = groundY();
   // What counts as being up on the hill rather than in front of it. A few
@@ -147,7 +150,7 @@ group('the hill is a workplace, not a road', async () => {
   // crest as a shortcut or it does not.
   const climbed = new Set();       // who was ever up on the hill
   let crossed = 0, ramped = 0, worstFlat = 0;
-  for (let i = 0; i < 900; i++) {
+  for (let i = 0; i < 1140; i++) {
     run(1 / 60);
     for (const b of detail()) {
       const mid = b.x + 9, feet = b.y + 18;

@@ -1,12 +1,12 @@
-// Where the crew go when two heaps are backing up at once. Empty hands pick
-// the heap that most needs the next pair of them (`fullestHeap` in
-// crew/hauler.js), and that is not the same answer for every body: the hands
-// already on their way count against a heap, and so does the walk. Without
-// either, six bodies read the same fullest heap, set off for it as a convoy,
-// and the heap beside the hole climbed past its limit with nobody on it while
-// they walked two thousand pixels for eight grains each. The carters bench
-// (`tools/node/carters.mjs`, quarry-jam) measures the same yard row by row;
-// this is the one fact out of it that must stay true.
+// Where the crew go when two heaps are backing up at once: over both of
+// them. Each new trip goes to the grain farthest from where the rest of the
+// crew are headed (`firstPick` in crew/hauler.js), so the crew fan out rather than read
+// one answer and set off for it as a convoy -- which is what they did when
+// the pick was the fullest heap: six bodies walked two thousand pixels for
+// eight grains each while the heap beside the hole climbed past its limit
+// with nobody on it. The carters bench (`tools/node/carters.mjs`,
+// quarry-jam) measures the same yard row by row; this is the one fact out
+// of it that must stay true.
 
 import { group, ok, state, run, openSites, P } from './helpers.mjs';
 import { PILE_LIMIT } from '../src/config.js';

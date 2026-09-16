@@ -51,6 +51,11 @@ export const DUCK_PACE = 6;      // pixels a frame out from under a falling rock
 // made the frame the footprint is clear, and this is the backstop for a body
 // that cannot get out, kept short because the gap between rocks is dead air.
 export const ROCK_GAP_MS = 1000;
+// How fast a rockhand shuffles along the layer it is working, between swings.
+// Not a walk: a hand that is off the layer walks back to it at COMMUTE_PACE.
+// A faster shuffle has the whole gang mosey the width of the hill to the last
+// few cells, a wait that reads as the rock being finished.
+export const ROCKHAND_WALK = 0.5;   // pixels a frame along the row
 // A stopped crew is not a frozen crew. When the pile is full the rock hands
 // stand down and shift about on the spot, slowly and nothing like the dance.
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down rockhand sways through

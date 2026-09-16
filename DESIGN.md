@@ -1016,34 +1016,40 @@ answer for all of them — so a single grain behind the crew turned the whole li
 it round again the moment the first of them reached it. Claiming is also what stops six workers
 queueing at one column while the rest of the yard sits there.
 
-**The fullest heap first, measured against its own limit.** A find is worth crossing the yard for
-and one body per ground goes for one; everybody else, while any heap is over three quarters, goes
-to the heap that is nearest to stopping its station — not to the nearest dust. The nearest dust to a
-body coming off the hole is always the rock's heap, so picked by distance the whole crew stood on it
-while the quarry's, a quarter the size and full to the line, kept the quarry stopped behind them.
-Fullness is a ratio because the limits differ by four to one: counted in grains the rock's heap
-wins every time too. As the fullest comes down the next fullest takes over, so the crew settle on to
-whichever heap needs them without anybody being told which one that is.
+**Farthest from the rest of the crew.** Each new trip, decided with empty hands, goes to the grain
+on the ground farthest from where the other carters are or are headed — their claims, or where they
+stand — ties to the column whose top grain has lain longest. The ground is the whole floor, from
+the world's left edge to the lip; there is no pile in the rule and no ground the crew do not fetch
+from. Then the body takes what is nearest until its hands are full and walks home taking what it
+walks over. That is the whole rule.
 
-**Less the hands already on their way, and per pixel of the walk.** The fullest heap is the same
-answer for every body reading it at once, so six read it, six set off for it as a convoy, and six
-came back with eight grains each — while the heap beside the hole, half full when they left, climbed
-past its limit with nobody on it (the rock stopped 46% of the run on the carters bench, quarry-jam).
-So a heap is as full as it will be once the bodies already headed there have taken their armfuls,
-and the fullness is divided by the round trip from here to the heap and the heap to the hole. That
-is not "nearest wins", which is the rule the paragraph above threw out: the discount is what keeps it
-honest. Bodies go to the near heap only until enough armfuls are coming to bring it under the line,
-and from then on the far heap is the better score and the rest walk there. One or two hold the rock
-while the others walk to the quarry, and the rock is stopped 0% of the run instead of 46%, banking
-half again as much. Both terms are read off the yard — the armful is the body's own `load`, the walk
-is measured in pixels — so there is no number to tune (`test/hauler-spread.test.mjs`).
+It was chosen for how it reads, not for what it banks (2026-09-15). Every rule before it was about
+piles — the nearest dust, then the fullest heap measured against its own limit, then that less the
+armfuls already on their way and per pixel of the walk, then a stopped station first, then one
+body kept for the open ground, then the ground with the fewest hands headed for it — and each
+fixed the last one's failure while leaving the yard reading the same way: the crew stood on one
+heap while the rest of the ground waited, and what lay off every strip, or out past the first one,
+was nobody's. Oldest-first alone was tried on the way and drains one heap at a time. Farthest from
+the crew is what "spread out" means said as a rule: the second body does not go where the first is
+going, the sixth goes where the other five are not, and a grain thrown out past the tower is
+exactly the place nobody else is. On the bench every strip and the open ground gets trips in every
+row, the quarry and the plots are cleared at the rate they fill, finds wait five seconds, every
+load is full (`tools/node/carters.mjs`, the trips-a-ground column; each resource's own rate is the
+measure and the total is not). What it costs is the heap beside the hole: a rock fed faster than a
+quarter of the crew can carry stops, and that is the rock's own ladder to buy hands for, not this
+rule's to rob the other piles for (`test/crew.test.mjs`, "a jammed heap and the finds are both
+carried in", reports the share of the run the rock stood stopped).
 
-**That order decides where a trip starts; the body works that heap, and the rest of the trip is a
-sweep home.** A target on a strip is worked: when the column is bare the next is the nearest on the
-same strip, a shuffle along the heap, until the hands are full or the strip is. Sent for one column
-it took that column and filled up from the rock's heap on the way back — the rock's strip lies
-between the quarry's and the hole — so the quarry's heap, the one the fullest-heap rule had sent it
-to, lost a column a trip and sat at full for a whole run (`tools/node/carters.mjs`, quarry-jam).
+**The target decides where a trip starts; after it the body takes whatever is nearest, and the
+rest of the trip is a sweep home.** With something in hand it keeps taking the nearest thing to
+where it stands — along the heap, on to the grains the heap has shed past the end of its strip,
+across to the next heap — until its hands are full, so long as the next thing is nearer than the
+walk home; a grain further off than the lip is another trip's. It was held to the strip it was
+sent to, and a heap's own spill a cell past the strip's edge was on no ground it was working: a
+body with room in hand stepped over it every trip and it lay there for good
+(`test/heap-fringe.test.mjs`). Before that it was sent for one column, took that column and filled
+up from the rock's heap on the way back — the rock's strip lies between the quarry's and the hole
+— so the far heap lost a column a trip.
 Then it goes for nothing else: it walks back toward the lip and takes everything it walks over until
 its hands are full, and it never turns round. What is behind it is the next trip's.
 A grain that lands ahead of it on the way is taken — claimed or not, unless the claimant is nearer
@@ -2705,6 +2711,16 @@ that nothing could ever answer, so a belt you had paid for -- in all three
 grounds, having handed over the carters' carts for it -- stood there and never
 ran. It was made leverless, and nothing was lost, and that should have been the
 whole answer three drawings earlier than it was.
+
+**And tenderless, for the same reason (2026-09-15).** It kept every other machine's rule --
+it ran only while a body stood at its post -- and its post is the lip, which is where every hauler
+comes to tip. So the body the belt took as its tender was one arriving to tip, and the tender stage
+owned it from then on: a carter with twenty-two in hand stood at the edge of the hole for the rest
+of the run doing nothing, reported three times over as "a stuck worker at the edge of the pit" and
+patched twice before the premise was questioned. A conveyor is not worked; it is switched on. The
+belt is `unmanned` (`MACHINES`, machines.js): it runs from the moment it is bought, posts nobody,
+takes no place from the haulers' roster, and the hum counts it while it is bought
+(`test/belt-lip.test.mjs`, the player's save).
 
 **What the machine is really worth, honestly.** A machine is a flat rate and a
 gang is not -- but the cut can never hold more than its five benches and the farm

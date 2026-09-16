@@ -452,9 +452,9 @@ group('dust lies where it is dropped, not where a pile is', async () => {
 // camera goes and the camera goes to the left edge of the world, so that ground
 // is reachable; what was wrong was the walking, and the walking is what stops.
 // A grain let go out there lands where it was let go of, lies there as the same
-// thin scatter bare ground takes anywhere, and waits for you rather than for
-// the crew. The crew's own bounds have not moved -- they still stop at
-// `yardLeft` -- so nothing books a column it cannot stand on.
+// thin scatter bare ground takes anywhere -- and the crew walk out and fetch
+// it like anything else on the ground: there is no ground they do not fetch
+// from (crew/hauler.js, `firstPick`; test/far-ground.test.mjs).
 group('dust let go off the end of the yard lies where it fell', async () => {
   window.__crew(0, 0);
   run(1);
@@ -484,14 +484,16 @@ group('dust let go off the end of the yard lies where it fell', async () => {
   const offSpan = window.__dustSpan();
   const heaped = Object.values(after.pileCount).reduce((a, b) => a + b, 0);
 
-  // Nobody may book it, either. A hauler held at `yardLeft` that claimed a
-  // column two hundred out would set off, stop at the end of its own span, and
-  // stand there with a claim it can never work off.
+  // And the crew go out for it. A body walks anywhere on the floor, so a
+  // column two hundred out is a column it can stand on and work off.
   window.__crew(0, 3);
   quickCrew();
-  run(6);
-  const claims = state().workerPos.filter(w => w[0] === 'h')
-    .map(w => +w.split(':')[1].split(',')[0]);
+  // the farthest out any of them gets in the time
+  let farthest = Infinity;
+  for (let i = 0; i < 6 * 60; i++) {
+    run(1 / 60);
+    for (const w of state().workerPos) if (w[0] === 'h') farthest = Math.min(farthest, +w.split(':')[1].split(',')[0]);
+  }
   const worked = state();
   window.__crew(0, 0);
   window.__clearFloor();
@@ -525,10 +527,10 @@ group('dust let go off the end of the yard lies where it fell', async () => {
        `dropped at ${off}, lying ${offSpan.lo}..${offSpan.hi}`),
     ok(heaped === 0, 'no heap two hundred columns away gains a grain by it',
        JSON.stringify(after.pileCount)),
-    ok(claims.every(x => x >= left - WORKER), 'and no body walks out to fetch it',
-       `haulers at ${claims.join(', ')}, the yard starts ${Math.round(left)}`),
-    ok(worked.floor >= 25, 'the drop is still lying there when they have had their chance',
-       `${worked.floor} on the floor`),
+    ok(farthest < left - WORKER, 'and a body walks out past the first heap to fetch it',
+       `out to ${Math.round(farthest)}, the heaps start ${Math.round(left)}`),
+    ok(worked.floor < after.floor, 'and the drop is being carried in',
+       `${after.floor} -> ${worked.floor} on the floor`),
     ok(shedOverYard > 0, 'a bird over the yard still sheds when it is startled',
        `${shedOverYard} grains`),
     ok(shedOffYard > 0, 'and one over the far end sheds too, now that ground holds dust',

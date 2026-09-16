@@ -1,6 +1,6 @@
 // How well the carters keep up, scenario by scenario.
 //
-//   node tools/node/carters.mjs [seconds] [--crew N] [--hands L] [--pace L] [--only name,name] [--fifo]
+//   node tools/node/carters.mjs [seconds] [--crew N] [--hands L] [--pace L] [--only name,name]
 //
 // A driven yard: nothing mines, nothing digs, nothing grows. Each scenario
 // feeds the strips itself -- dust onto the rock's, the quarry's and the farm's
@@ -9,7 +9,14 @@
 // it for a fixed stretch of game time. What is printed is one row a scenario:
 // what went down, what was banked, how much of the time each heap sat full
 // (which is what stops the station behind it), how long a find lay before
-// somebody came for it, and what the crew were doing with their time.
+// somebody came for it, how the trips were shared out over the grounds, and
+// what the crew were doing with their time.
+//
+// Read the per-resource columns, not the total. The rule is chosen for how
+// it reads from the yard -- bodies spread over every pile, every load full --
+// and each pile's own rate is the measure of that; the total banked rewards
+// a crew stood on the one heap beside the hole (DESIGN.md, "Farthest from
+// the rest of the crew").
 //
 // The point is comparing rules, not passing: run it on main and on a branch
 // and read the two tables side by side. The sim is seeded, so the same
@@ -28,7 +35,6 @@ const crew = +flag('--crew', 4);
 const hands = +flag('--hands', 4);
 const pace = +flag('--pace', 4);
 const only = flag('--only', null)?.split(',');
-const fifo = args.includes('--fifo');
 
 // Feed rates are grains a second onto a strip and finds a minute onto a
 // ground; `start` is how full each heap is when the crew arrive, as a share of
@@ -48,6 +54,11 @@ const { S } = yard;
 const state = () => yard.state();
 
 // One scenario, from a fresh seeded game, and its row of numbers.
+// which ground a claimed column is on: a strip's key, or the open ground
+const groundKey = c => {
+  const x = yard.floor.x + c * P;
+  return S.piles.find(p => x + P > p.from && x < p.to)?.key || 'yard';
+};
 function measure(sc) {
   window.__seed(20250913);
   window.__reset();
@@ -55,7 +66,6 @@ function measure(sc) {
   window.__meteor();                                 // the star stands, so sparks have a ground
   window.__crew(0, crew, 0, 0);
   window.__levels({ haulCarryLevel: hands, haulPaceLevel: pace });
-  window.__tune('HAUL_FIFO', fifo ? 1 : 0);
   window.__clearFloor();
   window.__fast(0.5);
 
@@ -79,6 +89,9 @@ function measure(sc) {
   const full = { rock: 0, quarry: 0, farm: 0 };
   let lying = 0, idle = 0, bodies = 0, trips = 0, load = 0;
   const carry = new Map();
+  // trips a ground: a body's claim landing on a ground it was not claiming on
+  const went = {};
+  const wasOn = new Map();
 
   const frames = seconds * 60;
   for (let i = 0; i < frames; i++) {
@@ -114,6 +127,9 @@ function measure(sc) {
       if (w.type !== 'hauler') return;
       const was = carry.get(k) || 0;
       if (was > 0 && !w.carry) { trips++; load += was; }
+      const on = w.claim >= 0 ? groundKey(w.claim) : null;
+      if (on && on !== wasOn.get(k)) went[on] = (went[on] || 0) + 1;
+      wasOn.set(k, on);
       carry.set(k, w.carry || 0);
     });
   }
@@ -137,6 +153,7 @@ function measure(sc) {
     'find wait s': isFinite(wait) ? wait.toFixed(0) : '-',
     'left': after.finds.length,
     'trips': trips,
+    'trips/ground': Object.entries(went).map(([g, n]) => `${g[0]}${n}`).join(' '),
     'load': trips ? (load / trips).toFixed(1) : '-',
     'idle': pct(idle / Math.max(1, bodies / frames))
   };
@@ -149,6 +166,6 @@ for (const sc of SCENARIOS) {
   rows.push(measure(sc));
   process.stderr.write(`${sc.name}: ${((performance.now() - t0) / 1000).toFixed(0)}s\n`);
 }
-console.log(`carters: ${crew} bodies, hands L${hands}, pace L${pace}, ${seconds}s of game each${fifo ? ', oldest first' : ''}`);
+console.log(`carters: ${crew} bodies, hands L${hands}, pace L${pace}, ${seconds}s of game each`);
 console.table(rows);
 process.exit(0);

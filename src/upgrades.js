@@ -21,7 +21,7 @@ import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY,
          APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
+import { machineFor, buyMachine, canBuy, MACHINES, UNMANNED, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
          HOUSE_COST0, HOUSE_RATE,
@@ -269,8 +269,9 @@ const capOfBare = job =>
 // Where a body may be put: the floor plan, or one tender while a machine has
 // the station. Reads the lever, not whether anybody is standing there -- a
 // cap derived from "is it manned" would flip every time the tender walked
-// off to shovel and `rebalance` would thrash the gang for ever.
-export const capOf = job => machineFor(job) ? 1 : capOfBare(job);
+// off to shovel and `rebalance` would thrash the gang for ever. A machine
+// that runs itself holds nobody and takes no place from the station.
+export const capOf = job => { const m = machineFor(job); return m && !UNMANNED.has(JOB_MACHINE[job]) ? 1 : capOfBare(job); };
 
 export const roomAt = job => capOf(job) - S[job];
 

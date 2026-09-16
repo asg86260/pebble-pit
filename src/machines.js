@@ -27,8 +27,14 @@ export const MACHINES = [
   // the machine or not at all, so the helmets are spent buying it
   // (`buyMachine`). Carrying goes on everywhere the belt does not reach, so
   // the carts stay bought and the kit row goes on selling them (`kitDisplaced`).
-  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false }
+  // `unmanned`: it runs from purchase with nobody posted at it. Its post is the
+  // lip, where every hauler comes to tip, so a tender taken there is a laden
+  // body that stands holding its load for the rest of the run
+  // (test/fixtures/belt-lip.json).
+  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true }
 ];
+// The machines that run themselves, by key.
+export const UNMANNED = new Set(MACHINES.filter(m => m.unmanned).map(m => m.key));
 
 // Derived, not written out again.
 export const JOB_MACHINE = Object.fromEntries(MACHINES.map(m => [m.job, m.key]));

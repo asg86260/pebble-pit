@@ -62,9 +62,12 @@ group('a grain a stride away is taken before the walk to the hole', async () => 
 
 group('what lies behind the target is left for the next trip', async () => {
   oneHauler();
-  // the target, one grain a stride further out, and one a stride nearer home
+  // the target, one grain a stride further out, and one a stride nearer home.
+  // On the open ground the target is the oldest grain, so the target goes
+  // down first and settles before the others land.
   const at = state().pitX - 1000;
   window.__pile(at, 1);
+  run(1);
   window.__pile(at - P * 8, 1);
   window.__pile(at + P * 8, 1);
   window.__place('hauler', at);
@@ -115,9 +118,16 @@ group('a fast body steps on to the next grain, never over it', async () => {
   oneHauler();
   window.__levels({ haulCarryLevel: LADDER });
   const s0 = state();
+  // A line of grains on the open ground short of the rock's strip: on a strip
+  // the target would be the column nearest the body, and the trip being
+  // watched starts at the far end. The far one goes down first and settles,
+  // so it is the oldest and the target.
   const spots = [];
-  for (let x = s0.pitX - 1000; x < s0.pitX - 100; x += P * 7) spots.push(x);
-  for (const x of spots) window.__pile(x, 1);
+  const rock = s0.piles.find(p => p.key === 'rock');
+  for (let x = rock.from - 700; x < rock.from - P * 4; x += P * 7) spots.push(x);
+  window.__pile(spots[0], 1);
+  run(1);
+  for (const x of spots.slice(1)) window.__pile(x, 1);
   run(1);                                    // and let them settle: a grain still rolling is not on the ground
   // The stride is widened only now: a body this fast sweeps a hand's worth
   // off the line during the settle itself, and the trip being watched is the
@@ -147,7 +157,6 @@ group('a fast body steps on to the next grain, never over it', async () => {
 // sees its column bare and picks again.
 group('the body on the spot takes a grain another has set off for', async () => {
   window.__reset();
-  window.__crew(0, 2);
   quickCrew();
   window.__clearFloor();
   run(0.2);
@@ -156,6 +165,9 @@ group('the body on the spot takes a grain another has set off for', async () => 
   window.__pile(far, 1);
   window.__pile(next, 1);
   run(1);
+  // hired only now: a crew this quick would have both grains in hand before
+  // they had settled
+  window.__crew(0, 2);
   // where the second grain actually came to rest -- a grain settles a column
   // or so from where it was dropped
   let c = -1;
@@ -242,17 +254,23 @@ group('a body sent to a heap fills its hands there before sweeping home', async 
   }
   window.__pile(r.from + P * 4, 40);
   run(1);
+  // A heap this full sheds a column onto the bare ground beside its strip,
+  // and that fringe is the quarry's too -- it is the first thing a body goes
+  // for (stray-sweep.test.mjs) and the heap is worked on the way home. So
+  // the quarry's loss is everything that left the floor less the rock's.
+  const n0 = floor.n;
   const q0 = state().pileCount.quarry, r0 = state().pileCount.rock;
   const cap = state().haulCap;
   window.__crew(0, 1);
   window.__place('hauler', state().pitX - 60);
   const t = firstToss(90);
-  const q1 = state().pileCount.quarry, r1 = state().pileCount.rock;
+  const r1 = state().pileCount.rock;
+  const fromQuarry = (n0 - t.left) - (r0 - r1);
   window.__crew(0, 0);
   return [
     ok(state().pileFull.quarry || q0 > 0, 'the quarry heap is the one over the line', `${q0}`),
     ok(t.tossed && t.took === cap, 'a full load is tipped', `${t.took} of ${cap}`),
-    ok(q0 - q1 === cap, "all of it off the quarry's heap", `${q0 - q1} from the quarry`),
+    ok(fromQuarry === cap, "all of it off the quarry's heap", `${fromQuarry} from the quarry`),
     ok(r0 - r1 === 0, "and none off the rock's on the way home", `${r0 - r1} from the rock`)
   ];
 });

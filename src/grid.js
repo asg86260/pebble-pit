@@ -106,7 +106,9 @@ export const resetSettleWork = () => { work = 0; };
 //
 // `age` is when each cell was last written, in frames, for a grid that keeps
 // one (`resizeGrid`). A grain that rolls is re-stamped where it lands, so the
-// age is how long it has lain *there*. Read by the carters' `HAUL_FIFO` pick.
+// age is how long it has lain *there*. Read by the carters' pick: the ground
+// whose oldest grain has lain longest breaks a tie (`firstPick` in
+// crew/hauler.js).
 let clock = 0;
 export const tickGrid = () => { clock++; };
 export const ageAt = (b, c, r) => b.age ? b.age[r * b.cols + c] : 0;

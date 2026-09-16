@@ -56,6 +56,9 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // mid-arc, or a body comes back at its saved height and
                       // is stood on the ground in one frame
                       'falling', 'vx', 'vy',
+                      // how fast it is strolling (`amble`): dropped, a body
+                      // back from a refresh mid-stroll sets off from a standstill
+                      'pace',
                       // behind a door, or it comes back on the doorstep
                       'inside',
                       // in the air on its own account, or a wizard saved aloft

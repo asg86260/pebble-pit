@@ -726,6 +726,8 @@ export const SCENES = {
   // --- the shields ------------------------------------------------------------
   // The `!` scenes run the crew's five-second dance through, so the shot is
   // the rock meeting the shield rather than the dance before it.
+  shieldrow: { about: 'the shields', say: "the bench's board with a shield on offer", page: true,
+    run: () => { shieldYard(); window.__board('bench'); } },
   ...Object.fromEntries(SHIELD_ORDER.flatMap(k => [
     [k, { about: 'the shields', say: `the ${k}, built`, run: () => shieldBuilt(k) }],
     // Built through once so the yard is right, then finished a second time

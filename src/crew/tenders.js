@@ -3,7 +3,7 @@
 
 import { frames, now } from '../clock.js';
 import { CLIMB_PACE, MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
-import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
+import { JOB_MACHINE, MACHINES, UNMANNED, machine, specOf } from '../machines.js';
 import { sfx } from '../audio.js';
 import { quarryFace } from '../quarry.js';
 import { inWorking, keepTo, stepRoute, ways } from '../route.js';
@@ -29,6 +29,9 @@ export function stepTender(w, now) {
   if (!key) return false;
   const r = machine(key);
   if (!r || !r.bought) return false;
+  // A machine that runs itself posts nobody: the body goes about the yard's
+  // ordinary work exactly as if the machine were not its trade's.
+  if (UNMANNED.has(key)) return false;
   const spec = specOf(key);
   if (!spec) return false;
 
@@ -136,7 +139,7 @@ function tenderFor(spec, at) {
 export function minding(w) {
   for (const m of MACHINES) {
     const r = machine(m.key), spec = specOf(m.key);
-    if (!r || !r.bought || !spec || spec.type !== w.type) continue;
+    if (!r || !r.bought || !spec || spec.type !== w.type || m.unmanned) continue;
     if (tenderFor(spec, spec.at()) === w) return m;
   }
   return null;
@@ -150,15 +153,17 @@ export function stepMachines(now) {
 
     const at = spec.at();
     r.working = false;                         // until it gets through all of it
-    const tender = tenderFor(spec, at);
-    // Unmanned: the beat is pushed forward every idle frame so the clock cannot
+    // A machine that runs itself needs nobody; every other one needs a body
+    // standing at it.
+    const tender = UNMANNED.has(m.key) ? null : tenderFor(spec, at);
+    // Untended: the beat is pushed forward every idle frame so the clock cannot
     // fall behind; nothing is banked to pay out when somebody wanders back.
-    if (!tender) { r.beatAt = now + 200; continue; }
+    if (!tender && !UNMANNED.has(m.key)) { r.beatAt = now + 200; continue; }
     // The belt's band reads this to keep running: a load already on it must
     // not be gated on the machine having *bitten*, since the ground goes clean
     // long before the last grain reaches the hole (`stepBelt`).
     r.mannedAt = now;
-    tender.resting = false;                    // it is working, whatever it looks like
+    if (tender) tender.resting = false;        // it is working, whatever it looks like
     if (!spec.ready()) { r.beatAt = now + 200; continue; }
 
     // Not clamped to a frame: a machine quicker than a frame does *several*

@@ -50,7 +50,7 @@ import { stepDig } from '../intro.js';
 import { stepTender } from './tenders.js';
 import { outOfYard } from './records.js';
 import { dispossessed, stepKit } from './kitwalk.js';
-import { onYard, stand, surfaceUnder, duck } from './body.js';
+import { onYard, stand, surfaceUnder, duck, sideOf } from './body.js';
 import { findPeak } from './rockhand.js';
 import { claims } from './hauler.js';
 import { fall, stepHat } from './falls.js';
@@ -221,20 +221,19 @@ const STAGES = [
   },
 
   // A rock on its way over a yard that is not dancing: a body in the footprint
-  // steps out and stands where it stepped to until the rock lands (let go the
-  // frame it is clear, an idle hauler strolls back over the line and is ducked
-  // again, a pixel in and out, for the whole fall); the gang wait the same
-  // way, or a rockhand's work stage stands it on the rock's top in the sky.
-  // Asked of the zone, which is there from the moment the last rock dies, so
-  // the footprint is clear before the next one is made (core.js). The gang
-  // wait on the rock being in the air, not on the zone: a scene takes the
-  // zone away while the dome holds a rock overhead.
+  // steps out of it; the gang stand where they stepped to until it lands (or
+  // a rockhand's work stage stands it on the rock's top in the sky); everybody
+  // else is back at work the frame they are clear, since the footprint's
+  // columns are `taken` and `holdTheLine` keeps them out. Asked of the zone,
+  // which is there from the moment the last rock dies, so the footprint is
+  // clear before the next one is made (core.js). The gang wait on the rock
+  // being in the air, not on the zone: a scene takes the zone away while the
+  // dome holds a rock overhead.
   (w, c) => {
     if (outOfYard(w) || w.craft || !onYard(w)) return false;
     const coming = S.rockFall > 0;
     if (!c.zone && !(coming && w.type === TYPE.ROCK)) return false;
-    if (c.zone && duck(w, c.zone)) w.ducked = true;
-    else if (w.type !== TYPE.ROCK && !w.ducked) return false;
+    if (!(c.zone && duck(w, c.zone)) && w.type !== TYPE.ROCK) return false;
     w.lunge = 0;
     w.y = stand(w);
     return true;
@@ -267,10 +266,6 @@ const STAGES = [
 export function updateWorkers(now, dt) {
   if (S.rockhands > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
-  // Once nothing is coming, whoever stepped out of its way is let go here, for
-  // every body, so one some other stage owned on the frame the rock landed is
-  // not left waiting for the one after.
-  if (!zone) for (const w of S.workers) w.ducked = false;
   const taken = claims();
   // Who is going for which patch of muck, rebuilt each pass from the claims
   // held on the bodies.
@@ -308,13 +303,19 @@ export function updateWorkers(now, dt) {
   }
   // The ground nobody may be *fetching from*: the duck knows nothing of
   // claims, and a hauler with a claim under the coming rock walks straight
-  // back in.
+  // back in. A claim on the far side goes the same way -- kept, it is a walk
+  // to the line and a stand there until the rock is down (`holdTheLine`);
+  // let go, the body picks again on its own side (`firstPick`). A body still
+  // in the footprint has no side yet and keeps its claim until it has ducked.
   if (zone) {
     const from = Math.max(0, colOf(floor, zone.from));
     const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
     for (let col = from; col <= to; col++) taken.add(col);
     for (const w of S.workers) {
-      if (w.type === TYPE.HAUL && w.claim >= from && w.claim <= to) w.claim = -1;
+      if (w.type !== TYPE.HAUL || w.claim < 0) continue;
+      const side = sideOf(zone, w.x);
+      const across = side && sideOf(zone, floor.x + w.claim * P) !== side;
+      if ((w.claim >= from && w.claim <= to) || across) w.claim = -1;
     }
   }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
@@ -336,9 +337,25 @@ export function updateWorkers(now, dt) {
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
     if (!done) jobOf(w).work(w, c);
+    holdTheLine(w, was.get(w), zone);
   }
 
   faceTravel(was);
+}
+
+// Nobody walks into the footprint while it stands. The drop-zone stage ducks a
+// body already in it; this is the other half, for a body outside whose errand
+// leads in. Every walk moves x for itself and none knows what a zone is, so
+// the line is held once, here: a body that began the frame clear and ended
+// inside is put back on the edge. The gang are the drop-zone stage's own
+// business, and a body in your hand or under the ground is not walking.
+function holdTheLine(w, x0, zone) {
+  if (!zone || x0 == null || w.type === TYPE.ROCK) return;
+  if (outOfYard(w) || w.craft || !onYard(w) || w.lifted || w.falling) return;
+  const inside = x => x + WORKER > zone.from && x < zone.to;
+  if (inside(x0) || !inside(w.x)) return;
+  w.x = x0 + WORKER <= zone.from ? zone.from - WORKER : zone.to;
+  w.y = stand(w);
 }
 
 // Which way everybody is facing: one field, *measured* here after everything

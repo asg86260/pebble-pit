@@ -5,7 +5,7 @@
 // striking the rock under its feet, turning at the ends of the layer and
 // before walking into a mate.
 
-import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE,
+import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE, ROCKHAND_WALK, COMMUTE_PACE,
          SWING_BOB, SWING_DRIVE } from '../config.js';
 import { S } from '../state.js';
 import { standOn, rockLeft } from '../world.js';
@@ -17,11 +17,11 @@ import { speedBoost, stronger } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { rockMuck } from '../smog.js';
 import { frames } from '../clock.js';
+import { amble } from './idle.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 
 const MINE_BAND = 3;      // cells below the peak still counted as the top layer
-const ROCKHAND_WALK = 0.5;   // pixels a frame along the row
 
 export function findPeak() {
   S.peakRow = S.gh;
@@ -91,7 +91,7 @@ export function rockhandWork(w, c) {
     // assignment overwrites the climber's refusal of a step and drags the
     // body over edges.
     const swayTo = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
-    w.x += Math.sign(swayTo - w.x) * Math.min(IDLE_PACE * frames(), Math.abs(swayTo - w.x));
+    amble(w, swayTo, IDLE_PACE);
     const surf = rockTopY(colAtX(w.x + WORKER / 2));
     w.y = climbTo(w, standOn(surf));
     w.next = now + rockhandMs();
@@ -109,7 +109,7 @@ export function rockhandWork(w, c) {
   if (!inBand(here)) {
     const back = nearestInBand(here);      // never null here: the stand-down above caught that
     if (back !== here) w.mineDir = Math.sign(back - here);
-    w.x += w.mineDir * ROCKHAND_WALK * 2.5 * frames();       // brisk, it has ground to make up
+    w.x += w.mineDir * COMMUTE_PACE * frames();   // a walk, at the pace it crosses the yard
   } else {
     const step = w.x + w.mineDir * ROCKHAND_WALK * frames();
     if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;

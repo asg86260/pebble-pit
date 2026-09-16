@@ -449,7 +449,15 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rows.shelves > .tile.job .gain, .rows.shelves > .tile.job .tag { display: none; }
 
 /* The goal card: the same cells on their side, across the shelf, with its
-   sentence. The one row that is a story, so it keeps its words. */
+   sentence. The one row that is a story, so it keeps its words.
+
+   It is the sign of its own section: a frame as heavy as a plank, with the
+   section's title as a black plate riding the frame's top edge, the way every
+   other section's sign sits on its plank. In a hairline it read as one more
+   row, and one more row is exactly what the one thing the yard is working
+   toward must not read as. The name is set like a sign too -- bold, spaced,
+   in capitals -- and the sentence under it is full black, since a card meant
+   to be read is not dimmed. */
 .rows.shelves > .tile.goal {
   grid-column: 1 / -1;
   grid-row: auto;
@@ -460,20 +468,28 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   align-items: center;
   column-gap: 10px;
   row-gap: 3px;
-  margin: 2px 0 6px;
-  padding: 8px 10px 8px 6px;
-  border: 1px solid #000;
-  border-bottom: var(--shelf-plank, 5px) solid #000;
+  /* Room above for the plate, which stands half out of the frame. */
+  margin: 14px 0 6px;
+  padding: 14px 12px 10px 8px;
+  border: 3px solid #000;
+  border-bottom-width: var(--shelf-plank, 5px);
   background: #fff;
   text-align: left;
 }
+.rows.shelves > .tile.goal::after {
+  content: attr(data-sign);
+  position: absolute; left: 8px; top: -10px;
+  padding: 3px 10px 4px;
+  background: #000; color: #fff;
+  font-size: 12px; line-height: 1; font-weight: bold; letter-spacing: .18em; text-transform: uppercase;
+}
 .rows.shelves > .tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; }
 .rows.shelves > .tile.goal .name { grid-column: 2; grid-row: 1; }
-.rows.shelves > .tile.goal .what { font-size: 1em; }
+.rows.shelves > .tile.goal .what { font-size: 14px; font-weight: bold; letter-spacing: .14em; text-transform: uppercase; }
 .rows.shelves > .tile.goal .gain { display: none; }
 .rows.shelves > .tile.goal .note {
   display: block; grid-column: 2; grid-row: 2;
-  font-size: 12px; line-height: 1.35; color: rgba(0, 0, 0, .65); white-space: normal; max-width: 46ch;
+  font-size: 12px; line-height: 1.35; white-space: normal; max-width: 46ch;
 }
 .rows.shelves > .tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }
 

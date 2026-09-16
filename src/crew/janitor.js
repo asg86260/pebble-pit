@@ -12,6 +12,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stand } from './body.js';
 import { stationX } from './commute.js';
+import { amble } from './idle.js';
 
 // Starts at the shed it belongs to; the work is wherever the mess is.
 export function newJanitor() {
@@ -39,11 +40,10 @@ export function janitorWork(w, c) {
   }
   const sway = now / 1000 * IDLE_BEAT + w.ph;
   const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
-  const step = to - w.x;
   // At loitering's own pace, not a fraction of a commute: chased at walking
   // pace the spot is reached in a blink and the idle is a freeze then a scoot.
-  w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
-           * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
+  amble(w, to, IDLE_PACE * (spelled('sweep') ? SPELL_SWEEP : 1));
+  // Feet stay on the ground: no straightening-up hop (see the rockhand's).
   w.y = stand(w);
 }
 

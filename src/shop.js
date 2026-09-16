@@ -325,7 +325,9 @@ function build(el, list, sections, empty, heads) {
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
       // A readout (`u.read`) and the pinned card do not answer the cursor.
       if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl) leanToCursor(b, u.key); }
-      if (sect.goal) b.classList.add('goal');
+      // The goal card wears its section's title as a sign on its own frame
+      // (shelf.css), since the goal heading itself is not drawn on a shelf.
+      if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
       // The pushpin in the card's corner (`fillPin`). Not a press on the card,
       // so the press is stopped here. A readout has nothing to wait for and a
       // signpost has no price, so neither carries one.

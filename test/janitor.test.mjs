@@ -43,9 +43,13 @@ group('the shed buys the job, and the janitor does it', async () => {
   run(90);
   const messy = state();
 
-  // the shed, and somebody on it
+  // the shed, and somebody on it -- and the crew hold it in from here, so
+  // what the count does is what the janitor does. Left going, five bodies
+  // every four seconds is about what one janitor clears, and the check read
+  // a draw.
   window.__loo(true);
   window.__air({ janitors: 1 });
+  window.__tune('LOO_EVERY', 1e9);
   const put = state();
   run(180);
   const swept = state();
