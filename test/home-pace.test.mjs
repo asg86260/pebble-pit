@@ -43,18 +43,22 @@ group('a body put to work out of the house hurries to it', async () => {
   const home = runUntil(() => state().houses.home === 1, 300);
   window.__assign('quarriers', 1);
   run(1 / 60);
-  const w = S.workers.find(x => x.walking);
-  const came = !!w?.fromHome;
-  const step = w ? stepOf(w) : 0;
-  const out = w ? runUntil(() => !w.walking, 60) : false;
+  const first = S.workers.find(x => x.walking);
+  // Read fresh by name each time, not held: a reload (test/helpers.mjs) lays
+  // the crew down again, and a record held across it is a frozen copy.
+  const w = () => S.workers.find(x => x.name === first?.name);
+  const came = !!first?.fromHome;
+  const step = first ? stepOf(first) : 0;
+  const out = first ? runUntil(() => !w().walking, 60) : false;
+  const flag = first ? w().fromHome : null;
   window.__crew(0, 0);
   window.__clearFloor();
   return [
     ok(home, 'with nothing to carry it goes in', `${state().houses.home} in`),
-    ok(w && came, 'put on the quarry it comes out walking, and knows it came from the door',
-       w ? `fromHome ${came}` : 'nobody walking'),
+    ok(first && came, 'put on the quarry it comes out walking, and knows it came from the door',
+       first ? `fromHome ${came}` : 'nobody walking'),
     ok(near(step, homePace()), 'at the hurried pace',
        `${step.toFixed(2)} px a frame, want ${homePace().toFixed(2)}`),
-    ok(out && !w.fromHome, 'and the flag is dropped when it arrives', w ? `fromHome ${w.fromHome}` : '')
+    ok(out && !flag, 'and the flag is dropped when it arrives', first ? `fromHome ${flag}` : '')
   ];
 });
