@@ -387,6 +387,175 @@ the whole of the building rather than a detail on it. It turns while there is a 
 spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
 says whether anything is happening.
 
+## The handful (design, not built; 2026-09-15)
+
+**The wheel is a coin.** Half doubles, half takes, and every hand at the table has
+exactly two shapes. The players say it is dull, and they are right for a reason
+the section above already admits: *the wheel does not free-run and then get told
+what happened — the answer is picked first and the wheel is aimed at it.* You are
+watching a picture of a decision that was made before it moved. The wheel goes.
+
+**The pitch is the one the sand board had: you drop a handful of dust down the
+building and watch it cascade.** Two versions of that have been built and cut
+(2026-09-11, "The drop" and "The sand board", both in the history), and the two
+of them failed on the same wall from opposite sides, so the wall is what this
+design is about:
+
+- The **drop** sent one rock down the pegs with the pot written on it. Maximum
+  spread — one path, ten coins, a ×39 edge bin — and no sand: the heap stood off
+  to one side as a chart of the number on the rock.
+- The **sand board** drained the whole heap through the pegs by the yard's own
+  falling-sand rules. All the sand, and no spread: the rules have no chance in
+  them, so the same gate landed the same counts every hand — *a roulette with
+  seven pockets dressed in sand* — and its first build, which let the sheet fan
+  out, paid between 0.9 and 1.65 on every call, which is a rate rather than a
+  bet.
+
+The wall is arithmetic. Every grain that goes down the board is a fair draw
+from the bins, so a pour of *N* grains pays the mean of *N* draws, and the
+spread of a mean shrinks with √*N*. A hundred grains through a fair board pay
+between 0.8 and 1.2 nearly every hand; two hundred and fifty pay one. **A
+cascade worth watching and a bet worth making pull against each other, and the
+handful is the size where they meet.**
+
+**A handful is thirty-two grains, and each one carries a thirty-second of the
+stake.** Not the pot one for one; a *handful* — which is what the pitch said. The
+count is written down (`CASINO_HANDFUL`), it is the same for the ten chip and
+for an all-in, and it is the one number that decides whether this is a bet: on
+the drop's bin table (below) one grain's pay has a standard deviation of about
+1.9, so thirty-two of them pay with a spread of about a third — a typical hand
+comes back at two-thirds or four-thirds of what went down, one hand in eight
+puts a grain in a ×39 bin and comes back well over double, and the median hand
+loses, because two-thirds of every handful lands in the halving bins. That is
+plinko's actual feel: you will probably lose a little, and you are there for
+the edge. A chip of ten is ten grains a dust, because a handful cannot be more
+than the stake; every other chip is thirty-two, and *a grain past the first
+band is worth its band* is the rule that already covers it.
+
+**Every grain flips its own coins.** This is the one thing neither cut version
+did and the whole of the fix. A grain at a peg goes left or right on the seeded
+rng, a fresh coin every grain every row, so the handful fans out into the bell
+the bins are priced on, and the same handful never lands the same way twice.
+The yard's `settle` rules take over only once a grain is in a bin, to heap it.
+Each grain's path is drawn off the rng as it leaves the hopper and then walked
+— two cells down, one across, a beat on the peg — so a mid-flight grain is
+still *the thing deciding*, and there is no physics to go wrong on a peg.
+Grains leave the hopper a few frames apart over about a second and a half, so
+the board carries a stream splitting on the pegs rather than thirty-two dots
+moving in step.
+
+**The bins are the drop's bins, and the table is fair to the grain.** Ten rows
+of pegs, eleven bins, written under the slots in the sign's own glyphs:
+
+| bin | ×39 | ×5 | ×3 | ×1 | ×½ | ×½ | ×½ | ×1 | ×3 | ×5 | ×39 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| in 1,024 | 1 | 10 | 45 | 120 | 210 | 252 | 210 | 120 | 45 | 10 | 1 |
+
+It sums to 1,024 in 1,024. **Fair, and that is the whole of the house's edge**,
+the same edge the wheel had: the mean of a hand is one, and the *median* is
+under one, so a pot ridden for ever still ends at nothing with certainty. The
+table lives in `config/casino.js` as a table, and a check asserts it pays 1.000
+so nobody moves a bin on its own.
+
+**The casino is the machine.** The sand board's shape, kept: one building read
+top to bottom, and no second shed past it.
+
+| | |
+|---|---|
+| **the roof** | a walled hopper; the stake pours out of the sky into it and stands there as the pot, at the table's own band ladder (`shownFor`) |
+| **the face** | the peg field, a white board knocked out of the block the way the wheel's disc was; pegs are single black cells, staggered a cell a row |
+| **the foot** | eleven bins two cells wide with their pay under them, and under those a tray the paid sand runs into |
+
+Eleven bins by two cells is twenty-two; the building is twenty-six wide today
+and keeps it. Ten peg rows two apart, four cells of air for the stream to fan,
+six cells of bin and four of tray: the face stands about thirty-four cells,
+from twelve, which is roughly where the drop's tower topped out. The sign runs
+across the front of the hopper with its chase of lights, where it reads as the
+hopper's own edge.
+
+**A hand.** Chip → the stake rains into the hopper → *let it go* → the hopper's
+floor opens and a handful comes out of the heap and down the pegs → the bins
+fill → the bins are paid. What the hopper heap does when the handful leaves it
+is the same thing a lost pot does: the rest of the heap lifts off and fades,
+because it was the picture of the pot and the pot is on the board now. The
+hand settles on the same three facts as before: nothing left to send, nothing
+in the air, no column of a bin still moving.
+
+**A bin is paid by emptying into the tray.** When the last grain is still, the
+bins let go bottom to top, a bin a beat, and each grain runs down into the tray
+carrying its bin's pay. The tray is the new pot and it fills toward `shownFor`
+of it the way the table always has — a ×39 grain arriving is a heap that
+sprouts, a ×½ bin is two grains going in and one coming out the other side — so
+what stands in the tray *is* the number on the row, and the bins are back to
+empty for the next hand. Nothing new is drawn for any of it: this is
+`trickleIn` and `drainOut` aimed at a different plot.
+
+**Then you decide again, and that is the game.**
+
+| | |
+|---|---|
+| **bank it** | the tray goes up over the works in an arc and down into the hole, grain by grain, the counter moving as each one lands |
+| **drop again** | the tray goes back *up* — the same arc, aimed at the hopper — and stands there as the stake for the next handful |
+
+The sand board cut *spin again* because winnings had nowhere to go but the
+hole and hoisting them was a second mechanism. It is not: a grain flying an
+arc to a plot is the one thing this building already does, and the hopper is a
+plot. *When to stop is the game* is the sentence the whole casino was built on,
+and a board without the ride would have thrown it away for a sound reason that
+no longer holds.
+
+**What it says when it settles.** The box over the building shows the hand's
+multiple to a tenth — ×0.7, ×1.3, ×2.6 — in place of the tick or cross. A hand
+that pays more than it took is a **win** and gets the strobe and the fountains;
+a hand that pays less is the dud with the dark sign. Even is neither, and the
+box is enough. The two noticeboard entries (*we're so back* / *time to get a
+loan*) keep their fifty-thousand lines, read off the difference.
+
+**Shut for the same reasons at the same times.** Chip, let-go, bank and
+drop-again are all dead while anything is pouring, falling, paying or lifting,
+and bank is dead over a full hole — the tray stays where it is until there is
+room, the same as ever. A save taken with a handful on the board comes back
+with the pot in the hopper and the let-go open again, the way a wheel mid-spin
+did; a path in flight is ephemeral. Making the drop stricter than the wheel
+would have been a rule with one exception.
+
+**Color.** Black and white, as before; nothing on the board says win or lose
+by shade. The bins' pay is written, and a heap in a ×39 bin is a heap in a
+×39 bin.
+
+### The calls this makes
+
+- **The wheel goes, and nothing stands beside the board.** Two games in one
+  building is a strip; the far end of the walk is one building with one game.
+- **Thirty-two.** Sixteen is a rock-and-a-half, too few to read as a cascade;
+  sixty-four pays within a quarter nearly every hand. Thirty-two is a knob and
+  the check that measures the spread is where it gets moved, if it moves.
+- **Coins per grain, not the sand rules, on the pegs.** Said above; it is the
+  whole difference between this and the version that got cut.
+- **The drop's bin table, unchanged.** It was fair, it had a check, and its
+  shape — two-thirds of grains halve, one in a thousand pays thirty-nine — is
+  the shape a handful needs to have a spread at all.
+- **A tray at the foot and a ride back up.** The tray is what makes the sand
+  in view equal the number on the row after the bins have multiplied it; the
+  ride back up is what keeps *when to stop* as the game.
+
+### What is checked
+
+`test/casino.test.mjs`, node tier, rewritten: the bin table pays 1,024 in
+1,024 off the config; the stake rains into the hopper and stands there as the
+pot at the written band ladder; a hand bought the player's way — chip row,
+let-go row — sends exactly `min(stake, CASINO_HANDFUL)` grains down the pegs,
+settles to the sum of each grain's bin to the grain, and stands the tray at
+`shownFor` of it; *drop again* puts the tray back in the hopper and the second
+hand is settled off the new stake; *bank it* pays the hole to the grain; every
+row shut mid-hand; a save mid-cascade comes back a pot in the hopper with the
+decision open. `test/handful.test.mjs`: two thousand seeded hands of the
+thousand chip pay a mean within two percent of one and a standard deviation
+between a quarter and a half — the number the whole design hangs on, held by a
+test rather than by a note. Browser tier (`selftest/casino.js`): the bench row
+builds it and a hand pressed through the page's rows settles. The scene is
+`casino`, taken mid-cascade.
+
 ## Crew
 
 **Everybody is somebody.** A body used to be a slot: the crew was four counts, people were made out

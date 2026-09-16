@@ -1,5 +1,16 @@
 # Still to do
 
+## The handful: the casino drops dust down a peg board -- DESIGNED, awaiting approval (2026-09-15)
+
+Players find the wheel dull, and the user is not a fan of it. The third plinko:
+thirty-two grains a hand, each carrying a thirty-second of the stake and
+flipping its own coin at every peg, into the drop's fair eleven-bin table; the
+paid bins empty into a tray at the foot, and the tray either banks or rides
+back up to the hopper. DESIGN.md, "The handful". The two cut versions failed on
+the same arithmetic from opposite sides (one rock: no sand; the whole heap: no
+spread), and the design says why the handful is the size where a cascade and a
+bet meet. Supersedes "The casino stays the wheel" below. Blocked on sign-off.
+
 ## Three brews, one a coin, read per trade -- BUILT (2026-09-15)
 
 "Three brews, one a coin, read per trade" at the end of DESIGN.md. The five
