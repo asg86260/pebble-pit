@@ -11375,3 +11375,37 @@ on the window made the touch the page's to refuse; and a touch that lands
 during a fling is never cancelable -- it catches the fling, which is the
 platform's rule and the design's. `bar.js`, `#bar` and the `BAR_*` knobs are
 gone; the counter and the skip hint stand above the safe area alone.
+
+**Played again (2026-09-16): the undo is cut, the sheets are one seat, a
+scroll is not a tap.** The undo from the tag was built, played, and the
+owner did not like it; it is gone -- `S.undo`, `undoBuy`, the knobs, its
+checks -- and a wrong buy is covered the way it always was: a press on the
+row in line pulls it out and hands the bill back (test/queue.test.mjs), and
+the one being built is committed. The card's tag is exactly what it was
+before the phone work. Three things about the sheets, from playing them. A
+scroll of the rows whose finger lifted over the yard shut the sheet: the
+platform raises a `pointerleave` on the panel from wherever a touch ends,
+and the cursor's "left the menu" rule took it; a finger does not leave, it
+ends, so that rule is the mouse's alone, the yard's tap-closes-a-board
+rule is judged at the release through `isTap` (never on a `pointercancel`,
+which is a scroll), and the wash above the settings is a tap through
+`onTap`. Any gesture that begins on a sheet is the sheet's until it ends
+(the handle captures its pointer; a touch keeps its target), and a drag
+from the yard that ends on a row buys nothing, since a row buys only on the
+click of a press that began on it. The jank on the pull from tall to the
+seat had two causes, both measured with a real finger over the protocol
+(tools/sheetpull.mjs): the seat wrote the sheet's `height` on every move,
+which reflowed the rows and the rail each frame, and -- the larger one --
+the page-wide `touch-action: manipulation` rule outranked the handle's
+`none`, so the platform took the drag off the handle after a few moves
+(`pointercancel`) and the sheet stopped following, then snapped. Now the
+box is sized for the tall stop always and only its transform moves, with
+the one transition applied on release; the handle is excluded from the
+page rule. The pull measured 18 ms worst, 16.7 ms mean over sixty moves,
+none over 32, before and after -- the stutter was the cancelled drag, not
+a slow frame. And the settings sheet is the boards' sheet: `placeSheet`
+became `sheetSeat(el, ...)` in sheet.js, one seat handed both the boards'
+panel and the held sheet, with the same handle, stops, follow-the-finger
+drag, pull-to-dismiss and tap outside; the held sheet slides off the foot
+and does not fade, and carries no rail since it is its own scroller (a rail
+inside it would scroll with the rows).

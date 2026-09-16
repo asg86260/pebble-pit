@@ -16,7 +16,7 @@ feature lives in DESIGN.md.
 - The phone's settings button is a cog.
 - On a phone one finger anywhere on the yard scrolls it, with the phone's own momentum and rubber band; a finger that lands on dust sweeps for its whole length instead (selftest/touch.js, test/camera.test.mjs, tools/fling.mjs).
 - Two arrows in the mid sky hop the view to the next station either way, each wearing the glyph of where it goes; on a phone only (test/hop.test.mjs, selftest/touch.js).
-- A tap on a row buys it first time, a scroll or a hold does not, a long press reads its note, and a purchase can be taken back from its tag for a few seconds (test/undo-buy.test.mjs, test/hover-gate.test.mjs, selftest/touch.js).
+- A tap on a row buys it first time, a scroll or a hold does not, and a long press reads its note (test/hover-gate.test.mjs, selftest/touch.js).
 - On a phone a board is a sheet from the bottom with a handle: drag it up for the long boards, down to put it away, and the crew list opens inside it (selftest/sheet.js).
 - A double tap on a phone never zooms the page (selftest/touch.js).
 - The yard fills a phone's whole screen, and installs to the home screen (selftest/touch.js).
@@ -32,8 +32,9 @@ feature lives in DESIGN.md.
 - The rung pips on a board stand apart on a phone instead of stacking on each other (selftest/sheet.js).
 - A board comes down when its station is scrolled off the window, on every board and not only the bench's (selftest/touch.js).
 - The hop arrows are thumb-sized, and on a phone held sideways they stand in the middle of the sky rather than on the ground line (selftest/touch.js).
-- A fast double tap on a row buys it once and keeps it; the undo waits a beat, and is the phone's alone -- on a desk a work at the front is committed as before (test/undo-buy.test.mjs, test/queue.test.mjs).
-- The undo tag is one word and stays inside its card (selftest/touch.js).
+- A scroll of a sheet's rows that lifts the finger over the yard leaves the sheet up, instead of shutting it as a tap outside (selftest/sheet.js, tools/sheetpull.mjs).
+- A sheet dragged between its stops follows the finger without stutter, and the platform no longer takes the drag off the handle halfway (selftest/sheet.js, tools/sheetpull.mjs).
+- The settings sheet on a phone is a sheet like the boards': the same handle, the same stops, and it slides off the foot when pulled down instead of fading (selftest/sheet.js).
 - A notice's card slides beside a building that reaches the top of the window instead of over it, which a tall settlement on a phone held sideways did (selftest/touch.js).
 
 - A body with nothing to do gets going and slows down when it strolls, instead of going from stood still to full pace in one frame and stopping as dead (test/amble.test.mjs).

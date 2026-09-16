@@ -3,19 +3,12 @@
 // is a feel: the coast of a fling is the platform's, so there is no friction
 // and no stop speed. What is here is what a tap IS, one answer for the whole
 // page (tap.js), and the shape of the three things a phone gets that a desk
-// does not -- the hop, the undo and the sheet.
+// does not -- the hop and the sheet.
 
 // A tap: a press that neither wanders nor lingers. Past the slop it is a
 // drag, past the time it is a hold, and neither buys or opens anything.
 export const TAP_SLOP = 14;          // pixels a tap may wander and still be a tap
 export const TAP_TIME = 500;         // ms; a press held longer is a long press, which asks about the row
-
-// A purchase can be taken back from the tile's own tag for this long: a
-// clean tap on the wrong tile is the one case the tap gate cannot catch.
-export const UNDO_MS = 4000;
-// ...but not in the first instant: a fast double tap is one purchase kept,
-// not one bought and taken back.
-export const UNDO_DEAD_MS = 250;
 
 // The hop: an arrow at each edge of the window, in the mid sky, that glides
 // the view to the next standing station that way. A share of the window's

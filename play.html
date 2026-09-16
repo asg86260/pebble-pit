@@ -23,7 +23,7 @@
        bottom sheets"), and this is its handle: the grip bar on its top edge,
        the board's name beside it, and the way back out of the crew list. On
        a desk it is not shown; board.js's `placeSheet` owns it. -->
-  <div id="handle" hidden>
+  <div id="handle" class="handle" hidden>
     <i class="grip"></i>
     <button id="listback" type="button" hidden>&#9664;</button>
     <span class="name"></span>
@@ -141,8 +141,9 @@
      it in step with the sheet (main.js). -->
 <div id="scrim" class="scrim" hidden></div>
 <div id="held" class="held" hidden>
-  <!-- the grip, on a phone, where the held sheet is a sheet from the bottom (gear.js) -->
-  <i id="heldgrip" class="grip" hidden></i>
+  <!-- the handle, on a phone, where the held sheet is a sheet from the bottom
+       through the boards' own seat (sheet.js, gear.js) -->
+  <div id="heldhandle" class="handle" hidden><i class="grip"></i><span class="name">settings</span></div>
   <!-- One sheet, several pages, told apart by data-pane: a space-separated
        list of the pages an element is on. settings.js's showPane shows the
        elements whose list holds the page's name and hides the rest. The

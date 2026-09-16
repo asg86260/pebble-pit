@@ -39,9 +39,11 @@ html, body {
    otherwise, and a tap on a board that zoomed instead of buying is the worst
    thing a tap can do. Everything that takes a tap says so; the yard refuses
    the platform every gesture (canvas, below) and the grab bar keeps its one
-   (#scroller). One rule rather than one per element, so the next button
+   (#scroller), and a sheet's handle keeps the whole gesture (.handle: a
+   grip the platform may pan is a drag the platform cancels halfway). One
+   rule rather than one per element, so the next button
    added is covered before anybody taps it twice. */
-body :not(canvas):not(#scroller):not(#spacer) { touch-action: manipulation; }
+body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
    "Momentum scrolling"). The spacer inside it is as wide as the world at the
    current zoom (world.js writes the width), and the canvas is stuck to the
@@ -156,27 +158,22 @@ canvas {
   display: block; width: 26px; height: 26px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Cpath d='M5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM12 7h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 26px 26px;
 }
-/* The held sheet as a sheet from the bottom, on a phone (gear.js): the
-   window's width, standing on the foot, scrolling inside, with a grip on
-   its top edge. The desk's centered card is untouched. */
+/* The held sheet as a sheet from the bottom, on a phone (gear.js, through
+   the boards' seat in sheet.js): the same box, handle and slide as a board
+   (the .bottom rules below), scrolling inside itself. It moves as one thing
+   and does not fade: the slide is the whole of its coming and going. The
+   desk's centered card is untouched. */
 #held.bottom {
   left: 0; right: 0; top: auto; bottom: 0;
   transform: none;
-  width: 100%; box-sizing: border-box;
-  max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain;
-  border: 0; border-top: 2px solid #000;
-  padding-top: 22px;
-  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  transition: opacity .18s linear, transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
+  max-height: none; overflow-y: auto; overscroll-behavior: contain;
+  align-items: center;
+  padding: 6px 26px calc(14px + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
+  opacity: 1;
+  scrollbar-width: none;
 }
-#held.bottom.dragging { transition: none; }
-#heldgrip { position: absolute; top: 0; left: 0; right: 0; height: 20px; cursor: grab; touch-action: none; }
-#heldgrip::after {
-  content: ''; position: absolute; top: 6px; left: 50%;
-  width: var(--sheet-grip-w, 36px); height: var(--sheet-grip-h, 4px);
-  margin-left: calc(var(--sheet-grip-w, 36px) / -2);
-  background: #000;
-}
+#held.bottom::-webkit-scrollbar { display: none; }
+#held.bottom .handle { align-self: stretch; margin: 0 -26px 4px; }
 /* a glyph is a canvas too, and the yard-window rule above is undone for it */
 #hop .pic canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block; background: none; cursor: inherit; image-rendering: pixelated; }
 /* Under motion: less the coast is still the platform's -- it is not a glide
@@ -1688,25 +1685,28 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
    crew list), the purse along the top edge, and the rows, which scroll. The
    popover's inner fades are turned off here: the sheet moves as one thing.
    Every rule carries the id, so it outranks the popover's whatever the order. */
-#panel.bottom {
+/* Every sheet on the phone -- the boards' panel and the held sheet -- wears
+   .bottom and these rules (sheet.js). */
+#panel.bottom, #held.bottom {
   left: 0; right: 0; bottom: 0;
   width: 100%;
   box-sizing: border-box;
   flex-direction: column;
-  align-items: stretch;
   gap: 0;
   background: #fff;
+  border: 0;
   border-top: 2px solid #000;
-  overflow: hidden;
-  transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1),
-              height var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
+  /* One transition, on the move to a stop: the box never changes size, so
+     only the transform ever eases, and never under a finger. */
+  transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
 }
-#panel.bottom.dragging, body.still #panel.bottom { transition: none; }
+#panel.bottom { align-items: stretch; overflow: hidden; }
+#panel.bottom.dragging, #held.bottom.dragging, body.still #panel.bottom, body.still #held.bottom { transition: none; }
 #panel.bottom > * { flex-shrink: 1; }
 #panel.bottom .purse, #panel.bottom > .sheet {
   opacity: 1; transform: none; transition: none;
 }
-#handle {
+.handle {
   position: relative;
   flex: 0 0 auto;
   display: flex; align-items: center; gap: 10px;
@@ -1716,13 +1716,13 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   touch-action: none;                   /* the drag is ours: it is the sheet's own gesture */
   -webkit-user-select: none; user-select: none;
 }
-#handle .grip {
+.handle .grip {
   position: absolute; top: 4px; left: 50%;
   width: var(--sheet-grip-w, 36px); height: var(--sheet-grip-h, 4px);
   margin-left: calc(var(--sheet-grip-w, 36px) / -2);
   background: #000;
 }
-#handle .name { font-size: 12px; }
+.handle .name { font-size: 12px; }
 #listback { padding: 2px 8px; border: 2px solid #000; background: #fff; color: #000; font: inherit; cursor: pointer; }
 #panel.bottom .purse {
   flex: 0 0 auto;
@@ -1735,6 +1735,11 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   width: 100%; max-width: none;
   border: 0;
   overflow-y: auto;
+  /* The box is the tall stop's whatever stop it stands at (board.js); at
+     the seat the foot of it is below the window, so the rows keep that
+     much room under their last line and can still be scrolled to it. */
+  padding-bottom: var(--sheet-hidden, 0px);
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;                  /* the rows scroll; a sideways drag is nothing */
   /* a pull past the top is the sheet's (board.js), never the page's rubber band */
@@ -1762,6 +1767,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: static; flex: 1 1 auto; min-height: 0;
   width: 100%; max-width: none; margin: 0;
   border: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+  padding-bottom: var(--sheet-hidden, 0px); box-sizing: border-box;
   opacity: 1; transform: none; transition: none;
 }
 #panel.bottom.listing > .sheet:not(.flyout) { display: none; }

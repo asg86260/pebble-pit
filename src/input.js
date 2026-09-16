@@ -135,8 +135,10 @@ canvas.addEventListener('pointerdown', e => {
   S.mouse = p;
   // A click off a station puts any open board away, whatever else it means:
   // a click is a decision to stop reading. Before everything else, so it
-  // happens whether or not the click lands on anything.
-  if (!atStation(p.x, p.y)) showPanel(null, true);
+  // happens whether or not the click lands on anything. A finger is judged
+  // at the release instead (`endDrag`): a press that turns into a scroll is
+  // not a decision to stop reading.
+  if (!atStation(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
   // the sky first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
   // then the controls that stand in the yard, before the ground behind them:
@@ -242,8 +244,10 @@ export function endDrag(e) {
   if (down.size < 2) panning = null;
 
   // A tap on a touchscreen is what a hover is on a desk: at a station it
-  // opens (or shuts) the board, anywhere else it puts it away.
-  if (held && held.kind === 'touch' && !panning &&
+  // opens (or shuts) the board, anywhere else it puts it away. A tap is a
+  // release (tap.js): a touch the platform took for a scroll is cancelled,
+  // not released, and closes nothing.
+  if (held && held.kind === 'touch' && !panning && e.type === 'pointerup' &&
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
     const which = stationAt(p.x, p.y);
@@ -567,8 +571,12 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 // The cursor leaving the menu closes it, unless it left toward the station:
-// the same wedge in the other direction.
+// the same wedge in the other direction. A cursor, never a finger: a touch
+// does not leave, it ends, and the platform raises its leave from wherever
+// the finger lifted -- a scroll of the rows that ended over the yard read
+// as the cursor walking off the board and shut the sheet.
 document.getElementById('panel').addEventListener('pointerleave', e => {
+  if (e.pointerType === 'touch') return;
   if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
 });
 addEventListener('keydown', e => {

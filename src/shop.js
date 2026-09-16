@@ -8,7 +8,7 @@ import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, rungOf, rungsOf, maxed, folds, building, inLine, lineAt, undoable } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, rungOf, rungsOf, maxed, folds, building, inLine, lineAt } from './upgrades.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
@@ -353,7 +353,7 @@ function build(el, list, sections, empty, heads) {
       const tells = (inSubmenu || (shelf && !sect.goal)) && (u.note || takesTime(u));
       const say = tells ? () => {
         const r = b.getBoundingClientRect();
-        const words = undoable(u) ? 'just bought -- press to take it back' : inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
+        const words = inLine(u) ? 'in line -- press to hand it back' : u.note ? u.note() : null;
         if (!words) { showTipAt(null); return; }
         // Off the board for a card (a note under the board's layer is a note
         // nobody reads), over the neighbors for a shelf tile.
@@ -608,19 +608,12 @@ export function refresh(el, list, headcount) {
         // site's works: a site building two at once has its first waiting row
         // third in the list and next in line.
         sayHTML(price, '');
-        // For a moment after the press the tag is the way back (DESIGN.md,
-        // "A tap buys"): a tap on it puts the bill back -- one word, since a tag
-        // is one word and a sentence ran off the card. The clock takes
-        // over when the moment is up.
-        const undo = undoable(u);
-        sayHTML(time, undo ? '<span class="have">undo</span>'
-                     : `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
+        sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
-        if (row.classList.contains('undo') !== undo) row.classList.toggle('undo', undo);
         // Greyed while being built; live while it waits, so a press can pull
-        // it back out -- and live while it can be undone.
-        grey(row, !queued && !undo);
+        // it back out.
+        grey(row, !queued);
         // Pressable but not on offer: `off` keeps the shelf's hover away.
         row.classList.add('off');
         continue;
@@ -628,7 +621,6 @@ export function refresh(el, list, headcount) {
     }
     if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
     if (row.classList.contains('building')) row.classList.remove('building');
-    if (row.classList.contains('undo')) row.classList.remove('undo');
     if (row.classList.contains('queued')) row.classList.remove('queued');
     if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
 

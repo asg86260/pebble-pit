@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS,
-         SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_HANDLE, SHEET_RAIL_W, SHEET_RAIL_INSET, TAP_SLOP } from './config.js';
+         SHEET_MS } from './config.js';
 import { S, bench } from './state.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows, crewList } from './crewboard.js';
@@ -25,6 +25,7 @@ import { now } from './clock.js';
 import { shown } from './tween.js';
 import { JOB } from './jobs.js';
 import { coarse } from './prefs.js';
+import { sheetSeat } from './sheet.js';
 
 const shopEl = document.getElementById('shop');
 const casinoShopEl = document.getElementById('casinoshop');
@@ -288,92 +289,26 @@ const GAP = 4;                             // never flush against the edge
 const FLY_GAP = 8;                         // the panel's gap, between the board and the list beside it
 
 // --- the sheet from the bottom ------------------------------------------------------
-// On a phone a board is a sheet (DESIGN.md, "Boards as bottom sheets"): the
-// window's width, its top edge at SHEET_H of the window so the ground line
-// and the station stay in the picture above it, a handle on its top edge,
-// the purse along the top inside it, and the rows scrolling within. Three
-// stops and no free height: down (gone), the seat, and tall (SHEET_TALL) for
-// a long board, dragged between by the handle. The crew list is a page inside
-// it rather than a card beside it, since beside it there is no room.
-//
-// It comes up and goes down as a translate on the y axis over SHEET_MS (the
-// stylesheet's transition on #panel.bottom), with `hidden` still the truth
-// the way fade.js keeps it for the held sheet: `settle` takes `open` off and
-// hides the element once the slide is done.
+// On a phone a board is a sheet (sheet.js; DESIGN.md, "Boards as bottom
+// sheets"): the panel through the one seat every sheet on the phone shares.
+// What is the board's own here: its name beside the grip, the crew list as a
+// page inside it rather than a card beside it, and the measuring the popover
+// wants back when the pointer stops being a thumb.
 const handleEl = document.getElementById('handle');
 const handleName = handleEl.querySelector('.name');
 const listBackEl = document.getElementById('listback');
-document.documentElement.style.setProperty?.('--sheet-ms', `${SHEET_MS}ms`);
-document.documentElement.style.setProperty?.('--sheet-grip-w', `${SHEET_HANDLE[0]}px`);
-document.documentElement.style.setProperty?.('--sheet-grip-h', `${SHEET_HANDLE[1]}px`);
-document.documentElement.style.setProperty?.('--sheet-rail-w', `${SHEET_RAIL_W}px`);
-document.documentElement.style.setProperty?.('--sheet-rail-inset', `${SHEET_RAIL_INSET}px`);
-// The sheet's own scrollbar: a phone's overlay bar is invisible until the
-// list moves, so it is hard to know there is more. A rail down the right
-// edge, a thumb the viewport's share of the content, seated from scrollTop
-// every frame, shown only while the rows overflow. Made here rather than in
-// play.html because it belongs to the seat, not the board.
-const railEl = document.createElement('i');
-railEl.className = 'rail';
-railEl.hidden = true;
-const railThumb = document.createElement('i');
-railThumb.className = 'thumb';
-railEl.appendChild(railThumb);
-panelEl.appendChild(railEl);
-let railPut = null;
-// The list that scrolls in the sheet: the crew list while it is the page,
-// the board's rows otherwise.
 const sheetList = () => (S.crewListOpen ? crewListEl : panelEl.querySelector(':scope > .sheet:not(.flyout)'));
-function placeRail() {
-  const list = sheetList();
-  const over = !!list && list.scrollHeight > list.clientHeight + 1;
-  if (railEl.hidden !== !over) railEl.hidden = !over;
-  if (!over) { railPut = null; return; }
-  const top = list.offsetTop, h = list.clientHeight;
-  const th = Math.max(SHEET_RAIL_W * 3, Math.round(h * list.clientHeight / list.scrollHeight));
-  const ty = Math.round((h - th) * (list.scrollTop / Math.max(1, list.scrollHeight - list.clientHeight)));
-  const put = `${top},${h},${th},${ty}`;
-  if (put === railPut) return;
-  railPut = put;
-  railEl.style.top = `${top}px`;
-  railEl.style.height = `${h}px`;
-  railThumb.style.height = `${th}px`;
-  railThumb.style.transform = `translate3d(0, ${ty}px, 0)`;
-}
-// For the checks: the rail's reading, or null while there is nothing to scroll.
-export const sheetRail = () => (railEl.hidden ? null : { track: railEl.getBoundingClientRect(), thumb: railThumb.getBoundingClientRect(), list: sheetList() });
-
-let tall = false;                          // the stop the sheet stands at
-let drag = null;                           // the handle in hand: where the finger began, and how far it has come
-let sheetPut = null;                       // the last transform written, so a still sheet leaves its layer alone
-let sheetHeight = 0;                       // the height it stands at, px
-
-// Its height at the stop it is on, or, in hand, wherever the finger has it:
-// dragged up it grows toward tall, dragged down it slides toward gone.
-const stopHeight = () => Math.round(S.H * (tall ? SHEET_TALL : (1 - SHEET_H)));
+const seat = sheetSeat(panelEl, {
+  handle: handleEl,
+  list: sheetList,
+  open: () => panelEl.classList.contains('open'),
+  dismiss: () => showPanel(null, true),
+  // the popover's inline seat and the pinned width are not the sheet's
+  enter: () => { putX = putY = null; remeasure(); },
+});
 
 function placeSheet() {
-  if (!panelEl.classList.contains('bottom')) {
-    panelEl.classList.add('bottom');
-    handleEl.hidden = false;
-    // the popover's inline seat and the pinned width are not the sheet's
-    panelEl.style.transform = '';
-    putX = putY = null;
-    sheetPut = null;
-    remeasure();
-  }
-  const open = panelEl.classList.contains('open');
-  const seat = stopHeight();
-  let height = seat, slide = open ? 0 : seat;
-  if (drag) {
-    const dy = drag.y - drag.y0;
-    if (dy < 0) height = Math.min(Math.round(S.H * SHEET_TALL), seat - dy);   // up: taller
-    else slide = Math.min(seat, dy);                                            // down: away
-  }
-  if (height !== sheetHeight) { sheetHeight = height; panelEl.style.height = `${height}px`; }
-  const put = `translate3d(0, ${slide}px, 0)`;
-  if (put !== sheetPut) { sheetPut = put; panelEl.style.transform = put; }
-  panelEl.classList.toggle('dragging', !!drag);
+  seat.place();
   // The name beside the grip, and the crew list as a page: the board's own
   // title is hidden by the stylesheet in favor of this one.
   const name = at ? pages[at]?.querySelector('.title')?.dataset.name || pages[at]?.querySelector('.title')?.textContent : '';
@@ -383,94 +318,25 @@ function placeSheet() {
     panelEl.classList.toggle('listing', listing);
     listBackEl.hidden = !listing;
   }
-  placeRail();
 }
 
 // Back to the popover: the switch on the sheet was turned off under an open
-// board. Everything the sheet wrote is taken back and the popover measures
-// and seats itself afresh.
+// board. The seat takes back what it wrote and the popover measures and
+// seats itself afresh.
 function leaveSheet() {
-  panelEl.classList.remove('bottom', 'dragging', 'listing', 'tall');
-  railEl.hidden = true; railPut = null;
-  panelEl.style.height = '';
-  panelEl.style.transform = '';
-  handleEl.hidden = true;
-  sheetHeight = 0; sheetPut = null; tall = false; drag = null;
+  seat.leave();
+  panelEl.classList.remove('listing');
   putX = putY = null;
   remeasure();
 }
 
-// Where the sheet is on the glass, for the wedge, the tip's dodge and the
-// counter: the window's width, standing on its foot.
-const sheetRect = () => (panelEl.hidden ? null : { x: 0, y: S.H - sheetHeight, w: S.W, h: sheetHeight });
-
-// The handle in hand. The press is tracked on the handle itself; the release
-// decides between the three stops by how far it went, and a press that went
-// nowhere is a tap, which is nothing.
-handleEl.addEventListener('pointerdown', e => {
-  if (e.button !== 0) return;
-  drag = { y0: e.clientY, y: e.clientY };
-  try { handleEl.setPointerCapture(e.pointerId); } catch {}
-  placeSheet();
-});
-handleEl.addEventListener('pointermove', e => {
-  if (!drag) return;
-  drag.y = e.clientY;
-  placeSheet();
-});
-const letGo = e => {
-  if (!drag) return;
-  const dy = (e.clientY ?? drag.y) - drag.y0;
-  const seat = stopHeight();
-  drag = null;
-  if (Math.abs(dy) < TAP_SLOP) { placeSheet(); return; }
-  // Down past a third of its height: from tall back to the seat, from the
-  // seat away. Up: tall.
-  if (dy > seat * SHEET_DISMISS) { if (tall) tall = false; else { showPanel(null, true); return; } }
-  else if (dy < 0) tall = true;
-  panelEl.classList.toggle('tall', tall);
-  placeSheet();
-};
-handleEl.addEventListener('pointerup', letGo);
-handleEl.addEventListener('pointercancel', letGo);
-
-// The list scrolled to its very top and pulled further down is the sheet
-// being pulled, the way every sheet on a phone works: the touch is taken
-// from the list at that moment (`preventDefault` on the move) and handed to
-// the same drag the handle runs. A pull with the list not at the top just
-// scrolls the list; `overscroll-behavior: contain` on it keeps the page from
-// rubber-banding in its stead. Touch events rather than pointer events,
-// since the list's own scroll cancels the pointer.
-let pull = null;                           // a touch on the list: where it began, and whether the list was at its top
-panelEl.addEventListener('touchstart', e => {
-  if (!panelEl.classList.contains('bottom') || drag) return;
-  const list = e.target.closest?.('.sheet');
-  if (!list) return;
-  const t = e.changedTouches[0];
-  pull = { y0: t.clientY, atTop: list.scrollTop <= 0 };
-}, { passive: true });
-panelEl.addEventListener('touchmove', e => {
-  if (!pull) return;
-  const t = e.changedTouches[0];
-  if (!drag) {
-    if (!pull.atTop || t.clientY - pull.y0 <= 0) { pull = null; return; }   // scrolling the list: not ours
-    drag = { y0: pull.y0, y: t.clientY };
-  }
-  drag.y = t.clientY;
-  e.preventDefault();
-  placeSheet();
-}, { passive: false });
-const pullEnd = e => {
-  if (!pull) return;
-  pull = null;
-  if (drag) letGo({ clientY: e.changedTouches[0]?.clientY });
-};
-panelEl.addEventListener('touchend', pullEnd);
-panelEl.addEventListener('touchcancel', pullEnd);
+const sheetRect = () => seat.rect();
 listBackEl.addEventListener('click', () => showCrewList(false));
 
-// For the checks: which stop the sheet stands at, and how tall that is.
-export const sheetStop = () => (panelEl.classList.contains('bottom') ? { tall, height: sheetHeight, rect: sheetRect() } : null);
+// For the checks: which stop the sheet stands at, how tall that is, and
+// the rail's reading.
+export const sheetStop = () => seat.stop();
+export const sheetRail = () => seat.rail();
 
 // --- the call to build the bench ----------------------------------------------
 // The one button on this page that is not on a board; it stands over the bare

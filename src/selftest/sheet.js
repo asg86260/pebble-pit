@@ -6,7 +6,8 @@
 // did. The pips on every board are boxes at a fixed pitch, so at a phone's
 // width no two of them can land on each other.
 
-import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch } from './kit.js';
+import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch, tap } from './kit.js';
+import { workOn } from '../works.js';
 import { SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_RAIL_W } from '../config.js';
 import { S } from '../state.js';
 import { sheetRail } from '../board.js';
@@ -37,15 +38,31 @@ const settled = async () => { await sleep(SHEET_MS + 60); await frames(2); };
 
 // The handle in hand: a press at its middle, moved `dy` down (up when
 // negative) over a few moves, and let go.
-async function dragHandle(dy) {
-  const r = handle().getBoundingClientRect();
+async function dragHandle(dy, el = handle()) {
+  const r = el.getBoundingClientRect();
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
-  const ev = (type, at, buttons = 1) => handle().dispatchEvent(new PointerEvent(type, {
+  const ev = (type, at, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
     clientX: x, clientY: at, pointerId: 5, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
   ev('pointerdown', y);
   for (let i = 1; i <= 6; i++) { ev('pointermove', y + dy * i / 6); await raf(); }
   ev('pointerup', y + dy, 0);
   await settled();
+}
+
+// A touch that begins somewhere and ends somewhere else, through the pointer
+// events a finger raises: `from` and `to` are page points, and the events go
+// to whatever stands at `from` (the platform's rule for a touch).
+async function stroke(from, to) {
+  const el = document.elementFromPoint(from.x, from.y);
+  const ev = (type, x, y, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
+    clientX: x, clientY: y, pointerId: 9, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true, cancelable: true }));
+  touch('touchstart', el, from.x, from.y, 9);
+  ev('pointerdown', from.x, from.y);
+  for (let i = 1; i <= 6; i++) { const x = from.x + (to.x - from.x) * i / 6, y = from.y + (to.y - from.y) * i / 6; touch('touchmove', el, x, y, 9); ev('pointermove', x, y); await raf(); }
+  ev('pointerup', to.x, to.y, 0);
+  touch('touchend', el, to.x, to.y, 9);
+  await settled();
+  return el;
 }
 
 const rect = () => panel().getBoundingClientRect();
@@ -60,7 +77,8 @@ export const TESTS = [
     const s = state();
     const r0 = rect();
     const fullWidth = Math.abs(r0.width - s.W) <= 2 && r0.left <= 1;
-    const atSeat = Math.abs(r0.top - s.H * SHEET_H) <= 2 && Math.abs(r0.bottom - s.H) <= 1;
+    // the box is the tall stop's, slid down: its top at the seat, its foot below the window
+    const atSeat = Math.abs(r0.top - s.H * SHEET_H) <= 2 && r0.bottom >= s.H - 1;
     const grip = handle().querySelector('.grip').getBoundingClientRect();
     const gripOnTop = Math.abs((grip.left + grip.width / 2) - s.W / 2) <= 2 && grip.top - r0.top < 12;
     const purse = document.getElementById('purse').getBoundingClientRect();
@@ -88,6 +106,88 @@ export const TESTS = [
       ok(tall, 'dragged up past its seat it is tall', `${Math.round(r1.height)} vs ${Math.round(s.H * SHEET_TALL)}`),
       ok(backToSeat, 'dragged down a third from tall it is back at the seat', `top ${Math.round(r2.top)}`),
       ok(gone, 'and down a third from the seat it is gone'),
+    ];
+  }],
+
+  ['a gesture that begins on the sheet is the sheet\'s wherever it ends; a tap outside closes; a drag from the yard buys nothing', async () => {
+    window.__nocine();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    run(0.5);
+    phone(true);
+    window.__board('bench');
+    await settled();
+    const el = list();
+    const r = rect();
+    // a scroll of the rows that lifts 200 px above the sheet: the list has
+    // scrolled and the sheet is still up
+    el.scrollTop = 0;
+    const from = { x: r.left + r.width / 2, y: r.top + 80 };
+    const startedOn = await stroke(from, { x: from.x, y: r.top - 200 });
+    el.scrollTop = 60;                              // the platform's scroll, stood in for
+    await frames(2);
+    const stillUp = !panel().hidden && state().boardOpen;
+    // a tap outside, on the yard above it, closes it
+    const sky = { x: state().W / 2, y: r.top - 120 };
+    await stroke(sky, sky);
+    await frames(2);
+    await sleep(300);
+    const closed = panel().hidden || !state().boardOpen;
+    // a drag that begins on the yard and ends on a row buys nothing
+    window.__board('bench');
+    await settled();
+    const row = document.querySelector('#shop button.tile:not(:disabled):not(.off)');
+    const rr = row.getBoundingClientRect();
+    const had = state().stored;
+    await stroke({ x: state().W / 2, y: rect().top - 120 }, { x: rr.left + rr.width / 2, y: rr.top + rr.height / 2 });
+    await frames(2);
+    const bought = state().stored < had || !!workOn(row.dataset.key);
+    window.__board(null);
+    phone(false);
+    await frames(2);
+    return [
+      ok(startedOn && el.contains(startedOn), 'the scroll began on the rows'),
+      ok(stillUp, 'and lifting the finger over the yard leaves the sheet up, the list scrolled'),
+      ok(closed, 'a tap on the yard above it puts it away'),
+      ok(!bought, 'a drag from the yard that ends on a row buys nothing', `${had} -> ${state().stored}`),
+    ];
+  }],
+
+  ['the settings sheet is a sheet like the boards\': the same gesture reaches the same stops', async () => {
+    window.__nocine();
+    await haveBench();
+    phone(true);
+    // the bench, dragged tall then back, and the transforms it lands on
+    window.__board('bench');
+    await settled();
+    const tf = () => panel().style.transform;
+    const seatBoard = tf();
+    await dragHandle(-160);
+    const tallBoard = tf();
+    await dragHandle(rect().height * SHEET_DISMISS + 30);
+    const backBoard = tf();
+    window.__board(null);
+    await settled();
+    // the settings sheet, the very same gestures on its own handle
+    await tap(document.getElementById('gear'));
+    await frames(2); await sleep(SHEET_MS + 60);
+    const held = document.getElementById('held'), hh = document.getElementById('heldhandle');
+    const seatHeld = held.style.transform;
+    await dragHandle(-160, hh);
+    const tallHeld = held.style.transform;
+    await dragHandle(held.getBoundingClientRect().height * SHEET_DISMISS + 30, hh);
+    const backHeld = held.style.transform;
+    // and pulled down past a third from the seat, it goes -- slid off, no fade
+    await dragHandle(held.getBoundingClientRect().height * SHEET_DISMISS + 30, hh);
+    const gone = held.hidden && !state().paused;
+    phone(false);
+    await frames(2);
+    return [
+      ok(seatBoard === seatHeld, 'both sheets stand at the same seat', `${seatBoard} vs ${seatHeld}`),
+      ok(tallBoard === tallHeld && tallBoard !== seatBoard, 'dragged up, both reach the same tall stop', `${tallBoard} vs ${tallHeld}`),
+      ok(backBoard === backHeld && backBoard === seatBoard, 'and dragged down a third, both come back to the seat', `${backBoard} vs ${backHeld}`),
+      ok(gone, 'and from the seat the same pull puts the settings away'),
     ];
   }],
 

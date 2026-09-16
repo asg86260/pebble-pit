@@ -313,8 +313,7 @@ export function pullOut(site, key) {
 }
 
 // Put one down unfinished, with nothing built and nothing handed back. The lab
-// offers this, and the undo of a purchase just made (upgrades.js, `undoBuy`),
-// which puts the bill back itself.
+// alone offers this.
 export function abandonAt(site, key = null) {
   const list = worksAt(site);
   // `0` for "the first one" of an empty list is a truthy index that splices

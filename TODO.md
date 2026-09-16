@@ -21,12 +21,11 @@ reading one answer for "is this a phone" (`coarse()` in prefs.js off
 `(pointer: coarse)`, with a switch on the settings sheet). Approved: two
 edge arrows when there is a station that way, sheets on a phone only,
 native momentum, undo not confirm. Built on branch `phone-touch`; the
-owner reshaped the scrolling mid-build (the grab bar, below) and added the
-fullscreen button, the skip button, the double-tap and pip fixes, and the
-home-screen install. Left for the owner: the landscape seat of the hop
-arrows (0.42 of a short window is the ground line), and whether a second
-tap inside `UNDO_MS` should undo, since a double tap now buys and takes
-back.
+owner reshaped the scrolling mid-build (the grab bar, below), added the
+fullscreen button, the gear, the skip button, the double-tap and pip fixes
+and the home-screen install, and cut the undo after playing it (2026-09-16:
+the queue already hands a wrong buy back). The one sheet mechanism is
+sheet.js, shared by the boards and the settings.
 
 - **Momentum scrolling.** The platform's, not ours (the owner, 2026-09-15):
   the canvas sits inside a scroller with a spacer the width of the world;
@@ -46,9 +45,9 @@ back.
   and the lean not wired under a coarse pointer, so the first tap is the
   tap; a row buys on a tap (slop and time, `tap.js`, one definition for
   the page) and not on a click, so a scroll never buys; the note on a long
-  press; a wrong buy undone from the tag for `UNDO_MS` rather than
-  confirmed. Checks: `selftest/touch.js`, `test/undo-buy.test.mjs`,
-  `test/hover-gate.test.mjs`.
+  press. The undo from the tag was built, played and cut: a wrong buy is
+  handed back from the queue as it always was. Checks: `selftest/touch.js`,
+  `test/hover-gate.test.mjs`, `test/queue.test.mjs`.
 - **Boards as bottom sheets.** On a phone a board is a full-width sheet
   from the bottom, top at `SHEET_H` (0.55) with a handle, three stops
   (down, seat, `SHEET_TALL`), the purse along its top edge inside it, the
