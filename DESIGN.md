@@ -772,6 +772,94 @@ the middle and a hoist's height can each move a strike without a recipe of
 their own (`SND_PEG_CENTS`, `SND_BIN_CENTS`, `SND_HOIST_CENTS`). The peg's
 recipe is the rock's hit cut short. Nobody has listened to it yet.
 
+## The stake is a heap you carry (design, not built; 2026-09-16)
+
+**The chip row is a menu, and nothing else in this yard is bought from a
+menu.** You pick ◾ 10, 100, 1,000 or *all in* from a dial, pick a coin from
+another, press a third row, and sand falls out of the sky. Every other thing
+you do here you do *to the yard* -- swing at the rock, sweep the dust, throw a
+pebble in the pit, pick a body up and put it down -- and the one place that
+is supposed to feel like putting your money on the table is the one place
+you do it through a board. The owner's ask: **premade piles of the coins
+stand beside the casino, and you drag a pile into the hopper to raise the
+stake.**
+
+**The piles.** To the right of the casino, on the ground, a row of heaps: for
+each coin the yard has handed out (dust always; shards and spores once the
+quarry and the farm stand), three heaps in the chip sizes -- ◾ 10, 100 and
+1,000 -- and beside them one bigger heap marked with the *all in* glyph that
+is the whole purse. Each heap is a real plot of sand at the table's own band
+ladder, so the thousand is visibly bigger than the hundred and the all-in is
+the biggest thing on the ground; a heap the purse cannot cover is not there
+(the ground is bare where it would stand), so what you can stake is what you
+can see. The row is `CASINO_STAKES` -- the list `CASINO_CHIPS` is today, a
+heap per entry per coin -- laid out from the building's right wall at
+`STAKE_GAP` cells apart, dust nearest.
+
+**Picking one up.** The same gesture as lifting a body: the right button held
+on a desk, and on a phone a finger that lands on a heap -- claimed the way a
+finger on dust is claimed, so it never scrolls. The heap comes up off the
+ground under the pointer as a carried heap (the yard already draws a carried
+body under the pointer; a carried heap is the same seat drawing a small
+mound), the ground where it stood goes bare, and while it is carried the
+hopper's rim is marked. Let it go over the hopper and it pours in: the heap
+under the pointer drains grain by grain into the hopper the way the stake
+rains in today, and the counter moves as each lands -- **nothing teleports;
+the stake still walks**. In the hopper it stands at the handful's scale (the
+bowl holds `min(stake, CASINO_HANDFUL)` grains, since everything in the bowl
+goes down the board). Let it go anywhere else and it goes back where it came
+from, the same arc back to its spot. The chip rows go: `chip`, `stakedust`,
+`stakeshard`, `stakespore` come off the board; `letgo`, `bank` and `ride`
+stay, and `letgo` carries the pot as now.
+
+**Raising the stake.** A second heap dropped in adds to the pot standing in
+the hopper -- that is the whole point of the ask -- so the stake is however
+many heaps you carried over before you let it go. One coin a hand, as now: the
+first heap sets the hand's coin, and a heap of another coin let go over the
+hopper is refused -- it bounces off the rim and arcs back to its spot, with
+the dud knock -- until the hand is banked. **Taking it back:** a pot standing
+in the hopper, before the let-go, can be lifted out again -- the same lift on
+the hopper's heap picks up the whole pot as a carried heap, and dropping it
+anywhere on the ground returns it to the purse (it arcs to the hole the way
+banking does; the counter moves as it lands). So a wrong drop is undone by
+the same gesture, and no row says *take it back*.
+
+**The piles refill from the purse.** They are pictures of what you can afford,
+not a stock: the moment a heap is lifted, its spot is bare, and the moment the
+pour finishes and the purse can still cover that size, the heap stands there
+again -- rained in from the sky the way the stake used to rain on to the
+table, so it is seen being put back. The all-in heap resizes with the purse.
+
+**Shut for the same reasons at the same times.** A heap cannot be lifted
+while a hand is pouring, falling, paying or hoisting, and a carried heap when
+the hand shuts (a save, a cutscene) goes back to its spot. On a phone a heap
+under a finger is a carried heap; a tap on one (no movement) does nothing.
+
+### The calls this makes
+
+- **Heaps in the chip sizes, not free amounts.** A heap you could size by
+  dragging out more or less sand would be a slider in disguise; three sizes
+  and all-in are the chips this casino has always sold, and adding heaps is
+  the counting.
+- **One coin a hand, still.** A mixed pot would need a mixed tray and a
+  mixed pay; the refusal at the rim is one rule and it is visible.
+- **The lift gesture is the body's.** One way to pick things up in this yard.
+- **The chip rows go.** A board that also sold chips would be two ways to do
+  one thing.
+
+### What is checked
+
+`test/casino.test.mjs`: the heaps stand only when the purse covers them and
+stand again after a pour; a heap lifted and dropped on the hopper pours the
+pot in to the grain and the purse down by the same; two heaps make one pot
+of their sum; a heap of another coin is refused and returns; the hopper's
+pot lifted out returns the purse; the board has no chip rows and `letgo`
+still plays the hand. Browser tier (`selftest/casino.js`): a synthetic
+right-drag on a desk and a finger-drag on a phone each carry a heap to the
+hopper and stake it; a finger on a heap never scrolls the yard. Scenes:
+`casinostakes` (the row of heaps beside the building), `casinocarry` (a heap
+under the pointer over the rim).
+
 ## Crew
 
 **Everybody is somebody.** A body used to be a slot: the crew was four counts, people were made out

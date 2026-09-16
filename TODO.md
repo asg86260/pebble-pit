@@ -1,5 +1,14 @@
 # Still to do
 
+## The stake is a heap you carry -- DESIGNED, awaiting approval (2026-09-16)
+
+The chip rows go; premade heaps of each coin (10, 100, 1,000, all in) stand
+on the ground to the right of the casino, sized by the band ladder and
+present only when the purse covers them; the body's lift gesture carries one
+to the hopper, where it pours in and adds to the stake; another coin is
+refused at the rim; the hopper's pot can be lifted back out. DESIGN.md, "The
+stake is a heap you carry". Blocked on sign-off.
+
 ## Beats and gates: one table each -- BUILT (the beats 2026-09-15, the gates 2026-09-16)
 
 "Beats and gates: one table each" at the end of DESIGN.md. The story's
