@@ -10581,3 +10581,161 @@ judders; a phone finds its scale through the device-pixel ladder already.
 Landscape gets no rule of its own: every measure above is a share of the
 window, and landscape is a wide short window, which the desk's rules
 already fit.
+
+## Beats and gates: one table each (design, not built)
+
+Seam 8 of "The second pass", and the shape seam 4 takes. Two things that
+look alike from the outside -- "the story happens in order" and "the doors
+open in order" -- and are not: the beats are a sequence, one running at a
+time, and want a machine; the doors are a partial order with facts hung
+off it, and want a dependency table. Building one shape for both would
+force an order on the doors that the game does not have.
+
+### What there is today
+
+The story is three machines and six flags. `intro.js` holds the opening
+and the two later story pieces as a phase string, `S.intro` (`leave`,
+`chat`, `fall`, `down`, `up`, `show`; then `meet`, `part`; then
+`rescue`), dispatched by a nine-`if` chain in `stepIntro`, with skipping
+split between `skipIntro` and `cutIntro` and an "owns the yard" predicate
+listed by hand. `cutscene.js` holds a second machine, `S.cine`, with its own
+`SCENES` table (the tear, the drowning, each shield's answer) and its own
+watch-and-skip. `ending.js` holds a third, one state, gated on both of the
+others. What each has *finished* is six persisted flags -- `introDone`,
+`reunionDone`, `storyTold`, `storyDanced`, `rescued`, `buried` -- and
+persist.js re-derives four of them on load from other facts (`introDone ||
+crew > 0`, `reunionDone ?? boulderNo > 1`, `storyTold` from `rescued`,
+`storyDanced` from `storyTold`).
+
+The doors are thirteen `<place>Open` booleans on `S`, written from sixteen
+files, and each `unlock*` row's `show` (or sticky `once`) is a hand-written
+predicate over them, the ten `seen*` flags, `shieldsDone` and the yard's
+counts. The order farm -> quarry -> tower lives in a map, `BEFORE`, in
+shield.js, and every other door reads its own combination. As the rows
+stand today:
+
+| door | after | needs |
+|---|---|---|
+| bench | -- | something affordable (`canAfford`, raise.js) |
+| props (shield) | the opening | `boulderNo >= PROP_FROM` |
+| farm | props | a core seen, `nearly(FARM_DUST)`; sticky |
+| net (shield) | farm | -- |
+| quarry | net | a core seen |
+| apothecary | farm | a spore seen |
+| shack | -- | `crew > 0`, `nearly(SHACK_DUST)`; sticky |
+| casino | quarry | `boulderNo >= 2` (`invested`) |
+| outhouse | -- | `seenMess`, or five patches lying |
+| arch (shield) | quarry | -- |
+| tower | arch | a core seen |
+| dome (shield) | tower, arch | -- |
+| scrub | -- | a rain, `seenAir`, a machine running |
+| meteor | tower | (the tower's own row) |
+| rift, drowned | -- | the hole's own count (pit.js, rift.js) |
+
+That table is the design. It is not written anywhere today; it is
+reconstructed by reading nine files.
+
+### The beats machine
+
+One registry, `BEATS` in `src/beats.js`, the shape of `STEPS`, `LAYERS` and
+`JOBS`: a row a beat, in the order they may play.
+
+```
+{ key,                    // 'leave', 'chat', ... 'tear', 'props', 'ending'
+  owns: 'yard' | 'camera' | 'sheet',
+  when: () => bool,       // the trigger, watched every frame while not done
+  enter(t), step(t),      // what it does; step returns true while running
+  skip(t),                // the click: finish the fact, release the owner
+  next: key | null }      // a beat that follows straight on (chat -> fall)
+```
+
+`S.beat` is the running beat's key (or null) and `S.beatsDone` the set of
+keys that have played. Those two replace `S.intro`, `S.cine`, `S.cineOwed`,
+`introDone`, `reunionDone`, `storyTold` and `storyDanced`. `rescued` and
+`buried` stay: they are facts about the yard (there is a body under the
+rock), not about the story, and the sim reads them.
+
+What `owns` buys is the rule the three machines keep by hand today: a
+beat that owns the yard stops the crew's own stepping (`introHolds`, now
+`ownsYard()`); a beat that owns the camera is the one thing allowed to
+point it (cutscene.js's rule, unchanged); a beat that owns the sheet pauses
+the frame (the ending). Two beats may run at once only if they own
+different things -- the rescue owns the yard while the dome's answer owns
+the camera, which is exactly the case `SHIELD.over` checks for by hand
+today (`S.intro !== 'rescue'`). A rule in verify.js says so, for every
+group at once.
+
+The rows, from what exists: `leave`, `chat`, `fall`, `down`, `up`, `show`
+(the opening; `when` is a fresh yard, each `next`s to the following);
+`meet`, `part` (the reunion; `when` is the first rock dead); `rescue` (`when`
+is the dome's answer with a body still under); `tear`, `drown` (camera;
+`when` is the gulp starting, as cutscene.js watches it); `props`, `net`,
+`arch`, `dome` (camera; `when` is the rock leaving the sky under a finished
+shield); `ending` (sheet; `when` is `rescued` with nothing else running).
+Skipping is one function, `skipBeat`, and one click.
+
+Saved: `beatsDone` in `SAVED`; `beat` by hand, as `cineOwed` is today -- a
+beat cut short by a reload replays over the event as it now stands, which
+is the rule cutscene.js already keeps. An old save's six flags fold into
+the set on read (`introDone` -> `show` and everything before it;
+`reunionDone` -> `part`; `storyTold` -> `ending`), one line each in
+persist.js under the save floor's dating rule.
+
+Checks: everything that exists (`test/intro*`, `test/cutscene*`,
+`test/endgame*`, `test/shield.test.mjs`, and every group's reload check --
+a save mid-beat is precisely what `reloadCheck` exercises). New,
+`test/beats.test.mjs`: every beat plays once and only once across a reload
+taken mid-beat; any beat skips on a click and the fact it was about still
+lands; the verify.js rule (no two beats with one owner) holds through a
+run of the whole story. `test/persist-roundtrip.test.mjs` goes red for
+the seven fields that leave `S`.
+
+### The gates table
+
+The table above, written down once: `GATES` in `src/gates.js`, a row a
+door.
+
+```
+{ key,                    // 'farm', 'quarry', 'net', 'tower', ...
+  after: [keys],          // doors that must be open first
+  needs: () => bool,      // the yard facts, in the row's own words
+  sticky: bool }          // offered once, stays offered (today's `once`)
+```
+
+Two readers. `open(key)` is whether the door is open -- today the
+`<place>Open` boolean, tomorrow the same fact -- and `offered(key)` is
+`!open(key) && after.every(open) && needs()`, held once seen when
+`sticky`. Every `unlock*` row's `show` becomes `offered(key)` and its
+`buy` sets the door open; the shields' rows read the same two functions;
+`shieldOpened(kind)` becomes `open(the door before it)`, read off the
+table, and `BEFORE` goes. The row for a door and its gate are not the same
+thing: the row is what the bench draws and charges, the gate is when the
+bench may show it.
+
+What stays out: the `seen*` flags. They are first-sight notices, the moment
+the yard has shown you a thing, and they are read by the boards and the
+notices as much as by the gates; they are inputs to `needs`, not doors.
+
+The thirteen booleans: this design reads them through `open()` and does
+not move them. Seam 4 ("A station is a row in a table") is where they
+become one `S.open` set or stay as they are; the gates table is the same
+table's `after`/`needs` columns, so seam 4 and this land as one `STATIONS`
+table with the gate columns on it, and `gates.js` is a name for the two
+readers rather than a second file.
+
+Checks: `test/door-chain.test.mjs` and the two `shop-coverage-*` files, as
+they are. New, `test/gates.test.mjs`: the table is acyclic; every
+`unlock*` row's `show` is `offered` of its own key and nothing else (a row
+with a private predicate is the old shape); for every door, a yard with
+its `after` doors shut is not offered it whatever `needs` says.
+
+### Decisions for the owner
+
+1. **The ending is a beat.** It owns the sheet, and it is the one thing
+   today gated on both other machines by hand. Recommended: yes.
+2. **`buried` and `rescued` stay on `S`.** They are yard facts the crew
+   reads; only story progress moves into `beatsDone`. Recommended: yes.
+3. **Order.** Seam 2 (split `upgrades.js`) first, since the cycle bit
+   seam 1; the gates table lands with seam 4; the beats machine (seam 8)
+   touches intro.js, cutscene.js, ending.js, state.js and persist.js only,
+   and can run in parallel with 2.

@@ -1,5 +1,16 @@
 # Still to do
 
+## Beats and gates: one table each -- DESIGNED (2026-09-15), not built
+
+"Beats and gates: one table each" at the end of DESIGN.md. The story's
+three machines (`S.intro`, `S.cine`, the ending) and six done-flags become
+one `BEATS` registry with `S.beat` and `S.beatsDone`; the thirteen doors'
+hand-written `show` predicates become one `GATES` table (`after`, `needs`,
+`sticky`) read through `open()` / `offered()`, which is seam 4's station
+table with two more columns. Blocker: sign-off on the three decisions at
+the end of the section; then seam 2 first, gates with seam 4, beats in
+parallel.
+
 ## Playing it on a phone -- APPROVED, BUILDING (2026-09-15)
 
 "Playing it on a phone" at the end of DESIGN.md: four asks from the owner,
