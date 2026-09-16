@@ -120,7 +120,7 @@ export const SECTIONS = [
   { title: 'the sky', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'lucky swings', keys: ['critchance', 'critmult'] },
-  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'belt', 'tunebelt'] },
+  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'belt'] },
   { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlocktower',

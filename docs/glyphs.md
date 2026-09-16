@@ -42,7 +42,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | boot            | `haulpace` +up                                                                         |
 | lever           | `auto`, `recycler`, `letgo`                                                            |
 | cart            | `carter`                                                                               |
-| belt            | `belt`, `tunebelt` +plus                                                             |
+| belt            | `belt`                                                                               |
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
 | jaw *           | `jaw`, `tunejaw` +plus                                                               |
 | tiller *        | `tiller`, `tunetiller` +plus                                                         |

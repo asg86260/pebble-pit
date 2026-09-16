@@ -115,7 +115,6 @@ export const ROWS = [
   { key: 'tuneram', part: 1, reach: () => { sites(); window.__machine('ram', { bought: true }); } },
   { key: 'belt', part: 1,
     reach: () => { sites(); window.__levels({ haulCarryLevel: 99, haulPaceLevel: 99 }); window.__kit({ carters: 3 }); } },
-  { key: 'tunebelt', part: 1, reach: () => { sites(); window.__machine('belt', { bought: true }); } },
 
   // --- the tower --------------------------------------------------------------
   { key: 'wizard', part: 2, reach: tower },

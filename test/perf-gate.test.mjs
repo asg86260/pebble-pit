@@ -126,7 +126,6 @@ group('the endgame yard does a frame of work a frame', async () => {
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   for (const k of ['jaw', 'ram', 'tiller', 'belt']) window.__machine(k, { bought: true });
   const ram = S.machines.ram; ram.tune = 12; ram.driven = true;
-  S.machines.belt.tune = 12;
   window.__meteor();
   window.__give(60000);
   const torn = S.riftOpen || window.__buy('rift');

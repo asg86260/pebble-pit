@@ -832,7 +832,7 @@ export const SCENES = {
     run: () => { rich(); lip(); window.__buy('jaw'); window.__buy('tiller');
                  window.__buy('ram'); window.__buy('belt'); window.__jump(30);
                  window.__machine('ram', { driven: true });
-                 for (let i = 0; i < 12; i++) { window.__buy('tuneram'); window.__buy('tunebelt'); }
+                 for (let i = 0; i < 12; i++) { window.__buy('tuneram'); }
                  window.__meteor(); window.__give(60000); window.__buy('rift');
                  for (let i = 0; i < 14; i++) window.__buy('riftrate');
                  window.__fast(20); window.__look(st().pitX - 700); } },

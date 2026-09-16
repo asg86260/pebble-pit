@@ -111,10 +111,10 @@ group('the shop keeps to one grammar per kind', async () => {
   // rule and is named here rather than left to fail silently.
   const exempt = k => casinoKeys.has(k) || k === 'airrate' || k === 'recycler';
 
-  // The four tune rows, held to "tune the X" -- one verb for all four, the
+  // The three tune rows, held to "tune the X" -- one verb for all three, the
   // flavour carried by the note a line below. They are `kind: 'rung'`, so they
   // are found by key rather than by kind.
-  const tuneKeys = new Set(['tuneram', 'tunebelt', 'tunetiller', 'tunejaw']);
+  const tuneKeys = new Set(['tuneram', 'tunetiller', 'tunejaw']);
 
   const machineBad = [];   // kind 'machine' must be "the X"
   const placeBad = [];     // kind 'place' must be "another X"
