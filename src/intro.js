@@ -80,7 +80,10 @@ export function startIntro() {
 // were watching, stood where it stood.
 export function skipIntro(played = true) {
   if (beatDone('show')) return;
-  const from = played || !S.pair.length ? null : S.pair[S.pair.length - 1].x;
+  // The survivor: the one on the right until the rock comes, and first from
+  // then (`crush`), so it is the last that is not marked as under it.
+  const stood = S.pair.filter(b => !b.under);
+  const from = played || !stood.length ? null : stood[stood.length - 1].x;
   if (beatRunning('leave')) arriveChat();
   if (beatRunning('leave') || beatRunning('chat')) crush();
   S.pair = [];
@@ -375,7 +378,12 @@ function say(t) {
 // somebody who was already standing there.
 export function crush() {
   const b = S.pair[1];                         // the one on the right
-  S.pair = b ? [b] : [];                       // the left-hand one is gone
+  const u = S.pair[0];                         // the one on the left, under it
+  // The left-hand one is still standing there while the rock is on its way
+  // down, and goes into the ground on the frame it lands (`stepFall`); the
+  // flung one stays first, which is where every later beat looks for it.
+  if (u) { u.say = null; u.under = true; }
+  S.pair = [b, u].filter(Boolean);
   S.buried = true;
   S.introAt = now();
   makeBoulder(true);                           // out of the sky, on to the spot
@@ -414,6 +422,9 @@ export function stepFall(t) {
   frame(t, 'fall');
   const b = S.pair[0];
   fly(b);
+  // Landed: the one it came down on is under it now, and drawn as the
+  // lodged square from here (`buriedVisible`) rather than as a body.
+  if (!(S.rockFall > 0)) S.pair = S.pair.filter(p => !p.under);
   return S.rockFall > 0 || !(b && b.down);
 }
 
@@ -546,8 +557,12 @@ function finish() {
 // on its way down: a rock exists the instant it is made, seconds before it
 // arrives, and going by "is there a rock" made the square wink out while the
 // next was still in the air.
+// The first rock is the one exception: while it is in the air, the one it is
+// coming down on is still stood there as a body (`crush`), so the lodged
+// square is not drawn until it lands.
 export const buriedVisible = () =>
-  S.buried && (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
+  S.buried && !beatRunning('fall') &&
+  (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
 
 // Where the square lives: the spot every rock lands on. It cannot move.
 export function buriedAt() {
