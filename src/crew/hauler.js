@@ -12,7 +12,7 @@ import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../r
 import { spawnChip, bell, aim } from '../dust.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
-import { haulSpeed, scoopMs, homePace } from '../upgrades.js';
+import { haulSpeed, scoopMs, homePace } from '../levels.js';
 // the stew on a hauler's legs, read per body at every haul walk
 import { speedBoost } from '../apothecary.js';
 import { TYPE } from '../jobs.js';

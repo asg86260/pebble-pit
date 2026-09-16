@@ -4,7 +4,7 @@
 
 import { LOOPOST_SHARDS, LOO_POSTS } from './config.js';
 import { S } from './state.js';
-import { rebalance } from './upgrades.js';
+import { rebalance } from './staffing.js';
 import { registerRows } from './works.js';
 
 export const OUTHOUSE_UPGRADES = [

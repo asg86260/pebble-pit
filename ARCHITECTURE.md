@@ -57,6 +57,23 @@ field or two on `S` and a constant or two in `config.js`.
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
+What was one `upgrades.js` is four files, split by who reads them.
+`levels.js` is what every ladder and every station is worth now (`mineMs`,
+`haulCap`, `commutePace`, `capOf`, `handsOf`, `gangWorth`, `machineRate`,
+`kitFull`): pure functions of `S`, the config, the kit, the machines and the
+world. `staffing.js` is the crew's counts (`JOBS`, `spareHands`, `rebalance`,
+`hire`, `assign`, `restaff`). `words.js` is how a board says a number
+(`MARK`, `purse`, `gainText`, `priceText`, `leftText`, `ordinal`).
+`upgrades.js` keeps the rows and the buying (`UPGRADES`, `SECTIONS`,
+`HOUSE_ROW`, `billOf`, `canPay`, `buy`, `take`). The rule: **the sim -- the
+crew, the stations, `game.js` -- imports `levels.js` and `staffing.js`; only
+the boards import `upgrades.js`.** `levels.js` imports none of
+`upgrades.js`, `shop.js`, `board.js`, `crew.js` or `works.js`, and
+`staffing.js` never rebuilds the shop: a caller that moved a body and wants
+the sheet to say so calls `buildShop()` itself. `node tools/cycles.mjs`
+prints the import rings and `--path a.js b.js` names the chain holding a
+file in one.
+
 ## Adding things
 
 **A new upgrade.** One object in `UPGRADES` in `upgrades.js`, one key in

@@ -1,5 +1,5 @@
 import { S } from '../state.js';
-import { rockhandBite, rockhandRate } from '../upgrades.js';
+import { rockhandBite, rockhandRate } from '../levels.js';
 import { tierRows, named } from './tiers.js';
 
 // The rock's rows. Data only: upgrades.js strings the files together into

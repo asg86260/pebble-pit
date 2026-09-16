@@ -7,7 +7,7 @@ import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
-import { capacity } from './upgrades.js';
+import { capacity } from './levels.js';
 import { buildShop } from './shop.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';

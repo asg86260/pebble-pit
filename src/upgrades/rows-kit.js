@@ -5,7 +5,7 @@ import { kitX } from '../world.js';
 import { stockOf, kitMaxOf } from '../kit.js';
 import { kitDisplaced, machineFor } from '../machines.js';
 import { shieldOpened } from '../shield.js';
-import { rebalance } from '../upgrades.js';
+import { rebalance } from '../staffing.js';
 import { syncWorkers } from '../crew.js';
 
 // The kit rows: a hat for the rock, a lamp for the cut, a brim for the plots, a

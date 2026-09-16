@@ -244,6 +244,9 @@ const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
 export const assign = (job, d = 1) => {
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
   assignJob(job, d);
+  // The roster's move does not rebuild the boards itself (staffing.js);
+  // the board's own button does, so this does too.
+  buildShop();
 };
 
 // Rebuild the boards, for a check that changed the game behind their back.

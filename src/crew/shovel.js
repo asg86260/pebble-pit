@@ -8,7 +8,7 @@ import { S } from '../state.js';
 import { workSpot, muckAtCol, nearestMuck, muckFor, sweepMuckAt, poopCols, colAt,
          MUCK_ELBOW } from '../smog.js';
 import { ways, wayAt, wayOver, keepTo, stepRoute, climbTo, feetOn, inWorking } from '../route.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
 import { rand } from '../rng.js';

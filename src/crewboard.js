@@ -6,7 +6,8 @@
 import { S } from './state.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_CUBE } from './config.js';
-import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
+import { JOB_OF as JOBS_AT } from './levels.js';
+import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showCrewList } from './board.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';

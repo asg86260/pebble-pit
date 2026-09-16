@@ -10,7 +10,8 @@
 
 import { S } from './state.js';
 import { SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
-import { buy, leftText } from './upgrades.js';
+import { buy } from './upgrades.js';
+import { leftText } from './words.js';
 import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';

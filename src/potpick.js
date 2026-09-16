@@ -17,7 +17,7 @@ import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
          tonicGain, tonicOf, tonicShown, canAffordBrew,
          potPreferOf, choosePotPrefer, preferableFor, preferLabel, doseCount } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
-import { MARK, priceText, purse } from './upgrades.js';
+import { MARK, priceText, purse } from './words.js';
 import { screenAt } from './render/frame.js';
 import { JOB } from './jobs.js';
 

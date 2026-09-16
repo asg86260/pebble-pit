@@ -7,7 +7,7 @@ import { at, put, colOf, topRow, isDust } from '../grid.js';
 import { keepTo, stepRoute, wayAt, wayOver, ways, climbTo, feetOn } from '../route.js';
 import { sweepMuckAt } from '../smog.js';
 import { swingFor } from './tenders.js';
-import { haulCap, scoopMs, commutePace } from '../upgrades.js';
+import { haulCap, scoopMs, commutePace } from '../levels.js';
 import { stronger } from '../apothecary.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';

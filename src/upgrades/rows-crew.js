@@ -1,5 +1,5 @@
 import { S } from '../state.js';
-import { haulCap, haulSpeed } from '../upgrades.js';
+import { haulCap, haulSpeed } from '../levels.js';
 import { tierRows, named } from './tiers.js';
 
 // The bench's crew rows. Data only: upgrades.js strings the files together

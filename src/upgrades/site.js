@@ -1,7 +1,7 @@
 import { UNLOCK_SHOW } from '../config.js';
 import { S } from '../state.js';
 import { lookAt } from '../world.js';
-import { assign, rebalance } from '../upgrades.js';
+import { assign, rebalance } from '../staffing.js';
 
 // The shape every "open a place" row on the bench is cut from. It lives here
 // rather than in upgrades.js because the rows files build a site the moment

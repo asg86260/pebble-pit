@@ -6,7 +6,7 @@ import { S } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { inHouse } from '../scrubhouse.js';
-import { JOB_OF } from '../upgrades.js';
+import { JOB_OF } from '../levels.js';
 
 // --- who they are --------------------------------------------------------------
 const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',

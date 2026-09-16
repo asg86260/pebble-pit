@@ -8,7 +8,7 @@ import { addGrain } from '../grid.js';
 import { atStation, blocked } from '../world.js';
 import { standTop, rockTop, ways, footing, solidNear, SOLID } from '../route.js';
 import { restOnRock } from '../rock.js';
-import { JOB_OF } from '../upgrades.js';
+import { JOB_OF } from '../levels.js';
 import { now, frames } from '../clock.js';
 import { settle, retask } from './commute.js';
 

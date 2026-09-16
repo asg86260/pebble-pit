@@ -10,7 +10,7 @@ import { spawnGrit } from '../grit.js';
 import { rand } from '../rng.js';
 import { fallMs } from '../rock.js';
 import { S, floor } from '../state.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace } from '../levels.js';
 import { siteBox } from '../works.js';
 import { duck, stand } from '../crew.js';
 import { onYard, surfaceUnder } from './body.js';

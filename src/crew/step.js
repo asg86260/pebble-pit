@@ -42,7 +42,7 @@ import { dropZone } from '../rock.js';
 import { keepTo, stepRoute, wayOver, solidNear } from '../route.js';
 import { TIDY_ELBOW } from '../tidy.js';
 import { MUCK_ELBOW, colAt, poopCols, muckFloor } from '../smog.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { floatDown } from '../wizard.js';
 import { stopJig, celebrate, MOVE_KEYS } from './dance.js';

@@ -44,4 +44,4 @@ export { pitFree, unbook } from './crew/hole.js';
 export { updateWorkers } from './crew/step.js';
 
 // Lives in upgrades.js so the stations can pace their own long trips with it.
-export { commutePace } from './upgrades.js';
+export { commutePace } from './levels.js';

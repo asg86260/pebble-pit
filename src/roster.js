@@ -8,7 +8,9 @@ import { S, quarry, farm, apothecary, scrub, sky, outhouse, shack } from './stat
 import { groundAt, kitX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
-import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
+import { assign, idle } from './staffing.js';
+import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
+import { buildShop } from './shop.js';
 import { KIT_MARK, TRADE_OF } from './kit.js';
 import { JOB } from './jobs.js';
 import { shown } from './tween.js';
@@ -151,8 +153,8 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(hit(b.less), x, y)) { assign(p.job, -1); return true; }
-    if (inside(hit(b.more), x, y)) { assign(p.job, 1); return true; }
+    if (inside(hit(b.less), x, y)) { assign(p.job, -1); buildShop(); return true; }
+    if (inside(hit(b.more), x, y)) { assign(p.job, 1); buildShop(); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
     // The machine's mark is not a button either (a machine is stopped by
     // taking its tender off, the `-` two rows up), but a click there is not a

@@ -20,7 +20,7 @@ import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX } from '.
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
-import { pickCount, rockhandBite, rockhandMs } from './upgrades.js';
+import { pickCount, rockhandBite, rockhandMs } from './levels.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';

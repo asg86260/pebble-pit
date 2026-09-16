@@ -5,7 +5,7 @@
 import { P, AT_POST, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE, IDLE_ROAM, JANITOR_PROP,
          SPELL_SWEEP } from '../config.js';
 import { outhouse } from '../state.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace } from '../levels.js';
 import { spelled } from '../tower.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';

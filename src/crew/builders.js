@@ -8,7 +8,7 @@ import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
 import { busyBuilderSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn } from '../route.js';
-import { commutePace } from '../upgrades.js';
+import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { now } from '../clock.js';
 import { stopJig, workJig } from './dance.js';

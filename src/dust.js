@@ -8,7 +8,7 @@ import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
-import { scoopMs, haulCap } from './upgrades.js';
+import { scoopMs, haulCap } from './levels.js';
 
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';

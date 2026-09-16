@@ -2,7 +2,8 @@ import { BELT_BILL, RAM_BILL, LADDER } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
-import { kitFull, mineRate, rebalance, capacity, pickCount } from '../upgrades.js';
+import { kitFull, mineRate, capacity, pickCount } from '../levels.js';
+import { rebalance } from '../staffing.js';
 import { tierRows, named } from './tiers.js';
 
 // The bench's bench rows. Data only: upgrades.js strings the files together

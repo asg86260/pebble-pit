@@ -9,7 +9,7 @@ import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
 import { raiseShield, shieldDone } from './shield.js';
 
-import { rebalance } from './upgrades.js';
+import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf } from './works.js';

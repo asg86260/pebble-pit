@@ -6,15 +6,16 @@ import { WORKER } from '../config.js';
 import { S } from '../state.js';
 import { kitX } from '../world.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
-import { JOB_OF, JOBS as ROSTER_JOBS } from '../upgrades.js';
-import { commutePace, homePace } from '../upgrades.js';
+import { JOB_OF } from '../levels.js';
+import { JOBS as ROSTER_JOBS } from '../staffing.js';
+import { commutePace, homePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { JOB_MACHINE, machine, specOf } from '../machines.js';
 import { postOf } from './tenders.js';
 // kitwalk.js borrows four names back off this file; the cycle is fine because
 // neither side reads the other while the modules are being evaluated.
 import { grabHat, kitFree } from './kitwalk.js';
-import { spareKit } from '../upgrades.js';
+import { spareKit } from '../levels.js';
 import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';

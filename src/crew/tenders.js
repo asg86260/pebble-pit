@@ -10,7 +10,7 @@ import { inWorking, keepTo, stepRoute, ways } from '../route.js';
 import { foul } from '../smog.js';
 import { S, floor } from '../state.js';
 import { spelled } from '../tower.js';
-import { JOB_OF, commutePace, machineRate } from '../upgrades.js';
+import { JOB_OF, commutePace, machineRate } from '../levels.js';
 import { walkY } from '../world.js';
 import { TYPE } from '../jobs.js';
 

@@ -12,7 +12,7 @@ import { ASSIGN_PAD, P, WORKER } from '../config.js';
 import { JOB, JOB_OF } from '../jobs.js';
 import { cellPos, rockDown, rockFootY } from '../rock.js';
 import { S } from '../state.js';
-import { roomAt } from '../upgrades.js';
+import { roomAt } from '../levels.js';
 import { retask } from './commute.js';
 import { joinJob } from './kitwalk.js';
 import { lifted } from './pointer.js';

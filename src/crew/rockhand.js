@@ -12,7 +12,7 @@ import { standOn, rockLeft } from '../world.js';
 import { climbTo } from '../route.js';
 import { boulderAlive, knockOff, rockTopY, rockPatch } from '../rock.js';
 import { tidyStep } from '../tidy.js';
-import { rockhandMs, rockhandBite } from '../upgrades.js';
+import { rockhandMs, rockhandBite } from '../levels.js';
 import { speedBoost, stronger } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { rockMuck } from '../smog.js';

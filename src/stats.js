@@ -9,7 +9,7 @@
 
 import { STATS_WINDOW_S, STATS_SAMPLE_S, STATS_FLOOR } from './config.js';
 import { S } from './state.js';
-import { MARK } from './upgrades.js';
+import { MARK } from './words.js';
 import { fmt } from './board.js';
 
 // What the books watch, in board order. Dust is read off `banked` because it
