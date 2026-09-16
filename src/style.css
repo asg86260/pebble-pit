@@ -163,6 +163,53 @@ canvas {
 /* in fullscreen: the corners turned inward, which is a square in the middle */
 #fullscreen[data-on="1"] .frame { border-color: transparent; background: #000; }
 #fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
+/* The gear (gear.js): the same square, beside the fullscreen button or in
+   its spot. The cog is a ring over a cross. */
+#gear {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
+  right: calc(env(safe-area-inset-right, 0px) + var(--fs-inset) + var(--gear-shift, 0px));
+  width: var(--fs-size); height: var(--fs-size);
+  z-index: 4;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #000;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  padding: 0;
+  cursor: pointer;
+}
+#gear .cog {
+  display: block; position: relative; width: 14px; height: 14px; box-sizing: border-box;
+  border: 3px solid #000; border-radius: 50%;
+}
+#gear .cog::before, #gear .cog::after {
+  content: ''; position: absolute; background: #000; left: 50%; top: 50%;
+}
+#gear .cog::before { width: 22px; height: 4px; margin: -2px 0 0 -11px; }
+#gear .cog::after { width: 4px; height: 22px; margin: -11px 0 0 -2px; }
+#gear .cog { background: #fff; background-clip: padding-box; z-index: 0; }
+#gear .cog::before, #gear .cog::after { z-index: -1; }   /* behind the ring: teeth, not a crosshair */
+/* The held sheet as a sheet from the bottom, on a phone (gear.js): the
+   window's width, standing on the foot, scrolling inside, with a grip on
+   its top edge. The desk's centered card is untouched. */
+#held.bottom {
+  left: 0; right: 0; top: auto; bottom: 0;
+  transform: none;
+  width: 100%; box-sizing: border-box;
+  max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain;
+  border: 0; border-top: 2px solid #000;
+  padding-top: 22px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transition: opacity .18s linear, transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
+}
+#held.bottom.dragging { transition: none; }
+#heldgrip { position: absolute; top: 0; left: 0; right: 0; height: 20px; cursor: grab; touch-action: none; }
+#heldgrip::after {
+  content: ''; position: absolute; top: 6px; left: 50%;
+  width: var(--sheet-grip-w, 36px); height: var(--sheet-grip-h, 4px);
+  margin-left: calc(var(--sheet-grip-w, 36px) / -2);
+  background: #000;
+}
 /* a glyph is a canvas too, and the yard-window rule above is undone for it */
 #hop .pic canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block; background: none; cursor: inherit; image-rendering: pixelated; }
 /* Under motion: less the coast is still the platform's -- it is not a glide
@@ -1039,7 +1086,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   position: fixed;
   z-index: 11;
   left: 50%; top: 12px;
-  transform: translate(-50%, -24px);
+  /* --toast-dx: how far off center it stands to clear a building (toast.js) */
+  transform: translate(calc(-50% + var(--toast-dx, 0px)), -24px);
   opacity: 0;
   display: flex;
   flex-direction: column;
@@ -1058,9 +1106,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   transition: opacity .6s linear, transform .3s ease-in;
 }
 /* coming: quick, so it lands rather than seeps in */
-.toast.up { opacity: 1; transform: translate(-50%, 0);
+.toast.up { opacity: 1; transform: translate(calc(-50% + var(--toast-dx, 0px)), 0);
             transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
-.toast.still { transition: none; transform: translate(-50%, 0); }
+.toast.still { transition: none; transform: translate(calc(-50% + var(--toast-dx, 0px)), 0); }
 @media (hover: hover) {
   .toast:hover { color: #000; background: #fff; border-color: #000; outline-color: #fff; }
 
@@ -1722,7 +1770,23 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;                  /* the rows scroll; a sideways drag is nothing */
+  /* a pull past the top is the sheet's (board.js), never the page's rubber band */
+  overscroll-behavior: contain;
+  scrollbar-width: none;                /* the rail below is the bar */
 }
+#panel.bottom > .sheet::-webkit-scrollbar, #panel.bottom .flyout::-webkit-scrollbar { display: none; }
+/* The sheet's scrollbar (board.js, placeRail): a cell-wide track down the
+   right edge inside the safe area, a black thumb the viewport's share of the
+   rows, seated from scrollTop. Shown only while the rows overflow. */
+#panel .rail { display: none; }
+#panel.bottom .rail {
+  display: block; position: absolute;
+  right: calc(var(--sheet-rail-inset, 4px) + env(safe-area-inset-right, 0px));
+  width: var(--sheet-rail-w, 6px);
+  background: #fff; border: 1px solid #000; box-sizing: border-box;
+  pointer-events: none;
+}
+#panel.bottom .rail .thumb { position: absolute; left: 0; right: 0; top: 0; background: #000; }
 /* the board's own title is the handle's now */
 #panel.bottom .page .title { display: none; }
 /* The crew list as a page inside the sheet: the board's rows step aside for
@@ -1730,7 +1794,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #panel.bottom .flyout {
   position: static; flex: 1 1 auto; min-height: 0;
   width: 100%; max-width: none; margin: 0;
-  border: 0; overflow-y: auto;
+  border: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
   opacity: 1; transform: none; transition: none;
 }
 #panel.bottom.listing > .sheet:not(.flyout) { display: none; }

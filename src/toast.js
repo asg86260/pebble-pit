@@ -15,6 +15,8 @@ import { cutsceneRunning } from './cutscene.js';
 import { reducedMotion } from './prefs.js';
 import { hold } from './input.js';
 import { showPane } from './settings.js';
+import { STATIONS, standRect } from './board.js';
+import { houseRect } from './crewboard.js';
 
 const el = document.getElementById('toast');
 const nameEl = el.querySelector('.name');
@@ -56,6 +58,8 @@ function show(key) {
   // `hidden` off and `up` on in the same style pass would skip the slide, so
   // the layout is read once between them.
   void el.offsetWidth;
+  seatX = null;
+  seatToast();
   el.classList.add('up');
 }
 
@@ -72,6 +76,47 @@ el.addEventListener('transitionend', () => {
   if (!el.classList.contains('up')) el.hidden = true;
 });
 
+// Where the card stands: the top edge, centered -- unless a building reaches
+// into that sky, as the settlement does once it is a few storeys tall in a
+// short window (a phone on its side), in which case the card slides sideways
+// to the clearer side of it, inside the glass. Asked every frame the card is
+// up, since the view moves under it; written only when the answer changes.
+// The buildings are the stations' own rectangles, read through the same
+// door the boards use, so a new station is dodged without being named.
+let seatX = null;
+function seatToast() {
+  const w = el.offsetWidth, h = el.offsetHeight;
+  if (!w) return;
+  const top = 12, left0 = (S.W - w) / 2;
+  const box = { x: left0, y: top, w, h };
+  const rects = STATIONS.map(standRect).filter(Boolean);
+  if (S.crew > 0) rects.push(houseRect());
+  const onScreen = r => ({ x: (r.x - S.camX) * S.zoom, y: (r.y - S.camY) * S.zoom, w: r.w * S.zoom, h: r.h * S.zoom });
+  const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  // and the two squares in the corner (fullscreen.js, gear.js), which are
+  // the page's, already on the glass
+  const boxes = rects.map(onScreen);
+  for (const id of ['gear', 'fullscreen']) {
+    const b = document.getElementById(id);
+    if (b && !b.hidden) { const r = b.getBoundingClientRect(); boxes.push({ x: r.left, y: r.top, w: r.width, h: r.height }); }
+  }
+  let x = left0;
+  for (const r of boxes) {
+    if (!meets(box, r)) continue;
+    // to whichever side of the building has the room, and only if it has it
+    const leftOf = r.x - 8 - w, rightOf = r.x + r.w + 8;
+    if (rightOf + w <= S.W - 8 && (leftOf < 8 || S.W - rightOf >= r.x)) x = rightOf;
+    else if (leftOf >= 8) x = leftOf;
+    box.x = x;
+  }
+  const at = Math.round(x + w / 2);
+  if (at === seatX) return;
+  seatX = at;
+  // As an offset on the transform, not a `left`: a fixed box given a left and
+  // no right shrinks to the room past it, and the words folded.
+  el.style.setProperty('--toast-dx', `${Math.round(at - S.W / 2)}px`);
+}
+
 // Once a frame, from `frame()` in main.js, on the game's clock: a held game
 // holds the card, and a check sees it on the game's seconds.
 export function stepToast() {
@@ -83,6 +128,7 @@ export function stepToast() {
   if (up) {
     // said its piece, or says a notice the record no longer has
     if (!S.won.includes(up) || t - upAt >= TOAST_MS) hide();
+    else seatToast();
     return;
   }
   const next = pending();
@@ -97,3 +143,5 @@ export function stepToast() {
 export const toastUp = () =>
   up ? { key: up, name: nameEl.textContent, note: noteEl.textContent } : null;
 export const toastWaiting = () => pending().length;
+// and where the card stands, for a check that it is over clear sky
+export const toastRect = () => (up ? el.getBoundingClientRect() : null);

@@ -6,9 +6,28 @@
 // did. The pips on every board are boxes at a fixed pitch, so at a phone's
 // width no two of them can land on each other.
 
-import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation } from './kit.js';
-import { SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS } from '../config.js';
+import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch } from './kit.js';
+import { SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_RAIL_W } from '../config.js';
 import { S } from '../state.js';
+import { sheetRail } from '../board.js';
+
+// The list of rows inside the sheet, the thing that scrolls.
+const list = () => panel().querySelector(':scope > .sheet:not(.flyout)');
+
+// A finger on the list, pulled `dy` down over a few moves and lifted: the
+// platform would scroll the list; the game takes the pull for the sheet only
+// when the list is at its top.
+async function pullList(dy) {
+  const el = list();
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width / 2, y = r.top + 20;
+  touch('touchstart', el, x, y, 6);
+  let prevented = false;
+  for (let i = 1; i <= 6; i++) { prevented = touch('touchmove', el, x, y + dy * i / 6, 6) || prevented; await raf(); }
+  touch('touchend', el, x, y + dy, 6);
+  await settled();
+  return prevented;
+}
 
 const phone = on => window.__coarse(on ? true : null);
 const panel = () => document.getElementById('panel');
@@ -69,6 +88,78 @@ export const TESTS = [
       ok(tall, 'dragged up past its seat it is tall', `${Math.round(r1.height)} vs ${Math.round(s.H * SHEET_TALL)}`),
       ok(backToSeat, 'dragged down a third from tall it is back at the seat', `top ${Math.round(r2.top)}`),
       ok(gone, 'and down a third from the seat it is gone'),
+    ];
+  }],
+
+  ['the list pulled down from its top pulls the sheet down; scrolled, it only scrolls', async () => {
+    window.__nocine();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    run(0.5);
+    phone(true);
+    window.__board('shack');
+    await settled();
+    const el = list();
+    const overflows = el.scrollHeight > el.clientHeight + 1;
+    const contain = getComputedStyle(el).overscrollBehaviorY;
+    // scrolled a little: a pull is the list's, and the sheet stays
+    el.scrollTop = 40;
+    await raf();
+    const took1 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const stayed = !panel().hidden;
+    // back at the top: the same pull is the sheet's, through its stops
+    el.scrollTop = 0;
+    await raf();
+    const took2 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const gone = panel().hidden;
+    phone(false);
+    await frames(2);
+    return [
+      ok(overflows, 'the shack board has more rows than the seat shows'),
+      ok(contain === 'contain', 'the list keeps its overscroll to itself', contain),
+      ok(!took1 && stayed, 'pulled with the list scrolled, the sheet stays', `took ${took1}`),
+      ok(took2 && gone, 'pulled from the very top, the sheet goes', `took ${took2}, hidden ${gone}`),
+    ];
+  }],
+
+  ['the sheet draws its own scrollbar while the rows overflow, and none when they fit', async () => {
+    window.__nocine();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    run(0.5);
+    const out = { long: null, fits: null };
+    await asScreen(390, 844, 3, async () => {
+      phone(true);
+      window.__board('bench');
+      await settled();
+      const el = list();
+      const rail = sheetRail();
+      out.long = { over: el.scrollHeight > el.clientHeight + 1, rail, share: el.clientHeight / el.scrollHeight,
+                   inside: rail && rail.track.right <= rect().right + 1 && rail.track.top >= rect().top - 1 && rail.track.bottom <= rect().bottom + 1 };
+      // scrolled to the foot, the thumb is at the foot
+      el.scrollTop = el.scrollHeight;
+      await frames(2);
+      const r2 = sheetRail();
+      out.long.atFoot = r2 && Math.abs(r2.thumb.bottom - r2.track.bottom) <= 2;
+      // a board that fits: the books, one ledger, at the tall stop
+      window.__board('stats');
+      await settled();
+      await dragHandle(-200);
+      const el2 = list();
+      out.fits = { over: el2.scrollHeight > el2.clientHeight + 1, rail: sheetRail() };
+      window.__board(null);
+      phone(false);
+    });
+    const ratio = out.long.rail ? out.long.rail.thumb.height / out.long.rail.track.height : 0;
+    return [
+      ok(out.long.over && !!out.long.rail, 'the bench overflows and wears a rail', `over ${out.long.over}`),
+      ok(out.long.rail && Math.abs(ratio - out.long.share) * out.long.rail.track.height <= SHEET_RAIL_W,
+         'the thumb is the viewport\'s share of the rows, within a cell', `${ratio.toFixed(3)} vs ${out.long.share.toFixed(3)}`),
+      ok(!!out.long.inside, 'and stands inside the sheet'),
+      ok(!!out.long.atFoot, 'scrolled to the foot, the thumb is at the foot'),
+      ok(out.fits && !out.fits.over && out.fits.rail === null, 'a board that fits wears none', `over ${out.fits && out.fits.over}`),
     ];
   }],
 

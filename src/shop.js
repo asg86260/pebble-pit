@@ -609,10 +609,11 @@ export function refresh(el, list, headcount) {
         // third in the list and next in line.
         sayHTML(price, '');
         // For a moment after the press the tag is the way back (DESIGN.md,
-        // "A tap buys"): a tap on it puts the bill back. The clock takes
+        // "A tap buys"): a tap on it puts the bill back -- one word, since a tag
+        // is one word and a sentence ran off the card. The clock takes
         // over when the moment is up.
         const undo = undoable(u);
-        sayHTML(time, undo ? '<span class="have">bought -- tap to undo</span>'
+        sayHTML(time, undo ? '<span class="have">undo</span>'
                      : `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
