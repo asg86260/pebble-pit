@@ -11,8 +11,10 @@
 
 // What goes on the roof is what you hold the arm for: pebbles pour out of
 // the purse into the funnel for as long as the arm is held, a slice of what
-// you own a second -- never less than a floor, so the shortest tap stakes a
-// real handful -- and the pile is the stake. See DESIGN.md, "The pour".
+// you own a second -- the purse as it stood at the press, held flat, so a
+// hold empties it in 1/POUR_SHARE seconds rather than crawling; never less
+// than a floor, so the shortest tap stakes a real handful -- and the pile is
+// the stake. See DESIGN.md, "The pour".
 export let POUR_SHARE = 0.05;             // of the purse, a second
 export let POUR_MIN = 16;                 // pebbles a second, at least
 

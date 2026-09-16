@@ -217,6 +217,7 @@ export const S = {
   // adds up (`stepHold` in casino.js).
   holding: false,
   pourAcc: 0,
+  pourAt: 0,              // the rate this hold pours at, read off the purse when the arm was pressed
   // The stake is still raining into the funnel. Nothing can be dropped until
   // the heap has stopped moving. See `pouring` in casino.js.
   pouring: false,
@@ -660,7 +661,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'pourAcc',
+  'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'pourAcc', 'pourAt',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',

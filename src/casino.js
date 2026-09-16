@@ -86,8 +86,11 @@ export const purseOf = () => S.stored;
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 
 // The hold. While the arm is held, pebbles pour out of the purse into the
-// funnel at `POUR_SHARE` of the purse a second, never less than `POUR_MIN`
-// a second and never past what the purse holds: the stake grows by whole
+// funnel at `POUR_SHARE` of the purse a second -- the purse as it stood when
+// the arm was pressed, held flat for the whole hold, so a purse empties in
+// 1/POUR_SHARE seconds rather than crawling as a share of what is left; a
+// second hold reads the purse again -- never less than `POUR_MIN` a second
+// and never past what the purse holds: the stake grows by whole
 // pebbles as the fraction adds up, the funnel rains in toward its picture
 // of the stake (`trickleIn`), and each grain of the rain carries its share,
 // spent out of the purse as it lands (`spendStake`). So the purse is never
@@ -99,13 +102,14 @@ export function holdArm(on) {
   if (on === !!S.holding) return true;
   S.holding = !!on;
   S.pourAcc = 0;
+  S.pourAt = on ? Math.max(POUR_SHARE * purseOf(), POUR_MIN) : 0;
   if (on) { stopAttract(); S.hand = null; }
   // let go, the arm springs back up over its swing
   else S.leverPulled = { key: 'casino-gate', at: now() - LEVER_SWING_MS };
   S.shopStale = true;
   return true;
 }
-export const pourRate = () => Math.max(POUR_SHARE * purseOf(), POUR_MIN);
+export const pourRate = () => S.holding ? S.pourAt : Math.max(POUR_SHARE * purseOf(), POUR_MIN);
 function stepHold(dt) {
   if (!S.holding) return;
   if (!canHold()) { holdArm(false); return; }

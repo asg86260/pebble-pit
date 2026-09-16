@@ -104,10 +104,15 @@ group('the arm held pours a share of the purse a second, whole pebbles, and stop
   settled();
   const stood = state();
   // and held on until there is nothing left: the purse is poured to zero
-  // and not past it
+  // and not past it, at the rate the purse set when the arm was pressed,
+  // flat for the whole hold -- a share of what is left would crawl
   hold(true);
-  let least = held;
-  for (let f = 0; f < 60 * 60 && state().holding; f++) { run(1 / 60); least = Math.min(least, state().stored); }
+  const left = stood.stored, again = state().pourRate;
+  let least = held, frames = 0, later = 0;
+  for (; frames < 60 * 60 && state().holding; frames++) {
+    run(1 / 60); least = Math.min(least, state().stored);
+    if (frames === 60 * 5) later = state().pourRate;
+  }
   const dry = state();
   hold(false);
   settled();
@@ -125,7 +130,11 @@ group('the arm held pours a share of the purse a second, whole pebbles, and stop
     ok(stood.table === shownFor(stood.pot.stake), 'the pile in the funnel is the stake at the band', `${stood.table}`),
     ok(!dry.holding && dry.pot.stake + dry.pot.owed >= held - 1 && least >= 0 && end.stored === 0 && end.pot.stake === held,
        'held on, the arm lets go on its own at the last pebble and the purse is never below zero',
-       `${end.stored} left, stake ${end.pot.stake} of ${held}, lowest ${least}`)
+       `${end.stored} left, stake ${end.pot.stake} of ${held}, lowest ${least}`),
+    ok(again === Math.max(POUR_SHARE * left, POUR_MIN) && later === again,
+       'the second hold reads the purse again and holds that rate flat', `${again} at the press, ${later} five seconds in`),
+    ok(Math.abs(frames / 60 - left / again) < 0.5,
+       "so the purse empties in the share's time, not a crawl", `${(frames / 60).toFixed(1)} s for ${left} at ${again} a second`)
   ];
 }, { reload: false });
 

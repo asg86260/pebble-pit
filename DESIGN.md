@@ -1025,6 +1025,16 @@ counted rather than read off the clock, so a step that changes length with
 the dust runs on rather than jumping, and the grains a second is read off
 the bowl's count between frames, smoothed.
 
+**The rate is set when the arm is pressed, and held flat.** Five per cent
+of what is left, read every frame, is a decay: the first second pours fifty
+of a thousand and the twentieth pours nineteen, and a long hold crawls
+toward a purse it never empties. Played on the phone that read as the
+machine tiring. The hold reads the purse once, at the press
+(`S.pourAt`), and pours that many a second until it lets go or the purse is
+dry, so a purse empties in `1/POUR_SHARE` seconds however long it stood; a
+second hold reads the purse again, so the share is still of what you own,
+and `POUR_MIN` still floors it.
+
 ## The stake is a heap you carry, and the casino has no board (built and cut 2026-09-16)
 
 *Cut the same day, the whole of it -- the heaps, the sweep, the tap, the
