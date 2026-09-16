@@ -7,10 +7,10 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, BIN_COLS } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, binLeft, slotW } from '../casino.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
-         HOPPER_H, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_W, BIN_H, LABEL_H, TRAY_H,
+         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS } from '../config.js';
@@ -44,12 +44,13 @@ const GLYPH = {
 };
 const WORD = 'CASINO';
 const GLYPH_H = 5, GLYPH_W = 7, GLYPH_GAP = 1, SIGN_PAD = 2;
-// Across the front in one word. Six letters and five gaps come to forty-seven
-// cells, which is one more than the board's inner width can center on a
-// building an even number of cells wide -- so the gap in the middle of the
-// word is two, and the handful falls through it.
+// Across the front in one word, the building's own width. Six letters and
+// five gaps come to forty-seven cells, one more than can center on a building
+// an even number of cells wide -- so the gap in the middle of the word is two,
+// and the handful falls through it; the rest of the width is air either side.
 const MID_GAP = 2;
-const SIGN_W = WORD.length * GLYPH_W + (WORD.length - 1) * GLYPH_GAP + (MID_GAP - GLYPH_GAP) + SIGN_PAD * 2;
+const SIGN_MIN = WORD.length * GLYPH_W + (WORD.length - 1) * GLYPH_GAP + (MID_GAP - GLYPH_GAP) + SIGN_PAD * 2;
+const SIGN_W = Math.max(SIGN_MIN, BOARD_COLS + CASINO_MARGIN * 2);
 const signX = () => casino.x + casino.w / 2 - (SIGN_W * P) / 2;
 const signY = () => casino.y + (HOPPER_H + GATE_H) * P;
 
@@ -63,9 +64,9 @@ function drawSign() {
   ctx.strokeStyle = '#000';
   ctx.strokeRect(x, y, w * P, h * P);
 
-  // the word, along the board
+  // the word, along the board, centered
   ctx.fillStyle = '#000';
-  let left = SIGN_PAD;
+  let left = (SIGN_W - SIGN_MIN) / 2 + SIGN_PAD;
   WORD.split('').forEach((ch, n) => {
     const rows = GLYPH[ch];
     for (let r = 0; r < GLYPH_H; r++)
@@ -99,6 +100,8 @@ function drawSign() {
   });
 }
 const CHASE_EVERY = 4;           // how many dark bulbs stand between the lit
+const PEG_SHADE = SHADES[0];     // a peg: the lightest grey the yard has, so a grain reads over it
+const TRAIL_SHADE = SHADES[1];   // and the cell a falling grain just left
 
 // every cell round the border of the sign, in order, so a light walking the
 // list walks the edge
@@ -134,6 +137,10 @@ const DIGIT = {
   // tried at this size and read as a zero, which on a bin is the one thing it
   // must not say.
   '.': ['0', '0', '0', '0', '1'],
+  // and a half in one glyph, for a three-cell foot: a five two cells wide,
+  // which is the one digit that still reads at two, and the point beside its
+  // foot, a row up so the two do not run into one shape
+  'h': ['011', '010', '011', '101', '011'],
   // times: the mark before a multiple
   'x': ['000', '101', '010', '101', '000']
 };
@@ -154,50 +161,22 @@ function drawWord(s, x, y) {
 }
 
 // --- the bins' pay --------------------------------------------------------------
-// One row of labels, one under each bin, centered on the bin's slot. A single
-// digit is three cells and sits under its slot exactly; the two-digit 39 at
-// the edges stacks its digits, a cell of air between, down the eleven rows the
-// band gives it, and the single digits stand centered on the same middle row.
-// The three half bins in the middle share one label -- they are one region of
-// the board, and priced as one -- with a bracket over the three saying so.
-const LABEL_TOP = 1;                                     // under the floor line
-const STACK_H = DIGIT_H * 2 + 1;
-const SINGLE_TOP = LABEL_TOP + Math.floor((STACK_H - DIGIT_H) / 2);
-const LABELS = (() => {
-  const out = [];
-  const n = CASINO_BINS.length, mid = Math.floor(n / 2);
-  const text = m => m === 0.5 ? '.5' : String(m);
-  for (let b = 0; b < n; b++) {
-    const m = CASINO_BINS[b], s = text(m);
-    if (m === 0.5 && b !== mid) continue;
-    const slot = b * BIN_W + (BIN_COLS - 1) / 2;         // the slot's middle column
-    if (m === 0.5) {
-      // the shared half, and the bracket over the three bins it stands for
-      const from = CASINO_BINS.indexOf(0.5), to = CASINO_BINS.lastIndexOf(0.5);
-      out.push({ word: s, col: slot - (wordW(s) - 1) / 2, row: SINGLE_TOP,
-                 bracket: [from * BIN_W, to * BIN_W + BIN_COLS - 1] });
-    } else if (s.length > 1) out.push({ stack: s.split(''), col: slot - 1, row: LABEL_TOP });
-    else out.push({ word: s, col: slot - 1, row: SINGLE_TOP });
-  }
-  return out;
-})();
+// What each bin pays, in the bin's own foot: the dividers run on down through
+// the band, so it is a row of table cells, one under each bin, and a pay can
+// only be read as belonging to the bin over it. A digit is three cells and an
+// inner slot is three; the edge bins' 39 is seven, and their slots are cut
+// that wide for it. The half bins each wear their own half, in one glyph.
+const LABEL_ROW = 2;                                     // under the floor line and a clear row
+const labelOf = m => m === 0.5 ? 'h' : String(m);
 
 function drawLabels(fx, fy) {
-  ctx.fillStyle = '#000';
   const top = fy + (FIELD_H + BIN_H) * P;
-  for (const l of LABELS) {
-    const x = fx + l.col * P;
-    if (l.stack) l.stack.forEach((ch, i) => drawDigit(ch, x, top + (l.row + i * (DIGIT_H + 1)) * P));
-    else drawWord(l.word, x, top + l.row * P);
-    if (l.bracket) {
-      // a line across the three, a cell under the floor, with a tick down at
-      // each end: the label under it is theirs together
-      const [a, b] = l.bracket;
-      ctx.fillRect(fx + a * P, top + (LABEL_TOP + 1) * P, (b - a + 1) * P, P);
-      ctx.fillRect(fx + a * P, top + (LABEL_TOP + 2) * P, P, P);
-      ctx.fillRect(fx + b * P, top + (LABEL_TOP + 2) * P, P, P);
-    }
-  }
+  ctx.fillStyle = '#000';
+  CASINO_BINS.forEach((m, b) => {
+    const word = labelOf(m);
+    const col = binLeft(b) + (slotW(b) - wordW(word)) / 2;
+    drawWord(word, fx + col * P, top + LABEL_ROW * P);
+  });
 }
 
 // --- the building -------------------------------------------------------------
@@ -214,8 +193,13 @@ export function drawCasino() {
     // `drawPotPile` over the sky, because that is where it stands.
     ctx.fillStyle = '#000';
     ctx.fillRect(x, y + HOPPER_H * P, w, h - HOPPER_H * P);
-    ctx.fillRect(x, y, P, HOPPER_H * P);
-    ctx.fillRect(x + w - P, y, P, HOPPER_H * P);
+    // The funnel: the walls step in a row at a time along `HOPPER_PROFILE`,
+    // the building's own wall plus the inset, so the bowl the heap sits in is
+    // the shape the sand rules see.
+    HOPPER_PROFILE.forEach((inset, r) => {
+      ctx.fillRect(x, y + r * P, (1 + inset) * P, P);
+      ctx.fillRect(x + w - (1 + inset) * P, y + r * P, (1 + inset) * P, P);
+    });
 
     // The floor, open: it splits from the middle over `CASINO_GATE_MS`, the
     // middle cell first and then the one either side, and the hole shows white
@@ -232,18 +216,21 @@ export function drawCasino() {
 
     // The face: a white board knocked out of the block, the way the wheel's
     // disc was, a wall in from each side, running from the air the stream fans
-    // in down through the pegs and the bins to the labels.
+    // in down through the pegs and the bins to their feet.
     ctx.fillStyle = '#fff';
     ctx.fillRect(x + P, f.y, w - 2 * P, (FIELD_H + BIN_H + LABEL_H) * P);
 
     // The pegs: row k has k + 1 of them, one under each seat a grain can reach,
-    // so the odds are the picture. A peg on the beat is a hit: it throws a
-    // spark -- its four corners lit for a frame or two -- with the grain
-    // sitting black on top of it.
-    ctx.fillStyle = '#000';
+    // so the odds are the picture. A mid grey, not black: the falling grains
+    // are the figure and the pegs are the ground, and black pegs under black
+    // grains made a stream that vanished into the triangle. A peg on the beat
+    // is a hit: it throws a spark -- its four corners lit black for a frame or
+    // two -- with the grain sitting black on top of it.
+    ctx.fillStyle = PEG_SHADE;
     for (let k = 0; k < CASINO_PEG_ROWS; k++)
       for (let c = 0; c < BOARD_COLS; c++)
         if (hasPeg(k, c)) ctx.fillRect(f.x + c * P, f.y + pegRow(k) * P, P, P);
+    ctx.fillStyle = '#000';
     if (mayFlash()) {
       for (const p of S.tableFx.pegs || []) {
         if (t - p.at >= CASINO_FLASH_MS) continue;
@@ -252,28 +239,34 @@ export function drawCasino() {
       }
     }
 
-    // The bins: eleven slots three cells wide with a cell of wall between,
-    // and a floor under the lot. A x39 bin goes black for a beat when a grain
-    // lands in it -- and, without the sound, when a grain one coin off falls
-    // inward instead.
-    const binTop = f.y + FIELD_H * P;
+    // The bins: eleven slots with a cell of wall between, the dividers running
+    // on down through the feet the pays are written in, a floor line between
+    // slot and foot, and the tray's rim under the lot. A x39 bin goes black for
+    // a beat when a grain lands in it -- and, without the sound, when a grain
+    // one coin off falls inward instead.
+    const binTop = f.y + FIELD_H * P, footTop = binTop + BIN_H * P;
     const e = S.tableFx.edge;
     if (e && mayFlash() && t - e.at < CASINO_FLASH_MS) {
       ctx.fillStyle = '#000';
-      ctx.fillRect(f.x + e.side * BIN_W * P, binTop, BIN_COLS * P, BIN_H * P);
+      ctx.fillRect(f.x + binLeft(e.side) * P, binTop, slotW(e.side) * P, BIN_H * P);
     }
+    // The dividers are a cell through the bins and a rule through the feet: a
+    // three-cell digit in a three-cell foot has no air from a cell-wide wall,
+    // and a digit touching the wall on both sides is a barcode.
     ctx.fillStyle = '#000';
-    ctx.fillRect(f.x - P, binTop, P, BIN_H * P);
-    for (let b = 0; b < CASINO_BINS.length; b++)
-      ctx.fillRect(f.x + (b * BIN_W + BIN_COLS) * P, binTop, P, BIN_H * P);
-    ctx.fillRect(x + P, binTop + BIN_H * P, w - 2 * P, P);
+    const rule = Math.max(1, P / 3), footH = (LABEL_H - 1) * P;
+    const divider = cx => {
+      ctx.fillRect(cx, binTop, P, BIN_H * P);
+      ctx.fillRect(cx + (P - rule) / 2, footTop, rule, footH);
+    };
+    divider(f.x - P);
+    for (let b = 0; b < CASINO_BINS.length; b++) divider(f.x + (binLeft(b) + slotW(b)) * P);
+    ctx.fillRect(x + P, footTop, w - 2 * P, P);
+    ctx.fillRect(x + P, footTop + (LABEL_H - 1) * P, w - 2 * P, P);
 
     drawLabels(f.x, f.y);
 
-    // and the tray: its rim is the label band's last row, and the walls are
-    // the block's own
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x + P, tray.y - P, w - 2 * P, P);
+    // and the tray, a white plot in the block's foot
     ctx.fillStyle = '#fff';
     ctx.fillRect(tray.x, tray.y, tray.cols * P, tray.rows * P);
     ctx.fillStyle = '#000';
@@ -297,9 +290,17 @@ export function drawPotPile() {
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;
+  // A falling grain is the figure: solid black, one cell, with the cell it
+  // just left behind it in a lighter shade -- the yard's idiom for a thing in
+  // motion -- so the stream reads from across the yard. Its own shade waits
+  // for the bin.
   for (const g of demo ? [...grains, demo] : grains) {
     if (g.landed) continue;
-    ctx.fillStyle = shadeOf(g.s);
+    if (g.pc !== g.c || g.pr !== g.r) {
+      ctx.fillStyle = TRAIL_SHADE;
+      ctx.fillRect(f.x + g.pc * P, f.y + g.pr * P, P, P);
+    }
+    ctx.fillStyle = '#000';
     ctx.fillRect(f.x + g.c * P, f.y + g.r * P, P, P);
   }
   if (S.drop) {
@@ -310,7 +311,7 @@ export function drawPotPile() {
           const s = at(bin, c, r);
           if (!s) continue;
           ctx.fillStyle = shadeOf(s);
-          ctx.fillRect(f.x + (b * BIN_W + c) * P, f.y + (FIELD_H + BIN_H - 1 - r) * P, P, P);
+          ctx.fillRect(f.x + (binLeft(b) + c) * P, f.y + (FIELD_H + BIN_H - 1 - r) * P, P, P);
         }
     });
   }

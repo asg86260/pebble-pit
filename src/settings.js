@@ -2,7 +2,7 @@
 // that is not the yard. This file wires the shelf; escape, resume and the
 // reset's two-click arming are input.js's.
 
-import { setPref, reducedMotion } from './prefs.js';
+import { setPref, reducedMotion, coarse } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
@@ -70,6 +70,19 @@ motionEl.addEventListener('click', () => {
   setPref('motion', !reducedMotion());
   sayMotion();
   document.body.classList.toggle('still', reducedMotion());
+});
+
+// The thumb switch, the same way: it reads what is in force, so a phone
+// reads "on" before it is ever pressed. Everything keyed on a phone -- the
+// hop, the sheet, the hover -- asks `coarse()` each frame, so nothing else
+// has to be told.
+const touchEl = document.getElementById('touch');
+function sayTouch() {
+  touchEl.textContent = coarse() ? 'touch: on' : 'touch: off';
+}
+touchEl.addEventListener('click', () => {
+  setPref('touch', !coarse());
+  sayTouch();
 });
 
 // In the Electron shell the save goes out and comes in through native
@@ -173,12 +186,14 @@ if (window.desk) {
 if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   if (sheet.hidden) { S.fellBack = false; S.newerSave = null; return; }
   sayMotion();
+  sayTouch();
   paste.hidden = true;
   box.value = '';
   said.textContent = '';
   sayStore();
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
+sayTouch();
 
 // The mute and the volume. The wake on the first pointer gesture is the one
 // line outside audio.js that knows a context exists: the browser allows

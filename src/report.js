@@ -34,7 +34,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
-import { pot, pouring, letting, hoisting, stakeOf, chipName, potAt, tableWant, trayWant, shownMult } from './casino.js';
+import { pot, pouring, letting, hoisting, stakeOf, chipName, potAt, tableWant, trayWant, shownMult, hopperN } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
@@ -278,7 +278,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   potAt: Math.round(potAt().x),
   // the grains in the hopper and the tray, and how many each is meant to hold,
   // which past the first band is fewer than the pot itself -- see `shownFor`
-  table: table.n,
+  table: hopperN(),
   tableWant: tableWant(),
   tray: tray.n,
   trayWant: trayWant(),

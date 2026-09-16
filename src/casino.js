@@ -26,19 +26,19 @@
 // had already been made. Here nothing is decided until a grain is on a peg.
 
 import { CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
-         HOPPER_H, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, BIN_H, LABEL_H, TRAY_H,
+         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
          CASINO_BURST_AT, CASINO_WIN_MS, CASINO_BURST, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
          CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS, CASINO_EVEN_BAND,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
-         P, SHADES, SHARD_CELL, SPORE_CELL, someFind, CASINO_BIG,
+         P, SHADES, SHARD_CELL, SPORE_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS, SND_HOIST_CENTS } from './config.js';
 import { S, pit, casino, table, tray } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
-import { addGrain, resizeGrid, settleSome, settle, topRow, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
+import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld } from './pit.js';
@@ -183,8 +183,15 @@ export function dealHand(stakeN) {
 // bins exactly and a grain's column is always over the slot of the bin its
 // coins add up to. A peg stands under every seat a grain can reach and nowhere
 // it cannot, so the pegs draw the odds.
+// A bin's place on the field: the two edge bins are wider than the rest, so a
+// bin is looked up rather than multiplied. A grain enters over the middle of
+// the middle bin's slot.
+const EDGE = b => b === 0 || b === CASINO_BINS.length - 1;
+export const binW = b => EDGE(b) ? EDGE_BIN_W : BIN_W;
+export const binLeft = b => (b ? EDGE_BIN_W + (b - 1) * BIN_W : 0);
+export const slotW = b => binW(b) - 1;                           // the wall is the last cell
 export const STEP = BIN_W / 2;                                   // cells across, a row
-export const START_COL = BOARD_COLS / 2;
+export const START_COL = binLeft(Math.floor(CASINO_BINS.length / 2)) + (slotW(1) - 1) / 2;
 export const seatRow = k => BOARD_AIR + k * PEG_ROW_H - 1;      // where a grain sits on peg row k
 export const pegRow = k => BOARD_AIR + k * PEG_ROW_H;           // and where the peg itself is
 export const hasPeg = (k, c) => {
@@ -198,25 +205,28 @@ export const fieldAt = () => ({
 });
 // Which bin a field column is over, and the slot column within it: a bin is
 // its slot and the wall on its right.
-export const BIN_COLS = BIN_W - 1;
-const binAt = c => Math.max(0, Math.min(CASINO_BINS.length - 1, Math.floor(c / BIN_W)));
-const slotCol = c => Math.min(BIN_COLS - 1, c - binAt(c) * BIN_W);
+const binAt = c => {
+  for (let b = CASINO_BINS.length - 1; b > 0; b--) if (c >= binLeft(b)) return b;
+  return 0;
+};
+const slotCol = c => Math.min(slotW(binAt(c)) - 1, c - binLeft(binAt(c)));
 
-// A bin is a plot of sand of its own -- three columns and six rows -- so what
-// lands in it heaps by the yard's rules: a x39 bin with two grains shows two
-// grains and a middle bin shows a heap. Eleven of them, remade for each hand.
-const makeBin = () => ({
-  x: 0, y: 0, cols: BIN_COLS, rows: BIN_H, p: P, grid: new Uint8Array(BIN_COLS * BIN_H),
+// A bin is a plot of sand of its own -- its slot's columns and six rows -- so
+// what lands in it heaps by the yard's rules: a x39 bin with two grains shows
+// two grains and a middle bin shows a heap. Eleven of them, remade for each
+// hand.
+const makeBin = b => ({
+  x: 0, y: 0, cols: slotW(b), rows: BIN_H, p: P, grid: new Uint8Array(slotW(b) * BIN_H),
   n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: true
 });
-const makeBins = () => CASINO_BINS.map(makeBin);
+const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
 
 // A grain about to go down the pegs: its column and row on the face, in cells
 // (negative rows are the gate and the sign band above the field), its ten
 // coins, and its shade. It starts in the gate.
 const makeGrain = (s, demo = false) => ({
-  c: START_COL, r: -(GATE_H + CASINO_SIGN_H), k: 0, seat: false, beat: 0, acc: 0,
-  path: drawPath(), s, demo, landed: false
+  c: START_COL, r: -(GATE_H + CASINO_SIGN_H), pc: START_COL, pr: -(GATE_H + CASINO_SIGN_H),
+  k: 0, seat: false, beat: 0, acc: 0, path: drawPath(), s, demo, landed: false
 });
 
 // Let it go. The floor splits from the middle and a handful of the heap comes
@@ -244,16 +254,16 @@ export function letGo() {
 // -- the hopper's middle, a wall in from the field's -- and its neighbors.
 const gateCols = () => {
   const mid = START_COL + CASINO_MARGIN - 1;
-  const out = [mid];
-  for (let d = 1; d <= (GATE_W - 1) / 2; d++) out.push(mid - d, mid + d);
+  const out = [];
+  for (let c = mid - Math.floor((GATE_W - 1) / 2); c <= mid + Math.ceil((GATE_W - 1) / 2); c++) out.push(c);
   return out;
 };
 function takeFromHopper() {
   const gate = gateCols();
   for (let d = 0; d < table.cols; d++) {
-    const cols = d ? [gate[0] - d, gate[0] + d] : gate;
+    const cols = d ? [gate[0] - d, gate[gate.length - 1] + d] : gate;
     for (const c of cols) {
-      if (c < 0 || c >= table.cols) continue;
+      if (c < 0 || c >= table.cols || wallAt(c, 0)) continue;
       const v = at(table, c, 0);
       if (v) { put(table, c, 0, 0); return v; }
     }
@@ -261,7 +271,7 @@ function takeFromHopper() {
   // nothing on the floor anywhere: the topmost grain there is
   const c = topmostColumn(table);
   if (c < 0) return 0;
-  const r = topRow(table, c);
+  const r = topGrain(table, c);
   const v = at(table, c, r);
   put(table, c, r, 0);
   return v;
@@ -299,6 +309,7 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
   g.acc += dt;
   while (g.acc >= CASINO_FALL_MS && !g.landed && !g.seat) {
     g.acc -= CASINO_FALL_MS;
+    g.pc = g.c; g.pr = g.r;                       // where it was, for the trail behind it
     if (g.k < CASINO_PEG_ROWS) {
       const seat = seatRow(g.k);
       if (g.r < seat) {
@@ -392,7 +403,7 @@ function payBin(b) {
       if (!s) continue;
       put(bin, c, r, 0);
       S.tableAir.push({
-        x: f.x + (b * BIN_W + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
+        x: f.x + (binLeft(b) + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
         vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, lands: 'tray'
       });
     }
@@ -403,7 +414,7 @@ function payBin(b) {
 const chuteAt = () => {
   const f = fieldAt();
   const b = S.drop?.payFrom ?? Math.floor(CASINO_BINS.length / 2);
-  return { x: f.x + (b * BIN_W + rand() * BIN_W) * P, y: f.y + (FIELD_H + BIN_H) * P };
+  return { x: f.x + (binLeft(b) + rand() * slotW(b)) * P, y: f.y + (FIELD_H + BIN_H) * P };
 };
 
 // The hand is paid. What is in the tray is the pot, the box says the multiple,
@@ -541,7 +552,7 @@ function hoistStep(dt) {
   while (n-- > 0) {
     const c = topmostColumn(tray);
     if (c < 0) break;
-    const r = topRow(tray, c);
+    const r = topGrain(tray, c);
     const v = at(tray, c, r);
     put(tray, c, r, 0);
     h.lifted++;
@@ -570,7 +581,7 @@ function payOutStep(dt) {
     let x = tray.x + tray.cols * P / 2, y = S.groundY - P, v = find ? someFind(find) : 4;
     const c = topmostColumn(tray);                 // off the heap if there is any left
     if (c >= 0) {
-      const r = topRow(tray, c);
+      const r = topGrain(tray, c);
       if (r >= 0) {
         v = at(tray, c, r);
         x = tray.x + c * P;
@@ -607,13 +618,36 @@ export const potAt = () => ({
   y: Math.round(table.y / P) * P
 });
 
+// The funnel's walls: how far in from each side the wall stands at a row,
+// counting the grid's rows up from the floor, so the profile's first entry
+// is the rim. A wall is a fixed cell in the plot -- never a grain, never
+// moving, and the ground the sand heaps against.
+export const wallAt = (c, r) => {
+  const inset = HOPPER_PROFILE[HOPPER_H - 1 - r] || 0;
+  return c < inset || c >= table.cols - inset;
+};
+const WALL_CELLS = HOPPER_PROFILE.reduce((n, inset) => n + inset * 2, 0);
+// The grains in the hopper: the plot's count less the walls, which it counts.
+export const hopperN = () => Math.max(0, table.n - WALL_CELLS);
+function layWalls() {
+  fillFlat(table, 0);
+  for (let r = 0; r < table.rows; r++)
+    for (let c = 0; c < table.cols; c++) if (wallAt(c, r)) put(table, c, r, ROCK_CELL);
+}
+
 export function wireTable() {
   if (!table.painter) table.painter = makePainter(table);
   table.onPut = table.painter.mark;
   table.blocked = null;
   table.ceiling = () => HOPPER_H;
-  table.repose = true;
+  // Flat, not heaped: a grain on a step of the funnel's wall only slides
+  // where there is a real drop beside it, and on a three-cell step there is
+  // none, so a heaped bowl coated its slopes instead of filling. Sand in a
+  // hopper lies level, and level fills from the throat up.
+  table.repose = false;
+  table.fixed = wallAt;
   resizeGrid(table);
+  layWalls();
 }
 export function wireTray() {
   if (!tray.painter) tray.painter = makePainter(tray);
@@ -627,7 +661,7 @@ export function wireTray() {
 // The sand itself is never saved: a reset or a reload starts the building
 // empty, and a pot comes back pouring into whichever plot it stood in.
 export function clearCasino() {
-  if (table.grid) fillFlat(table, 0);
+  if (table.grid) layWalls();
   if (tray.grid) fillFlat(tray, 0);
   table.capped = null;
   tray.capped = null;
@@ -689,8 +723,9 @@ const airborneTo = plot => S.tableAir.reduce((n, k) => n + (k.lands === plot ? 1
 // puts a column to sleep the moment a pass over it moves nothing, so a heap
 // that has found its angle has no awake columns at all (see grid.js). A pot of
 // ten settles in a blink and a pot of a thousand takes as long as it takes.
+const grainsIn = plot => plot === table ? hopperN() : plot.n;
 const settledIn = (plot, want, name) =>
-  airborneTo(name) === 0 && plot.n >= want && !plot.awakeN;
+  airborneTo(name) === 0 && grainsIn(plot) >= want && !plot.awakeN;
 export const settledInPile = () =>
   !S.paying && !S.hoisting &&
   (inHopper() ? settledIn(table, tableWant(), 'hopper') : inTray() ? settledIn(tray, trayWant(), 'tray') : true);
@@ -699,7 +734,7 @@ export const potShade = cur =>
   cur === 'shard' ? SHARD_CELL : cur === 'spore' ? SPORE_CELL : 0;
 
 function trickleIn(dt, plot, name, want, from) {
-  const have = plot.n + airborneTo(name);
+  const have = grainsIn(plot) + airborneTo(name);
   let n = Math.min(want - have, Math.max(1, Math.ceil((want - have) * (dt / TRICKLE_MS))));
   const find = potShade(S.pot?.cur);
   while (n-- > 0) {
@@ -708,7 +743,7 @@ function trickleIn(dt, plot, name, want, from) {
     if (S.tableAir.length < IN_AIR) {
       S.tableAir.push({ x, y, vx: (rand() - 0.5) * 0.3, vy: 0.9 + rand() * 0.8, t: 0, s: shade, lands: name });
     } else if (!addGrain(plot, x, null, shade)) {
-      plot.capped = plot.n;
+      plot.capped = grainsIn(plot);
       break;
     }
   }
@@ -726,11 +761,12 @@ const skyOver = () => ({
 // time, each fading out on its way up. A pot that vanished in a frame was a
 // number being set to zero; this is it *leaving*.
 function drainOut(dt, plot, want) {
-  let n = Math.min(plot.n - want, Math.max(1, Math.ceil((plot.n - want) * (dt / TRICKLE_MS))));
+  const over = grainsIn(plot) - want;
+  let n = Math.min(over, Math.max(1, Math.ceil(over * (dt / TRICKLE_MS))));
   while (n-- > 0) {
     const c = topmostColumn(plot);
     if (c < 0) break;
-    const r = topRow(plot, c);
+    const r = topGrain(plot, c);
     if (r < 0) break;
     const v = at(plot, c, r);
     put(plot, c, r, 0);
@@ -744,7 +780,16 @@ function drainOut(dt, plot, want) {
   }
 }
 
-// The tallest column with anything in it, so a heap comes apart from the top
+// The topmost grain in a column, walls aside, or -1: `topRow` finds the
+// topmost cell, and in the funnel's outer columns that is the wall with
+// nothing on it.
+const topGrain = (plot, c) => {
+  for (let r = plot.rows - 1; r >= 0; r--)
+    if (at(plot, c, r) && !(plot.fixed && plot.fixed(c, r))) return r;
+  return -1;
+};
+
+// The tallest column with a grain in it, so a heap comes apart from the top
 // rather than being eaten from one end. Where it starts looking walks, so the
 // same side is not always the one that goes first.
 let drainAt = 0;
@@ -752,7 +797,7 @@ function topmostColumn(plot) {
   let best = -1, high = -1;
   for (let i = 0; i < plot.cols; i++) {
     const c = (drainAt + i) % plot.cols;
-    const r = topRow(plot, c);
+    const r = topGrain(plot, c);
     if (r > high) { high = r; best = c; }
   }
   drainAt = (drainAt + 7) % Math.max(1, plot.cols);
@@ -762,7 +807,7 @@ function topmostColumn(plot) {
 // One frame of the two plots: each walks to what it should hold, and settles.
 export function stepTable(dt) {
   if (!S.casinoOpen || !table.grid || !tray.grid) return;
-  if (table.capped != null && table.n < table.capped) table.capped = null;   // room again
+  if (table.capped != null && hopperN() < table.capped) table.capped = null;   // room again
   if (tray.capped != null && tray.n < tray.capped) tray.capped = null;
   if (S.paying) payOutStep(dt);
   if (S.hoisting) hoistStep(dt);
@@ -770,8 +815,8 @@ export function stepTable(dt) {
   // the hopper: the stake raining in, or the rest of a let-go heap leaving. Not
   // while the tray is being hoisted into it -- that is the pour, the other way up.
   if (!S.hoisting) {
-    if (table.n + airborneTo('hopper') < hw) trickleIn(dt, table, 'hopper', hw, skyOver);
-    else if (table.n > hw) drainOut(dt, table, hw);
+    if (hopperN() + airborneTo('hopper') < hw) trickleIn(dt, table, 'hopper', hw, skyOver);
+    else if (hopperN() > hw) drainOut(dt, table, hw);
   }
   // the tray: the bins' pay sprouting toward the band, or a half bin's other
   // grain leaving; and a banked pot is lifted by `payOutStep`, not here
@@ -817,7 +862,7 @@ export function stepSparks(dt) {
       const plot = k.lands === 'hopper' ? table : tray;
       const c = Math.max(0, Math.min(plot.cols - 1, Math.round((k.x - plot.x) / P)));
       if (k.y >= surfaceY(plot, c)) {
-        if (!addGrain(plot, k.x, null, k.s)) plot.capped = plot.n;
+        if (!addGrain(plot, k.x, null, k.s)) plot.capped = grainsIn(plot);
         sfx(k.lands === 'hopper' ? 'hopper-land' : 'tray-tick', { x: k.x });
         S.tableAir.splice(i, 1);
       }

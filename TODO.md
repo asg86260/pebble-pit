@@ -76,9 +76,8 @@ No sim file imports the shop any more, but the ring does not shrink yet:
 `pit.js`, `hands.js`, `casino.js` and `intro.js` call `buildShop()` directly
 and `crew/assign.js` reads `standRect` from board.js (`tools/cycles.mjs
 --path` names each edge). Seam 6 removes those; it moves ahead of seam 5.
-Also found on main: the casino's `bank`/`ride` coverage lines are red since
-the handful -- persist.js re-pours a pot on every restore, and the harness's
-five-second reload check greys the two rows the frame they are pressed.
+Also red on main as of 9cb86fd, not from this seam: `test/machines.test.mjs`
+"a jaw pays a dig exactly what a gang would" (838 over 7 digs of 120).
 
 Seam 1, the dead-code sweep, is BUILT (2026-09-15): 43 exports nothing
 imported (22 of them config knobs), 132 imported names nothing read,

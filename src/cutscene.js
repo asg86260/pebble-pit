@@ -22,7 +22,7 @@ import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
          CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE } from './config.js';
 import { S, rift, pit } from './state.js';
-import { setZoom, clampCam } from './world.js';
+import { setZoom, clampCam, lockScroller } from './world.js';
 import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { now } from './clock.js';
@@ -93,6 +93,8 @@ export function play(name) {
   const zoom = typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
   S.shot = { name, at: 0, s: sc.s, zoom, from: S.zoom,
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
+  // The scroller is shut for the run: a fling in flight would fight the seat.
+  lockScroller(true);
   S.dirty = true;
 }
 
@@ -182,6 +184,7 @@ export function stepShot(t) {
 // (false) rather than ending on the click.
 export function release() {
   if (S.shot) S.shot.out = true;
+  lockScroller(false);
   S.dirty = true;
   return false;
 }

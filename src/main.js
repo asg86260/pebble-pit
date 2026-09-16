@@ -20,6 +20,9 @@ import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
 import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
 import { fadeIn, fadeOut } from './fade.js';
+import { refreshBar, measureSafeArea } from './bar.js';   // the grab bar along a phone's bottom edge
+import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
+import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
 
 // The veil comes off one frame after the first, so the frame is painted under
 // it before it starts to go.
@@ -41,7 +44,7 @@ import { tick } from './clock.js';
 
 // The layout is the game's; the measuring is the page's; this is the one line
 // where the two meet.
-export function relayout() { resize(settleIntoWorld); remeasure(); }
+export function relayout() { measureSafeArea(); resize(settleIntoWorld); remeasure(); }
 
 // What the frame spent, in its three parts (the yard thinks, the yard is
 // drawn, the page is written), under `vite dev` only: `import.meta.env.DEV`
@@ -85,6 +88,9 @@ function frame() {
     draw();
     const t2 = mark();
     hud();
+    refreshBar();
+    refreshHop();
+    refreshFullscreen();
     fillQueue();
     fillPin();
     stepToast();

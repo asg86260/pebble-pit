@@ -658,17 +658,27 @@ builds it and a hand pressed through the page's rows settles. The scene is
 
 ### What building it changed
 
-**The building is forty-eight cells wide and sixty-two tall.** The section
+**The building is fifty-six cells wide and sixty-two tall.** The section
 above added up the face at about thirty-four and left the hopper, the sign and
-the labels to the reader. Hopper five, floor one, sign nine, air three, pegs
-twenty, bins six, labels thirteen, tray five: a cabinet a little taller than
-it is wide, standing beside the tower rather than over it. The first build had
-a fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
-with the sign far above the action; the hopper and the tray came down to what
-the brim needs and the brim came down to what they hold -- one for one to a
-hundred, then two hundred and that is the brim (`CASINO_PILE_BAND`,
-`CASINO_PILE_BRIM`), five rows of forty-six with the rim clear. What is
-approximate is the size of the heap and nothing else, as before.
+the labels to the reader. Funnel nine, floor one, sign nine, air three, pegs
+twenty, bins six, feet nine, tray five: a cabinet a little taller than it
+is wide, standing beside the tower rather than over it. The first build had a
+fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
+with the sign far above the action.
+
+**The hopper is a funnel, and the funnel is the plot's ground.** A walled
+tray held the stake as a flat bar on the roof, which did not read as a hopper
+at all. The walls step in three cells a row down `HOPPER_PROFILE`, nine rows from
+the building's width at the rim to a six-cell floor over the two-cell throat, and
+they are `fixed` cells in the hopper's own grid -- the sand board's trick --
+so the yard's settle rules heap the stake against them: it fills from the
+throat up and sits in the bowl, and letting go sags it into the throat. The
+hopper lies flat rather than heaped (`repose` off): on a three-cell step a
+heaped grain has no drop beside it and coated the slopes instead of filling.
+The brim came down to what the bowl holds -- one for one to a hundred, then a
+two hundred (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the profile's
+two hundred and seventy cells with the rim clear. What is approximate is the
+size of the heap and nothing else, as before.
 
 **A bin is four cells: three of slot and a wall.** The design guessed two,
 and two cannot carry a pay: a digit is a three-cell glyph and a bin has to
@@ -679,18 +689,25 @@ forty-four, a white divider and the wall each side make forty-eight -- the
 sand board went to forty-one for seven slots, so this is the same cabinet
 with more slots in it.
 
-**The pays stand in one row, one under each bin.** A single digit sits under
-its slot exactly; the two 39s at the edges stack their digits down the eleven
-rows the band gives them, with the single digits centered on the same middle
-row; and the three half bins -- one region of the board, priced as one --
-share a single `.5` under a bracket spanning the three. Two staggered rows
-with leaders were tried first and read as a smudge.
+**The pays are the bins' feet.** A row of pays in a line read as one long
+number however it was spaced -- one cell between labels is the gap inside
+"39", and two was not enough contrast -- so the labels went back under their
+bins, and the bins' dividers run on down through the band: a row of table
+cells, one under each bin, and a pay can only belong to the bin over it. A
+digit is three cells, so an inner slot is three; the 39s are seven, so the
+two edge bins are cut seven wide (`EDGE_BIN_W`, from `DIGIT_W`) and catch over
+a wider mouth -- the fan's step is unchanged and a grain bound for an edge
+bin lands two cells inside it. Through the feet the dividers thin to a rule,
+because a three-cell digit against a cell-wide wall on both sides is a
+barcode. Each half bin wears its own half, in one three-cell glyph. Fifty-two
+cells of bins; the building is fifty-six wide, and the sign is its width.
 
-**The sign is the roof sign's face, across the front, in one word.** Six of
-the seven-cell letters and their gaps are forty-seven cells, one more than a
-board can center on a building an even number of cells wide, so the gap in the
-middle of the word is two -- and the handful falls through it, from a floor
-that opens to the three cells over it. The board stands two cells proud of the
+**The sign is the roof sign's face, across the front, in one word,
+between the funnel and the pegs so nothing stands in front of the bowl.** Six
+of the seven-cell letters and their gaps are forty-seven cells, one more than
+a board can center on a building an even number of cells wide, so the gap in
+the middle of the word is two -- and the handful falls through it, from the
+throat's two cells directly over it. The board stands two cells proud of the
 block either side, the way a marquee does, so the letters keep their clear
 cell from the bulbs. A three-by-five face was tried to fit the twenty-six-cell
 front and read as a row of fives; the letters DESIGN.md fought for stay.
@@ -702,11 +719,19 @@ shows a heap in the grains' own shades. Counts drawn as two filled columns
 were tried and read as printed paint. The hand settles on the same three
 facts: nothing left to send, nothing on the pegs, no column of a bin awake.
 
+**The grains are the figure and the pegs are the ground.** Black grains
+over black pegs was a stream that vanished into the triangle from across the
+yard. A falling grain is solid black with the cell it just left behind it in
+a lighter grey -- the yard's idiom for a thing in motion -- and a peg is the
+lightest grey the yard has; a hollow peg was the other candidate and at yard
+zoom a six-pixel ring is a dark cell. The grain's own shade waits for the
+bin.
+
 **A peg does not flash white.** The face it stands on is white, so a peg gone
 white for a frame is a peg gone, not a peg lit. On the beat it throws its
-four corners instead -- a spark round the black cell, with the grain sitting
-black on top -- which reads as the hit. The x39 bin's flash is the bin going
-black for the beat, for the same reason.
+four corners instead -- a black spark round the grey cell, with the grain
+sitting black on top -- which reads as the hit. The x39 bin's flash is the
+bin going black for the beat, for the same reason.
 
 **Even is a band, not a point.** A hand at x1.03 showed x1.0 in the box over
 a fountain, and the box and the fanfare disagreed. A hand within
@@ -10603,7 +10628,7 @@ None of this starts until the reliability freeze has held -- the node tier
 green twice running on main (TODO.md). A refactor on a suite that is not
 reliably green cannot tell a regression from a flake, and every seam above
 is verified by nothing else.
-## Playing it on a phone (design, approved 2026-09-15; building)
+## Playing it on a phone (built 2026-09-15)
 
 **Decided by the owner, 2026-09-15:** two edge arrows for the hop, drawn only
 when there is a station that way; boards as bottom sheets on a phone only,
@@ -10928,6 +10953,129 @@ judders; a phone finds its scale through the device-pixel ladder already.
 Landscape gets no rule of its own: every measure above is a share of the
 window, and landscape is a wide short window, which the desk's rules
 already fit.
+
+### What building it changed
+
+**The scrolling moved to the bottom of the screen (the owner, 2026-09-15,
+mid-build).** The first build put the canvas inside the scroller, so one
+finger on bare ground scrolled the yard natively and a `touchstart` gate
+claimed a finger on dust for the sweep. Played, that is the complaint the
+owner then made in another form: a long sweep toward the pit turned into a
+scroll halfway. So the rule became *scrolling happens only from the bottom
+of the screen*. The grab bar along the bottom edge (`bar.js`, `#scroller`
+in play.html, `BAR_H` / `BAR_INSET` / `BAR_THUMB_MIN` in `config/touch.js`)
+IS the platform's scroller, with the world-wide spacer inside it: a drag in
+it is a native scroll, one for one with the finger, coasting the way every
+list on the phone coasts, and `camX` reads its `scrollLeft` once a frame
+(`readScroll` in world.js) while every camera writer goes through
+`clampCam`, which writes it. The band draws a track and a thumb the view's
+share of the world, seated from `camX`, so it reads as the scrollbar it is;
+a tap on the track glides there with `lookAt`. The canvas keeps
+`touch-action: none`: a finger on the yard sweeps on dust and taps on
+anything else and never moves the view, and two fingers on a phone do
+nothing either (a desk's touchscreen keeps its two-finger pan). The
+`touchstart` gate and `fingerPan` are gone with the premise that made them
+necessary. On a desk the band is not on the page (`coarse()` false), the
+wheel, the middle button, the arrow keys and every glide write the camera as
+they did, and the node yard binds no scroller at all (`test/camera.test.mjs`).
+A scene locks the band for its run (`lockScroller`). The pan's rule that
+puts a board away when its station leaves the window now reads the open
+board by name (`openBoard()`); it was keyed on the bench's flag alone and
+never fired for the other ten.
+
+What was not seen: the coast itself. A touch dispatched from page script
+never scrolls anything, so the browser checks stand in for the platform by
+writing `scrollLeft`; `tools/fling.mjs` drives a real finger over the
+protocol and shows the band scrolling one for one, but the headless shell
+does not animate a fling, so the momentum was not watched here. It is the
+platform's, which was the point.
+
+**A tap buys, and a double tap zooms nothing.** `tap.js` is the one
+definition of a tap. A row still buys on the `click` the platform raises,
+but only when the press before it was a tap (`onTap`): a press that moved
+past `TAP_SLOP` or lingered past `TAP_TIME` swallows its click, and a click
+with no press before it (the keyboard, `el.click()` in a check) is a tap by
+construction, which is why every existing check kept passing. The long
+press asks about the row only where the row has a note; a row without one
+says nothing, as it did on hover. The yard's own tap in input.js reads the
+same `isTap`. Every `:hover` in both stylesheets stands behind
+`@media (hover: hover)` -- a script wrapped them, splitting comma lists so
+the plain selectors stayed -- and `test/hover-gate.test.mjs` walks the
+sheets for the next one. On a phone a double tap zooms the page unless the
+thing under it says otherwise, so one rule gives every tappable element
+`touch-action: manipulation` (the yard is `none`, the band `pan-x`), and the
+viewport meta carries `maximum-scale=1` as belt and braces; nothing else
+would do, since Safari ignores `user-scalable=no`.
+
+The undo covers what the queue can hand back: every purchase that is a
+piece of work -- a rung, a build, a machine, a place, which is nearly every
+row -- for `UNDO_MS` while the work has not landed, waiting or at the front
+(`abandonAt`, which was the lab's alone). The bill goes back as it was
+charged (`S.undo`, ephemeral). A row bought and had at once (the casino's
+decisions, a dial) has no work to put down and offers no undo. One
+consequence worth the owner's eye: a second tap on the same tile inside the
+moment *is* the undo, so a quick double tap buys and takes back; the
+double-tap check asserts exactly that.
+
+**The skip.** A tap on the yard already skipped a cutscene (the canvas's
+`pointerdown` calls `skipCutscene` for any pointer); what a phone could not
+skip was the opening, which a click does not cut on a desk either -- a
+rested hand is not a decision -- and which only the space bar, held, ends.
+The hint is a button now: held, it is the key held, through the same
+`holdSkip`, with the same bar filling under the words, and under a thumb it
+says "hold to skip". It stands above the grab bar (`--bar-room`).
+
+**Boards as bottom sheets.** Built as the second seat in board.js
+(`placeSheet`, chosen by one `coarse()` at the top of `place()`), with the
+handle in play.html and every rule in style.css carrying the panel's id so
+it outranks the popover's whatever the order. The sheet slides on y over
+`SHEET_MS` as a transition on the panel itself, and `settle` hides the
+element after `SHEET_MS` rather than the popover's 140 ms; the inner fades
+are off in a sheet, since it moves as one thing. The board's own title is
+hidden in favor of the handle's. The purse lies along the top inside the
+sheet; `pinWidth` gives the sheet the glass's width and does not pin it.
+The crew list is a page inside: the rows step aside (`listing`) and the
+arrow beside the grip brings them back. The grab bar is under the sheet
+while a board is up; a tap on the yard above the sheet puts the board away
+as on a desk. The turning-off case is handled too: a board open when the
+touch switch is turned off leaves the sheet (`leaveSheet`) and the popover
+measures and seats itself afresh, which `selftest/sheet.js` holds against
+`__boardFit`.
+
+**The pips are boxes.** The rung pips were text circles (`●○`) spaced by a
+letter-spacing tuned to one font, in a vertical writing mode on the shelf:
+a pitch of eight pixels for a seven-pixel glyph, and on a phone's font two
+of them stacked. A pip is an element now (`<i>`, filled with `on`), a cell
+across, at a pitch the stylesheet sets, in both the card's row and the
+shelf's column; `selftest/sheet.js` opens every board at a phone's width
+and asserts no two pips and no two bands meet.
+
+**The whole screen, and the home screen.** A web page cannot hide Safari's
+bar in a tab: there is no API for it, and the bar collapses only on a
+vertical document scroll, which a fixed-size yard never makes. What a page
+can do is fill everything Safari gives it (`viewport-fit=cover`, the page
+at `100dvh`, the corners and the band inside `env(safe-area-inset-*)`) and
+be installable: `public/manifest.webmanifest` (standalone, any orientation,
+white ground, black theme, the 64px icon) is linked from both pages with the
+apple tags beside it, and opened from the home screen the page runs with no
+bars at all. That is the only way the bar goes, and the settings sheet says
+so in a line where fullscreen is not to be had. The fullscreen button
+(`fullscreen.js`, `FS_SIZE` / `FS_INSET`) stands top-right in the sky, with
+the same row on the settings sheet, only where `fullscreenEnabled` is true
+-- a desk's browser, Android, an iPad; an iPhone has no element fullscreen
+and gets no button that does nothing. The Electron desk reads none of the
+tags. Landscape kept no rule of its own, as written above, and one thing
+shows for it: at 844x390 the hop arrows at 0.42 of the height stand on the
+ground line. Left for the owner.
+
+**Small things.** `coarse()` can be forced in memory for a scene or a check
+(`forceCoarse`, the `__coarse` hook), so the `phonebench`, `phonehouse`,
+`phoneshack` and `phoneyard` scenes stand a phone up without writing the
+player's preference; `scene()` clears it before every scene. `setZoom` keeps
+the view's left edge as it did and writes the band through `clampCam`; the
+"point under the pointer" the design named has no pointer in this game,
+since nobody zooms with one. The queue card's line for a work just bought
+is the same press as the tile, so it undoes too.
 
 ## Beats and gates: one table each (the beats built 2026-09-15; the gates design, not built)
 

@@ -9,7 +9,7 @@
 // imports those and never this, so a station's load order does not run
 // through the shop.
 
-import { P, RUNGS } from './config.js';
+import { P, RUNGS, UNDO_MS } from './config.js';
 import { S } from './state.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
@@ -18,7 +18,8 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 import { spelled } from './tower.js';
 
 import { buildShop } from './shop.js';
-import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut } from './works.js';
+import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut, abandonAt, rowFor } from './works.js';
+import { now } from './clock.js';
 import { nextHouseAt } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
@@ -226,6 +227,10 @@ export function buy(u) {
     // hand.
     return false;
   }
+  // Pressed again within the undo's window, the last purchase is taken back
+  // (DESIGN.md, "A tap buys"): a clean tap on the wrong tile is the one
+  // mistake the tap gate cannot catch, so the tile offers the way back.
+  if (undoable(u)) return !undoBuy();
   // Pressing a row in line hands it back: the bill comes back in full and
   // arcs from where it would have stood to the pile. Not a purchase.
   if (inLine(u)) {
@@ -255,10 +260,38 @@ export function buy(u) {
             : null;
   if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
   // Nothing is taken until all of it can be (`canPay` above).
-  for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
+  const bill = billOf(u);
+  for (const [money, n] of bill) if (money !== 'time') take(money, n);
   payTo();
 
   if (!takesTime(u)) u.buy();
+  // A work in the yard's hands can be handed back for a moment; a row bought
+  // and had (no work) has done its thing and cannot.
+  S.undo = takesTime(u) ? { key: u.key, site: u.site, bill: bill.filter(([m]) => m !== 'time'), at: now() } : null;
+  S.dirty = true;
+  buildShop();
+  return true;
+}
+
+// --- taking a purchase back ---------------------------------------------------------
+// The last purchase, for UNDO_MS after it was made, while the yard has not
+// finished it: pressing its tile (or the queue card's line) puts the work
+// down unbuilt and the bill back in the pit -- the bill as it was charged,
+// since a rung's next bill is dearer than the one just paid. A work that has
+// landed is had, and is not offered back.
+export const undoable = u =>
+  !!S.undo && S.undo.key === u.key && now() - S.undo.at <= UNDO_MS && !!workOn(u.key);
+
+export function undoBuy() {
+  const last = S.undo;
+  if (!last) return false;
+  if (now() - last.at > UNDO_MS || !workOn(last.key)) { S.undo = null; return false; }
+  const u = rowFor(last.key);
+  const box = siteBox(last.site, workOn(last.key));
+  if (!u || !abandonAt(last.site, last.key)) { S.undo = null; return false; }
+  const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
+  for (const [money, n] of last.bill) refund(money, n, x, y);
+  S.undo = null;
   S.dirty = true;
   buildShop();
   return true;

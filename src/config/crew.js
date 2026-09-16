@@ -13,7 +13,7 @@ export const IDLE_PACE = 0.28;
 // other way -- how long it takes to stop. A body that went from stood still to
 // its top speed in one frame and stopped as dead read as a sprite being slid
 // about; legs take a step or two to get going. See `amble` in crew/idle.js.
-export const AMBLE_RAMP = 18;
+export const AMBLE_RAMP = 36;
 export const JANITOR_PROP = 7000;
 export let LOO_EVERY = 600000;   // how often a body is about due, on average
 export const LOO_SPREAD = 0.55;  // and how much that wanders, either side

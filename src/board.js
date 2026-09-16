@@ -1,7 +1,8 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS } from './config.js';
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS,
+         SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_HANDLE, TAP_SLOP } from './config.js';
 import { S, bench, lab, apothecary, casino, scrub, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
@@ -23,6 +24,7 @@ import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
 import { now } from './clock.js';
 import { shown } from './tween.js';
 import { JOB } from './jobs.js';
+import { coarse } from './prefs.js';
 
 const shopEl = document.getElementById('shop');
 const casinoShopEl = document.getElementById('casinoshop');
@@ -234,7 +236,9 @@ function pinWidth() {
   if (!sheet) return;
   // The room the sheet may take, written onto it so a stylesheet that sizes it
   // by content (the shelf) can cap itself without knowing the purse.
-  const purseW = purseEl.offsetWidth;
+  // On a phone the sheet is the window's width and the purse lies inside it,
+  // so the room is the glass (DESIGN.md, "Boards as bottom sheets").
+  const purseW = coarse() ? 0 : purseEl.offsetWidth;
   sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
   // A shelf is as many slots wide as its fullest plank or its longest sign,
   // capped. It cannot size itself: `auto-fill` needs a definite width to count
@@ -260,6 +264,9 @@ function pinWidth() {
     sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(SHELF_SLOTS, most))));
   }
   sheet.style.width = '';
+  // A bottom sheet is as wide as the glass and the stylesheet says so; the
+  // pin below is the popover's.
+  if (coarse()) return;
   // The used width off the style, not the box: `offsetWidth` rounds a
   // fractional width off and the last word folds under; a client rect is
   // scaled while the board is still easing open. Rounded up, since a fraction
@@ -271,6 +278,8 @@ function pinWidth() {
 // plus the sheet's border and padding) rather than restated in the stylesheet.
 // Which side it stands on is `place`'s call.
 function seatFlyout() {
+  // Inside a bottom sheet the list is a page, and the stylesheet sizes it.
+  if (coarse()) { crewListEl.style.width = ''; crewListEl.style.marginLeft = ''; crewListEl.style.maxHeight = ''; return; }
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   const door = sheet && sheet.querySelector('.rows > button.door');
   if (!door) return;
@@ -298,6 +307,11 @@ export function remeasure(repin = true) {
 let putX = null, putY = null;
 
 function place(el, at) {
+  // The second seat (DESIGN.md, "Boards as bottom sheets"): on a phone the
+  // board is a sheet from the bottom, chosen here and nowhere else, so both
+  // seats share the open, the fill, the linger and every row.
+  if (coarse()) return placeSheet();
+  if (el.classList.contains('bottom')) leaveSheet();
   const { w, h } = measured();
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
@@ -347,6 +361,119 @@ function place(el, at) {
 
 const GAP = 4;                             // never flush against the edge
 const FLY_GAP = 8;                         // the panel's gap, between the board and the list beside it
+
+// --- the sheet from the bottom ------------------------------------------------------
+// On a phone a board is a sheet (DESIGN.md, "Boards as bottom sheets"): the
+// window's width, its top edge at SHEET_H of the window so the ground line
+// and the station stay in the picture above it, a handle on its top edge,
+// the purse along the top inside it, and the rows scrolling within. Three
+// stops and no free height: down (gone), the seat, and tall (SHEET_TALL) for
+// a long board, dragged between by the handle. The crew list is a page inside
+// it rather than a card beside it, since beside it there is no room.
+//
+// It comes up and goes down as a translate on the y axis over SHEET_MS (the
+// stylesheet's transition on #panel.bottom), with `hidden` still the truth
+// the way fade.js keeps it for the held sheet: `settle` takes `open` off and
+// hides the element once the slide is done.
+const handleEl = document.getElementById('handle');
+const handleName = handleEl.querySelector('.name');
+const listBackEl = document.getElementById('listback');
+document.documentElement.style.setProperty?.('--sheet-ms', `${SHEET_MS}ms`);
+document.documentElement.style.setProperty?.('--sheet-grip-w', `${SHEET_HANDLE[0]}px`);
+document.documentElement.style.setProperty?.('--sheet-grip-h', `${SHEET_HANDLE[1]}px`);
+
+let tall = false;                          // the stop the sheet stands at
+let drag = null;                           // the handle in hand: where the finger began, and how far it has come
+let sheetPut = null;                       // the last transform written, so a still sheet leaves its layer alone
+let sheetHeight = 0;                       // the height it stands at, px
+
+// Its height at the stop it is on, or, in hand, wherever the finger has it:
+// dragged up it grows toward tall, dragged down it slides toward gone.
+const stopHeight = () => Math.round(S.H * (tall ? SHEET_TALL : (1 - SHEET_H)));
+
+function placeSheet() {
+  if (!panelEl.classList.contains('bottom')) {
+    panelEl.classList.add('bottom');
+    handleEl.hidden = false;
+    // the popover's inline seat and the pinned width are not the sheet's
+    panelEl.style.transform = '';
+    putX = putY = null;
+    sheetPut = null;
+    remeasure();
+  }
+  const open = panelEl.classList.contains('open');
+  const seat = stopHeight();
+  let height = seat, slide = open ? 0 : seat;
+  if (drag) {
+    const dy = drag.y - drag.y0;
+    if (dy < 0) height = Math.min(Math.round(S.H * SHEET_TALL), seat - dy);   // up: taller
+    else slide = Math.min(seat, dy);                                            // down: away
+  }
+  if (height !== sheetHeight) { sheetHeight = height; panelEl.style.height = `${height}px`; }
+  const put = `translate3d(0, ${slide}px, 0)`;
+  if (put !== sheetPut) { sheetPut = put; panelEl.style.transform = put; }
+  panelEl.classList.toggle('dragging', !!drag);
+  // The name beside the grip, and the crew list as a page: the board's own
+  // title is hidden by the stylesheet in favor of this one.
+  const name = at ? pages[at]?.querySelector('.title')?.dataset.name || pages[at]?.querySelector('.title')?.textContent : '';
+  if (name && handleName.textContent !== name) handleName.textContent = name;
+  const listing = !!S.crewListOpen;
+  if (panelEl.classList.contains('listing') !== listing) {
+    panelEl.classList.toggle('listing', listing);
+    listBackEl.hidden = !listing;
+  }
+}
+
+// Back to the popover: the switch on the sheet was turned off under an open
+// board. Everything the sheet wrote is taken back and the popover measures
+// and seats itself afresh.
+function leaveSheet() {
+  panelEl.classList.remove('bottom', 'dragging', 'listing', 'tall');
+  panelEl.style.height = '';
+  panelEl.style.transform = '';
+  handleEl.hidden = true;
+  sheetHeight = 0; sheetPut = null; tall = false; drag = null;
+  putX = putY = null;
+  remeasure();
+}
+
+// Where the sheet is on the glass, for the wedge, the tip's dodge and the
+// counter: the window's width, standing on its foot.
+const sheetRect = () => (panelEl.hidden ? null : { x: 0, y: S.H - sheetHeight, w: S.W, h: sheetHeight });
+
+// The handle in hand. The press is tracked on the handle itself; the release
+// decides between the three stops by how far it went, and a press that went
+// nowhere is a tap, which is nothing.
+handleEl.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  drag = { y0: e.clientY, y: e.clientY };
+  try { handleEl.setPointerCapture(e.pointerId); } catch {}
+  placeSheet();
+});
+handleEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.y = e.clientY;
+  placeSheet();
+});
+const letGo = e => {
+  if (!drag) return;
+  const dy = e.clientY - drag.y0;
+  const seat = stopHeight();
+  drag = null;
+  if (Math.abs(dy) < TAP_SLOP) { placeSheet(); return; }
+  // Down past a third of its height: from tall back to the seat, from the
+  // seat away. Up: tall.
+  if (dy > seat * SHEET_DISMISS) { if (tall) tall = false; else { showPanel(null, true); return; } }
+  else if (dy < 0) tall = true;
+  panelEl.classList.toggle('tall', tall);
+  placeSheet();
+};
+handleEl.addEventListener('pointerup', letGo);
+handleEl.addEventListener('pointercancel', letGo);
+listBackEl.addEventListener('click', () => showCrewList(false));
+
+// For the checks: which stop the sheet stands at, and how tall that is.
+export const sheetStop = () => (panelEl.classList.contains('bottom') ? { tall, height: sheetHeight, rect: sheetRect() } : null);
 
 // --- the call to build the bench ----------------------------------------------
 // The one button on this page that is not on a board; it stands over the bare
@@ -406,6 +533,7 @@ const SAFE_SLACK = 34;
 // Where the board is on screen. `putY` is the bottom edge's height above the
 // window's foot; readers want the top corner, so it is turned back here.
 const panelRect = () => {
+  if (panelEl.classList.contains('bottom')) return sheetRect();
   if (putX === null) return null;
   // The crew list is out of the panel's flow, so it is counted in by hand, gap
   // and all, or the strip between the board and the names would be outside the
@@ -493,6 +621,9 @@ export function inSafeZone(px, py) {
 export function tidyBoards() {
   if (at !== 'house' && S.crewListOpen) showCrewList(false);
 }
+
+// Which board is up, by name, or null: the pan's rule and the sheet ask.
+export const openBoard = () => at;
 
 export function placeBoard() {
   if (!at) return;
@@ -660,11 +791,13 @@ function settle(want) {
     // (the listeners in shop.js's `build`).
     panelEl.classList.remove('open');
     clearTimeout(closing);
+    // The sheet goes down over SHEET_MS; the popover fades over its own beat.
+    if (panelEl.classList.contains('bottom')) placeSheet();
     closing = setTimeout(() => {
       if (at) return;                            // opened again on the way out
       panelEl.hidden = true;
       for (const k of Object.keys(pages)) pages[k].hidden = true;
-    }, 140);
+    }, panelEl.classList.contains('bottom') ? SHEET_MS : 140);
     return;
   }
 

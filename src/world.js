@@ -630,8 +630,67 @@ export const openingCamX = () => {
   return rockFar - withBench <= S.viewW ? withBench : S.cx - S.viewW * OPENING_ROCK_AT;
 };
 
+// --- the scroller ---------------------------------------------------------------
+// On a phone the platform holds the camera's x (DESIGN.md, "Momentum
+// scrolling"): the grab bar along the bottom edge is a horizontal scroller
+// with a spacer as wide as the world, a finger drags or flings it with the
+// platform's own coast, and the game reads where it got to. `S.camX` stays
+// the fact everything draws by; `scrollLeft` is where the platform keeps it.
+// Every writer of the camera comes through `clampCam`, which writes the
+// scroller, and `stepCamera` reads it back once a frame, so a fling and a
+// glide cannot disagree for longer than a frame. On a desk the band is
+// hidden and both halves stand down; the node yard binds no scroller at
+// all; either way the camera is the same fact without one.
+let scroller = null, spacer = null;
+let wroteLeft = -1, spacerW = -1;
+// What to do when the platform has moved the view: input.js hangs the
+// board's rule here, since a board follows its station out of the window
+// the same whether a finger or a wheel took it there.
+let taken = null;
+export function bindScroller(el, sp, onTaken) {
+  scroller = el; spacer = sp; taken = onTaken;
+  wroteLeft = -1; spacerW = -1;
+}
+// A scene owns the camera for its run, and a fling in flight would fight it:
+// the scroller is shut for the length of the scene (cutscene.js).
+export function lockScroller(on) {
+  if (scroller) scroller.style.overflowX = on ? 'hidden' : '';
+}
+// A hidden element has no scroll position to keep, so the band shown again
+// (the switch on the sheet) is written afresh rather than trusted.
+const bandUp = () => scroller && !scroller.hidden;
+export function resyncScroller() { wroteLeft = -1; spacerW = -1; writeScroll(); }
+function writeScroll() {
+  if (!bandUp()) return;
+  const w = Math.round(S.worldW * S.zoom);
+  if (w !== spacerW) { spacerW = w; spacer.style.width = `${w}px`; }
+  const left = S.camX * S.zoom;
+  if (left === wroteLeft) return;
+  scroller.scrollLeft = left;
+  // Kept as the platform kept it, not as asked: it rounds to its own pixels
+  // and clamps to its own edges, and the next read must not take its own
+  // rounding for a fling.
+  wroteLeft = scroller.scrollLeft;
+}
+// The platform's move, if it made one since the last write: a drag or a
+// fling in the band. The seat is taken back from whatever was gliding it,
+// the way `pan` does for a drag.
+function readScroll() {
+  if (!bandUp()) return;
+  const left = scroller.scrollLeft;
+  if (left === wroteLeft) return;
+  wroteLeft = left;
+  S.camX = left / S.zoom;
+  S.camTo = null;
+  S.follow = null;
+  S.dirty = true;
+  clampCam();
+  taken?.();
+}
+
 // one frame of that glide
 export function stepCamera(t) {
+  readScroll();
   const w = following(t);
   if (w) lookAt(w.x + WORKER / 2);
   else if (S.follow) S.follow = null;
@@ -664,6 +723,9 @@ export function clampCam() {
   // when a scene locks the height: pulled in close, half as much world
   // measured up from the pit floor is all pit.
   S.camY = S.camLockY != null ? S.camLockY : S.worldH - S.viewH;
+  // And the platform is told where the view now is, so the next fling
+  // starts from here and not from where the last one ended.
+  writeScroll();
 }
 
 // Knock the view: the yard being shaken, added on top of wherever you are

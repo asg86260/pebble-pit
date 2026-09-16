@@ -127,6 +127,10 @@ export const S = {
   // counter *less* what is through (`seedPitCores` in pit.js).
   riftHeld: { cores: 0, shards: 0, spores: 0, sparks: 0 },
   hideDone: false,        // whether finished ladders are folded off the boards
+  // The last purchase, while it can still be taken back from its tile
+  // (upgrades.js, undoBuy): its row, its site, the bill as charged, and
+  // when. Not saved: a reload is a decision to keep it.
+  undo: null,
 
   // --- cores ---
   cores: 0,
@@ -707,6 +711,8 @@ export const EPHEMERAL = [
   'statsBoardOpen', 'looBoardOpen',
   'shackBoardOpen',
   'nextHit', 'resetArmed',
+  // The four seconds in which a purchase can be taken back.
+  'undo',
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // The weather, and the part-grain the house is partway through.

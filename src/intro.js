@@ -72,6 +72,7 @@ export function startIntro() {
   setZoom(INTRO_ZOOM);
   S.camX = door + WORKER / 2 - S.viewW / 2;
   S.camTo = null;
+  clampCam();       // and written through to the page's scroller, or the next frame reads the old seat back
 }
 
 // Straight to the yard as it stands after all of it, for the dev hooks and
