@@ -10,7 +10,7 @@
 import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownMult, shownChange, shownCur, payingBin, binLeft, slotW, PEBBLE, hopperN } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
-import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind,
+import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, findKind,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, FIELD_H, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
@@ -290,7 +290,9 @@ function drawLabels(fx, fy) {
       ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
       ctx.fillStyle = '#fff';
     } else ctx.fillStyle = '#000';
-    if (typeof m === 'string') cells(MARK[m], fx + col * P, top + LABEL_ROW * P);
+    // a converting bin's foot wears its coin's own color -- the tone the
+    // purse counter and the sky's motes use for it -- lit or not
+    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(MARK[m], fx + col * P, top + LABEL_ROW * P); }
     else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
@@ -419,6 +421,8 @@ export function drawCasino() {
 // The coins' marks at five cells, for the converting bins' feet: the plots'
 // hexagon, the quarry's triangle, the core's four-point spark -- the
 // counter's own shapes.
+const COIN_CELL = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
+const coinTone = kind => FIND_COLOR[COIN_CELL[kind]][0];
 const MARK = {
   spore: ['01110', '11111', '11111', '11111', '01110'],
   shard: ['00100', '00100', '01110', '01110', '11111'],
