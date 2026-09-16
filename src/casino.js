@@ -26,7 +26,7 @@
 // had already been made. Here nothing is decided until a grain is on a peg.
 
 import { CASINO_CHIPS, CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS,
-         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, BIN_H, LABEL_H, TRAY_H,
+         HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, TRAY_H,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_FALL_MS, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GATE_MS,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
@@ -183,8 +183,15 @@ export function dealHand(stakeN) {
 // bins exactly and a grain's column is always over the slot of the bin its
 // coins add up to. A peg stands under every seat a grain can reach and nowhere
 // it cannot, so the pegs draw the odds.
+// A bin's place on the field: the two edge bins are wider than the rest, so a
+// bin is looked up rather than multiplied. A grain enters over the middle of
+// the middle bin's slot.
+const EDGE = b => b === 0 || b === CASINO_BINS.length - 1;
+export const binW = b => EDGE(b) ? EDGE_BIN_W : BIN_W;
+export const binLeft = b => (b ? EDGE_BIN_W + (b - 1) * BIN_W : 0);
+export const slotW = b => binW(b) - 1;                           // the wall is the last cell
 export const STEP = BIN_W / 2;                                   // cells across, a row
-export const START_COL = BOARD_COLS / 2;
+export const START_COL = binLeft(Math.floor(CASINO_BINS.length / 2)) + (slotW(1) - 1) / 2;
 export const seatRow = k => BOARD_AIR + k * PEG_ROW_H - 1;      // where a grain sits on peg row k
 export const pegRow = k => BOARD_AIR + k * PEG_ROW_H;           // and where the peg itself is
 export const hasPeg = (k, c) => {
@@ -198,18 +205,21 @@ export const fieldAt = () => ({
 });
 // Which bin a field column is over, and the slot column within it: a bin is
 // its slot and the wall on its right.
-export const BIN_COLS = BIN_W - 1;
-const binAt = c => Math.max(0, Math.min(CASINO_BINS.length - 1, Math.floor(c / BIN_W)));
-const slotCol = c => Math.min(BIN_COLS - 1, c - binAt(c) * BIN_W);
+const binAt = c => {
+  for (let b = CASINO_BINS.length - 1; b > 0; b--) if (c >= binLeft(b)) return b;
+  return 0;
+};
+const slotCol = c => Math.min(slotW(binAt(c)) - 1, c - binLeft(binAt(c)));
 
-// A bin is a plot of sand of its own -- three columns and six rows -- so what
-// lands in it heaps by the yard's rules: a x39 bin with two grains shows two
-// grains and a middle bin shows a heap. Eleven of them, remade for each hand.
-const makeBin = () => ({
-  x: 0, y: 0, cols: BIN_COLS, rows: BIN_H, p: P, grid: new Uint8Array(BIN_COLS * BIN_H),
+// A bin is a plot of sand of its own -- its slot's columns and six rows -- so
+// what lands in it heaps by the yard's rules: a x39 bin with two grains shows
+// two grains and a middle bin shows a heap. Eleven of them, remade for each
+// hand.
+const makeBin = b => ({
+  x: 0, y: 0, cols: slotW(b), rows: BIN_H, p: P, grid: new Uint8Array(slotW(b) * BIN_H),
   n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: true
 });
-const makeBins = () => CASINO_BINS.map(makeBin);
+const makeBins = () => CASINO_BINS.map((_, b) => makeBin(b));
 
 // A grain about to go down the pegs: its column and row on the face, in cells
 // (negative rows are the gate and the sign band above the field), its ten
@@ -245,7 +255,7 @@ export function letGo() {
 const gateCols = () => {
   const mid = START_COL + CASINO_MARGIN - 1;
   const out = [];
-  for (let c = mid - Math.ceil((GATE_W - 1) / 2); c <= mid + Math.floor((GATE_W - 1) / 2); c++) out.push(c);
+  for (let c = mid - Math.floor((GATE_W - 1) / 2); c <= mid + Math.ceil((GATE_W - 1) / 2); c++) out.push(c);
   return out;
 };
 function takeFromHopper() {
@@ -393,7 +403,7 @@ function payBin(b) {
       if (!s) continue;
       put(bin, c, r, 0);
       S.tableAir.push({
-        x: f.x + (b * BIN_W + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
+        x: f.x + (binLeft(b) + c) * P, y: f.y + (FIELD_H + BIN_H - 1 - r) * P,
         vx: 0, vy: 0.6 + rand() * 0.4, t: 0, s, lands: 'tray'
       });
     }
@@ -404,7 +414,7 @@ function payBin(b) {
 const chuteAt = () => {
   const f = fieldAt();
   const b = S.drop?.payFrom ?? Math.floor(CASINO_BINS.length / 2);
-  return { x: f.x + (b * BIN_W + rand() * BIN_W) * P, y: f.y + (FIELD_H + BIN_H) * P };
+  return { x: f.x + (binLeft(b) + rand() * slotW(b)) * P, y: f.y + (FIELD_H + BIN_H) * P };
 };
 
 // The hand is paid. What is in the tray is the pot, the box says the multiple,

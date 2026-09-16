@@ -658,26 +658,26 @@ builds it and a hand pressed through the page's rows settles. The scene is
 
 ### What building it changed
 
-**The building is forty-eight cells wide and sixty tall.** The section
+**The building is fifty-six cells wide and sixty-two tall.** The section
 above added up the face at about thirty-four and left the hopper, the sign and
-the labels to the reader. Funnel eight, floor one, sign nine, air three, pegs
-twenty, bins six, plaque eight, tray five: a cabinet a little taller than it
+the labels to the reader. Funnel nine, floor one, sign nine, air three, pegs
+twenty, bins six, feet nine, tray five: a cabinet a little taller than it
 is wide, standing beside the tower rather than over it. The first build had a
 fourteen-row hopper and tray and a twenty-six-cell front, and was a chimney
 with the sign far above the action.
 
 **The hopper is a funnel, and the funnel is the plot's ground.** A walled
 tray held the stake as a flat bar on the roof, which did not read as a hopper
-at all. The walls step in three cells a row down `HOPPER_PROFILE`, from the
-building's width at the rim to a six-cell floor over the two-cell throat, and
+at all. The walls step in three cells a row down `HOPPER_PROFILE`, nine rows from
+the building's width at the rim to a six-cell floor over the two-cell throat, and
 they are `fixed` cells in the hopper's own grid -- the sand board's trick --
 so the yard's settle rules heap the stake against them: it fills from the
 throat up and sits in the bowl, and letting go sags it into the throat. The
 hopper lies flat rather than heaped (`repose` off): on a three-cell step a
 heaped grain has no drop beside it and coated the slopes instead of filling.
 The brim came down to what the bowl holds -- one for one to a hundred, then a
-hundred and fifty (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the
-profile's two hundred cells with the rim clear. What is approximate is the
+two hundred (`CASINO_PILE_BAND`, `CASINO_PILE_BRIM`), inside the profile's
+two hundred and seventy cells with the rim clear. What is approximate is the
 size of the heap and nothing else, as before.
 
 **A bin is four cells: three of slot and a wall.** The design guessed two,
@@ -689,17 +689,18 @@ forty-four, a white divider and the wall each side make forty-eight -- the
 sand board went to forty-one for seven slots, so this is the same cabinet
 with more slots in it.
 
-**The pays stand in one line on a plaque.** The same boxed strip the sign
-is, without the bulbs, wide enough for every pay written across -- the 39s
-included; stacked digits read as a 3 over a 9 and "felt weird" -- and it is
-as wide as that needs, never narrower than the sign, standing proud of the
-block so the edge labels run out under the walls. Each label wants the middle
-of its slot and the row is settled: pushed apart from the held middle until
-two clear cells stand between neighbors, and back in from the plaque's edges.
-Two clear cells, because one is the gap inside "39", and a row of pays a cell
-apart read as one long number. The three half bins -- one region of the
-board, priced as one -- share a single `.5` under a bar spanning the three.
-Two staggered rows with leaders were tried first and read as a smudge.
+**The pays are the bins' feet.** A row of pays in a line read as one long
+number however it was spaced -- one cell between labels is the gap inside
+"39", and two was not enough contrast -- so the labels went back under their
+bins, and the bins' dividers run on down through the band: a row of table
+cells, one under each bin, and a pay can only belong to the bin over it. A
+digit is three cells, so an inner slot is three; the 39s are seven, so the
+two edge bins are cut seven wide (`EDGE_BIN_W`, from `DIGIT_W`) and catch over
+a wider mouth -- the fan's step is unchanged and a grain bound for an edge
+bin lands two cells inside it. Through the feet the dividers thin to a rule,
+because a three-cell digit against a cell-wide wall on both sides is a
+barcode. Each half bin wears its own half, in one three-cell glyph. Fifty-two
+cells of bins; the building is fifty-six wide, and the sign is its width.
 
 **The sign is the roof sign's face, across the front, in one word,
 between the funnel and the pegs so nothing stands in front of the bowl.** Six
