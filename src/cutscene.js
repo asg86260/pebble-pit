@@ -95,7 +95,6 @@ export function play(name) {
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
   // The scroller is shut for the run: a fling in flight would fight the seat.
   lockScroller(true);
-  S.dirty = true;
 }
 
 // A scene on its way out has let go as far as the player is concerned: the
@@ -175,7 +174,6 @@ export function stepShot(t) {
   S.shot = null;
   S.camLockY = null;
   setZoom(1);
-  S.dirty = true;
   return false;
 }
 
@@ -185,6 +183,5 @@ export function stepShot(t) {
 export function release() {
   if (S.shot) S.shot.out = true;
   lockScroller(false);
-  S.dirty = true;
   return false;
 }

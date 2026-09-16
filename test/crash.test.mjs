@@ -23,7 +23,6 @@ group('nothing is written after the game has stopped', async () => {
   yard.S.fatal = 'TypeError: something broke';
   run(10);
   yard.S.stored = wasStored + 1000;
-  yard.S.dirty = true;
   persist();
   const after = localStorage.getItem(KEY);
 

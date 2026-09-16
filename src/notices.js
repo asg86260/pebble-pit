@@ -104,7 +104,6 @@ export const unreadNotices = () => Math.max(0, S.won.length - S.wonSeen);
 export function markNoticesRead() {
   if (S.wonSeen === S.won.length) return;
   S.wonSeen = S.won.length;
-  S.dirty = true;
 }
 
 // `quiet` writes the record without announcing it (`catchUpNotices`).
@@ -118,7 +117,6 @@ export function earn(key, quiet = false) {
   S.wonSeq = (S.wonSeq || 0) + 1;
   S.wonAt = { ...S.wonAt, [key]: S.wonSeq };
   if (quiet) { S.wonSeen = S.won.length; hushNotices(); }
-  S.dirty = true;
   return true;
 }
 
@@ -162,9 +160,9 @@ export function catchUpNotices() {
 // a bite happens.
 export function noteBite(who) {
   const t = S.tally;
-  if (who === 'crew') { if (!t.rockCrew) { t.rockCrew = true; S.dirty = true; } }
-  else if (who === 'machine') { if (!t.rockMachine) { t.rockMachine = true; S.dirty = true; } }
-  else if (!t.rockYou) { t.rockYou = true; S.dirty = true; }
+  if (who === 'crew') { if (!t.rockCrew) { t.rockCrew = true; } }
+  else if (who === 'machine') { if (!t.rockMachine) { t.rockMachine = true; } }
+  else if (!t.rockYou) { t.rockYou = true; }
 }
 
 // A rock has come off: the rock's witnesses are spent here and cleared.
@@ -180,7 +178,6 @@ export function noteRockCleared() {
   // The hand's witness is kept: a full hand caught across the moment a rock
   // comes off is still a full hand caught.
   S.tally = { rockAt: now(), throwNo: t.throwNo | 0, throwOf: t.throwOf | 0, caught: t.caught | 0 };
-  S.dirty = true;
 }
 
 // A hand has settled at the table; big either way is worth a notice.
@@ -199,7 +196,6 @@ export function noteThrow(chips, full) {
   for (const ch of chips) ch.thrown = t.throwNo;
   t.throwOf = chips.length;
   t.caught = 0;
-  S.dirty = true;
 }
 
 // Only the current throw's grains count; one from an earlier hand or off a

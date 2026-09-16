@@ -69,7 +69,6 @@ export const machineSet = (which, o = {}) => {
   rebalance();
   syncWorkers();
   buildShop();
-  S.dirty = true;
   return { ...m };
 };
 
@@ -90,7 +89,6 @@ export const fullSites = () => {
   resite();
   rebalance();
   buildShop();
-  S.dirty = true;
   return { benches: benches(), plots: plotCount(),
            pick: S.rockhandPickLevel, speed: S.rockhandSpeedLevel,
            breakers: S.breakers, blasters: S.blasters, growers: S.growers };
@@ -100,14 +98,13 @@ export const clearFloor = () => {
   floor.grid.fill(0);
   recount(floor);                          // the cells went, and not through `put`
   floor.painter.repaint();
-  S.dirty = true;
 };
 
-export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); S.dirty = true; };
+export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); };
 
 // The hut is settled rather than left to scoot: it walks out one rock at a
 // time, and a jump is many rocks in one frame.
-export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); S.dirty = true; };
+export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); };
 
 export const preview = n => {
   const keep = S.boulderNo;
@@ -121,7 +118,7 @@ export const preview = n => {
 
 export const next = () => { clearBoulder(); S.chips = []; };
 
-export const drop = () => { dropCore(); S.dirty = true; };
+export const drop = () => { dropCore(); };
 
 // A flock now. Clears whatever was still up there first, so a check gets that
 // flock and not the leavings of the last one.
@@ -158,7 +155,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   resite();
   rebalance();                                      // and the rest carry dust
   if (S.crew) S.seenCore = true;
-  syncWorkers(); buildShop(); S.dirty = true;
+  syncWorkers(); buildShop();
 };
 
 // The story put past a shield without raising it: each failed shield opens
@@ -166,7 +163,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
 // shield never touches this, or it asserts nothing about the row.
 export const answered = (...kinds) => {
   for (const k of kinds) if (!S.shieldsDone.includes(k)) S.shieldsDone.push(k);
-  buildShop(); S.dirty = true;
+  buildShop();
   return [...S.shieldsDone];
 };
 
@@ -180,7 +177,6 @@ export const openRift = () => {
   S.riftAte = Math.max(S.riftAte || 0, ABYSS_AT);
   S.seenFullPit = true;
   seatRift();                       // the disc's rect follows the era it was put in
-  S.dirty = true;
 };
 
 // The torn era: `ate` positions the disc along its growth.
@@ -190,7 +186,6 @@ export const tearRift = (ate = 0) => {
   S.riftAte = Math.max(0, Math.round(ate));
   S.seenFullPit = true;
   seatRift();
-  S.dirty = true;
 };
 
 export const openMeteor = () => {
@@ -200,7 +195,6 @@ export const openMeteor = () => {
   S.seenCore = true;
   makeMeteor();
   buildShop();
-  S.dirty = true;
 };
 
 // A hat on the go, to look at. The work is the real one (same row, same
@@ -210,7 +204,6 @@ export const brewWizard = () => {
   S.towerOpen = true;
   const u = everyRow().find(r => r.key === TYPE.WIZARD);
   if (u && !workOn(TYPE.WIZARD)) start(u.site, u, null);
-  S.dirty = true;
   return Math.round(WIZ_BREW_MS / 1000);
 };
 
@@ -221,7 +214,6 @@ export const wizardHat = (n = 1) => {
   rebalance();
   syncWorkers();
   buildShop();
-  S.dirty = true;
 };
 
 // The stations' kit without paying: the counts are the hats on the stands,
@@ -236,7 +228,7 @@ export const kit = (o = {}) => {
       if (!S.shieldsDone.includes(k)) S.shieldsDone.push(k);
     S.seenShard = true;
   }
-  rebalance(); syncWorkers(); buildShop(); S.dirty = true;
+  rebalance(); syncWorkers(); buildShop();
 };
 
 // Move one body between jobs the way the board does, opening the place
@@ -268,7 +260,6 @@ export const fillBoard = () => {
 export const plots = () => {
   S.plots = S.plots.map(() => 0);
   S.plotTone = S.plotTone.map(() => 0);
-  S.dirty = true;
 };
 
 export const levels = (o = {}) => {             // set upgrade levels, for weighing balance
@@ -282,7 +273,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
-  buildShop(); S.dirty = true;
+  buildShop();
 };
 
 // --- the rules, watched from the inside ---------------------------------------
@@ -310,7 +301,6 @@ export const fast = (seconds = 1, hz = 60) => {
     // Throws on the frame a rule breaks, so the report names the frame.
     if (verifying) verifyWorld();
   }
-  S.dirty = true;
   return frames;
 };
 
@@ -324,7 +314,6 @@ export const setAir = (o = {}) => {
   if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);
   if (o.rains != null) S.rains = o.rains;
-  S.dirty = true;
   buildShop();
   return smogReport();
 };
@@ -348,7 +337,6 @@ export const takeFromPile = (key, n) => {
       took++;
     }
   }
-  S.dirty = true;
   return took;
 };
 
@@ -360,7 +348,7 @@ export const placeBody = (type, x) => {
 
 // A group that starts research and walks away leaves every later lab row
 // disabled, which reads as a broken test somewhere else entirely.
-export const abandon = () => { abandonAt('lab'); buildShop(); S.dirty = true; };
+export const abandon = () => { abandonAt('lab'); buildShop(); };
 
 // Back to a game nobody has played, opening skipped unless it is the thing
 // being looked at. `fresh` is off because this is what a check calls in the
@@ -372,6 +360,8 @@ export const newGame = (intro = false, fresh = false) => {
   // A yard the last group left held would stall this one: `fast` does
   // nothing held.
   S.paused = false;
+  // The boards as the frame would have them by now (main.js drains the flag).
+  buildShop();
 };
 
 // Say which run this is, and start it. A seed is a fact about a whole run,
@@ -400,7 +390,7 @@ export const seedGame = n => {
 export const coldSky = () => clearSky();
 
 // Come back to the game the way a page refresh does.
-export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
+export const reload = () => { persist(); restore(); buildShop(); };
 
 // A reload that is actually cold. `reload` is `persist()` then `restore()`
 // in one process, so anything still standing in `S` survives into the load,
@@ -408,22 +398,20 @@ export const reload = () => { S.dirty = true; persist(); restore(); buildShop();
 // memory made `restore`'s rebalance clamp by accident). This blanks what a
 // fresh page would not have and makes the save do the work.
 export const coldReload = () => {
-  S.dirty = true;                  // or a yard whose last act did not dirty it restores the save before
   persist();
   S.machines = null;
   restore();
   buildShop();
-  S.dirty = true;
 };
 
 
-export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
+export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); };
 
 // For a check whose subject is what is on the shack's board rather than how
 // it got there; the check that buys it goes through `unlockshack`.
-export const openShack = (open = true) => { S.shackOpen = open; buildShop(); S.dirty = true; };
+export const openShack = (open = true) => { S.shackOpen = open; buildShop(); };
 
-export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S.dirty = true; };
+export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); };
 
 
 // A tonic on a body, or in a stirrer's hand, for screenshots only; the real
@@ -440,7 +428,6 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
     w.doses = [...(w.doses || []).filter(d => d.tonic !== tonic),
                { tonic, until: clockNow() + 999999 }];
   }
-  S.dirty = true;
   return true;
 };
 
@@ -452,7 +439,6 @@ export const invest = () => {
   S.quarryOpen = true;
   S.boulderNo = Math.max(2, S.boulderNo);
   buildShop();
-  S.dirty = true;
 };
 
 export const grant = (o = {}) => {              // shards and spores, for looking at things
@@ -483,10 +469,10 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
     const over = o.dust - got;
     if (over > 0) { S.riftOpen = true; S.rift = (S.rift || 0) + over; S.stored += over; }
   }
-  buildShop(); S.dirty = true;
+  buildShop();
 };
 
-export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = true; };
+export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); };
 
 // Whatever the yard is building, standing this instant. A check about what a
 // purchase does must still buy it and wait (`buyBuilt` in the checks); this
@@ -505,7 +491,7 @@ export const finishWorks = () => {
   // Only the front of each site's line lands in a step, so it is stepped
   // until nothing filled-in is left standing.
   for (let guard = 0; guard < 99 && SITES.some(site => worksAt(site).some(w => w.done >= w.of)); guard++) stepWorks(0);
-  buildShop(); S.dirty = true;
+  buildShop();
   return done;
 };
 
@@ -555,7 +541,9 @@ export const boards = () => [
   { name: 'shack',  keys: shackRows().map(u => u.key),    sections: shackSections().map(x => x.keys) }
 ];
 
-export const allRows = () => everyRow().map(u => ({
+// The boards are built first, as the frame would have by the time a player
+// looked: a row the sim's last step raised (`S.shopStale`) is on them here.
+export const allRows = () => { buildShop(); return everyRow().map(u => ({
   key: u.key,
   name: u.name,
   // Through the same gate a board uses, not `show` on its own: a row whose
@@ -567,7 +555,7 @@ export const allRows = () => everyRow().map(u => ({
   // A job row, a dial and a payout row have no price, and `billOf` would
   // throw asking.
   bill: (u.bill || u.cost) ? billOf(u).map(([money, n]) => [money, n]) : []
-}));
+})); };
 // Every row anywhere, for `buyRowByKey`: a check presses the row itself,
 // prices and rules and dead states and all. A board missing from this list
 // answers `false`, and a check written against it passes by asserting
@@ -619,6 +607,9 @@ export const buyRowByKey = key => {
   // is settled, which is the one sign it fired.
   const wasDead = !!u.dead?.();
   buyRow(u);
+  // The boards as a tap leaves them (shop.js drains the flag on the press),
+  // so a check that presses then reads sees the next rung.
+  buildShop();
   return rungOf(u) > was
       || (u.from && u.from() !== from)
       || (showed && !u.show())
@@ -650,7 +641,7 @@ export const everything = (endless = LADDER, passes = 8) => {
     }
     if (!any) break;
   }
-  buildShop(); S.dirty = true;
+  buildShop();
   return bought;
 };
 
@@ -676,19 +667,17 @@ export const digCut = (n = 1) => {
   const cells = quarryCells();
   for (let c = 0; c < cells.length; c++)
     for (let i = 0; i < n && cells[c] < quarryTarget(c); i++) digCell(c);
-  S.dirty = true;
   return dugShare();
 };
 
 // Dust straight into the cut, the way a chip falling through the mouth would.
-export const pileCut = (x, n = 1) => { for (let i = 0; i < n; i++) addGrain(cut, x); S.dirty = true; };
+export const pileCut = (x, n = 1) => { for (let i = 0; i < n; i++) addGrain(cut, x); };
 
 // Dust straight on the hill, the way a chip coming down over the crest does
 // (`rockSand` in rock.js).
 export const pileRock = (x, n = 1) => {
   let put = 0;
   for (let i = 0; i < n; i++) if (restOnRock(x, 3 + (i % 3))) put++;
-  S.dirty = true;
   return put;
 };
 
@@ -700,7 +689,6 @@ export const swing = (n = 1) => {
     const x = rockLeft() + P * 2;
     knockOff(x, rockTopY(x) + P * 2, undefined, false);
   }
-  S.dirty = true;
   return before - countRock();
 };
 const countRock = () => S.boulder.flat().reduce((a, b) => a + b, 0);
@@ -796,7 +784,6 @@ export const muckSet = f => {
   const m = S.muck && S.muck.length ? S.muck : (S.muck = new Array(floor.cols).fill(0));
   for (let c = 0; c < m.length; c++) m[c] = f(c) || 0;
   retally();                       // an in-place write between frames: see smog.js
-  S.dirty = true;
   return m.reduce((n, v) => n + v, 0);
 };
 
@@ -826,7 +813,6 @@ export const hold = (i = 0, x = 0, y = 0) => {
   w.y = y - WORKER / 2;
   S.mouse.x = x;
   S.mouse.y = y;
-  S.dirty = true;
   return true;
 };
 
@@ -834,7 +820,6 @@ export const poopSet = f => {
   const q = poopCols();
   for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;
   retally();                       // same in-place write, same stale memo
-  S.dirty = true;
   return q.reduce((n, v) => n + v, 0);
 };
 
@@ -846,7 +831,7 @@ export const muckOverPit = () => {
 };
 
 // Look somewhere, for a screenshot.
-export const look = x => { S.camX = x; S.camTo = null; clampCam(); S.dirty = true; return Math.round(S.camX); };
+export const look = x => { S.camX = x; S.camTo = null; clampCam(); return Math.round(S.camX); };
 
 // --- getting about ------------------------------------------------------------
 // How a body would get from where it is to a place, in words: a route is
@@ -944,7 +929,7 @@ export const HANDLES = {
   // count. `__potSpot` answers for a pot the yard does not have, but the
   // picker asks `S.apothPots` and ignores a point outside it, so a check that
   // wants two cauldrons has to actually get the second one.
-  __brews: n => { S.brews = n; buildShop(); S.dirty = true; return true; },
+  __brews: n => { S.brews = n; buildShop(); return true; },
   // The recipes there are, from the place that decides it (a constant copied
   // into a check only proves two people copied it). `shown` matters: a shard
   // recipe stays off the list until the quarry opens.

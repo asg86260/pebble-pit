@@ -573,7 +573,6 @@ export function stepQuarrier(w, now, ctx = null) {
   w.swingAt = now + QUARRY_SWING;
   // A hearty stew quickens this body's own digging (apothecary.js).
   w.next = now + beatMs() / speedBoost(w) * (0.85 + rand() * 0.3);
-  S.dirty = true;
 
   if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out
 }
@@ -605,7 +604,6 @@ export function findShards(w, left, crit = critRoll(critBoost(w))) {
     if (crit > 1) critToss(w.x + WORKER / 2, w.y + WORKER, someFind(SHARD_CELL), 'quarry', crit);
     else tossOut(w.x + WORKER / 2, w.y + WORKER);
   }
-  S.dirty = true;
 }
 
 // The nearest column to `c` still standing at `course`, for the rest of a
@@ -793,7 +791,6 @@ export function fillQuarry() {
   // The next dig's stone is set when the ground is laid, not when somebody
   // first swings: a bench bought halfway down a dig pays from the next one.
   S.quarryOwed = seamShards();
-  S.dirty = true;
 }
 
 // What one dig is worth: the handful a bench, and the yield ladder's share on
@@ -1006,7 +1003,6 @@ defineMachine('jaw', {
       if (!below) { fillQuarry(); S.quarrySpent = false; }
       else S.quarrySpent = true;
     }
-    S.dirty = true;
     return true;
   }
 });

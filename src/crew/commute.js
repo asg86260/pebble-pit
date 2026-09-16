@@ -125,8 +125,7 @@ function arrive(w) {
   }
   // Picking up a hat off the ground sends the body straight back to work
   // through `retask`, so there is no leg left to walk.
-  if (w.leg === 'grab' && grabHat(w)) { S.dirty = true; return; }
-  S.dirty = true;
+  if (w.leg === 'grab' && grabHat(w)) return;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
   if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false;
                           w.fromHome = false; w.route = null; return; }

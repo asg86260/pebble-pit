@@ -24,7 +24,6 @@ group('play says what the open slot holds, without a yard number', async () => {
   clean();
   window.__crew(3);
   run(5);
-  yard.S.dirty = true;
   persist();
   const played = playLabel();
   setSlot(2);
@@ -59,7 +58,6 @@ group('picking a slot on the landing page moves the pointer and writes nothing',
   clean();
   window.__crew(2);
   run(5);
-  yard.S.dirty = true;
   persist();
   const blob = exportSave();
   setSlot(3);                                  // what the saves page does there

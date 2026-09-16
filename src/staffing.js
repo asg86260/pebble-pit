@@ -37,7 +37,6 @@ export function restaff(job, want) {
   if (room > 0) S[job] += Math.min(room, Math.max(0, idle()));
   rebalance();
   syncWorkers();
-  S.dirty = true;
 }
 
 // A station whose machine took its kit owns no hats. Zeroed here, the one
@@ -49,7 +48,7 @@ export function stripKit() {
     const r = machine(m.key);
     if (!r || !r.bought || !r.tookKit) continue;
     const trade = TRADE_OF[m.job];
-    if (trade && S[trade] > 0) { S[trade] = 0; S.dirty = true; }
+    if (trade && S[trade] > 0) { S[trade] = 0; }
   }
 }
 
@@ -116,7 +115,6 @@ export function hire() {
   S.crew++;
   rebalance();
   syncWorkers();
-  S.dirty = true;
 }
 
 // A loan taken off a job the player has just re-set is forgiven, not repaid:
@@ -135,5 +133,4 @@ export function assign(job, d) {
   forgive(job);
   rebalance();
   syncWorkers();
-  S.dirty = true;
 }

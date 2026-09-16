@@ -44,7 +44,7 @@ export const TESTS = [
     window.__crew(2, 1);
     window.__jump(7);
     run(2);
-    S.dirty = true; persist();
+    persist();
     const before = localStorage.getItem(KEY);
     const rockBefore = state().boulderNo;
     await press();
@@ -53,7 +53,7 @@ export const TESTS = [
     const down = held().hidden;
     const quarry = state().quarryOpen;
     run(3);                                  // long enough for the save clock to want to write
-    S.dirty = true; persist();
+    persist();
     const during = localStorage.getItem(KEY);
     const mine = block().querySelector('button.mine');
     if (mine) mine.click();

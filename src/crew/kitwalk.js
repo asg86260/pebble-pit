@@ -97,7 +97,6 @@ export function joinJob(w, job) {
   S[job] += 1;
   rebalance();
   syncWorkers();
-  S.dirty = true;
   return true;
 }
 
@@ -136,7 +135,6 @@ export function dispossessed(w) {
   rebalance();                       // ...and carrying is whoever is left over
   syncWorkers();
   retask(w, TYPE.HAUL);
-  S.dirty = true;
 }
 
 // The invariant, reasserted every pass: a station's kit ends up on somebody

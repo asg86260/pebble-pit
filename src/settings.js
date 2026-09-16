@@ -53,7 +53,6 @@ let leaving = false;
 async function leave(to) {
   if (leaving) return;
   leaving = true;
-  S.dirty = true;
   persist();
   document.getElementById('veil').classList.add('up');
   await Promise.all([storeSettled(), new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS))]);

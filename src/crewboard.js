@@ -113,7 +113,6 @@ function point(w) {
   // wherever that body is, and the sheet would be about a place you are no
   // longer looking at. The board it came out of stays for the next name.
   showCrewList(false);
-  S.dirty = true;
 }
 
 // Two rows only: the way through to the people at the top, the thing you buy

@@ -336,7 +336,6 @@ function stepChips(now) {
         if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
         else bankDust(ch.x, ch.s);
         S.chips.splice(i, 1);
-        S.dirty = true;
       }
       continue;
     }
@@ -356,7 +355,6 @@ function stepChips(now) {
     // while still over it.
     if (ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s)) {
       S.chips.splice(i, 1);
-      S.dirty = true;
       continue;
     }
     if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
@@ -366,7 +364,6 @@ function stepChips(now) {
       if (addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
       else bankDust(ch.x, ch.s);
       S.chips.splice(i, 1);
-      S.dirty = true;
     }
   }
 }

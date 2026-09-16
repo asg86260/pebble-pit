@@ -268,12 +268,10 @@ group('an old save with a multiplier reads as the spark rung bought', async () =
   openSites();
   S.tendLevel = TIER_OWN;
   S.mult.tend = 2;
-  S.dirty = true;
   window.__cold();
   const tend = S.tendLevel, mult = S.mult.tend;
 
   // ...and one written mid-research, by hand, since nothing writes one now.
-  S.dirty = true;
   yard.persist();
   const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
   raw.cropLevel = TIER_OWN;

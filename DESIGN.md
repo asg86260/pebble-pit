@@ -10599,6 +10599,21 @@ at the end of the frame, like `restaff` already is, and the 46 calls become
 `S.shopStale = true` or nothing. Last, because a board that rebuilds a frame
 late is a thing a check can see and this needs looking at with the shots.
 
+*As built (2026-09-16):* `S.dirty` is gone from state.js and its 252
+lines from the tree; `persist()` keeps only `fatal`, `staged` and the tab
+claim as gates and writes on the clock (the blob is not compared: the
+`savedAt` stamp differs every write, and a serialize a second was measured
+at 1.5 ms). `S.shopStale` (`EPHEMERAL`) is what the sim raises; `main.js`
+drains it once after `step`, a row's tap drains it in shop.js so the press
+answers on its frame, `buildShop` itself spends it, and `__buy`, `__rows`,
+`__reset` drain it in hooks.js so a check reads the board a player would
+see a frame later. The roster's two buttons raise the flag rather than
+build. No sim file imports shop.js; `crew/assign.js` reads `standRect` from
+stations.js. The ring fell from 83 to 80 and the sim is still in it, by two
+edges outside this seam: `words.js` imports `fmt` from board.js, and
+stations.js imports `houseRect` from crewboard.js, which imports board.js.
+`test/invalidation.test.mjs` is the check.
+
 **7. The comment pass.** Half the tree is comments, and the house rule --
 say why, in sentences -- is right and stays. What has crept in beside it is
 *history*: "it used to be X, which broke Y, so now Z", paragraph after

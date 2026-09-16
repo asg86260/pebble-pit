@@ -46,7 +46,6 @@ export function breatheAt(to, power, secs, from) {
     k.y += (dy / d) * step;
     k.t = 1 - d / k.from;
   }
-  if (DRAUGHT.length) S.dirty = true;
 }
 
 

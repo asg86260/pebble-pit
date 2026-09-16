@@ -28,7 +28,7 @@ const RAISE_BENCH = {
   box: () => ({ x: bench.x, w: bench.w, y: bench.y, h: bench.h }),
   // and which place is coming out of the ground, for the clip
   raises: 'bench',
-  buy: () => { S.seenBench = true; S.dirty = true; }
+  buy: () => { S.seenBench = true; }
 };
 registerRows([RAISE_BENCH]);
 

@@ -34,7 +34,6 @@ export function stepHat(w) {
     h.x = Math.round(h.x);
     h.rest = true;
   }
-  S.dirty = true;
 }
 
 
@@ -96,7 +95,6 @@ export function fall(w) {
       w.spill = 0;
     }
     // The hat is NOT put back on here: the body has to go and get it.
-    S.dirty = true;                         // the hat is on its own arc already
     return;                                 // it is in no state to be given a job
   }
   // Straight back to it if this is where it works, a walk if not -- unless it

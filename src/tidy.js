@@ -85,6 +85,5 @@ export function tidyStep(w, patch, taken, now) {
   w.tidied = (w.tidied || 0) + 1;
   w.tidyNext = now + TIDY_MS;
   w.lunge = 1;                                    // and it is seen to stoop for it
-  S.dirty = true;
   return true;
 }

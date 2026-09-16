@@ -31,7 +31,6 @@ export function myYard() {
   S.staged = false;
   restore();
   bootYard();
-  S.dirty = true;
   refresh();
   return true;
 }

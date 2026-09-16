@@ -7,7 +7,7 @@
 // aura asks holdTarget off the same table, so the ring and the deal cannot
 // disagree.
 
-import { standRect } from '../board.js';
+import { standRect } from '../stations.js';
 import { ASSIGN_PAD, P, WORKER } from '../config.js';
 import { JOB, JOB_OF } from '../jobs.js';
 import { cellPos, rockDown, rockFootY } from '../rock.js';

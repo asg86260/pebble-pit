@@ -127,7 +127,6 @@ export const bandY = () => beltY() - P;       // where a load sits: on top of th
 export function loadBelt(x, y, shade) {
   S.belt.push({ x, y, s: shade });
   sfx('belt-load', { x });
-  S.dirty = true;
 }
 
 // Bought, switched on, and with somebody standing at it this moment.
@@ -163,7 +162,6 @@ export function catchBelt(ch, now, f) {
   if (reg !== null && reg !== 'rock') return false;
   S.belt.push({ x: ch.x, y: bandY(), s: ch.s });
   sfx('belt-catch', { x: ch.x });
-  S.dirty = true;
   return true;
 }
 
@@ -197,7 +195,6 @@ export function stepBelt(now, f) {
     S.belt.splice(i, 1);
     spawnChip(b.x, b.y, BELT_PACE, 0, b.s);
   }
-  S.dirty = true;
 }
 
 defineMachine('belt', {
@@ -248,7 +245,6 @@ defineMachine('belt', {
       }
     }
     if (!got) return 0;
-    S.dirty = true;
     return got / load;
   }
 });

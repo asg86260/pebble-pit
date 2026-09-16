@@ -117,7 +117,7 @@ export const SCRUB_UPGRADES = [
     note: () => 'replaces the filters: what it catches comes back as pebbles',
     cost: () => RECYCLE_SHARDS,
     currency: 'shard',
-    buy: () => { S.recycler = true; S.dirty = true; },
+    buy: () => { S.recycler = true; },
     // Priced in ore, so not before the quarry stands.
     show: () => S.scrubOpen && S.quarryOpen && !S.recycler
   }

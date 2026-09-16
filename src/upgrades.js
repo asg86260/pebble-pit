@@ -17,7 +17,6 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 
 import { spelled } from './tower.js';
 
-import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut } from './works.js';
 import { nextHouseAt } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
@@ -93,7 +92,7 @@ export const HOUSE_ROW = {
                          * (spelled('thrift') ? SPELL_THRIFT : 1)),
   // The hire is the roster's; the sheet that sells it is rebuilt here, since
   // a work landing by itself asks nobody to.
-  buy: () => { hire(); buildShop(); },
+  buy: () => { hire(); S.shopStale = true; },
   show: () => S.crew > 0
 };
 // Not one of `UPGRADES` (it lives on the crew board), but a work coming out
@@ -165,7 +164,6 @@ export const benchMark = () =>
 
 export function markSectionsSeen() {
   S.seenSects = openSections();
-  S.dirty = true;
 }
 
 // Take one currency out of wherever it is kept. Dust is lifted out of the
@@ -220,7 +218,7 @@ export function buy(u) {
   // it go, bank it, drop again -- are the only ones in the game.
   if (u.price) {
     if (!u.show() || u.dead?.()) return false;
-    u.buy(); S.dirty = true; buildShop();
+    u.buy(); S.shopStale = true;
     // A payout row is one of the casino's decisions: it is a thing you do at
     // the table, not a thing you take away, so the board stays up for the next
     // hand.
@@ -234,8 +232,7 @@ export function buy(u) {
     if (!pullOut(u.site, u.key)) return false;
     const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
     for (const [money, n] of bill) if (money !== 'time') refund(money, n, x, y);
-    S.dirty = true;
-    buildShop();
+    S.shopStale = true;
     return false;
   }
   if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return false;
@@ -259,8 +256,7 @@ export function buy(u) {
   payTo();
 
   if (!takesTime(u)) u.buy();
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
   return true;
 }
 

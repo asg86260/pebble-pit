@@ -18,7 +18,6 @@ group('a rescued yard owes the ending until the sheet is put down', async () => 
   const fresh = state();
   // the rescue's own record, as intro.js leaves it: out, and no beat running
   S.rescued = true; S.buried = false;
-  S.dirty = true;
   yard.persist();
   S.beatsDone.push('ending');                // scribbled over, to prove the load reads it
   yard.restore();

@@ -140,7 +140,7 @@ test('and the yard says which run it is', () => {
 // So the generator's one word of state is written down beside the seed. See
 // rngState in src/rng.js and what persist.js does with it.
 
-const writeSave = () => { yard.S.dirty = true; persist(); };
+const writeSave = () => { persist(); };
 
 test('the save says which run it is and where the chance had got to', () => {
   window.__seed(SEED);

@@ -85,7 +85,7 @@ function tend(w, dt) {
     // Ripe, wherever it ripened: the spore forms at the tip of the stalk and
     // waits to be cut, so a plot that came on down the row is not cut by
     // nobody.
-    if (S.plots[k] >= 1) { S.plotTone[k] = someFind(SPORE_CELL); S.dirty = true; }
+    if (S.plots[k] >= 1) { S.plotTone[k] = someFind(SPORE_CELL); }
   }
 }
 
@@ -385,7 +385,6 @@ defineMachine('tiller', {
     if (S.plots[i] < 1) {
       S.plots[i] = Math.min(1, S.plots[i] + 1 / 40);
       if (S.plots[i] >= 1) S.plotTone[i] = someFind(SPORE_CELL);
-      S.dirty = true;
       return true;
     }
     // Through the farm's own `cut`, so the pile, the pile mark and the tone
@@ -393,7 +392,6 @@ defineMachine('tiller', {
     if (throughPlotMuck(1) < 1) return false;
     cut(i, plotX(i));
     if (tender) tender.farmed = (tender.farmed || 0) + 1;
-      S.dirty = true;
     return true;
   }
 });

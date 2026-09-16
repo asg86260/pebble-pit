@@ -57,7 +57,6 @@ group('every plain field on the list survives a save and a load', async () => {
   const want = {};
   fields.forEach((k, i) => { want[k] = sentinel(BLANK[k], i * 2); });
   Object.assign(S, want);
-  S.dirty = true;
   yard.persist();
   // Everything the loop is meant to read put to something else first -- a
   // different value, field by field -- so a field the save forgot comes back
@@ -106,7 +105,6 @@ group('every field on S is accounted for', async () => {
   // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
   const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
                   danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
-  S.dirty = true;
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
   const unlisted = written.filter(k => !seen.has(ALIAS[k] || k));

@@ -201,7 +201,6 @@ export function startle(wx, wy) {
       other.vx *= BIRD_BOLT;
       other.beat *= BIRD_BOLT;
     }
-    S.dirty = true;
     sfx('bird-startle', { x: from });       // your click landed on it
     return BIRD_DUST;
   }

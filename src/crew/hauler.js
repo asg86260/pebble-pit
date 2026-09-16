@@ -114,7 +114,6 @@ function scoop(w, c, now) {
   w.carry++;
   tookOne(w);
   w.next = now + scoopMs();
-  S.dirty = true;
   return true;
 }
 
@@ -256,7 +255,6 @@ export function haulerWork(w, c) {
       w.hasCore = true;
       tookOne(w);                            // a core is a grain of the hole too
       w.goal = 'dump';
-      S.dirty = true;
     }
     return;
   }
@@ -382,7 +380,6 @@ export function haulerWork(w, c) {
         const v = aim(from, up, land, CORE_SIZE, CORE_LOB_H);
         S.coreItem = { x: from - CORE_SIZE / 2, y: up, vx: v.vx, vy: v.vy, rest: false };
         w.hasCore = false;
-        S.dirty = true;
       }
       for (let i = 0; i < w.carry; i++) {
         // Onto the pile: most near the lip, tailing down the hole. Into the
@@ -406,7 +403,6 @@ export function haulerWork(w, c) {
       w.load = [];
       unbook(w);                             // the room it booked is spent
       w.goal = 'seek';
-      S.dirty = true;
     }
   } else if (w.goal === 'home') {
     // Knocked off: it walks to the door it was hired out of and goes in, and
@@ -422,7 +418,7 @@ export function haulerWork(w, c) {
     const door = hireSpot().x;
     w.x += Math.sign(door - w.x) * Math.min(homePace() * frames(), Math.abs(door - w.x));
     w.y = stand(w);
-    if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
+    if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; }
   } else {
     // Nothing to fetch and nothing to carry: a spot to stroll to, a stand
     // about when they get there, then another.

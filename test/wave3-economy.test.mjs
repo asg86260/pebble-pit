@@ -85,7 +85,6 @@ group('the outhouse starts at one post, and loopost buys the second', async () =
 group('a save from before the second cap keeps both', async () => {
   window.__reset();
   window.__loo(true);
-  yard.S.dirty = true;
   yard.persist();
   const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
   delete raw.looPosts;                          // the field a pre-wave save never wrote

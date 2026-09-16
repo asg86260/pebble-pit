@@ -126,7 +126,7 @@ export function stepSmog(dt) {
     S.stormFor = 0; S.rains++;
     // The first rain is what shows you the sky's reading; nothing else sets
     // `seenAir`, and the scrubbing house is gated on it.
-    if (!S.seenAir) { S.seenAir = true; S.dirty = true; }
+    if (!S.seenAir) { S.seenAir = true; }
     let marked = 0;
     for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
     markStorm(marked);

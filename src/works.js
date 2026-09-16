@@ -296,7 +296,6 @@ export function start(site, u, at) {
   // card has a name to add.
   if (!was) SITE_SAYS[site]?.started?.();
   staffHook();
-  S.dirty = true;
   return true;
 }
 
@@ -308,7 +307,6 @@ export function pullOut(site, key) {
   const list = worksAt(site);
   list.splice(list.findIndex(w => w.key === key), 1);
   staffHook();
-  S.dirty = true;
   return true;
 }
 
@@ -323,7 +321,6 @@ export function abandonAt(site, key = null) {
   if (i < 0) return false;
   list.splice(i, 1);
   staffHook();
-  S.dirty = true;
   return true;
 }
 
@@ -377,7 +374,6 @@ export function stepWorks(dt) {
       // crew/builders.js).
       if (list.length >= roomAt(site)) SITE_SAYS[site]?.started?.();
       staffHook();
-      S.dirty = true;
     }
   }
 }
@@ -408,5 +404,4 @@ export const doneName = site => {
 export function markDoneSeen(site) {
   if (!S.siteDone[site]) return;
   delete S.siteDone[site];
-  S.dirty = true;
 }

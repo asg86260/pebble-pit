@@ -24,7 +24,6 @@ const shown = key => !!window.__rows().find(r => r.key === key)?.shown;
 // `__reload` is persist-then-restore in one process, and a field the save
 // forgot survives that in memory, which is exactly the loss this is for.
 const coldReload = () => {
-  S.dirty = true;
   yard.persist();
   const raw = localStorage.getItem('boulder-clicker/v4');
   window.__reset();

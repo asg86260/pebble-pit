@@ -31,7 +31,6 @@ const offKv = () => primeStore(() => Promise.resolve(null));
 function played() {
   window.__crew(2);
   run(10);
-  yard.S.dirty = true;
   persist();
   return exportSave();
 }
@@ -114,7 +113,6 @@ group('the database refusing reads as an unsaved yard, and the store is on local
   kv.refuse = Object.assign(new Error('no room'), { name: 'QuotaExceededError' });
   played();
   await storeSettled();
-  yard.S.dirty = true;
   persist();                         // one write behind: this one reports the last
   const said = yard.S.unsaved;
   const why = storeTrouble();
@@ -135,11 +133,9 @@ group('the sheet can tell blocked from full', async () => {
   played();
   const blocked = storeTrouble();
   localStorage.setItem = () => { throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' }); };
-  yard.S.dirty = true;
   persist();
   const full = storeTrouble();
   localStorage.setItem = real;
-  yard.S.dirty = true;
   persist();
   const after = storeTrouble();
   return [

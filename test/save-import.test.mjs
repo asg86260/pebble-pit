@@ -22,6 +22,12 @@ const player = () =>
 // The names on the roster, in order: what "the same crew" means beyond a count.
 const roster = () => yard.S.workers.map(w => `${w.type}:${w.name}`).join(',');
 const rosterOf = blob => JSON.parse(blob).who.map(w => `${w.type}:${w.name}`).join(',');
+// The same yard under the key: the save writes on the clock now, so a blob
+// written twice differs only by the moment it was written.
+const sameYard = (a, b) => {
+  const sans = raw => { const s = JSON.parse(raw); delete s.savedAt; return JSON.stringify(s); };
+  return !!a && !!b && sans(a) === sans(b);
+};
 
 // Whether the yard is doing anything: dust banked over ten seconds. A yard
 // that came back and then stood still would pass every equality below.
@@ -31,7 +37,7 @@ group('a save goes out and comes back', async () => {
   const S = yard.S;
   window.__crew(2, 2);
   run(30);
-  S.dirty = true; yard.persist();              // what the once-a-second interval does
+  yard.persist();              // what the once-a-second interval does
   const blob = exportSave();
   const then = { stored: S.stored, who: roster() };
   run(30);
@@ -59,7 +65,7 @@ group('a blob that is not a save is refused and costs nothing', async () => {
   const S = yard.S;
   window.__crew(2, 2);
   run(20);
-  S.dirty = true; yard.persist();
+  yard.persist();
   const before = localStorage.getItem(KEY), stored = S.stored, prev = loadPrev();
   const answers = ['x', '{}', '{"stored":1}'].map(b => importSave(b));
   const after = localStorage.getItem(KEY);
@@ -82,7 +88,7 @@ group('a save that parses but will not restore leaves the old one standing', asy
   const S = yard.S;
   window.__crew(2, 2);
   run(20);
-  S.dirty = true; yard.persist();
+  yard.persist();
   const before = localStorage.getItem(KEY), stored = S.stored, who = roster();
   const bad = JSON.parse(player());
   bad.craft = 1;
@@ -92,7 +98,7 @@ group('a save that parses but will not restore leaves the old one standing', asy
   const going = runsOn();
   return [
     ok(took === false, 'the import is refused'),
-    ok(after === before, 'the previous blob is what is under the key'),
+    ok(sameYard(after, before), 'the previous yard is what is under the key'),
     ok(now.stored === stored && now.who === who, 'and the yard is the yard it was',
        `${stored}/${who.split(',').length} bodies before, ${now.stored}/${now.who.split(',').length} after`),
     ok(going, 'and it still runs')
@@ -163,7 +169,6 @@ group('a store that will not take the save says so, and save a copy still works'
   const setItem = localStorage.setItem;
   localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
   run(5);                                        // a few interval-lengths of play
-  yard.S.dirty = true;
   const { persist } = await import('../src/persist.js');
   persist();
   const unsaved = yard.S.unsaved;
@@ -189,11 +194,11 @@ group('a page overtaken by another tab stops writing', async () => {
   const { persist, claimSave } = await import('../src/persist.js');
   claimSave();                                   // this page names itself, as main.js does
   run(2);
-  yard.S.dirty = true; persist();
+  persist();
   const mine = localStorage.getItem(KEY);
   localStorage.setItem(OWNER_KEY(), 'someothertab');   // ...and another page writes
   run(2);
-  yard.S.dirty = true; persist();
+  persist();
   const after = localStorage.getItem(KEY);
   const yielded = yard.S.yielded;
 
@@ -220,12 +225,12 @@ group('a page whose claim cannot be read is not overtaken', async () => {
   const getItem = localStorage.getItem;
   localStorage.getItem = () => { throw new Error('blocked'); };   // as a blocked iframe throws
   run(2);
-  yard.S.dirty = true; persist();
+  persist();
   const yielded = yard.S.yielded;
   localStorage.getItem = getItem;
   localStorage.removeItem(OWNER_KEY());                              // and as a cleared store reads
   run(2);
-  yard.S.dirty = true; persist();
+  persist();
   const yieldedEmpty = yard.S.yielded;
   const wrote = localStorage.getItem(KEY);
 

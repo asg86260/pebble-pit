@@ -185,12 +185,11 @@ export const brewKeyOf = i => (S.brewKeys || [])[i] || potTonicOf(i);
 export const potSpentOf = i => !!(S.potSpents || [])[i];
 export const doseStock = key => Math.max(0, (S.shelf || {})[key] | 0);
 export const doseStockTotal = () => TONICS.reduce((n, t) => n + doseStock(t.key), 0);
-const shelve = (key, n) => { S.shelf[key] = doseStock(key) + n; S.dirty = true; };
+const shelve = (key, n) => { S.shelf[key] = doseStock(key) + n; };
 // The dev handle behind `__stock`; nothing in the game calls this.
 export const setStock = (key, n) => {
   if (!tonicOf(key)) return 0;
   S.shelf[key] = Math.max(0, n | 0);
-  S.dirty = true;
   return S.shelf[key];
 };
 
@@ -213,12 +212,10 @@ export function migrateApothecary() {
     if (S.potency[old] != null) {
       S.potency[to] = Math.max(S.potency[to] | 0, S.potency[old] | 0);
       delete S.potency[old];
-      S.dirty = true;
     }
     if (S.shelf[old] != null) {
       S.shelf[to] = (S.shelf[to] | 0) + (S.shelf[old] | 0);
       delete S.shelf[old];
-      S.dirty = true;
     }
   }
   const fold = key => FOLDED[key] || key;
@@ -233,19 +230,16 @@ export function migrateApothecary() {
   if (S.potTonic != null && !(S.potTonics || []).length) {
     S.potTonics = [S.potTonic];
     S.potTonic = null;
-    S.dirty = true;
   }
   if (S.potSpent && !(S.potSpents || []).length) {
     S.potSpents = [true];
     S.potSpent = false;
-    S.dirty = true;
   }
   // One favored job for the whole building becomes every pot's.
   S.potPrefers = S.potPrefers || [];
   if (S.potPrefer) {
     for (let i = 0; i < Math.max(1, S.apothPots | 0); i++) S.potPrefers[i] = S.potPrefer;
     S.potPrefer = null;
-    S.dirty = true;
   }
   const held = (S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
   if (held > 0) {
@@ -259,7 +253,6 @@ export function migrateApothecary() {
     for (const t of TONICS)
       if (!potencyLevel(t.key)) S.potency[t.key] = S.strengthLevel;
     S.strengthLevel = 0;
-    S.dirty = true;
   }
 }
 
@@ -357,7 +350,6 @@ function deal(w, target, key) {
   const keep = doses(target).filter(d => (tonicOf(d.tonic) || {}).kind !== (t || {}).kind);
   target.doses = [...keep, { tonic: key, until: now() + buffMs() }];
   w.brewed = (w.brewed || 0) + 1;
-  S.dirty = true;
 }
 
 // --- one stirrer, one frame ---------------------------------------------------
@@ -548,7 +540,6 @@ export function stepApothecary(dt) {
       S.brewKeys[i] = null;
       S.brews++;                                 // and the craft is one batch deeper
       if (!S.potKeep) S.potSpents[i] = true;     // this pot's one-off is spent
-      S.dirty = true;
     }
   }
 }
@@ -560,7 +551,6 @@ export function setPotTonic(i, key) {
   const was = potTonicOf(i);
   S.potTonics[i] = was === key ? null : key;     // the set tonic toggles the pot off
   S.potSpents[i] = false;
-  S.dirty = true;
 }
 // The picker at the pot: a pick says which one it wants, so unlike
 // `setPotTonic` it does not toggle off on the one already set; `null` is the
@@ -568,18 +558,16 @@ export function setPotTonic(i, key) {
 export function choosePotTonic(i, key) {
   S.potTonics[i] = key || null;
   S.potSpents[i] = false;
-  S.dirty = true;
 }
 // Every pot's one-off flag is cleared together, because the dial is the
 // building's: turning it back to "just this one" means one more batch each.
-export function setKeep(keep) { S.potKeep = keep; S.potSpents = []; S.dirty = true; }
+export function setKeep(keep) { S.potKeep = keep; S.potSpents = []; }
 // Who a pot's doses go to first, set at the pot (potpick.js). `null` is
 // whoever is nearest.
 export const potPreferOf = i => (S.potPrefers || [])[i] || null;
 export function choosePotPrefer(i, job) {
   if (!S.potPrefers) S.potPrefers = [];
   S.potPrefers[i] = job || null;
-  S.dirty = true;
 }
 
 // --- what the building's board sells ------------------------------------------

@@ -221,6 +221,5 @@ export function stepMachines(now) {
       const s = spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) };
       foul(dirt, s.x, s.y, 'mach');
     }
-    S.dirty = true;
   }
 }

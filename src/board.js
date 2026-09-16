@@ -804,7 +804,6 @@ hideEl.addEventListener('click', () => {
   // up would fold its rows away under your eyes on arrival.
   buildShop();
   sayHideDone();
-  S.dirty = true;
 });
 
 // A hand in progress hushes the board wherever it is standing. It is not closed

@@ -522,7 +522,6 @@ function pan(dx) {
   S.camX += dx;
   clampCam();
   if (S.camX === was) return;
-  S.dirty = true;                          // where you are looking is worth writing down
   viewTaken();
 }
 
@@ -614,6 +613,5 @@ export function hold(on) {
   (on ? fadeIn : fadeOut)(document.getElementById('held'));   // now, not next frame
   // The sheet comes up on its front page, and opening it reads the record.
   if (on) { showPane('main'); markNoticesRead(); sayStore(); }
-  S.dirty = true;
 }
 document.getElementById('resume').addEventListener('click', () => hold(false));

@@ -83,7 +83,6 @@ export function downTheCut(w, col) {
   w.carry = (w.carry || 0) + 1;
   tookOne(w);
   w.next = now() + scoopMs();
-  S.dirty = true;
 }
 
 // The nearest column of the cut's own dust nobody else has gone for: one

@@ -102,7 +102,6 @@ export function raiseShield(kind) {
                sag: 0, rising: false, rested: 0, setting: false, fading: 0 };
   if (laid >= KINDS[kind].pieces) fanfare(S.shield);
   refitShield();
-  S.dirty = true;
 }
 
 // A standing shield is re-sized for the rock that is now going to reach it,
@@ -115,7 +114,6 @@ export function refitShield() {
   const { x, w, h, rise } = shieldPlan(s.kind);
   if (x === s.x && w === s.w && h === s.h && rise === s.rise) return;
   Object.assign(s, { x, w, h, rise });
-  S.dirty = true;
 }
 
 // The ground a shield's build stands on (`siteBox` in works.js): the same
@@ -151,7 +149,6 @@ export function breakShield() {
   if (!S.shieldsDone.includes(s.kind)) S.shieldsDone.push(s.kind);
   S.shield = null;
   S.rockHeld = false;
-  S.dirty = true;
 }
 
 // A thing under a load it cannot take shakes and sheds. `strain` climbs from
@@ -237,7 +234,6 @@ function answer(s, kind) {
     if (!s.setting) {
       if (now() - (s.rested || s.caught) < kind.holds) return;
       s.setting = true;
-      S.dirty = true;
     }
     // Where it may come down to: the ground while nobody is under it,
     // otherwise as far as the dig is far along and never below a few courses
@@ -253,7 +249,6 @@ function answer(s, kind) {
       s.setting = false;
       s.caught = 0;
       s.rested = 0;
-      S.dirty = true;
     }
     return;
   }
@@ -272,13 +267,11 @@ export function stepShield() {
   // `shieldsDone` like the kinds that broke, so its row never returns.
   if (kind.answer === 'hold' && S.rescued && !beatRunning('rescue') && !s.caught && !s.fading) {
     s.fading = now();
-    S.dirty = true;
   }
   if (s.fading) {
     if (now() - s.fading >= DOME_FADE_MS) {
       if (!S.shieldsDone.includes(s.kind)) S.shieldsDone.push(s.kind);
       S.shield = null;
-      S.dirty = true;
     }
     return;                      // a fading dome catches nothing
   }
@@ -307,7 +300,6 @@ export function stepShield() {
       S.rockFallV = -Math.sqrt(2 * DROP_GRAV * DOME_BOUNCE_C * P);
     }
     lookUp(kind.holds || 1200);
-    S.dirty = true;
     return;
   }
 }
@@ -349,6 +341,5 @@ export function pourDome(hands, secs) {
   if (laid !== s.laid) {
     s.laid = laid;
     if (laid >= KINDS.dome.pieces) fanfare(s);
-    S.dirty = true;
   }
 }

@@ -14,7 +14,6 @@ import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, 
          surfaceY, colOf, topRow } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
-import { buildShop } from './shop.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 
@@ -171,9 +170,8 @@ export function throughRift(x, shade) {
     else if (kind === SPORE_CELL) { S.spores++; S.seenSpore = true; held.spores++; }
     else if (kind === SPARK_CELL) { S.sparks++; S.seenSpark = true; held.sparks++; }
     else return false;              // nothing this hole knows how to hold
-    buildShop();
+    S.shopStale = true;
   }
-  S.dirty = true;
   return true;
 }
 
@@ -248,11 +246,10 @@ export function bankDust(x, shade = 1) {
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left
-  } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
-  else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
+  } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; S.shopStale = true; }
+  else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; S.shopStale = true; }
   // The red out of the meteor's core, counted where everything else is.
-  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
-  S.dirty = true;
+  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; S.shopStale = true; }
   return true;
 }
 
@@ -358,7 +355,6 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
       }
     }
   }
-  S.dirty = true;
   return n - left;                           // what was actually taken
 }
 
@@ -553,7 +549,6 @@ export function rehomeDust() {
   // And anything left over the target comes off the top, which is the ordinary
   // case of a hole that shrank.
   if (have > want) liftTo(want, null);
-  S.dirty = true;
 }
 
 // The pile shows exactly what you still hold of everything that is not

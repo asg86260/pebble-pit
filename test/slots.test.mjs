@@ -11,12 +11,18 @@ const { persist, exportSave, importSave, claimSave } = await import('../src/pers
 const { openSlot, setSlot, slotRaw } = await import('../src/save.js');
 const { slotLabels, since } = await import('../src/slots.js');
 const KEY = 'boulder-clicker/v4';
+// The same yard under a key: the save writes on the clock now, so a switch
+// writes the yard you leave once more, and the blob differs only by the
+// moment it was written.
+const sameYard = (a, b) => {
+  const sans = raw => { const s = JSON.parse(raw); delete s.savedAt; return JSON.stringify(s); };
+  return !!a && !!b && sans(a) === sans(b);
+};
 
 // A yard worth telling apart from a fresh one, and its blob.
 function played(crew = 2) {
   window.__crew(crew);
   run(10);
-  yard.S.dirty = true;
   persist();
   return exportSave();
 }
@@ -37,7 +43,7 @@ group('stepping into an empty slot is the new game, and the yard you left stays'
   return [
     ok(openSlot() === 2, 'slot 2 is open', `slot ${openSlot()}`),
     ok(fresh.crew === 0 && fresh.beat.yard, 'and the intro is standing in it', `${fresh.crew} crew, beat ${fresh.beat.yard}`),
-    ok(localStorage.getItem(KEY) === first, 'slot 1 still holds the yard exactly as it was left'),
+    ok(sameYard(localStorage.getItem(KEY), first), 'slot 1 still holds the yard exactly as it was left'),
     ok(!!localStorage.getItem(KEY + '/2'), 'and slot 2 has a blob of its own now')
   ];
 });
@@ -84,7 +90,7 @@ group('a reset erases the open slot only', async () => {
   window.__reset(true, true);                    // the player's reset: the open slot
   return [
     ok(state().crew === 0, 'slot 2 is a fresh yard'),
-    ok(localStorage.getItem(KEY) === first, 'and slot 1 was not touched')
+    ok(sameYard(localStorage.getItem(KEY), first), 'and slot 1 was not touched')
   ];
 });
 
@@ -96,7 +102,7 @@ group('an import lands in the open slot only', async () => {
   const took = importSave(first);
   return [
     ok(took && state().crew === 3, 'the imported yard is standing in slot 2', `${state().crew} crew`),
-    ok(localStorage.getItem(KEY) === first, 'slot 1 is as it was'),
+    ok(sameYard(localStorage.getItem(KEY), first), 'slot 1 is as it was'),
     ok(openSlot() === 2, 'and slot 2 is still the open one')
   ];
 });
@@ -113,7 +119,6 @@ group('switching slots claims the new slot, so its autosave is not yielded to a 
   window.__slot(2);
   window.__crew(1);
   run(5);
-  yard.S.dirty = true;
   persist();
   const blob = slotRaw(2);
   const crew = blob ? JSON.parse(blob).crew : null;

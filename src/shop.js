@@ -59,7 +59,6 @@ export const revealed = u => {
   if (!S.shownRows.includes(u.key)) {
     if (!u.once()) return false;
     S.shownRows = [...S.shownRows, u.key];
-    S.dirty = true;
   }
   return u.show();
 };
@@ -368,6 +367,9 @@ function build(el, list, sections, empty, heads) {
       else onTap(b, () => {
         tookLook();                            // anything the yard sent earlier
         buy(u);
+        // The press answers on its own frame: the row it took goes, the next
+        // rung comes, before the finger is off the board.
+        if (S.shopStale) buildShop();
         tookLook();                            // and whatever this purchase sent
       }, { long: say });
       // A door opens what is behind it on the way in, not on the press; the
@@ -719,7 +721,6 @@ export function markRowSeen(u) {
   // A fresh array rather than a push: the save notices a new array where it
   // can miss a mutation in place.
   S.seenRows = [...S.seenRows, u.key];
-  S.dirty = true;
 }
 
 // The crew board, a list of people that changes length whenever anybody is
@@ -761,7 +762,13 @@ export function buildBoard(which) {
   if (board) build(...board());
 }
 
+// Every board. The sim never calls this: it raises `S.shopStale` and the
+// frame calls this once after `step` (main.js); the shell calls it where a
+// press has to answer on its own frame, and the hooks before a check reads
+// a board. Either way the flag is spent here, so a rebuild the shell asked
+// for is not asked for again by the frame.
 export function buildShop() {
+  S.shopStale = false;
   for (const which of Object.keys(BOARDS)) buildBoard(which);
 }
 
@@ -785,7 +792,6 @@ export function mountRows(el, rows, title = 'the bench', sections = null) {
 // shield does not climb back into a corner you emptied. The player's pin wins.
 export const togglePin = key => {
   S.pinned = S.pinned === key ? null : key;
-  S.dirty = true;
 };
 
 const goalRow = () => {
@@ -798,12 +804,12 @@ const goalRow = () => {
 export function fillPin() {
   if (!pinEl) return;
   let u = S.pinned ? rowFor(S.pinned) : null;
-  if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; S.dirty = true; }
+  if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; }
   // Not while a scene has the camera: the next shield's row arrives on the
   // frame the last one breaks, mid-cutscene.
   if (!u && !ownsCamera()) {
     u = goalRow();
-    if (u) { S.pinned = u.key; markRowSeen(u); S.dirty = true; }
+    if (u) { S.pinned = u.key; markRowSeen(u); }
   }
   pinEl.hidden = !u;
   if (!u) { built.delete(pinEl); return; }

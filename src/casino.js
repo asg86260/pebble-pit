@@ -42,7 +42,6 @@ import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, f
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, spendHeld } from './pit.js';
-import { buildShop } from './shop.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
 import { reducedMotion } from './prefs.js';
@@ -86,8 +85,7 @@ export const stakeOf = cur => chip() === 'all' ? purseOf(cur) : chip();
 
 export function pickChip(d) {
   S.chip = Math.max(0, Math.min(CASINO_CHIPS.length - 1, S.chip + d));
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 const inHopper = () => !!S.pot && S.pot.where === 'hopper';
@@ -126,8 +124,7 @@ export function stake(cur) {
   S.hand = null;                                 // the last one is old news now
   S.pouring = true;
   stopAttract();                                 // the machine has a player
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 // --- the handful ------------------------------------------------------------------
@@ -241,8 +238,7 @@ export function letGo() {
     stage: 'drop', holdAt: 0, payAt: 0, payIdx: 0, paid: 0, edge: false, payFrom: null
   };
   S.hand = null;
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 // One grain out of the gate. The heap is taken from the bottom over the
@@ -440,8 +436,7 @@ function settleHand() {
   const x = casino.x + casino.w / 2;
   if (won) sfx('jackpot', { x, big: true });
   else if (won === false) sfx('dud', { x });
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 // One frame of the hand on the board.
@@ -522,8 +517,7 @@ export function bank() {
   S.paying = { cur: S.pot.cur, left: pot(), grains: Math.max(1, tray.n) };
   S.pot = null;
   S.hand = null;                                 // taken: there is nothing to report
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 // Put the whole of it back on the roof. The tray's grains lift in a rising arc
@@ -536,8 +530,7 @@ export function ride() {
   S.pot = { ...S.pot, stake: S.pot.n, where: 'hopper' };
   S.hoisting = { grains: Math.max(1, tray.n), lifted: 0 };
   S.hand = null;
-  S.dirty = true;
-  buildShop();
+  S.shopStale = true;
 }
 
 // However much there is, it is away in about a second and a half: the rate
@@ -569,7 +562,6 @@ function hoistStep(dt) {
   if (tray.n === 0 && airborneTo('hopper') === 0) {
     S.hoisting = false;
     S.pouring = true;                            // and the hopper walks to what the pot says
-    S.dirty = true;
   }
 }
 
@@ -606,7 +598,7 @@ function payOutStep(dt) {
              y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30, ms: FLIGHT_MS }
     });
   }
-  if (p.grains < 1 && p.left < 1) { S.paying = null; S.dirty = true; }
+  if (p.grains < 1 && p.left < 1) { S.paying = null; }
 }
 
 // --- the two plots ---------------------------------------------------------------------
@@ -881,14 +873,14 @@ export function stepCasino(dt) {
   if (!S.casinoOpen) return;
   stepSparks(dt);
   // The pot is standing in its plot: the pour is over, and the decision is open.
-  if (S.pouring && settledInPile()) { S.pouring = false; S.dirty = true; buildShop(); }
+  if (S.pouring && settledInPile()) { S.pouring = false; S.shopStale = true; }
   if (S.drop) stepDrop(dt);
   stepAttract(dt);
   // A win's fountains go up a beat apart rather than all at once: three bursts
   // read as a celebration, one reads as a hiccup.
   if (S.hand?.won && S.hand.bursts < S.hand.fountains &&
       now() - S.hand.at >= S.hand.bursts * CASINO_BURST_GAP_MS) { burst(); S.hand.bursts++; }
-  if (S.hand && now() - S.hand.at > CASINO_SAY_MS) { S.hand = null; S.dirty = true; }
+  if (S.hand && now() - S.hand.at > CASINO_SAY_MS) { S.hand = null; }
 }
 
 // The top of the tray, which is where the news comes out of.

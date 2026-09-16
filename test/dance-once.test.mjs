@@ -110,7 +110,6 @@ group('the ending is danced once, when the sheet is put down', async () => {
   // And a save from before the beats existed, with the story already told:
   // an old finished yard does not throw a party on load.
   run(DANCE_MS / 1000 + 1);                    // this dance is over
-  S.dirty = true;
   yard.persist();
   const s = JSON.parse(localStorage.getItem(KEY));
   const wrote = Array.isArray(s.beatsDone) && s.beatsDone.includes('ending');

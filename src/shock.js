@@ -43,7 +43,6 @@ export function shockAt(x, y, power = 3, where = '', wave = null) {
       t: 0, life: CRIT_MOTE_LIFE * (0.7 + rand() * 0.6), color: wave && wave.color
     });
   }
-  S.dirty = true;
 }
 
 // `dt` arrives in MILLISECONDS like every other stepper; taken for seconds a
@@ -71,7 +70,6 @@ export function stepShocks(dt) {
     m.vx *= drag;
     m.vy *= drag;
   }
-  if (S.shocks.length || S.shockMotes.length) S.dirty = true;
 }
 
 // How far through its run a ring is, nought to one: what the drawing is a

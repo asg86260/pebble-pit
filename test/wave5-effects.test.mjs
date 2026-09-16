@@ -101,7 +101,6 @@ group('a save that bought the old widenings still loads, and pulls the same', as
 
   // Written down as it stands -- the store otherwise holds whatever the last
   // group left, which since the reach landed is a hole of some other size.
-  yard.S.dirty = true;
   yard.persist();
   const save = JSON.parse(localStorage.getItem('boulder-clicker/v4') || '{}');
   save.riftLevel = 7;

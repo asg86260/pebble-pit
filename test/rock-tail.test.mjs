@@ -22,7 +22,6 @@ const lastHandful = () => {
     w.x = rockLeft() + P;                  // the near end
     w.foot = w.footAt = null;
   });
-  S.dirty = true;
 };
 
 group('the last cells of a rock are reached at a walk', async () => {

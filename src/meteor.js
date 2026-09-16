@@ -38,7 +38,6 @@ export function stepSparkle(dt) {
     k.vx *= 0.96;
     k.vy = k.vy * 0.96 + 0.012;              // it slows, and then it sinks
   }
-  if (SPARKLE.length) S.dirty = true;
 }
 
 // the ring the wizards fly, and the bolts leave from
@@ -73,7 +72,6 @@ function stepBolts() {
       sparkle(b.x, b.y, (rand() - 0.5) * 0.5, (rand() - 0.5) * 0.5, 340);
       if (rand() < 0.5)
         sparkle(b.x, b.y, (rand() - 0.5) * 1.1, (rand() - 0.5) * 1.1, 220);
-      S.dirty = true;
       continue;
     }
     // A stronger bolt takes the cells around it too, spreading outward rather
@@ -129,7 +127,6 @@ export function emptySky() {
   sky.cols = sky.rows = n;
   sky.cells = new Uint8Array(n * n);
   sky.n = 0;
-  S.dirty = true;
 }
 
 export function makeMeteor() {
@@ -146,7 +143,6 @@ export function makeMeteor() {
       put(c, r, d <= core ? CORE : RIND);
     }
   }
-  S.dirty = true;
 }
 
 // The cell a wizard takes next: the furthest out from the middle, and of those
@@ -187,7 +183,6 @@ export function takeCell(c, r) {
     sparkle(x + P / 2, y + P / 2, (rand() - 0.5) * 1.6, (rand() - 0.5) * 1.6, 380);
   // worked out: the wizards make the next one (`summon`)
   if (sky.n === 0) S.summon = 0;
-  S.dirty = true;
   return kind;
 }
 
@@ -201,7 +196,6 @@ export const summonAt = () => Math.max(0, Math.min(1, S.summon || 0));
 export function summon(hands, secs) {
   if (!summoning() || hands <= 0) return;
   S.summon = summonAt() + (hands * secs * 1000) / SUMMON_MS;
-  S.dirty = true;
   if (S.summon < 1) return;
   // The flash is a fact about the moment, not a state; the light they poured
   // in comes back out as a ring thrown clear in every direction.
@@ -222,7 +216,4 @@ export function stepMeteor(t) {
   if (!S.meteorOpen) { BOLTS.length = 0; return; }
   if (!sky.cells) { makeMeteor(); return; }
   stepBolts();
-  // The canvas only draws when something says it should, and a breathing
-  // corona, a summoning and the flash all have to be drawn every frame.
-  if (sky.n > 0 || summoning() || t - (S.flashAt || 0) < 1000) S.dirty = true;
 }

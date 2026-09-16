@@ -419,7 +419,9 @@ export const S = {
   // The seed this run was started from: drawn by `reset` in persist.js, saved
   // with the yard. The chance itself is in rng.js.
   runSeed: 0,
-  dirty: false,           // something changed worth saving
+  // The sim changed what a board sells: the frame rebuilds every board once,
+  // after `step` (main.js), and the hooks rebuild before a check reads one.
+  shopStale: false,
   fatal: '',              // the game has stopped on a throw; nothing is written after it
   unsaved: false,         // the store refused the last write; the sheet says so
   yielded: false,         // another tab is writing this save; this page has stopped
@@ -712,7 +714,7 @@ export const EPHEMERAL = [
   // The weather, and the part-grain the house is partway through.
   'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
   'placed', 'strips', 'introHeart',
-  'dirty', 'fatal', 'lastFrame', 'settleAt',
+  'shopStale', 'fatal', 'lastFrame', 'settleAt',
   // A reload finds the one under the rock packed in, the way every rock
   // leaves it.
   'buriedDug',

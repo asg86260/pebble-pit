@@ -62,7 +62,6 @@ export function lift(w) {
   w.legs = null;
   w.brk = null;
   w.say = null;
-  S.dirty = true;
   return true;
 }
 
@@ -100,7 +99,6 @@ export function drop(w) {
   w.shook = 0;
   w.turnedAt = 0;
   w.lastDir = 0;
-  S.dirty = true;
 }
 
 // --- shaking somebody ---------------------------------------------------------
@@ -122,7 +120,6 @@ function shedLoad(w, dx) {
   }
   w.carry -= out;
   if (w.liftedFull && w.carry <= 0) earn('shookload');
-  S.dirty = true;
 }
 
 // The hat leaves the head as a thing in flight. Not a chip (a chip banks
@@ -138,7 +135,6 @@ function flingHat(w, dx) {
                vy: -SHAKE_LIFT * 1.4 + bell() * 0.4 };
   w.trained = false;
   earn('hatoff');
-  S.dirty = true;
 }
 export function shakeHeld(w, dx) {
   if (!w || Math.abs(dx) < 1) return;

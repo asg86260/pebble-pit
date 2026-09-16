@@ -84,6 +84,10 @@ function frame() {
     syncEnding();
     const t0 = mark();
     if (!S.paused && !(demo && reducedMotion())) step();
+    // The boards, once, for whatever the step changed on them: a core landing,
+    // a first drag, a hand settled. The sim raises the flag and nothing else;
+    // the draw below reads boards that are already right.
+    if (S.shopStale) { S.shopStale = false; buildShop(); }
     const t1 = mark();
     draw();
     const t2 = mark();

@@ -96,9 +96,9 @@ export const BEATS = [
   // putting it down is the skip, and the crew have their dance about it.
   { key: 'ending', owns: 'sheet', next: null,
     when: () => S.rescued && !S.beat.yard && !S.beat.camera,
-    enter: () => { S.dirty = true; },
+    enter: () => {},
     step: () => true,
-    skip: () => { if (S.rockhands > 0) S.danceUntil = now() + DANCE_MS; S.dirty = true; } },
+    skip: () => { if (S.rockhands > 0) S.danceUntil = now() + DANCE_MS; } },
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));
@@ -117,7 +117,6 @@ export function markDone(...keys) {
     if (!S.beatsDone.includes(key)) S.beatsDone.push(key);
     for (const o of OWNERS) if (S.beat[o] === key) S.beat[o] = null;
   }
-  S.dirty = true;
 }
 
 // Every beat a chain of `next`s reaches from this one, itself first. A skip
@@ -132,7 +131,6 @@ function chain(key) {
 function start(row, t) {
   S.beat[row.owns] = row.key;
   row.enter(t);
-  S.dirty = true;
 }
 
 // Enter a beat now, whether or not its `when` has come: the boot puts the

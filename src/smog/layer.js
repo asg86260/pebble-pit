@@ -105,7 +105,6 @@ function clearRange(range, effort) {
     const took = Math.min(m[c], left);
     m[c] -= took;
     left -= took;
-    S.dirty = true;
   }
   return left;
 }
@@ -156,7 +155,6 @@ export function dropMuckAt(wx, n, kind = 'muck') {
     if (low >= MUCK_MAX) break;                // nowhere near here has room
     m[best] = Math.min(MUCK_MAX, (m[best] || 0) + 1);
   }
-  S.dirty = true;
   return true;
 }
 
@@ -198,7 +196,6 @@ function slideOffLoose() {
       if (k === c || k < 0 || k >= m.length || (m[k] || 0) >= MUCK_MAX) continue;
       m[c]--;
       m[k] = (m[k] || 0) + 1;
-      S.dirty = true;
       return;                       // one column a pass; the rest follow it down
     }
   }
@@ -233,7 +230,6 @@ export function sweepMuckAt(wx, n, hand) {
         m[c] -= take;
         cells -= take;
         took += take;
-        S.dirty = true;
       }
     }
   }

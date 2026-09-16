@@ -8,7 +8,6 @@ import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
 import { capacity } from './levels.js';
-import { buildShop } from './shop.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
@@ -48,7 +47,6 @@ export function catchAir(mx, my) {
       spin: (rand() - 0.5) * 0.03,
       bob: rand() * Math.PI * 2
     });
-    S.dirty = true;
   }
 }
 
@@ -83,7 +81,6 @@ export function sweep(mx, my) {
       Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE) {
     S.coreItem = null;
     S.heldCore = true;
-    S.dirty = true;
   }
 
   let room = capacity() - S.held;
@@ -109,7 +106,7 @@ export function sweep(mx, my) {
   if (taken) {
     S.held += taken;
     // The bench's 'strength' row appears the first time this happens.
-    if (!S.seenDrag) { S.seenDrag = true; buildShop(); }
+    if (!S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
     for (let i = 0; i < taken; i++) {
       S.motes.push({
         s: lifted[i],
@@ -119,7 +116,6 @@ export function sweep(mx, my) {
         bob: rand() * Math.PI * 2
       });
     }
-    S.dirty = true;
   }
 }
 
@@ -128,7 +124,6 @@ export function release(x, y) {
   if (S.heldCore) {
     S.heldCore = false;
     S.coreItem = { x: x - CORE_SIZE / 2, y: y - CORE_SIZE / 2, vx, vy, rest: false };
-    S.dirty = true;
   }
   if (!S.held) return;
   // The juggling notice is for the biggest hand there is: a level-0 hand is
@@ -144,6 +139,5 @@ export function release(x, y) {
   noteThrow(S.chips.slice(from), full);
   S.held = 0;
   S.motes = [];
-  S.dirty = true;
 }
 

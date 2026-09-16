@@ -46,7 +46,6 @@ export const craftCost = () => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, 
 // room before the body.
 export function buyCraft() {
   CRAFT.push({ x: mastX(), dir: CRAFT.length % 2 ? -1 : 1, lift: 0, rise: 0, leaving: false });
-  S.dirty = true;
 }
 
 // --- where it is ----------------------------------------------------------------------

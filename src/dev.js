@@ -181,7 +181,6 @@ for (const t of TUNABLE) {
       t.set(+slider.value);
       shown.textContent = t.get();
       if (t.layout) relayout();
-      S.dirty = true;
     });
     box.appendChild(slider);
     box.appendChild(shown);

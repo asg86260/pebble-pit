@@ -46,7 +46,6 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(5);
-    S.dirty = true;
     persist();
     await storeSettled();
     const blob = exportSave();
@@ -100,7 +99,6 @@ export const TESTS = [
     await emptySlot2();
     window.__crew(2, 2);
     run(5);
-    S.dirty = true;
     persist();
     const crew = state().crew;
     await press();
@@ -141,7 +139,6 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(5);
-    S.dirty = true;
     persist();
     const blob = exportSave();
     await storeSettled();
@@ -159,11 +156,9 @@ export const TESTS = [
     let n = 0, threw = null;
     try { for (; n < 200; n++) localStorage.setItem('junk/' + n, junk); } catch (e) { threw = e.name; }
     run(3);
-    S.dirty = true;
     persist();
     const after = exportSave();
     await storeSettled();
-    S.dirty = true;
     persist();                                  // one write behind: this one reports the last
     const unsaved = S.unsaved;
     for (let i = 0; i < n; i++) localStorage.removeItem('junk/' + i);
@@ -264,7 +259,6 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(5);
-    S.dirty = true;
     persist();                                  // so there is a save to copy
     await press();
     settingsPage();
@@ -441,7 +435,6 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(5);
-    S.dirty = true;
     persist();
     earn('rock0', true);                       // the catch-up's quiet pass
     await raf();

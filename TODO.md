@@ -81,6 +81,15 @@ and `crew/assign.js` reads `standRect` from board.js (`tools/cycles.mjs
 Also red on main as of 9cb86fd, not from this seam: `test/machines.test.mjs`
 "a jaw pays a dig exactly what a gang would" (838 over 7 digs of 120).
 
+Seam 6, invalidation off the clock, is BUILT (2026-09-16): `S.dirty` and
+its 252 lines are gone, the save writes on its one-second clock, and the
+sim raises `S.shopStale` where it called `buildShop()`; the frame drains it
+(main.js), a tap drains it (shop.js), the hooks drain it before a read.
+`test/invalidation.test.mjs`. No sim file imports the shop; the ring is 80
+and the sim is still in it by `words.js -> board.js` (`fmt`) and
+`stations.js -> crewboard.js -> board.js` (`houseRect`), neither this
+seam's to move.
+
 Seam 1, the dead-code sweep, is BUILT (2026-09-15): 43 exports nothing
 imported (22 of them config knobs), 132 imported names nothing read,
 `SHIELD_GATES` and its branches, the lab's three state flags, `secondsMark`,

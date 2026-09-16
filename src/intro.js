@@ -27,7 +27,6 @@ import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
 import { rebalance } from './staffing.js';
-import { buildShop } from './shop.js';
 import { syncWorkers } from './crew.js';
 import { wayAt, ways, feetOn, climbTo } from './route.js';
 import { stopJig, MOVE_KEYS } from './crew/dance.js';
@@ -93,7 +92,7 @@ export function skipIntro(played = true) {
   finish();
   const w = S.workers[0];
   if (from != null && w) { w.x = from; w.y = walkY(from + WORKER / 2); }
-  buildShop();                     // the rows that flag opens are on the board from the first frame
+  S.shopStale = true;              // the rows that flag opens are on the board from the first frame
 }
 
 // The player's skip of any of the opening's beats: the same yard, the body
@@ -112,7 +111,6 @@ export function startMeet(t) {
   // Not scripted people: one of the crew, on the roster's own walk, swinging
   // at the ground the way it swings at everything (`sendDigger`).
   sendDigger();
-  S.dirty = true;
 }
 
 // --- and, once, somebody gets out ---------------------------------------------
@@ -124,7 +122,6 @@ export function startRescue(t) {
   S.introCut = false;
   S.rescueTo = 0;                              // nobody walks anywhere until it is dug out
   sendDigger();
-  S.dirty = true;
 }
 
 // Dug out, and up out of the ground: the walk out from under, and the two of
@@ -167,7 +164,6 @@ function getOut(t) {
     who.walking = true;
     who.met = true;
   }
-  S.dirty = true;
 }
 
 // The player's skip. The rescue finishes its dig and keeps its walk: a square
@@ -223,7 +219,6 @@ export function stepRescue(t) {
   if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); }
   for (const w of S.workers) { w.met = false; w.say = null; }
   S.pair = [];
-  S.dirty = true;
   return false;
 }
 
@@ -256,7 +251,6 @@ export function parted(t) {
   S.danceUntil = 0;
   S.boulderNo++;                               // the next one, and bigger, like any other
   makeBoulder(true);
-  S.dirty = true;
 }
 
 // It lands on them again, the crew scatter, and the view lets go. From here
@@ -272,7 +266,6 @@ export function letGo() {
   S.camLockY = null;
   setZoom(1);
   S.danceUntil = 0;
-  S.dirty = true;
 }
 
 const ease = k => 1 - Math.pow(1 - k, 3);
@@ -397,7 +390,6 @@ export function crush() {
     b.say = null;
     b.flung = true;
   }
-  S.dirty = true;
 }
 
 const FALL_G = GRAV * 0.6;
@@ -478,7 +470,6 @@ export function begin(t) {
 
   S.camLockY = null;                           // the yard has its view back
   setZoom(1);
-  S.dirty = true;
 }
 
 // It knocks a couple of cells off and throws one into the hole. Thrown, not
@@ -519,7 +510,6 @@ export function stepShow(t) {
     if (thrown) thrown.intro = true;
     w.lunge = 1;                                      // it puts its back into it
     S.introThrew = t;
-    S.dirty = true;
   }
 
   // Over when the grain is in the hole, or when it has plainly missed.
@@ -549,7 +539,6 @@ function finish() {
   // the call to build the bench, the first thing the player is asked to
   // press, was being pressed with the bench out of shot.
   lookAt(openingCamX() + S.viewW / 2);
-  S.dirty = true;
 }
 
 // --- the one underneath -------------------------------------------------------
@@ -594,7 +583,6 @@ export function sendDigger() {
   who.met = true;
   who.dig = true;
   who.digAt = 0;
-  S.dirty = true;
   return true;
 }
 
@@ -647,7 +635,6 @@ export function stepDig(w, c) {
     spawnSpoil(at.x + rand() * WORKER, at.y + WORKER - P, shadeNear(3), 'rock');
   }
   S.buriedDug = Math.min(1, buriedOut() + c.dt / 1000 / BURIED_DIG_S);
-  S.dirty = true;
   return true;
 }
 

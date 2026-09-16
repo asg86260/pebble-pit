@@ -28,7 +28,6 @@ import { bandY } from './dust.js';
 import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './staffing.js';
-import { buildShop } from './shop.js';
 import { resetRates } from './stats.js';
 import { catchUpNotices, resetNotices, hushNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
@@ -209,7 +208,7 @@ function blankByHand() {
 const PAGES = new Set(['W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'worldW', 'worldH',
                        'cx', 'cy', 'groundY', 'camY', 'camTo', 'camWas', 'camLockY', 'follow',
                        'mouse', 'unsaved', 'yielded', 'broken', 'fellBack', 'newerSave',
-                       'staged', 'build', 'tick', 'lastFrame', 'dirty', 'fatal',
+                       'staged', 'build', 'tick', 'lastFrame', 'shopStale', 'fatal',
                        'placed', 'strips']);
 function blankEphemeral() {
   for (const k of EPHEMERAL) if (!PAGES.has(k) && k in BLANK) S[k] = copyOf(BLANK[k]);
@@ -232,8 +231,9 @@ function payingOwed() {
 export function persist() {
   // The loop stops on a throw but the interval that calls this does not, and
   // it would put the state that just threw over the last whole save
-  // (crash.js).
-  if (S.fatal || !S.dirty) return;
+  // (crash.js). Nothing else gates it: the write runs on the clock (main.js,
+  // once a second) and writes whether or not anything moved.
+  if (S.fatal) return;
   // A yard stood at a scene is not the player's (scenesheet.js).
   if (S.staged) return;
   // Another page has written since this one did: this page's yard is the
@@ -244,7 +244,6 @@ export function persist() {
   // that held nothing, so tabbing away and back reset the game.
   const owner = claimed ? tabOwner() : TAB;
   if (S.yielded || (owner !== null && owner !== TAB)) { S.yielded = true; return; }
-  S.dirty = false;
   lastBlob = JSON.stringify(blob());
   // The sheet reads `S.unsaved`.
   S.unsaved = !saveRaw(lastBlob);
@@ -1018,8 +1017,7 @@ export function reset(fresh = true) {
   settleShack();                   // beside rock one, not sliding in from where it stood
   clearBoulder();
   startBeat('leave');              // a reset is a game that has never been played
-  buildShop();
-  S.dirty = true;
+  S.shopStale = true;
   persist();
 }
 
@@ -1032,7 +1030,6 @@ export function reset(fresh = true) {
 export function exportSave() {
   const broken = S.broken && loadBroken();
   if (broken) return broken;
-  S.dirty = true;
   persist();
   return lastBlob || loadRaw() || '';
 }
@@ -1062,7 +1059,6 @@ export function importSave(raw) {
     return false;
   }
   bootYard();
-  S.dirty = true;
   persist();
   return true;
 }
@@ -1085,14 +1081,13 @@ export function switchSlot(n) {
   if (!loadRaw()) { reset(); return; }
   restore();
   bootYard();
-  S.dirty = true;
   persist();
 }
 
 // The rest of what main.js does after `restore`. The view is clamped because
 // the save's world may be a different width from the one the page laid out.
 export function bootYard() {
-  buildShop();
+  S.shopStale = true;
   syncWorkers();
   S.camX = S.camWas ?? openingCamX();
   clampCam();

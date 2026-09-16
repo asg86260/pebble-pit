@@ -408,7 +408,6 @@ export function stepShack(dt) {
   if (shack.x === to) return;
   const step = SHACK_SCOOT * dt / 1000;               // dt is in milliseconds
   shack.x = shack.x > to ? Math.max(to, shack.x - step) : Math.min(to, shack.x + step);
-  S.dirty = true;
 }
 
 // The rock's left flank: the right-hand edge of whatever stands nearest it,
@@ -676,7 +675,6 @@ function readScroll() {
   S.camX = left / S.zoom;
   S.camTo = null;
   S.follow = null;
-  S.dirty = true;
   clampCam();
   taken?.();
 }

@@ -48,7 +48,6 @@ const onDesk = async (d, fn) => {
 function played() {
   window.__crew(2, 2);
   run(20);
-  yard.S.dirty = true;
   persist();
   return exportSave();
 }
@@ -62,7 +61,6 @@ group('the autosave writes through the desk and the boot reads through it', asyn
     const readOnBoot = d.reads;
     const stored = state().stored;
     run(5);
-    yard.S.dirty = true;
     persist();
     return [
       ok(readOnBoot > 0, 'restore reached desk.read', `${readOnBoot} reads`),
@@ -172,7 +170,6 @@ group('a save from a newer build is loaded and said, once', async () => {
     restore();
     bootYard();
     const older = yard.S.newerSave;
-    yard.S.dirty = true;
     persist();
     const written = JSON.parse(exportSave()).build;
     return [
@@ -194,11 +191,9 @@ group('the disk refusing a write reads as an unsaved yard', async () => {
   return onDesk(d, async () => {
     restore();
     bootYard();
-    yard.S.dirty = true;
     persist();
     await Promise.resolve();               // the disk answers
     const first = yard.S.unsaved;
-    yard.S.dirty = true;
     persist();
     return [
       ok(first === false, 'the first write is taken on trust'),

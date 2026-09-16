@@ -191,7 +191,6 @@ export function landRock(gentle = false) {
       }
     }
   }
-  S.dirty = true;
 }
 
 // The landing shakes the banks: grains already lying there hop off the top
@@ -281,7 +280,6 @@ export function restOnRock(x, shade) {
     if (sandTopY(n) > sandTopY(best) + SAND_ANGLE * P) best = n;
   }
   sand[best].push(shade);
-  S.dirty = true;
   return true;
 }
 
@@ -299,7 +297,6 @@ function tipSand(c) {
   if (!s || !s.length) return;
   const x = rockLeft() + c * P + P / 2;
   while (s.length) spawnSpoil(x, rockTopY(c) - s.length * P, s.pop());
-  S.dirty = true;
 }
 
 // And the whole hill's worth, for a rock about to be replaced.
@@ -497,7 +494,7 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   // Whatever came down in the last rain is on top of the rock, and a swing
   // goes into that first: the shift the rain cost you, paid here.
   want = throughRockMuck(want);
-  if (want < 1) { S.dirty = true; return; }
+  if (want < 1) return;
 
   noteBite(body ? 'crew' : from);   // somebody has now bitten this rock
 
@@ -555,7 +552,6 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   if (through !== null) sfx('rock-through', { x: through, hard: 1 / depthOf() });
   // Taking rock apart does not dirty the sky, by anybody: what dirties this
   // yard is machinery, and the ram's dirt goes up off the ram's stack.
-  S.dirty = true;
   refreshRockTops();
   // How many cells actually came off, so a machine can credit what it took
   // rather than what it asked for.
@@ -651,7 +647,6 @@ defineMachine('ram', {
     // Credited what it took, not one a strike: `mined` counts cells off the
     // hill everywhere else it is written.
     if (tender) tender.mined = (tender.mined || 0) + took;
-    S.dirty = true;
     // Answered in beats' worth, so the stack smokes for the work done.
     return took / bite;
   }

@@ -159,7 +159,6 @@ group('a refresh mid-dig does not empty the seam', async () => {
   const dugOut = () => S.workers.reduce((n, w) => n + (w.quarried || 0), 0);
   const owed = S.quarryOwed, had = dugOut(), dug = dugShare();
 
-  S.dirty = true;
   window.__reload();
   S.quarryOwed = 0;                            // what a freshly loaded page has
   yard.restore();
@@ -218,7 +217,6 @@ group('a refresh does not hand you a second core', async () => {
     // last (ROCK_GAP_MS), and a whole-second stride lands past it with the rock
     // alive again -- which is not the moment this save is about.
     for (let i = 0; i < 20 * 60 && !(S.coreItem && S.coreItem.rest); i++) run(1 / 60);
-    S.dirty = true;
     window.__reload();                         // and that moment is written down
 
     const sv = JSON.parse(localStorage.getItem(KEY));
@@ -303,7 +301,6 @@ group('a refresh keeps the ore yield you bought', async () => {
   run(1);
   const before = S.seamLevel;
 
-  S.dirty = true;
   window.__reload();
   S.seamLevel = 0;                             // what a freshly loaded page has
   yard.restore();

@@ -48,7 +48,6 @@ export function hatMade() {
   }
   rebalance();
   syncWorkers();
-  S.dirty = true;
 }
 
 // Whether an enchantment has been laid on the yard.

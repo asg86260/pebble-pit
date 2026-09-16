@@ -6,7 +6,6 @@ import { noteRockCleared } from './notices.js';
 import { addGrain } from './grid.js';
 import { rockEdge } from './world.js';
 import { aim } from './dust.js';
-import { buildShop } from './shop.js';
 import { GRAV } from './config.js';
 import { floor } from './state.js';
 import { at, colOf, surfaceY } from './grid.js';
@@ -44,8 +43,7 @@ export function bankCore(x) {
   sfx('core-bank', { x: at, big: true });   // a core is a boulder's worth of weight
   S.cores++;
   S.seenCore = true;
-  S.dirty = true;
-  buildShop();              // core-priced rows appear the first time one lands
+  S.shopStale = true;       // core-priced rows appear the first time one lands
   return true;
 }
 
@@ -85,7 +83,6 @@ export function stepCore() {
     // game.
     S.danceUntil = S.boulderNo === 1 && S.rockhands > 0 ? now() + DANCE_MS : 0;
     S.nextBoulderAt = now() + ROCK_GAP_MS;   // backstop if it never falls clear
-    S.dirty = true;
   }
 
   // The reunion (`meet` in beats.js) needs a moment with the first rock dead
@@ -102,7 +99,6 @@ export function stepCore() {
       noteRockCleared();   // what the one just finished was like
       S.boulderNo++;
       makeBoulder(true);
-      S.dirty = true;
     }
   }
 
@@ -169,7 +165,7 @@ export function stepCore() {
     k.vx *= 0.72;
     if (Math.abs(k.vy) < 1.3) {
       k.vy = 0;
-      if (Math.abs(k.vx) < 0.25) { k.vx = 0; k.rest = true; S.dirty = true; }
+      if (Math.abs(k.vx) < 0.25) { k.vx = 0; k.rest = true; }
     }
   }
 }

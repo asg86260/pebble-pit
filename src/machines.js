@@ -162,14 +162,12 @@ export function buyMachine(key) {
   // in. The belt takes no face, so it takes no carts (`kitDisplaced`).
   const spec = MACHINES.find(x => x.key === key) || {};
   m.tookKit = kitDisplaced(spec.job);
-  S.dirty = true;
   // It runs because it is bought. What it needs is the gang shifted off:
   // `capOf` answers 1 for a station with a machine standing, and nothing
   // recomputes that per frame, so the complement has to be walked to carrying
   // in the same breath or the whole gang stands at a station that now holds
   // one, for good. `rebalance` only ever clamps down.
   S.restaff = { job: spec.job, want: 1 };
-  S.dirty = true;
 }
 
 // On the board while every slot AND every hat the station can hold is bought,

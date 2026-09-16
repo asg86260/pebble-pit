@@ -133,7 +133,6 @@ export function stepGoing(secs) {
     g.t -= by;
     if (g.t <= 0) GOING.splice(i, 1);
   }
-  if (GOING.length) S.dirty = true;
 }
 
 // --- lightning ----------------------------------------------------------------
@@ -239,7 +238,6 @@ export function stepDrops() {
     if (d.y < rest - P) continue;
     if (rand() < RAIN_MARK && m[c] < MUCK_MAX) m[c]++;
     DROPS.splice(i, 1);
-    S.dirty = true;
   }
 }
 
