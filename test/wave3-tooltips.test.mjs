@@ -11,7 +11,7 @@ import { group, ok, state, run, openSites, P, yard } from './helpers.mjs';
 import { whatIsAt } from '../src/input.js';
 import { colOf, topRow, bottomY } from '../src/grid.js';
 import { nearHouse } from '../src/board.js';
-import { houseRect } from '../src/crewboard.js';
+import { houseRect } from '../src/house.js';
 
 // D1 -- a placed grain reads as what the boards call it.
 group('a placed grain on the ground reads as a pebble', async () => {
