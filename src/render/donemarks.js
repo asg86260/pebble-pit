@@ -7,7 +7,7 @@ import { P, DONE_MARK_FADE, DONE_MARK_GLOW } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
-import { onTheGo, rowFor } from '../works.js';
+import { worksAt, rowFor } from '../works.js';
 import { barSpot } from './bars.js';
 import { ctx } from './ctx.js';
 
@@ -139,7 +139,7 @@ export function drawDoneMarks() {
 export function doneMarkAt(site) {
   const at = barSpot(site);
   if (!at) return null;
-  const lift = onTheGo(site).length * P * 5;
+  const lift = worksAt(site).length * P * 5;
   return { x: Math.round(at.x / P) * P,
            y: Math.round(at.y / P) * P - lift - P * 6 };
 }

@@ -30,6 +30,7 @@ feature lives in DESIGN.md.
 - A reload that lands on the last stretch of a cutscene keeps the view on what the scene was about instead of sliding it half a window (test/cutscene.test.mjs).
 - The outhouse comes up at 300 pebbles instead of 900.
 - A station builds one thing at a time again, the rest in line behind it; different stations still build alongside each other (test/queue.test.mjs).
+- What is in line at a station still stacks over it as outlines above the one going up (the shot: `node tools/look.mjs queue --zoom 2`).
 - A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
 - A tile being built, and the mark over its station, wear the coloured outline of the rung going up round the cells that are up, growing with the fill; a tile in line is the whole outline alone.
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).

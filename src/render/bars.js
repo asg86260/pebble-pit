@@ -3,7 +3,7 @@
 import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
-import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
+import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -163,8 +163,10 @@ export function buildingGlyph(cx, cy, rows, at, tint = null) {
 // ground shows what it is.
 export function drawWorkBars() {
   for (const site of SITES) {
-    // A mark over what is being built and none over what is in line behind it.
-    const list = onTheGo(site);
+    // The whole list, the line included: a work in line is at nought, so it
+    // hangs as the outline alone over the one being built, and the stack is
+    // what the station has been paid for.
+    const list = worksAt(site);
     if (!list.length) continue;
     // One a work. On the yard each work stands on its own ground, so each
     // hangs over its own thing; elsewhere a second work stacks upward.
