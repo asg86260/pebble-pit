@@ -2,72 +2,24 @@
 // usually lands while you are looking somewhere else, and the bar coming down
 // is a signal made of nothing happening.
 
-import { now } from '../clock.js';
-import { P, DONE_MARK_FADE, DONE_MARK_GLOW } from '../config.js';
-import { glyphFor, inkSpan } from '../glyphs.js';
+import { P } from '../config.js';
+import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
-import { worksAt, rowFor } from '../works.js';
-import { barSpot } from './bars.js';
+import { doneAt, rowFor } from '../works.js';
+import { buildingGlyph, stackSlot } from './bars.js';
 import { ctx } from './ctx.js';
 
-// The thing that finished, in a box: the row's own glyph, the one its card
-// wears, so the mark says what landed and not only that something did. The
-// opposite number to the bar that means a station stopped. It bobs, because
-// it is asking to be come and looked at, and it stays until somebody opens
-// that station's board.
+// The thing that finished stays where it stood in the stack over the station
+// (`drawWorkBars`), drawn whole with a tick laid over it, and the next thing
+// going up lifts above it: a station that has landed three rungs since its
+// board was read shows three ticked glyphs, foot to top in the order they
+// landed, until somebody opens that board. The tick is what says done; the
+// glyph, the one its card wears, says what.
 
-// The tick laid over the glyph, so the mark reads as done and not as the
-// thing itself standing there.
+// The tick laid over the glyph, five wide, full black haloed in white so it
+// is never lost in the drawing.
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
-
-// A glyph's rows as the cells `drawMarkBox` takes, centered on its ink: the
-// drawing is often narrower than its square and off to one side. A cell at
-// nought starts on the center, so a span of even width sits square and an
-// odd one is half a cell right; `shift` is the pixels that put it true.
-export function markCells(rows) {
-  const [lo, hi] = inkSpan(rows);
-  const rowsInked = rows.map((r, y) => r.includes('#') ? y : -1).filter(y => y >= 0);
-  const top = rowsInked[0], bottom = rowsInked[rowsInked.length - 1] + 1;
-  const cx = Math.floor((lo + hi) / 2), cy = Math.floor((top + bottom) / 2);
-  const cells = [];
-  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') cells.push([x - cx, y - cy]); }));
-  return { cells, shift: [(lo + hi) % 2 ? -P / 2 : 0, (top + bottom) % 2 ? -P / 2 : 0] };
-}
-
-// The glyph and its glow. No box: the drawing stands on the yard itself,
-// over a soft white halo, whole under the drawing and gone GLOW cells out, so
-// it still reads on the dark of the pit. `y` rather than `at.y`: the bob is
-// the caller's, a thing about the mark and not about the glow.
-//
-// `tint` is the card's stroke (`tintOf`): a line round the outside of the
-// shape, found by flooding from the margin so a hole in the shape stays
-// white. The glyph and its stroke go down faint, and the tick over them
-// full, haloed in white so it is never lost in the drawing.
-export const GLOW = 6;
-export function drawMarkBox(at, y, glyph, tint = null) {
-  const r = P * GLOW;
-  const halo = ctx.createRadialGradient(at.x, y, 0, at.x, y, r);
-  // whole under the drawing (four cells out), gone two cells past it
-  halo.addColorStop(0, `rgba(255,255,255,${DONE_MARK_GLOW})`);
-  halo.addColorStop(4 / GLOW, `rgba(255,255,255,${DONE_MARK_GLOW})`);
-  halo.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = halo;
-  ctx.fillRect(at.x - r, y - r, r * 2, r * 2);
-
-  ctx.save();
-  ctx.translate(at.x + glyph.shift[0], y + glyph.shift[1]);
-  ctx.globalAlpha = DONE_MARK_FADE;
-  if (tint) strokeCells(glyph.cells, tint);
-  fillCells(glyph.cells, '#000');
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(at.x - P / 2, y - P / 2);   // five wide: half a cell puts it true
-  strokeCells(TICK, '#fff');
-  fillCells(TICK, '#000');
-  ctx.restore();
-}
 
 // cells on the grid about the origin, a cell at nought starting on it
 function fillCells(cells, color) {
@@ -122,34 +74,39 @@ function outsideEdge(glyph) {
   return edge;
 }
 
-
 export function drawDoneMarks() {
   for (const site in S.siteDone) {
-    if (!S.siteDone[site]) continue;
-    const at = doneMarkAt(site);
-    if (!at) continue;
-    const y = at.y + Math.round(Math.sin(now() / 500)) * P;   // one cell, never half
-    const key = S.siteDone[site], u = rowFor(key);
-    drawMarkBox(at, y, markCells(glyphFor(key)), u ? tintOf(u) : null);
+    doneAt(site).forEach((key, i) => {
+      const at = stackSlot(site, i);
+      if (!at) return;
+      const u = rowFor(key);
+      buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u) : null);
+      ctx.save();
+      ctx.translate(at.x - P / 2, at.cy - P / 2);   // five wide: half a cell puts it true
+      strokeCells(TICK, '#fff');
+      fillCells(TICK, '#000');
+      ctx.restore();
+    });
   }
 }
 
-// Where a site's mark hangs: the same spot its bar does (`barSpot`), lifted
-// over any bars still on the go there so the two never sit on each other.
+// Where a site's marks stand: the last one done, at the top of them, for the
+// tip to hang off.
 export function doneMarkAt(site) {
-  const at = barSpot(site);
-  if (!at) return null;
-  const lift = worksAt(site).length * P * 5;
-  return { x: Math.round(at.x / P) * P,
-           y: Math.round(at.y / P) * P - lift - P * 6 };
+  const n = doneAt(site).length;
+  if (!n) return null;
+  const top = stackSlot(site, n - 1);
+  return top && { x: top.x, y: top.cy };
 }
 
 // where the cursor has to be to be asking what finished; says which site
 export function overDoneMark(mx, my) {
   for (const site in S.siteDone) {
-    if (!S.siteDone[site]) continue;
-    const at = doneMarkAt(site);
-    if (at && Math.abs(mx - at.x) < P * 6 && Math.abs(my - at.y) < P * 6) return site;
+    const n = doneAt(site).length;
+    if (!n) continue;
+    const foot = stackSlot(site, 0), top = stackSlot(site, n - 1);
+    if (!foot) continue;
+    if (Math.abs(mx - foot.x) < P * 6 && my > top.cy - P * 6 && my < foot.cy + P * 6) return site;
   }
   return null;
 }

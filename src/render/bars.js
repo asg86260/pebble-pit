@@ -3,7 +3,7 @@
 import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
-import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt } from '../works.js';
+import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -161,6 +161,20 @@ export function buildingGlyph(cx, cy, rows, at, tint = null) {
 // picture is not said twice. Over anything else a station is working on (a
 // rung, a machine, a bench, a spell) the thing itself, since nothing on the
 // ground shows what it is.
+// The stack over a station: the glyphs of what it has finished since its
+// board was read at the foot, then what is going up, then what is in line,
+// each a glyph's height apart, so the whole of it reads bottom to top as the
+// order things were bought. `slot` counts from the foot. The foot is where
+// the bar's would be (a bar is three cells deep, centred on the spot), so the
+// picture stands clear of the flag's tip the way the bar does instead of
+// sitting on it.
+export function stackSlot(site, slot, w = null) {
+  const at = barSpot(site, w);
+  if (!at) return null;
+  const x = Math.round(at.x / P) * P, y = Math.round(at.y / P) * P;
+  return { x, y, cy: y - (CELLS / 2 - 1.5) * P - slot * P * (CELLS + 2) };
+}
+
 export function drawWorkBars() {
   for (const site of SITES) {
     // The whole list, the line included: a work in line is at nought, so it
@@ -169,24 +183,19 @@ export function drawWorkBars() {
     const list = worksAt(site);
     if (!list.length) continue;
     // One a work. On the yard each work stands on its own ground, so each
-    // hangs over its own thing; elsewhere a second work stacks upward.
-    let stacked = 0;
+    // hangs over its own thing; elsewhere the stack starts over what the
+    // station has finished and not yet shown (`drawDoneMarks`).
+    let stacked = doneAt(site).length;
     for (const w of list) {
-      const at = barSpot(site, w);
-      if (!at) continue;
-      const x = Math.round(at.x / P) * P;
       const lift = site === 'yard' ? 0 : stacked++;
-      const y = Math.round(at.y / P) * P;
+      const at = stackSlot(site, lift, w);
+      if (!at) continue;
       if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
-        bar(x, y - lift * P * 5, progressOf(w));
+        bar(at.x, at.y, progressOf(w));
         continue;
       }
-      // Its foot where the bar's would be (a bar is three cells deep, centred
-      // on the spot), so the picture stands clear of the flag's tip the way
-      // the bar does instead of sitting on it.
-      const cy = y - (CELLS / 2 - 1.5) * P - lift * P * (CELLS + 2);
       const row = rowFor(w.key);
-      buildingGlyph(x, cy, glyphFor(w.key), progressOf(w), row ? tintOf(row) : null);
+      buildingGlyph(at.x, at.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row) : null);
     }
   }
 }

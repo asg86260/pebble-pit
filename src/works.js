@@ -386,7 +386,10 @@ export function stepWorks(dt) {
 // center a tick on.
 export function workFinished(site, key) {
   if (site === 'yard') return;
-  S.siteDone[site] = key;
+  // Everything landed since the board was read, oldest first: the stack over
+  // the station shows them all, ticked, in the order they landed. A fresh
+  // array, as `markRowSeen` writes one, for the save.
+  S.siteDone[site] = [...doneAt(site), key];
   // The tile wears the turned-down corner of a card never seen until hovered
   // (`markRowSeen` in shop.js): the tick says a board has something, the
   // corner says which tile. A fresh array, as `markRowSeen` writes one: the
@@ -394,14 +397,17 @@ export function workFinished(site, key) {
   if (S.seenRows.includes(key)) S.seenRows = S.seenRows.filter(k => k !== key);
 }
 
-// what finished at a site, in the words the row used
+// What a site has finished and not yet shown, oldest first.
+export const doneAt = site => S.siteDone?.[site] || [];
+
+// what finished at a site, in the words the rows used
 export const doneName = site => {
-  const u = rowFor(S.siteDone[site]);
-  return u ? `${u.name} done` : 'work done';
+  const names = doneAt(site).map(key => rowFor(key)?.name).filter(Boolean);
+  return names.length ? `${names.join(', ')} done` : 'work done';
 };
 
 // and reading that station's board is what clears its mark
 export function markDoneSeen(site) {
-  if (!S.siteDone[site]) return;
+  if (!doneAt(site).length) return;
   delete S.siteDone[site];
 }

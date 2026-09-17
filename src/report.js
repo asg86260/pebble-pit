@@ -304,7 +304,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   shutters: [...S.shutters].sort((a, b) => a - b),
   // Per site; `labDone` is the lab's own reading of it.
   siteDone: S.siteDone,
-  labDone: S.siteDone?.lab ?? null,
+  labDone: S.siteDone?.lab?.at(-1) ?? null,
 
   // The boards: which one is up, what each has to offer, and where you stand to
   // open it.

@@ -427,13 +427,22 @@ export const SCENES = {
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('quarrybench'); window.__buy('farmplot'); window.__fast(6);
                  window.__look(st().farmShed.x - 60); } },
-  donemark: { about: 'the bench', say: "a finished work's tick over the shed",
+  donemark: { about: 'the bench', say: "a finished work's glyph, ticked, at the foot of the shed's stack",
     run: () => { window.__reset(); window.__crew(3, 3);
                  window.__grant({ dust: 99999, shards: 99, spores: 9999, cores: 9 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockquarry'); window.__finish();
                  window.__buy('quarrybench'); window.__finish(); window.__fast(2);
                  window.__look(st().quarryX - 300); } },
+  donestack: { about: 'the bench', say: 'two rungs landed and ticked, one going up over them, one in line',
+    run: () => { window.__reset(); window.__crew(3, 3);
+                 window.__grant({ dust: 99999, shards: 999, spores: 9999, cores: 9 });
+                 window.__buy('unlockfarm'); window.__finish();
+                 window.__buy('unlockquarry'); window.__finish();
+                 window.__buy('quarrybench'); window.__finish();
+                 window.__buy('quarrypace'); window.__finish();
+                 window.__buy('quarrybench'); window.__buy('quarrypace'); window.__fast(4);
+                 window.__look(st().quarryX - 500); } },
   // The board fills with slips as the record does, so the two shots worth
   // having are a yard just started and one that has done a great deal.
   notices: { about: 'the bench', say: 'the noticeboard on a yard just started',

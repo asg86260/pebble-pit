@@ -108,6 +108,22 @@ group('a pot from the plinko comes back a stake, or is paid out', async () => {
   ];
 });
 
+// The done mark over a station was the one key of the last thing landed; it
+// is the list of everything landed since the board was read.
+group('a done mark from before comes back as a list of one', async () => {
+  const s = blobOf();
+  s.saveV = 2;
+  s.siteDone = { quarry: 'quarrybench', farm: '' };
+  put(s);
+  yard.restore();
+  const done = JSON.stringify(S.siteDone);
+  return [
+    ok(Array.isArray(S.siteDone.quarry) && S.siteDone.quarry[0] === 'quarrybench' && S.siteDone.quarry.length === 1,
+       'the one key is a list of one', done),
+    ok(!('farm' in S.siteDone), 'and an empty mark is dropped', done)
+  ];
+});
+
 group('a save at today\'s saveV gets no migration', async () => {
   const s = blobOf();
   s.mult = { tend: 2 };                          // a stray old field is left alone

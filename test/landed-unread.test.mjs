@@ -30,7 +30,7 @@ group('a rung that lands makes its tile unread again', async () => {
     ok(!yard.S.seenRows.includes('quarrybench'),
        'and the tile is unread again the frame the rung lands',
        yard.S.seenRows.join(',')),
-    ok(state().siteDone?.quarry === 'quarrybench',
+    ok(state().siteDone?.quarry?.at(-1) === 'quarrybench',
        'beside the tick over the station', JSON.stringify(state().siteDone))
   ];
 });
