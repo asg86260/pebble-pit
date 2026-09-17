@@ -118,9 +118,11 @@ export function refitShield() {
 
 // The ground a shield's build stands on (`siteBox` in works.js): the same
 // footprint `raiseShield` will use, so the tape goes up around exactly it.
-export function shieldGround() {
-  const { x, w } = shieldPlan('props');
-  return { x, w };
+// It carries the kind's finished height too, so the work's bar hangs over the
+// top of the shield rather than off the ground line, inside it.
+export function shieldGround(kind = 'props') {
+  const { x, w, h } = shieldPlan(kind);
+  return { x, w, y: S.groundY - h * P, h: h * P };
 }
 
 // The shield going up right now, and how far through its work the builders

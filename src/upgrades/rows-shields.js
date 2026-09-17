@@ -18,7 +18,7 @@ import { offered } from '../stations.js';
 export const SHIELD_ROWS = [
   {
     key: 'props',
-    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
+    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround('props'),
     work: () => PROP_WORK,
     name: 'wooden barrier',
     note: () => 'quickly try to build a barrier to save your sqwife',
@@ -28,7 +28,7 @@ export const SHIELD_ROWS = [
   },
   {
     key: 'net',
-    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
+    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround('net'),
     work: () => NET_WORK,
     name: 'the net',
     note: () => 'that didn\'t work, try catching the rock with a net?',
@@ -39,7 +39,7 @@ export const SHIELD_ROWS = [
   },
   {
     key: 'arch',
-    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
+    kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround('arch'),
     work: () => ARCH_WORK,
     name: 'cut the arch',
     note: () => 'still not sturdy enough. lets build a stone arch.',
