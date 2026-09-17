@@ -6,13 +6,14 @@
 // The pole stands on the middle column of the station's stand box, so any
 // station, present or future, is covered without knowing its drawing.
 
-import { STATIONS, hasOffer, standRect } from '../board.js';
+import { STATIONS, hasNew, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
   FLAG_FILL, FLAG_GIVE, FLAG_H, FLAG_HOIST_MS, FLAG_LIMP, FLAG_POLE,
   FLAG_RAISE_MS, FLAG_RIPPLE_MS,
   FLAG_SAG, FLAG_SWING, FLAG_W, FLAG_WAVES,
+  NEW_WAVES, NEW_WAVE_INK, NEW_WAVE_MS, NEW_WAVE_R,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P, TOWER_SHAFT,
 } from '../config.js';
 import { now } from '../clock.js';
@@ -185,14 +186,15 @@ function drawFlag(rect, which, t, pole, hoist) {
 // When a raised flag reaches the masthead, one ring of ink breathes off its
 // tip and spends itself; the flag alone carries the standing state after.
 const openedAt = new Map();
-function drawOpeningWave(rect, which, since, t) {
-  const k = (t - since) / OFFER_WAVE_MS;
+// One ring off the masthead at `k` of its life (0 born, 1 gone), `reach`
+// out at the end and `ink` dark at the start.
+function ring(rect, which, k, reach, ink) {
   if (k >= 1) return;
   const { x, y } = flagBase(rect, which);
   const from = { x: x + P / 2, y: y - FLAG_POLE * P };
-  const rad = k * OFFER_WAVE_R;
+  const rad = k * reach;
   if (rad < P) return;
-  ctx.globalAlpha = (1 - k) * OFFER_WAVE_INK;
+  ctx.globalAlpha = (1 - k) * ink;
   const n = Math.max(10, Math.round((Math.PI * 2 * rad) / P));
   ctx.beginPath();
   for (let j = 0; j < n; j++) {
@@ -201,6 +203,20 @@ function drawOpeningWave(rect, which, since, t) {
   }
   ctx.fill();
   ctx.globalAlpha = 1;
+}
+const drawOpeningWave = (rect, which, since, t) =>
+  ring(rect, which, (t - since) / OFFER_WAVE_MS, OFFER_WAVE_R, OFFER_WAVE_INK);
+
+// The flag over a board with something on it you have never seen keeps
+// sending: NEW_WAVES rings in flight, a life apart, on the game's clock, so a
+// yard put away mid-ring comes back mid-ring. Off the seed, so two new boards
+// do not pulse in step.
+function drawNewWaves(rect, which, t) {
+  const seed = seedOf(which);
+  for (let i = 0; i < NEW_WAVES; i++) {
+    const k = ((t / NEW_WAVE_MS + seed + i / NEW_WAVES) % 1 + 1) % 1;
+    ring(rect, which, k, NEW_WAVE_R, NEW_WAVE_INK);
+  }
 }
 
 // How far into its raise each station's flag is, in milliseconds: up while
@@ -243,6 +259,10 @@ export function drawFlags() {
     if (e < RAISE_TOTAL) { openedAt.delete(which); continue; }
     if (!openedAt.has(which)) openedAt.set(which, t);
     drawOpeningWave(r, which, openedAt.get(which), t);
+    // A flag flies for something you can buy; the waves are for something you
+    // have never looked at, and only while it flies -- a pole with nothing on
+    // it sending rings is a signal about nothing.
+    if (hasNew(which)) drawNewWaves(r, which, t);
   }
   ctx.restore();
 }

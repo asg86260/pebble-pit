@@ -113,6 +113,15 @@ export function hasOffer(which) {
                                   canPay(u) && !inLine(u));
 }
 
+// Whether a station's board holds a row you have never had on an open board:
+// the same rule the card's turned-down corner answers to (shop.js, `fresh`),
+// so the flag's waves and the corner say new about the same rows. Asked of a
+// standing station only; the flag that carries the waves needs a roof.
+export function hasNew(which) {
+  if (!standing(which)) return false;
+  return listFor(which).some(u => u.show && u.show() && !u.read && !S.seenRows.includes(u.key));
+}
+
 // Near enough to a station to be interested in it, for the checks that ask
 // by name; the pointer asks `stationAt` (stations.js) instead.
 export const nearQuarry = (x, y) => nearStation('quarry', x, y);
