@@ -11,7 +11,7 @@ import { group, ok, run, yard } from './helpers.mjs';
 const S = () => yard.S;
 const row = key => window.__rows().find(r => r.key === key);
 const shown = key => !!row(key)?.shown;
-const spells = () => ['spelldrive', 'spellluck', 'spellbloom', 'spellthrift', 'spellsweep'].filter(shown).join(',');
+const spells = () => ['spelldrive', 'spellluck', 'spellgmo', 'spellthrift', 'spellsweep'].filter(shown).join(',');
 
 function standTower() {
   window.__reset();
@@ -34,10 +34,10 @@ group('an enchantment is offered once what it enchants is in the yard', async ()
   run(1);
   const withMachine = spells();
   return [
-    ok(first === 'spellbloom,spellthrift', 'with the tower and the farm, the crop\'s and the houses\' spells stand', first),
-    ok(withQuarry === 'spellluck,spellbloom,spellthrift', 'the quarry brings its own', withQuarry),
-    ok(withLoo === 'spellluck,spellbloom,spellthrift,spellsweep', 'the closet the janitors\'', withLoo),
-    ok(withMachine === 'spelldrive,spellluck,spellbloom,spellthrift,spellsweep', 'and a machine the drive', withMachine)
+    ok(first === 'spellgmo,spellthrift', 'with the tower and the farm, the crop\'s and the houses\' spells stand', first),
+    ok(withQuarry === 'spellluck,spellgmo,spellthrift', 'the quarry brings its own', withQuarry),
+    ok(withLoo === 'spellluck,spellgmo,spellthrift,spellsweep', 'the closet the janitors\'', withLoo),
+    ok(withMachine === 'spelldrive,spellluck,spellgmo,spellthrift,spellsweep', 'and a machine the drive', withMachine)
   ];
 });
 
@@ -45,28 +45,28 @@ group('each enchantment says what it is worth on the tile', async () => {
   standTower();
   window.__crew(3, 3, 3, 3); window.__loo(); window.__machine('ram', { bought: true });
   run(1);
-  const gains = Object.fromEntries(['spelldrive', 'spellluck', 'spellbloom', 'spellthrift', 'spellsweep'].map(k => [k, row(k)?.gain]));
+  const gains = Object.fromEntries(['spelldrive', 'spellluck', 'spellgmo', 'spellthrift', 'spellsweep'].map(k => [k, row(k)?.gain]));
   return [
     ok(gains.spelldrive === '+50% speed', 'the drive', gains.spelldrive),
     ok(gains.spellluck === '+25% ore', 'the luck', gains.spellluck),
-    ok(gains.spellbloom === '+25% spores', 'the bloom', gains.spellbloom),
+    ok(gains.spellgmo === '+25% spores', 'the gmo', gains.spellgmo),
     ok(gains.spellthrift === '50% cheaper', 'the thrift', gains.spellthrift),
     ok(gains.spellsweep === '2x faster', 'the sweep', gains.spellsweep)
   ];
 });
 
-group('the bloom spell is a quarter more spores off every cut', async () => {
+group('the gmo spell is a quarter more spores off every cut', async () => {
   standTower();
   const { cropYield, cropSpores } = await import('../src/farm.js');
-  const { SPELL_BLOOM } = await import('../src/config.js');
+  const { SPELL_GMO } = await import('../src/config.js');
   S().spells = [];
   const plain = cropSpores();
-  S().spells = ['bloom'];
+  S().spells = ['gmo'];
   const blessed = cropSpores();
   S().spells = [];
   return [
     ok(plain === cropYield(), 'without it a cut is the ladder\'s answer', `${plain} vs ${cropYield()}`),
-    ok(blessed === Math.max(1, Math.round(cropYield() * SPELL_BLOOM)),
+    ok(blessed === Math.max(1, Math.round(cropYield() * SPELL_GMO)),
        'with it laid, the ladder\'s answer and a quarter again', `${plain} -> ${blessed}`)
   ];
 });

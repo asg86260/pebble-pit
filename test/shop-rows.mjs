@@ -102,7 +102,7 @@ export const ROWS = [
   // SPELL_NEEDS): a machine for the drive, the closet for the sweep.
   { key: 'spelldrive', part: 2, reach: () => { tower(); window.__machine('ram', { bought: true }); } },
   { key: 'spellluck', part: 2, reach: tower },
-  { key: 'spellbloom', part: 2, reach: tower },
+  { key: 'spellgmo', part: 2, reach: tower },
   { key: 'spellthrift', part: 2, reach: tower },
   { key: 'spellsweep', part: 2, reach: () => { tower(); window.__loo(); } },
 

@@ -33,7 +33,7 @@ export const SPELLS = [
     note: 'every machine in the yard runs 50% faster' },
   { key: 'luck',   name: 'enrich the quarry',    spark: 105,
     note: 'every dig in the quarry brings up 25% more ore' },
-  { key: 'bloom',  name: 'swell the crop',       spark: 105,
+  { key: 'gmo',    name: 'genetically modify crops', spark: 105,
     note: 'every cut in the farm brings up 25% more spores' },
   { key: 'thrift', name: 'cheapen the houses',   spark: 90,
     note: 'every house from now on costs half as much' },
@@ -42,7 +42,7 @@ export const SPELLS = [
 ];
 export const SPELL_DRIVE = 1.5;      // what each one is worth
 export const SPELL_LUCK = 1.25;
-export const SPELL_BLOOM = 1.25;
+export const SPELL_GMO = 1.25;
 export const SPELL_THRIFT = 0.5;
 export const SPELL_SWEEP = 2;
 
