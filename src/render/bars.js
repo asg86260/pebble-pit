@@ -87,19 +87,27 @@ export function barSpot(site, w = null) {
 // The thing being built, over the place it is happening: the row's own glyph
 // at a yard cell a sprite cell, going up the way the card's does (glyphs.js,
 // `drawGlyph`) -- bottom row first, left to right, one cell of the drawing a
-// share of the work, the rest a ghost of a dot a cell. The same picture on
-// the tile and over the station, so a glance at either says what is coming.
+// share of the work, the rest the shape's outline and nothing inside (the
+// card's `plan`). The same picture on the tile and over the station, so a
+// glance at either says what is coming.
+const EDGE = P / 6;                      // the outline's stroke, one yard pixel
 export function buildingGlyph(cx, cy, rows, at) {
   const laid = [];
-  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') laid.push([x, y]); }));
+  const shape = new Set();
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(`${x},${y}`); } }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const up = Math.floor(at * laid.length);
   const x0 = cx - (CELLS * P) / 2, y0 = cy - (CELLS * P) / 2;
-  const dot = P / 3;
   ctx.fillStyle = '#000';
   laid.forEach(([x, y], k) => {
-    if (k < up) ctx.fillRect(x0 + x * P, y0 + y * P, P, P);
-    else ctx.fillRect(x0 + x * P + dot, y0 + y * P + dot, dot, dot);
+    const px = x0 + x * P, py = y0 + y * P;
+    if (k < up) { ctx.fillRect(px, py, P, P); return; }
+    // Each side of the cell that faces out of the shape gets a stroke, so the
+    // outline runs round the whole drawing rather than boxing every cell.
+    if (!shape.has(`${x},${y - 1}`)) ctx.fillRect(px, py, P, EDGE);
+    if (!shape.has(`${x},${y + 1}`)) ctx.fillRect(px, py + P - EDGE, P, EDGE);
+    if (!shape.has(`${x - 1},${y}`)) ctx.fillRect(px, py, EDGE, P);
+    if (!shape.has(`${x + 1},${y}`)) ctx.fillRect(px + P - EDGE, py, EDGE, P);
   });
 }
 
