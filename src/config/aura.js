@@ -50,11 +50,6 @@ export const OFFER_WAVE_MS = 2600;   // the ring, born to gone
 export const OFFER_WAVE_R = 9 * P;   // how far it reaches before it dies
 export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 
-// The thing a station is building, drawn over it (render/bars.js): the part
-// not up yet is an outline in this gray, lighter than the card's ghost so it
-// sits back from the black that is there.
-export const BUILD_GHOST_INK = '#bdbdbd';
-
 // While the board behind a flying flag holds a row you have never seen, the
 // tip keeps sending rings: the opening ring over again, several in flight at
 // once, spaced evenly, until the row has been looked at.
