@@ -5,7 +5,7 @@
 // is cut for a spore. What a hand is worth is one plot's worth of tending in
 // the time one plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
+import { PLOT_COST, PLOT_SPORES, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -266,11 +266,12 @@ export const FARM_UPGRADES = [
     // (quarry.js, `quarrybench`).
     rung: () => S.plotLevel,
     rungs: () => FARM_PLOTS_MAX - FARM_PLOTS0,
-    cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel)),
-    // Dust, not shards: the plots open *before* the cut, so pricing them in
-    // shards is a row you cannot buy and cannot see why. The cut keeps its
-    // spores, because the farm is standing by the time you get there.
-    currency: 'dust',
+    // Dust and the farm's own crop, not shards: the plots open *before* the
+    // cut, so pricing them in shards is a row you cannot buy and cannot see
+    // why. The cut keeps its spores, because the farm is standing by the time
+    // you get there.
+    bill: () => [['dust', Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel))],
+                 ['spore', Math.round(PLOT_SPORES * Math.pow(PLOT_RATE, S.plotLevel))]],
     buy: () => { S.plotLevel++; resite(); },
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },

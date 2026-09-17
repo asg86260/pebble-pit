@@ -26,6 +26,9 @@ export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 // them by the hundred; level with the farm's `PLOT_COST`, since a place row on
 // either ground should cost like a place you open once the yard is running.
 export const BENCH_COST = 100;      // spores for the first of them
+// And the cut's own stone beside the spores: the next bench is cut out of
+// the ground the gang is already bringing up. A minute or so of a fresh cut.
+export const BENCH_SHARDS = 25;     // shards for that same first bench
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets
 
 // What each rung of the cut's two ladders is worth and costs is written a rung

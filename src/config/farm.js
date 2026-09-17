@@ -12,6 +12,9 @@ export const FARM_PLOTS_MAX = 7;  // and the whole plot, once it is all broken
 // already growing" are the same moment. See DESIGN.md, "What the two grounds
 // sell".
 export const PLOT_COST = 520;      // dust for the first plot after it
+// And the farm's own crop beside the dust: a plot is broken by the hands that
+// work the row, and the row pays for it. A minute or two of a staffed farm.
+export const PLOT_SPORES = 60;     // spores for that same first plot
 export const PLOT_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one plot and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
