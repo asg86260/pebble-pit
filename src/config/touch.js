@@ -10,6 +10,13 @@
 export const TAP_SLOP = 14;          // pixels a tap may wander and still be a tap
 export const TAP_TIME = 500;         // ms; a press held longer is a long press, which asks about the row
 
+// A finger on dust sweeps and a finger on anything else scrolls, and the
+// platform has to be told which at touchstart (input.js). A thumb's
+// contact point is not where the player sees it land, so dust anywhere
+// within this many screen pixels of the finger claims it for the sweep,
+// whatever the sweep's own brush is at that zoom.
+export const THUMB = 28;             // px; a fingertip's half-width
+
 // The hop: an arrow at each edge of the window, in the mid sky, that glides
 // the view to the next standing station that way. A share of the window's
 // height, since a phone has no fixed one.

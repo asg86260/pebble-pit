@@ -9,7 +9,7 @@
 // writing the preference, and every group puts it back.
 
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
-import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H } from '../config.js';
+import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, THUMB, BRUSH, P } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
 import { workOn } from '../works.js';
@@ -66,6 +66,7 @@ export const TESTS = [
     let spot = null;
     for (let dx = -60; dx <= 60 && spot == null; dx += 6) if ([-6, 0, 6].every(k => window.__dustUnder(s3.camX + s3.viewW / 2 + dx + k, s3.groundY - 6) && window.__dustUnder(s3.camX + s3.viewW / 2 + dx, s3.groundY - 6 + k))) spot = s3.camX + s3.viewW / 2 + dx;
     let dustSaid = null, swept = null, stayed = null;
+    let nearBrush = null, nearReach = null, nearSaid = null, nearDrag = null;
     if (spot != null) {
       const [dx, dy] = [(spot - s3.camX) * s3.zoom, (s3.groundY - 6 - s3.camY) * s3.zoom];
       dustSaid = touch('touchstart', canvas(), dx, dy);
@@ -76,6 +77,23 @@ export const TESTS = [
       stayed = mid.camX === s3.camX;
       finger('pointerup', 1, dx - 72, dy);
       touch('touchend', canvas(), dx - 72, dy);
+      await frames(1);
+      // a finger that lands a little off the pile -- just past the sweep's
+      // own brush, but within a thumb's width -- is a sweep too: the thumb's
+      // contact point is not where the player sees it (iPhone, 2026-09-17)
+      const s4 = state();
+      let yOff = s4.groundY - 6;
+      while (yOff > s4.groundY - 200 && window.__dustUnder(spot, yOff)) yOff -= 1;
+      const reach = Math.max(BRUSH, Math.ceil(THUMB / (s4.zoom * P)));
+      nearBrush = !window.__dustUnder(spot, yOff - 1);
+      nearReach = window.__dustUnder(spot, yOff - 1, reach);
+      const ny = (yOff - 1 - s4.camY) * s4.zoom;
+      nearSaid = touch('touchstart', canvas(), dx, ny);
+      finger('pointerdown', 1, dx, ny);
+      await frames(1);
+      nearDrag = state().dragging;
+      finger('pointerup', 1, dx, ny);
+      touch('touchend', canvas(), dx, ny);
       await frames(1);
     }
     // a board comes down when its station is scrolled off the window, on
@@ -98,6 +116,8 @@ export const TESTS = [
       ok(spot != null, 'there is dust on the floor to press on'),
       ok(dustSaid === true, 'a finger on dust is the game\'s: the platform is told no', `refused ${dustSaid}`),
       ok(swept === true && stayed === true, 'and it sweeps without moving the view', `swept ${swept}, stayed ${stayed}`),
+      ok(nearBrush && nearReach && nearSaid === true && nearDrag === true, 'a finger a thumb\'s width off the pile is a sweep too, not a scroll',
+         `past the brush ${nearBrush}, within reach ${nearReach}, refused ${nearSaid}, dragging ${nearDrag}`),
       ok(houseUp && houseDown, 'a board comes down when its station is scrolled off the window', `up ${houseUp}, down ${houseDown}`),
       ok(lockedBefore === 'auto' || lockedBefore === 'scroll', 'the scroller is open to a finger with no scene on', lockedBefore),
     ];

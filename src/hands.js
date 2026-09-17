@@ -54,12 +54,12 @@ export function catchAir(mx, my) {
 const mote = s => ({ s, a: rand() * Math.PI * 2, d: P * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 });
 
 // The ground's cells within the brush, in the order the brush walks them.
-function* brushCells(mx, my) {
+function* brushCells(mx, my, radius = BRUSH) {
   const c0 = colOf(floor, mx);
   const r0 = Math.floor((bottomY(floor) - my) / P);
-  for (let dr = -BRUSH; dr <= BRUSH; dr++) {
-    for (let dc = -BRUSH; dc <= BRUSH; dc++) {
-      if (dc * dc + dr * dr > BRUSH * BRUSH) continue;
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      if (dc * dc + dr * dr > radius * radius) continue;
       const c = c0 + dc, r = r0 + dr;
       if (inside(floor, c, r) && at(floor, c, r)) yield [c, r];
     }
@@ -76,9 +76,11 @@ export const overCore = (mx, my) =>
 // Whether a sweep here would find anything, at the same reach `sweep` uses,
 // without taking it. A finger on a phone asks it once, on the press, to tell
 // a sweep from a look about (DESIGN.md, "One finger looks about").
-export function dustUnder(mx, my) {
+// Is there dust to sweep within `radius` cells of a point: the brush by
+// default, or a finger's reach (input.js, `fingerReach`).
+export function dustUnder(mx, my, radius = BRUSH) {
   if (overCore(mx, my)) return true;
-  for (const _ of brushCells(mx, my)) return true;
+  for (const _ of brushCells(mx, my, radius)) return true;
   return false;
 }
 

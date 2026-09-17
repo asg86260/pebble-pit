@@ -4,7 +4,7 @@
 // else's module.
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TOSS_DELAY } from './config.js';
+         FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -170,8 +170,9 @@ canvas.addEventListener('pointerdown', e => {
   }
   // A finger off the dust is the platform's: it scrolls the view if it
   // moves, and a tap is read at the release. A mouse keeps its left button
-  // for the sweep everywhere.
-  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y)) return;
+  // for the sweep everywhere. The same reach as the touchstart gate, so
+  // the two never disagree about one finger.
+  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y, fingerReach())) return;
   S.dragging = true;
   S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
   S.trail = [];
@@ -563,6 +564,11 @@ bindScroller(scroller, spacer, viewTaken);
 // the canvas alone left the platform treating the touch as uncancelable
 // (measured over the protocol, tools/fling.mjs), and only a blocking
 // listener at the window made the touch the page's to refuse.
+// How far, in cells, a finger claims dust from: a thumb's width on the
+// glass (`THUMB`), never less than the brush itself. A press that lands a
+// little off the pile is still a sweep, since the thumb's contact point is
+// not where the player sees it; only clear ground and sky scroll.
+const fingerReach = () => Math.max(BRUSH, Math.ceil(THUMB / (S.zoom * P)));
 addEventListener('touchstart', e => {
   if (e.target !== canvas) return;
   if (S.paused || cutsceneRunning()) return;
@@ -571,7 +577,7 @@ addEventListener('touchstart', e => {
     const p = pos(t);
     // ...and a finger on the casino's arm, or on its sign while it is a
     // button: a hold on the arm must never scroll the page
-    if (dustUnder(p.x, p.y) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { e.preventDefault(); return; }
+    if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { e.preventDefault(); return; }
   }
 }, { passive: false });
 
