@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+## v0.2.5 — 2026-09-17
+
 **New this release**
 - A tile being built draws its unbuilt part as an outline, the same outline it wears everywhere else, not a dotted ghost.
 - A hauler scoops quicker with every rung of its pace ladder, all the way up, so an upgraded hauler is faster at the heap as well as on the walk (test/ladders.test.mjs).
