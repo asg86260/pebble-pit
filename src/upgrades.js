@@ -184,11 +184,12 @@ export const billOf = u => {
 };
 
 // The stroke round a row's glyph: the deepest coin on its next rung's bill,
-// the rung's legend rather than a verdict on it (SHELF_INK); grey once there
-// is no next rung, null while it asks nothing but dust. The card and the
-// mark over a station that finished the row wear the same one.
+// the rung's legend rather than a verdict on it (SHELF_INK); null while it
+// asks nothing but dust. A finished ladder keeps its last rung's stroke (its
+// bill clamps to the top band), so a done row still shows what it took; the
+// row being greyed is what says done. The card and the mark over a station
+// that finished the row wear the same one.
 export const tintOf = u => {
-  if (maxed(u)) return SHELF_INK.done;
   const coins = billOf(u).map(([m]) => m);
   return coins.includes('spark') ? SHELF_INK.spark
        : coins.includes('shard') ? SHELF_INK.shard

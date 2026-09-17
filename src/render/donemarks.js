@@ -3,7 +3,7 @@
 // is a signal made of nothing happening.
 
 import { now } from '../clock.js';
-import { P, SHELF_INK, DONE_MARK_FADE } from '../config.js';
+import { P, DONE_MARK_FADE } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
@@ -41,8 +41,7 @@ export function markCells(rows) {
 //
 // `tint` is the card's stroke (`tintOf`): a line round the outside of the
 // shape, as thick as the box's own, found by flooding from the margin so a
-// hole in the shape stays white. `done` paints the shape grey instead. The
-// glyph and its stroke go down faint, and the tick over them full, haloed
+// hole in the shape stays white. The glyph and its stroke go down faint, and the tick over them full, haloed
 // in white so it is never lost in the drawing.
 export const BOX = 10;
 export function drawMarkBox(at, y, glyph, tint = null) {
@@ -56,8 +55,8 @@ export function drawMarkBox(at, y, glyph, tint = null) {
   ctx.save();
   ctx.translate(at.x + glyph.shift[0], y + glyph.shift[1]);
   ctx.globalAlpha = DONE_MARK_FADE;
-  if (tint && tint !== SHELF_INK.done) strokeCells(glyph.cells, tint);
-  fillCells(glyph.cells, tint === SHELF_INK.done ? tint : '#000');
+  if (tint) strokeCells(glyph.cells, tint);
+  fillCells(glyph.cells, '#000');
   ctx.restore();
 
   ctx.save();

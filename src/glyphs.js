@@ -203,7 +203,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
       if (near) solid[y * W + x] = 0;
     }
   }
-  if (tint && tint !== SHELF_INK.done) {
+  if (tint) {
     const out = new Uint8Array(W * H); const q = [0]; out[0] = 1;
     while (q.length) {
       const k = q.pop(), x = k % W, y = (k - x) / W;
@@ -226,7 +226,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
       if (near) g.fillRect(x, y, 1, 1);
     }
   }
-  g.fillStyle = tint === SHELF_INK.done ? tint : ink;
+  g.fillStyle = ink;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (solid[y * W + x]) g.fillRect(x, y, 1, 1);
   g.fillStyle = SHELF_INK.ghost;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ghost[y * W + x]) g.fillRect(x, y, 1, 1);
