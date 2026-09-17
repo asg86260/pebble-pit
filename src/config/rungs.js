@@ -27,7 +27,7 @@ export const LADDERS = {
   speed:        { value: [1, 1.5, 2, 2.5, 3, 4, 6, 8, 12], dust: [100, 150, 200, 300, 400, 600, 800, 1200] },      // hits/s, your swing
   pick:         { value: [1, 2, 3, 4, 5, 6, 7, 10, 12], dust: [250, 400, 500, 750, 1000, 1500, 2000, 3000] },    // px your swing takes
   toss:         { value: [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4], dust: [80, 120, 160, 240, 320, 480, 640, 960] },   // throws/s, a held hand
-  reach:        { value: [120, 180, 260, 380, 540, 800, 1200, 2000, 3000], dust: [60, 100, 150, 200, 300, 450, 700, 1000] }, // px a held hand throws
+  reach:        { value: [500, 640, 800, 1000, 1200, 1600, 2000, 2500, 3000], dust: [60, 100, 150, 200, 300, 450, 700, 1000] }, // px a held hand throws; the foot covers the rock's own pile to the hole
   critchance:   { value: [5, 8, 10, 12, 15, 18, 20, 25, 30], dust: [500, 800, 1250, 2000, 3000, 5000, 8000, 12000] },   // % of swings
   critmult:     { value: [2, 3, 4, 5, 6, 7, 8, 9, 10], dust: [1000, 1500, 2500, 4000, 6000, 10000, 16000, 25000] }, // x a crit is worth
   // --- the shack: the gang -----------------------------------------------------

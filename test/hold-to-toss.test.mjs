@@ -58,7 +58,7 @@ group('a hand at the foot of the reach ladder throws its handful short, onto the
   S.autoToss = true;
   S.carryLevel = 3;
   S.tossReachLevel = 0;
-  const far = pit.x - P * 60;                // well past a first-rung throw of the lip
+  const far = pit.x - P * 140;               // well past a first-rung throw of the lip, on bare ground left of the rock
   const stored = state().stored;
   holdOver(far, 30, 9);
   run(3);
