@@ -83,7 +83,14 @@ export const SCRUB_CLOG = 26;
 // starts the moment there is room for one more, so at the limit the crew mine
 // exactly as fast as the crew carry. Any margin is a chore of clearing before
 // anybody picks a pick up again.
-export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
+// The gap between grains a hauler scoops, one figure a rung of the pace
+// ladder, written down like every other ladder (config/rungs.js). It falls by
+// about a quarter a rung, so a rung bought for the walk is felt at the heap
+// too: the load grows up the carry ladder at the same time, and on the eased
+// curve this replaced, which flattened at thirty, a top-rung hauler stood
+// scooping for nearly half of every trip. Read through `scoopMs` in levels.js;
+// the belt divides the same figure by what it is worth.
+export const HAUL_SCOOP_MS = [110, 81, 60, 45, 33, 24, 18, 13, 10];
 
 // What a body costs over a run. Bodies are the bottleneck of a whole run, and
 // every later station wants two or three more of them: at 45 and 1.30x the

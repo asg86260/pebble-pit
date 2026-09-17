@@ -16,9 +16,9 @@
 
 import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER, LADDERS } from '../src/config.js';
+import { TIER_BAND, TIER_OWN, TIER_RUNGS, LADDER, LADDERS, HAUL_SCOOP_MS } from '../src/config.js';
 import { rungOf, rungsOf } from '../src/words.js';
-import { capacity, pickCount, haulCap } from '../src/levels.js';
+import { capacity, pickCount, haulCap, scoopMs } from '../src/levels.js';
 import { tendMs, cropYield, FARM_UPGRADES } from '../src/farm.js';
 import { cellMs, seamDig, quarryMs, QUARRY_UPGRADES } from '../src/quarry.js';
 import { dosesPer } from '../src/apothecary.js';
@@ -248,11 +248,18 @@ group('every count ladder reads a list a value a rung, each worth more than the 
     ['doses', dosesPer(LADDER), LADDERS.brewdoses.value[LADDER]]
   ].filter(([, got, want]) => got !== want).map(([k, got, want]) => `${k}: ${got} not ${want}`);
   const dig0 = at('seamLevel', 0, seamDig), digTop = at('seamLevel', LADDER, seamDig);
+  // The scoop rides the pace ladder off its own list (config/crew.js), and
+  // every rung of the walk must be felt at the heap too: shorter every rung,
+  // never flat.
+  const scoop = Array.from({ length: LADDER + 1 }, (_, i) => scoopMs(i));
+  const scoopFlat = scoop.some((v, i) => i && !(v < scoop[i - 1]));
   return [
     ok(short.length === 0, 'every ladder has a value for the foot and one a rung, and a cost a rung', short.join(', ')),
     ok(flat.length === 0, 'and every rung is worth more, and costs more, than the last', flat.join(', ')),
     ok(broken.length === 0, 'and a count is whole at every rung', broken.join(', ')),
     ok(reads.length === 0, 'and each count reads the top of its own list at the top', reads.join('; ')),
+    ok(HAUL_SCOOP_MS.length === LADDER + 1 && !scoopFlat && scoop[LADDER] === HAUL_SCOOP_MS[LADDER],
+       'and the scoop is quicker at every rung of the pace ladder, read off its list', scoop.join(' ')),
     ok(Math.abs(digTop / dig0 - LADDERS.seam.value[LADDER]) < 0.05, 'and a dig at the top is its list\'s share of the base',
        `${(digTop / dig0).toFixed(2)} vs ${LADDERS.seam.value[LADDER]}`)
   ];

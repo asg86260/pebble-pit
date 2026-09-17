@@ -7,7 +7,7 @@
 // board, a row or a price, so a station reading its pace from here does not
 // drag the shop into its load order.
 
-import { LADDER, rungValue, HAUL_MS } from './config.js';
+import { LADDER, rungValue, HAUL_SCOOP_MS } from './config.js';
 import { COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY } from './config.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, SPELL_DRIVE } from './config.js';
 import { S } from './state.js';
@@ -18,24 +18,12 @@ import { spelled } from './tower.js';
 import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 import { JOB } from './jobs.js';
 
-// A rate ladder from `base` to `floor` in a fixed number of rungs, eased so the
-// first rungs are worth more than the last; the last rung lands exactly on the
-// floor, so a row can say "5 of 5" instead of quietly reaching a cap.
-export const swing = (base, floor, rungs) => lvl => {
-  const k = Math.max(0, Math.min(1, lvl / rungs));
-  return Math.round(base + (floor - base) * (1 - Math.pow(1 - k, 1.6)));
-};
-
 export const capacity = (lvl = S.carryLevel) => rungValue('carry', lvl);
 
 // `rungCost` and `DUST_PER` live in upgrades/price.js, a leaf, so the ladder
 // helper can price a row without importing this file.
 import { rungCost, DUST_PER } from './upgrades/price.js';
 export { rungCost, DUST_PER };
-
-// The scoop is the one curve left here: it rides the haulers' pace ladder and
-// no row reads it. Every other ladder reads its written list (config/rungs.js).
-const scoopGap = swing(HAUL_MS, 30, LADDER);
 
 export const mineRate = (lvl = S.speedLevel) => rungValue('speed', lvl);
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, Math.round(1000 / mineRate(lvl)));
@@ -49,7 +37,9 @@ export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, Math.round
 export const haulCap = (lvl = S.haulCarryLevel) => rungValue('haulcarry', lvl);
 // The walk is written in px/s and stepped in px a frame.
 export const haulSpeed = (lvl = S.haulPaceLevel) => rungValue('haulpace', lvl) / 60;
-export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl));
+// The scoop rides the pace ladder, off its own written list; no row reads it.
+export const scoopMs = (lvl = S.haulPaceLevel) =>
+  Math.max(1, HAUL_SCOOP_MS[Math.max(0, Math.min(HAUL_SCOOP_MS.length - 1, lvl | 0))]);
 // A trip's pace for anybody making one. One number for every commute: a
 // station-private walking speed tuned for a few feet of ground gets used for
 // whole commutes and a body crawls across the world.

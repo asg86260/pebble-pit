@@ -10656,8 +10656,13 @@ rung the grounds had.
   `STRENGTH0/5`), every first cost (`*_COST`, `BREW_RUNG_DUST`, `CRIT_RATE`),
   `tierCost`, `SPARK_GAIN`, and the earlier per-count lists. `tierRows` takes
   no `first`/`rate`; the bill is the table's dust with the band's coins at
-  `DUST_PER`. The hauler's scoop is the one curve left, riding the pace level
-  unseen. `RUNG_KNOBS` hands `TUNABLE` a knob a value and a knob a cost.
+  `DUST_PER`. The hauler's scoop rode the pace level unseen on an eased curve
+  until 2026-09-17, when it went onto a written list too (`HAUL_SCOOP_MS`,
+  config/crew.js): the curve flattened at thirty milliseconds while the load
+  kept growing, so a top-rung hauler stood scooping for nearly half of every
+  trip and a pace rung was felt on the walk and not at the heap. The list
+  falls by about a quarter a rung; `swing` went with it. `RUNG_KNOBS` hands
+  `TUNABLE` a knob a value and a knob a cost.
 - The last two flat rows -- `critmult` and `rockhandpick` -- are `tierRows`
   ladders now, dust alone on the first rung like every other; the hauler's two
   hand-written three-band tables went onto `named`.
