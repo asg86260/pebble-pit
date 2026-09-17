@@ -38,7 +38,7 @@ const st = () => window.__state();
 const RICH_DUST = 90000;
 const rich = () => {
   window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: RICH_DUST });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
 };
 
 // The lip bought out, which is what the belt is gated behind; `__fullSites`
@@ -281,7 +281,7 @@ export const SCENES = {
   // band.
   belt: { about: 'the crew', say: 'the belt running from the rock to the lip',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 999, shards: 999, spores: 999 }); lip();
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
                  window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
                  window.__jump(4); window.__fast(12); window.__clearFloor();
                  window.__look(st().pitX - 620); } },
@@ -394,7 +394,7 @@ export const SCENES = {
   // camera overrides `__look` for every frame after.
   flag: { about: 'the bench', say: 'the offer flag up over the bench',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
                  window.__fast(2); window.__look(4930); } },
   // The mast slides out over FLAG_RAISE_MS and the cloth runs up it over
   // FLAG_HOIST_MS. The grant has to land after the runner's own second of
@@ -404,14 +404,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
                    window.__fast(0.3);
                  }); } },
   flaghoist: { about: 'the bench', say: 'the flag halfway up its mast', page: true,
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
                    window.__fast(0.95);
                  }); } },
   // Nothing else frames both sheds, and the whole question about a shack is
@@ -684,11 +684,11 @@ export const SCENES = {
   // is a shot of a lull. Compare the pair side by side.
   gustR: { about: 'the house and the sky', say: 'the wind at its strongest, blowing right',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(64.5); window.__look(st().rockLeftX - 300); } },
   gustL: { about: 'the house and the sky', say: 'the wind at its strongest, blowing left',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(50); window.__look(st().rockLeftX - 300); } },
 
   // --- the tower --------------------------------------------------------------
@@ -787,7 +787,7 @@ export const SCENES = {
   // that had already had the moment.
   tear: { about: 'the pit and the rift', say: 'the hole giving way',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9 });
                  window.__meteor(); window.__give(60000); window.__fast(0.5); window.__look(st().pitX - 300); } },
   rift: { about: 'the pit and the rift', say: 'the rift, torn and fed',
     run: () => { rich(); window.__meteor(); window.__rift(); window.__give(60000); window.__give(12000);

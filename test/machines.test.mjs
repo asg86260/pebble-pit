@@ -9,7 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT } from '../src/config.js';
+import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT, BELT_SPREAD } from '../src/config.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
@@ -1250,6 +1250,49 @@ group('a grain rides the belt rather than being thrown over it', async () => {
     ok(after.stored > before.stored, 'and the hole has it', `${before.stored} -> ${after.stored}`),
     ok(after.floor < before.floor, 'and the ground has not',
        `${before.floor} -> ${after.floor}`)
+  ];
+});
+
+// A scoop lifts its whole load off one column, and the band drew every grain
+// of it in its one row: a belt seven deep read as one deep. The loads have a
+// level now, and a column's worth lies as a heap along the band -- some of it
+// up off the band, none of it a tower.
+group('a load piles on the band rather than lying in one row', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1);
+  window.__machine('belt', { bought: true });
+  window.__levels({ haulCarryLevel: LADDER });     // a scoop of many grains
+  window.__clearFloor();
+  run(4);
+
+  // One deep column on the open ground, so every scoop comes off the same x.
+  const s0 = state();
+  const col = Math.round((s0.pitX - 400) / P) * P;
+  for (let i = 0; i < 40; i++) window.__pile(col, 3);
+  runUntil(() => state().belt >= 8, 20);
+  // What the machine holds, level by level, and the deepest column of it.
+  const loads = yard.S.belt.slice();
+  const levels = new Set(loads.map(b => b.h || 0));
+  const cols = new Map();
+  for (const b of loads) {
+    const c = Math.round(b.x / P);
+    cols.set(c, (cols.get(c) || 0) + 1);
+  }
+  const tallest = Math.max(...levels);
+  // The tallest a heap can be with its loads spread over the cells the
+  // spread allows, and a level of slack for the ones lifted while it moved.
+  const heap = Math.ceil(loads.length / (2 * BELT_SPREAD + 1)) + 1;
+  run(20);
+  window.__crew(0, 0);
+  return [
+    ok(loads.length >= 8, 'a scoop or two is on the machine', `${loads.length} loads`),
+    ok(levels.size > 1, 'and not all of it is on the band: some rides on the rest',
+       `levels ${[...levels].sort().join(',')}`),
+    ok(cols.size > 1 && tallest + 1 <= heap, 'as a heap along the band, not a tower on one cell',
+       `${cols.size} cells wide, ${tallest + 1} levels, ${heap} allowed`),
+    ok(state().belt === 0, 'and it all still arrives', `${state().belt} left on it`)
   ];
 });
 

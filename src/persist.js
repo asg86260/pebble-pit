@@ -342,9 +342,9 @@ function blob() {
     // started, so an absolute time saved in one session means nothing in the
     // next.
     works: S.works,
-    // Position and shade; the band's height is the world's to answer on the
-    // way back in.
-    belt: (S.belt || []).map(b => [Math.round(b.x), b.s]),
+    // Position, shade and level on the heap; the band's height is the
+    // world's to answer on the way back in.
+    belt: (S.belt || []).map(b => [Math.round(b.x), b.s, b.h || 0]),
     // Every grain in the air: a refresh destroying what was up is the one
     // thing the yard promises it never does.
     chips: (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]),
@@ -635,7 +635,7 @@ export function restore() {
         .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
     : [];
   S.belt = Array.isArray(s.belt)
-    ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh]) => ({ x, y: bandY(), s: sh || 1 }))
+    ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh, h]) => ({ x, y: bandY() - (h || 0) * P, s: sh || 1, h: h || 0 }))
     : [];
   // A list a site. Only rows the board still sells, each under the site its
   // row says today, so a work whose row has moved sites does not come back

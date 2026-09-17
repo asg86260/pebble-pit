@@ -587,7 +587,7 @@ export const SAVED_BY_HAND = [
   JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
-  'belt',                 // what is riding the belt, as [x, shade] pairs
+  'belt',                 // what is riding the belt, as [x, shade, level] triples
   'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
   'haze',                 // rounded: a fraction of a mote is not worth the characters

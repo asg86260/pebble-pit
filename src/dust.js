@@ -3,7 +3,7 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER } from './config.js';
+import { P, GRAV, WORKER, BELT_SPREAD } from './config.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
@@ -122,10 +122,43 @@ const BELT_LIFT = P * 0.7;
 // closes is a frame's worth of dust.
 export const bandY = () => beltY() - P;       // where a load sits: on top of the band
 
+// --- piling on it ------------------------------------------------------------------
+// The band is a grain wide but not a grain deep. A scoop lifts its whole load
+// off one column, and the belt was drawing all of it in the band's one row:
+// seven grains deep looked like one. So a load has a level, `h`, cells above
+// the band, and rides at `restY`. It is given once, when the load is lifted,
+// from what is already on the machine at that x -- and it holds, because
+// everything riding moves at the band's pace, so what was under a load when
+// it landed is under it at the head.
+//
+// A heap, not a tower: the load goes to the lowest of the cells within
+// `BELT_SPREAD` of where it lay, nearest first, so a column's worth slumps
+// along the band the way a dumped load does. Never past the reach: the head
+// is over open air and drops what gets there.
+export const restY = b => bandY() - (b.h || 0) * P;
+const ridingAt = x => {
+  let n = 0;
+  for (const b of S.belt) if (Math.abs(b.x - x) < P / 2) n++;
+  return n;
+};
+function settle(x) {
+  const from = beltFrom(), to = beltReach();
+  let at = x, h = ridingAt(x);
+  for (let k = 1; k <= BELT_SPREAD && h > 0; k++) {
+    for (const cx of [x - k * P, x + k * P]) {
+      if (cx < from || cx >= to) continue;
+      const n = ridingAt(cx);
+      if (n < h) { at = cx; h = n; }
+    }
+  }
+  return { x: at, h };
+}
+
 // A grain leaves the ground and is on the machine from this moment; the
 // scoop takes it to the band, down as readily as up.
 export function loadBelt(x, y, shade) {
-  S.belt.push({ x, y, s: shade });
+  const at = settle(x);
+  S.belt.push({ x: at.x, y, s: shade, h: at.h });
   sfx('belt-load', { x });
 }
 
@@ -160,7 +193,10 @@ export function catchBelt(ch, now, f) {
   const c = colOf(floor, ch.x);
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
-  S.belt.push({ x: ch.x, y: bandY(), s: ch.s });
+  // Onto whatever is riding there: the level is its own, the settling is a
+  // frame's climb.
+  const at = settle(ch.x);
+  S.belt.push({ x: at.x, y: bandY(), s: ch.s, h: at.h });
   sfx('belt-catch', { x: ch.x });
   return true;
 }
@@ -180,12 +216,16 @@ export function stepBelt(now, f) {
   const top = bandY(), head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
-    if (b.y !== top) {
+    const rest = restY(b);
+    if (b.y !== rest) {
       // Still on the scoop. It creeps forward while it climbs, so the lift
-      // reads as a machine taking it up rather than a grain levitating.
-      const d = top - b.y;
+      // reads as a machine taking it up rather than a grain levitating --
+      // until it is above the band, where it is on the machine and goes at
+      // the band's pace while it settles onto the heap, or the heap it was
+      // given a level on would run out from under it.
+      const d = rest - b.y;
       b.y += Math.sign(d) * Math.min(BELT_LIFT * f, Math.abs(d));
-      b.x += BELT_PACE * 0.35 * f;
+      b.x += BELT_PACE * (b.y <= top ? 1 : 0.35) * f;
       continue;
     }
     b.x += BELT_PACE * f;
