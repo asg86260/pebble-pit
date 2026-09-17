@@ -135,23 +135,11 @@ group('a save comes back in the era it was written in', async () => {
   yard.restore();
   const torn = state();
 
-  // And a save from before the arc existed -- riftOpen with no riftAte --
-  // was written when the tear and the drowning were one moment, so it comes
-  // back drowned: nobody is pulled back an era.
-  const pre = JSON.parse(raw);
-  delete pre.riftAte;
-  delete pre.drowned;
-  window.__reset();
-  localStorage.setItem('boulder-clicker/v4', JSON.stringify(pre));
-  yard.restore();
-  const old = state();
-
+  // A save from before the arc existed is below the save floor (v0.1.1 has
+  // the arc), so there is no pre-arc era to be read back into.
   return [
     ok(torn.riftOpen && !torn.drowned, 'a torn yard reloads torn'),
-    ok(torn.riftAte === 300000, 'with its appetite intact', `${torn.riftAte}`),
-    ok(old.riftOpen && old.drowned, 'a pre-arc torn save reloads drowned'),
-    ok(old.riftAte >= ABYSS_AT, 'seeded past the threshold, so nothing re-drowns it',
-       `${old.riftAte}`)
+    ok(torn.riftAte === 300000, 'with its appetite intact', `${torn.riftAte}`)
   ];
 });
 
