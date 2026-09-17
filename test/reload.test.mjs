@@ -93,11 +93,13 @@ group('a refresh does not send the gang back down the ladder', async () => {
 // --- and the three things a refresh used to take off you ----------------------
 
 // A hand paid is money on its way out of the foot: each bin's pay falls
-// through the building and out of the hatch on to the casino's strip, so for
-// the second or two in between the whole of it is in the air -- and the
+// through the building into the tray, stands there, and flies out of the
+// hatch into the hole, so for a few seconds the whole of it is in the air
+// or standing as sand nobody saves -- and the
 // field that wrote it down was once the one field in that building nobody
 // wrote. A refresh mid-pay came back on an empty sky, and four thousand dust
-// was simply gone. Now what is flying comes back owed and is thrown again,
+// was simply gone. Now what is flying or in the tray comes back owed and is
+// thrown again,
 // and the bins that had not paid come back as a stake in the funnel.
 group('a refresh in the middle of a payout does not eat the pot', async () => {
   const S = yard.S;
@@ -109,8 +111,12 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
   const before = S.stored, floorBefore = S.floorGrains, heldBefore = held();
   const dropped = window.__tapSign();
   // into the pay, with something out of a bin and in the air
-  const paying = runUntil(() => state().drop && state().drop.stage === 'pay' && state().toStrip > 0, 40);
+  const paying = runUntil(() => state().drop && state().drop.stage === 'pay' && state().toTray + state().tray > 0, 40);
   const mid = state();
+  // what had left a bin: falling into the tray, or standing in it as its pebbles
+  const out = mid.toTray + mid.tray;
+  // owed by count: the pebbles, and a coin a grain
+  const owed = Object.values(mid.drop.pays).reduce((a, b) => a + b, 0);
 
   window.__reload();
   const back = state();
@@ -118,14 +124,14 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
   const landed = (S.floorGrains - floorBefore) + (held() - heldBefore) + (S.stored - before);
 
   return [
-    ok(s0 > 0 && dropped && paying, 'a hand is paying with its pay in the air', `${mid.toStrip} in the air`),
+    ok(s0 > 0 && dropped && paying, 'a hand is paying with its pay in the air or the tray', `${out} out of the bins`),
     ok(mid.pot && mid.pot.stake < s0 && mid.drop.paid > 0, "and the bins that paid have left the funnel's ledger",
        `${mid.pot && mid.pot.stake} of ${s0} unpaid, ${mid.drop && mid.drop.paid} paid`),
-    ok(back.payLeft === mid.toStrip, 'what was in the air is owed the moment the page comes back',
-       `${mid.toStrip} flying, ${back.payLeft} owed`),
+    ok(back.payLeft === owed, 'what had left the bins is owed the moment the page comes back',
+       `${JSON.stringify(mid.drop.pays)} paid out, ${back.payLeft} owed`),
     ok(back.pot && back.pot.stake === mid.pot.stake && !back.letting, 'and the bins that had not paid are a stake in the funnel again',
        JSON.stringify(back.pot)),
-    ok(!S.paying && landed >= mid.drop.paid, 'and the ground is paid every grain that had left a bin',
+    ok(!S.paying && landed >= mid.drop.paid, 'and the hole is paid every grain that had left a bin',
        `${mid.drop.paid} paid out, ${landed} landed, carried or banked`)
   ];
 // One particular hand across more than five seconds, and a reload of its own

@@ -922,7 +922,12 @@ capped at `SIGN_CHASE_MAX_MS`, so the chase spins up as the pour runs and
 runs down as it eases, while the number climbs. Ready, with a stake standing
 and the arm let go, the sign flashes on a beat (`SIGN_FLASH_MS`) between the
 count and the words DROP IT -- the same words for a pointer and a finger --
-in the sign's own letters, with no rule under either; the "press me" is
+in the sign's own letters, with no rule under either. Not at once: the
+count is still rolling up to the stake when the arm lets go, so the sign
+holds it for `SIGN_SETTLE_MS` first (the owner, 2026-09-16: "the drop it
+text delays a second or two for the lerp to settle the new stake amount"),
+and the flash is timed from the end of that wait so the words are its
+first face (`onWords`). The "press me" is
 the lights, more excited than idle or pouring without strobing: **every
 bulb on with a sparkle** -- about one in four dropping out, a different
 few each `SIGN_READY_STEP_MS` step (`SIGN_READY_LIGHTS` 'sparkle', the
@@ -991,10 +996,10 @@ adds and a release keeps the stake across a reload, the sand raining back
 to its band; a tap drops exactly `min(CASINO_HANDFUL, stake)` pebbles and
 only the bins with a pebble come up to pay, to the grain by worth; a flick
 drops as many pebbles as it has; the arm and the sign are dead mid-hand and
-the arm pours again while the pay runs out; the pay pours out of the foot
-on to the casino's strip in its own kinds and the haulers carry every kind
-to the hole with each counter moving; a full strip holds the pour; a save
-mid-cascade comes back a stake in the hopper with the sign live. Rules in
+the arm pours again while the pay runs out; the pay heaps in the tray in
+its own kinds and the tray flies every kind into the hole with each counter
+moving, the exact pot; the tray holds nothing up; a save mid-cascade comes
+back a stake in the hopper with the sign live. Rules in
 `verify.js`: no purse below zero, and the stake never more than was poured
 (landed plus owed is the stake, and what is owed is covered). The converting
 bins' floor and the rounding are `__binPay` in `test/handful.test.mjs`,
@@ -1019,29 +1024,35 @@ them and are what "The pour" is built on.
 
 ### What building it changed
 
-**The pay pours on to the casino's own strip after all.** "No strip" in the
-building paragraph meant the chute-and-crank casino's, with its lever; the
-pay still has to land somewhere the crew reads, and "the heap the crew
-already hauls" is a strip in `S.piles` with a limit (`PILE_LIMIT.casino`)
-and the pile-full mark. A pebble off a bin lands as the pebbles it is
-worth and a coin goes out as a grain of that coin, one a coin; `bankDust`
-credits each kind as the haulers' loads land in the hole, so ore, crops and
-sparks off the table are counted where every other coin is.
-
-**The tray is gone: the pay falls straight out of the foot.** Built first
-with the bins paying into a tray at the foot that then ran out of the
-hatch, which was the plinko's tray kept for no reason -- a heap standing
-in the building for a second and a half that nobody could do anything with.
-Now each bin, on its beat, drops what it holds: its pebbles fall through
-the foot to the building's floor and lob out of the hatch on to the strip,
-each carrying its share of the bin's pay, and a converting bin's pay falls
-as the coin itself, one grain a coin in its color, so what lands is what
-was won. A full strip holds the bin that is due -- its foot lit, its
-pebbles in it -- rather than a tray filling; the pot's ledger shrinks bin
-by bin as each pays, so a save mid-pay comes back with the unpaid bins'
-pebbles in the funnel and what was in the air owed and thrown again.
-`FOOT_H` is the foot's height; `trayShownFor` and its band knobs went with
-the tray.
+**The pay heaps in a tray in the foot, and the tray flies it into the
+hole.** (The owner, 2026-09-16: "i dont want the winning piles to get
+blocked, and hold up more drops ... make the casino a bit taller, give the
+tray some height, so we can see the winnings pile up, then have it fly
+into the pit itself.") The two earlier turns -- the pay poured on to a
+strip of the casino's own in `S.piles` for the haulers, with a limit that
+held the bin due while the strip was full; then the tray was cut as the
+plinko's tray kept for no reason -- both put the win on the ground, where
+a big pot was a pile the yard had to clear before the next hand could pay.
+Now the foot is taller (`FOOT_H`) and is the tray: a plot of sand of its
+own (`tray` in state.js, `TRAY_H` rows, seated on the building's floor)
+that each bin's pebbles fall into and heap in, the way the hopper's stake
+does. A dust cell stands for its share of the pay on a ledger
+(`S.trayOwed`, `trayShare`: the hopper's own trick), a converting bin's pay
+lands as its coin, one grain a coin. A beat after the last grain lands
+(`TRAY_HOLD_MS`, so the pile is seen whole) the tray lifts it off a grain
+at a time, tallest column first as the hopper drains, out of the hatch and
+over the yard in an arc into the hole (`flyToHole`), where `bankDust`
+counts each kind as it lands -- the exact pot, the remainder on the last
+cell. However much there is, it is away in about `TRAY_OUT_MS`. **Nothing
+holds on it**: the next stake pours and drops while the tray empties, and
+a hand paid into a tray still going heaps on top; only a tray with no cell
+left holds a bin, and that frees itself. The casino holds no ground any
+more (`pile: null`; `PILE_LIMIT.casino` is gone) and the haulers have no
+leg in it. A save catches the tray and the air as `S.paying` and flies it
+out of the hatch on the reload. Cut with it: the pebble that appeared out
+of the pegs a bin's height over where it had just landed -- a bin's plot
+runs on up into the field so a heap can stand proud, and a pebble off the
+pegs was put on its top row; it goes in at the rim now (`BIN_RIM_ROW`).
 
 **The box lists what was won, by kind.** "x0.8 -20" was a number about the
 bet; what the player sees land is pebbles, crops, ore and sparks, so the box

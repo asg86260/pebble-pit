@@ -5,7 +5,7 @@
 // pile drains into the throat, a handful of pebbles comes out on to the pegs
 // into the drop's fair bins, and the bins that hold one pay -- the middle
 // five in pebbles by their multiple, the outer six in crops, ore or sparks by
-// worth -- out of the foot on to the ground for the crew. See DESIGN.md,
+// worth -- into the tray, and the tray flies it into the hole. See DESIGN.md,
 // "The handful" and "The pour".
 //
 // These check the mechanism a hand at a time, done the way a player does it:
@@ -15,7 +15,7 @@
 // handful.test.mjs.
 
 import { yard, group, ok, state, run, runUntil, quickCrew } from './helpers.mjs';
-import { CASINO_BINS, CASINO_HANDFUL, POUR_SHARE, POUR_MIN, PILE_LIMIT, shownFor } from '../src/config.js';
+import { CASINO_BINS, CASINO_HANDFUL, POUR_SHARE, POUR_MIN, shownFor } from '../src/config.js';
 import { DUST_PER } from '../src/upgrades/price.js';
 
 // The table, opened without the dust it costs, with dust in the hole to stake
@@ -163,8 +163,6 @@ group('holding again adds to the stake, and a release keeps it across a reload',
 // A hand is longer than the reload harness's five seconds and is one
 // particular handful on the pegs -- a save writes the stake down and a load
 // pours it back into the hopper -- so these follow it without the harness.
-// (A hand's pay has to fit on the strip, since nobody here carries it: a
-// stake under the strip's limit, so the bins never hold.)
 group('a tap on the sign drops exactly a handful, and only the bins with a pebble pay', async () => {
   atTheTable();
   const s0 = stake(0.4);
@@ -229,63 +227,62 @@ group('the arm and the sign are dead mid-hand', async () => {
   ];
 }, { reload: false });
 
-// Everything pours out of the foot in its own kind on to the strip, and the
-// crew carries it in: a pebble grain lands as the pebbles it is worth, a
-// coin as a grain of that coin, and the counters move as the loads land.
-group('the pay pours out of the foot on to the strip in its own kinds, and the haulers carry it to the hole', async () => {
+// Everything pours out of the feet in its own kind into the tray, where it
+// heaps as a pile, and the tray flies it into the hole itself: a pebble grain
+// lands as the pebbles it is worth, a coin as a grain of that coin, and the
+// counters move as they land. Nobody carries it.
+group('the pay heaps in the tray in its own kinds, and the tray flies it into the hole', async () => {
   atTheTable();
   const s0 = stake(0.4);
   const hand = playHand();
   const paid = hand.s.hand.n, pays = hand.s.hand.pays;
   const held = state().stored, ore = state().shards, crops = state().spores, sparks = state().sparks;
-  const strip = state().piles.find(p => p.key === 'casino');
-  run(0.6);
-  const flying = state();
-  runUntil(() => state().tableAir === 0 && !state().paying, 30);
-  run(0.5);
-  const tipped = state();
-  window.__crew(0, 4);                               // and now somebody to carry it
-  quickCrew();
+  // the last bin has paid: what fell lands in the tray and stands there a
+  // beat (a frame at a time: the beat is shorter than the harness's second)
+  for (let f = 0; f < 300 && !(state().tray > 0 && state().toTray === 0); f++) run(1 / 60);
+  const heaped = state();
   const want = held + pays.dust;
-  const carried = runUntil(() => state().stored >= want && state().shards >= ore + pays.shard && state().spores >= crops + pays.spore && state().sparks >= sparks + pays.spark, 300);
-  const landed = state();
+  const landed = runUntil(() => state().stored >= want && state().shards >= ore + pays.shard && state().spores >= crops + pays.spore && state().sparks >= sparks + pays.spark, 30);
+  runUntil(() => state().tableAir === 0 && state().tray === 0, 10);
+  const after = state();
   return [
     ok(s0 > 0 && paid > 0, 'a hand was paid', `${paid} for ${s0}`),
-    ok(!!strip && strip.to <= hand.s.casinoX, 'the casino has a strip on the ground at its left',
-       strip && `${strip.from}..${strip.to}, building at ${hand.s.casinoX}`),
-    ok(flying.tableAir > 0 || flying.pileCount.casino > 0, 'the pay is in the air out of the foot, or landed', `${flying.tableAir} flying`),
-    ok(flying.stored === held, 'and no counter moves for it until it is carried', `${flying.stored} vs ${held}`),
-    ok(paid <= PILE_LIMIT.casino ? tipped.pileCount.casino === pays.dust + pays.shard + pays.spore + pays.spark : tipped.pileCount.casino > 0,
-       'the pay lies on the strip, a grain a coin', `${tipped.pileCount.casino} on the ground for ${JSON.stringify(pays)}`),
-    ok(carried, 'and the haulers carry it to the hole, every counter moving as its kind lands',
-       `${held} + ${pays.dust} -> ${landed.stored}; ore ${ore} -> ${landed.shards}, crops ${crops} -> ${landed.spores}, sparks ${sparks} -> ${landed.sparks}`)
+    ok(heaped.tray > 0 && heaped.tray >= pays.shard + pays.spore + pays.spark,
+       'the pay stands in the tray, a coin a grain and the pebbles as the grains that fell', `${heaped.tray} in the tray for ${JSON.stringify(pays)}`),
+    ok(heaped.trayOwed === pays.dust, 'and the tray owes the pebbles the hand paid', `${heaped.trayOwed} owed, ${pays.dust} paid`),
+    ok(heaped.stored === held, 'and no counter moves for it until it lands', `${heaped.stored} vs ${held}`),
+    ok(!heaped.pileCount.casino && !heaped.piles.some(p => p.key === 'casino'), 'nothing goes on the ground'),
+    ok(landed, 'the tray flies it into the hole, every counter moving as its kind lands',
+       `${held} + ${pays.dust} -> ${after.stored}; ore ${ore} -> ${after.shards}, crops ${crops} -> ${after.spores}, sparks ${sparks} -> ${after.sparks}`),
+    ok(after.tray === 0 && after.trayOwed === 0 && after.stored === want, 'and the tray is empty, the exact pot paid',
+       `${after.tray} left, ${after.trayOwed} owed, ${after.stored} vs ${want}`)
   ];
 }, { reload: false });
 
-// A pay has to have somewhere to land: a full strip holds the bin that is
-// due, its foot lit and its pebbles in it, and the mark over the strip says
-// why; when the haulers make room the hand goes on.
-group('a full strip holds the bins', async () => {
+// The tray never holds the next stake: while the last pay is still flying
+// out, the arm pours and the sign drops again, and the new hand's pay heaps
+// on top of what is left.
+group('the tray holds nothing up', async () => {
   atTheTable();
   stake(0.4);
-  const strip = state().piles.find(p => p.key === 'casino');
-  window.__pile((strip.from + strip.to) / 2, PILE_LIMIT.casino);
-  tap();
-  runUntil(() => state().drop && state().drop.stage === 'pay', 30);
-  run(3);
-  const full = state();
-  window.__clearFloor();
-  runUntil(() => !state().letting && state().tableAir === 0, 30);
-  run(0.5);
+  playHand();
+  const paying = state();
+  const poured = hold(true);
+  run(0.4);
+  hold(false);
+  settled();
+  const again = state();
+  const dropped = tap();
+  runUntil(() => !state().letting, 30);
+  runUntil(() => state().tableAir === 0 && state().tray === 0, 30);
   const after = state();
   return [
-    ok(full.pileMarks.includes('casino'), 'the strip is full and its mark stands', full.pileMarks.join(',')),
-    ok(full.letting && full.drop.stage === 'pay' && full.drop.paying != null && full.drop.bins.reduce((a, b) => a + b, 0) > 0,
-       'so a bin holds its pebbles with its foot lit', full.drop && `bin ${full.drop.paying} lit, ${full.drop.bins.join(',')} in the bins`),
-    ok(full.toStrip === 0 && full.pileCount.casino <= PILE_LIMIT.casino, 'and nothing more is on its way to the strip',
-       `${full.toStrip} in the air, ${full.pileCount.casino} on the ground`),
-    ok(after.hand && after.hand.n > 0 && after.pileCount.casino > 0, 'and pays out once there is room',
-       `${after.hand && after.hand.n} paid, ${after.pileCount.casino} on the ground`)
+    ok(paying.tray > 0 || paying.toTray > 0 || paying.toHole > 0, 'the last pay is in the tray or in the air',
+       `${paying.tray} in the tray, ${paying.toTray} falling in, ${paying.toHole} flying out`),
+    ok(poured && again.pot && again.pot.stake > 0, 'and the arm pours a new stake meanwhile', `${again.pot && again.pot.stake}`),
+    ok(dropped, 'and the sign drops it'),
+    ok(after.tray === 0 && after.trayOwed === 0 && after.tableAir === 0, 'and everything goes to the hole in the end',
+       `${after.tray} in the tray, ${after.trayOwed} owed, ${after.tableAir} flying`)
   ];
 }, { reload: false });
 

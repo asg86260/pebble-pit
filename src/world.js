@@ -9,7 +9,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
-        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, HOPPER_H,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, HOPPER_H, TRAY_H,
         SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
@@ -17,7 +17,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -237,7 +237,6 @@ export function refreshPiles() {
     // strip only *appears* once the site is standing, because until then
     // nothing pays out on to it.
     ...(S.strips || []).filter(p => (p.key !== 'scrub' || S.scrubOpen)
-                                 && (p.key !== 'casino' || S.casinoOpen)
                                  && (p.key !== 'sky' || S.meteorOpen)),
     // and the rock's, worked out fresh every time, because the rock it stands
     // off from is a different size for every boulder
@@ -558,6 +557,11 @@ export function resize(after) {
   table.cols = CASINO_W / P - 2;
   table.rows = HOPPER_H;
   table.y = casino.y;
+  // and the tray in its foot: the same width, stood on the building's floor
+  tray.x = casino.x + P;
+  tray.cols = CASINO_W / P - 2;
+  tray.rows = TRAY_H;
+  tray.y = casino.y + casino.h - TRAY_H * P;
 
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.

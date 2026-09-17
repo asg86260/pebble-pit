@@ -737,17 +737,17 @@ export const SCENES = {
     run: () => { window.__casinoStakes(6000); window.__casinoStake(200); window.__tapSign();
                  for (let f = 0; f < 1200 && !(st().drop && st().drop.stage === 'pay'); f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 380); } },
-  // A hand just paid: the pay pouring out of the foot on to the ground in
-  // its own kinds, the box saying the multiple and the change.
-  casinopourout: { about: 'the casino', say: 'the pay pouring out of the foot on to the ground, in its own kinds',
+  // A hand just paid: the pay heaped in the tray in its own kinds, standing
+  // its beat, the box saying the multiple and the change.
+  casinopourout: { about: 'the casino', say: 'the pay heaped in the tray, in its own kinds',
     run: () => { window.__casinoStakes(6000); window.__casinoStake(1000); window.__tapSign();
-                 for (let f = 0; f < 3600 && (st().drop || !st().paying); f++) window.__fast(1 / 60);
-                 window.__fast(0.5); window.__look(st().casinoX - 300); } },
-  // ...and the heap the crew carries in: the pay landed, a hauler on its way.
-  casinopaid: { about: 'the casino', say: 'the pay on the ground, the box saying the hand, a hauler coming',
-    run: () => { window.__casinoStakes(6000); window.__crew(0, 3); window.__levels({ haulPaceLevel: 8 });
-                 window.__casinoStake(300); window.__casinoHand(); window.__fast(0.5);
+                 for (let f = 0; f < 3600 && !(st().tray > 0 && st().toTray === 0 && !st().drop); f++) window.__fast(1 / 60);
                  window.__look(st().casinoX - 300); } },
+  // ...and the tray flying it out of the hatch into the hole.
+  casinopaid: { about: 'the casino', say: 'the tray flying the pay out of the hatch into the hole',
+    run: () => { window.__casinoStakes(6000); window.__casinoStake(1000); window.__tapSign();
+                 for (let f = 0; f < 3600 && !(st().toHole > 0); f++) window.__fast(1 / 60);
+                 window.__fast(0.6); window.__look(st().casinoX - 300); } },
   // A win: hands are played until one pays more than it took, and the shot is
   // a beat after -- the strobe on the sign and the fountains in the air.
   casinowin: { about: 'the casino', say: 'a win: the strobe and the fountains',

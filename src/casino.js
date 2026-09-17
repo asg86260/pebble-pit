@@ -31,8 +31,9 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, PILE_LIMIT, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, FOOT_H,
+         TRAY_H, TRAY_HOLD_MS, TRAY_OUT_MS, TRAY_STEP_MS,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
          CASINO_GRAV, CASINO_HOP, CASINO_HOP_VARY, CASINO_PEG_BEAT_MS, CASINO_GRAIN_GAP_MS, CASINO_GRAIN_JITTER,
          CASINO_BIN_KNOCK, CASINO_KNOCK, CASINO_WIN_KNOCK, CASINO_SETTLE_HOLD_MS, CASINO_PAY_BEAT_MS,
@@ -41,11 +42,11 @@ import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, PIL
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
          P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, ROCK_CELL, someFind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS } from './config.js';
-import { S, casino, table, floor } from './state.js';
+import { S, casino, table, tray, pit } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
-import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat } from './grid.js';
-import { shakeView, blocked } from './world.js';
+import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat, isDust } from './grid.js';
+import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { LEVER_SWING_MS } from './config.js';
 import { spend, bankDust } from './pit.js';
@@ -261,6 +262,8 @@ const slotCol = c => Math.min(slotW(binAt(c)) - 1, c - binLeft(binAt(c)));
 // one bin stands proud of the rim rather than waiting over it for ever.
 export const PEBBLE = 2;
 const binCols = b => Math.max(1, Math.floor(slotW(b) / PEBBLE));
+// the plot row just over the rim: where a pebble off the pegs goes in
+const BIN_RIM_ROW = Math.floor(BIN_H / PEBBLE);
 const makeBin = b => ({
   x: 0, y: 0, cols: binCols(b), rows: CASINO_HANDFUL, p: P * PEBBLE, grid: new Uint8Array(binCols(b) * CASINO_HANDFUL),
   n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: true
@@ -436,14 +439,20 @@ function stepGrain(g, dt, bins, onPeg, onLand) {
     }
     return;
   }
-  // below the pegs: down to the bin's rim, and in at the top of its slot,
-  // where the bin's own sand rules take it the rest of the way. A slot full
-  // to the rim keeps the grain waiting over it, which nothing ever fills.
+  // below the pegs: down to the bin's rim, and in at the rim, where the
+  // bin's own sand rules take it the rest of the way. At the rim and not at
+  // the plot's top: the plot runs on up into the field so a heap can stand
+  // proud, and a pebble put on its top row appeared out of the pegs a bin's
+  // height over where it had just been seen to land. A heap already proud of
+  // the rim takes it on its first free row; a column full to the plot's top
+  // keeps the grain waiting over it, which nothing ever fills.
   if (g.y < FIELD_H) return;
   g.x = g.to; g.c = g.to; g.y = FIELD_H; g.r = FIELD_H; g.vx = 0; g.vy = 0;
   const b = binAt(g.c), bin = bins[b], col = Math.min(bin.cols - 1, Math.floor(slotCol(g.c) / PEBBLE));
-  if (at(bin, col, bin.rows - 1)) return;
-  put(bin, col, bin.rows - 1, g.s);
+  let row = BIN_RIM_ROW;
+  while (row < bin.rows && at(bin, col, row)) row++;
+  if (row >= bin.rows) return;
+  put(bin, col, row, g.s);
   g.landed = true;
   onLand(g, b);
 }
@@ -493,12 +502,12 @@ function binHit(g, b) {
 // When the last grain is still there is a held beat with the board full and
 // quiet, and then the bins that hold a pebble pay from the middle outward, a
 // bin a beat -- an empty bin never inverts its foot, sounds or pays. What a
-// bin pays falls out of it: down through the foot to the floor of the
-// building and out of the hatch in a lob on to the strip, where it heaps as
-// the pile the haulers carry. Nothing waits in a tray. A pebble bin's pebbles
-// go down each carrying its share of the pay; a converting bin's pay goes
-// down in its own coin, one grain a coin. A full strip holds the bin: its
-// foot stays lit and its pebbles stay in it until the haulers make room.
+// bin pays falls out of it: down through the foot into the tray on the
+// building's floor, where it heaps as a pile of its own. A pebble bin's
+// pebbles go down each carrying its share of the pay; a converting bin's
+// pay goes down in its own coin, one grain a coin. A tray with no cell left
+// holds the bin -- its foot lit, its pebbles in it -- until one frees, which
+// the tray emptying itself sees to; it never holds the next stake.
 function payBin(b) {
   const d = S.drop;
   const bin = d.bins[b];
@@ -538,18 +547,47 @@ function payBin(b) {
       grains.push({ x: g.x + (i >= cellsOut.length ? (rand() - 0.5) * P * PEBBLE : 0), y: g.y, s: someFind(COIN_CELL[pay.kind]), worth: 1, big: true });
     }
   }
-  const strip = casinoStrip();
   for (const g of grains) {
-    if (S.tableAir.length >= IN_AIR) { for (let w = g.worth; w > 0; w--) bankDust(strip ? strip.from : g.x, g.s); continue; }
-    S.tableAir.push({
-      x: g.x, y: g.y, s: g.s, worth: g.worth, big: g.big, t: 0, vx: 0, vy: 0.4 + rand() * 0.4, lands: 'strip',
-      // down through the foot to the building's floor, then out of the hatch
-      floorY: S.groundY - P,
-      then: { x1: strip.from + (strip.to - strip.from) * (0.25 + rand() * 0.5), y1: S.groundY - P,
-              high: P * 4 + rand() * P * 4, ms: CHUTE_MS }
-    });
+    if (S.tableAir.length >= IN_AIR) { for (let w = g.worth; w > 0; w--) bankDust(holeX(), g.s); continue; }
+    // down through the foot into the tray
+    S.tableAir.push({ x: g.x, y: g.y, s: g.s, worth: g.worth, big: g.big, t: 0, vx: 0, vy: 0.4 + rand() * 0.4, lands: 'tray' });
   }
 }
+
+// A grain of the pay landing in the tray: a coin is a coin, and a pebble
+// lands as the heap its share of the pay reads as, on the hopper's own
+// ladder (`shownFor`) -- so a win stands taller in the tray than its stake
+// stood in the bowl -- with the pebbles it stands for kept on a ledger the
+// way the hopper keeps the stake (`trayShare`). A tray with no cell for it
+// sends it on to the hole rather than nowhere, and holds the bins until it
+// has room again.
+function trayLand(k) {
+  const dust = isDust(k.s), worth = k.worth || 1;
+  const cells = dust ? Math.max(1, Math.round(shownFor(S.trayOwed + worth) - shownFor(S.trayOwed))) : 1;
+  let laid = 0;
+  for (let i = 0; i < cells; i++) {
+    if (!addGrain(tray, k.x + (i ? (rand() - 0.5) * P * 8 : 0), null, dust ? 1 + Math.floor(rand() * SHADES.length) : k.s)) break;
+    laid++;
+  }
+  if (!laid) {
+    tray.capped = true;
+    for (let w = worth; w > 0; w--) bankDust(holeX(), k.s);
+    return;
+  }
+  if (dust) { S.trayDust += laid; S.trayOwed += worth; }
+  S.trayAt = now();
+  sfx('hopper-land', { x: k.x });
+}
+// what one dust cell off the tray carries: an even share of what is owed,
+// the remainder on the last
+function trayShare() {
+  const left = Math.max(1, S.trayDust);
+  return left > 1 ? Math.min(S.trayOwed, Math.max(1, Math.round(S.trayOwed / left))) : S.trayOwed;
+}
+// somewhere over the hole, for a grain on its way in
+const holeX = () => pit.x + P + rand() * Math.max(P, pit.cols * P - 2 * P);
+// the hatch in the foot's left wall, at the building's floor
+const hatchAt = () => ({ x: casino.x, y: casino.y + casino.h - 2 * P });
 
 // The hand is paid: the last bin's pay is on its way out of the foot. The
 // box says the multiple, and it is felt: a hand that pays more than it
@@ -646,42 +684,83 @@ export function stopAttract() {
 }
 
 // --- pouring out --------------------------------------------------------------------
-// The pay lands on the ground at the building's left, in its own kinds, where
-// it heaps as a real pile the haulers carry in like any heap: a grain off a
-// bin lands as the pebbles it is worth, and a coin as a grain of that coin.
-// The counter moves as the haulers' loads land in the hole. A win is
-// collected, not credited. The strip has a limit, and a bin holds while it
-// is full: a pot has to have somewhere to land, with the waiting visible.
-const casinoStrip = () => S.piles.find(p => p.key === 'casino');
-const toStrip = () => S.tableAir.reduce((n, k) => n + (k.lands === 'strip' ? (k.worth || 1) : 0), 0);
-export const chuteOpen = () =>
-  !!casinoStrip() && (S.pileCount?.casino || 0) + toStrip() < PILE_LIMIT.casino;
+// The pay heaps in the tray, in its own kinds, and the tray sends it to the
+// hole itself: a beat after the last bin has paid, so the pile is seen
+// whole, it lifts off a grain at a time -- the tallest column first, the
+// way the hopper drains -- out of the hatch in the foot's left wall and
+// over the yard in an arc into the hole, where a dust cell lands as the
+// pebbles it carries and a coin as itself. The counter moves as they land.
+// A win is collected, not credited. Nothing holds on the tray: the next
+// stake pours while it empties, and a hand paid into a tray still going
+// heaps on top.
+export const chuteOpen = () => !tray.capped;
 export const payLeft = () => S.paying ? Object.values(S.paying.left).reduce((n, v) => n + v, 0) : 0;
 // The hatch in the foot's left wall is open while anything is on its way out
 // of it.
-export const hatchOpen = () => !!S.paying || S.tableAir.some(k => k.lands === 'strip');
+export const hatchOpen = () => !!S.paying || S.tableAir.some(k => k.lands === 'hole');
+// The tray is holding its pile for a look: the bins are still paying into
+// it, something is still falling into it, or the last grain landed a beat
+// ago -- the pile is seen whole before any of it goes.
+const trayHolds = () =>
+  (S.drop && S.drop.stage === 'pay') || S.tableAir.some(k => k.lands === 'tray') ||
+  now() - (S.trayAt ?? -Infinity) < TRAY_HOLD_MS;
 
 // However much there is, it is away in about a second and a half: the rate
 // every trickle here runs at.
 const TRICKLE_MS = 1500;
 const IN_AIR = 24000;
-const CHUTE_MS = 700;
+const HATCH_MS = 220;
+const FLIGHT_MS = 900;
 const COIN_CELL = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
 
-// What a save caught in the air: the pay that had left the bins and not
-// landed comes back owed (`S.paying`, written as what was flying) and runs
-// out of the hatch on to the strip from where it was going -- the bins it
-// left are empty and the sand in them was never saved. The grain count is
+// A grain leaving the building: from wherever it is to the hatch, then out
+// and over to the hole.
+function flyToHole(x, y, s, worth) {
+  const h = hatchAt();
+  S.tableAir.push({
+    x, y, s, worth, big: true, t: 0, lands: 'hole',
+    arc: { x0: x, y0: y, x1: h.x, y1: h.y, k: 0, high: P * 2, ms: HATCH_MS },
+    then: { x1: holeX(), y1: S.groundY - P, high: P * 10 + rand() * P * 6, ms: FLIGHT_MS }
+  });
+}
+
+// One frame of the tray emptying into the hole.
+function trayOut(dt) {
+  if (!tray.grid || !tray.n || trayHolds()) { S.trayAcc = 0; return; }
+  // a share of the pile a frame, so a big pile is away in about TRAY_OUT_MS,
+  // and never faster than a grain a TRAY_STEP_MS, so a small one is seen to go
+  S.trayAcc += dt / TRAY_STEP_MS;
+  let n = Math.min(tray.n, Math.max(Math.floor(S.trayAcc), Math.ceil(tray.n * (dt / TRAY_OUT_MS))));
+  S.trayAcc = Math.max(0, Math.min(1, S.trayAcc - n));
+  while (n-- > 0 && S.tableAir.length < IN_AIR) {
+    const c = topmostColumn(tray);
+    if (c < 0) break;
+    const r = topGrain(tray, c);
+    if (r < 0) break;
+    const v = at(tray, c, r);
+    put(tray, c, r, 0);
+    tray.capped = null;
+    let worth = 1;
+    if (isDust(v)) { worth = trayShare(); S.trayOwed -= worth; S.trayDust = Math.max(0, S.trayDust - 1); }
+    flyToHole(tray.x + c * P, bottomY(tray) - (r + 1) * P, v, worth);
+  }
+  // the ledger's rounding, or a cell the tray lost: what is still owed with
+  // no dust cell to carry it goes on its own
+  if (S.trayDust === 0 && S.trayOwed > 0) { const h = hatchAt(); flyToHole(h.x, h.y, 1, S.trayOwed); S.trayOwed = 0; }
+}
+
+// What a save caught on its way to the hole: the pay in the tray or in the
+// air comes back owed (`S.paying`, written as what was there) and flies out
+// of the hatch -- the sand it stood as was never saved. The grain count is
 // only how many throws the pebbles are split across.
 function payOutStep(dt) {
   const p = S.paying;
-  const strip = casinoStrip();
   const coins = p.left.spore + p.left.shard + p.left.spark;
   const grains = coins + (p.left.dust > 0 ? Math.max(1, Math.min(p.grains, p.left.dust)) : 0);
   let n = Math.min(grains, Math.max(1, Math.ceil(grains * (dt / TRICKLE_MS))));
-  while (n-- > 0 && payLeft() > 0 && chuteOpen()) {
+  while (n-- > 0 && payLeft() > 0) {
     const kind = ['spark', 'shard', 'spore'].find(k => p.left[k] > 0);
-    const x = casino.x, y = S.groundY - P;
+    const { x, y } = hatchAt();
     let v = kind ? someFind(COIN_CELL[kind]) : 1 + Math.floor(rand() * SHADES.length), worth = 1;
     if (kind) p.left[kind]--;
     else {
@@ -690,13 +769,7 @@ function payOutStep(dt) {
       p.left.dust -= worth;
       p.grains = Math.max(1, p.grains - 1);
     }
-    S.tableAir.push({
-      x, y, s: v, t: 0, worth, big: true, lands: 'strip',
-      // into the middle half of the strip, so a grain that walks to the nearest
-      // column with room stays on the ground the survey counts as the casino's
-      arc: { x0: x, y0: y, x1: strip.from + (strip.to - strip.from) * (0.25 + rand() * 0.5),
-             y1: S.groundY - P, k: 0, high: P * 4 + rand() * P * 4, ms: CHUTE_MS }
-    });
+    flyToHole(x, y, v, worth);
   }
   if (payLeft() <= 0) S.paying = null;
 }
@@ -740,12 +813,22 @@ export function wireTable() {
   table.fixed = wallAt;
   resizeGrid(table);
   layWalls();
+  // and the tray: a heap on a flat floor, walled by the room
+  if (!tray.painter) tray.painter = makePainter(tray);
+  tray.onPut = tray.painter.mark;
+  tray.blocked = null;
+  tray.ceiling = () => TRAY_H;
+  tray.repose = true;
+  resizeGrid(tray);
 }
 // The sand itself is never saved: a reset or a reload starts the building
 // empty, and a pot comes back pouring into whichever plot it stood in.
 export function clearCasino() {
   if (table.grid) layWalls();
   table.capped = null;
+  if (tray.grid) fillFlat(tray, 0);
+  tray.capped = null;
+  S.trayOwed = 0; S.trayDust = 0;
   S.tableFx = { pegs: [], edge: null, strobeAt: 0 };
 }
 
@@ -909,16 +992,10 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         if (k.lands === 'hopper') { k.arc = null; k.vx = 0; k.vy = 0.5; continue; }
-        // One square off the tray is worth its share of the pay, and on the
-        // ground it is that many grains of its kind: the pile IS the pay, for
-        // the haulers to carry. A grain the ground still refuses goes to the
-        // hole rather than nowhere.
-        if (k.lands === 'strip') {
-          for (let w = k.worth ?? 1; w > 0; w--) if (!addGrain(floor, a.x1, blocked, k.s)) bankDust(a.x1, k.s);
-          sfx('grain-land', { x: a.x1 });
-          S.tableAir.splice(i, 1);
-          continue;
-        }
+        // an arc with another after it: out of the hatch, then over to the hole
+        if (k.then) { k.arc = { x0: k.x, y0: k.y, ...k.then, k: 0 }; k.then = null; continue; }
+        // One square off the tray is worth its share of the pay, and in the
+        // hole it is that many grains of its kind.
         for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
         S.tableAir.splice(i, 1);
       }
@@ -928,11 +1005,10 @@ export function stepSparks(dt) {
     k.x += k.vx * f;
     k.y += k.vy * f;
     k.t += dt / 1000;
-    // A grain of the pay falling through the foot: at the building's floor
-    // it goes out of the hatch in a lob on to the strip.
-    if (k.then && k.y >= k.floorY) {
-      k.arc = { x0: k.x, y0: k.floorY, ...k.then, k: 0 };
-      k.then = null;
+    // A grain of the pay falling through the foot lands in the tray
+    if (k.lands === 'tray') {
+      const c = Math.max(0, Math.min(tray.cols - 1, Math.round((k.x - tray.x) / P)));
+      if (k.y >= surfaceY(tray, c)) { trayLand(k); S.tableAir.splice(i, 1); }
       continue;
     }
     // A grain coming down into a plot is one of the pot arriving: it stops
@@ -950,7 +1026,6 @@ export function stepSparks(dt) {
       }
       continue;
     }
-    if (k.lands === 'strip') continue;      // on its way through the foot; it lands off its arc
     // A rising one goes until its time is up, because what it is doing is
     // leaving; a plain falling one is scenery and stops at the ground.
     if (k.t > TABLE_LIFE || (!k.up && k.y >= S.groundY - P)) S.tableAir.splice(i, 1);
@@ -965,8 +1040,10 @@ export function stepCasino(dt) {
   stepSparks(dt);
   stepHold(dt);
   // The pot is standing in its plot: the pour is over, and the decision is open.
-  if (S.pouring && !S.holding && settledInPile()) { S.pouring = false; S.shopStale = true; }
+  if (S.pouring && !S.holding && settledInPile()) { S.pouring = false; S.readyAt = now(); S.shopStale = true; }
   if (S.drop) stepDrop(dt);
+  settleSome(tray, 2000);
+  trayOut(dt);
   stepAttract(dt);
   // A win's fountains go up a beat apart rather than all at once: three bursts
   // read as a celebration, one reads as a hiccup.

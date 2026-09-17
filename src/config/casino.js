@@ -99,10 +99,13 @@ export const BIN_H = 6;
 // and no pay can be read as its neighbor's. A floor line, a clear row, five of
 // glyph, a clear row, and the tray's rim.
 export const LABEL_H = 9;
-// The foot under the bins: the pay falls through it to the building's floor
-// and out of the hatch in its left wall on to the ground. Nothing stands in
-// it.
-export const FOOT_H = 12;
+// The foot under the bins is the tray: the pay falls through the feet and
+// heaps on the building's floor, a plot of sand of its own, where a win is
+// seen to pile up before it goes. Tall enough for a big hand to stand in.
+export const FOOT_H = 22;
+// The tray's plot: the foot's height less a clear row under the feet's rim,
+// so a pebble is seen to drop before it lands.
+export const TRAY_H = FOOT_H - 2;
 // The field's width: the bins across.
 export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
@@ -195,6 +198,10 @@ export let SIGN_SWAP_MS = 1500;
 export let SIGN_CHASE_MIN_MS = 40;
 export let SIGN_CHASE_MAX_MS = 400;
 export let SIGN_FLASH_MS = 700;
+// Ready, the sign holds the count this long before the first DROP IT: the
+// figure is still rolling up to the stake when the arm lets go, and words
+// over a number mid-climb read as the sign changing its mind.
+export let SIGN_SETTLE_MS = 1500;
 export let SIGN_READY_STEP_MS = 60;
 export let SIGN_READY_LIGHTS = 'sparkle';
 export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
@@ -202,6 +209,15 @@ export const setReadyLights = how => { SIGN_READY_LIGHTS = how; };
 export let SIGN_FLASH_FACE = null;
 export const setFlashFace = f => { SIGN_FLASH_FACE = f; };
 export let CASINO_CHASE_LIVE_MS = 65;
+// The tray keeps the pay a beat after the last bin has paid, so the pile is
+// seen whole, then lifts it off a grain at a time, out of the hatch and into
+// the hole: however much there is, it is away in about this long. The next
+// stake pours while it goes; nothing waits on the tray.
+export let TRAY_HOLD_MS = 600;
+export let TRAY_OUT_MS = 2500;
+// ...and never faster than a grain every this many ms, so a small pile is
+// seen to go rather than blink off.
+export let TRAY_STEP_MS = 40;
 // The machine sells itself. Every so often, with nobody at it, one grain drops
 // from the hopper and ticks its way down to a bin, then lifts and fades -- a
 // demonstration with nothing riding on it, and the only moving thing out past
@@ -278,6 +294,14 @@ export const CASINO_KNOBS = [
     get: () => SIGN_READY_STEP_MS, set: v => { SIGN_READY_STEP_MS = v; } },
   { key: 'SIGN_FLASH_MS', label: 'the ready flash, ms', min: 200, max: 2000, step: 50,
     get: () => SIGN_FLASH_MS, set: v => { SIGN_FLASH_MS = v; } },
+  { key: 'SIGN_SETTLE_MS', label: 'the count settling before DROP IT, ms', min: 0, max: 4000, step: 100,
+    get: () => SIGN_SETTLE_MS, set: v => { SIGN_SETTLE_MS = v; } },
+  { key: 'TRAY_HOLD_MS', label: 'the tray holds the pay, ms', min: 0, max: 3000, step: 100,
+    get: () => TRAY_HOLD_MS, set: v => { TRAY_HOLD_MS = v; } },
+  { key: 'TRAY_OUT_MS', label: 'the tray empties into the hole, ms', min: 500, max: 8000, step: 250,
+    get: () => TRAY_OUT_MS, set: v => { TRAY_OUT_MS = v; } },
+  { key: 'TRAY_STEP_MS', label: 'the tray, ms a grain at the slowest', min: 10, max: 200, step: 5,
+    get: () => TRAY_STEP_MS, set: v => { TRAY_STEP_MS = v; } },
   { key: 'CASINO_ATTRACT_S', label: 'the attract loop, s', min: 5, max: 120, step: 5,
     get: () => CASINO_ATTRACT_S, set: v => { CASINO_ATTRACT_S = v; } },
   { key: 'CASINO_EVEN_BAND', label: 'even, within', min: 0, max: 0.3, step: 0.01,

@@ -220,6 +220,11 @@ export const S = {
   pouring: false,
   tableAir: [],           // the casino's grains in the air: arriving, leaving, or on their way out of the foot
   paying: null,           // { left: { dust, spore, shard, spark }, grains } -- a paid hand on its way out of the foot
+  trayOwed: 0,            // the pebbles the tray's dust cells stand for, spent as they leave
+  trayDust: 0,            // how many of the tray's cells are dust, so each carries its share
+  trayAt: 0,              // when the last grain of the pay landed in the tray: it stands a beat after
+  trayAcc: 0,             // the tray's pace out, in fractions of a grain
+  readyAt: 0,             // when the sign went ready: it holds the count a beat before DROP IT
   // The hand under way: the gate open, the grains on the pegs, the bins filling,
   // then the bins paying out of the foot. Null when nothing is falling. A path in
   // flight is ephemeral -- a reload comes back a pot in the hopper with the
@@ -659,6 +664,9 @@ export const EPHEMERAL = [
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
   'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'pourAcc', 'pourAt',
+  // the tray's sand is never saved, so its ledger is not either: a save
+  // writes what the tray holds as `paying` (persist.js, `payingOwed`)
+  'trayOwed', 'trayDust', 'trayAt', 'trayAcc', 'readyAt',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
@@ -721,6 +729,8 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // real plot of sand, like the yard and the hole. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// and the tray in its foot, where a paid hand heaps before it goes to the hole
+export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

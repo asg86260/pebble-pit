@@ -13,6 +13,10 @@ feature lives in DESIGN.md.
 
 **New this release**
 - The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
+- The casino is taller and its foot is a tray: a paid hand heaps in it, stands a beat, then flies out of the hatch into the hole on its own; nothing goes on the ground and no pile ever holds up the next drop (test/casino.test.mjs).
+- The sign holds the count for a moment after the arm lets go, so the figure settles before it flashes DROP IT.
+- A pebble off the pegs goes into its bin at the rim instead of appearing a bin's height over it.
+- A reload that lands on the last stretch of a cutscene keeps the view on what the scene was about instead of sliding it half a window (test/cutscene.test.mjs).
 - The outhouse comes up at 300 pebbles instead of 900.
 - A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
 - A dark switch on the settings sheet, on the landing page and in the game: the yard white on black, following the system's setting until pressed (test/settings.test.mjs, scene `dark`).

@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -266,7 +266,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
                     falling: S.drop.grains.filter(g => !g.landed).length,
                     onPegs: S.drop.grains.filter(g => g.seat).length,
                     bins: S.drop.bins.map(b => b.n),
-                    paid: Math.round(S.drop.paid), edge: S.drop.edge, paying: payingBin() },
+                    paid: Math.round(S.drop.paid), pays: { ...S.drop.pays }, edge: S.drop.edge, paying: payingBin() },
   // the arm held, and what it pours a second
   holding: holding(),
   pourRate: pourRate(),
@@ -282,8 +282,12 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   table: hopperN(),
   tableWant: tableWant(),
   // what a paid hand caught by a reload still has to run out of the foot, by
-  // kind; and how much of the pay is in the air on its way to the strip
-  toStrip: S.tableAir.reduce((n, k) => n + (k.lands === 'strip' ? (k.worth || 1) : 0), 0),
+  // kind; the grains standing in the tray and the pebbles they stand for;
+  // and how much of the pay is in the air on its way to the hole
+  tray: tray.n || 0,
+  trayOwed: S.trayOwed || 0,
+  toHole: S.tableAir.reduce((n, k) => n + (k.lands === 'hole' ? (k.worth || 1) : 0), 0),
+  toTray: S.tableAir.reduce((n, k) => n + (k.lands === 'tray' ? 1 : 0), 0),
   paying: S.paying ? { ...S.paying.left } : null,
   payLeft: payLeft(),
   hand: S.hand && { won: S.hand.won, n: S.hand.n, mult: +S.hand.mult.toFixed(3), edge: S.hand.edge, pays: S.hand.pays },

@@ -16,10 +16,10 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, 
          BOARD_COLS, CASINO_MARGIN, CASINO_PEG_ROWS, CASINO_BINS, CASINO_GATE_MS,
          CASINO_WIN_MS, CASINO_STROBE_MS, CASINO_DARK_MS, CASINO_RELIGHT_MS,
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
-import { S, casino, table } from '../state.js';
+import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
 import { ARM_LENGTH, ARM_BOSS, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
-         SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
+         SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_SETTLE_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
@@ -93,12 +93,19 @@ function signState() {
   if (S.holding || S.pouring) return 'pouring';
   return 'ready';
 }
+// Ready, the sign flashes between the count and the words, on the beat --
+// but not until the count has settled: the figure rolls up to the stake for
+// a moment after the arm lets go, and the words wait on it. The flash is
+// timed from the end of that wait, so the words are its first face.
+function onWords(t) {
+  if (SIGN_FLASH_FACE != null) return !!SIGN_FLASH_FACE;
+  const since = t - (S.readyAt ?? -Infinity) - SIGN_SETTLE_MS;
+  return since >= 0 && Math.floor(since / SIGN_FLASH_MS) % 2 === 0;
+}
 function signWord() {
   const state = signState();
   if (state === 'idle') return { word: WORD, gap: true, state };
-  // ready, the sign flashes between the count and the words, on the beat
-  const face = SIGN_FLASH_FACE ?? Math.floor(now() / SIGN_FLASH_MS) % 2;
-  if (state === 'ready' && face) return { word: 'DROP IT', gap: false, state };
+  if (state === 'ready' && onWords(now())) return { word: 'DROP IT', gap: false, state };
   // the count is the stake as held -- what has been committed, in the bowl
   // or on its way -- and, draining, what is left of it in the bowl
   const d = S.drop;
@@ -158,7 +165,7 @@ function drawSign() {
     : state === 'ready' ? SIGN_READY_STEP_MS : busy() ? CASINO_CHASE_LIVE_MS : CASINO_CHASE_MS;
   const step = chaseStep(t, stepMs);
   const swap = Math.floor(t / SIGN_SWAP_MS) % 2;
-  const words = state === 'ready' && (SIGN_FLASH_FACE ?? Math.floor(t / SIGN_FLASH_MS) % 2);
+  const words = state === 'ready' && onWords(t);
   const age = S.hand ? t - S.hand.at : Infinity;
   const edgeAge = t - (S.tableFx.strobeAt || -Infinity);
   const strobe = mayFlash() && ((S.hand?.won && age < CASINO_WIN_MS) ||
@@ -403,12 +410,12 @@ export function drawCasino() {
     drawLabels(f.x, f.y);
 
     // and the foot: a white room in the block under the bins, a wall in from
-    // each side, that the pay falls through
+    // each side -- the tray the pay falls into and heaps in (`drawPotPile`)
     const footY = y + h - FOOT_H * P;
     ctx.fillStyle = '#fff';
     ctx.fillRect(x + P, footY, w - 2 * P, FOOT_H * P);
 
-    // The foot's hatch, open while the pay goes out of it on to the ground:
+    // The foot's hatch, open while the pay flies out of it to the hole:
     // white, a way through like every opening here.
     if (hatchOpen()) { ctx.fillStyle = '#fff'; ctx.fillRect(x, footY + (FOOT_H - 3) * P, P, 3 * P); }
     // The arm on the wall beside the funnel: black while it can be held
@@ -482,6 +489,7 @@ const shadeOf = s => {
 export function drawPotPile() {
   if (!S.casinoOpen) return;
   if (table.grid && table.n) drawGrid(table);
+  if (tray.grid && tray.n) drawGrid(tray);
   const f = fieldAt();
   const grains = S.drop ? S.drop.grains : [];
   const demo = S.attract?.grain;

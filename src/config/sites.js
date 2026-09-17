@@ -109,10 +109,9 @@ export const SITES = [
   // The lab has no row: a building that is gone must not go on holding ground.
   // See DESIGN.md, "The lab is deleted".
   { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
-  // The casino pours a paid hand out of its foot on to the ground at its
-  // left, away from the rock, in its own kinds, and the haulers carry it in
-  // like any heap.
-  { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: 'casino', side: 'left' },
+  // The casino holds no ground: a paid hand heaps in its own tray and flies
+  // out of the hatch into the hole on its own.
+  { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: null },
   // The tower carries the star's ground on its own far side, which is what
   // puts the star beside it: the rind the star drops has to land on ground
   // somebody has reserved, or it walks the yard looking for a column with room.

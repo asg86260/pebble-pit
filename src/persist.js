@@ -10,7 +10,7 @@ import { seedSmog, skyFromSave, skyKindCounts, DROPS, SKY } from './smog.js';
 import { slideLayers } from './smog/layer.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry } from './state.js';
+import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut, sky, quarry, tray } from './state.js';
 import { SITES, rowFor, busyBuilderSites } from './works.js';
 import { resetCut, squareCut, cutTop } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
@@ -222,15 +222,17 @@ let lastBlob = null;
 // What the ground is still owed by the casino: the hand being poured out,
 // plus every grain already in the air toward the strip, by kind.
 function payingOwed() {
-  // on its arc out of the hatch, or still falling through the foot toward it
-  const arcs = (S.tableAir || []).filter(k => k.lands === 'strip' && (k.arc || k.then));
+  // falling into the tray, standing in it, or on its way out to the hole
+  const kindOf = s => findKind(s) === SHARD_CELL ? 'shard' : findKind(s) === SPORE_CELL ? 'spore' : findKind(s) === SPARK_CELL ? 'spark' : 'dust';
+  const flying = (S.tableAir || []).filter(k => k.lands === 'tray' || k.lands === 'hole');
   const left = { dust: 0, spore: 0, shard: 0, spark: 0, ...(S.paying ? S.paying.left : {}) };
-  for (const k of arcs) {
-    const kind = findKind(k.s) === SHARD_CELL ? 'shard' : findKind(k.s) === SPORE_CELL ? 'spore' : findKind(k.s) === SPARK_CELL ? 'spark' : 'dust';
-    left[kind] += k.worth || 1;
-  }
-  if (!S.paying && !arcs.length) return null;
-  return { left, grains: (S.paying ? S.paying.grains : 0) + arcs.length };
+  for (const k of flying) left[kindOf(k.s)] += k.worth || 1;
+  // the tray's dust cells are the ledger's pebbles; its coins are themselves
+  let cells = 0;
+  if (tray.grid) for (const v of tray.grid) if (v) { cells++; if (!isDust(v)) left[kindOf(v)]++; }
+  left.dust += S.trayOwed || 0;
+  if (!S.paying && !flying.length && !cells) return null;
+  return { left, grains: (S.paying ? S.paying.grains : 0) + flying.length + cells };
 }
 
 export function persist() {
@@ -572,8 +574,17 @@ export function restore() {
   const camera = BEATS.find(r => r.key === owed && r.owns === 'camera' && !done.has(owed));
   S.beat = { yard: null, camera: camera ? camera.key : null, sheet: null };
   // A shot of some other scene is the old yard's; the same scene, still
-  // standing in this process, carries on rather than starting over.
-  if (S.shot && S.shot.name !== S.beat.camera) { S.shot = null; setZoom(1); }
+  // standing in this process, carries on rather than starting over. The
+  // view's center is kept across the zoom going back, the way the scene's
+  // own way out keeps it: a seat let go by its left edge slides off the
+  // thing it was looking at by half the width it gained.
+  if (S.shot && S.shot.name !== S.beat.camera) {
+    const center = S.camX + S.viewW / 2;
+    S.shot = null;
+    setZoom(1);
+    S.camX = center - S.viewW / 2;
+    clampCam();
+  }
   // The catch is taken again below, once the rock's fall has been read.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
