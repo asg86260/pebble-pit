@@ -178,25 +178,25 @@ export function beltRunning(now) {
 // was bought and what misses it.
 //
 // `f` is the frame, so the crossing is tested exactly: a chip lands when its
-// underside reaches the band's top having been above it a frame ago. A fixed
+// underside reaches the surface having been above it a frame ago. A fixed
 // tolerance is wrong for either a fast chip (more than a cell a frame) or a
-// slow one.
+// slow one. The surface is the top of whatever is riding there, not the
+// band: caught at the band and given a level, a chip stopped on the band and
+// then rose through the heap to its place, which is not how a grain lands.
 export function catchBelt(ch, now, f) {
   if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
   if (!beltRunning(now)) return false;
-  const y = beltY();
-  const under = ch.y + P, was = under - ch.vy * f;
-  if (was > y || under < y) return false;             // did not cross the band this frame
   if (ch.x + P <= beltFrom() || ch.x >= beltReach()) return false;
   // Not over another station's strip: the cut's stone and the farm's crop
   // are carried by hand to their own piles and belong there.
   const c = colOf(floor, ch.x);
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
-  // Onto whatever is riding there: the level is its own, the settling is a
-  // frame's climb.
   const at = settle(ch.x);
-  S.belt.push({ x: at.x, y: bandY(), s: ch.s, h: at.h });
+  const y = beltY() - at.h * P;
+  const under = ch.y + P, was = under - ch.vy * f;
+  if (was > y || under < y) return false;             // did not cross the surface this frame
+  S.belt.push({ x: at.x, y: y - P, s: ch.s, h: at.h });
   sfx('belt-catch', { x: ch.x });
   return true;
 }
