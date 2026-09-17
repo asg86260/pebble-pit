@@ -32,6 +32,7 @@ feature lives in DESIGN.md.
 - A site builds everything it is paid for at once, a spare body on each; with fewer bodies than works the rest wait for one, and a work nobody has touched can still be handed back (test/queue.test.mjs).
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.
+- A body dropped on the rock by hand walks to its helmet first and climbs wearing it, instead of standing on the rock bare-headed (test/wave7b-assign.test.mjs).
 
 - The bar over a barrier, net or arch being built hangs above the shield's full height instead of inside the rock (the shots: `node tools/look.mjs 'props~,net~,arch~'`).
 
