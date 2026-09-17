@@ -6,7 +6,7 @@
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
-import { clampCam, unfollow, bindScroller } from './world.js';
+import { clampCam, unfollow, bindScroller, lookAt } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
@@ -16,7 +16,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
-import { station, stationAt } from './stations.js';
+import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -603,8 +603,14 @@ addEventListener('keydown', e => {
     if (shutOpts()) return;
     hold(!S.paused);
   }
-  if (e.key === 'ArrowRight') pan(P * 12);
-  if (e.key === 'ArrowLeft') pan(-P * 12);
+  // The letters and the digits only while not typing: the settings sheet
+  // has a box a save is pasted into.
+  const key = typing(e.target) ? '' : e.key;
+  if (e.key === 'ArrowRight' || key === 'd' || key === 'D') pan(P * 12);
+  if (e.key === 'ArrowLeft' || key === 'a' || key === 'A') pan(-P * 12);
+  // A digit jumps the view to a place: 1 is the rock, 2 onward the buildings
+  // standing along from it, in yard order.
+  if (key.length === 1 && key >= '1' && key <= '9') jumpTo(+key - 1);
   // Space, held, skips the running scene (skip.js); the browser's repeats are
   // ignored. Not while typing: the settings sheet has a box a save is pasted
   // into.
@@ -614,6 +620,27 @@ addEventListener('keydown', e => {
   }
 });
 addEventListener('keyup', e => { if (e.key === ' ') holdSkip(false); });
+
+// The places a digit can send the view: the rock, then every building that
+// stands today, right to left. Read on the press rather than kept, so a
+// building that went up since is on the list by existing. The noticeboard
+// is furniture, not a place, and stands in the house's own gap anyway.
+function jumpStops() {
+  const stops = [];
+  for (const st of STATIONS) {
+    if (st.key === 'stats' || !st.stand || !st.open()) continue;
+    const r = st.stand();
+    if (r) stops.push(r.x + r.w / 2);
+  }
+  return [S.cx, ...stops.sort((p, q) => q - p)];
+}
+function jumpTo(i) {
+  const x = jumpStops()[i];
+  if (x == null) return;
+  unfollow();
+  lookAt(x);
+  viewTaken();
+}
 // A window that loses focus never sees its key come up.
 addEventListener('blur', () => holdSkip(false));
 const typing = el =>
