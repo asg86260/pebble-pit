@@ -32,6 +32,16 @@
 //               and the number of grains a frame is the yard's business: a
 //               driven ram lands fifty, a quiet yard lands none. The rule is
 //               about the search, and the search is per grain.
+//   stances     how many times `solidNear` walked the ground for somewhere to
+//               stand. A body picking a patch of muck asks it of a column it
+//               could not stand on, and a torn pit's mouth is six hundred such
+//               columns with nowhere to stand within reach of any of them: a
+//               hauler at the lip with no claim asked eighty cells of every one
+//               of them, five pit columns read to the floor at each, every
+//               frame -- a rained-on endgame at a hundred milliseconds a frame,
+//               and the same again after a reload, since the muck is saved. A
+//               hauler goes down for muck over the mouth, so it has no stance
+//               to look for there (`nearestMuck`).
 //
 // Two yards, three hundred frames each, each stepped one frame at a time with
 // the counters zeroed between them. The verifier is off for the counted frames:
@@ -134,5 +144,35 @@ group('the endgame yard does a frame of work a frame', async () => {
   return [
     ok(torn, 'the rift is open, so this is the yard PERF.md section 4 measured', `rift ${state().rift}`),
     ...verdict('endgame', watch())
+  ];
+}, 20250901);
+
+// Muck over the whole mouth of a torn pit and nowhere else, and haulers with
+// nothing else on. Each of them may ask for a stance once a frame -- where it
+// would work its own patch from (`workSpot`) -- and never for the columns
+// over the mouth it is picking among, so the rule is one search a body.
+group('a hauler picking muck over the mouth does not look for a stance there', async () => {
+  window.__crew(0, 6);
+  window.__grant({ sparks: 999999, dust: 200000 });
+  window.__meteor();
+  window.__give(60000);
+  const torn = S.riftOpen || window.__buy('rift');
+  window.__fast(10);
+  window.__clearFloor();
+  window.__muckSet(c => (window.__overPit(c) ? 3 : 0));
+  window.__verify(false);
+  const perf = globalThis.__perf;
+  let worst = 0, worstAt = -1;
+  for (let i = 0; i < FRAMES; i++) {
+    perf.stances = 0;
+    window.__fast(1 / 60);
+    if (perf.stances > worst) { worst = perf.stances; worstAt = i; }
+  }
+  console.log(`# perf-gate mouth: stances max ${worst} (frame ${worstAt}) over ${S.workers.length} bodies, mouth ${yard.pit.cols} columns`);
+  return [
+    ok(torn, 'the rift is open, so the mouth is the wide one', `rift ${state().rift}`),
+    ok(window.__muckOverPit() > 0, 'there is muck over the mouth to pick among', `${window.__muckOverPit()} over it`),
+    ok(worst <= S.workers.length, 'at most one search for a stance a body a frame',
+       `${worst} searches on frame ${worstAt}, ${S.workers.length} bodies`)
   ];
 }, 20250901);

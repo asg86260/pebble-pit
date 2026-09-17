@@ -372,12 +372,17 @@ export function nearestMuck(wx, taken, hand) {
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= m.length || !here(c) || !inside(c)) continue;
-      if (!canDescend && overPitMouth(c * P + P / 2)) continue;
+      const x = c * P + P / 2;
+      const down = overPitMouth(x);
+      if (!canDescend && down) continue;
+      if (taken && taken.has(c)) continue;
       // Nor a column with nowhere to stand within a shovel's reach of it: the
       // claim would be dropped at the shovel (`takeMess`) and picked again
-      // here, a frame at a time, for as long as the mess lay there.
-      if (footing(c * P + P / 2) !== SOLID && solidNear(c * P + P / 2) == null) continue;
-      if (taken && taken.has(c)) continue;
+      // here, a frame at a time, for as long as the mess lay there. Not asked
+      // of the mouth by a body that goes down it: its stance there is the
+      // hole's floor (`downTheHole`), and a torn mouth is hundreds of columns
+      // with no ground within reach of any of them (test/perf-gate.test.mjs).
+      if (!down && footing(x) !== SOLID && solidNear(x) == null) continue;
       // A claim is a stretch, not a cell: columns are six pixels and a body
       // eighteen wide, so reserving one cell puts the next body one cell over,
       // standing in the first for the whole clear-up.

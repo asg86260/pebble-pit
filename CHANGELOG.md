@@ -11,6 +11,7 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- A yard with a torn pit no longer drops to a few frames a second, before and after a reload, once rain has left muck over the hole (test/perf-gate.test.mjs).
 - On the dark page a card's clock count, its gain line and the ledger's leaders read in the dark ink instead of black on black (src/selftest/boards.js, "on the dark page every word on a card is lighter than its paper").
 
 ## v0.3.2 — 2026-09-17

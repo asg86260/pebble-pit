@@ -115,6 +115,7 @@ export function footing(x, all = ways()) {
 // down, so a body clearing a heap stands in front of it and the mess ends up
 // in front of it too.
 export function solidNear(x, reach = 40, all = ways()) {
+  globalThis.__perf.stances++;               // the perf gate's: one search for a stance
   for (let d = 0; d <= reach; d++) {
     for (const at of (d ? [x - d * P, x + d * P] : [x])) {
       if (footing(at, all) === SOLID) return at;

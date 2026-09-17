@@ -28,8 +28,9 @@ export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 // The perf gate's counters (test/perf-gate.test.mjs): counted per frame, not
 // timed, because a count is the same on a loaded machine. Published on
 // `globalThis` so the check reads the live module's count and not a second
-// instance's. `route.js` adds to `ways`; `addGrain` adds to the other two.
-globalThis.__perf = { ways: 0, grainCols: 0, grains: 0 };
+// instance's. `route.js` adds to `ways` and `stances`; `addGrain` adds to the
+// other two.
+globalThis.__perf = { ways: 0, grainCols: 0, grains: 0, stances: 0 };
 
 // A cell holds a shade of dust, or something that is not dust at all (a core,
 // a shard, a spore). They move the same way; they are not worth one dust.
