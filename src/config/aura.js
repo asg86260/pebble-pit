@@ -53,10 +53,10 @@ export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 // While the board behind a flying flag holds a row you have never seen, the
 // tip keeps sending rings: the opening ring over again, several in flight at
 // once, spaced evenly, until the row has been looked at.
-export const NEW_WAVE_MS = 2000;     // one ring, born to gone
+export const NEW_WAVE_MS = 3000;     // one ring, born to gone
 export const NEW_WAVE_R = 7 * P;     // how far it reaches before it dies
-export const NEW_WAVE_INK = 0.5;     // the darkest a ring is, at birth
-export const NEW_WAVES = 3;          // rings in flight at once
+export const NEW_WAVE_INK = 0.25;    // the darkest a ring is, at birth
+export const NEW_WAVES = 2;          // rings in flight at once
 
 // --- assignment by hand ------------------------------------------------------
 // How far past a station's own ground a held body may be dropped and still mean
