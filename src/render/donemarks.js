@@ -3,7 +3,7 @@
 // is a signal made of nothing happening.
 
 import { now } from '../clock.js';
-import { P, SHELF_INK } from '../config.js';
+import { P, SHELF_INK, DONE_MARK_FADE } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
@@ -17,15 +17,22 @@ import { ctx } from './ctx.js';
 // it is asking to be come and looked at, and it stays until somebody opens
 // that station's board.
 
+// The tick laid over the glyph, so the mark reads as done and not as the
+// thing itself standing there.
+const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
+
 // A glyph's rows as the cells `drawMarkBox` takes, centered on its ink: the
-// drawing is often narrower than its square and off to one side.
+// drawing is often narrower than its square and off to one side. A cell at
+// nought starts on the center, so a span of even width sits square and an
+// odd one is half a cell right; `shift` is the pixels that put it true.
 export function markCells(rows) {
   const [lo, hi] = inkSpan(rows);
   const rowsInked = rows.map((r, y) => r.includes('#') ? y : -1).filter(y => y >= 0);
-  const cx = Math.floor((lo + hi) / 2), cy = Math.floor((rowsInked[0] + rowsInked[rowsInked.length - 1] + 1) / 2);
+  const top = rowsInked[0], bottom = rowsInked[rowsInked.length - 1] + 1;
+  const cx = Math.floor((lo + hi) / 2), cy = Math.floor((top + bottom) / 2);
   const cells = [];
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') cells.push([x - cx, y - cy]); }));
-  return cells;
+  return { cells, shift: [(lo + hi) % 2 ? -P / 2 : 0, (top + bottom) % 2 ? -P / 2 : 0] };
 }
 
 // The box and whichever cells go in it. Ten cells square: an eight-cell glyph
@@ -34,7 +41,9 @@ export function markCells(rows) {
 //
 // `tint` is the card's stroke (`tintOf`): a line round the outside of the
 // shape, as thick as the box's own, found by flooding from the margin so a
-// hole in the shape stays white. `done` paints the shape grey instead.
+// hole in the shape stays white. `done` paints the shape grey instead. The
+// glyph and its stroke go down faint, and the tick over them full, haloed
+// in white so it is never lost in the drawing.
 export const BOX = 10;
 export function drawMarkBox(at, y, glyph, tint = null) {
   const half = P * BOX / 2;
@@ -44,23 +53,38 @@ export function drawMarkBox(at, y, glyph, tint = null) {
   ctx.strokeStyle = '#000';
   ctx.strokeRect(at.x - half, y - half, P * BOX, P * BOX);
 
-  // a cell at nought starts on the center, so an even-width drawing (cells
-  // -4 to 3) sits square in the box
-  if (tint && tint !== SHELF_INK.done) {
-    const t = Math.max(1, P / 3);
-    ctx.fillStyle = tint;
-    for (const [ox, oy] of outsideEdge(glyph))
-      for (const [dx, dy] of glyph) {
-        if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
-        // the ink cell grown by the stroke, cut to this outside cell
-        const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
-        const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
-        if (x1 > x0 && y1 > y0) ctx.fillRect(at.x + x0, y + y0, x1 - x0, y1 - y0);
-      }
-  }
-  ctx.fillStyle = tint === SHELF_INK.done ? tint : '#000';
-  for (const [dx, dy] of glyph)
-    ctx.fillRect(at.x + dx * P, y + dy * P, P, P);
+  ctx.save();
+  ctx.translate(at.x + glyph.shift[0], y + glyph.shift[1]);
+  ctx.globalAlpha = DONE_MARK_FADE;
+  if (tint && tint !== SHELF_INK.done) strokeCells(glyph.cells, tint);
+  fillCells(glyph.cells, tint === SHELF_INK.done ? tint : '#000');
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(at.x - P / 2, y - P / 2);   // five wide: half a cell puts it true
+  strokeCells(TICK, '#fff');
+  fillCells(TICK, '#000');
+  ctx.restore();
+}
+
+// cells on the grid about the origin, a cell at nought starting on it
+function fillCells(cells, color) {
+  ctx.fillStyle = color;
+  for (const [dx, dy] of cells) ctx.fillRect(dx * P, dy * P, P, P);
+}
+
+// A line round the outside of a shape, as thick as the box's own: each ink
+// cell grown by the stroke, cut to the outside cells that touch it.
+function strokeCells(cells, color) {
+  const t = Math.max(1, P / 3);
+  ctx.fillStyle = color;
+  for (const [ox, oy] of outsideEdge(cells))
+    for (const [dx, dy] of cells) {
+      if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
+      const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
+      const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
+      if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    }
 }
 
 // The empty cells round a shape that touch it from the outside, corners
@@ -95,6 +119,7 @@ function outsideEdge(glyph) {
   }
   return edge;
 }
+
 
 export function drawDoneMarks() {
   for (const site in S.siteDone) {
