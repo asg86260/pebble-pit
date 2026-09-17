@@ -307,9 +307,11 @@
 @media (hover: hover) {
   .rows.shelves > .tile:hover .pinmark { opacity: 1; }
 }
+/* The new-corner is top-LEFT on a tile: the pips stand down the right edge,
+   and a notch over them read as the top of the ladder. */
 .rows.shelves > .tile.new::before {
-  content: ''; position: absolute; top: 2px; right: 4px;
-  border: 4px solid var(--ink); border-left-color: transparent; border-bottom-color: transparent;
+  content: ''; position: absolute; top: 2px; left: 4px;
+  border: 4px solid var(--ink); border-right-color: transparent; border-bottom-color: transparent;
 }
 /* The hover. The tile lifts off the plank on a plate with a hard shadow; the
    dots go with it; once up, it drifts in a one-pixel loop. One motion, one
