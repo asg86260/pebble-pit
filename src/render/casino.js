@@ -18,7 +18,7 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, 
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
+import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, ARM_DEAD, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
          SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_SETTLE_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
@@ -476,9 +476,15 @@ function drawControl(l) {
   ctx.lineTo(ex, ey);
   ctx.stroke();
   knob(ex, ey, ARM_KNOB);
-  // the ball is hollow while it is being worked past the dead band, so the
-  // throttle reads at a glance: pouring in or pouring back
-  if (S.holding && Math.abs(shape.throttle) > 0.12) { ctx.fillStyle = '#fff'; knob(ex, ey, ARM_KNOB - 2); }
+  // The ball's face says which way the arm is working, past the dead band:
+  // a plus cut out of it pouring in, a minus of the same stroke pouring
+  // back, and solid at rest. Three cells across, one thick, either way.
+  if (S.holding && Math.abs(shape.throttle) > ARM_DEAD) {
+    ctx.fillStyle = '#fff';
+    const face = ARM_KNOB - 2, bx = Math.round(ex / P) * P, by = Math.round(ey / P) * P, half = Math.floor(face / 2) * P;
+    ctx.fillRect(bx - half, by, face * P, P);                       // the bar of either
+    if (shape.throttle > 0) ctx.fillRect(bx, by - half, P, face * P);   // and the plus's upright
+  }
   ctx.fillStyle = '#000';
 }
 

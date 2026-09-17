@@ -1111,6 +1111,11 @@ stem is twelve cells (`ARM_LENGTH`, was eight) and the ball five across
 and the full push are three different pictures from across the yard and
 a thumb has something to hold. The hit box grows with it.
 
+**The ball says which way.** The hollow in the working ball was a plus by
+accident -- a three-cell knob with its corners off -- and the owner read
+it as one; so it is one on purpose pouring in, a minus of the same stroke
+pouring back, and solid within the dead band.
+
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
 hold commits a pebble only while an unspent one covers it, the rain's
