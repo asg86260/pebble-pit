@@ -107,7 +107,7 @@ export const GLYPH_OF = {
   'potency-stew': ['bowl', 'plus'], 'potency-brace': ['spark', 'plus'], 'potency-strong': ['sack', 'plus'],
   // the tower
   wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
-  spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
+  spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellbloom: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the scrubbing house
   fan: ['fan'], balloon: ['balloon'], recycler: ['lever'],

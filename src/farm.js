@@ -5,7 +5,7 @@
 // is cut for a spore. What a hand is worth is one plot's worth of tending in
 // the time one plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_SPORES, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, rungValue } from './config.js';
+import { PLOT_COST, PLOT_SPORES, PLOT_RATE, FARM_PLOTS0, FARM_PLOTS_MAX, TILLER_BILL, SPELL_BLOOM, rungValue } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -17,6 +17,7 @@ import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance } from './staffing.js';
 import { kitFull, commutePace } from './levels.js';
 import { frames } from './clock.js';
+import { spelled } from './tower.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
@@ -43,6 +44,12 @@ export const tendMs = (lvl = tendLadder()) => Math.max(400, Math.round(60000 / t
 // thing the yard can draw.
 export const cropYield = (lvl = cropLadder()) =>
   Math.max(1, Math.round(rungValue('crop', lvl)));
+
+// What actually comes off a stalk when it is cut: that, with the bloom spell
+// over it. Multiplied here, at the one place the amount is decided, so the
+// board's ladder still says what a rung is worth on its own.
+export const cropSpores = () =>
+  Math.max(1, Math.round(cropYield() * (spelled('bloom') ? SPELL_BLOOM : 1)));
 
 export const plotX = i => farm.x + i * FARM_GAP;
 export const plotTop = i => S.groundY - FARM_H * S.plots[i];
@@ -139,7 +146,7 @@ function cut(i, x, w) {
   // A bracing tonic on this hand lifts its crit chance; nobody else's.
   const crit = critRoll(critBoost(w));
   // A strong brew is a bigger cut (`stronger`).
-  const got = stronger(w, cropYield()) * crit;
+  const got = stronger(w, cropSpores()) * crit;
   for (let n = 0; n < got; n++) {
     if (crit > 1) critToss(x, plotTop(i) - P, tone, 'farm', crit);
     else spawnSpoil(x, plotTop(i) - P, tone, 'farm');

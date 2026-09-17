@@ -6,7 +6,7 @@ import { STEP } from './mult.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
+         DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_BLOOM, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
 import { raiseShield } from './shield.js';
 import { offered } from './stations.js';
 
@@ -62,12 +62,14 @@ const pct = f => `${Math.round(Math.abs(f - 1) * 100)}%`;
 const SPELL_BLURB = {
   drive: () => `+${pct(SPELL_DRIVE)} speed`,
   luck: () => `+${pct(SPELL_LUCK)} ore`,
+  bloom: () => `+${pct(SPELL_BLOOM)} spores`,
   thrift: () => `${pct(SPELL_THRIFT)} cheaper`,
   sweep: () => `${SPELL_SWEEP}x faster`
 };
 const SPELL_NEEDS = {
   drive: () => MACHINES.some(m => machine(m.key)?.bought),
   luck: () => !!S.quarryOpen,
+  bloom: () => !!S.farmOpen,
   thrift: () => true,
   sweep: () => !!S.outhouseOpen
 };

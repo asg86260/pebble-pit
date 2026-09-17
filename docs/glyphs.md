@@ -64,11 +64,11 @@ cells wide); those are redrawn at eight, the shape settled.
 | balloon         | `balloon`                                                                              |
 | shovel          | `quarrybench` +plus                                                                    |
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |
-| ear of crop     | `crop` +plus                                                                           |
+| ear of crop     | `crop` +plus, `spellbloom` +star                                                       |
 | hoe             | `tend` +up                                                                             |
 | vial            | `brewdoses` +plus                                                                      |
 | bowl            | `potency-stew` +plus                                                                   |
-| star (5-point)  | `spelldrive`, `spellluck`, `spellthrift`, `spellsweep` (with their own first glyph)     |
+| star (5-point)  | `spelldrive`, `spellluck`, `spellbloom`, `spellthrift`, `spellsweep` (with their own first glyph) |
 | wand            | `wizspeed` +up                                                                         |
 | bolt            | `wizpower`                                                                             |
 | dome arc        | `dome`                                                                                 |

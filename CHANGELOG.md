@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The tower has a fifth enchantment, "swell the crop": every cut in the farm brings up 25% more spores. It is offered once the farm is open.
 - The carter is worked at the bench like any other upgrade, not built out at the lip.
 - Hold to toss throws handfuls off the pile the hand is near, from the pile itself, and leaves what is in the hand alone until you flick it.
 - Another shovel in the quarry costs shards alone; it no longer asks spores.
