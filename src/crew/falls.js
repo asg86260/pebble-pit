@@ -97,6 +97,13 @@ export function fall(w) {
     // The hat is NOT put back on here: the body has to go and get it.
     return;                                 // it is in no state to be given a job
   }
+  // A body that lands mid-commute keeps its legs and only re-routes from where
+  // it is now: a hand-assignment (`assignDrop`) retasks the body in the air,
+  // hat first, and settling it because it came down on the station threw the
+  // hat leg away and stood it there bare-headed. A lift drops the walk, so a
+  // thrown body never lands walking; only a drop onto a station does. A leg
+  // is somewhere to go: `walking` alone is a flag a check can set.
+  if (w.walking && w.walkTo != null) { w.route = null; return; }
   // Straight back to it if this is where it works, a walk if not -- unless it
   // fell mid-errand with a claim held, in which case only the stale route is
   // dropped and the mess stage steers it on. Re-tasking that body sends it

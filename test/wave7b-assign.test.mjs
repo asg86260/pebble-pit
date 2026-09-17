@@ -13,6 +13,7 @@ const { dropTargets, holdTarget } = await import('../src/crew/assign.js');
 const { lift, drop } = await import('../src/crew/pointer.js');
 const { JOB, JOB_OF } = await import('../src/jobs.js');
 const { roomAt } = await import('../src/levels.js');
+const { kitX } = await import('../src/world.js');
 
 const S = yard.S;
 
@@ -126,5 +127,35 @@ group('rebalance still owns the haulers after a drop', async () => {
     ok(S.haulers === S.crew - asked(),
        'carrying is the remainder, rebalance()\'s to give',
        `crew ${S.crew}, asked ${asked()}, haulers ${S.haulers}`)
+  ];
+});
+
+group('a hauler dropped on the rock goes for its helmet before it climbs', async () => {
+  // Three helmets, one on a head: two spare on the stand. The drop lands the
+  // body ON the station, and landing there used to settle it -- legs and all,
+  // hat leg included -- so it stood on the rock bare-headed.
+  window.__crew(1, 3, 0, 0);
+  window.__kit({ breakers: 3 });
+  window.__shack();
+  run(2);
+  const w = S.workers.find(o => o.type === 'hauler');
+  const rock = dropTargets().find(t => t.key === 'rock');
+  holdOver(w, rock);
+  drop(w);
+  const legs = [w.leg, ...(w.legs || []).map(l => l.do)];
+  // Watched to the stand: it must reach the hat still bare, and climb wearing it.
+  let bareAtStand = false, landedWalking = false;
+  for (let i = 0; i < 60 * 60; i++) {
+    run(1 / 60);
+    if (!w.falling && w.walking && w.leg === 'wear') landedWalking = true;
+    if (w.leg === 'wear' && !w.trained && Math.abs(w.x - kitX(JOB.ROCK)) < WORKER) bareAtStand = true;
+    if (!w.walking && !w.falling && w.leg === 'work') break;
+  }
+  return [
+    ok(legs[0] === 'wear' && legs[1] === 'work', 'the drop queues the hat, then the work', legs.join(' > ')),
+    ok(landedWalking, 'and landing on the station keeps that walk'),
+    ok(bareAtStand, 'so it reaches the stand bare-headed'),
+    ok(w.trained && w.kitOf === JOB.ROCK && !w.walking, 'and is at work in its helmet',
+       `trained ${!!w.trained}, kitOf ${w.kitOf}, walking ${!!w.walking}`)
   ];
 });
