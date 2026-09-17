@@ -3,7 +3,7 @@
 // is a signal made of nothing happening.
 
 import { now } from '../clock.js';
-import { P, DONE_MARK_FADE } from '../config.js';
+import { P, DONE_MARK_FADE, DONE_MARK_GLOW } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
@@ -35,22 +35,25 @@ export function markCells(rows) {
   return { cells, shift: [(lo + hi) % 2 ? -P / 2 : 0, (top + bottom) % 2 ? -P / 2 : 0] };
 }
 
-// The box and whichever cells go in it. Ten cells square: an eight-cell glyph
-// and a cell of white either side of it. `y` rather than `at.y`: the bob is
-// the caller's, a thing about the mark and not about the box.
+// The glyph and its glow. No box: the drawing stands on the yard itself,
+// over a soft white halo, whole under the drawing and gone GLOW cells out, so
+// it still reads on the dark of the pit. `y` rather than `at.y`: the bob is
+// the caller's, a thing about the mark and not about the glow.
 //
 // `tint` is the card's stroke (`tintOf`): a line round the outside of the
-// shape, as thick as the box's own, found by flooding from the margin so a
-// hole in the shape stays white. The glyph and its stroke go down faint, and the tick over them full, haloed
-// in white so it is never lost in the drawing.
-export const BOX = 10;
+// shape, found by flooding from the margin so a hole in the shape stays
+// white. The glyph and its stroke go down faint, and the tick over them
+// full, haloed in white so it is never lost in the drawing.
+export const GLOW = 6;
 export function drawMarkBox(at, y, glyph, tint = null) {
-  const half = P * BOX / 2;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(at.x - half, y - half, P * BOX, P * BOX);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(at.x - half, y - half, P * BOX, P * BOX);
+  const r = P * GLOW;
+  const halo = ctx.createRadialGradient(at.x, y, 0, at.x, y, r);
+  // whole under the drawing (four cells out), gone two cells past it
+  halo.addColorStop(0, `rgba(255,255,255,${DONE_MARK_GLOW})`);
+  halo.addColorStop(4 / GLOW, `rgba(255,255,255,${DONE_MARK_GLOW})`);
+  halo.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(at.x - r, y - r, r * 2, r * 2);
 
   ctx.save();
   ctx.translate(at.x + glyph.shift[0], y + glyph.shift[1]);
@@ -72,7 +75,7 @@ function fillCells(cells, color) {
   for (const [dx, dy] of cells) ctx.fillRect(dx * P, dy * P, P, P);
 }
 
-// A line round the outside of a shape, as thick as the box's own: each ink
+// A line round the outside of a shape, a third of a cell thick: each ink
 // cell grown by the stroke, cut to the outside cells that touch it.
 function strokeCells(cells, color) {
   const t = Math.max(1, P / 3);
