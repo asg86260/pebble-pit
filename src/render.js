@@ -8,7 +8,7 @@
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
-import { drawApothecary, drawPotLabels } from './render/apothecary.js';
+import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
@@ -156,6 +156,7 @@ const LAYERS = [
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'workers', draw: drawWorkers },
+  { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
   { name: 'says', draw: drawSays },              // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
