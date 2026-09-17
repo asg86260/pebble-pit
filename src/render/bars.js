@@ -1,6 +1,6 @@
 // The progress bar, and where each site's bar hangs.
 
-import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS } from '../config.js';
+import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, SHELF_INK } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
@@ -98,12 +98,13 @@ export function buildingGlyph(cx, cy, rows, at) {
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const up = Math.floor(at * laid.length);
   const x0 = cx - (CELLS * P) / 2, y0 = cy - (CELLS * P) / 2;
-  ctx.fillStyle = '#000';
   laid.forEach(([x, y], k) => {
     const px = x0 + x * P, py = y0 + y * P;
-    if (k < up) { ctx.fillRect(px, py, P, P); return; }
+    if (k < up) { ctx.fillStyle = '#000'; ctx.fillRect(px, py, P, P); return; }
     // Each side of the cell that faces out of the shape gets a stroke, so the
-    // outline runs round the whole drawing rather than boxing every cell.
+    // outline runs round the whole drawing rather than boxing every cell. In
+    // the card's ghost gray: what is not there yet stands back from what is.
+    ctx.fillStyle = SHELF_INK.ghost;
     if (!shape.has(`${x},${y - 1}`)) ctx.fillRect(px, py, P, EDGE);
     if (!shape.has(`${x},${y + 1}`)) ctx.fillRect(px, py + P - EDGE, P, EDGE);
     if (!shape.has(`${x - 1},${y}`)) ctx.fillRect(px, py, EDGE, P);
