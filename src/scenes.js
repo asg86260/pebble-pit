@@ -832,7 +832,22 @@ export const SCENES = {
                   window.__look(S.shield.x + S.shield.w / 2 - S.viewW / 2);
                 } }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
-                run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }]
+                run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }],
+    // Halfway through the labor, for what hangs over the site and how much of
+    // the shield stands: the dome has no labor from the ground (`dome~`).
+    ...(k === 'dome' ? [] : [[`${k}~`, { about: 'the shields', say: `the ${k} half-built, the picture over it`,
+                run: () => {
+                  shieldYard();
+                  S.shieldsDone = SHIELD_ORDER.slice(0, SHIELD_ORDER.indexOf(k));
+                  S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
+                  window.__buy(k);
+                  const halfway = () => {
+                    const w = (S.works.yard || []).find(w => w.key === k);
+                    return !w || w.done >= w.of / 2;
+                  };
+                  for (let i = 0; i < 900 && !halfway(); i++) window.__fast(1);
+                  window.__look(S.cx - S.viewW / 2);
+                } }]])
   ])),
   // The star is left up so the shot proves the beams draw with one burning.
   'dome+': { about: 'the shields', say: 'the wizard called off the star, flat out for the dome',

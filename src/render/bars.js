@@ -5,6 +5,7 @@ import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
+import { KINDS, shieldPlan } from '../shield.js';
 import { flagReach } from './aura.js';
 import { ctx } from './ctx.js';
 
@@ -60,6 +61,12 @@ const placeOf = w =>
   rowFor(w.key)?.kind === 'building'
     ? (OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null)) : null;
 
+// A shield is the one yard build that is not a place: it stands over the rock
+// at the height its plan gives it (`shieldPlan`), so its bar hangs off
+// that, not off the ground line -- which is inside the rock.
+const shieldTop = w =>
+  KINDS[w.key] && !KINDS[w.key].cast ? S.groundY - shieldPlan(w.key).h * P : null;
+
 export function barSpot(site, w = null) {
   const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site, w);
   if (!box) return null;
@@ -74,6 +81,8 @@ export function barSpot(site, w = null) {
     const place = placeOf(w);
     const b = place && (RISING_BOX[place] ? RISING_BOX[place]() : null);
     if (b) top = Math.min(b.y ?? S.groundY, S.groundY);
+    const sh = shieldTop(w);
+    if (sh != null) top = Math.min(top, sh);
   }
   // And above the station's flag, which reaches well past BAR_CLEAR. The reach
   // is asked of the thing that draws the flag; a clearance guessed here would
