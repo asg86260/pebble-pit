@@ -28,6 +28,7 @@ feature lives in DESIGN.md.
 - A reload that lands on the last stretch of a cutscene keeps the view on what the scene was about instead of sliding it half a window (test/cutscene.test.mjs).
 - The outhouse comes up at 300 pebbles instead of 900.
 - A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
+- A tile being built, and the mark over its station, wear the coloured outline of the rung going up from the first cell, round the whole drawing; a tile in line is that outline alone.
 - A site builds everything it is paid for at once, a spare body on each; with fewer bodies than works the rest wait for one, and a work nobody has touched can still be handed back (test/queue.test.mjs).
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.

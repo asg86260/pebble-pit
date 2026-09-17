@@ -547,11 +547,11 @@ export function refresh(el, list, headcount) {
     const mine = takesTime(u) ? workOn(u.key) : null;
     const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
     if (pic && mine) {
-      // Drawn to the share done, no stroke (a stroke is the next rung's legend,
-      // and there is no next rung on a thing not up). A row in line is a plan:
-      // the outline and nothing in it.
+      // Drawn to the share done, in the stroke of the rung going up: the row's
+      // `buy` has not run yet, so its bill is still this rung's. A row in
+      // line is a plan: the outline and nothing in it.
       const rows = glyphFor(u.key);
-      wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
+      wearGlyph(row, u.key, tintOf(u), '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
       const tint = tintOf(u);
       const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';

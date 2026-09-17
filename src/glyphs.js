@@ -135,15 +135,16 @@ export const inkSpan = rows => {
 
 // The glyph as a canvas: `ink` cells, and a one-pixel stroke in `tint` round
 // the outside of the shape only. Outside is found by flooding from the
-// margin, so a hole in the shape stays white. `tint` null is no stroke;
-// `done` draws the shape itself grey. The stroke keeps its coin whatever the
-// ink: it is the rung's legend, not a verdict on it.
+// margin, so a hole in the shape stays white. `tint` null is no stroke. The stroke keeps
+// its coin whatever the ink: it is the rung's legend, not a verdict on it.
 //
 // `built` is how many of the drawing's cells are up on a tile being built
 // (DESIGN.md, "A tile being built shows the building"): laid bottom row
 // first, left to right, the rest a ghost of one pixel in four. Null is the
-// whole drawing. `'plan'` is a thing in line: the shape's one-pixel edge and
-// nothing inside.
+// whole drawing. The stroke goes round the whole drawing from the first cell,
+// so the rung going up is legible before it is up. `'plan'` is a thing in
+// line: its outline and nothing inside -- the stroke, or the shape's own
+// one-pixel edge in ghost when the rung has no coin.
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
 //
 // `hands` are the bodies at the site (DESIGN.md, "A hand on the tile"): one
@@ -166,18 +167,21 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') laid.push([x, y]); }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const plan = built === 'plan';
+  // The whole drawing's footprint, up or not: what the stroke goes round on a
+  // tile being built.
+  const shape = new Uint8Array(W * H);
   laid.forEach(([x, y], k) => {
     const up = built === null || (!plan && k < built);
     for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) {
       const at = (y * CELL + j + M) * W + x * CELL + i + M + L;
+      shape[at] = 1;
       if (up) solid[at] = 1; else if (!plan && i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
     }
   });
   // The plan's edge, found on the shape rather than the outside, so it is
-  // inside the footprint and the ink lands where the built cells will.
-  if (plan) {
-    const shape = new Uint8Array(W * H);
-    laid.forEach(([x, y]) => { for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) shape[(y * CELL + j + M) * W + x * CELL + i + M + L] = 1; });
+  // inside the footprint and the ink lands where the built cells will. Only
+  // when there is no stroke to be the outline: two rings read as a frame.
+  if (plan && !tint) {
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (!shape[y * W + x]) continue;
       const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !shape[(y + dy) * W + x + dx]);
@@ -204,6 +208,9 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
     }
   }
   if (tint) {
+    // Round the finished drawing (which the badge has cut into), or round the
+    // footprint of one still going up.
+    const mass = built === null ? solid : shape;
     const out = new Uint8Array(W * H); const q = [0]; out[0] = 1;
     while (q.length) {
       const k = q.pop(), x = k % W, y = (k - x) / W;
@@ -211,7 +218,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
         const nx = x + dx, ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
         const n = ny * W + nx;
-        if (out[n] || solid[n]) continue;
+        if (out[n] || mass[n]) continue;
         out[n] = 1; q.push(n);
       }
     }
@@ -221,7 +228,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
       let near = false;
       for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
         const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && ny >= 0 && nx < W && ny < H && solid[ny * W + nx]) { near = true; break; }
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && mass[ny * W + nx]) { near = true; break; }
       }
       if (near) g.fillRect(x, y, 1, 1);
     }

@@ -10863,9 +10863,13 @@ are wrong with that, in order of weight:
 the hands would lay them, and the cells not yet built are a dotted ghost --
 every other pixel of the cell, at the tone of the ground's dots. The picture
 is the bar. At the press it is all ghost; at the last hammer-blow it is all
-ink, and the tile is the tile it will be from then on. The stroke stays off
-until it is done: a stroke is the next rung's legend and there is no next
-rung on a thing not yet built.
+ink, and the tile is the tile it will be from then on. The stroke is on
+from the first cell, round the whole drawing rather than the part that is
+up (the owner, 2026-09-16: "can the outline of the tier of upgrade be
+included into the build animation and progress? instead of just being the
+gray version of the glyph"): the row's `buy` has not run, so its bill is
+still the rung going up, and the coloured edge says which rung that is
+while the dots inside it say how far.
 
 The yard's rule holds: **the fill moves only while somebody is at the site.**
 It is `progressOf(workOn(key))` read straight, the same number the site's
@@ -10883,9 +10887,10 @@ you came back to the board to read, so it keeps the board's type size and
 the tag's box, and takes the whole box rather than a cell of it.
 
 **Queued is a plan with a place in line.** A tile bought and waiting its
-turn is drawn as a plan -- the shape's one-pixel edge and nothing inside --
-so it reads apart from a build just started, whose ghost is dotted and
-about to fill. Its tag says its place *in the line* -- `next`, then `2nd`,
+turn is drawn as a plan -- its outline and nothing inside: the rung's
+coloured stroke, or the shape's one-pixel edge in grey when the rung asks
+only dust -- so it reads apart from a build just started, whose ghost is
+dotted and about to fill. Its tag says its place *in the line* -- `next`, then `2nd`,
 `3rd` -- with no clock, since a clock on a thing not yet started would be a
 guess the site cannot keep. In the line, not among the site's works: a
 site building two at once has its first waiting row third in the list and
