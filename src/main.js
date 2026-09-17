@@ -35,7 +35,7 @@ function unveil() {
 document.body.classList.toggle('still', reducedMotion());
 
 import { OWNER_KEY, TAB, primeStore } from './save.js';
-import { hold } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
+import { hold, stepKeyPan } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
@@ -82,6 +82,7 @@ function frame() {
     (S.paused ? fadeIn : fadeOut)(heldSheet);
     (S.paused ? fadeIn : fadeOut)(scrim);
     syncEnding();
+    stepKeyPan();                             // the arrows, held: a held yard pans too
     const t0 = mark();
     if (!S.paused && !(demo && reducedMotion())) step();
     // The boards, once, for whatever the step changed on them: a core landing,
