@@ -231,7 +231,13 @@ export function placeSites() {
 }
 
 export function refreshPiles() {
-  laid = groundKey();
+  // The strips only, and the key is NOT stamped here: `laid` says the
+  // buildings are seated as well (`layPiles`), and a door that lays the
+  // strips on its own -- the restore's `resite`, a new rock -- would
+  // otherwise mark the walk done under a key it never seated. That is what
+  // stood every building in table order after a refresh: the fresh page
+  // walked an empty `buildOrder`, the restore filled it in and stamped the
+  // key through `resite`, and the walk was never asked again.
   S.piles = [
     // The ground is reserved from the moment the table names a site; the
     // strip only *appears* once the site is standing, because until then

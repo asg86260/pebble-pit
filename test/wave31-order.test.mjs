@@ -134,3 +134,33 @@ group('a yard that has bought nothing keeps the table order', async () => {
   // `buildOrder` there has to leave every building exactly where that player
   // left it, and those checks would fail loudly if it did not.
 });
+
+// A refresh is the other way a walk goes stale. A fresh page walks the yard
+// under an empty order before the save is read; the restore then fills the
+// order in and lays the strips through `resite` -- which used to stamp the
+// ground key on its own, so the walk was marked done under a key it had never
+// seated and every building came back in table order. The next purchase
+// re-walked and snapped them all across the yard.
+group('a refresh puts every building back where it was bought', async () => {
+  const bought = yardWith('unlockfarm', 'unlockouthouse');
+  yard.persist();
+  const raw = localStorage.getItem('boulder-clicker/v4');
+  // The page-load shape: a blank yard, walked once, and THEN the save.
+  window.__seed(SEED);
+  yard.fast(1);
+  localStorage.setItem('boulder-clicker/v4', raw);
+  yard.restore();
+  yard.fast(1);
+  const back = state();
+
+  return [
+    ok(back.buildOrder.join() === 'farm,outhouse', 'the order came back',
+       back.buildOrder.join()),
+    ok(back.stands.farm && Math.round(back.stands.farm.x) === bought.farm,
+       'the plots stand where they stood',
+       `${bought.farm} -> ${Math.round(back.stands.farm?.x)}`),
+    ok(back.stands.outhouse && Math.round(back.stands.outhouse.x) === bought.outhouse,
+       'and so does the outhouse',
+       `${bought.outhouse} -> ${Math.round(back.stands.outhouse?.x)}`)
+  ];
+});
