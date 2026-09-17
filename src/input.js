@@ -41,6 +41,7 @@ import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
+import { reducedMotion } from './prefs.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -110,6 +111,7 @@ canvas.addEventListener('pointerdown', e => {
   // A click skips a running cutscene and does nothing else: a swing taken
   // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
+  wheelOwed = 0;                             // a hand on the yard takes the view from the wheel
   // The middle button looks around and the right button lifts (`lift`);
   // neither can mean any of the things the left button means.
   if (e.button === 1) {
@@ -575,11 +577,15 @@ addEventListener('touchstart', e => {
 
 // The wheel: a vertical wheel is the yard's own sideways pan, as it always
 // was. A sideways delta -- a trackpad's two-finger swipe -- is left to the
-// platform, which scrolls the scroller with its own momentum.
+// platform, which scrolls the scroller with its own momentum. A notch is
+// owed rather than taken: `stepPan` eases the view through it over a few
+// frames, the way a page smooth-scrolls, instead of jumping the whole notch
+// at once. Instant under reduced motion, as a page is.
 canvas.addEventListener('wheel', e => {
   if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
   e.preventDefault();
-  pan(e.deltaY * 0.8);
+  if (reducedMotion()) pan(e.deltaY * 0.8);
+  else wheelOwed += e.deltaY * 0.8;
 }, { passive: false });
 
 // The cursor leaving the menu closes it, unless it left toward the station:
@@ -606,7 +612,7 @@ addEventListener('keydown', e => {
   // The letters and the digits only while not typing: the settings sheet
   // has a box a save is pasted into.
   const key = typing(e.target) ? '' : e.key;
-  // The arrows and A/D pan while held (stepKeyPan, once a frame) rather
+  // The arrows and A/D pan while held (stepPan, once a frame) rather
   // than hopping on every repeat the platform sends: a held key slides
   // the view at one speed instead of stuttering at the repeat rate.
   const dir = panDir(e, key);
@@ -627,7 +633,7 @@ addEventListener('keyup', e => {
   const dir = panDir(e, e.key);
   if (dir) keysHeld.delete(dir);
 });
-addEventListener('blur', () => keysHeld.clear());   // a key let go on another window never arrives
+addEventListener('blur', () => { keysHeld.clear(); wheelOwed = 0; });   // a key let go on another window never arrives
 
 // --- panning by key -----------------------------------------------------------
 // Which way a key pans, or '' for a key that does not.
@@ -638,16 +644,28 @@ function panDir(e, key) {
 }
 const keysHeld = new Set();
 const KEY_PAN = 0.8;                          // views a second, held: the same feel at any zoom
-let keyPanAt = 0;
-// One frame of the held keys: the view slides at KEY_PAN while either is
-// down, and stands still when both are. On the wall clock, not the yard's:
-// the keys pan a held yard too (main.js, every frame).
-export function stepKeyPan() {
+let wheelOwed = 0;                            // world units the wheel has asked for and not yet had
+const WHEEL_EASE = 80;                        // ms for the owed distance to fall to 1/e
+let panAt = 0;
+// One frame of the keys and the wheel: the view slides at KEY_PAN while
+// either key is down (still when both are), and eases through whatever the
+// wheel is owed. On the wall clock, not the yard's: a held yard pans too
+// (main.js, every frame).
+export function stepPan() {
   const t = performance.now();
-  const dt = Math.min(100, t - keyPanAt);    // a tab-out is not one long frame
-  keyPanAt = t;
+  const dt = Math.min(100, t - panAt);       // a tab-out is not one long frame
+  panAt = t;
   const dir = (keysHeld.has('right') ? 1 : 0) - (keysHeld.has('left') ? 1 : 0);
   if (dir) pan(dir * KEY_PAN * S.viewW * dt / 1000);
+  if (wheelOwed) {
+    // the last couple of units at once: a glide that creeps a pixel a frame
+    // to the very end reads as a stuck wheel
+    const step = Math.abs(wheelOwed) < 2 ? wheelOwed : wheelOwed * (1 - Math.exp(-dt / WHEEL_EASE));
+    const was = S.camX;
+    pan(step);
+    // the rest, unless the edge took it: a notch into the wall is spent
+    wheelOwed = S.camX === was ? 0 : wheelOwed - step;
+  }
 }
 
 // The places a digit can send the view: the rock, then every building that
