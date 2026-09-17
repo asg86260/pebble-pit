@@ -3,7 +3,7 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER, BELT_DEPTH } from './config.js';
+import { P, GRAV, WORKER } from './config.js';
 import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit, band } from './state.js';
@@ -113,8 +113,9 @@ const BELT_LIFT = P * 0.7;
 
 // --- what is riding it ----------------------------------------------------------
 // The load is **ground on the belt**: `band` in state.js is a strip of the
-// same grid the yard's floor is, `BELT_DEPTH` cells deep, laid over the band
-// from tail to head. A grain lands in it the way a grain lands on the ground
+// same grid the yard's floor is, laid over the band from tail to head and
+// reaching the top of the world, so a heap on it is as tall as its own
+// slope lets it be and never flat-topped by a ceiling. A grain lands in it the way a grain lands on the ground
 // (`addGrain`), it slumps and stands up the way the ground does (`settle`,
 // with `repose`), and the machine moves it by shifting every column a cell
 // toward the head each time the band has run a cell, so it travels the way
@@ -131,16 +132,17 @@ const BELT_LIFT = P * 0.7;
 // surface of its column.
 export const bandY = () => beltY() - P;       // the band's top row: where a load sits
 
-// The strip laid over the band. `y` is the top of the grid, so the bottom row
-// sits on the band. Wired at boot with the ground (`settleIntoWorld`); a
-// resize keeps its grains, packed flat.
+// The strip laid over the band. The bottom row sits on the band and the top
+// row is the top of the world, so `y` is nought or the cell nearest it.
+// Wired at boot with the ground (`settleIntoWorld`); a resize keeps its
+// grains, packed flat.
 export function wireBelt() {
   if (!band.painter) band.painter = makePainter(band);
   band.onPut = band.painter.mark;
   band.x = beltFrom();
   band.cols = Math.max(1, Math.round((beltTo() - beltFrom()) / P));
-  band.rows = BELT_DEPTH;
-  band.y = bandY() - (BELT_DEPTH - 1) * P;
+  band.rows = Math.max(1, Math.floor(bandY() / P) + 1);
+  band.y = bandY() - (band.rows - 1) * P;
   band.repose = true;                      // a heap on the band stands up, as on the ground
   resizeGrid(band);
 }
@@ -220,7 +222,7 @@ export function catchBelt(ch, now, f) {
   const y = surfaceY(band, bc) + P;                   // the top of the column, as a line
   const under = ch.y + P, was = under - ch.vy * f;
   if (was > y || under < y) return false;             // did not cross the surface this frame
-  if (!addGrain(band, ch.x, null, ch.s)) return false; // a band with no cell left: it falls on through
+  if (!addGrain(band, ch.x, null, ch.s)) return false; // nowhere on the strip at all: it falls on through
   sfx('belt-catch', { x: ch.x });
   return true;
 }
