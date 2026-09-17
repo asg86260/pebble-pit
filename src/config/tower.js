@@ -34,7 +34,7 @@ export const SPELLS = [
   { key: 'luck',   name: 'enrich the quarry',    spark: 105,
     note: 'every dig in the quarry brings up 25% more ore' },
   { key: 'gmo',    name: 'genetically modify crops', spark: 105,
-    note: 'every cut in the farm brings up 25% more spores' },
+    note: 'every crop is 25% bigger' },
   { key: 'thrift', name: 'cheapen the houses',   spark: 90,
     note: 'every house from now on costs half as much' },
   { key: 'sweep',  name: 'quicken the janitors', spark: 75,
