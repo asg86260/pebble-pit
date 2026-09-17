@@ -13,7 +13,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH,
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
@@ -92,9 +92,8 @@ export const kitX = job =>
   // The gang's, outside the shack; before there is a shack, the rock's own
   // left flank.
   job === JOB.ROCK ? (S.shackOpen ? shack.x - KIT_OUT.shack : rockLeft() - P * 4) :
-  // well back from the lip: the full-hole warning stands five cells short of
-  // the edge, and a trestle under a warning triangle is two marks in one place
-  job === JOB.HAUL ? pit.x - P * 16 :
+  // The carters', at the bench they are worked at, not at the lip they haul to.
+  job === JOB.HAUL ? bench.x - KIT_OUT.bench :
   job === JOB.QUARRY ? quarry.x - KIT_OUT.quarry :
   job === JOB.FARM ? farm.x - KIT_OUT.farm :
   job === JOB.STIR ? apothecary.x - KIT_OUT.apothecary :
@@ -442,11 +441,11 @@ export function seatSites() {
 
   // The noticeboard does NOT get a slot: a row reserves ground, the world
   // gets wider, the floor gains columns, and the sky's dust budget goes with
-  // it. It is furniture, centered in the gap between the bench and the front
-  // doors, so it moves when they move. The rect is the PANEL, which hangs on
-  // its posts.
+  // it. It is furniture, centered in the gap between the carts' stand (left
+  // of the bench, `kitX`) and the front doors, so it moves when they move.
+  // The rect is the PANEL, which hangs on its posts.
   const gapFrom = placed.at.house.x + placed.at.house.w;
-  const gapTo = placed.at.bench.x;
+  const gapTo = kitX(JOB.HAUL) - STAND_REACH;
   S.noticeboard.w = BOARD_W;
   S.noticeboard.h = BOARD_H;
   S.noticeboard.x = Math.round((gapFrom + (gapTo - gapFrom - BOARD_W) / 2) / P) * P;
