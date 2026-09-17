@@ -3,10 +3,11 @@
 // is a signal made of nothing happening.
 
 import { now } from '../clock.js';
-import { P } from '../config.js';
+import { P, SHELF_INK } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S } from '../state.js';
-import { onTheGo } from '../works.js';
+import { tintOf } from '../upgrades.js';
+import { onTheGo, rowFor } from '../works.js';
 import { barSpot } from './bars.js';
 import { ctx } from './ctx.js';
 
@@ -30,8 +31,12 @@ export function markCells(rows) {
 // The box and whichever cells go in it. Ten cells square: an eight-cell glyph
 // and a cell of white either side of it. `y` rather than `at.y`: the bob is
 // the caller's, a thing about the mark and not about the box.
+//
+// `tint` is the card's stroke (`tintOf`): a line round the outside of the
+// shape, as thick as the box's own, found by flooding from the margin so a
+// hole in the shape stays white. `done` paints the shape grey instead.
 export const BOX = 10;
-export function drawMarkBox(at, y, glyph) {
+export function drawMarkBox(at, y, glyph, tint = null) {
   const half = P * BOX / 2;
   ctx.fillStyle = '#fff';
   ctx.fillRect(at.x - half, y - half, P * BOX, P * BOX);
@@ -41,9 +46,54 @@ export function drawMarkBox(at, y, glyph) {
 
   // a cell at nought starts on the center, so an even-width drawing (cells
   // -4 to 3) sits square in the box
-  ctx.fillStyle = '#000';
+  if (tint && tint !== SHELF_INK.done) {
+    const t = Math.max(1, P / 3);
+    ctx.fillStyle = tint;
+    for (const [ox, oy] of outsideEdge(glyph))
+      for (const [dx, dy] of glyph) {
+        if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
+        // the ink cell grown by the stroke, cut to this outside cell
+        const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
+        const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
+        if (x1 > x0 && y1 > y0) ctx.fillRect(at.x + x0, y + y0, x1 - x0, y1 - y0);
+      }
+  }
+  ctx.fillStyle = tint === SHELF_INK.done ? tint : '#000';
   for (const [dx, dy] of glyph)
     ctx.fillRect(at.x + dx * P, y + dy * P, P, P);
+}
+
+// The empty cells round a shape that touch it from the outside, corners
+// included: where its stroke goes. Flooded from a margin one cell past the
+// shape's bounds, so an enclosed hole is never reached.
+function outsideEdge(glyph) {
+  const xs = glyph.map(([x]) => x), ys = glyph.map(([, y]) => y);
+  const x0 = Math.min(...xs) - 1, x1 = Math.max(...xs) + 1, y0 = Math.min(...ys) - 1, y1 = Math.max(...ys) + 1;
+  const W = x1 - x0 + 1, H = y1 - y0 + 1;
+  const ink = new Uint8Array(W * H), out = new Uint8Array(W * H);
+  for (const [x, y] of glyph) ink[(y - y0) * W + x - x0] = 1;
+  const q = [0]; out[0] = 1;
+  while (q.length) {
+    const k = q.pop(), x = k % W, y = (k - x) / W;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const n = ny * W + nx;
+      if (out[n] || ink[n]) continue;
+      out[n] = 1; q.push(n);
+    }
+  }
+  const edge = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!out[y * W + x]) continue;
+    let near = false;
+    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && ny >= 0 && nx < W && ny < H && ink[ny * W + nx]) { near = true; break; }
+    }
+    if (near) edge.push([x + x0, y + y0]);
+  }
+  return edge;
 }
 
 export function drawDoneMarks() {
@@ -52,7 +102,8 @@ export function drawDoneMarks() {
     const at = doneMarkAt(site);
     if (!at) continue;
     const y = at.y + Math.round(Math.sin(now() / 500)) * P;   // one cell, never half
-    drawMarkBox(at, y, markCells(glyphFor(S.siteDone[site])));
+    const key = S.siteDone[site], u = rowFor(key);
+    drawMarkBox(at, y, markCells(glyphFor(key)), u ? tintOf(u) : null);
   }
 }
 

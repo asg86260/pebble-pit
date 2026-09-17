@@ -8,7 +8,7 @@ import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, building, inLine } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, inLine } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText } from './words.js';
 import { takesTime, idleAt, rowFor, progressOf, leftAt, workOn, bodiesOn } from './works.js';
@@ -553,11 +553,7 @@ export function refresh(el, list, headcount) {
       const rows = glyphFor(u.key);
       wearGlyph(row, u.key, null, '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
-      const coins = full.map(([m]) => m);
-      const tint = maxed(u) ? SHELF_INK.done
-                 : coins.includes('spark') ? SHELF_INK.spark
-                 : coins.includes('shard') ? SHELF_INK.shard
-                 : coins.includes('spore') ? SHELF_INK.spore : null;
+      const tint = tintOf(u);
       const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
       // A hand fades out over the finished drawing rather than vanishing.
       // `seen` has an entry only for a tile that had a hand, so every other

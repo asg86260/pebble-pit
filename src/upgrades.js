@@ -9,7 +9,7 @@
 // imports those and never this, so a station's load order does not run
 // through the shop.
 
-import { P } from './config.js';
+import { P, SHELF_INK } from './config.js';
 import { S } from './state.js';
 import { maxed } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
@@ -181,6 +181,18 @@ export const billOf = u => {
   if (!takesTime(u)) return bill;
   const on = workOn(u.key);
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
+};
+
+// The stroke round a row's glyph: the deepest coin on its next rung's bill,
+// the rung's legend rather than a verdict on it (SHELF_INK); grey once there
+// is no next rung, null while it asks nothing but dust. The card and the
+// mark over a station that finished the row wear the same one.
+export const tintOf = u => {
+  if (maxed(u)) return SHELF_INK.done;
+  const coins = billOf(u).map(([m]) => m);
+  return coins.includes('spark') ? SHELF_INK.spark
+       : coins.includes('shard') ? SHELF_INK.shard
+       : coins.includes('spore') ? SHELF_INK.spore : null;
 };
 
 // Being built, or bought and not yet started on; only the second can be
