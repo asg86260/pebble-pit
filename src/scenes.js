@@ -374,6 +374,13 @@ export const SCENES = {
                  window.__look(st().apothecaryX - 380); } },
   building: { about: 'the bench', say: 'a machine being built, the bar over the site',
     run: () => { rich(); window.__buy('jaw'); window.__fast(9); window.__look(st().quarryX - 260); } },
+  // The shovel's ink sits left of its grid: the shot that says a lopsided
+  // drawing still hangs centred over its shed.
+  buildbench: { about: 'the bench', say: 'a bench being built, the shovel centred over the shed',
+    run: () => { window.__reset(); window.__crew(3, 3, 3, 3);
+                 window.__grant({ dust: 99999, shards: 999, spores: 9999, sparks: 999 });
+                 window.__buy('unlockquarry'); window.__finish();
+                 window.__buy('quarrybench'); window.__fast(6); window.__look(st().quarryX - 480); } },
   buildboard: { about: 'the bench', say: 'a row read while its work is on the go',
     run: () => { rich(); window.__buy('jaw'); window.__fast(30); window.__board('quarry'); } },
   // The whole crew is stood down after the work has some cells up: a station

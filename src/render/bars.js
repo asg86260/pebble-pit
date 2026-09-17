@@ -1,7 +1,7 @@
 // The progress bar, and where each site's bar hangs.
 
 import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
-import { glyphFor } from '../glyphs.js';
+import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
@@ -97,7 +97,10 @@ export function buildingGlyph(cx, cy, rows, at) {
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(`${x},${y}`); } }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const up = Math.floor(at * laid.length);
-  const x0 = cx - (CELLS * P) / 2, y0 = cy - (CELLS * P) / 2;
+  // Centred on the ink, not the box: a drawing off to one side of its grid
+  // (the shovel, the lamp) would otherwise hang beside the station.
+  const [lo, hi] = inkSpan(rows);
+  const x0 = Math.round(cx / P - (lo + hi) / 2) * P, y0 = cy - (CELLS * P) / 2;
   laid.forEach(([x, y], k) => {
     const px = x0 + x * P, py = y0 + y * P;
     if (k < up) { ctx.fillStyle = '#000'; ctx.fillRect(px, py, P, P); return; }

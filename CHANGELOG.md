@@ -17,6 +17,7 @@ feature lives in DESIGN.md.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.
 - The turned-down corner on a new tile is in its top-left, off the ladder's pips.
 - The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
+- The thing going up over a shed hangs centred on its drawing, not its grid, so a lopsided one like the shovel no longer sits off to the left (the shot: `node tools/look.mjs buildbench`).
 - The casino is taller and its foot is a tray: a paid hand heaps in it, stands a beat, then flies out of the hatch into the hole on its own; nothing goes on the ground and no pile ever holds up the next drop (test/casino.test.mjs).
 - The sign holds the count for a moment after the arm lets go, so the figure settles before it flashes DROP IT.
 - A pebble off the pegs goes into its bin at the rim instead of appearing a bin's height over it.
