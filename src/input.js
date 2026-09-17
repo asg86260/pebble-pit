@@ -606,8 +606,11 @@ addEventListener('keydown', e => {
   // The letters and the digits only while not typing: the settings sheet
   // has a box a save is pasted into.
   const key = typing(e.target) ? '' : e.key;
-  if (e.key === 'ArrowRight' || key === 'd' || key === 'D') pan(P * 12);
-  if (e.key === 'ArrowLeft' || key === 'a' || key === 'A') pan(-P * 12);
+  // The arrows and A/D pan while held (stepKeyPan, once a frame) rather
+  // than hopping on every repeat the platform sends: a held key slides
+  // the view at one speed instead of stuttering at the repeat rate.
+  const dir = panDir(e, key);
+  if (dir) { if (key) e.preventDefault(); if (!e.repeat) keysHeld.add(dir); }
   // A digit jumps the view to a place: 1 is the rock, 2 onward the buildings
   // standing along from it, in yard order.
   if (key.length === 1 && key >= '1' && key <= '9') jumpTo(+key - 1);
@@ -619,7 +622,33 @@ addEventListener('keydown', e => {
     if (!e.repeat) holdSkip(true);
   }
 });
-addEventListener('keyup', e => { if (e.key === ' ') holdSkip(false); });
+addEventListener('keyup', e => {
+  if (e.key === ' ') holdSkip(false);
+  const dir = panDir(e, e.key);
+  if (dir) keysHeld.delete(dir);
+});
+addEventListener('blur', () => keysHeld.clear());   // a key let go on another window never arrives
+
+// --- panning by key -----------------------------------------------------------
+// Which way a key pans, or '' for a key that does not.
+function panDir(e, key) {
+  if (e.key === 'ArrowRight' || key === 'd' || key === 'D') return 'right';
+  if (e.key === 'ArrowLeft' || key === 'a' || key === 'A') return 'left';
+  return '';
+}
+const keysHeld = new Set();
+const KEY_PAN = 0.8;                          // views a second, held: the same feel at any zoom
+let keyPanAt = 0;
+// One frame of the held keys: the view slides at KEY_PAN while either is
+// down, and stands still when both are. On the wall clock, not the yard's:
+// the keys pan a held yard too (main.js, every frame).
+export function stepKeyPan() {
+  const t = performance.now();
+  const dt = Math.min(100, t - keyPanAt);    // a tab-out is not one long frame
+  keyPanAt = t;
+  const dir = (keysHeld.has('right') ? 1 : 0) - (keysHeld.has('left') ? 1 : 0);
+  if (dir) pan(dir * KEY_PAN * S.viewW * dt / 1000);
+}
 
 // The places a digit can send the view: the rock, then every building that
 // stands today, right to left. Read on the press rather than kept, so a
