@@ -258,12 +258,12 @@ body.still #scroller { scroll-behavior: auto; }
      card does not stop, it paints on over the next cell. So every run of words
      in the rows wraps, and the handful of things that would be nonsense broken
      across a line are made whole again below, each by name. */
-  var(--paper)-space: normal;
+  white-space: normal;
 }
 /* What stays on one line: a coin and its number, the row of pips, the stepper
    with its count, the headcount on a heading. Each is one mark, not a phrase,
    and a mark split over two lines is two marks. */
-.rows .cost > span, .rows .ladder, .rows .step, .rows .badge { var(--paper)-space: nowrap; }
+.rows .cost > span, .rows .ladder, .rows .step, .rows .badge { white-space: nowrap; }
 /* Headings and anything else loose span the sheet; a card takes one cell of it. */
 .rows > * { grid-column: 1 / -1; }
 .rows > button, .rows > .job { grid-column: auto; }
@@ -280,7 +280,7 @@ body.still #scroller { scroll-behavior: auto; }
      have flattened the badge inside it to the same fade, and the headcount is
      the one thing on this line worth reading at a glance. */
   color: var(--ink);
-  border-bottom: 1px solid rgba(0, 0, 0, .4);
+  border-bottom: 1px solid var(--ink-5);
 }
 .rows .sect:first-child { margin-top: 0; }
 
@@ -337,7 +337,7 @@ body.still #scroller { scroll-behavior: auto; }
    is the board still talking to you. */
 .page .empty {
   padding: 2px 0;
-  color: rgba(0, 0, 0, .45);
+  color: var(--ink-5);
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -635,7 +635,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 2;
   opacity: .75;
   min-width: 0;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
 }
 /* The second line is a line whether or not there are words on it. A card with
    nothing to say about what it gives -- the row that opens the crew list, say --
@@ -675,7 +675,7 @@ body.still #scroller { scroll-behavior: auto; }
   min-width: 0;
   text-align: left;
   opacity: .7;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 /* The clock is not a coin: it is the other fact about time and sits under the
@@ -686,7 +686,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 2;
   justify-self: end;
   opacity: .7;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
 }
 /* A card with no ladder has nothing in the top-right corner, so the clock
    comes up to take it: the right-hand column is still "time", read from the
@@ -707,7 +707,7 @@ body.still #scroller { scroll-behavior: auto; }
   font-size: .9em;
   line-height: 1.35;
   margin-top: .1em;
-  var(--paper)-space: normal;
+  white-space: normal;
   max-width: 46ch;
 }
 /* On an inverted row -- one under the cursor, or the tonic the pot is set to --
@@ -753,7 +753,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 1;
   min-width: 0;
   font-style: normal;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -865,7 +865,7 @@ body.still #scroller { scroll-behavior: auto; }
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
 }
 .optspop .opt {
   font: inherit;
@@ -908,7 +908,7 @@ body.still #scroller { scroll-behavior: auto; }
 .optspop[data-potpick] .opt .bill {
   flex: 0 0 auto;
   padding-left: 18px;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
 }
 .optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
 /* What the brew does, under what it is called: the boards' own note register,
@@ -1341,7 +1341,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   border: 0;
   text-align: left;
   cursor: pointer;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
 }
 /* The front line is the thing being built: its pips are its bar, and it is
    not a thing you can press. The lines behind it are the ones you can hand
@@ -1349,7 +1349,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .queue button.front { cursor: default; }
 /* The clock on every line, pushed to the right edge so the figures line up
    down the card whatever the names do. */
-.queue button .left { margin-left: auto; padding-left: 10px; opacity: var(--pip-tone, .78); var(--paper)-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
+.queue button .left { margin-left: auto; padding-left: 10px; opacity: var(--pip-tone, .78); white-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
 /* The figure is a right-aligned column of its own so the clocks read down
    the card as one column; "3 min" is the widest it says. */
 .queue button .left b { font-weight: inherit; min-width: 5ch; text-align: right; }
@@ -1376,7 +1376,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   text-transform: uppercase;
   color: var(--ink);
   pointer-events: none;
-  var(--paper)-space: pre;
+  white-space: pre;
   line-height: 1.5;
 }
 
@@ -1545,7 +1545,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--paper);
   border: 2px solid var(--ink);
   letter-spacing: .1em;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
   /* it fades with the board it belongs to, on the same beat */
   opacity: 0;
   transform: translateY(3px) scale(.985);
@@ -1587,7 +1587,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   border: var(--sheet-border) solid var(--ink);
   letter-spacing: .1em;
   text-transform: uppercase;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
   opacity: 0;
   transform: translateY(3px) scale(.985);
   transform-origin: 0 100%;
@@ -1627,7 +1627,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   letter-spacing: .14em;
   text-transform: uppercase;
   cursor: pointer;
-  var(--paper)-space: nowrap;
+  white-space: nowrap;
   will-change: transform;
   backface-visibility: hidden;
 }

@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- On the dark page a card's clock count, its gain line and the ledger's leaders read in the dark ink instead of black on black (src/selftest/boards.js, "on the dark page every word on a card is lighter than its paper").
+
 ## v0.3.2 — 2026-09-17
 
 - On an iPhone playing the itch page, the yard no longer slides under a finger that is sweeping dust (src/selftest/touch.js, "one finger on the yard scrolls it").

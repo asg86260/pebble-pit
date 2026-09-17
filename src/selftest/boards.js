@@ -240,6 +240,40 @@ export const TESTS = [
     ];
   }],
 
+  ['on the dark page every word on a card is lighter than its paper', async () => {
+    newRun();
+    await settle();
+    window.__give(3000);
+    window.__crew(2, 2);
+    run(20);
+    window.__board('bench');
+    await sleep(400);
+    // The clock's count went unread on the dark page (2026-09-17): a rule in
+    // shelf.css named black outright rather than a palette step, so the
+    // swap to the dark ink never reached it. Measured off the computed
+    // style of every text cell on every card, against the card's own paper.
+    const lum = c => { const m = /rgba?\((\d+), (\d+), (\d+)/.exec(c); return m ? (+m[1] + +m[2] + +m[3]) / 3 : NaN; };
+    document.documentElement.classList.add('dark');
+    await raf();
+    const rows = [...document.querySelectorAll('#shop button[data-key]')];
+    const dim = [];
+    for (const row of rows) {
+      const paper = lum(getComputedStyle(row).backgroundColor);
+      for (const sel of ['.what', '.gain', '.time', '.cost']) {
+        const el = row.querySelector(sel);
+        if (!el || !el.textContent.trim()) continue;
+        const ink = lum(getComputedStyle(el).color);
+        if (!(ink > paper + 40)) dim.push(`${row.dataset.key} ${sel} ${ink} on ${paper}`);
+      }
+    }
+    document.documentElement.classList.remove('dark');
+    window.__board(null);
+    return [
+      ok(rows.length > 0, 'the bench has cards on it'),
+      ok(dim.length === 0, 'every word on every card stands off the dark paper', dim.join('; ')),
+    ];
+  }],
+
   ['a bill you can half afford says which half', async () => {
     newRun();
     await settle();
