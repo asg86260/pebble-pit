@@ -1,6 +1,6 @@
 // The progress bar, and where each site's bar hangs.
 
-import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, SHELF_INK } from '../config.js';
+import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
@@ -103,8 +103,8 @@ export function buildingGlyph(cx, cy, rows, at) {
     if (k < up) { ctx.fillStyle = '#000'; ctx.fillRect(px, py, P, P); return; }
     // Each side of the cell that faces out of the shape gets a stroke, so the
     // outline runs round the whole drawing rather than boxing every cell. In
-    // the card's ghost gray: what is not there yet stands back from what is.
-    ctx.fillStyle = SHELF_INK.ghost;
+    // a light gray: what is not there yet stands back from what is.
+    ctx.fillStyle = BUILD_GHOST_INK;
     if (!shape.has(`${x},${y - 1}`)) ctx.fillRect(px, py, P, EDGE);
     if (!shape.has(`${x},${y + 1}`)) ctx.fillRect(px, py + P - EDGE, P, EDGE);
     if (!shape.has(`${x - 1},${y}`)) ctx.fillRect(px, py, EDGE, P);
