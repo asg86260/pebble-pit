@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The carter is worked at the bench like any other upgrade, not built out at the lip.
 - Hold to toss reaches the hole from anywhere on the rock's pile at its first rung (500px, up from 120); the reach ladder is for the stations further off.
 - A station building something shows the thing itself going up over the roof, cell by cell, the way its card does, instead of a bar.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.

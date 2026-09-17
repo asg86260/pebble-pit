@@ -1,7 +1,6 @@
 import { TRADE_COST, TRADE_RATE } from '../config.js';
 import { S } from '../state.js';
 import { JOB } from '../jobs.js';
-import { kitX } from '../world.js';
 import { stockOf, kitMaxOf } from '../kit.js';
 import { kitDisplaced, machineFor } from '../machines.js';
 import { shieldOpened } from '../shield.js';
@@ -14,8 +13,10 @@ import { syncWorkers } from '../crew.js';
 //
 // Each row is drawn on the board of the station that wears the kit (`board`;
 // the bench draws whichever row names none) and WORKED there (`site`), so the
-// hat is made where it lands and has nowhere to teleport from. See DESIGN.md,
-// "The school comes down".
+// hat is made where it lands and has nowhere to teleport from. The cart is
+// the exception: it is sold and worked at the bench like any other upgrade,
+// not built at the lip -- a specialist is an upgrade, not construction. See
+// DESIGN.md, "The school comes down".
 
 // Every trade is the same object: a job, the count of that job already
 // trained, and the thing it is twice as good at. `shield` is the try against
@@ -26,7 +27,7 @@ export const TRADES = [
     site: 'shack', board: 'shack', shield: 'props' },
   { key: 'carter', name: 'carter', job: JOB.HAUL, count: 'carters',
     does: 'twice the load', place: 'the pit',
-    site: 'yard', board: null, shield: 'props' },
+    site: 'bench', board: null, shield: 'props' },
   { key: 'blaster', name: 'blaster', job: JOB.QUARRY, count: 'blasters',
     does: 'twice the trips', place: 'the quarry',
     site: 'quarry', board: 'quarry', shield: 'arch' },
@@ -77,8 +78,6 @@ export const KIT_ROWS = TRADES.map(t => ({
   // A rung, the shortest wait in the game: the carts have no ceiling, and a
   // set of six at a building's pace would be twenty minutes of standing about.
   kind: 'rung', site: t.site,
-  // The carts are made at the lip's own stand.
-  ...(t.site === 'yard' ? { at: () => kitX(t.job) } : {}),
   ...(t.board ? { board: t.board } : {}),
   name: t.name,
   note: () => `${t.name}: ${t.does}, at ${t.place}`,

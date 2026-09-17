@@ -10133,7 +10133,7 @@ that question is asked. Nothing about what a hat does, what it costs or how
 many there can be changes; only where you stand to buy one.
 
 **The hat is made where it lands.** A row is a `rung` at the station's own
-site -- `shack`, `quarry`, `farm`, and the lip for the carts -- so the spare
+site -- `shack`, `quarry`, `farm` -- so the spare
 hand who does the work walks to the station, works the eight seconds under a
 bar, and the hat is put on that station's stand where the body is standing.
 The shelf outside the school's door and the carry across the yard (`hatShelf`,
@@ -10141,8 +10141,12 @@ The shelf outside the school's door and the carry across the yard (`hatShelf`,
 `stepKit`) were the answer to a hat appearing a thousand pixels from where it
 was bought; a hat made at its own stand has nowhere to teleport from, so all
 of it comes out. The one made object in the yard that used to need an errand
-is now made by a body you watched walk there. For the carts, the site is the
-yard with `at` the lip's cart stand, the way a machine row names its ground.
+is now made by a body you watched walk there. The carts are the exception:
+the cart row is sold on the bench and worked there (`site: 'bench'`), the
+same as every other bench upgrade, and the count goes straight to the lip's
+stand. A specialist is an upgrade, not construction -- a cart going up over
+the lip under a build glyph, with a body sent out to make it, read as a
+building site where there is none (2026-09-16).
 
 **The shields are the gate.** The school was gated on twenty shards and three
 hundred dust; the gate was a building. What the yard actually learns from is
