@@ -18,7 +18,7 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 
 import { spelled } from './tower.js';
 
-import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut } from './works.js';
+import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, pullOut } from './works.js';
 import { nextHouseAt } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
@@ -183,12 +183,11 @@ export const billOf = u => {
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
-// Being built, or bought and waiting its turn; only the second can be pressed
-// again to hand it back. A site takes a line, so no row is refused for what
-// its neighbor is doing.
+// Being built, or bought and not yet started on; only the second can be
+// pressed again to hand it back. A site builds everything at once, so no row
+// is refused for what its neighbor is doing.
 export const building = u => takesTime(u) && !!workOn(u.key);
 export const inLine = u => takesTime(u) && waiting(u.site, u.key);
-export const lineAt = u => placeOf(u.site, u.key);
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 

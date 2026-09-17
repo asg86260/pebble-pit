@@ -9725,6 +9725,32 @@ is spare, an empty cut building nothing. A queue does not staff itself.
   rung is not for sale until this one lands); a repeatable row (a hat, a pot)
   can be queued as many times as you can pay for, and the card counts them.
 
+### Everything at once (amended 2026-09-16)
+
+**The owner's word:** "allow for multiple constructions at one time. not sure
+why there's a limit." So the room is gone. Every work a site is paid for is
+on the go from the press: `onTheGo(site)` is the whole list, nothing stands
+in line by position, and `roomAt` is no more.
+
+- **Builders are one a WORK, not one a site**, out of the spare bodies
+  (`rebalance`): three rungs bought at the bench with three haulers spare get
+  three builders. With fewer spare than works, the rest of the works stand
+  until a body comes free -- the lending stays one a site, so a run of builds
+  cannot borrow every station body and stop the dust.
+- A site whose hands are shared (the lab) spreads them over all its works,
+  as before; each rung goes slower, the batch lands together.
+- **`waiting(site, key)`** now means "nobody has started on it": at nought and
+  no body on it (`idleAt`). That is the pull-out-for-refund window; a work a
+  body has touched is committed. **`idleAt(site, key)`** is what the tile and
+  the card read for `queued` against `building`: a work with nobody on it
+  says `queued` whether it is untouched or its body has since been stood down.
+- The card: every line carries its own clock (what is left of *that* work at
+  its own pace, `leftAt` off `handsOn`), or `queued` when nobody is at it. No
+  places, no `next`: there is no line to have a place in. A line nobody is on
+  is still the button that hands it back.
+- The tile's tag holds the clock in every case; `queued up in n` and
+  `placeWord` are gone.
+
 ### The card
 
 **Amended as built (2026-09-12).** The first draft was a line per site with

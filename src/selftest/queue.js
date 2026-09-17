@@ -1,7 +1,7 @@
 // The queue card (queue.js): the one piece of the queue that needs a page --
 // a card in the corner of the window that is absent on a fresh game, present
-// the moment something is building, one name a line, and a press on a waiting
-// name hands that work back. The mechanics of the line itself are the node
+// the moment something is building, one name a line, and a press on a name
+// nobody has started on hands that work back. The mechanics of the line itself are the node
 // tier's (test/queue.test.mjs).
 
 import { newRun, raf, settle, state, ok, panel, run } from './kit.js';
@@ -11,9 +11,11 @@ const names = () => [...card().querySelectorAll('button .name')].map(n => n.text
 const showing = () => !card().hidden && !card().classList.contains('off');
 
 export const TESTS = [
-  ['the queue card is absent until something is building, then lists the line', async () => {
+  ['the queue card is absent until something is building, then lists the works', async () => {
     newRun();
     await settle();
+    // Nobody spare: one body is lent to the bench, so a second work has nobody
+    // on it and waits.
     window.__crew(3, 0);
     window.__give(200000);
     // Twenty seconds of hauling: `carry` is offered once a load has been seen carried.
@@ -21,7 +23,7 @@ export const TESTS = [
     await raf();
     const before = showing();
     window.__buy('carry');
-    run(0.1);
+    run(3);                            // long enough for the lent body to be on it
     await raf(); await raf();
     const one = { showing: showing(), names: names() };
     window.__buy('auto');
@@ -39,13 +41,11 @@ export const TESTS = [
       ok(one.showing && one.names.length === 1, 'one press, one name on the card', one.names.join(', ')),
       ok(two.names.length === 2 && two.names[1] === 'hold to mine', 'a second press adds a second name behind it',
          two.names.join(', ')),
-      ok(!!two.front && two.front.length === 5, 'the front line carries its bar as pips', `${two.front}`),
-      // Two clocks. The front's is a figure, or its status while the builder
-      // is still walking over; the waiting one's is always a figure, and more
-      // than the front's when the front has one, since it counts both.
-      ok(two.clocks.length === 2 && +two.clocks[1] > 0
-         && (two.clocks[0] === 'building' || +two.clocks[1] > +two.clocks[0] && +two.clocks[0] > 0),
-         'every line has a clock, and the waiting one counts what is ahead of it', two.clocks.join(' | ')),
+      ok(!!two.front && two.front.length === 5, 'the line with a body on it carries its bar as pips', `${two.front}`),
+      // Two clocks: the one being built has a figure, the one nobody is at
+      // says so.
+      ok(two.clocks.length === 2 && /^\d+:\d\d$/.test(two.clocks[0]) && two.clocks[1] === 'queued',
+         'the line being built has a clock, and the one nobody is at says queued', two.clocks.join(' | ')),
       ok(!after, 'and the card goes when the line is empty')
     ];
   }],
@@ -57,6 +57,7 @@ export const TESTS = [
     window.__give(200000);
     run(20);
     window.__buy('carry');
+    run(3);                            // the lent body is on it: committed
     const before = state().stored;
     window.__buy('auto');
     const paid = before - state().stored;
