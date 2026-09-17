@@ -267,8 +267,9 @@ const snapshotOf = (survey, apron, stranded, air) => ({
                     onPegs: S.drop.grains.filter(g => g.seat).length,
                     bins: S.drop.bins.map(b => b.n),
                     paid: Math.round(S.drop.paid), pays: { ...S.drop.pays }, edge: S.drop.edge, paying: payingBin() },
-  // the arm held, and what it pours a second
+  // the arm held, where it is, and what it pours a second (out, below zero)
   holding: holding(),
+  throttle: S.throttle,
   pourRate: pourRate(),
   // the sign is live: a stake stands still in the funnel
   canDrop: canDrop(),

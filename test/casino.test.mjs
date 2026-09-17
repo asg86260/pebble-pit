@@ -15,7 +15,7 @@
 // handful.test.mjs.
 
 import { yard, group, ok, state, run, runUntil, quickCrew } from './helpers.mjs';
-import { CASINO_BINS, CASINO_HANDFUL, POUR_SHARE, POUR_MIN, shownFor } from '../src/config.js';
+import { CASINO_BINS, CASINO_HANDFUL, POUR_SHARE, POUR_MIN, ARM_DEAD, ARM_LENGTH, ARM_SWING, P, shownFor } from '../src/config.js';
 import { DUST_PER } from '../src/upgrades/price.js';
 
 // The table, opened without the dust it costs, with dust in the hole to stake
@@ -28,7 +28,7 @@ function atTheTable(dust = 6000) {
   window.__build();
   run(0.1);
 }
-const hold = on => window.__holdArm(on);
+const hold = (on, throttle = 1) => window.__holdArm(on, throttle);
 const tap = () => window.__tapSign();
 // the pour landed and the bowl still
 const settled = () => runUntil(() => !state().pouring && state().tableAir === 0, 30);
@@ -110,10 +110,11 @@ group('the arm held pours a share of the purse a second, whole pebbles, and stop
   hold(true);
   const left = stood.stored, again = state().pourRate;
   let least = held, frames = 0, later = 0;
-  for (; frames < 60 * 60 && state().holding; frames++) {
+  for (; frames < 60 * 60 && state().pot.stake < held; frames++) {     // until the last pebble is committed
     run(1 / 60); least = Math.min(least, state().stored);
     if (frames === 60 * 5) later = state().pourRate;
   }
+  run(1.5);                                    // and held on past the last pebble, the rain landing
   const dry = state();
   hold(false);
   settled();
@@ -129,13 +130,89 @@ group('the arm held pours a share of the purse a second, whole pebbles, and stop
     ok(stood.stored === held - stood.pot.stake && stood.pot.owed === 0 && stood.pot.on === stood.pot.stake,
        'and once the pour has landed the purse is down by exactly the stake', `${stood.stored} vs ${held - stood.pot.stake}`),
     ok(stood.table === shownFor(stood.pot.stake), 'the pile in the funnel is the stake at the band', `${stood.table}`),
-    ok(!dry.holding && dry.pot.stake + dry.pot.owed >= held - 1 && least >= 0 && end.stored === 0 && end.pot.stake === held,
-       'held on, the arm lets go on its own at the last pebble and the purse is never below zero',
+    ok(dry.holding && dry.stored === 0 && dry.pot.stake === held && least >= 0 && end.stored === 0 && end.pot.stake === held,
+       'held on past the last pebble, the purse is poured to nothing and never below it',
        `${end.stored} left, stake ${end.pot.stake} of ${held}, lowest ${least}`),
     ok(again === Math.max(POUR_SHARE * left, POUR_MIN) && later === again,
        'the second hold reads the purse again and holds that rate flat', `${again} at the press, ${later} five seconds in`),
     ok(Math.abs(frames / 60 - left / again) < 0.5,
        "so the purse empties in the share's time, not a crawl", `${(frames / 60).toFixed(1)} s for ${left} at ${again} a second`)
+  ];
+}, { reload: false });
+
+// The arm is a throttle. Grabbed and dragged the player's way -- a press on
+// it, the pointer moved -- it pours at the pulled fraction of the rate,
+// pours back out to the purse when pushed up, and pours nothing within the
+// dead band at rest; the purse and the stake always sum to what there was.
+group('the arm is a throttle: pulled it pours by the pull, pushed it pours back, at rest it pours nothing', async () => {
+  atTheTable(1000);
+  const held = state().stored;
+  const arm = window.__leverAt('casino-gate');
+  const reach = ARM_LENGTH * P;
+  // a point on the arm's swing at a throttle: rest is halfway round, a full
+  // pull the bottom, a full push the top
+  const at = t => { const a = ARM_SWING / 2 + t * ARM_SWING / 2; return [arm.x + arm.dir * Math.sin(a) * reach, arm.y - Math.cos(a) * reach]; };
+  const full = Math.max(POUR_SHARE * held, POUR_MIN);
+  // grabbed at rest: nothing pours
+  const grabbed = window.__holdAt(...at(0));
+  run(1);
+  const rest = state();
+  // dragged halfway down: the rate is the notch's plus half the way to full
+  window.__dragAt(...at(0.5));
+  const halfRate = state().pourRate;
+  const before = state().pot ? state().pot.stake : 0;
+  run(1);
+  const half = state();
+  // dragged to the bottom: the full rate
+  window.__dragAt(...at(1));
+  const fullRate = state().pourRate;
+  run(0.5);
+  window.__dragAt(...at(0));
+  run(0.5);
+  const paused = state();
+  const staked = paused.pot.stake;
+  // pushed to the top: the stake pours back to the purse at the full rate
+  window.__dragAt(...at(-1));
+  const backRate = state().pourRate;
+  run(1);
+  const pushed = state();
+  window.__releaseArm();
+  settled();
+  const end = state();
+  const want = POUR_MIN + ((0.5 - ARM_DEAD) / (1 - ARM_DEAD)) * (full - POUR_MIN);
+  return [
+    ok(grabbed && rest.holding && rest.pourRate === 0 && !rest.pot, 'grabbed at rest the arm pours nothing', `${rest.pourRate} a second, pot ${JSON.stringify(rest.pot)}`),
+    ok(Math.abs(halfRate - want) < 1e-6, 'pulled halfway it pours at the notch plus half the way to the full rate', `${halfRate} vs ${want}`),
+    ok(half.pot && half.pot.stake - before >= halfRate * 0.85 && half.pot.stake - before <= halfRate * 1.05,
+       'and a second of that pours about that many pebbles', `${half.pot && half.pot.stake - before} of ${halfRate}`),
+    ok(fullRate === full && paused.pourRate === 0 && paused.holding, 'at the bottom the full rate; back at rest, nothing, with the arm still in hand', `${fullRate}, then ${paused.pourRate}`),
+    ok(backRate === -full && pushed.pot && pushed.pot.stake < staked && pushed.stored > paused.stored,
+       'pushed to the top the stake pours back to the purse at the full rate', `${backRate}; stake ${staked} -> ${pushed.pot && pushed.pot.stake}, purse ${paused.stored} -> ${pushed.stored}`),
+    ok(end.stored + (end.pot ? end.pot.stake : 0) === held && end.stored >= 0 && (!end.pot || end.pot.stake >= 0),
+       'and the purse and the stake always sum to what there was', `${end.stored} + ${end.pot && end.pot.stake} = ${held}`),
+    ok(!end.holding && end.pot && end.pot.stake > 0 && end.canDrop, 'let go, the arm springs to rest and the stake stays', `${end.pot && end.pot.stake}`)
+  ];
+}, { reload: false });
+
+// And pushed on past the last pebble the stake goes to nothing and no
+// further: the purse is whole again and the sign is dark.
+group('pushed on, the stake pours all the way back and stops at nothing', async () => {
+  atTheTable(1000);
+  const held = state().stored;
+  stake(0.5);
+  const staked = state().pot.stake;
+  hold(true, -1);
+  let least = 0;
+  for (let f = 0; f < 60 * 30 && state().pot; f++) { run(1 / 60); least = Math.min(least, state().pot ? state().pot.stake : 0); }
+  run(0.5);
+  const gone = state();
+  hold(false);
+  settled();
+  const end = state();
+  return [
+    ok(staked > 0, 'a stake stood', `${staked}`),
+    ok(!gone.pot && gone.stored === held && least >= 0, 'pushed on, it pours all the way back and the purse is whole', `${gone.stored} of ${held}, lowest stake ${least}`),
+    ok(!end.pot && end.table === 0 && !end.canDrop, 'and there is nothing in the funnel and nothing to drop', `${end.table} in the funnel`)
   ];
 }, { reload: false });
 

@@ -45,8 +45,8 @@ import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, choosePotPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { dealHand, binPay, potAt } from './casino.js';
-import { LEVERS, leverAt, leverUnder, holdAt, releaseArm, tapAt, signBox } from './levers.js';
-import { holdArm, dropIt } from './casino.js';
+import { LEVERS, leverAt, leverUnder, holdAt, dragArm, releaseArm, tapAt, signBox } from './levers.js';
+import { holdArm, setThrottle, dropIt } from './casino.js';
 import { setReadyLights, setFlashFace } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -908,9 +908,11 @@ export const HANDLES = {
   // pointer makes. `__holdArm(true)` starts the pour and `__holdArm(false)`
   // ends it; `__tapSign()` drops the stake; each answers false when the
   // control is dead. `__holdAt` and `__tapAt` are the hit tests, by point.
-  __holdArm: on => holdArm(!!on),
+  __holdArm: (on, throttle = 1) => holdArm(!!on, throttle),
+  __throttle: t => { setThrottle(t); return S.throttle; },
   __tapSign: () => dropIt(),
   __holdAt: (x, y) => holdAt(x, y),
+  __dragAt: (x, y) => dragArm(x, y),
   __releaseArm: () => releaseArm(),
   __tapAt: (x, y) => tapAt(x, y),
   __leverAt: key => { const l = LEVERS.find(x => x.key === key); return l ? leverAt(l) : null; },

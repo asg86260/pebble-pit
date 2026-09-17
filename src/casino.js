@@ -31,7 +31,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
-import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, shownFor,
+import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, ARM_DEAD, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, FOOT_H,
          TRAY_H, TRAY_HOLD_MS, TRAY_OUT_MS, TRAY_STEP_MS,
          BOARD_COLS, CASINO_MARGIN, FIELD_H,
@@ -85,44 +85,75 @@ export const busy = () => pouring() || letting();
 export const purseOf = () => S.stored;
 export const inHopper = () => !!S.pot && S.pot.where === 'hopper';
 
-// The hold. While the arm is held, pebbles pour out of the purse into the
-// funnel at `POUR_SHARE` of the purse a second -- the purse as it stood when
-// the arm was pressed, held flat for the whole hold, so a purse empties in
+// The hold. The arm is a throttle: pulled down past the dead band, pebbles
+// pour out of the purse into the funnel, at `POUR_MIN` a second at the
+// first notch and up to `POUR_SHARE` of the purse a second at full pull --
+// the purse as it stood when the arm was grabbed, so a pull empties it in
 // 1/POUR_SHARE seconds rather than crawling as a share of what is left; a
-// second hold reads the purse again -- never less than `POUR_MIN` a second
-// and never past what the purse holds: the stake grows by whole
-// pebbles as the fraction adds up, the funnel rains in toward its picture
-// of the stake (`trickleIn`), and each grain of the rain carries its share,
-// spent out of the purse as it lands (`spendStake`). So the purse is never
-// poured below zero -- a pebble is only ever committed while there is one
-// unspent to cover it -- and a save mid-pour keeps what was committed.
-export const canHold = () => S.casinoOpen && !letting() && purseOf() - (S.pot ? S.pot.owed : 0) > 0;
-export function holdArm(on) {
+// second hold reads the purse again. Pushed up past the dead band it pours
+// the other way at the same scale: pebbles leave the stake and go back to
+// the purse, the ones never spent first. Either way the stake moves by
+// whole pebbles as the fraction adds up, never past what the purse holds
+// and never below nothing; the funnel rains in toward its picture of the
+// stake (`trickleIn`), each grain of the rain carrying its share, spent out
+// of the purse as it lands (`spendStake`), and drains its picture when the
+// stake shrinks. So no purse is poured below zero -- a pebble is only ever
+// committed while there is one unspent to cover it -- and a save mid-pour
+// keeps what was committed.
+export const canHold = () => S.casinoOpen && !letting() && (purseOf() - (S.pot ? S.pot.owed : 0) > 0 || (!!S.pot && S.pot.stake > 0));
+export function holdArm(on, throttle = 1) {
   if (on && !canHold()) return false;
-  if (on === !!S.holding) return true;
+  if (on === !!S.holding) { if (on) setThrottle(throttle); return true; }
   S.holding = !!on;
   S.pourAcc = 0;
   S.pourAt = on ? Math.max(POUR_SHARE * purseOf(), POUR_MIN) : 0;
-  if (on) { stopAttract(); S.hand = null; }
-  // let go, the arm springs back up over its swing
-  else S.leverPulled = { key: 'casino-gate', at: now() - LEVER_SWING_MS };
+  if (on) { stopAttract(); S.hand = null; setThrottle(throttle); }
+  // let go, the arm springs back to rest from wherever it was
+  else { S.leverPulled = { key: 'casino-gate', at: now(), from: S.throttle }; S.throttle = 0; }
   S.shopStale = true;
   return true;
 }
-export const pourRate = () => S.holding ? S.pourAt : Math.max(POUR_SHARE * purseOf(), POUR_MIN);
+// Where the held arm is: down toward 1, up toward -1, rest at 0.
+export const setThrottle = t => { S.throttle = Math.max(-1, Math.min(1, +t || 0)); };
+// What the arm pours a second at its throttle, signed: in, past the dead
+// band down; out, past it up; nothing within it.
+export const pourRate = () => {
+  if (!S.holding) return Math.max(POUR_SHARE * purseOf(), POUR_MIN);
+  const t = S.throttle, a = Math.abs(t);
+  if (a <= ARM_DEAD) return 0;
+  const k = (a - ARM_DEAD) / (1 - ARM_DEAD);
+  return Math.sign(t) * (POUR_MIN + k * (S.pourAt - POUR_MIN));
+};
 function stepHold(dt) {
   if (!S.holding) return;
   if (!canHold()) { holdArm(false); return; }
-  S.pourAcc += pourRate() * (dt / 1000);
+  const rate = pourRate();
+  if (!rate) { S.pourAcc = 0; return; }
+  S.pourAcc += Math.abs(rate) * (dt / 1000);
   const whole = Math.floor(S.pourAcc);
   if (!whole) return;
   S.pourAcc -= whole;
-  if (!S.pot) S.pot = { cur: 'dust', stake: 0, n: 0, owed: 0, where: 'hopper' };
-  const add = Math.min(whole, purseOf() - S.pot.owed);
-  S.pot.stake += add;
-  S.pot.owed += add;
-  S.pouring = true;
+  if (rate > 0) {
+    if (!S.pot) S.pot = { cur: 'dust', stake: 0, n: 0, owed: 0, where: 'hopper' };
+    const add = Math.min(whole, purseOf() - S.pot.owed);
+    S.pot.stake += add;
+    S.pot.owed += add;
+    S.pouring = true;
+  } else if (S.pot) unstake(whole);
   S.shopStale = true;
+}
+// Pebbles going back to the purse: the ones still owed first, since nothing
+// was paid for them; then the ones that landed, refunded as they leave the
+// ledger -- the picture in the funnel drains after them (`drainOut`). A
+// stake pushed to nothing is no stake.
+function unstake(n) {
+  const pot = S.pot;
+  const fromOwed = Math.min(n, pot.owed);
+  pot.owed -= fromOwed; pot.stake -= fromOwed; n -= fromOwed;
+  const fromLanded = Math.min(n, pot.n, pot.stake);
+  pot.n -= fromLanded; pot.stake -= fromLanded;
+  S.stored += fromLanded;
+  if (pot.stake <= 0) { S.pot = null; S.pouring = false; }
 }
 
 // A grain of the stake landing in the bowl: its share comes out of the
