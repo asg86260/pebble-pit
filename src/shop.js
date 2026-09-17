@@ -554,7 +554,10 @@ export function refresh(el, list, headcount) {
       wearGlyph(row, u.key, tintOf(u), '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
     } else if (pic) {
       const tint = tintOf(u);
-      const ink = waits || full.some(([m, n]) => m !== 'time' && purse(m) < n) ? SHELF_INK.short : '#000';
+      // A climbed ladder is drawn full: its bill clamps to the top band, so
+      // reading it against the purse would grey the glyph every time a coin
+      // ran low, on a row that is not for sale.
+      const ink = !maxed(u) && (waits || full.some(([m, n]) => m !== 'time' && purse(m) < n)) ? SHELF_INK.short : '#000';
       // A hand fades out over the finished drawing rather than vanishing.
       // `seen` has an entry only for a tile that had a hand, so every other
       // tile pays nothing here.
@@ -628,9 +631,10 @@ export function refresh(el, list, headcount) {
     if (maxed(u)) {
       sayHTML(gain, '');
       sayHTML(price, 'done'); sayHTML(time, '');
-      grey(row, true); row.classList.add('off');
+      grey(row, true); row.classList.add('off', 'done');
       continue;
     }
+    if (row.classList.contains('done')) row.classList.remove('done');
     // A next rung priced in a coin the yard has no source for yet shows its
     // price like any other and stays greyed: the bill is the news, and the
     // coin on it is the thing to go and get (`coinNeeds`).

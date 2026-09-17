@@ -277,6 +277,10 @@
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) .time { padding: 0 6px; }
 /* Short of a coin, stalled, or climbed: the tag says so by its edge. */
 .rows.shelves > button.tile:disabled .tag { border-style: dashed; color: var(--ink-5); }
+/* A climbed ladder (`done`) wears a solid tag at full ink: it is finished,
+   not short of anything. */
+.rows.shelves > button.tile.done:disabled .tag { border-style: solid; color: var(--ink); }
+.rows.shelves > button.tile.done .what { color: var(--ink); }
 /* A tile the yard is building (DESIGN.md, "A tile being built shows the
    building"): the tag is a clock and nothing else, at full ink and with a
    solid edge -- a running clock is not a thing you cannot afford. It goes

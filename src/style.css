@@ -439,6 +439,10 @@ body.still #scroller { scroll-behavior: auto; }
 /* A status is about the whole card and is the one thing on it worth reading
    while it is stalled. */
 .rows button:disabled.waiting .gain { color: var(--ink); }
+/* A climbed ladder (`done`, set by the board) is not "you cannot afford
+   this" either: it is drawn at full ink, solid, the way a row you could buy
+   is, so the last rung never reads as one you are saving for. */
+.rows button:disabled.done { color: var(--ink); border-style: solid; }
 
 /* A card you have never had on an open board: the corner is turned down.
    It was a dot hung nine pixels off the left of the title, which was the right

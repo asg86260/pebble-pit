@@ -590,6 +590,18 @@ export const TESTS = [
     await sleep(400);
     const still = row();
     const says = still && still.textContent.includes('done');
+    // Broke, so the top rung's bill (a done row's bill clamps there) is one
+    // the purse cannot meet: a finished row is drawn full anyway. The board
+    // paints on its next frame, so the yard is turned once more.
+    const St = (await import('/src/state.js')).S;
+    window.__pay('shard', St.shards); window.__pay('dust', St.stored);
+    run(1);
+    await sleep(200);
+    const ink = still ? getComputedStyle(still).color : '';
+    const tag = still && still.querySelector('.tag');
+    const edge = tag ? getComputedStyle(tag).borderTopStyle : (still ? getComputedStyle(still).borderTopStyle : '');
+    const pic = still && still.querySelector('.pic');
+    const glyphInk = pic ? pic.dataset.tint.split('/')[1] : '#000';
     hide.click();
     await sleep(400);
     window.__board(null);
@@ -599,7 +611,12 @@ export const TESTS = [
          `${presses} presses -> ${bought} breakers`),
       ok(!!still, 'and the finished row is still on the board with them hidden',
          still ? 'there' : 'GONE'),
-      ok(says, 'saying it is done', still ? still.textContent.trim() : 'no row')
+      ok(says, 'saying it is done', still ? still.textContent.trim() : 'no row'),
+      // A done row is not one you cannot afford: full ink, a solid edge, and
+      // a glyph that does not grey when a coin on the clamped bill runs out.
+      ok(ink === 'rgb(0, 0, 0)' && edge === 'solid' && glyphInk === '#000',
+         'and drawn full, solid, with the glyph in black, even broke',
+         `${ink} ${edge} glyph ${glyphInk}`)
     ];
   }],
 

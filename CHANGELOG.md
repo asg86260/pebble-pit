@@ -21,6 +21,7 @@ feature lives in DESIGN.md.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.
 - The mark over a station that finished something shows the thing itself, faint, with the same coloured outline its card wears and a tick over it, on a soft glow rather than in a box.
 - The work over a station shows the thing itself going up, cell by cell, the way its card does; only a building coming out of the ground keeps the bar, since its own sprite already shows it rising.
+- A finished ladder is drawn full: black title, black glyph, a solid `done` tag, and it no longer greys or flickers when you run short of a coin (src/selftest/boards.js, "a finished kit row stays on the board").
 - The turned-down corner on a new tile is in its top-left, off the ladder's pips.
 - The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
 - The casino is taller and its foot is a tray: a paid hand heaps in it, stands a beat, then flies out of the hatch into the hole on its own; nothing goes on the ground and no pile ever holds up the next drop (test/casino.test.mjs).
