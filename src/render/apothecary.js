@@ -169,12 +169,11 @@ function drawPot(i, g) {
 
   // Cell offsets into the grid: if you move the brew up or down in CAULDRON,
   // move CAULDRON_BREW_ROW to match.
-  const potMid = px + Math.round(CAULDRON[0].length / 2) * P;
   const brewY = topY + CAULDRON_BREW_ROW * P;
 
-  // Fire, bubbles and steam only while a batch is on the boil, so an idle
-  // cauldron is exactly the CAULDRON grid and the fire is part of what says it
-  // is being worked. See `potBoiling`.
+  // Fire and bubbles only while a batch is on the boil, so an idle cauldron is
+  // exactly the CAULDRON grid and the fire is part of what says it is being
+  // worked. See `potBoiling`. The steam is on its own layer (`drawBrewSteam`).
   if (!potBoiling(i)) return;
   const t = now();
   // Colored by the batch that was lit and paid for, not by what the pot is set
@@ -231,11 +230,23 @@ function drawPot(i, g) {
     const ph = (t / 560 + bcol * 0.21 + i * 0.31) % 1;
     if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
   }
-  // Steam off the pool, carrying a hint of the brew's color so the vapor says
-  // the same thing the flame does.
-  ctx.fillStyle = fire.steam;
+  ctx.fillStyle = '#000';
+}
+
+// Steam off one pot's pool, carrying a hint of the brew's color so the vapor
+// says the same thing the flame does. Drawn on its own layer with the crew
+// (`brew steam` in render.js), not with the pot: the vapor rises in front of
+// the buildings behind the apothecary rather than vanishing into them.
+function drawPotSteam(i, g) {
+  if (!potBoiling(i)) return;
+  const px = potX(i);
+  const topY = g - CAULDRON.length * P;
+  const potMid = px + Math.round(CAULDRON[0].length / 2) * P;
+  const brewY = topY + CAULDRON_BREW_ROW * P;
+  const t = now();
+  ctx.fillStyle = flameOf(brewKeyOf(i)).steam;
   for (let k = 0; k < 9; k++) {
-    const ph = (t / 850 + k * 0.11 + i * 0.13) % 1;
+    const ph = (t / STEAM_RISE_MS + k * 0.11 + i * 0.13) % 1;
     if (ph > 0.9) continue;
     const sway = Math.round(Math.sin(t / 760 + k * 1.4 + i) * 2);
     const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
@@ -243,6 +254,16 @@ function drawPot(i, g) {
     ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
   }
   ctx.fillStyle = '#000';
+}
+
+// One cell of steam climbs eight cells over a pot in this long; bigger is slower.
+const STEAM_RISE_MS = 1300;
+
+export function drawBrewSteam() {
+  // Nothing boils while the building is still rising, and the pots are drawn
+  // scaled inside `withRise` then, so the steam waits until it stands.
+  if (!S.apothecaryOpen || risingAt('apothecary')) return;
+  for (let i = 0; i < S.apothPots; i++) drawPotSteam(i, S.groundY);
 }
 
 export function drawApothecary() {
