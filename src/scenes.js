@@ -713,8 +713,13 @@ export const SCENES = {
     run: () => { window.__casinoStakes(6000); window.__fast(0.5); window.__look(st().casinoX - 380); } },
   // The hold: the arm down, the stake raining into the funnel, the sign
   // counting it up, the bulbs chasing.
-  casinopour: { about: 'the casino', say: 'the arm held: the stake pouring into the funnel, the sign counting',
-    run: () => { window.__casinoStakes(6000); window.__holdArm(true); window.__fast(1.5);
+  casinopour: { about: 'the casino', say: 'the arm pulled to the bottom: the stake pouring into the funnel, the sign counting',
+    run: () => { window.__casinoStakes(6000); window.__holdArm(true, 1); window.__fast(1.5);
+                 window.__look(st().casinoX - 380); } },
+  // ...and pushed to the top: the stake pouring back out to the purse, the
+  // sign counting down, the chase running the other way.
+  casinopush: { about: 'the casino', say: 'the arm pushed to the top: the stake pouring back to the purse',
+    run: () => { window.__casinoStakes(6000); window.__casinoStake(1500); window.__holdArm(true, -1); window.__fast(0.8);
                  window.__look(st().casinoX - 380); } },
   // The stake standing, the arm let go: the sign ready, on the count and on
   // the words, the sparkle on the bulbs; and the sign pressed.

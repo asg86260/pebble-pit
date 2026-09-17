@@ -8,7 +8,7 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
-import { fieldAt, hasPeg, pegRow, busy, mayFlash, shownPays, shownChange, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
+import { fieldAt, hasPeg, pegRow, busy, mayFlash, pourRate, shownPays, shownChange, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
 import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, findKind,
@@ -18,7 +18,7 @@ import { FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, TABLE_LIFE, 
          CASINO_CHASE_MS, CASINO_CHASE_LIVE_MS, CASINO_EDGE_STROBE_MS, CASINO_FLASH_MS, CASINO_PEG_BEAT_MS } from '../config.js';
 import { S, casino, table, tray } from '../state.js';
 import { LEVERS, leverAt, leverShape } from '../levers.js';
-import { ARM_LENGTH, ARM_BOSS, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
+import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, MARK_CELLS, DIGIT_H, BUTTON_PRESS_MS,
          SIGN_SWAP_MS, SIGN_CHASE_MIN_MS, SIGN_CHASE_MAX_MS, SIGN_FLASH_MS, SIGN_SETTLE_MS, SIGN_READY_STEP_MS, SIGN_READY_LIGHTS, SIGN_FLASH_FACE } from '../config.js';
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
@@ -180,11 +180,14 @@ function drawSign() {
       if (SIGN_READY_LIGHTS === 'sparkle') { if (sparkleOut(i, step)) return; }
       else if (!words && (i + step) % CHASE_EVERY && (i - step + 1e6) % CHASE_EVERY) return;
     }
-    else if (chasing && (i + step) % CHASE_EVERY) return;
+    else if (chasing && (i + chaseDir() * step + (1 << 20)) % CHASE_EVERY) return;
     ctx.fillRect(x + cx * P, y + cy * P, P, P);
   });
 }
 const CHASE_EVERY = 4;           // how many dark bulbs stand between the lit
+// the chase runs with the dust: round one way pouring in, the other pouring
+// back out to the purse
+const chaseDir = () => S.holding && pourRate() < 0 ? -1 : 1;
 
 // The chase's step is counted, not read off the clock, so a step that
 // changes length with the dust runs on rather than jumping.
@@ -461,18 +464,21 @@ function drawControl(l) {
   ctx.fillStyle = ink;
   ctx.strokeStyle = ink;
   // the arm turns about a boss out from the wall: the stem swings from
-  // straight up, the ball leading
+  // straight up, the ball leading, and rests halfway round
   const reach = ARM_LENGTH * P;
   const a = Math.PI / 2 - shape.angle;
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
   ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
-  knob(x, y, 2);
+  knob(x, y, ARM_PIVOT);
   ctx.lineWidth = P;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(ex, ey);
   ctx.stroke();
-  knob(ex, ey, 3);
+  knob(ex, ey, ARM_KNOB);
+  // the ball is hollow while it is being worked past the dead band, so the
+  // throttle reads at a glance: pouring in or pouring back
+  if (S.holding && Math.abs(shape.throttle) > 0.12) { ctx.fillStyle = '#fff'; knob(ex, ey, ARM_KNOB - 2); }
   ctx.fillStyle = '#000';
 }
 

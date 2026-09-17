@@ -216,8 +216,9 @@ export const S = {
   // The arm is held: the stake is pouring, whole pebbles as the fraction
   // adds up (`stepHold` in casino.js).
   holding: false,
+  throttle: 0,            // how far the held arm is pulled (down, toward 1) or pushed (up, toward -1)
   pourAcc: 0,
-  pourAt: 0,              // the rate this hold pours at, read off the purse when the arm was pressed
+  pourAt: 0,              // the rate a full pull pours at, read off the purse when the arm was pressed
   // The stake is still raining into the funnel. Nothing can be dropped until
   // the heap has stopped moving. See `pouring` in casino.js.
   pouring: false,
@@ -668,7 +669,7 @@ export const EPHEMERAL = [
   // the demonstration grain, what the machine is flashing, and a hand that
   // settled before you closed the tab: a reload comes back a pot in its plot
   // with the decision open again
-  'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'pourAcc', 'pourAt',
+  'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'throttle', 'pourAcc', 'pourAt',
   // the tray's sand is never saved, so its ledger is not either: a save
   // writes what the tray holds as `paying` (persist.js, `payingOwed`)
   'trayOwed', 'trayDust', 'trayAt', 'trayAcc', 'readyAt',

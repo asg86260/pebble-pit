@@ -26,7 +26,7 @@ import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
-import { holdAt, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
+import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
 import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -148,8 +148,8 @@ canvas.addEventListener('pointerdown', e => {
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
   if (rosterHit(p.x, p.y)) return;
-  // The casino's arm: a press on it, pointer or finger, starts the pour and
-  // holds it until the release, wherever that is. The sign: a click drops
+  // The casino's arm: a press on it, pointer or finger, grabs it, the drag
+  // works it and the release lets it go, wherever that is. The sign: a click drops
   // the stake at once; a finger is judged at the release, through the
   // page's one tap gate, since a press there may be the start of a scroll.
   if (holdAt(p.x, p.y)) { try { canvas.setPointerCapture(e.pointerId); } catch {} return; }
@@ -194,6 +194,8 @@ canvas.addEventListener('pointermove', e => {
     panning = now;
     return;
   }
+  // the arm in hand follows the pointer, and nothing else reads the drag
+  if (S.holding) { const p = pos(e); S.mouse = p; dragArm(p.x, p.y); return; }
 
   // The air is stirred on the glass, where a mote lives: dragging the view
   // slides the pointer across the world without moving it across the window,

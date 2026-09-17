@@ -111,18 +111,23 @@ export const BOARD_COLS = (CASINO_BINS.length - 2) * BIN_W + 2 * EDGE_BIN_W;
 export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 
 // --- the controls on the building ---------------------------------------------------
-// Two, and one of them is the sign. The arm is a slot machine's: a tall stem
-// up from a boss on the wall by the funnel with a ball on the end, held down
-// while the stake pours and springing back up when let go; dead, it lies at
-// the bottom of its swing. The sign is the drop button while a stake stands
-// in the funnel: a tap presses it down a cell for a beat and the floor
-// opens. A thumb needs more than a stem to find, so on a phone every hit box
-// opens out to `LEVER_HIT` cells.
-export const ARM_LENGTH = 8;              // the arm's stem, in cells
+// Two, and one of them is the sign. The arm is a throttle: a stem up from a
+// boss on the wall by the funnel with a ball on the end, resting halfway
+// round its swing, and it follows the hand. Pulled down past the dead band
+// the stake pours in, faster the further it is pulled; pushed up it pours
+// back out to the purse the same way; let go it springs to rest and the
+// stake stays. Dead, it lies at the bottom of its swing. The sign is the
+// drop button while a stake stands in the funnel: a tap presses it down a
+// cell for a beat and the floor opens. A thumb needs more than a stem to
+// find, so on a phone every hit box opens out to `LEVER_HIT` cells.
+export const ARM_LENGTH = 12;             // the arm's stem, in cells: long enough that the throw reads
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
-export const ARM_SWING = (2 * Math.PI) / 3;   // how far down it swings
+export const ARM_PIVOT = 3;               // the boss's knob, in cells across
+export const ARM_KNOB = 5;                // the ball on the end, in cells across: a thumb's worth
+export const ARM_SWING = (2 * Math.PI) / 3;   // the whole throw, top to bottom; rest is the middle of it
+export const ARM_DEAD = 0.12;             // of the half throw either side of rest that pours nothing
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells
-export const LEVER_SWING_MS = 300;        // the arm down; up takes twice this
+export const LEVER_SWING_MS = 300;        // the arm springs back to rest in this
 export const BUTTON_PRESS_MS = 200;       // the sign reads pressed this long
 export const MARK_CELLS = 5;              // a coin's mark on a bin's foot, in cells square
 // The building is the field's width and a margin either side: a white

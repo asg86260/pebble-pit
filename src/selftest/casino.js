@@ -1,13 +1,14 @@
-// The casino on the page: the bench row builds it, a press-and-hold on the
-// arm pours the stake -- with the mouse on a desk, with a finger on a phone,
-// where a hold on the arm never scrolls the page -- and a click or a tap on
-// the sign drops it. Nothing on the building has a tooltip.
+// The casino on the page: the bench row builds it, a press on the arm and
+// a drag down pours the stake -- with the mouse on a desk, with a finger on
+// a phone, where a drag on the arm never scrolls the page -- and a click or
+// a tap on the sign drops it. Nothing on the building has a tooltip.
 //
 // What the hand *does* is the node tier's (test/casino.test.mjs, handful.test.mjs);
 // this is the pointer and the page. 3 groups, in the order they have always
 // run in -- see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, buildShopFromTest, ok, run, runUntil, raf, canvas, point, touch, finger, P } from './kit.js';
+import { ARM_LENGTH, ARM_SWING } from '../config.js';
 
 const phone = on => window.__coarse(on ? true : null);
 const frames = async n => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
@@ -33,9 +34,14 @@ async function atTheCasino() {
   await frames(2);
   return state();
 }
-// where the arm and the sign are on screen
+// where the arm's ball is on screen at a throttle (rest 0, full pull 1),
+// and the sign
 const onScreen = ({ x, y }) => { const t = state(); return [(x - t.camX) * t.zoom, (y - t.camY) * t.zoom]; };
-const armAt = () => { const l = window.__leverAt('casino-gate'); return onScreen({ x: l.x, y: l.y - P * 4 }); };
+const armAt = (throttle = 0) => {
+  const l = window.__leverAt('casino-gate');
+  const a = ARM_SWING / 2 + throttle * ARM_SWING / 2, reach = ARM_LENGTH * P;
+  return onScreen({ x: l.x + l.dir * Math.sin(a) * reach, y: l.y - Math.cos(a) * reach });
+};
 const signAt = () => onScreen(window.__signAt());
 
 export const TESTS = [
@@ -44,13 +50,18 @@ export const TESTS = [
     const rows = window.__rows().filter(r => ['chip', 'stakedust', 'letgo', 'bank', 'ride'].includes(r.key));
     const held = s.stored;
     const [ax, ay] = armAt();
-    // hovering the arm says nothing; a press on it pours
+    const [bx, by] = armAt(1);
+    // hovering the arm says nothing; a press on it grabs it, and dragged to
+    // the bottom of its swing it pours
     point('pointermove', ax, ay, 0);
     await frames(2);
     const armTip = tipText();
     point('pointerdown', ax, ay);
     await frames(1);
     const pressed = state();
+    point('pointermove', bx, by);
+    await frames(1);
+    const pulled = state();
     run(1);
     await frames(1);
     const holding = state();
@@ -75,8 +86,9 @@ export const TESTS = [
     return [
       ok(s.casinoOpen, 'the bench row builds it', `casino at ${s.casinoX}`),
       ok(rows.length === 0, 'and it has no rows on any board', rows.map(r => r.key).join(',')),
-      ok(pressed.holding && holding.holding && holding.pot && holding.pot.stake > 0,
-         'the mouse held on the arm pours the stake', `${holding.pot && holding.pot.stake} after a second`),
+      ok(pressed.holding && pressed.pourRate === 0 && pulled.throttle > 0.9 && holding.pot && holding.pot.stake > 0,
+         'the mouse grabs the arm at rest, and dragged down it pours the stake',
+         `throttle ${pulled.throttle}, ${holding.pot && holding.pot.stake} after a second`),
       ok(!released.holding && released.pot && released.pot.stake === holding.pot.stake,
          'letting go, wherever the pointer is, keeps the stake', JSON.stringify(released.pot)),
       ok(stood.stored === held - stood.pot.stake && stood.canDrop, 'the purse is down by it and the sign is live',
@@ -95,10 +107,14 @@ export const TESTS = [
     const sc = document.getElementById('scroller');
     const camX = state().camX, scrollX = sc.scrollLeft;
     const [ax, ay] = armAt();
-    // the platform asks at touchstart: a finger on the arm is the game's
+    const [bx, by] = armAt(1);
+    // the platform asks at touchstart: a finger on the arm is the game's,
+    // and its drag down the swing is the throttle
     const said = touch('touchstart', canvas(), ax, ay);
     finger('pointerdown', 1, ax, ay);
     await frames(2);
+    finger('pointermove', 1, bx, by);
+    await frames(1);
     run(1);
     await frames(1);
     const holding = state(), midScroll = sc.scrollLeft;
@@ -123,7 +139,7 @@ export const TESTS = [
     await sleep(300);
     return [
       ok(said, 'the touch on the arm is claimed at touchstart, so the platform never scrolls it'),
-      ok(holding.holding && holding.pot && holding.pot.stake > 0, 'the finger held on the arm pours', `${holding.pot && holding.pot.stake}`),
+      ok(holding.holding && holding.throttle > 0.9 && holding.pot && holding.pot.stake > 0, 'the finger dragging the arm down pours', `throttle ${holding.throttle}, ${holding.pot && holding.pot.stake}`),
       ok(holding.camX === camX && midScroll === scrollX, 'the yard did not move under the hold',
          `${holding.camX} vs ${camX}, ${midScroll} vs ${scrollX}`),
       ok(!released.holding && released.pot && released.pot.stake === holding.pot.stake, 'lifting the finger keeps the stake'),

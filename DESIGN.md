@@ -1090,6 +1090,27 @@ step, and the throat lets them out `CASINO_GRAIN_GAP_MS` apart give or take
 with its two-cell trail over grey pegs stays. `tools/node/strip.mjs` and
 `stitch.py` shoot a frame strip of the drop for this kind of round.
 
+**The arm is a throttle.** Held down as a switch it poured at one rate and
+nothing else; played, the hand wanted to say how much. Now the arm rests
+halfway round its swing and follows the pointer or finger: pulled down past
+a dead band (`ARM_DEAD`) it pours in, `POUR_MIN` a second at the first
+notch up to the full rate at the bottom; pushed up past it the stake pours
+back out to the purse at the same scale -- the pebbles never spent first,
+then the landed ones refunded as they leave the ledger, the picture
+draining after them -- so the unstake is the same control the other way;
+let go it springs to rest and the stake stays. The sign rolls both ways
+and the chase runs with the dust, the other way round when pouring back.
+The ball is hollow while the arm is working past the dead band. On a
+phone the drag is the same touch the gate claims at touchstart, so it
+never scrolls. `__holdArm(true)` with no throttle is a full pull, so the
+scenes and checks that hold the arm still do.
+
+**The arm is half again as big.** A throttle has to show its throw: the
+stem is twelve cells (`ARM_LENGTH`, was eight) and the ball five across
+(`ARM_KNOB`, was three) on a three-cell boss, so the rest, the full pull
+and the full push are three different pictures from across the yard and
+a thumb has something to hold. The hit box grows with it.
+
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
 hold commits a pebble only while an unspent one covers it, the rain's
