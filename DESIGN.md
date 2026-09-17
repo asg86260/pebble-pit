@@ -10864,12 +10864,13 @@ the hands would lay them, and the cells not yet built are a dotted ghost --
 every other pixel of the cell, at the tone of the ground's dots. The picture
 is the bar. At the press it is all ghost; at the last hammer-blow it is all
 ink, and the tile is the tile it will be from then on. The stroke is on
-from the first cell, round the whole drawing rather than the part that is
-up (the owner, 2026-09-16: "can the outline of the tier of upgrade be
+from the first cell, round the cells that are up, so it grows with the
+fill (the owner, 2026-09-16: "can the outline of the tier of upgrade be
 included into the build animation and progress? instead of just being the
-gray version of the glyph"): the row's `buy` has not run, so its bill is
-still the rung going up, and the coloured edge says which rung that is
-while the dots inside it say how far.
+gray version of the glyph"; 2026-09-17: "only show the outline for the
+built cells? not the whole glyph"): the row's `buy` has not run, so its
+bill is still the rung going up, and the coloured edge says which rung
+that is while the dots above it say how far is left.
 
 The yard's rule holds: **the fill moves only while somebody is at the site.**
 It is `progressOf(workOn(key))` read straight, the same number the site's

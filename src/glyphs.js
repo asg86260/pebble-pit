@@ -141,10 +141,11 @@ export const inkSpan = rows => {
 // `built` is how many of the drawing's cells are up on a tile being built
 // (DESIGN.md, "A tile being built shows the building"): laid bottom row
 // first, left to right, the rest a ghost of one pixel in four. Null is the
-// whole drawing. The stroke goes round the whole drawing from the first cell,
-// so the rung going up is legible before it is up. `'plan'` is a thing in
-// line: its outline and nothing inside -- the stroke, or the shape's own
-// one-pixel edge in ghost when the rung has no coin.
+// whole drawing. The stroke goes round the cells that are up, so it grows
+// with the fill (the owner, 2026-09-17: "only show the outline for the built
+// cells? not the whole glyph"). `'plan'` is a thing in line: its outline
+// and nothing inside -- the stroke round the whole drawing, or the shape's
+// own one-pixel edge in ghost when the rung has no coin.
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
 //
 // `hands` are the bodies at the site (DESIGN.md, "A hand on the tile"): one
@@ -167,8 +168,7 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') laid.push([x, y]); }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const plan = built === 'plan';
-  // The whole drawing's footprint, up or not: what the stroke goes round on a
-  // tile being built.
+  // The whole drawing's footprint, up or not: what a plan's stroke goes round.
   const shape = new Uint8Array(W * H);
   laid.forEach(([x, y], k) => {
     const up = built === null || (!plan && k < built);
@@ -208,9 +208,9 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
     }
   }
   if (tint) {
-    // Round the finished drawing (which the badge has cut into), or round the
-    // footprint of one still going up.
-    const mass = built === null ? solid : shape;
+    // Round the cells that are up (the badge cut into them on a finished
+    // drawing); a plan has none, so round its whole footprint.
+    const mass = plan ? shape : solid;
     const out = new Uint8Array(W * H); const q = [0]; out[0] = 1;
     while (q.length) {
       const k = q.pop(), x = k % W, y = (k - x) / W;

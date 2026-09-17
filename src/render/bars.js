@@ -99,10 +99,10 @@ export function barSpot(site, w = null) {
 // glyph at a yard cell a sprite cell, going up the way the card's does
 // (glyphs.js, `drawGlyph`) -- bottom row first, left to right, one cell of the
 // drawing a share of the work, the rest the shape's outline and nothing inside
-// (the card's `plan`), and round the whole of it the rung's coloured stroke
-// (`tint`, the card's `tintOf`) as thick as the done mark's, from the first
-// cell. The same picture on the tile and over the station, so a glance at
-// either says what is coming.
+// (the card's `plan`), and round the cells that are up the rung's coloured
+// stroke (`tint`, the card's `tintOf`) as thick as the done mark's, growing
+// with the fill. The same picture on the tile and over the station, so a
+// glance at either says what is coming.
 const EDGE = P / 6;                      // the outline's stroke, one yard pixel
 export function buildingGlyph(cx, cy, rows, at, tint = null) {
   const laid = [];
@@ -114,21 +114,23 @@ export function buildingGlyph(cx, cy, rows, at, tint = null) {
   // (the shovel, the lamp) would otherwise hang beside the station.
   const [lo, hi] = inkSpan(rows);
   const x0 = Math.round(cx / P - (lo + hi) / 2) * P, y0 = cy - (CELLS * P) / 2;
-  // The stroke first, under the cells: a strip along each side that faces the
-  // outside, and a square on each corner whose diagonal is outside, so it runs
-  // round the shape without boxing a cell or lining a hole. Outside is flooded
-  // from a cell past the grid, the way the done mark's stroke finds it.
-  if (tint) {
+  // The stroke first, under the cells: a strip along each side of a built cell
+  // that faces the outside, and a square on each corner whose diagonal is
+  // outside, so it runs round what is up without boxing a cell or lining a
+  // hole. Outside is flooded from a cell past the grid over everything not
+  // yet built, the way the done mark's stroke finds it.
+  if (tint && up) {
     const t = Math.max(1, P / 3);
+    const built = new Set(laid.slice(0, up).map(([x, y]) => `${x},${y}`));
     const out = new Set(), q = [[-1, -1]];
     while (q.length) {
       const [x, y] = q.pop(), k = `${x},${y}`;
-      if (x < -1 || y < -1 || x > CELLS || y > CELLS || out.has(k) || shape.has(k)) continue;
+      if (x < -1 || y < -1 || x > CELLS || y > CELLS || out.has(k) || built.has(k)) continue;
       out.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
     }
     const open = (x, y) => out.has(`${x},${y}`);
     ctx.fillStyle = tint;
-    laid.forEach(([x, y]) => {
+    laid.slice(0, up).forEach(([x, y]) => {
       const px = x0 + x * P, py = y0 + y * P;
       if (open(x, y - 1)) ctx.fillRect(px, py - t, P, t);
       if (open(x, y + 1)) ctx.fillRect(px, py + P, P, t);
