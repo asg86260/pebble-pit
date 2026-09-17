@@ -584,8 +584,9 @@ addEventListener('touchstart', e => {
 canvas.addEventListener('wheel', e => {
   if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
   e.preventDefault();
-  if (reducedMotion()) pan(e.deltaY * 0.8);
-  else wheelOwed += e.deltaY * 0.8;
+  const d = e.deltaY * WHEEL_GAIN;
+  if (reducedMotion()) pan(d);
+  else wheelOwed += d;
 }, { passive: false });
 
 // The cursor leaving the menu closes it, unless it left toward the station:
@@ -644,6 +645,7 @@ function panDir(e, key) {
 }
 const keysHeld = new Set();
 const KEY_PAN = 0.5;                          // views a second, held: the same feel at any zoom
+const WHEEL_GAIN = 1.0;                       // world units a pixel of wheel delta is worth
 let wheelOwed = 0;                            // world units the wheel has asked for and not yet had
 const WHEEL_EASE = 80;                        // ms for the owed distance to fall to 1/e
 let panAt = 0;
