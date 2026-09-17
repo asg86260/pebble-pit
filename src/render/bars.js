@@ -126,7 +126,8 @@ export function buildingGlyph(cx, cy, rows, at) {
 }
 
 // Over a construction -- a building coming out of the ground, whose own
-// sprite already shows the thing going up (`risingPlaces`) -- the bar, so the
+// sprite already shows the thing going up (`risingPlaces`), or a shield rising
+// over the rock (`risingShield` in render/shield.js) -- the bar, so the
 // picture is not said twice. Over anything else a station is working on (a
 // rung, a machine, a bench, a spell) the thing itself, since nothing on the
 // ground shows what it is.
@@ -144,7 +145,7 @@ export function drawWorkBars() {
       const x = Math.round(at.x / P) * P;
       const lift = site === 'yard' ? 0 : stacked++;
       const y = Math.round(at.y / P) * P;
-      if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
+      if (site === 'yard' && (KINDS[w.key] || risingPlaces().some(r => r.key === w.key))) {
         bar(x, y - lift * P * 5, progressOf(w));
         continue;
       }
