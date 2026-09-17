@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- On a phone, a finger that lands a little off the dust still sweeps it instead of scrolling the yard (src/selftest/touch.js, "one finger on the yard scrolls it").
+
 ## v0.2.5 — 2026-09-17
 
 **New this release**
