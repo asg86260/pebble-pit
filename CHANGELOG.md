@@ -18,6 +18,7 @@ feature lives in DESIGN.md.
 - Hold to toss reaches the hole from anywhere on the rock's pile at its first rung (500px, up from 120); the reach ladder is for the stations further off.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.
 - The mark over a station that finished something shows the thing itself, not a tick, with the same coloured outline its card wears.
+- The work over a station shows the thing itself going up, cell by cell, the way its card does; only a building coming out of the ground keeps the bar, since its own sprite already shows it rising.
 - The turned-down corner on a new tile is in its top-left, off the ladder's pips.
 - The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
 - The casino is taller and its foot is a tray: a paid hand heaps in it, stands a beat, then flies out of the hatch into the hole on its own; nothing goes on the ground and no pile ever holds up the next drop (test/casino.test.mjs).
