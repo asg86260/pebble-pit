@@ -1,12 +1,14 @@
 // The progress bar, and where each site's bar hangs.
 
-import { P, TOWER_SHAFT } from '../config.js';
+import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
+import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, onTheGo } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { KINDS, shieldPlan } from '../shield.js';
 import { flagReach } from './aura.js';
+import { risingPlaces } from './rise.js';
 import { ctx } from './ctx.js';
 
 // One bar for every site that builds: a thing filling a cell at a time, over
@@ -92,22 +94,65 @@ export function barSpot(site, w = null) {
   return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
 }
 
-// Only the bar over a station: the building's own sprite already shows the
-// thing going up, so a picture of it here would say the same thing twice.
+// The thing being worked on, over the place it is happening: the row's own
+// glyph at a yard cell a sprite cell, going up the way the card's does
+// (glyphs.js, `drawGlyph`) -- bottom row first, left to right, one cell of the
+// drawing a share of the work, the rest the shape's outline and nothing inside
+// (the card's `plan`). The same picture on the tile and over the station, so a
+// glance at either says what is coming.
+const EDGE = P / 6;                      // the outline's stroke, one yard pixel
+export function buildingGlyph(cx, cy, rows, at) {
+  const laid = [];
+  const shape = new Set();
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(`${x},${y}`); } }));
+  laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const up = Math.floor(at * laid.length);
+  // Centred on the ink, not the box: a drawing off to one side of its grid
+  // (the shovel, the lamp) would otherwise hang beside the station.
+  const [lo, hi] = inkSpan(rows);
+  const x0 = Math.round(cx / P - (lo + hi) / 2) * P, y0 = cy - (CELLS * P) / 2;
+  laid.forEach(([x, y], k) => {
+    const px = x0 + x * P, py = y0 + y * P;
+    if (k < up) { ctx.fillStyle = '#000'; ctx.fillRect(px, py, P, P); return; }
+    // Each side of the cell that faces out of the shape gets a stroke, so the
+    // outline runs round the whole drawing rather than boxing every cell. In
+    // a light gray: what is not there yet stands back from what is.
+    ctx.fillStyle = BUILD_GHOST_INK;
+    if (!shape.has(`${x},${y - 1}`)) ctx.fillRect(px, py, P, EDGE);
+    if (!shape.has(`${x},${y + 1}`)) ctx.fillRect(px, py + P - EDGE, P, EDGE);
+    if (!shape.has(`${x - 1},${y}`)) ctx.fillRect(px, py, EDGE, P);
+    if (!shape.has(`${x + 1},${y}`)) ctx.fillRect(px + P - EDGE, py, EDGE, P);
+  });
+}
+
+// Over a construction -- a building coming out of the ground, whose own
+// sprite already shows the thing going up (`risingPlaces`) -- the bar, so the
+// picture is not said twice. Over anything else a station is working on (a
+// rung, a machine, a bench, a spell) the thing itself, since nothing on the
+// ground shows what it is.
 export function drawWorkBars() {
   for (const site of SITES) {
-    // A bar over what is being built and none over what is in line behind it.
+    // A mark over what is being built and none over what is in line behind it.
     const list = onTheGo(site);
     if (!list.length) continue;
-    // One bar a work. On the yard each work stands on its own ground, so each
-    // bar hangs over its own thing; elsewhere a second work stacks upward.
+    // One a work. On the yard each work stands on its own ground, so each
+    // hangs over its own thing; elsewhere a second work stacks upward.
     let stacked = 0;
     for (const w of list) {
       const at = barSpot(site, w);
       if (!at) continue;
       const x = Math.round(at.x / P) * P;
       const lift = site === 'yard' ? 0 : stacked++;
-      bar(x, Math.round(at.y / P) * P - lift * P * 5, progressOf(w));
+      const y = Math.round(at.y / P) * P;
+      if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
+        bar(x, y - lift * P * 5, progressOf(w));
+        continue;
+      }
+      // Its foot where the bar's would be (a bar is three cells deep, centred
+      // on the spot), so the picture stands clear of the flag's tip the way
+      // the bar does instead of sitting on it.
+      const cy = y - (CELLS / 2 - 1.5) * P - lift * P * (CELLS + 2);
+      buildingGlyph(x, cy, glyphFor(w.key), progressOf(w));
     }
   }
 }
