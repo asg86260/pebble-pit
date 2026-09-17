@@ -162,10 +162,13 @@ export const TOWER_UPGRADES = [
 // tune, and it takes everything from the frame it tears (`stepRift` in
 // rift.js). `S.riftLevel` is still read off old saves so they load clean.
 
+// The dome is this board's goal, as each shield before it is the bench's: the
+// wide card, and it pins itself into the corner once you have opened the
+// tower to see it (`fillPin` in shop.js).
 export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
-  { title: 'the dome', keys: ['dome'] }
+  { title: 'the dome', goal: true, keys: ['dome'] }
 ];
 
 // so a work coming back out of a save knows which row it belongs to

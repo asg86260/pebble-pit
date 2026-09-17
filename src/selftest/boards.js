@@ -1709,4 +1709,41 @@ export const TESTS = [
       ok(down, 'and its pushpin takes it down again, leaving the corner empty')
     ];
   }],
+
+  // The dome is the tower's goal, and it waits for the tower to be opened: the
+  // bench's sign sends you to the wizards, and a dome pinned from the yard
+  // would spare you that walk.
+  ['the dome pins itself once the tower is opened, not before', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1, 0, 0, 0, 1);
+    window.__jump(4);
+    window.__answered('props', 'net', 'arch');
+    window.__meteor();
+    window.__build();
+    const corner = () => document.getElementById('pin');
+    const card = () => corner().querySelector('button[data-key]');
+    await settle(0.2);
+    // The dome is on offer, but nobody has been up to see it.
+    const offered = state().offered?.dome ?? true;
+    const notYet = corner().hidden && state().pinned === null;
+
+    window.__board('tower');
+    await settle(0.2);
+    const goalCard = document.querySelector('#towershop button[data-key="dome"]');
+    const wide = goalCard?.classList.contains('goal');
+    const pinned = !corner().hidden && card()?.dataset.key === 'dome' && state().pinned === 'dome';
+
+    // Closing the board leaves it up: going into the corner was being seen.
+    window.__board(null);
+    await settle(0.2);
+    const stays = !corner().hidden && state().pinned === 'dome';
+
+    return [
+      ok(offered && notYet, 'the dome on offer does not pin from the yard', state().pinned),
+      ok(wide, "it is the goal card on the tower's board"),
+      ok(pinned, 'and opening the tower pins it into the corner', card()?.dataset.key),
+      ok(stays, 'where it stays once the board is closed')
+    ];
+  }],
 ];

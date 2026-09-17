@@ -849,6 +849,13 @@ export const SCENES = {
                   window.__look(S.cx - S.viewW / 2);
                 } }]])
   ])),
+  // The dome on offer: the three before it have failed and the tower is
+  // opened to it, so the board wears the wide goal card and the corner pins
+  // it (`fillPin` in shop.js).
+  domeoffer: { about: 'the shields', say: "the dome on offer on the tower's board, pinned in the corner",
+    run: () => { shieldYard(); window.__answered('props', 'net', 'arch');
+                 S.quarryOpen = S.farmOpen = true; window.__meteor();
+                 window.__board('tower'); window.__fast(12); } },
   // The star is left up so the shot proves the beams draw with one burning.
   'dome+': { about: 'the shields', say: 'the wizard called off the star, flat out for the dome',
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },

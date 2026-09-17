@@ -777,11 +777,24 @@ export const togglePin = key => {
   S.pinned = S.pinned === key ? null : key;
 };
 
+// Where a goal can stand: the bench's sky, and the tower's dome. The bench's
+// pins the frame it arrives; a station's waits until you have opened that
+// board, because the bench's sign sends you to the tower, and a dome pinned
+// from the yard would spare you the walk it is there to make you take.
+const GOALS = [
+  { rows: UPGRADES, sections: SECTIONS, when: () => true },
+  { rows: TOWER_UPGRADES, sections: TOWER_SECTIONS, when: () => S.towerBoardOpen }
+];
+
 const goalRow = () => {
-  const goal = SECTIONS.find(s => s.goal);
-  if (!goal) return null;
-  return UPGRADES.find(u => goal.keys.includes(u.key) && !u.sign && revealed(u)
-                            && !S.seenRows.includes(u.key)) || null;
+  for (const { rows, sections, when } of GOALS) {
+    const goal = sections.find(s => s.goal);
+    if (!goal || !when()) continue;
+    const u = rows.find(u => goal.keys.includes(u.key) && !u.sign && revealed(u)
+                             && !S.seenRows.includes(u.key));
+    if (u) return u;
+  }
+  return null;
 };
 
 export function fillPin() {
