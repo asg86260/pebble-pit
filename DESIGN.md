@@ -226,8 +226,9 @@ runs.
 
 The chimney says the place is being worked, and it goes out the moment the work is done — which
 is a signal made of nothing happening, and no use at all if you were looking elsewhere. So
-finishing leaves a **mark standing over the lab**: a tick in a box, the opposite number to the bar
-that means a station has stopped. It bobs, because it is asking to be come and looked at rather
+finishing leaves a **mark standing over the lab**: the finished thing's own glyph in a box — the
+drawing its card wears, so the mark says what landed — the opposite number to the bar that means
+a station has stopped. It bobs, because it is asking to be come and looked at rather
 than reporting a state, and it comes down when the lab board is read. The lab's own board carries
 the **crew row** as well as the bench's, because the lab is where you are standing when you start
 a piece of research and walking back to the bench to staff it is a walk for nothing.

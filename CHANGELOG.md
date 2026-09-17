@@ -16,6 +16,7 @@ feature lives in DESIGN.md.
 - Hold to toss reaches the hole from anywhere on the rock's pile at its first rung (500px, up from 120); the reach ladder is for the stations further off.
 - A station building something shows the thing itself going up over the roof, cell by cell, the way its card does, instead of a bar.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.
+- The mark over a station that finished something shows the thing itself, not a tick.
 - The turned-down corner on a new tile is in its top-left, off the ladder's pips.
 - The number notices say their number as digits: 25 rocks, 100k pebbles, a crew of 50.
 - The thing going up over a shed hangs centred on its drawing, not its grid, so a lopsided one like the shovel no longer sits off to the left (the shot: `node tools/look.mjs buildbench`).
