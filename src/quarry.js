@@ -5,7 +5,7 @@
 // carrying dust. Nothing about the quarry is shown until it is opened.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo, plant } from './route.js';
-import { BENCH_COST, BENCH_SHARDS, BENCH_RATE, rungValue,
+import { BENCH_SHARDS, BENCH_RATE, rungValue,
          QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
 import { shockAt } from './shock.js';
@@ -874,11 +874,9 @@ export const QUARRY_UPGRADES = [
     // climbs with it.
     rung: () => S.benchLevel,
     rungs: () => QUARRY_BENCH_MAX - QUARRY_BENCH0,
-    // Green and blue: the other ground's crop, so the cut and the plots pay
-    // for each other, and a cut of the cut's own stone, so the next bench
-    // comes out of what the gang is already bringing up.
-    bill: () => [['spore', Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel))],
-                 ['shard', Math.round(BENCH_SHARDS * Math.pow(BENCH_RATE, S.benchLevel))]],
+    // A cut of the cut's own stone: the next bench comes out of what the
+    // gang is already bringing up.
+    bill: () => [['shard', Math.round(BENCH_SHARDS * Math.pow(BENCH_RATE, S.benchLevel))]],
     buy: () => { S.benchLevel++; resite(); },
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },

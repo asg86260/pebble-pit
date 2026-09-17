@@ -27,7 +27,7 @@ group('paying starts the work and does not finish it', async () => {
   run(2);
 
   const benches = state().benches;
-  const stone = state().spores;
+  const stone = state().shards;
   const started = window.__buy('quarrybench');
   const just = state();
   const work = on('quarrybench');
@@ -42,8 +42,8 @@ group('paying starts the work and does not finish it', async () => {
     // The coin goes on the press. What you are waiting on is the labour, not the
     // bill -- a price you could still spend on something else while the thing it
     // bought was being made would be a price you had not paid.
-    ok(just.spores < stone, 'the crop is taken on the press, not on the finish',
-       `${stone} -> ${just.spores}`),
+    ok(just.shards < stone, 'the stone is taken on the press, not on the finish',
+       `${stone} -> ${just.shards}`),
     ok(!!work && work.of > 0 && work.done < work.of,
        'and there is a work on the cut, part done',
        work ? `${work.done} of ${work.of}` : 'nothing'),

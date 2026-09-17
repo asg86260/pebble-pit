@@ -19,9 +19,9 @@ export const TESTS = [
     const packed = state();
 
     // Enough of each coin for the bench and the plot together: the bench
-    // asks spores and shards, the plot dust and spores.
-    const { BENCH_COST, BENCH_SHARDS, PLOT_SPORES } = await import('../config.js');
-    window.__grant({ shards: 40 + BENCH_SHARDS, spores: BENCH_COST + PLOT_SPORES });
+    // asks shards, the plot dust and spores.
+    const { BENCH_SHARDS, PLOT_SPORES } = await import('../config.js');
+    window.__grant({ shards: 40 + BENCH_SHARDS, spores: PLOT_SPORES });
     // And dust, which the farm's rows are priced in: the plots open before
     // the cut.
     window.__tip(20000);
