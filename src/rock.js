@@ -490,26 +490,18 @@ export function pickCell(mx, my) {
 export function knockOff(mx, my, want = pickCount(), dirties = true, body = null, from = 'you') {
   const c = pickCell(mx, my);
   if (!c) return;
+  return bite(want, w => shaveOrder(c, w), mx, body, from);
+}
 
-  // Whatever came down in the last rain is on top of the rock, and a swing
-  // goes into that first: the shift the rain cost you, paid here.
-  want = throughRockMuck(want);
-  if (want < 1) return;
-
-  noteBite(body ? 'crew' : from);   // somebody has now bitten this rock
-
-  // The rock is an unbounded job, so a crit ADDS pixels. One roll for the
-  // swing, whoever is swinging; the spoil then flies up as a fountain.
-  const crit = critRoll(critBoost(body));
-  if (crit > 1) want *= crit;
-
-  // A swing shaves the rock, it does not bore it: a cell is ranked first by
-  // how much deeper it sits under its own column's surface than the struck
-  // cell does, and only then by distance. On a hill the cells beside a
-  // surface strike are air and the nearest stone is straight down, so
-  // ranking by distance alone sent a crit down a column; this way it takes
-  // the top layer across the neighbouring columns before it goes under.
-  // The search reaches further sideways than down for the same reason.
+// A swing shaves the rock, it does not bore it: a cell is ranked first by
+// how much deeper it sits under its own column's surface than the struck
+// cell does, and only then by distance. On a hill the cells beside a
+// surface strike are air and the nearest stone is straight down, so
+// ranking by distance alone sent a crit down a column; this way it takes
+// the top layer across the neighbouring columns before it goes under.
+// The search reaches further sideways than down for the same reason.
+// One sheet a cell: a swing lightens `want` cells rather than boring one.
+function shaveOrder(c, want) {
   const down = Math.ceil(Math.sqrt(want)) + 1;
   const wide = Math.min(Math.ceil(want / 2) + 1, S.gw);
   const tops = S.rockTops || [];
@@ -525,7 +517,43 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
     }
   }
   near.sort((a, b) => a.deep - b.deep || a.d - b.d);
+  return near;
+}
 
+// The ram's order: the face, whole. The nearest column that still has rock
+// in it, top cell first, every sheet of a cell before the next, so the hill
+// is eaten from the left and nothing else is touched. Handed the shave
+// order instead, a strike as big as the ram's took one sheet off a band of
+// cells along the surface, and the rock came apart in rows and columns of
+// pale cells rather than at the face. A cell is listed once a sheet, since
+// `bite` takes one sheet an entry.
+function faceOrder(want) {
+  const cells = [];
+  for (let x = 0; x < S.gw && cells.length < want; x++) {
+    for (let y = 0; y < S.gh && cells.length < want; y++) {
+      for (let n = S.boulder[y][x]; n > 0 && cells.length < want; n--) cells.push({ x, y });
+    }
+  }
+  return cells;
+}
+
+// Take `want` sheets in the order `order` ranks them, spend the muck first,
+// roll the crit, throw the spoil and sound the pick; `mx` is where the sound
+// comes from. Answers how many sheets came off.
+function bite(want, order, mx, body, from) {
+  // Whatever came down in the last rain is on top of the rock, and a swing
+  // goes into that first: the shift the rain cost you, paid here.
+  want = throughRockMuck(want);
+  if (want < 1) return;
+
+  noteBite(body ? 'crew' : from);   // somebody has now bitten this rock
+
+  // The rock is an unbounded job, so a crit ADDS pixels. One roll for the
+  // swing, whoever is swinging; the spoil then flies up as a fountain.
+  const crit = critRoll(critBoost(body));
+  if (crit > 1) want *= crit;
+
+  const near = order(want);
   const took = Math.min(want, near.length);
   // How deep the nearest cell still is, as a share of the rock's full thickness:
   // the pick sounds lower and duller the more sheets are under it.
@@ -604,6 +632,10 @@ export function ramX() {
   return Math.round(ramNowX / P) * P;
 }
 
+// One strike: the face, from the left (`faceOrder`), sounded from where the
+// arm lands.
+const ramStrike = want => bite(want, faceOrder, rockFaceX(), null, 'machine');
+
 defineMachine('ram', {
   job: JOB.ROCK,
   type: TYPE.ROCK,
@@ -633,16 +665,9 @@ defineMachine('ram', {
   // is owed this frame at once): one `knockOff` and one `refreshRockTops`
   // rather than eight a frame.
   bite: (tender, n = 1) => {
-    // The nearest column that still has rock in it, not a fixed spot: struck
-    // at a fixed column, the arm went on swinging at a hole in the air for
-    // the rest of the boulder.
-    let col = -1;
-    for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) { col = c; break; }
-    if (col < 0) return false;                 // nothing left of this one
-    const x = rockLeft() + col * P + P / 2;
-    const y = rockTopY(col) + P * 2;
+    if (rockFaceX() >= rockLeft() + S.gw * P) return false;   // nothing left of this one
     const bite = rockhandBite();
-    const took = knockOff(x, y, bite * n, true, null, 'machine') || 0;
+    const took = ramStrike(bite * n) || 0;
     if (!took) return 0;
     // Credited what it took, not one a strike: `mined` counts cells off the
     // hill everywhere else it is written.

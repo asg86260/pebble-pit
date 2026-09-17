@@ -10,6 +10,7 @@ import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, 
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
 import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT, BELT_SPREAD } from '../src/config.js';
+import { S } from '../src/state.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
@@ -178,6 +179,51 @@ group('the ram advances into the hill as it eats it', async () => {
        `${ram[0]} -> ${ram[ram.length - 1]}`),
     ok(daylight, 'never closing the daylight the arm strikes across',
        `${standoff.join(' ')}, reach ${RAM_REACH} cells`)
+  ];
+});
+
+// The ram eats the face, and only the face.
+//
+// A strike used to go through the swing's cell ranking, which takes one sheet
+// off each of a band of cells along the surface: a player's pick shaves. At
+// the ram's bite that pale band ran across the hill, and once the struck spot
+// was hollow the strike bored sideways to the nearest stone, so a thick rock
+// came apart in rows and columns of half-eaten cells instead of from the
+// left. Sampled while it works: the only cell part-way through is in the
+// face column, and every column right of the face is still whole.
+group('the ram takes the face whole, column by column from the left', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0);
+  window.__machine('ram', { bought: true });
+  window.__clearFloor();
+  window.__jump(6);                          // three sheets a cell: a half-eaten cell shows
+  // Sheets are thinner toward the crest, so "eaten" is measured against the
+  // rock as it was built, not against the full depth.
+  const built = S.boulder.map(row => row.slice());
+  runUntil(() => (state().machines.ram.workedAt | 0) > 0, 40);
+
+  const wrong = [];
+  for (let i = 0; i < 16 && !wrong.length; i++) {
+    run(0.25); window.__clearFloor();
+    if (S.boulderNo !== 6) break;            // the next rock lands whole
+    const face = S.rockTops.findIndex(t => t >= 0);
+    if (face < 0) break;
+    const partial = [];
+    for (let y = 0; y < S.gh; y++) for (let x = 0; x < S.gw; x++) {
+      const v = S.boulder[y][x];
+      if (v === built[y][x]) continue;
+      if (x > face) wrong.push(`right of the face ${face}: ${x},${y}=${v} of ${built[y][x]}`);
+      else if (v > 0) partial.push(`${x},${y}=${v} of ${built[y][x]}`);
+    }
+    if (partial.length > 1) wrong.push(`more than one cell part-way through: ${partial.join(' ')}`);
+  }
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(!wrong.length, 'one cell at most is part-way through, and nothing right of the face is touched',
+       wrong.slice(0, 3).join('; ') || 'clean')
   ];
 });
 
