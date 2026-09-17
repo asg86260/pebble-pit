@@ -120,10 +120,10 @@ export const FIELD_H = BOARD_AIR + CASINO_PEG_ROWS * PEG_ROW_H;
 // drop button while a stake stands in the funnel: a tap presses it down a
 // cell for a beat and the floor opens. A thumb needs more than a stem to
 // find, so on a phone every hit box opens out to `LEVER_HIT` cells.
-export const ARM_LENGTH = 8;              // the arm's stem, in cells
+export const ARM_LENGTH = 12;             // the arm's stem, in cells: long enough that the throw reads
 export const ARM_BOSS = 2;                // the boss the arm turns on stands this far out from the wall
-export const ARM_PIVOT = 2;               // the boss's knob, in cells across
-export const ARM_KNOB = 3;                // the ball on the end, in cells across
+export const ARM_PIVOT = 3;               // the boss's knob, in cells across
+export const ARM_KNOB = 5;                // the ball on the end, in cells across: a thumb's worth
 export const ARM_SWING = (2 * Math.PI) / 3;   // the whole throw, top to bottom; rest is the middle of it
 export const ARM_DEAD = 0.12;             // of the half throw either side of rest that pours nothing
 export const LEVER_HIT = 8;               // the tap target on a phone, in cells

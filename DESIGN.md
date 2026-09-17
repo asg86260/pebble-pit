@@ -1105,6 +1105,12 @@ phone the drag is the same touch the gate claims at touchstart, so it
 never scrolls. `__holdArm(true)` with no throttle is a full pull, so the
 scenes and checks that hold the arm still do.
 
+**The arm is half again as big.** A throttle has to show its throw: the
+stem is twelve cells (`ARM_LENGTH`, was eight) and the ball five across
+(`ARM_KNOB`, was three) on a three-cell boss, so the rest, the full pull
+and the full push are three different pictures from across the yard and
+a thumb has something to hold. The hit box grows with it.
+
 **The stake is what was held for, and the purse is spent as it lands.** The
 pot carries `stake` (committed), `n` (landed and spent) and `owed`; the
 hold commits a pebble only while an unspent one covers it, the rain's
