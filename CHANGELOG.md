@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- On an iPhone playing the itch page, the yard no longer slides under a finger that is sweeping dust (src/selftest/touch.js, "one finger on the yard scrolls it").
+
 ## v0.3.1 — 2026-09-17
 
 - On a phone, a finger that lands a little off the dust still sweeps it instead of scrolling the yard (src/selftest/touch.js, "one finger on the yard scrolls it").

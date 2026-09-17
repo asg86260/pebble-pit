@@ -580,6 +580,16 @@ addEventListener('touchstart', e => {
     if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { e.preventDefault(); return; }
   }
 }, { passive: false });
+// ...and said again on every move while the game holds the finger. iPhone
+// Safari, with the game framed in itch's page, went on scrolling the yard
+// under a sweep that touchstart had refused (2026-09-17), so the refusal
+// at landing is not enough there; a move refused is refused wherever the
+// platform decided. A finger the game did not claim never gets here with
+// a sweep or the arm on, so the platform's own scroll is untouched.
+addEventListener('touchmove', e => {
+  if (e.target !== canvas) return;
+  if (S.dragging || S.holding) e.preventDefault();
+}, { passive: false });
 
 // The wheel: a vertical wheel is the yard's own sideways pan, as it always
 // was. A sideways delta -- a trackpad's two-finger swipe -- is left to the

@@ -54,6 +54,7 @@ export const TESTS = [
     const skyY = (s1.groundY - 300 - s1.camY) * s1.zoom;
     const skySaid = touch('touchstart', canvas(), 300, skyY);
     finger('pointerdown', 1, 300, skyY);
+    const skyMoveSaid = touch('touchmove', canvas(), 280, skyY);   // a move on the sky is the platform's too
     for (let i = 1; i <= 6; i++) { finger('pointermove', 1, 300 - i * 20, skyY); await sleep(16); }
     finger('pointerup', 1, 180, skyY);
     touch('touchend', canvas(), 180, skyY);
@@ -65,13 +66,14 @@ export const TESTS = [
     const s3 = state();
     let spot = null;
     for (let dx = -60; dx <= 60 && spot == null; dx += 6) if ([-6, 0, 6].every(k => window.__dustUnder(s3.camX + s3.viewW / 2 + dx + k, s3.groundY - 6) && window.__dustUnder(s3.camX + s3.viewW / 2 + dx, s3.groundY - 6 + k))) spot = s3.camX + s3.viewW / 2 + dx;
-    let dustSaid = null, swept = null, stayed = null;
+    let dustSaid = null, swept = null, stayed = null, moveSaid = null;
     let nearBrush = null, nearReach = null, nearSaid = null, nearDrag = null;
     if (spot != null) {
       const [dx, dy] = [(spot - s3.camX) * s3.zoom, (s3.groundY - 6 - s3.camY) * s3.zoom];
       dustSaid = touch('touchstart', canvas(), dx, dy);
       finger('pointerdown', 1, dx, dy);
       for (let i = 1; i <= 6; i++) { finger('pointermove', 1, dx - i * 12, dy); await sleep(16); }
+      moveSaid = touch('touchmove', canvas(), dx - 72, dy);   // and every move of a held sweep is refused too (itch on an iPhone)
       const mid = state();
       swept = mid.dragging && (mid.held > s3.held || mid.floor < s3.floor);
       stayed = mid.camX === s3.camX;
@@ -116,6 +118,7 @@ export const TESTS = [
       ok(spot != null, 'there is dust on the floor to press on'),
       ok(dustSaid === true, 'a finger on dust is the game\'s: the platform is told no', `refused ${dustSaid}`),
       ok(swept === true && stayed === true, 'and it sweeps without moving the view', `swept ${swept}, stayed ${stayed}`),
+      ok(moveSaid === true && skyMoveSaid === false, 'a move of a held sweep is refused to the platform, a move on the sky is not', `sweep ${moveSaid}, sky ${skyMoveSaid}`),
       ok(nearBrush && nearReach && nearSaid === true && nearDrag === true, 'a finger a thumb\'s width off the pile is a sweep too, not a scroll',
          `past the brush ${nearBrush}, within reach ${nearReach}, refused ${nearSaid}, dragging ${nearDrag}`),
       ok(houseUp && houseDown, 'a board comes down when its station is scrolled off the window', `up ${houseUp}, down ${houseDown}`),
