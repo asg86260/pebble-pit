@@ -1,17 +1,18 @@
 // The queue card: what the yard is building and what is in line behind it, on
 // one small card in the corner of the window (DESIGN.md, "The queue").
 //
-// One name a line, across every site, in the order they were bought; a work
-// somebody is on carries its bar as pips. A name nobody has started on is a
+// One name a line, across every site, in the order things will land; the line
+// at the front of each site's run carries the bar as pips. A waiting name is a
 // button, and pressing it hands the work back through the same `buy` its row
 // goes through, so the card and the board cannot disagree. It stands top-left,
 // under the boards: on a short window a board reaches the corner, and the
 // board you walked up to read should win it.
 
 import { S } from './state.js';
-import { SITES, worksAt, progressOf, rowFor, leftAt, waiting, idleAt } from './works.js';
+import { SITES, worksAt, roomAt, progressOf, rowFor, leftAt, stalled } from './works.js';
 import { buy } from './upgrades.js';
 import { leftText } from './words.js';
+import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';
 
@@ -32,12 +33,20 @@ const pips = w => {
   return '●'.repeat(at) + '○'.repeat(QUEUE_PIPS - at);
 };
 
-// Every work is built at once, each at its own pace, so a line's clock is
-// what is left of that one work (`leftAt`). A line nobody is at says `queued`
-// and no clock: a clock over a work nobody is doing is a promise the yard is
-// not keeping.
-const clockOf = (site, key) =>
-  idleAt(site, key) ? 'queued' : `<i class="clock"></i><b>${leftText(leftAt(site, key))}</b>`;
+// A site's line is worked one at a time at one pace, so the time until a work
+// lands is the sum of what is left of everything ahead of it plus its own,
+// each at the site's own rate (`leftAt`). The words are the tile's: a waiting
+// line says its place before its clock.
+const clockOf = (site, list, i) => {
+  const going = roomAt(site);
+  // A front line nobody is at says `queued` and no clock: a clock over a work
+  // nobody is doing is a promise the yard is not keeping.
+  if (i < going && stalled(site)) return 'queued';
+  let ms = 0;
+  for (let j = 0; j <= i; j++) ms += leftAt(site, list[j].key);
+  const place = i < going ? '' : `<em>${placeWord(i - going + 1)}</em> `;
+  return `${place}<i class="clock"></i><b>${leftText(ms)}</b>`;
+};
 
 // Rebuilt only when the set of works changes; a card rebuilt every frame
 // would lose the hover under the cursor.
@@ -46,10 +55,9 @@ let built = '';
 export function fillQueue() {
   const lines = [];
   for (const site of SITES) {
-    // A work somebody has started on is committed and its name is not a
-    // button; one nobody has touched is, and a press hands it back.
-    for (const w of worksAt(site))
-      lines.push({ site, key: w.key, w, front: !waiting(site, w.key), clock: clockOf(site, w.key) });
+    const list = worksAt(site);
+    const going = roomAt(site);
+    list.forEach((w, i) => lines.push({ site, key: w.key, w, front: i < going, clock: clockOf(site, list, i) }));
   }
   const key = lines.map(l => `${l.site}:${l.key}:${l.front ? 1 : 0}`).join('|');
   if (key !== built) {

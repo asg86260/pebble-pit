@@ -1438,7 +1438,6 @@ export const TESTS = [
     // sits back down when the site stalls. Read as the lift, which is what
     // the hover sets.
     const lift = () => (tile() ? getComputedStyle(tile()).getPropertyValue('--lift').trim() : '');
-    await sleep(300);                  // the plate rises on a wall-clock transition once the builder is on it
     const liftGoing = lift();
     const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
     // Nobody at the site: the fill and the clock both hold.
@@ -1453,19 +1452,17 @@ export const TESTS = [
     window.__finish();
     await settle(1);
     // A ladder rung is built too (at the bench), and its pips are a fact about
-    // the ladder, not about the build: they stay up while it goes. Nobody
-    // spare here: one body is lent to the bench, so a second press has nobody
-    // to build it and waits.
-    window.__crew(3, 0, 5, 7);
+    // the ladder, not about the build: they stay up while it goes.
+    window.__crew(3, 3, 5, 7);
     window.__board('bench');
     await settle(1);
     shop().querySelector('[data-key="carry"]')?.click();
-    await settle(3);
+    await settle(1);
     const pips = shop().querySelector('[data-key="carry"] .ladder')?.querySelectorAll('i').length || 0;
     const said = shop().querySelector('[data-key="carry"] .gain')?.textContent || '';
-    // A second press on the same board starts too, but with nobody on it: its
-    // tag holds the clock it would take, the queue card says queued on the
-    // same line, and the tile says what a press does.
+    // A second press on the same board goes in line behind it: its tag says
+    // its place in the line, the queue card says the same word, and the tile
+    // says what a press does.
     shop().querySelector('[data-key="auto"]')?.click();
     await settle(1);
     const nextTag = shop().querySelector('[data-key="auto"] .tag .time')?.textContent.trim() || '';
@@ -1481,8 +1478,8 @@ export const TESTS = [
     return [
       ok(whole > 0 && atStart < whole, 'pressing a build row draws its glyph as a ghost', `${whole} -> ${atStart}`),
       ok(/building|queued/.test(said) && pips > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips} pips`),
-      ok(nextSaid === 'queued' && /^\d+:\d\d$/.test(nextTag), 'a row nobody is on says queued, and its tag holds a clock', `${nextSaid} / ${nextTag}`),
-      ok(/queued/.test(cardLine), 'and the queue card says queued on the same line', cardLine || 'no line'),
+      ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
+      ok(/next/.test(cardLine), 'and the queue card says next on the same line', cardLine || 'no line'),
       ok(edge === 'dashed', 'and its edge is dashed', edge || 'none'),
       ok(later > atStart, 'and the glyph fills in while a hand is at the site', `${atStart} -> ${later}`),
       ok(/^\d+:\d\d$/.test(clockAt) && secs(clockLater) < secs(clockAt),

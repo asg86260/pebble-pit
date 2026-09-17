@@ -1,6 +1,6 @@
-// The queue: a site builds everything it is paid for at once, one body a work
-// while there are spare bodies, paid for on the press and handed back in full
-// if pulled out before anybody has started on it. See DESIGN.md, "The queue".
+// The queue: a site builds one thing at a time and the rest wait in line,
+// paid for on the press and handed back in full if pulled out before anybody
+// has hands on them. See DESIGN.md, "The queue".
 //
 // Bought the way a player buys -- `__buy`, the row's own path -- and never by
 // writing to `S.works`: the thing under test is what a press does when the
@@ -15,8 +15,8 @@ const purse = () => state().stored;
 // Three rungs on the bench: a hauler's carry, your swing, and a sharper pick.
 // The swing and the pick are offered once mining is automatic, which is set by
 // hand here because it is the gate on the rows and not the thing under test.
-const setUp = (spare = 3) => {
-  window.__crew(1, spare);
+const setUp = () => {
+  window.__crew(3, 0);
   window.__grant({ dust: 5000 });
   yard.S.seenDrag = true;
   yard.S.autoMine = true;
@@ -24,7 +24,7 @@ const setUp = (spare = 3) => {
 };
 const THREE = ['carry', 'speed', 'pick'];
 
-group('a second press at a busy site starts too, and is paid for now', async () => {
+group('a second press at a busy site goes in line, and is paid for now', async () => {
   setUp();
   const before = purse();
   const first = window.__buy('carry');
@@ -42,33 +42,21 @@ group('a second press at a busy site starts too, and is paid for now', async () 
   ];
 });
 
-group('every work is built at once, one body each', async () => {
+group('only the front of the line is worked; the rest stand at nought', async () => {
   setUp();
   for (const key of THREE) window.__buy(key);
-  run(3);
+  run(4);
   const list = at('bench');
+  const front = list[0], behind = list.slice(1);
   return [
-    ok(list.length === 3 && list.every(w => w.done > 0), 'all three are being built',
-       list.map(w => `${w.key}:${w.done.toFixed(1)}`).join(' ')),
-    ok(state().builders === 3, 'and a body is at each of them', `${state().builders}`),
+    ok(front && front.done > 0, 'the front one is being built', `${front?.key} ${front?.done}`),
+    ok(behind.every(w => w.done === 0), 'the ones behind it have not moved',
+       behind.map(w => `${w.key}:${w.done}`).join(' ')),
+    ok(state().builders <= 1, 'and one body, not a gang, is at the bench', `${state().builders}`),
   ];
 });
 
-group('with fewer spare bodies than works, the rest stand until one comes free', async () => {
-  setUp(1);
-  for (const key of THREE) window.__buy(key);
-  run(3);
-  const list = at('bench');
-  const going = list.filter(w => w.done > 0), still = list.filter(w => w.done === 0);
-  return [
-    ok(going.length === 1 && going[0].key === 'carry', 'the first bought has the one body',
-       list.map(w => `${w.key}:${w.done.toFixed(1)}`).join(' ')),
-    ok(still.length === 2, 'and the other two have not moved', still.map(w => w.key).join(',')),
-    ok(state().builders === 1, 'one body, not a gang', `${state().builders}`),
-  ];
-});
-
-group('they all land, and each one does what its row does', async () => {
+group('they land in the order bought, each stepping up as the one before lands', async () => {
   setUp();
   for (const key of THREE) window.__buy(key);
   const landed = [];
@@ -78,17 +66,16 @@ group('they all land, and each one does what its row does', async () => {
   };
   runUntil(note, 240);
   return [
-    ok(landed.length === 3, 'all three landed', landed.join(',')),
+    ok(landed.join(',') === THREE.join(','), 'all three landed, in order', landed.join(',')),
     ok(state().carryLevel === 1 && state().speedLevel === 1 && state().pickLevel === 1,
        'and each one did what its row does',
        `carry ${state().carryLevel} speed ${state().speedLevel} pick ${state().pickLevel}`),
   ];
 });
 
-group('a press on a row nobody has started on pulls it out and hands the bill back', async () => {
-  setUp(1);
+group('a press on a row in line pulls it out and hands the bill back', async () => {
+  setUp();
   window.__buy('carry');
-  run(3);                                     // the one body is on the carry
   const before = purse();
   window.__buy('pick');
   const paid = before - purse();
@@ -99,7 +86,7 @@ group('a press on a row nobody has started on pulls it out and hands the bill ba
   return [
     ok(paid > 0, 'the pick was paid for', `${paid}`),
     ok(pulled === false, 'the press is not a purchase', `${pulled}`),
-    ok(list.join(',') === 'carry', 'and the pick is out of the list', list.join(',')),
+    ok(list.join(',') === 'carry', 'and the pick is out of the line', list.join(',')),
     ok(purse() === before, 'with the whole bill back in the pile', `${before} -> ${purse()}`),
   ];
 });
@@ -107,7 +94,7 @@ group('a press on a row nobody has started on pulls it out and hands the bill ba
 group('the one being built is committed: pressing it again does nothing', async () => {
   setUp();
   window.__buy('carry');
-  run(3);
+  run(1);
   const before = purse();
   const again = window.__buy('carry');
   return [
@@ -118,10 +105,10 @@ group('the one being built is committed: pressing it again does nothing', async 
   ];
 });
 
-group('the works survive a reload in the same order and state', async () => {
-  setUp(1);
+group('a line survives a reload in the same order, still at nought behind the front', async () => {
+  setUp();
   for (const key of THREE) window.__buy(key);
-  run(3);
+  run(2);
   const was = at('bench').map(w => `${w.key}:${w.done > 0 ? 'going' : 'waiting'}`);
   window.__reload();
   run(0.1);

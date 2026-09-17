@@ -22,9 +22,9 @@ export const WORK_STEP = 1.35;
 // it is the same kind of work
 export const BUILD_EFFORT = 1;
 
-// One spare body per build going up, and one lent per site when nobody is
-// spare, is written into `rebalance` in staffing.js, the one place that
-// decides who is building. See DESIGN.md, "The build yard".
+// The cap of one spare body per build is written into `rebalance` in
+// upgrades.js, the one place that decides who is building. See DESIGN.md,
+// "The build yard".
 
 // --- the farm's and the quarry's own sheds -----------------------------------
 // The two stations with a board and nothing to hold it get a small shed on the

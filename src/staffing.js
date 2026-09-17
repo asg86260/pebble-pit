@@ -13,7 +13,7 @@ import { JOB } from './jobs.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
 import { MACHINES, machine } from './machines.js';
 import { syncWorkers } from './crew.js';
-import { busyBuilderSites, onTheGo, siteX } from './works.js';
+import { busyBuilderSites, siteX } from './works.js';
 import { capOf, roomAt } from './levels.js';
 
 // A job is a count, not a purchase: you buy a body once and move it freely.
@@ -64,15 +64,13 @@ export function rebalance() {
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'tossSpeedLevel', 'tossReachLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
-  // Builders are derived, one a WORK, out of the spare bodies only: every
-  // build going up gets its own pair of hands while there are hands to give,
-  // and the rest of the works stand until one comes free.
+  // Builders are derived, one a site, never the whole yard: a build that
+  // swallowed every idle body would stop the dust moving.
   const sites = busyBuilderSites();
-  const gang = sites.reduce((n, site) => n + onTheGo(site).length, 0);
+  const gang = sites.length;
   // Nobody spare: the body standing nearest the site is *lent* -- taken off
   // its count, which makes it spare -- and given back when nothing is left to
-  // build. One a SITE, not one a work: a run of builds that borrowed every
-  // station body would stop the dust moving. The loan rides on the body (`lentFrom`) rather than in a list
+  // build. The loan rides on the body (`lentFrom`) rather than in a list
   // beside it, so a reload cannot come back owing a debt no body carries and
   // a repayment cannot land on top of a move the player made meanwhile.
   for (let short = sites.length - Math.max(0, spareHands()); short > 0; short--) {

@@ -29,9 +29,9 @@ feature lives in DESIGN.md.
 - A pebble off the pegs goes into its bin at the rim instead of appearing a bin's height over it.
 - A reload that lands on the last stretch of a cutscene keeps the view on what the scene was about instead of sliding it half a window (test/cutscene.test.mjs).
 - The outhouse comes up at 300 pebbles instead of 900.
+- A station builds one thing at a time again, the rest in line behind it; different stations still build alongside each other (test/queue.test.mjs).
 - A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
 - A tile being built, and the mark over its station, wear the coloured outline of the rung going up round the cells that are up, growing with the fill; a tile in line is the whole outline alone.
-- A site builds everything it is paid for at once, a spare body on each; with fewer bodies than works the rest wait for one, and a work nobody has touched can still be handed back (test/queue.test.mjs).
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.
 - A body dropped on the rock by hand walks to its helmet first and climbs wearing it, instead of standing on the rock bare-headed (test/wave7b-assign.test.mjs).
