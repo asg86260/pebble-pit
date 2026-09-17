@@ -67,6 +67,7 @@ feature lives in DESIGN.md.
 - A crit on the rock takes the top layer across the columns beside it instead of boring straight down the one it hit; a swing shaves the rock, it does not drill it.
 - A storm over a tall rock still in the air no longer crashes the yard when the bolt would have struck inside the rock (test/sky-fan.test.mjs).
 - In the opening the one the first rock lands on stays stood there until it lands, instead of showing dug into the ground while the rock is still in the air (test/lodged.test.mjs).
+- A refresh keeps every building where you bought it, instead of standing them all in the table's order until the next purchase snapped them back across the yard (test/wave31-order.test.mjs).
 
 ## v0.2.4 — 2026-09-15
 
