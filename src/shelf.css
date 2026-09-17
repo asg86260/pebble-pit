@@ -40,8 +40,8 @@
   font: 12px/1 ui-monospace, "Courier New", monospace;
   letter-spacing: 0;
   text-transform: none;
-  white-space: normal;
-  color: #000;
+  var(--paper)-space: normal;
+  color: var(--ink);
 }
 /* The ground: the held sheet's dot tile, one pixel in six, at half its ink,
    over the whole sheet -- title, shelves and the button under them -- so
@@ -75,7 +75,7 @@
 .rows.shelves { position: relative; container-type: inline-size; }
 /* A sign and the bare-board line keep to one line: `pinWidth` widens the
    shelf to fit them, so they have no call to fold. */
-.rows.shelves > .sect, .rows.shelves > .empty { white-space: nowrap; }
+.rows.shelves > .sect, .rows.shelves > .empty { var(--paper)-space: nowrap; }
 .rows.shelves > .sect {
   position: relative;
   grid-column: 1 / -1;
@@ -84,8 +84,8 @@
   margin: calc(var(--shelf-plank, 5px) + var(--shelf-top, 8px)) 0 var(--shelf-sign, 6px);
   padding: 3px 10px 4px;
   border: 0;
-  background: #000;
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   font-size: 12px;
   line-height: 1;
   font-weight: bold;
@@ -98,13 +98,13 @@
   left: 0;
   top: calc(-1 * (var(--shelf-plank, 5px) + var(--shelf-top, 8px)));
   width: 100cqw;
-  border-top: var(--shelf-plank, 5px) solid #000;
+  border-top: var(--shelf-plank, 5px) solid var(--ink);
 }
 .rows.shelves > .sect:first-child, .rows.shelves > .tile.goal + .sect { margin-top: 4px; margin-bottom: var(--shelf-sign, 6px); }
 .rows.shelves > .sect:first-child::before, .rows.shelves > .tile.goal + .sect::before { display: none; }
 .rows.shelves > .sect.goal { display: none; }
-.rows.shelves > .sect .badge { margin-left: 8px; color: #000; background: #fff; }
-.rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank, 5px) solid #000; }
+.rows.shelves > .sect .badge { margin-left: 8px; color: var(--ink); background: var(--paper); }
+.rows.shelves::after { content: ''; grid-column: 1 / -1; width: 100cqw; border-top: var(--shelf-plank, 5px) solid var(--ink); }
 
 /* A tile: four rows -- picture, name, gain, tag -- everything centered on
    the tile's own center line. The rows are the plank's, not the tile's: a
@@ -169,7 +169,7 @@
   /* A name wider than the slot folds at a space; the plank's rows take the
      line (see `.tile`). A word wider than the slot on its own -- none is --
      would still be clipped, not broken. */
-  white-space: normal;
+  var(--paper)-space: normal;
   overflow: hidden;
   font-style: normal;
   font-size: .85em;
@@ -208,7 +208,7 @@
 }
 .rows.shelves > .tile .gain {
   grid-row: 3;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   /* one line, and never past the tile's edge: a door's blurb is words, not a
      number, and a long one clipped with an ellipsis is a short one, where
      one let run wrote itself across the neighbor's tile */
@@ -234,10 +234,10 @@
   /* The two cells are the same height and center what they hold, and the
      tag centers the two -- one box, one middle. */
   align-items: center;
-  border: 1px solid #000;
-  background: #fff;
+  border: 1px solid var(--ink);
+  background: var(--paper);
   line-height: 16px;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 /* Both cells are the tag's inner height and center what they hold; a mark
@@ -252,12 +252,12 @@
 .rows.shelves > .tile .tag:has(.cost:empty):has(.time:empty) { display: none; }
 .rows.shelves > .tile .tag .time { color: rgba(0, 0, 0, .6); padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
-.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; line-height: 16px; }
+.rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; var(--paper)-space: nowrap; line-height: 16px; }
 /* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
    by its `:has()`; the two cells are pinned to flow order here at a weight
    above it, so the clock never climbs over the bill. */
 .rows.shelves > .tile .tag > .time.time, .rows.shelves > .tile .tag > .cost.cost { grid-row: auto; grid-column: auto; align-self: center; justify-self: auto; }
-.rows.shelves > .tile .tag .short { color: #8c8c8c; }
+.rows.shelves > .tile .tag .short { color: var(--ink-5); }
 /* A coin short is the whole tile's news, not the tag's alone: the title pales
    to the same grey (the glyph's ink goes with it, redrawn by the board), so the
    plank sorts itself into what you can buy and what you are saving for from
@@ -267,7 +267,7 @@
    (`locked`, set by the board) is, near enough: it is not yours to press
    either, and its price names the coin to go and get. */
 .rows.shelves > button.tile:has(.tag .short) .what,
-.rows.shelves > button.tile.locked .what { color: #8c8c8c; }
+.rows.shelves > button.tile.locked .what { color: var(--ink-5); }
 /* A bill of two or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. Two, not
    three: a two-coin bill and its clock on one line is wider than the room
@@ -276,16 +276,16 @@
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) .cost { display: grid; grid-template-columns: auto auto; column-gap: 6px; padding: 1px 6px 0; height: auto; }
 .rows.shelves > .tile .tag:has(.cost > span:nth-child(2)) .time { padding: 0 6px; }
 /* Short of a coin, stalled, or climbed: the tag says so by its edge. */
-.rows.shelves > button.tile:disabled .tag { border-style: dashed; color: #8c8c8c; }
+.rows.shelves > button.tile:disabled .tag { border-style: dashed; color: var(--ink-5); }
 /* A tile the yard is building (DESIGN.md, "A tile being built shows the
    building"): the tag is a clock and nothing else, at full ink and with a
    solid edge -- a running clock is not a thing you cannot afford. It goes
    dashed again only when the site has nobody at it, which is when the clock
    stops. A tile in line is not disabled (a press hands it back) and wears
    its place the same way. */
-.rows.shelves > button.tile.building:disabled .tag { border-style: solid; color: #000; }
-.rows.shelves > .tile .tag:has(.cost:empty) .time { color: #000; padding: 0 6px; }
-.rows.shelves > .tile.waiting .gain { color: #000; }
+.rows.shelves > button.tile.building:disabled .tag { border-style: solid; color: var(--ink); }
+.rows.shelves > .tile .tag:has(.cost:empty) .time { color: var(--ink); padding: 0 6px; }
+.rows.shelves > .tile.waiting .gain { color: var(--ink); }
 
 /* A shelf on which nothing has a gain has no gain line. The builder cannot
    know that per section, so the row keeps its track and the line is simply
@@ -301,7 +301,7 @@
   width: 9px; height: 9px;
   opacity: 0;
   cursor: pointer;
-  background: linear-gradient(#000, #000) 4px 0 / 1px 9px no-repeat, linear-gradient(#000, #000) 1px 0 / 7px 3px no-repeat;
+  background: linear-gradient(var(--ink), var(--ink)) 4px 0 / 1px 9px no-repeat, linear-gradient(var(--ink), var(--ink)) 1px 0 / 7px 3px no-repeat;
 }
 .rows.shelves > .tile.pinned .pinmark { opacity: 1; }
 @media (hover: hover) {
@@ -309,7 +309,7 @@
 }
 .rows.shelves > .tile.new::before {
   content: ''; position: absolute; top: 2px; right: 4px;
-  border: 4px solid #000; border-left-color: transparent; border-bottom-color: transparent;
+  border: 4px solid var(--ink); border-left-color: transparent; border-bottom-color: transparent;
 }
 /* The hover. The tile lifts off the plank on a plate with a hard shadow; the
    dots go with it; once up, it drifts in a one-pixel loop. One motion, one
@@ -335,7 +335,7 @@
   /* Painted white under its own dots: at rest that is indistinguishable
      from the ground, and once lifted only the tile's dots are inside the
      plate rather than the ground's showing through beside them. */
-  background-color: #fff;
+  background-color: var(--paper);
   /* The plate's edge is a real border, clear at rest, and the background is
      clipped inside it -- an outline drawn inward sat on a fraction of a
      device pixel at a scaled display and let a sliver of dots past it. The
@@ -353,7 +353,7 @@
      own label. */
   will-change: transform;
   transform: translate(calc(var(--lift) + var(--sway-x) + var(--sway-x2) + var(--follow-x)), calc(var(--lift) + var(--sway-y) + var(--sway-y2) + var(--follow-y)));
-  box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--sway-x2) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--sway-y2) - var(--follow-y)) 0 #000;
+  box-shadow: calc(0px - var(--lift) - var(--sway-x) - var(--sway-x2) - var(--follow-x)) calc(0px - var(--lift) - var(--sway-y) - var(--sway-y2) - var(--follow-y)) 0 var(--ink);
   transition: border-color var(--shelf-hover-ms, 120ms) ease-out, --lift var(--shelf-hover-ms, 120ms) ease-out,
               --sway-x var(--shelf-hover-ms, 120ms) ease-out, --sway-y var(--shelf-hover-ms, 120ms) ease-out,
               --sway-x2 var(--shelf-hover-ms, 120ms) ease-out, --sway-y2 var(--shelf-hover-ms, 120ms) ease-out,
@@ -366,13 +366,13 @@
    disabled -- a row in line, pressable to hand it back -- whose title went
    white on a white tile and vanished under the cursor. */
 @media (hover: hover) {
-  .rows.shelves > button.tile:hover:not(:disabled) { color: #000; background-color: #fff; }
+  .rows.shelves > button.tile:hover:not(:disabled) { color: var(--ink); background-color: var(--paper); }
 }
 /* A tile in line is pencilled in: a dashed edge round the whole tile, on
    the plate's own border, so a thing waiting its turn reads as such from
    across the plank and not only from its tag. It is the one tile on a
    plank that is neither for sale nor being made. */
-.rows.shelves > button.tile.queued { border: 1px dashed #000; }
+.rows.shelves > button.tile.queued { border: 1px dashed var(--ink); }
 /* Only a tile you can pay for lifts. `off` is set by the builder on every
    row you cannot pay for right now -- short of a coin, climbed, waiting,
    building, queued -- so the hover never depends on the button's own
@@ -386,13 +386,13 @@
    held. */
 .rows.shelves > button.tile.building {
   --lift: -2px;
-  border-color: #000;
+  border-color: var(--ink);
   /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
      and a pseudo-class outranks the firewall's revert. White, the same as at
      rest, so only the tile's own dots are inside the plate and they move
      with it; the shorthand would take the dots with it. */
-  background-color: #fff;
-  color: #000;
+  background-color: var(--paper);
+  color: var(--ink);
   /* The drift: a one-pixel circle through the lifted position, eased, on
      SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
      its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
@@ -405,13 +405,13 @@
 @media (hover: hover) {
   .rows.shelves > button.tile:hover:not(:disabled):not(.off):not(.stat) {
     --lift: -2px;
-    border-color: #000;
+    border-color: var(--ink);
     /* Said outright: style.css inverts a hovered card (`.rows button:hover`),
        and a pseudo-class outranks the firewall's revert. White, the same as at
        rest, so only the tile's own dots are inside the plate and they move
        with it; the shorthand would take the dots with it. */
-    background-color: #fff;
-    color: #000;
+    background-color: var(--paper);
+    color: var(--ink);
     /* The drift: a one-pixel circle through the lifted position, eased, on
        SHELF_FLOAT_MS, starting once the lift has landed. Each tile turns at
        its own rate and in its own direction (`--sway-rate`, `--sway-dir`,
@@ -449,16 +449,16 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   grid-auto-flow: column;
   align-items: center;
   height: 18px;
-  border: 1px solid #000;
-  background: #fff;
+  border: 1px solid var(--ink);
+  background: var(--paper);
   line-height: 16px;
   font: inherit;
-  color: #000;
+  color: var(--ink);
 }
 .rows.shelves > .tile .step .less, .rows.shelves > .tile .step .more {
-  width: 18px; height: 16px; padding: 0; border: 0; background: #fff; color: #000; font: inherit; cursor: pointer;
+  width: 18px; height: 16px; padding: 0; border: 0; background: var(--paper); color: var(--ink); font: inherit; cursor: pointer;
 }
-.rows.shelves > .tile .step .less:disabled, .rows.shelves > .tile .step .more:disabled { color: #8c8c8c; cursor: default; }
+.rows.shelves > .tile .step .less:disabled, .rows.shelves > .tile .step .more:disabled { color: var(--ink-5); cursor: default; }
 .rows.shelves > .tile .step .count { min-width: 2em; text-align: center; }
 .rows.shelves > .tile .chosen { padding: 0 8px; cursor: pointer; }
 /* A picker tile stands two slots wide: what it shows is a sentence ("batch
@@ -473,7 +473,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   max-width: 100%;
   overflow: hidden;
   text-align: center;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   text-overflow: ellipsis;
 }
 .rows.shelves > .tile .chosen::after { content: ' \25BE'; opacity: .55; }
@@ -502,16 +502,16 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   /* Room above for the plate, which stands half out of the frame. */
   margin: 14px 0 6px;
   padding: 14px 12px 10px 8px;
-  border: 3px solid #000;
+  border: 3px solid var(--ink);
   border-bottom-width: var(--shelf-plank, 5px);
-  background: #fff;
+  background: var(--paper);
   text-align: left;
 }
 .rows.shelves > .tile.goal::after {
   content: attr(data-sign);
   position: absolute; left: 8px; top: -10px;
   padding: 3px 10px 4px;
-  background: #000; color: #fff;
+  background: var(--ink); color: var(--paper);
   font-size: 12px; line-height: 1; font-weight: bold; letter-spacing: .18em; text-transform: uppercase;
 }
 .rows.shelves > .tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; }
@@ -520,7 +520,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rows.shelves > .tile.goal .gain { display: none; }
 .rows.shelves > .tile.goal .note {
   display: block; grid-column: 2; grid-row: 2;
-  font-size: 12px; line-height: 1.35; white-space: normal; max-width: 46ch;
+  font-size: 12px; line-height: 1.35; var(--paper)-space: normal; max-width: 46ch;
 }
 .rows.shelves > .tile.goal .tag { grid-column: 3; grid-row: 1 / 3; }
 
@@ -541,8 +541,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   font: 12px/1 ui-monospace, "Courier New", monospace;
   letter-spacing: 0;
   text-transform: none;
-  white-space: normal;
-  color: #000;
+  var(--paper)-space: normal;
+  color: var(--ink);
 }
 .sheet:has(> .page:not([hidden]) .rows.ledger) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
@@ -551,7 +551,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   display: block;
   margin: 12px 0 4px;
   padding: 0 0 3px;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--ink);
   font-size: 12px;
   line-height: 1;
   font-weight: bold;
@@ -575,11 +575,11 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   cursor: default;
 }
 .rows.ledger > button .name { display: contents; }
-.rows.ledger > button .what { grid-column: 1; display: block; font-style: normal; letter-spacing: .08em; white-space: nowrap; }
+.rows.ledger > button .what { grid-column: 1; display: block; font-style: normal; letter-spacing: .08em; var(--paper)-space: nowrap; }
 .rows.ledger > button .ladder, .rows.ledger > button .gain, .rows.ledger > button .time, .rows.ledger > button .note, .rows.ledger > button .pinmark { display: none; }
 /* the leader: a dotted rule from the label to the value, sat on the baseline */
 .rows.ledger > button::after { content: ''; grid-column: 2; grid-row: 1; align-self: end; border-bottom: 1px dotted rgba(0, 0, 0, .5); margin-bottom: 3px; }
-.rows.ledger > button .cost { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rows.ledger > button .cost { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; gap: 4px; var(--paper)-space: nowrap; font-variant-numeric: tabular-nums; }
 .rows.ledger > button .cost > span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* --- the pin: one tile in the corner ---------------------------------------
@@ -596,8 +596,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   max-width: calc(100vw - 16px);
   margin: 0;
   padding: 4px var(--sheet-pad-x, 8px) 0;
-  border: var(--sheet-border, 2px) solid #000;
-  background-color: #fff;
+  border: var(--sheet-border, 2px) solid var(--ink);
+  background-color: var(--paper);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 .pin.rows.shelves > .sect { display: none; }
@@ -610,3 +610,12 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   .pin.rows.shelves > button.tile:hover { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
 }
 
+
+/* The stipples above carry their ink inside a data URI, which cannot read a
+   variable, so the dark page (style.css, `:root`) gets its own. */
+html.dark .sheet:has(> .page:not([hidden]) .rows.shelves),
+html.dark .rows.shelves > button.tile,
+html.dark .sheet:has(> .page:not([hidden]) .rows.ledger),
+html.dark .pin.rows.shelves {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+}

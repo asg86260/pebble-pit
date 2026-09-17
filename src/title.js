@@ -6,10 +6,10 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord } from './record.js';
-import { pref, setPref, reducedMotion, dark, applyDark } from './prefs.js';
+import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
-import { VEIL_MS, PICTURE_WAIT_MS } from './config.js';
+import { VEIL_MS, PICTURE_WAIT_MS, LIGHT_PAPER, DARK_PAPER } from './config.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -84,9 +84,26 @@ motionEl.addEventListener('click', () => {
   document.body.classList.toggle('still', reducedMotion());
   yard.contentWindow?.location.reload();
 });
-// The picture in the frame is turned over by this page's filter, so it
-// needs no reload for this switch.
-darkEl.addEventListener('click', () => { setPref('dark', !dark()); sayDark(); applyDark(); });
+// The dark switch is a fade, not a cut: the veil goes up in the color of the
+// page that is coming, the column changes under it and the picture is
+// reloaded in the new palette (ink.js says why a reload), and the veil lifts
+// once the picture is there, with the same ceiling the boot's wait has.
+darkEl.addEventListener('click', async () => {
+  setPref('dark', !dark());
+  const veil = document.getElementById('veil');
+  veil.style.background = dark() ? DARK_PAPER : LIGHT_PAPER;
+  veil.classList.add('up');
+  await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
+  document.documentElement.classList.toggle('dark', dark());
+  sayDark();
+  const up = new Promise(r => {
+    yard.addEventListener('load', () => setTimeout(r, 60), { once: true });
+    setTimeout(r, PICTURE_WAIT_MS);
+  });
+  yard.contentWindow?.location.reload();
+  await up;
+  requestAnimationFrame(() => veil.classList.remove('up'));
+});
 soundEl.addEventListener('click', () => { setPref('muted', !pref('muted')); saySound(); });
 volumeEl.addEventListener('input', () => setPref('volume', +volumeEl.value));
 

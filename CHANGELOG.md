@@ -19,7 +19,7 @@ feature lives in DESIGN.md.
 - A reload that lands on the last stretch of a cutscene keeps the view on what the scene was about instead of sliding it half a window (test/cutscene.test.mjs).
 - The outhouse comes up at 300 pebbles instead of 900.
 - A tile waiting in line no longer says "press to hand it back" on hover; its dashed edge and the next tag carry it.
-- A dark switch on the settings sheet, on the landing page and in the game: the yard white on black, following the system's setting until pressed (test/settings.test.mjs, scene `dark`).
+- A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 
 - The casino is the pour: hold the arm and pebbles pour from your purse into the funnel, a share of what you own a second; tap the sign to drop them; the bins pay in pebbles, crops, ore and sparks, each falling out of its bin through the foot on to the ground for the crew (test/casino.test.mjs, selftest/casino.js).
 - "Hold to toss" on the bench: hold the button on a heap and the hand keeps sweeping it up and throwing each handful at the hole by itself, with a pace ladder and a reach ladder beside it; a heap further off than the reach is thrown that far toward the hole and lies there for the next hold (test/hold-to-toss.test.mjs).

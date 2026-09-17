@@ -13,6 +13,12 @@ export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // free to mean anything else. Color in this game belongs to the things that
 // never came off the rock.
 export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
+// The page's two inks, and the dark page's (DESIGN.md, "Dark mode"): not
+// white on black but a light gray on charcoal, so the dark page is a page and
+// not a negative. ink.js maps every other color between them by lightness,
+// and the stylesheet's variables carry the same four (style.css, `:root`).
+export const LIGHT_PAPER = '#ffffff', LIGHT_INK = '#000000';
+export const DARK_PAPER = '#1f1f1f', DARK_INK = '#e0e0e0';
 // Cells above the shades are not dust, but they are one cell exactly like a
 // grain of dust: they fall, heap, slump, are scooped and are carried by the
 // same code, and differ only in the mark drawn on them and what they are worth

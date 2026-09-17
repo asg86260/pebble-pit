@@ -84,22 +84,24 @@ test('coarse follows the switch, remembers, and can be forced without being writ
   localStorage.removeItem(KEY);
 });
 
-// The dark switch (DESIGN.md, "Dark mode"): the same shape again. With no
-// `matchMedia` the page is black on white, so no shot turns over by itself.
-test('dark follows the switch, remembers, and can be forced without being written', async () => {
+// The dark switch (DESIGN.md, "Dark mode"): the same shape again, less the
+// forcing -- the palette is fixed at boot, so a shot asks for it in the
+// address instead. With no `matchMedia` the page is the light one, so every
+// check draws in the inks it was written against, and ink.js's map is the
+// identity: what a renderer writes is what reaches the canvas.
+test('dark follows the switch and remembers; the light page maps no color', async () => {
   localStorage.removeItem(KEY);
   const m = await fresh(8);
-  assert.equal(m.dark(), false, 'no matchMedia: black on white');
+  assert.equal(m.dark(), false, 'no matchMedia: the light page');
   m.setPref('dark', true);
-  assert.equal(m.dark(), true, 'the switch says white on black');
+  assert.equal(m.dark(), true, 'the switch says dark');
   const again = await fresh(9);
   assert.equal(again.dark(), true, 'and the next load reads it back');
   again.setPref('dark', null);
   assert.equal(again.dark(), false);
-  again.forceDark(true);
-  assert.equal(again.dark(), true, 'forced in memory');
-  assert.equal(JSON.parse(localStorage.getItem(KEY)).dark, null, 'and nothing was written');
-  again.forceDark(null);
-  assert.equal(again.dark(), false);
   localStorage.removeItem(KEY);
+  const ink = await import('../src/ink.js?1');
+  assert.equal(ink.paper, '#ffffff');
+  assert.equal(ink.inkOf('#8a8a8a'), '#8a8a8a', 'a gray goes through as written');
+  assert.equal(ink.inkOf('rgba(0,0,0,0.4)'), 'rgba(0,0,0,0.4)');
 });

@@ -2,12 +2,12 @@
 // that is not the yard. This file wires the shelf; escape, resume and the
 // reset's two-click arming are input.js's.
 
-import { setPref, reducedMotion, coarse, dark, applyDark } from './prefs.js';
+import { setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
 import { storeTrouble, storeSettled } from './save.js';
-import { VEIL_MS } from './config.js';
+import { VEIL_MS, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { copyOut } from './copyout.js';
@@ -85,7 +85,10 @@ touchEl.addEventListener('click', () => {
 });
 
 // And the dark switch: a desk that asked its system for dark reads "on"
-// before the switch is ever touched.
+// before the switch is ever touched. Pressing it is a reload, since the
+// page's palette is fixed at boot (ink.js): the veil goes up in the color of
+// the page that is coming, the page comes back under it and the veil
+// lifts, so the change is one fade and not a cut.
 const darkEl = document.getElementById('dark');
 function sayDark() {
   darkEl.textContent = dark() ? 'dark: on' : 'dark: off';
@@ -93,7 +96,8 @@ function sayDark() {
 darkEl.addEventListener('click', () => {
   setPref('dark', !dark());
   sayDark();
-  applyDark();
+  document.getElementById('veil').style.background = dark() ? DARK_PAPER : LIGHT_PAPER;
+  leave(location.href);
 });
 
 // In the Electron shell the save goes out and comes in through native

@@ -16,6 +16,7 @@
 // for a fringe the whole pixel discipline exists to prevent.
 
 import { PRESS_MIX } from './config.js';
+import { raw } from './ink.js';
 
 // No dial: a look you can move at runtime is a look nobody has decided on.
 const amount = {
@@ -35,7 +36,7 @@ function scanlines(ctx, w, h, a) {
     c.width = 1;
     c.height = 2;
     const cx = c.getContext('2d');
-    cx.fillStyle = `rgba(0,0,0,${ink})`;
+    cx.fillStyle = raw(`rgba(0,0,0,${ink})`);   // a shade, not an ink: it dims on either page
     cx.fillRect(0, 1, 1, 1);                   // the odd row
     stripe = ctx.createPattern(c, 'repeat');
     stripeInk = ink;
@@ -57,7 +58,7 @@ function vignette(ctx, w, h, a) {
     // leaves the clear middle.
     for (let i = 0; i <= 8; i++) {
       const t = i / 8;
-      g.addColorStop(t, `rgba(0,0,0,${a * 0.5 * t * t * (3 - 2 * t)})`);
+      g.addColorStop(t, raw(`rgba(0,0,0,${a * 0.5 * t * t * (3 - 2 * t)})`));
     }
     vig = g;
     vigKey = key;

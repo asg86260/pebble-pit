@@ -2,7 +2,7 @@ html, body {
   /* The whole of what the browser gives the page: on a phone the dynamic
      height follows the bar as it collapses (world.js, `resize`, reads it). */
   margin: 0; height: 100%; height: 100dvh;
-  background: #fff; color: #000;
+  background: var(--paper); color: var(--ink);
   overflow: hidden;
   /* on a phone: no rubber-banding or pull-to-refresh behind the game */
   overscroll-behavior: none;
@@ -43,13 +43,25 @@ html, body {
    grip the platform may pan is a drag the platform cancels halfway). One
    rule rather than one per element, so the next button
    added is covered before anybody taps it twice. */
-/* Dark mode (DESIGN.md, "Dark mode"): the whole page turned over in one rule
-   rather than a second ink for every fill in the renderers. The hue rotation
-   puts the coloured marks -- the quarry's blue, the farm's green -- back the
-   way round they were, only lighter, which is what a dark page wants of them.
-   The root's own background is painted outside its filter, so it is set by
-   hand; the body's white goes through it and comes out black. */
-html.dark { filter: invert(1) hue-rotate(180deg); background: #000; }
+/* The palette (DESIGN.md, "Dark mode"): the page's ink and paper, and the
+   grays the boards use as steps between them, numbered by how far from the
+   ink they stand, in tenths. No rule below names a color; it names one of
+   these. The dark page's ink and paper are the ones config/view.js gives the
+   canvas (DARK_PAPER, DARK_INK), and its grays are the light page's put
+   through ink.js's map -- the same step, from the other end:
+   paper + (ink - paper) * (1 - v / 255). Scrims (rgba black) are shade, not
+   ink, and stay dark on both pages. */
+:root {
+  --paper: #fff; --ink: #000;
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+}
+html.dark {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+}
+/* The gear is a drawing inlined as SVG with its own black fill; on the dark
+   page it is turned to the ink. */
+html.dark #gear .cog { filter: invert(1) brightness(.878); }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
    "Momentum scrolling"). The spacer inside it is as wide as the world at the
@@ -81,7 +93,7 @@ canvas {
   width: 100%;
   height: 100%;
   display: block;
-  background: #fff;
+  background: var(--paper);
   cursor: crosshair;
 }
 /* The hop (hop.js): a square at each edge of the mid sky, black frame on
@@ -105,9 +117,9 @@ canvas {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #fff;
-  color: #000;
-  border: 2px solid #000;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
   box-sizing: border-box;
   font: 12px ui-monospace, "Courier New", monospace;
   cursor: pointer;
@@ -125,25 +137,25 @@ canvas {
   width: var(--fs-size); height: var(--fs-size);
   z-index: 4;
   display: flex; align-items: center; justify-content: center;
-  background: #fff; color: #000;
-  border: 2px solid #000;
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink);
   box-sizing: border-box;
   padding: 0;
   cursor: pointer;
 }
 #fullscreen .frame {
   display: block; position: relative; width: 18px; height: 18px; box-sizing: border-box;
-  border: 2px solid #000;
+  border: 2px solid var(--ink);
 }
 /* the corners: the frame with the middle of each edge painted out by two
    white bars laid over it, so four brackets are left pointing outward */
 #fullscreen .frame::before, #fullscreen .frame::after {
-  content: ''; position: absolute; background: #fff;
+  content: ''; position: absolute; background: var(--paper);
 }
 #fullscreen .frame::before { top: -2px; bottom: -2px; left: 4px; right: 4px; }
 #fullscreen .frame::after { left: -2px; right: -2px; top: 4px; bottom: 4px; }
 /* in fullscreen: the corners turned inward, which is a square in the middle */
-#fullscreen[data-on="1"] .frame { border-color: transparent; background: #000; }
+#fullscreen[data-on="1"] .frame { border-color: transparent; background: var(--ink); }
 #fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
 /* The gear (gear.js): the same square, beside the fullscreen button or in
    its spot. The cog is a thirteen-cell pixel drawing at two screen pixels a
@@ -155,8 +167,8 @@ canvas {
   width: var(--fs-size); height: var(--fs-size);
   z-index: 4;
   display: flex; align-items: center; justify-content: center;
-  background: #fff; color: #000;
-  border: 2px solid #000;
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink);
   box-sizing: border-box;
   padding: 0;
   cursor: pointer;
@@ -246,12 +258,12 @@ body.still #scroller { scroll-behavior: auto; }
      card does not stop, it paints on over the next cell. So every run of words
      in the rows wraps, and the handful of things that would be nonsense broken
      across a line are made whole again below, each by name. */
-  white-space: normal;
+  var(--paper)-space: normal;
 }
 /* What stays on one line: a coin and its number, the row of pips, the stepper
    with its count, the headcount on a heading. Each is one mark, not a phrase,
    and a mark split over two lines is two marks. */
-.rows .cost > span, .rows .ladder, .rows .step, .rows .badge { white-space: nowrap; }
+.rows .cost > span, .rows .ladder, .rows .step, .rows .badge { var(--paper)-space: nowrap; }
 /* Headings and anything else loose span the sheet; a card takes one cell of it. */
 .rows > * { grid-column: 1 / -1; }
 .rows > button, .rows > .job { grid-column: auto; }
@@ -267,7 +279,7 @@ body.still #scroller { scroll-behavior: auto; }
      Dimmed through colour rather than opacity, when it was dimmed: opacity would
      have flattened the badge inside it to the same fade, and the headcount is
      the one thing on this line worth reading at a glance. */
-  color: #000;
+  color: var(--ink);
   border-bottom: 1px solid rgba(0, 0, 0, .4);
 }
 .rows .sect:first-child { margin-top: 0; }
@@ -281,7 +293,7 @@ body.still #scroller { scroll-behavior: auto; }
 .rows .sect.goal { border-bottom: 0; margin-bottom: -2px; }
 .rows button.goal {
   grid-column: 1 / -1;
-  border: 3px double #000;
+  border: 3px double var(--ink);
   padding: 8px 10px 20px;
 }
 .rows button.goal .note { margin-bottom: 2px; }
@@ -300,11 +312,11 @@ body.still #scroller { scroll-behavior: auto; }
 .page .title {
   margin-bottom: 7px;
   padding-bottom: 4px;
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid var(--ink);
   font: inherit;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
 }
 
 /* What a board is for, when the name is not enough on its own. Only one of them
@@ -317,7 +329,7 @@ body.still #scroller { scroll-behavior: auto; }
   letter-spacing: .1em;
   text-transform: uppercase;
   font-size: .82em;
-  color: #000;
+  color: var(--ink);
 }
 
 /* A board with nothing on it. It happens at the quarry, which runs out of
@@ -338,8 +350,8 @@ body.still #scroller { scroll-behavior: auto; }
   display: inline-block;
   margin-left: 6px;
   padding: 0 4px;
-  color: #fff;
-  background: #000;
+  color: var(--paper);
+  background: var(--ink);
   font: inherit;
   letter-spacing: 0;
 }
@@ -375,22 +387,22 @@ body.still #scroller { scroll-behavior: auto; }
   letter-spacing: .1em;
   text-transform: uppercase;
   text-align: left;
-  color: #000;
+  color: var(--ink);
   background: none;
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
   /* The bottom is deeper than the top: the pin sits in a strip of its own under
      the price, at the bottom-right, so it never lands on the bill. */
   padding: 6px 8px 18px;
   cursor: pointer;
 }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled) { color: #fff; background: #000; }
+  .rows button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
 }
 /* The tonic the pot is set to, marked on the menu: it reads inverted, the way a
    chosen thing does, so a glance at the board says what is on the boil. The word
    "brewing" sits where a price would, filled in by the board. */
-.rows button.pick.on { color: #fff; background: #000; }
-.rows button.pick.on .gain { color: #fff; }
+.rows button.pick.on { color: var(--paper); background: var(--ink); }
+.rows button.pick.on .gain { color: var(--paper); }
 /* A row you cannot press yet is dimmed by *colour* rather than by opacity, so
    that something inside it can still be darker than it is. Opacity on the row
    multiplies everything under it and there is no way back up from it -- which
@@ -413,9 +425,9 @@ body.still #scroller { scroll-behavior: auto; }
    coins you are SHORT of are the black ones, because that is the number you
    came to read, and the coins you have are the grey. An affordable row is all
    black; a row you cannot press is grey with one black number in it. */
-.rows button:disabled { color: #8c8c8c; cursor: default; }
+.rows button:disabled { color: var(--ink-5); cursor: default; }
 .rows button:disabled .gain, .rows button:disabled .cost { opacity: 1; }
-.rows button:disabled .cost .short { color: #000; }
+.rows button:disabled .cost .short { color: var(--ink); }
 /* ...and measured again, by the player this time: over the sky the whole sheet
    is grey-ish, so one grey against another is still the question left open. A
    card you cannot pay for is drawn dashed -- the outline of a card rather than
@@ -426,7 +438,7 @@ body.still #scroller { scroll-behavior: auto; }
 .rows button:has(.cost .short) { border-style: dashed; }
 /* A status is about the whole card and is the one thing on it worth reading
    while it is stalled. */
-.rows button:disabled.waiting .gain { color: #000; }
+.rows button:disabled.waiting .gain { color: var(--ink); }
 
 /* A card you have never had on an open board: the corner is turned down.
    It was a dot hung nine pixels off the left of the title, which was the right
@@ -504,10 +516,10 @@ body.still #scroller { scroll-behavior: auto; }
   display: block;
   width: var(--card-w);
   max-width: calc(100vw - 16px);
-  background: #fff;
+  background: var(--paper);
 }
 .pin .sect { display: none; }
-.pin button { width: 100%; border: 3px double #000; }
+.pin button { width: 100%; border: 3px double var(--ink); }
 .pin button .gain:empty { display: none; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
@@ -619,7 +631,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 2;
   opacity: .75;
   min-width: 0;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
 }
 /* The second line is a line whether or not there are words on it. A card with
    nothing to say about what it gives -- the row that opens the crew list, say --
@@ -659,7 +671,7 @@ body.still #scroller { scroll-behavior: auto; }
   min-width: 0;
   text-align: left;
   opacity: .7;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 /* The clock is not a coin: it is the other fact about time and sits under the
@@ -670,7 +682,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 2;
   justify-self: end;
   opacity: .7;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
 }
 /* A card with no ladder has nothing in the top-right corner, so the clock
    comes up to take it: the right-hand column is still "time", read from the
@@ -691,15 +703,15 @@ body.still #scroller { scroll-behavior: auto; }
   font-size: .9em;
   line-height: 1.35;
   margin-top: .1em;
-  white-space: normal;
+  var(--paper)-space: normal;
   max-width: 46ch;
 }
 /* On an inverted row -- one under the cursor, or the tonic the pot is set to --
    the words go white with the rest of the row, so the description stays readable
    on the black rather than turning to ink on ink. */
-.rows button.pick.on .note { color: #fff; opacity: .9; }
+.rows button.pick.on .note { color: var(--paper); opacity: .9; }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled) .note { color: #fff; opacity: .9; }
+  .rows button:hover:not(:disabled) .note { color: var(--paper); opacity: .9; }
 }
 
 /* The count and its two buttons, held in the one cell that a price would fill,
@@ -737,7 +749,7 @@ body.still #scroller { scroll-behavior: auto; }
   grid-row: 1;
   min-width: 0;
   font-style: normal;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -804,7 +816,7 @@ body.still #scroller { scroll-behavior: auto; }
   align-items: baseline;
   letter-spacing: .1em;
   text-transform: uppercase;
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
   padding: 6px 8px;
 }
 .rows .job .count { text-align: center; }
@@ -841,22 +853,22 @@ body.still #scroller { scroll-behavior: auto; }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  background: #fff;
-  border: 2px solid #000;
+  background: var(--paper);
+  border: 2px solid var(--ink);
   padding: 0;
   max-height: 60vh;
   overflow-y: auto;
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
 }
 .optspop .opt {
   font: inherit;
   letter-spacing: inherit;
   text-transform: inherit;
   text-align: left;
-  color: #000;
+  color: var(--ink);
   background: none;
   border: 0;
   padding: 4px 14px 4px 10px;
@@ -866,9 +878,9 @@ body.still #scroller { scroll-behavior: auto; }
    thing reads everywhere else on these boards: inverted. A dot in the margin was
    a mark this game does not use anywhere, and it made the list look like a
    document rather than a menu. */
-.optspop .opt.on { color: #fff; background: #000; }
+.optspop .opt.on { color: var(--paper); background: var(--ink); }
 @media (hover: hover) {
-  .optspop .opt:hover { color: #fff; background: #000; }
+  .optspop .opt:hover { color: var(--paper); background: var(--ink); }
 }
 /* The picker at the pot lays its rows out like a board row rather than like a
    plain option: the name on the left, what a batch of it costs on the right, and
@@ -892,7 +904,7 @@ body.still #scroller { scroll-behavior: auto; }
 .optspop[data-potpick] .opt .bill {
   flex: 0 0 auto;
   padding-left: 18px;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
 }
 .optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
 /* What the brew does, under what it is called: the boards' own note register,
@@ -915,7 +927,7 @@ body.still #scroller { scroll-behavior: auto; }
    the way a chosen thing is everywhere on these boards. */
 .optspop[data-potpick] .forhead {
   padding: 6px 14px 2px 10px;
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--ink);
   margin-top: 4px;
   opacity: .5;
   font-size: .82em;
@@ -925,7 +937,7 @@ body.still #scroller { scroll-behavior: auto; }
   letter-spacing: inherit;
   text-transform: inherit;
   text-align: left;
-  color: #000;
+  color: var(--ink);
   background: none;
   border: 0;
   padding: 4px 14px 4px 10px;
@@ -935,14 +947,14 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .optspop[data-potpick] .for .who { flex: 1 1 auto; }
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
-.optspop[data-potpick] .for.on { color: #fff; background: #000; }
+.optspop[data-potpick] .for.on { color: var(--paper); background: var(--ink); }
 @media (hover: hover) {
-  .optspop[data-potpick] .for:hover { color: #fff; background: #000; }
+  .optspop[data-potpick] .for:hover { color: var(--paper); background: var(--ink); }
 }
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
 .optspop[data-potpick] .for.only { cursor: default; }
 @media (hover: hover) {
-  .optspop[data-potpick] .for.only:hover { color: #000; background: none; }
+  .optspop[data-potpick] .for.only:hover { color: var(--ink); background: none; }
 }
 
 /* A block of the brew's own color, for the picker at the pot. The color itself
@@ -954,14 +966,14 @@ body.still #scroller { scroll-behavior: auto; }
   height: 10px;
   margin-right: 8px;
   vertical-align: -1px;
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
 }
 /* On a row that has a second line under it, the block belongs beside the NAME
    rather than halfway down the whole row. */
 .optspop[data-potpick] .opt .swatch { margin-top: 3px; }
-.optspop .opt.on .swatch { border-color: #fff; }
+.optspop .opt.on .swatch { border-color: var(--paper); }
 @media (hover: hover) {
-  .optspop .opt:hover .swatch { border-color: #fff; }
+  .optspop .opt:hover .swatch { border-color: var(--paper); }
 }
 .rows .job button {
   display: block;
@@ -988,8 +1000,12 @@ body.still #scroller { scroll-behavior: auto; }
    a screen, not a grey fill. Under the sheet, over the boards. */
 .scrim {
   position: fixed; inset: 0; z-index: 11;
-  background-color: rgba(255, 255, 255, .66);
+  background-color: color-mix(in srgb, var(--paper) 66%, transparent);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.28'/%3E%3C/svg%3E");
+}
+/* the same stipple in the dark page's ink: a data URI cannot read a variable */
+html.dark .scrim {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.28'/%3E%3C/svg%3E");
 }
 /* The held sheet and its wash come up and go down as fades (fade.js puts
    `on` on after showing and takes it off ahead of hiding). Only those two:
@@ -1015,12 +1031,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   align-items: center;
   gap: 10px;
   padding: 14px 26px;
-  background: #fff;
-  border: 1px solid #000;
+  background: var(--paper);
+  border: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
 }
 /* The achievements, a page to read behind the front of the sheet: one card a
    notice, two across like a board's, the name in the boards' card hand and
@@ -1037,9 +1053,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    two-line name beside a one-line name would otherwise leave the two notes at
    different heights, and a row of cards reads as a row when its notes line up. */
 .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
-                      padding: 5px 8px; border: 1px solid #000; }
+                      padding: 5px 8px; border: 1px solid var(--ink); }
 .record .name { letter-spacing: .1em; text-transform: uppercase; }
-.record .note { color: #666; }
+.record .note { color: var(--ink-4); }
 .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
    lands (toast.js). The same card as the achievements page -- name in the
@@ -1066,11 +1082,11 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   gap: 4px;
   padding: 9px 20px 8px;
   max-width: 80vw;
-  background: #000;
-  border: 1px solid #fff;
-  outline: 1px solid #000;
+  background: var(--ink);
+  border: 1px solid var(--paper);
+  outline: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
-  color: #fff;
+  color: var(--paper);
   text-align: center;
   cursor: pointer;
   /* going: a slow fade, so it lingers rather than blinks off */
@@ -1081,17 +1097,17 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
             transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
 .toast.still { transition: none; transform: translate(calc(-50% + var(--toast-dx, 0px)), 0); }
 @media (hover: hover) {
-  .toast:hover { color: #000; background: #fff; border-color: #000; outline-color: #fff; }
+  .toast:hover { color: var(--ink); background: var(--paper); border-color: var(--ink); outline-color: var(--paper); }
 
-  .toast:hover .note { color: #000; }
+  .toast:hover .note { color: var(--ink); }
 }
 .toast .name { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
-.toast .note { color: #aaa; }
+.toast .note { color: var(--ink-7); }
 /* the ring: a one-pixel edge that starts on the card's own and swells out as
    it fades. The card leaves the tree between two notices, so the animation
    starts fresh every time it goes up. */
 .toast::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-                border: 2px solid #000; outline: 1px solid #fff; opacity: 0; }
+                border: 2px solid var(--ink); outline: 1px solid var(--paper); opacity: 0; }
 @keyframes toastring { from { inset: 0; opacity: 1; } 50% { opacity: .8; } to { inset: -26px; opacity: 0; } }
 .toast.up::after { animation: toastring .8s ease-out .1s; }
 .toast.still::after { animation: none; }
@@ -1106,7 +1122,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .said { max-width: 34em; text-align: center; }
 /* the line between the word and the rest: the top of the sheet is about the
    game being stopped, the bottom is about what you can do while it is */
-.held .rule { width: 60%; border-top: 1px solid #000; }
+.held .rule { width: 60%; border-top: 1px solid var(--ink); }
 /* the sheet's small hand, for the lines that are said rather than offered:
    the keys, the build, the one sentence about there being no ending */
 .held .small { font-size: 10px; }
@@ -1122,9 +1138,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   font: inherit;
   letter-spacing: 0;
   text-transform: none;
-  color: #000;
-  background: #fff;
-  border: 1px solid #000;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
   padding: 4px;
   resize: none;
   outline: none;
@@ -1134,9 +1150,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   font: inherit;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
   background: none;
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
   padding: 4px 14px;
   cursor: pointer;
   /* every button the width of the sheet: the sheet is as wide as its
@@ -1149,7 +1165,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .slots { align-self: stretch; }
 .held .slot { min-width: 0; }
 @media (hover: hover) {
-  .held button:hover { color: #fff; background: #000; }
+  .held button:hover { color: var(--paper); background: var(--ink); }
 }
 /* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
    track and a square for the thumb, the same square everything else here is
@@ -1159,16 +1175,16 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   width: 140px; height: 12px; margin: 0;
   background: none; cursor: pointer;
 }
-.held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: #000; }
-.held input[type=range]::-moz-range-track { height: 1px; background: #000; }
+.held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
+.held input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
 .held input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 12px; height: 12px; margin-top: -6px;
-  background: #fff; border: 1px solid #000; border-radius: 0;
+  background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
 }
 .held input[type=range]::-moz-range-thumb {
   width: 12px; height: 12px;
-  background: #fff; border: 1px solid #000; border-radius: 0;
+  background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
 }
 
 /* The crew board is the one list of rows that is not a shop. There is no price,
@@ -1221,7 +1237,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    that -- and it has no click on it. */
 .rows button.stat { cursor: default; }
 @media (hover: hover) {
-  .rows button.stat:hover:not(:disabled) { color: #000; background: none; }
+  .rows button.stat:hover:not(:disabled) { color: var(--ink); background: none; }
 
   .rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
 
@@ -1299,12 +1315,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   flex-direction: column;
   width: max-content;
   padding: 4px 0;
-  background: #fff;
-  border: 1px solid #000;
+  background: var(--paper);
+  border: 1px solid var(--ink);
   font: 12px/1.5 ui-monospace, "Courier New", monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
   transition: opacity .25s;
 }
 .queue.off { opacity: 0; pointer-events: none; }
@@ -1321,7 +1337,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   border: 0;
   text-align: left;
   cursor: pointer;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
 }
 /* The front line is the thing being built: its pips are its bar, and it is
    not a thing you can press. The lines behind it are the ones you can hand
@@ -1329,7 +1345,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .queue button.front { cursor: default; }
 /* The clock on every line, pushed to the right edge so the figures line up
    down the card whatever the names do. */
-.queue button .left { margin-left: auto; padding-left: 10px; opacity: var(--pip-tone, .78); white-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
+.queue button .left { margin-left: auto; padding-left: 10px; opacity: var(--pip-tone, .78); var(--paper)-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
 /* The figure is a right-aligned column of its own so the clocks read down
    the card as one column; "3 min" is the widest it says. */
 .queue button .left b { font-weight: inherit; min-width: 5ch; text-align: right; }
@@ -1339,7 +1355,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
 @media (hover: hover) {
-  .queue button.wait:hover { color: #fff; background: #000; }
+  .queue button.wait:hover { color: var(--paper); background: var(--ink); }
 }
 
 #tip {
@@ -1349,14 +1365,14 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      with nowhere to stand did not overlap the menu, it disappeared into it. */
   z-index: 20;
   padding: 3px 6px;
-  background: #fff;
-  border: 1px solid #000;
+  background: var(--paper);
+  border: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
   pointer-events: none;
-  white-space: pre;
+  var(--paper)-space: pre;
   line-height: 1.5;
 }
 
@@ -1366,9 +1382,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: #000;
-  background: #fff;
-  border: 1px dashed #000;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px dashed var(--ink);
   padding: 2px 6px;
   opacity: .7;
   cursor: pointer;
@@ -1385,18 +1401,18 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @media (hover: hover) {
   #reset:hover { opacity: 1; }
 }
-#reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
+#reset.armed { opacity: 1; color: var(--paper); background: var(--ink); border-style: solid; }
 /* The saves page: one row a yard, the open one inert and said so. An empty
    row is armed like the reset before it starts a yard. */
 .held .slots { display: flex; flex-direction: column; gap: 6px; }
 .held .slot { min-width: 22em; text-align: left; }
 .held .slot.open { opacity: .7; }
-.held .slot.armed { color: #fff; background: #000; }
+.held .slot.armed { color: var(--paper); background: var(--ink); }
 /* The veil: white over the whole page as it boots, and taken away once the
    yard is drawn (main.js). The landing page goes to the same white on play,
    so the two documents meet in it. Under motion: less it is taken away at
    once. */
-.veil { position: fixed; inset: 0; z-index: 20; background: #fff; opacity: 0; pointer-events: none; transition: opacity .45s linear; }
+.veil { position: fixed; inset: 0; z-index: 20; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .45s linear; }
 .veil.up { opacity: 1; pointer-events: auto; }
 body.still .veil { transition: none; }
 /* The landing page's picture (main.js, `demo`): the game with nothing but
@@ -1413,7 +1429,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #stats {
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--ink);
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 2px 10px;
@@ -1432,12 +1448,12 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   max-height: calc(100dvh - 8px);
   overflow-y: auto;
   padding: 5px 7px;
-  background: #fff;
-  border: 1px solid #000;
+  background: var(--paper);
+  border: 1px solid var(--ink);
   font: 11px ui-monospace, "Courier New", monospace;
   letter-spacing: .04em;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink);
 }
 /* The tab strip: one button a tab, the one you are on filled in, the way the
    panel's other buttons fill under the cursor. Held to the top of the panel so
@@ -1446,10 +1462,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: sticky; top: 0;
   display: flex; gap: 3px;
   padding-bottom: 4px; margin-bottom: 3px;
-  background: #fff;
-  border-bottom: 1px solid #000;
+  background: var(--paper);
+  border-bottom: 1px solid var(--ink);
 }
-#dev .devtabs button.on { color: #fff; background: #000; }
+#dev .devtabs button.on { color: var(--paper); background: var(--ink); }
 #dev .devrow {
   display: grid;
   grid-template-columns: 8em 1fr;
@@ -1463,29 +1479,29 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #dev textarea {
   display: block; width: 100%; box-sizing: border-box;
   font: inherit; text-transform: none; letter-spacing: 0;
-  color: #000; background: #fff; border: 1px solid #000;
+  color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
   margin: 2px 0 3px;
 }
 #dev button {
   font: inherit;
   text-transform: inherit;
-  color: #000;
+  color: var(--ink);
   background: none;
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
   padding: 0 4px;
   cursor: pointer;
 }
 @media (hover: hover) {
-  #dev button:hover { color: #fff; background: #000; }
+  #dev button:hover { color: var(--paper); background: var(--ink); }
 }
 #dev b { min-width: 3.4em; font-weight: normal; }
-#dev input[type=range] { width: 8em; accent-color: #000; }
+#dev input[type=range] { width: 8em; accent-color: var(--ink); }
 #dev select {
   font: inherit;
   text-transform: inherit;
-  color: #000;
-  background: #fff;
-  border: 1px solid #000;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
   padding: 0 2px;
 }
 
@@ -1522,10 +1538,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex-direction: column;
   gap: 3px;
   padding: 8px 10px;
-  background: #fff;
-  border: 2px solid #000;
+  background: var(--paper);
+  border: 2px solid var(--ink);
   letter-spacing: .1em;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   /* it fades with the board it belongs to, on the same beat */
   opacity: 0;
   transform: translateY(3px) scale(.985);
@@ -1563,11 +1579,11 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   max-width: var(--sheet-w);
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px var(--sheet-pad-x);
-  background: #fff;
-  border: var(--sheet-border) solid #000;
+  background: var(--paper);
+  border: var(--sheet-border) solid var(--ink);
   letter-spacing: .1em;
   text-transform: uppercase;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   opacity: 0;
   transform: translateY(3px) scale(.985);
   transform-origin: 0 100%;
@@ -1600,20 +1616,20 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   left: 0; top: auto; bottom: 0;
   z-index: 11;
   padding: 10px 14px;
-  background: #000;
-  color: #fff;
-  border: 2px solid #000;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
   cursor: pointer;
-  white-space: nowrap;
+  var(--paper)-space: nowrap;
   will-change: transform;
   backface-visibility: hidden;
 }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 @media (hover: hover) {
-  #raise:hover { background: #fff; color: #000; }
+  #raise:hover { background: var(--paper); color: var(--ink); }
 }
 
 /* wave-release: track F */
@@ -1626,8 +1642,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   display: inline-block;
   margin-left: 6px;
   padding: 0 4px;
-  color: #fff;
-  background: #000;
+  color: var(--paper);
+  background: var(--ink);
   font: inherit;
   letter-spacing: 0;
 }
@@ -1682,9 +1698,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   .rows .job { padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   @media (hover: hover) {
-    .rows button:hover:not(:disabled) { color: #000; background: none; }
+    .rows button:hover:not(:disabled) { color: var(--ink); background: none; }
   }
-  .rows button:active:not(:disabled) { color: #fff; background: #000; }
+  .rows button:active:not(:disabled) { color: var(--paper); background: var(--ink); }
   #hidedone { padding: 6px 8px; }
 }
 
@@ -1705,9 +1721,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex-direction: column;
   /* the seat positions a sheet; what is inside keeps its own spacing (the
      panel sets its own gap below, the held sheet keeps the desk's) */
-  background: #fff;
+  background: var(--paper);
   border: 0;
-  border-top: 2px solid #000;
+  border-top: 2px solid var(--ink);
   /* One transition, on the move to a stop: the box never changes size, so
      only the transform ever eases, and never under a finger. */
   transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
@@ -1732,15 +1748,15 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: absolute; top: 4px; left: 50%;
   width: var(--sheet-grip-w, 36px); height: var(--sheet-grip-h, 4px);
   margin-left: calc(var(--sheet-grip-w, 36px) / -2);
-  background: #000;
+  background: var(--ink);
 }
 .handle .name { font-size: 12px; }
-#listback { padding: 2px 8px; border: 2px solid #000; background: #fff; color: #000; font: inherit; cursor: pointer; }
+#listback { padding: 2px 8px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
 #panel.bottom .purse {
   flex: 0 0 auto;
   flex-direction: row; justify-content: space-between;
   gap: 8px; padding: 4px 12px 6px;
-  border: 0; border-bottom: 2px solid #000;
+  border: 0; border-bottom: 2px solid var(--ink);
 }
 #panel.bottom > .sheet {
   flex: 1 1 auto; min-height: 0;
@@ -1767,10 +1783,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   display: block; position: absolute;
   right: calc(var(--sheet-rail-inset, 4px) + env(safe-area-inset-right, 0px));
   width: var(--sheet-rail-w, 6px);
-  background: #fff; border: 1px solid #000; box-sizing: border-box;
+  background: var(--paper); border: 1px solid var(--ink); box-sizing: border-box;
   pointer-events: none;
 }
-#panel.bottom .rail .thumb { position: absolute; left: 0; right: 0; top: 0; background: #000; }
+#panel.bottom .rail .thumb { position: absolute; left: 0; right: 0; top: 0; background: var(--ink); }
 /* the board's own title is the handle's now */
 #panel.bottom .page .title { display: none; }
 /* The crew list as a page inside the sheet: the board's rows step aside for
@@ -1808,13 +1824,13 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   padding: 6px 14px 5px;
-  background: #000;
-  border: 1px solid #fff;
-  outline: 1px solid #000;
+  background: var(--ink);
+  border: 1px solid var(--paper);
+  outline: 1px solid var(--ink);
   font: 10px ui-monospace, "Courier New", monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--paper);
   /* A button, since a phone has no space bar: held, it is the key held. */
   cursor: pointer;
   touch-action: manipulation;
@@ -1822,5 +1838,5 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   transition: opacity .18s linear;   /* SHEET_FADE_MS in config/view.js */
 }
 .skip.on { opacity: 1; }
-.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; }
+.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--paper); }
 .skip .say { position: relative; mix-blend-mode: difference; }

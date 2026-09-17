@@ -54,27 +54,15 @@ export function coarse() {
 let forced = null;
 export const forceCoarse = v => { forced = v; };
 
-// Whether the page is turned over, white on black (DESIGN.md, "Dark mode"):
-// the sheet's switch, else what the system asks for. The node yard has no
-// `matchMedia` and reads "off", which is what every shot is checked against.
-let forcedDark = null;
+// Whether the page is the dark one (DESIGN.md, "Dark mode"): `?dark` in the
+// address for a shot, else the sheet's switch, else what the system asks
+// for. Asked once, at boot: the palette is fixed for the life of the page
+// (ink.js says why), so the switch reloads rather than repainting. The node
+// yard has no `matchMedia` and reads "off", which is what every check is
+// written against. The head of each page asks the same question of the
+// store directly, before the first paint (play.html, index.html).
 export function dark() {
-  if (forcedDark != null) return forcedDark;
+  if (typeof location !== 'undefined' && /[?&]dark\b/.test(location.search)) return true;
   if (prefs.dark != null) return prefs.dark;
   return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
 }
-
-// The class the stylesheets turn the page over on, put on the root of the
-// top page only: a framed page (the title's picture, the scene bench) is
-// turned over by the page around it, and turning it again would put it back.
-// Each page's head puts the same class on from the store before the first
-// paint (play.html, index.html), so the page never opens white and then goes
-// dark; this is the switch and the system changing its mind afterwards.
-export function applyDark() {
-  if (typeof document === 'undefined' || window !== window.top) return;
-  document.documentElement.classList.toggle('dark', dark());
-}
-if (typeof matchMedia === 'function') matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyDark);
-
-// Dark stood up for a scene or a check, without writing the preference.
-export const forceDark = v => { forcedDark = v; applyDark(); };

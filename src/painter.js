@@ -7,6 +7,7 @@
 // draw them itself, on top.
 
 import { SHADES, FIND_COLOR } from './config.js';
+import { inkOf } from './ink.js';   // the bytes go straight in, past the context's setter
 
 const rgb = h => {
   const n = parseInt(h.slice(1), 16);
@@ -14,14 +15,14 @@ const rgb = h => {
 };
 
 // the shades as packed RGBA, so a grain is four array writes
-const RGBA = SHADES.map(rgb);
+const RGBA = SHADES.map(h => rgb(inkOf(h)));
 
 // The colors for the cells that are not dust: a shard in a pile is painted by
 // the same pass as the dust around it. Anything with no color here is left
 // clear for its owner to draw on top.
 const EXTRA = new Map();
 for (const [base, tones] of Object.entries(FIND_COLOR)) {
-  tones.forEach((h, i) => EXTRA.set(+base + i, rgb(h)));
+  tones.forEach((h, i) => EXTRA.set(+base + i, rgb(inkOf(h))));
 }
 
 // Cells rewritten since the last reset, the same handle `settleWork` in grid.js

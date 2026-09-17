@@ -5,6 +5,7 @@ import { P } from '../config.js';
 import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
+import { xorInk } from '../ink.js';
 
 // --- a busy site looks like a building site -----------------------------------
 // A station's footprint is its own rect. The yard is one slot shared by every
@@ -69,7 +70,7 @@ export function drawBuildSites() {
 export function drawGrit() {
   ctx.save();
   ctx.globalCompositeOperation = 'difference';
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = xorInk;
   for (const g of S.grit) {
     ctx.globalAlpha = Math.max(0, 1 - (g.t / g.life) ** 2);
     ctx.fillRect(Math.round(g.x / P) * P, Math.round(g.y / P) * P, P, P);

@@ -22,30 +22,46 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
 
 ## Dark mode (built 2026-09-16)
 
-The page turned over: white on black, for a dark room or a system set to
-dark. It follows `prefers-color-scheme` until the switch on the settings
-sheet is pressed, and then remembers, the way the motion switch does
-(`prefs.js`, `dark`).
+A dark page for a dark room: not the light page turned over but a page of
+its own, light gray on charcoal (`DARK_INK` `#e0e0e0` on `DARK_PAPER`
+`#1f1f1f`, `config/view.js`), so it reads as paper and not as a negative.
+It follows `prefers-color-scheme` until the switch on the settings sheet is
+pressed, and then remembers, the way the motion switch does (`prefs.js`,
+`dark`).
 
-It is one rule, not a second palette: `html.dark` gets
-`filter: invert(1) hue-rotate(180deg)`. The renderers write black and white
-by name in some five hundred places, and a palette threaded through them all
-would be a week of work for a yard that is, by design, two inks. The hue
-rotation is what makes the trick hold for the coloured marks: an inversion
-alone turns the quarry's blue orange and the farm's green magenta; rotated
-back they stay blue and green, lighter, which is what a dark page wants of a
-mark anyway. Sprites, the boards, the sheet and the veil all go through the
-same filter, so nothing is missed by being drawn a different way.
+It was first shipped as one CSS rule, `invert(1) hue-rotate(180deg)`, and
+that was cheap in the wrong way: pure white on pure black, and the marks a
+half-step off their hue (the sparks salmon). What replaced it is a palette
+with one owner, `ink.js`. Every color the renderers write goes through it by
+lightness -- black to the ink, white to the paper, a gray to the same step
+between them -- and a colored mark keeps its hue and saturation and takes
+the lightness a gray of its weight would, so the quarry's blue is still
+blue and the sparks are still red. It is installed on the canvas context's
+setters, on the prototype, so the yard's context, every scratch canvas and
+the press's gradient are covered without a line in any of them; the
+painter, which writes bytes, asks it once for its shade table. Two things
+are shade rather than ink and go through as written (`raw`): the press's
+scanlines and vignette, which dim on either page; and the site grit, which
+draws by `difference` and wants the sum of ink and paper (`xorInk`). The
+boards' stylesheet carries the same four inks and its five grays as
+variables on `:root`, with the dark values computed by the same formula;
+scrims stay dark on both pages.
 
-The class goes on before the first paint by a line in each page's head that
-reads the store directly, so the page never opens white and then goes dark;
-and on the top page only -- the title's picture is a frame of the game, and
-a frame that inverted itself inside an inverted page would come out light.
-The desk's window is still opened white (`electron/main.cjs`), so on the
-desk the first frame flashes; the fix is a window colour read from the
-store, and it is not done.
+The palette is fixed at boot. A sprite cached on a scratch canvas was drawn
+in the palette of the moment, and there are a dozen such caches with a dozen
+owners; re-inking them all under a live switch is the kind of work that
+leaves one of them stale in one mode. So the switch is a reload, made to
+read as a fade rather than a cut: the veil goes up in the color of the page
+that is *coming*, the page reloads under it -- each page's head reads the
+store before the first paint, so it opens in the right inks -- and the veil
+lifts. The title page does the same over its column and reloads the framed
+picture, lifting the veil when the frame has loaded, with the boot's own
+ceiling. Under reduced motion both are instant. The desk's window is still
+opened white (`electron/main.cjs`), so on the desk the first frame flashes;
+the fix is a window color read from the store, and it is not done.
 
-The scene `dark` is the hill turned over, for the look tool.
+For a shot, `play.html?dark` opens the dark page whatever the store says
+(`GAME=http://localhost:<port>/play.html?dark node tools/look.mjs rock`).
 
 ## The opening
 
