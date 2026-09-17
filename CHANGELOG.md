@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- A tile being built draws its unbuilt part as an outline, the same outline it wears everywhere else, not a dotted ghost.
 - The barrier is the tower's goal card, and it pins itself into the corner once you open the tower to see it (src/selftest/boards.js, "the dome pins itself").
 - The tower has a fifth enchantment, "genetically modify crops": every crop is 25% bigger. It is offered once the farm is open.
 - The carter is worked at the bench like any other upgrade, not built out at the lip.

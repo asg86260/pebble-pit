@@ -93,4 +93,4 @@ export const DONE_MARK_FADE = 0.4;
 // and how white the glow behind it is at its center, fading to nothing at
 // its edge
 export const DONE_MARK_GLOW = 0.85;
-export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the unbuilt cells of a glyph being built, dotted
+export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the outline of the unbuilt part of a glyph

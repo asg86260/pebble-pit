@@ -140,12 +140,13 @@ export const inkSpan = rows => {
 //
 // `built` is how many of the drawing's cells are up on a tile being built
 // (DESIGN.md, "A tile being built shows the building"): laid bottom row
-// first, left to right, the rest a ghost of one pixel in four. Null is the
-// whole drawing. The stroke goes round the cells that are up, so it grows
-// with the fill (the owner, 2026-09-17: "only show the outline for the built
-// cells? not the whole glyph"). `'plan'` is a thing in line: its outline
-// and nothing inside -- the stroke round the whole drawing, or the shape's
-// own one-pixel edge in ghost when the rung has no coin.
+// first, left to right, the rest the shape's own one-pixel edge in ghost,
+// the same outline the drawing wears everywhere else it is not yet up. Null
+// is the whole drawing. The stroke goes round the cells that are up, so it
+// grows with the fill (the owner, 2026-09-17: "only show the outline for the
+// built cells? not the whole glyph"). `'plan'` is a thing in line: its
+// outline and nothing inside -- the stroke round the whole drawing, or that
+// same ghost edge when the rung has no coin.
 export const cellsOf = rows => rows.reduce((n, r) => n + [...r].filter(ch => ch === '#').length, 0);
 //
 // `hands` are the bodies at the site (DESIGN.md, "A hand on the tile"): one
@@ -175,15 +176,15 @@ export const drawGlyph = (rows, tint = null, ink = '#000', badge = null, built =
     for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) {
       const at = (y * CELL + j + M) * W + x * CELL + i + M + L;
       shape[at] = 1;
-      if (up) solid[at] = 1; else if (!plan && i % 2 === 0 && j % 2 === 0) ghost[at] = 1;
+      if (up) solid[at] = 1;
     }
   });
-  // The plan's edge, found on the shape rather than the outside, so it is
-  // inside the footprint and the ink lands where the built cells will. Only
-  // when there is no stroke to be the outline: two rings read as a frame.
-  if (plan && !tint) {
+  // The unbuilt part's edge, found on the shape rather than the outside, so
+  // it is inside the footprint and the ink lands where the built cells will.
+  // A plan with a stroke skips it: two rings read as a frame.
+  if (built !== null && !(plan && tint)) {
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      if (!shape[y * W + x]) continue;
+      if (!shape[y * W + x] || solid[y * W + x]) continue;
       const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !shape[(y + dy) * W + x + dx]);
       if (edge) ghost[y * W + x] = 1;
     }

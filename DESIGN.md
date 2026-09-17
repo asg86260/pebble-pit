@@ -10846,9 +10846,10 @@ are wrong with that, in order of weight:
 
 **The glyph is built.** While the work is on, the tile's drawing is drawn
 *to the share done*: its cells fill in from the bottom row up, in the order
-the hands would lay them, and the cells not yet built are a dotted ghost --
-every other pixel of the cell, at the tone of the ground's dots. The picture
-is the bar. At the press it is all ghost; at the last hammer-blow it is all
+the hands would lay them, and the cells not yet built are an outline --
+the shape's one-pixel edge in grey with nothing inside, the way a plan is
+drawn and the way the drawing is shown everywhere it is not yet up. The
+picture is the bar. At the press it is all outline; at the last hammer-blow it is all
 ink, and the tile is the tile it will be from then on. The stroke is on
 from the first cell, round the cells that are up, so it grows with the
 fill (the owner, 2026-09-16: "can the outline of the tier of upgrade be
@@ -10948,7 +10949,10 @@ ghost.
 All three calls went the way the design leaned: bottom-up fill, a dotted
 ghost (it reads against the plank's dots -- the plank's are one in
 thirty-six at .14, the ghost's one in four at the short grey), and the
-clock in place of the bill. `drawGlyph` takes a count of built cells and
+clock in place of the bill. The ghost did not last: on 2026-09-17 the owner
+asked for the outline instead, so the tile wears the same edge as the plan
+and every other place the drawing is shown before it is up, and the dither
+is gone. `drawGlyph` takes a count of built cells and
 `wearGlyph` keys the redraw on it, so a build redraws its picture once a
 cell. The pips were found to vanish on a building row -- the ladder block
 sat after the status branch's `continue`, on the cards too -- and were
