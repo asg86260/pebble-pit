@@ -88,7 +88,8 @@ export const S = {
 
   // --- dust in the air and on the cursor ---
   chips: [],              // knocked loose, still flying
-  belt: [],               // riding the belt, between the ground and the hole
+  belt: [],               // on the belt's scoop, climbing from the ground to the band
+  beltRun: 0,             // how far the band has run since it last shifted its load a cell
   paid: [],               // flying out of the pit to the bench, on the way to being spent
   gulped: [],             // and out of the pit into the abyss, diving to its surface
   ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
@@ -587,7 +588,7 @@ export const SAVED_BY_HAND = [
   JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
-  'belt',                 // what is riding the belt, as [x, shade, level] triples
+  'belt',                 // what is riding the belt, on the band or the scoop, as [x, shade] pairs
   'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
   'haze',                 // rounded: a fraction of a mote is not worth the characters
@@ -637,6 +638,7 @@ export const EPHEMERAL = [
   'unsaved', 'yielded', 'broken',
   'fellBack', 'newerSave',
   'staged',
+  'beltRun',              // the band's run since its load last shifted: under a cell
   // The window and the view, all measured at boot.
   'W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'camY', 'camTo', 'camWas',
   'follow', 'camLockY', 'shake', 'shakePh', 'shakeX', 'shakeY',
@@ -737,6 +739,10 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 export const table = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // and the tray in its foot, where a paid hand heaps before it goes to the hole
 export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The load on the belt: a strip of ground laid over the band, tail to head,
+// that the machine shifts a column at a time (`wireBelt`, `stepBelt` in
+// dust.js). Its cells are what `belt` in the save unpacks into.
+export const band = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

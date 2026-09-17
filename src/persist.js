@@ -24,7 +24,7 @@ import { OPENING } from './intro.js';
 import { BEATS, startBeat } from './beats.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
-import { bandY } from './dust.js';
+import { beltGrains, emptyBelt, fillBelt } from './dust.js';
 import { KINDS } from './shield.js';
 import { syncWorkers, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './staffing.js';
@@ -342,9 +342,9 @@ function blob() {
     // started, so an absolute time saved in one session means nothing in the
     // next.
     works: S.works,
-    // Position, shade and level on the heap; the band's height is the
-    // world's to answer on the way back in.
-    belt: (S.belt || []).map(b => [Math.round(b.x), b.s, b.h || 0]),
+    // Position and shade, on the band and on the scoop alike; the band's
+    // height is the world's to answer on the way back in.
+    belt: beltGrains(),
     // Every grain in the air: a refresh destroying what was up is the one
     // thing the yard promises it never does.
     chips: (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]),
@@ -492,6 +492,7 @@ export function restore() {
     S.paying = null;
     S.pouring = false;
     clearCasino();
+    emptyBelt();
     S.buildOrder = [];
     S.plots = [];
     S.plotTone = [];
@@ -634,9 +635,11 @@ export function restore() {
     ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
         .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
     : [];
-  S.belt = Array.isArray(s.belt)
-    ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])).map(([x, sh, h]) => ({ x, y: bandY() - (h || 0) * P, s: sh || 1, h: h || 0 }))
-    : [];
+  // Every grain back into the strip at its own column, so it lies as it did
+  // (`fillBelt`); the strip is emptied first, since the save is the whole of
+  // the load.
+  emptyBelt();
+  fillBelt(Array.isArray(s.belt) ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])) : []);
   // A list a site. Only rows the board still sells, each under the site its
   // row says today, so a work whose row has moved sites does not come back
   // blocking a site that is not there.
@@ -819,6 +822,7 @@ export function reset(fresh = true) {
   // the air, on the belt, on the pegs or on the camera is the old yard's too.
   blankEphemeral();
   clearCasino();                   // the hopper stands empty
+  emptyBelt();                     // and the band
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
   S.rift = 0;

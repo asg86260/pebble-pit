@@ -9,7 +9,9 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT, BELT_SPREAD } from '../src/config.js';
+import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT } from '../src/config.js';
+import { band } from '../src/state.js';
+import { at, grainsIn } from '../src/grid.js';
 import { S } from '../src/state.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
@@ -1299,11 +1301,14 @@ group('a grain rides the belt rather than being thrown over it', async () => {
   ];
 });
 
-// A scoop lifts its whole load off one column, and the band drew every grain
-// of it in its one row: a belt seven deep read as one deep. The loads have a
-// level now, and a column's worth lies as a heap along the band -- some of it
-// up off the band, none of it a tower.
-group('a load piles on the band rather than lying in one row', async () => {
+// The load on the belt is ground: a strip of the floor's own grid riding
+// the band (`band` in state.js). Before this the loads were points with a
+// continuous x -- drawn in the band's one row, then counted into levels --
+// and neither sat on the grid nor settled: gaps between grains, grains
+// floating up to a level, a heap cut off square at the lip. What the check
+// asks is what it asks of the ground: a scoop's grains land in cells, stand
+// on each other, slump to a heap rather than a tower, and ride to the hole.
+group('a load piles on the band the way dust piles on the ground', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -1317,27 +1322,30 @@ group('a load piles on the band rather than lying in one row', async () => {
   const s0 = state();
   const col = Math.round((s0.pitX - 400) / P) * P;
   for (let i = 0; i < 40; i++) window.__pile(col, 3);
-  runUntil(() => state().belt >= 8, 20);
-  // What the machine holds, level by level, and the deepest column of it.
-  const loads = yard.S.belt.slice();
-  const levels = new Set(loads.map(b => b.h || 0));
-  const cols = new Map();
-  for (const b of loads) {
-    const c = Math.round(b.x / P);
-    cols.set(c, (cols.get(c) || 0) + 1);
+  runUntil(() => grainsIn(band) >= 8, 20);
+  run(0.5);                                        // and a beat to lie down
+  // The strip, column by column: how many stand in each, and whether every
+  // grain has one under it or the band.
+  const depth = [];
+  let seated = true, n = 0;
+  for (let c = 0; c < band.cols; c++) {
+    let d = 0;
+    for (let r = 0; r < band.rows; r++) {
+      if (!at(band, c, r)) continue;
+      d++; n++;
+      if (r > 0 && !at(band, c, r - 1)) seated = false;
+    }
+    if (d) depth.push(d);
   }
-  const tallest = Math.max(...levels);
-  // The tallest a heap can be with its loads spread over the cells the
-  // spread allows, and a level of slack for the ones lifted while it moved.
-  const heap = Math.ceil(loads.length / (2 * BELT_SPREAD + 1)) + 1;
+  const deepest = Math.max(0, ...depth);
   run(20);
   window.__crew(0, 0);
   return [
-    ok(loads.length >= 8, 'a scoop or two is on the machine', `${loads.length} loads`),
-    ok(levels.size > 1, 'and not all of it is on the band: some rides on the rest',
-       `levels ${[...levels].sort().join(',')}`),
-    ok(cols.size > 1 && tallest + 1 <= heap, 'as a heap along the band, not a tower on one cell',
-       `${cols.size} cells wide, ${tallest + 1} levels, ${heap} allowed`),
+    ok(n >= 8, 'a scoop or two is on the band', `${n} grains`),
+    ok(deepest > 1, 'standing on each other, not in one row', `${deepest} deep`),
+    ok(seated, 'every grain on a grain or the band, none in the air'),
+    ok(depth.length > 1 && deepest < n, 'as a heap along the band, not a tower on one cell',
+       `${depth.length} columns, ${depth.join(' ')}`),
     ok(state().belt === 0, 'and it all still arrives', `${state().belt} left on it`)
   ];
 });

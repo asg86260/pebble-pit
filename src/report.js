@@ -50,6 +50,7 @@ import { idle } from './staffing.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
 import { boiling as apothBoiling, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
+import { onBelt, beltGrains } from './dust.js';
 
 // The floor, a column at a time: how many grains are lying in each, and how
 // tall it stands (the row above the topmost grain, so an empty column is 0).
@@ -607,8 +608,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // The casino chips in flight.
   chips: S.chips.length,
   // What is riding the belt, and how far along.
-  belt: S.belt.length,
-  beltX: S.belt.slice(0, 8).map(b => Math.round(b.x)),
+  belt: onBelt(),
+  beltX: beltGrains(8).map(b => b[0]),
   chipShades: S.chips.slice(0, 8).map(c => c.s),
   chipX: S.chips.slice(0, 8).map(c => Math.round(c.x)),
 

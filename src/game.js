@@ -19,7 +19,7 @@ import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from 
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
-import { stepBelt, catchBelt } from './dust.js';
+import { stepBelt, catchBelt, wireBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
@@ -103,6 +103,7 @@ export function settleIntoWorld() {
   wirePit();
   wireCut();                               // the cut's own sand, sized off the quarry
   wireTable();                             // the hopper on the casino's roof
+  wireBelt();                              // the strip of ground riding the belt
   resizeGrid(floor);
   if (!pit.grid) setPitGrain();            // the pit never changes with the window
   seedAir();

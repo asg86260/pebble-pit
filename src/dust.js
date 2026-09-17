@@ -3,11 +3,12 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER, BELT_SPREAD } from './config.js';
+import { P, GRAV, WORKER, BELT_DEPTH } from './config.js';
+import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
-import { S, floor, pit } from './state.js';
+import { S, floor, pit, band } from './state.js';
 import { defineMachine, machine } from './machines.js';
-import { at, put, colOf, bottomY } from './grid.js';
+import { at, put, colOf, bottomY, addGrain, settle, surfaceY, grainsIn, recount, resizeGrid, fillFlat } from './grid.js';
 import { scoopMs, haulCap } from './levels.js';
 
 import { rand } from './rng.js';
@@ -111,54 +112,79 @@ export const BELT_PACE = P * 0.9;
 const BELT_LIFT = P * 0.7;
 
 // --- what is riding it ----------------------------------------------------------
-// A load is `{ x, y, s }`, and it is **not a chip**: a chip is thrown once and
-// left to gravity; a load is carried, and where it goes next is decided by
-// the machine every frame. Two legs: lifted (a *climb*, not a throw, because
-// the heap between the rock and the hole is routinely deeper than the belt
-// is tall and a grain tossed at the band from inside a heap lands back on
-// the heap), then ridden.
+// The load is **ground on the belt**: `band` in state.js is a strip of the
+// same grid the yard's floor is, `BELT_DEPTH` cells deep, laid over the band
+// from tail to head. A grain lands in it the way a grain lands on the ground
+// (`addGrain`), it slumps and stands up the way the ground does (`settle`,
+// with `repose`), and the machine moves it by shifting every column a cell
+// toward the head each time the band has run a cell, so it travels the way
+// the band's own marks do. What shifts off the last column is over the mouth
+// and falls (`spawnChip`). Loads written any other way -- counted, spread,
+// given a height -- were grains that did not sit on the grid and did not
+// settle, and looked it.
 //
-// Not saved, like the chips (`restore`): what is in the air when the tab
-// closes is a frame's worth of dust.
-export const bandY = () => beltY() - P;       // where a load sits: on top of the band
+// A *lift* is the one thing not in the grid: `S.belt` holds the grains the
+// scoop is carrying up from the ground, `{ x, y, s }`, a climb rather than a
+// throw (the heap between the rock and the hole is routinely deeper than the
+// belt is tall, and a grain tossed at the band from inside a heap lands back
+// on the heap). It creeps forward while it climbs and joins the grid at the
+// surface of its column.
+export const bandY = () => beltY() - P;       // the band's top row: where a load sits
 
-// --- piling on it ------------------------------------------------------------------
-// The band is a grain wide but not a grain deep. A scoop lifts its whole load
-// off one column, and the belt was drawing all of it in the band's one row:
-// seven grains deep looked like one. So a load has a level, `h`, cells above
-// the band, and rides at `restY`. It is given once, when the load is lifted,
-// from what is already on the machine at that x -- and it holds, because
-// everything riding moves at the band's pace, so what was under a load when
-// it landed is under it at the head.
-//
-// A heap, not a tower: the load goes to the lowest of the cells within
-// `BELT_SPREAD` of where it lay, nearest first, so a column's worth slumps
-// along the band the way a dumped load does. Never past the reach: the head
-// is over open air and drops what gets there.
-export const restY = b => bandY() - (b.h || 0) * P;
-const ridingAt = x => {
-  let n = 0;
-  for (const b of S.belt) if (Math.abs(b.x - x) < P / 2) n++;
-  return n;
-};
-function settle(x) {
-  const from = beltFrom(), to = beltReach();
-  let at = x, h = ridingAt(x);
-  for (let k = 1; k <= BELT_SPREAD && h > 0; k++) {
-    for (const cx of [x - k * P, x + k * P]) {
-      if (cx < from || cx >= to) continue;
-      const n = ridingAt(cx);
-      if (n < h) { at = cx; h = n; }
-    }
-  }
-  return { x: at, h };
+// The strip laid over the band. `y` is the top of the grid, so the bottom row
+// sits on the band. Wired at boot with the ground (`settleIntoWorld`); a
+// resize keeps its grains, packed flat.
+export function wireBelt() {
+  if (!band.painter) band.painter = makePainter(band);
+  band.onPut = band.painter.mark;
+  band.x = beltFrom();
+  band.cols = Math.max(1, Math.round((beltTo() - beltFrom()) / P));
+  band.rows = BELT_DEPTH;
+  band.y = bandY() - (BELT_DEPTH - 1) * P;
+  band.repose = true;                      // a heap on the band stands up, as on the ground
+  resizeGrid(band);
 }
 
-// A grain leaves the ground and is on the machine from this moment; the
-// scoop takes it to the band, down as readily as up.
+// How much is on the machine: on the band and on the scoop.
+export const onBelt = () => grainsIn(band) + S.belt.length;
+
+// Every grain on the machine as `[x, shade]`, the head's first: what the
+// save keeps, and what a check reads to see the load moving. `limit` stops
+// the walk once it has enough.
+export function beltGrains(limit = Infinity) {
+  const out = [];
+  if (band.grid) {
+    for (let c = band.cols - 1; c >= 0 && out.length < limit; c--) {
+      for (let r = 0; r < band.rows && out.length < limit; r++) {
+        const v = at(band, c, r);
+        if (v) out.push([band.x + c * P, v]);
+      }
+    }
+  }
+  for (const b of S.belt) { if (out.length >= limit) break; out.push([Math.round(b.x), b.s]); }
+  return out;
+}
+
+// Nothing on the band or the scoop: a reset, and a save being unpacked.
+export function emptyBelt() {
+  S.belt = [];
+  S.beltRun = 0;
+  if (band.grid) fillFlat(band, 0);
+}
+
+// A save's grains, `[x, shade]`, back onto the machine: into the strip at
+// each one's column while the strip is wired, or -- before the world is laid
+// out -- as lifts at the band's height, which the first frame puts in.
+export function fillBelt(grains) {
+  for (const [x, sh] of grains) {
+    if (band.grid && addGrain(band, x, null, sh || 1)) continue;
+    S.belt.push({ x, y: bandY(), s: sh || 1 });
+  }
+}
+
+// The lift: on the scoop from this moment, climbing to the band.
 export function loadBelt(x, y, shade) {
-  const at = settle(x);
-  S.belt.push({ x: at.x, y, s: shade, h: at.h });
+  S.belt.push({ x, y, s: shade });
   sfx('belt-load', { x });
 }
 
@@ -178,25 +204,23 @@ export function beltRunning(now) {
 // was bought and what misses it.
 //
 // `f` is the frame, so the crossing is tested exactly: a chip lands when its
-// underside reaches the surface having been above it a frame ago. A fixed
-// tolerance is wrong for either a fast chip (more than a cell a frame) or a
-// slow one. The surface is the top of whatever is riding there, not the
-// band: caught at the band and given a level, a chip stopped on the band and
-// then rose through the heap to its place, which is not how a grain lands.
+// underside reaches the surface of its column -- the top of what is riding
+// there, or the band -- having been above it a frame ago. A fixed tolerance
+// is wrong for either a fast chip (more than a cell a frame) or a slow one.
 export function catchBelt(ch, now, f) {
   if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
-  if (!beltRunning(now)) return false;
+  if (!beltRunning(now) || !band.grid) return false;
   if (ch.x + P <= beltFrom() || ch.x >= beltReach()) return false;
   // Not over another station's strip: the cut's stone and the farm's crop
   // are carried by hand to their own piles and belong there.
   const c = colOf(floor, ch.x);
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
-  const at = settle(ch.x);
-  const y = beltY() - at.h * P;
+  const bc = Math.max(0, Math.min(band.cols - 1, colOf(band, ch.x)));
+  const y = surfaceY(band, bc) + P;                   // the top of the column, as a line
   const under = ch.y + P, was = under - ch.vy * f;
   if (was > y || under < y) return false;             // did not cross the surface this frame
-  S.belt.push({ x: at.x, y: y - P, s: ch.s, h: at.h });
+  if (!addGrain(band, ch.x, null, ch.s)) return false; // a band with no cell left: it falls on through
   sfx('belt-catch', { x: ch.x });
   return true;
 }
@@ -207,34 +231,48 @@ export function catchBelt(ch, now, f) {
 // before the last load reaches the hole, and a band that stopped then would
 // leave a row of grains hanging over the yard.
 export function stepBelt(now, f) {
-  if (!S.belt || !S.belt.length) return;
+  if (!band.grid) return;
   if (!beltRunning(now)) return;
+  // The lifts: up to the surface of the column each is under, and in.
+  for (let i = S.belt.length - 1; i >= 0; i--) {
+    const b = S.belt[i];
+    const c = Math.max(0, Math.min(band.cols - 1, colOf(band, b.x)));
+    const d = surfaceY(band, c) - b.y;
+    if (Math.abs(d) > BELT_LIFT * f) {
+      // Still on the scoop. It creeps forward while it climbs, so the lift
+      // reads as a machine taking it up rather than a grain levitating.
+      b.y += Math.sign(d) * BELT_LIFT * f;
+      b.x += BELT_PACE * 0.35 * f;
+      continue;
+    }
+    S.belt.splice(i, 1);
+    addGrain(band, b.x, null, b.s);
+  }
   // The band never stops for the hole: a band held on a full count stood for
   // good when the count was ahead of the pile, because the load that would
   // have torn the hole open was one it was holding. What the head drops that
   // the pile has no cell for goes through the rift (`bankDust` in pit.js).
-  const top = bandY(), head = beltTo();
-  for (let i = S.belt.length - 1; i >= 0; i--) {
-    const b = S.belt[i];
-    const rest = restY(b);
-    if (b.y !== rest) {
-      // Still on the scoop. It creeps forward while it climbs, so the lift
-      // reads as a machine taking it up rather than a grain levitating --
-      // until it is above the band, where it is on the machine and goes at
-      // the band's pace while it settles onto the heap, or the heap it was
-      // given a level on would run out from under it.
-      const d = rest - b.y;
-      b.y += Math.sign(d) * Math.min(BELT_LIFT * f, Math.abs(d));
-      b.x += BELT_PACE * (b.y <= top ? 1 : 0.35) * f;
-      continue;
+  //
+  // It has run a cell: every column a cell toward the head, and the last
+  // column off the end, out over the mouth, dropping with the band's speed
+  // for the chip loop to put in the hole like everything else.
+  S.beltRun = (S.beltRun || 0) + BELT_PACE * f;
+  while (S.beltRun >= P) {
+    S.beltRun -= P;
+    if (!grainsIn(band)) { S.beltRun = 0; break; }
+    const head = band.x + band.cols * P, last = band.cols - 1;
+    for (let r = 0; r < band.rows; r++) {
+      const v = at(band, last, r);
+      if (v) spawnChip(head, bottomY(band) - (r + 1) * P, BELT_PACE, 0, v);
+      const row = r * band.cols;
+      band.grid.copyWithin(row + 1, row, row + last);
+      band.grid[row] = 0;
     }
-    b.x += BELT_PACE * f;
-    if (b.x < head) continue;
-    // Off the end of the head, out over the mouth: it drops with the band's
-    // speed and the chip loop puts it in the hole like everything else.
-    S.belt.splice(i, 1);
-    spawnChip(b.x, b.y, BELT_PACE, 0, b.s);
+    recount(band);                        // written behind `put`'s back
+    band.painter.repaint();
   }
+  // And it lies the way ground does.
+  settle(band);
 }
 
 defineMachine('belt', {

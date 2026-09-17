@@ -100,11 +100,11 @@ export const TILLER_BILL = [['spark', 240], ['dust', 4800], ['shard', 360]];
 // because carrying does not *have* a coin: a hauler moves what everybody else
 // made. So it is priced in all three grounds.
 export const BELT_BILL = [['spark', 480], ['dust', 9600], ['shard', 600], ['spore', 600]];
-// How far along the band, in cells either side, a load lifted off one
-// column may slump to find a lower cell before it piles on what is there. A
-// scoop's whole load comes off one column, so at nought it stood as a tower
-// a load tall; at two it lies five wide and climbs only after that.
-export const BELT_SPREAD = 2;
+// How deep the load on the belt may stand, in cells: the rows of the strip
+// of ground laid over the band (`band` in state.js). A grain that finds no
+// cell left in the strip falls on through, so this is the belt's capacity as
+// well as its picture.
+export const BELT_DEPTH = 6;
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.

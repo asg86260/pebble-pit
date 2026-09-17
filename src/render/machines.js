@@ -4,6 +4,8 @@
 import { now } from '../clock.js';
 import { MACHINE_IDLE_MS, MACHINE_PUFF_LIFE, MACHINE_PUFF_MS, MACHINE_PUFF_RISE, MACHINE_PUFF_S, P, WORKER } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY } from '../dust.js';
+
+import { drawGrid } from './ground.js';
 import { tillerAt, tillerWay } from '../farm.js';
 import { MACHINES, machine, specOf } from '../machines.js';
 import { puff } from '../puff.js';
@@ -11,7 +13,7 @@ import { jawX, jawY, rigTop, shaftX } from '../quarry.js';
 import { rand } from '../rng.js';
 import { ramX, rockFaceX, rockShare } from '../rock.js';
 import { BIT, DRILL, MACHINE_MARK, RAM, TILLER, drawSprite, spriteH, spriteW } from '../sprites.js';
-import { S } from '../state.js';
+import { S, band } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
@@ -172,8 +174,10 @@ export function drawBelt() {
     ctx.fillRect(x, y, P, P);
   }
   ctx.fillStyle = '#000';
-  // What is riding it: each load a grain, drawn as whatever it is. The same
-  // call a chip in the air gets, because it is the same grain.
+  // What is riding it: ground, through its own painter like the yard's. And
+  // what the scoop is lifting to it, each a grain drawn as whatever it is --
+  // the same call a chip in the air gets, because it is the same grain.
+  if (band.grid && band.n) drawGrid(band);
   for (const b of S.belt) drawMark(b.s, Math.round(b.x) + P / 2, Math.round(b.y) + P / 2);
   ctx.fillStyle = '#000';
 }

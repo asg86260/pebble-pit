@@ -39,8 +39,7 @@ feature lives in DESIGN.md.
 - A tile being built, and the mark over its station, wear the coloured outline of the rung going up round the cells that are up, growing with the fill; a tile in line is the whole outline alone.
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.
-- The belt's load piles up along the band, a heap where a scoop dropped it, instead of every grain lying in the one row (test/machines.test.mjs, "a load piles on the band").
-- Spoil thrown onto the belt lands on top of what is riding there instead of stopping on the band and rising through the heap (the shot: `node tools/look.mjs belt --zoom 2`).
+- The load on the belt is dust like the ground's: it lands in cells, stands on what is under it, slumps to a heap and rides to the head in one piece, instead of every grain lying in the band's one row with gaps between (test/machines.test.mjs, "a load piles on the band").
 - A body dropped on the rock by hand walks to its helmet first and climbs wearing it, instead of standing on the rock bare-headed (test/wave7b-assign.test.mjs).
 
 - The bar over a barrier, net or arch being built hangs above the shield's full height instead of inside the rock (the shots: `node tools/look.mjs 'props~,net~,arch~'`).
