@@ -28,8 +28,10 @@ export const KIT = {
   [JOB.ROCK]:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
   [JOB.QUARRY]: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
   [JOB.FARM]: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
-  // A set of three, and no ceiling over it: see the note on `max` above.
-  [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: 0,     set: KIT_MAX },
+  // A set of three, and no ceiling over it: see the note on `max` above. The
+  // cart is no hat: on its stand it is the box, two cells high, standing on
+  // its wheel (`drawCartBox`, render/crew.js), so the count clears the box.
+  [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: P * 2, set: KIT_MAX },
   // Not a doubling but a license: no hat, no flying. See wizard.js.
   [JOB.WIZARD]:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
   // The one hat nobody buys: the shed hangs one on the stand for every post it

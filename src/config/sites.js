@@ -70,7 +70,7 @@ export const SHACK_RISE = P;
 // about to fall over. The farm's clears the first plot and whoever is stooping
 // over it. The rest stand clear of a door.
 export const KIT_OUT = {
-  shack: P * 6, outhouse: P * 6, quarry: BRIDGE_RUN + P * 5,
+  shack: P * 6, bench: P * 6, outhouse: P * 6, quarry: BRIDGE_RUN + P * 5,
   farm: P * 18, apothecary: P * 6, tower: P * 8
 };
 // A stand's slab is drawn from a cell left of its x (drawKitStands, render/
@@ -90,6 +90,9 @@ export const SITES = [
   // measured off whatever is nearest, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null,
     hang: () => kitHang('shack') },
+  // The carts' stand is left of the bench (`kitX`), but the bench pads for no
+  // hang: the noticeboard's gap (STATION_GAP, and the house's furniture pad
+  // for the board itself) is wider than the stand and the board together.
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   // The settlement owns the ground the noticeboard stands on. The board is
   // furniture rather than a station (seated in world.js) and has no slot of
