@@ -7,7 +7,7 @@ import { P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { workSpot, muckAtCol, nearestMuck, muckFor, sweepMuckAt, poopCols, colAt,
          MUCK_ELBOW } from '../smog.js';
-import { ways, wayAt, wayOver, keepTo, stepRoute, climbTo, feetOn, inWorking } from '../route.js';
+import { NONE, footing, ways, wayAt, wayOver, keepTo, stepRoute, climbTo, feetOn, inWorking } from '../route.js';
 import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
@@ -90,13 +90,18 @@ export function takeMess(w, c) {
   // column, held until that column is clear.
   const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
   if (patch == null) return false;
-  // A stance further from its patch than a body's width is not a stance:
-  // `workSpot` widens its search until it finds real ground somewhere, and
-  // muck over the open mouth of an empty pit hands back dry land cells away,
-  // with the body shovelling across the gap from the ground line. The claim is
-  // dropped and picked again next frame instead.
+  // Over a mouth, a stance further from its patch than a body's width is not
+  // a stance: `workSpot` widens its search until it finds real ground
+  // somewhere, and muck over the open mouth of an empty pit hands back dry
+  // land cells away, with the body shovelling across the gap from the ground
+  // line. The claim is dropped and picked again next frame instead. On a heap
+  // the reach is the point: a body cannot stand on loose dust, so it stands at
+  // the foot of the bank and the shovel goes up it (`sweepMuckAt` takes the
+  // nearest cells first), or the muck a rain leaves on the middle of a wide
+  // bank -- further from bare ground than `slideOffLoose` carries it -- is
+  // claimed, refused and claimed again by every body in the yard for good.
   const to = patch == null ? null : workSpot(patch);
-  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return held(w); }
+  if (to == null || (footing(patch) === NONE && Math.abs(to - patch) > WORKER)) { w.muckAt = null; return held(w); }
   // A mess under the coming rock, or across it, is not fetched through the
   // fall: the walk knows nothing of the zone and judders against its wall.
   if (S.rockFall > 0 && c.zone &&

@@ -41,6 +41,7 @@ feature lives in DESIGN.md.
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.
 - The load on the belt is dust like the ground's: it lands in cells, stands on what is under it, slumps to a heap and rides to the head in one piece, instead of every grain lying in the band's one row with gaps between (test/machines.test.mjs, "a load piles on the band").
 - A body dropped on the rock by hand walks to its helmet first and climbs wearing it, instead of standing on the rock bare-headed (test/wave7b-assign.test.mjs).
+- Muck a rain leaves on the middle of a wide heap is shovelled up from the foot of the heap, not left lying under it for the rest of the run (test/muck-under-heap.test.mjs).
 
 - The bar over a barrier, net or arch being built hangs above the shield's full height instead of inside the rock (the shots: `node tools/look.mjs 'props~,net~,arch~'`).
 
