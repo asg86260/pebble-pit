@@ -39,8 +39,6 @@ export const SITE_JOB = {
 // --- what a site can take, and how fast ----------------------------------------
 // Both defaulted so a station that says nothing behaves like every other.
 //
-//   room    how many works it can have on the go at once. One everywhere, two
-//           at a lab with a second bench.
 //   effort  worker-seconds a pair of hands puts in per second. `BUILD_EFFORT`
 //           everywhere, and the lab's own pace at the lab, which is what its
 //           `labkit` ladder buys.
@@ -50,7 +48,6 @@ export const SITE_JOB = {
 // Registered by the station rather than imported from it: works.js is read by
 // every board in the game and may not read one back.
 const SITE_SAYS = {};
-export const roomAt = site => Math.max(1, Math.round(SITE_SAYS[site]?.room?.() ?? 1));
 export const effortAt = site => Math.max(0, SITE_SAYS[site]?.effort?.() ?? BUILD_EFFORT);
 
 export const SITES = Object.keys(SITE_JOB);
@@ -222,16 +219,14 @@ export function siteBox(site, which = null) {
 }
 
 // --- what is on the go --------------------------------------------------------
-// A site builds as many as it has room for and the rest wait in line, paid
-// for now and built in turn (DESIGN.md, "The queue"). The save, the report
-// and the count on a card mean this whole list.
+// A site builds everything it has been paid for at once, each work with its
+// own hands (DESIGN.md, "The queue", amended). The save, the report and the
+// count on a card mean this whole list.
 export const worksAt = site => S.works?.[site] || [];
-// The front of it, being built now: the only ones that get hands, a bar, a
-// fence or a body walking over.
-export const onTheGo = site => worksAt(site).slice(0, roomAt(site));
-// The rest, in the order they will be built, at nought until then.
-export const inLine = site => worksAt(site).slice(roomAt(site));
-// "The" work at a site, for callers asking about a site with room for one.
+// Every work is on the go: each gets a bar, a fence and a body walking over
+// as soon as one is spare. Kept as a name so a reader says which it means.
+export const onTheGo = site => worksAt(site);
+// "The" work at a site, for callers asking about a site with one.
 export const workAt = site => worksAt(site)[0] || null;
 export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key) || null;
 export const busyAt = site => worksAt(site).length > 0;
@@ -239,13 +234,20 @@ export const busyAt = site => worksAt(site).length > 0;
 // (DESIGN.md, "A hand on the tile"). Read off the bodies each frame, so the
 // tile shows a hand only while the site has one.
 export const bodiesOn = key => S.workers.filter(w => w.jigAt != null && w.workKey === key);
-// Where a work stands in its site's list, counting the front as one, so the
-// first behind it is 2, which is what "2nd" in its tag means. Nought for a
-// work the site does not have.
-export const placeOf = (site, key) => worksAt(site).findIndex(w => w.key === key) + 1;
-export const waiting = (site, key) => placeOf(site, key) > roomAt(site);
-// Only what says where a new work goes; nothing is greyed on it.
-export const fullAt = site => worksAt(site).length >= roomAt(site);
+// Nobody on this one work right now. At a builder-manned site that is a
+// builder at ITS work (standing there, whether mid-swing or between bursts);
+// elsewhere the hands are shared over every work, so any hand at the site is
+// on it.
+export const idleAt = (site, key) => {
+  const own = builderManned(site) ? handsOn(site, key) : null;
+  return (own ?? handsAt(site)) < 1;
+};
+// A work nobody has started on: paid for, at nought, no body on it. Until
+// then it can be pulled back out for a full refund (`pullOut`).
+export const waiting = (site, key) => {
+  const w = worksAt(site).find(x => x.key === key);
+  return !!w && w.done === 0 && idleAt(site, key);
+};
 
 // how far along it is, 0..1 -- for a bar over the site
 export const progressOf = w => (w && w.of > 0 ? Math.min(1, w.done / w.of) : 0);
@@ -262,8 +264,10 @@ export const leftAt = (site, key = null) => {
   const w = key ? list.find(x => x.key === key) || list[0] : list[0];
   if (!w) return 0;
   // At this site's own pace: a clock on a lab row that quoted the yard's plain
-  // effort would be quoting somebody else's day.
-  const rate = Math.max(1, handsAt(site)) * effortAt(site);
+  // effort would be quoting somebody else's day. A builder-manned site puts
+  // one body on each work, so the hands that count are the ones at THIS one.
+  const own = builderManned(site) ? handsOn(site, w.key) : null;
+  const rate = Math.max(1, own ?? handsAt(site)) * effortAt(site);
   return Math.max(0, (w.of - w.done) * 1000 / rate);
 };
 
@@ -280,27 +284,23 @@ function reserve(key) {
   groundHook();
 }
 
-// Start one, or put it in line if the site is already building as much as it
-// can.
+// Start one. Nothing waits its turn: a site builds everything it is paid for
+// at once, and a body is found for each as one comes spare.
 export function start(site, u, at) {
   if (!site) return false;
-  const was = fullAt(site);
   (S.works[site] ||= []).push({ key: u.key, done: 0, of: workFor(u), at: at ?? null });
   // The ground is spoken for the moment it is paid for, not when the thing
   // lands: the walk is laid out in the order places were bought (`siteOrder`
   // in world.js), and a place not yet in that order was laid at the end of
   // the walk, so the whole building jumped across the yard when it finished.
   reserve(u.key);
-  // A full site has nothing new starting; `started` is said when the work
-  // reaches the front (`stepWorks`). The staff hook is still asked, because a
-  // card has a name to add.
-  if (!was) SITE_SAYS[site]?.started?.();
+  SITE_SAYS[site]?.started?.();
   staffHook();
   return true;
 }
 
-// Take a work out of the line, unbuilt. Only a waiting one: a work being built
-// has hands on it and is committed. What is handed back is the row's business
+// Take a work back, unbuilt. Only a waiting one: a work somebody has started
+// on is committed. What is handed back is the row's business
 // (`buy` in upgrades.js).
 export function pullOut(site, key) {
   if (!waiting(site, key)) return false;
@@ -333,8 +333,7 @@ export function stepWorks(dt) {
     const list = worksAt(site);
     if (!list.length) continue;
     const hands = handsAt(site);
-    // Only the front of the line is worked; the rest stand at nought.
-    const going = Math.min(list.length, roomAt(site));
+    const going = list.length;
     // The hands are shared out over what is on the go: two benches with one
     // scholar between them is one scholar's work spread over both.
     const each = hands / going;
@@ -369,10 +368,8 @@ export function stepWorks(dt) {
       // key, so left for the next walk it was left for the next reload.
       reserve(w.key);
       doneHook(site, w.key);
-      // The next in line is told it has started, exactly as if bought into an
-      // empty site, and the builder this landing freed takes it (`siteFor` in
-      // crew/builders.js).
-      if (list.length >= roomAt(site)) SITE_SAYS[site]?.started?.();
+      // The builder this landing freed takes whichever work has the fewest on
+      // it (`siteFor` in crew/builders.js).
       staffHook();
     }
   }

@@ -8,10 +8,10 @@ import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_
 import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, building, inLine, lineAt } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy, billOf, canPay, building, inLine } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
-import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
-import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
+import { MARK, gainText, purse, priceText, leftText } from './words.js';
+import { takesTime, idleAt, rowFor, progressOf, leftAt, workOn, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
@@ -408,8 +408,6 @@ function build(el, list, sections, empty, heads) {
 // A count runs through the tweener; a dial's value can be words, which do not.
 const sayCount = (key, v) => typeof v === 'number' ? String(Math.round(shown('count:' + key, v))) : String(v);
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
-// A place in a line: the first waiting is `next`, the rest count from there.
-export const placeWord = n => (n <= 1 ? 'next' : ordinal(n));
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; reworded = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 const sayNote = (row, u) => { const n = row.querySelector('.note'); if (n && typeof u.note === 'function') say(n, u.note()); };
@@ -596,20 +594,17 @@ export function refresh(el, list, headcount) {
         say(what, u.name);
         // The vocabulary is closed, and every word fits the tightest cell on
         // any board (`pinWidth` in board.js, the width check in
-        // selftest/boards.js). A builders' site always has somebody, so it is
-        // never stuck.
+        // selftest/boards.js).
         row.classList.add('waiting');
         const queued = inLine(u);
-        const stuck = !queued && stalled(u.site) && !BUILDER_SITES.includes(u.site);
+        const stuck = !queued && idleAt(u.site, u.key);
         // Two words about bodies: `building` while somebody is at it, `queued`
         // while nobody is. The tile says which by the rest of it.
         sayHTML(gain, queued || stuck ? 'queued' : 'building');
-        // A paid bill is not a price: the tag holds the time left, or for a
-        // row in line its place. The place is in the LINE, not among the
-        // site's works: a site building two at once has its first waiting row
-        // third in the list and next in line.
+        // A paid bill is not a price: the tag holds the time left, at the
+        // pace the work would go with a body on it.
         sayHTML(price, '');
-        sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
+        sayHTML(time, `<span class="have">${MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
         // Greyed while being built; live while it waits, so a press can pull
