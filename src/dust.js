@@ -205,13 +205,20 @@ export function beltRunning(now) {
 // rockhand's shovel. The scoop is for what was lying about before the belt
 // was bought and what misses it.
 //
-// `f` is the frame, so the crossing is tested exactly: a chip lands when its
-// underside reaches the surface of its column -- the top of what is riding
-// there, or the band -- having been above it a frame ago. A fixed tolerance
-// is wrong for either a fast chip (more than a cell a frame) or a slow one.
+// The test is the ground's own (`stepChips`): a chip coming down that is at
+// or below the surface of its column -- the top of what is riding there, or
+// the band -- has landed. Not "crossed it this frame": a chip coming down
+// on the side of a heap steps into a taller column whose surface it was
+// already under, and tested for the crossing it went through the heap and
+// the band to the floor, for the scoop to pick back up. Only from above the
+// band: a chip under it, thrown off the face below the band's height, is on
+// its way up and crosses the band the way anything thrown does. Judged from
+// where it was a frame ago (`f` is the frame), since a fast one can pass
+// the band's own row in one.
 export function catchBelt(ch, now, f) {
   if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
   if (!beltRunning(now) || !band.grid) return false;
+  if (ch.y - ch.vy * f > beltY()) return false;       // under the band, not over it
   if (ch.x + P <= beltFrom() || ch.x >= beltReach()) return false;
   // Not over another station's strip: the cut's stone and the farm's crop
   // are carried by hand to their own piles and belong there.
@@ -219,9 +226,7 @@ export function catchBelt(ch, now, f) {
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
   const bc = Math.max(0, Math.min(band.cols - 1, colOf(band, ch.x)));
-  const y = surfaceY(band, bc) + P;                   // the top of the column, as a line
-  const under = ch.y + P, was = under - ch.vy * f;
-  if (was > y || under < y) return false;             // did not cross the surface this frame
+  if (ch.y < surfaceY(band, bc)) return false;        // still above what is riding there
   if (!addGrain(band, ch.x, null, ch.s)) return false; // nowhere on the strip at all: it falls on through
   sfx('belt-catch', { x: ch.x });
   return true;

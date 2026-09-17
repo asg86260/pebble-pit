@@ -42,6 +42,7 @@ feature lives in DESIGN.md.
 - A dark switch on the settings sheet, on the landing page and in the game: the yard in light gray on charcoal, the marks still in their colors, following the system's setting until pressed; the change is a fade through the veil, not a cut (test/settings.test.mjs, `play.html?dark`).
 - The steam off a boiling pot rises in front of the buildings, on the crew's plane, and climbs slower.
 - The load on the belt is dust like the ground's: it lands in cells, stands on what is under it, slumps to a heap as tall as its slope allows and rides to the head in one piece, instead of every grain lying in the band's one row with gaps between (test/machines.test.mjs, "a load piles on the band").
+- Spoil coming down on the side of a tall heap on the belt lands on the heap instead of going through it to the floor for the scoop to lift back up (test/machines.test.mjs, "a tall heap on the band").
 - A body dropped on the rock by hand walks to its helmet first and climbs wearing it, instead of standing on the rock bare-headed (test/wave7b-assign.test.mjs).
 - Muck a rain leaves on the middle of a wide heap is shovelled up from the foot of the heap, not left lying under it for the rest of the run (test/muck-under-heap.test.mjs).
 

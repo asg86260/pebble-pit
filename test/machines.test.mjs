@@ -10,8 +10,9 @@ import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, 
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
 import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT } from '../src/config.js';
-import { band } from '../src/state.js';
-import { at, grainsIn } from '../src/grid.js';
+import { band, floor } from '../src/state.js';
+import { at, grainsIn, addGrain } from '../src/grid.js';
+import { beltFrom, beltReach } from '../src/dust.js';
 import { S } from '../src/state.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
@@ -1444,6 +1445,42 @@ group("the rock's spoil lands on the belt and never touches the ground", async (
     // the scoop, which is what the scoop is still for.
     ok(worst < 40, 'and next to none of it ever lies on the ground',
        `${worst} grains on the floor at the worst of it`)
+  ];
+});
+
+// And still when the heap on the band is tall. A chip coming down on the side
+// of a heap steps into a column whose surface it is already under; tested for
+// the crossing, it went through the heap and the band to the floor, and the
+// scoop lifted it back up in plain view. The band takes what the ground takes:
+// anything coming down at or below its column's surface.
+group("spoil coming down on a tall heap on the band lands on it, not the floor", async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 2);
+  window.__machine('ram', { bought: true });
+  window.__machine('belt', { bought: true });
+  haveRock();
+  run(8);
+  // A ragged heap on the band, everywhere the spoil comes down: steps taller
+  // than a chip falls in a frame, for a chip to come down beside.
+  for (let x = beltFrom(), k = 0; x < beltReach(); x += P, k++) {
+    const deep = (k % 4) ? 2 : 16;
+    for (let i = 0; i < deep; i++) addGrain(band, x, null, 3);
+  }
+  window.__clearFloor();
+  // Landings, not a count: the scoop lifts a fallen grain off the floor
+  // within a beat, so the floor never holds enough to show. Every frame the
+  // floor's grains go up is grains that came down on it.
+  let landed = 0, was = floor.n;
+  for (let i = 0; i < 240; i++) {
+    window.__fast(1 / 60);
+    if (floor.n > was) landed += floor.n - was;
+    was = floor.n;
+  }
+  window.__crew(0, 0);
+  return [
+    ok(landed < 10, 'next to none of it comes down on the ground', `${landed} grains landed`)
   ];
 });
 
