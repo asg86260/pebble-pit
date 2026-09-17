@@ -13,7 +13,7 @@ export const METEOR_CORE_SPARKS = 3;
 
 // A wizard is a hat, like every other trade -- the one hat nobody can do the
 // job without. The tower makes them one at a time and takes its time over it.
-export const WIZ_DUST = 4000;
+export const WIZ_DUST = 1000;
 export const WIZ_SHARDS = 200;
 export const WIZ_SPORES = 200;
 export const WIZ_RATE = 1.7;         // and each one after the first
@@ -96,7 +96,7 @@ export const RAY_MAX = 5;            // and at their longest
 export const RAY_BEAT = 1.7;         // seconds for one breath of the corona
 export const CORE_FLICK = 260;       // ms a core cell holds a tone before it shifts
 
-// A core and a thousand dust, and nothing else: a bill with four lines on it
+// A core and four thousand dust, and nothing else: a bill with four lines on it
 // is a row you have to study rather than read.
 export const TOWER_CORES = 1;
-export const TOWER_DUST = 1000;
+export const TOWER_DUST = 4000;
