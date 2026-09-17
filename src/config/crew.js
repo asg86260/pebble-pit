@@ -26,7 +26,8 @@ export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
-export const TOSS_DELAY = 260;   // and before a held sweep starts throwing (hold to toss)
+export const TOSS_DELAY = 260;   // and before a held hand starts throwing (hold to toss)
+export const TOSS_NEAR = P * 20;  // how far either side a held hand reaches for a grain, and how far off a pile's end it still works the pile
 // How many rungs there are on every ladder in the game: one number, so "how
 // far along is this" has one answer wherever it is asked. What changes between
 // ladders is what a rung costs and is bought with (config/rungs.js; "The

@@ -1,12 +1,13 @@
 // Your hands: what a click, a drag and a flick do.
 //
-// Sweeping lifts dust off the ground onto the cursor, a flick throws it (or a
-// held hand lets it go at the hole by itself, once that is bought), and
-// anything still in the air can be caught on the way past.
+// Sweeping lifts dust off the ground onto the cursor, a flick throws it, a
+// held hand throws handfuls off the pile it is near at the hole by itself
+// (once that is bought), and anything still in the air can be caught on the
+// way past.
 
-import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC } from './config.js';
+import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR } from './config.js';
 import { S, floor } from './state.js';
-import { at, put, inside, colOf, bottomY } from './grid.js';
+import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { holeLanding } from './pit.js';
 import { capacity, tossReach } from './levels.js';
@@ -131,27 +132,60 @@ export function release(x, y) {
   S.motes = [];
 }
 
-// Hold to toss: the handful leaves the hand where it is, aimed at the hole
-// on the arc the haulers throw on (`holdToToss` in game.js decides when).
-// The hand has a reach (the bench's ladder): a hole further off than that
-// gets the handful thrown that far toward it, to land on the ground and be
-// picked up again from there. The peak grows with the distance, so a throw
-// from the far side of the rock clears it. Not a juggle: nothing here is
-// thrown to be caught.
-export function tossAtHole(x, y) {
-  if (!S.held) return;
-  const from = S.chips.length;
-  for (let i = 0; i < S.held; i++) {
-    const fx = x + (rand() - 0.5) * P * 6, fy = y + (rand() - 0.5) * P * 6;
-    const hole = holeLanding();
-    const land = Math.abs(hole - fx) <= tossReach() ? hole : fx + Math.sign(hole - fx) * tossReach();
-    const rise = Math.max(TOSS_RISE, Math.abs(land - fx) * HAND_ARC) * (1 + bell() * TOSS_RISE_VARY * 0.4);
-    const v = aim(fx, fy, land, P, rise);
-    spawnChip(fx, fy, v.vx, v.vy, S.motes[i]?.s || 1);
-    S.chips[S.chips.length - 1].auto = true;      // past the hand that threw it (catchAir)
+// The pile a held hand works: the one under it, or the nearest whose end is
+// within TOSS_NEAR of it. Null on open ground.
+export function pileNear(mx) {
+  let best = null, gap = TOSS_NEAR + 1;
+  for (const p of S.piles) {
+    const d = mx < p.from ? p.from - mx : mx >= p.to ? mx - p.to : 0;
+    if (d < gap) { best = p; gap = d; }
   }
-  noteThrow(S.chips.slice(from), false);
-  S.held = 0;
-  S.motes = [];
+  return best;
+}
+
+// Hold to toss: a handful off the pile the hand is near, thrown from where it
+// lay, aimed at the hole on the arc the haulers throw on (`holdToToss` in
+// game.js decides when). Not what is in the hand: that stays until you flick
+// it. The handful is a brush-wide scoop off the crust nearest the hand, so
+// the pile goes from the near end rather than being shaved flat. Near a
+// station's strip the hand works the whole strip; anywhere it also reaches
+// TOSS_NEAR either side, so a handful that fell short on open ground is
+// picked up from there. The hand has a reach (the bench's ladder): a hole
+// further off than that gets the handful thrown that far toward it, to land
+// on the ground and be picked up again from there. The peak grows with the
+// distance, so a throw from the far side of the rock clears it. Not a
+// juggle: nothing here is thrown to be caught. Returns how many grains went.
+export function tossFromPile(mx) {
+  const p = pileNear(mx);
+  const from = S.chips.length;
+  const c0 = colOf(floor, mx);
+  const lo = Math.max(0, Math.min(colOf(floor, mx - TOSS_NEAR), p ? colOf(floor, p.from) : Infinity));
+  const hi = Math.min(floor.cols - 1, Math.max(colOf(floor, mx + TOSS_NEAR), p ? colOf(floor, p.to - 1) : -Infinity));
+  let room = capacity();
+  const perCol = Math.max(1, Math.ceil(room / (BRUSH * 2 + 1)));
+  const hole = holeLanding();
+  const take = c => {
+    for (let k = 0; k < perCol && room > 0; k++) {
+      const r = topRow(floor, c);
+      if (r < 0) return;
+      const v = at(floor, c, r);
+      put(floor, c, r, 0);
+      room--;
+      const fx = floor.x + c * P, fy = bottomY(floor) - (r + 1) * P;
+      const land = Math.abs(hole - fx) <= tossReach() ? hole : fx + Math.sign(hole - fx) * tossReach();
+      const rise = Math.max(TOSS_RISE, Math.abs(land - fx) * HAND_ARC) * (1 + bell() * TOSS_RISE_VARY * 0.4);
+      const vel = aim(fx, fy, land, P, rise);
+      spawnChip(fx, fy, vel.vx, vel.vy, v);
+      S.chips[S.chips.length - 1].auto = true;    // past the hand that threw it (catchAir)
+    }
+  };
+  // nearest columns first, either side of the hand, out to the strip's ends
+  for (let d = 0; room > 0 && (c0 - d >= lo || c0 + d <= hi); d++) {
+    if (c0 - d >= lo && c0 - d <= hi) take(c0 - d);
+    if (d && c0 + d >= lo && c0 + d <= hi) take(c0 + d);
+  }
+  const went = S.chips.length - from;
+  if (went) noteThrow(S.chips.slice(from), false);
+  return went;
 }
 

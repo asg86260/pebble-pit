@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 - The carter is worked at the bench like any other upgrade, not built out at the lip.
+- Hold to toss throws handfuls off the pile the hand is near, from the pile itself, and leaves what is in the hand alone until you flick it.
 - Hold to toss reaches the hole from anywhere on the rock's pile at its first rung (500px, up from 120); the reach ladder is for the stations further off.
 - A flag over a board with something on it you have never looked at sends rings off its tip until you do.
 - The mark over a station that finished something shows the thing itself, not a tick.

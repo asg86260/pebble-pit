@@ -48,7 +48,7 @@ setRooms(houseCubes);
 setSheds({ quarry: quarryShed, farm: farmShed, apothecary: apothHut });
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
-import { catchAir, sweep, dustUnder, tossAtHole } from './hands.js';
+import { catchAir, tossFromPile } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
@@ -56,7 +56,7 @@ import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepBuried, stepUnder } from './intro.js';
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
-import { mineMs, tossMs, capacity } from './levels.js';
+import { mineMs, tossMs } from './levels.js';
 import { restaff, stripKit } from './staffing.js';
 // The bench's row is registered by this file being loaded, here rather than
 // by the page, because a yard with no document still has to raise a bench
@@ -164,17 +164,15 @@ function holdToMine(now) {
   }
 }
 
-// Hold to toss: a hand held down on dust keeps sweeping what is under it,
-// and once it is full, or the ground under it is bare, lets the handful go
-// at the hole (`tossAtHole`). Paced like the swing, so a sweep and a flick
-// is still yours: nothing leaves the hand before `TOSS_DELAY`, and then a
-// handful every `tossMs`, the bench's pace ladder.
+// Hold to toss: a hand held down near a pile grabs a handful off it and
+// throws that at the hole (`tossFromPile`), leaving whatever is in the hand
+// where it is. Paced like the swing, so a sweep and a flick is still yours:
+// nothing goes before `TOSS_DELAY`, and then a handful every `tossMs`, the
+// bench's pace ladder.
 function holdToToss(now) {
   if (!S.dragging || !S.autoToss) return;
-  sweep(S.mouse.x, S.mouse.y);
-  if (now < S.nextToss || !S.held) return;
-  if (S.held < capacity() && dustUnder(S.mouse.x, S.mouse.y)) return;
-  tossAtHole(S.mouse.x, S.mouse.y);
+  if (now < S.nextToss) return;
+  tossFromPile(S.mouse.x);
   S.nextToss = now + tossMs();
 }
 

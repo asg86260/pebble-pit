@@ -1919,11 +1919,13 @@ in a single function that every board shares. Adding an upgrade is still adding 
 
 ## Hold to toss (built)
 
-The sweep's answer to hold to mine. Once bought, a button held on dust keeps sweeping what is
-under it, and when the hand is full, or the ground under it is bare, the handful leaves the hand
-where it is, aimed at the mouth of the hole on the arc the haulers throw on. Nothing leaves before
-the same pause hold to mine keeps, so a sweep and a flick is still yours; and a handful the held
-hand let go is not caught back by the hand it left from.
+The sweep's answer to hold to mine. Once bought, a button held near a pile grabs a handful off
+the crust nearest the hand and throws it from where it lay, aimed at the mouth of the hole on the
+arc the haulers throw on. What is in the hand is not touched: that stays until you flick it.
+Near a station's strip the hand works the whole strip, nearest end first; anywhere it reaches
+`TOSS_NEAR` either side, so a handful that fell short is picked up from the open ground it lies
+on. Nothing goes before the same pause hold to mine keeps, so a sweep and a flick is still yours;
+and a handful the held hand threw is not caught back by the hand it left from.
 
 Two ladders, and it starts small and slow on both. **Throw pace** is how often a handful goes,
 half a throw a second at the foot. **Throw reach** is how far one carries: a hole further off
@@ -1932,7 +1934,7 @@ there on the next hold. The foot of the reach ladder covers only the end of the 
 the top reaches the lab's pile at the far end of the yard. Both ladders wait on hold to toss
 being bought, the way the swing ladders wait on hold to mine, and the row itself waits on having
 dragged once, like the carry row. Numbers: `toss` and `reach` in `config/rungs.js`;
-`holdToToss` in game.js, `tossAtHole` in hands.js, and the landing spot the haulers share,
+`holdToToss` in game.js, `tossFromPile` in hands.js, and the landing spot the haulers share,
 `holeLanding` in pit.js.
 
 ## The workbench
