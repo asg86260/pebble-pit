@@ -643,7 +643,7 @@ function panDir(e, key) {
   return '';
 }
 const keysHeld = new Set();
-const KEY_PAN = 0.8;                          // views a second, held: the same feel at any zoom
+const KEY_PAN = 0.5;                          // views a second, held: the same feel at any zoom
 let wheelOwed = 0;                            // world units the wheel has asked for and not yet had
 const WHEEL_EASE = 80;                        // ms for the owed distance to fall to 1/e
 let panAt = 0;
