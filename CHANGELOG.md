@@ -11,6 +11,9 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
+- On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").
+
 ## v0.3.3 — 2026-09-17
 
 - A yard with a torn pit no longer drops to a few frames a second, before and after a reload, once rain has left muck over the hole (test/perf-gate.test.mjs).

@@ -6,7 +6,7 @@
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
-import { clampCam, unfollow, bindScroller, lookAt } from './world.js';
+import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
@@ -569,27 +569,43 @@ bindScroller(scroller, spacer, viewTaken);
 // little off the pile is still a sweep, since the thumb's contact point is
 // not where the player sees it; only clear ground and sky scroll.
 const fingerReach = () => Math.max(BRUSH, Math.ceil(THUMB / (S.zoom * P)));
+// Claiming is two things, because saying no was not enough on its own:
+// iPhone Safari, with the game framed in itch's page, went on scrolling the
+// yard under a sweep whose touchstart and every touchmove had been refused
+// (2026-09-17, 2026-09-20). So the scroller is also shut for the length of
+// the claimed touch -- a scroller that cannot scroll has nothing for the
+// platform to commit to -- and opened again when the last finger lifts. A
+// finger the game did not claim never shuts it, so the platform's own
+// scroll is untouched.
+let claimed = false;
+function claim(e) {
+  e.preventDefault();
+  if (claimed) return;
+  claimed = true;
+  lockScroller(true, 'touch');
+}
 addEventListener('touchstart', e => {
   if (e.target !== canvas) return;
   if (S.paused || cutsceneRunning()) return;
-  if (S.dragging) { e.preventDefault(); return; }
+  if (S.dragging) { claim(e); return; }
   for (const t of e.changedTouches) {
     const p = pos(t);
     // ...and a finger on the casino's arm, or on its sign while it is a
     // button: a hold on the arm must never scroll the page
-    if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { e.preventDefault(); return; }
+    if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
   }
 }, { passive: false });
-// ...and said again on every move while the game holds the finger. iPhone
-// Safari, with the game framed in itch's page, went on scrolling the yard
-// under a sweep that touchstart had refused (2026-09-17), so the refusal
-// at landing is not enough there; a move refused is refused wherever the
-// platform decided. A finger the game did not claim never gets here with
-// a sweep or the arm on, so the platform's own scroll is untouched.
 addEventListener('touchmove', e => {
   if (e.target !== canvas) return;
   if (S.dragging || S.holding) e.preventDefault();
 }, { passive: false });
+const unclaim = e => {
+  if (!claimed || e.touches.length) return;
+  claimed = false;
+  lockScroller(false, 'touch');
+};
+addEventListener('touchend', unclaim);
+addEventListener('touchcancel', unclaim);
 
 // The wheel: a vertical wheel is the yard's own sideways pan, as it always
 // was. A sideways delta -- a trackpad's two-finger swipe -- is left to the
