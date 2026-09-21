@@ -58,14 +58,6 @@ export function envelope(t) {
   return up * (RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail);
 }
 
-// Where the water is born: the clouds say (`rainSpans` in weather.js), and
-// hand the answer in here rather than being imported, because weather.js
-// reaches the renderer and this file is reached from the rules -- an import
-// would be a cycle through the whole game. Nothing until the clouds have
-// spoken; a sky with no clouds has no rain.
-let spansFrom = () => [];
-export const bornUnder = fn => { spansFrom = fn; };
-
 // What the rain has done, for the rules: drops landed by kind and the muck the
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
@@ -84,26 +76,16 @@ export function pour(secs) {
   // never does; one at a time, because a second bolt over the first is a fizz.
   if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
-  // The water: clean drops out of the clouds over the window. Where the strip
-  // has no cloud over a column the sheet is thinner there, so a light front
-  // rains in patches and a heavy one everywhere.
-  const spans = spansFrom();
-  if (spans.length) {
-    let n = RAIN_PER_S * secs * env;
-    let total = 0;
-    for (const sp of spans) total += sp.x1 - sp.x0;
-    while (n > 0) {
-      if (n < 1 && rand() > n) break;
-      n -= 1;
-      let at = rand() * total;
-      for (const sp of spans) {
-        const w = sp.x1 - sp.x0;
-        if (at > w) { at -= w; continue; }
-        DROPS.push({ x: sp.x0 + at, y: sp.y, dirt: false,
-                     vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
-        break;
-      }
-    }
+  // The water: clean drops from over the top of the window, the whole width
+  // of it, the same place the acid comes from -- one sheet, whatever is in
+  // it. Born under the cloud bars it rained in patches under the clouds
+  // while the acid fell everywhere, and the two read as two weathers.
+  let water = RAIN_PER_S * secs * env;
+  while (water > 0) {
+    if (water < 1 && rand() > water) break;
+    water -= 1;
+    DROPS.push({ x: S.camX + rand() * S.viewW, y: S.camY - P, dirt: false,
+                 vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
   }
 
   // The acid: which marked motes may fall, as indices. This runs every frame

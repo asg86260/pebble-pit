@@ -19,6 +19,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The water and the acid come down as one sheet across the whole window, not the water in patches under the clouds and the acid everywhere (src/scenes.js `acidrain`; test/weather.test.mjs, "it rains on a clean yard").
 - The air reading no longer runs a hair over the sky while it is raining (test/sky-readout.test.mjs, "what the readout says is what is overhead").
 - The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
 - On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").

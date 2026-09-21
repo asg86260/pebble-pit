@@ -14,7 +14,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
 import { frames } from './clock.js';
-import { bornUnder, dryTime } from './smog/rain.js';
+import { dryTime } from './smog/rain.js';
 import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
@@ -210,26 +210,6 @@ function cellsOf(c, sw) {
   return bars.reduce((m, b) => m + (b.b - b.a), 0) + (bars[0] ? under * (bars[0].b - bars[0].a) : 0);
 }
 
-// Where rain is born: the underside of every cloud bar over the window, as
-// world spans with the y of that underside. The sheet falls out of the thing
-// that swelled, so a light front rains in patches and a heavy one everywhere.
-// Handed to the rain rather than imported by it (see `bornUnder`).
-export function rainSpans() {
-  const out = [];
-  const sw = swell();
-  const left = S.camX, right = S.camX + S.viewW;
-  for (const c of CLOUDS) {
-    const { bars, under } = barsOf(c, sw);
-    const foot = bars[0];
-    if (!foot) continue;
-    const x = skyX(c);
-    const x0 = Math.max(left, x + foot.a * P), x1 = Math.min(right, x + foot.b * P);
-    if (x1 <= x0) continue;
-    out.push({ x0, x1, y: Math.round(c.y / P) * P + under * P });
-  }
-  return out;
-}
-bornUnder(rainSpans);
 
 // A few birds, strung out rather than in a formation: same heading, each a
 // little behind and a little off the last.

@@ -12442,11 +12442,12 @@ The five clouds at the back are decoration today; they become the warning.
   the sky borrows the rock's shades stands; a storm cloud is a bigger, heavier
   shape in the same two greys, and the flash and the bolt are what darken the
   sky.
-- Drops are born **under the cloud bars** in the strip, not from a line over
-  the window: the rain falls out of the thing that swelled. Where the strip
-  has no cloud over a column the sheet is thinner there, so a light front
-  rains in patches and a heavy one everywhere. Marked motes still drop from
-  over the window where their mote hung, as now.
+- Drops are born over the top of the window, the whole width of it, water
+  and acid alike: one sheet. (Built first with the water born under the
+  cloud bars, so a light front rained in patches; the acid still fell from
+  over the window wherever its mote hung, and the two read as two weathers
+  -- the water in patches under the clouds, the acid everywhere. Cut
+  2026-09-21.)
 - Through the pour the clouds hold; through the taper and for a while after
   (`CLOUD_SETTLE_S`) they shed the extra rows and the extra ones drift off
   the sides. Nothing pops.
