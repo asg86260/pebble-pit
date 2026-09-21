@@ -1414,11 +1414,11 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .slot.armed { color: var(--paper); background: var(--ink); }
 /* The board of times: one line a row, best first, this yard's own row
    boxed. The ending sheet's line under "it took" is the same register. */
-.held .times { display: flex; flex-direction: column; gap: 4px; min-width: 22em; max-height: 50vh; overflow-y: auto;
+.held .times, .col .times { display: flex; flex-direction: column; gap: 4px; min-width: 22em; max-height: 50vh; overflow-y: auto;
                text-transform: none; letter-spacing: 0; font-size: 11px; }
-.held .times .row { padding: 3px 8px; border: 1px solid transparent; }
-.held .times .row.mine { border-color: var(--ink); }
-.held .times .none { text-align: center; color: var(--ink-4); }
+.held .times .row, .col .times .row { padding: 3px 8px; border: 1px solid transparent; }
+.held .times .row.mine, .col .times .row.mine { border-color: var(--ink); }
+.held .times .none, .col .times .none { text-align: center; color: var(--ink-4); }
 #timespost input, #boardname { font: inherit; padding: 4px 8px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); min-width: 12em; }
 #timessaid:empty { display: none; }
 /* The veil: white over the whole page as it boots, and taken away once the

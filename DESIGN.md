@@ -12724,8 +12724,10 @@ first and a name is a label on a row, not a key, so that is fine.
   `times · best 12:34`, turning to a list of `TIMES_SHOWN` rows, `12:34 ·
   bob · itch · 3 days ago` (`since` in slots.js), your row marked, and your
   own rank under the list if you are not on it. It is fetched when the page
-  is turned, never on a timer; the landing page reads the same route for one
-  line under the achievements button, `best time 12:34 · bob`.
+  is turned, never on a timer. The title page has the same page behind a
+  `times` button of its own beside achievements, with the best on the button
+  -- the owner's call (2026-09-21): the board is the title's business, not
+  something behind the settings.
 - **Quiet when away.** Every call has one `TIMES_TIMEOUT_MS` and one
   outcome for any failure: the page says "the board is away" and the rest of
   the game notices nothing. No retries, no queue, no status in the yard.

@@ -45,6 +45,7 @@ body.title { overflow: hidden; }
 .col .slot.armed { color: var(--paper); background: var(--ink); }
 /* the record's cards, one across in the column */
 .col .record { grid-template-columns: 1fr; width: 21em; max-width: none; max-height: 50vh; box-sizing: border-box; }
+.col .times { width: 21em; min-width: 0; box-sizing: border-box; }
 .col .record .card { background: var(--paper); }
 .col #reset { border-style: dashed; opacity: .7; }
 .col #reset:hover, .col #reset.armed { opacity: 1; }
