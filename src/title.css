@@ -45,7 +45,18 @@ body.title { overflow: hidden; }
 .col .slot.armed { color: var(--paper); background: var(--ink); }
 /* the record's cards, one across in the column */
 .col .record { grid-template-columns: 1fr; width: 21em; max-width: none; max-height: 50vh; box-sizing: border-box; }
-.col .times { width: 21em; min-width: 0; box-sizing: border-box; }
+/* The board of times: a panel in the sky on the right, in the column's
+   hand, standing the whole time the page is up. Under a narrow window it
+   folds away rather than lying over the column. */
+.board {
+  position: fixed; right: 36px; top: 34px; width: 22em; max-height: calc(100vh - 68px);
+  padding: 10px 14px 12px; box-sizing: border-box; overflow-y: auto;
+  border: 1px solid var(--ink); background: var(--paper);
+  letter-spacing: .14em; text-transform: uppercase;
+}
+.board .word { font-size: 17px; letter-spacing: .3em; margin-bottom: 8px; }
+.board .times { min-width: 0; max-height: none; }
+@media (max-width: 720px) { .board { display: none; } }
 .col .record .card { background: var(--paper); }
 .col #reset { border-style: dashed; opacity: .7; }
 .col #reset:hover, .col #reset.armed { opacity: 1; }

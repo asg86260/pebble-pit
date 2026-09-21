@@ -6,7 +6,7 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord } from './record.js';
-import { timesOn, fetchBoard, showTimes, timesLabel, noteBest } from './timesboard.js';
+import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
@@ -35,7 +35,6 @@ function showPane(name) {
   front();
   if (name === 'slots') showSlots(document.getElementById('slots'), say, pick, false);
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
-  if (name === 'times') showTimes(document.getElementById('times'), opened()?.runId || null);
   if (name === 'settings') { sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume'); }
 }
 // The front's three lines that read the store.
@@ -44,32 +43,21 @@ function front() {
   document.getElementById('playlabel').textContent = playLabel();
   document.getElementById('slotsbtn').textContent = slotsLabel();
   document.getElementById('recordbtn').textContent = recordLabelOf(s?.won);
-  document.getElementById('timesbtn').textContent = timesLabel();
 }
-// No board, no button: a build nobody pointed at a server takes it off
-// every page rather than hiding it, so the pane switch never brings it back.
-if (!timesOn()) document.getElementById('timesbtn').dataset.pane = '';
-// The best time on the board, asked once as the page comes up so the times
-// button can carry it; the button reads plain 'times' until it answers, or
-// for good if it never does.
-async function bestTime() {
-  if (!timesOn()) return;
-  try {
-    const board = await fetchBoard(1, null);
-    noteBest(board?.rows?.[0]?.ms);
-    front();
-  } catch {}
+// The board of times, standing on the right the whole time: asked once as
+// the page comes up. A build with no board has no panel at all.
+if (timesOn()) {
+  document.getElementById('board').hidden = false;
+  showTimes(document.getElementById('times'), opened()?.runId || null);
 }
-bestTime();
 // Opening a slot here moves the pointer and nothing else: no yard is running
 // to swap.
 function pick(n) { setSlot(n); }
 
 document.getElementById('slotsbtn').addEventListener('click', () => showPane('slots'));
 document.getElementById('recordbtn').addEventListener('click', () => showPane('record'));
-document.getElementById('timesbtn').addEventListener('click', () => showPane('times'));
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
-for (const id of ['slotsback', 'recordback', 'timesback', 'settingsback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
+for (const id of ['slotsback', 'recordback', 'settingsback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
 
 // Play waits for the store to take every write made here, and for the veil to
 // reach white: play.html comes up out of the same white (main.js), so the load

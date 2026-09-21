@@ -31,6 +31,14 @@ try {
      The menu is the column on the left, and each button opens in the column:
      one place, and the yard keeps moving behind it. -->
 <iframe id="yard" class="yard" src="./play.html?demo" title="" tabindex="-1"></iframe>
+<!-- The board of times (timesboard.js): everybody's rescue, best first, off
+     the server, standing in the sky on the right the whole time the page is
+     up -- not behind a button. The open yard's own row is marked. Absent on
+     a build with no board. -->
+<div id="board" class="board" hidden>
+  <div class="word">times</div>
+  <div id="times" class="times"></div>
+</div>
 <div class="col">
   <div class="gamename">pebble<br>pit</div>
   <div class="line">a rock. a hole. a few people between them.</div>
@@ -40,9 +48,6 @@ try {
   <div id="playlabel" class="sub" data-pane="main"></div>
   <button id="slotsbtn" type="button" data-pane="main">saves</button>
   <button id="recordbtn" type="button" data-pane="main">achievements</button>
-  <!-- the board of times: a page of its own behind this button, which carries
-       the best time once the server has answered. See timesboard.js. -->
-  <button id="timesbtn" type="button" data-pane="main">times</button>
   <button id="settingsbtn" type="button" data-pane="main">settings</button>
   <!-- the desk only: title.js gives it a pane when window.desk exists -->
   <button id="quit" type="button" hidden>exit to desktop</button>
@@ -57,12 +62,6 @@ try {
   <div class="word" data-pane="record" hidden>achievements</div>
   <div id="record" class="record" data-pane="record" hidden></div>
   <button id="recordback" type="button" data-pane="record" hidden>back</button>
-
-  <!-- the board of times, everybody's rescue, best first, off the server;
-       the open yard's own row is marked -->
-  <div class="word" data-pane="times" hidden>times</div>
-  <div id="times" class="times" data-pane="times" hidden></div>
-  <button id="timesback" type="button" data-pane="times" hidden>back</button>
 
   <!-- the settings, as on the held sheet; the save going out and coming in
        acts on the open slot's blob -->
