@@ -1885,6 +1885,10 @@ is under, and a posted time shorter than what the server watched is
 refused; the save is checked against the time and a floor. Bun + Hono +
 `bun:sqlite` in `server/`, the pirate ship's shape, behind the owner's
 tunnel; itch-app players verified through `ITCHIO_API_KEY` and badged.
-DESIGN.md, "The board of times: a global competition for the rescue".
-Waiting on: sign-off. Blockers before building: a tunnel hostname for
+Spoof-proofing, not proof -- the owner's call (2026-09-20): a bot that
+plays for as long as an honest rescue gets a row, and the journal replay
+stays in "Not now". Offline runs are never refused: an id-less post gets a
+`~` row, and a post that could not go out waits on `timePending` for the
+next boot. DESIGN.md, "The board of times: a global competition for the
+rescue". Approved in shape 2026-09-20. Blockers before building: a tunnel hostname for
 `TIMES_URL`, and `TIMES_FLOOR_MS` read off a driven rescue.
