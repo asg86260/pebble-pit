@@ -62,8 +62,11 @@ export function swell() {
 // A cloud is a few flat bars stacked and stepped in: widest at the bottom,
 // narrowing upward, and never symmetrical. Its `give` is its own share of the
 // swell, so no two grow a cell on the same frame and the sky never steps in
-// lockstep; a `storm` cloud is one the front brought, which is nothing at all
-// until the swell has grown it and goes as the swell goes.
+// lockstep -- read off its depth rather than drawn, because a draw here is a
+// number off the yard's one generator at seed time and every seeded run,
+// weather or not, would come out differently. A `storm` cloud is one the
+// front brought, which is nothing at all until the swell has grown it and
+// goes as the swell goes.
 function makeCloud(x, storm = false) {
   const w = 10 + Math.floor(rand() * 12);
   const bars = [];
@@ -76,7 +79,7 @@ function makeCloud(x, storm = false) {
   }
   const far = 0.14 + rand() * 0.22;
   return { x, y: inBand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far),
-           give: 0.7 + rand() * 0.6, storm };
+           give: 0.7 + (far - 0.14) / 0.22 * 0.6, storm };
 }
 
 // The bars a cloud is drawn as this frame, swelled: each widens at its foot

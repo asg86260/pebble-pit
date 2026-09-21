@@ -173,6 +173,10 @@ export function stepSmog(dt) {
   stepStorm(secs);
   if (raining()) pour(secs);
   place(secs);
+  // Counted again after the shower has taken its motes, or the number stands
+  // a frame's worth of drops over the sky between frames -- which is where
+  // the boards and the checks read it.
+  if (raining()) reckon();
   stepGoing(secs);
   stepDrops();
   stepBolt(secs);

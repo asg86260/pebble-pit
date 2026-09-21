@@ -147,15 +147,17 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
   const rainAt = hz => {
     window.__reset();
     window.__crew(0, 0);
-    // To the brim, which is the one sky certain to break at the next look: over
-    // the rain is on a clock of its own now (test/weather.test.mjs).
+    // A brim sky and the next front brought forward: the rain is on a clock
+    // of its own now (test/weather.test.mjs), and the front brews before it
+    // pours.
     window.__air({ haze: state().smog.cap, muck: 0 });
+    window.__front(1);
     // Frame by frame rather than a second at a time. The shower is measured from
     // the frame it starts on, and a coarse wait leaves it up to a second into its
     // own ramp before the measuring begins -- so the two clocks would be reading
     // different parts of the same shower and calling the difference a frame-rate
     // fault.
-    for (let i = 0; i < 40 * hz && !raining(); i++) window.__fast(1 / hz, hz);
+    for (let i = 0; i < 90 * hz && !raining(); i++) window.__fast(1 / hz, hz);
     window.__fast(8, hz);
     return Math.round(state().smog.muck.all);
   };

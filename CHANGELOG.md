@@ -16,6 +16,7 @@ feature lives in DESIGN.md.
 - The board of times: every rescue's clock on one board for everybody, best first, with your name typed once -- on the held sheet, the ending sheet and the title page (test/times.test.mjs, server/test/times.test.ts).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The air reading no longer runs a hair over the sky while it is raining (test/sky-readout.test.mjs, "what the readout says is what is overhead").
 - The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
 - On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").
 - The load on the belt lies as a heap: no needles standing up out of it under a tuned ram, and no cliff at the tail (test/belt-load.test.mjs).
