@@ -143,19 +143,18 @@ group('the air over a site is the colour of what comes out of it', async () => {
 // which part of the works is dirtying it.
 group('the sky says which part of the works dirtied it', async () => {
   window.__reset();
-  // A machine running, because a machine is the only thing that dirties this
-  // yard. No hand work fouls at all any more -- not the rock, not the cut, not
-  // the plots. That is the whole of the smoke curve: a yard worked by people is
-  // clean, and what you buy when you buy an engine is the sky.
+  // A machine running -- the heavy source -- and hand work alongside it, which
+  // fouls a little dust now (DESIGN.md, "Hand work fouls, lightly"). Every mote
+  // still carries where it came from, and the two the yard raises are the
+  // machine's soot and a hand's dust; the quarry and the farm raise nothing by
+  // hand (their FOUL constants are unwired), so no shard or spore is up there.
   openSites();
   window.__fullSites();
   window.__crew(2, 0, 5, 7);
   window.__machine('jaw', { bought: true });
   window.__machine('tiller', { bought: true });
   window.__air({ haze: 0, muck: 0 });
-  // Long enough for a plot to come all the way on and be cut. The quarry fouls
-  // per cell dug and starts almost at once; the farm only fouls when a crop is
-  // taken off, which is a whole ripening away.
+  // Long enough for the machine to be smoking in earnest.
   run(60);
   const s = state();
   const k = s.smog.skyKinds || {};
@@ -164,14 +163,10 @@ group('the sky says which part of the works dirtied it', async () => {
   return [
     ok(s.smog.sky > 0, 'there is a sky to read', `${s.smog.sky} motes`),
     ok(!k.none, 'every mote knows what put it up', JSON.stringify(k)),
-    // Blue and green, from the two grounds that still raise anything by hand.
-    // The rock raises nothing at all now, so there is no `dust` in the band
-    // unless a machine has put soot there.
-    ok(k.mach > 0, 'and it is soot, off a stack', `${k.mach || 0}`),
-    ok(!k.dust && !k.shard && !k.spore,
-       'and nothing else is up there, because no hand work fouls',
-       JSON.stringify(k)),
-    ok(Object.keys(k).length >= 1, 'so a dirty sky is a yard with engines in it',
+    ok(k.mach > 0, 'and the machine is soot, off a stack', `${k.mach || 0}`),
+    ok(!k.shard && !k.spore,
+       'and the quarry and the farm raise nothing by hand', JSON.stringify(k)),
+    ok(Object.keys(k).length >= 1, 'so a dirty sky knows what dirtied it',
        JSON.stringify(k))
   ];
 });

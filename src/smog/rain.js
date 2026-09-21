@@ -62,6 +62,25 @@ export function envelope(t) {
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
 
+// Where the drops are born: the cloud undersides (`rainSpans` in weather.js),
+// handed in rather than imported so rain.js pulls in nothing that reaches the
+// renderer. Nothing until the clouds have spoken.
+let spansFrom = () => [];
+export const bornUnder = fn => { spansFrom = fn; };
+
+// A point under the clouds to drop from, weighted by how much cloud covers the
+// window, or null when there is no cloud over the view -- a front with its
+// clouds off screen, which the caller falls back to the window top for.
+function underCloud(spans, total) {
+  let at = rand() * total;
+  for (const sp of spans) {
+    const w = sp.x1 - sp.x0;
+    if (at > w) { at -= w; continue; }
+    return { x: sp.x0 + at, y: sp.y };
+  }
+  return null;
+}
+
 // One frame of the shower. The length is the storm's own; the marked motes
 // come down through it in proportion to the envelope, so the dirt arrives
 // with the rain and not in a lump at the front, and the shower is over when
@@ -76,15 +95,24 @@ export function pour(secs) {
   // never does; one at a time, because a second bolt over the first is a fizz.
   if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
-  // The water: clean drops from over the top of the window, the whole width
-  // of it, the same place the acid comes from -- one sheet, whatever is in
-  // it. Born under the cloud bars it rained in patches under the clouds
-  // while the acid fell everywhere, and the two read as two weathers.
+  // One sheet, born under the clouds: the water and the washed acid fall from
+  // the same undersides, so a light front rains in patches under what cloud
+  // there is and a full storm everywhere. With no cloud over the view (a front
+  // whose clouds are off screen) they fall from the window top so the rain is
+  // never lost.
+  const spans = spansFrom();
+  let total = 0;
+  for (const sp of spans) total += sp.x1 - sp.x0;
+  const top = S.camY - P;
+  const born = () => total > 0 ? underCloud(spans, total) : { x: S.camX + rand() * S.viewW, y: top };
+
+  // The water.
   let water = RAIN_PER_S * secs * env;
   while (water > 0) {
     if (water < 1 && rand() > water) break;
     water -= 1;
-    DROPS.push({ x: S.camX + rand() * S.viewW, y: S.camY - P, dirt: false,
+    const p = born();
+    DROPS.push({ x: p.x, y: p.y, dirt: false,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
   }
 
@@ -106,16 +134,13 @@ export function pour(secs) {
     pick[at] = pick[pick.length - 1];
     pick.pop();
     gone.add(i);
-    const m = SKY[i];
-    // The drop falls from over the top of the window, not from where its mote
-    // hung: drops materializing at every height of the screen read as the air
-    // leaking. The mote thins out where it stood; one mote taken is one drop.
-    DROPS.push({ x: moteX(m), y: S.camY - P, dirt: true,
+    // A marked mote is consumed -- the sky thins, the clouds pale by the
+    // number -- and a dirty drop falls from a cloud, its place the cloud's
+    // and not the invisible mote's.
+    const p = born();
+    DROPS.push({ x: p.x, y: p.y, dirt: true,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
-    if (GOING.length < GOING_CAP)
-      GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind, tone: m.tone,
-                   ink: m.ink, t: 1, vx: 0, vy: 0 });
-    dropped(m);
+    dropped(SKY[i]);
   }
 
   // and out of the sky in one pass, keeping the order of what is left

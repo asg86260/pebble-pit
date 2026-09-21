@@ -118,6 +118,12 @@ export function drawSmog() {
   const runs = new Map();
   const warm = [], cool = [];
   for (const m of SKY) {
+    // Only the plume, not the band: the smoke still climbing off the works is
+    // drawn -- so a swing visibly puts something up -- but the settled sky is
+    // the clouds' to show now, not a field of specks over them (DESIGN.md,
+    // "The sky is the clouds"). A mote climbs, fades into the cloud, and from
+    // there is only counted.
+    if (!m.up) continue;
     // Asked of the sky rather than read off the mote: a settled mote is not
     // written every frame (`moteX` in smog.js). The cull on x comes first, so
     // the height and the fringe are only worked out for what is on the glass.

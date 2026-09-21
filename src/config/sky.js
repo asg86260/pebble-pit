@@ -12,6 +12,14 @@
 // Small on purpose: hand labor should barely mark the sky, so that the
 // machinery is the dirty thing.
 export let SMOG_PER_DUST = 0.08;
+// Hand work fouls a little, so muck is taught early, while the yard is slow
+// enough to read one body stopping to shovel (DESIGN.md, "Hand work fouls,
+// lightly"). A swing on the rock puts up HAND_FOUL grains of soot -- dust, not
+// a machine's stack -- but only up to HAND_FOUL_CEIL of haze: past a light sky
+// hand work adds nothing, so a yard that never builds a machine tops out light
+// and the machines stay the dirty thing.
+export let HAND_FOUL = 12;
+export let HAND_FOUL_CEIL = 700;
 export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // The line the readout draws: a sky past it is one the next storm will make
@@ -217,6 +225,10 @@ export let PUFF_WANDER = 14;
 export const SKY_KNOBS = [
   { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02,
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
+  { key: 'HAND_FOUL', label: 'soot a swing', min: 0, max: 60, step: 1,
+    get: () => HAND_FOUL, set: v => { HAND_FOUL = v; } },
+  { key: 'HAND_FOUL_CEIL', label: 'hand foul ceiling', min: 0, max: 4200, step: 50,
+    get: () => HAND_FOUL_CEIL, set: v => { HAND_FOUL_CEIL = v; } },
   { key: 'RAIN_EVERY_S', label: 'rain every', min: 30, max: 1200, step: 10,
     get: () => RAIN_EVERY_S, set: v => { RAIN_EVERY_S = v; } },
   { key: 'RAIN_EVERY_GIVE', label: 'rain spread', min: 0, max: 0.9, step: 0.05,

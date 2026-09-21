@@ -10,11 +10,13 @@
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S, CLOUD_GROW_W, CLOUD_GROW_ROWS,
          CLOUD_GROW_UNDER, CLOUD_LEAN, STORM_BREW_S,
+         CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_INK_AT, CLOUD_MURK_INK, CLOUD_MURK_GIVE,
+         SMOG_CAP, SMOG_TINTS,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
 import { frames } from './clock.js';
-import { dryTime } from './smog/rain.js';
+import { bornUnder, dryTime } from './smog/rain.js';
 import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
@@ -45,6 +47,16 @@ function inBand() {
   return top + rand() * (low - top);
 }
 
+// A cloud's height, worked out from the band every frame rather than fixed at
+// birth: the band follows the camera, so a cloud born while the view sat one
+// place would strand above or below it once the view moved (and the clouds are
+// the sky now, so a stranded cloud is a missing sky). `yb` is its lane in the
+// band, nought at the top to one at the bottom.
+function cloudY(c) {
+  const { top, low } = band();
+  return top + (c.yb ?? 0.5) * (low - top);
+}
+
 // --- the front ---------------------------------------------------------------
 // The clouds are the storm's warning. How far the sky is swelled, nought to
 // one, is read off the storm's clock every frame and never kept: up through
@@ -57,6 +69,36 @@ export function swell() {
   if (S.stormFor >= 0) return heft * smooth(S.stormFor / STORM_BREW_S);
   if (S.raining) return heft;
   return heft * (1 - smooth(dryTime() / CLOUD_SETTLE_S));
+}
+
+// How dirty the whole sky is, nought to one: the one number the clouds are the
+// readout of (DESIGN.md, "The sky is the clouds"). Not a mote's place -- the
+// murk is the sky's total, and every cloud takes it together.
+export const murk = () => Math.min(1, S.haze / SMOG_CAP);
+
+// The smoke's browns, parsed once, and the clouds' two pales, so a cell can be
+// slid from its pale toward a tint and on toward ink without a parse a frame.
+const rgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+const MURK_PAL = SMOG_TINTS.mach.map(rgb);
+const PALE = { body: rgb(CLOUD_TONE), under: rgb(CLOUD_UNDER) };
+const INK = [0, 0, 0];
+const mix = (a, b, k) => [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];
+// A stable per-cell number out of the cloud and the cell, so a cell keeps its
+// tint and its weight frame to frame and the sky does not shimmer.
+const hash = (a, b, cc) => { let h = (Math.imul(a|0,73856093) ^ Math.imul(b|0,19349663) ^ Math.imul(cc|0,83492791)) >>> 0; return ((h ^ (h>>>13)) >>> 0) / 4294967296; };
+// The color a cloud cell is drawn this frame: its pale when the sky is clean,
+// sliding toward its own smoke tint with the murk and, past MURK_INK_AT, on
+// toward ink -- quantized, so cells of a color batch into one fill.
+function murkColor(seed, cx, cy, part, mk) {
+  const base = PALE[part];
+  if (mk < 0.02) return base;
+  const r = hash(seed, cx, cy);
+  const tint = MURK_PAL[(r * 4) | 0];
+  const give = 1 - CLOUD_MURK_GIVE + r * CLOUD_MURK_GIVE * 2;
+  let col = mix(base, tint, Math.min(1, mk * CLOUD_MURK_TINT * give));
+  if (mk > CLOUD_MURK_INK_AT)
+    col = mix(col, INK, (mk - CLOUD_MURK_INK_AT) / (1 - CLOUD_MURK_INK_AT) * CLOUD_MURK_INK * give);
+  return [Math.round(col[0]/8)*8, Math.round(col[1]/8)*8, Math.round(col[2]/8)*8];
 }
 
 // A cloud is a few flat bars stacked and stepped in: widest at the bottom,
@@ -78,7 +120,7 @@ function makeCloud(x, storm = false) {
     if (b - a < 3) break;
   }
   const far = 0.14 + rand() * 0.22;
-  return { x, y: inBand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far),
+  return { x, yb: rand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (far - 0.14) / 0.22 * 0.6, storm };
 }
 
@@ -88,9 +130,11 @@ function makeCloud(x, storm = false) {
 // a cell at a time; the per-cloud `give` puts each one's steps on frames of
 // its own. A storm cloud is its whole self scaled by the swell.
 function barsOf(c, sw) {
-  const k = Math.min(1, sw * c.give);
+  // A cloud grows with the murk (a dirty sky is a heavier ceiling) and with
+  // the storm's swell (a front is a bigger one), the two adding up to the cap.
+  const k = Math.min(1, (sw + murk() * CLOUD_MURK_GROW) * c.give);
   const grow = Math.round(CLOUD_GROW_W / 2 * k);
-  const scale = c.storm ? k : 1;
+  const scale = c.storm ? Math.min(1, sw * c.give) : 1;
   // Every row's width only ever grows with k -- the widening, the scale and
   // the rows continued off the crown all do -- so the cloud never loses a
   // cell on the way up. The rows too thin to draw are dropped last, for
@@ -188,7 +232,7 @@ export function skyReport() {
     birds: BIRDS.length,
     top: Math.round(top),
     low: Math.round(low),
-    cloudY: CLOUDS.map(c => Math.round(c.y)),
+    cloudY: CLOUDS.map(c => Math.round(cloudY(c))),
     cloudAcross: CLOUDS.map(across),
     birdY: BIRDS.map(b => Math.round(b.y)),
     birdAcross: BIRDS.map(across),
@@ -209,6 +253,29 @@ function cellsOf(c, sw) {
   const { bars, under } = barsOf(c, sw);
   return bars.reduce((m, b) => m + (b.b - b.a), 0) + (bars[0] ? under * (bars[0].b - bars[0].a) : 0);
 }
+
+// Where rain is born: the underside of every cloud bar over the window, as
+// world spans with the y of that underside. Both the water and the washed
+// acid fall from here, so a light front rains in patches under what cloud
+// there is and a full storm everywhere, the storm being a ceiling. Handed to
+// the rain rather than imported by it (`bornUnder`), because weather.js
+// reaches the renderer and rain.js is reached from the rules.
+export function rainSpans() {
+  const out = [];
+  const sw = swell();
+  const left = S.camX, right = S.camX + S.viewW;
+  for (const c of CLOUDS) {
+    const { bars, under } = barsOf(c, sw);
+    const foot = bars[0];
+    if (!foot) continue;
+    const x = skyX(c);
+    const x0 = Math.max(left, x + foot.a * P), x1 = Math.min(right, x + foot.b * P);
+    if (x1 <= x0) continue;
+    out.push({ x0, x1, y: Math.round(cloudY(c) / P) * P + under * P });
+  }
+  return out;
+}
+bornUnder(rainSpans);
 
 
 // A few birds, strung out rather than in a formation: same heading, each a
@@ -295,19 +362,51 @@ function skyX(s) {
 }
 
 export function drawClouds() {
-  const sw = swell();
+  const sw = swell(), mk = murk();
+  // A clean sky is the fast path: whole bars in the two pales, one fill a bar,
+  // the way the clouds have always drawn. A dirty sky shades cell by cell, so
+  // the cells are bucketed by their quantized color and each bucket filled in
+  // one path -- a few dozen fills for the whole sky, not one a cell.
+  if (mk < 0.02) {
+    for (const c of CLOUDS) {
+      const x = skyX(c), y = Math.round(cloudY(c) / P) * P;
+      const { bars, under } = barsOf(c, sw);
+      for (const bar of bars) {
+        ctx.fillStyle = bar.r ? CLOUD_TONE : CLOUD_UNDER;
+        ctx.fillRect(x + bar.a * P, y - (bar.r + 1) * P, (bar.b - bar.a) * P, P);
+      }
+      const foot = bars[0];
+      if (foot) for (let k = 0; k < under; k++)
+        ctx.fillRect(x + foot.a * P, y + k * P, (foot.b - foot.a) * P, P);
+    }
+    ctx.fillStyle = '#000';
+    return;
+  }
+  const runs = new Map();
+  const cell = (seed, wx, cx, cy, part) => {
+    const col = murkColor(seed, cx, cy, part, mk);
+    const key = (col[0] << 16) | (col[1] << 8) | col[2];
+    let run = runs.get(key);
+    if (!run) runs.set(key, run = { col, at: [] });
+    run.at.push(wx, cy * P);
+  };
   for (const c of CLOUDS) {
-    const x = skyX(c);
-    const y = Math.round(c.y / P) * P;
+    const x = skyX(c), y = Math.round(cloudY(c) / P) * P;
+    const seed = (c.seed * 1e6) | 0;
     const { bars, under } = barsOf(c, sw);
     for (const bar of bars) {
-      ctx.fillStyle = bar.r ? CLOUD_TONE : CLOUD_UNDER;   // the underside is the darker one
-      ctx.fillRect(x + bar.a * P, y - (bar.r + 1) * P, (bar.b - bar.a) * P, P);
+      const ry = (y - (bar.r + 1) * P) / P;
+      for (let cx = bar.a; cx < bar.b; cx++) cell(seed, x + cx * P, cx, ry, bar.r ? 'body' : 'under');
     }
-    // and the deepened underside, rows of the foot hung below it
     const foot = bars[0];
-    if (foot) for (let k = 0; k < under; k++)
-      ctx.fillRect(x + foot.a * P, y + k * P, (foot.b - foot.a) * P, P);
+    if (foot) for (let k = 0; k < under; k++) {
+      const ry = (y + k * P) / P;
+      for (let cx = foot.a; cx < foot.b; cx++) cell(seed, x + cx * P, cx, ry, 'under');
+    }
+  }
+  for (const run of runs.values()) {
+    ctx.fillStyle = `rgb(${run.col[0]},${run.col[1]},${run.col[2]})`;
+    for (let i = 0; i < run.at.length; i += 2) ctx.fillRect(run.at[i], run.at[i + 1], P, P);
   }
   ctx.fillStyle = '#000';
 }

@@ -6,7 +6,7 @@
 // before walking into a mate.
 
 import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE, ROCKHAND_WALK, COMMUTE_PACE,
-         SWING_BOB, SWING_DRIVE } from '../config.js';
+         SWING_BOB, SWING_DRIVE, HAND_FOUL, HAND_FOUL_CEIL } from '../config.js';
 import { S } from '../state.js';
 import { standOn, rockLeft } from '../world.js';
 import { climbTo } from '../route.js';
@@ -15,7 +15,7 @@ import { tidyStep } from '../tidy.js';
 import { rockhandMs, rockhandBite } from '../levels.js';
 import { speedBoost, stronger } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
-import { rockMuck } from '../smog.js';
+import { rockMuck, foul } from '../smog.js';
 import { frames } from '../clock.js';
 import { amble } from './idle.js';
 import { rand } from '../rng.js';
@@ -129,6 +129,10 @@ export function rockhandWork(w, c) {
     knockOff(w.x + WORKER / 2, surf + P / 2, bite, true, w);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
+    // A swing puts up a little dust, so the sky is taught early (DESIGN.md,
+    // "Hand work fouls, lightly"). Capped: past a light sky hand work adds
+    // nothing, and the machines are the ones that dirty it in earnest.
+    if (S.haze < HAND_FOUL_CEIL) foul(HAND_FOUL, w.x + WORKER / 2, surf, 'dust');
     // A hearty stew quickens the swing; `speedBoost` is 1 with no stew.
     w.next = now + rockhandMs() / speedBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
   } else if (boulderAlive()) {

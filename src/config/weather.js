@@ -18,6 +18,19 @@ export let CLOUD_SETTLE_S = 30;
 export const CLOUD_GROW_W = 10;      // cells a cloud widens by at a full swell
 export const CLOUD_GROW_ROWS = 3;    // rows it gains on top
 export const CLOUD_GROW_UNDER = 2;   // and rows its underside deepens by
+// The murk: the clouds are the sky's dirt readout (DESIGN.md, "The sky is the
+// clouds"). One number, `S.haze / SMOG_CAP`, grows and darkens every cloud
+// together. Murk grows a cloud less than a storm swells it -- a dirty sky is a
+// heavier ceiling, a storm is a bigger one -- so this is a share of the swell's
+// grow, not its own set of cells.
+export const CLOUD_MURK_GROW = 0.5;  // a brim sky grows a cloud this share of a full swell
+// How dark a cloud cell goes: at a brim sky a cell slides this far from the
+// cloud's pale toward its smoke tint, and past MURK_INK_AT it carries on toward
+// black, so the brim is a near-black ceiling rather than a flat brown.
+export const CLOUD_MURK_TINT = 0.9;
+export const CLOUD_MURK_INK_AT = 0.6;   // murk past this starts pulling the cell toward ink
+export const CLOUD_MURK_INK = 0.55;     // and this far toward it at the brim
+export const CLOUD_MURK_GIVE = 0.3;     // how much one cell's murk may differ from the next
 // World pixels a frame a full gust carries a fully swelled cloud, on top of
 // its own drift: the front leans with the sheet under it.
 export const CLOUD_LEAN = 0.12;
@@ -42,8 +55,8 @@ export const STINK_RISE = 26;        // pixels a second a wisp climbs
 export const STINK_LIFE = 2.4;       // seconds before it has gone
 export const STINK_EVERY = 3;        // one column in this many gets one
 
-export const CLOUD_TONE = '#efefef';
-export const CLOUD_UNDER = '#e3e3e3';   // the bottom bar, so a cloud has an underside
+export const CLOUD_TONE = '#e4e4e4';
+export const CLOUD_UNDER = '#d6d6d6';   // the bottom bar, so a cloud has an underside
 export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
 export const BIRD_TONE = '#5f5f5f';
 export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next

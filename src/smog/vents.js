@@ -12,11 +12,12 @@ import { enter, nextSlot } from './sky.js';
 // the works it came out of, carried on the mote: by the time a mote has
 // settled and spread it is nowhere near what made it.
 export function foul(grains, x, y, kind = 'dust') {
-  // The sky has one producer and the only dirt it accepts is a machine's, off
-  // its own stack (`stepMachines`). Unconditional, not gated on a machine
-  // working *now*: a gate on the yard's state makes "hand work never fouls"
-  // true only while a machine happens to be mid-beat.
-  if (kind !== 'mach') return 0;
+  // The sky takes a machine's soot off its stack (`stepMachines`) and a light
+  // dust off hand work (`rockhandWork`, capped in the caller). Nothing else --
+  // a stray kind is a bug, not a new source. Unconditional on the yard's
+  // state, not gated on a machine working *now*: a gate makes "hand work
+  // fouls" true only while a machine happens to be mid-beat.
+  if (kind !== 'mach' && kind !== 'dust') return 0;
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   countMade(add);                  // counted where it is made -- see `sampleAir`

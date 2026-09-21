@@ -12359,6 +12359,95 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
+## The sky is the clouds (built 2026-09-21)
+
+The sky had grown four textures at once -- a haze band of specks, the drifting
+clouds, the rain, the muck -- and they read as a mess: you could not tell the
+pollution from the weather from the dirt. This folds three of them into one.
+**The clouds are the sky.** How dirty the air is, is how big and how murky the
+clouds are; there is no separate speck-band drawn over them.
+
+### What changes, and what does not
+
+The mote engine underneath is *kept*, as the bookkeeping: a swing still puts a
+puff up, it still climbs, it still settles into the count, the scrubbing house
+still pulls the nearest ones down, a shower still consumes them. `S.haze` is
+still the motes, by arithmetic. What changes is only what is **drawn**:
+
+- **The settled band is not drawn.** `drawSmog` draws only the plume still
+  climbing off the works -- the smoke you can see rising -- and the fade when a
+  mote leaves. The settled motes, once a field of specks across the whole sky,
+  are now invisible; the clouds stand for them.
+- **The clouds are the readout.** One number, `murk = S.haze / SMOG_CAP`, the
+  whole sky's dirt. Every cloud grows a little with it (to a cap) and takes the
+  smoke's color together -- not one cell at a time over the works, but the
+  whole sky shading up as one, the way a real sky browns over. A clean yard is
+  five pale clouds; a brim yard is a dark ceiling. That *is* the warning, and
+  it is the thing itself, so there is no pane and no darkening effect.
+- **The murk is the smoke's own color.** Each cloud cell keeps a fixed tint out
+  of `SMOG_TINTS` (dust and mach are both brown) chosen off a cheap hash of the
+  cloud and the cell, so it is per-cell varied and never a flat fill and never
+  shimmers; the cell slides from the cloud's pale toward that tint, and past a
+  high murk on toward ink, as the number climbs. No new tone, and the rock's
+  greys are still nobody else's.
+- **Rain is born under the clouds.** A shower's drops -- water and the washed
+  acid alike -- fall from the cloud undersides, so at a light front they fall
+  in patches under what cloud there is and at a full storm everywhere, because
+  the storm is a ceiling. The mote a drop consumes is invisible bookkeeping;
+  the drop's *place* is the cloud's.
+
+### Hand work fouls, lightly, so muck is taught early
+
+Today the rock raises nothing and only a machine's stack fouls, so the first
+muck a player sees is late -- by which time the crew is fast and a body
+stopping to shovel for a second is illegible. So **hand work fouls a little**:
+a swing on the rock and a hauled load each put up a faint dust puff, capped so
+a yard that never builds a machine tops out at a *light* sky -- enough that the
+early front lays a little muck, in one spot, that one slow body ambles over and
+clears while you can still read it. The machines are still the dirty thing; the
+balance ("beatable only if you invest") is unmoved, because hand fouling cannot
+reach a heavy sky on its own. This reverses "the rock raises nothing"
+(`foul` refused all but `mach`); the reason is legibility, written here.
+
+### What this supersedes
+
+"The sky is the band" and "the sky is the motes" (below) described the specks
+being the only honest sky and a painted cloud being the one dishonest thing.
+That was right that the *cause* must be watchable -- and it still is, the plume
+still rises off every swing -- but a field of specks across the whole window
+was the texture that made the sky unreadable. The cloud is a readout of a real
+count, not a picture of a number pulled from nowhere, so the objection those
+sections raised does not apply: nothing is drawn that a mote did not earn.
+
+### What building it changed
+
+- **The mote engine is kept whole; only the drawing changed.** `drawSmog` now
+  draws only the climbing plume (`m.up`); the settled band is not drawn. The
+  house still pulls the nearest motes, a shower still consumes them, `reckon`
+  still sets `S.haze` from `SKY.length`. Every sim check about the band's shape
+  (clumpiness, the even spread, a speck coming up to weight) still holds,
+  because the band still runs -- it is just invisible.
+- **A cloud's height tracks the band every frame** (`cloudY`, off a lane
+  fraction `yb`), not fixed at birth. The band follows the camera; with the
+  clouds now the whole sky, a cloud fixed at its birth height stranded above or
+  below the view the moment the camera moved, and the sky went missing. This was
+  latent before -- the invisible haze filled the view regardless.
+- **Hand fouling draws from the seeded generator.** A swing calling `foul`
+  consumes rng, so every seeded run with mining rockhands now evolves
+  differently. Most checks do not care; two did, both because they wanted a
+  single controlled source and happened to include breakers: `sky-readout`'s
+  rate check (now runs the quarry with no breakers) and `sky-fan`'s
+  speck-arrival check (whose `__tip(90000)` buried the machines -- with the
+  shifted seed they stayed starved through the window; the burial was incidental
+  and is gone). Neither is a game bug; the plain yard fouls and fills correctly.
+- **`foul` accepts `dust` as well as `mach`.** The one place the old rule "only
+  a machine fouls" lived; a swing's dust now passes, capped at `HAND_FOUL_CEIL`.
+- **The base cloud tones went a step darker** (`#e4e4e4` / `#d6d6d6`), so a
+  clean cloud reads as a pale shape rather than near-white now that the clouds
+  carry the sky.
+- **Every number here is a first guess on the panel** -- `HAND_FOUL`,
+  `HAND_FOUL_CEIL`, and the `CLOUD_MURK_*` set -- tuned by shot, not settled.
+
 ## Weather (built 2026-09-20)
 
 The rain is the sky's own, and the dirt only decides what it costs. Today a

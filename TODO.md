@@ -1,5 +1,17 @@
 # Still to do
 
+## The sky is the clouds -- BUILT (2026-09-21)
+
+"The sky is the clouds" at the end of DESIGN.md, with "What building it
+changed". The haze speck-band is no longer drawn; the clouds are the readout,
+growing and darkening together with `S.haze / SMOG_CAP` in the smoke's own
+browns, and the rain is born from their undersides. The mote engine is kept as
+the invisible bookkeeping. Hand work fouls a little dust now (`HAND_FOUL`,
+capped at `HAND_FOUL_CEIL`) so muck is taught early while the yard is slow.
+Numbers are first guesses on the dev panel; the murk depth, the hand-foul rate
+and the first-storm feel all want a play-through's tuning. Scenes `sky0..3`,
+`cleanrain`, `acidrain`, `cloudswell`.
+
 ## Weather -- BUILT (2026-09-20)
 
 "Weather" at the end of DESIGN.md, with "What building it changed". Rain is

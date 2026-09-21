@@ -32,15 +32,16 @@ const healJaw = () => window.__tune('MACHINE_GAIN', JAW_WORTH);
 // at nought however many bodies you move.
 group('the sky reads as one rate, and it can go negative', async () => {
     run(0.4);
-  // Somebody on the cut. This group needs a yard that is actively fouling, and
-  // mining raises nothing at all now -- the rock is silent, by anybody -- so the
-  // source has to be the quarry.
+  // Somebody on the cut, and no breakers: this group is about the house
+  // turning one source's reading round, so it keeps to the quarry. Hand work
+  // on the rock fouls its own light dust now (DESIGN.md, "Hand work fouls,
+  // lightly"), which would be a second source the house also has to fight.
   openSites();
   window.__fullSites();
   // Wound well down: what this group is about is the house turning the reading
   // round, not the balance between a jaw and a houseful of bodies.
   woundJaw();
-  window.__crew(4, 4, 5);
+  window.__crew(0, 4, 5);
   window.__machine('jaw', { bought: true });
   window.__invest();
   // Long enough for the cut to be working at its steady rate. The rock fouled
