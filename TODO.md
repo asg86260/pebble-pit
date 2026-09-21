@@ -1875,3 +1875,16 @@ the gate is a tidying rather than a fix.
 nought until the place is built, because it counts things that get built rather
 than a level that can be bought ahead. Expect `__crew` to need its station-open
 lines moved above `rebalance()`, which is what shares the bodies out.
+
+## The board of times -- DESIGNED, NOT BUILT (2026-09-20)
+
+A global best-first board for "sqwife saved in", Megabonk-shape: one board
+for everybody, a name typed once, your row marked. The server owns the
+number: the game registers a run at the first rock, pings while the sqwife
+is under, and a posted time shorter than what the server watched is
+refused; the save is checked against the time and a floor. Bun + Hono +
+`bun:sqlite` in `server/`, the pirate ship's shape, behind the owner's
+tunnel; itch-app players verified through `ITCHIO_API_KEY` and badged.
+DESIGN.md, "The board of times: a global competition for the rescue".
+Waiting on: sign-off. Blockers before building: a tunnel hostname for
+`TIMES_URL`, and `TIMES_FLOOR_MS` read off a driven rescue.
