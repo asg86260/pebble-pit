@@ -3390,7 +3390,7 @@ quarry -- open the cut, get a jaw and a hoist with it -- on the argument that a
 problem and its answer belong in the same part of the game. That argument was
 right about the pairing and wrong about which pair. A machine is the *end* of a
 station, not its opening: see "The machines" below, where each one is locked
-behind every slot that station will ever have and priced in sparks out of a
+behind that station's ladders and a full set of hats and priced in sparks out of a
 star. What answers hand labour is the scrubbing house, bought early because hand
 labour already fouls the sky; what the machines do is make the house you already
 own stop being enough.
@@ -3524,13 +3524,15 @@ The rock is the exception the doc has always made and still makes: the ram
 replaces the *miners'* hand work, not yours. The hill still comes apart under
 your own cursor.
 
-**Every slot first.** A machine is not offered until the station has been given
-everything hands can be given -- all five benches at the cut, all seven plots at
-the farm, both of the rock's kit ladders at 5/5 -- and a full set of kit, which
-is `KIT_MAX` and is three. This is what stops a machine
-from hollowing out the ladder underneath it: `the next plot` can never be made
-worthless by a tiller you were able to buy instead of it, because the tiller is
-the thing you get *for* buying the last plot.
+**The workers first.** A machine is not offered until the station's own two
+ladders are topped (`LADDER` rungs each) and a full set of kit is bought, which
+is `KIT_MAX` and is three -- the same gate at every station, the rock's and the
+haulers' included. The benches and the plots are *not* the gate (they were,
+until 2026-09-21): they are room, and a machine's rate is measured against the
+room it stands in (`gangWorth` reads the live complement), so `the next plot`
+still buys something with a tiller standing -- a stronger tiller. What the gate
+protects is the kit ladder, which the machine spends and would otherwise make
+worthless halfway up.
 
 **So a machine is worth a full complement, times a dial.** Gated as above, you
 buy it at the exact moment the cut holds five and the farm holds seven, so a
@@ -3579,7 +3581,7 @@ Worse, it made the specialists obsolete at a stroke. A machine caps its station
 at one body, so the moment the machine stood up every helmet you had bought went
 into a drawer, and the trade ladder stopped being worth finishing halfway up.
 
-So the gate is **every slot and every hat**, and the rate is measured against the
+So the gate is **every ladder and every hat**, and the rate is measured against the
 gang that set of hats made: the complement, plus one again for each of it that is
 wearing a hat, times `MACHINE_GAIN`. Five benches with three lamps between them
 is eight hands, and the jaw is twelve. The specialists become the last thing you
@@ -3740,8 +3742,8 @@ say a thing is the one that gets it wrong.
 
 What it costs is the hand fallback: a station with a machine standing at it is
 worked by that machine or it is not worked, and there is no putting five bodies
-back on the face. That is the right trade. The machine is gated behind every slot
-and every hat the station can hold, and buying it spends the hats, so by the time
+back on the face. That is the right trade. The machine is gated behind both of
+the station's ladders and every hat it can hold, and buying it spends the hats, so by the time
 you have one there is nothing the hands could go back to being better at -- a
 lever whose off position was strictly worse was a decision nobody made twice.
 

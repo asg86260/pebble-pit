@@ -744,6 +744,9 @@ group('the tiller crawls the row and brings the plots in', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
+  // `__fullSites` tops the crop ladder, and at that yield the tiller brims
+  // the farm's pile before the count below starts; this is about the crawl.
+  window.__levels({ cropLevel: 0 });
   window.__crew(0, 0, 0, 1);                 // one tender at the farm
   window.__machine('tiller', { bought: true });
   window.__clearFloor();
@@ -952,8 +955,8 @@ group('the ram replaces the rockhands and never your own cursor', async () => {
 // A machine is not offered until its station has been given everything hands can
 // be given. That gate is what stops a machine hollowing out the ladder beneath
 // it: `the next plot` can never be made worthless by a tiller bought instead of
-// it, because the tiller is what you get *for* buying the last plot.
-group('a machine is not for sale until every slot is bought', async () => {
+// it: the tiller is what you get for topping both of the plots' ladders.
+group("a machine is not for sale until the station's ladders are topped", async () => {
   window.__reset();
   openSites();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
@@ -964,7 +967,10 @@ group('a machine is not for sale until every slot is bought', async () => {
   const rows = () => window.__rows().filter(r => r.shown).map(r => r.key);
 
   const bare = rows();
-  window.__levels({ benchLevel: 2 });        // four of five benches
+  // Every hat handed out and every bench taken out, one rung short on one
+  // ladder: the floor is not the gate, the ladders are.
+  window.__kit({ blasters: 3 });
+  window.__levels({ benchLevel: 3, quarryPaceLevel: LADDER, seamLevel: LADDER - 1 });
   const nearly = rows();
   window.__fullSites();
   const full = rows();
@@ -972,9 +978,9 @@ group('a machine is not for sale until every slot is bought', async () => {
     ok(!bare.includes('jaw') && !bare.includes('tiller') && !bare.includes('ram'),
        'none of the three is on a board to begin with',
        bare.filter(k => ['jaw', 'ram', 'tiller'].includes(k)).join(',') || 'none'),
-    ok(!nearly.includes('jaw'), 'nor with one bench still to take out'),
-    ok(full.includes('jaw'), 'and the jaw appears when the last bench is bought'),
-    ok(full.includes('tiller'), 'the tiller when the last furrow is'),
+    ok(!nearly.includes('jaw'), 'nor with one rung still to climb, whatever the benches'),
+    ok(full.includes('jaw'), 'and the jaw appears when both ladders are topped'),
+    ok(full.includes('tiller'), "the tiller when the plots' are"),
     ok(full.includes('ram'), "and the ram when the rock's kit is bought right out")
   ];
 });

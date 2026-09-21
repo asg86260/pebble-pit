@@ -78,13 +78,18 @@ export const machineSet = (which, o = {}) => {
   return { ...m };
 };
 
-// Every station given every slot it will ever have and a full set of hats,
-// which is what the machines are gated behind.
+// Every station given every slot it will ever have, every ladder topped and a
+// full set of hats -- the ladders and the hats are what the machines are gated
+// behind; the slots are so the yard looks the part.
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
   S.rockhandPickLevel = LADDER;
   S.rockhandSpeedLevel = LADDER;
+  S.quarryPaceLevel = LADDER;
+  S.seamLevel = LADDER;
+  S.tendLevel = LADDER;
+  S.cropLevel = LADDER;
   S.quarryOpen = true;
   S.farmOpen = true;
   S.breakers = Math.max(S.breakers, kitCap(JOB.ROCK));

@@ -116,15 +116,15 @@ export const ROWS = [
   { key: 'recycler', part: 2, reach: scrub },
 
   // --- the quarry -------------------------------------------------------------
-  { key: 'seam', part: 2, reach: sites },
-  { key: 'quarrypace', part: 2, reach: sites },
+  { key: 'seam', part: 2, reach: grounds },
+  { key: 'quarrypace', part: 2, reach: grounds },
   { key: 'quarrybench', part: 2, reach: () => { window.__invest(); crew(); grantAll(); } },
   { key: 'jaw', part: 2, reach: () => { sites(); window.__kit({ blasters: 3 }); } },
   { key: 'tunejaw', part: 2, reach: () => { sites(); window.__machine('jaw', { bought: true }); } },
 
   // --- the farm ---------------------------------------------------------------
-  { key: 'crop', part: 2, reach: sites },
-  { key: 'tend', part: 2, reach: sites },
+  { key: 'crop', part: 2, reach: grounds },
+  { key: 'tend', part: 2, reach: grounds },
   { key: 'farmplot', part: 2, reach: () => { window.__invest(); crew(); grantAll(); } },
   { key: 'tiller', part: 2, reach: () => { sites(); window.__kit({ growers: 3 }); } },
   { key: 'tunetiller', part: 2, reach: () => { sites(); window.__machine('tiller', { bought: true }); } },

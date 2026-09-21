@@ -19,7 +19,7 @@ import { kitFull, commutePace } from './levels.js';
 import { frames } from './clock.js';
 import { spelled } from './tower.js';
 import { tuneRow } from './machines.js';
-import { MACHINE_TUNE } from './config.js';
+import { MACHINE_TUNE, LADDER } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
@@ -301,13 +301,15 @@ export const FARM_UPGRADES = [
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },
   {
-    // The last thing the plots ever sell, once every furrow is broken.
+    // Gated like the ram: both of the plots' ladders topped and a hat on every
+    // grower (`canBuy`), not the last furrow.
     key: 'tiller',
     kind: 'machine', site: 'farm',
     name: 'the tiller',
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
-    show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX,
+    show: () => S.farmOpen && canBuy('tiller',
+                                      () => S.tendLevel >= LADDER && S.cropLevel >= LADDER,
                                       () => kitFull(JOB.FARM))
   },
 

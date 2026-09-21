@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The drill and the tiller are for sale once the station's two ladders are topped and every hat is bought, like the ram; the last bench and the last furrow no longer stand in the way (test/machines.test.mjs).
 - Weather: it rains on its own clock now, clean rain that carries down a share of whatever smoke is overhead as acid among the water; the first storm of a yard comes in the first few minutes with the lightning, and the clouds swell before a front and settle after (test/weather.test.mjs).
 - The board of times: every rescue's clock on one board for everybody, best first, with your name typed once -- on the held sheet, the ending sheet and the title page (test/times.test.mjs, server/test/times.test.ts).
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).

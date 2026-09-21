@@ -185,10 +185,10 @@ export const specOf = key => SPEC[key] || null;
 
 
 // --- buying one ------------------------------------------------------------------
-// A machine is not offered until its station has been given everything hands
-// can be given, so `the next plot` can never be made worthless by a tiller
-// bought instead of it. What "every slot" means is the station's own business,
-// so the gate is a function per machine.
+// A machine is not offered until its station's hands have been given
+// everything a ladder sells, so the kit ladder it spends is never made
+// worthless halfway up. Which ladders those are is the station's own
+// business, so the gate is a function per machine.
 export function buyMachine(key) {
   const m = machine(key);
   if (!m || m.bought) return;
@@ -208,15 +208,15 @@ export function buyMachine(key) {
   S.restaff = { job: spec.job, want: 1 };
 }
 
-// On the board while every slot AND every hat the station can hold is bought,
-// and the machine is not. The hats matter because a machine caps its station
+// On the board while the station's own ladders are topped AND every hat it
+// can hold is bought, and the machine is not. The hats matter because a machine caps its station
 // at one body, so without that gate every helmet went into a drawer the
 // moment it started; gated this way the machine is worth half again what the
 // specialists were (`machineRate`).
 //
 // Gated on **bought**: a row that came and went with whether the machine was
 // manned would rebuild the board every time its tender wandered off.
-export const canBuy = (key, slotsFull, kitFull) => {
+export const canBuy = (key, laddersFull, kitFull) => {
   const m = machine(key);
-  return !!m && !m.bought && slotsFull() && kitFull();
+  return !!m && !m.bought && laddersFull() && kitFull();
 };

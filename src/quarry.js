@@ -29,7 +29,7 @@ import { SPELL_LUCK } from './config.js';
 import { rebalance } from './staffing.js';
 import { kitFull, commutePace } from './levels.js';
 import { tuneRow } from './machines.js';
-import { MACHINE_TUNE } from './config.js';
+import { MACHINE_TUNE, LADDER } from './config.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 import { registerRows } from './works.js';
@@ -896,14 +896,16 @@ export const QUARRY_UPGRADES = [
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },
   {
-    // The last thing the cut ever sells, once the hole is as deep as it will
-    // ever go (`canBuy`).
+    // Gated like the ram: both of the cut's ladders topped and a helmet on
+    // every quarrier (`canBuy`), not the last bench -- the benches are room,
+    // and a machine replaces the hands, not the floor.
     key: 'jaw',
     kind: 'machine', site: 'quarry',
     name: 'the drill',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
-    show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
+    show: () => S.quarryOpen && canBuy('jaw',
+                                       () => S.quarryPaceLevel >= LADDER && S.seamLevel >= LADDER,
                                        () => kitFull(JOB.QUARRY))
   },
 
