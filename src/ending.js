@@ -12,7 +12,7 @@ import { S } from './state.js';
 import { sayClock } from './stats.js';
 import { now } from './clock.js';
 import { beatRunning, skipBeat } from './beats.js';
-import { timesOn, timesName, postTime, sayRank } from './times.js';
+import { timesOn, timesName, postTime, sayRank, BOARD_DOWN } from './times.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
@@ -53,8 +53,9 @@ async function send(name) {
   posted = true;
   postRow.hidden = true;
   timesSaid.textContent = 'telling the board…';
-  const r = await postTime(name);
-  if (r === null) timesSaid.textContent = 'the board is away; it will hear about this next time';
+  let r = null;
+  try { r = await postTime(name); } catch {}
+  if (r === null) timesSaid.textContent = BOARD_DOWN + '; your time is kept and goes up next time you open the game';
   else if (r.error) timesSaid.textContent = r.error;
   else timesSaid.textContent = `on the board: ${sayRank(r.rank, r.of)}`;
 }

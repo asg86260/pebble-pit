@@ -49,6 +49,10 @@ export function setTimesName(name) {
   setPref('name', String(name || '').trim().slice(0, TIMES_NAME_MAX));
 }
 
+// What every surface says when the board cannot be reached: the server is
+// on somebody's desk, and a desk is sometimes off.
+export const BOARD_DOWN = 'the board is down right now';
+
 // The list, best first, and this yard's own row if it has one. Null when the
 // board cannot be reached.
 export async function fetchBoard(top = TIMES_SHOWN, mineId = S.runId) {
@@ -77,6 +81,15 @@ export const noteBest = ms => { if (Number.isFinite(ms)) best = ms; };
 
 // The page: fetched when it is turned, never on a timer.
 export async function showTimes(el, mineId = S.runId) {
+  try { await drawTimes(el, mineId); } catch {
+    el.replaceChildren();
+    const none = document.createElement('div');
+    none.className = 'none';
+    none.textContent = BOARD_DOWN + ' \u2014 try again later';
+    el.appendChild(none);
+  }
+}
+async function drawTimes(el, mineId) {
   el.replaceChildren();
   const none = document.createElement('div');
   none.className = 'none';
@@ -86,7 +99,7 @@ export async function showTimes(el, mineId = S.runId) {
   const board = await fetchBoard(TIMES_SHOWN, mineId);
   el.replaceChildren();
   if (!board) {
-    none.textContent = 'the board is away';
+    none.textContent = BOARD_DOWN + ' \u2014 try again later';
     el.appendChild(none);
     return;
   }

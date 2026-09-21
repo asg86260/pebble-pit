@@ -14,3 +14,4 @@ vite.tmp.log
 .env.local
 server/times.sqlite
 server/node_modules/
+server/logs/

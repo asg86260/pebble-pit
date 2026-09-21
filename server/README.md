@@ -47,14 +47,24 @@ once a day.
 
 ## Deploying
 
-The same as the pirate ship's `deploy/`: `cloudflared tunnel create
-pebble-times`, route a hostname to it, point the tunnel's `config.yml` at
-`http://127.0.0.1:3100`, and run the server under a supervising scheduled
-task (copy `run-app.ps1` and `run-tunnel.ps1` from there; change the root,
-the port and the mutex name). No Cloudflare Access in front: the board is
-public by design, and the routes carry their own limits.
+Deployed 2026-09-21 on the owner's machine at `https://times.graham-things.com`:
+the `pebble-times` Cloudflare Tunnel (`~/.cloudflared/config-pebble.yml`,
+its own tunnel beside pirate-ship's and lbs-content's, always run with
+`--config`) and two logon-triggered scheduled tasks, `pebble-times-app` and
+`pebble-times-tunnel`, each a supervising restart loop in `deploy/`.
 
-Then the game's build needs the hostname: `VITE_TIMES_URL=https://<host>` in
-the environment of `vite build` (a `.env.local` at the repo root works for a
-local build; the release workflow wants it as a repository variable). With
-no `VITE_TIMES_URL` the game has no board: no button, no ping, no post.
+```powershell
+powershell -ExecutionPolicy Bypass -File server\deploy\register-tasks.ps1   # (re)register; -Remove to drop
+Start-ScheduledTask -TaskName pebble-times-app; Start-ScheduledTask -TaskName pebble-times-tunnel
+Get-Content server\logs\app.log -Tail 20                                      # and tunnel.log, server-err.log
+```
+
+No Cloudflare Access in front: the board is public by design, and the routes
+carry their own limits. When the machine is off the board is down, and the
+game says so on every surface ("the board is down right now"); a rescue
+posted then waits on the save for the next boot.
+
+The game's build reads the hostname from `VITE_TIMES_URL`: the release
+workflow takes it from the `TIMES_URL` repository variable, and a local
+build from a `.env.local` at the repo root. With no `VITE_TIMES_URL` the
+game has no board: no button, no ping, no post.

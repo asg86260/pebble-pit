@@ -6,7 +6,7 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord } from './record.js';
-import { timesOn, fetchBoard, rowText } from './timesboard.js';
+import { timesOn, fetchBoard, rowText, BOARD_DOWN } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
@@ -45,12 +45,17 @@ function front() {
   document.getElementById('recordbtn').textContent = recordLabelOf(s?.won);
 }
 // The board of times' best, one line under the achievements: asked once as
-// the page comes up, blank until it answers, blank for good if it never does.
+// the page comes up, blank until it answers, and honest if it never does.
 async function bestTime() {
   if (!timesOn()) return;
-  const board = await fetchBoard(1, null);
-  const top = board?.rows?.[0];
-  if (top) document.getElementById('timesline').textContent = `best time ${rowText(top)}`;
+  const el = document.getElementById('timesline');
+  try {
+    const board = await fetchBoard(1, null);
+    const top = board?.rows?.[0];
+    el.textContent = !board ? BOARD_DOWN : top ? `best time ${rowText(top)}` : 'no times on the board yet';
+  } catch {
+    el.textContent = BOARD_DOWN;
+  }
 }
 bestTime();
 // Opening a slot here moves the pointer and nothing else: no yard is running

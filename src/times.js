@@ -15,9 +15,9 @@
 
 import { S } from './state.js';
 import { exportSave } from './persist.js';
-import { call, timesOn, timesName, setTimesName } from './timesboard.js';
+import { call, timesOn, timesName, setTimesName, BOARD_DOWN } from './timesboard.js';
 import { TIMES_PING_S } from './config.js';
-export { setTimesUrl, timesOn, timesName, setTimesName, sayRank, showTimes, timesLabel } from './timesboard.js';
+export { setTimesUrl, timesOn, timesName, setTimesName, sayRank, showTimes, timesLabel, BOARD_DOWN } from './timesboard.js';
 
 // The desk under the itch app hands over the key itch gave it (preload.cjs);
 // anywhere else there is none.
@@ -36,8 +36,10 @@ const ASKED_RUN = 1, ASKED_PENDING = 2;
 export const bootTimes = () => { S.timesAsked = 0; };
 
 async function startRun() {
-  const r = await call('/runs', { save: exportSave() });
-  if (r && typeof r.id === 'string' && S.buried && !S.runId) S.runId = r.id;
+  try {
+    const r = await call('/runs', { save: exportSave() });
+    if (r && typeof r.id === 'string' && S.buried && !S.runId) S.runId = r.id;
+  } catch {}
 }
 
 // The step (game.js): while the sqwife is under and the yard has no run yet,
@@ -47,8 +49,10 @@ let stepped = false;
 export function stepTimes() {
   if (!timesOn() || S.staged) return;
   stepped = true;
-  if (S.buried && !S.runId && !(S.timesAsked & ASKED_RUN)) { S.timesAsked |= ASKED_RUN; startRun(); }
-  if (S.timePending && !(S.timesAsked & ASKED_PENDING)) { S.timesAsked |= ASKED_PENDING; sendPending(); }
+  try {
+    if (S.buried && !S.runId && !(S.timesAsked & ASKED_RUN)) { S.timesAsked |= ASKED_RUN; startRun(); }
+    if (S.timePending && !(S.timesAsked & ASKED_PENDING)) { S.timesAsked |= ASKED_PENDING; sendPending(); }
+  } catch {}
 }
 
 // The ping, on wall time: a tick posts only if the yard stepped since the
@@ -59,7 +63,7 @@ export function startTimes() {
   pinger = setInterval(() => {
     const go = stepped && S.buried && S.runId;
     stepped = false;
-    if (go) call(`/runs/${S.runId}/ping`, {});
+    if (go) { try { call(`/runs/${S.runId}/ping`, {}); } catch {} }
   }, TIMES_PING_S * 1000);
 }
 
@@ -83,11 +87,13 @@ export async function postTime(name = timesName()) {
 async function sendPending() {
   const p = S.timePending;
   if (!p) return;
-  const body = { ms: p.ms, name: p.name, save: exportSave(), itch: itchKey() };
-  const r = await call(S.runId ? `/runs/${S.runId}/time` : '/runs/time', body);
-  if (r === null) return;                        // still away; next boot
-  S.timePending = null;
-  if (typeof r.id === 'string' && !S.runId) S.runId = r.id;
+  try {
+    const body = { ms: p.ms, name: p.name, save: exportSave(), itch: itchKey() };
+    const r = await call(S.runId ? `/runs/${S.runId}/time` : '/runs/time', body);
+    if (r === null) return;                      // still down; next boot
+    S.timePending = null;
+    if (typeof r.id === 'string' && !S.runId) S.runId = r.id;
+  } catch {}
 }
 
 // What a refusal says on the sheet. The codes are the server's
@@ -96,5 +102,5 @@ function saidRefusal(status) {
   if (status === 409) return 'the board already has this one';
   if (status === 422) return 'the board did not believe it';
   if (status === 429) return 'the board is busy; try again in a minute';
-  return 'the board is away';
+  return BOARD_DOWN;
 }

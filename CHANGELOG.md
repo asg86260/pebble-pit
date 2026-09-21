@@ -14,6 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 - Weather: it rains on its own clock now, clean rain that carries down a share of whatever smoke is overhead as acid among the water; the first storm of a yard comes in the first few minutes with the lightning, and the clouds swell before a front and settle after (test/weather.test.mjs).
 - The board of times: every rescue's clock on one board for everybody, best first, with your name typed once -- on the held sheet, the ending sheet and the title page (test/times.test.mjs, server/test/times.test.ts).
+- When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
 - The air reading no longer runs a hair over the sky while it is raining (test/sky-readout.test.mjs, "what the readout says is what is overhead").
