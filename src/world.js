@@ -654,10 +654,16 @@ export function bindScroller(el, sp, onTaken) {
   scroller = el; spacer = sp; taken = onTaken;
   wroteLeft = -1; spacerW = -1;
 }
-// A scene owns the camera for its run, and a fling in flight would fight it:
-// the scroller is shut for the length of the scene (cutscene.js).
-export function lockScroller(on) {
-  if (scroller) scroller.style.overflowX = on ? 'hidden' : '';
+// The scroller shut: a scene owns the camera for its run, and a fling in
+// flight would fight it (cutscene.js); a finger the game has claimed must
+// not pan it either (input.js). Shut by reason, so a finger lifting during a
+// scene does not open what the scene shut. Shutting it is what makes the
+// refusal hold: a scroller that cannot scroll has nothing for the platform
+// to commit to, whatever it made of the touch's `preventDefault`.
+const shut = new Set();
+export function lockScroller(on, why = 'scene') {
+  if (on) shut.add(why); else shut.delete(why);
+  if (scroller) scroller.style.overflowX = shut.size ? 'hidden' : '';
 }
 function writeScroll() {
   if (!scroller) return;
