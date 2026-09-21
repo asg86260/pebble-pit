@@ -5,12 +5,12 @@
 
 import { P, WORKER } from './config.js';
 import { S, quarry, farm, apothecary, scrub, sky, outhouse, shack } from './state.js';
-import { groundAt, kitX, quarryShed } from './world.js';
+import { groundAt, kitX, liftX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
-import { KIT_MARK, TRADE_OF } from './kit.js';
+import { KIT_MARK, TRADE_OF, LIFT, spareLifts } from './kit.js';
 import { JOB } from './jobs.js';
 import { shown } from './tween.js';
 
@@ -120,6 +120,13 @@ export function kitStands() {
     if (n < 1) continue;
     const x = Math.round(kitX(p.job) / P) * P;
     out.push({ job: p.job, mark: KIT_MARK[p.job], n, x, y: Math.round(groundAt(x) / P) * P });
+  }
+  // The engines wait on a second trestle beside the carts', one stand's width
+  // over, so the two counts never sit on one another.
+  const lifts = spareLifts();
+  if (lifts >= 1) {
+    const x = Math.round(liftX() / P) * P;
+    out.push({ job: JOB.HAUL, mark: LIFT.mark, n: lifts, x, y: Math.round(groundAt(x) / P) * P });
   }
   return out;
 }

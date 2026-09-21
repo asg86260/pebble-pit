@@ -31,7 +31,11 @@ export const KIT = {
   // A set of three, and no ceiling over it: see the note on `max` above. The
   // cart is no hat: on its stand it is the box, two cells high, standing on
   // its wheel (`drawCartBox`, render/crew.js), so the count clears the box.
-  [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: P * 2, set: KIT_MAX },
+  // `up` is the one second rung in the table: a forklift is a cart with an
+  // engine under it, worn by a carter and counted on `S.drivers`, and every
+  // question about it is asked of this row (`liftsOf`, `driving`, `spareLifts`).
+  [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: P * 2, set: KIT_MAX,
+                  up: { mark: 'lift', trade: 'drivers', tall: P * 3 } },
   // Not a doubling but a license: no hat, no flying. See wizard.js.
   [JOB.WIZARD]:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
   // The one hat nobody buys: the shed hangs one on the stand for every post it
@@ -87,16 +91,29 @@ export const KIT_MARK = Object.fromEntries(
 // Keyed by mark rather than by job, because the stand knows what it is holding
 // rather than who is coming for it.
 export const HAT_TALL = Object.fromEntries(
-  Object.values(KIT).map(k => [k.mark, k.tall]));
+  Object.values(KIT).flatMap(k => [[k.mark, k.tall], ...(k.up ? [[k.up.mark, k.up.tall]] : [])]));
 
 // What a body has on. Asked of the *kit* (which station the thing came off)
 // and never of the job the body is doing: somebody taken off the rock is a
 // hauler on the books and is still carrying the rock's helmet for the length
-// of the walk. A bare head is a head that has not been to a stand yet.
+// of the walk. A bare head is a head that has not been to a stand yet. A
+// driver's answer is the lift: the cart is under it.
 export function wearing(w) {
   if (!w || !w.trained) return null;
-  return KIT[w.kitOf]?.mark || null;
+  const k = KIT[w.kitOf];
+  if (!k) return null;
+  return w.lift && k.up ? k.up.mark : k.mark;
 }
+
+// --- the forklift ------------------------------------------------------------
+// The engine is bolted to a cart, so a lift is only ever on a body that is
+// wearing the cart it went on to, and comes off with it (`drop`, `flingHat`).
+// The counts are the cart's shape again: owned, worn, lying loose, spare.
+export const LIFT = KIT[JOB.HAUL].up;
+export const liftsOf = () => S[LIFT.trade] || 0;
+export const driving = () => S.workers.filter(w => w.trained && w.lift).length;
+export const looseLifts = () => S.workers.filter(w => w.hatOff && w.hatOff.lift).length;
+export const spareLifts = () => Math.max(0, liftsOf() - driving() - looseLifts());
 
 // Whether there is a row on the shop board for the hat.
 export const boughtKit = job => !!(KIT[job] && KIT[job].trade);

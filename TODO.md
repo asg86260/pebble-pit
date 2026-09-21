@@ -1,23 +1,24 @@
 # Still to do
 
-## The forklift -- DESIGNED, NOT BUILT (2026-09-20)
+## The forklift -- BUILT (2026-09-20)
 
 **Diagnosis.** The belt is the haulers' only machine and it touches the rock's
 pile alone: one line, no ladder, nothing for the muck, the far heaps or the
 casino's strip, which are walked by hand for the whole game. Every other
 station's end of the line is a machine; the haulers' is a cart.
 
-**Design.** DESIGN.md, "The forklift (design, not built)": a second rung of
-the haulers' kit, worn by a carter, bought one at a time in sparks and dust
-with no ceiling; four times the load and twice the pace; soot off the cart
-per cell driven laden, through `foul()`, so the sky is the brake. The belt
-stays. Decided 2026-09-20: keep the belt, a forklift per hauler (not one
-purchase and a ladder), smoke along the drive.
+**Built.** DESIGN.md, "The forklift": the `driver` row on the bench beside
+the carts (sparks and dust, rising a lift at a time, no ceiling, the belt's
+gate); `KIT[HAUL].up`, `S.drivers`, `w.lift`; the engines' trestle beyond the
+carts' (`liftX`, and the bench's `hang`); `LIFT_LOAD`, `LIFT_PACE`,
+`LIFT_FOUL` on the dev panel; soot off the cart per cell driven laden; rule
+3c in `verify.js`; `test/forklift.test.mjs`. Three departures from the
+design text, each recorded under "As built" there.
 
-**Blocker.** Approval of the design. Then: `KIT[HAUL].up`, `S.drivers` in
-`SAVED`, `w.lift`, `driver` in `TRADES`, the `lift` glyph, `LIFT_*` knobs
-in `config/kit.js`, `test/forklift.test.mjs`, a line in `test/shop-rows.mjs`,
-a rule in `verify.js`.
+**Open.** The forklift's picture is a first drawing (`drawLiftBox`,
+render/crew.js) and the `lift` shelf glyph a first sketch: both want a pass
+in `glyphs.html` and a shot. `LIFT_FOUL` is a starting number, untuned
+against a fully bought scrubbing house.
 
 ## The pour -- BUILT (2026-09-16)
 

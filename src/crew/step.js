@@ -137,6 +137,7 @@ const STAGES = [
     }
     w.trained = true;
     w.kitOf = w.hatOff.of;
+    w.lift = !!w.hatOff.lift;
     w.hatOff = null;
     retask(w, w.type);
     return true;

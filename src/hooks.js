@@ -227,7 +227,7 @@ export const wizardHat = (n = 1) => {
 // that open the kit rows (rows-kit.js).
 export const kit = (o = {}) => {
   if (typeof o !== 'object') o = {};
-  for (const k of ['breakers', 'carters', 'blasters', 'growers'])
+  for (const k of ['breakers', 'carters', 'drivers', 'blasters', 'growers'])
     if (o[k] != null) S[k] = o[k];
   if (o.learned) {
     for (const k of ['props', 'net', 'arch'])

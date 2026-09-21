@@ -147,6 +147,7 @@ export const S = {
   // (upgrades/rows-kit.js).
   breakers: 0,            // helmets the rock owns
   carters: 0,             // carts the lip owns
+  drivers: 0,             // and forklifts: engines under some of those carts
   growers: 0,             // brims the plots own
   blasters: 0,            // lamps the cut owns
 
@@ -470,6 +471,7 @@ export const SAVED = [
   // The kit each station owns.
   'breakers',
   'carters',
+  'drivers',
   'blasters',
   'growers',
   'haulCarryLevel',

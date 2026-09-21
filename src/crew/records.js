@@ -54,7 +54,7 @@ export const newRecord = () => ({
 // down. `lentFrom` is the loan, saved with the body it is on (`rebalance` in
 // upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
-                      'at', 'trained', 'kitOf', 'x', 'y',
+                      'at', 'trained', 'kitOf', 'lift', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
                       // the doses in a stirrer's arms, or a stirrer saved on a
                       // round comes back with `goal: 'out'` and empty hands

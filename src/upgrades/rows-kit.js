@@ -1,7 +1,8 @@
-import { TRADE_COST, TRADE_RATE } from '../config.js';
+import { TRADE_COST, TRADE_RATE, LIFT_BILL, LIFT_LOAD, LIFT_PACE, LADDER } from '../config.js';
 import { S } from '../state.js';
 import { JOB } from '../jobs.js';
-import { stockOf, kitMaxOf } from '../kit.js';
+import { stockOf, kitMaxOf, LIFT } from '../kit.js';
+import { kitFull } from '../levels.js';
 import { kitDisplaced, machineFor } from '../machines.js';
 import { shieldOpened } from '../shield.js';
 import { rebalance } from '../staffing.js';
@@ -100,3 +101,32 @@ export const KIT_ROWS = TRADES.map(t => ({
   show: () => S.seenShard && learned(t) && OPEN[t.job]() &&
               !(machineFor(t.job) && kitDisplaced(t.job))
 }));
+
+// --- the forklift --------------------------------------------------------------
+// The carts' second rung: an engine under a cart, sold beside the carts and
+// worked at the bench like them, a count with a price and never `done`
+// (DESIGN.md, "The forklift"). Priced in the machines' coin, rising a lift at
+// a time the way a hat does.
+const lifts = () => S[LIFT.trade] || 0;
+export const liftCost = (n = lifts()) =>
+  LIFT_BILL.map(([money, at]) => [money, Math.round(at * Math.pow(TRADE_RATE, n))]);
+
+KIT_ROWS.push({
+  key: 'driver',
+  kind: 'rung', site: 'bench',
+  name: 'driver',
+  note: () => `driver: ${LIFT_LOAD * 2} times the load, ${LIFT_PACE} times the pace, and smoke, at the pit`,
+  unit: null,
+  from: lifts,
+  to: () => lifts() + 1,
+  keep: true,
+  bill: liftCost,
+  // The engine goes on to a cart at the stand, so the row is a stand's count
+  // like the cart row's (`stepLifts` sends the carter).
+  buy: () => { S[LIFT.trade] = lifts() + 1; },
+  // The belt's gate: a full set of carts and both of the haulers' ladders
+  // topped, so the two open together and which comes first is the player's.
+  // Owned, it stays, like every kit row.
+  show: () => lifts() > 0 ||
+              (kitFull(JOB.HAUL) && S.haulCarryLevel >= LADDER && S.haulPaceLevel >= LADDER)
+});

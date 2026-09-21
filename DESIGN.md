@@ -3798,7 +3798,7 @@ It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
 what the tier-6 spark rungs and the paint store are for.
 
-### The forklift (design, not built)
+### The forklift (built 2026-09-20)
 
 **The belt only ever touches the rock's pile.** It runs the one line from the
 rock to the hole, and its own design says so: it has no ladder because it is
@@ -3924,6 +3924,29 @@ engine; `lift` is the mark, `driver` the trade, as `cart`/`carter`); the gate
 copied from the belt's rather than a new one; the row on the bench rather than
 at the lip, because the cart row is; four times the load and twice the pace as
 the first numbers, moved on the dev panel.
+
+**As built (2026-09-20).** Three things differ from the text above, each
+because the simpler rule was the one already in the game:
+
+- *The cart does not come back to the stand.* The engine is bolted to the
+  cart the carter arrived wearing (`arrive`, the `lift` leg): a driver is a
+  carter with an engine, `S.carters` counts it as a cart worn, and the cart
+  comes off with the engine (`drop`, `flingHat`). One walk, not two, and the
+  rule `drivers <= carters` holds by construction.
+- *A knocked-off forklift goes to whoever a knocked-off cart goes to.* The
+  hat-on-the-ground rule is "the station's, and the nearest entitled body's"
+  (`mayWear`), and a body entitled to a cart is a bare hauler. A carter with
+  its cart on is not on that list, so the forklift is picked up whole by a
+  bare hauler, who becomes a driver. Restricting it to carters would have
+  meant a second entitlement rule for one hat.
+- *The engines have a trestle of their own,* `LIFT_STAND_OFF` beyond the
+  carts' (`liftX`), and the bench pads its left side by it (`hang` on its
+  `SITES` row) so the noticeboard, which centers between the house and that
+  stand, keeps its walk. A yard is wider by the stand from this version on.
+
+The row is a kit row worked at the bench, so it is built with a wait like a
+cart; a check buys it with `buyNow`. The scenes are `forklift`, `liftstand`
+and `driverrow`.
 
 ### Settled
 

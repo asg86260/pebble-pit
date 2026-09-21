@@ -70,7 +70,7 @@ import { AIR_KNOBS } from './config/air.js';
 import { SKY_KNOBS } from './config/sky.js';
 import { SCRUB_KNOBS } from './config/scrub.js';
 import { CREW_KNOBS } from './config/crew.js';
-import { KIT_KNOBS } from './config/kit.js';
+import { KIT_KNOBS, LIFT_KNOBS } from './config/kit.js';
 import { QUARRY_KNOBS } from './config/quarry.js';
 import { MACHINE_KNOBS } from './config/machines.js';
 import { FARM_KNOBS } from './config/farm.js';
@@ -86,7 +86,7 @@ import { CASINO_KNOBS } from './config/casino.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
-  ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...QUARRY_KNOBS,
+  ...SKY_KNOBS, ...SCRUB_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...LIFT_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS,
   ...CASINO_KNOBS
