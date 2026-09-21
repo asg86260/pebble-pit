@@ -55,6 +55,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
 
+      # The board of times' hostname (server/README.md): a repository
+      # variable, so a fork with no board builds a game with no board.
+      - name: Board of times
+        if: vars.TIMES_URL != ''
+        run: echo "VITE_TIMES_URL=${{ vars.TIMES_URL }}" >> "$GITHUB_ENV"
       # The signing variables are only exported when the secrets exist: an
       # unset secret is an empty string, and electron-builder reads an empty
       # CSC_LINK as a path to a certificate file that is not there.

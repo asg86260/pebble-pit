@@ -19,7 +19,7 @@ import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from 
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
-import { stepBelt, catchBelt, wireBelt } from './dust.js';
+import { stepBelt, settleBelt, catchBelt, wireBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
@@ -54,6 +54,7 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepBuried, stepUnder } from './intro.js';
+import { stepTimes } from './times.js';          // and the board of times, told they are still under
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
 import { mineMs, tossMs } from './levels.js';
@@ -217,6 +218,7 @@ export const STEPS = [
   { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through
   { name: 'records',  step: c => stepRecords(c.dt) },     // and everybody gets a little older
   { name: 'under',    step: c => stepUnder(c.dt) },       // and the one under the rock has been there a frame longer
+  { name: 'times',    step: stepTimes },                  // and the board is asked to name the run, once
   { name: 'breaks',   step: c => stepBreaks(c.now) },     // and what the stopped ones get up to
   // The collapse does NOT take the camera: the view is where you put it, and
   // an ad hoc grab steals the frame from anything else pointing it.
@@ -253,10 +255,11 @@ export const STEPS = [
   // chip this same frame and should fall on the frame it left.
   { name: 'belt',  step: c => stepBelt(c.now, frames()) },
   { name: 'chips', step: c => stepChips(c.now) },
-  { name: 'settle', step: () => {
+  { name: 'settle', step: c => {
       settleSome(floor, SETTLE_BUDGET);
       settlePit();
-      if (cut.grid) settleSome(cut, SETTLE_BUDGET); } }
+      if (cut.grid) settleSome(cut, SETTLE_BUDGET);
+      settleBelt(c.now); } }
 ];
 
 export function step() {

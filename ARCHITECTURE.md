@@ -56,6 +56,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `save.js` | the store seam: IndexedDB on a page (read once before the boot, `primeStore`), `window.desk` in the shell, localStorage as the way in and the fallback; the guard, the fallback and the save floor (`isSave`) over all of it; every key follows the open slot | rarely |
 | `idb.js` | IndexedDB as four promises over one key-value store; null wherever it is not to be had | rarely |
 | `slots.js` | the saves page: three yards, one open at a time, labelled off their own blobs | rarely |
+| `timesboard.js` | the board of times without a yard: the call to the server, the read, the name, the page; the landing page reads this alone | rarely |
+| `times.js` | the board of times' yard half: the run named at the first rock, the ping on wall time, the rescue's post and the one that waits on the save; `server/` is the other end | rarely |
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 

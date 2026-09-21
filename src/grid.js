@@ -161,6 +161,12 @@ export function topRow(b, c) {
 // ceiling is how a bank is kept from standing up as a wall.
 export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 
+// How far a column may stand over the one beside it, in cells, where heaps
+// stand up (`repose`): a grain slides only into a drop deeper than this, so
+// at rest a heap's face is this steep and no steeper. The belt puts a grain
+// down where this already holds (`restOn` in dust.js).
+export const REPOSE_DROP = 2;
+
 // How far a grain may walk to get out from under something that is not
 // ground, in columns: however wide the thing in the way is, and the widest
 // is the hill with its clearance, a little over eighty columns. Past the
@@ -258,7 +264,7 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
         if (!roomFor(b, n, r - 1)) continue;          // that column may not stand that high
         // where heaps stand up, a grain only slides if there is a real drop
         // beside it, so a pile keeps its shape instead of spreading flat
-        if (b.repose && r >= 2 && at(b, n, r - 2)) continue;
+        if (b.repose && r >= REPOSE_DROP && at(b, n, r - REPOSE_DROP)) continue;
         if (!at(b, n, r - 1) && !at(b, n, r)) {
           put(b, c, r, 0);
           put(b, n, r - 1, v);

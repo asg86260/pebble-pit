@@ -5,7 +5,8 @@
 
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
-import { pref, setPref, reducedMotion, coarse } from '../prefs.js';
+import { pref, setPref, reducedMotion, coarse, dark } from '../prefs.js';
+import { timesOn } from '../timesboard.js';
 import { disarmReset } from '../input.js';
 import { setSlot, storeSettled, clear, slotRaw } from '../save.js';
 import { S } from '../state.js';
@@ -35,6 +36,7 @@ const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
   .map(el => el.id === 'recordbtn' ? 'achievements'
            : el.id === 'slotsbtn' ? 'saves'
+           : el.id === 'timesbtn' ? 'times'
            : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
@@ -183,6 +185,7 @@ export const TESTS = [
       '',                                     // the rule
       'saves',                                // the three yards -- see slots.js
       'achievements',                         // the button to the page behind -- see record.js
+      ...(timesOn() ? ['times'] : []),        // the board of times, only on a build with one -- see times.js
       'settings',                             // and the settings, behind one word
       'return to title',
       'esc holds · ← → look about · hold space to skip a scene',
@@ -194,11 +197,13 @@ export const TESTS = [
       'settings',
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'touch: ' + (coarse() ? 'on' : 'off'),  // the thumb switch -- see prefs.js
+      'dark: ' + (dark() ? 'on' : 'off'),     // the page turned over -- see ink.js
       // the whole screen, where the platform can give it -- see fullscreen.js
       ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
       'save a copy load a save',
+      ...(timesOn() ? [''] : []),             // the name on the board: a box has no words
       'reset progress',
       'back',
       version(),

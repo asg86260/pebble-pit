@@ -12411,3 +12411,236 @@ side on the bench.
   one seed.
 - `SMOG_RAIN_AT` stays as the readout's line (and `cloudR`); only the roll
   that read it is gone.
+
+## The board of times: a global competition for the rescue (built 2026-09-20)
+
+"The clock over the sqwife" ends: *the story ends with a time you can beat.
+It is the one thing in the game you are racing, and it was never written
+down.* This writes it down, and not on your own machine: one board, shared
+by everybody who has ever got the sqwife out, best time first, with your
+own row marked. The shape is a Megabonk-style global board -- no login, a
+name you type once, and a row you can see everybody else's row next to.
+
+**What "Not doing" refuses and what this is.** That list says no score and
+no summary screen, and it stands. This is not a score: nothing is counted
+up, weighted or turned into a percentage, and nothing here asks you to come
+back tomorrow. It is a stopwatch on the one thing the story is about, which
+the ending sheet already reads out. The only new fact is that other people's
+stopwatches stand beside yours.
+
+### The bargain
+
+A time on a global board is worth exactly as much as it can be trusted, and
+the client cannot be trusted: the game is open source, it runs in the
+player's browser, and a save is a JSON blob. Any key, secret or signing
+routine in the bundle is in the cheater's hands, and `POST {name, ms}` is one
+`curl` away. So the rule that shapes everything below is:
+
+**The server owns the number.** The game never tells the server how long the
+rescue took; it tells the server *when it is under the rock*, and the server
+keeps its own clock. A posted time is refused if it is shorter than what the
+server watched. The lower bound -- the only direction a cheater cares
+about -- is the server's fact, not the client's.
+
+**How much this is, said plainly.** This is the tier every off-the-shelf
+leaderboard sits in -- Steam's, GameJolt's, PlayFab's, Megabonk's: the
+client reports, the server sanity-checks, and a board that matters gets
+moderated. The one extra here is the server's own clock as a floor, which
+is the "session must be older than the time it claims" check that tier
+grows after its first wipe. It is spoof-proofing, not proof: it turns
+"one `curl`" into "leave a script pinging for as long as an honest rescue
+takes", and a bot that fires real clicks for that long gets a row. That is
+the owner's call for a silly game, made 2026-09-20, and it is enough. The
+tier above -- the server replays a journal of every input, Trackmania's
+way -- is in "Not now": the sim is already deterministic, so it is
+possible, and it is ten times this design's work.
+
+### The server
+
+`server/` in this repo, the pirate ship's shape: Bun + Hono, `bun:sqlite`
+for the table (no dependency beyond hono), run on the owner's machine behind
+the same kind of Cloudflare Tunnel, with `deploy/` scripts of the same
+pattern. It is one process with four routes and one table. The game's
+`package.json` does not change; `server/` is its own Bun workspace with its
+own `package.json`, so the game still ships with no new dependency.
+
+**`POST /runs`** -- the first rock has landed on somebody. The body is
+`{ save }`: the save at that moment. The server mints a run id (a random
+128-bit token), stores `{ id, started: now, pinged: now, seen: 0, ip }` and
+returns `{ id }`. The game keeps the id on `S` (`runId`, `SAVED`), so a
+reload carries it and an exported save carries it -- the run is the yard's,
+not the browser's. A save that already carries a `runId` never posts again.
+
+**`POST /runs/:id/ping`** -- the game is running and the sqwife is under.
+Sent every `TIMES_PING_S` seconds of wall time, only while the sim is
+stepping and `S.buried` -- so never while held, never after the rescue, and
+never from a tab the browser has put to sleep. The server adds the gap
+since the last ping to `seen`, capped at `TIMES_PING_S × TIMES_PING_SLACK`
+so a ping after a day away counts as one interval and not a day: the server
+measures *watched* time, a floor under `buriedMs` and never more than it. A
+ping on an id the server does not know is `404` and the game goes quiet
+(below). The interval is a precision knob, not a cost one: a cheater can
+shave at most one interval off a real run, and at sixty seconds a two-hour
+rescue is a hundred and twenty requests of nothing, one `UPDATE` each.
+
+**`POST /runs/:id/time`** -- the rescue. The body is `{ ms, name, save,
+itch }`. A post with no id at all -- a run that started with no network,
+which on the desk is the ordinary case -- is `POST /runs/time`: the server
+mints the id then and there, with `seen: 0`, and the row is checked like
+any other but for the clock. The server refuses, in this order, and each
+refusal is its own line in `server/test/times.test.ts`:
+
+1. an id it does not know, or one that already has a time (`409`);
+2. `ms < seen − TIMES_PING_S × TIMES_PING_SLACK` -- shorter than the server
+   watched, less one interval for the ping that had not landed yet (`422`).
+   Only ever this direction: a run the server saw *less* of than it claims
+   is not refused, because a network that dropped is the player's loss of
+   proof and not evidence against them;
+3. `ms < TIMES_FLOOR_MS` -- under the floor a real rescue cannot beat, a
+   `config.js` constant read off the fastest driven rescue the node tier
+   can stage plus a margin (`422`);
+4. a save that does not agree: `save.buriedMs !== ms`, `save.rescued` not
+   set, `save.runId !== id`, or a save behind the one posted at the first
+   rock on `boulderNo` (`422`);
+5. a name that is not one to twenty printable characters after trimming
+   (`422`; the server stores it as given, the page escapes it).
+
+Everything else is a row: `{ id, ms, seen, name, at: now, itch, ip }`. The
+ip is kept for the rate limit and a ban, never shown. `seen` is how much of
+the run the server watched, and the board says so: a row the server saw
+less than `TIMES_WATCHED_MIN` of carries a `~` before the time (the tooltip
+says *played offline*), and one it watched carries nothing. An offline desk
+run is a `~` row on the same board; a player who wants the plain row plays
+with the network up. Nothing honest is refused, and the board says what it
+knows.
+
+**`GET /times?top=N`** -- the board: `[{ ms, seen, name, at, itch }]`, best
+first, `N` capped at `TIMES_TOP_MAX`. With `?mine=<id>`, the row for that
+run comes back beside the list with its rank, so a player outside the top
+still sees where they stand. Cached in memory and rebuilt on a new row; the
+table is tiny and the read is the hot path.
+
+**Rate limits**, all per ip, all `429`: one run a minute, a ping a
+`TIMES_PING_S / 2`, one time a minute. A run with no ping for
+`TIMES_RUN_STALE_D` days is dropped, so an abandoned yard does not sit in
+the table for ever.
+
+**Identity.** There is no login and the board wants none. A row is a name
+typed once, on the ending sheet the first time you get there, kept in
+`prefs.js` (`name`) and editable on the settings sheet -- a preference in
+the same sense as the mute, so it survives a reset and does not travel with
+a save. One thing can verify a name, and the board says so with a badge
+beside the row (`itch`, or nothing):
+
+- The **itch desktop app** sets `ITCHIO_API_KEY` in the environment of a
+  game it launches. The desk build reads it in `electron/main.cjs` and hands
+  it over the bridge (`window.desk.itchKey()`); the game sends it as `itch`
+  with the time; the server calls `https://itch.io/api/1/jwt/me` with it
+  and, on a `200`, stores the username itch returned *in place of* the typed
+  one and marks the row. The key never goes in the table.
+- A game embedded on itch.io's own page gets **no** identity -- there is no
+  client API for it -- and the game is not on Steam, so those are the two
+  cases: verified through the itch app on the desk, or a name you typed.
+
+A typed name is a typed name: two people can be `bob`. The board is best
+first and a name is a label on a row, not a key, so that is fine.
+
+### The game
+
+- **A run starts at the first rock.** `stepUnder` (intro.js) is where
+  `buriedMs` starts counting; on the frame it starts, `times.js` posts
+  `/runs` with the save and keeps the id. The post is fire-and-forget: the
+  yard never waits on the network. A run that got no id (offline, the board
+  away) tries once more at each boot while `S.buried && !S.runId`, so a
+  desk run that starts on the train and comes home registers then; one
+  that never does posts at the rescue with no id and gets the `~` row.
+- **The ping** is `times.js`'s own `setInterval` at `TIMES_PING_S`, and
+  each tick posts only if the sim stepped since the last one and
+  `S.buried && S.runId` -- a held yard, a sleeping tab and a finished story
+  all go quiet without a field on `S`.
+- **The rescue.** `getOut` sets `rescued`; the ending sheet (`ending.js`)
+  gains one line under "it took 12:34": the name box the first time, then a
+  `post` button; on a name already kept it posts on show. The reply comes
+  back as your rank -- "3rd of 41" -- on the same line, or one of the
+  refusals in the player's words ("the board did not believe it"). A refused
+  time is not retried; the row is the server's call. A post that never
+  reached the server (offline) is not lost: `timePending` (`SAVED`) holds
+  the name and the ms, and `times.js` sends it at the next boot with a
+  network, once, and the sheet's line reads "posted" the next time the
+  board page is turned. One field, one try a boot, no queue.
+- **The board** is a page on the held sheet beside achievements and saves:
+  `times · best 12:34`, turning to a list of `TIMES_SHOWN` rows, `12:34 ·
+  bob · itch · 3 days ago` (`since` in slots.js), your row marked, and your
+  own rank under the list if you are not on it. It is fetched when the page
+  is turned, never on a timer; the landing page reads the same route for one
+  line under the achievements button, `best time 12:34 · bob`.
+- **Quiet when away.** Every call has one `TIMES_TIMEOUT_MS` and one
+  outcome for any failure: the page says "the board is away" and the rest of
+  the game notices nothing. No retries, no queue, no status in the yard.
+  There is no story reason for a network, so the network is never allowed to
+  show in the yard.
+- **The endpoint** is `TIMES_URL` in `config.js`; empty in the node yard and
+  the checks, where `times.js` does nothing at all and every check runs as
+  now. `VITE_TIMES_URL` at build time fills it for the itch and desk builds.
+
+### What it costs the player
+
+Nothing in the yard: no coin, no body, no board. A name, once. A time on the
+board is not a reward and unlocks nothing -- the story's end is still the
+end, and the yard is still yours -- so the competition is the one thing the
+"Not doing" list allows: something to beat, next run, on the same board.
+
+### Checks
+
+- `test/times.test.mjs` (node): a run posts once at the first rock and never
+  again on reload; a tick with no frame stepped since, or a held yard, sends
+  no ping; a rescue posts `buriedMs`; a run with no id registers at the
+  next boot and a post that failed goes out from `timePending` once; with
+  `TIMES_URL` empty nothing is called. The network is a stub `fetch` on
+  `globalThis`, the same way the desk bridge is stubbed.
+- `server/test/times.test.ts` (Bun, run from `server/`): every refusal
+  above, the id-less post and its `~` row, the board's order, `mine`
+  outside the top, the rate limits, the
+  stale sweep, the itch path with a stubbed `jwt/me`.
+- Browser: the sheet page and the ending line, one group in `src/selftest/`.
+- `TIMES_FLOOR_MS` is read off `tools/node/rescue-floor.mjs`, the fastest
+  the driven yard can stage the rescue; the constant carries the run's
+  number in its comment and the tool is how it is re-read.
+
+### What building it changed
+
+- **Two files, not one.** `persist.js` is the whole yard, and the landing
+  page must not stand one, so the board's read, the call and the name are
+  `timesboard.js` (yard-free, what `title.js` imports) and the run, the ping
+  and the post are `times.js` on top of it.
+- **"Once a boot" is on `S`.** `timesAsked` (ephemeral) carries the two
+  marks; a reset clears it and a page's boot is a fresh module. The node
+  yard's reload is neither, so its check says when it boots (`__bootTimes`).
+- **The floor is half the driven yard.** `tools/node/rescue-floor.mjs` has
+  the rescue at 220 s on two crew and 243 s on ten -- the shields' sequence
+  sets the pace, not the hands -- so `TIMES_FLOOR_MS` is 120 s.
+- **The limits are seconds, not minutes.** A caller is an ip, and an ip can
+  be a school behind one router; a run and a time are ten seconds apart, a
+  ping half an interval, and a refused time hands the turn back so a
+  mistyped name is not a minute's wait.
+- **A staged yard never posts.** The scene bench and the demo stand yards
+  nobody owns; `stepTimes` reads `S.staged` and stays quiet, which is also
+  why a scene shot of the ending sheet says "the board did not believe it"
+  (its 01:03 is under the floor) and never puts a row up.
+- **No build, no board.** With `VITE_TIMES_URL` unset there is no times
+  button, no name box and no call; the release workflow reads it from a
+  repository variable (`TIMES_URL`). Wiring the tunnel is server/README.md.
+
+### Not now
+
+- **The journal.** Seed, every frame's `dt`, every input from the first rock
+  to the rescue, carried across reloads, posted with the time and replayed
+  under Bun on `src/game.js`. The sim is already seeded and deterministic
+  frame for frame, so it is possible; it is also a save-side system of its
+  own (a growing list on `S`, hours long), a replay harness, and a minute of
+  server time a post. The step up if the board is gamed.
+- **Steam.** Not on it. The badge column has room for a second word.
+- **Per-slot or per-version boards.** One board. A release that changes the
+  rescue's pace (the pit arc, the dome's bill) is a new race, and the honest
+  answer is a `version` column on the row and `?since=<version>` on the
+  read, which is one column and one filter when it is wanted.

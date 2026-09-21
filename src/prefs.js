@@ -11,6 +11,7 @@ const DEFAULTS = {
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
   dark: null,        // null = follow the system; true = white on black; false = black on white
+  name: '',          // the name on the board of times, typed once (times.js)
 };
 
 let prefs = { ...DEFAULTS };

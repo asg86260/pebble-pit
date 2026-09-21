@@ -12,7 +12,7 @@
 // (`LEDGER_EVERY`). Play never calls it.
 
 import { WORKER } from './config.js';
-import { S, pit, floor, cut } from './state.js';
+import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, standTop, WORKINGS } from './route.js';
 import { cutTop } from './quarry.js';
@@ -356,6 +356,29 @@ export function verifyWorld() {
         if (inPile[key] + through !== owned)
           fail(`the ${key} in the hole and the rift are not what you own`,
                `${inPile[key]} in the pile + ${through} through = ${inPile[key] + through}, counter ${owned}`);
+      }
+    }
+
+    // --- rule 14: the load on the belt lies at rest ------------------------------
+    // A heap on the band stands up the way one on the ground does (`repose`
+    // in grid.js: a grain slides only into a drop of two), what lands on it
+    // is put where it rests (`restOn`), and it is settled to rest after
+    // everything has landed (`settleBelt`), so no column of it stands more
+    // than that drop over the one beside it. A taller one is a needle: what
+    // landed this frame outrunning the slump. And the depth the belt keeps
+    // of each column (`band.high`) is a second copy of the cells, checked
+    // here for the reason the ledgers are.
+    if (band.grid && band.n) {
+      const deep = c => { for (let r = band.rows - 1; r >= 0; r--) if (band.grid[r * band.cols + c]) return r + 1; return 0; };
+      let prev = deep(0);
+      for (let c = 0; c < band.cols; c++) {
+        const d = deep(c);
+        if (band.high && band.high[c] !== d)
+          fail('the belt has lost count of a column', `column ${c} of the band stands ${d} deep, the belt says ${band.high[c]}`);
+        if (Math.abs(d - prev) > 2)
+          fail('the load on the belt stands as a needle',
+               `columns ${c - 1} and ${c} of the band stand ${prev} and ${d} deep`);
+        prev = d;
       }
     }
   }

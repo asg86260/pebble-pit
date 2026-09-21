@@ -71,6 +71,12 @@ export const S = {
   // How long they have been under, in ms: from the first rock until they
   // walk out, so after the rescue it is the time the story took.
   buriedMs: 0,
+  // The board of times (times.js): the server's name for this run, given at
+  // the first rock and kept with the yard, and a rescue's post that could
+  // not go out yet -- `{ ms, name }` until the next boot with a network.
+  runId: null,
+  timePending: null,
+  timesAsked: 0,          // which of the two the board has been asked this boot
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
@@ -547,6 +553,8 @@ export const SAVED = [
   'beatsDone',
   // A reload carries the clock on rather than starting it over.
   'buriedMs',
+  // The run is the yard's, not the browser's: an exported save carries it.
+  'runId', 'timePending',
   // The counts, the flags and the ladders that were once read by hand for a
   // rename or a guess; above the save floor every one of them is a plain
   // copy.
@@ -655,6 +663,7 @@ export const EPHEMERAL = [
   // The opening, while it is running.
   'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
   'introThrew', 'skipHeldAt', 'introCut',
+  'timesAsked',           // once a boot is once a page
   // Only read for the spread a rock does on arriving.
   'landAt',
   // Worked out again from the shield that is standing.
@@ -748,7 +757,7 @@ export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: n
 // The load on the belt: a strip of ground laid over the band, tail to head,
 // that the machine shifts a column at a time (`wireBelt`, `stepBelt` in
 // dust.js). Its cells are what `belt` in the save unpacks into.
-export const band = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+export const band = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, high: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

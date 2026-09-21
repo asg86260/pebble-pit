@@ -1,4 +1,4 @@
-// The bridge: one object, five functions, no events.
+// The bridge: one object, six functions, no events.
 //
 // `window.desk` is the whole of what the page knows about the shell. The save
 // is read and written by slot number (1 to 3; see DESIGN.md, "Save slots"). No
@@ -15,5 +15,8 @@ contextBridge.exposeInMainWorld('desk', {
   write: (slot, raw) => ipcRenderer.invoke('desk:write', slot, raw),
   exportTo: raw => ipcRenderer.invoke('desk:exportTo', raw),
   importFrom: () => ipcRenderer.invoke('desk:importFrom'),
-  version: () => ipcRenderer.sendSync('desk:version')
+  version: () => ipcRenderer.sendSync('desk:version'),
+  // The key the itch app put in the environment, or '' outside it; the board
+  // of times sends it up so the server can ask itch whose it is (times.js).
+  itchKey: () => ipcRenderer.sendSync('desk:itchKey')
 });
