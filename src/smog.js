@@ -93,6 +93,44 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
   markStorm(marked);
 }
 
+// The sky, on the save (persist.js, `SAVERS`): the haze as a number and
+// what it is made of, the rain already falling, and every speck still on its
+// way up. Counts, not motes: the band itself is rebuilt on the way back in.
+export const SAVE = {
+  fields: ['haze', 'poop', 'skyKinds', 'drops', 'puffs'],
+  write(out) {
+    // Rounded: a fraction of a mote is not worth the characters.
+    out.haze = Math.round(S.haze);
+    // What the haze is made of, by kind, or the band rebuilt all as dust
+    // tells the readout nothing but hand work fouled it.
+    out.skyKinds = skyKindCounts();
+    // The drops already falling are the muck the shower was about to leave.
+    out.drops = DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2)]);
+    // Every speck still on its way up, with its climb.
+    out.puffs = SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
+                                             Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]);
+    out.poop = S.poop || [];
+  },
+  read(s) {
+    S.haze = s.haze || 0;
+    S.scrubBank = 0;
+    // The weather in flight comes back with the sky (`raining`, `rainFor`,
+    // `stormFor` are plain saved fields); the bolt is a flash of a few
+    // frames and is not.
+    S.bolt = null;
+    S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
+    // The sky itself, not only the number for it: `settleCount` only ever
+    // takes motes away in play, so a haze read back over an empty band
+    // stays wrong for an hour. Safe here because the world is laid out
+    // before the save is read (main.js), so there is a width to spread it
+    // across.
+    skyFromSave(s.skyKinds, s.drops, s.puffs);
+  },
+  // A new yard's sky is seeded by `reset` itself: the fresh-yard arm of
+  // `restore` runs on a page whose layout has already seeded one.
+  blank() {}
+};
+
 export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
          foul, stirSmoke,

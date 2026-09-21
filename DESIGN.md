@@ -11217,7 +11217,7 @@ nothing new goes on `S`.
   "a pot says who it is for" for the list. `test/wave7-brew.test.mjs` and
   `test/mana-brew.test.mjs` went with the recipes they were about.
 
-## The second pass (design, not built)
+## The second pass (built, seam by seam, 2026-09-15 to 2026-09-20)
 
 The first pass built every system once, under a design that was being found
 as it was built, and it worked: the registries that came out of it -- `STEPS`
@@ -11334,6 +11334,28 @@ dozen owners -- the shield, the machines, the works, the sky, the cut. Each
 moves next to the thing it saves and registers with persist.js, the way a
 job registers with `JOBS`; `persist-roundtrip` keeps the rule that a field
 is in one list. persist.js becomes the loop and the grid codec.
+
+*As built (2026-09-20):* every owner exports a `SAVE` -- `fields` (the
+by-hand names it owns), `write(out)`, `read(s)`, `blank()` -- and
+`SAVERS` in persist.js lists twenty-three of them in the order `restore()`
+read before, with the ordering comments on the list the way `STEPS` carries
+its own. `blob()` is the plain copies, the stamp, then every `write`;
+`restore()` reads the seed, the seat and the rock before the arms part
+(whether the rock reads *is* whether there is a save), then `readSaved`,
+`setPitGrain`, and every `read` in list order; the fresh arm and `reset()`
+call every `blank`. Five savers are persist.js's own because what they
+save has no owner above state.js: the stamp, the chance (rng.js is below
+state.js and cannot see `S`), and the three plots through the codec (the
+floor, the pit's cells, the cut's cells -- the rift and `quarryCells`
+are pit.js's and quarry.js's). `restoreCrew` moved to crew/records.js,
+`payingOwed` to casino.js. persist.js went from 933 lines to 620; the ring
+is unchanged (74/3/3) and no owner imports persist.js. The blob is the
+same data as before, key for key and value for value (41,687 bytes either
+side on the proof yard); only its top-level key order now follows
+`SAVERS`. `test/save-owners.test.mjs` writes a rich yard, reads it back
+and writes it again: byte-equal less the stamp's clock and the four facts
+a load re-derives on purpose (`rngState`, `pouring`, `skyKinds`, an empty
+site's list under `works`), which the base tree re-derived too.
 
 **6. Invalidation is not a thing every line does.** `S.dirty` only gates
 the autosave: it becomes "save on the clock, and skip if the last blob is

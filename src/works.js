@@ -140,6 +140,42 @@ let ROWS = [];
 export const registerRows = list => { ROWS = ROWS.concat(list); };
 export const rowFor = key => ROWS.find(u => u.key === key) || null;
 
+// The works, on the save (persist.js, `SAVERS`): what the yard is partway
+// through building, a list a site, and the order its buildings went up in.
+export const SAVE = {
+  fields: ['works', 'buildOrder'],
+  write(out) {
+    // Worker-seconds rather than a deadline: `now()` starts wherever the
+    // page started, so an absolute time saved in one session means nothing
+    // in the next.
+    out.works = S.works;
+    out.buildOrder = S.buildOrder || [];
+  },
+  read(s) {
+    // Empty is the fixed order. `placeSites` (world.js) drops an
+    // unrecognized key, since it already knows which keys are real places.
+    S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
+    // A list a site. Only rows the board still sells, each under the site
+    // its row says today, so a work whose row has moved sites does not come
+    // back blocking a site that is not there.
+    S.works = {};
+    for (const [site, list] of Object.entries(s.works || {})) {
+      if (!Array.isArray(list)) continue;
+      for (const w of list) {
+        if (!(w && w.key && rowFor(w.key) && w.of > 0)) continue;
+        const home = rowFor(w.key).site || site;
+        if (!SITES.includes(home)) continue;
+        (S.works[home] ||= []).push({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
+                                      of: w.of, at: w.at ?? null });
+      }
+    }
+  },
+  blank() {
+    S.works = {};
+    S.buildOrder = [];
+  }
+};
+
 // --- what a thing takes -------------------------------------------------------
 // One table off the kind of thing a row sells, climbing with the rung the way
 // the price does. Read it as "how long with one pair of hands on it".

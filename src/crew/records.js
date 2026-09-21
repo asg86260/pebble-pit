@@ -2,11 +2,20 @@
 // it feeds a rate; it is so the four on the rock are four people rather than
 // the number four.
 
-import { S } from '../state.js';
+import { S, quarry } from '../state.js';
+import { P, WORKER } from '../config.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { inHouse } from '../scrubhouse.js';
 import { JOB_OF } from '../levels.js';
+import { TYPE } from '../jobs.js';
+import { FACTORY } from './jobs.js';
+import { syncWorkers } from './muster.js';
+import { resite, overCutMouth } from '../world.js';
+import { cutTop } from '../quarry.js';
+import { rebalance } from '../staffing.js';
+import { busyBuilderSites } from '../works.js';
+import { hushNotices } from '../notices.js';
 
 // --- who they are --------------------------------------------------------------
 const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',
@@ -129,6 +138,84 @@ export function wearRecord(w, from) {
   if (!w.at) w.at = {};
   return w;
 }
+
+// The crew, put back. Each body is made by its own factory, so it has every
+// field its job expects whatever has changed since the save, and then handed
+// back the things that are *it* rather than its job.
+function restoreCrew(who, mouth = null) {
+  // Whether the ground under the crew is the ground they were saved on, and
+  // if the cut has moved, by how much: the yard re-walks when a station grows
+  // (DRAWN_W in world.js), and a save carries every body at its old x.
+  const sameGround = mouth != null && mouth === quarry.x;
+  const cutShift = mouth != null && S.quarryOpen ? quarry.x - mouth : 0;
+  S.workers = [];
+  if (!Array.isArray(who)) return;
+  for (const k of who) {
+    if (!k.type) continue;
+    const made = FACTORY(k.type);
+    if (!made.type) continue;                  // a trade this build does not have
+    let rec = k;
+    // A body down in the cut when the cut moved goes with the cut, or it
+    // comes back in solid ground with no working under it (verify.js rule 1).
+    // A body at ground height over the mouth on a layout that moved stands at
+    // the near edge instead; at ground height exactly, because a carter on
+    // the bridge deck is over the mouth too and belongs there. A quarrier at
+    // work stands on the cut's floor under its own x, or it walks the whole
+    // top of the cut and climbs down again on every refresh. None of it on
+    // the same layout: a body over the mouth then is at the head of the
+    // ladder mid-stride, and moving it hops it back on every refresh.
+    if (cutShift && Number.isFinite(rec.x) && Number.isFinite(rec.y)
+        && rec.y + WORKER > S.groundY + 1
+        && rec.x + WORKER > mouth && rec.x < mouth + quarry.w) {
+      rec = { ...rec, x: rec.x + cutShift };
+    }
+    if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
+        && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
+      if (k.type === TYPE.QUARRY && rec.goal === 'work') {
+        rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };
+      } else {
+        const nearSide = rec.x + WORKER / 2 < quarry.x + quarry.w / 2;
+        rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
+      }
+    }
+    S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
+  }
+}
+
+// The crew, on the save (persist.js, `SAVERS`): the crew itself, not just
+// how many of them there are. A body has a name and a record, and rebuilding
+// the yard from four counts would hand you back four strangers standing
+// where your crew was.
+export const SAVE = {
+  fields: ['workers', 'mouth'],
+  write(out) {
+    out.who = S.workers.map(keepOf);
+    // Where the mouth of the cut was under them, so a load can tell a
+    // layout that moved from one that did not (`restoreCrew`).
+    out.mouth = S.quarryOpen ? quarry.x : null;
+  },
+  read(s) {
+    resite();                    // the quarry is as deep and the plot as wide as it was
+    restoreCrew(s.who, Number.isFinite(s.mouth) ? s.mouth : null);
+    // A body written down is a body in the yard: a save can carry the
+    // headcount and the list disagreeing (the fixture in `test/fixtures`
+    // does), and `syncWorkers` stands down anybody the deal has no room
+    // for, so the count gives way to the list. The deal is done again when
+    // it does, because `rebalance` is where `S.haulers` comes from.
+    if (S.workers.length > S.crew) { S.crew = S.workers.length; rebalance(); }
+    syncWorkers();               // and anybody the counts say is missing
+    hushNotices();               // what this save already earned is on the sheet, not in the air
+    // A site with no gang of its own that was busy when the tab shut needs
+    // its builders sent again: only a build starting turns spare hands into
+    // builders, and a reload is not one. Only when there is a busy site,
+    // because a second `rebalance` over a roster whose numbers never quite
+    // add up is a place a body can be lost.
+    if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
+  },
+  // The crew walks out by the counts (`syncWorkers`), which a reset does
+  // itself once every count is nought.
+  blank() { S.crew = 0; }
+};
 
 // Not in the yard: behind a door, up in the balloon, or on the cursor and
 // what follows it (in the air, falling, seeing stars). One list, asked by the

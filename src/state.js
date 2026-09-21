@@ -561,10 +561,13 @@ export const SAVED = [
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
 // clamp against another counter, a job renamed since the save was written.
-// Their code stays in `persist()`. The last six are not fields on `S`: the
-// grids and the sky are module consts, the chance is rng.js's and the craft
-// balloon.js's; they are named so the list reads as everything a save
-// carries that is not a plain copy.
+// Each is written and read by its owner's `SAVE` (the shield's in shield.js,
+// the machines' in machines.js), listed in `SAVERS` in persist.js in the
+// order the yard is read back; every name here is in exactly one saver's
+// `fields` (test/persist-roundtrip.test.mjs). The last six are not fields on
+// `S`: the grids and the sky are module consts, the chance is rng.js's and
+// the craft balloon.js's; they are named so the list reads as everything a
+// save carries that is not a plain copy.
 export const SAVED_BY_HAND = [
   'runSeed',              // the run's name, and the stream it is partway through
   'camX',                 // rounded out, and read back once, into `camWas`

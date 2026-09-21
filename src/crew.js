@@ -27,7 +27,7 @@
 // when anything imports the crew at all.
 import './crew/muster.js';
 
-export { newRecord, KEEPS, keepOf, wearRecord, outOfYard, stepRecords, mainlyAt } from './crew/records.js';
+export { newRecord, KEEPS, keepOf, wearRecord, outOfYard, stepRecords, mainlyAt, SAVE } from './crew/records.js';
 export { stepMachines } from './crew/tenders.js';
 export { workerAt, lift, lifted, drop, shakeHeld } from './crew/pointer.js';
 export { kitFree } from './crew/kitwalk.js';

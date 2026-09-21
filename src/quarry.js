@@ -640,6 +640,21 @@ export function quarryCells() {
   return S.quarryCells;
 }
 
+// The dig, on the save (persist.js, `SAVERS`). The cut's own sand is the
+// codec's (`CUT` in persist.js), read after the ground; it only means
+// anything against these, so the two are written together.
+export const SAVE = {
+  fields: ['quarryCells'],
+  write(out) {
+    out.quarryCells = S.quarryCells ? Array.from(S.quarryCells) : null;
+  },
+  read(s) {
+    // Null is an unbroken floor, which `resetCut` lays fresh rock to match.
+    S.quarryCells = Array.isArray(s.quarryCells) ? s.quarryCells.map(v => +v || 0) : null;
+  },
+  blank() {}
+};
+
 // how deep column c goes when the quarry is finished, in cells
 export function quarryTarget(c) {
   const cells = quarryCells();

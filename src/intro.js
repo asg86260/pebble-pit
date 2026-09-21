@@ -33,7 +33,7 @@ import { stopJig, MOVE_KEYS } from './crew/dance.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
 import { doorAt } from './house.js';
-import { beatDone, beatRunning, ownsYard, markDone } from './beats.js';
+import { beatDone, beatRunning, ownsYard, markDone, startBeat } from './beats.js';
 
 // Where the two of them stand: either side of the spot the rock lands on.
 // The one on the left is the one it lands on.
@@ -42,6 +42,32 @@ const pairX = i => Math.round((S.cx + (i ? INTRO_APART : -INTRO_APART) - WORKER 
 // The opening's six beats, in the order they play; skipping any of them is
 // skipping all of them.
 export const OPENING = ['leave', 'chat', 'fall', 'down', 'up', 'show'];
+
+// The opening and the rescue, on the save (persist.js, `SAVERS`): who is
+// under the rock and whether they are out. Last on the list, because a yard
+// that has not seen the opening through is stood at the door before the
+// first frame is drawn, after everything else is back.
+export const SAVE = {
+  fields: ['buried', 'rescued'],
+  write(out) {
+    out.buried = S.buried;
+    out.rescued = S.rescued;
+  },
+  read(s) {
+    S.camLockY = null;
+    S.pair = [];
+    S.buried = !!s.buried;
+    S.rescued = !!s.rescued;
+    if (S.rescued) S.buried = false;
+    if (!S.beatsDone.includes('show')) startBeat('leave');
+  },
+  blank() {
+    S.rescued = false;
+    // The opening's pair, stood at the door: a new game, and a game never
+    // played, are the same yard.
+    startBeat('leave');
+  }
+};
 
 // The pair's word balloons, and the view, for one frame of any beat the
 // opening has. Every phase's step goes through here first.

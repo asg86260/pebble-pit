@@ -40,7 +40,7 @@ import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, ARM
          CASINO_BURST_AT, CASINO_WIN_MS, CASINO_BURST, CASINO_BURST_GAP_MS, CASINO_BURST_UP, CASINO_BURST_SIDE,
          CASINO_SAY_MS, CASINO_ATTRACT_S, CASINO_FLASH_MS, CASINO_EVEN_BAND,
          CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM, TABLE_LIFE, TABLE_GRAV,
-         P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, ROCK_CELL, someFind, CASINO_BIG,
+         P, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, ROCK_CELL, someFind, findKind, CASINO_BIG,
          SND_PEG_CENTS, SND_BIN_CENTS } from './config.js';
 import { S, casino, table, tray, pit } from './state.js';
 import { noteHand } from './notices.js';
@@ -852,6 +852,90 @@ export function wireTable() {
   tray.repose = true;
   resizeGrid(tray);
 }
+// What the ground is still owed by the casino: the hand being poured out,
+// plus every grain already in the air toward the strip, by kind.
+function payingOwed() {
+  // falling into the tray, standing in it, or on its way out to the hole
+  const kindOf = s => findKind(s) === SHARD_CELL ? 'shard' : findKind(s) === SPORE_CELL ? 'spore' : findKind(s) === SPARK_CELL ? 'spark' : 'dust';
+  const flying = (S.tableAir || []).filter(k => k.lands === 'tray' || k.lands === 'hole');
+  const left = { dust: 0, spore: 0, shard: 0, spark: 0, ...(S.paying ? S.paying.left : {}) };
+  for (const k of flying) left[kindOf(k.s)] += k.worth || 1;
+  // the tray's dust cells are the ledger's pebbles; its coins are themselves
+  let cells = 0;
+  if (tray.grid) for (const v of tray.grid) if (v) { cells++; if (!isDust(v)) left[kindOf(v)]++; }
+  left.dust += S.trayOwed || 0;
+  if (!S.paying && !flying.length && !cells) return null;
+  return { left, grains: (S.paying ? S.paying.grains : 0) + flying.length + cells };
+}
+
+// The casino, on the save (persist.js, `SAVERS`): what is on the table and
+// which plot it stands in, whether its stake is still raining down, and
+// what a paid hand still owes the ground.
+export const SAVE = {
+  fields: ['pot', 'pouring', 'paying'],
+  write(out) {
+    out.pot = S.pot && { ...S.pot };
+    // The sand itself is not saved -- neither plot's grid ever is -- so a
+    // pot comes back pouring into whichever plot it stood in, whatever it
+    // was doing: a hand caught mid-cascade comes back a pot in the hopper
+    // with the let-go open again, the way a wheel mid-spin used to. The bet
+    // that was made is the chip, and the chip is what comes back.
+    out.pouring = !!S.pouring;
+    // A pot you have taken is money, not sand: `bank()` hands it to
+    // `S.paying` and the hole is paid as each flying grain lands, so what is
+    // written is everything that has not landed yet, the worth of the
+    // grains in the air included. `paying` is put down the moment the last
+    // grain leaves the heap, so in that window the arcs alone are owed, in
+    // dust, which is what an arc lands as.
+    out.paying = payingOwed();
+  },
+  read(s) {
+    // A pot left in the funnel is still in it. The sand itself is never
+    // saved, so it comes back pouring in again whatever it was doing -- a
+    // hand caught on the pegs comes back a pot in the hopper with the sign
+    // live again, and a hand caught paying comes back with the unpaid bins'
+    // pebbles in it, the paid ones being on the ground or owed (`paying`).
+    // `owed` is what the purse has still to pay for a stake caught raining
+    // in: spent as the grains land, so what was not yet spent is spent on
+    // the way back in, and a save mid-pour costs nothing twice.
+    S.pot = s.pot && s.pot.cur
+      ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, owed: +s.pot.owed || 0,
+          where: s.pot.where === 'tray' ? 'tray' : 'hopper' }
+      : null;
+    clearCasino();                // every plot starts empty; the pot pours again
+    S.tableAir = [];
+    S.drop = null;                // a hand on the pegs, a hoist, a demonstration: none has a beginning to come back to
+
+    S.attract = null;
+    // A pay caught in the air comes back still owed to you: what had left
+    // the bins and not landed is written as `paying`, and `payOutStep`
+    // throws it out of the hatch again, so a refresh is never a way to skip
+    // the walk or to lose the pay. The grain count is only how many throws
+    // the pebbles are split across, so a payout with nothing left in it is
+    // no payout.
+    // (an older save's `left` was one number of dust; the pour's is a count
+    // a kind)
+    const left = s.paying && s.paying.left;
+    const kinds = left && typeof left === 'object'
+      ? { dust: Math.round(+left.dust) || 0, spore: Math.round(+left.spore) || 0, shard: Math.round(+left.shard) || 0, spark: Math.round(+left.spark) || 0 }
+      : { dust: Math.round(+left) || 0, spore: 0, shard: 0, spark: 0 };
+    S.paying = s.paying && Object.values(kinds).some(n => n >= 1)
+      ? { left: kinds, grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
+      : null;
+    // A bet made is a bet made: a pot comes back pouring into its plot,
+    // whether it was still arriving or already standing there, because the
+    // sand it stood as was not saved.
+    S.pouring = S.casinoOpen && !!S.pot;
+    S.hand = null;                // a hand that settled before you closed the tab is old news
+  },
+  blank() {
+    S.pot = null;
+    S.paying = null;
+    S.pouring = false;
+    clearCasino();                   // the hopper stands empty
+  }
+};
+
 // The sand itself is never saved: a reset or a reload starts the building
 // empty, and a pot comes back pouring into whichever plot it stood in.
 export function clearCasino() {

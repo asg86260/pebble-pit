@@ -5,7 +5,7 @@
 // bill: `dropZone` has walked the crew clear, and the wreck mines back as
 // dust.
 import { S } from './state.js';
-import { P, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
+import { P, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
 import { spawnSpoil } from './dust.js';
@@ -255,6 +255,63 @@ function answer(s, kind) {
   // Stone stops the rock dead, and then the crack runs.
   if (now() - s.caught >= kind.holds) breakShield();
 }
+
+// The shield, on the save (persist.js, `SAVERS`): the standing one field by
+// field (the live one carries more than a save should), the set that have
+// answered, and the catch taken again once the rock's fall has been read.
+export const SAVE = {
+  fields: ['shield', 'shieldsDone'],
+  write(out) {
+    out.shield = S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
+                               h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                               // So a re-caught rock picks up where the rope was.
+                               strain: S.shield.strain || 0, sag: S.shield.sag || 0,
+                               caughtAgo: S.shield.caught ? Math.max(0, Math.round(now() - S.shield.caught)) : null };
+    out.shieldsDone = [...S.shieldsDone];
+  },
+  read(s) {
+    // The catch is taken again below, once the rock's fall has been read.
+    S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
+                            h: s.shield.h, rise: s.shield.rise || 0,
+                            laid: s.shield.laid || 0, caught: 0, held: 0,
+                            strain: 0, sag: 0,
+                            setting: false, poured: 0, fading: 0 } : null;
+    // What is woven is the fact; the wizard-seconds behind it are worked
+    // back out of it.
+    if (S.shield && KINDS[S.shield.kind].cast) {
+      const k = KINDS[S.shield.kind];
+      S.shield.poured = (S.shield.laid / k.pieces) * k.work;
+    }
+    S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
+    S.rockHeld = false;
+    // A rock that was in the shield's hands is in them still, or it falls
+    // the rest of the way on its own, lands inside the net without the net
+    // giving up, and `shieldsDone` never gets the word. Only a finished
+    // shield of a kind that catches; the rock goes through anything else
+    // anyway.
+    if (S.shield && S.rockFall > 0) {
+      const k = KINDS[S.shield.kind];
+      if (S.shield.laid >= k.pieces && k.answer !== 'through' && s.shield.caughtAgo != null && Number.isFinite(+s.shield.caughtAgo)) {
+        // `held` is the catch height (where a falling rock's foot meets the
+        // shield's top, as in `stepShield`), not where the rock is now, or
+        // every refresh would have the rope start straining from nothing. A
+        // rock above it is one the dome sprang back up.
+        S.shield.caught = now() - (+s.shield.caughtAgo || 0);
+        S.shield.held = (S.shield.h + 1) * P + ROCK_SINK;
+        S.shield.strain = +s.shield.strain || 0;
+        S.shield.sag = +s.shield.sag || 0;
+        if (k.answer === 'hold' && S.rockFall > S.shield.held) S.shield.rising = true;
+        else S.rockFallV = 0;
+        S.rockHeld = true;
+      }
+    }
+  },
+  blank() {
+    S.shield = null;
+    S.shieldsDone = [];
+    S.rockHeld = false;
+  }
+};
 
 // One frame of a shield's life. The answer happens where the picture says it
 // does: in the air, when the rock's foot reaches the top.

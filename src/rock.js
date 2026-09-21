@@ -16,7 +16,7 @@ import { noteBite } from './notices.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
-import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX } from './world.js';
+import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX, settleShack } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { beatRunning } from './beats.js';
 import { critRoll } from './crit.js';
@@ -449,6 +449,46 @@ export function clearBoulder() {
   S.boulder = S.boulder.map(row => row.map(() => 0));
   refreshRockTops();
 }
+
+// The rock, on the save (persist.js, `SAVERS`). Read before the yard knows
+// whether it has a save, because whether the rock reads *is* whether there
+// is one: `read` answers that, and a no is the fresh yard.
+export const SAVE = {
+  fields: ['boulder', 'gw', 'gh', 'boulderNo', 'nextBoulderAt', 'rockSand'],
+  write(out) {
+    out.boulder = gridToString();
+    out.gw = S.gw;
+    out.gh = S.gh;
+    out.boulderNo = S.boulderNo;
+    // A moment on the clock is written as a distance, because the clock
+    // starts again with the page.
+    out.nextBoulderIn = Math.max(0, Math.round(S.nextBoulderAt - now()));
+    // Column by column, bottom grain first.
+    out.rockSand = (S.rockSand || []).map(a => (a || []).join(','));
+  },
+  read(s) {
+    // The number and what is lying on the rock come first: a save whose rock
+    // will not read still keeps its number for the fresh yard to build.
+    S.boulderNo = s?.boulderNo || 1;
+    S.nextBoulderAt = Number.isFinite(s?.nextBoulderIn) && s.nextBoulderIn > 0 ? now() + s.nextBoulderIn : 0;
+    S.rockSand = Array.isArray(s?.rockSand)
+      ? s.rockSand.map(a => String(a || '').split(',').filter(Boolean).map(Number))
+      : null;
+    if (!s || !gridFromString(s.boulder, s.gw, s.gh)) return false;
+    // The hut where this save's rock puts it: the yard was laid out with
+    // the hut off rock one, and a bigger rock would have it inside the
+    // boulder.
+    settleShack();
+    return true;
+  },
+  blank() {
+    // Nothing lying on the last rock, or `makeBoulder` tips it onto the heap.
+    S.rockSand = null;
+    makeBoulder();
+    settleShack();                   // beside rock one, not sliding in from where it stood
+    clearBoulder();
+  }
+};
 
 // The rock is there *and on the ground*. One question for your own hand
 // (`overBoulder`) and the ram's `ready`: `boulderAlive` alone is true the

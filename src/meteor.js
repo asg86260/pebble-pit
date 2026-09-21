@@ -145,6 +145,31 @@ export function makeMeteor() {
   }
 }
 
+// The star, on the save (persist.js, `SAVERS`): what is left of it is a
+// rock half taken apart. The hat on the go is not saved: a spell mid-cast
+// has no beginning, so the tower starts it again.
+export const SAVE = {
+  fields: ['meteorCells', 'summon'],
+  write(out) {
+    out.meteorCells = sky.cells ? Array.from(sky.cells) : null;
+    out.summon = +(S.summon || 0).toFixed(3);
+  },
+  read(s) {
+    if (!S.meteorOpen) return;
+    makeMeteor();
+    // The cells as they were left, if the save is of this shape of sky.
+    if (Array.isArray(s.meteorCells) && s.meteorCells.length === sky.cells.length) {
+      sky.cells.set(s.meteorCells);
+      sky.n = sky.cells.reduce((n, v) => n + (v ? 1 : 0), 0);
+    }
+    S.summon = Math.max(0, Math.min(1, s.summon || 0));
+  },
+  blank() {
+    sky.cells = null;
+    sky.n = 0;
+  }
+};
+
 // The cell a wizard takes next: the furthest out from the middle, and of those
 // the nearest to the body. Furthest out first is what makes it a rind and a
 // core rather than a shaft bored straight to the red. `taken` is the cells

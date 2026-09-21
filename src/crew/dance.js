@@ -88,6 +88,20 @@ function startMove(w, at, key) {
 const danceEnd = now =>
   S.rockFall > 0 ? now + fallMs() : S.danceUntil;
 
+// The end of the dance, on the save (persist.js, `SAVERS`): a moment on the
+// clock is written as a distance, because the clock starts again with the
+// page.
+export const SAVE = {
+  fields: ['danceUntil'],
+  write(out) {
+    out.danceLeft = Math.max(0, Math.round(S.danceUntil - now()));
+  },
+  read(s) {
+    S.danceUntil = Number.isFinite(s.danceLeft) && s.danceLeft > 0 ? now() + s.danceLeft : 0;
+  },
+  blank() {}
+};
+
 // On the bridge over the cut, which is a way, not the yard: a body stopped on
 // the ramp dances on a slope and the stride back to work reads as a drop, so
 // it comes down before it joins in. ON it, not under it: the span alone puts

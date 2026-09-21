@@ -64,6 +64,24 @@ export function plantPlots() {
   if (S.plotTone.length > n) S.plotTone.length = n;
 }
 
+// The plots, on the save (persist.js, `SAVERS`): how far along each is, as
+// hundredths, and the spore standing ripe on it.
+export const SAVE = {
+  fields: ['plots', 'plotTone'],
+  write(out) {
+    out.plots = S.plots.map(b => Math.round(b * 100));
+    out.plotTone = [...S.plotTone];
+  },
+  read(s) {
+    if (Array.isArray(s.plots)) S.plots = s.plots.map(b => (+b || 0) / 100);
+    if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
+  },
+  blank() {
+    S.plots = [];
+    S.plotTone = [];
+  }
+};
+
 export function newFarmhand() {
   plantPlots();
   return {

@@ -634,6 +634,39 @@ export function seedPitCores() {
   }
 }
 
+// The rift, on the save (persist.js, `SAVERS`): the one part of the pile
+// that is not in the pile. `stored` counts it, the hole does not hold it.
+// The pile itself is the codec's (`PIT` in persist.js), read just before
+// this, because how much belongs in the hole depends on how much is already
+// through.
+export const SAVE = {
+  fields: ['rift', 'riftHeld'],
+  write(out) {
+    out.rift = S.rift;
+    out.riftHeld = S.riftHeld;
+  },
+  read(s) {
+    // Clamped to the counter: a rift holding more than you own leaves
+    // `inHole` reading nought against a pile that plainly has dust in it.
+    S.riftGulp = 0; S.riftShake = 0;     // a save comes back after the tearing, never in it
+    S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
+    // The coins through it, clamped to their own counters the same way.
+    S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+    for (const k of ['cores', 'shards', 'spores', 'sparks'])
+      S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
+    rehomeDust();
+    seedPitCores();
+  },
+  blank() {
+    // A new yard has no hole in the air in it, and nothing standing on the
+    // other side of one. An event is not a state (state.js).
+    S.riftGulp = 0; S.riftShake = 0;
+    S.rift = 0;
+    S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+    setPitGrain();
+  }
+};
+
 // Lift cells of one kind out of the pile, topmost first, and say how many
 // were there. What it could not find is through the rift, and `take` in
 // upgrades.js pays the rest out of there.

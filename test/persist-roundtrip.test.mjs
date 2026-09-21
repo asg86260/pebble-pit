@@ -9,13 +9,15 @@
 //
 // It leans on the three lists in state.js. `SAVED` is the plain part, written
 // and read by one loop in persist.js; `SAVED_BY_HAND` is the part whose encode
-// or decode is more than a copy; `EPHEMERAL` is what is deliberately thrown
+// or decode is more than a copy, each name written and read by its owner's
+// `SAVE` (`SAVERS` in persist.js); `EPHEMERAL` is what is deliberately thrown
 // away. A field in none of them fails the last group here, which is the whole
 // point of the lists: adding one and not thinking about it is a red test rather
 // than lost player data.
 
 import { group, ok, yard } from './helpers.mjs';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL } from '../src/state.js';
+import { SAVERS } from '../src/persist.js';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -143,6 +145,22 @@ group('every field on S is accounted for', async () => {
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })
+  ];
+});
+
+// A by-hand name is written and read by its owner's `SAVE`, listed in
+// `SAVERS` (persist.js). The list in state.js is the declaration; this is
+// the rule that every declared name has exactly one owner, and that no saver
+// claims a name the declaration does not have.
+group('every by-hand field has exactly one saver', async () => {
+  const claimed = SAVERS.flatMap(o => o.fields);
+  const twice = claimed.filter((k, i) => claimed.indexOf(k) !== i);
+  const unowned = SAVED_BY_HAND.filter(k => !claimed.includes(k));
+  const undeclared = claimed.filter(k => !SAVED_BY_HAND.includes(k));
+  return [
+    ok(unowned.length === 0, 'every name on SAVED_BY_HAND is in one saver\'s fields', unowned.join(', ')),
+    ok(twice.length === 0, 'and no two savers claim a name', twice.join(', ')),
+    ok(undeclared.length === 0, 'and no saver claims a name state.js does not declare', undeclared.join(', '))
   ];
 });
 

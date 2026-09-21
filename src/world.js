@@ -634,6 +634,25 @@ export const openingCamX = () => {
   return rockFar - withBench <= S.viewW ? withBench : S.cx - S.viewW * OPENING_ROCK_AT;
 };
 
+// The seat, on the save (persist.js, `SAVERS`). Read before the yard knows
+// whether it has a save, into `camWas`, which the page's boot seats the view
+// from (`bootYard`) and nothing else reads.
+export const SAVE = {
+  fields: ['camX'],
+  write(out) {
+    // Where the view is, rounded. While a scene has the view pulled in,
+    // `camX` is the left edge of a narrower view than the one that comes
+    // back, so the seat is written at the yard's own zoom.
+    out.camX = Math.round(S.shot ? S.camX + S.viewW / 2 - S.W * P / CELL / 2 : S.camX);
+  },
+  read(s) {
+    S.camWas = Number.isFinite(s?.camX) ? s.camX : null;
+  },
+  // The seat is whoever called's to settle: a reset leaves the view where it
+  // stood.
+  blank() {}
+};
+
 // --- the scroller ---------------------------------------------------------------
 // On a page the platform holds the camera's x (DESIGN.md, "Momentum
 // scrolling"): the canvas sits stuck inside a horizontal scroller with a

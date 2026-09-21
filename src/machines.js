@@ -14,6 +14,7 @@
 import { S } from './state.js';
 import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from './config.js';
 import { JOB } from './jobs.js';
+import { now } from './clock.js';
 
 // The job is the link to everything else: what `capOf` answers about, what
 // `handsOf` reads, and what `restaff` puts back.
@@ -76,6 +77,43 @@ export const freshMachines = () => Object.fromEntries(MACHINES.map(m => [m.key, 
 export const machine = key => {
   if (!S.machines) S.machines = freshMachines();
   return S.machines[key] || null;
+};
+
+// The machines, on the save (persist.js, `SAVERS`): facts only. Whether one
+// is *running* is whether anybody is standing at it, and the crew is rebuilt
+// from the counts on the way in.
+export const SAVE = {
+  fields: ['machines'],
+  write(out) {
+    out.machines = Object.fromEntries(MACHINES.map(m => {
+      const r = (S.machines && S.machines[m.key]) || {};
+      return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit,
+                       tune: r.tune || 0,
+                       // Its clock, as distances, or a refresh hands every
+                       // machine a free unit.
+                       beatIn: r.beatAt ? Math.max(0, Math.round(r.beatAt - now())) : null,
+                       workedAgo: r.workedAt ? Math.max(0, Math.round(now() - r.workedAt)) : null }];
+    }));
+  },
+  read(s) {
+    S.machines = freshMachines();
+    for (const m of MACHINES) {
+      const r = (s.machines && s.machines[m.key]) || {};
+      const rec = S.machines[m.key];
+      rec.bought = !!r.bought;
+      // A machine is worked by whoever is standing at it, so only the fact
+      // of the lever is read.
+      rec.driven = !!r.driven;
+      rec.tune = Math.max(0, Math.round(+r.tune || 0));
+      // A machine that does not take kit never took any, whatever the save
+      // says: a stale `true` has `stripKit` empty the stand every frame
+      // under a row still selling carts.
+      rec.tookKit = rec.bought && kitDisplaced(m.job) && !!r.tookKit;
+      if (Number.isFinite(r.beatIn)) rec.beatAt = now() + r.beatIn;
+      if (Number.isFinite(r.workedAgo)) rec.workedAt = now() - r.workedAgo;
+    }
+  },
+  blank() { S.machines = freshMachines(); }   // a new yard has no machines in it
 };
 
 // The machine standing in for a job, if there is one. About *bought* rather

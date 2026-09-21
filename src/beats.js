@@ -27,6 +27,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release } from './cutscene.js';
 import { shieldUp, KINDS } from './shield.js';
+import { setZoom, clampCam } from './world.js';
 
 const OWNERS = ['yard', 'camera', 'sheet'];
 
@@ -118,6 +119,50 @@ export function markDone(...keys) {
     for (const o of OWNERS) if (S.beat[o] === key) S.beat[o] = null;
   }
 }
+
+// The beats, on the save (persist.js, `SAVERS`). Only the camera's beat is
+// written, and only until it has been seen through; the yard's beats come
+// back by their own triggers (the opening from the door, the rescue from the
+// dome's next hold) and the sheet by its fact. `beatsDone` is a plain saved
+// field; `read` only takes back what a save mid-chain must play again.
+export const SAVE = {
+  fields: ['beat'],
+  write(out) {
+    // A scene on its way out has let go as far as the player is concerned.
+    out.beat = { camera: S.beat.camera && !(S.shot && S.shot.out) ? S.beat.camera : null };
+  },
+  read(s) {
+    // A chain of beats (the opening, the reunion) is one story: a save taken
+    // partway through it does not write the yard's beat down, so the beats
+    // it had played come off the set and the story starts over from its
+    // first.
+    const done = new Set(S.beatsDone);
+    for (const row of BEATS) {
+      let end = row;
+      while (end.next) end = BEATS.find(r => r.key === end.next);
+      if (end !== row && !done.has(end.key)) done.delete(row.key);
+    }
+    S.beatsDone = [...done];
+    // A scene the last sitting closed the tab on is the running camera beat,
+    // played once over the event as it now stands.
+    const owed = typeof s.beat?.camera === 'string' ? s.beat.camera : null;
+    const camera = BEATS.find(r => r.key === owed && r.owns === 'camera' && !done.has(owed));
+    S.beat = { yard: null, camera: camera ? camera.key : null, sheet: null };
+    // A shot of some other scene is the old yard's; the same scene, still
+    // standing in this process, carries on rather than starting over. The
+    // view's center is kept across the zoom going back, the way the scene's
+    // own way out keeps it: a seat let go by its left edge slides off the
+    // thing it was looking at by half the width it gained.
+    if (S.shot && S.shot.name !== S.beat.camera) {
+      const center = S.camX + S.viewW / 2;
+      S.shot = null;
+      setZoom(1);
+      S.camX = center - S.viewW / 2;
+      clampCam();
+    }
+  },
+  blank() {}
+};
 
 // Every beat a chain of `next`s reaches from this one, itself first. A skip
 // finishes the whole chain: the one thing a skipped opening owes is the yard

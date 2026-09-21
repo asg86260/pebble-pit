@@ -98,6 +98,25 @@ export function rebalance() {
   S.haulers = Math.max(0, spareHands() - S.builders);
 }
 
+// The deal, on the save (persist.js, `SAVERS`). `read` is where the load's
+// `rebalance` happens: after the machines, because a restored machine
+// changes what its station's cap *is*, and before the crew is stood.
+export const SAVE = {
+  fields: ['haulers', 'lent'],
+  write(out) {
+    // Worked out again on the way in; written for a save arriving as a bug
+    // report.
+    out.haulers = S.haulers;
+    out.lent = S.lent || [];
+  },
+  read(s) {
+    rebalance();
+    // Only jobs this build still has.
+    S.lent = Array.isArray(s.lent) ? s.lent.filter(j => JOBS.includes(j)) : [];
+  },
+  blank() { S.haulers = 0; }
+};
+
 // The station body nearest any site that wants one and not already lent.
 function nearestLendable(sites) {
   const xs = sites.map(siteX).filter(x => x != null);

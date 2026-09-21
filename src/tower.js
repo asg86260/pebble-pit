@@ -50,6 +50,15 @@ export function hatMade() {
   syncWorkers();
 }
 
+// The wizards, on the save (persist.js, `SAVERS`): never more bodies up
+// there than there are hats.
+export const SAVE = {
+  fields: ['wizards'],
+  write(out) { out.wizards = S.wizards; },
+  read(s) { S.wizards = Math.min(s.wizards || 0, S.wizardHats); },
+  blank() {}
+};
+
 // Whether an enchantment has been laid on the yard.
 export const spelled = key => (S.spells || []).includes(key);
 

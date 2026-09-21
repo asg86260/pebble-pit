@@ -287,4 +287,12 @@ export function craftLoad(list) {
 
 export const clearCraft = () => { CRAFT.length = 0; };
 
+// The craft, on the save (persist.js, `SAVERS`).
+export const SAVE = {
+  fields: ['craft'],
+  write(out) { out.craft = craftSave(); },
+  read(s) { craftLoad(s.craft); },
+  blank() { clearCraft(); }
+};
+
 export { BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H };

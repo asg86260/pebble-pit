@@ -34,6 +34,30 @@ export function dropCore() {
   S.coreItem = { x: h.x, y: h.y, vx: v.vx, vy: v.vy, rest: false };
 }
 
+// A core loose in the world, on the save (persist.js, `SAVERS`).
+export const SAVE = {
+  fields: ['coreItem'],
+  write(out) {
+    // A core on the cursor is written where the cursor was.
+    out.core = S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y }
+             : S.heldCore && S.mouse ? { x: S.mouse.x - CORE_SIZE / 2, y: S.groundY - CORE_SIZE } : null;
+    out.coreLoose = S.heldCore || !!S.coreItem;
+  },
+  read(s) {
+    // `coreTaker` is a body, and the bodies are about to be built again: a
+    // claim left pointing at a body no longer in the yard leaves the core
+    // lying there for good (`haulerWork` defers to the taker). A restore in
+    // a running page has to say so.
+    S.coreTaker = null;
+    if (s.coreLoose) {
+      S.coreItem = s.core
+        ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
+        : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
+    }
+  },
+  blank() { S.coreItem = null; }
+};
+
 // A core into the hole, if the hole will have it. It takes a grain of room
 // like everything else, so a full pit turns one away; false means the core is
 // still out there and still yours, lying where it is until a dig makes room.

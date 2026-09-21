@@ -46,7 +46,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `input.js` | events to calls, and nothing else | yes |
 | `skip.js` | the space bar, held, ending whichever scene has the yard; `skiphint.js` is the hint under it, in the shell | yes |
 | `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
-| `persist.js` | reading and writing the game; plain fields come off `SAVED` in state.js in one loop, hand-encoded ones stay here; `restore()` reads today's shape only, after `migrate` | a field in no list is a red test |
+| `persist.js` | reading and writing the game: the loop over `SAVERS` and the codec for the three plots; plain fields come off `SAVED` in state.js in one loop, every by-hand field is written and read by its owner's `SAVE`; `restore()` reads today's shape only, after `migrate` | a field in no list is a red test; the **order** of `SAVERS` is the load |
 | `migrations/` | every change to the save's shape since the save floor, one dated file a migration, run in order over the raw blob by `migrate` (`index.js`) before `restore()` reads it; keyed on `saveV` (`config/saves.js`); archiving one is deleting the file (docs/saves.md) | with a shape change; never edited after |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
 | `title.js` | the landing page (`index.html`): the menu column over `play.html?demo` in a frame; reads the store, never boots a yard | rarely |
@@ -135,7 +135,7 @@ can see.
    `site({ key, ... })` in `upgrades/site.js` -- no `show` of its own; the
    gate is the row in 3
 6. a `draw` in `render.js`, in painting order, and a step in `main.js`
-7. its fields in `persist.js` — nothing warns you if you forget
+7. its `SAVE` (`fields`, `write`, `read`, `blank`), one line in `SAVERS` in `persist.js` — a by-hand name with no saver is a red test
 8. checks in `selftest/`, in the file for the subject, and a line in
    `test/shop-rows.mjs` for the door
 
@@ -164,10 +164,11 @@ rather than drawn a grain at a time. Moving a line in that list is a visual
 change, not a tidy-up; a new feature adds its entry at the right depth.
 
 **Every new field on `S` goes in one of state.js's three lists** — `SAVED`
-(a plain copy), `SAVED_BY_HAND` (its code in `persist.js`), or `EPHEMERAL`
-(thrown away on purpose). `test/persist-roundtrip.test.mjs` goes red for a
-field in none of them, and for a by-hand name `persist()` never writes, which
-is the warning persist.js used to owe you.
+(a plain copy), `SAVED_BY_HAND` (written and read by its owner's `SAVE`,
+listed in `SAVERS` in `persist.js`), or `EPHEMERAL` (thrown away on
+purpose). `test/persist-roundtrip.test.mjs` goes red for a field in none of
+them, for a by-hand name no saver claims (or two claim), and for one
+`persist()` never writes, which is the warning persist.js used to owe you.
 
 **Every new row on any board gets a line in `test/shop-rows.mjs`** — how a
 player reaches it. The two `shop-coverage-*.test.mjs` files walk the table:

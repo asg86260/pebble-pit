@@ -94,7 +94,7 @@ Shots the calls were made against: `shots/phone/yard.png`,
 `shots/phone/bench.png`, `shots/phone/quarryboard.png`. The cutscene
 framing at a phone's width was a fix and is in CHANGELOG.md
 (`test/phone-view.test.mjs`).
-## The second pass -- DESIGNED (2026-09-15), not built
+## The second pass -- BUILT (2026-09-15 to 2026-09-20), every seam
 
 "The second pass" at the end of DESIGN.md: a measured survey of the tree
 (49% comment lines, a 72-module import cycle pivoting on `upgrades.js`, 42
@@ -126,6 +126,17 @@ to add and archive one. Left: `scholars` stays on `S` at nought because
 staffing.js's `JOBS` still lists the lab's job (the lab building itself, its
 rect and `TO_LAB`, is still the dead-code item above); the thirteen
 `<place>Open` booleans are seam 4's. Red on main at d679e7a, not from this seam: `test/machines.test.mjs` "smoke rises and goes out" (a working jaw puts 0 motes in the air) -- came in with the belt-ladder/stake-heaps landing.
+
+Seam 5, saving beside the owner, is BUILT (2026-09-20), the last: every
+owner exports a `SAVE` (`fields`, `write`, `read`, `blank`), `SAVERS` in
+persist.js is the load's order with its ordering comments on the list, and
+persist.js (933 lines to 620) is the loop, the stamp, the chance and the
+three plots' codec. The blob is the same data key for key; its top-level
+key order follows `SAVERS` now. `test/save-owners.test.mjs`. Found and
+left: a round trip re-derives four facts on purpose (`rngState`, `pouring`,
+`skyKinds`, an empty site's list under `works`), on the base tree as here,
+so the check names them rather than asserting the blob byte for byte.
+With this the second pass is closed; nothing of it is open.
 
 Seam 6, invalidation off the clock, is BUILT (2026-09-16): `S.dirty` and
 its 252 lines are gone, the save writes on its one-second clock, and the

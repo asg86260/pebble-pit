@@ -184,6 +184,31 @@ export function fillBelt(grains) {
   }
 }
 
+// The belt and the air, on the save (persist.js, `SAVERS`).
+export const SAVE = {
+  fields: ['belt', 'chips'],
+  write(out) {
+    // Position and shade, on the band and on the scoop alike; the band's
+    // height is the world's to answer on the way back in.
+    out.belt = beltGrains();
+    // Every grain in the air: a refresh destroying what was up is the one
+    // thing the yard promises it never does.
+    out.chips = (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]);
+  },
+  read(s) {
+    S.chips = Array.isArray(s.chips)
+      ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
+          .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
+      : [];
+    // Every grain back into the strip at its own column, so it lies as it
+    // did (`fillBelt`); the strip is emptied first, since the save is the
+    // whole of the load.
+    emptyBelt();
+    fillBelt(Array.isArray(s.belt) ? s.belt.filter(b => Array.isArray(b) && Number.isFinite(b[0])) : []);
+  },
+  blank() { emptyBelt(); }
+};
+
 // The lift: on the scoop from this moment, climbing to the band.
 export function loadBelt(x, y, shade) {
   S.belt.push({ x, y, s: shade });
