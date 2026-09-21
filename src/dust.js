@@ -8,7 +8,7 @@ import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit, band } from './state.js';
 import { defineMachine, machine } from './machines.js';
-import { at, put, colOf, bottomY, addGrain, settle, surfaceY, grainsIn, recount, resizeGrid, fillFlat } from './grid.js';
+import { at, put, colOf, bottomY, addGrain, settle, topRow, grainsIn, recount, resizeGrid, fillFlat, REPOSE_DROP } from './grid.js';
 import { scoopMs, haulCap } from './levels.js';
 
 import { rand } from './rng.js';
@@ -138,13 +138,70 @@ export const bandY = () => beltY() - P;       // the band's top row: where a loa
 // grains, packed flat.
 export function wireBelt() {
   if (!band.painter) band.painter = makePainter(band);
-  band.onPut = band.painter.mark;
+  band.onPut = (c, r) => { band.painter.mark(c, r); markHigh(c, r); };
   band.x = beltFrom();
   band.cols = Math.max(1, Math.round((beltTo() - beltFrom()) / P));
   band.rows = Math.max(1, Math.floor(bandY() / P) + 1);
   band.y = bandY() - (band.rows - 1) * P;
   band.repose = true;                      // a heap on the band stands up, as on the ground
+  band.high = new Uint16Array(band.cols);  // before the cells: `resizeGrid` writes through `put`
   resizeGrid(band);
+  measureHigh();
+}
+
+// --- how deep each column stands -------------------------------------------------
+// `band.high` is the row above the top grain of each column, kept beside the
+// cells: the strip runs to the top of the world, so reading a column's top
+// off the cells is a walk down three hundred empty rows, and the landing
+// asks for it three times a column it walks (`restOn`) for every grain that
+// comes down, every frame. Kept the way `n` is: every write through `put`
+// tells `onPut`, and a write behind its back (the shift in `stepBelt`, a
+// resize) measures it again.
+const highOf = c => band.high[c];
+function markHigh(c, r) {
+  if (at(band, c, r)) { if (r >= band.high[c]) band.high[c] = r + 1; return; }
+  if (r + 1 !== band.high[c]) return;      // a cell under the top: the top is where it was
+  let t = r; while (t > 0 && !at(band, c, t - 1)) t--;
+  band.high[c] = t;
+}
+function measureHigh() {
+  for (let c = 0; c < band.cols; c++) band.high[c] = topRow(band, c) + 1;
+}
+// The world y of the top of a column, as a line: where a grain coming down
+// it lands.
+const highY = c => bottomY(band) - (highOf(c) + 1) * P;
+
+// Where a grain coming down on column `c` of the load comes to rest: there,
+// or -- when standing there would put the column more than a drop over the
+// one beside it, so it would only slide off -- down the face, to the first
+// column it would rest on. What `settle` does over frames, a cell a pass,
+// done at once, because a tuned ram lands a dozen grains a frame on the one
+// column whose crest meets its arc, and a column sheds one a pass. The
+// ground's heaps have their ceiling (`bankCeiling`) to spread a landing;
+// the band's load has none.
+//
+// Past either end of the strip is a drop, so the load rises away from the
+// tail at the slope it rests at, as a heap on the ground rises from the end
+// of its strip. To `settle` the tail is a wall, and a load fed at it (the
+// scoop bites from the tail forward) would lean on it as a cliff for every
+// cell the band runs to expose. A grain that rolls off an end is off the
+// strip: -1, and it falls.
+function restOn(c) {
+  const EDGE = 0;                          // how deep the ground past an end stands: not at all
+  while (c >= 0 && c < band.cols) {
+    const left = c > 0 ? highOf(c - 1) : EDGE;
+    const right = c + 1 < band.cols ? highOf(c + 1) : EDGE;
+    if (highOf(c) + 1 - Math.min(left, right) <= REPOSE_DROP) return c;
+    c += left < right ? -1 : 1;
+  }
+  return -1;
+}
+
+// A grain on to the load at x, where it would come to rest. False when it
+// rolled off an end of the strip, or found no cell: it is not on the band.
+function landOn(x, shade) {
+  const c = restOn(Math.max(0, Math.min(band.cols - 1, colOf(band, x))));
+  return c >= 0 && addGrain(band, band.x + c * P, null, shade);
 }
 
 // How much is on the machine: on the band and on the scoop.
@@ -171,7 +228,7 @@ export function beltGrains(limit = Infinity) {
 export function emptyBelt() {
   S.belt = [];
   S.beltRun = 0;
-  if (band.grid) fillFlat(band, 0);
+  if (band.grid) { fillFlat(band, 0); measureHigh(); }
 }
 
 // A save's grains, `[x, shade]`, back onto the machine: into the strip at
@@ -251,8 +308,8 @@ export function catchBelt(ch, now, f) {
   const reg = floor.region ? floor.region(c) : null;
   if (reg !== null && reg !== 'rock') return false;
   const bc = Math.max(0, Math.min(band.cols - 1, colOf(band, ch.x)));
-  if (ch.y < surfaceY(band, bc)) return false;        // still above what is riding there
-  if (!addGrain(band, ch.x, null, ch.s)) return false; // nowhere on the strip at all: it falls on through
+  if (ch.y < highY(bc)) return false;                 // still above what is riding there
+  if (!landOn(ch.x, ch.s)) return false;              // nowhere on the strip at all: it falls on through
   sfx('belt-catch', { x: ch.x });
   return true;
 }
@@ -269,7 +326,7 @@ export function stepBelt(now, f) {
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
     const c = Math.max(0, Math.min(band.cols - 1, colOf(band, b.x)));
-    const d = surfaceY(band, c) - b.y;
+    const d = highY(c) - b.y;
     if (Math.abs(d) > BELT_LIFT * f) {
       // Still on the scoop. It creeps forward while it climbs, so the lift
       // reads as a machine taking it up rather than a grain levitating.
@@ -278,7 +335,9 @@ export function stepBelt(now, f) {
       continue;
     }
     S.belt.splice(i, 1);
-    addGrain(band, b.x, null, b.s);
+    // Off the scoop and on to the load; one that rolls off the tail end of
+    // it falls to the ground under the tail, for the scoop to take again.
+    if (!landOn(b.x, b.s)) spawnChip(b.x, b.y, -BELT_PACE * 0.35, 0, b.s);
   }
   // The band never stops for the hole: a band held on a full count stood for
   // good when the count was ahead of the pile, because the load that would
@@ -301,10 +360,22 @@ export function stepBelt(now, f) {
       band.grid[row] = 0;
     }
     recount(band);                        // written behind `put`'s back
+    band.high.copyWithin(1, 0, last); band.high[0] = 0;
     band.painter.repaint();
   }
-  // And it lies the way ground does.
-  settle(band);
+}
+
+// And the load lies the way ground does -- and lies *still* by the end of
+// the frame: a slide leaves the column it left a cell lower, so a pass a
+// frame, as the floor gets, ends the frame with a step beside every slide.
+// A pass answers through the awake columns, so a load at rest costs one
+// empty look, and what lands is put at rest (`restOn`), so this is a few
+// passes; the strip's height bounds it. After the chips have landed
+// (game.js, `STEPS`), or what came down this frame would stand unsettled
+// through the draw.
+export function settleBelt(now) {
+  if (!band.grid || !beltRunning(now)) return;
+  for (let i = 0; i < band.rows && settle(band); i++);
 }
 
 defineMachine('belt', {

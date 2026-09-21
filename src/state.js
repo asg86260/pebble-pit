@@ -745,7 +745,7 @@ export const tray = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: n
 // The load on the belt: a strip of ground laid over the band, tail to head,
 // that the machine shifts a column at a time (`wireBelt`, `stepBelt` in
 // dust.js). Its cells are what `belt` in the save unpacks into.
-export const band = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+export const band = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, high: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.
