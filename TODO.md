@@ -1909,7 +1909,13 @@ nought until the place is built, because it counts things that get built rather
 than a level that can be bought ahead. Expect `__crew` to need its station-open
 lines moved above `rebalance()`, which is what shares the bodies out.
 
-## The board of times -- BUILT (2026-09-20), the server not yet deployed
+## The board of times -- BUILT (2026-09-20), DEPLOYED (2026-09-21), SWITCHED OFF (2026-09-21)
+
+Off behind `TIMES_ON` in `src/config/times.js` by the owner's call; the
+server at times.graham-things.com and its two logon tasks stay up. Flip
+the constant to bring it back; nothing else changes.
+
+### As built
 
 A global best-first board for "sqwife saved in", Megabonk-shape: one board
 for everybody, a name typed once, your row marked. The server owns the

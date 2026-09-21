@@ -2,11 +2,17 @@
 // for the rescue"): the one board everybody's rescue clock goes on, and the
 // server that keeps it.
 
+// The switch. Off, the game is a build with no board -- no panel on the
+// title, no page on the sheet, no ping, no post -- whatever TIMES_URL says.
+// Off since 2026-09-21 by the owner's call; the server and the tunnel stay up.
+// A check turns the board on for itself through `__timesUrl`.
+export const TIMES_ON = false;
+
 // Where the board is. Empty means there is no board: times.js does nothing
 // at all, which is the node yard, the checks and a build nobody pointed at a
 // server. A build reads it from `VITE_TIMES_URL`; the node yard has no
 // `import.meta.env`, so the read is guarded.
-export const TIMES_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_TIMES_URL) || '';
+export const TIMES_URL = (TIMES_ON && typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_TIMES_URL) || '';
 
 // How often the game tells the server the sqwife is still under, in wall
 // seconds. A precision knob, not a cost one: a cheater can shave at most one
