@@ -14,7 +14,7 @@ import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf } from './works.js';
-import { TYPE } from './jobs.js';
+import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine } from './machines.js';
 
 // what the next hat costs, in each of the three things the yard makes
@@ -53,7 +53,7 @@ export function hatMade() {
 // The wizards, on the save (persist.js, `SAVERS`): never more bodies up
 // there than there are hats.
 export const SAVE = {
-  fields: ['wizards'],
+  fields: [JOB.WIZARD],
   write(out) { out.wizards = S.wizards; },
   read(s) { S.wizards = Math.min(s.wizards || 0, S.wizardHats); },
   blank() {}

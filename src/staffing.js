@@ -102,7 +102,7 @@ export function rebalance() {
 // `rebalance` happens: after the machines, because a restored machine
 // changes what its station's cap *is*, and before the crew is stood.
 export const SAVE = {
-  fields: ['haulers', 'lent'],
+  fields: [JOB.HAUL, 'lent'],
   write(out) {
     // Worked out again on the way in; written for a save arriving as a bug
     // report.
