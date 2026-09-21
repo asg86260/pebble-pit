@@ -3798,6 +3798,127 @@ It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
 what the tier-6 spark rungs and the paint store are for.
 
+### The motor cart (design, not built)
+
+**The belt only ever touches the rock's pile.** It runs the one line from the
+rock to the hole, and its own design says so: it has no ladder because it is
+limited by what the ram drops. The muck, the far heaps, the casino's strip and
+everything else a hauler carries are walked by hand for the whole game, so the
+haulers are the one station with a machine that does not take their work over
+and a set of carts that never gets any better. The other stations' end of the
+line is a machine; the haulers' is a cart.
+
+**A motor cart is a cart with an engine on it, and a hauler drives it.** It is
+not a station and not a belt: it goes wherever the hauler goes, to every pile
+the hauler works, and it is *worn* like the cart it replaces -- so nothing
+teleports, every load still crosses the yard on a body, and the road is where
+you see what you bought. It is faster and carries more, and it smokes. It is
+bought one at a time, one to a hauler, and there is no end to the row, exactly
+as the carts have none: another motor cart is another engine on the road, and
+what says stop is the price and the sky.
+
+The belt stays. It is the cheap first step on the rock line and it lifts what
+the ram drops without a body at all; the motor carts are the dear step past it
+that covers every other line. A yard can own either or both, and the two do
+not read each other.
+
+**What it is.** The second rung of the haulers' kit. The kit table (`KIT` in
+kit.js) gets, on the haulers' entry only, an `up`: a second mark (`motor`) with
+its own count on `S` (`S.drivers`, in `SAVED`), its own stand slot at the
+bench, and its own row. A body records it as `w.motor` beside `w.trained`,
+saved with the worker. `stockOf`, `spareKit`, `worn` and `loose` are asked per
+mark rather than per job for the one job that has two; every other job answers
+as it does now.
+
+**Who wears it.** A carter -- a hauler already wearing a cart -- and nobody
+else. A motor cart made at the bench goes on the stand; `stepKit` sends the
+nearest carter with its hands free to swap, and the cart it took off goes back
+on the stand for the next bare hauler. A bare hauler never takes a motor cart
+off the stand: the cart is the licence, the engine is the upgrade. A knocked-off
+motor cart (`hatOff` with `mark: 'motor'`) is a carter's to pick up and nobody
+else's, by the same rule.
+
+**What it does.** Two numbers in `config/kit.js`, both on the dev panel:
+
+- `MOTOR_LOAD = 2` -- over the carter's load, so a driver carries four times a
+  bare hauler (`load` in crew/hole.js, written off the two constants rather
+  than as those numbers).
+- `MOTOR_PACE = 2` -- over the hauler's pace, laden and empty (`haulSpeed` and
+  `commutePace` read per body).
+
+Both are flat multipliers on the ladders' values, so the two hauler ladders go
+on being worth climbing after the engine and the ladder book's tables still
+describe a driver.
+
+**The smoke.** `MOTOR_FOUL` soot a cell, all of it `'mach'`, put up **from the
+cart while it drives laden** -- a puff every `MOTOR_PUFF_CELLS` cells travelled
+with a load on, at the cart's tail. Not from a chimney at the lip and not per
+load tipped: the dirt is proportional to the road actually driven, so a yard
+whose drivers are running the far heaps blackens faster than one whose drivers
+idle at a full hole, and the sky reads as the cost of the traffic you can see.
+It runs through `foul()` like the machines' soot, so it comes under the same
+fan ladder and scrubbing house the sky is balanced through, and adds no sink of
+its own ("The sky is beatable, but only if you invest"). Empty driving is
+clean: the engine is working when the load is on.
+
+The number to tune is *total* soot a yard of six drivers puts up against what a
+fully bought scrubbing house takes down; the target is the standing one -- it
+rains on a yard that buys drivers and ignores the house, and comes under
+control once the house is bought into. `MOTOR_FOUL` starts at `MACHINE_FOUL`
+spread over a rock-to-hole run, so one driver on the rock line smokes about
+what the belt would have, and is tuned from there on the dev panel.
+
+**The row.** On the bench under the haulers' heading, beside the cart row, as
+`driver` in `TRADES` (`count: 'drivers'`, `does: 'four times the load, twice
+the pace, and smoke'`). A kit row, not a machine row: it sells a count with a
+price like the carts, never `done`. Priced in **sparks and dust** -- the
+machines' coin, because it is machinery (sparks are the machines' currency end
+to end), and dust because every bill carries dust -- rising `TRADE_RATE` a cart
+like every other hat: `MOTOR_BILL` is the foot (`[['spark', 30], ['dust',
+1800]]`, on the sixty-a-spark line) and `motorCost(n)` scales both legs by
+`TRADE_RATE^n`. Shown once the carts are a full set (`kitFull(JOB.HAUL)`, three
+carts) and both hauler ladders are topped -- the gate the belt has, so the two
+open together and which to buy first is the player's call. A yard that owns a
+driver keeps the row whatever the sky has said, like every kit row.
+
+**The drawing.** The cart glyph with a stack on its tail, in `GLYPHS` (`motor`;
+an inventory line in `docs/glyphs.md`, drawn in `glyphs.html`). While laden and
+moving, a puff behind it from the sky's `'mach'` palette, with the per-cell
+variation every mote has. Nothing on the stand differs from a cart but the
+glyph.
+
+**What it must not break.**
+
+- *Nothing teleports*: a driver walks every load; the swap is a walk to the
+  stand; the cart taken off walks back on the next bare hauler.
+- *The carts keep selling*: `S.carters` is unchanged by a motor cart, a driver
+  is a carter with an engine, and `kitFull(JOB.HAUL)` reads carts alone.
+- *The belt's gate and rate are untouched*; `machineRate` does not know the
+  motor cart exists.
+- *The sky stays a live decision*: no rung that cleans it, and the soot goes
+  through `foul()` and nothing else.
+
+**Checks** (node tier, `test/motor-cart.test.mjs`, plus a line in
+`test/shop-rows.mjs`):
+
+- bought like a player: `__buy('driver')` on a yard with three carts and both
+  ladders topped puts one on the stand, a carter walks to it and swaps, the
+  cart lands back on the stand, and a bare hauler then picks that cart up.
+- a driver carries `MOTOR_LOAD` times a carter's load and crosses the yard in
+  `1/MOTOR_PACE` of the time, measured on the same run.
+- soot: a laden drive puts `'mach'` motes up and an empty one puts none; two
+  drivers on the far heaps foul faster than one on the rock line.
+- a `verify.js` rule: `S.drivers` never exceeds `S.carters`, and no body has
+  `w.motor` without `w.trained`.
+- `test/persist-roundtrip.test.mjs`: `S.drivers` and `w.motor` survive a
+  reload; a save from before the field loads with none.
+
+**Calls made here unless overruled:** the name `driver` (a carter with an
+engine; `motor` is the mark, `driver` the trade, as `cart`/`carter`); the gate
+copied from the belt's rather than a new one; the row on the bench rather than
+at the lip, because the cart row is; four times the load and twice the pace as
+the first numbers, moved on the dev panel.
+
 ### Settled
 
 **A rung costs the tier's currency and dust, both.** The rock never stops giving
