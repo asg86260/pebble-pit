@@ -12439,3 +12439,176 @@ end, and the yard is still yours -- so the competition is the one thing the
   rescue's pace (the pit arc, the dome's bill) is a new race, and the honest
   answer is a `version` column on the row and `?since=<version>` on the
   read, which is one column and one filter when it is wanted.
+
+## The serpent: the second half of the game (design, not built)
+
+*Proposed 2026-09-20. Not built. The owner's ask, written down so the
+shape can be argued before any of it is code.*
+
+The story so far ends with a rescue: the dome holds the rock, the one under
+it walks out, the two of them are a crew of two again and the sheet says how
+long it took. "No ending" above was true when it was written and is the
+premise this design overturns: the rescue is the end of the *first* half.
+The second half starts at the pit.
+
+### The snatch
+
+Once the rescue has been had and the pit has drowned, the two of them walk
+over to the abyss to look at it -- the way they walked out of the house in
+the opening -- and something comes up out of it. A serpent, big enough that
+its head is the width of the pit, rises through the surface, takes the one
+who was rescued and goes down again. The surface closes. That is the beat:
+`snatch`, in `BEATS`, owning the yard and the camera the way the rescue does,
+triggered when *both* facts are true (`S.rescued` and `S.drowned`) and
+neither beat is running -- whichever of the two arrives second fires it.
+Nothing pops in: the serpent rises out of the liquid a cell a frame, the
+body it takes is carried down through the surface, and the surface is what
+it always was afterward. A save from before this comes back with the pair
+where they are and plays the beat when it is due, once, and never again
+(`beatsDone`).
+
+The yard carries on. The crew keep mining, the machines keep running, the
+purse keeps filling. The one left is a body in the yard until the player
+follows them down.
+
+### Two views, one game
+
+**Clicking the abyss changes the view.** The drowned pit is already the one
+thing in the yard the player can look *into*; from the snatch onward a click
+on its surface takes the view down into it, and a click on the underside of
+the surface brings it back up. One save, one clock, one purse, two views:
+the yard and the deep. Both run on every frame whether or not they are on
+screen -- the deep is not a modal, it is the other half of the same works,
+and a player who goes back up to buy a rung of something finds the fight
+where they left it.
+
+The view is a fact on `S` (`S.view`, `'yard' | 'deep'`, saved), and the
+switch is a camera glide down through the surface, not a cut: the surface
+fills the frame, the frame goes black, the deep fades in around the one who
+went down. Under reduced motion it is the two framings, one then the other.
+
+**The deep is another place, drawn by the same rules.** Black and white,
+flat shapes, the cell grid, per-cell variation. What is different is the
+*motion*: nothing in the yard moves unless a body carries it, and nothing in
+the deep is still. The serpent's coils sway on their own clock; the water
+has currents, drawn as the interference the abyss's surface already has
+(`abyssLine`), only everywhere; scales that come off drift on the current
+before they settle, where dust in the yard drops. Bodies do not walk in the
+deep, they swim -- the same commute at the same pace, but along a curve
+with a lag behind the pointer, so the whole place reads as liquid. Still
+nothing teleports; still every body crosses the space to every destination.
+
+### The serpent is the rock
+
+The deep begins the way the yard began: one body, one thing to hit, a click
+a strike. The rescued one is in the serpent's belly -- drawn, a square
+silhouette through the coil, so the goal is on screen from the first frame.
+The one left is the whole crew, and a click strikes the serpent where it is
+clicked, the way a click swung at the rock. A strike knocks off a **scale**:
+the deep's coin, a grain that drifts down and settles on the floor of the
+deep for whoever is sweeping. Scales do not run out. The serpent regrows
+them, and the yard's whole economy of a rock that ends is replaced by a
+thing that does not.
+
+**Damage is a rate, not a total.** The rock had a heft you chip through; the
+serpent has a *wound* you hold open. Every strike deepens it; the serpent
+heals it back at a fixed rate (`SERPENT_HEAL`, cells a second). The wound is
+the integral of damage less healing, floored at nothing: stop striking and
+it closes, strike slower than it heals and it never opens. The goal is a
+rate: **once damage a second stays above the heal for long enough that the
+wound reaches its depth** (`SERPENT_WOUND`), the belly opens and the one
+inside comes out. That is the second half's rescue. The wound is drawn as a
+gap in the coil opening and closing -- the picture *is* the reading, a bar
+would be a spreadsheet on top of it -- and the one inside is seen through it
+more clearly the deeper it is.
+
+This changes what a ladder buys. In the yard a rung shortens the wait; in
+the deep a rung raises a rate, and the question the whole half asks is
+whether your rate beats the serpent's. A yard fully built is a yard that
+runs itself; a deep fully built is a deep that *wins*. The heal rate is one
+number in config.js, and it is the second half's `ABYSS_AT`: the thing the
+balance is tuned against.
+
+### What the scale buys
+
+The deep's board sells in scales. Its ladders are the yard's ladders on the
+same shape -- `tierRows` with `named` bands, `LADDER` rungs, a written
+table in `config/rungs.js` -- and the coin order is the deep's own: scales
+only, then scales and dust, then scales, dust and ore, then a spark at the
+top, so the yard's purse is drawn on and the two halves are one economy. No
+new coin past the scale.
+
+The rows, in the order the deep hands them out:
+
+- **The strike.** Damage a click, the rock hand's ladder over again.
+- **Hands.** Bodies for the deep, the crew's ladder over again: they swim to
+  the coil and strike on their own clock, and each one's damage is a ladder.
+  Who they are is a call for the owner (below).
+- **Sweeping.** Scales settle on the floor; somebody carries them to the
+  purse, or they sit there, the way dust does.
+- **A machine or two, in sparks.** The deep's plant, bought with the yard's
+  sparks by the rule that sparks buy every machine. What they are is not
+  designed here; the first build has none.
+
+### What it costs
+
+The rescue used to be the end, and the sheet that says "saved in" is the
+board of times' clock. It stays: the clock the board reads is the first
+rescue, unchanged, and the second half is not timed. A player who has been
+rescued and never drowns the pit never sees the serpent; that is fine, the
+first half is a whole game.
+
+The engine gets a second scene to draw and step, and both run every frame.
+The deep is one body and one serpent for most of its life, so the cost is
+the coil's motion, which is a sine over a few dozen cells. The endgame pass's
+budget (PERF.md) is the gate: the deep on a driven yard must not push a
+frame over what the yard alone does by more than the serpent's own draw.
+
+### The rules it must not break
+
+- Nothing teleports. The snatch is a body carried down; the view switch is
+  a camera move; a scale drifts to the floor; a hand swims to the coil.
+- `config.js` owns the heal rate, the wound depth, the strike, the pace of
+  the swim and the coil's sway. `state.js` owns `S.view`, the wound, the
+  scale count, the deep's crew, each in `SAVED`, `SAVED_BY_HAND` or
+  `EPHEMERAL`.
+- The deep's ladders are two rungs a coin with a spark at the top, through
+  `tierRows`. No flat rows.
+- The sim does not read the view. `S.view` is the renderer's and the
+  pointer's; nothing in game.js branches on it.
+- A save from any earlier era comes back in the yard view with no serpent,
+  and the snatch plays when it is due.
+
+### The calls to make
+
+1. **Who are the hands in the deep?** The yard's crew swimming down the
+   abyss one at a time as they are hired, or a crew of the deep's own (the
+   things that live there), hired on the deep's board? The first ties the
+   halves together; the second lets the deep have its own look. The design
+   assumes the first -- a hired body walks to the pit and goes in -- until
+   overruled.
+2. **Does the yard's income cross over?** The ladders above draw on dust,
+   ore and sparks from the yard's purse. Yes as written; a no makes the deep
+   a second game on the same save, which the one-purse rule argues against.
+3. **When can the serpent be won?** The heal rate sets it. One number, in
+   config.js, tuned in the ladder book once the rows exist, aimed so that
+   the deep's full ladders beat it comfortably and half of them do not.
+4. **The snatch's trigger.** Both facts (`rescued` and `drowned`) as
+   written, so the serpent never rises out of a pit that is still a hole.
+   The alternative -- the snatch drowns the pit itself, at the rescue --
+   skips the torn era for a player who reaches the dome first. Kept as
+   written.
+
+### How it is checked
+
+`test/serpent.test.mjs`, node tier, buying it like a player: the snatch
+plays once both facts are true and once only, and the body it takes is
+gone from the crew; a click on the coil drops a scale that settles on the
+floor; the wound closes when nobody strikes; a strike rate under the heal
+never opens it, one over it does, and the one inside is freed at the
+depth; a rung of the strike bought through `__buy` raises the rate; a
+reload in the deep comes back in the deep with the wound where it was
+(`reloadCheck` covers it unasked). A `verify.js` rule: the wound is never
+below nought nor above its depth, and nobody is in the deep before the
+snatch has played. Scenes in `scenes.js`: `snatch`, `deep`, `serpent-wound`,
+`serpent-freed`, so every state of the coil is a shot.

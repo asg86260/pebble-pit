@@ -1,5 +1,19 @@
 # Still to do
 
+## The serpent: the second half of the game -- DESIGNED, NOT BUILT (2026-09-20)
+
+"The serpent: the second half of the game" at the end of DESIGN.md. After
+the rescue and the drowning, the pair walk to the abyss and a serpent
+takes the rescued one down (`snatch` in `BEATS`); a click on the surface
+takes the view into the deep, one save and one purse under two views. The
+deep opens as the yard did -- one body, one thing to strike -- but the
+serpent heals, so the goal is a rate, not a total: hold the wound open past
+`SERPENT_HEAL` until it reaches `SERPENT_WOUND` and the belly opens.
+Scales are the deep's coin and never run out; its ladders are the yard's
+shape (two rungs a coin, a spark at the top). Blocked on the owner's four
+calls at the foot of the section: who the deep's hands are, whether the
+yard's purse crosses over, the heal rate, and the snatch's trigger.
+
 ## The pour -- BUILT (2026-09-16)
 
 The casino, sized to the yard: hold the arm and pebbles pour from the purse
