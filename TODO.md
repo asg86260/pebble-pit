@@ -1,22 +1,22 @@
 # Still to do
 
-## The motor cart -- DESIGNED, NOT BUILT (2026-09-20)
+## The forklift -- DESIGNED, NOT BUILT (2026-09-20)
 
 **Diagnosis.** The belt is the haulers' only machine and it touches the rock's
 pile alone: one line, no ladder, nothing for the muck, the far heaps or the
 casino's strip, which are walked by hand for the whole game. Every other
 station's end of the line is a machine; the haulers' is a cart.
 
-**Design.** DESIGN.md, "The motor cart (design, not built)": a second rung of
+**Design.** DESIGN.md, "The forklift (design, not built)": a second rung of
 the haulers' kit, worn by a carter, bought one at a time in sparks and dust
 with no ceiling; four times the load and twice the pace; soot off the cart
 per cell driven laden, through `foul()`, so the sky is the brake. The belt
-stays. Decided 2026-09-20: keep the belt, a motor cart per hauler (not one
+stays. Decided 2026-09-20: keep the belt, a forklift per hauler (not one
 purchase and a ladder), smoke along the drive.
 
 **Blocker.** Approval of the design. Then: `KIT[HAUL].up`, `S.drivers` in
-`SAVED`, `w.motor`, `driver` in `TRADES`, the `motor` glyph, `MOTOR_*` knobs
-in `config/kit.js`, `test/motor-cart.test.mjs`, a line in `test/shop-rows.mjs`,
+`SAVED`, `w.lift`, `driver` in `TRADES`, the `lift` glyph, `LIFT_*` knobs
+in `config/kit.js`, `test/forklift.test.mjs`, a line in `test/shop-rows.mjs`,
 a rule in `verify.js`.
 
 ## The pour -- BUILT (2026-09-16)
