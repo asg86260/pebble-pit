@@ -1,6 +1,5 @@
 import { frames } from '../clock.js';
 import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
-import { rainSpans } from '../weather.js';
 import { rand } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -59,6 +58,14 @@ export function envelope(t) {
   return up * (RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail);
 }
 
+// Where the water is born: the clouds say (`rainSpans` in weather.js), and
+// hand the answer in here rather than being imported, because weather.js
+// reaches the renderer and this file is reached from the rules -- an import
+// would be a cycle through the whole game. Nothing until the clouds have
+// spoken; a sky with no clouds has no rain.
+let spansFrom = () => [];
+export const bornUnder = fn => { spansFrom = fn; };
+
 // What the rain has done, for the rules: drops landed by kind and the muck the
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
@@ -80,7 +87,7 @@ export function pour(secs) {
   // The water: clean drops out of the clouds over the window. Where the strip
   // has no cloud over a column the sheet is thinner there, so a light front
   // rains in patches and a heavy one everywhere.
-  const spans = rainSpans();
+  const spans = spansFrom();
   if (spans.length) {
     let n = RAIN_PER_S * secs * env;
     let total = 0;
