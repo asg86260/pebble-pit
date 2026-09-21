@@ -17,15 +17,15 @@ group('a quarry upgrade gets worked while the drill stands, and the drill keeps 
   window.__reset();
   openSites();
   window.__crew(0, 2, 5);
-  window.__fullSites();
+  window.__machineGates();
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
 
   // The drill, bought the way a player buys it, and running.
   const drill = buyBuilt('jaw');
-  // `__fullSites` tops both quarry ladders to get the drill on the board. At
-  // that yield the pile brims before the drill is built, and a topped pace
-  // ladder has no rung left to buy; this is about a rung being worked.
+  // `__machineGates` topped both quarry ladders to get the drill on the
+  // board. At that yield the pile brims before the drill is built, and a
+  // topped pace ladder has no rung left to buy; this is about a rung worked.
   window.__levels({ seamLevel: 0, quarryPaceLevel: 0 });
   window.__clearFloor();
   run(12);

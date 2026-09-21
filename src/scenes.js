@@ -37,7 +37,7 @@ const st = () => window.__state();
 // pours the rest through a rift that is simply open.
 const RICH_DUST = 90000;
 const rich = () => {
-  window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
+  window.__reset(); window.__crew(3, 3, 5, 7); window.__machineGates();
   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
 };
 

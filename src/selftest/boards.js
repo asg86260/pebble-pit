@@ -1474,7 +1474,7 @@ export const TESTS = [
   ['a tile being built fills in, and its clock counts down', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
-    window.__fullSites();
+    window.__machineGates();
     window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
     window.__board('quarry');
     await settle(1);
@@ -1561,7 +1561,7 @@ export const TESTS = [
   ['a hand on a tile being built swings with the body at the site', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
-    window.__fullSites();
+    window.__machineGates();
     window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
     window.__board('quarry');
     await settle(1);

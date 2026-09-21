@@ -78,18 +78,15 @@ export const machineSet = (which, o = {}) => {
   return { ...m };
 };
 
-// Every station given every slot it will ever have, every ladder topped and a
-// full set of hats -- the ladders and the hats are what the machines are gated
-// behind; the slots are so the yard looks the part.
+// Every station given every slot it will ever have and a full set of hats,
+// with the grounds' own ladders left at the foot: most checks want a full
+// yard at pace nought. The rock's two ladders are topped here because the
+// rock has no slots to fill and the ram has always been gated on them.
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
   S.rockhandPickLevel = LADDER;
   S.rockhandSpeedLevel = LADDER;
-  S.quarryPaceLevel = LADDER;
-  S.seamLevel = LADDER;
-  S.tendLevel = LADDER;
-  S.cropLevel = LADDER;
   S.quarryOpen = true;
   S.farmOpen = true;
   S.breakers = Math.max(S.breakers, kitCap(JOB.ROCK));
@@ -103,6 +100,19 @@ export const fullSites = () => {
   return { benches: benches(), plots: plotCount(),
            pick: S.rockhandPickLevel, speed: S.rockhandSpeedLevel,
            breakers: S.breakers, blasters: S.blasters, growers: S.growers };
+};
+
+// `fullSites` and every ladder a machine is gated behind topped as well
+// (`canBuy`): the jaw and the tiller on their boards. Kept apart from
+// `fullSites` because a topped ore or crop ladder brims a pile in seconds,
+// which is not the yard most checks mean to stand in.
+export const machineGates = () => {
+  fullSites();
+  S.quarryPaceLevel = LADDER;
+  S.seamLevel = LADDER;
+  S.tendLevel = LADDER;
+  S.cropLevel = LADDER;
+  buildShop();
 };
 
 export const clearFloor = () => {
@@ -888,7 +898,7 @@ export const HANDLES = {
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __slot: switchSlot,
-  __machine: machineSet, __fullSites: fullSites,
+  __machine: machineSet, __fullSites: fullSites, __machineGates: machineGates,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __climbed: climbedBills, __boards: boards, __unsection: unsection,
   __invest: invest, __grant: grant, __dose: dose,

@@ -224,7 +224,7 @@ group('a row that has been revealed stays revealed', async () => {
 // through the row that presses it.
 group('a flag stays up while the site it sells from is building', async () => {
   window.__reset();
-  window.__fullSites();
+  window.__machineGates();
   window.__grant({ dust: 5e6, shards: 5000, spores: 5000, sparks: 5000, cores: 500 });
   run(1);
   const before = state().offers.includes('quarry');

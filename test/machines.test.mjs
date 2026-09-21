@@ -85,9 +85,8 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
 group('a machine is stopped by taking its tender off', async () => {
   window.__reset();
   openSites();
-  window.__fullSites();
   window.__crew(0, 0, 5);
-  window.__fullSites();
+  window.__machineGates();
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
   buyBuilt('jaw');
@@ -261,8 +260,8 @@ group('the ram takes the face whole, column by column from the left', async () =
 group('smoke rises and goes out, and does not pile up', async () => {
   window.__reset();
   openSites();
-  window.__fullSites();
   window.__crew(0, 0, 5);
+  window.__machineGates();
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
   buyBuilt('jaw');
@@ -744,9 +743,6 @@ group('the tiller crawls the row and brings the plots in', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
-  // `__fullSites` tops the crop ladder, and at that yield the tiller brims
-  // the farm's pile before the count below starts; this is about the crawl.
-  window.__levels({ cropLevel: 0 });
   window.__crew(0, 0, 0, 1);                 // one tender at the farm
   window.__machine('tiller', { bought: true });
   window.__clearFloor();
@@ -972,7 +968,7 @@ group("a machine is not for sale until the station's ladders are topped", async 
   window.__kit({ blasters: 3 });
   window.__levels({ benchLevel: 3, quarryPaceLevel: LADDER, seamLevel: LADDER - 1 });
   const nearly = rows();
-  window.__fullSites();
+  window.__machineGates();
   const full = rows();
   return [
     ok(!bare.includes('jaw') && !bare.includes('tiller') && !bare.includes('ram'),
@@ -1080,7 +1076,7 @@ group('a machine is never priced in the coin its own station makes', async () =>
 group('a machine waits for the specialists, and then beats them', async () => {
   window.__reset();
   openSites();
-  window.__fullSites();
+  window.__machineGates();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(9000);
   const offered = () => window.__rows().filter(r => r.shown).map(r => r.key);
@@ -1096,7 +1092,7 @@ group('a machine waits for the specialists, and then beats them', async () => {
   const back = offered();
 
   return [
-    ok(kitted.includes('jaw'), 'a fully slotted, fully hatted cut is offered a jaw'),
+    ok(kitted.includes('jaw'), 'a topped, fully hatted cut is offered a jaw'),
     ok(!bare.includes('jaw'), 'a cut with no blasters in it is not',
        bare.filter(k => k === 'jaw').join(',') || 'not offered'),
     ok(!half.includes('jaw'), 'and nor is one with two of its three'),
@@ -1162,9 +1158,8 @@ group('a jaw out-digs the kitted gang it stood down', async () => {
 group('buying a machine takes the specialists with it', async () => {
   window.__reset();
   openSites();
-  window.__fullSites();
   window.__crew(0, 1, 5);
-  window.__fullSites();
+  window.__machineGates();
   window.__grant({ sparks: 999, spores: 999 });
   window.__tip(9000);
   run(2);
