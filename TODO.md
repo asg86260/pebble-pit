@@ -1,5 +1,19 @@
 # Still to do
 
+## Weather -- DESIGN, NOT BUILT (2026-09-20)
+
+"Weather" at the end of DESIGN.md. Rain gets its own clock and stops being
+caused by the smoke: a front is due every few minutes whatever is overhead,
+draws a heft, and washes `RAIN_WASH` x heft of the settled sky down as acid
+among clean drops that leave nothing; the house is the only thing that
+empties the sky. The first front of a save is heft 1 a few minutes in, so the
+lightning is seen early over a clean yard. The five clouds swell through a
+longer brew -- wider bars, more rows, a heavier underside, more of them --
+and settle after the taper; the swell is derived off the storm clock, never
+saved. `SMOG_RAIN_BEND`, `SMOG_SAMPLE` and `rainOdds` go. Checks named in
+the section (`test/weather.test.mjs`, a rule in verify.js, four scenes).
+Awaiting approval; nothing built.
+
 ## The pour -- BUILT (2026-09-16)
 
 The casino, sized to the yard: hold the arm and pebbles pour from the purse

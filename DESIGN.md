@@ -12206,3 +12206,172 @@ checked equal to the desk's. And the purse's coins shuffled as a count
 crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
+
+## Weather (design, not built)
+
+The rain is the sky's own, and the dirt only decides what it costs. Today a
+shower is *caused* by the smoke: the sky is sampled every few seconds, a
+filthy one rolls to break, and when it breaks the whole marked band comes down
+as muck. That makes the weather a symptom -- it cannot rain on a clean yard,
+so a player who scrubs never sees a storm, a bolt or a wet yard, and the one
+piece of weather the game has is a punishment with a sound effect. This
+section turns it round: **it rains when it rains, and how dirty the rain is,
+is how dirty the sky is.**
+
+### The bargain
+
+Three things move, and one does not.
+
+- **Rain has its own clock.** A front is due every few minutes on a rolled
+  interval (`RAIN_EVERY_S`, a mean, spread by `RAIN_EVERY_GIVE`), whatever is
+  overhead. The clock is the only thing that starts a shower; the smoke never
+  does. `RAIN_GAP` stays as the floor between two.
+- **A shower washes a share of the sky, not the whole of it.** When the front
+  breaks, `RAIN_WASH` of the settled band -- scaled by the storm's heft (below)
+  -- is marked, and those motes come down through the shower as they do now,
+  one mote one drop, thinning the banks overhead as they go. What is not
+  marked stays up. The scrubbing house is the *only* thing that empties the
+  sky; a storm only taxes it.
+- **The rain is water, and the wash is what is acid in it.** A shower is a
+  sheet of clean drops from over the top of the window at `RAIN_PER_S` (per
+  view width, since it is no longer one drop a mote), and the marked motes
+  fall *among* them. A clean drop lands and is gone; a drop that was a mote
+  lands as muck at `RAIN_MARK`, exactly as now. So a scrubbed yard gets wet and
+  loses nothing, a filthy one gets the same rain with the sky in it, and the
+  two are told apart in the sheet itself: a dirty drop is drawn in the muck's
+  tone, a clean one in a paler grey, so you can see the rain is bad before it
+  lands. Per-cell variation, not a flat sheet, as everywhere.
+- **What does not move: the sky's balance.** `SMOG_CAP`, the house, the
+  filters, the recycler, `RAIN_MARK`, `MUCK_MAX` -- untouched. A brim sky under
+  a heavy storm lays about a third of what a brim sky lays today (a third of
+  the band washed, the same share of it filth), but it goes on doing so every
+  front for as long as the sky is left at the brim, because nothing but the
+  house takes the rest down. "Beatable only if you invest" holds by a plainer
+  rule than the odds curve: ignore the house and every shower is acid; buy
+  into it and the same shower is water.
+
+`SMOG_RAIN_BEND`, `SMOG_SAMPLE`, `rainOdds()` and the roll in `breaks()` go.
+The `odds` field in the report goes with them; the clouds are the forecast.
+
+### A storm has a heft
+
+Not every front is the same front. When one is rolled it draws a **heft** in
+`[0, 1]`: how far the clouds swell, how long it pours (`RAIN_LEN_S` × heft
+over a floor), how much of the sky it washes (`RAIN_WASH` × heft) and how
+often it strikes. A light one is a drizzle with no bolt in it and a wetted
+yard; a heavy one is the storm the game has now. The envelope is the one
+`pour` already has -- drizzle, smoothstep up, taper -- read off the storm's own
+length rather than off how much marked sky is left, since a clean shower has no
+marked sky to run out of. The marked motes are spread across the pour by that
+same envelope, so the dirt comes down with the rain and not in a lump at the
+front.
+
+**The first front of a save is heft 1, due at `RAIN_FIRST_S`** (a few
+minutes in): the lightning is the best thing the sky does and today it is
+seen only by a player who has fouled the sky to the brim and left it. A new
+yard gets the full storm in its first quarter hour, over a sky too clean to
+mark, so it costs nothing and shows everything.
+
+### The clouds are the front
+
+The five clouds at the back are decoration today; they become the warning.
+`STORM_BREW_S` grows (about forty seconds) and through it the sky **swells**:
+
+- Each cloud widens, bar by bar, from its bottom row up, and gains a row or
+  two at the top, so the silhouette that was a low mound becomes a high one.
+  Growth is in whole cells on the `P` grid, a cell at a time on its own
+  schedule per cloud, never all of them on one frame (the lesson of the dither
+  sky: a field that steps in lockstep boils).
+- More come in off the sides until the strip holds `CLOUDS_STORM` × heft of
+  them, so a heavy front is a ceiling of cloud and a light one a few larger
+  ones.
+- The underside deepens: `CLOUD_UNDER` becomes two rows, then three, so the
+  cloud has weight rather than size. **No new tone.** The rule that nothing in
+  the sky borrows the rock's shades stands; a storm cloud is a bigger, heavier
+  shape in the same two greys, and the flash and the bolt are what darken the
+  sky.
+- Drops are born **under the cloud bars** in the strip, not from a line over
+  the window: the rain falls out of the thing that swelled. Where the strip
+  has no cloud over a column the sheet is thinner there, so a light front
+  rains in patches and a heavy one everywhere. Marked motes still drop from
+  over the window where their mote hung, as now.
+- Through the pour the clouds hold; through the taper and for a while after
+  (`CLOUD_SETTLE_S`) they shed the extra rows and the extra ones drift off
+  the sides. Nothing pops.
+
+**The swell is derived, never stored.** Each cloud's size is a function of
+`(S.stormFor, S.rainFor, S.stormHeft)` and its own seed, so a reload mid-brew
+comes back with the same sky at the same swell, and the clouds stay out of the
+save, as they are now. The wind already leans the sheet; it leans the swelled
+clouds' drift the same way.
+
+### Lightning, earlier and by heft
+
+Nothing about the bolt changes -- the shape, the flash, the embers, the
+weather-only rule. Its odds a second are the storm envelope squared over
+`BOLT_EVERY_S` as now, **times heft**, so a drizzle never strikes and a full
+storm strikes as it does today. With the first front at heft 1 the first bolt
+is minutes in, over a clean yard, instead of an hour in over a fouled one.
+
+### State and the save
+
+- `S.rainDue` (seconds to the next front; `SAVED`) and `S.stormHeft`
+  (`SAVED`). `S.stormFor`, `S.rainFor`, `S.raining`, `S.rains` as they are.
+- `rain.js` gets `stepFront(secs)` in place of `breaks`; the marking at the
+  roll takes `RAIN_WASH × heft` of the settled motes rather than all of them
+  (a uniform pick, so the wash is spread over the whole band and not one end
+  of it). Clean drops carry `dirt: false` and `stepDrops` marks only the dirty
+  ones; `drawRain` picks the tone off the flag.
+- `weather.js` gets `swell()` (the derived size for a frame) and the extra
+  clouds; `skyReport()` gains `swell` and `storm` so a check can watch a
+  brew-up. `stepWeather` is on the frame already.
+- Numbers, all new, all in `config/sky.js` and `config/weather.js` and on the
+  panel: `RAIN_EVERY_S` (360), `RAIN_EVERY_GIVE` (0.6, so three to ten
+  minutes), `RAIN_FIRST_S` (180), `RAIN_LEN_S` (45, floored at 12),
+  `RAIN_WASH` (0.35), `CLOUDS_STORM` (12), `CLOUD_SETTLE_S` (30),
+  `STORM_BREW_S` to 40. Every one is a guess to be tuned on the panel; none of
+  them is a balance lever except `RAIN_WASH`, which says how much of a fouled
+  sky a storm carries down and so how fast an ignored sky becomes muck.
+
+### What is checked
+
+`test/weather.test.mjs`, node tier, one group each:
+
+1. **It rains on a clean yard.** Nothing fouled; `runUntil(raining)` inside
+   `RAIN_FIRST_S + STORM_BREW_S + slack`; drops fall; at the end the muck
+   count is nought and the haze is nought.
+2. **Dirty rain is a share of the sky.** `__air` to a half sky; the next
+   front washes `RAIN_WASH × heft` of the settled motes within a tolerance,
+   leaves the rest up, and the muck laid is that many × `RAIN_MARK` within
+   a tolerance.
+3. **The first storm strikes.** From a fresh yard, a bolt is seen before the
+   first shower ends (the first front is heft 1).
+4. **A front survives a reload.** Save mid-brew; the front comes back at the
+   same `stormFor` and heft, and the clouds report the same swell.
+5. **The clouds swell and settle.** `skyReport().swell` is nought before the
+   roll, climbs through the brew without ever stepping every cloud on one
+   frame, and is nought again `CLOUD_SETTLE_S` after the taper.
+
+A rule in `verify.js`: **muck never rises while no dirty drop is in the
+air** -- a clean shower that leaves a mark is the wrong shower.
+
+`test/sky-rain.test.mjs` loses "a full sky is a threat rather than a
+stopwatch" (there is no roll to check); "a minute of dry" and "a storm throws
+a bolt" stand. `makeItRain` in the helpers becomes "fill the sky and bring
+the next front forward", through a `__front(heft)` hook that sets
+`S.rainDue` to nought.
+
+Scenes: `rainbrew` shows the swell as it stands; `cloudswell` (a heavy front
+at the end of its brew, no rain yet), `cleanrain` (heft 1 over a clean
+sky) and `acidrain` (the same over a brim sky), so the two sheets sit side by
+side on the bench.
+
+### Open, and not decided here
+
+- `clogged()` still counts the sky's muck at the house's door (TODO). A clean
+  shower no longer clogs it, which takes most of the sting out; the count
+  itself is left as it was.
+- Whether a front should ever be made *more* likely by a fouled sky. Not in
+  this design: the point is that the sky is not the cause. If the balance
+  wants an ignored sky punished faster, `RAIN_WASH` is the lever, not the
+  clock.
