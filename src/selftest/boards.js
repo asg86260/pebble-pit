@@ -274,6 +274,37 @@ export const TESTS = [
     ];
   }],
 
+  ['the clock in a tag is in the same ink as the bill beside it', async () => {
+    newRun();
+    await settle();
+    window.__give(3000);
+    window.__crew(2, 2);
+    run(20);
+    window.__board('bench');
+    await sleep(400);
+    // The clock cell wore a step less ink than the coins in the same box, and
+    // on the dark page that read as a second color, not a lighter touch
+    // (2026-09-20). Measured on both pages: the computed color of the clock
+    // cell against the bill's, on every card that carries both.
+    const off = [];
+    for (const dark of [false, true]) {
+      document.documentElement.classList.toggle('dark', dark);
+      await raf();
+      for (const row of document.querySelectorAll('#shop button[data-key]')) {
+        const time = row.querySelector('.tag .time'), cost = row.querySelector('.tag .cost');
+        if (!time || !cost || !time.textContent.trim() || !cost.textContent.trim()) continue;
+        const a = getComputedStyle(time).color, b = getComputedStyle(cost).color;
+        if (a !== b) off.push(`${dark ? 'dark' : 'light'} ${row.dataset.key} ${a} vs ${b}`);
+      }
+    }
+    document.documentElement.classList.remove('dark');
+    window.__board(null);
+    return [
+      ok(document.querySelectorAll('#shop button[data-key] .tag .time').length > 0, 'the bench has clocks on it'),
+      ok(off.length === 0, 'every clock is the ink of its bill', off.join('; ')),
+    ];
+  }],
+
   ['a bill you can half afford says which half', async () => {
     newRun();
     await settle();

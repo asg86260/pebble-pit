@@ -223,7 +223,9 @@
 
 /* The tag: one box, the bill and the clock in it, at the board's own type
    size with the marks it was drawn for. An 18px box round a 16px line; the
-   clock is a cell of the same box, dimmed by color so its border matches. */
+   clock is a cell of the same box, in the same ink as the bill -- it was once
+   dimmed a step, which on the dark page read as a different color from the
+   coins beside it rather than as a lighter touch. */
 .rows.shelves > .tile .tag {
   grid-row: 4;
   /* Hung from the gain line: the row is the plank's, as tall as the tallest
@@ -250,7 +252,7 @@
 /* A tag with nothing in it -- a row with no bill and no clock -- is no tag
    at all, not an empty box drawn as a dot. */
 .rows.shelves > .tile .tag:has(.cost:empty):has(.time:empty) { display: none; }
-.rows.shelves > .tile .tag .time { color: var(--ink-4); padding: 0 6px 0 2px; }
+.rows.shelves > .tile .tag .time { padding: 0 6px 0 2px; }
 .rows.shelves > .tile .tag .time:empty { display: none; }
 .rows.shelves > .tile .tag .cost > span, .rows.shelves > .tile .tag .time > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; line-height: 16px; }
 /* `.rows button:has(.ladder:empty) .time` in style.css outranks the firewall
@@ -288,7 +290,7 @@
    stops. A tile in line is not disabled (a press hands it back) and wears
    its place the same way. */
 .rows.shelves > button.tile.building:disabled .tag { border-style: solid; color: var(--ink); }
-.rows.shelves > .tile .tag:has(.cost:empty) .time { color: var(--ink); padding: 0 6px; }
+.rows.shelves > .tile .tag:has(.cost:empty) .time { padding: 0 6px; }
 .rows.shelves > .tile.waiting .gain { color: var(--ink); }
 
 /* A shelf on which nothing has a gain has no gain line. The builder cannot
