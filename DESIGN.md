@@ -12207,7 +12207,7 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
-## The board of times: a global competition for the rescue (design, not built)
+## The board of times: a global competition for the rescue (built 2026-09-20)
 
 "The clock over the sqwife" ends: *the story ends with a time you can beat.
 It is the one thing in the game you are racing, and it was never written
@@ -12401,6 +12401,30 @@ end, and the yard is still yours -- so the competition is the one thing the
 - `TIMES_FLOOR_MS` is read off `tools/node/rescue-floor.mjs`, the fastest
   the driven yard can stage the rescue; the constant carries the run's
   number in its comment and the tool is how it is re-read.
+
+### What building it changed
+
+- **Two files, not one.** `persist.js` is the whole yard, and the landing
+  page must not stand one, so the board's read, the call and the name are
+  `timesboard.js` (yard-free, what `title.js` imports) and the run, the ping
+  and the post are `times.js` on top of it.
+- **"Once a boot" is on `S`.** `timesAsked` (ephemeral) carries the two
+  marks; a reset clears it and a page's boot is a fresh module. The node
+  yard's reload is neither, so its check says when it boots (`__bootTimes`).
+- **The floor is half the driven yard.** `tools/node/rescue-floor.mjs` has
+  the rescue at 220 s on two crew and 243 s on ten -- the shields' sequence
+  sets the pace, not the hands -- so `TIMES_FLOOR_MS` is 120 s.
+- **The limits are seconds, not minutes.** A caller is an ip, and an ip can
+  be a school behind one router; a run and a time are ten seconds apart, a
+  ping half an interval, and a refused time hands the turn back so a
+  mistyped name is not a minute's wait.
+- **A staged yard never posts.** The scene bench and the demo stand yards
+  nobody owns; `stepTimes` reads `S.staged` and stays quiet, which is also
+  why a scene shot of the ending sheet says "the board did not believe it"
+  (its 01:03 is under the floor) and never puts a row up.
+- **No build, no board.** With `VITE_TIMES_URL` unset there is no times
+  button, no name box and no call; the release workflow reads it from a
+  repository variable (`TIMES_URL`). Wiring the tunnel is server/README.md.
 
 ### Not now
 

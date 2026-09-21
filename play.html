@@ -176,6 +176,13 @@ try {
   <div class="word" data-pane="record" hidden>achievements</div>
   <div id="record" class="record" data-pane="record" hidden></div>
   <button id="recordback" type="button" data-pane="record" hidden>back</button>
+  <!-- The board of times: everybody's rescue, best first, off the server.
+       A page of its own behind this button, which carries the best. See
+       times.js. -->
+  <button id="timesbtn" type="button" data-pane="main">times</button>
+  <div class="word" data-pane="times" hidden>times</div>
+  <div id="times" class="times" data-pane="times" hidden></div>
+  <button id="timesback" type="button" data-pane="times" hidden>back</button>
   <!-- The settings, behind one word: a title page with a volume slider on it
        is not a title page. -->
   <button id="settingsbtn" type="button" data-pane="main">settings</button>
@@ -208,6 +215,9 @@ try {
   </div>
   <!-- the reset erases the open slot only; starting another yard is the
        saves page's business -->
+  <!-- the name the board of times shows for this player; a preference, like
+       the mute, so it survives a reset -->
+  <input id="boardname" type="text" maxlength="20" placeholder="name on the board" spellcheck="false" autocomplete="off" data-pane="settings" hidden>
   <button id="reset" type="button" data-pane="settings" hidden>reset progress</button>
   <!-- the sheet's one-line reply, on every page that has something to say -->
   <div class="said" data-pane="main slots settings"></div>
@@ -242,6 +252,14 @@ try {
 <div id="saved" class="held" hidden>
   <div class="word">you did it</div>
   <div class="why">you saved your sqwife. it took <span id="savedin"></span>.</div>
+  <!-- The board of times: the one line the network is allowed on. A name
+       box the first time, then the post; the reply is your rank or the
+       board's refusal, in the same line. See times.js. -->
+  <div id="timespost" class="pair" hidden>
+    <input id="timesname" type="text" maxlength="20" placeholder="your name" spellcheck="false" autocomplete="off">
+    <button id="timesgo" type="button">post it</button>
+  </div>
+  <div id="timessaid" class="small"></div>
   <div class="rule"></div>
   <div class="why">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
   <div class="why">thank you!</div>

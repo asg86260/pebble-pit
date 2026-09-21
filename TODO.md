@@ -1876,7 +1876,7 @@ nought until the place is built, because it counts things that get built rather
 than a level that can be bought ahead. Expect `__crew` to need its station-open
 lines moved above `rebalance()`, which is what shares the bodies out.
 
-## The board of times -- DESIGNED, NOT BUILT (2026-09-20)
+## The board of times -- BUILT (2026-09-20), the server not yet deployed
 
 A global best-first board for "sqwife saved in", Megabonk-shape: one board
 for everybody, a name typed once, your row marked. The server owns the
@@ -1885,10 +1885,13 @@ is under, and a posted time shorter than what the server watched is
 refused; the save is checked against the time and a floor. Bun + Hono +
 `bun:sqlite` in `server/`, the pirate ship's shape, behind the owner's
 tunnel; itch-app players verified through `ITCHIO_API_KEY` and badged.
-Spoof-proofing, not proof -- the owner's call (2026-09-20): a bot that
-plays for as long as an honest rescue gets a row, and the journal replay
-stays in "Not now". Offline runs are never refused: an id-less post gets a
-`~` row, and a post that could not go out waits on `timePending` for the
-next boot. DESIGN.md, "The board of times: a global competition for the
-rescue". Approved in shape 2026-09-20. Blockers before building: a tunnel hostname for
-`TIMES_URL`, and `TIMES_FLOOR_MS` read off a driven rescue.
+Spoof-proofing, not proof -- the owner's call: a bot that plays for as long
+as an honest rescue gets a row, and the journal replay stays in "Not now".
+Offline runs are never refused: an id-less post gets a `~` row, and a post
+that could not go out waits on `timePending` for the next boot. DESIGN.md,
+"The board of times: a global competition for the rescue", with "What
+building it changed". Left to do, by the owner: stand the server behind a
+tunnel (server/README.md) and set the `TIMES_URL` repository variable --
+until then a release builds a game with no board. Nobody has played a
+rescue against the live board; the browser has only named a run and pinged
+it. The desk's itch badge has not been seen with a real itch key.

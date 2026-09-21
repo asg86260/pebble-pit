@@ -12,6 +12,7 @@ import { S } from './state.js';
 import { sayClock } from './stats.js';
 import { now } from './clock.js';
 import { beatRunning, skipBeat } from './beats.js';
+import { timesOn, timesName, postTime, sayRank } from './times.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
@@ -24,9 +25,41 @@ export function syncEnding() {
     sheet.hidden = !up;
     // The clock stopped when they walked out (`stepUnder`), so this is the
     // same number the books read.
-    if (up) savedIn.textContent = sayClock(S.buriedMs);
+    if (up) { savedIn.textContent = sayClock(S.buriedMs); offerPost(); }
+    else posted = false;                    // the next story's sheet gets its own line
   }
 }
+
+// The board of times' line: with no board the line is blank; with a name
+// already kept the time goes up as the sheet comes up; otherwise the box and
+// the button, once. The reply is the rank, or the refusal in the player's
+// words, and a board that could not be reached says so -- the post waits on
+// the save for the next boot (times.js).
+const postRow = document.getElementById('timespost');
+const nameBox = document.getElementById('timesname');
+const goBtn = document.getElementById('timesgo');
+const timesSaid = document.getElementById('timessaid');
+let posted = false;
+function offerPost() {
+  timesSaid.textContent = '';
+  postRow.hidden = true;
+  if (!timesOn() || posted) return;
+  if (timesName()) { send(timesName()); return; }
+  nameBox.value = '';
+  postRow.hidden = false;
+}
+async function send(name) {
+  if (!name.trim()) return;
+  posted = true;
+  postRow.hidden = true;
+  timesSaid.textContent = 'telling the board…';
+  const r = await postTime(name);
+  if (r === null) timesSaid.textContent = 'the board is away; it will hear about this next time';
+  else if (r.error) timesSaid.textContent = r.error;
+  else timesSaid.textContent = `on the board: ${sayRank(r.rank, r.of)}`;
+}
+goBtn.addEventListener('click', () => send(nameBox.value));
+nameBox.addEventListener('keydown', e => { if (e.key === 'Enter') send(nameBox.value); });
 
 document.getElementById('keepplaying').addEventListener('click', () => {
   skipBeat(now(), 'sheet');

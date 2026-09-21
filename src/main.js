@@ -38,6 +38,7 @@ import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold, stepPan } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import './settings.js';              // the held sheet's shelf
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
+import { startTimes } from './times.js';    // and the board of times' ping, on wall time
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
 import { tick } from './clock.js';
@@ -188,4 +189,5 @@ if (import.meta.env.DEV) {
 }
 
 requestAnimationFrame(frame);
+if (!demo) startTimes();
 if (!demo) unveil();

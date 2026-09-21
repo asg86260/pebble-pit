@@ -120,3 +120,6 @@ export * from './config/sound.js';
 
 // track M: the save floor and the save shape number
 export * from './config/saves.js';
+
+// the board of times: the server, the ping and the floor
+export * from './config/times.js';

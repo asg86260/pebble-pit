@@ -10,6 +10,7 @@ import { storeTrouble, storeSettled } from './save.js';
 import { VEIL_MS, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
+import { showTimes, timesLabel, timesOn, timesName, setTimesName } from './times.js';
 import { copyOut } from './copyout.js';
 export { copyOut };
 
@@ -22,6 +23,9 @@ const recordBtn = document.getElementById('recordbtn');
 const recordEl = document.getElementById('record');
 const slotsBtn = document.getElementById('slotsbtn');
 const slotsEl = document.getElementById('slots');
+const timesBtn = document.getElementById('timesbtn');
+const timesEl = document.getElementById('times');
+const boardName = document.getElementById('boardname');
 
 // The sheet's pages: every child carries `data-pane`, a space-separated list
 // of the pages it is on. Two fronts (`title`, where the boot stops, and
@@ -34,14 +38,23 @@ export function showPane(name) {
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
   slotsBtn.textContent = slotsLabel();
+  timesBtn.textContent = timesLabel();
+  // No board, no page: a build nobody pointed at a server has no times button
+  // and no name box.
+  if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
   if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; }, switchSlot);
+  if (name === 'times') showTimes(timesEl);
+  if (name === 'settings') boardName.value = timesName();
 }
 const back = () => showPane('main');
 recordBtn.addEventListener('click', () => showPane('record'));
 document.getElementById('recordback').addEventListener('click', back);
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
+timesBtn.addEventListener('click', () => showPane('times'));
+document.getElementById('timesback').addEventListener('click', back);
+boardName.addEventListener('change', () => { setTimesName(boardName.value); boardName.value = timesName(); });
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
 document.getElementById('settingsback').addEventListener('click', back);
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
