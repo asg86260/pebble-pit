@@ -55,7 +55,11 @@ const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                // wave7b-build: derived before the bench is open (which this
                // check's nonsense flags may or may not say), clamped to its
                // posts after -- either way rebalance's answer, not the save's
-               'builders'];
+               'builders',
+               // the marked motes still to fall: a load marks that many of
+               // the rebuilt band and writes down how many it found to mark
+               // (`remarkSky`), which over this check's empty sky is none
+               'stormLeft'];
 
 group('every plain field on the list survives a save and a load', async () => {
   const fields = SAVED.filter(k => !DEALT.includes(k));

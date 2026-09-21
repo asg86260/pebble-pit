@@ -34,7 +34,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `crew.js` | the crew — a barrel over `src/crew/`; a worker type is one file there plus a row in the `JOBS` registry (`src/crew/jobs.js`) | yes |
 | `air.js` | the dust hanging in the yard: three bands of it, at three distances, and its colour over each site | yes |
 | `roster.js` | the crew count and its two buttons under each station | yes |
-| `weather.js` | the clouds and the birds, far behind everything | yes |
+| `weather.js` | the clouds and the birds, far behind everything; the clouds swell with the storm's clock and the rain is born under them | yes |
 | `audio.js` | the sound: the only file that names an `AudioContext`. Modules name the event (`sfx('rock-hit', { x, hard, big })`) and it decides what survives the fold window, the ceiling and the voice cap; `SOUNDS` in `config/sound.js` maps each event to its class and a recipe in `RECIPES` (or null: counted, silent), a strike is that recipe rendered sample by sample into a buffer, the same arithmetic as the hit bench, and there is no bed of any kind. The dev panel's `sounds` tab lays the bench's mapping JSON over the table live (`applySounds`). The decision half runs with no context, which is what `test/sound.test.mjs` holds; every number is `SND_*` in `config/sound.js` | yes |
 | `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board. The boards rebuild themselves on the frame: the sim raises `S.shopStale` and never calls the shop; `main.js` drains the flag once after `step`, a press drains it on its own frame, and the hooks drain it before a check reads a board | yes |

@@ -57,11 +57,11 @@ const skyAt = haze => {
   window.__air({ haze }); window.__fast(8);
 };
 
-// A brim sky is certain to break at the next look; the waits are loops on the
-// yard's own readout rather than counted seconds, so the scenes survive
-// retuning.
-const untilBrewing = () => { for (let i = 0; i < 90 && !st().smog.brewing; i++) window.__fast(1); };
-const untilRaining = () => { for (let i = 0; i < 120 && !st().smog.raining; i++) window.__fast(1); };
+// The rain is on a clock of its own, so a scene that wants weather brings
+// the next front forward at a heft; the waits are loops on the yard's own
+// readout rather than counted seconds, so the scenes survive retuning.
+const untilBrewing = (heft = 1) => { window.__front(heft); for (let i = 0; i < 90 && !st().smog.brewing; i++) window.__fast(1); };
+const untilRaining = (heft = 1) => { untilBrewing(heft); for (let i = 0; i < 120 && !st().smog.raining; i++) window.__fast(1); };
 
 // A pointer put on a spot of the yard. Not a hook: standing at a thing is
 // what opens it, and there is no handle that puts the mark up.
@@ -673,8 +673,16 @@ export const SCENES = {
   sky1: { about: 'the house and the sky', say: 'a light sky', run: () => skyAt(900) },
   sky2: { about: 'the house and the sky', say: 'a heavy sky', run: () => skyAt(2100) },
   sky3: { about: 'the house and the sky', say: 'a sky at the brim', run: () => skyAt(4200) },
-  rainbrew: { about: 'the house and the sky', say: "the storm brewing up",
-    run: () => { skyAt(4200); untilBrewing(); window.__fast(9); } },
+  rainbrew: { about: 'the house and the sky', say: "the storm brewing up, the clouds half swelled",
+    run: () => { skyAt(4200); untilBrewing(); window.__fast(20); } },
+  cloudswell: { about: 'the house and the sky', say: 'a heavy front at the end of its brew, no rain yet',
+    run: () => { skyAt(0); untilBrewing(); window.__fast(37); } },
+  cloudlight: { about: 'the house and the sky', say: 'a light front: a few larger clouds, a patchy drizzle',
+    run: () => { skyAt(0); untilRaining(0.3); window.__fast(6); } },
+  cleanrain: { about: 'the house and the sky', say: 'a full storm over a clean sky: water, no acid',
+    run: () => { skyAt(0); untilRaining(); window.__fast(18); } },
+  acidrain: { about: 'the house and the sky', say: 'the same storm over a brim sky: the wash among the water',
+    run: () => { skyAt(4200); untilRaining(); window.__fast(18); } },
   raindrizzle: { about: 'the house and the sky', say: 'the drizzle',
     run: () => { skyAt(4200); untilRaining(); window.__fast(2); } },
   rain: { about: 'the house and the sky', say: 'the full pour',
@@ -685,7 +693,11 @@ export const SCENES = {
     run: () => { skyAt(4200); untilRaining(); window.__fast(14); window.__strike(9, 9); } },
   raintaper: { about: 'the house and the sky', say: 'the taper at the end of the storm',
     run: () => { skyAt(4200); untilRaining();
-                 for (let i = 0; i < 90 && st().smog.haze > 700; i++) window.__fast(1); } },
+                 for (let i = 0; i < 90 && st().smog.rainFor < st().smog.stormLen - 4; i++) window.__fast(1); } },
+  cloudsettle: { about: 'the house and the sky', say: 'the clouds settling after the shower',
+    run: () => { skyAt(0); untilRaining();
+                 for (let i = 0; i < 120 && st().smog.raining; i++) window.__fast(1);
+                 window.__fast(12); } },
   // Dust, haze and a flag in one frame, because the claim is that the three
   // lean together. The clock is seeded, and the two times are where the wind
   // actually is strongest each way inside the first eighty seconds, found by

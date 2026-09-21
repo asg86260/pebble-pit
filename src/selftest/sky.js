@@ -18,9 +18,10 @@ export const TESTS = [
     const clean = has();
     const blind = state().seenAir;
 
-    // To the brim rather than a hair over the line: a sky at the line only
-    // *might* rain at the next look, and a sky at the brim is certain to.
+    // A dirty sky and the next front brought forward: the rain is on a clock
+    // of its own and the dirt never starts it.
     window.__air({ haze: state().smog.cap });
+    window.__front(1);
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
     const rained = has();
@@ -52,8 +53,9 @@ export const TESTS = [
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
     window.__invest();
-    // the brim, so the rain is certain at the next look
+    // a dirty sky, and the next front brought forward
     window.__air({ haze: state().smog.cap });
+    window.__front(1);
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
     // ...and a machine running, which the house waits on

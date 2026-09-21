@@ -15,7 +15,7 @@ import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restO
 import { bankDust, throughRift, spend as spendFromPit, pitTop as muckTopAt, pitRoom, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
-import { SKY, fillSky, forceStrike, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
+import { SKY, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -394,6 +394,11 @@ export const seedGame = n => {
 // whole file, so without this a check about restoring the sky passes on
 // motes that were never cleared.
 export const coldSky = () => clearSky();
+
+// The next front due now, at a heft the check chooses (a full storm unless
+// it says). The roll, the marking and the brew are the game's own; the gap
+// since the last shower is not waived.
+export const front = (heft = 1) => { S.rainDue = 0; pinHeft(heft); };
 
 // Come back to the game the way a page refresh does.
 export const reload = () => { persist(); restore(); buildShop(); };
@@ -869,6 +874,8 @@ export const HANDLES = {
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
   __strike: forceStrike,
+  // The next front brought forward, at a heft: the roll itself is the game's.
+  __front: front,
   // The crit roll forced: true always crits, false never, null rolls for real
   // (crit.js).
   __crit: forceCrit,

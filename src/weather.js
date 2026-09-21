@@ -8,11 +8,14 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_TOP,
+         CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S, CLOUD_GROW_W, CLOUD_GROW_ROWS,
+         CLOUD_GROW_UNDER, CLOUD_LEAN, STORM_BREW_S,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
 import { frames } from './clock.js';
+import { dryTime } from './smog/rain.js';
+import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 import { rand } from './rng.js';
@@ -42,9 +45,26 @@ function inBand() {
   return top + rand() * (low - top);
 }
 
+// --- the front ---------------------------------------------------------------
+// The clouds are the storm's warning. How far the sky is swelled, nought to
+// one, is read off the storm's clock every frame and never kept: up through
+// the brew, held through the pour, and down again over CLOUD_SETTLE_S once the
+// shower has stopped -- so a reload mid-brew comes back at the same swell,
+// and a game picked up again after one is a settled sky, like a dry one.
+const smooth = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
+export function swell() {
+  const heft = S.stormHeft || 0;
+  if (S.stormFor >= 0) return heft * smooth(S.stormFor / STORM_BREW_S);
+  if (S.raining) return heft;
+  return heft * (1 - smooth(dryTime() / CLOUD_SETTLE_S));
+}
+
 // A cloud is a few flat bars stacked and stepped in: widest at the bottom,
-// narrowing upward, and never symmetrical.
-function makeCloud(x) {
+// narrowing upward, and never symmetrical. Its `give` is its own share of the
+// swell, so no two grow a cell on the same frame and the sky never steps in
+// lockstep; a `storm` cloud is one the front brought, which is nothing at all
+// until the swell has grown it and goes as the swell goes.
+function makeCloud(x, storm = false) {
   const w = 10 + Math.floor(rand() * 12);
   const bars = [];
   let a = 0, b = w;
@@ -55,7 +75,37 @@ function makeCloud(x) {
     if (b - a < 3) break;
   }
   const far = 0.14 + rand() * 0.22;
-  return { x, y: inBand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far) };
+  return { x, y: inBand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far),
+           give: 0.7 + rand() * 0.6, storm };
+}
+
+// The bars a cloud is drawn as this frame, swelled: each widens at its foot
+// more than at its crown, rows are added on top continuing the step, and
+// the underside deepens by whole rows. All in whole cells, so a cloud grows
+// a cell at a time; the per-cloud `give` puts each one's steps on frames of
+// its own. A storm cloud is its whole self scaled by the swell.
+function barsOf(c, sw) {
+  const k = Math.min(1, sw * c.give);
+  const grow = Math.round(CLOUD_GROW_W / 2 * k);
+  const scale = c.storm ? k : 1;
+  // Every row's width only ever grows with k -- the widening, the scale and
+  // the rows continued off the crown all do -- so the cloud never loses a
+  // cell on the way up. The rows too thin to draw are dropped last, for
+  // that reason: a row continued off a crown that was itself too thin would
+  // come and go as the crown crossed the line.
+  const rows = [];
+  for (const bar of c.bars) {
+    const g = Math.max(0, grow - bar.r);
+    // the width rounded once, on its own: rounding both ends can lose a cell
+    // between them as the scale grows
+    const a = Math.round((bar.a - g) * scale);
+    rows.push({ a, b: a + Math.round((bar.b - bar.a + 2 * g) * scale), r: bar.r });
+  }
+  const crown = rows[rows.length - 1];
+  const more = Math.round(CLOUD_GROW_ROWS * k);
+  for (let r = 1; r <= more; r++)
+    rows.push({ a: crown.a + 2 * r, b: crown.b - 2 * r, r: crown.r + r });
+  return { bars: rows.filter(bar => bar.b - bar.a >= 3), under: Math.round(CLOUD_GROW_UNDER * k) };
 }
 
 // Where a sky thing is on the screen right now, in world units across the view.
@@ -85,11 +135,24 @@ export function stepWeather(now) {
     c.x = S.camX * c.far - c.w * P - P * 4;    // in off the left, going right
     CLOUDS.push(c);
   }
+  // The front's own clouds: more of them the heavier it is, born anywhere
+  // across the strip since a storm cloud is nothing until the swell grows
+  // it, and gone once the swell has let them shrink to nothing.
+  const sw = swell();
+  const want = CLOUDS_WANTED + Math.round((CLOUDS_STORM - CLOUDS_WANTED) * sw);
+  while (CLOUDS_ON && CLOUDS.length < want) {
+    const c = makeCloud(0, true);
+    c.x = S.camX * c.far + rand() * S.viewW - c.w * P / 2;
+    CLOUDS.push(c);
+  }
+  if (sw <= 0) for (let i = CLOUDS.length - 1; i >= 0; i--) if (CLOUDS[i].storm) CLOUDS.splice(i, 1);
   // Pixels a frame, stepped by how long the frame was, or the sky slows down
   // on a slow machine while the clock behind it does not.
   const f = frames();
+  // a swelled cloud leans with the wind the rain under it leans with
+  const lean = gust() * CLOUD_LEAN * sw;
   for (const c of CLOUDS) {
-    c.x += c.vx * f;
+    c.x += (c.vx + lean) * f;
     const at = acrossView(c);
     if (at > S.viewW + P * 8) c.x -= wide;     // out the right, back in the left
     else if (at < -c.w * P - P * 8) c.x += wide;
@@ -128,8 +191,39 @@ export function skyReport() {
     birdAcross: BIRDS.map(across),
     birdWorld: BIRDS.map(b => ({ x: skyX(b), y: Math.round(b.y / P) * P })),
     drifts: CLOUDS.every(c => c.vx > 0),
-    fars: CLOUDS.map(c => +c.far.toFixed(2))
+    fars: CLOUDS.map(c => +c.far.toFixed(2)),
+    // the front: how far the sky is swelled, and how many cells of cloud
+    // are drawn, so a check can watch it grow a cell at a time
+    swell: +swell().toFixed(3),
+    storm: CLOUDS.filter(c => c.storm).length,
+    cloudEach: CLOUDS.map(c => cellsOf(c, swell())),
+    cloudCells: CLOUDS.reduce((n, c) => n + cellsOf(c, swell()), 0)
   };
+}
+
+// the cells a cloud is drawn as, for the report
+function cellsOf(c, sw) {
+  const { bars, under } = barsOf(c, sw);
+  return bars.reduce((m, b) => m + (b.b - b.a), 0) + (bars[0] ? under * (bars[0].b - bars[0].a) : 0);
+}
+
+// Where rain is born: the underside of every cloud bar over the window, as
+// world spans with the y of that underside. The sheet falls out of the thing
+// that swelled, so a light front rains in patches and a heavy one everywhere.
+export function rainSpans() {
+  const out = [];
+  const sw = swell();
+  const left = S.camX, right = S.camX + S.viewW;
+  for (const c of CLOUDS) {
+    const { bars, under } = barsOf(c, sw);
+    const foot = bars[0];
+    if (!foot) continue;
+    const x = skyX(c);
+    const x0 = Math.max(left, x + foot.a * P), x1 = Math.min(right, x + foot.b * P);
+    if (x1 <= x0) continue;
+    out.push({ x0, x1, y: Math.round(c.y / P) * P + under * P });
+  }
+  return out;
 }
 
 // A few birds, strung out rather than in a formation: same heading, each a
@@ -216,13 +310,19 @@ function skyX(s) {
 }
 
 export function drawClouds() {
+  const sw = swell();
   for (const c of CLOUDS) {
     const x = skyX(c);
     const y = Math.round(c.y / P) * P;
-    for (const bar of c.bars) {
+    const { bars, under } = barsOf(c, sw);
+    for (const bar of bars) {
       ctx.fillStyle = bar.r ? CLOUD_TONE : CLOUD_UNDER;   // the underside is the darker one
       ctx.fillRect(x + bar.a * P, y - (bar.r + 1) * P, (bar.b - bar.a) * P, P);
     }
+    // and the deepened underside, rows of the foot hung below it
+    const foot = bars[0];
+    if (foot) for (let k = 0; k < under; k++)
+      ctx.fillRect(x + foot.a * P, y + k * P, (foot.b - foot.a) * P, P);
   }
   ctx.fillStyle = '#000';
 }

@@ -362,8 +362,11 @@ export const S = {
   raining: false,         // and whether it is coming back down right now
   rainFor: 0,             // seconds into this shower, which is how hard it is coming down
   bolt: null,             // a strike in the sky: its cells and how long it has left, or null
-  // The storm's front: a break rolls a brew-up, not a shower.
+  // The storm's front: the clock rolls a brew-up, not a shower.
   stormFor: -1,           // seconds since the roll, or -1 for no storm on the way
+  rainDue: -1,            // seconds until the next front is rolled; -1 until the yard sets it
+  stormHeft: 1,           // how big the front on the way (or pouring) is, 0..1
+  stormLeft: 0,           // marked motes still to fall in this shower
   rains: 0,               // how many times they have
   scrubOpen: false,       // the house is built
   purifiers: 0,           // and this many bodies are in it
@@ -520,7 +523,7 @@ export const SAVED = [
   // The weather in flight, or a refresh mid-storm clears the sky. The bolt is
   // a flash and stays ephemeral; the sky's motes are re-marked as this
   // storm's on the way in.
-  'raining', 'rainFor', 'stormFor',
+  'raining', 'rainFor', 'stormFor', 'rainDue', 'stormHeft', 'stormLeft',
   // A rock on its way down, or a refresh under a falling rock lands it at
   // once.
   'rockFall', 'rockFallV',

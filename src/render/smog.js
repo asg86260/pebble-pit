@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, EMBERS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -222,25 +222,29 @@ export function drawDraught() {
 
 export function drawRain() {
   if (!DROPS.length) return;
-  // One path for the whole shower (see `drawSmog`). A drop is a dash of cells
-  // along the way it is going, each cell stepped sideways by however far the
-  // wind carries it in one cell of fall, so the whole sheet comes down slanted
-  // at one angle: a shower drawn in squares is a dirtier sky, not a storm.
+  // Two paths for the whole shower (see `drawSmog`): the water in its pale
+  // tone and the acid in the muck's, so the sheet says what it is before it
+  // lands. A drop is a dash of cells along the way it is going, each cell
+  // stepped sideways by however far the wind carries it in one cell of fall,
+  // so the whole sheet comes down slanted at one angle: a shower drawn in
+  // squares is a dirtier sky, not a storm.
   const lean = gust() * RAIN_LEAN;
   // The dash is as long as the drop is fast: slow far flecks, long near strokes.
   const slowest = RAIN_FALL - RAIN_FALL_GIVE / 2;
   const cellsPer = (RAIN_DASH_MAX - RAIN_DASH_MIN + 1) / (RAIN_FALL_GIVE || 1);
-  ctx.fillStyle = MUCK_GREY;
-  ctx.beginPath();
-  for (const d of DROPS) {
-    if (!onScreen(d.x)) continue;
-    const x = Math.round(d.x), y = Math.round(d.y);
-    const step = lean / d.vy * P;             // sideways per cell of fall
-    const len = Math.min(RAIN_DASH_MAX, RAIN_DASH_MIN + Math.floor((d.vy - slowest) * cellsPer));
-    for (let k = 0; k < len; k++)
-      ctx.rect(x - Math.round(k * step), y - k * P, P, P);
+  for (const dirt of [false, true]) {
+    ctx.fillStyle = dirt ? MUCK_GREY : RAIN_WATER_TONE;
+    ctx.beginPath();
+    for (const d of DROPS) {
+      if (!!d.dirt !== dirt || !onScreen(d.x)) continue;
+      const x = Math.round(d.x), y = Math.round(d.y);
+      const step = lean / d.vy * P;             // sideways per cell of fall
+      const len = Math.min(RAIN_DASH_MAX, RAIN_DASH_MIN + Math.floor((d.vy - slowest) * cellsPer));
+      for (let k = 0; k < len; k++)
+        ctx.rect(x - Math.round(k * step), y - k * P, P, P);
+    }
+    ctx.fill();
   }
-  ctx.fill();
 }
 
 // The bolt: black, full for the first half of its life and fading through the

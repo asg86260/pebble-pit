@@ -82,16 +82,18 @@ group('buying a pot re-walks the yard rather than spending reserved ground', asy
   ];
 });
 
-// The storm, watched all the way through: darkness first, then a drizzle
-// gentler than the pour, then the taper, and a clean end with the wash gone.
+// The storm, watched all the way through: the brew first, then a drizzle
+// gentler than the pour, then the taper, and an end with every marked mote
+// down and the rest of the sky still up.
 group('a storm brews up, pours, and trails off', async () => {
   run(0.4);
   window.__crew(0, 0);
   window.__air({ haze: state().smog.cap, muck: 0 });
 
-  // The roll lands within a look or two at the brim, and what it starts is a
-  // brew, not a shower: no drop falls while the sky darkens.
-  const brewed = runUntil(() => state().smog.brewing, 30);
+  // The front brought forward (the rain is on its own clock), and what it
+  // starts is a brew, not a shower: no drop falls while the clouds swell.
+  window.__front(1);
+  const brewed = runUntil(() => state().smog.brewing, 5);
   run(10);
   const mid = state().smog;
   const noRainYet = !mid.raining && mid.drops === 0;
@@ -106,20 +108,22 @@ group('a storm brews up, pours, and trails off', async () => {
   run(12);                                     // well past the rise
   const peak = state().smog.drops;
 
-  // The taper: watched down to the end. The rate falls away with what is left,
-  // and when it stops there is nothing marked left.
+  // The taper: watched down to the end. When it stops there is nothing
+  // marked left, and the sky it did not mark is still there.
   runUntil(() => !state().smog.raining, 120);
   const done = state().smog;
   window.__air({ haze: 0, muck: 0 });
   return [
-    ok(brewed, 'a brim sky commits to a storm within a look or two'),
+    ok(brewed, 'the front brews up'),
     ok(noRainYet, 'with not a drop falling while it brews',
        `${mid.drops} drops, raining ${mid.raining}`),
     ok(atOpen.raining && atOpen.rains >= 1, 'then the drizzle begins'),
     ok(drizzle < peak / 2, 'and the drizzle is far gentler than the pour',
        `${drizzle} drops in the air against ${peak} at the peak`),
-    ok(done.haze < 40, 'and the shower still ends clean: every marked mote falls',
-       `${Math.round(done.haze)} haze left`)
+    ok(done.left === 0, 'and the shower ends clean: every marked mote falls',
+       `${done.left} marked left`),
+    ok(done.haze > done.cap / 2, 'while the sky it did not mark is still up there',
+       `${Math.round(done.haze)} of ${done.cap} haze left`)
   ];
 });
 

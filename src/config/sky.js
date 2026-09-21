@@ -14,34 +14,33 @@
 export let SMOG_PER_DUST = 0.08;
 export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
-// The sky has to get properly filthy before it comes down, or the rain arrives
-// while the sky is still a scatter of specks and the cause is never on screen
-// long enough to be read as one.
-export const SMOG_RAIN_AT = 3200;    // and this many of them up there brings it down
+// The line the readout draws: a sky past it is one the next storm will make
+// a mess of. The rain itself no longer reads it (see "when it breaks").
+export const SMOG_RAIN_AT = 3200;
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
 
 // --- when it breaks -----------------------------------------------------------
-// A sky over the line does not come down on the frame it crosses it. The yard
-// takes a *sample* of what is overhead every few seconds and rolls, so you
-// cannot stand under a full band counting frames to the drop: a filthy sky
-// means it is *likely* to rain, and how likely is how filthy.
-export const SMOG_SAMPLE = 5;        // seconds between one look at the sky and the next
-// How hard the rain's odds bend against how full the sky is: the chance is the
-// share of the cap raised to this, so a lightly dirty yard is very nearly
-// never rained on and a brimming one rains the moment RAIN_GAP lets it.
-// Against a five-second sample and a minute's dry: a quarter-full sky is a
-// shower about once an hour and a half, a half-full one about one in three
-// minutes, three-quarters about one in ninety seconds.
-//
-// **This is a balance lever, not a look.** Rain takes down the whole sky it
-// breaks on, so a bend that is too gentle has the weather doing the house's
-// job for it, and the house is meant to be the thing you invest in.
-export let SMOG_RAIN_BEND = 5;
-// A minute of dry between one shower and the next. A shower takes down the sky
-// it broke on and nothing else, so over a busy yard the band is back over the
-// line when it stops, and two rains with a frame between them is one rain that
-// stuttered.
+// The rain is the sky's own and the dirt never starts it: a front is due every
+// RAIN_EVERY_S on average, rolled between (1 - GIVE) and (1 + GIVE) of that,
+// whatever is overhead. What the dirt decides is what the shower costs
+// (RAIN_WASH). DESIGN.md, "Weather".
+export let RAIN_EVERY_S = 360;
+export let RAIN_EVERY_GIVE = 0.6;
+// The first front of a save comes early and at full heft, so the lightning is
+// seen in the first quarter hour over a sky too clean to mark.
+export let RAIN_FIRST_S = 180;
+// A minute of dry between one shower and the next, a floor under the roll.
 export const RAIN_GAP = 60;          // seconds of dry before another may break
+// The share of the settled sky a full storm carries down, and so how fast an
+// ignored sky becomes muck: the balance lever of the weather. A lighter front
+// takes its heft's share of this.
+export let RAIN_WASH = 0.35;
+// How long a full storm pours, and the least any front does. The envelope
+// (drizzle, rise, taper) is read off this length; the marked motes are spread
+// down it so the dirt comes with the rain rather than in a lump at the front.
+export let RAIN_LEN_S = 45;
+export const RAIN_LEN_MIN_S = 12;
+export const RAIN_TAPER_S = 8;      // the taper at the end, in seconds of the shower
 // Haze each mote in the sky stands for -- really how *many* specks a dirty sky
 // is made of, which is what decides whether you can see one. The band is spread
 // evenly over the whole world and the window shows an eighth of it. Everything
@@ -118,23 +117,25 @@ export const PLUME_THIN = 2.5;
 // There is no cap on how many specks may be climbing at once: past a cap the
 // next mote went straight into the band, which read as pollution appearing out
 // of nothing in the middle of the sky.
-// Grains a second across the whole yard. A brim sky is about forty seconds of
-// shower, and a lighter one proportionally shorter; the muck a shower leaves
-// is duration-independent (motes times RAIN_MARK), so the length only has to
-// be long enough to be weather.
-export let RAIN_PER_S = 650;        // per mote: a sky of more specks takes more of them a second
+// Clean drops a second across one window's width of sky at full pour; the
+// sheet is water, and the marked motes fall among it as the acid. Per window
+// rather than per yard so a wide world is not a thicker shower.
+export let RAIN_PER_S = 650;
+// The tone of a clean drop: lighter than the lightest rock shade, since
+// nothing in the sky may borrow those, and paler than the muck a dirty drop
+// is drawn in, so the acid shows in the sheet before it lands.
+export const RAIN_WATER_TONE = '#a4a4a4';
 
 // --- the shape of a storm -------------------------------------------------------
 // A storm is an event with a front and a tail, not a switch: it *brews* for
-// STORM_BREW_S, then a drizzle at a fifth of the rate, a smoothstep up to the
-// full pour, and a taper at the end (`pour` in smog/rain.js). No darkening
-// wash through the brew: the sky itself is the warning, and a pane over it
-// read as a screen effect.
-export let STORM_BREW_S = 20;       // seconds of brewing before the first drop
+// STORM_BREW_S while the clouds swell, then a drizzle at a fifth of the rate,
+// a smoothstep up to the full pour, and a taper at the end (`pour` in
+// smog/rain.js). No darkening wash through the brew: the clouds are the
+// warning, and a pane over the sky read as a screen effect.
+export let STORM_BREW_S = 40;       // seconds of brewing before the first drop
 export let RAIN_DRIZZLE_S = 6;      // seconds of drizzle before the pour comes on
 export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full takes
-export const RAIN_TAPER_AT = 0.25;  // taper once this share of the marked sky is left
-export const RAIN_TAPER_FLOOR = 0.1; // and never below this share of the rate
+export const RAIN_TAPER_FLOOR = 0.1; // the taper never goes below this share of the rate
 // How a drop moves, in pixels a frame. One speed: rain is at terminal velocity
 // long before it is anywhere you can see it, and a drop gaining speed down the
 // window reads as something dropped. The give is how much one drop may differ
@@ -216,8 +217,16 @@ export let PUFF_WANDER = 14;
 export const SKY_KNOBS = [
   { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02,
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
-  { key: 'SMOG_RAIN_BEND', label: 'rain bend', min: 1, max: 8, step: 0.1,
-    get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } },
+  { key: 'RAIN_EVERY_S', label: 'rain every', min: 30, max: 1200, step: 10,
+    get: () => RAIN_EVERY_S, set: v => { RAIN_EVERY_S = v; } },
+  { key: 'RAIN_EVERY_GIVE', label: 'rain spread', min: 0, max: 0.9, step: 0.05,
+    get: () => RAIN_EVERY_GIVE, set: v => { RAIN_EVERY_GIVE = v; } },
+  { key: 'RAIN_FIRST_S', label: 'first rain', min: 10, max: 900, step: 10,
+    get: () => RAIN_FIRST_S, set: v => { RAIN_FIRST_S = v; } },
+  { key: 'RAIN_WASH', label: 'rain wash', min: 0, max: 1, step: 0.05,
+    get: () => RAIN_WASH, set: v => { RAIN_WASH = v; } },
+  { key: 'RAIN_LEN_S', label: 'rain length', min: 12, max: 180, step: 1,
+    get: () => RAIN_LEN_S, set: v => { RAIN_LEN_S = v; } },
   { key: 'RAIN_PER_S', label: 'rain rate', min: 100, max: 3000, step: 25,
     get: () => RAIN_PER_S, set: v => { RAIN_PER_S = v; } },
   { key: 'STORM_BREW_S', label: 'storm brew', min: 0, max: 60, step: 1,

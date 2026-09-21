@@ -8,6 +8,19 @@ import { P } from './yard.js';
 // (`band` in `weather.js`), so the two are layered rather than mixed.
 export const CLOUDS_ON = true;
 export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in view
+// The clouds are the front. Through a storm's brew they swell -- each one
+// wider, taller, with a heavier underside -- and more come in off the sides,
+// up to CLOUDS_STORM at a full heft; through the taper and for CLOUD_SETTLE_S
+// after it they shed it all again. The swell is derived off the storm's clock
+// every frame and never saved (`swell` in weather.js).
+export const CLOUDS_STORM = 12;
+export let CLOUD_SETTLE_S = 30;
+export const CLOUD_GROW_W = 10;      // cells a cloud widens by at a full swell
+export const CLOUD_GROW_ROWS = 3;    // rows it gains on top
+export const CLOUD_GROW_UNDER = 2;   // and rows its underside deepens by
+// World pixels a frame a full gust carries a fully swelled cloud, on top of
+// its own drift: the front leans with the sheet under it.
+export const CLOUD_LEAN = 0.12;
 // The muck the rain leaves: a third earth color beside the quarry's blue and
 // the farm's green, and deliberately the drab one, since it is worth nothing.
 // Not grey: a pile of dust is a block of grey cells, so grey muck lying on a
@@ -50,5 +63,7 @@ export let CUT_MS = 700;
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.
 export const WEATHER_KNOBS = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50,
-    get: () => CUT_MS, set: v => { CUT_MS = v; } }
+    get: () => CUT_MS, set: v => { CUT_MS = v; } },
+  { key: 'CLOUD_SETTLE_S', label: 'cloud settle', min: 0, max: 120, step: 1,
+    get: () => CLOUD_SETTLE_S, set: v => { CLOUD_SETTLE_S = v; } }
 ];

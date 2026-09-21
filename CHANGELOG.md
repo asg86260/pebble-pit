@@ -11,6 +11,9 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+**New this release**
+- Weather: it rains on its own clock now, clean rain that carries down a share of whatever smoke is overhead as acid among the water; the first storm of a yard comes in the first few minutes with the lightning, and the clouds swell before a front and settle after (test/weather.test.mjs).
+
 - The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
 - On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").
 

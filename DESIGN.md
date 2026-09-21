@@ -12207,7 +12207,7 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
-## Weather (design, not built)
+## Weather (built 2026-09-20)
 
 The rain is the sky's own, and the dirt only decides what it costs. Today a
 shower is *caused* by the smoke: the sky is sampled every few seconds, a
@@ -12375,3 +12375,39 @@ side on the bench.
   this design: the point is that the sky is not the cause. If the balance
   wants an ignored sky punished faster, `RAIN_WASH` is the lever, not the
   clock.
+
+### What building it changed
+
+- **The clouds are faint, and stay faint.** The base tones (`CLOUD_TONE`,
+  `CLOUD_UNDER`) sit a few steps off the paper on either page, so a swelled
+  sky reads as a pale ceiling rather than a dark one. Built as approved --
+  no third tone -- and `cloudswell` on the bench is the shot to judge it
+  by. If the front wants more presence, the call is a tone that deepens
+  with the swell, still well lighter than the lightest rock shade; it is a
+  one-line change in `drawClouds` and is not made here.
+- **A row's width is rounded once.** A storm cloud is its whole shape scaled
+  by the swell, and rounding both ends of a bar lost a cell between them as
+  the scale grew, so a cloud on its way up shrank on odd frames. The width is
+  rounded on its own and the left end placed after; the rows continued off
+  the crown are cut from the *unfiltered* crown for the same reason. The
+  check counts cells a frame and refuses a single shrink.
+- **`S.stormLeft`**, saved: how many marked motes are still to fall. A load
+  rebuilds the band out of the haze, so a reload mid-pour would otherwise
+  mark a fresh share of what was left, and a shower watched under the
+  five-second reload harness came down twice over. `remarkSky` marks that
+  many of the rebuilt band instead.
+- **A migration** (`2026-09-20-weather`, `SAVE_V` 4): a save from before has
+  no clock, and a clock of -1 never comes due, so it is given the first
+  front the way a new yard is.
+- **The taper is seconds, not a share.** With the length the storm's own
+  there is no marked count to take a quarter of; `RAIN_TAPER_S` is the last
+  seconds of the shower and `RAIN_TAPER_AT` is gone.
+- **Drops carry `dirt`**, saved as a fourth field; a drop from an older save
+  has none and was sky, so it is dirty.
+- **The rain rate is per window,** since it is no longer a drop a mote: a
+  wide world is not a thicker shower.
+- The bolt check in `sky-rain` looks four times a second: a bolt hangs for
+  0.6 s and a once-a-second look missed every one of a storm's strikes on
+  one seed.
+- `SMOG_RAIN_AT` stays as the readout's line (and `cloudR`); only the roll
+  that read it is gone.

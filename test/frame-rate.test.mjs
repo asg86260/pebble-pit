@@ -148,7 +148,7 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
     window.__reset();
     window.__crew(0, 0);
     // To the brim, which is the one sky certain to break at the next look: over
-    // the line is only a chance now (see `rainOdds` in smog.js).
+    // the rain is on a clock of its own now (test/weather.test.mjs).
     window.__air({ haze: state().smog.cap, muck: 0 });
     // Frame by frame rather than a second at a time. The shower is measured from
     // the frame it starts on, and a coarse wait leaves it up to a second into its

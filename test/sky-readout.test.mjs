@@ -205,8 +205,8 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   window.__crew(3, 3, 5);
   window.__machine('jaw', { bought: true });
   haveRock();
-  // A sky at the brim, which is the one that is certain to break at the next
-  // look: over the line is a chance now, not an event. See `makeItRain`.
+  // A sky at the brim and the front brought forward: the rain is on its own
+  // clock now. See `makeItRain`.
   const wet = makeItRain();
 
   // watched all the way through, because what went wrong before went wrong
@@ -235,9 +235,11 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   healJaw();
   return [
     ok(wet, 'a sky over the line comes down'),
-    ok(dry && dry.haze < 40,
-       'and when it stops there is next to nothing left overhead',
-       `${dry && Math.round(dry.haze)} haze, ${dry && dry.sky} motes`),
+    // The front's share of it, not the lot: only the house empties the sky,
+    // and a shower that stops is one with nothing marked left in it.
+    ok(dry && dry.left === 0 && dry.haze > 0,
+       'and when it stops every mote it marked has fallen and the rest is still up',
+       `${dry && dry.left} marked left, ${dry && Math.round(dry.haze)} haze, ${dry && dry.sky} motes`),
     ok(flips === 1, 'it stops once rather than flickering off and on',
        `${flips} changes of state`),
     ok(after.rains === rains,

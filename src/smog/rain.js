@@ -1,5 +1,6 @@
 import { frames } from '../clock.js';
-import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { rainSpans } from '../weather.js';
 import { rand } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -8,9 +9,10 @@ import { colAt, muckCols, muckFloor } from './layer.js';
 import { dropped, moteX, moteY } from './sky.js';
 
 // --- the rain ----------------------------------------------------------------------
-// No clock. It runs until the marked sky is empty, because what falls *is*
-// the sky: a mote drops out of it, comes down under gravity and lands.
-const RAIN_FLOOR = 4;
+// A shower is water, and the wash is what is acid in it: a sheet of clean
+// drops out of the clouds for the storm's own length, and among them the
+// motes the front marked, one mote one drop, coming down as muck. A clean
+// drop lands and is gone.
 
 // What falls has to have got there first: a mote is settled once it has eased
 // into the band (the same `SMOG_SINK` the sinking-in uses). Picking from the
@@ -25,45 +27,87 @@ const doomed = m => settled(m) && m.rain === S.rains;
 // A plain smoothstep, nought to one across [0, 1]: a shower has no corners.
 const smooth = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 
-// How many motes the shower broke on, written at the roll and read by the
-// taper: "a quarter of the marked sky left" is a share of what was marked, not
-// of whatever has climbed up since.
-let stormMarked = 0;
-export const markStorm = n => { stormMarked = n; };
+// The front's share of the settled sky, marked at the roll: a uniform pick,
+// so the wash is spread over the whole band and not one end of it. What is
+// not marked stays up; only the house empties the sky. `S.stormLeft` is how
+// many are still to fall, saved, so a reload marks that many of the rebuilt
+// band and not a fresh share of it.
+export function markSky(share = RAIN_WASH * S.stormHeft) {
+  let marked = 0;
+  for (const m of SKY) if (settled(m) && rand() < share) { m.rain = S.rains; marked++; }
+  S.stormLeft = marked;
+  return marked;
+}
 
-// One for a shower in full voice down to nought as the last marked motes
-// fall; the wash over the sky reads it.
-let tail = 1;
+// A save coming back mid-storm: the motes still owed, out of what is settled.
+export function remarkSky() {
+  let up = 0;
+  for (const m of SKY) if (settled(m)) up++;
+  markSky(up ? Math.min(1, (S.stormLeft || 0) / up) : 0);
+}
+
+// How long this front pours: its heft's share of a full storm, and never
+// under the floor, so a drizzle is still weather.
+export const stormLen = () => Math.max(RAIN_LEN_MIN_S, RAIN_LEN_S * S.stormHeft);
+
+// The shower's envelope at a moment: a drizzle at a fifth of the rate, a
+// smoothstep up to the full pour, and a taper over the last seconds so it
+// trails off instead of cutting.
+export function envelope(t) {
+  const up = 0.2 + 0.8 * smooth((t - RAIN_DRIZZLE_S) / RAIN_RISE_S);
+  const tail = smooth((stormLen() - t) / RAIN_TAPER_S);
+  return up * (RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail);
+}
+
+// What the rain has done, for the rules: drops landed by kind and the muck the
+// dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
+export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
+
+// One frame of the shower. The length is the storm's own; the marked motes
+// come down through it in proportion to the envelope, so the dirt arrives
+// with the rain and not in a lump at the front, and the shower is over when
+// its time is up and the last marked mote has gone.
 export function pour(secs) {
-  if (!SKY.length) { S.raining = false; tail = 0; return; }
-
-  // The envelope: a drizzle at a fifth of the rate, a smoothstep up to the
-  // full pour, and a taper over the last quarter of the marked sky so the
-  // shower trails off instead of cutting. Nothing is lost to the shape; it
-  // runs until every marked mote is gone.
   S.rainFor = (S.rainFor || 0) + secs;
   const t = S.rainFor;
-  const env = 0.2 + 0.8 * smooth((t - RAIN_DRIZZLE_S) / RAIN_RISE_S);
-  let n = RAIN_PER_S * secs * env;
+  const len = stormLen();
+  const env = envelope(t);
   // A strike now and then at the height of it. Squared on the envelope so the
-  // drizzle and the taper hardly ever flash; one at a time, because a second
-  // bolt over the first is a fizz.
-  if (!S.bolt && rand() < secs * env * env / BOLT_EVERY_S) S.bolt = strike();
+  // drizzle and the taper hardly ever flash, and by the heft so a light front
+  // never does; one at a time, because a second bolt over the first is a fizz.
+  if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
-  // Which ones may fall, as indices: this runs every frame of a downpour over
-  // thousands of specks, so a pick is a swap out of the back of the list, not
-  // a search.
+  // The water: clean drops out of the clouds over the window. Where the strip
+  // has no cloud over a column the sheet is thinner there, so a light front
+  // rains in patches and a heavy one everywhere.
+  const spans = rainSpans();
+  if (spans.length) {
+    let n = RAIN_PER_S * secs * env;
+    let total = 0;
+    for (const sp of spans) total += sp.x1 - sp.x0;
+    while (n > 0) {
+      if (n < 1 && rand() > n) break;
+      n -= 1;
+      let at = rand() * total;
+      for (const sp of spans) {
+        const w = sp.x1 - sp.x0;
+        if (at > w) { at -= w; continue; }
+        DROPS.push({ x: sp.x0 + at, y: sp.y, dirt: false,
+                     vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
+        break;
+      }
+    }
+  }
+
+  // The acid: which marked motes may fall, as indices. This runs every frame
+  // over thousands of specks, so a pick is a swap out of the back of the list,
+  // not a search.
   const pick = [];
   for (let i = 0; i < SKY.length; i++) if (doomed(SKY[i])) pick.push(i);
-  // Nothing settled left: a shower does not reach down the plume.
-  if (!pick.length) { S.raining = false; tail = 0; return; }
-
-  // The taper floor is never nothing, so every marked mote still goes and the
-  // shower ends clean.
-  const frac = stormMarked > 0 ? pick.length / stormMarked : 1;
-  tail = smooth(frac / RAIN_TAPER_AT);
-  if (frac < RAIN_TAPER_AT) n *= RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail;
-
+  // Spread over what is left of the shower, weighted by the envelope, and the
+  // lot of them in the last frame so none is left hanging.
+  const left = len - t;
+  let n = left <= secs ? pick.length : pick.length * secs * env / (left * 0.8);
   const gone = new Set();
   while (n > 0 && pick.length) {
     if (n < 1 && rand() > n) break;
@@ -77,7 +121,7 @@ export function pour(secs) {
     // The drop falls from over the top of the window, not from where its mote
     // hung: drops materializing at every height of the screen read as the air
     // leaking. The mote thins out where it stood; one mote taken is one drop.
-    DROPS.push({ x: moteX(m), y: S.camY - P,
+    DROPS.push({ x: moteX(m), y: S.camY - P, dirt: true,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
     if (GOING.length < GOING_CAP)
       GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind, tone: m.tone,
@@ -91,11 +135,8 @@ export function pour(secs) {
     for (let i = 0; i < SKY.length; i++) if (!gone.has(i)) SKY[w++] = SKY[i];
     SKY.length = w;
   }
-  // Over when the sky it broke on is gone, whatever has arrived since. No
-  // second condition on the number: the number is the specks, so a shower
-  // that stopped on a figure could stop with a filthy figure over an empty
-  // sky and start again next frame, for ever.
-  if (!SKY.some(doomed)) { S.raining = false; tail = 0; }
+  S.stormLeft = pick.length;
+  if (t >= len && !pick.length) S.raining = false;
 }
 
 // --- the brew-up ---------------------------------------------------------------
@@ -240,47 +281,48 @@ export function stepDrops() {
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
     const rest = muckFloor(c) - m[c] * P;
     if (d.y < rest - P) continue;
-    if (rand() < RAIN_MARK && m[c] < MUCK_MAX) m[c]++;
+    // Only what was sky leaves a mark; the water is water.
+    if (d.dirt) {
+      LEDGER.dirty++;
+      if (rand() < RAIN_MARK && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
+    } else LEDGER.clean++;
     DROPS.splice(i, 1);
   }
 }
 
-// --- whether it rains ----------------------------------------------------------------
-// The sky is looked at every few seconds and asked, not compared against a
-// line every frame. There is no line: one curve, the share of the cap raised
-// to `SMOG_RAIN_BEND`, so the chance falls away far faster than the sky
-// clears and a lightly dirty yard is not rained on. Nought at nought exactly:
-// a clean sky is not a question, and asking it anyway would take a number off
-// the yard's one generator every few seconds (see `breaks`).
-export function rainOdds() {
-  if (!(S.haze > 0)) return 0;
-  const share = Math.min(1, S.haze / SMOG_CAP);
-  return Math.min(1, Math.pow(share, SMOG_RAIN_BEND));
+// --- when it rains ------------------------------------------------------------------
+// The rain is the sky's own: a front is due every few minutes on a rolled
+// interval, whatever is overhead, and the dirt only decides what the shower
+// costs. The clock runs down between showers and stands still through one.
+export const nextDue = () =>
+  RAIN_EVERY_S * (1 + (rand() * 2 - 1) * RAIN_EVERY_GIVE);
+
+// How big the front rolled now is. The first of a save is a full storm, so
+// the lightning is seen early over a sky too clean to mark; a check may pin
+// the next one (`__front`).
+let pinned = null;
+export const pinHeft = h => { pinned = h; };
+export function rollHeft() {
+  const h = pinned ?? (S.rains === 1 ? 1 : rand());
+  pinned = null;
+  return h;
 }
 
-// Seconds since the last shower stopped, and since the sky was last looked
-// at. Facts about a run, not a save: a game picked up again is a dry yard.
-export let dryFor = Infinity, sinceLook = 0;
+// Seconds since the last shower stopped. A fact about a run, not a save: a
+// game picked up again is a dry yard.
+export let dryFor = Infinity;
 
 export const dryTime = () => dryFor;
 // Put back from `seedSmog`; only the declaring file may write it.
-export const resetRain = () => { dryFor = Infinity; sinceLook = 0; };
+export const resetRain = () => { dryFor = Infinity; pinned = null; LEDGER.clean = LEDGER.dirty = LEDGER.laid = 0; };
 
-// Asked every frame and answered on the frames a sample falls due, so the
-// roll happens at the sampling rate however fast the machine is running.
-export function breaks(secs) {
-  // A storm on the way is a storm: the sky is not asked again while it brews.
-  if (raining() || brewing()) { dryFor = 0; sinceLook = 0; return false; }
+// Asked every frame; true on the frame the front is due. The yard sets the
+// first `rainDue` (`seedSmog`); a save from before the clock has none and is
+// given the first front. RAIN_GAP is a floor under the roll, not a schedule.
+export function stepFront(secs) {
+  if (raining() || brewing()) { dryFor = 0; return false; }
   dryFor += secs;
-  sinceLook += secs;
-  if (sinceLook < SMOG_SAMPLE) return false;
-  sinceLook = 0;
-  // A shower rains the sky it broke on and the works go on fouling underneath
-  // it, so without RAIN_GAP a busy yard comes out of one downpour straight
-  // into the next.
-  if (dryFor < RAIN_GAP) return false;
-  // The roll only if there are odds: a coin flipped for a clean sky would
-  // make every seeded run, weather or not, come out differently.
-  const odds = rainOdds();
-  return odds > 0 && rand() < odds;
+  if (!(S.rainDue >= 0)) return false;
+  S.rainDue = Math.max(0, S.rainDue - secs);
+  return S.rainDue <= 0 && dryFor >= RAIN_GAP;
 }

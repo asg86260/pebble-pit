@@ -37,8 +37,8 @@ import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
 import { pullCraft } from './smog/craft.js';
-import { breaks, dryTime, forceStrike, markStorm, pour, rainOdds, settled, stepBolt, stepDrops, stepEmbers, EMBERS,
-         stepGoing, stepStorm } from './smog/rain.js';
+import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
+         stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck,
          plotMuck, poopCols, poopLeft, quarryMuck, retally, rockMuck, slumpMess,
@@ -48,9 +48,9 @@ import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
 // A save coming back. The band is rebuilt out of the haze (sky.js); a storm
-// brewing or pouring at the save marks the rebuilt sky as its own, the same
-// rule the roll applies, or the shower finds no mote it may drop and calls
-// itself over.
+// brewing or pouring at the save marks the rebuilt sky as its own by the same
+// share the roll took, or the shower finds no mote it may drop and pours
+// clean.
 export function skyFromSave(kinds = null, drops = null, puffs = null) {
   // The haze counts the plume too, so what the plume will put back is taken
   // off before the fill and reckoned again once it is up.
@@ -68,11 +68,13 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
     enter(p);
   }
   reckon();
-  // The rain already falling, where it was. See `drops` in persist.js.
+  // The rain already falling, where it was. A drop saved before the water
+  // came has no fourth field and was sky, so it is dirty.
   if (Array.isArray(drops))
     for (const d of drops)
       if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1]))
-        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL });
+        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL,
+                     dirt: d.length < 4 || !!d[3] });
   // The rebuild makes dust; the saved share of soot, spore and the rest is
   // relabelled onto it, look and all, so the readout of what dirtied the sky
   // survives a refresh.
@@ -87,10 +89,7 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
       }
     }
   }
-  if (!(S.raining || S.stormFor >= 0)) return;
-  let marked = 0;
-  for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
-  markStorm(marked);
+  if (S.raining || S.stormFor >= 0) remarkSky();
 }
 
 // The sky, on the save (persist.js, `SAVERS`): the haze as a number and
@@ -105,7 +104,7 @@ export const SAVE = {
     // tells the readout nothing but hand work fouled it.
     out.skyKinds = skyKindCounts();
     // The drops already falling are the muck the shower was about to leave.
-    out.drops = DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2)]);
+    out.drops = DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2), d.dirt ? 1 : 0]);
     // Every speck still on its way up, with its climb.
     out.puffs = SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
                                              Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]);
@@ -135,7 +134,7 @@ export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
          foul, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
-         DRAUGHT, rainOdds, dryTime, forceStrike, EMBERS,
+         DRAUGHT, dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,
          nearestMuck, rockMuck, quarryMuck, plotMuck, buried, retally,
@@ -155,19 +154,21 @@ export function stepSmog(dt) {
   // After the house, so a mote in the throat is the house's rather than
   // fought over.
   pullCraft(secs);
-  // Before the rain roll, which has to be about what is actually overhead.
+  // Before the front, whose marking has to be about what is actually overhead.
   reckon();
-  // A roll that succeeds starts a brew, not a shower (`stepStorm`). The
-  // marking happens at the roll: everything settled now belongs to this
-  // storm, and what arrives after does not and stays up when it stops.
-  if (breaks(secs)) {
+  // A front that is due starts a brew, not a shower (`stepStorm`), and rolls
+  // the next one. The marking happens at the roll: the front's share of what
+  // is settled now belongs to this storm, and what arrives after does not and
+  // stays up when it stops. The first front of a save is a full storm, so the
+  // lightning is seen early over a sky too clean to mark.
+  if (stepFront(secs)) {
     S.stormFor = 0; S.rains++;
+    S.stormHeft = rollHeft();
+    S.rainDue = nextDue();
     // The first rain is what shows you the sky's reading; nothing else sets
     // `seenAir`, and the scrubbing house is gated on it.
     if (!S.seenAir) { S.seenAir = true; }
-    let marked = 0;
-    for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
-    markStorm(marked);
+    markSky();
   }
   stepStorm(secs);
   if (raining()) pour(secs);

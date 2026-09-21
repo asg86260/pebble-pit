@@ -1,9 +1,9 @@
-import { P, SCRUB_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
+import { P, RAIN_FIRST_S, SCRUB_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
 import { DROPS, SKY, climbing, intake, raining, resetDrift, scrubbing } from './band.js';
 import { resetGullet } from './house.js';
 import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
-import { EMBERS, dryFor, rainOdds, resetRain } from './rain.js';
+import { EMBERS, LEDGER, dryFor, resetRain, stormLen } from './rain.js';
 import { clearSky, cloudR, moteX, moteY } from './sky.js';
 import { spread } from './vents.js';
 
@@ -63,18 +63,12 @@ export function airReadout() {
   return {
     haze: Math.round(S.haze),
     at: SMOG_RAIN_AT,
-    // A sky at the line only *might* rain; a sky at the brim is going to on
-    // the next look, which is the number a check winds to when it wants
-    // weather.
     cap: SMOG_CAP,
     share: Math.min(1, S.haze / SMOG_CAP),
     fouling: +(fouling() * 60).toFixed(1),
     scrubbing: +(scrubbed() * 60).toFixed(1),
     // blank when the house is winning, which is the number worth playing for
     dueMs: net <= 0 ? null : Math.round(((SMOG_CAP - S.haze) / net) * 1000),
-    // The two numbers behind the fact that reaching the line is not the same
-    // as it raining.
-    odds: +rainOdds().toFixed(3),
     dryFor: dryFor === Infinity ? null : +dryFor.toFixed(1)
   };
 }
@@ -138,8 +132,11 @@ export function smogReport() {
            raining: raining(), rains: S.rains, recycled: S.recycled,
            // a strike in the sky: how many cells it is, or 0 for none
            bolt: S.bolt ? S.bolt.cells.length : 0, embers: EMBERS.length,
-           // the storm's front and its wash, so a check can watch a brew-up
-           brewing: S.stormFor >= 0, stormFor: S.stormFor,
+           // the storm's front and its heft, so a check can watch a brew-up
+           brewing: S.stormFor >= 0, stormFor: S.stormFor, heft: S.stormHeft,
+           rainDue: S.rainDue, stormLen: stormLen(), rainFor: S.rainFor, left: S.stormLeft,
+           // what the shower has landed and laid, by kind of drop
+           landed: { ...LEDGER },
            purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,
            muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
@@ -154,6 +151,9 @@ export function seedSmog() {
   // because each owns the `let` behind it.
   resetRain();
   S.stormFor = -1;
+  // The first front of a new yard is on the clock from the start.
+  S.rainDue = RAIN_FIRST_S;
+  S.stormHeft = 1;
   net.fill(0);
   filled = 0;
   oldest = 0;

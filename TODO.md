@@ -1,18 +1,17 @@
 # Still to do
 
-## Weather -- DESIGN, NOT BUILT (2026-09-20)
+## Weather -- BUILT (2026-09-20)
 
-"Weather" at the end of DESIGN.md. Rain gets its own clock and stops being
-caused by the smoke: a front is due every few minutes whatever is overhead,
-draws a heft, and washes `RAIN_WASH` x heft of the settled sky down as acid
-among clean drops that leave nothing; the house is the only thing that
-empties the sky. The first front of a save is heft 1 a few minutes in, so the
-lightning is seen early over a clean yard. The five clouds swell through a
-longer brew -- wider bars, more rows, a heavier underside, more of them --
-and settle after the taper; the swell is derived off the storm clock, never
-saved. `SMOG_RAIN_BEND`, `SMOG_SAMPLE` and `rainOdds` go. Checks named in
-the section (`test/weather.test.mjs`, a rule in verify.js, four scenes).
-Awaiting approval; nothing built.
+"Weather" at the end of DESIGN.md, with "What building it changed". Rain is
+on its own clock: a front every few minutes whatever is overhead, at a heft,
+washing `RAIN_WASH` x heft of the settled sky down as acid among clean
+drops; the first front of a save is a full storm a few minutes in; the
+clouds swell through the brew and settle after. `test/weather.test.mjs`,
+rule 14 in verify.js, scenes `cloudswell`, `cloudlight`, `cleanrain`,
+`acidrain`, `cloudsettle`. Left for later: the swelled clouds are in the
+base tones and read faintly on both pages (see the section) -- a tone that
+deepens with the swell is the one-line option if the front wants more
+presence; every number is a first guess on the panel.
 
 ## The pour -- BUILT (2026-09-16)
 

@@ -30,6 +30,7 @@ import { seed } from './rng.js';
 import { now } from './clock.js';
 import { JOB } from './jobs.js';
 import { BEATS } from './beats.js';
+import { LEDGER } from './smog/rain.js';
 
 // The jobs the roster is made of, and the count on S that owns each. Must be
 // the same list `syncWorkers` builds the crew from: a job missing from one is
@@ -119,6 +120,15 @@ export function resetVerify() {
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
 
 export function verifyWorld() {
+  // --- rule 14: the water is water ------------------------------------------
+  // A shower is clean drops with the washed sky among them, and only a drop
+  // that was sky may leave a mark (`stepDrops`), so the muck the rain has laid
+  // can never pass the dirty drops that have landed. A clean shower that
+  // leaves a mark is the wrong shower.
+  if (LEDGER.laid > LEDGER.dirty)
+    fail('the rain laid more muck than dirty drops landed',
+         `laid ${LEDGER.laid}, dirty ${LEDGER.dirty}, clean ${LEDGER.clean}`);
+
   // --- rule 13: the purse is never poured below zero, and the stake is
   // never more than was poured ---------------------------------------------
   // The casino's hold commits a pebble only while an unspent one covers it

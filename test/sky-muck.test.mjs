@@ -53,16 +53,13 @@ group('the sky fills up, and gives it back', async () => {
   // And a moment for what is still climbing to arrive, because a shower claims
   // the sky that is *settled* when it breaks and motes in flight are not.
   run(6);
-  // And then over the line by hand. It used to get there on its own: the yard
-  // was mining, mining was the loudest source in the game, and a sky held a hair
-  // under the line crossed it within a second. The rock raises nothing at all
-  // now, so a yard held just short of raining stays just short of raining for
-  // ever, and everything below waits on a shower that never comes.
-  //
-  // To the brim rather than a hair over the line, and then waited out: the line
-  // is where a shower becomes *likely* now, and a check that wants one asks for
-  // the sky that is certain to break. See `makeItRain`.
-  makeItRain();
+  // And then the front brought forward over this sky. The rain is on a clock
+  // of its own and the dirt never starts it (test/weather.test.mjs), so a
+  // check that wants a shower asks for the next front rather than waiting on
+  // one; over the sky as it stands, not the brim `makeItRain` fills to,
+  // because the banks are watched shrinking against the readout's line.
+  window.__front(1);
+  runUntil(() => state().smog.raining, 120);
 
   // Watched all the way down rather than sampled at the ends: the whole claim
   // is that it thins out, and a before and an after cannot tell a fade from a
@@ -79,8 +76,10 @@ group('the sky fills up, and gives it back', async () => {
   // coin toss, and it is the yard's own crew that made it one. What this is
   // about is that the rain comes down on the rock at all, and that is a fact
   // about the shower, not about one frame of it.
+  // The whole shower: a full storm pours for RAIN_LEN_S, the front's share
+  // of the sky spread down it.
   const deepest = { rock: 0, yard: 0 };
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 260; i++) {
     run(0.25);
     const air = state().smog;
     if (!air.raining) { if (seenR.length) break; else continue; }
@@ -143,12 +142,10 @@ group('the sky fills up, and gives it back', async () => {
        `${wet.drops} in the air`),
     ok(shrank, 'and the banks it falls out of shrink as it comes down, step by step',
        seenR.join(' ')),
-    // Smaller, not empty. A shower rains the sky it broke on and nothing else --
-    // which is the whole point of the change -- so what is overhead when it
-    // stops is whatever arrived after it started, and the banks come down to
-    // that rather than to nothing. "Next to nothing left" was true when a shower
-    // reached down the plume and pulled specks out of it, and it is not the
-    // behaviour anybody wants.
+    // Smaller, not empty. A shower washes its share of the sky it broke on
+    // and nothing else -- only the house empties the sky -- so what is
+    // overhead when it stops is the rest, and whatever arrived after it
+    // started.
     ok(seenR[seenR.length - 1] < seenR[0],
        'so by the end they are smaller than they were',
        `${seenR[0]} -> ${seenR[seenR.length - 1]}`),
@@ -163,17 +160,11 @@ group('the sky fills up, and gives it back', async () => {
        `${dried.smog.muck.rock} back on it by the time they were swinging again`),
     ok(swinging, 'and then get back to the rock under it',
        `${rockWas} -> ${dried.rock}`),
-    // Not "exactly one" any more, and the reason is the rain itself rather than
-    // anything about this group. It used to be impossible to rain under
-    // SMOG_RAIN_AT, so a yard that had just been rained out could not rain again
-    // until the works had put a whole line's worth back up -- which never
-    // happened inside a check. The odds are a curve now and a fair sky is a small
-    // chance rather than none, so a long group may well see a second shower.
-    //
-    // What actually has to be true is that showers do not run into each other,
-    // and that is RAIN_GAP's guarantee -- measured, on its own, by "a minute of
-    // dry between one shower and the next" in sky-rain. Here it is enough that
-    // the yard is not raining constantly.
+    // Not "exactly one": the rain is on its own clock and a long group may
+    // see the next front. What has to be true is that showers do not run into
+    // each other, and that is RAIN_GAP's guarantee -- measured, on its own, by
+    // "a minute of dry between one shower and the next" in sky-rain. Here it
+    // is enough that the yard is not raining constantly.
     ok(dried.smog.rains <= 3, 'and one rain is one rain: it does not keep coming',
        `${dried.smog.rains} over the whole group`)
   ];
