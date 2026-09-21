@@ -83,6 +83,9 @@ export const ROWS = [
   { key: 'askwizards', dial: true, part: 1, reach: () => { window.__answered('props', 'net', 'arch'); } },
   { key: 'breaker', part: 1, reach: () => { grounds(); window.__shack(); window.__answered('props'); } },
   { key: 'carter', part: 1, reach: () => { grounds(); window.__answered('props'); } },
+  // The belt's gate: a full set of carts and both of the haulers' ladders topped.
+  { key: 'driver', part: 1,
+    reach: () => { sites(); window.__levels({ haulCarryLevel: 99, haulPaceLevel: 99 }); window.__kit({ carters: 3 }); } },
   { key: 'blaster', part: 1, reach: () => { grounds(); window.__answered('props', 'net', 'arch'); } },
   { key: 'grower', part: 1, reach: () => { grounds(); window.__answered('props', 'net'); } },
 

@@ -8,6 +8,7 @@ import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 import { SCRUB_W } from './scrub.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
+import { LIFT_STAND_OFF } from './kit.js';
 
 export const TO_LEDGE = 636;     // rock center to the lip of the pit
 // The rock is the only thing on this side, so the ground is its spoil's: the
@@ -90,10 +91,12 @@ export const SITES = [
   // measured off whatever is nearest, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null,
     hang: () => kitHang('shack') },
-  // The carts' stand is left of the bench (`kitX`), but the bench pads for no
-  // hang: the noticeboard's gap (STATION_GAP, and the house's furniture pad
-  // for the board itself) is wider than the stand and the board together.
-  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
+  // The carts' stand is left of the bench (`kitX`) and the engines' a stand
+  // beyond it (`liftX`). The noticeboard's gap (STATION_GAP, and the house's
+  // furniture pad for the board itself) covers the carts' stand and the
+  // board together, so the bench pads only for the second trestle.
+  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null,
+    hang: () => LIFT_STAND_OFF },
   // The settlement owns the ground the noticeboard stands on. The board is
   // furniture rather than a station (seated in world.js) and has no slot of
   // its own, so the house pads its rock side by the board's own width, the

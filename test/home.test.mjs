@@ -2,7 +2,7 @@
 // home, and turn a light on behind a window.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
-import { STATION_GAP, SITES, padOf } from '../src/config.js';
+import { STATION_GAP, SITES, padOf, hangOf } from '../src/config.js';
 // A yard with nothing in it to carry is a yard nobody needs to be stood in.
 // The one thing that has to be true is that letting them go is never a
 // decision you regret: they are all back the moment there is dust.
@@ -165,8 +165,9 @@ group('the crew have somewhere to live', async () => {
     // the same `padOf` the walk uses, so the two cannot disagree. (For a
     // while every site owned the widest heap's worth of apron whether it had
     // a heap or not, and this read that plus the gap; a site pads by what it
-    // parks now.)
-    ok(big.ofBench === STATION_GAP + padOf(SITES.find(r => r.key === 'house')),
+    // parks now.) The bench hangs the engines' stand on its left (`hang`), read
+    // off `hangOf` the same way.
+    ok(big.ofBench === STATION_GAP + padOf(SITES.find(r => r.key === 'house')) + hangOf(SITES.find(r => r.key === 'bench')),
        'the block stands a station\'s gap and its board off the bench',
        `${big.ofBench}px, gap ${STATION_GAP}`),
     ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',

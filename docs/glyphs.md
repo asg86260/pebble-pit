@@ -43,6 +43,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | lever           | `auto`, `recycler`, `letgo`                                                            |
 | cart            | `carter`                                                                               |
 | belt            | `belt`                                                                               |
+| forklift        | `driver`                                                                             |
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
 | jaw *           | `jaw`, `tunejaw` +plus                                                               |
 | tiller *        | `tiller`, `tunetiller` +plus                                                         |
@@ -86,8 +87,8 @@ the eight badges at three-by-three.
 
 By the board they first appear on, so a shelf can be finished at a time:
 
-- **bench** (13): sack, pick head, pick mid-swing, spark, cracked rock,
-  boot, lever, cart, belt, hoist frame, furrow, die, hut, bucket and mop,
+- **bench** (14): sack, pick head, pick mid-swing, spark, cracked rock,
+  boot, lever, cart, forklift, belt, hoist frame, furrow, die, hut, bucket and mop,
   tower, fan -- the last seven double as their stations' own marks
 - **house** (2): house, door
 - **quarry** (2): shovel, ore lump

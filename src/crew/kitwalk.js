@@ -2,8 +2,9 @@
 // book-keeping that stops two bodies grabbing the same one. The walk itself
 // (nextLeg, arrive) is commute.js's.
 
-import { KIT_JOBS, TYPE_OF } from '../kit.js';
+import { KIT_JOBS, TYPE_OF, driving, liftsOf, spareLifts } from '../kit.js';
 import { S } from '../state.js';
+import { liftX } from '../world.js';
 import { JOB_OF, hats, roomAt, spareKit, worn } from '../levels.js';
 import { rebalance } from '../staffing.js';
 
@@ -27,6 +28,13 @@ const hattedIn = job => S.workers.find(o => o.trained && o.kitOf === job && canR
 // the rock in the same breath both set off for the last helmet.
 const claimed = job => S.workers.filter(o => o.wanting === job).length;
 export const kitFree = job => spareKit(job) - claimed(job);
+
+// The legs that hold a `wanting` claim on a stand: a walk for a hat, or for
+// the engine that goes on to a cart.
+const WANTS = new Set(['wear', 'lift']);
+// What a carter walking for an engine is `fetching` and `wanting`: not a job,
+// so it never collides with a station's own errand.
+const LIFT_ERRAND = 'lift';
 
 // --- a hat on the ground is anybody's ------------------------------------------
 // A hat belongs to the STATION, not the head under it, so a knocked-off hat is
@@ -63,7 +71,7 @@ function holdClaims() {
     // stale claim that wedges one hat for the rest of the run. Dropped here,
     // the dispatch below re-issues the errand a frame later.
     if (w.wanting && !(w.walking &&
-        (w.leg === 'wear' || (w.legs || []).some(l => l.do === 'wear'))))
+        (WANTS.has(w.leg) || (w.legs || []).some(l => WANTS.has(l.do)))))
       w.wanting = null;
     const o = w.claimHat;
     if (!o) continue;
@@ -114,6 +122,7 @@ export function grabHat(w) {
   o.hatOff = null;
   w.trained = true;
   w.kitOf = job;
+  w.lift = !!h.lift;                            // a fallen forklift is picked up whole
   // The body it came off has lost the job with it (`dispossessed`). Marked
   // rather than moved: the owner may still be seeing stars or in your hand.
   if (joining) { o.robbed = true; joinJob(w, job); }
@@ -182,4 +191,33 @@ export function stepKit() {
       if (w) errand(w, job, 'drop');
     }
   }
+  stepLifts();
+}
+
+// --- the forklift ---------------------------------------------------------------
+// The engine is the carts' stand's second shelf and follows the same rules:
+// one on the stand goes to a carter with its hands free, one errand at a time,
+// and an engine on the road the stand no longer owns walks back. A carter and
+// not a bare hauler, because the engine goes on to a cart (`arrive`, 'lift').
+function stepLifts() {
+  if (S.workers.some(o => o.walking && o.fetching === LIFT_ERRAND)) return;
+  if (spareLifts() - claimed(LIFT_ERRAND) > 0) {
+    const w = S.workers.find(o => o.trained && o.kitOf === JOB.HAUL && !o.lift &&
+                                  JOB_OF[o.type] === JOB.HAUL && canRun(o));
+    if (w) { liftErrand(w, 'lift'); return; }
+  }
+  if (driving() > liftsOf()) {
+    const w = S.workers.find(o => o.lift && canRun(o));
+    if (w) liftErrand(w, 'unlift');
+  }
+}
+
+// To the carts' stand and back to wherever it was carrying, like `errand`,
+// under the lift's own name so the carts' errand and this one never count as
+// each other.
+function liftErrand(w, what) {
+  w.fetching = LIFT_ERRAND;
+  if (what === 'lift') w.wanting = LIFT_ERRAND;
+  w.legs = [{ to: liftX(), do: what }, { to: stationX(w.type) ?? w.x, do: 'back' }];
+  nextLeg(w);
 }

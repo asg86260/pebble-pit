@@ -4,7 +4,8 @@
 // lip it may not walk over, the books it holds room in, and the loose core
 // nobody else will pick up.
 
-import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER } from '../config.js';
+import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
+         LIFT_PACE, LIFT_FOUL, LIFT_PUFF_CELLS } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY } from '../world.js';
@@ -12,7 +13,7 @@ import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../r
 import { spawnChip, bell, aim } from '../dust.js';
 import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
-import { muckAtCol, muckFor, nearestMuck } from '../smog.js';
+import { muckAtCol, muckFor, nearestMuck, foul } from '../smog.js';
 import { haulSpeed, scoopMs, homePace } from '../levels.js';
 // the stew on a hauler's legs, read per body at every haul walk
 import { speedBoost } from '../apothecary.js';
@@ -165,8 +166,31 @@ export function topGrain(c) {
   return -1;
 }
 
+// A body's own pace on the road: the ladder's, a tonic on top, and the engine
+// on top of that. Every walk a hauler makes with work in mind goes through
+// here; the stroll (`ROAM_PACE`) does not, since an engine idling is not
+// driving.
+export const drive = w => haulSpeed() * speedBoost(w) * (w.lift ? LIFT_PACE : 1);
+
+// A forklift smokes for the road it drives laden: a puff every
+// `LIFT_PUFF_CELLS` cells, off the back of it, counted off where the body
+// actually went this frame rather than off its pace, so a body that stood still
+// or was carried put up nothing. Empty driving is clean (DESIGN.md, "The
+// forklift"). All of it soot, the one kind the sky accepts (`foul`).
+function liftSmoke(w) {
+  const was = w.liftAt;
+  w.liftAt = w.x;
+  if (!w.lift || !w.carry || was == null) { w.liftOdo = 0; return; }
+  w.liftOdo = (w.liftOdo || 0) + Math.abs(w.x - was) / P;
+  if (w.liftOdo < LIFT_PUFF_CELLS) return;
+  w.liftOdo -= LIFT_PUFF_CELLS;
+  const back = (w.face || 1) > 0 ? w.x - P : w.x + WORKER;
+  foul(LIFT_FOUL * LIFT_PUFF_CELLS, back, w.y + WORKER - P * 2, 'mach');
+}
+
 export function haulerWork(w, c) {
   const { now, zone, taken, muckTaken, cutTaken } = c;
+  liftSmoke(w);
 
   // Down the hole, and nothing else applies -- checked before the dodge: a
   // body on a ladder cannot go anywhere but up or down, and the dodge putting
@@ -241,7 +265,7 @@ export function haulerWork(w, c) {
     S.coreTaker = w;
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
     const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-    const pace = haulSpeed() * speedBoost(w) * HAUL_EMPTY;
+    const pace = drive(w) * HAUL_EMPTY;
     // A route, not a straight line: the core rests at the foot of the rock
     // and the next rock lands on the same spot, so a straight walk from the
     // far side goes through the hill at ground level.
@@ -325,7 +349,7 @@ export function haulerWork(w, c) {
     const col = w.claim;
     const target = floor.x + col * P;
     // hands free, so it moves; a load is what slows it down
-    const pace = haulSpeed() * speedBoost(w) * HAUL_EMPTY;
+    const pace = drive(w) * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
     // It scoops what is under it, not what its left edge is exactly on: the
     // last two columns before the lip sit further right than a worker may
@@ -356,7 +380,7 @@ export function haulerWork(w, c) {
     // here is held to the lip and a body walking to tip should not hold room
     // it will not use.
     const target = pit.x - WORKER;                 // the lip, where they can stand
-    let stride = Math.min(haulSpeed() * speedBoost(w) * frames(), Math.abs(target - w.x));
+    let stride = Math.min(drive(w) * frames(), Math.abs(target - w.x));
     if (!w.hasCore && w.carry < load(w)) {
       const c = underfoot(w, stride);
       const under = c >= 0 && floor.x + c * P <= w.x + WORKER;

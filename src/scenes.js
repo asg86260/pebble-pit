@@ -48,6 +48,15 @@ const lip = () => {
   window.__kit({ carters: 6 });
 };
 
+// Where the hauler with the most in its arms is standing, off the snapshot's
+// crew lines, for a look at a load on the road.
+const ladenHauler = () => {
+  const hs = st().crewDetail.filter(d => d[0] === 'h').map(d => d.split('|'))
+                            .filter(d => d[5] === 'pyard');
+  hs.sort((a, b) => +b[3].slice(1) - +a[3].slice(1));
+  return hs.length ? +hs[0][2] : st().pitX;
+};
+
 // A sky at whatever level the scene sets. The eight seconds are not padding:
 // `fillSky` mints the sky at the top of the window and each speck eases down
 // to its slot over `SMOG_SINK`, so shot at once it reads as a bug in the thing
@@ -642,6 +651,21 @@ export const SCENES = {
   kitbench: { about: 'the kit', say: 'the carter on the bench, beside the belt',
     run: () => { rich(); S.shieldsDone = ['props']; window.__kit({ carters: 2 });
                  window.__board('bench'); } },
+  // Bought through the row, so the carters walk to the engines' stand for
+  // them; the run is long enough for the swaps and a laden drive or two.
+  forklift: { about: 'the kit', say: 'three forklifts on the road, smoking, and the driver row on the bench',
+    run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
+                 for (let i = 0; i < 3; i++) { window.__buy('driver'); window.__finish(); }
+                 window.__fast(30); window.__look(ladenHauler() - st().viewW / 2); } },
+  liftstand: { about: 'the kit', say: 'an engine waiting on its trestle beside the carts\' stand',
+    // No haulers, so nobody comes for it and it stays on the trestle.
+    run: () => { window.__reset(); window.__crew(3, 0, 5, 7); window.__fullSites();
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
+                 window.__buy('driver'); window.__finish(); window.__fast(0.5);
+                 window.__look(st().benchX - 72 - st().viewW / 2); } },
+  driverrow: { about: 'the kit', say: 'the driver row on the bench, beside the carts',
+    run: () => { rich(); S.shieldsDone = ['props']; lip(); window.__board('bench'); } },
   kit: { about: 'the kit', say: 'every hat there is, worn',
     run: () => { window.__reset(); window.__crew(3, 3, 3, 3);
                  window.__kit({ breakers: 3, carters: 3, blasters: 3, growers: 3 });

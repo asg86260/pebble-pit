@@ -1,7 +1,7 @@
 // The hole, and the ladder down the cut: two errands that are the same errand,
 // plus the books that say how much room a trip has spoken for.
 
-import { P, WORKER } from '../config.js';
+import { P, WORKER, LIFT_LOAD } from '../config.js';
 import { S, pit, cut, quarry } from '../state.js';
 import { at, put, colOf, topRow, isDust } from '../grid.js';
 import { keepTo, stepRoute, wayAt, wayOver, ways, climbTo, feetOn } from '../route.js';
@@ -112,9 +112,11 @@ export function nearestCutDust(x, taken) {
 // nobody was allowed to make.
 export const pitFree = () => Infinity;
 
-// what one body carries in a trip: a cart holds twice, and a strong brew adds
-// its half on top for as long as the dose is worn (apothecary.js)
-export const load = w => stronger(w, Math.round(haulCap() * (w.trained ? 2 : 1)));
+// what one body carries in a trip: a cart holds twice, a forklift `LIFT_LOAD`
+// over that, and a strong brew adds its half on top for as long as the dose
+// is worn (apothecary.js)
+export const load = w =>
+  stronger(w, Math.round(haulCap() * (w.trained ? 2 : 1) * (w.lift ? LIFT_LOAD : 1)));
 
 // what it may still take this trip, and taking one more off it
 export const roomOnBoard = w => (w.booked || 0) - (w.took || 0);

@@ -104,6 +104,47 @@ function drawCartBox(x, y) {
   ctx.fillRect(x + CART_W / 2 - P / 2, y + CART_H, P, P);
 }
 
+// A forklift: the driver sits up on a truck instead of walking beside a box.
+// The truck is a cart's box on two wheels, the body sat on top of it, a mast
+// one cell wide up the front with the forks out along the ground, and a stack
+// out the back; the load rides on the forks, in front and off the ground,
+// which is what four times a cart looks like. `LIFT_SEAT` is how far the
+// truck lifts the body: a wheel and the box. Same footing as the cart: wheels
+// in the cell over the ground line, the box on the wheels. Five cells wide so
+// a three-cell body sits centered on it a whole cell in from each end.
+const LIFT_W = P * 5, LIFT_H = P * 2, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
+export const LIFT_SEAT = P + LIFT_H;
+
+// One drawing for all three places it is seen: on the road under a body, on
+// its stand, and lying where it was thrown. `x` is the truck's left edge,
+// `ground` the line its wheels stand on, `fwd` which way the forks point.
+function drawLiftBox(x, ground, fwd = 1) {
+  const bottom = ground - P;                                   // the wheels' row
+  const top = bottom - LIFT_H;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, bottom, P, P);                               // two wheels
+  ctx.fillRect(x + LIFT_W - P, bottom, P, P);
+  const mastX = fwd > 0 ? x + LIFT_W : x - P;
+  ctx.fillRect(mastX, ground - LIFT_MAST, P, LIFT_MAST);        // the mast
+  const forkX = fwd > 0 ? mastX + P : mastX - LIFT_FORK;
+  ctx.fillRect(forkX, bottom, LIFT_FORK, P);                    // and the forks
+  const stackX = fwd > 0 ? x - P : x + LIFT_W;
+  ctx.fillRect(stackX, top - P, P, P * 2);                      // the stack, out the back
+  return { forkX, forkTop: bottom };
+}
+
+// Under a body at (x, y): the truck centered on it, facing its way. Returns
+// where the forks are for the load to stack on.
+function drawLift(x, y, face) {
+  const fwd = (face || 1) > 0 ? 1 : -1;
+  return drawLiftBox(x + (WORKER - LIFT_W) / 2, y + WORKER, fwd);
+}
+
 // Exported because the roster draws the same thing beside its count.
 export { drawCart };
 
@@ -130,7 +171,8 @@ export function drawDroppedHats() {
     // Drawn as the thing it IS, off whose kit it is: a cart lying on the ground
     // is the box and its wheel, not a little hat.
     const mark = KIT_MARK[w.hatOff.of] || 'helmet';
-    if (mark === 'cart') drawCartBox(x, y - CART_H - P);
+    if (w.hatOff.lift) drawLiftBox(x, y);
+    else if (mark === 'cart') drawCartBox(x, y - CART_H - P);
     else drawHat(x, y, mark);
   }
 }
@@ -144,6 +186,7 @@ export function drawKitStands() {
     ctx.fillRect(k.x + STAND_W - P * 2, top + P, P, STAND_H - P);
     // and the one on it, standing on the slab the way it stands on a head
     if (k.mark === 'cart') drawCartBox(k.x - P, top - CART_H);
+    else if (k.mark === 'lift') drawLiftBox(k.x - P, top + P);
     else drawHat(k.x + (STAND_W - P * 2 - WORKER) / 2, top, k.mark);
   }
 }
@@ -433,18 +476,23 @@ export function drawWorkers() {
     // drawn between pixels smears a hairline off its own edge.
     const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
     const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
-    const y = Math.round(w.y + throwOn * look.lunge * P - hop);
+    const ground = Math.round(w.y + throwOn * look.lunge * P - hop);
 
     // A cart is kit like any other, drawn off what the body is holding rather
-    // than what the books say it is: the same rule a helmet has.
-    const cart = wearing(w) === 'cart' ? cartBox(x, y, w.face || 1) : null;
-    if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
+    // than what the books say it is: the same rule a helmet has. A forklift
+    // is the same rule with the body sat up on it: the truck is drawn on the
+    // ground and the body `LIFT_SEAT` above it, and nothing in the sim moves.
+    const kit = wearing(w);
+    const cart = kit === 'cart' ? cartBox(x, ground, w.face || 1) : null;
+    if (cart) drawCart(x, ground, w.face || 1);       // behind the body it follows
+    const lift = kit === 'lift' ? drawLift(x, ground, w.face || 1) : null;
+    const y = lift ? ground - LIFT_SEAT : ground;
 
     drawBody(x, y);
 
     // One line, for everybody: the whole of what "hats are always shown" means.
-    const hat = wearing(w);
-    if (hat && hat !== 'cart') drawHat(x, y, hat);
+    const hat = kit;
+    if (hat && hat !== 'cart' && hat !== 'lift') drawHat(x, y, hat);
 
     // The tonic is not drawn on the body: it is a plume of motes let go from
     // the head into the yard (`stepDoseMotes` in apothecary.js), so a walking
@@ -468,11 +516,12 @@ export function drawWorkers() {
     if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); continue; }
 
     // A load is drawn grain by grain as whatever each grain is: overhead two
-    // abreast, or in the cart four abreast.
-    const abreast = cart ? CART_ABREAST : 2;
-    const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
-    const top = cart ? cart.y : y;
-    const cap = cart ? 40 : 24;
+    // abreast, in the cart four abreast, or on the forks three abreast and as
+    // high as it goes.
+    const abreast = lift ? LIFT_ABREAST : cart ? CART_ABREAST : 2;
+    const left = lift ? lift.forkX : cart ? cart.x : x + (WORKER - P * 2) / 2;
+    const top = lift ? lift.forkTop : cart ? cart.y : y;
+    const cap = lift ? 48 : cart ? 40 : 24;
     for (let i = 0; i < Math.min(w.carry, cap); i++) {
       drawMark(w.load?.[i] || 1,
                left + (i % abreast) * P + P / 2,
