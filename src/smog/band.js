@@ -44,6 +44,10 @@ export const DROPS = [];
 // color, weight); the mote itself is gone.
 export const GOING = [];
 
+// The smoke off a working stack: decoration, not haze -- a puff is thrown
+// on a beat, rises, and fades, and is never counted (`puffStack` in vents.js).
+export const STACK = [];
+
 // Nothing on its way into the house has a list of its own: the sky is what goes
 // in, dragged there by the draught. See `pull`.
 

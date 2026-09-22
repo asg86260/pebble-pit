@@ -41,8 +41,11 @@ export let RAIN_FIRST_S = 180;
 export const RAIN_GAP = 60;          // seconds of dry before another may break
 // The share of the settled sky a full storm carries down, and so how fast an
 // ignored sky becomes muck: the balance lever of the weather. A lighter front
-// takes its heft's share of this.
-export let RAIN_WASH = 0.35;
+// takes its heft's share of this. High, so a storm clears most of the sky and
+// the clouds pale behind it -- rain that left the sky as black as it found it
+// read as weather that did nothing. What that costs is the muck it lays, which
+// is what the house is for: keep the sky low and a storm has little to drop.
+export let RAIN_WASH = 0.8;
 // How long a full storm pours, and the least any front does. The envelope
 // (drizzle, rise, taper) is read off this length; the marked motes are spread
 // down it so the dirt comes with the rain rather than in a lump at the front.

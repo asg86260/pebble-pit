@@ -9,7 +9,7 @@
 
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 import { RAIN_FIRST_S, STORM_BREW_S, RAIN_WASH, RAIN_MARK, CLOUD_SETTLE_S } from '../src/config.js';
-import { skyReport, rainSpans } from '../src/weather.js';
+import { skyReport } from '../src/weather.js';
 
 group('it rains on a clean yard, on its own clock', async () => {
   run(0.4);
@@ -53,9 +53,12 @@ group('dirty rain is a share of the sky, and only that share marks', async () =>
     ok(came, 'it rains'),
     ok(share > RAIN_WASH * 0.7 && share < RAIN_WASH * 1.3,
        'the front washes its share of the settled sky down', `${fell} of ${up}: ${share.toFixed(2)} against ${RAIN_WASH}`),
-    ok(after.sky > up * 0.5, 'and leaves the rest up there', `${after.sky} of ${up} left`),
+    // The rest stays up -- the house, not the weather, is what empties a sky.
+    ok(after.sky > up * (1 - RAIN_WASH) * 0.6, 'and leaves the rest up there', `${after.sky} of ${up} left`),
     ok(after.landed.clean > fell, 'the water outnumbers the acid', `${after.landed.clean} clean, ${fell} dirty`),
-    ok(after.landed.laid > fell * RAIN_MARK * 0.6 && after.landed.laid <= fell,
+    // Under RAIN_MARK a drop, and a little under that again once a heavy wash
+    // stacks its columns to MUCK_MAX; never more than the dirty drops that fell.
+    ok(after.landed.laid > fell * RAIN_MARK * 0.4 && after.landed.laid <= fell,
        'and the acid lays its mark, the water none', `${after.landed.laid} laid by ${fell} dirty drops`),
     ok(after.muck.all > 0, 'so there is muck to shovel', `${after.muck.all}`)
   ];
@@ -145,18 +148,19 @@ group('a dirty sky shows in the clouds, and its rain falls in the yard', async (
   run(2);
   const dirty = skyReport().cloudCells;
 
-  // Its rain is born in screen space (`rainSpans`), turned into a yard x by the
-  // shower, so a span never runs past the window and a drop never carries the
-  // clouds' parallax across the yard as it is scrolled.
+  // Its rain is one sheet over the yard: every drop is born inside the window
+  // and none is tied to a cloud, so the sheet is the same whatever the clouds
+  // happen to be doing and does not slide as the view scrolls.
   window.__front(1);
   runUntil(() => state().smog.raining, 120);
-  const spans = rainSpans();
-  const inView = spans.every(s => s.x0 >= -1 && s.x1 <= state().viewW + 1);
+  run(1);
+  const xs = window.__dropXs();
+  const inView = xs.length > 0 && xs.every(x => x >= state().camX - 8 && x <= state().camX + state().viewW + 8);
   window.__air({ haze: 0, muck: 0 });
   return [
     ok(clean >= 0, 'a clean sky has its clouds', `${clean} cells`),
     ok(dirty > clean, 'and a little haze already thickens them', `${clean} -> ${dirty}`),
-    ok(spans.length > 0 && inView, 'and the rain is born within the window, not off at a cloud\'s world x',
-       JSON.stringify(spans.map(s => [Math.round(s.x0), Math.round(s.x1)])).slice(0, 120))
+    ok(inView, 'and the rain is born across the window, one sheet over the yard',
+       `${xs.length} drops, view ${Math.round(state().camX)}..${Math.round(state().camX + state().viewW)}`)
   ];
 });

@@ -4,7 +4,7 @@
 import { now } from '../clock.js';
 import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
-import { DRAUGHT, DROPS, EMBERS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
+import { DRAUGHT, DROPS, EMBERS, GOING, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
@@ -109,7 +109,7 @@ const CA_COOL = '#1f9ad0';         // and the cyan one
 // into the canvas costs the same setup whatever it draws, and a shower is a
 // couple of thousand specks on the glass at once.
 export function drawSmog() {
-  if (!SKY.length && !GOING.length) return;
+  if (!SKY.length && !GOING.length && !STACK.length) return;
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
 
@@ -191,6 +191,29 @@ export function drawSmog() {
   spill(cool, CA_COOL, HAZE_INK * CA_INK);
   for (const run of runs.values()) spill(run.at, run.tint, HAZE_INK * run.ink);
 
+  // The smoke off the stacks, at smoke's own weight and not the haze's: the
+  // haze is drawn faint because it is thousands of specks and any darker is
+  // confetti, but a chimney's few puffs at a fifth of the ink are nothing at
+  // all. Full for the first half of a puff's life, thinning through the rest,
+  // in the machine's soot browns, one bucket a weight.
+  if (STACK.length) {
+    const stack = new Map();
+    for (const q of STACK) {
+      if (!onScreen(q.x)) continue;
+      const step = Math.round(Math.min(1, 2 * q.t / q.life) * 10) / 10;
+      if (!step) continue;
+      const key = q.tone + '|' + step;
+      let run = stack.get(key);
+      if (!run) stack.set(key, run = { tint: SMOG_TINTS.mach[q.tone % SMOG_TINTS.mach.length], ink: step, at: [] });
+      run.at.push(Math.round(q.x / P) * P, Math.round(q.y / P) * P);
+    }
+    for (const run of stack.values()) {
+      ctx.globalAlpha = STACK_INK * run.ink;
+      ctx.fillStyle = run.tint;
+      for (let i = 0; i < run.at.length; i += 2) ctx.fillRect(run.at[i], run.at[i + 1], P, P);
+    }
+  }
+
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
@@ -199,6 +222,8 @@ export function drawSmog() {
 // for both, so the thing in the sky and the thing off the swing are one thing.
 // Past about a quarter these stop being air and start being confetti.
 const HAZE_INK = 0.2;
+// and the weight of a stack's smoke, which is a thing and not air
+const STACK_INK = 0.75;
 
 // Only what is on the screen: the window shows a fifth of the world, and a
 // thousand alpha rects a frame is the difference between a yard that runs and

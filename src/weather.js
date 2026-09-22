@@ -16,7 +16,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
 import { frames } from './clock.js';
-import { bornUnder, dryTime } from './smog/rain.js';
+import { dryTime } from './smog/rain.js';
 import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
@@ -254,32 +254,6 @@ function cellsOf(c, sw) {
   return bars.reduce((m, b) => m + (b.b - b.a), 0) + (bars[0] ? under * (bars[0].b - bars[0].a) : 0);
 }
 
-// Where rain is born: the underside of every cloud bar on the window, in
-// SCREEN spans -- how far across the view the cloud's foot reaches -- with the
-// world y of that underside. Screen, not world, on purpose: the clouds are
-// far and parallax, so a spawn tied to their world x would drift through the
-// yard as the view pans and the sheet would slide sideways. The rain hands
-// each drop a *yard* x under the cloud's screen span instead (`pour`), so the
-// drops fall straight in the works and scroll with the ground while the patch
-// stays under the cloud you can see. A light front rains in patches under what
-// cloud there is; a full storm is a ceiling and rains everywhere. Handed to
-// the rain rather than imported by it (`bornUnder`), because weather.js
-// reaches the renderer and rain.js is reached from the rules.
-export function rainSpans() {
-  const out = [];
-  const sw = swell();
-  for (const c of CLOUDS) {
-    const { bars, under } = barsOf(c, sw);
-    const foot = bars[0];
-    if (!foot) continue;
-    const x = skyX(c) - S.camX;                 // the cloud's foot in screen x
-    const x0 = Math.max(0, x + foot.a * P), x1 = Math.min(S.viewW, x + foot.b * P);
-    if (x1 <= x0) continue;
-    out.push({ x0, x1, y: Math.round(cloudY(c) / P) * P + under * P });
-  }
-  return out;
-}
-bornUnder(rainSpans);
 
 
 // A few birds, strung out rather than in a formation: same heading, each a

@@ -35,6 +35,17 @@ export const DUST_PER_CORE = 500;
 // under one: at a pace the scrubbing house and the rain can argue with. The
 // runner charges it in one place, off the stack (`stepMachines`).
 export let MACHINE_FOUL = 0.4;
+// The smoke you see off a working stack, apart from the haze it adds. What a
+// beat puts into the sky is a few motes (MACHINE_FOUL is small by design, so
+// the house can argue with it), and a few motes climbing away are not a
+// chimney smoking; so each beat also throws STACK_PUFFS off the stack that
+// rise, lean on the wind and fade over STACK_LIFE_S -- smoke that dissipates,
+// as most of a chimney's does, while the motes are what lingers. Only on a
+// beat: a stack over an idle machine puts up nothing.
+export let STACK_PUFFS = 3;
+export const STACK_LIFE_S = 2.2;
+export const STACK_RISE = 0.7;      // pixels a frame it climbs, easing off
+export const STACK_SCATTER = 0.5;   // sideways throw either way, pixels a frame
 // How the ram gets about: a slow crawl forward as the face retreats, and a
 // brisker drive in reverse when a boulder is finished. Pixels a frame. The
 // reverse beats the next rock down from any distance a boulder run can open
@@ -106,6 +117,8 @@ export const BELT_BILL = [['spark', 480], ['dust', 9600], ['shard', 600], ['spor
 export const MACHINE_KNOBS = [
   { key: 'MACHINE_GAIN', label: 'a machine is worth', min: 0.5, max: 6, step: 0.1,
     get: () => MACHINE_GAIN, set: v => { MACHINE_GAIN = v; } },
+  { key: 'STACK_PUFFS', label: 'smoke a beat', min: 0, max: 12, step: 1,
+    get: () => STACK_PUFFS, set: v => { STACK_PUFFS = v; } },
   { key: 'MACHINE_FOUL', label: 'soot a machine unit', min: 0, max: 12, step: 0.1,
     get: () => MACHINE_FOUL, set: v => { MACHINE_FOUL = v; } }
 ];

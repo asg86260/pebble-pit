@@ -701,7 +701,7 @@ export const SCENES = {
     run: () => { skyAt(4200); untilBrewing(); window.__fast(20); } },
   cloudswell: { about: 'the house and the sky', say: 'a heavy front at the end of its brew, no rain yet',
     run: () => { skyAt(0); untilBrewing(); window.__fast(37); } },
-  cloudlight: { about: 'the house and the sky', say: 'a light front: a few larger clouds, a thin drizzle',
+  cloudlight: { about: 'the house and the sky', say: 'a light front: a few larger clouds, a light shower',
     run: () => { skyAt(0); untilRaining(0.3); window.__fast(6); } },
   cleanrain: { about: 'the house and the sky', say: 'a full storm over a clean sky: water, no acid',
     run: () => { skyAt(0); untilRaining(); window.__fast(18); } },

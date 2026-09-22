@@ -1,9 +1,9 @@
 import { now } from '../clock.js';
-import { GOING_CAP, P, PLUME_LEAN, PLUME_LIFE, PLUME_THIN, PUFF_FADE, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, PUFF_WANDER, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
+import { GOING_CAP, P, PLUME_LEAN, STACK_LIFE_S, STACK_RISE, STACK_SCATTER, PLUME_LIFE, PLUME_THIN, PUFF_FADE, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, PUFF_WANDER, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { give, windAt } from '../wind.js';
-import { GOING, SKY, bandLow, bandTop, drift } from './band.js';
+import { GOING, SKY, STACK, bandLow, bandTop, drift } from './band.js';
 import { countMade } from './books.js';
 import { enter, nextSlot } from './sky.js';
 
@@ -50,6 +50,35 @@ export function foul(grains, x, y, kind = 'dust') {
     // straight cylinder, a pipe rather than smoke.
     p.lean = (rand() - 0.5) * 2;
     enter(p);
+  }
+}
+
+// The smoke off a stack on a beat: `n` puffs thrown up from the top of it,
+// each with a little sideways throw and its own rise, dying away as they go so
+// the column widens and thins rather than shooting off the top of the window.
+export function puffStack(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const life = STACK_LIFE_S * (0.7 + 0.6 * rand());
+    STACK.push({ x: x + (rand() - 0.5) * P * 2, y,
+                 vx: (rand() - 0.5) * 2 * STACK_SCATTER,
+                 vy: -STACK_RISE * (0.6 + 0.8 * rand()),
+                 t: life, life, tone: Math.floor(rand() * 4) });
+  }
+}
+
+export function stepStack(secs) {
+  if (!STACK.length) return;
+  const f = secs * 60;
+  const lean = windAt(now()) * PUFF_LEAN_WIND * secs;
+  const slow = Math.max(0, 1 - 0.9 * secs);
+  for (let i = STACK.length - 1; i >= 0; i--) {
+    const q = STACK[i];
+    q.x += q.vx * f + lean;
+    q.y += q.vy * f;
+    q.vx *= slow;
+    q.vy *= slow;
+    q.t -= secs;
+    if (q.t <= 0) STACK.splice(i, 1);
   }
 }
 

@@ -15,7 +15,7 @@ import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restO
 import { bankDust, throughRift, spend as spendFromPit, pitTop as muckTopAt, pitRoom, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
-import { SKY, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
+import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -765,6 +765,8 @@ export const give = (n, shade = 4) => {
 // --- the sky, the layer of muck, and where dust is lying ---------------------
 
 export const skyX = () => SKY.map(moteX);
+// where every drop in the air is, for a check about the sheet
+export const dropXs = () => DROPS.map(d => d.x);
 
 // A puff and a mote are one object, so every speck in the air, climbing or
 // not, is at full weight; this is the check that it stays that way.
@@ -890,6 +892,7 @@ export const HANDLES = {
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
   __strike: forceStrike,
+  __dropXs: dropXs,
   // The next front brought forward, at a heft: the roll itself is the game's.
   __front: front,
   // The crit roll forced: true always crits, false never, null rolls for real

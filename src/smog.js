@@ -22,9 +22,9 @@
 
 import { S } from './state.js';
 import { RAIN_FALL, PUFF_UP, SMOG_PER_MOTE } from './config.js';
-import { DROPS, GOING, SKY, bandLow, bandTop, climbing, clogged, fanPull,
+import { DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, clogged, fanPull,
          outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
-import { foul, look, reckon, skyMote, stepPuffs } from './smog/vents.js';
+import { foul, look, puffStack, reckon, skyMote, stepPuffs, stepStack } from './smog/vents.js';
 import { enter } from './smog/sky.js';
 
 // What the band is made of, by kind, for the save. See `skyFromSave`.
@@ -130,9 +130,9 @@ export const SAVE = {
   blank() {}
 };
 
-export { SKY, DROPS, GOING, bandTop, bandLow, raining, clogged, scrubbing,
+export { SKY, DROPS, GOING, STACK, bandTop, bandLow, raining, clogged, scrubbing,
          outletMuck, fanPull, scrubRate, climbing,
-         foul, stirSmoke,
+         foul, puffStack, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
          DRAUGHT, dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
@@ -178,6 +178,7 @@ export function stepSmog(dt) {
   // the boards and the checks read it.
   if (raining()) reckon();
   stepGoing(secs);
+  stepStack(secs);
   stepDrops();
   stepBolt(secs);
   stepEmbers(secs);

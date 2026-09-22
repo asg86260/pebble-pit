@@ -12461,13 +12461,29 @@ Two things the first cut got wrong, found in play:
   little haze shows at once and the darkening eases toward the brim. `murk` is
   read only by the drawing, so bending it moves no balance. `HAND_FOUL_CEIL`
   dropped to keep a hand-only sky light under the steeper curve.
-- **The rain slid sideways when the view scrolled.** Drops were born at the
-  cloud's *world* x, which carries the parallax term, so the spawn drifted
-  through the yard as the camera panned and the sheet sheared. `rainSpans` hands
-  the rain *screen* spans now, and the shower turns each into a yard x
-  (`camX + screen`): a rolled screen column, kept only where a cloud covers it,
-  so the drops fall straight in the works and scroll with the ground while the
-  patch stays under the cloud you can see.
+- **Rain from the clouds is cut.** Born under the cloud bars, the sheet
+  thinned to wherever a cloud happened to be on screen -- and the clouds are
+  few, far and parallax, so on a scroll it was a strip at the top that slid
+  about. The rain is the yard's: one sheet born over the top of the window,
+  the whole width of it, water and acid alike, falling straight and scrolling
+  with the ground. The clouds are the readout and the front's swell; they are
+  not the tap.
+- **No lump at the end of a storm.** The acid used to be weighted along the
+  envelope with "whatever is left, in the last frame", which landed a heap of
+  muck as the rain stopped. It is spread evenly over what is left of the shower
+  and over at least the taper's length at the end, and the shower runs until
+  the last marked mote is down, so it trickles out with the rain.
+- **A storm washes most of the sky (`RAIN_WASH` 0.8, was 0.35).** At a third,
+  the clouds stayed black behind a storm, which read as weather that had done
+  nothing. The rest is still the house's to take down, and the cost of a heavy
+  wash is the muck it lays -- which is what keeping the sky low is for.
+- **A working machine smokes.** `MACHINE_FOUL` is small by design, so a beat
+  puts a few motes into the sky, and a few motes climbing away are not a
+  chimney smoking -- least of all drawn at the haze's fifth of an ink. Each
+  beat now also throws `STACK_PUFFS` off the stack (`puffStack`, `STACK` in
+  band.js): decoration, never counted, rising and fading over `STACK_LIFE_S`
+  at smoke's own weight (`STACK_INK`), only on a beat so an idle machine puts
+  up nothing. The motes are what lingers; the puffs are the smoke you see.
 
 ## Weather (built 2026-09-20)
 

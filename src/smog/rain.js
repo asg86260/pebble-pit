@@ -62,26 +62,6 @@ export function envelope(t) {
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
 
-// Where the drops are born: the cloud undersides (`rainSpans` in weather.js),
-// handed in rather than imported so rain.js pulls in nothing that reaches the
-// renderer. Nothing until the clouds have spoken.
-let spansFrom = () => [];
-export const bornUnder = fn => { spansFrom = fn; };
-
-// A point under the clouds to drop from, or null when the rolled screen column
-// has no cloud over it. A column of the *view* is picked at random and kept
-// only if a cloud's foot (screen spans, `rainSpans`) covers it, so the rain is
-// patchy under a light front and everywhere under a heavy one; the drop's x is
-// that column turned into a *yard* x (`camX + screen`), which is the whole
-// point -- it does not carry the cloud's parallax, so the drop falls straight
-// in the works and scrolls with the ground while the patch stays under the
-// cloud you can see. A miss is a dry column this frame, not a drop moved.
-function underCloud(spans) {
-  const sx = rand() * S.viewW;
-  for (const sp of spans) if (sx >= sp.x0 && sx < sp.x1) return { x: S.camX + sx, y: sp.y };
-  return null;
-}
-
 // One frame of the shower. The length is the storm's own; the marked motes
 // come down through it in proportion to the envelope, so the dirt arrives
 // with the rain and not in a lump at the front, and the shower is over when
@@ -96,27 +76,20 @@ export function pour(secs) {
   // never does; one at a time, because a second bolt over the first is a fizz.
   if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
-  // One sheet, born under the clouds: the water and the washed acid fall from
-  // the same undersides, so a light front rains in patches under what cloud
-  // there is and a full storm everywhere. With no cloud over the view (a front
-  // whose clouds are off screen) they fall from the window top so the rain is
-  // never lost.
-  // One sheet, born under the clouds: water and the washed acid from the same
-  // undersides. With the front's clouds off screen (rare, mid-storm) a plain
-  // sheet from the window top, so the rain is never lost.
-  const spans = spansFrom();
+  // One sheet over the yard, born over the top of the window the whole width
+  // of it, water and the washed acid alike. Not from the clouds: they are far,
+  // few and parallax, so a sheet tied to them thinned to wherever a cloud
+  // happened to be and slid sideways as the view scrolled. The rain is the
+  // yard's -- it lands here -- so it is born over the yard and falls straight.
   const top = S.camY - P;
-  const fallback = () => ({ x: S.camX + rand() * S.viewW, y: spans[0] ? spans[0].y : top });
+  const born = () => ({ x: S.camX + rand() * S.viewW, y: top });
 
-  // The water: a rolled column, kept only where a cloud covers it, so a light
-  // front rains in patches and a heavy one everywhere. A dry column is a drop
-  // not made, which is what thins the sheet.
+  // The water.
   let water = RAIN_PER_S * secs * env;
   while (water > 0) {
     if (water < 1 && rand() > water) break;
     water -= 1;
-    const p = spans.length ? underCloud(spans) : fallback();
-    if (!p) continue;
+    const p = born();
     DROPS.push({ x: p.x, y: p.y, dirt: false,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
   }
@@ -126,10 +99,12 @@ export function pour(secs) {
   // not a search.
   const pick = [];
   for (let i = 0; i < SKY.length; i++) if (doomed(SKY[i])) pick.push(i);
-  // Spread over what is left of the shower, weighted by the envelope, and the
-  // lot of them in the last frame so none is left hanging.
-  const left = len - t;
-  let n = left <= secs ? pick.length : pick.length * secs * env / (left * 0.8);
+  // Spread evenly over what is left of the shower, and over at least the
+  // taper's length at the end, so the last of it trickles out with the rain
+  // rather than landing as a lump in the closing frame. The shower does not
+  // end until every marked mote is down, so nothing is ever left hanging.
+  const left = Math.max(len - t, RAIN_TAPER_S);
+  let n = pick.length * secs / left;
   const gone = new Set();
   while (n > 0 && pick.length) {
     if (n < 1 && rand() > n) break;
@@ -140,10 +115,9 @@ export function pour(secs) {
     pick.pop();
     gone.add(i);
     // A marked mote is consumed -- the sky thins, the clouds pale by the
-    // number -- and a dirty drop falls from a cloud, its place the cloud's
-    // and not the invisible mote's. Always placed (the mote is spent), under a
-    // cloud where one covers the rolled column, else the plain fallback.
-    const p = (spans.length && underCloud(spans)) || fallback();
+    // number -- and a dirty drop falls, its place the sheet's and not the
+    // invisible mote's.
+    const p = born();
     DROPS.push({ x: p.x, y: p.y, dirt: true,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
     dropped(SKY[i]);

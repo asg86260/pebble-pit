@@ -2,12 +2,12 @@
 // stands there, and steps its stroke.
 
 import { frames, now } from '../clock.js';
-import { MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
+import { MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER, STACK_PUFFS } from '../config.js';
 import { JOB_MACHINE, MACHINES, UNMANNED, machine, specOf } from '../machines.js';
 import { sfx } from '../audio.js';
 
 import { inWorking, keepTo, stepRoute, ways } from '../route.js';
-import { foul } from '../smog.js';
+import { foul, puffStack } from '../smog.js';
 import { S, floor } from '../state.js';
 import { spelled } from '../tower.js';
 import { JOB_OF, commutePace, machineRate } from '../levels.js';
@@ -217,9 +217,9 @@ export function stepMachines(now) {
     // the stack in one color. Off the top of the stack, which is the
     // station's to answer, so the chimney puffs where the dirt goes up.
     const dirt = MACHINE_FOUL * did;
-    if (dirt > 0) {
-      const s = spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) };
-      foul(dirt, s.x, s.y, 'mach');
-    }
+    const s = spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) };
+    if (dirt > 0) foul(dirt, s.x, s.y, 'mach');
+    // and the smoke you see, off the same stack, on the same beat
+    puffStack(s.x, s.y, STACK_PUFFS);
   }
 }
