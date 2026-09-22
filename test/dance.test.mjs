@@ -17,7 +17,7 @@
 // steps straight over one.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, run, runUntil, state, yard, P, WORKER } from './helpers.mjs';
+import { group, ok, run, runUntil, state, yard, openSites, P, WORKER } from './helpers.mjs';
 import { DANCE_BUZZ, JIG_PACE } from '../src/config.js';
 
 // Every frame of the next `secs` seconds, per body: where it is, how high, and
@@ -190,5 +190,47 @@ group('the gang on the floor of the cut dance too', async () => {
     ok(down, 'four quarriers are on the floor of the cut'),
     ok(danced, 'and the yard celebrates'),
     ok(jigging === 4, 'and every one of them is in the dance', `${jigging} of 4`)
+  ];
+});
+
+// Joined out of a walk: the beat starting while the crew are on their way
+// across the yard, which the groups above never arrange. A body stops its
+// walk and dances from the height the walk had it at; one still easing up to
+// its own surface does not join until it is there (`jig`), which is what
+// keeps this under a cell.
+group('a body joins the dance out of a commute without a snap', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();                        // plots enough for five
+  window.__crew(1, 6);
+  yard.S.beatsDone.push('meet', 'part');
+  run(2);
+  window.__assign('farmhands', 5);             // across the yard to the plots
+  run(1);
+  const walking = yard.S.workers.filter(w => w.walking).length;
+  window.__next();
+  // Every body, every frame the yard is celebrating; a fall is its own motion.
+  let worst = 0, at = '';
+  const last = new Map();
+  for (let f = 0; f < 6 * 60; f++) {
+    run(1 / 60);
+    if (!(yard.S.danceUntil > yard.clock.now())) { last.clear(); continue; }
+    for (const w of yard.S.workers) {
+      const was = last.get(w);
+      if (w.falling || w.lifted) { last.delete(w); continue; }
+      if (was != null && Math.abs(w.y - was) > worst) {
+        worst = Math.abs(w.y - was);
+        at = `${w.name} (${w.type}) ${Math.round(was)} -> ${Math.round(w.y)}, move ${w.move}`;
+      }
+      last.set(w, w.y);
+    }
+  }
+  const dancers = yard.S.workers.filter(w => w.jigOn).length;
+  window.__crew(0, 0, 0);
+  return [
+    ok(walking >= 3, 'the crew are commuting when the rock goes', `${walking} walking`),
+    ok(dancers >= 3, 'and they dance', `${dancers} danced`),
+    ok(worst <= P + 1e-6, 'and nobody moves more than a cell of height in a frame',
+       `worst ${worst.toFixed(2)}px: ${at}`)
   ];
 });

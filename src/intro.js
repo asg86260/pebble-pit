@@ -28,7 +28,7 @@ import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
 import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
-import { wayAt, ways, feetOn, climbTo } from './route.js';
+import { wayAt, ways, feetOn, climbTo, plant } from './route.js';
 import { stopJig, MOVE_KEYS } from './crew/dance.js';
 import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
@@ -109,7 +109,8 @@ export function skipIntro(played = true) {
   // The survivor: the one on the right until the rock comes, and first from
   // then (`crush`), so it is the last that is not marked as under it.
   const stood = S.pair.filter(b => !b.under);
-  const from = played || !stood.length ? null : stood[stood.length - 1].x;
+  const last = stood[stood.length - 1];
+  const from = played || !last ? null : { x: last.x, y: last.y };
   if (beatRunning('leave')) arriveChat();
   if (beatRunning('leave') || beatRunning('chat')) crush();
   S.pair = [];
@@ -120,7 +121,9 @@ export function skipIntro(played = true) {
   if (played) S.seenDrag = true;
   finish();
   const w = S.workers[0];
-  if (from != null && w) { w.x = from; w.y = walkY(from + WORKER / 2); }
+  // Not a move: this body takes the survivor's place, height and all. Cut
+  // mid-throw it is still in the air and comes down from there.
+  if (from != null && w) { w.x = from.x; plant(w, from.y); }
   S.shopStale = true;              // the rows that flag opens are on the board from the first frame
 }
 
@@ -488,7 +491,8 @@ export function begin(t) {
   // The body that walks to the rock is *this* body: a rockhand made from
   // nothing put a fresh square on the rock in the frame the watched one
   // disappeared.
-  const from = S.pair[0] ? S.pair[0].x : S.cx;
+  const b = S.pair[0];
+  const from = b ? b.x : S.cx;
   S.introAt = t;
   S.pair = [];
   S.crew = 1;
@@ -498,8 +502,10 @@ export function begin(t) {
 
   const w = S.workers[0];
   if (w) {
+    // The watched body's own height, not the ground's: this is a hand-over,
+    // not a move. With nobody to take over from it is stood up where it is.
     w.x = from;
-    w.y = walkY(from + WORKER / 2);
+    plant(w, b ? b.y : walkY(from + WORKER / 2));
     w.walkTo = S.cx - WORKER / 2;              // and it walks there, like anybody
     w.leg = 'work';
     w.walking = true;

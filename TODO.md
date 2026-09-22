@@ -19,26 +19,14 @@ toward the claim, and under the seed the cloud rework moved the run to, the
 snap settles at two. Not a timing matter -- eight seconds does not get the
 third cell. Red on main until the elbow is looked at.
 
-### Five movers still write `y` as a position (2026-09-08)
+### The purifier's walk to the door writes `y` as a position (2026-09-22)
 
-A mover that sets `w.y = walkY(...)` outright is a teleport whenever the body
-is not already on that line. `route.js` names the class at the foot of
-`climbTo`: "Fix the mover, not the law of walking." Still in the code:
-
-```
-src/crew/tenders.js:75, 90     src/apothecary.js:327, 352
-src/balloon.js:244, 248        src/intro.js:123, 502
-```
-
-Not one sweep, deliberately: the tenders' and the balloon's cases are bodies
-going through doors and up into baskets, where "the ground under it" is not the
-question. Each wants a look on its own, with a shot, and probably a check per
-mover.
-
-Same hunt: a body joining the dance out of a walk runs `w.y = stand(w)` that
-frame (`jig` in crew/dance.js), and `w.foot` is re-taken from the new y on the
-same frame -- measured up to seventeen pixels of snap. Only when the beat starts
-while the crew are commuting, which `dance.test.mjs` does not arrange.
+`stepPurifier` (filter.js) sets `w.y = walkY(...)` outright, the last of the
+movers `route.js` names at the foot of `climbTo`. The others go through the
+climber now (`test/movers-y.test.mjs`); this one was left to whoever has the
+air filter open. Every hand-over to it seen so far arrives on the floor, so it
+has not popped in a check -- `climbTo(w, walkY(...))`, as the stirrer and the
+farmhand do, when somebody is in the file.
 
 ### A knocked-off hat is not saved (2026-09-14)
 
