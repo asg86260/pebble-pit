@@ -28,7 +28,7 @@ feature lives in DESIGN.md.
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
-- The clouds sit higher in the sky, and the distant ones stay up there with the rest instead of sinking toward the roofs (src/scenes.js `rock`, `yard`).
+- Every cloud sits at the same height now, near or far, the way a sky of cumulus does; a distant one is told by being smaller, finer and paler, not by hanging lower (src/scenes.js `rock`, `yard`).
 - No cell of cloud blinks in or out any more: it comes up out of the page as it fills and goes back down into it as it empties, so a sky swelling or letting go after a shower moves instead of stepping (src/scenes.js `cloudswell`, `cloudsettle`).
 - A machine's smoke hangs a little longer off the stack before it thins away (src/scenes.js `yard`).
 - The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").

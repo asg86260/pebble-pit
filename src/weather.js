@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_MELT_S, CLOUD_EDGE_STEPS, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANE, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -164,7 +164,8 @@ function styleOf(col, k) {
 // run, weather or not, would come out differently. A `storm` cloud is one the
 // front brought, which is nothing at all until the swell has grown it and goes
 // as the swell goes. `sheet` is which of CLOUD_LAYERS it is born into, and it
-// stays there: its size, its depth and its lane in the band are the sheet's.
+// stays there: its size, its grain and its depth are the sheet's. Its height
+// is not -- every cloud's base is in the one lane (CLOUD_LANE).
 const between = ([a, b]) => a + rand() * (b - a);
 const count = ([a, b]) => a + Math.floor(rand() * (b - a + 1));
 function pickKind() {
@@ -200,7 +201,7 @@ function makeCloud(x, sheet, storm = false) {
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
-  const yb = L.lane[0] + rand() * (L.lane[1] - L.lane[0]);
+  const yb = between(CLOUD_LANE);
   const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
               give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, melt: 0 };
   // its height on a dry day, in its own cells, for keeping its crown in view
@@ -212,11 +213,11 @@ function makeCloud(x, sheet, storm = false) {
 // a cloud's cell in world pixels: its sheet's
 const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
 
-// A cloud on its way out, which is every cloud in the end: nothing in the sky
-// blinks off. It thins from the bottom a cell at a time and climbs as it goes,
-// paling toward the page, the way a cloud actually breaks up -- over
-// CLOUD_MELT_S. A melting cloud no longer counts toward its sheet, so its
-// replacement drifts in while it is still going.
+// A cloud on its way out: it thins from the bottom a cell at a time and climbs
+// as it goes, paling toward the page, the way a cloud actually breaks up. Only
+// a front's own clouds go this way -- the ordinary sky wraps around the strip
+// -- and a melting one no longer counts toward its sheet, so its replacement
+// drifts in while it is still going.
 const melting = c => c.melt > 0;
 const fade = c => Math.min(1, c.melt) * 0.9;
 
@@ -309,24 +310,24 @@ export function stepWeather(now) {
   const f = frames();
   // a swelled cloud leans with the wind the rain under it leans with
   const lean = gust() * CLOUD_LEAN * sw;
-  const secs = f / 60;
   // the front has peaked and is letting go: neither brewing nor pouring
   const letting = !S.raining && S.stormFor < 0;
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
-    // A cloud melts once it is on its way out. One the front brought breaks up
-    // as the front lets go of it -- its melt is the swell's own fall, so it is
-    // gone exactly when the sky has settled, rather than hanging on after it.
-    // Any other goes by the clock once it is off the end of the strip.
-    const at = acrossView(c);
+    // A cloud the front brought breaks up as the front lets go of it: its melt
+    // is the swell's own fall, so it is gone exactly when the sky has settled
+    // rather than hanging on after it, and every cell it sheds sinks back into
+    // the page on the way (CLOUD_EDGE_STEPS).
     if (c.storm && letting) c.melt = Math.max(c.melt, 1 - sw);
-    else if (at > S.viewW + P * 8) c.melt = Math.max(c.melt, 1e-6) + secs / CLOUD_MELT_S;
-    if (melting(c)) {
-      if (c.melt >= 1) CLOUDS.splice(i, 1);
-    } else if (at < -c.w * cellOf(c) - P * 8) {
-      c.x += wide;                             // in off the left again, still whole
-    }
+    if (c.melt >= 1) { CLOUDS.splice(i, 1); continue; }
+    // The ordinary sky wraps around the strip instead. A cloud only ever
+    // crosses an edge well outside the window, so nobody sees it go; melting
+    // it there would let a jump of the camera strand one dissolving in the
+    // middle of the sky for no reason anybody could see.
+    const at = acrossView(c);
+    if (at > S.viewW + P * 8) c.x -= wide;
+    else if (at < -c.w * cellOf(c) - P * 8) c.x += wide;
   }
 
   if (!nextBirds) nextBirds = now + BIRD_GAP / 2;

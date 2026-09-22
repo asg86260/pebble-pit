@@ -7,36 +7,31 @@ import { P } from './yard.js';
 // nothing in the sky may borrow them. The clouds keep clear of the haze
 // (`band` in `weather.js`), so the two are layered rather than mixed.
 export const CLOUDS_ON = true;
-// The sky is deep: three sheets of cloud, one behind the other, and a cloud
-// is born into one of them and stays there. `far` is the sheet's parallax
-// (how much of the camera's scroll it takes, so the far sheet barely moves and
-// the near one nearly keeps up with the ground) and its drift comes off it
-// too, so the sheets slide past each other. `scale` is how big a cloud in the
-// sheet is: the far ones are small and the near ones tall enough to be cut by
-// the window's top, which is what puts them overhead. `fade` is the air
-// between you and the sheet: the far sheet's colors are mixed that far toward
-// the page's white, so it is a pale suggestion and the near sheet is the one
-// with weight -- the only depth of field a flat-color picture can have. `lane`
-// is where in the band the sheet sits, nought at the top to one at the bottom:
-// the far clouds low toward the horizon, the near ones overhead, the way a
-// sky recedes. `n` is how many are kept in the strip of sky in view.
-// The sheets follow how a sky recedes (John Muir Laws, "How to draw clouds
-// in perspective"): the far ones are more, packed closer, squashed into thin
-// horizontal slips with their flat bases lined up near the horizon; the near
-// ones fewer, tall, in their true shape, overhead. `scale` is a cloud's width
-// in the sheet, in its own cells, and `flat` how much of its height it keeps.
-// `cell` is the size of the sheet's cell against the yard's: the near sheet
-// is drawn in cells twice the yard's and the far one in half-cells, so a
-// far cloud is finer-grained as well as smaller and paler -- the grain is
-// the depth, the way a thing close up is coarse and a thing far off is fine.
-// `lane` is where in the band the sheet's bases sit, nought at the top to one
-// at the bottom, kept narrow so a sheet's bases line up the way cumulus bases
-// do.
+// The sky is deep: three sheets of cloud, one behind the other, and a cloud is
+// born into one of them and stays there. `far` is the sheet's parallax (how
+// much of the camera's scroll it takes, so the far sheet barely moves and the
+// near one nearly keeps up with the ground), and its drift comes off it too,
+// so the sheets slide past each other. `scale` is a cloud's width in the
+// sheet, in its own cells, and `flat` how much of its height it keeps: the far
+// ones are more, smaller and squashed toward horizontal slips, the near ones
+// fewer, tall and in their true shape (John Muir Laws, "How to draw clouds in
+// perspective"). `cell` is the size of the sheet's cell against the yard's --
+// the near sheet is drawn in cells half again the yard's and the far one in
+// half-cells, so a far cloud is finer-grained as well as smaller, the way a
+// thing close up is coarse and a thing far off is fine. The air between is in
+// CLOUD_FADE_FAR, read off a cloud's own `far`. `n` is how many of the sheet
+// are kept in the strip of sky in view.
 export const CLOUD_LAYERS = [
-  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7,  cell: 0.5, lane: [0.6, 0.75], n: 5 },
-  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9,  cell: 1,   lane: [0.34, 0.5], n: 3 },
-  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0,  cell: 1.5, lane: [0.06, 0.24], n: 2 }
+  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 5 },
+  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
+  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0, cell: 1.5, n: 2 }
 ];
+// Every cloud's base sits in this one lane of the band, nought at the top to
+// one at the bottom, whichever sheet it is in: cumulus forms at the height the
+// air gives it and they all sit on that, so a sheet is told apart by size,
+// grain and paleness and never by height. Narrow, but not a line -- bases
+// exactly level read as a shelf.
+export const CLOUD_LANE = [0.28, 0.46];
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
 // side of its sheet's `far`, so two in a sheet still slide past each other
@@ -46,7 +41,7 @@ export const CLOUD_FAR_JITTER = 0.03;
 // of the sky. Well clear of the works -- the far sheet reads as distance
 // because it is small, pale and fine-grained, not because it is low, and
 // clouds hanging down near the roofs read as fog in the yard
-export const CLOUD_FLOOR = P * 46;
+export const CLOUD_FLOOR = P * 20;
 // The air between you and a cloud: its tones are mixed this far toward the
 // page's white at the farthest depth, nothing at the nearest, straight off its
 // `far` -- so the far sheet is a pale slip with its shades pressed together,
@@ -60,12 +55,12 @@ export const CLOUD_FADE_FAR = 0.45;
 // goes back down. Few, deliberately -- this is a cloud's edge softening, not
 // a gradient, and the sky is still a handful of flat tones.
 export const CLOUD_EDGE_STEPS = 3;
-// And a cloud on its way out -- off the end of the strip, or one a passing
-// front brought -- thins from the bottom a cell at a time and climbs as it
-// thins, paling toward the page, over CLOUD_MELT_S. Slow: a cloud breaking up
-// is the slowest thing in the picture, and a melt you can catch happening
-// reads as a fault.
-export const CLOUD_MELT_S = 22;
+// A front's own clouds go further: as the front lets go of them they thin from
+// the bottom a cell at a time and climb as they thin, paling toward the page,
+// on the swell's own fall -- so they are gone exactly when the sky has settled
+// (CLOUD_SETTLE_S), which is slow enough that a melt is never caught happening.
+// The ordinary sky has no such life: it wraps around the strip, well outside
+// the window where nobody sees it.
 // A cloud is shaded like the boulder, in steps between CLOUD_TONE and
 // CLOUD_UNDER: lit, body, shade, and the underside. It is lit from above: a
 // cell's depth is how far below the nearest bit of the top outline it sits

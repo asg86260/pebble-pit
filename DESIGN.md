@@ -12392,9 +12392,13 @@ not tuned a sheet at a time:
   snapped to a whole device pixel (`snap` in `drawClouds`), so no fill meets
   another between pixels and there is no hairline of page through a cloud.
   Cells are joined along rows, not up columns, for the same reason.
-- **Place.** A near cloud sits high, a far one low; and a cloud is never
-  placed so high that its dry crown is off the top of the window, since a
-  tall cloud cut flat at the top is a slab.
+Height is deliberately *not* one of them. Every cloud's base sits in the one
+lane (`CLOUD_LANE`), whichever sheet it is in: cumulus forms at the height the
+air gives it and they all sit on that, so a sky reads as one sky. Perspective
+says a far cloud should sink toward the horizon, and it was built that way
+first -- at this scale it read as a cloud that had come down rather than one
+that was far away. A cloud is never placed so high that its dry crown is off
+the top of the window, since a tall cloud cut flat at the top is a slab.
 
 ### A cloud is a spine and puffs
 
@@ -12418,14 +12422,13 @@ back into it, and a sky growing or shedding moves instead of stepping. It is
 also the only softening a flat picture gets: the edge reads as cloud rather
 than as a staircase. Rounding the height was what made a cell blink.
 
-A whole cloud on its way out thins from the bottom a cell at a time and climbs
-as it thins, paling toward the page, so it breaks up rather than vanishing.
-One the front brought melts on the swell's own fall, so the front's clouds are
-gone exactly when the sky has settled and not a moment after; any other melts
-by the clock (`CLOUD_MELT_S`) once it is off the end of the strip. A cloud
-arriving needs nothing of its own -- its cells come up out of the page as they
-fill. The same rule as the yard's: nothing appears where it is wanted and
-nothing pops out.
+A front's own cloud goes further: as the front lets go of it, it thins from the
+bottom a cell at a time and climbs as it thins, paling toward the page, on the
+swell's own fall -- so it breaks up rather than vanishing, and is gone exactly
+when the sky has settled. The ordinary sky needs no such life. It wraps around
+the strip, an edge at a time, well outside the window where nobody sees it;
+melting it there was tried and cut, because a jump of the camera then stranded
+a cloud dissolving in the middle of the sky for no reason anybody could see.
 
 ### Shaded like the boulder
 
