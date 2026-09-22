@@ -159,7 +159,7 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // it, so nothing stops and no purchase stands between the player and
 // playing. Through the rift is not away: `inHole` is what you own less what
 // is through, so the counters do not move (`swallow`).
-export function throughRift(x, shade) {
+export function throughRift(x, shade, n = 1) {
   S.seenFullPit = true;
   if (!S.riftOpen) {
     // The hole gives way: it takes the whole pile, and the yard is rocked
@@ -170,17 +170,17 @@ export function throughRift(x, shade) {
     sfx('rift-tear', { x: pit.x + pit.w / 2 });
   }
   const held = riftHeld();
-  S.riftAte = (S.riftAte || 0) + 1;   // fed at the mouth counts toward its growth
+  S.riftAte = (S.riftAte || 0) + n;   // fed at the mouth counts toward its growth
   if (isDust(shade)) {
-    S.stored++;
-    S.banked++;
-    S.rift = (S.rift || 0) + 1;
+    S.stored += n;
+    S.banked += n;
+    S.rift = (S.rift || 0) + n;
   } else {
     const kind = findKind(shade);
-    if (shade === CORE_CELL || kind === CORE_CELL) { S.cores++; S.seenCore = true; held.cores++; }
-    else if (kind === SHARD_CELL) { S.shards++; S.seenShard = true; held.shards++; }
-    else if (kind === SPORE_CELL) { S.spores++; S.seenSpore = true; held.spores++; }
-    else if (kind === SPARK_CELL) { S.sparks++; S.seenSpark = true; held.sparks++; }
+    if (shade === CORE_CELL || kind === CORE_CELL) { S.cores += n; S.seenCore = true; held.cores += n; }
+    else if (kind === SHARD_CELL) { S.shards += n; S.seenShard = true; held.shards += n; }
+    else if (kind === SPORE_CELL) { S.spores += n; S.seenSpore = true; held.spores += n; }
+    else if (kind === SPARK_CELL) { S.sparks += n; S.seenSpark = true; held.sparks += n; }
     else return false;              // nothing this hole knows how to hold
     S.shopStale = true;
   }
@@ -249,20 +249,34 @@ export function riftCatch(x, y, shade, vx = 0, vy = 0) {
   return true;
 }
 
-export function bankDust(x, shade = 1) {
+// `n` grains of one shade at one spot: the casino's pay lands a square worth
+// millions. The pile is still asked a grain at a time, but once it has
+// refused one it will refuse the rest, so the rest go through the rift as one
+// sum; each refusal is a search of the whole pile. The grains are laid a
+// column further out each, either side of `x` in turn, so each finds its
+// column with room rather than searching out from the one the last filled.
+export function bankDust(x, shade = 1, n = 1) {
   // The pile is asked, never the count: the first grain it has no cell for
   // is what tears the hole open (`throughRift`). So this never answers
   // false, and nothing carrying dust ever needs to ask the hole first.
-  if (!addGrain(pit, x, null, shade)) return throughRift(x, shade);
-  sfx('pit-land', { x });
-  if (isDust(shade)) {
-    S.stored++;                              // every pixel is worth one
-    S.banked++;                              // the books count what came in, not what is left
-  } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; S.shopStale = true; }
-  else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; S.shopStale = true; }
-  // The red out of the meteor's core, counted where everything else is.
-  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; S.shopStale = true; }
-  return true;
+  const c0 = colOf(pit, x);
+  let laid = 0;
+  for (; laid < n; laid++) {
+    const off = (laid & 1 ? -1 : 1) * Math.ceil(laid / 2);
+    const c = ((c0 + off) % pit.cols + pit.cols) % pit.cols;
+    if (!addGrain(pit, laid ? pit.x + c * pit.p : x, null, shade)) break;
+  }
+  if (laid) {
+    sfx('pit-land', { x });
+    if (isDust(shade)) {
+      S.stored += laid;                      // every pixel is worth one
+      S.banked += laid;                      // the books count what came in, not what is left
+    } else if (findKind(shade) === SHARD_CELL) { S.shards += laid; S.seenShard = true; S.shopStale = true; }
+    else if (findKind(shade) === SPORE_CELL) { S.spores += laid; S.seenSpore = true; S.shopStale = true; }
+    // The red out of the meteor's core, counted where everything else is.
+    else if (findKind(shade) === SPARK_CELL) { S.sparks += laid; S.seenSpark = true; S.shopStale = true; }
+  }
+  return laid < n ? throughRift(x, shade, n - laid) : true;
 }
 
 // how high a column may stand once the hole beneath it is full

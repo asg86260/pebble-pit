@@ -45,11 +45,11 @@ import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, ARM
 import { S, casino, table, tray, pit } from './state.js';
 import { noteHand } from './notices.js';
 import { makePainter } from './painter.js';
-import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, fillFlat, isDust } from './grid.js';
+import { addGrain, resizeGrid, settleSome, settle, at, put, bottomY, surfaceY, colOf, fillFlat, isDust } from './grid.js';
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { LEVER_SWING_MS } from './config.js';
-import { spend, bankDust } from './pit.js';
+import { spend, bankDust, riftCatch, throughRift } from './pit.js';
 import { DUST_PER } from './upgrades/price.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
@@ -579,7 +579,7 @@ function payBin(b) {
     }
   }
   for (const g of grains) {
-    if (S.tableAir.length >= IN_AIR) { for (let w = g.worth; w > 0; w--) bankDust(holeX(), g.s); continue; }
+    if (S.tableAir.length >= IN_AIR) { bankDust(holeX(), g.s, g.worth); continue; }
     // down through the foot into the tray
     S.tableAir.push({ x: g.x, y: g.y, s: g.s, worth: g.worth, big: g.big, t: 0, vx: 0, vy: 0.4 + rand() * 0.4, lands: 'tray' });
   }
@@ -602,7 +602,7 @@ function trayLand(k) {
   }
   if (!laid) {
     tray.capped = true;
-    for (let w = worth; w > 0; w--) bankDust(holeX(), k.s);
+    bankDust(holeX(), k.s, worth);
     return;
   }
   if (dust) { S.trayDust += laid; S.trayOwed += worth; }
@@ -751,9 +751,15 @@ function flyToHole(x, y, s, worth) {
   S.tableAir.push({
     x, y, s, worth, big: true, t: 0, lands: 'hole',
     arc: { x0: x, y0: y, x1: h.x, y1: h.y, k: 0, high: P * 2, ms: HATCH_MS },
-    then: { x1: holeX(), y1: S.groundY - P, high: P * 10 + rand() * P * 6, ms: FLIGHT_MS }
+    then: { x1: holeX(), high: P * 10 + rand() * P * 6, ms: FLIGHT_MS }
   });
 }
+// Where a grain flown to the hole comes down: on the pile under it, read as
+// it leaves the hatch, the way a thrown chip lands (game.js), so it is seen
+// to arrive where it is banked. A torn pit takes it at the mouth, as it takes
+// a chip.
+const holeY = x => S.riftOpen ? S.groundY - P
+  : surfaceY(pit, Math.max(0, Math.min(pit.cols - 1, colOf(pit, x))));
 
 // One frame of the tray emptying into the hole.
 function trayOut(dt) {
@@ -1108,10 +1114,14 @@ export function stepSparks(dt) {
       if (a.k >= 1) {
         if (k.lands === 'hopper') { k.arc = null; k.vx = 0; k.vy = 0.5; continue; }
         // an arc with another after it: out of the hatch, then over to the hole
-        if (k.then) { k.arc = { x0: k.x, y0: k.y, ...k.then, k: 0 }; k.then = null; continue; }
+        if (k.then) { k.arc = { x0: k.x, y0: k.y, y1: holeY(k.then.x1), ...k.then, k: 0 }; k.then = null; continue; }
         // One square off the tray is worth its share of the pay, and in the
-        // hole it is that many grains of its kind.
-        for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
+        // hole it is that many grains of its kind. A torn pit takes it at the
+        // mouth, the square itself into the swirl and the rest of its worth
+        // with it, rather than on to a pile the rift lifts straight back off.
+        const w = k.worth ?? 1;
+        if (!S.riftOpen) bankDust(a.x1, k.s, w);
+        else if (riftCatch(k.x, k.y, k.s) && w > 1) throughRift(k.x, k.s, w - 1);
         S.tableAir.splice(i, 1);
       }
       continue;
