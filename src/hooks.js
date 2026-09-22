@@ -254,9 +254,8 @@ export const kit = (o = {}) => {
 
 // Move one body between jobs the way the board does, opening the place
 // first: the board can only send somebody to a station that is standing, and
-// `benches()` and `plotCount()` report standing room for a hole that is not
-// there, so without this a body walks to where the cut will be and stands
-// under the ground line (gating `capOfBare` on the place is in TODO.md).
+// a shut quarry or farm holds nobody (`capOfBare`), so without this the move
+// is refused.
 const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
 export const assign = (job, d = 1) => {
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
