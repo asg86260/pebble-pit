@@ -89,7 +89,7 @@ export function swell() {
 // How dirty the whole sky is (smog/band.js): the clouds are its readout, and
 // the air filter's dial reads the same number.
 import { murk } from './smog/band.js';
-import { skyGuests } from './render/balloon.js';
+import { GUESTS } from './skyguests.js';
 export { murk };
 // One cloud's murk: the sky's, less what a balloon drawing it in has paled it
 // (`drawn`, eased by balloon.js). Picture only; the count is the sky's.
@@ -554,14 +554,12 @@ export function cloudSpot(c) {
   if (melting(c)) return null;
   return { x: c.x + c.w * cellOf(c) / 2, far: c.far, y: cloudY(c) };
 }
-// Drawn where the clouds are drawn: a balloon's `x` and depth, on the glass.
-export const onSky = (x, far) => x + S.camX * (1 - far);
+GUESTS.clouds = () => CLOUDS;
+GUESTS.spot = cloudSpot;
 
 // Things that live among the clouds and are drawn between their sheets by
-// depth: the balloons (`skyGuests` in render/balloon.js), asked each frame
-// for a list of `{ far, draw }`, farthest drawn first, interleaved with the
-// clouds. Asked at draw time rather than registered at load, since the two
-// files are in one import ring.
+// depth: the balloons (skyguests.js), asked each frame for a list of
+// `{ far, draw }`, farthest drawn first, interleaved with the clouds.
 
 // The color the air is this frame, as a cloud's underside shows it: what a
 // balloon is drawing in is drawn in this (render/balloon.js), so the haze
@@ -606,7 +604,7 @@ export function drawClouds() {
   // fills meeting there blend into a hairline of page through the cloud.
   const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
-  const visitors = skyGuests().slice().sort((a, b) => a.far - b.far);
+  const visitors = GUESTS.list().slice().sort((a, b) => a.far - b.far);
   let g = 0;
   for (const c of order) {
     // Anything farther than this cloud goes down first, so the cloud covers it.

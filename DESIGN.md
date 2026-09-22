@@ -12910,6 +12910,23 @@ reload finds each craft a new cloud.
   `drawBody`, sized with the craft; the yard hides it (`inBasket`).
 - `save-import`'s example of a save that parses but will not restore is a
   numeric shield now: the craft list is read defensively and no longer throws.
+- **Bigger, and a balloon's own shape.** Seven cells by nine on a box as wide
+  as the envelope read as a light bulb on its base. The envelope is eleven by
+  thirteen now, round over the top, widest a little above the middle and
+  drawn in on a curve to a neck the lines run down from, over a box narrower
+  than the envelope. A craft is never drawn smaller than `BALLOON_MIN_SIZE` of
+  itself, however far back a sheet it is among: at the far sheet's own size
+  it was a speck. The posts are spaced by the widest part (`BALLOON_SPAN`).
+- **Each craft wears its own envelope,** by the order it was bought: plain,
+  seamed, banded, the way no two hot-air balloons at a field are the same.
+- **Moored on the ground, by a stake.** On posts the craft read as signs on
+  poles. A moored basket rests on the ground with its tether tied off to a
+  stake beside it, and a rider steps up into it.
+- **The clouds reach the craft through a seam module** (`skyguests.js`), and
+  the craft reach the cloud pass the same way. `balloon.js` importing
+  `weather.js` closed a ring from the upgrade list through the renderer to
+  the shop, which read the list before it existed, and ten node files failed
+  to load.
 
 ## The balloons draw the haze in (built 2026-09-22)
 

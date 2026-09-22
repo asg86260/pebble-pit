@@ -35,11 +35,14 @@ function extents() {
       key: row.key,
       pad: padOf(row),
       hang: hangOf(row),
+      // what a site keeps on its rock side past its own walls: the filter's
+      // dial and the row its balloons moor at
+      right: row.right ? Math.round(row.right() / P) * P : 0,
       side: row.side,
       from: box.x,
       to: box.x + box.w,
       runFrom: Math.min(box.x, strip ? strip.from : Infinity),
-      runTo: Math.max(box.x + box.w, strip ? strip.to : -Infinity)
+      runTo: Math.max(box.x + box.w + (row.right ? Math.round(row.right() / P) * P : 0), strip ? strip.to : -Infinity)
     };
   }).sort((a, b) => a.from - b.from);
 }
@@ -49,7 +52,7 @@ function extents() {
 // site's if its heap lies on its far side, the further site's if it throws
 // toward the rock -- plus whatever the nearer site hangs off its left side,
 // which is the side facing the further one.
-const pitch = (near, far) => STATION_GAP + near.hang
+const pitch = (near, far) => STATION_GAP + near.hang + far.right
   + (near.side === 'left' ? near.pad : 0) + (far.side === 'left' ? 0 : far.pad);
 
 group('one gap, and the same one, between every pair of stations', () => {

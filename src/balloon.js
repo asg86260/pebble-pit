@@ -18,14 +18,14 @@ import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_W, BALLOON
          BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H, BALLOON_BOB,
          BALLOON_MAST_GAP, BALLOON_CLIMB_S, BALLOON_TRAVEL_S, BALLOON_DWELL_S,
          BALLOON_LOAD, BALLOON_HANG, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
-         FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE } from './config.js';
+         BALLOON_SPAN, BALLOON_MIN_SIZE, FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
 import { walkY } from './world.js';
 import { climbTo, plant } from './route.js';
 import { TYPE } from './jobs.js';
 import { stream } from './rng.js';
-import { CLOUDS, cloudSpot, onSky } from './weather.js';
+import { GUESTS } from './skyguests.js';
 import { clogged } from './smog.js';
 import { unloadCraft } from './smog/craft.js';
 
@@ -59,12 +59,12 @@ export function buyCraft() {
 // re-sited whenever the yard is laid out.
 const dialEnd = () => filter.x + filter.w - P * FILTER_WALL + P * (DIAL_STUB + DIAL_CELLS);
 export const mastX = (i = 0) =>
-  dialEnd() + P * BALLOON_MAST_GAP + BALLOON_FILTER_W / 2 + i * (BALLOON_FILTER_W + P * BALLOON_MAST_GAP);
+  dialEnd() + P * BALLOON_MAST_GAP + BALLOON_SPAN / 2 + i * (BALLOON_SPAN + P * BALLOON_MAST_GAP);
 
-// Where a moored craft's basket sits: a basket's depth over the walk line,
-// which is a body's height over the ground, so a rider climbs its post into
-// it (`stepRider`) rather than being set in it.
-export const postY = i => walkY(mastX(i)) - BALLOON_BASKET;
+// Where a moored craft's basket sits: on the ground at its post, the way a
+// balloon is moored, tied off to a stake beside it; a rider steps up into it
+// (`stepRider`).
+export const postY = i => walkY(mastX(i)) + WORKER;
 
 // --- who is in it ---------------------------------------------------------------------
 // A fact about the body, not the craft: `w.craft` is the index it is riding.
@@ -190,14 +190,17 @@ const ease = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k);
 const lerp = (a, b, k) => a + (b - a) * k;
 const mix = (a, b, k) => ({ x: lerp(a.x, b.x, k), far: lerp(a.far, b.far, k), y: lerp(a.y, b.y, k) });
 const here = k => ({ x: k.x, far: k.far, y: k.y });
-const CRAFT_TALL = BALLOON_H + BALLOON_FILTER_H + BALLOON_BASKET;
+const CRAFT_TALL = BALLOON_H + P + BALLOON_FILTER_H + BALLOON_BASKET;   // the lines are a course between bag and box
 
 const atPost = i => ({ x: mastX(i), far: 1, y: postY(i) });
+// Where something at a depth is drawn on the glass: the camera added by depth,
+// as it is to a cloud (`skyAt` in weather.js).
+const onSky = (x, far) => x + S.camX * (1 - far);
 
 // Hanging under a cloud: a little nearer than it, so it is drawn in front of
 // the cloud it is working and behind the ones in front of that.
 function under(cloud) {
-  const s = cloud && CLOUDS.includes(cloud) ? cloudSpot(cloud) : null;
+  const s = cloud && GUESTS.clouds().includes(cloud) ? GUESTS.spot(cloud) : null;
   if (!s) return null;
   // The hang and the craft at the size it is drawn at that depth, or a far
   // craft hangs a whole craft's height below a cloud it is drawn a third of.
@@ -209,8 +212,8 @@ function under(cloud) {
 // crossing the world.
 function nextCloud(from, not) {
   const at = onSky(from.x, from.far);
-  const open = CLOUDS.filter(c => c !== not && cloudSpot(c));
-  const near = open.filter(c => Math.abs(onSky(cloudSpot(c).x, c.far) - at) < (S.viewW || 800));
+  const open = GUESTS.clouds().filter(c => c !== not && GUESTS.spot(c));
+  const near = open.filter(c => Math.abs(onSky(GUESTS.spot(c).x, c.far) - at) < (S.viewW || 800));
   const pool = near.length ? near : open;
   return pool.length ? pool[Math.floor(roll() * pool.length)] : null;
 }
@@ -268,7 +271,7 @@ function paleClouds(secs) {
     if (working(i) && k && k.cloud && k.go >= BALLOON_TRAVEL_S) held.add(k.cloud);
   }
   const e = Math.min(1, CLOUD_DRAWN_EASE * secs);
-  for (const cl of CLOUDS) cl.drawn = (cl.drawn || 0) + ((held.has(cl) ? 1 : 0) - (cl.drawn || 0)) * e;
+  for (const cl of GUESTS.clouds()) cl.drawn = (cl.drawn || 0) + ((held.has(cl) ? 1 : 0) - (cl.drawn || 0)) * e;
 }
 
 // How far off its cloud a craft is swaying, this instant: two swings whose
@@ -291,6 +294,9 @@ const SIZES = CLOUD_LAYERS
   .map(l => ({ far: l.far, s: l.cell / CLOUD_LAYERS[CLOUD_LAYERS.length - 1].cell }))
   .sort((a, b) => a.far - b.far);
 export function sizeAt(far) {
+  return Math.max(BALLOON_MIN_SIZE, sheetSize(far));
+}
+function sheetSize(far) {
   if (far <= SIZES[0].far) return SIZES[0].s;
   for (let n = 1; n < SIZES.length; n++)
     if (far <= SIZES[n].far)
@@ -325,7 +331,7 @@ export function stepRider(w, berth) {
   // craft does not leave without it.
   if (w.goal === 'board') {
     if (w.craft == null || !CRAFT[w.craft]) { w.goal = 'to'; w.craft = null; w.aloft = false; return false; }
-    const want = postY(w.craft) - WORKER;
+    const want = postY(w.craft) - P - WORKER;
     const up = want - w.y;
     plant(w, w.y + Math.sign(up) * Math.min(CLIMB_PACE * frames(), Math.abs(up)));
     if (Math.abs(want - w.y) < 0.5) w.goal = 'aloft';   // in, and the craft takes it from here
@@ -336,7 +342,7 @@ export function stepRider(w, berth) {
     // off in the sky the craft is drawn; the balloon draws it in the basket.
     if (!CRAFT[berth]) { w.goal = 'to'; w.craft = null; w.aloft = false; return false; }
     w.x = mastX(berth) - WORKER / 2;
-    plant(w, postY(berth) - WORKER);
+    plant(w, postY(berth) - P - WORKER);
     return true;
   }
 

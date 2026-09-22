@@ -6,7 +6,7 @@ import { heapBase } from './piles.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 
 import { DIAL_CELLS, DIAL_STUB, FILTER_W, FILTER_WALL } from './filter.js';
-import { BALLOON_FILTER_W, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
+import { BALLOON_SPAN, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 import { LIFT_STAND_OFF } from './kit.js';
@@ -120,7 +120,7 @@ export const SITES = [
   // moves a building (the apothecary reserves its pots the same way).
   { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: 'filter',  side: 'left',
     right: () => P * (DIAL_STUB + DIAL_CELLS - FILTER_WALL)
-               + BALLOON_RUNGS * (BALLOON_FILTER_W + P * BALLOON_MAST_GAP) + P * BALLOON_MAST_GAP },
+               + BALLOON_RUNGS * (BALLOON_SPAN + P * BALLOON_MAST_GAP) + P * BALLOON_MAST_GAP },
   // The casino holds no ground: a paid hand heaps in its own tray and flies
   // out of the hatch into the hole on its own.
   { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: null },
