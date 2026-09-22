@@ -13,10 +13,12 @@
 // changed -- the lumps either side of the edge, not the rate. Each currency
 // reaches back as far as it needs to have STATS_ARRIVALS arrivals behind it, no
 // less than the short window and no more than the long one, so a streaming coin
-// stays live and a rare one stops flickering.
+// stays live and a rare one stops flickering. A player who would rather read
+// every row over the same stretch picks one of STATS_OVER_S on the board
+// (`booksOver`), and then that is the window, lumps and all.
 
 import { STATS_WINDOW_S, STATS_WINDOW_MAX_S, STATS_ARRIVALS, STATS_SAMPLE_S,
-         STATS_FLOOR } from './config.js';
+         STATS_FLOOR, STATS_OVER_S } from './config.js';
 import { S } from './state.js';
 import { MARK } from './words.js';
 import { fmt } from './words.js';
@@ -64,45 +66,50 @@ export function sampleBooks(now) {
   last = vals;
   lastAt = now;
 
-  const cut = now - STATS_WINDOW_MAX_S * 1000;
+  const cut = now - Math.max(STATS_WINDOW_MAX_S, ...STATS_OVER_S) * 1000;
   while (ring.length && ring[0].at <= cut) ring.shift();
 }
 
 const read = () => Object.fromEntries(BOOKS.map(b => [b.key, b.count() || 0]));
 
-// Per second, over this currency's own window: walk back from now until there
-// are both a short window's seconds and STATS_ARRIVALS arrivals behind us, then
-// stop. Whatever is gathered is divided by the span it actually covers rather
-// than by the window's nominal length -- a young yard has ten seconds of
-// readings, and dividing them by thirty would report a third of the truth.
-export function bookRate(key) {
+// Walk back from now over one currency's window and hand back what came in
+// and the seconds it came in over. Auto stops once there are both a short
+// window's seconds and STATS_ARRIVALS arrivals behind it; a picked window
+// stops at its length. With no key it is the whole ring.
+function windowOf(key) {
+  const over = S.booksOver || 0;
   let span = 0, got = 0, seen = 0;
   for (let i = ring.length - 1; i >= 0; i--) {
     const e = ring[i];
-    const g = e.gain[key] || 0;
+    if (key != null && over > 0 && span + e.dt > over) break;
+    const g = key == null ? 0 : e.gain[key] || 0;
     span += e.dt;
     got += g;
     if (g > 0) seen++;
-    if (span >= STATS_WINDOW_S && seen >= STATS_ARRIVALS) break;
+    if (key != null && over <= 0 && span >= STATS_WINDOW_S && seen >= STATS_ARRIVALS) break;
   }
+  return { span, got };
+}
+
+// Per second, divided by the span the window actually covers rather than its
+// nominal length: a young yard has ten seconds of readings, and dividing them
+// by thirty would report a third of the truth.
+export function bookRate(key) {
+  const { span, got } = windowOf(key);
   if (span <= 0) return 0;
   const rate = got / span;
   return rate < STATS_FLOOR ? 0 : rate;
 }
 
-// How far back a currency's own window reaches, in seconds; `bookSpan()` with
-// nothing named is the whole ring, which is how long the books have watched.
-export function bookSpan(key) {
-  let span = 0, seen = 0;
-  for (let i = ring.length - 1; i >= 0; i--) {
-    const e = ring[i];
-    span += e.dt;
-    if (key == null) continue;
-    if (e.gain[key] > 0) seen++;
-    if (span >= STATS_WINDOW_S && seen >= STATS_ARRIVALS) break;
-  }
-  return span;
-}
+// How far back a currency's window reaches, in seconds; with nothing named,
+// how long the books have been watching.
+export const bookSpan = key => windowOf(key).span;
+
+// The toggle's steps: auto, then each fixed window, then round again. A saved
+// window that is not on the list (an older build's) steps to the first.
+const OVERS = [0, ...STATS_OVER_S];
+export const nextOver = over => OVERS[(OVERS.indexOf(over) + 1) % OVERS.length];
+const sayOver = over => over > 0 ? `${Math.round(over / 60)} min` : 'auto';
 
 // Two figures of precision, and never a decimal point on something in the
 // hundreds: a core an hour and a thousand dust a second share this column.
@@ -113,6 +120,20 @@ const say = v =>
   String(Math.round(v));
 
 // --- the board ----------------------------------------------------------------
+// The window the rates are taken over, pressed to step to the next. A
+// signpost's press: nothing is bought, and it carries no pushpin.
+const OVER_ROW = {
+  key: 'ratesover',
+  name: 'averaged over',
+  sign: true,
+  price: () => sayOver(S.booksOver || 0),
+  dead: () => false,
+  cost: () => 0,
+  bill: () => [],
+  buy: () => { S.booksOver = nextOver(S.booksOver || 0); },
+  show: () => true
+};
+
 // Rows in the shape every other board uses. They are readouts, not purchases:
 // `read` takes the cursor and the hover off in the stylesheet.
 export const STATS_UPGRADES = BOOKS.map(b => ({
@@ -202,7 +223,8 @@ const TALLY_UPGRADES = [
     show: () => S.rescued }
 ];
 
-// One list, so board.js and shop.js get both kinds without being told.
+// One list, so board.js and shop.js get every kind without being told.
+STATS_UPGRADES.unshift(OVER_ROW);
 STATS_UPGRADES.push(...TALLY_UPGRADES);
 
 export const STATS_SECTIONS = [

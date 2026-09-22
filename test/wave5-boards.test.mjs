@@ -17,8 +17,9 @@ import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
-import { bookRate, bookSpan } from '../src/stats.js';
-import { STATS_WINDOW_S } from '../src/config.js';
+import { bookRate, bookSpan, STATS_UPGRADES } from '../src/stats.js';
+import { STATS_WINDOW_S, STATS_OVER_S } from '../src/config.js';
+import { buy } from '../src/upgrades.js';
 import { showPanel, hud } from '../src/board.js';
 
 const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES,
@@ -141,6 +142,46 @@ group('a coin that arrives in lumps is read over a longer window than one that s
     // it went 0.07, 0.13, 0.07 on a yard that had not changed.
     ok(step < mean * 0.25, 'and the ore rate holds still from one second to the next',
        `biggest step ${step.toFixed(3)} on ${mean.toFixed(3)}`)
+  ];
+});
+
+// The window can be picked on the board. Pressed the way the board presses a
+// row (`buy`, which is what the tap calls), it steps auto -> each fixed window
+// -> auto, a fixed window reads every coin over exactly that stretch, and the
+// choice comes back after a reload.
+group('the books can be read over a window the player picks', async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__crew(4, 4, 4, 0);
+  run(150);
+
+  const row = STATS_UPGRADES.find(u => u.key === 'ratesover');
+  const says = [];
+  const steps = [];
+  for (let i = 0; i <= STATS_OVER_S.length; i++) {
+    says.push(row.price());
+    steps.push(yard.S.booksOver);
+    buy(row);
+  }
+  const back = yard.S.booksOver;               // round the loop to auto
+
+  const autoOre = bookSpan('shard');
+  buy(row);                                    // a minute
+  const minuteOre = bookSpan('shard');
+  const minuteDust = bookSpan('dust');
+  const picked = yard.S.booksOver;
+  window.__reload();
+
+  return [
+    ok(row && steps.join(',') === [0, ...STATS_OVER_S].join(','),
+       'pressing it steps auto and then each fixed window', steps.join(',')),
+    ok(back === 0, 'and round to auto again', String(back)),
+    ok(says[0] === 'auto' && says[1] === '1 min', 'and it says which one it is on', says.join(' | ')),
+    ok(autoOre > STATS_OVER_S[0] * 1.2 && minuteOre <= STATS_OVER_S[0] && minuteOre > STATS_OVER_S[0] - 1,
+       'a minute reads ore over a minute, however lumpy', `auto ${autoOre.toFixed(1)}s, picked ${minuteOre.toFixed(1)}s`),
+    ok(Math.abs(minuteDust - minuteOre) < 1, 'and every coin over the same minute',
+       `dust ${minuteDust.toFixed(1)}s, ore ${minuteOre.toFixed(1)}s`),
+    ok(yard.S.booksOver === picked, 'and the choice is still there after a reload', String(yard.S.booksOver))
   ];
 });
 

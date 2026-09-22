@@ -9062,6 +9062,26 @@ panel), each with a line or two of ink on it. Every edge is a whole cell; the pa
 cells wide because that is what three three-cell sheets with a cell around each come to, rather
 than the sheets squeezed into a panel sized first.
 
+### Amendment — the books read each coin over its own window, or one you pick (built)
+
+**Auto, by default.** A fixed thirty seconds held a hundred arrivals of dust and
+two of ore, so the ore row was decided by which side of the edge the second lump
+fell: 0.07, 0.13, 0.07, with nothing in the yard changed. Each currency now reaches
+back until it has both `STATS_WINDOW_S` seconds and `STATS_ARRIVALS` arrivals
+behind it, capped at `STATS_WINDOW_MAX_S`. Arrivals, not units, so the rule means
+the same to a coin that comes a thousand at a time as to one that comes singly. A
+streaming coin sits at the short window and stays live; a rare one widens until it
+holds still. Still a window and not an easing, for the reason the books always
+gave: an eased figure reads high after the thing making it has stopped.
+
+**Or a window the player picks.** The first line under "income, a second" is
+*averaged over*, and pressing it steps auto → 1 min → 5 min → 10 min → auto
+(`STATS_OVER_S`). A picked window reads every coin over exactly that stretch, lumps
+and all -- what the line says is what it does. The unit stays a second whatever is
+picked, so a number never changes meaning under the player's eye; the heading is
+said once and stays true. The choice is saved (`booksOver`). It is a signpost's
+press rather than a purchase: no price, no pushpin, no pip.
+
 ### Amendment — a toast when one lands (built)
 
 The original design said, in so many words, "no toast, no banner, no card sliding in over the

@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The income books can be averaged over a window you pick -- auto, a minute, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
 - A working balloon now pulls its catch out of a cloud: a thread of cells runs down from the nearest cloud above it, and that cloud pales while it is being drawn from; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `balloonpan`, `moored`; test/balloon.test.mjs).
 - The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).
 - The rain has depth like the sky does: it falls in three sheets, fine pale flecks far off and long dark strokes close in, sliding past each other as you scroll, with the clouds in front of the far ones (src/scenes.js `raindepth`; test/sky-rain.test.mjs).

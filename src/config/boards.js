@@ -32,6 +32,9 @@ export const STATS_WINDOW_MAX_S = 300;   // and the longest, for the rarest coin
 // shows. Counted in samples that saw anything, so it means the same thing to a
 // coin that comes a thousand at a time as to one that comes singly.
 export const STATS_ARRIVALS = 24;
+// The fixed windows a player can pick instead of the auto one, in seconds,
+// in the order the toggle steps through them. The ring keeps the longest.
+export const STATS_OVER_S = [60, 300, 600];
 // Every frame would be a thousand-odd ring entries for no more truth than forty
 // give.
 export const STATS_SAMPLE_S = 0.5;
