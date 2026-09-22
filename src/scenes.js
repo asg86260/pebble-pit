@@ -301,6 +301,13 @@ export const SCENES = {
                  window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
                  window.__jump(4); window.__fast(12); window.__clearFloor();
                  window.__look(st().pitX - 620); } },
+  // The head over the drowned hole: the load pouring off the end of the band
+  // into the abyss. The rift is torn so the hole never fills and the band
+  // never has a reason to stand.
+  beltdrop: { about: 'the crew', say: 'the belt head pouring its load into the abyss',
+    run: () => { rich(); lip(); window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish(); window.__jump(30);
+                 window.__meteor(); window.__give(60000); window.__buy('rift');
+                 window.__fast(12); window.__look(st().pitX - 400); } },
   // Both marks want a station whose pile has filled and which has something
   // to sell, so the yard runs a while with nobody to carry anything away.
   marks: { about: 'the crew', say: 'the stopped triangle and the offer diamond',

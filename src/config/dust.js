@@ -40,6 +40,13 @@ export const DIZZY_MS = 2000;      // and how long the stars last afterwards
 export const WOBBLE = P / 2;       // pixels either side of where it landed
 export const WOBBLE_BEAT = 11;     // radians a second -- unsteady, not a shiver
 
+// --- off the belt's head ----------------------------------------------------------
+// The load leaves the head as a conveyor's does: the top of it flies on at the
+// band's speed, the bottom curls round the head and drops short, so a column
+// comes off as a fan rather than a slab. Shares of the band's speed.
+export let BELT_THROW_LOW = 0.3;   // what the grain on the band itself leaves with
+export let BELT_SCATTER = 0.18;    // and each grain's own give either side of its row's
+
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.
 export const DUST_KNOBS = [
@@ -53,6 +60,10 @@ export const DUST_KNOBS = [
     get: () => THROW, set: v => { THROW = v; } },
   { key: 'THROW_MAX', label: 'hardest throw', min: 4, max: 80, step: 1,
     get: () => THROW_MAX, set: v => { THROW_MAX = v; } },
+  { key: 'BELT_THROW_LOW', label: 'belt head, low throw', min: 0, max: 1, step: 0.05,
+    get: () => BELT_THROW_LOW, set: v => { BELT_THROW_LOW = v; } },
+  { key: 'BELT_SCATTER', label: 'belt head, scatter', min: 0, max: 0.6, step: 0.02,
+    get: () => BELT_SCATTER, set: v => { BELT_SCATTER = v; } },
   { key: 'SHAKE_TURNS', label: 'a shaking is', min: 2, max: 16, step: 1,
     get: () => SHAKE_TURNS, set: v => { SHAKE_TURNS = v; } }
 ];

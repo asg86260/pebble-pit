@@ -3,7 +3,7 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER } from './config.js';
+import { P, GRAV, WORKER, BELT_THROW_LOW, BELT_SCATTER } from './config.js';
 import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit, band } from './state.js';
@@ -352,9 +352,16 @@ export function stepBelt(now, f) {
     S.beltRun -= P;
     if (!grainsIn(band)) { S.beltRun = 0; break; }
     const head = band.x + band.cols * P, last = band.cols - 1;
+    const tall = Math.max(1, highOf(last));
     for (let r = 0; r < band.rows; r++) {
       const v = at(band, last, r);
-      if (v) spawnChip(head, bottomY(band) - (r + 1) * P, BELT_PACE, 0, v);
+      if (v) {
+        // Fanned by height: every grain of a column leaving on the one speed
+        // falls as the column did, a slab hanging off the head.
+        const share = BELT_THROW_LOW + (1 - BELT_THROW_LOW) * (r + 1) / tall;
+        const vx = Math.max(0, BELT_PACE * (share + bell() * BELT_SCATTER));
+        spawnChip(head, bottomY(band) - (r + 1) * P, vx, 0, v);
+      }
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;

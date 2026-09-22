@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The belt pours its load off the head in a fan, the top of the heap flying furthest, instead of dropping it into the hole in hard vertical sheets (src/scenes.js `beltdrop`).
 - The books and the crew list open in a window in the middle of the screen instead of a popover taller than the window: the books' four sheets side by side, the crew a card a body; it stays until you close it, and the yard keeps running underneath (src/selftest/house.js).
 - Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
