@@ -30,7 +30,7 @@ feature lives in DESIGN.md.
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
-- The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower (src/scenes.js `rock`, `yard`).
+- The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").
 - Resizing the window no longer sends the clouds flying: they hold their height and come back into the strip in one step instead of a frame at a time (test/sky-air.test.mjs).
 - A cloud no longer pops in at the edge of the window while you scroll; the sky's strip is wide enough that a cloud coming round is still off the screen (test/weather.test.mjs, "no cloud ever jumps in view while you scroll").
 - No cell of cloud blinks in or out any more: it comes up out of the page as it fills and goes back down into it as it empties, so a sky swelling or letting go after a shower moves instead of stepping (src/scenes.js `cloudswell`, `cloudsettle`).

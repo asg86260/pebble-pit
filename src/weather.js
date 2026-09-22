@@ -59,18 +59,17 @@ function inBand() {
 // share of anything: a share of a band whose bottom is the ground line slides
 // every cloud up and down the sky as the window is resized, and the height
 // clouds sit at has nothing to do with how tall the window is. `yb` is that
-// depth, in world pixels, picked once at birth. Never so high that its crown
-// is off the top of the window, though -- a near cloud is tall, and a tall
-// cloud cut flat at the top is a slab.
+// depth, in world pixels, picked once at birth out of its sheet's lane, and
+// nothing moves it after: a clamp that kept a tall crown under the top of the
+// window pushed the near sheet -- which is the tall one -- below the sheets
+// behind it, which is the one thing the lanes exist to prevent. A near cloud
+// tall enough to be cut by the top of the window is a cloud overhead.
 function cloudBand() {
   const top = S.camY + CLOUD_TOP * P;
-  let low = top + Math.max(...Object.values(CLOUD_LANES).map(l => l[1])) * P;
-  for (const c of CLOUDS) low = Math.max(low, top + (c.tall + 1) * cellOf(c));
-  return { top, low };
+  return { top, low: top + Math.max(...Object.values(CLOUD_LANES).map(l => l[1])) * P };
 }
 function cloudY(c) {
-  const top = S.camY + CLOUD_TOP * P;
-  return top + Math.max(c.yb ?? 0, (c.tall + 1) * cellOf(c));
+  return S.camY + CLOUD_TOP * P + (c.yb ?? 0);
 }
 
 // --- the front ---------------------------------------------------------------
@@ -387,6 +386,7 @@ export function skyReport() {
     // and how wide each is on the screen, so a check can ask whether one was
     // in view when it wrapped
     cloudWide: CLOUDS.map(c => Math.round(c.w * cellOf(c))),
+    cloudSheet: CLOUDS.map(c => c.sheet),
     birdY: BIRDS.map(b => Math.round(b.y)),
     birdAcross: BIRDS.map(across),
     birdWorld: BIRDS.map(b => ({ x: skyX(b), y: Math.round(b.y / P) * P })),

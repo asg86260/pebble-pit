@@ -204,3 +204,23 @@ group('no cloud ever jumps in view while you scroll', async () => {
     ok(jumped === 0, 'and never with any of the cloud on the screen', `${jumped} in view`)
   ];
 });
+
+// The sheets are a perspective, so the nearest sits highest and each one
+// behind it a little lower. Nothing may move a cloud off its sheet's lane --
+// a clamp that kept tall crowns under the top of the window once pushed the
+// near sheet, which is the tall one, below the sheets behind it.
+group('the nearer the sheet, the higher it rides', async () => {
+  run(3);
+  const r = skyReport();
+  const of = sheet => r.cloudY.filter((y, i) => r.cloudSheet[i] === sheet);
+  const near = of(2), mid = of(1), far = of(0);
+  const lowest = a => Math.max(...a), highest = a => Math.min(...a);
+  return [
+    ok(near.length && mid.length && far.length, 'every sheet has clouds in it',
+       `${near.length} near, ${mid.length} mid, ${far.length} far`),
+    ok(lowest(near) < highest(mid), 'no near cloud hangs as low as a mid one',
+       `near down to ${lowest(near)}, mid from ${highest(mid)}`),
+    ok(lowest(mid) < highest(far), 'and none in the middle as low as a far one',
+       `mid down to ${lowest(mid)}, far from ${highest(far)}`)
+  ];
+});

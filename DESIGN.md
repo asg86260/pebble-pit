@@ -12433,9 +12433,12 @@ not tuned a sheet at a time:
   sinking toward the horizon -- was built first and cut: at this scale it read
   as a cloud that had come down rather than one that was far away. All three
   lanes sit near the top of the band, since the sky over the works is mostly
-  empty and the clouds belong up in it. A cloud is never placed so high that
-  its dry crown is off the top of the window, since a tall cloud cut flat at
-  the top is a slab.
+  empty and the clouds belong up in it. Nothing moves a cloud off its lane
+  after it is born: a clamp that kept a tall crown under the top of the window
+  was tried, and it pushed the near sheet -- the tall one -- below the sheets
+  behind it, which is the one thing the lanes exist to prevent. A near cloud
+  tall enough to be cut by the top of the window is a cloud overhead, and the
+  near sheet is drawn smaller than it was so that is rare.
 
 A lane is measured in cells down from the top of the band, not as a share of
 the sky between the window's top and the ground: a share slides every cloud up

@@ -24,7 +24,7 @@ export const CLOUDS_ON = true;
 export const CLOUD_LAYERS = [
   { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 5 },
   { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
-  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0, cell: 1.5, n: 2 }
+  { name: 'near', far: 0.40, scale: 0.6,  flat: 1.0, cell: 1.5, n: 2 }
 ];
 // Where a sheet's bases sit, in cells below the top of the band: the near
 // sheet highest and each one behind it a little lower, so the sky reads as one
@@ -33,7 +33,7 @@ export const CLOUD_LAYERS = [
 // share of the sky, so the height a cloud sits at does not move when the
 // window is resized, and all of it near the top: the sky over the works is
 // mostly empty and the clouds belong up in it.
-export const CLOUD_LANES = { near: [2, 6], mid: [7, 11], far: [12, 16] };
+export const CLOUD_LANES = { near: [5, 9], mid: [11, 15], far: [17, 21] };
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
 // side of its sheet's `far`, so two in a sheet still slide past each other
