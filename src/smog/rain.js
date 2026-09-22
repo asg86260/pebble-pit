@@ -68,16 +68,17 @@ export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
 let spansFrom = () => [];
 export const bornUnder = fn => { spansFrom = fn; };
 
-// A point under the clouds to drop from, weighted by how much cloud covers the
-// window, or null when there is no cloud over the view -- a front with its
-// clouds off screen, which the caller falls back to the window top for.
-function underCloud(spans, total) {
-  let at = rand() * total;
-  for (const sp of spans) {
-    const w = sp.x1 - sp.x0;
-    if (at > w) { at -= w; continue; }
-    return { x: sp.x0 + at, y: sp.y };
-  }
+// A point under the clouds to drop from, or null when the rolled screen column
+// has no cloud over it. A column of the *view* is picked at random and kept
+// only if a cloud's foot (screen spans, `rainSpans`) covers it, so the rain is
+// patchy under a light front and everywhere under a heavy one; the drop's x is
+// that column turned into a *yard* x (`camX + screen`), which is the whole
+// point -- it does not carry the cloud's parallax, so the drop falls straight
+// in the works and scrolls with the ground while the patch stays under the
+// cloud you can see. A miss is a dry column this frame, not a drop moved.
+function underCloud(spans) {
+  const sx = rand() * S.viewW;
+  for (const sp of spans) if (sx >= sp.x0 && sx < sp.x1) return { x: S.camX + sx, y: sp.y };
   return null;
 }
 
@@ -100,18 +101,22 @@ export function pour(secs) {
   // there is and a full storm everywhere. With no cloud over the view (a front
   // whose clouds are off screen) they fall from the window top so the rain is
   // never lost.
+  // One sheet, born under the clouds: water and the washed acid from the same
+  // undersides. With the front's clouds off screen (rare, mid-storm) a plain
+  // sheet from the window top, so the rain is never lost.
   const spans = spansFrom();
-  let total = 0;
-  for (const sp of spans) total += sp.x1 - sp.x0;
   const top = S.camY - P;
-  const born = () => total > 0 ? underCloud(spans, total) : { x: S.camX + rand() * S.viewW, y: top };
+  const fallback = () => ({ x: S.camX + rand() * S.viewW, y: spans[0] ? spans[0].y : top });
 
-  // The water.
+  // The water: a rolled column, kept only where a cloud covers it, so a light
+  // front rains in patches and a heavy one everywhere. A dry column is a drop
+  // not made, which is what thins the sheet.
   let water = RAIN_PER_S * secs * env;
   while (water > 0) {
     if (water < 1 && rand() > water) break;
     water -= 1;
-    const p = born();
+    const p = spans.length ? underCloud(spans) : fallback();
+    if (!p) continue;
     DROPS.push({ x: p.x, y: p.y, dirt: false,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
   }
@@ -136,8 +141,9 @@ export function pour(secs) {
     gone.add(i);
     // A marked mote is consumed -- the sky thins, the clouds pale by the
     // number -- and a dirty drop falls from a cloud, its place the cloud's
-    // and not the invisible mote's.
-    const p = born();
+    // and not the invisible mote's. Always placed (the mote is spent), under a
+    // cloud where one covers the rolled column, else the plain fallback.
+    const p = (spans.length && underCloud(spans)) || fallback();
     DROPS.push({ x: p.x, y: p.y, dirt: true,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
     dropped(SKY[i]);

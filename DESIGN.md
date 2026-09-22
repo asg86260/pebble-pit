@@ -12448,6 +12448,27 @@ sections raised does not apply: nothing is drawn that a mote did not earn.
 - **Every number here is a first guess on the panel** -- `HAND_FOUL`,
   `HAND_FOUL_CEIL`, and the `CLOUD_MURK_*` set -- tuned by shot, not settled.
 
+### The murk is bent, and the rain is anchored to the yard (2026-09-21)
+
+Two things the first cut got wrong, found in play:
+
+- **A working machine dirtied nothing you could see.** `SMOG_CAP` is a
+  slow-fill ceiling -- a machine sits at a low share of it for tens of minutes
+  -- so a murk read linearly off `haze / SMOG_CAP` stayed near nought through
+  all of that and the clouds never darkened. The old speck-band drew every mote,
+  so low haze still showed; the cloud readout needs the murk bent up at the low
+  end. `murk` is now `(haze / SMOG_CAP) ^ CLOUD_MURK_POW` (about 0.45), so a
+  little haze shows at once and the darkening eases toward the brim. `murk` is
+  read only by the drawing, so bending it moves no balance. `HAND_FOUL_CEIL`
+  dropped to keep a hand-only sky light under the steeper curve.
+- **The rain slid sideways when the view scrolled.** Drops were born at the
+  cloud's *world* x, which carries the parallax term, so the spawn drifted
+  through the yard as the camera panned and the sheet sheared. `rainSpans` hands
+  the rain *screen* spans now, and the shower turns each into a yard x
+  (`camX + screen`): a rolled screen column, kept only where a cloud covers it,
+  so the drops fall straight in the works and scroll with the ground while the
+  patch stays under the cloud you can see.
+
 ## Weather (built 2026-09-20)
 
 The rain is the sky's own, and the dirt only decides what it costs. Today a

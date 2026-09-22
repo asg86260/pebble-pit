@@ -31,6 +31,13 @@ export const CLOUD_MURK_TINT = 0.9;
 export const CLOUD_MURK_INK_AT = 0.6;   // murk past this starts pulling the cell toward ink
 export const CLOUD_MURK_INK = 0.55;     // and this far toward it at the brim
 export const CLOUD_MURK_GIVE = 0.3;     // how much one cell's murk may differ from the next
+// How the murk answers the haze: the share of the cap raised to this power.
+// SMOG_CAP is a slow-fill ceiling (tens of minutes of machines), so a linear
+// share sits near nothing for most of a run and the clouds never darken enough
+// to read a working machine. Bent below one, a little haze shows at once and
+// the darkening eases toward the brim -- so a machine smoking for a minute is
+// visibly dirtying the sky, which is the whole point of it.
+export let CLOUD_MURK_POW = 0.45;
 // World pixels a frame a full gust carries a fully swelled cloud, on top of
 // its own drift: the front leans with the sheet under it.
 export const CLOUD_LEAN = 0.12;
@@ -78,5 +85,7 @@ export const WEATHER_KNOBS = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50,
     get: () => CUT_MS, set: v => { CUT_MS = v; } },
   { key: 'CLOUD_SETTLE_S', label: 'cloud settle', min: 0, max: 120, step: 1,
-    get: () => CLOUD_SETTLE_S, set: v => { CLOUD_SETTLE_S = v; } }
+    get: () => CLOUD_SETTLE_S, set: v => { CLOUD_SETTLE_S = v; } },
+  { key: 'CLOUD_MURK_POW', label: 'murk bend', min: 0.2, max: 1, step: 0.05,
+    get: () => CLOUD_MURK_POW, set: v => { CLOUD_MURK_POW = v; } }
 ];

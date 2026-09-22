@@ -19,7 +19,7 @@ export let SMOG_PER_DUST = 0.08;
 // hand work adds nothing, so a yard that never builds a machine tops out light
 // and the machines stay the dirty thing.
 export let HAND_FOUL = 12;
-export let HAND_FOUL_CEIL = 700;
+export let HAND_FOUL_CEIL = 200;
 export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // The line the readout draws: a sky past it is one the next storm will make

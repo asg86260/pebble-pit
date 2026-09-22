@@ -9,7 +9,7 @@
 
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 import { RAIN_FIRST_S, STORM_BREW_S, RAIN_WASH, RAIN_MARK, CLOUD_SETTLE_S } from '../src/config.js';
-import { skyReport } from '../src/weather.js';
+import { skyReport, rainSpans } from '../src/weather.js';
 
 group('it rains on a clean yard, on its own clock', async () => {
   run(0.4);
@@ -129,3 +129,34 @@ group('the clouds swell through the brew and settle after', async () => {
 // a load stands up fresh ones (`seedWeather`), so a mid-brew reload is a new
 // sky and the frame-by-frame count means nothing across it.
 }, { reload: false });
+
+// A working sky has to be seen: the clouds are the readout, so a dirty sky
+// grows and darkens them, and the rain they drop falls in the yard rather than
+// sliding sideways with the far, parallaxing clouds when the view scrolls.
+group('a dirty sky shows in the clouds, and its rain falls in the yard', async () => {
+  run(0.4);
+  window.__crew(0, 0);
+  const clean = skyReport().cloudCells;
+  // A little haze -- far short of the brim -- has to already show: SMOG_CAP is
+  // a slow-fill ceiling, so a machine sits at a low share for a long time, and
+  // a linear murk would leave the sky blank through all of it (the bug this
+  // fixes). The clouds grow with the murk, so more cells is the readout moving.
+  window.__air({ haze: 300, muck: 0 });
+  run(2);
+  const dirty = skyReport().cloudCells;
+
+  // Its rain is born in screen space (`rainSpans`), turned into a yard x by the
+  // shower, so a span never runs past the window and a drop never carries the
+  // clouds' parallax across the yard as it is scrolled.
+  window.__front(1);
+  runUntil(() => state().smog.raining, 120);
+  const spans = rainSpans();
+  const inView = spans.every(s => s.x0 >= -1 && s.x1 <= state().viewW + 1);
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(clean >= 0, 'a clean sky has its clouds', `${clean} cells`),
+    ok(dirty > clean, 'and a little haze already thickens them', `${clean} -> ${dirty}`),
+    ok(spans.length > 0 && inView, 'and the rain is born within the window, not off at a cloud\'s world x',
+       JSON.stringify(spans.map(s => [Math.round(s.x0), Math.round(s.x1)])).slice(0, 120))
+  ];
+});

@@ -183,9 +183,15 @@ group('the sky fills up, and gives it back', async () => {
 // about the rain and says nothing about the other.
 group('a mess comes before the dust', async () => {
     run(0.4);
-  window.__crew(1, 5);
-  window.__give(500);                          // plenty on the floor to distract them
+  window.__crew(0, 5);
+  // Dust on the floor for the crew to be tempted by, put there directly rather
+  // than by filling the hole until a miner's spill overflows it: that overflow
+  // depended on `give` landing the hole *exactly* full, which the seed decides,
+  // so the floor could come up empty and this check about muck-before-dust
+  // would fail on the setup, not the behavior.
+  for (let i = 0; i < 24; i++) window.__pile(state().rockX + 180 + i * 30, 22);
   run(4);
+  const dry = state().floor;
   makeItRain();
   let peak = 0;
   for (let i = 0; i < 60; i++) { run(0.25); peak = Math.max(peak, state().smog.muck.yard); }
@@ -194,20 +200,29 @@ group('a mess comes before the dust', async () => {
   // whether the crew are gaining on it while it is still falling measures the
   // weather rather than the crew.
   runUntil(() => !state().smog.raining, 120);
-  const wet = state();
-  run(60);
+  const wet = state();                         // the mess at its deepest
+  run(24);                                     // the crew well into clearing it
+  const mid = state();                         // muck still high
+  // Out the far side of the mess, so the floor dust is fair game again.
+  runUntil(() => state().smog.muck.yard < 10, 180);
+  run(6);
   const later = state();
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });
   window.__clearFloor();
   return [
+    ok(dry > 100, 'there is dust on the floor to be tempted by', `${dry} cells`),
     ok(peak > 100, 'a rain leaves the yard under a real layer', `${Math.round(peak)} cells`),
-    ok(later.smog.muck.yard < wet.smog.muck.yard,
-       'and the crew set about it rather than stepping over it',
-       `${wet.smog.muck.yard} -> ${later.smog.muck.yard}`),
-    ok(later.floor > 0,
-       'with the dust left lying where it is until the mess is gone',
-       `${later.floor} still on the ground`)
+    ok(mid.smog.muck.yard < wet.smog.muck.yard,
+       'the crew set about the mess', `${wet.smog.muck.yard} -> ${mid.smog.muck.yard}`),
+    // The whole of it: while there is a mess to clear the floor dust is left
+    // where it lies -- held level across the stretch the crew are on the muck.
+    ok(Math.abs(mid.floor - wet.floor) <= 24 && mid.smog.muck.yard > 50,
+       'and the floor dust is left where it lies until the mess is gone',
+       `floor ${wet.floor} -> ${mid.floor} while muck ${Math.round(mid.smog.muck.yard)}`),
+    ok(later.floor < wet.floor - 24,
+       'and only once the mess is gone do they turn to the dust',
+       `${wet.floor} -> ${later.floor}`)
   ];
 });
 

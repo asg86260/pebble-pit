@@ -10,7 +10,7 @@
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S, CLOUD_GROW_W, CLOUD_GROW_ROWS,
          CLOUD_GROW_UNDER, CLOUD_LEAN, STORM_BREW_S,
-         CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_INK_AT, CLOUD_MURK_INK, CLOUD_MURK_GIVE,
+         CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_INK_AT, CLOUD_MURK_INK, CLOUD_MURK_GIVE, CLOUD_MURK_POW,
          SMOG_CAP, SMOG_TINTS,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
@@ -74,7 +74,7 @@ export function swell() {
 // How dirty the whole sky is, nought to one: the one number the clouds are the
 // readout of (DESIGN.md, "The sky is the clouds"). Not a mote's place -- the
 // murk is the sky's total, and every cloud takes it together.
-export const murk = () => Math.min(1, S.haze / SMOG_CAP);
+export const murk = () => Math.pow(Math.min(1, S.haze / SMOG_CAP), CLOUD_MURK_POW);
 
 // The smoke's browns, parsed once, and the clouds' two pales, so a cell can be
 // slid from its pale toward a tint and on toward ink without a parse a frame.
@@ -254,22 +254,26 @@ function cellsOf(c, sw) {
   return bars.reduce((m, b) => m + (b.b - b.a), 0) + (bars[0] ? under * (bars[0].b - bars[0].a) : 0);
 }
 
-// Where rain is born: the underside of every cloud bar over the window, as
-// world spans with the y of that underside. Both the water and the washed
-// acid fall from here, so a light front rains in patches under what cloud
-// there is and a full storm everywhere, the storm being a ceiling. Handed to
+// Where rain is born: the underside of every cloud bar on the window, in
+// SCREEN spans -- how far across the view the cloud's foot reaches -- with the
+// world y of that underside. Screen, not world, on purpose: the clouds are
+// far and parallax, so a spawn tied to their world x would drift through the
+// yard as the view pans and the sheet would slide sideways. The rain hands
+// each drop a *yard* x under the cloud's screen span instead (`pour`), so the
+// drops fall straight in the works and scroll with the ground while the patch
+// stays under the cloud you can see. A light front rains in patches under what
+// cloud there is; a full storm is a ceiling and rains everywhere. Handed to
 // the rain rather than imported by it (`bornUnder`), because weather.js
 // reaches the renderer and rain.js is reached from the rules.
 export function rainSpans() {
   const out = [];
   const sw = swell();
-  const left = S.camX, right = S.camX + S.viewW;
   for (const c of CLOUDS) {
     const { bars, under } = barsOf(c, sw);
     const foot = bars[0];
     if (!foot) continue;
-    const x = skyX(c);
-    const x0 = Math.max(left, x + foot.a * P), x1 = Math.min(right, x + foot.b * P);
+    const x = skyX(c) - S.camX;                 // the cloud's foot in screen x
+    const x0 = Math.max(0, x + foot.a * P), x1 = Math.min(S.viewW, x + foot.b * P);
     if (x1 <= x0) continue;
     out.push({ x0, x1, y: Math.round(cloudY(c) / P) * P + under * P });
   }

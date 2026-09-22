@@ -13,6 +13,8 @@ feature lives in DESIGN.md.
 
 **New this release**
 - The sky is the clouds now: the smoke gathers into them so they grow and darken as the yard dirties, the rain falls from their undersides, and hand work fouls a little so a first muck comes early while the yard is still slow to watch (test/sky-air.test.mjs).
+- A working machine now visibly dirties the sky instead of leaving it blank until the yard is nearly at the brim (test/weather.test.mjs).
+- Rain no longer slides sideways with the clouds when you scroll; it falls in the yard and scrolls with the ground (test/weather.test.mjs).
 - The drill and the tiller are for sale once the station's two ladders are topped and every hat is bought, like the ram; the last bench and the last furrow no longer stand in the way (test/machines.test.mjs).
 - Weather: it rains on its own clock now, clean rain that carries down a share of whatever smoke is overhead as acid among the water; the first storm of a yard comes in the first few minutes with the lightning, and the clouds swell before a front and settle after (test/weather.test.mjs).
 - The board of times is switched off for now (`TIMES_ON` in config/times.js): no panel, no page, no post.
