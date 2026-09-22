@@ -84,6 +84,8 @@ export function takeMess(w, c) {
     const pick = (w.type === TYPE.JANITOR ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
       ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
+    // The elbow's push belongs to the stance it was pushed on (see below).
+    w.shovelAt = null;
   }
   // The patch, and the ground to work it from: a body cannot stand on a site,
   // so it walks to the edge and reaches across. The claim is the muck's own
@@ -142,6 +144,7 @@ export function takeMess(w, c) {
   const arrive = P * 2;
   const slack = w.route ? arrive : arrive + WORKER;
   if (Math.abs(at - w.x) > slack || wayAt(w.x, w.y, all).key !== on.key) {
+    w.shovelAt = null;
     // Nowhere a route reaches: give the patch up rather than hold a claim on
     // it; `mess.back` puts the body on its own goal and it looks again.
     if (!keepTo(w, at, on)) return false;
@@ -167,11 +170,16 @@ export function takeMess(w, c) {
   // cell on `at` two cells wide -- a push crossing it pays double, and a
   // fraction left behind that side starts a cell in arrears -- so a pair
   // elbowed across their patch parts one cell short of a body's width.
+  //
+  // The push is the stance's: a new claim or a walk forgets it. Kept, a push
+  // left over from the column before pulls a body that has just stepped a
+  // cell to its next column straight back, off that column's ground, and the
+  // body climbs back and drops again five times a second.
   const spot = s => { const d = s - at; return at + Math.sign(d) * Math.floor(Math.abs(d) / P) * P; };
   const cells = (w.x - at) / P;
   if (Math.abs(cells - Math.round(cells)) > 1e-6) { w.x = spot(w.x); w.shovelAt = null; }
   // Further from the feet than a frame's push can leave it is a push from
-  // some other stance (a walk, a load): it starts again from here.
+  // some other stance (a load): it starts again from here.
   if (w.shovelAt == null || Math.abs(w.shovelAt - w.x) >= 2 * P) w.shovelAt = w.x;
   const push = w.shovelAt - w.x;
   if (Math.abs(push) >= P) w.x += Math.sign(push) * Math.floor(Math.abs(push) / P) * P;

@@ -36,29 +36,6 @@ while the crew are commuting, which `dance.test.mjs` does not arrange.
 no saver, so a body sent to pick one up after a refresh finds nothing there.
 Save it as a fact of the yard, the way a loose core is.
 
-### Workers jitter on the rock's flank during a muck clear-up
-
-Bodies shovelling the hill after a rain ease up a few pixels, snap down 8-10,
-about three times a second (~130 cycles/min since the stuck-yard fixes; 26
-before `bed9ba5`).
-
-**Mechanism.** `bed9ba5` made a body releasing a finished muck column `return
-false` for one frame so the re-pick happens against a claim book without its
-own elbows. That hands the body back to its own job for the frame, which
-re-plants it on the rock (`plant`/`standOn`), and muck duty takes it back next
-frame.
-
-**Blocker.** Both fixes tried -- hold the body in muck duty for the release
-frame, or re-pick in the same breath -- drop the jitter to ~17/min and collapse
-the janitors' clearing rate (the sky-house check goes from 15 poop left to
-80-95). Why the one-frame fallthrough *doubles* clearing is not understood;
-`janitorWork` only loiters. Answer that first; the fix is then a few lines in
-`takeMess`'s release branch.
-
-Repro: seed 20250830; open sites, loo, 2 miners + 2 haulers + 2 janitors; relay
-3 cells of muck across the rock's columns every 5 s; count climb-then-drop
-cycles (up >= 2 px, then down >= 12 px from the high point) over 60 s.
-
 ### `addGrain` on bare ground has no region (2026-09-09)
 
 The region lookup returns `null` for bare yard, the same value as "no region",

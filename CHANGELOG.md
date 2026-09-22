@@ -34,6 +34,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The gang shovelling rain off the rock no longer bob up and down its flank as they step from one column to the next (test/muck-jitter.test.mjs).
 - Two bodies shovelling on the same spot step a whole body's width apart instead of stopping a cell short and shovelling through each other (test/janitor.test.mjs).
 - The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
 - A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
