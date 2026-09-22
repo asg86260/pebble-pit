@@ -11,6 +11,7 @@ import { DANCE_BEAT, DANCE_BUZZ, DANCE_JUMP_H, DANCE_TEMPO_HI, danceJumpBeat } f
 import { S } from '../src/state.js';
 import { sweep } from '../src/hands.js';
 import { boulderAlive } from '../src/rock.js';
+import { inWorking } from '../src/route.js';
 
 // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
 // about on the bare ground, and only then does the next one come down.
@@ -547,31 +548,48 @@ group('a rockhand tosses its spoil onto the heap', async () => {
 // seconds before it arrives, so the square winked out while the rock was still
 // up in the air and what you saw was a thing disappearing rather than a thing
 // being buried.
+//
+// Without the reload: a mark over a head is not written down, so a save read
+// back on the landing frame takes it off, and this check is about the mark.
 group('the one underneath is covered by the rock, not by the making of it', async () => {
   window.__reset();
   window.__crew(1, 0);
   window.__jump(2);
   window.__next();
 
-  let falling = 0, landed = 0, said = 0;
-  for (let i = 0; i < 400; i++) {
+  // Frame by frame to the one the rock lands on, and the witnesses are read
+  // on that frame: a mark is up for LAND_SAY_MS from the landing, so a count
+  // of frames with somebody saying something across a fixed window was a
+  // count of whatever else happened to be said in it.
+  let falling = 0, fell = 0;
+  for (let i = 0; i < 600 && !(state().rockFall > 0); i++) run(1 / 60);   // it is made
+  while (state().rockFall > 0 && fell < 600) {
+    if (state().buriedVisible) falling++;
     run(1 / 60);
-    const s = state();
-    if (s.rockFall > 0 && s.buriedVisible) falling++;
-    if (s.rockFall === 0 && s.rock > 0 && s.buriedVisible) landed++;
-    if (s.saying > 0) said++;
+    fell++;
+  }
+  const down = state().rockFall === 0 && state().rock > 0;
+  const watching = S.workers.filter(w => !w.inside && !w.aloft && !inWorking(w));
+  const silent = watching.filter(w => !(w.say && w.say.mark === 'bang'));
+  const buriedOnLanding = state().buriedVisible;
+  let landed = 0;
+  for (let i = 0; i < 120; i++) {
+    run(1 / 60);
+    if (state().rock > 0 && state().buriedVisible) landed++;
   }
   window.__crew(0, 0);
   window.__reset();
   return [
+    ok(down, 'the rock comes down', `${fell} frames`),
     ok(falling > 10, 'it is there the whole way down', `${falling} frames`),
-    ok(landed === 0, 'and gone the moment the rock is on it', `${landed} frames after`),
+    ok(!buriedOnLanding && landed === 0, 'and gone the moment the rock is on it', `${landed} frames after`),
     // and somebody watched it happen. The opening gives the body it threw clear
     // a mark over its head; every rock after that lands on the same spot, on the
     // same person, and used to land in silence.
-    ok(said > 0, 'and whoever saw it says so', `${said} frames of it`)
+    ok(watching.length > 0 && silent.length === 0, 'and whoever saw it says so',
+       `${watching.length} watching, silent: ${silent.map(w => w.type).join(', ') || 'none'}`)
   ];
-});
+}, { reload: false });
 
 // A gang with no rock to work and none on its way has nowhere to walk to. The
 // "back to the layer" step, asked for the nearest working column when there
