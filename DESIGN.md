@@ -12562,6 +12562,96 @@ stays exactly as it is.
   against `stuck-yard.json`, a player save from before the rename with the
   house standing.
 
+## The balloons pull from the clouds (design, not built)
+
+Cutting the balloons was the wrong fix for the right complaint. The dial
+stood where they moored, and with the specks gone they took the air in as
+invisibly as the house did. When the sky was specks, a balloon was the one
+place you could watch the haze get pulled in. The clouds can give that back:
+**a balloon pulls its catch out of a cloud, and you can see it go.**
+
+### Back, as they were
+
+The cut is reverted whole: `balloon.js`, its drawing, its row, the riders,
+the umbrella, the save field, the scenes and `test/balloon.test.mjs`. The
+price ladder, the berth claim, the patrol and the drop under the basket stay
+exactly as they were. Everything below is added to that.
+
+The save version never goes backwards. `2026-09-22-no-balloons.js` stays in
+the list at `v: 6` but does nothing any more. A save it already ran on keeps
+its refund and has no balloons, which is a fair trade. A save from before it
+keeps its balloons.
+
+### The mast stands clear of the dial
+
+`mastX` is derived from the dial's reach, not from the building's width, so
+a moored envelope never stands over the gauge. The dial's extent (the stub
+and its seven cells) moves to `config/filter.js` so both read the same
+number, and the mast stands `FILTER_W` plus the dial plus its old five
+cells of air. A shot settles whether that crowds the next site over.
+
+### The thread
+
+A working balloon draws a **thread** from the underside of a cloud down into
+its filter box: a stream of cells in the cloud's own tones, drawn in fresh
+every frame and closing at the draught's pace, the way the house's intake
+cells do.
+
+- **Which cloud:** the nearest one on screen to the balloon's mouth, from
+  any sheet, measured where the cloud is drawn (`skyAt`), not at its world x.
+  The clouds scroll slower than the ground, so the cloud above a balloon
+  changes as the view moves. The thread is drawn fresh every frame, so it
+  simply reaches for whichever cloud is nearest and stretches as the two
+  slide apart. A thread that has chosen a cloud keeps it until another is
+  clearly nearer, by a margin, so it does not flick between two clouds
+  when they are about level.
+- **With no cloud on screen,** the thread runs up off the top of the window.
+  The balloon is still pulling on the sky; the cloud is just out of view.
+- **What it does not decide:** how fast the balloon pulls. The rate stays
+  as it was: the fan's pull, taken out of the sky's one count, from anywhere
+  (`eat`). The balloon's pull is a fact about the balloon; which cloud the
+  thread reaches is a fact about the view. The pull must not depend on where
+  the player is looking, or a scrolled yard would clean faster than a still one.
+
+### The cloud pales
+
+The cloud a thread is on **pales**: its murk is drawn lower than the sky's,
+so it browns less and swells less than the clouds around it. When the thread
+lets go, it fills back in.
+
+- Each cloud carries a `drawn` share, from nought to one, eased up while a
+  thread is on it and back down after, on the clock rather than the frame.
+  The cloud's tones and growth read `murk() * (1 - drawn * DRAWN_MAX)`
+  instead of `murk()`. The whole cloud pales, not one patch: the tones are
+  per cloud already, and a pale hole in one cloud would say "clean air
+  here", which the sky's count does not mean.
+- `DRAWN_MAX` is under one, so a pulled cloud on a filthy day is a paler
+  brown, not a white one. It must never read as clean.
+- It is picture only. The count is the truth, and the dial and the other
+  clouds go on reading it. The clouds are not saved, so `drawn` is not
+  either; a reload starts every cloud unpulled and the threads find their
+  clouds on the first frame.
+
+### What does not move
+
+The balance, the balloon's rate, its ladder and its price. The drop under the
+basket: its catch falls out as clods, like the filter's spout. `RAIN_WASH`, the
+fan ladder, the house. Nothing about the thread or the paling reaches the sim.
+
+### What is checked
+
+- `test/balloon.test.mjs` comes back as it was and still passes: bought on the
+  board, boarded on foot, pulling, dropping under itself.
+- A new group there: **the pull does not depend on the view.** Two runs from
+  the same seed, one with the camera scrolled back and forth, lay the same
+  muck and take the same motes.
+- The migration: a save stamped `v: 5` with balloons keeps them, and a save
+  stamped 6 without them loads as it is.
+- The thread and the paling are drawings, and no check sees them. The scene
+  `balloon` shows a thread on a near cloud, `balloonpan` shows it
+  re-reaching as the view scrolls, and `moored` shows the mast clear of the
+  dial.
+
 ## The balloons are cut (2026-09-22)
 
 The filter's dial went on the far wall, and the balloons were moored at a

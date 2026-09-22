@@ -1,5 +1,14 @@
 # Still to do
 
+## The balloons pull from the clouds -- DESIGNED, awaiting sign-off (2026-09-22)
+
+"The balloons pull from the clouds" in DESIGN.md. Revert the cut, stand the
+mast clear of the dial, and give a working balloon a thread of cloud-colored
+cells running up to the nearest cloud on screen. That cloud pales while the
+thread is on it. The thread and the paling are drawing only; the rate, the
+price and the drop under the basket are unchanged. The no-balloons migration
+stays at v6 as a no-op, so the save version never goes backwards.
+
 ## The air filter -- BUILT (2026-09-22)
 
 "The air filter" in DESIGN.md. The scrubbing house is the air filter, renamed
