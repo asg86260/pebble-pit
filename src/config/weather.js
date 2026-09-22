@@ -15,29 +15,37 @@ export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in vi
 // every frame and never saved (`swell` in weather.js).
 export const CLOUDS_STORM = 12;
 export let CLOUD_SETTLE_S = 30;
-export const CLOUD_GROW_W = 10;      // cells a cloud widens by at a full swell
-export const CLOUD_GROW_ROWS = 3;    // rows it gains on top
-export const CLOUD_GROW_UNDER = 2;   // and rows its underside deepens by
+// How far a bump's radius grows at a full swell, as a share of itself: the
+// front is a bigger cloud, not a new shape.
+export const CLOUD_GROW_R = 0.9;
+export const CLOUD_GROW_UNDER = 2;   // rows the underside deepens by at a full swell
 // The murk: the clouds are the sky's dirt readout (DESIGN.md, "The sky is the
-// clouds"). One number, `S.haze / SMOG_CAP`, grows and darkens every cloud
+// clouds"). One number, `S.haze / SMOG_CAP`, grows and browns every cloud
 // together. Murk grows a cloud less than a storm swells it -- a dirty sky is a
 // heavier ceiling, a storm is a bigger one -- so this is a share of the swell's
-// grow, not its own set of cells.
-export const CLOUD_MURK_GROW = 0.5;  // a brim sky grows a cloud this share of a full swell
-// How dark a cloud cell goes: at a brim sky a cell slides this far from the
-// cloud's pale toward its smoke tint, and past MURK_INK_AT it carries on toward
-// black, so the brim is a near-black ceiling rather than a flat brown.
-export const CLOUD_MURK_TINT = 0.9;
-export const CLOUD_MURK_INK_AT = 0.6;   // murk past this starts pulling the cell toward ink
-export const CLOUD_MURK_INK = 0.55;     // and this far toward it at the brim
-export const CLOUD_MURK_GIVE = 0.3;     // how much one cell's murk may differ from the next
+// grow, not its own.
+export const CLOUD_MURK_GROW = 0.5;
+// The brown a dirty cloud slides toward, and how far it gets at the brim: a
+// heavy brown and no further. Not black -- a black sky over the works read as
+// night, and hid the storm that was the thing worth seeing.
+export const CLOUD_MURK_TONE = '#6b4d28';
+export const CLOUD_MURK_UNDER = '#503a20';
+export const CLOUD_MURK_TINT = 0.6;
 // How the murk answers the haze: the share of the cap raised to this power.
 // SMOG_CAP is a slow-fill ceiling (tens of minutes of machines), so a linear
 // share sits near nothing for most of a run and the clouds never darken enough
 // to read a working machine. Bent below one, a little haze shows at once and
-// the darkening eases toward the brim -- so a machine smoking for a minute is
-// visibly dirtying the sky, which is the whole point of it.
+// the darkening eases toward the brim.
 export let CLOUD_MURK_POW = 0.45;
+// The storm's own color: a cool grey, laid over whatever brown the murk has
+// put there, so weather and dirt are told apart -- brown is the yard being
+// dirty, grey is rain on the way. The underside takes it harder, which is what
+// makes a front read as a heavy sky. Bluish rather than a rock grey, so the
+// sky borrows none of the six shades even where it dips as dark.
+export const CLOUD_STORM_TONE = '#a6a6b0';
+export const CLOUD_STORM_UNDER = '#868692';
+export const CLOUD_STORM_TINT = 0.7;
+export const CLOUD_STORM_UNDER_TINT = 0.85;
 // World pixels a frame a full gust carries a fully swelled cloud, on top of
 // its own drift: the front leans with the sheet under it.
 export const CLOUD_LEAN = 0.12;

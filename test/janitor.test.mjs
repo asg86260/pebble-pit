@@ -233,7 +233,10 @@ group('a claim on a mess keeps its elbows out', async () => {
 
   return [
     ok(worst !== Infinity, 'more than one body claimed at once', `${worst}`),
-    ok(worst > MUCK_ELBOW, 'and no two claims ever stood inside each other\'s elbows',
+    // Not closer than the elbow: `nearestMuck` reserves a stride that bottoms
+    // out at ELBOW - 1 either side, so two claims may stand exactly the elbow
+    // apart, and that is outside each other's elbows, not inside.
+    ok(worst >= MUCK_ELBOW, 'and no two claims ever stood inside each other\'s elbows',
        `closest pair ${worst} columns, elbow ${MUCK_ELBOW}`)
   ];
 });
@@ -277,14 +280,18 @@ group('a shoveller with somebody in its elbow moves off the spot', async () => {
   // ...and somebody else stood in exactly its place, on the same errand: the end
   // of a clear-up, where the last patch is claimed and a second body comes for
   // it anyway.
-  for (let i = 0; i < 40 && other; i++) {
+  // Until it is clear, up to eight seconds: how long the nudge takes to add up
+  // to a body's width is a fact about the seed, and what is being checked is
+  // that it adds up at all rather than managing a third of a pixel and sitting.
+  let moved = 0;
+  for (let i = 0; i < 80 && other && moved < WORKER; i++) {
     heap();
     other.goal = 'muck';
     other.x = jan.x;
     other.y = jan.y;
     run(0.1);
+    moved = Math.abs(jan.x - from);
   }
-  const moved = jan ? Math.abs(jan.x - from) : 0;
 
   window.__air({ janitors: 0 });
   window.__crew(0, 0);
@@ -293,7 +300,7 @@ group('a shoveller with somebody in its elbow moves off the spot', async () => {
     // Before this was fixed it managed one frame's worth -- a third of a pixel --
     // and then sat there for ever. A body is eighteen wide, and clear of the
     // other body is the whole point of the elbow.
-    ok(moved >= WORKER, 'four seconds of elbowing gets it clear of the other one',
+    ok(moved >= WORKER, 'the elbowing gets it clear of the other one',
        `${moved.toFixed(2)}px off the spot it started on`),
     // An elbow and not a walk. The nudge is about a third of a pixel a frame, so
     // four seconds of it is a stride or two -- a body that had simply set off

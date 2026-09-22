@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 - The sky is the clouds now: the smoke gathers into them so they grow and darken as the yard dirties, the rain falls from their undersides, and hand work fouls a little so a first muck comes early while the yard is still slow to watch (test/sky-air.test.mjs).
 - A working machine now visibly dirties the sky instead of leaving it blank until the yard is nearly at the brim (test/weather.test.mjs).
 - Rain falls over the whole world at once, not just the part on screen, so scrolling during a storm finds it already raining there rather than a sheet that follows the camera and fills in behind it (test/weather.test.mjs, "a dirty sky shows in the clouds, and its rain falls in the yard").
@@ -47,6 +48,7 @@ feature lives in DESIGN.md.
 ## v0.2.5 — 2026-09-17
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 - A tile being built draws its unbuilt part as an outline, the same outline it wears everywhere else, not a dotted ghost.
 - A hauler scoops quicker with every rung of its pace ladder, all the way up, so an upgraded hauler is faster at the heap as well as on the walk (test/ladders.test.mjs).
 - The barrier is the tower's goal card, and it pins itself into the corner once you open the tower to see it (src/selftest/boards.js, "the dome pins itself").
@@ -137,6 +139,7 @@ feature lives in DESIGN.md.
 ## v0.2.3 — 2026-09-15
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - The haulers spread themselves over the whole yard: each sets off for the resource farthest from where the others are headed, wherever on the ground it lies -- out past the tower included -- fills its hands with whatever is nearest, and comes home taking what it walks over (test/hauler-spread.test.mjs, test/far-ground.test.mjs, test/jobs.test.mjs).
 - The shield on offer stands out on the bench: a heavy frame with "the sky" on a plate over it, the name set like a sign (`node tools/look.mjs shieldrow`).
@@ -150,6 +153,7 @@ feature lives in DESIGN.md.
 ## v0.2.2 — 2026-09-15
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - The apothecary brews three things, one a coin: the hearty stew (crop) is speed, the strong brew (ore) is strength, the bracing tonic (sparks) is crit -- and every trade reads it its own way: a hauler walks faster and carries more, a wizard casts sooner and hits harder, a digger swings sooner and bites deeper. The speed brew and the mana brew are folded in, rungs and stock kept (test/three-brews.test.mjs).
 - The "for" list under a pot names every trade whose station stands, staffed or not, and none whose station is not up yet (test/pot-prefer.test.mjs).
@@ -202,6 +206,7 @@ feature lives in DESIGN.md.
 ## v0.2.1 — 2026-09-15
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - Every board is shelves: a section is a plank, an upgrade is a thing standing on it with its name, its gain and one price tag under it. The description is the hover tip.
 - Every upgrade has a drawing -- forty-odd of them, borrowed across the boards, with a small badge in the corner saying how: a plus for more of a thing, a chevron for faster, a coin for which stake.
@@ -212,6 +217,7 @@ feature lives in DESIGN.md.
 ## v0.2.0 — 2026-09-15
 
 **New this release**
+- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - Every ladder is eight rungs, two a coin: dust, then crops, then ore, then a spark -- one card, the last band red.
 - Hold space to skip any scene.

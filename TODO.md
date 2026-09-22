@@ -1,5 +1,16 @@
 # Still to do
 
+## The shoveller's elbow stalls a cell short (2026-09-21)
+
+`test/janitor.test.mjs`, "a shoveller with somebody in its elbow moves off
+the spot": with the other body pinned on top of it, the janitor is nudged
+two cells (12 px) and never takes the third to be clear of an 18 px body --
+`elbowMuck` is a third of a pixel a frame and `shovelAt` snaps to whole cells
+toward the claim, and under the seed the cloud rework moved the run to, the
+snap settles at two. Green under the seed before; the mechanic can stall a
+cell short. Not a timing matter -- eight seconds does not get the third cell.
+Red on main until the elbow is looked at.
+
 ## The sky is the clouds -- BUILT (2026-09-21)
 
 "The sky is the clouds" at the end of DESIGN.md, with "What building it
