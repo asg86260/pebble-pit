@@ -71,7 +71,7 @@ import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { stepCraftAir } from './craftair.js';
-import { tidyBoards, stationFoot } from './board.js';
+import { stationFoot } from './board.js';
 import { stepFilter } from './filter.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
@@ -205,7 +205,6 @@ export const STEPS = [
   { name: 'notices', step: c => stepNotices(c.now) },   // and whether the yard did anything worth saying
   { name: 'weather', step: c => stepWeather(c.now) },
   { name: 'survey',  step: countTick },
-  { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
   { name: 'rock',    step: stepRock },        // a new one on its way down
   { name: 'shack',   step: c => stepShack(c.dt) },  // and the hut scooting over to make room for it
   // Straight after the rock: it reads where the rock has got to this frame

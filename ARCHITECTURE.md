@@ -40,6 +40,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `shop.js` | turning those rows into a board. The boards rebuild themselves on the frame: the sim raises `S.shopStale` and never calls the shop; `main.js` drains the flag once after `step`, a press drains it on its own frame, and the hooks drain it before a check reads a board | yes |
 | `stations.js` | the station table: a row a place -- whether it stands (`open`), where you stand to open its board (`stand`), and its gate (`after`, `needs`, `sticky`, read through `offered`); the shields are rows with no ground. `stationAt(x, y)` is the pointer's one question | a row a station |
 | `board.js` | the one menu: where it stands, and the counter above the pit; whose it is comes off `stations.js` | yes |
+| `modal.js` | the window: larger reading opened off a board, centered over a wash of its own, the yard running under it; a kind is registered by its owner (`windowFor`, the books and the crew in `shop.js`) and knows nothing of what is in it | rarely |
+| `income.js` | the running record of income, written where each coin lands (`earned`, called by the pit); a rate over any window is a sum and a division | rarely |
 | `tween.js` | a count on its way: every number drawn -- the card, a purse, a roster, a price -- is read through `shown(name, value)` and runs to its value instead of jumping | rarely |
 | `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |

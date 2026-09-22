@@ -322,11 +322,9 @@ export const SCENES = {
     run: () => { rich(); window.__board('house'); window.__look(st().houses.door - 400); } },
   // The door hovered the way a pointer does it, since nothing but a hover
   // opens the list.
-  crewlist: { about: 'the crew', say: 'the crew list, out beside its board', page: true,
+  crewlist: { about: 'the crew', say: 'the crew list, in its window', page: true,
     run: () => { rich(); window.__crew(6, 5, 5, 4); window.__board('house'); window.__look(st().houses.door - 400);
-                 const door = document.querySelector('#crewshop button[data-key="crewlist"]');
-                 if (door) { const r = door.getBoundingClientRect();
-                   door.dispatchEvent(new PointerEvent('pointerenter', { clientX: r.left + 2, clientY: r.top + 2, bubbles: true })); } } },
+                 document.querySelector('#crewshop button[data-key="crewlist"]')?.click(); } },
   apothbuff: { about: 'the crew', say: 'bodies under tonics, standing',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
@@ -859,9 +857,9 @@ export const SCENES = {
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
   // Every sheet of the books: long enough for the arrows (two windows of
   // record), and a machine putting soot up so the sky sheet has a story.
-  booksall: { about: 'the pit and the rift', say: 'every sheet of the books, arrows and all',
+  booksall: { about: 'the pit and the rift', say: 'every sheet of the books in their window, arrows and all',
     run: () => { rich(); S.seenAir = true; window.__machine('jaw', { bought: true }); window.__fast(150);
-                 window.__board('stats'); window.__look(st().pitX - 300); } },
+                 window.__look(st().pitX - 300); window.__window('books'); } },
   // Half a second in lands this in the middle of the gulp. Not `rich()`: its
   // grant opens the rift during the setup, so the scene would open on a yard
   // that had already had the moment.

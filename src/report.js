@@ -312,7 +312,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // open it.
   boardOpen: S.boardOpen,
   houseBoardOpen: S.houseBoardOpen,
-  crewListOpen: S.crewListOpen,
+  modal: S.modal,
   filterBoardOpen: S.filterBoardOpen,
   quarryBoardOpen: S.quarryBoardOpen,
   farmBoardOpen: S.farmBoardOpen,

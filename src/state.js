@@ -340,7 +340,7 @@ export const S = {
   mining: false,
   paused: false,          // the whole yard held still, on the space bar
   houseBoardOpen: false,  // and the block, with what you can put up on it
-  crewListOpen: false,    // whose submenu of names is out beside it
+  modal: null,            // which window is open over the yard, by kind (modal.js), or none
   quarryBoardOpen: false,
   farmBoardOpen: false,
   shackOpen: false,       // the gang has a hut, and the rock has a board
@@ -701,7 +701,7 @@ export const EPHEMERAL = [
   'trayOwed', 'trayCells', 'trayAt', 'trayAcc', 'readyAt',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
-  'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
+  'houseBoardOpen', 'modal', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'filterBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',
   'shackBoardOpen',

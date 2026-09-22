@@ -8,7 +8,7 @@ import { houseRect } from './house.js';
 import { JOB_OF as JOBS_AT } from './levels.js';
 import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
-import { showCrewList } from './board.js';
+import { showWindow, closeWindow } from './modal.js';
 import { inHouse as inFilterHouse } from './filter.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
@@ -94,9 +94,9 @@ function point(w) {
   follow(w);
   w.pointed = now() + POINT_MS;
   // Picking a name is the end of reading the list: the view leaves for
-  // wherever that body is, and the sheet would be about a place you are no
-  // longer looking at. The board it came out of stays for the next name.
-  showCrewList(false);
+  // wherever that body is, and the window would stand over the very body it
+  // sent you to.
+  closeWindow();
 }
 
 // Two rows only: the way through to the people at the top, the thing you buy
@@ -113,11 +113,10 @@ export function crewRows() {
 const CREW_ROW = {
   key: 'crewlist',
   name: 'who lives here',
-  // Hovering opens the list, like every board in the game. The press is for a
-  // finger, which cannot hover, and it toggles because a finger has no way to
-  // walk away from a list either.
-  over: () => showCrewList(true),
-  buy: () => showCrewList(!S.crewListOpen),
+  // Pressed, not hovered: the list is a window you sit and read (modal.js),
+  // and a window that came up on a pass of the pointer would be in the way.
+  buy: () => showWindow('crew'),
+  opens: true,
   price: () => String(S.crew),
   dead: () => false,
   show: () => true,

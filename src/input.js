@@ -3,6 +3,7 @@
 // Nothing in here decides anything: it turns an event into a call on somebody
 // else's module.
 
+import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
@@ -650,11 +651,13 @@ addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   // No reset key: erasing everything must never be quicker than two
   // deliberate clicks on the armed button. Escape holds the yard; a list
-  // standing open on a board answers to it first, so the key never does two
-  // things at once.
+  // standing open on a board, then an open window, answers to it first, so
+  // the key never does two things at once. A held yard lets go first of all:
+  // the held sheet stands over the window.
   if (e.key === 'Escape') {
     e.preventDefault();
     if (shutOpts()) return;
+    if (!S.paused && closeWindow()) return;
     hold(!S.paused);
   }
   // The letters and the digits only while not typing: the settings sheet

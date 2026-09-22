@@ -12,14 +12,14 @@ import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, inL
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
-import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
-import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
+import { STATS_UPGRADES, STATS_SECTIONS, BOOK_ROWS, BOOK_SECTIONS } from './stats.js';
+import { windowFor } from './modal.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
@@ -184,7 +184,7 @@ function build(el, list, sections, empty, heads) {
   // The shelf (DESIGN.md, "The shelf"): a section is a plank and a row a thing
   // standing on it. The crew submenu and the pin keep the cards; the books are
   // a ledger, a line a reading, laid out by the stylesheet on the card markup.
-  const ledger = el === statsEl;
+  const ledger = LEDGERS.includes(el);
   const shelf = !inSubmenu && !ledger;
   el.classList.toggle('shelves', shelf);
   el.classList.toggle('ledger', ledger);
@@ -371,18 +371,13 @@ function build(el, list, sections, empty, heads) {
         if (S.shopStale) buildShop();
         tookLook();                            // and whatever this purchase sent
       }, { long: say });
-      // A door opens what is behind it on the way in, not on the press; the
-      // press is wired too (on the row itself) because a finger cannot hover.
-      // Every other board row, hovered, puts away whatever the last door led
-      // to. Rows inside the submenu are exempt: they are the answer, not the
-      // question, and this same builder makes them.
-      if (u.over) { b.classList.add('door'); b.addEventListener('pointerenter', () => u.over()); }
-      // Put away by being *stood on*, not crossed: this row is on the way to
-      // the list, so the fold waits a grace (board.js, `closeSubmenu`).
-      else if (!inSubmenu) {
-        b.addEventListener('pointerenter', () => closeSubmenu());
-        b.addEventListener('pointerleave', () => keepSubmenu());
-      }
+      // A row with something behind it is a door. One with `over` opens it on
+      // the way in as well as on the press, which is wired on the row itself
+      // because a finger cannot hover; one that `opens` a window waits for the
+      // press, since a window that came up on a pass of the pointer would be
+      // in the way.
+      if (u.over || u.opens) b.classList.add('door');
+      if (u.over) b.addEventListener('pointerenter', () => u.over());
       // The corner comes off the card you went and looked at; hovering is the
       // cheapest true evidence a row was read. A finger cannot hover, so the
       // press clears it too.
@@ -725,6 +720,31 @@ export function buildCrew() {
 export function buildCrewList() {
   build(crewListEl, crewList(), crewListSections(), 'nobody lives here yet');
 }
+
+// --- the window's two kinds (modal.js) ---------------------------------------------
+// The books, a ledger a sheet: each sheet built from its own rows alone, so no
+// row of another sheet lands under an "and" heading, and a sheet with nothing
+// to show yet is empty and folded away by the stylesheet.
+const BOOK_SHEETS = [['bookincome', 0], ['booksky', 1], ['bookcrew', 2], ['booktally', 3]]
+  .map(([id, i]) => [document.getElementById(id), i]);
+const LEDGERS = [statsEl, ...BOOK_SHEETS.map(([el]) => el)];
+windowFor('books', {
+  title: 'the books',
+  body: 'modalbooks',
+  fill: () => {
+    for (const [el, i] of BOOK_SHEETS) {
+      const sect = BOOK_SECTIONS[i];
+      const rows = BOOK_ROWS.filter(u => sect.keys.includes(u.key));
+      build(el, rows, [sect], '');
+      refresh(el, rows, null);
+    }
+  }
+});
+windowFor('crew', {
+  title: 'who lives here',
+  body: 'modalcrew',
+  fill: () => { buildCrewList(); refresh(crewListEl, crewList(), null); }
+});
 
 // Every board, by the name the panel knows it by. Each row is asked for rather
 // than held: farm.js and quarry.js import this file back, so their lists do

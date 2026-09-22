@@ -12,6 +12,7 @@ import { AIR_TREND_STEPS } from './config.js';
 import { airReadout, airSides, airTrend, skyKindCounts, muckLeft } from './smog.js';
 import { doing } from './crewboard.js';
 import { JOB, JOB_OF, jobSaid } from './jobs.js';
+import { showWindow } from './modal.js';
 
 // What the books show, in board order. A currency appears once you have seen
 // one.
@@ -204,14 +205,32 @@ const TALLY_ROWS = [
           () => S.rescued)
 ];
 
-// One list, so board.js and shop.js get every kind without being told.
-export const STATS_UPGRADES = [OVER_ROW, ...INCOME_ROWS, ...SKY_ROWS, ...CREW_ROWS, ...TALLY_ROWS];
-
-export const STATS_SECTIONS = [
+// The books in the window (modal.js): every sheet, side by side. Each sheet
+// is built on its own, so a column holds a whole sheet.
+export const BOOK_ROWS = [OVER_ROW, ...INCOME_ROWS, ...SKY_ROWS, ...CREW_ROWS, ...TALLY_ROWS];
+export const BOOK_SECTIONS = [
   { title: 'income, a second', keys: [OVER_ROW, ...INCOME_ROWS].map(u => u.key) },
   { title: 'the sky', keys: SKY_ROWS.map(u => u.key) },
   { title: 'the crew', keys: CREW_ROWS.map(u => u.key) },
   { title: 'the tally', keys: TALLY_ROWS.map(u => u.key) }
+];
+
+// The board at the noticeboard: what you glance at in passing, the rates, and
+// the way into the rest. A signpost's press, like the window row.
+const OPEN_ROW = {
+  key: 'openbooks',
+  name: 'open the books',
+  sign: true,
+  price: () => '▸',
+  dead: () => false,
+  cost: () => 0,
+  bill: () => [],
+  buy: () => showWindow('books'),
+  show: () => true
+};
+export const STATS_UPGRADES = [...INCOME_ROWS, OPEN_ROW];
+export const STATS_SECTIONS = [
+  { title: 'income, a second', keys: STATS_UPGRADES.map(u => u.key) }
 ];
 
 // --- the eased per-minute rates ----------------------------------------------

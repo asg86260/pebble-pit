@@ -4,13 +4,15 @@
 // out here.
 
 import { group, ok, run, yard } from './helpers.mjs';
-import { STATS_UPGRADES, STATS_SECTIONS } from '../src/stats.js';
+import { BOOK_ROWS, BOOK_SECTIONS, STATS_UPGRADES } from '../src/stats.js';
+import { showWindow } from '../src/modal.js';
 import { bookTrend } from '../src/income.js';
 import { refund } from '../src/pit.js';
 import { airSides } from '../src/smog.js';
 import { showPanel, hud } from '../src/board.js';
+import { buy } from '../src/upgrades.js';
 
-const row = key => STATS_UPGRADES.find(u => u.key === key);
+const row = key => BOOK_ROWS.find(u => u.key === key);
 const text = v => String(v).replace(/<[^>]+>/g, '').trim();
 
 // --- income ---------------------------------------------------------------------
@@ -72,7 +74,7 @@ group('the sky sheet agrees with itself', async () => {
   const { up, down } = airSides();
   const due = text(row('skydue').price());
   const arrows = text(row('skytrend').price());
-  const shares = STATS_UPGRADES.filter(u => /^sky(mach|dust|shard|spore)$/.test(u.key) && u.show())
+  const shares = BOOK_ROWS.filter(u => /^sky(mach|dust|shard|spore)$/.test(u.key) && u.show())
     .map(u => +text(u.price()).replace('%', ''));
   const sum = shares.reduce((a, b) => a + b, 0);
 
@@ -93,7 +95,7 @@ group('the crew sheet counts every body once, each way', async () => {
   window.__fullSites();
   window.__crew(3, 3, 3, 2);
   run(60);
-  const shown = STATS_UPGRADES.filter(u => u.show());
+  const shown = BOOK_ROWS.filter(u => u.show());
   const sum = prefix => shown.filter(u => u.key.startsWith(prefix)).reduce((n, u) => n + +text(u.price()), 0);
   const bodies = yard.S.workers.length;
   const top = Math.max(...yard.S.workers.map(w => w.mined || 0));
@@ -108,9 +110,11 @@ group('the crew sheet counts every body once, each way', async () => {
   ];
 });
 
-// --- the board ----------------------------------------------------------------------
-// Four headings, in the order the design gives them, drawn through the board.
-group('the books draw four sheets', async () => {
+// --- the board and the window -------------------------------------------------------
+// The board at the noticeboard is the rates and a way in; the window it opens
+// holds every sheet, each under its own heading, in the order the design gives.
+// Pressed the way the board presses a row (`buy`, what the tap calls).
+group('the board is the rates, and the books open in a window', async () => {
   window.__reset();
   window.__fullSites();
   window.__crew(3, 3, 3, 0);
@@ -118,16 +122,27 @@ group('the books draw four sheets', async () => {
   run(60);
   showPanel('stats', true);
   hud();
-  const rows = [...document.getElementById('statsshop').children];
-  const heads = rows.filter(r => r.dataset.sect).map(r => r.dataset.sect);
-  const dust = rows.find(r => r.dataset.key === 'ratedust');
+  const onBoard = [...document.getElementById('statsshop').children].map(r => r.dataset.key).filter(Boolean);
+  buy(STATS_UPGRADES.find(u => u.key === 'openbooks'));
+  hud();
+  const opened = yard.S.modal;
+  const sheets = ['bookincome', 'booksky', 'bookcrew', 'booktally'].map(id => document.getElementById(id));
+  const heads = sheets.flatMap(el => [...el.children].filter(r => r.dataset.sect).map(r => r.dataset.sect));
+  // (Off the sheet's own children: the node yard's DOM knows `.cls` selectors
+  // and nothing else.)
+  const dust = [...sheets[0].children].find(r => r.dataset.key === 'ratedust');
   const note = dust ? dust.querySelector('.note') : null;
+  showWindow(null);
   showPanel(null, true);
 
   return [
-    ok(heads.join(' | ') === STATS_SECTIONS.map(s => s.title).join(' | '), 'every sheet has its heading, in order',
+    ok(onBoard.includes('ratedust') && onBoard.includes('openbooks') && !onBoard.some(k => /^(sky|crew|now|best|tally)/.test(k)),
+       'the board carries the rates and the way in, and nothing else', onBoard.join(',')),
+    ok(opened === 'books', 'pressing the way in opens the books', String(opened)),
+    ok(heads.join(' | ') === BOOK_SECTIONS.map(s => s.title).join(' | '), 'every sheet has its heading, in order',
        heads.join(' | ')),
     ok(note && /in the last minute/.test(note.textContent), 'and a rate says its sum under it',
-       note ? note.textContent : 'no note')
+       note ? note.textContent : 'no note'),
+    ok(yard.S.modal === null, 'and it closes again')
   ];
 });

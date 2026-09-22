@@ -1015,8 +1015,9 @@ html.dark .scrim {
    `on` on after showing and takes it off ahead of hiding). Only those two:
    the crashed and ending sheets share the class and show themselves by
    `hidden` alone. */
-#held, #scrim { opacity: 0; transition: opacity .18s linear; }   /* SHEET_FADE_MS in config/view.js */
-#held.on, #scrim.on { opacity: 1; }
+#held, #scrim, #modal, #modalwash { opacity: 0; transition: opacity .18s linear; }   /* SHEET_FADE_MS in config/view.js */
+#held.on, #scrim.on, #modal.on, #modalwash.on { opacity: 1; }
+body.still #modal, body.still #modalwash { transition: none; }
 /* A page turned, on the sheet or the landing page's column, comes in as a
    short fade: an element going from hidden to shown restarts its animation,
    so this is the whole of it. */
@@ -1247,43 +1248,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 
   .rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
 }
-#crewshop button .cost, #crewlist button .cost { text-align: right; }
-
-/* --- the house board's submenu ------------------------------------------------
-   The people used to be the bottom half of the house board: the row that puts
-   another house up, and then a name for every body in the settlement. At four
-   bodies that is a board. At twenty it is a column of names taller than the
-   window, standing on the block it is describing, with the one row you can
-   actually press hiding at the top of it. So the names come out beside the board
-   when you ask for them, and the board stays the size of what you can do.
-
-   Beside the board, to the right, standing on the same bottom edge -- the
-   way a submenu stands beside the menu it opened from -- and out of the
-   panel's flow altogether. It stood to the right once before as a flex
-   sibling, and that moved the board: on any window narrower than about 1400
-   pixels the panel no longer fit and hovering the door threw the board into
-   the corner to make room. A list you opened by hovering a row should not
-   move the row. Then it stood above the board, which moved nothing but had
-   nowhere to go the day the board was seated high: a tall board on a short
-   window put every name off the top of the glass. So: out of flow, beside,
-   and when the right-hand side runs out it stands to the left of the purse
-   instead (`.port`, decided in `place` in board.js) rather than squashing or
-   moving anything. Its width is measured off the door and the sheet by
-   `seatFlyout` rather than restated here. Nothing the panel measures
-   includes the list, so nothing about the board's seat changes when it comes
-   out. The gap is the panel's gap, restated: `gap` has no length a child can
-   read. */
-.panel .flyout { position: absolute; bottom: 0; left: calc(100% + 8px); transform-origin: 0 100%; }
-.panel .flyout.port { left: auto; right: calc(100% + 8px); transform-origin: 100% 100%; }
-#crewlist .rows { grid-template-columns: minmax(0, 1fr); }
-/* A settlement can get long. The names scroll inside the sheet rather than
-   growing off the top of the window -- `place` caps this further by the room
-   the board actually has above its bottom edge. */
-#crewlist { max-height: 46vh; overflow-y: auto; }
-/* Two columns rather than three. Nothing on this sheet has a price, so the
-   middle column -- what a purchase gives you -- is closed up, and where the body
-   is takes whatever room the longest answer needs: "at the air filter" in
-   the shop's 4.6em price column is a phrase running off the edge of the sheet. */
+#crewshop button .cost, #crewlistrows button .cost { text-align: right; }
 
 /* A row that leads somewhere says so. Every other name on a board is a thing
    you press and something happens; a door opens a sheet, and the mark is the
@@ -1293,9 +1258,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    And it has a line of its own, a card's width in the first column: the cards
    beside it are things to buy, and a door in among them was one more card to
    read -- side by side with "another house" it read as a second purchase. The
-   card after it starts the next line. The sheet it opens stands over the
-   board, so the door is the top-left card and the names come out directly
-   above it. The builder marks any row with something behind it. */
+   card after it starts the next line. What it opens is a window over the yard
+   (modal.js). The builder marks any row with something behind it. */
 .rows > button.door { grid-column: 1; }
 .rows > button.door + button, .rows > button.door + .job { grid-column: 1; }
 .rows button.door .what::after { content: ' \203A'; opacity: .5; }
@@ -1773,7 +1737,6 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--ink);
 }
 .handle .name { font-size: 12px; }
-#listback { padding: 2px 8px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
 #panel.bottom .purse {
   flex: 0 0 auto;
   flex-direction: row; justify-content: space-between;
@@ -1796,7 +1759,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   overscroll-behavior: contain;
   scrollbar-width: none;                /* the rail below is the bar */
 }
-#panel.bottom > .sheet::-webkit-scrollbar, #panel.bottom .flyout::-webkit-scrollbar { display: none; }
+#panel.bottom > .sheet::-webkit-scrollbar { display: none; }
 /* The sheet's scrollbar (board.js, placeRail): a cell-wide track down the
    right edge inside the safe area, a black thumb the viewport's share of the
    rows, seated from scrollTop. Shown only while the rows overflow. */
@@ -1811,17 +1774,6 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #panel.bottom .rail .thumb { position: absolute; left: 0; right: 0; top: 0; background: var(--ink); }
 /* the board's own title is the handle's now */
 #panel.bottom .page .title { display: none; }
-/* The crew list as a page inside the sheet: the board's rows step aside for
-   it, and the way back is the arrow beside the grip. */
-#panel.bottom .flyout {
-  position: static; flex: 1 1 auto; min-height: 0;
-  width: 100%; max-width: none; margin: 0;
-  border: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
-  padding-bottom: var(--sheet-hidden, 0px); box-sizing: border-box;
-  opacity: 1; transform: none; transition: none;
-}
-#panel.bottom.listing > .sheet:not(.flyout) { display: none; }
-/* the grab bar under it is spoken for; nothing else has to move */
 
 /* Narrow glass, whatever the height: one card across. Two columns on a sheet
    the width of a phone are cards of 180 pixels, and a bill of six coins in
@@ -1862,3 +1814,43 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .skip.on { opacity: 1; }
 .skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--paper); }
 .skip .say { position: relative; mix-blend-mode: difference; }
+
+/* --- the window (modal.js) ------------------------------------------------------
+   Larger reading, opened off a board: centered over a wash of its own, under
+   the held sheet's (the held sheet and its wash come later in the page at the
+   same heights). As wide as its content wants up to most of the glass, and
+   scrolled inside itself past most of its height, so the cross never leaves
+   the window. The same ink, border and dotted ground as the boards. */
+.modalwash { z-index: 11; }
+.modal {
+  position: fixed; z-index: 12;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column;
+  box-sizing: border-box;
+  max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
+  padding: 8px 12px 12px;
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font: 12px ui-monospace, "Courier New", monospace;
+}
+html.dark .modal {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+}
+.modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.modalhead .title { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; }
+#modalclose { padding: 0 6px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: 1.4; cursor: pointer; }
+#modalclose:hover { background: var(--ink); color: var(--paper); }
+.modalbody { overflow-y: auto; overscroll-behavior: contain; min-height: 0;
+             scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }   /* inked: no grey in the picture */
+/* The books: a column a sheet, each a ledger as wide as the board's, as many
+   across as the window holds -- four on a wide desk, two on a laptop, one on a
+   phone. A sheet with nothing on it yet folds away. */
+.modalbody.books { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 40ch)); gap: 0 24px; align-items: start; width: min(calc(4 * 40ch + 3 * 24px), calc(100vw - 48px)); }
+.modalbody.books > .rows:has(> .empty) { display: none; }
+.modalbody.books > .rows.ledger > .sect:first-child { margin-top: 0; }
+/* The crew: a card a body, as many across as fit. */
+#modalcrew { width: min(72ch, calc(100vw - 48px)); }
+#modalcrew .rows { grid-template-columns: repeat(auto-fill, minmax(22ch, 1fr)); }

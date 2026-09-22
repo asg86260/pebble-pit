@@ -364,7 +364,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the crew list opens as a page inside the sheet, never outside the window', async () => {
+  ['on a phone the crew window stands inside the glass, and the cross puts it away', async () => {
     window.__nocine();
     window.__crew(3, 2);
     run(0.5);
@@ -374,26 +374,20 @@ export const TESTS = [
     const door = await openCrewList();
     await settled();
     const s = state();
-    const list = document.getElementById('crewlist');
-    const lr = list.getBoundingClientRect();
-    const pr = rect();
-    const inside = !list.hidden && lr.left >= pr.left - 1 && lr.right <= pr.right + 1 && lr.top >= pr.top - 1 && lr.bottom <= pr.bottom + 1;
-    const inWindow = lr.right <= s.W + 1 && lr.bottom <= s.H + 1 && lr.left >= -1;
-    const rowsHidden = getComputedStyle(panel().querySelector(':scope > .sheet:not(.flyout)')).display === 'none';
-    const back = document.getElementById('listback');
-    const backShown = !back.hidden;
-    back.click();
+    const win = document.getElementById('modal');
+    const wr = win.getBoundingClientRect();
+    const inWindow = !win.hidden && wr.left >= -1 && wr.top >= -1 && wr.right <= s.W + 1 && wr.bottom <= s.H + 1;
+    document.getElementById('modalclose').click();
     await settled();
-    const closed = list.hidden;
+    const closed = state().modal === null;
     phone(false);
     window.__board(null);
     await frames(2);
     return [
       ok(!!door, 'the house board has its door'),
-      ok(inside, 'the list opens inside the sheet', `list ${Math.round(lr.left)},${Math.round(lr.top)} ${Math.round(lr.width)}x${Math.round(lr.height)} in ${Math.round(pr.left)},${Math.round(pr.top)} ${Math.round(pr.width)}x${Math.round(pr.height)}`),
-      ok(inWindow, 'and inside the window'),
-      ok(rowsHidden, 'in place of the board\'s rows'),
-      ok(backShown && closed, 'and the arrow beside the grip brings the rows back'),
+      ok(s.modal === 'crew', 'pressing it opens the crew window', `${s.modal}`),
+      ok(inWindow, 'inside the glass', `${Math.round(wr.left)},${Math.round(wr.top)} ${Math.round(wr.width)}x${Math.round(wr.height)} in ${s.W}x${s.H}`),
+      ok(closed, 'and the cross puts it away'),
     ];
   }],
 

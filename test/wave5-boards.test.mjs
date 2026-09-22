@@ -17,7 +17,7 @@ import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
-import { STATS_UPGRADES } from '../src/stats.js';
+import { BOOK_ROWS } from '../src/stats.js';
 import { bookRate, bookSpan } from '../src/income.js';
 import { STATS_OVER_S, STATS_OVER_DEFAULT } from '../src/config.js';
 import { buy } from '../src/upgrades.js';
@@ -145,7 +145,7 @@ group('the books can be read over a window the player picks', async () => {
   window.__crew(3, 3);
   run(Math.max(...STATS_OVER_S) + 10);         // a record longer than any window
 
-  const row = STATS_UPGRADES.find(u => u.key === 'ratesover');
+  const row = BOOK_ROWS.find(u => u.key === 'ratesover');
   const steps = [], says = [], spans = [];
   for (let i = 0; i < STATS_OVER_S.length; i++) {
     buy(row);

@@ -1,4 +1,4 @@
-// The house board and the crew submenu hung off it.
+// The house board and the crew window opened off it.
 
 import { sleep, newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point, hoverBench, hoverHouse, openCrewList, hoverAway, run, buy } from './kit.js';
 
@@ -55,7 +55,7 @@ export const TESTS = [
     await openCrewList();
     const open = state();
     // the first person on the sheet that opened: the board itself is the block
-    const row = document.querySelector('#crewlist button[data-key^="who"]');
+    const row = document.querySelector('#crewlistrows button[data-key^="who"]');
     if (row) {
       const r = row.getBoundingClientRect();
       row.dispatchEvent(new PointerEvent('pointerenter',
@@ -104,55 +104,7 @@ export const TESTS = [
     ];
   }],
 
-  // A submenu opens because a row was hovered; hovering a different row is
-  // the answer changing.
-  ['reading another row puts the submenu away', async () => {
-    newRun();
-    await settle();
-    window.__crew(2, 2);
-    run(60);
-    await hoverHouse();
-    const door = await openCrewList();
-    const list = document.getElementById('crewlist');
-    const wasOut = !list.hidden && state().crewListOpen;
-
-    // any other row on the same board -- the one that buys another house
-    const other = [...document.querySelectorAll('#crewshop button')]
-      .find(b => b !== door && b.offsetParent !== null);
-    const enter = (el, type = 'pointerenter') => {
-      const r = el.getBoundingClientRect();
-      el.dispatchEvent(new PointerEvent(type,
-        { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
-    };
-    const leave = el => enter(el, 'pointerleave');
-    // Crossed on the way to the list: the row is between the door and the
-    // names, so the pointer passes over it and lands on the list inside the
-    // grace, and the list must still be there when it arrives.
-    if (other) { enter(other); await raf(); leave(other); enter(list); }
-    await sleep(320);                      // past SUBMENU_GRACE_MS
-    const crossed = state().crewListOpen;
-    // Stood on, and stayed on: that is reading the other row.
-    if (other) { enter(other); await raf(); await raf(); }
-    const atOnce = state().crewListOpen;   // not yet -- the grace has not run
-    await sleep(320);
-    const after = state().crewListOpen;
-
-    // and back on the door it comes out again, so this is a change of mind
-    // rather than a submenu that can only be opened once
-    await openCrewList();
-    const again = state().crewListOpen;
-    await hoverAway();
-    window.__crew(0, 0);
-    return [
-      ok(wasOut, 'hovering the door opens the list'),
-      ok(!!other, 'there is another row on the board to read'),
-      ok(crossed, 'crossing that row on the way to the list does not fold it', `${crossed}`),
-      ok(atOnce && !after, 'and standing on it does, a moment later', `${atOnce} -> ${after}`),
-      ok(again, 'and going back to the door brings it out again', `${again}`)
-    ];
-  }],
-
-  ['picking a name takes the view to them and folds the list away', async () => {
+  ['picking a name takes the view to them and closes the window', async () => {
     newRun();
     await settle();
     window.__crew(6, 2);
@@ -170,8 +122,8 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(rows.length > 1, 'there is a list of them to pick from', `${rows.length}`),
-      ok(!after.crewListOpen, 'picking one folds the list away',
-         `${before.crewListOpen} -> ${after.crewListOpen}`),
+      ok(before.modal === 'crew' && after.modal === null, 'picking one closes the window',
+         `${before.modal} -> ${after.modal}`),
       ok(!!after.follows, 'and the view goes to whoever it was', `${after.follows}`)
     ];
   }],
@@ -260,24 +212,21 @@ export const TESTS = [
       }
       el.dispatchEvent(new PointerEvent('pointermove', at));
       await sleep(16);
-      if (state().crewListOpen) opened = true;
+      if (state().modal) opened = true;
     }
     const arrived = state();
     window.__board(null);
     window.__crew(0, 0);
     return [
-      // Stated directly rather than as a row count: whatever the cursor
-      // crosses first coming in off the yard must not be the door, which
-      // opens on hover.
-      ok(rows.length > 0 && rows[rows.length - 1].dataset.key !== 'crewlist',
-         'the row nearest the yard is not the one that opens the settlement',
-         rows.map(r => r.dataset.key).join(' then ')),
-      ok(!opened, 'and reaching it never puts the settlement up'),
+      // The door opens on a press, so crossing any row on the way in, the
+      // door included, puts nothing up.
+      ok(rows.length > 0, 'there are rows to walk through', rows.map(r => r.dataset.key).join(' then ')),
+      ok(!opened, 'and reaching them never puts the settlement up'),
       ok(arrived.houseBoardOpen, 'and the board is still there when you get there')
     ];
   }],
 
-  ['hovering a name does not close the list it is on', async () => {
+  ['hovering a name does not close the window it is in', async () => {
     newRun();
     await settle();
     window.__crew(6, 2);
@@ -293,65 +242,20 @@ export const TESTS = [
       b.dispatchEvent(new PointerEvent('pointerenter',
         { clientX: r.left + 8, clientY: r.top + 4, bubbles: true }));
       await sleep(40);
-      if (!state().crewListOpen) stayed = false;
+      if (state().modal !== 'crew') stayed = false;
     }
     const at = state();
+    window.__window(null);
     await hoverAway();
     window.__crew(0, 0);
     return [
       ok(rows.length >= 4, 'there are names on the sheet', `${rows.length}`),
-      ok(stayed, 'and hovering one leaves the sheet up'),
-      ok(at.crewListOpen && at.houseBoardOpen,
-         'and the board underneath it too', `${at.crewListOpen}, ${at.houseBoardOpen}`)
-    ];
-  }],
-
-  ['you can get to the names without a ruler', async () => {
-    newRun();
-    await settle();
-    window.__crew(6, 2);
-    window.__give(40000);
-    run(30);
-    await hoverHouse();
-    const door = await openCrewList();
-    await sleep(120);
-    const rows = [...document.querySelectorAll('#crewlistrows button')];
-    const dr = door.getBoundingClientRect();
-    const target = rows[0].getBoundingClientRect();
-
-    // the ugliest crossing there is: out of the bottom of the board, along the
-    // bottom edge of the panel, and up into the list. Along the edge and not
-    // under it: the ground that far below the house board is the bench's own
-    // stand, where a station under the pointer takes the board every time
-    // (input.js). The wedge protects the crossing between a board and its
-    // list, not a stroll over the neighbors.
-    const dip = document.getElementById('panel').getBoundingClientRect().bottom - 10;
-    const path = [
-      [dr.right - 6, dr.bottom - 2],
-      [dr.right + 10, dip],
-      [(dr.right + target.left) / 2, dip],
-      [target.left + 20, dip],
-      [target.left + 20, target.top + 6]
-    ];
-    let openThroughout = true;
-    for (const [x, y] of path) {
-      point('pointermove', x, y, 0);          // to the canvas: the game's own ears
-      await sleep(50);
-      if (!state().houseBoardOpen || !state().crewListOpen) openThroughout = false;
-    }
-    const at = state();
-    await hoverAway();
-    window.__crew(0, 0);
-    return [
-      ok(rows.length > 0, 'there are names to walk to', `${rows.length} of them`),
-      ok(openThroughout, 'and the board and its list survive the crossing'),
-      ok(at.houseBoardOpen && at.crewListOpen, 'and are still up at the far end of it',
-         `${at.houseBoardOpen}, ${at.crewListOpen}`)
+      ok(stayed && at.modal === 'crew', 'and hovering one leaves the window up', `${at.modal}`)
     ];
   }],
 
   ['a row wears its description inline, not on a hover', async () => {
-    // The crew submenu is the one exception (a roster of a dozen bodies keeps
+    // The crew window is the one exception (a roster of a dozen bodies keeps
     // the hover; see shop.js), and this is a board.
     newRun();
     await settle();
@@ -388,64 +292,69 @@ export const TESTS = [
     ];
   }],
 
-  // The list stands beside the board on its bottom edge, the panel's gap
-  // away: to the right, or to the left of the purse when the right runs out.
-  // The board does not move for it, except on a window too narrow for the
-  // three together, where it gives ground by exactly the shortfall. The
-  // headless window is 800 wide, which is that case, so the move, if any, is
-  // proved to be the shortfall and nothing more.
-  ['the list opens beside the board', async () => {
+  // The window stands in the middle of the glass over a wash of its own, the
+  // yard keeps running under it, and it goes three ways: the cross, escape,
+  // and a press on the wash. The pointer wandering off is not one of them.
+  ['the crew opens in a window, and it closes three ways', async () => {
     newRun();
     await settle();
     window.__crew(3, 2);
-    run(60);
+    run(30);
     await hoverHouse();
-    const sheet = document.querySelector('#panel .sheet:not(.flyout)');
-    const list = document.getElementById('crewlist');
-    const panel = document.getElementById('panel');
-    const before = sheet.getBoundingClientRect();
-    const panelBefore = panel.getBoundingClientRect();
-    const door = await openCrewList();
-    await sleep(80);
-    const after = sheet.getBoundingClientRect();
-    const panelAfter = panel.getBoundingClientRect();
-    const listed = list.getBoundingClientRect();
-    const doorAt = door.getBoundingClientRect();
-    const gap = 8;
-    const shortfall = Math.max(0, panelBefore.right + gap + listed.width + 4 - innerWidth);
-    const gave = panelBefore.left - panelAfter.left;
-    // all the ground the board has to give is what stands between it and the
-    // window's edge; past that the list itself comes back over the board
-    const canGive = Math.min(shortfall, panelBefore.left - 4);
-    const right = Math.abs(listed.left - (panelAfter.right + gap)) < 1 ||
-                  (shortfall > canGive && Math.abs(listed.right - (innerWidth - 4)) < 1);
-    const left = Math.abs(listed.right - (panelAfter.left - gap)) < 1;
-    const beside = (right || left) && Math.abs(listed.bottom - after.bottom) < 1;
-    const inside = listed.left >= 0 && listed.right <= innerWidth;
-    const still = Math.abs(after.bottom - before.bottom) < 1 &&
-                  (shortfall === 0 ? Math.abs(gave) < 1 : Math.abs(gave - canGive) < 1);
-    // a slot, or a card plus the sheet's border and padding on either side,
-    // which is the board's width less what its rows take
-    const sheetAir = after.width - document.getElementById('crewshop').getBoundingClientRect().width;
-    const wantW = door.classList.contains('tile') ? 2 * doorAt.width : doorAt.width + sheetAir;
-    const wide = Math.abs(listed.width - wantW) < 1;
-    const unmoved = !panel.classList.contains('stack') && !panel.classList.contains('flip');
+    const win = document.getElementById('modal');
+    const wash = document.getElementById('modalwash');
+    const opened = [];
+    const openIt = async () => {
+      window.__board('house');
+      await sleep(120);
+      await openCrewList();
+      await sleep(260);                          // past the fade in
+      const r = win.getBoundingClientRect();
+      opened.push(state().modal === 'crew' && !win.hidden && !wash.hidden);
+      return r;
+    };
+    const r = await openIt();
+    const mid = Math.abs((r.left + r.right) / 2 - innerWidth / 2) < 2 && Math.abs((r.top + r.bottom) / 2 - innerHeight / 2) < 2;
+    const inside = r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
+    // the yard under it is not held: a window is for reading a live yard
+    const ran = !state().paused;
+    // the pointer off to the corner, as a hand leaving the list would
+    point('pointermove', 4, 4, 0);
+    await sleep(250);
+    const stayed = state().modal === 'crew';
+
+    document.getElementById('modalclose').click();
+    await sleep(40);
+    const byCross = state().modal === null;
+    await openIt();
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await sleep(40);
+    const byKey = state().modal === null && !state().paused;
+    await openIt();
+    const wr = wash.getBoundingClientRect();
+    wash.dispatchEvent(new PointerEvent('pointerdown', { clientX: wr.left + 6, clientY: wr.top + 6, bubbles: true, isPrimary: true }));
+    wash.dispatchEvent(new PointerEvent('pointerup', { clientX: wr.left + 6, clientY: wr.top + 6, bubbles: true, isPrimary: true }));
+    wash.click();
+    await sleep(40);
+    const byWash = state().modal === null;
+    await sleep(260);
+    const gone = win.hidden && wash.hidden;
     await hoverAway();
     window.__crew(0, 0);
     return [
-      ok(listed.width > 60, 'the list opens with something on it', `${Math.round(listed.width)}px`),
-      ok(beside, 'beside the board, on its bottom edge, the panel\'s gap away',
-         `list ${Math.round(listed.left)}-${Math.round(listed.right)},${Math.round(listed.bottom)}; panel ${Math.round(panelAfter.left)}-${Math.round(panelAfter.right)},${Math.round(after.bottom)}`),
-      ok(inside, 'and inside the window', `${Math.round(listed.left)}-${Math.round(listed.right)} of ${innerWidth}`),
-      ok(still, 'and the board it came out of has not moved, or gave only the ground it had to',
-         `${Math.round(before.left)},${Math.round(before.bottom)} -> ${Math.round(after.left)},${Math.round(after.bottom)}, short ${Math.round(shortfall)}`),
-      ok(wide, door.classList.contains('tile') ? 'two slots wide' : 'one card wide',
-         `list ${Math.round(listed.width)}w, door ${Math.round(doorAt.width)}w`),
-      ok(unmoved, 'with nothing in the panel re-seated to make room for it', panel.className)
+      ok(opened.every(Boolean) && opened.length === 3, 'pressing the door opens the window over its wash', opened.join(',')),
+      ok(mid && inside, 'in the middle of the glass, and inside it',
+         `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} in ${innerWidth}x${innerHeight}`),
+      ok(ran, 'and the yard is not held under it'),
+      ok(stayed, 'the pointer wandering off leaves it up'),
+      ok(byCross, 'the cross closes it'),
+      ok(byKey, 'so does escape, without holding the yard'),
+      ok(byWash, 'and so does a press on the wash'),
+      ok(gone, 'and gone, it is hidden')
     ];
   }],
 
-  ['the crew is a submenu of the house board', async () => {
+  ['the crew opens off the house board, in a window', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
@@ -453,46 +362,18 @@ export const TESTS = [
     await hoverHouse();
     const shut = state();
     const inlineNames = document.querySelectorAll('#crewshop [data-key^="who"]').length;
-    const sheet = document.querySelector('#panel .sheet:not(.flyout)');
-    const list = document.getElementById('crewlist');
-
     await openCrewList();
+    await sleep(260);
     const open = state();
-    const listOut = !list.hidden;
-    const listed = list.getBoundingClientRect();
-    const board = sheet.getBoundingClientRect();
-
-    // These go to the canvas, where the game decides whether the cursor has
-    // walked off: over the real page the panel is in the way and the canvas
-    // never hears any of it, so this is the harder question.
-    const probes = [
-      [listed.left + listed.width / 2, listed.top + listed.height / 2],
-      [listed.right - 4, listed.bottom - 4],
-      [listed.right - 4, listed.top + 4],
-      [(board.right + listed.left) / 2, listed.bottom - 6]
-    ];
-    let stayed = true;
-    for (const [x, y] of probes) {
-      point('pointermove', x, y, 0);
-      const s = state();
-      if (!s.houseBoardOpen || !s.crewListOpen) stayed = false;
-    }
-    const onIt = state();
-
-    // Straight up off the top: out of the wedge in the one direction that
-    // cannot be mistaken for anything else, since the sky is not a station.
-    point('pointermove', listed.left + listed.width / 2,
-          Math.min(listed.top, board.top) - 160, 0);
-    // past LINGER (board.js): leaving a station lingers so that arriving at
-    // the next is a move rather than a close and an open
-    await sleep(240);
-    const left = state();
+    const win = document.getElementById('modal');
+    const inWindow = win.contains(document.getElementById('crewlistrows'));
+    window.__window(null);
     await hoverAway();
     window.__crew(0, 0);
     return [
-      ok(shut.houseBoardOpen && !shut.crewListOpen,
-         'standing at the house opens the board with the list still folded away',
-         `${shut.houseBoardOpen}, ${shut.crewListOpen}`),
+      ok(shut.houseBoardOpen && !shut.modal,
+         'standing at the house opens the board with the list still put away',
+         `${shut.houseBoardOpen}, ${shut.modal}`),
       ok(inlineNames === 0 && shut.crewRows.length === 0,
          'so no names are sitting on the board itself', `${inlineNames} of them`),
       ok(!!shut.houseRow && /^another house/.test(shut.houseRow),
@@ -501,24 +382,12 @@ export const TESTS = [
          shut.crewDoor.includes('4'),
          'and a row that leads to the people, saying how many there are',
          shut.crewDoor),
-      ok(open.crewListOpen && listOut,
-         'reaching that row brings the people out beside it',
-         `${open.crewListOpen}, ${listOut}`),
+      ok(open.modal === 'crew' && inWindow,
+         'pressing that row brings the people up in the window', `${open.modal}`),
       ok(open.crewRows.length === 4,
-         'one row per body, on the sheet that opened', `${open.crewRows.length} rows`),
+         'one row per body', `${open.crewRows.length} rows`),
       ok(open.crewRows.some(r => r.includes('on the rock')),
-         'still saying where each of them is', JSON.stringify(open.crewRows)),
-      ok(document.getElementById('panel').contains(list) && listed.width > 0,
-         'the list is part of the menu rather than a second thing beside it',
-         `${Math.round(listed.width)}x${Math.round(listed.height)}`),
-      ok(stayed, 'hovering it closes neither the board nor the list',
-         `board ${Math.round(board.right)}, list ${Math.round(listed.left)}`),
-      ok(onIt.houseBoardOpen && onIt.crewListOpen,
-         'and both are still up at the far corner of it',
-         `${onIt.houseBoardOpen}, ${onIt.crewListOpen}`),
-      ok(!left.houseBoardOpen && !left.crewListOpen,
-         'while walking away takes the two of them together',
-         `${left.houseBoardOpen}, ${left.crewListOpen}`)
+         'still saying where each of them is', JSON.stringify(open.crewRows))
     ];
   }],
 
