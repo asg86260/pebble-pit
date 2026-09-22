@@ -6,7 +6,7 @@
 // back door proves the state can be set, and nothing about whether you can get
 // there.
 
-import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED } from './helpers.mjs';
+import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED, yard } from './helpers.mjs';
 
 const rich = () => {
   window.__reset();
@@ -243,5 +243,32 @@ group('what a balloon pulls does not depend on where you are looking', async () 
     ok(still.haze < 2400, 'the craft takes the sky down', `${still.haze}`),
     ok(JSON.stringify(still) === JSON.stringify(swung), 'and does the same whichever way the view swings',
        `still ${JSON.stringify(still)}, swung ${JSON.stringify(swung)}`)
+  ];
+}, { reload: false });
+
+// A balloon's rider is on the purifiers like the body in the house, and the
+// filter's cap is one plus a body a craft. Read back, the crew is dealt out
+// against that cap, so the craft have to be back before the deal, or the cap
+// is one and the rider is stood down on every load.
+group('a balloon rider is still on the job after a reload', async () => {
+  rich();
+  buyNow('balloon');
+  window.__air({ purifiers: 2 });
+  runUntil(() => state().craft[0] && state().craft[0].up, 60);
+  const before = yard.S.purifiers;
+  // Read back the way a fresh page reads it, with no craft already in
+  // memory: a save and a load in one process keeps the old ones, and a cap
+  // read off them hides the bug.
+  yard.persist();
+  const raw = localStorage.getItem('boulder-clicker/v4');
+  window.__reset();
+  localStorage.setItem('boulder-clicker/v4', raw);
+  yard.restore();
+  const after = yard.S.purifiers;
+  const flies = runUntil(() => state().craft[0] && state().craft[0].up, 60);
+  return [
+    ok(before === 2, 'one in the house and one in the balloon', `${before}`),
+    ok(after === 2, 'and both are still on the purifiers after a reload', `${before} -> ${after}`),
+    ok(flies, 'and the balloon goes back up')
   ];
 }, { reload: false });

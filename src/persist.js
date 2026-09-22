@@ -445,8 +445,12 @@ export const SAVERS = [
   // reload (`persist()` then `restore()` in one process) hides this,
   // because the in-memory machine is still running.
   MACHINES,
-  // The load's `rebalance`, and the loan: after the machines, before the
-  // crew is stood.
+  // The craft before the deal for the same reason: the filter's cap is one
+  // body plus one a craft, and dealt against the house alone every rider is
+  // stood down on every load.
+  BALLOON,
+  // The load's `rebalance`, and the loan: after the machines and the craft,
+  // before the crew is stood.
   STAFF,
   QUARRY,
   BEATS,
@@ -456,7 +460,6 @@ export const SAVERS = [
   WORKS,
   DUST,
   METEOR,
-  BALLOON,
   SMOG,
   CASINO,
   FARM,
