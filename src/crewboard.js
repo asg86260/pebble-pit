@@ -60,7 +60,7 @@ const NOW = { seek: 'looking for pebbles', dump: 'tipping a load',
               tend: 'tending a plot', home: 'heading home', idle: 'nothing much',
               in: 'inside', aloft: 'up in the balloon' };
 
-function doing(w) {
+export function doing(w) {
   // These outrank any goal: the stepper's last word is stale for all four.
   if (w.lifted) return 'in your hand';
   if (w.falling) return 'in mid-air';

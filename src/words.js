@@ -133,3 +133,14 @@ export const leftText = ms => {
 };
 export const ordinal = n =>
   n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+
+// A signed change as arrows, against three steps: under the first is level,
+// then one arrow, two, three. The air filter's board and the books both draw
+// with it, so an arrow is the same kind of thing wherever it stands.
+const UP = '▲', DOWN = '▼', LEVEL = '—';
+export function arrowsFor(t, steps) {
+  const size = Math.abs(t);
+  if (size < steps[0]) return LEVEL;
+  const n = size < steps[1] ? 1 : size < steps[2] ? 2 : 3;
+  return (t > 0 ? UP : DOWN).repeat(n);
+}

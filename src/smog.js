@@ -44,7 +44,7 @@ import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          plotMuck, poopCols, poopLeft, quarryMuck, retally, rockMuck, slumpMess,
          sweepMuckAt, throughPlotMuck, throughQuarryMuck, throughRockMuck,
          workSpot, yardMuck, yardMuckFor } from './smog/layer.js';
-import { airReadout, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
+import { airReadout, airSides, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
 // A save coming back. The band is rebuilt out of the haze (sky.js); a storm
@@ -148,7 +148,7 @@ export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining, clogg
          nearestMuck, rockMuck, quarryMuck, plotMuck, buried, retally,
          throughRockMuck, throughQuarryMuck, throughPlotMuck, cleanSpotNear,
          workSpot, dropMuckAt, slumpMess, sweepMuckAt,
-         sampleAir, airTrend, airReadout, clumpiness, skyBins, drawnIn,
+         sampleAir, airTrend, airSides, airReadout, clumpiness, skyBins, drawnIn,
          smogReport, seedSmog };
 
 // --- one frame ---------------------------------------------------------------------

@@ -9088,7 +9088,7 @@ built and taken out the same day: it steadied the rare coins by averaging them
 over up to five minutes, which is also five minutes of a windfall reading as a
 rate, and it was a rule the player could not see.
 
-### Amendment — the books grow three sheets: income, the sky, the crew (design, not built)
+### Amendment — the books grow three sheets: income, the sky, the crew (built)
 
 The books are five rates and a tally: enough to say the yard is earning, not
 enough to say how it is going. Three things a player actually asks while
@@ -9155,14 +9155,31 @@ change to the whole carry for one line of a board. *Earned against spent*:
 nothing records spending yet; it is the natural next sheet once this one has
 been read in play. Charts: see below.
 
-**Open calls.**
-1. *One board or pages.* Three new sections on one board is about twenty-five
-   lines with the tally; the proposal is the one board, sections folded like the
-   other boards'. The alternative is three pages on the noticeboard (*income /
-   sky / crew*), which needs a page control the board does not have.
-2. *A picture or numbers only.* Proposed: numbers only for this round. A
-   ten-minute pixel strip per coin is possible (the shelf's glyphs already draw
-   into the DOM) and is the obvious follow-up if the arrows are not enough.
+**Decided (2026-09-22):** one board, numbers only. The sheet scrolls. A
+ten-minute pixel strip per coin stays the obvious follow-up if the arrows are
+not enough.
+
+**As built, where it moved from the above.**
+- *An arrow is held level inside the counts' own scatter.* Two windows of the
+  same steady yard differ by about the square root of their sum, and a relative
+  step on eight ore a minute flipped between two arrows on one lump. Outside
+  that scatter the steps are `STATS_TREND_STEPS`, as a share of the window
+  before. The arrow drawing itself moved to words.js (`arrowsFor`) with the sky's
+  steps in config (`AIR_TREND_STEPS`), because the books importing the air
+  board's module was a load-order cycle.
+- *"Full in", not "rain in".* Rain keeps its own clock since the weather; what
+  the readout counts down to is a full sky (`SMOG_CAP`). The countdown and the two
+  sides are all off the same minute (`airSides`, beside `airTrend`), so they
+  cannot tell three stories; the air readout's one-second figures would have.
+- *The crew's "right now" reads the crew card's `doing`*, not `whereIs`:
+  `whereIs` says a carrying hauler is "on the way" for ever.
+- *Lifetime income* is shown for every coin but pebbles, which keep *pebbles
+  banked*. A save from before this starts `earnedTotal` at nought; nothing could
+  reconstruct it without counting refunds back in.
+- A window's sum is only written under a rate that had one; a nought already
+  says nothing came in.
+
+Scene `booksall`; checks test/books-sheets.test.mjs.
 
 ### Amendment — a toast when one lands (built)
 

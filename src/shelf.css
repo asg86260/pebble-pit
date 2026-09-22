@@ -584,7 +584,10 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 }
 .rows.ledger > button .name { display: contents; }
 .rows.ledger > button .what { grid-column: 1; display: block; font-style: normal; letter-spacing: .08em; white-space: nowrap; }
-.rows.ledger > button .ladder, .rows.ledger > button .gain, .rows.ledger > button .time, .rows.ledger > button .note, .rows.ledger > button .pinmark { display: none; }
+.rows.ledger > button .ladder, .rows.ledger > button .gain, .rows.ledger > button .time, .rows.ledger > button .pinmark { display: none; }
+/* a reading's note is the dim line under it: the sum behind a rate */
+.rows.ledger > button .note { grid-column: 1 / -1; grid-row: 2; display: block; padding: 2px 0 0 2ch; color: var(--ink-5); font-size: 11px; }
+.rows.ledger > button .note:empty { display: none; }
 /* the leader: a dotted rule from the label to the value, sat on the baseline */
 .rows.ledger > button::after { content: ''; grid-column: 2; grid-row: 1; align-self: end; border-bottom: 1px dotted var(--ink-5); margin-bottom: 3px; }
 .rows.ledger > button .cost { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }

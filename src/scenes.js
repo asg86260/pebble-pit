@@ -857,6 +857,11 @@ export const SCENES = {
   // noughts.
   books: { about: 'the pit and the rift', say: 'the books over the pit',
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
+  // Every sheet of the books: long enough for the arrows (two windows of
+  // record), and a machine putting soot up so the sky sheet has a story.
+  booksall: { about: 'the pit and the rift', say: 'every sheet of the books, arrows and all',
+    run: () => { rich(); S.seenAir = true; window.__machine('jaw', { bought: true }); window.__fast(150);
+                 window.__board('stats'); window.__look(st().pitX - 300); } },
   // Half a second in lands this in the middle of the gulp. Not `rich()`: its
   // grant opens the rift during the setup, so the scene would open on a yard
   // that had already had the moment.

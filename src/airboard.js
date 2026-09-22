@@ -6,24 +6,15 @@
 
 import { S } from './state.js';
 import { airTrend } from './smog.js';
+import { AIR_TREND_STEPS } from './config.js';
+import { arrowsFor } from './words.js';
 
 // An arrow, and nothing else: the sign *is* the reading. Averaged over the
 // last minute (`airTrend`), or a house very nearly keeping up flips it every
-// second or two.
-const UP = '▲', DOWN = '▼', LEVEL = '—';
-
-// How fast, in arrows: one is a drift, two is a problem, three is a yard
-// running away from you, and the same three the other way once the house is
-// winning.
-const STEPS = [15, 60];                 // a minute's worth, between one arrow and two
-
-function arrows() {
-  const t = airTrend() * 60;            // a minute, like every other rate here
-  const size = Math.abs(t);
-  if (size < 1) return LEVEL;
-  const n = size < STEPS[0] ? 1 : size < STEPS[1] ? 2 : 3;
-  return (t > 0 ? UP : DOWN).repeat(n);
-}
+// second or two. One is a drift, two is a problem, three is a yard running
+// away from you, and the same three the other way once the house is winning.
+export const airArrows = () => arrowsFor(airTrend() * 60, AIR_TREND_STEPS);
+const arrows = airArrows;
 
 // and the same fact in a word, for the hover
 function trendWord() {

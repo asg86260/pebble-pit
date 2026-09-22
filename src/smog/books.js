@@ -29,6 +29,9 @@ export const countDrew = () => { drew += 1; };
 // keeping up.
 const WINDOW = 60;
 const net = new Array(WINDOW).fill(0);
+// and the two sides of it, so the books can say why the arrow points
+const up = new Array(WINDOW).fill(0);
+const down = new Array(WINDOW).fill(0);
 let filled = 0, oldest = 0;
 
 export function sampleAir(t) {
@@ -43,6 +46,8 @@ export function sampleAir(t) {
   drew = 0;
   if (!mark.at) return;
   net[oldest] = rate - took;
+  up[oldest] = rate;
+  down[oldest] = took;
   oldest = (oldest + 1) % WINDOW;
   filled = Math.min(WINDOW, filled + 1);
 }
@@ -53,6 +58,14 @@ export function airTrend() {
   let sum = 0;
   for (let i = 0; i < filled; i++) sum += net[i];
   return sum / filled;
+}
+// What went up and what the house took down, a second each, over the same
+// minute as `airTrend`.
+export function airSides() {
+  if (!filled) return { up: 0, down: 0 };
+  let u = 0, d = 0;
+  for (let i = 0; i < filled; i++) { u += up[i]; d += down[i]; }
+  return { up: u / filled, down: d / filled };
 }
 const fouling = () => mark.rate;
 // What the house took out over the last second, not what its fan is rated at.
@@ -154,7 +167,7 @@ export function seedSmog() {
   // The first front of a new yard is on the clock from the start.
   S.rainDue = RAIN_FIRST_S;
   S.stormHeft = 1;
-  net.fill(0);
+  net.fill(0); up.fill(0); down.fill(0);
   filled = 0;
   oldest = 0;
   mark = { at: 0, rate: 0, drew: 0 };

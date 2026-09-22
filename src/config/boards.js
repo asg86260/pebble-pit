@@ -23,6 +23,11 @@ export const PIP_HOVER_LIFT = 0.5;
 // toggle steps through them. The income record keeps the longest.
 export const STATS_OVER_S = [30, 60, 300, 600];
 export const STATS_OVER_DEFAULT = 60;
+// A rate's arrow: its window against the one before, as a share of the one
+// before. Under the first is level; then one arrow, two, three.
+export const STATS_TREND_STEPS = [0.05, 0.25, 1];
+// The sky's arrow, in haze a minute, on the air filter's board and the books'.
+export const AIR_TREND_STEPS = [1, 15, 60];
 // Every frame would be a thousand-odd ring entries for no more truth than forty
 // give.
 export const STATS_SAMPLE_S = 0.5;

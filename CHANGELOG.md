@@ -14,6 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 - Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
+- The books have three new sheets: each income rate wears an arrow and the sum under it, the sky says what is putting it up and when it will be full, and the crew says who is doing what and who is best at it (test/books-sheets.test.mjs).
 - The income books are a running record of what came in, averaged over a window you pick -- half a minute, one, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
 - A working balloon draws the haze in: a stream of cells in the air's own color gathers into its filter box from all round it, thicker the dirtier the sky; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `moored`; test/balloon.test.mjs).
 - The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).

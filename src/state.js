@@ -353,6 +353,7 @@ export const S = {
   // The books over the pit: the one board that belongs to no building.
   statsBoardOpen: false,
   booksOver: 60,          // the seconds the books average over (STATS_OVER_S)
+  earnedTotal: {},        // every coin that came in as income, by coin, refunds kept out (income.js)
   // --- the record (notices.js) ---
   // Recognition only: nothing in here feeds a rate.
   won: [],                // the notices earned, in the order they landed
@@ -472,6 +473,7 @@ export const SAVED = [
   'riftLevel',
   'hideDone',
   'booksOver',
+  'earnedTotal',
   'pickLevel',
   'critChanceLevel',
   'critMultLevel',
