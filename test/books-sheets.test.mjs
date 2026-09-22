@@ -70,7 +70,11 @@ group('the sky sheet agrees with itself', async () => {
   window.__crew(4, 4, 4, 0);
   window.__machine('jaw', { bought: true });
   yard.S.seenAir = true;
-  run(90);
+  // Read while the yard is still fouling: the haulers cannot keep up with
+  // this crew, so the rock's and the cut's piles are full inside a quarter
+  // minute and both stand, and by a minute and a half the sky's side was a stray beat or
+  // nothing, whichever the dice gave.
+  run(30);
   const { up, down } = airSides();
   const due = text(row('skydue').price());
   const arrows = text(row('skytrend').price());
