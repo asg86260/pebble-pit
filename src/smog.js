@@ -12,7 +12,7 @@
 //   draught.js  a hand through the smoke
 //   sky.js      how the sky is arranged: slots, sway, creep, settling
 //   house.js    the air filter pulling on the band
-//   craft.js    what the balloons take
+//   spout.js    what comes out of the filter's spout
 //   rain.js     the shower, and whether one breaks
 //   layer.js    the muck it leaves on the ground, and shifting it
 //   books.js    what the boards are told, and seeding a run
@@ -36,7 +36,7 @@ export function skyKindCounts() {
 import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
-import { pullCraft, stepClods } from './smog/craft.js';
+import { stepClods } from './smog/spout.js';
 import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
          stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
@@ -161,9 +161,6 @@ export function stepSmog(dt) {
   // is the same dirt subtracted twice.
   if (filtering()) { pull(secs); breathe(secs); }
   else { DRAUGHT.length = 0; }
-  // After the house, so a mote in the throat is the house's rather than
-  // fought over.
-  pullCraft(secs);
   // Before the front, whose marking has to be about what is actually overhead.
   reckon();
   // A front that is due starts a brew, not a shower (`stepStorm`), and rolls

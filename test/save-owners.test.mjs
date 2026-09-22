@@ -5,7 +5,7 @@
 //
 // What this file proves is that the move changed nothing about the save: a
 // rich yard -- every station open, crew, machines, a shield up, a pot on the
-// table, the star, a craft, a build in flight, dust on every ground -- is
+// table, the star, a build in flight, dust on every ground -- is
 // written, read back and written again, and the second blob is the first
 // byte for byte, less the stamp's clock and the four facts a load re-derives
 // on purpose (named below, each with its reason). The same yard on the tree
@@ -27,8 +27,8 @@ const ALIAS = { workers: ['who'], coreItem: ['core', 'coreLoose'],
 const spelledAs = k => ALIAS[k] || [k];
 
 // A yard with something saved in every corner of it, stood up the player's
-// way where a hook is not the point: the shield and the craft are bought
-// through their rows and built by the crew.
+// way where a hook is not the point: the shield is bought through its row and
+// built by the crew.
 function richYard() {
   window.__fullSites();
   window.__grant({ shards: 900, spores: 900, cores: 9, sparks: 300 });
@@ -43,10 +43,7 @@ function richYard() {
   window.__meteor();
   window.__wizardHat();
   run(3);
-  window.__air({ open: true });
-  window.__buy('balloon');
-  window.__air({ purifiers: 2 });
-  runUntil(() => state().craft.length > 0, 200);
+  window.__air({ open: true, purifiers: 1 });
   run(3);
   window.__casino(true);
   window.__casinoStake(60);
@@ -91,12 +88,12 @@ group('a rich yard written, read back and written again is the same blob', async
     JSON.stringify(before[k]) !== JSON.stringify(after[k]));
   return [
     ok(before.who.length >= 14 && !!before.shield && !!before.pot && !!before.meteorCells &&
-       before.craft.length > 0 && Object.values(before.works).some(l => l.length) &&
+       Object.values(before.works).some(l => l.length) &&
        before.chips.length > 0 && before.floor.cells.length > 100 && before.cut.cells.length > 10 &&
        Object.values(before.machines).filter(m => m.bought).length === 4,
        'the yard has something saved in every corner',
        `${before.who.length} crew, shield ${!!before.shield}, pot ${!!before.pot}, star ${!!before.meteorCells}, ` +
-       `${before.craft.length} craft, works ${JSON.stringify(before.works)}, ${before.chips.length} chips`),
+       `works ${JSON.stringify(before.works)}, ${before.chips.length} chips`),
     ok(Object.keys(before).join() === Object.keys(after).join(),
        'the second blob has the same keys in the same order'),
     ok(rest(first) === rest(second),

@@ -579,10 +579,9 @@ export const SAVED = [
 // Each is written and read by its owner's `SAVE` (the shield's in shield.js,
 // the machines' in machines.js), listed in `SAVERS` in persist.js in the
 // order the yard is read back; every name here is in exactly one saver's
-// `fields` (test/persist-roundtrip.test.mjs). The last six are not fields on
-// `S`: the grids and the sky are module consts, the chance is rng.js's and
-// the craft balloon.js's; they are named so the list reads as everything a
-// save carries that is not a plain copy.
+// `fields` (test/persist-roundtrip.test.mjs). The last five are not fields on
+// `S`: the grids are module consts and the chance is rng.js's; they are named
+// so the list reads as everything a save carries that is not a plain copy.
 export const SAVED_BY_HAND = [
   'runSeed',              // the run's name, and the stream it is partway through
   'camX',                 // rounded out, and read back once, into `camWas`
@@ -642,8 +641,8 @@ export const SAVED_BY_HAND = [
   'build', 'saveV',
   // When it was written, for the saves page's "5 days ago" (slots.js).
   'savedAt',
-  // Not fields on S: the grids, the sky, the chance and the craft.
-  'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
+  // Not fields on S: the grids, the sky and the chance.
+  'floor', 'pit', 'cut', 'meteorCells', 'rngState',
 ];
 
 // And everything else: this session's own, deliberately thrown away on a

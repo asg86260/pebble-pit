@@ -36,8 +36,8 @@ export const climbing = () => { let n = 0; for (const m of SKY) if (m.up) n++; r
 
 // On their way down, as muck. A sky mote becomes one of these when it rains.
 export const DROPS = [];
-// And out of the filter, as muck: a load dropped off the spout's lip, or off
-// a balloon's basket, falling to the heap it will land on (`stepClods`).
+// And out of the filter, as muck: a load dropped off the spout's lip, falling
+// to the heap it will land on (`stepClods`).
 export const CLODS = [];
 
 // Specks on their way out: taken by a mouth, and fading where they stood.
@@ -58,8 +58,7 @@ export const STACK = [];
 // down to a little clear air over the ground line. Read off the ground line
 // rather than off a depth so the haze reaches the works whatever the window
 // is; floored against the top so a window too short to hold both still gives
-// the band somewhere to be. Exported because the balloon has to agree with
-// the air about where the sky is (`laneY` in balloon.js).
+// the band somewhere to be.
 export const bandTop = () => S.camY + SMOG_TOP * P;
 export const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 

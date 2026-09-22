@@ -252,9 +252,8 @@ group('a claim on a mess keeps its elbows out', async () => {
 // up to anything, so two bodies on the last patch of a clear-up shovelled
 // through one another until the heap ran out.
 //
-// The same fractional-rounding trap balloon.js writes up over its craft: a thing
-// that moves less than a pixel a frame has to remember the part of a pixel it
-// has moved.
+// The fractional-rounding trap: a thing that moves less than a pixel a frame
+// has to remember the part of a pixel it has moved.
 group('a shoveller with somebody in its elbow moves off the spot', async () => {
   window.__reset();
   window.__crew(0, 2);

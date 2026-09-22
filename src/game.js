@@ -69,7 +69,6 @@ setTake(take);
 import { stepSmoke } from './puff.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
-import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
 import { stepFilter } from './filter.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
@@ -243,7 +242,6 @@ export const STEPS = [
   // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
   { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
-  { name: 'balloons',  step: stepBalloons },              // and the craft crossing it
   { name: 'sampleair', step: c => sampleAir(c.now) },
   // swinging does not catch its own spray
   { name: 'catch', step: () => { if (S.dragging) catchAir(S.mouse.x, S.mouse.y); } },

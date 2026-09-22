@@ -12562,6 +12562,35 @@ stays exactly as it is.
   against `stuck-yard.json`, a player save from before the rename with the
   house standing.
 
+## The balloons are cut (2026-09-22)
+
+The filter's dial went on the far wall, and the balloons were moored at a
+mast on that same side: a moored envelope stood over the dial. Moving one of
+them was the obvious fix. Cutting the balloons was the better one. They were
+a second mouth on the same fan, so they bought a faster sky, which the fan
+ladder already sells. They needed a berth claim, a rider rule, an umbrella
+and an escape from the fall rule, all to put one more body in the sky. And
+with the specks gone they took the air in the same invisible way the house
+did, so they no longer showed anything the dial does not.
+
+What goes: `balloon.js`, its drawing and its config, the row, the riders and
+the umbrella (which only ever appeared under a balloon), the craft's save
+field, the scenes `moored`, `balloon` and `brolly`, and `test/balloon.test.mjs`.
+The wizards' float-down stays; it was never the balloons' own. The filter holds
+one body, and its mouth is one gullet again (`smog/house.js`); what comes out
+of the spout is `smog/spout.js`.
+
+**A save that bought some is paid back** (`2026-09-22-no-balloons.js`,
+`SAVE_V` 6). Every balloon bought, and one on order, is refunded into the hole
+at the prices they were sold at, written into the migration because the
+ladder that priced them is gone. A body up in a basket is let down on the
+wizards' descent rather than stood on the ground. Checked in
+`test/air-filter.test.mjs`.
+
+**Balance.** A balloon was a second mouth on the house's fan, so a yard that
+leaned on balloons past the top of the fan ladder loses that headroom. If a
+fully bought yard cannot hold its sky, the fan ladder is the dial to turn.
+
 ## The sky has depth (built 2026-09-21)
 
 Every cloud sat in one band at one depth, drawn the same, and the sky read as

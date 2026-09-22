@@ -9,7 +9,6 @@ import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
-import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
@@ -53,7 +52,6 @@ export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary
 export { drawDraught, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 export { drawShack } from './render/shack.js';
-export { drawBalloons, drawBrollies } from './render/balloon.js';
 export { drawFilter } from './render/filter.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
@@ -172,8 +170,6 @@ const LAYERS = [
   // world: painted back with the pit, it warped blank page and read as a plain
   // disc. Nothing that has to stay readable is ever over the pit's near end.
   { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
-  { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
-  { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
   { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
   { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name

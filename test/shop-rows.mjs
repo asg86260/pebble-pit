@@ -112,7 +112,6 @@ export const ROWS = [
   // --- the air filter ----------------------------------------------------
   { key: 'fan', part: 2, reach: filter },
   { key: 'airrate', dial: true, part: 2, reach: S => { S.seenAir = true; } },
-  { key: 'balloon', part: 2, reach: filter },
   { key: 'recycler', part: 2, reach: filter },
 
   // --- the quarry -------------------------------------------------------------

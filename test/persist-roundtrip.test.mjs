@@ -49,8 +49,8 @@ function sentinel(blank, n) {
 // cannot.
 const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                'stirrers', 'janitors',
-               // the house holds one body and a mouth a balloon, and there
-               // is no lab: both are clamped to their caps on the way in
+               // the filter holds one body and there is no lab: both are
+               // clamped to their caps on the way in
                'purifiers', 'scholars',
                // wave7b-build: derived before the bench is open (which this
                // check's nonsense flags may or may not say), clamped to its
@@ -138,14 +138,14 @@ group('every field on S is accounted for', async () => {
        'and everything on SAVED_BY_HAND is actually written by persist()',
        unwritten.join(', ')),
     // The lists are about S, so a name on one of them that is not a field is
-    // either a typo or one of the six that belong to another module -- the
-    // grids, the sky, the chance, the craft, and the two leftovers the format
+    // either a typo or one of those that belong to another module -- the
+    // grids, the sky, the chance, and the two leftovers the format
     // still carries. Named here so a typo cannot hide among them.
     ...Object.entries(lists).map(([name, list]) => {
       // ...and `mouth`, where the cut's mouth was: a fact about the layout the
       // crew were saved on, read by `restoreCrew` and kept by nothing.
       // ...and `saveV`, the shape number the migrations read off the blob.
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV'];
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })
@@ -170,7 +170,7 @@ group('every by-hand field has exactly one saver', async () => {
 
 // The group above reads the keys `S` has at the moment it runs, and a field a
 // module hangs on `S` the first time it is needed is not among them: the
-// house's part-clod (`filterMuck`) was written by craft.js for a month with no
+// house's part-clod (`filterMuck`) was written by the spout for a month with no
 // declaration, no list and no blank, so a reset kept it and a reload lost it,
 // and nothing here went red. So the source is read as well as the object:
 // every name assigned through `S.` anywhere under src/ has to be declared.

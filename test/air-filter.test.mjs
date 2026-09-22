@@ -5,9 +5,9 @@
 // `filtersieve` are its check.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, run, buyBuilt, yard, state } from './helpers.mjs';
+import { group, ok, run, runUntil, buyBuilt, yard, state } from './helpers.mjs';
 import { FILTER_MUCK, FILTER_PER_MUCK, SMOG_PER_MOTE } from '../src/config.js';
-import { JOB } from '../src/jobs.js';
+import { JOB, TYPE } from '../src/jobs.js';
 
 const S = yard.S;
 
@@ -38,6 +38,37 @@ group('a save from before the rename comes back with its scrubbing house as the 
        'its row is still one the player has seen'),
     ok(S.seenSects.includes('the air filter') && !S.seenSects.includes('the scrubbing house'),
        'and its board is still one they have read', S.seenSects.join(', '))
+  ];
+});
+
+group('a save with balloons in it gets its dust back, and its rider floats down', async () => {
+  // A save from before the balloons went: two bought, a third being built,
+  // and the filter's body up in a basket.
+  window.__crew(0, 0);
+  window.__air({ open: true, purifiers: 1 });
+  run(20);
+  yard.persist();
+  const s = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
+  const rider = s.who.find(r => r.type === TYPE.PURIFY);
+  s.saveV = 5;
+  s.craft = [{ x: 0, dir: 1, lift: 1 }, { x: 0, dir: -1, lift: 0 }];
+  s.works = { ...(s.works || {}), filter: [{ key: 'balloon', done: 1, of: 45, at: null }] };
+  s.seenRows = [...(s.seenRows || []), 'balloon'];
+  Object.assign(rider, { goal: 'aloft', aloft: true, craft: 0, berth: 0, y: rider.y - 300 });
+  const was = s.stored;
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(s));
+  yard.restore();
+  const body = S.workers.find(w => w.type === TYPE.PURIFY);
+  const high = body && body.y;
+  const landed = runUntil(() => body && !body.aloft && !body.floating, 30);
+  return [
+    ok(S.stored === was + 1200 + 2280 + 4332, 'every balloon bought or on order is paid back',
+       `${was} -> ${S.stored}`),
+    ok(!S.seenRows.includes('balloon'), 'and its row is forgotten'),
+    ok(!(S.works.filter || []).some(w => w.key === 'balloon'), 'and its build is off the site'),
+    ok(body && body.craft === undefined && body.berth === undefined, 'the rider is out of the basket'),
+    ok(high < S.groundY - 100, 'and still up where it was', `${Math.round(high)} over ground ${S.groundY}`),
+    ok(landed, 'and comes down on its own')
   ];
 });
 

@@ -152,9 +152,9 @@ export function takeMess(w, c) {
   // off. Snapped, not pinned, because the elbow has to be able to move a body
   // or the gang bunches onto one spot.
   //
-  // The fraction lives on `shovelAt` and `w.x` is what it rounds to (the trap
-  // balloon.js writes up: a thing moving less than a pixel a frame has to
-  // remember the part of a pixel it has moved), or the elbow's third of a
+  // The fraction lives on `shovelAt` and `w.x` is what it rounds to (a thing
+  // moving less than a pixel a frame has to remember the part of a pixel it
+  // has moved), or the elbow's third of a
   // pixel is undone by the next frame's round and two bodies shovel through
   // each other for the whole clear-up. Snapped TOWARD `at`, never past it:
   // rounding to the world's cells sends a body arrived a fraction short back

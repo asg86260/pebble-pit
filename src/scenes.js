@@ -701,21 +701,6 @@ export const SCENES = {
   filtersieve: { about: 'the house and the sky', say: 'the air filter with the recycler fitted',
     run: () => { rich(); window.__air({ open: true, haze: 2600, purifiers: 1, recycler: true }); window.__fast(20);
                  window.__look(st().filterX - 300); } },
-  moored: { about: 'the house and the sky', say: 'a balloon moored at the mast',
-    run: () => { rich(); window.__air({ open: true }); window.__fast(2);
-                 window.__buy('balloon'); window.__fast(2); window.__look(st().filterX - 220); } },
-  // `page` on the two with a craft in the air: the camera reads `craft` off
-  // the page's snapshot, which the node yard's has not got.
-  balloon: { about: 'the house and the sky', say: 'a balloon crewed and out over the yard', page: true,
-    run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
-                 window.__buy('balloon'); window.__air({ purifiers: 2 }); window.__fast(30);
-                 window.__look(st().craft[0].x - 380); } },
-  // Taken off the purifiers while the craft was up.
-  brolly: { about: 'the house and the sky', say: 'a rider stepping out under an umbrella', page: true,
-    run: () => { rich(); window.__air({ open: true, haze: 1600 }); window.__fast(2);
-                 window.__buy('balloon'); window.__air({ purifiers: 2 }); window.__fast(35);
-                 window.__look(st().craft[0].x - 400);
-                 window.__air({ purifiers: 0 }); window.__fast(2.2); } },
   // The sky at four levels (DESIGN.md, "The sky is the band").
   sky0: { about: 'the house and the sky', say: 'a clear sky', run: () => skyAt(0) },
   sky1: { about: 'the house and the sky', say: 'a light sky', run: () => skyAt(900) },

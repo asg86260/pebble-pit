@@ -58,7 +58,7 @@ const NOW = { seek: 'looking for pebbles', dump: 'tipping a load',
               muck: 'shoveling up mess', cut: 'digging in the quarry',
               work: 'digging in the quarry', up: 'climbing out', down: 'climbing down',
               tend: 'tending a plot', home: 'heading home', idle: 'nothing much',
-              in: 'inside', aloft: 'up in the balloon' };
+              in: 'inside' };
 
 function doing(w) {
   // These outrank any goal: the stepper's last word is stale for all four.

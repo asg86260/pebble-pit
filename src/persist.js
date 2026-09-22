@@ -11,7 +11,6 @@ import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
 import { seedSmog, SAVE as SMOG } from './smog.js';
 import { resetWeather } from './weather.js';
 import { slideLayers } from './smog/layer.js';
-import { SAVE as BALLOON } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, BLANK, SAVED, SAVED_BY_HAND, EPHEMERAL, floor, pit, cut } from './state.js';
 import { SAVE as WORKS } from './works.js';
@@ -455,7 +454,6 @@ export const SAVERS = [
   WORKS,
   DUST,
   METEOR,
-  BALLOON,
   SMOG,
   CASINO,
   FARM,

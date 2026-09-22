@@ -72,10 +72,7 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       'inside',
                       // in the air on its own account, or a wizard saved aloft
                       // falls and starts the climb again on every refresh
-                      'aloft', 'floating', 'brolly', 'spot',
-                      // which craft it is aboard, and the berth a purifier was
-                      // dealt, which puts it back in the same basket
-                      'craft', 'berth',
+                      'aloft', 'floating', 'spot',
                       // the plot a farmhand is working, or the far end of a
                       // long row is never reached between refreshes
                       'plot',
@@ -217,7 +214,7 @@ export const SAVE = {
   blank() { S.crew = 0; }
 };
 
-// Not in the yard: behind a door, up in the balloon, or on the cursor and
+// Not in the yard: behind a door, up in the air, or on the cursor and
 // what follows it (in the air, falling, seeing stars). One list, asked by the
 // celebration and by the loo clock below.
 export const outOfYard = w =>

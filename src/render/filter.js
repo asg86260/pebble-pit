@@ -181,7 +181,7 @@ function drawDial(wall, r) {
   for (const [i, j] of needle(S.dialStep)) ctx.fillRect(x0 + P * i, y0 + P * j, P, P);
 }
 
-// A load on its way down off the spout, or off a balloon's basket: one cell
+// A load on its way down off the spout: one cell
 // of muck, in the muck's own tone, falling to the heap it will land on.
 export function drawClods() {
   if (!CLODS.length) return;
