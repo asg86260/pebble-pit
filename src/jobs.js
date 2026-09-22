@@ -47,5 +47,6 @@ export const TYPE_OF = Object.freeze(Object.fromEntries(
 // How a job is SAID, where the key is not already the words. Nothing prints a
 // raw key. The keys stay `rockhands` and `quarriers` -- saves and hooks quote
 // them.
-const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.PURIFY]: 'air purifiers' });
+const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.FARM]: 'farmers',
+                             [JOB.PURIFY]: 'air purifiers', [JOB.STIR]: 'apothecary' });
 export const jobSaid = job => SAID[job] || job || '';

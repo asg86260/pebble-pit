@@ -11,7 +11,7 @@ import { arrowsFor } from './words.js';
 import { AIR_TREND_STEPS } from './config.js';
 import { airReadout, airSides, airTrend, skyKindCounts, muckLeft } from './smog.js';
 import { doing } from './crewboard.js';
-import { JOB, JOB_OF } from './jobs.js';
+import { JOB, JOB_OF, jobSaid } from './jobs.js';
 import { showWindow } from './modal.js';
 
 // What the books show, in board order. A currency appears once you have seen
@@ -119,16 +119,8 @@ const SKY_ROWS = [
 // How many, doing what, and who is best at it. The jobs are the stations a
 // player hires for, in the words a player uses, one line a station; the spare
 // hands putting a building up are nobody's station and are not counted here.
-const JOBS_SHOWN = [
-  { job: JOB.ROCK,    name: 'diggers' },
-  { job: JOB.QUARRY,  name: 'miners' },
-  { job: JOB.HAUL,    name: 'haulers' },
-  { job: JOB.FARM,    name: 'farmers' },
-  { job: JOB.JANITOR, name: 'janitors' },
-  { job: JOB.PURIFY,  name: 'air purifiers' },
-  { job: JOB.STIR,    name: 'apothecary' },
-  { job: JOB.WIZARD,  name: 'wizards' }
-];
+// The words are jobs.js's (`jobSaid`), the one place a job is spelled.
+const JOBS_SHOWN = [JOB.ROCK, JOB.QUARRY, JOB.HAUL, JOB.FARM, JOB.JANITOR, JOB.PURIFY, JOB.STIR, JOB.WIZARD];
 const headcount = job => S.workers.filter(w => JOB_OF[w.type] === job).length;
 // At it, or not: walking there, on a break, at home and nothing much are all
 // not at it, and telling them apart was more lines than it was worth. The
@@ -157,8 +149,8 @@ const sayTime = ms =>
   ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
 const hasCrew = () => S.workers.length > 0;
 const CREW_ROWS = [
-  ...JOBS_SHOWN.map(j => readout(`crew${j.job}`, j.name, () => String(headcount(j.job)),
-                                 () => headcount(j.job) > 0)),
+  ...JOBS_SHOWN.map(j => readout(`crew${j}`, jobSaid(j), () => String(headcount(j)),
+                                 () => headcount(j) > 0)),
   ...NOW_IS.map(n => readout(`now${n.key}`, n.name, () => String(nowIs(n.key)), hasCrew)),
   ...BEST.map(r => readout(`best${r.field}`, r.name,
                            () => { const w = best(r.field); return w ? `${w.name} · ${fmt(w[r.field])}` : ''; },
