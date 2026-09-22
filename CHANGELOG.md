@@ -27,6 +27,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
 - The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").
 - A working machine's smoke is the brown puffs off its stack and nothing else; the fringed specks that climbed beside them and the black wisps on their own timer are gone, and the dirt shows in the clouds (test/machines.test.mjs, "smoke rises and goes out, and does not pile up").
 - The water and the acid come down as one sheet across the whole window, not the water in patches under the clouds and the acid everywhere (src/scenes.js `acidrain`; test/weather.test.mjs, "it rains on a clean yard").

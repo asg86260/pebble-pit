@@ -416,11 +416,12 @@ export function startle(wx, wy) {
 
 // Drawn inside the world transform at their own x: the camera has already
 // been taken off, so putting the parallax back on is what leaves them moving
-// slowly. Rounded to whole cells, or the bars land between device pixels and
-// go soft.
-function skyX(s, grain = P) {
-  return Math.round((s.x + S.camX * (1 - s.far)) / grain) * grain;
-}
+// slowly. A bird's is rounded to whole cells, or its bars land between device
+// pixels and go soft. A cloud's is not: it is snapped to device pixels as it
+// is drawn, and rounding it to its cell first made it hop a cell at a time
+// against a camera that scrolls smoothly.
+const skyAt = s => s.x + S.camX * (1 - s.far);
+const skyX = s => Math.round(skyAt(s) / P) * P;
 
 // The tone of one cell, `cx` across and `r` rows above the base: lit from
 // above, the way a rock cell is shaded by its depth into the rock. Its depth
@@ -459,7 +460,7 @@ export function drawClouds() {
   for (const c of order) {
     const tones = cloudTones(crown, base, c.far);
     const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
-    const x = skyX(c, cp), y = Math.round(cloudY(c) / cp) * cp;
+    const x = skyAt(c), y = cloudY(c);
     const { lo, hi, h, under: u } = columnsOf(c, sw);
     let peak = 0;
     for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];

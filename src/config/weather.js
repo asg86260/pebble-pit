@@ -34,8 +34,8 @@ export const CLOUDS_ON = true;
 // do.
 export const CLOUD_LAYERS = [
   { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7,  cell: 0.5, lane: [0.9, 1.0],   n: 5 },
-  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9,  cell: 1,   lane: [0.65, 0.78], n: 3 },
-  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0,  cell: 1.5, lane: [0.4, 0.55],  n: 2 }
+  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9,  cell: 1,   lane: [0.5, 0.65],  n: 3 },
+  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0,  cell: 1.5, lane: [0.12, 0.3],  n: 2 }
 ];
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
