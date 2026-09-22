@@ -27,10 +27,20 @@ export const underMeteor = () => sky.x - WORKER / 2;
 export const atTower = w =>
   w.aloft || (!w.walking && Math.abs((w.spot ?? underMeteor()) - w.x) <= WORKER);
 
+// The spots a wizard may go up from, a few cells either side of the middle
+// and two cells apart: a body is three cells wide, so neighbors one cell
+// apart rise as one smudge.
+const SPOTS = [-4, -2, 0, 2, 4];
+
 export function newWizard() {
-  // Its own spot a few cells either side of the middle: they go up from where
-  // they stand, and one column would rise as a single body four deep.
-  const x = underMeteor() + Math.round((rand() - 0.5) * 6) * P;
+  // Its own spot: they go up from where they stand, and two on one cell would
+  // rise as a single body. A spot another wizard holds is not drawn while a
+  // free one is left.
+  const held = new Set(S.workers.filter(w => w.type === TYPE.WIZARD).map(w => w.spot));
+  const at = d => underMeteor() + d * P;
+  const free = SPOTS.filter(d => !held.has(at(d)));
+  const pick = free.length ? free : SPOTS;
+  const x = at(pick[Math.floor(rand() * pick.length)]);
   return {
     type: TYPE.WIZARD, x, spot: x, y: walkY(x + WORKER / 2),
     aloft: false,           // whether its feet are off the ground

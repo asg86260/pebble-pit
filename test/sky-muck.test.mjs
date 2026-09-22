@@ -207,7 +207,8 @@ group('a mess comes before the dust', async () => {
   const mid = state();                         // muck still high
   // Out the far side of the mess, so the floor dust is fair game again.
   runUntil(() => state().smog.muck.yard < 10, 180);
-  run(20);
+  // The walk back to the dust is however far the last of the mess lay from it.
+  runUntil(() => state().floor < wet.floor - 10, 90);
   const later = state();
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });

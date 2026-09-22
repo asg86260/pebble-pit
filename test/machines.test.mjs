@@ -1552,8 +1552,9 @@ group('the last load off a swept yard still reaches the hole', async () => {
   const s0 = state();
   for (let i = 0; i < 40; i++) window.__pile(s0.pitX - 500 + (i % 20) * 6, 2);
   const before = state();
-  // long enough that the ground is bare well before the end of it
-  run(20);
+  // Until the ground is bare: what the belt's pile cannot hold stays on the
+  // bare yard beside it, and the one hauler carries it over a load at a time.
+  runUntil(() => state().floor === 0 && state().belt === 0 && yard.S.workers.every(w => !w.carry), 90);
   const after = state();
   window.__crew(0, 0);
   return [
