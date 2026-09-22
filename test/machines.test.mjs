@@ -169,6 +169,10 @@ group('the ram advances into the hill as it eats it', async () => {
   // hold is that the arm's daylight never collapses and the machine never
   // overshoots into the hill.
   const daylight = standoff.every(d => d >= P * RAM_REACH);
+  // And it keeps up: a ram at the top of the ladder eats faster than any
+  // fixed crawl, and a drive that could not close the gap left the arm
+  // striking across ever more daylight.
+  const keepsUp = standoff[standoff.length - 1] <= standoff[0];
 
   window.__crew(0, 0, 0);
   return [
@@ -180,7 +184,8 @@ group('the ram advances into the hill as it eats it', async () => {
        'and the ram drives in after it rather than standing still',
        `${ram[0]} -> ${ram[ram.length - 1]}`),
     ok(daylight, 'never closing the daylight the arm strikes across',
-       `${standoff.join(' ')}, reach ${RAM_REACH} cells`)
+       `${standoff.join(' ')}, reach ${RAM_REACH} cells`),
+    ok(keepsUp, 'and never falling behind it either', standoff.join(' '))
   ];
 });
 

@@ -7,7 +7,7 @@
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
   ROCK_W_MAX, ROCK_H_MAX, ROCK_FLANK_CLEAR, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
-  ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CLEAR, SQUASH_MS
+  ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CATCHUP_S, RAM_CLEAR, SQUASH_MS
 } from './config.js';
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
@@ -667,7 +667,11 @@ export function ramX() {
   const f = Math.max(0, (t - ramMovedAt) / (1000 / 60));   // elapsed, in frames
   ramMovedAt = t;
   const d = target - ramNowX;
-  const speed = d < 0 ? RAM_BACK : RAM_CRAWL;              // left is the drive home
+  // Left is the drive home. Forward, the crawl is a floor: the face retreats
+  // as fast as the machine eats it, so the drive closes the lag in a fixed
+  // time whatever the bite, or a tuned ram is left striking across a gap.
+  const speed = d < 0 ? RAM_BACK
+              : Math.max(RAM_CRAWL, d / (RAM_CATCHUP_S * 60));
   ramNowX += Math.sign(d) * Math.min(Math.abs(d), speed * f);
   return Math.round(ramNowX / P) * P;
 }

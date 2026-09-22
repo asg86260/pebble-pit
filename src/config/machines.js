@@ -50,9 +50,13 @@ export const STACK_SCATTER = 0.5;   // sideways throw either way, pixels a frame
 // brisker drive in reverse when a boulder is finished. Pixels a frame. The
 // reverse beats the next rock down from any distance a boulder run can open
 // up, so the ram is parked when the rock lands -- but it drives back, it does
-// not teleport.
+// not teleport. The crawl is the floor: a tuned ram eats the face faster than
+// any fixed crawl, so the drive forward is derived from the lag instead -- it
+// closes whatever has opened up within `RAM_CATCHUP_S`, and the arm never
+// stretches across a widening gap.
 export const RAM_CRAWL = 0.6;
 export const RAM_BACK = 8;
+export const RAM_CATCHUP_S = 0.5;
 // Bare ground kept between the bench and the ram's tail: the parked spot is
 // measured off the face, and a fresh boulder's face is close enough to the
 // bench that the machine stood into it.
