@@ -85,21 +85,22 @@ export function pour(secs) {
   // never does; one at a time, because a second bolt over the first is a fizz.
   if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
-  // One sheet over the yard, born over the top of the window the whole width
-  // of it, water and the washed acid alike. Not from the clouds: they are far,
-  // few and parallax, so a sheet tied to them thinned to wherever a cloud
-  // happened to be and slid sideways as the view scrolled. The rain is the
-  // yard's -- it lands here -- so it is born over the yard and falls straight.
+  // One sheet over the whole world, born over the top of the window. Not the
+  // view: rain born only where the camera is fills in a second after every
+  // scroll and keeps falling where the camera was, so the sheet follows the
+  // player about. A storm is over the yard entire, so the water is born the
+  // width of the world at the window's rate per window, and the acid where
+  // its mote hung. Not from the clouds either: they are far, few and
+  // parallax, and a sheet tied to them thinned to wherever one happened to be.
   const top = S.camY - P;
-  const born = () => ({ x: S.camX + rand() * S.viewW, y: top });
+  const world = Math.max(S.viewW, S.worldW || 0);
 
-  // The water.
-  let water = RAIN_PER_S * secs * env;
+  // The water, RAIN_PER_S a window's width, across every window's worth.
+  let water = RAIN_PER_S * secs * env * (world / S.viewW);
   while (water > 0) {
     if (water < 1 && rand() > water) break;
     water -= 1;
-    const p = born();
-    DROPS.push({ x: p.x, y: p.y, dirt: false,
+    DROPS.push({ x: rand() * world, y: top, dirt: false,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
   }
 
@@ -126,10 +127,9 @@ export function pour(secs) {
     pick.pop();
     gone.add(i);
     // A marked mote is consumed -- the sky thins, the clouds pale by the
-    // number -- and a dirty drop falls, its place the sheet's and not the
-    // invisible mote's.
-    const p = born();
-    DROPS.push({ x: p.x, y: p.y, dirt: true,
+    // number -- and a dirty drop falls where the mote hung, so the muck lands
+    // under the sky that made it, the world over, and not only in the view.
+    DROPS.push({ x: moteX(SKY[i]), y: top, dirt: true,
                  vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
     dropped(SKY[i]);
   }

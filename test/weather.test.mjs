@@ -68,8 +68,14 @@ group('the first storm strikes', async () => {
   run(0.4);
   window.__crew(0, 0);
   const came = runUntil(() => state().smog.raining, RAIN_FIRST_S + STORM_BREW_S + 15);
-  const struck = runUntil(() => state().smog.bolt > 0, 60);
-  const during = state().smog.raining;
+  // Looked for four times a second: a bolt hangs well under one, and a
+  // once-a-second look can miss every strike of a storm on one seed.
+  let struck = false, during = false;
+  for (let i = 0; i < 4 * 60 && !struck; i++) {
+    run(0.25);
+    const s = state().smog;
+    if (s.bolt > 0) { struck = true; during = s.raining; }
+  }
   return [
     ok(came, 'the first front comes'),
     ok(struck && during, 'and a bolt is seen before the shower ends, over a clean yard', `${struck}, raining ${during}`)
@@ -148,19 +154,22 @@ group('a dirty sky shows in the clouds, and its rain falls in the yard', async (
   run(2);
   const dirty = skyReport().cloudCells;
 
-  // Its rain is one sheet over the yard: every drop is born inside the window
-  // and none is tied to a cloud, so the sheet is the same whatever the clouds
-  // happen to be doing and does not slide as the view scrolls.
+  // Its rain is one sheet over the whole world, not the window: drops are
+  // falling beyond either edge of the view, so a scroll finds rain already
+  // there rather than a sheet that follows the camera and fills in behind it.
   window.__front(1);
   runUntil(() => state().smog.raining, 120);
   run(1);
   const xs = window.__dropXs();
-  const inView = xs.length > 0 && xs.every(x => x >= state().camX - 8 && x <= state().camX + state().viewW + 8);
+  const cam = state().camX, right = cam + state().viewW;
+  const beyond = xs.some(x => x < cam - 8) || xs.some(x => x > right + 8);
+  const inWorld = xs.every(x => x >= -8 && x <= (state().worldW || right) + 8);
+  const inView = xs.length > 0 && beyond && inWorld;
   window.__air({ haze: 0, muck: 0 });
   return [
     ok(clean >= 0, 'a clean sky has its clouds', `${clean} cells`),
     ok(dirty > clean, 'and a little haze already thickens them', `${clean} -> ${dirty}`),
-    ok(inView, 'and the rain is born across the window, one sheet over the yard',
-       `${xs.length} drops, view ${Math.round(state().camX)}..${Math.round(state().camX + state().viewW)}`)
+    ok(inView, 'and the rain is one sheet over the whole world, not only the window',
+       `${xs.length} drops, view ${Math.round(cam)}..${Math.round(right)}, world ${Math.round(state().worldW || 0)}`)
   ];
 });
