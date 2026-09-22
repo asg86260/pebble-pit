@@ -449,14 +449,17 @@ export const SAVERS = [
   // body plus one a craft, and dealt against the house alone every rider is
   // stood down on every load.
   BALLOON,
-  // The load's `rebalance`, and the loan: after the machines and the craft,
-  // before the crew is stood.
+  // The wizards' count before the deal too: every job count has to be back
+  // before the spares are worked out, or the wizards are counted as haulers
+  // and three more bodies are stood up on every load.
+  TOWER,
+  // The load's `rebalance`, and the loan: after the machines, the craft and
+  // every job count, before the crew is stood.
   STAFF,
   QUARRY,
   BEATS,
   // The catch is taken again here, once the rock's fall has been read.
   SHIELD,
-  TOWER,
   WORKS,
   DUST,
   METEOR,
