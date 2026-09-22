@@ -40,12 +40,6 @@ frame (`jig` in crew/dance.js), and `w.foot` is re-taken from the new y on the
 same frame -- measured up to seventeen pixels of snap. Only when the beat starts
 while the crew are commuting, which `dance.test.mjs` does not arrange.
 
-### A knocked-off hat is not saved (2026-09-14)
-
-`w.hatOff` (crew/pointer.js, stepped in crew/step.js and crew/kitwalk.js) is on
-no saver, so a body sent to pick one up after a refresh finds nothing there.
-Save it as a fact of the yard, the way a loose core is.
-
 ### Workers jitter on the rock's flank during a muck clear-up
 
 Bodies shovelling the hill after a rain ease up a few pixels, snap down 8-10,

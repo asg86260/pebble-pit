@@ -16,6 +16,7 @@ import { cutTop } from '../quarry.js';
 import { rebalance } from '../staffing.js';
 import { busyBuilderSites } from '../works.js';
 import { hushNotices } from '../notices.js';
+import { standTop, rockTop, footing, solidNear, SOLID } from '../route.js';
 
 // --- who they are --------------------------------------------------------------
 const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',
@@ -87,14 +88,22 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       'jigAt', 'jigDir', 'jigRate', 'jigBeat', 'jigDown', 'move', 'moveFrom', 'moveBeats', 'foot', 'footAt',
                       // the mess it is on and where it planted its shovel, or
                       // a janitor against a fouling crew never wins
-                      'muckAt', 'shovelAt'];
+                      'muckAt', 'shovelAt',
+                      // came round to find its hat on another head
+                      // (`dispossessed`), or it stays on the job bare-headed
+                      'robbed',
+                      // seeing stars, and the spot it rocks about: a refresh
+                      // that clears them puts the owner in the race for its
+                      // hat (`ownerRacing`) that the stars had it sitting out
+                      'dizzyFor', 'landedAt'];
 
 // Moments on a body's clock, kept as how far off they are because the clock
 // starts again with the page: written as `field - now()`, read back the
 // reverse. The work's own clocks are in here too, or every refresh hands
 // every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
-                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt'];
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt',
+                 'dizzyUntil'];
 const momentsOf = w => {
   const out = {};
   for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());
@@ -108,9 +117,25 @@ const doseKeep = w => (w.doses || [])
   .filter(d => d.until > now())
   .map(d => ({ tonic: d.tonic, left: Math.round(d.until - now()) }));
 
+// A knocked-off hat is a thing in the yard, written where it lies. One still
+// in the air is written where it will land, the same landing `stepHat` gives
+// it, because the flight is a moment and the save is not: read back mid-arc,
+// it would hang there until the next frame. Written with the ground it was
+// saved over, since the crew is read back before the floor is.
+function hatKeep(h) {
+  let x = h.x, y = h.y;
+  if (!h.rest) {
+    if (footing(x) !== SOLID) x = solidNear(x, 200) ?? x;
+    x = Math.round(x);
+    y = standTop(x, rockTop);
+  }
+  return { of: h.of, lift: !!h.lift, x, y };
+}
+
 export function keepOf(w) {
   const out = { type: w.type };
   for (const k of KEEPS) if (w[k] != null) out[k] = w[k];
+  if (w.hatOff) out.hatOff = hatKeep(w.hatOff);
   const doses = doseKeep(w);
   if (doses.length) out.doses = doses;
   const moments = momentsOf(w);
@@ -126,6 +151,11 @@ export function wearRecord(w, from) {
   // the job's own starting goal, and a saved word the job has no stepper for
   // would ride along unread for ever.
   if (!hasGoal) delete w.goal;
+  // A hat comes back at rest where it was written (`hatKeep`). An old save
+  // has none, and the station's count puts that hat back on the stand.
+  const h = from.hatOff;
+  if (h && h.of && Number.isFinite(h.x) && Number.isFinite(h.y))
+    w.hatOff = { of: h.of, lift: !!h.lift, rest: true, x: h.x, y: h.y, vx: 0, vy: 0 };
   // An old save has one `dose` rather than a list; older still, a dose with no
   // `left` was written as a moment on a clock since restarted, and the body
   // comes back sober.
@@ -135,6 +165,8 @@ export function wearRecord(w, from) {
   if (on.length) w.doses = on;
   // and its moments, the same way round: what was written is how far off
   if (from.moments) for (const k of MOMENTS) if (Number.isFinite(from.moments[k])) w[k] = now() + from.moments[k];
+  // The stars over its head are the same spell, drawn.
+  if (w.dizzyUntil > now()) w.say = { mark: 'dizzy', until: w.dizzyUntil };
   if (!w.at) w.at = {};
   return w;
 }
@@ -150,7 +182,8 @@ function restoreCrew(who, mouth = null) {
   const cutShift = mouth != null && S.quarryOpen ? quarry.x - mouth : 0;
   S.workers = [];
   if (!Array.isArray(who)) return;
-  for (const k of who) {
+  const built = [];                            // saved place -> body, for the claims
+  for (const [i, k] of who.entries()) {
     if (!k.type) continue;
     const made = FACTORY(k.type);
     if (!made.type) continue;                  // a trade this build does not have
@@ -178,7 +211,15 @@ function restoreCrew(who, mouth = null) {
         rec = { ...rec, x: nearSide ? quarry.x - WORKER - P : quarry.x + quarry.w + P };
       }
     }
-    S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
+    S.workers.push(built[i] = wearRecord(Object.assign(made, newRecord()), rec));
+  }
+  // A body walking for somebody else's hat walks for that body's hat, or it
+  // arrives, finds its claim gone, and the station is held to that one
+  // pointless errand. Put back after every body is stood, since the owner may
+  // be written after the one walking for it.
+  for (const [i, k] of who.entries()) {
+    const w = built[i], o = built[k.claimHat];
+    if (w && Number.isInteger(k.claimHat) && o && o.hatOff) w.claimHat = o;
   }
 }
 
@@ -189,7 +230,13 @@ function restoreCrew(who, mouth = null) {
 export const SAVE = {
   fields: ['workers', 'mouth'],
   write(out) {
-    out.who = S.workers.map(keepOf);
+    // `claimHat` is a body, written as its place in this list.
+    out.who = S.workers.map(w => {
+      const k = keepOf(w);
+      const at = w.claimHat ? S.workers.indexOf(w.claimHat) : -1;
+      if (at >= 0) k.claimHat = at;
+      return k;
+    });
     // Where the mouth of the cut was under them, so a load can tell a
     // layout that moved from one that did not (`restoreCrew`).
     out.mouth = S.quarryOpen ? quarry.x : null;

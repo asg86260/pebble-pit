@@ -34,6 +34,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- A hat knocked off somebody's head is still lying where it fell after a refresh, instead of turning up back on the stand, and whoever was walking for it still goes and gets it (test/hat-save.test.mjs).
 - The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
 - A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
 - The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).
