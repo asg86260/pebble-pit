@@ -13,10 +13,8 @@ import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
 
-// Where a row's work stands, and therefore whose hands do it. The purifiers
-// and the wizards do their own station's work from the post (a balance call
-// still open in TODO.md, "rungs for free"); everything else is put up by the
-// yard's spare hands (`builders` in crew.js).
+// Where a row's work stands, and therefore whose hands do it: the yard's spare
+// hands (`builders` in crew.js) everywhere a station's own gang is at a post.
 export const SITE_JOB = {
   // A spare hand at the shed, not one of the station's own gang: a body at its
   // post is a body the player put there to produce, and a one-body gang with
@@ -24,8 +22,11 @@ export const SITE_JOB = {
   quarry: JOB.BUILD,
   farm: JOB.BUILD,
   apothecary: JOB.BUILD,
-  filter: JOB.PURIFY,
-  tower: JOB.WIZARD,
+  // The purifier's post and the wizard's are where they work, so crediting
+  // them had the fan rung fill while the filter scrubbed and the hat rise
+  // while the wizard cast: a rung for free.
+  filter: JOB.BUILD,
+  tower: JOB.BUILD,
   yard: JOB.BUILD,
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.

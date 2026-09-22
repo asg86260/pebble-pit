@@ -3,7 +3,7 @@
 // the thing standing between you and every spark in the game could only be made
 // faster by hiring another body and buying it a hat.
 
-import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
+import { yard, group, ok, state, run, openSites, buyBuilt } from './helpers.mjs';
 
 group('the tower sells casting speed and heavier bolts', async () => {
   window.__reset();
@@ -17,8 +17,8 @@ group('the tower sells casting speed and heavier bolts', async () => {
   const before = state();
   const offered = rows();
 
-  // Both are rungs past the bench, so both are built rather than had: the two
-  // wizards standing at the tower are what finishes them. See works.js.
+  // Both are rungs past the bench, so both are built rather than had: a spare
+  // hand walked to the tower is what finishes them (test/spare-hand-builds).
   const fast = buyBuilt('wizspeed');
   const hard = buyBuilt('wizpower');
   const after = state();
@@ -108,40 +108,5 @@ group('the tower can enchant the rest of the yard', async () => {
        'and a blessed cut turns up more stone', `${beforeSeam} -> ${after.seam}`),
     ok(!gone.includes('spelldrive'),
        'and a spell already laid is not offered twice')
-  ];
-});
-
-// And nothing on the tower's board is worked by a wizard that is not there.
-// The tower counted a wizard the moment it was one -- "either way it is at the
-// tower" -- so a hat rung landed for a body still two thousand pixels out
-// across the yard (critics 2026-09-10, A7). One wizard, set down at the far
-// end of the yard and walking: the bar holds at nought until it arrives.
-group('the tower waits for its wizard to arrive', async () => {
-  window.__reset();
-  openSites();
-  window.__crew(0, 1, 0, 0, 0, 1);
-  window.__grant({ sparks: 999, shards: 400, spores: 400, dust: 40000 });
-  run(3);
-  const s0 = state();
-  // the length of the yard away, and walking
-  window.__place('wizard', s0.rockLeftX);
-  // By name across the long wait: a reload (test/helpers.mjs) builds the crew again.
-  const wName = yard.S.workers.find(o => o.type === 'wizard').name;
-  const w = yard.S.workers.find(o => o.type === 'wizard');
-  w.walking = true; w.aloft = false;
-  const bought = window.__buy('wizspeed');
-  run(2);
-  const early = state().works.tower?.done ?? -1;
-  const far = Math.abs(w.x - s0.towerX) > 600;
-  const landed = runUntil(() => !state().works.tower, 240);
-  const w2 = yard.S.workers.find(o => o.name === wName) || w;
-  const near = Math.abs(w2.x - s0.towerX) < 200 || w2.aloft;
-
-  window.__crew(0, 0);
-  return [
-    ok(bought, 'the rung is bought'),
-    ok(far && early === 0, 'and the bar does not move while its wizard is still crossing the yard',
-       `done ${early} with the wizard ${Math.round(Math.abs(w.x - s0.towerX))} px off`),
-    ok(landed && near, 'and lands once it is there', `${landed}, ${Math.round(w2.x)} vs tower ${s0.towerX}`)
   ];
 });

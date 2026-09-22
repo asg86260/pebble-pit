@@ -4,7 +4,7 @@
 import { WORKER, CORE_SIZE } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
-import { SITE_JOB, setHands, setHandsOn, setStaff, onTheGo, builderManned } from '../works.js';
+import { setHands, setHandsOn, setStaff, onTheGo, builderManned } from '../works.js';
 import { JOB_OF, hats, rockhandMs } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { KIT_JOBS } from '../kit.js';
@@ -14,36 +14,19 @@ import { newRecord } from './records.js';
 import { retask } from './commute.js';
 import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted } from './jobs.js';
-import { atTower } from '../wizard.js';
 
 // --- who is actually at a site ------------------------------------------------
 // The one question works.js cannot answer for itself: a count is not a body,
-// and a station idles until somebody is *actually standing there*. Arrived,
-// not assigned: `S.quarriers` counts a body still crossing the yard.
-const ARRIVED = {
-  purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',
-  // At the tower, on the ground under it or aloft, and it has to *be* there.
-  wizards: w => w.type === TYPE.WIZARD && atTower(w),
-  builders: w => w.type === TYPE.BUILD && w.goal === 'at',
-};
+// and a site idles until somebody is *actually standing there*. Arrived, not
+// assigned, and at *its* site: a builder still crossing the yard, or standing
+// at the next station over, puts in nothing.
+const building = site => w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
 
 setHands(site => {
-  const at = ARRIVED[SITE_JOB[site]];
-  if (!at) return 0;
-  // A builder is at *its* site and no other. And a builder standing at a
-  // station counts there whoever the station's gang is, or the work it was
-  // sent for asks how many WIZARDS are there and gets the nought that sent
-  // for it.
-  const helping = w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
-  const there = S.workers.filter(w => helping(w)
-                                   || (at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
-  // One pair of hands on a piece of work, whoever owns the site, or the same
-  // row costs a different time on every board depending on staffing. Capped
-  // here because this is the one function that answers "how many hands are on
-  // this". A builder-manned site holds one pair PER WORK on the go, because
-  // each body is at exactly one of them (`handsOn`).
-  const cap = builderManned(site) ? Math.max(1, onTheGo(site).length) : 1;
-  return Math.min(cap, there);
+  if (!builderManned(site)) return 0;
+  // One pair of hands per work on the go, because each body is at exactly one
+  // of them (`handsOn`); a gang of spare hands at one work is still one.
+  return Math.min(Math.max(1, onTheGo(site).length), S.workers.filter(building(site)).length);
 });
 
 // The hands at ONE work of a site's several; only builders answer. A body

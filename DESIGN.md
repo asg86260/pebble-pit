@@ -9835,7 +9835,9 @@ whole time, and none of them credits the bar.
 - The standing rule: the scrubbing house, the tower and the school credit a
   body at its post, and the post is where it works, so the fan ladder fills
   while the house scrubs and the hat rises while the wizard casts. That is the
-  "rungs for free" defect in TODO.md, diagnosed and left for a balance call.
+  "rungs for free" defect, diagnosed and left for a balance call; settled
+  2026-09-22 on the owner's word -- a hauler walks over to put in the
+  filter's and the tower's rungs too (`SITE_JOB`, works.js).
 
 One rule closes both. A spare hand is a real cost -- a hauler off the dust for
 the duration, which you can see -- and it is a cost that is always payable,

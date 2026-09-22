@@ -114,8 +114,7 @@ export const FILTER_UPGRADES = [
   CRAFT_ROW,
   {
     key: 'recycler',
-    // A fitting the house's own body puts in, so the house is not filtering
-    // while it happens.
+    // A fitting a spare hand puts in (`SITE_JOB`), like the fan's rungs.
     kind: 'place', site: 'filter',
     name: 'the recycler',
     note: () => 'replaces the filters: what it catches comes back as pebbles',
