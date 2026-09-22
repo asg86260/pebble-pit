@@ -301,6 +301,18 @@ export function seedWeather() {
   toSpread = true;
 }
 
+// A new run is a new sky. Only from the yard's own reset, never from the
+// layout: the layout runs on every resize, and a sky cleared there is a
+// window full of different clouds every time it is dragged. The clouds are
+// drawn out of the run's own chance, so one left standing is a fact of the
+// last run in this one -- which `the same seed is the same run` catches.
+export function resetWeather() {
+  CLOUDS.length = 0;
+  BIRDS.length = 0;
+  nextBirds = 0;
+  toSpread = true;
+}
+
 // Fills whatever the sky is short of, spread evenly across the view. Only what
 // is missing: called again on every relayout, and making a new sky there put a
 // fresh set of clouds in the window every time it was resized and took the

@@ -9,6 +9,7 @@ import { P, SHADES, LOO_POSTS, SAVE_V } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
+import { resetWeather } from './weather.js';
 import { slideLayers } from './smog/layer.js';
 import { SAVE as BALLOON } from './balloon.js';
 import { showPanel } from './board.js';
@@ -537,6 +538,7 @@ export function reset(fresh = true) {
   snapShown();
   S.looPosts = LOO_POSTS;
   seedSmog();
+  resetWeather();                  // a new run is a new sky, clouds and birds both
   S.boulderNo = 1;                 // the rock's blank builds it
   for (const o of SAVERS) o.blank();
   syncWorkers();                   // the crew walks out, every count being nought

@@ -39,6 +39,7 @@ feature lives in DESIGN.md.
 - The rain is lighter (src/scenes.js `rain`, `acidrain`).
 - A front's clouds thin away in place as it lets go instead of climbing out of the sky (src/scenes.js `cloudsettle`).
 - A storm's clouds no longer appear whole in the middle of the sky as it brews; each one comes up out of nothing where it forms (test/weather.test.mjs, "a front's clouds come up out of nothing where they are born").
+- A new game starts under a new sky again, rather than keeping the last one's clouds (test/golden.test.mjs, "the same seed is the same run").
 - No cell of cloud blinks in or out any more: it comes up out of the page as it fills and goes back down into it as it empties, so a sky swelling or letting go after a shower moves instead of stepping (src/scenes.js `cloudswell`, `cloudsettle`).
 - A machine's smoke hangs a little longer off the stack before it thins away (src/scenes.js `yard`).
 - The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").

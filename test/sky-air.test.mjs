@@ -51,6 +51,10 @@ group('the thing in the sky is benched', async () => {
 // Clouds and smog share the sky, layered rather than mixed: the haze along the
 // very top, the weather below it, and the birds through the middle of it.
 group('the sky has clouds in it, and birds now and then', async () => {
+  // A frame first: the sky is spread on the first frame it is stepped, not
+  // when the yard is laid out, because the layout runs before the camera is
+  // where the save left it (weather.js, `seedWeather`).
+  run(1 / 60);
   const before = state().sky;
   run(2);
   window.__look(0);
