@@ -389,7 +389,7 @@ export const S = {
   recycler: false,        // which keep what they catch rather than binning it
   filterBank: 0,           // part of a grain, on its way to being a whole one
   filterMuck: 0,           // and part of a clod of muck, on its way out of the spout
-  pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
+  slatAt: 0,              // how far round its bank of slats the filter is, while somebody is in
   dialAt: 0,              // what the filter's dial reads, eased toward the sky
   dialStep: 0,            // and the line of cells its needle is drawn on
   recycled: 0,            // and how many whole ones it has given back
@@ -707,7 +707,7 @@ export const EPHEMERAL = [
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // The weather, and the part-grain the house is partway through.
-  'bolt', 'filterBank', 'filterMuck', 'pumpAt', 'dialAt', 'dialStep',
+  'bolt', 'filterBank', 'filterMuck', 'slatAt', 'dialAt', 'dialStep',
   'placed', 'strips', 'introHeart',
   'shopStale', 'fatal', 'lastFrame', 'settleAt',
   // A reload finds the one under the rock packed in, the way every rock

@@ -12588,6 +12588,50 @@ stays exactly as it is.
   against `stuck-yard.json`, a player save from before the rename with the
   house standing.
 
+## The air filter is a louvered shed (built 2026-09-22)
+
+The first air filter was a hood flaring open at the sky over a bellows. It
+read as a funnel rather than a building, and the flag, placed at the middle
+of the top edge, stood in the open mouth of the hood, in the air. Three new
+shapes were mocked up in the yard's own manner (a fan house, a breathing
+stack, a louvered shed) and the shed was picked.
+
+**The shed.** A gabled shed like the quarry's and the farm's: walls
+`FILTER_WALL` cells in from each side of the footprint, a roof stepping out
+from the ridge to eaves a cell past the walls, and a cupola on the ridge.
+The air goes in at the vent cut in the cupola (`FILTER_VENT`; `intake` in
+smog/band.js), so the one building that takes something in at the top
+still shows where. The flag stands on the cupola's cap (`filterFlagSpot`,
+`SPOT` in render/aura.js).
+
+**The slats are the working sign.** Three slats across the front replace the
+bellows. Shut, a slat is a grey band (`HOUSE_CURTAIN`, the house's own
+window grey); open, it is cut through to white. While somebody is inside
+they stand open with one swinging shut in turn, going round faster the more
+are in there (`S.slatAt`, stepped in the sim). Idle is every slat shut, a
+pose the working bank never shows.
+
+**The gauge has severity zones.** The dial's ring is green, yellow and red in
+thirds along its sweep (`DIAL_ZONES`); the cells under the hub, outside the
+sweep, stay black. The earlier note that the dial carries no zones because
+rain keeps its own clock still holds for rain: the zones say how dirty the
+air is, not when it will rain. Red here is not a spark's red; the player
+chose the standard gauge over a palette that avoids it.
+
+**The spout throws onto a pile.** A two-cell stub low on the near wall
+(`FILTER_PORT`, `FILTER_SPOUT`) throws each load on the yard's own arc
+(`aim` in dust.js, `GRAV`) onto the filter's heap strip, near the building
+and tailing out along it the way spoil lands on the rock's heap. It used to
+drip straight down out of a chute like a tap. The recycler's dust grains go
+out on the same throw, and the recycler's mark is the stub's mouth gone grey,
+a sieve over it. The heap the clog counts is the strip itself now
+(`outletMuck`), not a guessed reach off the wall. A balloon's loads still
+drop straight down from its basket.
+
+The mast is measured off the dial as before, which now hangs off the shed's
+wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
+`filterclog`, `filtersieve`, `moored`.
+
 ## The balloons pull from the clouds (built 2026-09-22)
 
 Cutting the balloons was the wrong fix for the right complaint. The dial

@@ -111,7 +111,7 @@ export const SAVE = {
     out.poop = S.poop || [];
     // And the filter's loads still falling off the spout: each is a load of
     // muck the heap is owed.
-    out.clods = CLODS.map(k => [Math.round(k.x), Math.round(k.y), +k.vy.toFixed(2), k.n]);
+    out.clods = CLODS.map(k => [Math.round(k.x), Math.round(k.y), +k.vy.toFixed(2), k.n, +(k.vx || 0).toFixed(2)]);
   },
   read(s) {
     S.haze = s.haze || 0;
@@ -130,7 +130,8 @@ export const SAVE = {
     CLODS.length = 0;
     for (const k of Array.isArray(s.clods) ? s.clods : [])
       if (Array.isArray(k) && Number.isFinite(k[0]) && Number.isFinite(k[1]))
-        CLODS.push({ x: k[0], y: k[1], vy: Number.isFinite(k[2]) ? k[2] : 0, n: +k[3] || 1 });
+        CLODS.push({ x: k[0], y: k[1], vy: Number.isFinite(k[2]) ? k[2] : 0, n: +k[3] || 1,
+                     vx: Number.isFinite(k[4]) ? k[4] : 0 });
   },
   // A new yard's sky is seeded by `reset` itself: the fresh-yard arm of
   // `restore` runs on a page whose layout has already seeded one.

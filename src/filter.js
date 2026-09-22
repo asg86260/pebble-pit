@@ -5,7 +5,7 @@
 // rather than a purchase because the bodies in it are bodies not on the rock
 // (DESIGN.md).
 
-import { WORKER, FARM_WALK, FILTER_DUST, RECYCLE_SHARDS, FILTER_PUMP, FILTER_FOLDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
+import { WORKER, FARM_WALK, FILTER_DUST, RECYCLE_SHARDS, FILTER_PUMP, FILTER_SLATS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull, murk } from './smog.js';
 import { S, filter } from './state.js';
@@ -29,28 +29,20 @@ export const inHouse = w => w.type === TYPE.PURIFY && w.goal === 'in';
 // through the door.
 export const inFilter = () => S.workers.filter(inHouse).length;
 
-// The bellows on the front, in folds of stroke. It breathes while somebody is
-// in there, quickening with the roster to a cap of four, and an empty house
-// adds nothing rather than catching up to a clock that ran on without it.
-//
-// It closes rather than stops: the folds fall shut toward nought from
-// whichever side of the stroke they are on, so the last thing it does is close.
+// The slats on the front, as how far round the bank the one swinging shut
+// has got. They turn while somebody is inside, quickening with the roster to
+// a cap of four, and an empty shed shuts them all rather than catching up to
+// a clock that ran on without it.
 //
 // Stepped in the sim, not in drawFilter: a clock kept by the draw loop runs at
 // double speed the moment anything draws the yard twice in a frame. Kept
-// inside one stroke rather than counting up forever, so a float never runs
-// out of precision to say which fold it is on.
+// inside one turn of the bank rather than counting up forever, so a float
+// never runs out of precision to say which slat it is on.
 export function stepFilter(dt) {
   if (!S.filterOpen) return;
   stepDial(dt / 1000);
-  const step = FILTER_PUMP * dt / 1000, cycle = FILTER_FOLDS * 2;
   const n = Math.min(4, inFilter());
-  if (n) { S.pumpAt = (S.pumpAt + step * n) % cycle; return; }
-  if (!S.pumpAt) return;
-  // shutting: the near half of the triangle runs back down to nought, the far
-  // half runs on to the end of the stroke; both are the folds closing
-  if (S.pumpAt <= FILTER_FOLDS) S.pumpAt = Math.max(0, S.pumpAt - step);
-  else S.pumpAt = Math.min(cycle, S.pumpAt + step) % cycle;
+  S.slatAt = n ? (S.slatAt + FILTER_PUMP * dt / 1000 * n) % FILTER_SLATS : 0;
 }
 
 // The dial reads what the clouds are drawn from, so the two cannot disagree,

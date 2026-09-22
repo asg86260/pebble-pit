@@ -1,9 +1,9 @@
 import { CRAFT, craftDrop, working } from '../balloon.js';
-import { CLOD_FALL, CLOD_PULL, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
+import { GRAV, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
 import { frames } from '../clock.js';
-import { spawnChip } from '../dust.js';
+import { aim, bell, spawnChip } from '../dust.js';
 import { shadeNear } from '../grid.js';
-import { rand } from '../rng.js';
+import { pileOf } from '../world.js';
 import { S } from '../state.js';
 import { CLODS, fanPull, outlet } from './band.js';
 import { countDrew } from './books.js';
@@ -29,18 +29,33 @@ export function pullCraft(secs) {
   }
 }
 
+// Where a throw off the filter's spout comes down: on its heap, most of it
+// near the building and tailing away out along the heap, which is the shape a
+// heap somebody is throwing onto takes (`spawnSpoil` in dust.js). Off the
+// yard's chance, since where the muck lands is what the crew then shovel.
+function landing(out) {
+  const heap = pileOf('filter');
+  if (!heap) return out.x - P * 6;
+  const near = heap.to - P, far = heap.from + P;
+  return Math.max(far, near - P - Math.abs(bell()) * (near - far) * 0.45);
+}
+
+// How a load or a grain leaves: thrown off the filter's spout onto its heap,
+// or let fall from under a balloon's basket, wherever that is at the time.
+function launch(craft) {
+  if (craft != null) { const out = craftDrop(craft); return { ...out, vx: 0, vy: 0, land: null }; }
+  const out = outlet(), land = landing(out), v = aim(out.x, out.y, land, P);
+  return { ...out, vx: v.vx, vy: v.vy, land };
+}
+
 export function swallow(craft = null) {
   countDrew();                     // counted at the mouth -- see `sampleAir`
-  // The house drops at its spout; a craft drops under its basket, wherever
-  // that is at the time.
   if (!S.recycler) {
     S.filterMuck = (S.filterMuck || 0) + 1;
     while (S.filterMuck >= FILTER_PER_MUCK) {
       S.filterMuck -= FILTER_PER_MUCK;
-      // The house's load leaves from the clear cell under the lip, not from
-      // inside it, or the first half of its fall is behind the black.
-      const out = craft == null ? outlet() : craftDrop(craft);
-      CLODS.push({ x: out.x, y: craft == null ? out.y + P : out.y, vy: CLOD_FALL, n: FILTER_MUCK });
+      const go = launch(craft);
+      CLODS.push({ x: go.x, y: go.y, vx: go.vx, vy: go.vy, n: FILTER_MUCK });
     }
     return;
   }
@@ -50,22 +65,23 @@ export function swallow(craft = null) {
   while (S.filterBank >= 1) {
     S.filterBank -= 1;
     S.recycled++;
-    const out = craft == null ? outlet() : craftDrop(craft);
-    // Dropped, not thrown: the arm points down. No two grains the same shade,
-    // or the heap under the spout is a block of one gray beside mottled spoil.
-    spawnChip(out.x, out.y, (rand() - 0.5) * 0.5, 0.15, shadeNear(RECYCLE_TONE));
+    // On the same throw as the muck. No two grains the same shade, or the
+    // heap is a block of one gray beside mottled spoil.
+    const go = launch(craft);
+    spawnChip(go.x, go.y, go.vx, go.vy, shadeNear(RECYCLE_TONE), go.land);
   }
 }
 
-// The loads on their way down. Each lands on the heap under it, as the load
-// it is, through the same `dropMuckAt` a load always went through: the fall
-// is the only thing added, so the heap is where it always was.
+// The loads in the air, on the yard's own gravity. Each lands where it comes
+// down, as the load it is, through the same `dropMuckAt` every load goes
+// through.
 export function stepClods() {
   if (!CLODS.length) return;
   const m = muckCols(), f = frames();
   for (let i = CLODS.length - 1; i >= 0; i--) {
     const k = CLODS[i];
-    k.vy += CLOD_PULL * f;
+    k.vy += GRAV * f;
+    k.x += (k.vx || 0) * f;
     k.y += k.vy * f;
     const c = colAt(k.x);
     if (c >= 0 && c < m.length && k.y < muckFloor(c) - (m[c] || 0) * P - P) continue;

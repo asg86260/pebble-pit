@@ -2,7 +2,7 @@
 //
 // The house drags the sky down to a heap out the back; a balloon goes up into
 // it and drops what it catches wherever it is. See DESIGN.md, "The purifier
-// balloon". It is a thing the house sells, not a replacement: the throat, the
+// balloon". It is a thing the house sells, not a replacement: the vent, the
 // fan, the board and the door are all still the house's.
 //
 // `smog.js` owns the air; this owns the craft. The one thing a craft must
@@ -16,7 +16,7 @@ import { P, WORKER, FARM_WALK, BALLOON_DUST, BALLOON_RATE,
          BALLOON_UNDER, BALLOON_LANE_STEP, BALLOON_CLEAR, BALLOON_EDGE, CLOUD_TOP, CLOUD_LANES,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
          BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE, BALLOON_MAST_GAP,
-         FILTER_HOOD, DIAL_CELLS, DIAL_STUB } from './config.js';
+         FILTER_WALL, DIAL_CELLS, DIAL_STUB } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
 import { walkY, yardLeft } from './world.js';
@@ -52,10 +52,10 @@ export function buyCraft() {
 // The mast: to the right of the air filter, clear of its dial. Derived, not
 // stored, since the house is re-sited whenever the yard is laid out, and off
 // where the dial ends rather than where the building does, or a moored craft
-// stands over the gauge. Over the middle of the roof a moored envelope is
-// drawn straight through the hood and the bellows; the left is the spout's
-// wall and its heap (`filterHeap` in world.js).
-const dialEnd = () => filter.x + filter.w - P * (FILTER_HOOD - 1) + P * (DIAL_STUB + DIAL_CELLS);
+// stands over the gauge. Over the roof a moored envelope is drawn straight
+// through the cupola; the left is the spout's wall and its heap (`filterHeap`
+// in world.js).
+const dialEnd = () => filter.x + filter.w - P * FILTER_WALL + P * (DIAL_STUB + DIAL_CELLS);
 export const mastX = () => dialEnd() + P * BALLOON_MAST_GAP + BALLOON_FILTER_W / 2;
 
 // The height a craft cruises at, lane by lane, under the clouds it pulls on

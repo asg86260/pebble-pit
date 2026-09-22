@@ -1,5 +1,13 @@
 # Still to do
 
+## The air filter is a louvered shed -- BUILT (2026-09-22)
+
+"The air filter is a louvered shed" in DESIGN.md. A gabled shed with a
+vented cupola and three slats across its front, which open and cycle while
+somebody is inside; the flag stands on the cupola. The gauge is green,
+yellow and red in thirds. The spout throws its loads in an arc onto the
+heap instead of dripping them.
+
 ## The balloons pull from the clouds -- BUILT (2026-09-22)
 
 "The balloons pull from the clouds" in DESIGN.md. The cut is reverted, the

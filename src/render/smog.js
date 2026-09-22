@@ -240,7 +240,7 @@ const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 // Kept as the name the shell calls; nothing left for it to do.
 export function drawPuffs() {}
 
-// The air going into the house: faint specks falling in from all round the hood
+// The air going into the house: faint specks falling in to the cupola's vent
 // while somebody is inside. Worth nothing and counted nowhere, and drawn thin
 // enough to say so; they are what shows a fan over a clean sky still pulling.
 export function drawDraught() {

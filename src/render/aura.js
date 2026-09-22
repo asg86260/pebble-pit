@@ -7,6 +7,7 @@
 // station, present or future, is covered without knowing its drawing.
 
 import { STATIONS, hasNew, hasOffer, standRect } from '../board.js';
+import { filterFlagSpot } from './filter.js';
 import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
@@ -63,6 +64,7 @@ function roofPeak(rect) {
 // station not listed gets `roofPeak`. Each two-cell feature takes the pole
 // astride its middle boundary, half a cell in from its left edge.
 const SPOT = {
+  filter: filterFlagSpot,
   house: () => { const f = chimneyAt(); return f && { x: f.x + P / 2, y: f.y - P * 4 }; },
   bench: () => ({ x: bench.x + P * 4.5, y: bench.y - P * 2 }),  // the clamped block
   lab: () => ({ x: lab.x + P * 3, y: lab.y }),                  // the chimney

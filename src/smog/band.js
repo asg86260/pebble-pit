@@ -1,4 +1,4 @@
-import { CLOUD_MURK_POW, P, FILTER_ARM, FILTER_CHUTE, FILTER_CLOG, SMOG_CAP, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
+import { CLOUD_MURK_POW, P, FILTER_PORT, FILTER_SPOUT, FILTER_VENT, FILTER_WALL, FILTER_CLOG, SMOG_CAP, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { speedBoost, strengthBoost } from '../apothecary.js';
 import { S, filter } from '../state.js';
@@ -76,12 +76,14 @@ export const murk = () => Math.pow(Math.min(1, S.haze / SMOG_CAP), CLOUD_MURK_PO
 export const clogged = () => !!S.pileFull.filter || outletMuck() >= FILTER_CLOG;
 export const filtering = () => S.filterOpen && inFilter() > 0 && !clogged();
 
-// Muck lying on the ground the spout reaches, which is what the back of the
-// house leaves when there is no recycler on it.
+// Muck lying on the filter's own heap, beside the near wall, where the spout
+// throws it when there is no recycler on it.
 export function outletMuck() {
   if (!S.filterOpen) return 0;
   const m = muckCols();
-  const from = colAt(filter.x - P * (FILTER_CHUTE + 2)), to = colAt(filter.x + filter.w);
+  const heap = S.piles.find(p => p.key === 'filter');
+  if (!heap) return 0;
+  const from = colAt(heap.from), to = colAt(filter.x + P * FILTER_WALL);
   let n = 0;
   for (let c = from; c <= to; c++) n += m[c] || 0;
   return n;
@@ -95,14 +97,13 @@ export const fanPull = (lvl = S.fanLevel || 0) => rungValue('fan', lvl);
 export const filterRate = () => (S.filterOpen
   ? S.workers.reduce((n, w) => n + (inHouse(w) ? fanPull() * speedBoost(w) * strengthBoost(w) : 0), 0)
   : 0);
-// Where the thread ends and where the dust comes back out, both places on the
-// building and both on the lattice: a caught mote is drawn as a cell, and a
-// run of them converging on a half cell is the one off-grid thing in the
-// yard. The middle column of an odd front is a whole column; the throat
-// closes on to it two courses below the last course of hood.
+// Where the air goes in and where what it caught comes back out, both places
+// on the building and both on the lattice: a caught mote is drawn as a cell,
+// and a run of them converging on a half cell is the one off-grid thing in the
+// yard. The air goes in at the vent in the cupola, on the middle column.
 export const intake = () => ({ x: filter.x + Math.floor(filter.w / (P * 2)) * P,
-                        y: filter.y + P * 5 });
-// The clear cell under the lip of the chute, not the lip: a grain spawned on
-// the lip is born inside solid black and climbs through the arm before it
-// falls.
-export const outlet = () => ({ x: filter.x - P, y: filter.y + filter.h - P * FILTER_ARM });
+                        y: filter.y + P * FILTER_VENT });
+// The clear cell just past the end of the spout: a load born inside the stub
+// would climb through black before it was thrown.
+export const outlet = () => ({ x: filter.x + P * (FILTER_WALL - FILTER_SPOUT - 1),
+                               y: filter.y + filter.h - P * FILTER_PORT });
