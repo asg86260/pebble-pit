@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_MELT_S, CLOUD_DAWN_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_MELT_S, CLOUD_EDGE_STEPS, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -114,18 +114,40 @@ function partColor(part, mk, sw) {
 const FAR_MIN = CLOUD_LAYERS[0].far - CLOUD_FAR_JITTER;
 const FAR_MAX = CLOUD_LAYERS[CLOUD_LAYERS.length - 1].far + CLOUD_FAR_JITTER;
 const fadeAt = far => CLOUD_FADE_FAR * (1 - (far - FAR_MIN) / (FAR_MAX - FAR_MIN));
-// One cloud's tones this frame, crown to base: CLOUD_TONES steps between the
+// One cloud's colors this frame, crown to base: CLOUD_TONES steps between the
 // two part colors, every step then faded toward the page by the cloud's depth
 // -- the air takes the same share off every tone, so a far cloud's shades are
-// pressed together as well as paler. A dozen strings a frame, no more.
+// pressed together as well as paler.
 function cloudTones(crown, base, far, off = 0) {
   const fade = Math.min(1, fadeAt(far) + off * (1 - fadeAt(far))), out = [];
   for (let k = 0; k < CLOUD_TONES; k++) {
     let col = mix(crown, base, k / (CLOUD_TONES - 1));
     if (fade > 0) col = mix(col, PAGE, fade);
-    out.push(`rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
+    out.push(col);
   }
   return out;
+}
+
+// A cell is not always all there. A cloud's outline is a circle's edge, which
+// crosses a cell part way: how much of the cell the cloud fills is drawn as
+// how far its tone has come up from the page, in CLOUD_EDGE_STEPS steps. So a
+// cell arriving as the sky swells comes up out of the page, and one going as
+// the front lets go goes back down into it, instead of either blinking. The
+// styles are built as they are asked for and kept: a cloud uses a dozen at
+// most, and building a string a cell would be a string a cell. The colors
+// slide with the murk and the swell, so the table is emptied when it has
+// grown past what a frame could want.
+const STYLES = new Map();
+function styleOf(col, k) {
+  if (STYLES.size > 600) STYLES.clear();
+  const key = `${col[0]|0},${col[1]|0},${col[2]|0},${k}`;
+  let s = STYLES.get(key);
+  if (s === undefined) {
+    const c = k >= CLOUD_EDGE_STEPS ? col : mix(PAGE, col, k / CLOUD_EDGE_STEPS);
+    s = `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
+    STYLES.set(key, s);
+  }
+  return s;
 }
 
 // A cloud is one mass of circles on a flat base, the way a cumulus is: a
@@ -180,7 +202,7 @@ function makeCloud(x, sheet, storm = false) {
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = L.lane[0] + rand() * (L.lane[1] - L.lane[0]);
   const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
-              give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, dawn: 0, melt: 0 };
+              give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, melt: 0 };
   // its height on a dry day, in its own cells, for keeping its crown in view
   const { lo, hi, h } = columnsOf(c, 0);
   for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > c.tall) c.tall = h[cx];
@@ -196,7 +218,7 @@ const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
 // CLOUD_MELT_S. A melting cloud no longer counts toward its sheet, so its
 // replacement drifts in while it is still going.
 const melting = c => c.melt > 0;
-const fade = c => Math.min(1, c.melt) * 0.9 + (1 - Math.min(1, c.dawn)) * 0.9;
+const fade = c => Math.min(1, c.melt) * 0.9;
 
 // how many of a sheet's clouds are in the sky, not counting the ones going
 const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
@@ -221,12 +243,12 @@ function columnsOf(c, sw) {
       const dx = cx + 0.5 - b.x;
       const d2 = r * r - dx * dx;
       if (d2 <= 0) continue;
-      // the column's height under this bump: from the base line up to the
-      // bump's top edge, never below a whole cell
-      // rounded, not raised: a circle's crown then spans a few cells rather
-      // than coming to a one-cell point
-      const top = Math.round(-(b.y - Math.sqrt(d2)) * flat);
-      if (top < 1) continue;
+      // the column's height under this bump, from the base line up to the
+      // bump's top edge -- kept as it falls, fraction and all: the part of a
+      // cell the cloud fills is what says how solid that cell is drawn, and
+      // rounding here is what made a cell blink on and off as the sky swelled
+      const top = -(b.y - Math.sqrt(d2)) * flat;
+      if (top <= 0) continue;
       h[cx] = Math.max(h[cx] || 0, top);
       if (cx < lo) lo = cx; if (cx > hi) hi = cx;
     }
@@ -293,7 +315,6 @@ export function stepWeather(now) {
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
-    if (c.dawn < 1) c.dawn = Math.min(1, c.dawn + secs / CLOUD_DAWN_S);
     // A cloud melts once it is on its way out. One the front brought breaks up
     // as the front lets go of it -- its melt is the swell's own fall, so it is
     // gone exactly when the sky has settled, rather than hanging on after it.
@@ -353,11 +374,14 @@ export function skyReport() {
   };
 }
 
-// the cells a cloud is drawn as, for the report
+// the cells a cloud is drawn as, for the report. Whole cells: a column's
+// height is carried as a fraction now (the part of the top cell the cloud
+// fills, which is how solid it is drawn), and counting those would make every
+// cloud's count change on every frame.
 function cellsOf(c, sw) {
   const { lo, hi, h } = columnsOf(c, sw);
   let n = 0;
-  for (let cx = lo; cx <= hi; cx++) n += h[cx] || 0;
+  for (let cx = lo; cx <= hi; cx++) n += Math.ceil(h[cx] || 0);
   return n;
 }
 
@@ -486,24 +510,31 @@ export function drawClouds() {
     const { lo, hi, h, under: u } = columnsOf(c, sw);
     let peak = 0;
     for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];
-    const cap = Math.min(peak, Math.floor((y - top) / cp));   // clipped at the window's top
-    // What a melting cloud has lost off its bottom, in whole cells; it is
-    // drawn that far up as well, so it climbs as it thins.
-    const eaten = Math.floor(c.melt * (peak + 1));
-    // Row by row from the base up, runs of one tone as one rect: cells
+    const cap = Math.min(Math.ceil(peak), Math.floor((y - top) / cp));   // clipped at the window's top
+    // How far a melting cloud has been eaten off its bottom, in cells and
+    // fractions of one: it is drawn that far up as well, so it climbs as it
+    // thins, and the row it is halfway through is drawn half solid.
+    const ate = c.melt * (peak + 1);
+    // Row by row from the base up, runs of one style as one rect: cells
     // joined along the row rather than up the column, or every column's
     // edge is a seam once the zoom puts it between device pixels.
-    for (let r = eaten; r < cap; r++) {
-      let from = lo, tone = -1;
+    for (let r = Math.floor(ate); r < cap; r++) {
+      const below = Math.min(1, r + 1 - ate);      // how much of this row the melt has left
+      let from = lo, style = null;
       for (let cx = lo; cx <= hi + 1; cx++) {
-        const t = cx <= hi && (h[cx] || 0) > r ? cellTone(h, peak, cx, r, u) : -1;
-        if (t === tone) continue;
-        if (tone >= 0) {
-          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1 + eaten) * cp);
-          ctx.fillStyle = tones[tone];
-          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - (r + eaten) * cp) - y0);
+        let now = null;
+        if (cx <= hi) {
+          const fill = Math.min(below, (h[cx] || 0) - r);   // how much of this cell is cloud
+          if (fill > 0) now = styleOf(tones[cellTone(h, peak, cx, r, u)],
+                                      Math.max(1, Math.ceil(fill * CLOUD_EDGE_STEPS)));
         }
-        tone = t; from = cx;
+        if (now === style) continue;
+        if (style) {
+          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1 - ate) * cp);
+          ctx.fillStyle = style;
+          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - (r - ate) * cp) - y0);
+        }
+        style = now; from = cx;
       }
     }
   }

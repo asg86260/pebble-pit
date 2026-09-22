@@ -54,14 +54,18 @@ export const CLOUD_FLOOR = P * 46;
 // picture can have, and it takes the same share off dirt and weather, so a far
 // cloud on a dirty day is a paler brown, not a cleaner one.
 export const CLOUD_FADE_FAR = 0.45;
-// Nothing in the sky blinks off. A cloud on its way out -- off the end of the
-// strip, or one a passing front brought -- thins from the bottom a cell at a
-// time and climbs as it thins, paling toward the page, over CLOUD_MELT_S; a
-// new one comes up out of nothing over CLOUD_DAWN_S. Slow, both of them: a
-// cloud breaking up is the slowest thing in the picture, and a melt you can
-// catch happening reads as a fault.
+// Nothing in the sky blinks. How many steps a cell has between the page and
+// its own tone, for the part of it the cloud actually fills: a cell arriving
+// as the sky swells comes up through them and one going as the front lets go
+// goes back down. Few, deliberately -- this is a cloud's edge softening, not
+// a gradient, and the sky is still a handful of flat tones.
+export const CLOUD_EDGE_STEPS = 3;
+// And a cloud on its way out -- off the end of the strip, or one a passing
+// front brought -- thins from the bottom a cell at a time and climbs as it
+// thins, paling toward the page, over CLOUD_MELT_S. Slow: a cloud breaking up
+// is the slowest thing in the picture, and a melt you can catch happening
+// reads as a fault.
 export const CLOUD_MELT_S = 22;
-export const CLOUD_DAWN_S = 14;
 // A cloud is shaded like the boulder, in steps between CLOUD_TONE and
 // CLOUD_UNDER: lit, body, shade, and the underside. It is lit from above: a
 // cell's depth is how far below the nearest bit of the top outline it sits

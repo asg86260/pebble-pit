@@ -12408,15 +12408,24 @@ cloud made a sky of the same cloud over and over. Circle crowns are rounded to
 the grid, not raised, so a puff's top spans a few cells rather than coming to
 a point.
 
-### Nothing in the sky blinks off
+### Nothing in the sky blinks
 
-A cloud on its way out thins from the bottom a cell at a time and climbs as it
-thins, paling toward the page, so it breaks up rather than vanishing. One the
-front brought melts on the swell's own fall, so the front's clouds are gone
-exactly when the sky has settled and not a moment after; any other melts by
-the clock (`CLOUD_MELT_S`) once it is off the end of the strip, and a new one
-comes up out of nothing over `CLOUD_DAWN_S`. The same rule as the yard's:
-nothing appears where it is wanted and nothing pops out.
+A column's height is carried as a fraction -- how far up into its top cell the
+circle's edge reaches -- and that fraction is drawn as how far that cell's tone
+has come up from the page, in `CLOUD_EDGE_STEPS` steps. So a cell arriving as
+the sky swells rises out of the page and one going as the front lets go sinks
+back into it, and a sky growing or shedding moves instead of stepping. It is
+also the only softening a flat picture gets: the edge reads as cloud rather
+than as a staircase. Rounding the height was what made a cell blink.
+
+A whole cloud on its way out thins from the bottom a cell at a time and climbs
+as it thins, paling toward the page, so it breaks up rather than vanishing.
+One the front brought melts on the swell's own fall, so the front's clouds are
+gone exactly when the sky has settled and not a moment after; any other melts
+by the clock (`CLOUD_MELT_S`) once it is off the end of the strip. A cloud
+arriving needs nothing of its own -- its cells come up out of the page as they
+fill. The same rule as the yard's: nothing appears where it is wanted and
+nothing pops out.
 
 ### Shaded like the boulder
 
