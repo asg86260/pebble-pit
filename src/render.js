@@ -38,7 +38,7 @@ import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
-import { drawSmoke } from './render/stations.js';
+import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
@@ -123,6 +123,7 @@ const LAYERS = [
   { name: 'pot pile', draw: drawPotPile },       // what is on the table, as a heap on the ground
   { name: 'sparks', draw: drawSparks },          // and whatever the last spin threw out of it
   { name: 'smoke', draw: drawSmoke },
+  { name: 'dose motes', draw: drawDoseMotes, dim: 1 }, // the tonic trailing off a body, at the smoke's depth
 
   { name: 'rock', draw: drawRock },
   // After the rock, because a shield stands over it; before the crew, who walk
