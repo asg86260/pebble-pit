@@ -344,6 +344,7 @@ export function stepBelt(now, f) {
   // have torn the hole open was one it was holding. What the head drops that
   // the pile has no cell for goes through the rift (`bankDust` in pit.js).
   //
+  spillFront();
   // It has run a cell: every column a cell toward the head, and the last
   // column off the end, out over the mouth, dropping with the band's speed
   // for the chip loop to put in the hole like everything else.
@@ -355,13 +356,7 @@ export function stepBelt(now, f) {
     const tall = Math.max(1, highOf(last));
     for (let r = 0; r < band.rows; r++) {
       const v = at(band, last, r);
-      if (v) {
-        // Fanned by height: every grain of a column leaving on the one speed
-        // falls as the column did, a slab hanging off the head.
-        const share = BELT_THROW_LOW + (1 - BELT_THROW_LOW) * (r + 1) / tall;
-        const vx = Math.max(0, BELT_PACE * (share + bell() * BELT_SCATTER));
-        spawnChip(head, bottomY(band) - (r + 1) * P, vx, 0, v);
-      }
+      if (v) tipOff(head - P, r, (r + 1) / tall, v);
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;
@@ -369,6 +364,36 @@ export function stepBelt(now, f) {
     recount(band);                        // written behind `put`'s back
     band.high.copyWithin(1, 0, last); band.high[0] = 0;
     band.painter.repaint();
+  }
+}
+
+// A grain off the front of the load, from the cell it sat in, somewhere
+// across that cell rather than all on one x. Fanned by `share`, how high in
+// its column it stood: every grain leaving on the one speed falls as the
+// column did, a slab hanging off the head.
+function tipOff(x, r, share, v) {
+  const s = BELT_THROW_LOW + (1 - BELT_THROW_LOW) * share;
+  const vx = Math.max(0, BELT_PACE * (s + bell() * BELT_SCATTER));
+  spawnChip(x + rand() * P, bottomY(band) - (r + 1) * P, vx, 0, v);
+}
+
+// The head is a drop, so the load's front stands at the slope it rests at
+// down to it, as a heap does at the end of its strip: a column may stand
+// `REPOSE_DROP` rows a cell back from the edge, and the top grain of one
+// standing over that tumbles forward off it. Carried to the head at full
+// height instead, the load met the air as a wall, and the fall began on a
+// ruled line one cell past it. A grain a column a frame, so the front
+// trickles over rather than shearing off in lumps.
+function spillFront() {
+  const last = band.cols - 1;
+  for (let c = last; c >= 0; c--) {
+    const may = (last - c + 1) * REPOSE_DROP;
+    if (may >= band.rows) break;
+    const h = highOf(c);
+    if (h <= may) continue;
+    const v = at(band, c, h - 1);
+    put(band, c, h - 1, 0);
+    tipOff(band.x + c * P, h - 1, 1, v);
   }
 }
 
