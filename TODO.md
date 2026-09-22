@@ -9,15 +9,6 @@ and CHANGELOG.md; the old entries are in git history (this file before
 
 ## Defects
 
-### The purifier's walk to the door writes `y` as a position (2026-09-22)
-
-`stepPurifier` (filter.js) sets `w.y = walkY(...)` outright, the last of the
-movers `route.js` names at the foot of `climbTo`. The others go through the
-climber now (`test/movers-y.test.mjs`); this one was left to whoever has the
-air filter open. Every hand-over to it seen so far arrives on the floor, so it
-has not popped in a check -- `climbTo(w, walkY(...))`, as the stirrer and the
-farmhand do, when somebody is in the file.
-
 ### `inWorking` reads the ground line to a pixel again (2026-09-22)
 
 `onYard` is `!inWorking`, and since b58041ac `inWorking` answers true for any

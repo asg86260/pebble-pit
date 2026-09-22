@@ -10,6 +10,7 @@ import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull, murk } from './smog.js';
 import { S, filter } from './state.js';
 import { walkY } from './world.js';
+import { climbTo } from './route.js';
 
 import { airRows, airSection } from './airboard.js';
 import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
@@ -67,7 +68,7 @@ export function stepPurifier(w) {
   // on the body to be believed by something else later.
   if (w.craft != null) dismount(w);
 
-  w.y = walkY(w.x + WORKER / 2);
+  w.y = climbTo(w, walkY(w.x + WORKER / 2));
   const d = filterDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
   w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
