@@ -191,6 +191,9 @@ try {
   <!-- the thumb switch: the hop, the sheet and the tap gate follow the
        pointer the platform reports, and this overrides it (prefs.js, coarse) -->
   <button id="touch" type="button" data-pane="settings" hidden>touch: off</button>
+  <!-- the crew drawn faint, so a late yard's crowd does not hide the
+       buildings behind it (render.js, a `dim` layer) -->
+  <button id="crewfade" type="button" data-pane="settings" hidden>crew: full</button>
   <!-- white on black (prefs.js, dark): follows the system until pressed -->
   <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <!-- the whole screen, where the platform will give it (fullscreen.js);
