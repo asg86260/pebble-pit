@@ -38,6 +38,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).
 - Wizards going up to the star no longer rise out of the same spot as one smudge; each takes its own patch of ground under it (test/sky-work.test.mjs).
 - A balloon's rider stays on the job after the game is reloaded, instead of being sent back to the spare crew (test/balloon.test.mjs).
 - A hat knocked off somebody's head is still lying where it fell after a refresh, instead of turning up back on the stand, and whoever was walking for it still goes and gets it (test/hat-save.test.mjs).
