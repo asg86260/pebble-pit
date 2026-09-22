@@ -18,6 +18,7 @@ import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 import { bookRate, bookSpan } from '../src/stats.js';
+import { STATS_WINDOW_S } from '../src/config.js';
 import { showPanel, hud } from '../src/board.js';
 
 const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES,
@@ -104,6 +105,42 @@ group('a purchase does not read as the yard running backwards', async () => {
     ok(earning > 0, 'the yard was earning', earning.toFixed(2)),
     ok(after >= earning * 0.5,
        'and it still is after a big purchase', `${earning.toFixed(2)} -> ${after.toFixed(2)}`)
+  ];
+});
+
+// A rate a player watched halve and double while nothing changed. Thirty
+// seconds of ore is two arrivals or four, and which side of the window's edge
+// the second one falls decided the whole number. The window is each currency's
+// own now, and the mechanism is what is asserted: a coin that arrives in lumps
+// reaches further back than the short window, a coin that streams does not, and
+// the reading holds still from one second to the next.
+group('a coin that arrives in lumps is read over a longer window than one that streams', async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__crew(4, 4, 4, 0);                   // rockhands and carters streaming dust, quarriers lumping ore
+  run(150);                                    // long enough for the ore window to have widened
+
+  const dustWin = bookSpan('dust');
+  const oreWin = bookSpan('shard');
+
+  // Sixty readings a second apart, the way a player watching the board sees it.
+  const seen = [];
+  for (let i = 0; i < 60; i++) { run(1); seen.push(bookRate('shard')); }
+  const mean = seen.reduce((a, b) => a + b, 0) / seen.length;
+  let step = 0;
+  for (let i = 1; i < seen.length; i++) step = Math.max(step, Math.abs(seen[i] - seen[i - 1]));
+
+  return [
+    ok(mean > 0, 'the quarry is bringing ore up', mean.toFixed(3)),
+    ok(dustWin >= STATS_WINDOW_S,
+       'no window is shorter than the short one', `${dustWin.toFixed(1)}s`),
+    ok(oreWin > dustWin * 1.5,
+       'and ore arrives in fewer, bigger lumps, so its window reaches further back',
+       `ore ${oreWin.toFixed(1)}s against dust's ${dustWin.toFixed(1)}s`),
+    // A fifth of itself in one second was the old reading's ordinary behavior;
+    // it went 0.07, 0.13, 0.07 on a yard that had not changed.
+    ok(step < mean * 0.25, 'and the ore rate holds still from one second to the next',
+       `biggest step ${step.toFixed(3)} on ${mean.toFixed(3)}`)
   ];
 });
 

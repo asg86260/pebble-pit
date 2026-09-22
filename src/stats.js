@@ -6,8 +6,17 @@
 // balance can stand in for an income. A window, not an easing: an eased
 // average reads high for a while after the thing making it has stopped, which
 // is exactly when you are looking at the board.
+//
+// The window is each currency's own. A fixed one is the wrong length for every
+// coin at once: thirty seconds is a hundred arrivals of dust and two of ore, so
+// the ore row read 0.07, then 0.13, then 0.07 with nothing in the yard having
+// changed -- the lumps either side of the edge, not the rate. Each currency
+// reaches back as far as it needs to have STATS_ARRIVALS arrivals behind it, no
+// less than the short window and no more than the long one, so a streaming coin
+// stays live and a rare one stops flickering.
 
-import { STATS_WINDOW_S, STATS_SAMPLE_S, STATS_FLOOR } from './config.js';
+import { STATS_WINDOW_S, STATS_WINDOW_MAX_S, STATS_ARRIVALS, STATS_SAMPLE_S,
+         STATS_FLOOR } from './config.js';
 import { S } from './state.js';
 import { MARK } from './words.js';
 import { fmt } from './words.js';
@@ -55,25 +64,45 @@ export function sampleBooks(now) {
   last = vals;
   lastAt = now;
 
-  const cut = now - STATS_WINDOW_S * 1000;
+  const cut = now - STATS_WINDOW_MAX_S * 1000;
   while (ring.length && ring[0].at <= cut) ring.shift();
 }
 
 const read = () => Object.fromEntries(BOOKS.map(b => [b.key, b.count() || 0]));
 
-// Per second, divided by the span the window actually covers rather than its
-// full length: a young yard has ten seconds of readings, and dividing them by
-// thirty would report a third of the truth.
+// Per second, over this currency's own window: walk back from now until there
+// are both a short window's seconds and STATS_ARRIVALS arrivals behind us, then
+// stop. Whatever is gathered is divided by the span it actually covers rather
+// than by the window's nominal length -- a young yard has ten seconds of
+// readings, and dividing them by thirty would report a third of the truth.
 export function bookRate(key) {
-  let span = 0, got = 0;
-  for (const e of ring) { span += e.dt; got += e.gain[key] || 0; }
+  let span = 0, got = 0, seen = 0;
+  for (let i = ring.length - 1; i >= 0; i--) {
+    const e = ring[i];
+    const g = e.gain[key] || 0;
+    span += e.dt;
+    got += g;
+    if (g > 0) seen++;
+    if (span >= STATS_WINDOW_S && seen >= STATS_ARRIVALS) break;
+  }
   if (span <= 0) return 0;
   const rate = got / span;
   return rate < STATS_FLOOR ? 0 : rate;
 }
 
-// How long the books have been watching, in seconds.
-export const bookSpan = () => ring.reduce((t, e) => t + e.dt, 0);
+// How far back a currency's own window reaches, in seconds; `bookSpan()` with
+// nothing named is the whole ring, which is how long the books have watched.
+export function bookSpan(key) {
+  let span = 0, seen = 0;
+  for (let i = ring.length - 1; i >= 0; i--) {
+    const e = ring[i];
+    span += e.dt;
+    if (key == null) continue;
+    if (e.gain[key] > 0) seen++;
+    if (span >= STATS_WINDOW_S && seen >= STATS_ARRIVALS) break;
+  }
+  return span;
+}
 
 // Two figures of precision, and never a decimal point on something in the
 // hundreds: a core an hour and a thousand dust a second share this column.

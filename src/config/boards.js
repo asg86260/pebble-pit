@@ -19,7 +19,19 @@ export const PIP_HOVER_LIFT = 0.5;
 // counters, with the walks, the queues and the idle hands in it, never
 // predicted. A rolling window rather than an eased average, so the figure has
 // an end on it and does not read high after the thing making it has stopped.
-export const STATS_WINDOW_S = 30;    // how much of the recent past a rate is taken over
+// The window is not one length. A currency that arrives in a steady stream is
+// read over the short window and stays live; one that arrives in lumps minutes
+// apart widens its own window until it has enough arrivals behind it to be
+// worth the two figures the board prints. A fixed thirty seconds held two ore
+// one moment and four the next, and the board read 0.07 then 0.13 -- a number
+// that halves and doubles while nothing in the yard has changed.
+export const STATS_WINDOW_S = 30;    // the shortest window: a live currency's
+export const STATS_WINDOW_MAX_S = 300;   // and the longest, for the rarest coin
+// Arrivals, not units: a reading one arrival away from its neighbor is worth
+// about a twentieth of itself, which is under the second figure the board
+// shows. Counted in samples that saw anything, so it means the same thing to a
+// coin that comes a thousand at a time as to one that comes singly.
+export const STATS_ARRIVALS = 24;
 // Every frame would be a thousand-odd ring entries for no more truth than forty
 // give.
 export const STATS_SAMPLE_S = 0.5;
