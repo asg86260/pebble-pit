@@ -5,7 +5,7 @@ import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_
          aboard, craftAt, mastX, postY } from '../balloon.js';
 import { DRAWN } from '../craftair.js';
 import { fadeAt, murkTone } from '../weather.js';
-import { P, WORKER } from '../config.js';
+import { BALLOON_HANG, P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawBody } from './crew.js';
@@ -60,20 +60,20 @@ function drawCraft(i, a) {
 
 const FTOP = -BALLOON_BASKET - BALLOON_FILTER_H;   // the filter's own top, from the basket's bottom
 
-// The haze a working craft is drawing in: each cell on its way from where it
-// started, round the craft, into the middle of the filter box. Behind the
-// balloon, so the envelope stays a clean shape and the haze goes in out of
-// sight. Drawn in the color the air is, so a filthy sky is a brown stream and
-// a clean one a pale trickle.
+// The stream a working craft is drawing down out of its cloud: one column of
+// cells from the cloud's base into the vent at the crown, gathered from a cell
+// either side at the top and narrowing to the vent. Drawn in the color the air
+// is, so a filthy sky is a brown stream and a clean one a pale trickle.
+const CROWN = FTOP - P - BALLOON_H;          // the top of the envelope, from the basket's bottom
 function drawDrawnIn(i) {
   const cells = DRAWN[i];
   if (!cells || !cells.length) return;
-  const cy = FTOP + BALLOON_FILTER_H / 2;
+  const top = CROWN - P * BALLOON_HANG;
   ctx.fillStyle = murkTone();
   ctx.beginPath();
   for (const c of cells) {
-    const d = c.d * (1 - c.t);
-    ctx.rect(Math.round(Math.cos(c.a) * d / P) * P, Math.round((cy + Math.sin(c.a) * d) / P) * P, P, P);
+    const x = Math.round(c.off * (1 - c.t)) * P - P / 2;
+    ctx.rect(x, Math.round((top + c.t * P * BALLOON_HANG) / P) * P, P, P);
   }
   ctx.fill();
 }
@@ -101,6 +101,8 @@ function drawEnvelope(look) {
     ctx.fillRect(-widths[n] * P / 2, top + n * P, widths[n] * P, P);
   }
   ctx.fillStyle = '#fff';
+  // The vent in the crown, where the stream out of the cloud goes in.
+  ctx.fillRect(-P / 2, top, P, P);
   if (look % 3 === 1) {
     // gores: two seams from the crown down to the neck
     for (let n = 1; n < rows - 1; n++) {

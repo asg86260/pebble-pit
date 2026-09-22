@@ -36,13 +36,14 @@ export const BALLOON_DWELL_S = 14;
 // muck, thrown onto the filter's heap from its post.
 export const BALLOON_LOAD = 540;
 // Cells of sky between a cloud's base and the crown of the envelope hanging
-// under it.
-export const BALLOON_HANG = 2;
-// The haze a working craft draws in (craftair.js): cells a second at the bare
-// fan over a clean sky, and how much more at the brim, so a filthy sky is a
-// thick stream and a clean one a trickle; how far out they start, and pixels
-// a second they close at.
-export const DRAWIN_PER_S = 10;
+// under it: room for the stream the craft draws down out of the cloud.
+export const BALLOON_HANG = 6;
+// The stream a working craft draws down out of its cloud (craftair.js): cells
+// a second at the bare fan over a clean sky, and how much more at the brim, so
+// a filthy sky is a thick stream and a clean one a trickle; how many cells
+// either side of the line it is gathered from at the cloud, narrowing to the
+// vent; and pixels a second it comes down at.
+export const DRAWIN_PER_S = 12;
 export const DRAWIN_MURK = 3;
-export const DRAWIN_FROM = P * 16;
-export const DRAWIN_PACE = 40;
+export const DRAWIN_WIDE = 1;
+export const DRAWIN_PACE = 30;

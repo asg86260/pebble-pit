@@ -81,6 +81,10 @@ export const aboard = i => S.workers.some(w => w.craft === i && inBasket(w));
 
 // A craft works only while it is up among the clouds with somebody in it.
 export const working = i => !!CRAFT[i] && CRAFT[i].phase === 'aloft' && crewed(i);
+// And it is seen drawing a cloud in only while it hangs under one (craftair.js):
+// a picture question, asked of the picture's half.
+export const atCloud = i => working(i) && !!CRAFT[i].sky && !!CRAFT[i].sky.cloud &&
+                            CRAFT[i].sky.go >= BALLOON_TRAVEL_S;
 
 // Which berth a body on the purifiers takes: `-1` for the house, or the index
 // of a craft. **Claimed once and kept.** A berth worked out from the body's
@@ -150,8 +154,11 @@ export function dismount(w) {
 // a little at a time, before it goes up again.
 const UNLOAD_PER_S = BALLOON_LOAD / 1.5;       // a full basket thrown out in a second and a half
 
-export function stepBalloons() {
-  const secs = frames() / 60;
+// Timed by the frame's own `dt`, like every other clock in the step list:
+// `frames()` is the draw's measure, and a yard stepped by hand (`__fast`) ran
+// a craft's clock at whatever the last drawn frame had been.
+export function stepBalloons(dt) {
+  const secs = dt / 1000;
   for (let i = 0; i < CRAFT.length; i++) {
     const c = CRAFT[i];
     const manned = crewed(i);

@@ -12924,6 +12924,17 @@ reload finds each craft a new cloud.
   it was a speck. The posts are spaced by the widest part (`BALLOON_SPAN`).
 - **Each craft wears its own envelope,** by the order it was bought: plain,
   seamed, banded, the way no two hot-air balloons at a field are the same.
+- **One stream, out of the cloud.** The cells gathering in from all round a
+  craft read as a swarm rather than as a cloud being drawn down. A craft
+  hanging under its cloud now draws a single column out of the cloud's base
+  into a vent at the crown of the envelope (`craftair.js`, `atCloud`), a
+  cell either side at the top narrowing to the vent, thicker the dirtier the
+  sky. The craft is in its cloud's own sheet, so the two ends are at one
+  depth and scroll together; nothing on the way between two clouds. The hang
+  under the cloud is longer (`BALLOON_HANG` six cells) so the column shows.
+- **The craft's clock runs off the frame's `dt`,** like every other clock in
+  the step list. Timed off `frames()`, a yard stepped by hand in the page ran
+  it at whatever the last drawn frame had been, and craft sat in their climb.
 - **Moored on the ground, by a stake.** On posts the craft read as signs on
   poles. A moored basket rests on the ground with its tether tied off to a
   stake beside it, and a rider steps up into it.

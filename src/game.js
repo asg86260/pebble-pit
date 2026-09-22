@@ -243,7 +243,7 @@ export const STEPS = [
   // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
   { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
-  { name: 'balloons',  step: stepBalloons },              // and the craft crossing it
+  { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in
   { name: 'sampleair', step: c => sampleAir(c.now) },
   // swinging does not catch its own spray
