@@ -586,7 +586,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // moors.
   craft: CRAFT.map((c, i) => {
     const a = craftAt(i);
-    return { phase: c.phase, load: c.load, post: Math.round(mastX(i)),
+    return { phase: c.phase, post: Math.round(mastX(i)),
              x: Math.round(a.x), y: Math.round(a.y), far: +a.far.toFixed(3),
              crewed: crewed(i), up: working(i) };
   }),

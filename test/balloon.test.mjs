@@ -8,7 +8,6 @@
 // there.
 
 import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED, yard } from './helpers.mjs';
-import { BALLOON_LOAD } from '../src/config.js';
 
 const rich = () => {
   window.__reset();
@@ -111,36 +110,28 @@ group('a rider taken off the job is brought home in the basket and steps off at 
   ];
 });
 
-group("a craft carries its catch home and throws it onto the filter's heap", async () => {
+group('a craft lets what it catches fall wherever it is, and stays up to do it', async () => {
   rich();
   buyNow('balloon');
   // A dirty sky, nobody in the house, one aloft; nothing else fouls it.
-  window.__air({ purifiers: 2, haze: 3000, muck: 0 });
   window.__crew(0, 0);
-  window.__air({ purifiers: 2 });
-  const heap = state().piles.find(p => p.key === 'filter');
-  const onHeap = () => { const m = yard.S.muck || []; let n = 0;
-    for (let c = Math.floor(heap.from / 6); c <= Math.ceil(heap.to / 6); c++) n += m[c] || 0; return n; };
+  window.__air({ purifiers: 2, haze: 3000, muck: 0 });
   runUntil(() => state().craft[0].up, 90);
-  const full = runUntil(() => state().craft[0].load >= BALLOON_LOAD || state().craft[0].phase === 'down', 400);
-  const carrying = state().craft[0].load;
-  const before = onHeap();
-  const home = runUntil(() => state().craft[0].phase === 'moored', 30);
-  const emptied = runUntil(() => state().craft[0].load === 0, 10);
-  run(3);
-  const after = onHeap();
+  const muck = () => (yard.S.muck || []).reduce((n, v) => n + (v || 0), 0);
+  const before = muck();
+  let home = false;
+  for (let s = 0; s < 60; s++) { run(1); if (state().craft[0].phase !== 'aloft') home = true; }
   return [
-    ok(full && carrying > 0, 'it fills as it pulls, and turns for home when full', `${carrying} carried`),
-    ok(home && emptied, 'at its post it throws the lot out'),
-    ok(after > before, "and it lands on the filter's heap", `${before} -> ${after}`)
+    ok(muck() > before, 'its catch comes down as muck', `${before} -> ${muck()}`),
+    ok(!home, 'without it ever coming home to empty', state().craft[0].phase)
   ];
 });
 
 // Where a craft is among the clouds is a fact about the view (the clouds scroll
 // slower than the ground, so where it is drawn depends on where you are
-// looking), and nothing about it may reach the yard. The same
-// yard run twice from one seed, once with the view swung back and forth over
-// it, takes the same sky and lays the same muck.
+// looking). Where its muck lands follows that, by the player's choice; how
+// much of the sky it takes must not. The same yard run twice from one seed,
+// once with the view swung back and forth over it, takes the same sky.
 group('what a balloon pulls does not depend on where you are looking', async () => {
   const yardRun = swing => {
     window.__seed(SEED);
@@ -153,8 +144,9 @@ group('what a balloon pulls does not depend on where you are looking', async () 
       run(1);
     }
     const st = state();
-    return { haze: Math.round(st.smog.haze), muck: Math.round(st.smog.muck.yard),
-             phase: st.craft[0].phase, load: st.craft[0].load };
+    // Not where the muck lands, which follows the view by design: how much
+    // of the sky it takes, and what the craft is doing.
+    return { haze: Math.round(st.smog.haze), phase: st.craft[0].phase };
   };
   const still = yardRun(false);
   const swung = yardRun(true);

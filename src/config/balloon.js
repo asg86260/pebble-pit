@@ -32,9 +32,6 @@ export const BALLOON_MIN_SIZE = 0.55;
 export const BALLOON_CLIMB_S = 7;
 export const BALLOON_TRAVEL_S = 6;
 export const BALLOON_DWELL_S = 14;
-// What a craft carries before it comes home to empty, in motes: a few loads of
-// muck, thrown onto the filter's heap from its post.
-export const BALLOON_LOAD = 540;
 // Cells of sky between a cloud's base and the crown of the envelope hanging
 // under it: room for the stream the craft draws down out of the cloud.
 export const BALLOON_HANG = 6;

@@ -7,7 +7,7 @@
 // the door are all still the house's.
 //
 // Two halves, kept apart on purpose. **The yard's half** is a clock: a craft is
-// moored, going up, aloft or coming down, for a time, carrying a load. Nothing
+// moored, going up, aloft or coming down, for a time. Nothing
 // in it depends on the view, so a scrolled yard and a still one do the same
 // thing. **The picture's half** is where the craft is in the sky: among the
 // clouds, at their depth, drawn where they are drawn, which is a matter of the
@@ -17,7 +17,7 @@
 import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_W, BALLOON_H,
          BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H, BALLOON_BOB,
          BALLOON_MAST_GAP, BALLOON_CLIMB_S, BALLOON_TRAVEL_S, BALLOON_DWELL_S,
-         BALLOON_LOAD, BALLOON_HANG, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
+         BALLOON_HANG, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
          BALLOON_SPAN, BALLOON_MIN_SIZE, FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
@@ -26,16 +26,13 @@ import { climbTo, plant } from './route.js';
 import { TYPE } from './jobs.js';
 import { stream } from './rng.js';
 import { GUESTS } from './skyguests.js';
-import { clogged } from './smog.js';
-import { unloadCraft } from './smog/craft.js';
 
 // --- the craft ----------------------------------------------------------------------
-// A craft is `{ phase, t, load }` to the yard:
+// A craft is `{ phase, t }` to the yard:
 //
 //   phase  'moored' at its post, 'up' on the way into the sky, 'aloft' at
 //          work among the clouds, 'down' on the way home.
 //   t      seconds into the phase, for the trips up and down.
-//   load   motes caught and not yet thrown onto the filter's heap.
 //
 // and carries `sky`, the picture's half (below), which is never saved.
 // Its post is its index, so two craft cannot disagree about which is which.
@@ -49,7 +46,7 @@ export const craftCost = () => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, 
 // Bought moored, with nobody in it, like every other station that sells the
 // room before the body.
 export function buyCraft() {
-  CRAFT.push({ phase: 'moored', t: 0, load: 0, sky: null });
+  CRAFT.push({ phase: 'moored', t: 0, sky: null });
 }
 
 // --- the posts ----------------------------------------------------------------------
@@ -149,10 +146,9 @@ export function dismount(w) {
 }
 
 // --- the yard's half: the clock ----------------------------------------------------
-// Up when somebody is aboard and there is room on the heap for what it will
-// bring back; home when it is full or its rider has gone; emptied at the post,
-// a little at a time, before it goes up again.
-const UNLOAD_PER_S = BALLOON_LOAD / 1.5;       // a full basket thrown out in a second and a half
+// Up when somebody is aboard; home when its rider has gone. What it catches
+// it lets fall where it is (`swallow` in smog/craft.js), so it never has to
+// come home to empty.
 
 // Timed by the frame's own `dt`, like every other clock in the step list:
 // `frames()` is the draw's measure, and a yard stepped by hand (`__fast`) ran
@@ -163,18 +159,14 @@ export function stepBalloons(dt) {
     const c = CRAFT[i];
     const manned = crewed(i);
     if (c.phase === 'moored') {
-      if (c.load > 0) {
-        unloadCraft(i, Math.min(c.load, Math.max(1, Math.ceil(UNLOAD_PER_S * secs))));
-      } else if (manned && !clogged()) {
-        c.phase = 'up'; c.t = 0;
-      }
+      if (manned) { c.phase = 'up'; c.t = 0; }
     } else if (c.phase === 'up') {
       c.t += secs;
       // Let go of on the way up: it turns round where it is.
       if (!manned) { c.phase = 'down'; c.t = Math.max(0, BALLOON_CLIMB_S - c.t); }
       else if (c.t >= BALLOON_CLIMB_S) { c.phase = 'aloft'; c.t = 0; }
     } else if (c.phase === 'aloft') {
-      if (!manned || c.load >= BALLOON_LOAD) { c.phase = 'down'; c.t = 0; }
+      if (!manned) { c.phase = 'down'; c.t = 0; }
     } else if (c.phase === 'down') {
       c.t += secs;
       if (c.t >= BALLOON_CLIMB_S) { c.phase = 'moored'; c.t = 0; }
@@ -363,8 +355,8 @@ export function stepRider(w, berth) {
     return true;
   }
   w.x = mastX(berth) - WORKER / 2;
-  // Into the basket only while the craft is home and emptied.
-  if (c && c.phase === 'moored' && c.load === 0) {
+  // Into the basket only while the craft is home.
+  if (c && c.phase === 'moored') {
     // **This flag is the whole of what keeps a rider in the sky.** The fall
     // rule runs early in the crew pipeline and a body up a post with nothing
     // under it is exactly what it looks for; `aloft` is how the wizard
@@ -377,10 +369,10 @@ export function stepRider(w, berth) {
 }
 
 // --- the save -------------------------------------------------------------------------
-// The clock and the load. Where the craft is in the sky is a picture and is
+// The clock. Where the craft is in the sky is a picture and is
 // not written down: the clouds it was among are not saved either, so a craft
 // read back aloft finds a cloud of the new sky.
-export const craftSave = () => CRAFT.map(c => ({ phase: c.phase, t: +c.t.toFixed(2), load: c.load }));
+export const craftSave = () => CRAFT.map(c => ({ phase: c.phase, t: +c.t.toFixed(2) }));
 
 const PHASES = new Set(['moored', 'up', 'aloft', 'down']);
 export function craftLoad(list) {
@@ -389,7 +381,6 @@ export function craftLoad(list) {
     CRAFT.push({
       phase: PHASES.has(c && c.phase) ? c.phase : 'moored',
       t: Number.isFinite(c && c.t) ? Math.max(0, c.t) : 0,
-      load: Number.isFinite(c && c.load) ? Math.max(0, Math.round(c.load)) : 0,
       sky: null
     });
   }

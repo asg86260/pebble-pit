@@ -12932,6 +12932,14 @@ reload finds each craft a new cloud.
   sky. The craft is in its cloud's own sheet, so the two ends are at one
   depth and scroll together; nothing on the way between two clouds. The hang
   under the cloud is longer (`BALLOON_HANG` six cells) so the column shows.
+- **The catch falls where the craft is, not carried home.** The player chose
+  it, knowing the cost: a craft among the clouds has no fixed place over the
+  ground (a far sheet barely moves as you scroll), so a load let fall from
+  where it is drawn lands under wherever the view is. How much falls does not
+  follow the view -- the pull is still the fan's out of the one count, and the
+  check that the view cannot change it now compares the sky taken and not the
+  muck's place. A craft stays up for as long as it is crewed; `BALLOON_LOAD`,
+  the trip home to empty and the throw over the shed are gone.
 - **The craft's clock runs off the frame's `dt`,** like every other clock in
   the step list. Timed off `frames()`, a yard stepped by hand in the page ran
   it at whatever the last drawn frame had been, and craft sat in their climb.
