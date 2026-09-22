@@ -15,7 +15,7 @@ feature lives in DESIGN.md.
 - The sky is the clouds now: the smoke gathers into them so they grow and darken as the yard dirties, the rain falls from their undersides, and hand work fouls a little so a first muck comes early while the yard is still slow to watch (test/sky-air.test.mjs).
 - A working machine now visibly dirties the sky instead of leaving it blank until the yard is nearly at the brim (test/weather.test.mjs).
 - Rain is one sheet over the whole yard again, not patches under whichever clouds happen to be on screen, so it no longer thins out or slides about when you scroll (test/weather.test.mjs, "a dirty sky shows in the clouds, and its rain falls in the yard").
-- A storm no longer dumps a heap of muck in its last moment; the acid trickles out with the rain to the end (test/sky-muck.test.mjs, "a mess comes before the dust").
+- A storm no longer dumps a heap of muck in its last moment; the acid comes down in the shape of the rain, a drizzle carrying little and the pour most, and is all down as the shower ends (test/wave6-sky.test.mjs, "a storm brews up, pours, and trails off").
 - The clouds pale again after a storm instead of staying black: a storm now washes most of the sky down (test/weather.test.mjs, "dirty rain is a share of the sky").
 - A working machine puts up visible smoke off its stack on every beat (src/scenes.js `yard`).
 - The drill and the tiller are for sale once the station's two ladders are topped and every hat is bought, like the ram; the last bench and the last furrow no longer stand in the way (test/machines.test.mjs).

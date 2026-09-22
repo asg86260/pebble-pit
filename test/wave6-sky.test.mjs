@@ -10,6 +10,7 @@
 // is about forty seconds of shower, and every marked mote still goes.
 
 import { group, ok, state, run, runUntil, makeItRain, buyNow, openSites, yard } from './helpers.mjs';
+import { RAIN_WASH } from '../src/config.js';
 
 // The band is uniform by construction, at a working level and at the brim: the
 // fullest strip of sky holds barely more than the average one, from the frame
@@ -122,7 +123,8 @@ group('a storm brews up, pours, and trails off', async () => {
        `${drizzle} drops in the air against ${peak} at the peak`),
     ok(done.left === 0, 'and the shower ends clean: every marked mote falls',
        `${done.left} marked left`),
-    ok(done.haze > done.cap / 2, 'while the sky it did not mark is still up there',
+    // The rest: a storm washes RAIN_WASH of the sky, and the house takes the rest.
+    ok(done.haze > done.cap * (1 - RAIN_WASH) * 0.6, 'while the sky it did not mark is still up there',
        `${Math.round(done.haze)} of ${done.cap} haze left`)
   ];
 });

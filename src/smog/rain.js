@@ -58,6 +58,15 @@ export function envelope(t) {
   return up * (RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail);
 }
 
+// The envelope integrated from `t` to the shower's end, in envelope-seconds:
+// what the acid still has to be spread over. A coarse sum, half a second a
+// step, which is well inside the smoothstep's curvature.
+function envLeft(t, len) {
+  let sum = 0;
+  for (let x = t; x < len; x += 0.5) sum += envelope(Math.min(x + 0.25, len)) * Math.min(0.5, len - x);
+  return sum;
+}
+
 // What the rain has done, for the rules: drops landed by kind and the muck the
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
@@ -99,12 +108,14 @@ export function pour(secs) {
   // not a search.
   const pick = [];
   for (let i = 0; i < SKY.length; i++) if (doomed(SKY[i])) pick.push(i);
-  // Spread evenly over what is left of the shower, and over at least the
-  // taper's length at the end, so the last of it trickles out with the rain
-  // rather than landing as a lump in the closing frame. The shower does not
-  // end until every marked mote is down, so nothing is ever left hanging.
-  const left = Math.max(len - t, RAIN_TAPER_S);
-  let n = pick.length * secs / left;
+  // Shaped by the envelope, like the water -- a drizzle carries little acid
+  // and the pour most -- and normalized by what is left of the envelope, so
+  // the lot of it is down as the shower ends: this frame's share is env(t)
+  // over the integral of env from now to the end. No lump in the last frame
+  // (the old "whatever is left, now"), and no flat rate that drowned the
+  // drizzle. Past the end, what a reload re-marked drains over the taper.
+  const rest = t < len ? envLeft(t, len) : 0;
+  let n = rest > 0 ? pick.length * secs * env / rest : pick.length * secs / RAIN_TAPER_S;
   const gone = new Set();
   while (n > 0 && pick.length) {
     if (n < 1 && rand() > n) break;
