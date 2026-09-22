@@ -105,21 +105,50 @@ export function barSpot(site, w = null) {
 // glance at either says what is coming.
 const EDGE = P / 6;                      // the outline's stroke, one yard pixel
 export function buildingGlyph(cx, cy, rows, at, tint = null) {
+  const g = glyphPlan(rows);
+  const up = Math.floor(at * g.laid.length);
+  const d = g.at[up] ||= drawnAt(g, up);
+  // Centred on the ink, not the box: a drawing off to one side of its grid
+  // (the shovel, the lamp) would otherwise hang beside the station.
+  const x0 = Math.round(cx / P - g.mid) * P, y0 = cy - (CELLS * P) / 2;
+  if (tint && up) paintRects(d.stroke, tint, x0, y0);
+  paintRects(d.ink, '#000', x0, y0);
+  paintRects(d.ghost, BUILD_GHOST_INK, x0, y0);
+}
+
+function paintRects(rects, color, x0, y0) {
+  if (!rects.length) return;
+  ctx.fillStyle = color;
+  for (let i = 0; i < rects.length; i += 4) ctx.fillRect(x0 + rects[i], y0 + rects[i + 1], rects[i + 2], rects[i + 3]);
+}
+
+// The shape of a drawing and of each stage of it going up, worked out once:
+// every station's stack redraws every frame, and a stack of finished rungs is
+// dozens of glyphs whose floods and cell sets never change. Keyed on the rows
+// themselves, which a glyph edit replaces rather than rewrites.
+const PLANS = new WeakMap();
+function glyphPlan(rows) {
+  let g = PLANS.get(rows);
+  if (g) return g;
   const laid = [];
   const shape = new Set();
   rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(`${x},${y}`); } }));
   laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
-  const up = Math.floor(at * laid.length);
-  // Centred on the ink, not the box: a drawing off to one side of its grid
-  // (the shovel, the lamp) would otherwise hang beside the station.
   const [lo, hi] = inkSpan(rows);
-  const x0 = Math.round(cx / P - (lo + hi) / 2) * P, y0 = cy - (CELLS * P) / 2;
+  g = { laid, shape, mid: (lo + hi) / 2, at: [] };
+  PLANS.set(rows, g);
+  return g;
+}
+
+// The rectangles of a drawing with `up` of its cells built, about its corner.
+function drawnAt({ laid, shape }, up) {
+  const stroke = [], ink = [], ghost = [];
   // The stroke first, under the cells: a strip along each side of a built cell
   // that faces the outside, and a square on each corner whose diagonal is
   // outside, so it runs round what is up without boxing a cell or lining a
   // hole. Outside is flooded from a cell past the grid over everything not
   // yet built, the way the done mark's stroke finds it.
-  if (tint && up) {
+  if (up) {
     const t = Math.max(1, P / 3);
     const built = new Set(laid.slice(0, up).map(([x, y]) => `${x},${y}`));
     const out = new Set(), q = [[-1, -1]];
@@ -129,31 +158,30 @@ export function buildingGlyph(cx, cy, rows, at, tint = null) {
       out.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
     }
     const open = (x, y) => out.has(`${x},${y}`);
-    ctx.fillStyle = tint;
     laid.slice(0, up).forEach(([x, y]) => {
-      const px = x0 + x * P, py = y0 + y * P;
-      if (open(x, y - 1)) ctx.fillRect(px, py - t, P, t);
-      if (open(x, y + 1)) ctx.fillRect(px, py + P, P, t);
-      if (open(x - 1, y)) ctx.fillRect(px - t, py, t, P);
-      if (open(x + 1, y)) ctx.fillRect(px + P, py, t, P);
-      if (open(x - 1, y - 1)) ctx.fillRect(px - t, py - t, t, t);
-      if (open(x + 1, y - 1)) ctx.fillRect(px + P, py - t, t, t);
-      if (open(x - 1, y + 1)) ctx.fillRect(px - t, py + P, t, t);
-      if (open(x + 1, y + 1)) ctx.fillRect(px + P, py + P, t, t);
+      const px = x * P, py = y * P;
+      if (open(x, y - 1)) stroke.push(px, py - t, P, t);
+      if (open(x, y + 1)) stroke.push(px, py + P, P, t);
+      if (open(x - 1, y)) stroke.push(px - t, py, t, P);
+      if (open(x + 1, y)) stroke.push(px + P, py, t, P);
+      if (open(x - 1, y - 1)) stroke.push(px - t, py - t, t, t);
+      if (open(x + 1, y - 1)) stroke.push(px + P, py - t, t, t);
+      if (open(x - 1, y + 1)) stroke.push(px - t, py + P, t, t);
+      if (open(x + 1, y + 1)) stroke.push(px + P, py + P, t, t);
     });
   }
   laid.forEach(([x, y], k) => {
-    const px = x0 + x * P, py = y0 + y * P;
-    if (k < up) { ctx.fillStyle = '#000'; ctx.fillRect(px, py, P, P); return; }
+    const px = x * P, py = y * P;
+    if (k < up) { ink.push(px, py, P, P); return; }
     // Each side of the cell that faces out of the shape gets a stroke, so the
     // outline runs round the whole drawing rather than boxing every cell. In
     // a light gray: what is not there yet stands back from what is.
-    ctx.fillStyle = BUILD_GHOST_INK;
-    if (!shape.has(`${x},${y - 1}`)) ctx.fillRect(px, py, P, EDGE);
-    if (!shape.has(`${x},${y + 1}`)) ctx.fillRect(px, py + P - EDGE, P, EDGE);
-    if (!shape.has(`${x - 1},${y}`)) ctx.fillRect(px, py, EDGE, P);
-    if (!shape.has(`${x + 1},${y}`)) ctx.fillRect(px + P - EDGE, py, EDGE, P);
+    if (!shape.has(`${x},${y - 1}`)) ghost.push(px, py, P, EDGE);
+    if (!shape.has(`${x},${y + 1}`)) ghost.push(px, py + P - EDGE, P, EDGE);
+    if (!shape.has(`${x - 1},${y}`)) ghost.push(px, py, EDGE, P);
+    if (!shape.has(`${x + 1},${y}`)) ghost.push(px + P - EDGE, py, EDGE, P);
   });
+  return { stroke, ink, ghost };
 }
 
 // Over a construction -- a building coming out of the ground, whose own

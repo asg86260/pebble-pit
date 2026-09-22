@@ -269,10 +269,17 @@ export function step() {
 }
 
 // Everything in the air, one frame further along, and whatever it lands on.
+let dead = new Uint8Array(0);
 function stepChips(now) {
   const f = frames();
-  for (let i = S.chips.length - 1; i >= 0; i--) {
-    const ch = S.chips[i];
+  // A grain that lands is struck off and the list closed up once at the end:
+  // a splice apiece is the whole list moved for every grain that lands, and
+  // an endgame yard has thousands in the air and hundreds landing a frame.
+  const chips = S.chips, n = chips.length;
+  if (dead.length < n) dead = new Uint8Array(n * 2);
+  dead.fill(0, 0, n);
+  for (let i = n - 1; i >= 0; i--) {
+    const ch = chips[i];
     // however long this frame was, in the sixtieths these speeds are written in
     ch.vy += GRAV * f;
     ch.x += ch.vx * f;
@@ -304,7 +311,7 @@ function stepChips(now) {
     // condition). Ahead of the hole and the cut, because the head of the belt
     // hangs over the mouth of the hole and a grain crossing the band above
     // the lip would otherwise be taken by the hole from under it.
-    if (catchBelt(ch, now, f)) { S.chips.splice(i, 1); continue; }
+    if (catchBelt(ch, now, f)) { dead[i] = 1; continue; }
 
     // down the shaft: the pit collects whatever falls through its mouth
     // `>=`, to match what the ground asks below: with `>` a chip that came
@@ -314,7 +321,7 @@ function stepChips(now) {
       // A torn pit takes the grain the moment it crosses the mouth, instead
       // of landing it on a pile the rift would only lift it back off.
       if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s, ch.vx, ch.vy)) {
-        S.chips.splice(i, 1);
+        dead[i] = 1;
         continue;
       }
       const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, ch.x)));
@@ -326,7 +333,7 @@ function stepChips(now) {
         // Into the pile, or through the rift if the pile has no cell for it;
         // the hole never hands a grain back.
         bankDust(ch.x, ch.s);
-        S.chips.splice(i, 1);
+        dead[i] = 1;
         continue;
       }
       continue;
@@ -350,7 +357,7 @@ function stepChips(now) {
         // comes down as it would on any other ground.
         if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
         else bankDust(ch.x, ch.s);
-        S.chips.splice(i, 1);
+        dead[i] = 1;
       }
       continue;
     }
@@ -369,7 +376,7 @@ function stepChips(now) {
     // the face: a thrown grain is aimed past the hill and is not arrived
     // while still over it.
     if (ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s)) {
-      S.chips.splice(i, 1);
+      dead[i] = 1;
       continue;
     }
     if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
@@ -378,9 +385,13 @@ function stepChips(now) {
       // grain goes to it instead.
       if (addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
       else bankDust(ch.x, ch.s);
-      S.chips.splice(i, 1);
+      dead[i] = 1;
     }
   }
+  // Anything thrown while the list was walked went on its end, and stays.
+  let w = 0;
+  for (let r = 0; r < chips.length; r++) if (r >= n || !dead[r]) chips[w++] = chips[r];
+  chips.length = w;
 }
 
 // One walk of the ground, four times a second: how much lies on each strip,

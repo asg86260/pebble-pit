@@ -2,7 +2,7 @@
 // usually lands while you are looking somewhere else, and the bar coming down
 // is a signal made of nothing happening.
 
-import { P } from '../config.js';
+import { P, SHELF_GLYPH_CELLS } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
@@ -29,16 +29,25 @@ function fillCells(cells, color) {
 
 // A line round the outside of a shape, a third of a cell thick: each ink
 // cell grown by the stroke, cut to the outside cells that touch it.
+// Worked out once a shape: every mark over every station is redrawn every
+// frame, and the flood under it never changes.
+const STROKES = new WeakMap();
 function strokeCells(cells, color) {
-  const t = Math.max(1, P / 3);
+  let rects = STROKES.get(cells);
+  if (!rects) {
+    rects = [];
+    const t = Math.max(1, P / 3);
+    for (const [ox, oy] of outsideEdge(cells))
+      for (const [dx, dy] of cells) {
+        if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
+        const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
+        const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
+        if (x1 > x0 && y1 > y0) rects.push(x0, y0, x1 - x0, y1 - y0);
+      }
+    STROKES.set(cells, rects);
+  }
   ctx.fillStyle = color;
-  for (const [ox, oy] of outsideEdge(cells))
-    for (const [dx, dy] of cells) {
-      if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
-      const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
-      const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
-      if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    }
+  for (let i = 0; i < rects.length; i += 4) ctx.fillRect(rects[i], rects[i + 1], rects[i + 2], rects[i + 3]);
 }
 
 // The empty cells round a shape that touch it from the outside, corners
@@ -79,6 +88,11 @@ export function drawDoneMarks() {
     doneAt(site).forEach((key, i) => {
       const at = stackSlot(site, i);
       if (!at) return;
+      // A board left unread for long stacks its marks up off the top of the
+      // glass, and every one of them is a glyph's worth of cells.
+      const reach = SHELF_GLYPH_CELLS * P;
+      if (at.cy + reach < S.camY || at.cy - reach > S.camY + S.viewH ||
+          at.x + reach < S.camX || at.x - reach > S.camX + S.viewW) return;
       const u = rowFor(key);
       buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u) : null);
       ctx.save();

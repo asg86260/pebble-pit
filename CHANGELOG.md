@@ -39,6 +39,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- A late yard with every ladder bought no longer drops to half speed: the stack of finished-work ticks over a station and the thousands of grains in the air are cheap to draw and move again (src/scenes.js `everything`).
 - The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
 - A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).
 - The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).
