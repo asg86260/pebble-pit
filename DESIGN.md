@@ -3834,6 +3834,20 @@ It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
 what the tier-6 spark rungs and the paint store are for.
 
+### Haulers tip onto the belt (built 2026-09-22)
+
+**While the belt runs, a trip ends at its tail.** The band carries everything
+on it to the hole, so a carter walking a load the length of the run to the lip
+was walking the belt's road beside it. A laden body stops at the tail and
+tosses the load up onto the band, which catches it the way it catches the
+rock's spoil (`catchBelt`); a body already under the band tips where it stands.
+Nothing teleports -- the load still crosses the yard, on the band instead of on
+legs -- and the walk it saves is the longest one a hauler makes: a heap off past
+the rock clears in about three fifths of the time. A core is the exception and
+still goes to the lip, since it is lobbed onto the pile rather than carried.
+With no belt, or a stopped one, the lip is where it always was (`tipSpot` in
+crew/hauler.js).
+
 ### The forklift (built 2026-09-20)
 
 **The belt only ever touches the rock's pile.** It runs the one line from the

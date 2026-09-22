@@ -10,7 +10,7 @@ import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
-import { spawnChip, bell, aim } from '../dust.js';
+import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach } from '../dust.js';
 import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck, foul } from '../smog.js';
@@ -186,6 +186,24 @@ function liftSmoke(w) {
   w.liftOdo -= LIFT_PUFF_CELLS;
   const back = (w.face || 1) > 0 ? w.x - P : w.x + WORKER;
   foul(LIFT_FOUL * LIFT_PUFF_CELLS, back, w.y + WORKER - P * 2, 'mach');
+}
+
+// Where a load is tipped from, and onto what. While the belt runs the band
+// goes to the hole by itself, so a trip ends at the tail rather than the lip
+// -- the walk from the rock to the hole is the belt's -- and a body already
+// under the band tips where it stands. A core still goes to the lip: it is
+// lobbed onto the pile and counted when it touches it (`stepCore`).
+function tipSpot(w, now) {
+  const lip = pit.x - WORKER;
+  if (w.hasCore || !beltRunning(now)) return { x: lip, belt: false };
+  return { x: Math.min(lip, Math.max(w.x, beltFrom() - WORKER / 2)), belt: true };
+}
+
+// Where a grain tossed onto the band comes down: a few cells ahead of the
+// hands, toward the head, and never off either end of the run.
+function bandLanding(from) {
+  const lo = beltFrom() + P, hi = beltReach() - P;
+  return Math.max(lo, Math.min(hi, from + P + rand() * P * 4));
 }
 
 export function haulerWork(w, c) {
@@ -379,7 +397,8 @@ export function haulerWork(w, c) {
     // The column is found before the hole is asked, because a booking made
     // here is held to the lip and a body walking to tip should not hold room
     // it will not use.
-    const target = pit.x - WORKER;                 // the lip, where they can stand
+    const tip = tipSpot(w, now);
+    const target = tip.x;
     let stride = Math.min(drive(w) * frames(), Math.abs(target - w.x));
     if (!w.hasCore && w.carry < load(w)) {
       const c = underfoot(w, stride);
@@ -395,8 +414,13 @@ export function haulerWork(w, c) {
     w.x += Math.sign(target - w.x) * stride;
     if (Math.abs(target - w.x) < P) {
       // A toss off the lip, aimed at the hole the way spoil is aimed at a
-      // pile: a fixed spray sails over the far wall of a narrow pit.
-      const from = w.x + WORKER / 2, up = S.groundY - WORKER - P;
+      // pile: a fixed spray sails over the far wall of a narrow pit. Or up
+      // onto the band, which catches it the way it catches the rock's spoil
+      // (`catchBelt`) -- from the hands wherever the feet are, since the tail
+      // stands on the rock's own slope and a toss from the ground line there
+      // starts inside the hill.
+      const from = w.x + WORKER / 2, up = (tip.belt ? w.y : S.groundY - WORKER) - P;
+      const above = S.groundY - WORKER - P - up;         // how far over the ground line the hands are
       const far = pit.x + Math.max(P, pit.w - P * 2);
       if (w.hasCore) {
         // Lobbed to a fixed peak on the same `aim` everything else is thrown
@@ -407,13 +431,14 @@ export function haulerWork(w, c) {
         w.hasCore = false;
       }
       for (let i = 0; i < w.carry; i++) {
-        // Onto the pile, or into the drain (`holeLanding` in pit.js).
-        const land = holeLanding();
+        // Onto the band, or onto the pile or into the drain (`holeLanding`
+        // in pit.js).
+        const land = tip.belt ? bandLanding(from) : holeLanding();
         // A hand's throw, not a nozzle's: the hands are a span and each grain
         // gets its own peak, so they land spread in time as well as place.
         const fx = from + (rand() - 0.5) * TOSS_SPREAD;
         const fy = up - rand() * P;
-        const rise = TOSS_RISE * (1 + bell() * TOSS_RISE_VARY);
+        const rise = above + TOSS_RISE * (1 + bell() * TOSS_RISE_VARY);
         const v = aim(fx, fy, land, P, rise);
         spawnChip(fx, fy, v.vx, v.vy, w.load?.[i] || 1);
       }
