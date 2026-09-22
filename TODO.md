@@ -69,20 +69,6 @@ Repro: seed 20250830; open sites, loo, 2 miners + 2 haulers + 2 janitors; relay
 3 cells of muck across the rock's columns every 5 s; count climb-then-drop
 cycles (up >= 2 px, then down >= 12 px from the high point) over 60 s.
 
-### `addGrain` on bare ground has no region (2026-09-09)
-
-The region lookup returns `null` for bare yard, the same value as "no region",
-so `inRegion` is always true and the search runs to `b.cols` -- it can walk
-into a neighbor's strip, which is a teleport. Neither perf-gate yard hits it.
-
-### The sim is camera-dependent (2026-09-09)
-
-The sky's motes spend the shared seeded RNG at *screen* positions, so two camera
-placements draw different numbers (the intro's thrown grain lands on frame 1180
-against 1195). The clean rain already draws from a `stream()` of its own; the
-motes want the same. Until then no check can assert frame-exact timing across a
-camera change.
-
 ### A body assigned to a closed quarry stands in the ground (2026-09-08)
 
 `capOfBare` (levels.js) answers off `benches()` and `plotCount()`, which count

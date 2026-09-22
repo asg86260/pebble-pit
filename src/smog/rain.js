@@ -88,6 +88,20 @@ const waterRand = () => {
   return water();
 };
 
+// The lightning has one too. A bolt starts somewhere across the view and runs
+// down to whatever that column has for a floor, so how many draws it takes --
+// a kink a segment, an ember a cell, none at all where the floor is over the
+// window -- is a fact about the camera, and the yard's stream must not carry
+// one. The roll for whether a bolt comes is in it as well: a bolt that found
+// nowhere to run leaves the next frame rolling again, which is the camera
+// again. It changes nothing in the yard, so nothing is lost by it.
+let flash = stream(0);
+let boltedAt = -1;
+const boltRand = () => {
+  if (boltedAt !== S.rains) { flash = stream((S.runSeed ^ (S.rains * 0x85EBCA6B) ^ 0xB017) >>> 0); boltedAt = S.rains; }
+  return flash();
+};
+
 // Which sheet a clean drop is born into: a roll against the sheets' shares,
 // walked in order so the shares read as written.
 function sheetRoll() {
@@ -105,10 +119,13 @@ function sheetRoll() {
 // the cloud sheet up through it.
 // A dirty drop is the yard's business -- which mote fell is a fact about the
 // sky -- so its give comes off the yard's stream; a clean one is scenery and
-// takes the water's.
+// takes the water's. Whether a dirty one marks where it lands is rolled here,
+// at its birth, and not on the frame it lands: it is born over the top of the
+// window, so that frame is a fact about how high the camera sits.
 const drop = (x, y, d, dirt) => ({
   x, y, d, dirt,
-  vy: RAIN_FALL * RAIN_SHEETS[d].speed * (1 + ((dirt ? rand() : waterRand()) - 0.5) * RAIN_FALL_GIVE / RAIN_FALL)
+  vy: RAIN_FALL * RAIN_SHEETS[d].speed * (1 + ((dirt ? rand() : waterRand()) - 0.5) * RAIN_FALL_GIVE / RAIN_FALL),
+  mark: dirt && rand() < RAIN_MARK
 });
 
 // What the rain has done, for the rules: drops landed by kind and the muck the
@@ -127,7 +144,7 @@ export function pour(secs) {
   // A strike now and then at the height of it. Squared on the envelope so the
   // drizzle and the taper hardly ever flash, and by the heft so a light front
   // never does; one at a time, because a second bolt over the first is a fizz.
-  if (!S.bolt && rand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
+  if (!S.bolt && boltRand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
 
   // One sheet over the whole world, born over the top of the window. Not the
   // view: rain born only where the camera is fills in a second after every
@@ -235,7 +252,7 @@ export function stepGoing(secs) {
 // it changes nothing.
 function strike() {
   const cells = [];
-  const jog = () => Math.round((rand() * 2 - 1) * BOLT_JOG) * P;
+  const jog = () => Math.round((boltRand() * 2 - 1) * BOLT_JOG) * P;
   // The jog is kept from one segment to the next more often than not, so the
   // bolt runs straight and then kinks; re-rolled every segment it is a worm.
   const run = (x, y, max, lean) => {
@@ -243,13 +260,13 @@ function strike() {
     for (let s = 0; s < max; s++) {
       const floorY = muckFloor(colAt(x));
       if (y >= floorY) return;
-      if (rand() < BOLT_KINK) dx = jog() + lean;
+      if (boltRand() < BOLT_KINK) dx = jog() + lean;
       for (let k = 0; k < BOLT_STEP && y + k * P < floorY; k++)
         cells.push([x + Math.round(k * dx / BOLT_STEP / P) * P, y + k * P]);
       x += dx; y += BOLT_STEP * P;
     }
   };
-  const x0 = Math.round((S.camX + rand() * S.viewW) / P) * P;
+  const x0 = Math.round((S.camX + boltRand() * S.viewW) / P) * P;
   const y0 = S.camY - P;
   // the fork leans the way the main bolt was not
   run(x0, y0, 1e3, 0);
@@ -257,12 +274,12 @@ function strike() {
   // in the air -- has nowhere for a bolt to run, so there is none this frame.
   if (!cells.length) return null;
   const [lo, hi] = BOLT_FORK_AT;
-  const at = cells[Math.floor(cells.length * (lo + rand() * (hi - lo)))];
+  const at = cells[Math.floor(cells.length * (lo + boltRand() * (hi - lo)))];
   const way = at[0] < x0 ? 1 : -1;
   run(at[0], at[1], BOLT_FORK_LEN, way * BOLT_JOG * P);
   // embers along the whole of it, not a burst at the foot: the bolt is the
   // hot thing, all the way down
-  for (const [x, y] of cells) if (rand() < EMBER_PER_CELL) ember(x, y);
+  for (const [x, y] of cells) if (boltRand() < EMBER_PER_CELL) ember(x, y);
   return { cells, x: x0, left: BOLT_LIFE_S, flash: BOLT_FLASH_S };
 }
 
@@ -272,10 +289,10 @@ function strike() {
 // sailing off the top of the window. The wind has them at a share.
 export const EMBERS = [];
 function ember(x, y) {
-  const life = EMBER_LIFE_S * (0.6 + 0.4 * rand());
-  EMBERS.push({ x: x + rand() * P, y,
-                vx: (rand() * 2 - 1) * EMBER_SCATTER,
-                vy: -EMBER_RISE * (0.5 + rand()),
+  const life = EMBER_LIFE_S * (0.6 + 0.4 * boltRand());
+  EMBERS.push({ x: x + boltRand() * P, y,
+                vx: (boltRand() * 2 - 1) * EMBER_SCATTER,
+                vy: -EMBER_RISE * (0.5 + boltRand()),
                 t: life, life });
 }
 
@@ -345,7 +362,7 @@ export function stepDrops() {
     // Only what was sky leaves a mark; the water is water.
     if (d.dirt) {
       LEDGER.dirty++;
-      if (rand() < RAIN_MARK && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
+      if (d.mark && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
     } else LEDGER.clean++;
     DROPS.splice(i, 1);
   }
@@ -375,7 +392,12 @@ export let dryFor = Infinity;
 
 export const dryTime = () => dryFor;
 // Put back from `seedSmog`; only the declaring file may write it.
-export const resetRain = () => { dryFor = Infinity; pinned = null; LEDGER.clean = LEDGER.dirty = LEDGER.laid = 0; };
+// The water's and the lightning's streams go too: a new run's first shower is
+// `S.rains` 1 again, and a stream kept from the last run's is that run's weather.
+export const resetRain = () => {
+  dryFor = Infinity; pinned = null; wateredAt = -1; boltedAt = -1;
+  LEDGER.clean = LEDGER.dirty = LEDGER.laid = 0;
+};
 
 // Asked every frame; true on the frame the front is due. The yard sets the
 // first `rainDue` (`seedSmog`); a save from before the clock has none and is

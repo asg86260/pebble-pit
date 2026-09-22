@@ -21,7 +21,8 @@
 // run in, which is the only thing about them that is not local to one of them.
 
 import { S } from './state.js';
-import { RAIN_FALL, PUFF_UP, SMOG_PER_MOTE } from './config.js';
+import { RAIN_FALL, RAIN_MARK, PUFF_UP, SMOG_PER_MOTE } from './config.js';
+import { rand } from './rng.js';
 import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, clogged, fanPull, murk,
          outletMuck, raining, filterRate, filtering } from './smog/band.js';
 import { foul, look, puffStack, reckon, skyMote, stepPuffs, stepStack } from './smog/vents.js';
@@ -69,12 +70,15 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
   }
   reckon();
   // The rain already falling, where it was. A drop saved before the water
-  // came has no fourth field and was sky, so it is dirty.
+  // came has no fourth field and was sky, so it is dirty. One saved before
+  // the mark was rolled at birth has no fifth, and rolls it here.
   if (Array.isArray(drops))
     for (const d of drops)
-      if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1]))
-        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL,
-                     dirt: d.length < 4 || !!d[3] });
+      if (Array.isArray(d) && Number.isFinite(d[0]) && Number.isFinite(d[1])) {
+        const dirt = d.length < 4 || !!d[3];
+        DROPS.push({ x: d[0], y: d[1], vy: Number.isFinite(d[2]) ? d[2] : RAIN_FALL, dirt,
+                     mark: dirt && (d.length > 4 ? !!d[4] : rand() < RAIN_MARK) });
+      }
   // The rebuild makes dust; the saved share of soot, spore and the rest is
   // relabelled onto it, look and all, so the readout of what dirtied the sky
   // survives a refresh.
@@ -104,7 +108,8 @@ export const SAVE = {
     // tells the readout nothing but hand work fouled it.
     out.skyKinds = skyKindCounts();
     // The drops already falling are the muck the shower was about to leave.
-    out.drops = DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2), d.dirt ? 1 : 0]);
+    // A dirty one carries whether it marks, rolled when it was born.
+    out.drops = DROPS.map(d => [Math.round(d.x), Math.round(d.y), +d.vy.toFixed(2), d.dirt ? 1 : 0, d.mark ? 1 : 0]);
     // Every speck still on its way up, with its climb.
     out.puffs = SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
                                              Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]);

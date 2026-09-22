@@ -17,14 +17,24 @@ import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now, frames } from './clock.js';
 import { gust, give } from './wind.js';
-import { rand } from './rng.js';
+import { seed, stream } from './rng.js';
 
 export const AIR = [];
 
 const MARGIN = 24;                 // how far past the edge a mote may sit before it wraps
 let camWasX = 0, camWasY = 0;      // last frame's camera, for how far the field has to slide
 
+// The air draws from a stream of its own, the way the clean rain does
+// (`waterRand` in smog/rain.js). A mote lives on the glass, so how many draws
+// a frame takes depends on where the camera is -- a walker off the screen is
+// skipped and another rolled -- and taken from the yard's `rand()` every roll
+// after it would be a different number for a different view. Seeded off the
+// run's seed, so a seeded run's air is still the same air twice.
+let air = stream(0);
+const airRand = () => air();
+
 export function seedAir() {
+  air = stream((seed() ^ 0xA1B2C3D4) >>> 0);
   AIR.length = 0;
   camWasX = S.camX;
   camWasY = S.camY;
@@ -35,7 +45,7 @@ export function seedAir() {
 
 // which band a new mote belongs to, by the share each one is meant to hold
 function pickBand() {
-  let r = rand();
+  let r = airRand();
   for (const b of AIR_BANDS) { r -= b.share; if (r <= 0) return b; }
   return AIR_BANDS[AIR_BANDS.length - 1];
 }
@@ -67,10 +77,10 @@ function offAWalker() {
   const crew = S.workers;
   if (!crew.length) return null;
   for (let tries = 0; tries < 6; tries++) {
-    const w = crew[Math.floor(rand() * crew.length)];
+    const w = crew[Math.floor(airRand() * crew.length)];
     const was = wasAt.get(w);
     if (was === undefined || Math.abs(w.x - was) < 0.3) continue;   // standing still: no dust
-    const x = (w.x + rand() * WORKER - S.camX) * S.zoom;
+    const x = (w.x + airRand() * WORKER - S.camX) * S.zoom;
     const y = (w.y + WORKER - S.camY) * S.zoom - 2;   // just clear of the boots
     if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
     return { x, y };
@@ -86,12 +96,12 @@ function rememberWalkers() {
 // a spot just above the dust in a random column of a pile, in screen pixels, or
 // null if there is nothing lying about within the window
 function offAPile() {
-  const b = rand() < 0.5 ? floor : pit;
+  const b = airRand() < 0.5 ? floor : pit;
   for (let tries = 0; tries < 12; tries++) {
-    const c = Math.floor(rand() * b.cols);
+    const c = Math.floor(airRand() * b.cols);
     if (!at(b, c, 0)) continue;
     if (b === floor && blocked(c)) continue;
-    const x = (b.x + c * b.p + rand() * b.p - S.camX) * S.zoom;
+    const x = (b.x + c * b.p + airRand() * b.p - S.camX) * S.zoom;
     const y = (surfaceY(b, c) - P - S.camY) * S.zoom;
     if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
     return { x, y };
@@ -122,9 +132,9 @@ function offASite() {
   if (S.quarryOpen) open.push(quarry);
   if (S.farmOpen) open.push(farm);
   if (!open.length) return null;
-  const site = open[Math.floor(rand() * open.length)];
-  const x = (site.x + rand() * site.w - S.camX) * S.zoom;
-  const y = (S.groundY - rand() * AIR_SITE_UP - S.camY) * S.zoom;
+  const site = open[Math.floor(airRand() * open.length)];
+  const x = (site.x + airRand() * site.w - S.camX) * S.zoom;
+  const y = (S.groundY - airRand() * AIR_SITE_UP - S.camY) * S.zoom;
   if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) return null;
   return { x, y };
 }
@@ -136,33 +146,33 @@ function place(m, anywhere) {
   // boots first: dust at somebody's feet is the one bit of the air plainly
   // caused by something you are watching
   const from = anywhere ? null
-             : (rand() < AIR_SITE ? offASite() : null)
+             : (airRand() < AIR_SITE ? offASite() : null)
                || offAWalker() || (dustAbout() > 20 ? offAPile() : null);
   if (from) { m.x = from.x; m.y = from.y; m.kind = kindAt(m.x); return m; }
 
-  m.x = rand() * S.W;
+  m.x = airRand() * S.W;
   m.kind = kindAt(m.x);
-  if (anywhere && rand() > AIR_LOW) { m.y = rand() * S.H; return m; }
+  if (anywhere && airRand() > AIR_LOW) { m.y = airRand() * S.H; return m; }
 
   // low: in the band of air just over the ground, clamped to the window so a
   // ground line scrolled off the bottom does not take the whole field with it
   const g = Math.min(Math.max(groundOnScreen(), 0), S.H);
-  m.y = g - rand() * AIR_LOW_BAND * S.zoom;
-  if (m.y < 0 || m.y > S.H) m.y = rand() * S.H;
+  m.y = g - airRand() * AIR_LOW_BAND * S.zoom;
+  if (m.y < 0 || m.y > S.H) m.y = airRand() * S.H;
   return m;
 }
 
 function born(anywhere) {
   const b = pickBand();
-  const grit = rand() < AIR_GRIT;
+  const grit = airRand() < AIR_GRIT;
   return place({
     b,
     grit,                                        // heavier: it sinks instead of climbing
-    vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + rand() * 0.8),
+    vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + airRand() * 0.8),
     // How much of the wind this one takes, fixed for its life; less if it is
     // grit. A share of one wind, not a phase of its own: a mote leaning the
     // opposite way to the one beside it says there is no wind.
-    lean: give(rand(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
+    lean: give(airRand(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
   }, anywhere);
 }
 
@@ -184,7 +194,7 @@ export function stepAir() {
   // the air thickens and thins a mote at a time, so a pile being carried away
   // does not put a hole in the sky
   if (AIR.length < want) AIR.push(born(false));
-  else if (AIR.length > want + 8) AIR.splice(Math.floor(rand() * AIR.length), 1);
+  else if (AIR.length > want + 8) AIR.splice(Math.floor(airRand() * AIR.length), 1);
 
   // Everything below is pixels a frame, stepped by however long this frame
   // was; the easing, a proportion of what is left, is raised to that power.
@@ -250,9 +260,9 @@ function riftOnGlass() {
 // Where a mote goes once the rift has had it. Most come back at the edge of
 // its reach, which gives the pull something to pull on (RIFT_FEED).
 function reborn(m, s) {
-  if (rand() > RIFT_FEED) return place(m, false);
-  const a = rand() * Math.PI * 2;
-  const r = s.r * RIFT_PULL_R * (0.86 + rand() * 0.14);
+  if (airRand() > RIFT_FEED) return place(m, false);
+  const a = airRand() * Math.PI * 2;
+  const r = s.r * RIFT_PULL_R * (0.86 + airRand() * 0.14);
   m.x = s.x + Math.cos(a) * r;
   m.y = s.y + Math.sin(a) * r;
   m.kind = kindAt(m.x);
@@ -309,7 +319,7 @@ export function stirAir(sx, sy, dx, dy) {
     // Each mote leans its own way off the cursor's heading, picked when the
     // wake first touches it and kept while it coasts; all of them on the
     // exact heading slide as one stiff sheet.
-    if (!m.sx && !m.sy) m.st = (rand() * 2 - 1) * AIR_STIR_SCATTER;
+    if (!m.sx && !m.sy) m.st = (airRand() * 2 - 1) * AIR_STIR_SCATTER;
     const cs = Math.cos(m.st || 0), sn = Math.sin(m.st || 0);
     const px = ux * cs - uy * sn, py = ux * sn + uy * cs;
     m.sx = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sx || 0) + px * k));

@@ -21,7 +21,10 @@ import { motesWanted, reckon, skyMote } from './vents.js';
 // yard's chance instead, so no three motes are ever collinear on purpose.
 const ACROSS = 0.6180339887498949;      // one turn less the golden ratio
 
-let slots = 0;                          // handed out, never reused, never reset
+// Handed out, never reused while the sky that holds them stands. Back to
+// nought only with an empty sky (`clearSky`), where no mote is left to share a
+// place with, so the same seed lays the same sky whatever ran before it.
+let slots = 0;
 
 // Worked out once when the slot is handed over and carried on the mote: a
 // mote's slot never changes, and re-deriving it per mote per frame was a
@@ -102,6 +105,7 @@ export const dropped = m => { m.gone = true; };
 export function clearSky() {
   SKY.length = 0;
   ACTIVE.length = 0;
+  slots = 0;
 }
 
 // One frame of the sky. A settled mote has no state to step, so it is not
