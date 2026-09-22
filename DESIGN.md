@@ -12487,7 +12487,8 @@ Two things the first cut got wrong, found in play:
   and the only thing seen: a machine's motes are not drawn on the climb
   either (`drawSmog` skips `mach`), since the speck plume rising beside the
   puffs read as a second kind of pollution. They go straight into the count
-  the clouds show.
+  the clouds show. The older black wisps a stack let go on its own timer
+  (`stepMachineSmoke`, `MACHINE_PUFF_*`) are cut for the same reason.
 
 ## Weather (built 2026-09-20)
 

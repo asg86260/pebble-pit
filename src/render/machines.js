@@ -1,16 +1,14 @@
 // The three machines and the hoist: the drill, the ram, the tiller, the belt,
-// their run switch and their smoke.
+// their run switch.
 
 import { now } from '../clock.js';
-import { MACHINE_IDLE_MS, MACHINE_PUFF_LIFE, MACHINE_PUFF_MS, MACHINE_PUFF_RISE, MACHINE_PUFF_S, P, WORKER } from '../config.js';
+import { MACHINE_IDLE_MS, P, WORKER } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY } from '../dust.js';
 
 import { drawGrid } from './ground.js';
 import { tillerAt, tillerWay } from '../farm.js';
-import { MACHINES, machine, specOf } from '../machines.js';
-import { puff } from '../puff.js';
+import { machine } from '../machines.js';
 import { jawX, jawY, rigTop, shaftX } from '../quarry.js';
-import { rand } from '../rng.js';
 import { ramX, rockFaceX, rockShare } from '../rock.js';
 import { BIT, DRILL, MACHINE_MARK, RAM, TILLER, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, band } from '../state.js';
@@ -205,25 +203,3 @@ export function drawRunSwitch(box, key) {
   ctx.fillStyle = '#000';
 }
 
-// A puff off a machine's stack: the same smoke the lab's chimney makes and the
-// same list, flagged `mach` so the lab's own count (research being worked on)
-// is not muddled by it. Only a machine that is actually running smokes, and
-// `stepMachines` is what decides that. Where each stack is is registered with
-// the machine (`defineMachine`), so the drawing and `stepMachines` cannot hold
-// two opinions about where the chimney is.
-
-export function stepMachineSmoke(now) {
-  for (const m0 of MACHINES) {
-    const key = m0.key;
-    const m = machine(key);
-    if (!m || !m.bought) continue;
-    if (now - (m.workedAt || 0) > MACHINE_IDLE_MS) continue;   // idle, unmanned, or stood down
-    if (now < (m.puffAt || 0)) continue;
-    m.puffAt = now + MACHINE_PUFF_MS * (0.6 + rand() * 0.8);
-    const spec = specOf(key);
-    if (!spec || !spec.stack) continue;
-    const at = spec.stack();
-    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach',
-                       rise: MACHINE_PUFF_RISE, life: MACHINE_PUFF_LIFE });
-  }
-}

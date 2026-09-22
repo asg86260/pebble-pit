@@ -60,7 +60,6 @@ const fresh = () => ({
   tookKit: false,
   beatAt: 0,             // when its next unit of work is due
   phase: 0,              // where it is in its own animation, 0..1
-  puffAt: 0,             // and when the stack is next due to puff
   soundAt: 0,            // and when it is next heard: a body's pace, not its own
   // Unused until a star's core can be turned into a heart; then it multiplies
   // exactly one number (`machineRate`).

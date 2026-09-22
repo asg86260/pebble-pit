@@ -9,7 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { MACHINE_PUFF_LIFE, LADDER, PILE_LIMIT } from '../src/config.js';
+import { STACK_LIFE_S, LADDER, PILE_LIMIT } from '../src/config.js';
 import { band, floor } from '../src/state.js';
 import { at, grainsIn, addGrain } from '../src/grid.js';
 import { beltFrom, beltReach } from '../src/dust.js';
@@ -273,36 +273,30 @@ group('smoke rises and goes out, and does not pile up', async () => {
 
   await run(7);
   // The most in the air over a few seconds, not the count at one instant: the
-  // stack puffs a few motes every second and a half and they go out together,
-  // so a single reading can land in the gap between one puff going out and the
-  // next -- it read nought at exactly ten seconds with the tender aboard and
-  // the machine running. A threshold on a noisy statistic; this is the
-  // statistic asked properly.
+  // stack puffs on a beat and the puffs go out together, so a single reading
+  // can land in the gap between one puff going out and the next. A threshold
+  // on a noisy statistic; this is the statistic asked properly.
+  const stack = () => state().smog.stack;
   let early = 0;
-  for (let i = 0; i < 12; i++) { await run(0.25); early = Math.max(early, state().machSmoke); }
-  // Long enough that a leak would be plain: the stack puffs about four motes
-  // every second and a half, so an hour's worth of frames with nothing expiring
-  // runs into the hundreds while a healthy yard sits at a handful.
+  for (let i = 0; i < 12; i++) { await run(0.25); early = Math.max(early, stack()); }
+  // Long enough that a leak would be plain: a puff lives a couple of seconds,
+  // so an hour's worth of frames with nothing expiring runs into the
+  // thousands while a healthy yard sits at a few dozen.
   await run(40);
-  const late = state().machSmoke;
-  // The oldest mote in the air, in seconds. A stuck mote's age climbs forever.
-  const oldest = Math.max(0, ...yard.S.smoke.map(m => m.t));
+  const late = stack();
 
   // Take the tender off and the stack stops. A life and a bit later, nothing of
   // it should be left in the air.
   window.__assign('quarriers', -1);
-  await run(MACHINE_PUFF_LIFE + 1);
-  const cleared = state().machSmoke;
+  await run(STACK_LIFE_S * 1.3 + 1);
+  const cleared = stack();
 
   window.__crew(0, 0, 0);
   PILE_LIMIT.quarry = limit;
   return [
-    ok(early > 0, 'a working machine puts smoke in the air', `${early} motes`),
+    ok(early > 0, 'a working machine puts smoke in the air', `${early} puffs`),
     ok(late <= early * 2, 'and four times as long later there is not four times as much',
        `${early} -> ${late} after another 40s`),
-    ok(oldest <= MACHINE_PUFF_LIFE + 0.1,
-       'no mote is older than the life it was let go with',
-       `oldest ${oldest.toFixed(2)}s vs life ${MACHINE_PUFF_LIFE}s`),
     ok(cleared === 0, 'and the stack stopping clears the air',
        `${late} -> ${cleared}`)
   ];

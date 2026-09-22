@@ -300,7 +300,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   skyShown: S.skyShown,
   scholars: S.scholars,
   smoke: S.smoke.filter(p => !p.house && !p.cig && !p.mach).length,
-  machSmoke: S.smoke.filter(p => p.mach).length,
   cigSmoke: S.smoke.filter(p => p.cig).length,
   grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,

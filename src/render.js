@@ -59,7 +59,7 @@ export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } fro
 export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
-export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
+export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';
 export { drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';

@@ -22,8 +22,9 @@ export function puff(x, y, o = {}) {
       t: rand() * 0.15,               // and not all at the same age -- seconds
       ph: rand(),                     // which of its cells stay as it comes apart: see drawSmoke
       // How fast this one goes up and how long it lasts, both its own: a
-      // machine's stack is not a chimney (MACHINE_PUFF_RISE), and a trail that
-      // climbs as long as a wisp over a roof streaks halfway up the window.
+      // dose burning off a body is not a chimney (DOSE_MOTE_RISE), and a
+      // trail that climbs as long as a wisp over a roof streaks halfway up
+      // the window.
       rise: o.rise,
       life: o.life,
       // Smoke has no color. A tonic burning off a body is the same plume in
@@ -46,7 +47,7 @@ export function puff(x, y, o = {}) {
 
 // What happens to a mote once let go: it climbs, leans on its drift, ages,
 // and is gone. Nothing else ages `S.smoke`. `rise` and `life` are per-mote
-// (MACHINE_PUFF_RISE); a mote not told falls back to the wisp.
+// (DOSE_MOTE_RISE); a mote not told falls back to the wisp.
 export function stepSmoke(dt) {
   for (let i = S.smoke.length - 1; i >= 0; i--) {
     const p = S.smoke[i];

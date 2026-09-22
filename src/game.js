@@ -66,7 +66,6 @@ import './raise.js';
 // Wired rather than imported into apothecary.js, which would close a ring
 // back to upgrades. See `setTake`.
 setTake(take);
-import { stepMachineSmoke } from './render.js';
 import { stepSmoke } from './puff.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
@@ -223,7 +222,6 @@ export const STEPS = [
   // The collapse does NOT take the camera: the view is where you put it, and
   // an ad hoc grab steals the frame from anything else pointing it.
   { name: 'works',        step: c => stepWorks(c.dt) },   // and whatever the yard is building
-  { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
   { name: 'smoke',        step: c => stepSmoke(c.dt) },   // and every mote of it climbing and going out
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out

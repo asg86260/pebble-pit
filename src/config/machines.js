@@ -75,15 +75,6 @@ export const MACHINE_CATCHUP_MS = 250;
 // beat lands on one frame in three at best, so "is it working" has to be a
 // moment rather than a frame or the drawing strobes.
 export const MACHINE_IDLE_MS = 600;
-// Between a hearth (HOUSE_PUFF_MS) and a cigarette: more often than a hearth,
-// bigger than a cigarette.
-export const MACHINE_PUFF_MS = 1500;
-export const MACHINE_PUFF_S = 1.15;
-// A machine's stack smokes lower and shorter than a chimney: three stacks in
-// the middle of everything at the chimney's pace and life are streaks halfway
-// up the window, drawing the eye off the yard.
-export const MACHINE_PUFF_RISE = 0.22;
-export const MACHINE_PUFF_LIFE = 1.5;
 
 // A puff is a handful of motes let go together, not one square: a single mote
 // on a short timer reads as a dotted line, a thing ticking rather than
