@@ -12,7 +12,7 @@
 // `ladder()`, the ram `rockEdge(-1)`, the tiller the plot line.
 
 import { S } from './state.js';
-import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from './config.js';
+import { MACHINE_TUNE, MACHINE_TUNE_SPARKS, MACHINE_TUNE_RUNGS, DUST_PER_SPARK } from './config.js';
 import { JOB } from './jobs.js';
 import { now } from './clock.js';
 
@@ -64,7 +64,7 @@ const fresh = () => ({
   // Unused until a star's core can be turned into a heart; then it multiplies
   // exactly one number (`machineRate`).
   driven: false,
-  // An endless ladder; see `tuneGain`.
+  // Three rungs of red; see `tuneGain`.
   tune: 0
 });
 
@@ -103,7 +103,9 @@ export const SAVE = {
       // A machine is worked by whoever is standing at it, so only the fact
       // of the lever is read.
       rec.driven = !!r.driven;
-      rec.tune = Math.max(0, Math.round(+r.tune || 0));
+      // Clamped to the ladder's length: the tune rows were endless once, and a
+      // save from then holds a rung count no board can now sell or draw.
+      rec.tune = Math.min(MACHINE_TUNE_RUNGS, Math.max(0, Math.round(+r.tune || 0)));
       // A machine that does not take kit never took any, whatever the save
       // says: a stale `true` has `stripKit` empty the stand every frame
       // under a row still selling carts.
@@ -124,25 +126,34 @@ export const machineFor = job => {
 };
 
 // --- tuning one --------------------------------------------------------------
-// Each machine's ladder **never ends**: that is what makes them the yard's dust
-// sink (DESIGN.md, "The rift" / "Economy"). One multiplier on `machineRate` in
-// upgrades.js, so a fifth machine gets a ladder by existing.
+// A machine's ladder is three rungs of red and it ends, like every other ladder
+// on every other board (DESIGN.md, "Every upgrade is a ladder with an end").
+// One multiplier on `machineRate` in upgrades.js, so a fifth machine gets a
+// ladder by existing.
 export const tuneOf = key => machine(key)?.tune || 0;
 export const tuneGain = key => Math.pow(MACHINE_TUNE, tuneOf(key));
-export const tuneCost = key => Math.round(MACHINE_TUNE_COST * Math.pow(MACHINE_TUNE_UP, tuneOf(key)));
+// The bill for the rung you are standing on. Clamped at the top so a topped
+// row still has a price to draw against the purse rather than `undefined`.
+export const tuneCost = key =>
+  MACHINE_TUNE_SPARKS[Math.min(tuneOf(key), MACHINE_TUNE_RUNGS - 1)];
 
 // The row, on the board of the place the machine stands.
 //
-// No `rung`, deliberately: `rungOf` calls a row without one "never finished",
-// and pips over this would draw an end onto the one row that has none.
 // `site` is where the machine stands, because tuning one is work done ON it.
 // `board` is which sheet draws it, `undefined` meaning the machine's own.
 export const tuneRow = (key, name, note, site, board) => ({
   key: 'tune' + key,
   kind: 'rung', site, board,
   name,
+  // What the multiplier stands at now and what the rung would make it, so the
+  // card reads "1.3x -> 1.7x" the way its neighbors do.
   unit: 'x',
+  from: () => tuneGain(key),
+  to: () => tuneGain(key) * MACHINE_TUNE,
   note,
+  // A ladder like any other: pips a rung, and an end to reach.
+  rung: () => tuneOf(key),
+  rungs: () => MACHINE_TUNE_RUNGS,
   bill: () => [['spark', tuneCost(key)], ['dust', tuneCost(key) * DUST_PER_SPARK]],
   buy: () => { const m = machine(key); if (m) m.tune = (m.tune || 0) + 1; },
   // A ladder for a thing you have not bought is a row about nothing.

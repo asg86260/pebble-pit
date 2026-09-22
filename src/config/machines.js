@@ -9,14 +9,21 @@ import { P } from './yard.js';
 // at one and a half times the station's clock is worth rather more than one
 // and a half hands, by an amount that depends on how far apart the work is.
 export let MACHINE_GAIN = 1.5;
-// What one tuning of a machine multiplies its rate by, what the first one
-// costs in red, and how fast that price climbs. See `tuneRow` in machines.js.
-// The ladder never ends, so the price has to be the wall rather than the rung
-// count: 1.55 a rung against a gain of 1.3 means each one buys less than the
-// last, which is what makes it a sink deep enough to swallow an endgame's dust.
+// What one rung of a machine's ladder multiplies its rate by, and what each of
+// the three rungs costs in red. See `tuneRow` in machines.js.
+//
+// A written table, a rung a line, like every other ladder in the game
+// (`LADDERS` in config/rungs.js): three rungs is short enough to read, and a
+// short ladder ends, so the row says "2 of 3" instead of disappearing into a
+// price that climbs out of reach. The rift's throughput is the endless red
+// sink now; a machine's ladder is a thing you finish.
+//
+// The rungs cost about what the machine did, then half again, then half again:
+// topping one out is a second machine's worth of red, which is the weight the
+// decision wants.
 export const MACHINE_TUNE = 1.3;
-export const MACHINE_TUNE_COST = 360;
-export const MACHINE_TUNE_UP = 1.55;
+export const MACHINE_TUNE_SPARKS = [360, 600, 1000];
+export const MACHINE_TUNE_RUNGS = MACHINE_TUNE_SPARKS.length;
 // Dust to the spark, the line every price in this game sits on. `DUST_PER` in
 // upgrades.js is the full table; this is the one entry also needed here, where
 // a bill is built and upgrades.js cannot be reached without closing a ring.

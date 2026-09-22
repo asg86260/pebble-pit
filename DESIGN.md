@@ -3374,8 +3374,9 @@ reason to finish a star rather than abandon it half-mined.
 red: the ground can take a stat as far as the ground goes, and past that it costs
 something that fell out of the sky. This is what red is *for* in the long run --
 and what it buys has settled since this was written. Red is **the machines'
-currency**: it buys every machine in the yard and then every rung of the endless
-ladders on them, and it opens the rift and buys its throughput. The pit press
+currency**: it buys every machine in the yard and then every rung of the
+three-rung ladders on them, and it opens the rift and buys its throughput --
+which is the endless one now. The pit press
 used to be the example here and is cut. The paint store below spends the same red
 on something that is not a multiplier at all.
 
@@ -3448,14 +3449,47 @@ the band runs at one pace. The belt is limited by what the ram drops, not by
 its own clock, so a faster scoop found nothing faster. Three ladders are sink
 enough.
 
-**Endless is load-bearing, not decoration.** A five-rung ladder has a finite
-total cost, and a finite total cost puts the surplus straight back where it was.
-What stops an endless one running away with the game is that the price climbs
-faster than the gain: a rung is worth ×1.3 and costs ×1.55 of the last, so each
-one buys less than the one before it and the ladder is a slope rather than a
-lever. By the tenth rung a single rung costs more dust than the hole can hold --
-which is where the two halves of this meet, because a ladder like that is only
-climbable by a yard with a rift under it.
+**Endless was load-bearing, and is not any more.** *(Superseded -- see "A
+machine's ladder ends" below.)* The argument was that a five-rung ladder has a
+finite total cost, and a finite total cost puts the surplus straight back where
+it was; what stopped an endless one running away was that the price climbed
+faster than the gain, ×1.55 a rung against ×1.3, so each rung bought less than
+the last. That held, and it cost the row the one thing every other row on every
+board has: an end, and pips that say where you are on it.
+
+### A machine's ladder ends (built)
+
+**Three rungs of red, a written table, and pips like every other row.** The
+tune rows were the last endless ladders on any board, and the cost of that was
+paid on the card: with no `rung`, `rungOf` called them "never finished", so
+they were the one kind of card in the game with nothing down its right edge --
+no pips, no end, no "2 of 3". A player reading the shack's plank saw two
+ladders that said where they stood and one that said nothing at all.
+
+That is a contradiction with the oldest rule here -- "Every upgrade is a ladder
+with an end, and the row says where you are on it" -- and the machines were the
+one exception to it. They are not now. `MACHINE_TUNE_SPARKS` is a line a rung,
+`[360, 600, 1000]`, the way `LADDERS` in `config/rungs.js` is a line a rung for
+every other ladder in the game: no first-cost-and-rate, no wall standing in for
+a top. Topping one out costs about two machines' worth of red, which is the
+weight the purchase should carry.
+
+**The red sink is the rift, not the machines.** That was the argument for
+endless, and it has somewhere else to live: the rift's throughput ladder is
+endless and priced in red and dust, and it is the one row that should be, since
+what it buys is a hole that eats what you cannot spend. A machine's ladder is a
+thing you finish; the rift is the thing you feed.
+
+**The names follow the pips.** An endless row had to be named for the act --
+*tune the ram* -- because there was no quantity to name the end of. A three-rung
+ladder has one, so the rows are named the way every neighbor on their board is:
+*ram strike*, *drill bite*, *tiller pace*, each led by the machine's own word,
+with the gain reading `1.3 -> 1.7x` off `from`/`to` like any other rung. The
+flavour stays in the note a line below.
+
+**A save from the endless days comes back at the top.** `restore` clamps `tune`
+to `MACHINE_TUNE_RUNGS`: a yard that bought twelve rungs holds a rate no board
+can now sell, and a rate you cannot buy is worse than a refund.
 
 It is **one multiplier** in `machineRate` and nothing else. Every machine's rate
 already ran through that one function, so a rung is a number in the machine's own
@@ -6102,7 +6136,7 @@ remember. See `test/boards.test.mjs`.
 | `place` | **"another X"**, where X is what marks one body's place at that station. |
 | `machine` | **"the X"**. |
 | `building` | **"build the X"**. One verb for all of them: ten rows with ten verbs read as ten unrelated purchases. The narrative shield rows are the exception -- they are a scripted arc, not a catalogue. |
-| tune rows | **"tune the X"**, the same verb for all four. The note carries the flavour. |
+| tune rows | a bare noun led by the machine's own word -- **"ram strike"**, **"drill bite"**, **"tiller pace"**. They were **"tune the X"** and were the only imperatives among the stat rungs on any board; the note a line below still carries the flavour. See "A machine's ladder ends". |
 | capability | the plain sentence of what you can now do. |
 
 And two rules that are not about names:

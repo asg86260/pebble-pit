@@ -111,21 +111,26 @@ group('the shop keeps to one grammar per kind', async () => {
   // rule and is named here rather than left to fail silently.
   const exempt = k => casinoKeys.has(k) || k === 'airrate' || k === 'recycler';
 
-  // The three tune rows, held to "tune the X" -- one verb for all three, the
-  // flavour carried by the note a line below. They are `kind: 'rung'`, so they
-  // are found by key rather than by kind.
-  const tuneKeys = new Set(['tuneram', 'tunetiller', 'tunejaw']);
+  // The three tune rows, held to the register every neighbor on their board
+  // keeps: a noun phrase naming the thing that goes up ("crop yield",
+  // "swing speed"), led by the machine's own word. They were imperatives
+  // ("tune the ram") and were the only ones on any board. They are
+  // `kind: 'rung'`, so they are found by key rather than by kind.
+  const tuneWords = { tuneram: 'ram', tunetiller: 'tiller', tunejaw: 'drill' };
+  const tuneKeys = new Set(Object.keys(tuneWords));
 
   const machineBad = [];   // kind 'machine' must be "the X"
   const placeBad = [];     // kind 'place' must be "another X"
-  const tuneBad = [];      // a tune row must be "tune the X"
+  const tuneBad = [];      // a tune row must be a noun phrase led by its machine
   const unitless = [];     // a rated row (pct) must state a unit
   const genreBad = [];     // no row says "upgrade" -- the one genre-word cut
 
   for (const r of rows) {
     const name = r.name || '';
     if (tuneKeys.has(r.key)) {
-      if (!name.startsWith('tune the ')) tuneBad.push(`${r.key}:"${name}"`);
+      // Led by the machine's word, and no article or verb in front of it:
+      // "ram strike", not "the ram", "another ram" or "tune the ram".
+      if (!name.startsWith(tuneWords[r.key] + ' ')) tuneBad.push(`${r.key}:"${name}"`);
     } else if (!exempt(r.key)) {
       if (r.kind === 'machine' && !name.startsWith('the '))
         machineBad.push(`${r.key}:"${name}"`);
@@ -149,7 +154,7 @@ group('the shop keeps to one grammar per kind', async () => {
        'every place row is named "another X"',
        placeBad.join(', ') || 'none'),
     ok(tuneBad.length === 0,
-       'every tune row is named "tune the X"',
+       "every machine's ladder is named for what goes up, led by the machine's word",
        tuneBad.join(', ') || 'none'),
     ok(unitless.length === 0,
        'every rated row states a unit, so none render a percent of nothing',

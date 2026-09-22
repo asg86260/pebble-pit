@@ -30,7 +30,7 @@ import { kitCap } from './levels.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
 import { UPGRADES, lodgers, SECTIONS, buy as buyRow, billOf, take, HOUSE_ROW } from './upgrades.js';
-import { rungOf, maxed } from './words.js';
+import { rungOf, rungsOf, maxed } from './words.js';
 import { gainText } from './words.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
@@ -577,6 +577,12 @@ export const allRows = () => { buildShop(); return everyRow().map(u => ({
   // reveal has not fired is a row no board would draw (`revealed`).
   shown: !!revealed(u),
   gain: gainText(u),
+  // Where the row stands on its ladder, and whether it is finished. A row with
+  // no ladder is 0 of 0 and never done. Reported because checks were asking
+  // `row.done` and getting `undefined`, which passes whatever the board says.
+  rung: rungOf(u),
+  rungs: u.rung ? rungsOf(u) : 0,
+  done: maxed(u),
   // What the card says it is waiting on instead of a price (`coinNeeds`).
   waits: u.waits?.() || '',
   // A job row, a dial and a payout row have no price, and `billOf` would
@@ -646,10 +652,14 @@ export const buyRowByKey = key => {
 
 // Everything bought, through `buyRowByKey`, walked again until a whole pass
 // buys nothing (a row that only appears once another has gone is reached on
-// the next pass). The casino is left alone: a chip is a wager. The machines'
-// tuning ladders have no top (`tuneRow`), so they go last and get `endless`
-// rungs each, or they drink every spark before the jaw is reached. `grant`
-// first. Returns every key pressed, in order.
+// the next pass). The casino is left alone: a chip is a wager. `grant` first.
+// Returns every key pressed, in order.
+//
+// `endless` is the cap for a row with no top at all. There is one kind left,
+// the rift's throughput; the machines' tuning ladders used to be the others
+// and now end at `MACHINE_TUNE_RUNGS`, where `maxed` stops them like any
+// other row. Bottomless rows go last, or they drink every spark before the
+// jaw is reached.
 export const everything = (endless = LADDER, passes = 8) => {
   const bought = [];
   const bottomless = u => u.kind === 'rung' && !u.rung;

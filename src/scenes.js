@@ -17,7 +17,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
 
@@ -189,6 +189,13 @@ export const SCENES = {
                  window.__fast(6); window.__look(st().shackX - 200); } },
   shackboard: { about: 'the rock', say: "the shack's board",
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__board('shack'); } },
+  // The machine's own ladder: three rungs of red, a pip each, beside the two
+  // banded ladders it used to be the odd one out among.
+  tunerow: { about: 'the rock', say: "the ram's own ladder, one rung up its three",
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram'); window.__finish();
+                 window.__grant({ sparks: 99999, dust: 9000000 });
+                 window.__buy('tuneram'); window.__finish();
+                 window.__board('shack'); } },
   shackwork: { about: 'the rock', say: 'a rung being fitted at the shack',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__invest();
                  window.__buy('rockhandspeed'); window.__fast(6); window.__look(st().shackX - 400); } },
@@ -936,7 +943,7 @@ export const SCENES = {
     run: () => { rich(); lip(); window.__buy('jaw'); window.__buy('tiller');
                  window.__buy('ram'); window.__buy('belt'); window.__jump(30);
                  window.__machine('ram', { driven: true });
-                 for (let i = 0; i < 12; i++) { window.__buy('tuneram'); }
+                 for (let i = 0; i < MACHINE_TUNE_RUNGS; i++) { window.__buy('tuneram'); }
                  window.__meteor(); window.__give(60000); window.__buy('rift');
                  for (let i = 0; i < 14; i++) window.__buy('riftrate');
                  window.__fast(20); window.__look(st().pitX - 700); } },

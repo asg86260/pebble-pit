@@ -909,10 +909,11 @@ export const QUARRY_UPGRADES = [
                                        () => kitFull(JOB.QUARRY))
   },
 
-  // The drill's own ladder, endless (`tuneRow` in machines.js). Keyed 'jaw',
-  // which is what every save has in it; the words are what anybody reads.
-  tuneRow('jaw', 'tune the drill',
-          () => `the drill bites ${MACHINE_TUNE}x harder, again`, 'quarry')
+  // The drill's own ladder, three rungs of red (`tuneRow` in machines.js).
+  // Keyed 'jaw', which is what every save has in it; the words are what
+  // anybody reads.
+  tuneRow('jaw', 'drill bite',
+          () => `the drill bites ${MACHINE_TUNE}x harder`, 'quarry')
 ];
 
 // Two headings: who works the hole (the blaster's lamps lodge here from
@@ -980,7 +981,7 @@ defineMachine('jaw', {
   // The station's own clock at pace nought, divided by what the machine is
   // worth. The cut's pace ladder is NOT in here: its rungs are the walk
   // between cells, and a rig on the deck does not walk. The machine's own
-  // ladder is `tune the jaw`. (Read off the ladder, the jaw ran four times
+  // ladder is `drill bite`. (Read off the ladder, the jaw ran four times
   // faster at pace eight and fouled four times as much.)
   ms: rate => cellMs(0) / Math.max(0.01, rate),
   // `quarryDone()` is deliberately *not* here: the beat on which the cut is

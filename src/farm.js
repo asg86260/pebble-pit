@@ -313,9 +313,9 @@ export const FARM_UPGRADES = [
                                       () => kitFull(JOB.FARM))
   },
 
-  // The tiller's ladder, endless like the rest.
-  tuneRow('tiller', 'tune the tiller',
-          () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
+  // The tiller's ladder, three rungs of red like the rest.
+  tuneRow('tiller', 'tiller pace',
+          () => `the tiller works ${MACHINE_TUNE}x faster`, 'farm')
 ];
 
 // Two headings: who works the plots (the grower's brims lodge here from

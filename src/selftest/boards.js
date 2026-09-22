@@ -3,7 +3,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
-import { TIER_OWN, SHELF_HAND_FADE } from '../config.js';
+import { TIER_OWN, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1667,6 +1667,34 @@ export const TESTS = [
       ok(!!pips && pips.querySelectorAll('i').length === 3, 'the blaster row has three pips', String(pips?.querySelectorAll('i').length)),
       ok(!!box && box.height > box.width, 'and they stand in a column', box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
       ok(!!bandedEl && mine === theirs, "the same distance in from the edge as a banded ladder's", `${mine} vs ${theirs}`),
+    ];
+  }],
+
+  // A machine's ladder had no `rung` while it was endless, so it was the one
+  // card on any board with nothing down its right edge. Three rungs now, and
+  // a rung bought has to light a pip: the shelf reads `rung`/`rungs`, so a
+  // row that lost either goes back to a bare tile and this goes red.
+  ["a machine's ladder carries pips, and a rung bought lights one", async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    window.__grant({ sparks: 999999, shards: 999, spores: 999, dust: 9000000 });
+    window.__machine('ram', { bought: true });
+    window.__board('shack');
+    await settle(1);
+    const ladder = () => document.querySelector('#panel .rows.shelves [data-key="tuneram"] .ladder');
+    const count = () => ({ all: ladder()?.querySelectorAll('i').length || 0,
+                           on: ladder()?.querySelectorAll('i.on').length || 0 });
+    const before = count();
+    window.__buy('tuneram'); window.__finish();
+    await settle(1);
+    const after = count();
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(before.all === MACHINE_TUNE_RUNGS, 'a pip a rung of the ladder', `${before.all}`),
+      ok(before.on === 0, 'none of them lit before a rung is bought', `${before.on}`),
+      ok(after.on === 1, 'and one lit after', `${after.on}`),
     ];
   }],
 

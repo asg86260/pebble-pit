@@ -12,7 +12,7 @@ import { group, ok, openSites, buyNow } from './helpers.mjs';
 import { onBelt } from '../src/dust.js';
 import { band } from '../src/state.js';
 import { at } from '../src/grid.js';
-import { LADDER } from '../src/config.js';
+import { LADDER, MACHINE_TUNE_RUNGS } from '../src/config.js';
 
 // The deepest column of the band and the biggest step between neighbors,
 // read off the strip itself: what is on the scoop is not standing on it yet.
@@ -44,7 +44,7 @@ group('the load on the belt stands as a heap, never a needle', async () => {
   // The ram bought up its ladder the way a player does, so it lands on the
   // band at the pace that stood the needle up.
   let tuned = 0;
-  for (let i = 0; i < 8; i++) if (buyNow('tuneram')) tuned++;
+  for (let i = 0; i < MACHINE_TUNE_RUNGS; i++) if (buyNow('tuneram')) tuned++;
   window.__jump(4);
   window.__clearFloor();
   // A frame at a time, since a needle is a fact about a frame: one that
@@ -58,7 +58,8 @@ group('the load on the belt stands as a heap, never a needle', async () => {
   }
   return [
     ok(ram && belt, 'the ram and the belt were bought', `ram ${ram}, belt ${belt}`),
-    ok(tuned === 8, 'the ram climbed its ladder', `${tuned} rungs`),
+    ok(tuned === MACHINE_TUNE_RUNGS, 'the ram climbed its ladder to the top',
+       `${tuned} of ${MACHINE_TUNE_RUNGS} rungs`),
     ok(most > 200, 'the band carried a real load', `${most} grains at most`),
     ok(worst.step <= 2, 'no column stood more than a drop over the one beside it',
        `worst step ${worst.step} at column ${worst.col}, the deepest column ${worst.tallest}`)

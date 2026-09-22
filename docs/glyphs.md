@@ -14,7 +14,7 @@ are a ledger and want none. Sixty-one rows.
 
 A row borrows the glyph of the thing it is *about*, and a **badge** -- a
 five-by-five mark in the top-right corner -- says what is being done
-to it. So "tune the ram", "another pot" and "strong brew" are the ram, the
+to it. So "ram strike", "another pot" and "strong brew" are the ram, the
 pot and the sack (carry) with a plus (more of it, any way), "enrich the
 quarry" is the ore lump with a star. One drawing serves a family, the
 family reads as one, and a player who knows the sack knows every row that

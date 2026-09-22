@@ -365,8 +365,11 @@ Two harness facts, each of which cost a full launch cycle:
 ## Decided, do not relitigate
 
 - **Sparks (red, ✚) are the machines' currency, end to end.** They buy every
-  machine, every rung of each machine's endless tuning ladder, and they tear and
-  widen the rift. The paint store in DESIGN.md is a *secondary* plan for the
+  machine, every rung of each machine's three-rung ladder, and they tear and
+  widen the rift. The machines' ladders were endless and are not since
+  2026-09-22: `MACHINE_TUNE_SPARKS` is a written table, the row carries pips
+  and an end like every other row, and the rift's throughput is the endless
+  red sink (DESIGN.md, "A machine's ladder ends"). The paint store in DESIGN.md is a *secondary* plan for the
   same resource, not the primary sink. The pit press (`packpile`) is cut.
 - **The sky is beatable, but only if you invest.** A yard running all three
   machines should still rain on you if you ignore the scrubbing house, and
@@ -391,6 +394,7 @@ Two harness facts, each of which cost a full launch cycle:
   unit-a-rung constants, no base-and-top, no first-cost-and-rate (DESIGN.md,
   "A rung is a step up"). The ladder book edits it a rung at a time.
   The tower's and the machines' spark ladders are outside this rule by the
-  decision above. Build every new ladder through `tierRows` with `named`
+  decision above -- they are short written tables of their own, not `tierRows`
+  bands, but they do end and they do carry pips. Build every new ladder through `tierRows` with `named`
   bands; a flat row with one bill from rung one is the old shape and a bug.
   See DESIGN.md, "Every ladder is sold in bands".

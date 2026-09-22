@@ -6,11 +6,11 @@ import { tuneRow } from '../machines.js';
 export const TUNING_ROWS = [
 
   // The ram's ladder, beside the row that buys its machine, on the shack's
-  // board. Endless (`tuneRow` in machines.js).
+  // board. Three rungs of red (`tuneRow` in machines.js).
   //
   // The belt has no ladder. Its scoop only lifts what is lying loose, and the
   // rock's spoil lands on the band straight off the shovel (`catchBelt`), so a
   // faster scoop finds nothing faster: the rung bought nothing you could see.
-  tuneRow('ram', 'tune the ram',
-          () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard', 'shack')
+  tuneRow('ram', 'ram strike',
+          () => `the ram strikes ${MACHINE_TUNE}x harder`, 'yard', 'shack')
 ];
