@@ -26,14 +26,14 @@ export const CLOUD_LAYERS = [
   { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
   { name: 'near', far: 0.40, scale: 0.85, flat: 1.0, cell: 1.5, n: 2 }
 ];
-// Every cloud's base sits this many cells below the top of the band, whichever
-// sheet it is in: cumulus forms at the height the air gives it and they all
-// sit on that, so a sheet is told apart by size, grain and paleness and never
-// by height. In cells, not a share of the sky, so the height a cloud sits at
-// does not move when the window is resized. Narrow, but not a line -- bases
-// exactly level read as a shelf. High: the sky over the works is mostly empty
-// and the clouds belong near the top of it.
-export const CLOUD_LANE = [4, 13];
+// Where a sheet's bases sit, in cells below the top of the band: the near
+// sheet highest and each one behind it a little lower, so the sky reads as one
+// level of cumulus seen in perspective rather than as three. A cell or two of
+// give within a sheet -- bases exactly level read as a shelf. In cells, not a
+// share of the sky, so the height a cloud sits at does not move when the
+// window is resized, and all of it near the top: the sky over the works is
+// mostly empty and the clouds belong up in it.
+export const CLOUD_LANES = { near: [2, 6], mid: [7, 11], far: [12, 16] };
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
 // side of its sheet's `far`, so two in a sheet still slide past each other

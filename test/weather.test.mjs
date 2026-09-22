@@ -173,3 +173,34 @@ group('a dirty sky shows in the clouds, and its rain falls in the yard', async (
        `${xs.length} drops, view ${Math.round(cam)}..${Math.round(right)}, world ${Math.round(state().worldW || 0)}`)
   ];
 });
+
+// The sky is a strip that wraps: a cloud off one end of it comes back on the
+// other. That has to happen out of sight, and the strip is only as wide as the
+// window plus the cloud's own width and a margin, so the one thing to prove is
+// that no cloud ever jumps while any part of it is on the screen. Scrolled the
+// way a player scrolls -- the camera moved a little a frame, both ways.
+group('no cloud ever jumps in view while you scroll', async () => {
+  run(3);
+  const view = state().viewW;
+  const snap = () => {
+    const r = skyReport();
+    return r.cloudAcross.map((at, i) => ({ at, w: r.cloudWide[i] }));
+  };
+  const seen = a => a.at < view && a.at + a.w > 0;
+  let was = snap(), jumped = 0, wrapped = 0;
+  for (let i = 0; i < 600; i++) {
+    window.__look(state().camX + (i % 2 ? 20 : -6));
+    run(1 / 60);
+    const now = snap();
+    for (let j = 0; j < Math.min(was.length, now.length); j++) {
+      if (Math.abs(now[j].at - was[j].at) < 60) continue;   // a wrap, not a drift
+      wrapped++;
+      if (seen(was[j]) || seen(now[j])) jumped++;
+    }
+    was = now;
+  }
+  return [
+    ok(wrapped > 0, 'scrolling that far wraps the sky round', `${wrapped} wraps`),
+    ok(jumped === 0, 'and never with any of the cloud on the screen', `${jumped} in view`)
+  ];
+});

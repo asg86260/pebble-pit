@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANE, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -64,7 +64,7 @@ function inBand() {
 // cloud cut flat at the top is a slab.
 function cloudBand() {
   const top = S.camY + CLOUD_TOP * P;
-  let low = top + CLOUD_LANE[1] * P;
+  let low = top + Math.max(...Object.values(CLOUD_LANES).map(l => l[1])) * P;
   for (const c of CLOUDS) low = Math.max(low, top + (c.tall + 1) * cellOf(c));
   return { top, low };
 }
@@ -218,7 +218,7 @@ function makeCloud(x, sheet, storm = false) {
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
-  const yb = between(CLOUD_LANE) * P;   // its base, in pixels below the band's top
+  const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
   const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
               give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, melt: 0 };
   // its height on a dry day, in its own cells, for keeping its crown in view
@@ -299,7 +299,6 @@ export function seedWeather() {
 }
 
 export function stepWeather(now) {
-  const wide = S.viewW + P * 40;               // the strip a cloud wraps around
 
   if (CLOUDS_ON) CLOUD_LAYERS.forEach((L, sheet) => {
     while (inSheet(sheet, false) < L.n) {
@@ -343,14 +342,16 @@ export function stepWeather(now) {
     // it there would let a jump of the camera strand one dissolving in the
     // middle of the sky for no reason anybody could see.
     //
-    // Wound back into the strip in one step rather than shifted by a strip's
-    // width: the strip is the window's own width, so resizing the window moves
-    // both ends of it, and a cloud several strips outside it took a frame a
-    // strip to come back -- which is the sky thrashing while a window is
-    // dragged.
-    const at = acrossView(c), from = -c.w * cellOf(c) - P * 8;
-    if (at > S.viewW + P * 8 || at < from) {
-      c.x = from + (((at - from) % wide) + wide) % wide + S.camX * c.far;
+    // The strip is the window's width plus the cloud's own, and a margin at
+    // each end: a cloud that has just cleared one edge has to land clear of
+    // the other, and a strip only as wide as the window landed a wide one with
+    // its far end still showing -- which is a cloud popping in at the edge
+    // while you scroll. Wound back in one step rather than shifted a strip at
+    // a time, so a resize (which moves both ends) does not thrash it.
+    const at = acrossView(c), wide = c.w * cellOf(c) + P * 32;
+    const from = -(c.w * cellOf(c) + P * 16), span = S.viewW + wide;
+    if (at > S.viewW + P * 16 || at < from) {
+      c.x = from + (((at - from) % span) + span) % span + S.camX * c.far;
     }
   }
 
@@ -383,6 +384,9 @@ export function skyReport() {
     low: Math.round(low),
     cloudY: CLOUDS.map(c => Math.round(cloudY(c))),
     cloudAcross: CLOUDS.map(across),
+    // and how wide each is on the screen, so a check can ask whether one was
+    // in view when it wrapped
+    cloudWide: CLOUDS.map(c => Math.round(c.w * cellOf(c))),
     birdY: BIRDS.map(b => Math.round(b.y)),
     birdAcross: BIRDS.map(across),
     birdWorld: BIRDS.map(b => ({ x: skyX(b), y: Math.round(b.y / P) * P })),
