@@ -32,7 +32,7 @@ export { stepMachines } from './crew/tenders.js';
 export { workerAt, lift, lifted, drop, shakeHeld } from './crew/pointer.js';
 export { kitFree } from './crew/kitwalk.js';
 
-export { stand, duck, hireSpot, atHome, homeCount, upTop } from './crew/body.js';
+export { stand, duck, hireSpot, atHome, homeCount } from './crew/body.js';
 export { FACTORY } from './crew/jobs.js';
 export { findPeak, nearestInBand, elbowed } from './crew/rockhand.js';
 export { stepBuilder } from './crew/builders.js';
