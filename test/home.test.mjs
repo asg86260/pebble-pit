@@ -51,12 +51,8 @@ group('a body put to work comes out of the house first', async () => {
   // back -- and it is here because the check assigns quarriers further down and
   // never opened one.
   //
-  // It went unnoticed because the yard used to let it: `benches()` counts the
-  // benches a quarry WOULD hold, so a hole nobody had dug reported standing
-  // room and `assignJob` filled it. The two bodies walked to where the cut will
-  // be and stood under the ground line in a working that does not exist. The
-  // floor plan asks whether the place is standing now (`STANDING`, upgrades.js),
-  // so this setup has to say so.
+  // A shut quarry holds nobody (`capOfBare`, levels.js), so this setup has to
+  // open one.
   window.__crew(0, 0, 1);
   window.__crew(0, 3);
   window.__clearFloor();

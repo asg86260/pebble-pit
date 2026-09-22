@@ -83,20 +83,6 @@ against 1195). The clean rain already draws from a `stream()` of its own; the
 motes want the same. Until then no check can assert frame-exact timing across a
 camera change.
 
-### A body assigned to a closed quarry stands in the ground (2026-09-08)
-
-`capOfBare` (levels.js) answers off `benches()` and `plotCount()`, which count
-what a quarry or farm *would* hold, so a shut station reports room and
-`assignJob` fills it; the body stands a body-height under the ground line with
-no working under it. Both ways in are shut (`__crew` and `__assign` open the
-place first; a shut station has no board), so no route reaches it today.
-
-The real fix is a gate in `capOfBare` on `S.quarryOpen` / `S.farmOpen`. It was
-built and backed out: it moves bodies in every check that staffed a station
-before opening one (`dance`, `reload`, `sky-fan` went red, none about
-staffing). Do it deliberately, reading the fallout a check at a time; expect
-`__crew`'s station-open lines to move above `rebalance()`.
-
 ### Two tests fail at random
 
 - `test/rock.test.mjs`, "the one underneath is covered by the rock" -- about 1

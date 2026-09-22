@@ -76,10 +76,12 @@ export const loose = job => S.workers.filter(w => w.hatOff && w.hatOff.of === jo
 export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 
 // What a station's floor plan says it holds. One table, read by `capOf` and
-// `handsOf` both, so the two cannot disagree.
+// `handsOf` both, so the two cannot disagree. `benches()` and `plotCount()`
+// count what the place would hold, so a quarry or farm not yet open holds
+// nobody: a body sent there stands in a working that is not dug.
 const capOfBare = job =>
-  job === JOB.QUARRY ? benches() :
-  job === JOB.FARM ? plotCount() :
+  job === JOB.QUARRY ? (S.quarryOpen ? benches() : 0) :
+  job === JOB.FARM ? (S.farmOpen ? plotCount() : 0) :
   // One stirrer to a pot.
   job === JOB.STIR ? S.apothPots :
   // There is no lab. Kept as a nought rather than deleted so a save with
