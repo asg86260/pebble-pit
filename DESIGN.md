@@ -12476,12 +12476,22 @@ also the only softening a flat picture gets: the edge reads as cloud rather
 than as a staircase. Rounding the height was what made a cell blink.
 
 A front's own cloud goes further: as the front lets go of it, it thins from the
-bottom a cell at a time and climbs as it thins, paling toward the page, on the
-swell's own fall -- so it breaks up rather than vanishing, and is gone exactly
+bottom a cell at a time, paling toward the page, on the swell's own fall -- so it breaks up rather than vanishing, and is gone exactly
 when the sky has settled. The ordinary sky needs no such life. It wraps around
 the strip, an edge at a time, well outside the window where nobody sees it;
 melting it there was tried and cut, because a jump of the camera then stranded
 a cloud dissolving in the middle of the sky for no reason anybody could see.
+Lifting a melting cloud as it thinned was tried and cut too: it drew the eye to
+the one thing that was leaving, which is the opposite of what a front letting
+go should do.
+
+The sky is spread on the first frame it is stepped rather than when the yard is
+laid out. The layout runs before the camera is put where the save left it, so a
+sky spread there is a sky that is wound back into the strip on the first frame
+-- the whole sky visibly rearranging itself a moment after the page comes up.
+The layout runs again on every resize, so the spread only ever fills what is
+missing; making a new sky there swapped every cloud in the window each time it
+was dragged, and took the birds out of the air mid-flight.
 
 ### Shaded like the boulder
 

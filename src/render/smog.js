@@ -291,7 +291,7 @@ const cellOf = d => P * CLOUD_LAYERS[RAIN_SHEETS[d].sheet].cell / NEAR_CELL;
 // fall, so the whole sheet comes down slanted at one angle: a shower drawn in
 // squares is a dirtier sky, not a storm.
 function sheetRain(d, lean) {
-  const far = farOf(d), cp = cellOf(d);
+  const far = farOf(d), cp = cellOf(d), lands = RAIN_SHEETS[d].lands;
   // The drops in a sheet that are at the fast end of its give get the longer
   // dash, so a sheet has two lengths in it rather than one.
   const quick = RAIN_FALL * RAIN_SHEETS[d].speed;
@@ -316,6 +316,10 @@ function sheetRain(d, lean) {
       const len = dashOf(d, drop.vy > quick);
       for (let j = 0; j < len; j++) {
         const x0 = snap(wx - j * step), y0 = snap(drop.y - j * cp);
+        // A sheet that does not land stops at the ground line. It is drawn
+        // before the ground, but the ground below the line is marks on the
+        // page and not a fill, so a cell under it shows through the gaps.
+        if (!lands && y0 + cp > S.groundY) continue;
         ctx.rect(x0, y0, snap(x0 + cp) - x0, snap(y0 + cp) - y0);
       }
     }

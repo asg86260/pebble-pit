@@ -94,7 +94,7 @@ export const CLOUD_PUFF_SINK = [0.0, 0.4];
 // up to CLOUDS_STORM at a full heft; through the taper and for CLOUD_SETTLE_S
 // after it they shed it all again. The swell is derived off the storm's clock
 // every frame and never saved (`swell` in weather.js).
-export const CLOUDS_STORM = 16;
+export const CLOUDS_STORM = 22;
 export let CLOUD_SETTLE_S = 30;
 // How far a bump's radius grows at a full swell, as a share of itself: the
 // front is a bigger cloud, not a new shape.

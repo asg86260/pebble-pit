@@ -9,7 +9,7 @@
 
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 import { RAIN_FIRST_S, STORM_BREW_S, RAIN_WASH, RAIN_MARK, CLOUD_SETTLE_S } from '../src/config.js';
-import { skyReport } from '../src/weather.js';
+import { seedWeather, skyReport } from '../src/weather.js';
 
 group('it rains on a clean yard, on its own clock', async () => {
   run(0.4);
@@ -222,5 +222,30 @@ group('the nearer the sheet, the higher it rides', async () => {
        `near down to ${lowest(near)}, mid from ${highest(mid)}`),
     ok(lowest(mid) < highest(far), 'and none in the middle as low as a far one',
        `mid down to ${lowest(mid)}, far from ${highest(far)}`)
+  ];
+});
+
+// The sky is filled on the first frame it is stepped, not when the yard is
+// laid out: the layout runs before the camera is where the save left it, and a
+// sky spread across the old view is a sky that is wound back into the strip on
+// the first frame -- the whole sky visibly rearranging itself a moment after
+// the page comes up.
+group('the sky is spread where the camera ends up, not where it started', async () => {
+  window.__look(0);
+  seedWeather();                       // as a relayout does, before the camera moves
+  window.__look(4000);                 // ...and then the save puts the camera somewhere
+  run(1 / 60);
+  const first = skyReport();
+  run(1);
+  const after = skyReport();
+  const view = state().viewW;
+  const onStrip = first.cloudAcross.every((x, i) => x > -600 && x < view + 600);
+  const moved = first.cloudAcross.filter((x, i) => Math.abs(x - after.cloudAcross[i]) > 60).length;
+  return [
+    ok(first.clouds === after.clouds && first.clouds > 0, 'the sky is full on the first frame',
+       `${first.clouds} then ${after.clouds}`),
+    ok(onStrip, 'and spread about the view the camera actually ended on',
+       first.cloudAcross.join(' ')),
+    ok(moved === 0, 'and no cloud is wound anywhere once it is there', `${moved} moved`)
   ];
 });

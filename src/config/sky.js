@@ -131,7 +131,7 @@ export const PLUME_THIN = 2.5;
 // Clean drops a second across one window's width of sky at full pour; the
 // sheet is water, and the marked motes fall among it as the acid. Per window
 // rather than per yard so a wide world is not a thicker shower.
-export let RAIN_PER_S = 650;
+export let RAIN_PER_S = 300;
 // The tone of a clean drop: lighter than the lightest rock shade, since
 // nothing in the sky may borrow those, and paler than the muck a dirty drop
 // is drawn in, so the acid shows in the sheet before it lands.
@@ -195,10 +195,11 @@ export const RAIN_SHEETS = [
 // nearest cloud, so its parallax is the world's own and not CLOUD_LAYERS'.
 // Read as an index so nothing counts the sheets twice.
 export const RAIN_NEAR = RAIN_SHEETS.findIndex(s => s.lands);
-// How far past the ground line a backdrop drop falls before it is culled. It
-// is drawn behind the ground, so it is already out of sight; the margin is
-// only so it is not culled on the frame it goes under.
-export const RAIN_BEHIND_DROP = 24;
+// A backdrop drop is taken off at the ground line, and never drawn below it:
+// the ground below the line is a pattern of marks on the page rather than a
+// solid fill, so a drop drawn behind it shows straight through the gaps and
+// reads as rain falling over the ground.
+export const RAIN_BEHIND_DROP = 0;
 // Lightning. Weather only: a strike costs the yard nothing and touches no
 // body. The odds a second scale with the square of the storm envelope, so a
 // drizzle almost never flashes and the full pour does about every

@@ -34,6 +34,10 @@ feature lives in DESIGN.md.
 - The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").
 - Resizing the window no longer sends the clouds flying: they hold their height and come back into the strip in one step instead of a frame at a time (test/sky-air.test.mjs).
 - A cloud no longer pops in at the edge of the window while you scroll; the sky's strip is wide enough that a cloud coming round is still off the screen (test/weather.test.mjs, "no cloud ever jumps in view while you scroll").
+- The sky no longer rearranges itself a moment after the page comes up, and resizing the window no longer swaps every cloud for a new one or takes the birds out of the air (test/weather.test.mjs, "the sky is spread where the camera ends up, not where it started").
+- The rain behind the yard no longer shows through the ground it is supposed to be behind; it stops at the ground line (src/scenes.js `rain`).
+- The rain is lighter (src/scenes.js `rain`, `acidrain`).
+- A front's clouds thin away in place as it lets go instead of climbing out of the sky (src/scenes.js `cloudsettle`).
 - No cell of cloud blinks in or out any more: it comes up out of the page as it fills and goes back down into it as it empties, so a sky swelling or letting go after a shower moves instead of stepping (src/scenes.js `cloudswell`, `cloudsettle`).
 - A machine's smoke hangs a little longer off the stack before it thins away (src/scenes.js `yard`).
 - The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").

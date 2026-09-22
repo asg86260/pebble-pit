@@ -281,15 +281,26 @@ function acrossView(s) {
   return s.x - S.camX * s.far;
 }
 
+// A sky already full, rather than one that fills up while it is being looked
+// at. Asked for here and done on the next frame (`spreadSky`), because this
+// runs from `settleIntoWorld`, which is before the camera has been put where
+// the save left it: a sky spread across the view at the old camera is a sky
+// that is nowhere near the new one, and every cloud in it is wound back into
+// the strip on the first frame -- which is the whole sky visibly rearranging
+// itself a moment after the page comes up.
+let toSpread = true;
 export function seedWeather() {
-  CLOUDS.length = 0;
-  BIRDS.length = 0;
-  nextBirds = 0;
-  // start with a sky already full, rather than one that fills up while it is
-  // being looked at
-  if (!CLOUDS_ON) return;
+  if (!CLOUDS_ON) { CLOUDS.length = 0; return; }
+  toSpread = true;
+}
+
+// Fills whatever the sky is short of, spread evenly across the view. Only what
+// is missing: called again on every relayout, and making a new sky there put a
+// fresh set of clouds in the window every time it was resized and took the
+// birds out of the air mid-flight.
+function spreadSky() {
   CLOUD_LAYERS.forEach((L, sheet) => {
-    for (let i = 0; i < L.n; i++) {
+    for (let i = inSheet(sheet, false); i < L.n; i++) {
       const c = makeCloud(0, sheet);
       c.x = S.camX * c.far + (i + rand()) * (S.viewW / L.n) - c.w * cellOf(c);
       CLOUDS.push(c);
@@ -298,6 +309,7 @@ export function seedWeather() {
 }
 
 export function stepWeather(now) {
+  if (toSpread && CLOUDS_ON) { spreadSky(); toSpread = false; }
 
   if (CLOUDS_ON) CLOUD_LAYERS.forEach((L, sheet) => {
     while (inSheet(sheet, false) < L.n) {
@@ -541,8 +553,10 @@ export function drawClouds() {
     for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];
     const cap = Math.min(Math.ceil(peak), Math.floor((y - top) / cp));   // clipped at the window's top
     // How far a melting cloud has been eaten off its bottom, in cells and
-    // fractions of one: it is drawn that far up as well, so it climbs as it
-    // thins, and the row it is halfway through is drawn half solid.
+    // fractions of one; the row it is halfway through is drawn half solid. It
+    // is not lifted as well: a cloud that climbed while it thinned drew the
+    // eye to the one thing that was leaving, which is the opposite of what a
+    // front letting go should do.
     const ate = c.melt * (peak + 1);
     // Row by row from the base up, runs of one style as one rect: cells
     // joined along the row rather than up the column, or every column's
@@ -559,9 +573,9 @@ export function drawClouds() {
         }
         if (now === style) continue;
         if (style) {
-          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1 - ate) * cp);
+          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1) * cp);
           ctx.fillStyle = style;
-          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - (r - ate) * cp) - y0);
+          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - r * cp) - y0);
         }
         style = now; from = cx;
       }
