@@ -30,7 +30,7 @@ import { ROCK_ROWS } from './upgrades/rows-rock.js';
 import { CREW_ROWS } from './upgrades/rows-crew.js';
 import { FARM_ROWS } from './upgrades/rows-farm.js';
 import { KIT_ROWS } from './upgrades/rows-kit.js';
-import { SCRUB_ROWS } from './upgrades/rows-scrub.js';
+import { FILTER_ROWS } from './upgrades/rows-filter.js';
 import { TOWER_ROWS } from './upgrades/rows-tower.js';
 import { CASINO_ROWS } from './upgrades/rows-casino.js';
 import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
@@ -95,7 +95,7 @@ export const UPGRADES = chained([
   ...CREW_ROWS,
   ...FARM_ROWS,
   ...KIT_ROWS,
-  ...SCRUB_ROWS,
+  ...FILTER_ROWS,
   ...TOWER_ROWS,
   ...CASINO_ROWS,
   ...APOTHECARY_ROWS,
@@ -124,7 +124,7 @@ export const SECTIONS = [
   { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlocktower',
-    'unlockscrub'
+    'unlockfilter'
   ] }
 ];
 

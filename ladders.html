@@ -75,14 +75,14 @@
 </div>
 <!-- The ids board.js and shop.js take hold of at load, so the row modules can
      be imported here. Nothing in them is drawn. -->
-<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="scrub"></div><div id="scrubshop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
 <script type="module">
 import { S } from './src/state.js';
 import { TUNABLE } from './src/config.js';
 import { UPGRADES, HOUSE_ROW, billOf } from './src/upgrades.js';
 import { rungOf, rungsOf, maxed } from './src/words.js';
 import { TOWER_UPGRADES } from './src/tower.js';
-import { SCRUB_UPGRADES } from './src/scrubhouse.js';
+import { FILTER_UPGRADES } from './src/filter.js';
 import { QUARRY_UPGRADES } from './src/quarry.js';
 import { FARM_UPGRADES } from './src/farm.js';
 import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
@@ -99,7 +99,7 @@ import { LADDERS } from './src/config.js';
 // A yard with every place open and every coin met, so no card is greyed for
 // want of a source and every band's bill is the one it will ask.
 Object.assign(S, {
-  crew: 8, farmOpen: true, quarryOpen: true, apothecaryOpen: true, scrubOpen: true,
+  crew: 8, farmOpen: true, quarryOpen: true, apothecaryOpen: true, filterOpen: true,
   towerOpen: true, shackOpen: true, outhouseOpen: true, casinoOpen: true,
   seenShard: true, seenSpore: true, seenCore: true, seenSpark: true, seenAir: true,
   brews: 9, autoMine: true, boulderNo: 3, introDone: true
@@ -109,7 +109,7 @@ const ROWS = [
   ...UPGRADES.map(u => ({ u, board: 'bench' })),
   ...TOWER_UPGRADES.map(u => ({ u, board: 'tower' })),
   ...OUTHOUSE_UPGRADES.map(u => ({ u, board: 'outhouse' })),
-  ...SCRUB_UPGRADES.map(u => ({ u, board: 'scrub' })),
+  ...FILTER_UPGRADES.map(u => ({ u, board: 'filter' })),
   ...QUARRY_UPGRADES.map(u => ({ u, board: 'quarry' })),
   ...FARM_UPGRADES.map(u => ({ u, board: 'farm' })),
   ...APOTHECARY_UPGRADES.map(u => ({ u, board: 'apothecary' })),

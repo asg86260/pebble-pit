@@ -39,7 +39,7 @@ export const DUST_PER_CORE = 500;
 // machine is the sky's only producer (`foul` refuses everything else), so this
 // one dial *is* the pollution rate, and a machine is also many times as quick
 // as the hands it replaced, so the compounding is easy to get wrong. Well
-// under one: at a pace the scrubbing house and the rain can argue with. The
+// under one: at a pace the air filter and the rain can argue with. The
 // runner charges it in one place, off the stack (`stepMachines`).
 export let MACHINE_FOUL = 0.4;
 // The smoke you see off a working stack, apart from the haze it adds. What a

@@ -7,7 +7,7 @@
 // having written it.
 //
 // It happened to five things at once: the lab's own two ladders, both of the
-// tower's, all four of its enchantments and the scrubbing house's fan were
+// tower's, all four of its enchantments and the air filter's fan were
 // invisible for as long as they had existed. Nothing failed. There was simply
 // nothing to click.
 
@@ -22,7 +22,7 @@ import { LADDER } from '../src/config.js';
 // already reaches for `src/quarry.js` this way.
 import { UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
@@ -95,7 +95,7 @@ group('a row no section names is still drawn', async () => {
 // still wraps it so a fistful of violations reports as a fistful.
 group('the shop keeps to one grammar per kind', async () => {
   const rows = [...UPGRADES, ...TOWER_UPGRADES,
-                ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
+                ...FILTER_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                 ...APOTHECARY_UPGRADES];
 
   // The casino is not a shop -- chips, stake, let it go, bank it, drop again are moves at a

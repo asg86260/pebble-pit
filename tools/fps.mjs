@@ -14,7 +14,7 @@ const SCENES = {
   smoke:    `__crew(8,4);__air({haze:1200})`,
   thick:    `__crew(8,4);__air({haze:2400})`,
   rain:     `__crew(8,4);__air({haze:2400});__fast(20)`,
-  scrub:    `__crew(8,4);__air({haze:2400,open:true,purifiers:1,recycler:true})`,
+  filter:    `__crew(8,4);__air({haze:2400,open:true,purifiers:1,recycler:true})`,
   star:     `__crew(6,3);__meteor();__wizardHat(3);__assign&&0;__air({haze:900})`,
   muck:     `__crew(8,4);__air({muck:300,haze:900})`,
   // The worst the sky ever is, and the one that matters now the haze has the

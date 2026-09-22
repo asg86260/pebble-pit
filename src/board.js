@@ -13,7 +13,7 @@ import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
 import { busy } from './casino.js';
-import { SCRUB_UPGRADES } from './scrubhouse.js';
+import { FILTER_UPGRADES } from './filter.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES } from './apothecary.js';
@@ -33,7 +33,7 @@ const shopEl = document.getElementById('shop');
 const crewShopEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlist');
 const crewListRowsEl = document.getElementById('crewlistrows');
-const scrubShopEl = document.getElementById('scrubshop');
+const filterShopEl = document.getElementById('filtershop');
 const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
 const apothShopEl = document.getElementById('apothshop');
@@ -45,7 +45,7 @@ const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'),
                 house: document.getElementById('house'),
-                scrub: document.getElementById('scrub'),
+                filter: document.getElementById('filter'),
                 quarry: document.getElementById('quarryboard'),
                 farm: document.getElementById('farmboard'),
                 apothecary: document.getElementById('apothboard'),
@@ -75,7 +75,7 @@ const anchor = which => station(which)?.stand?.();
 const listFor = which =>
   // A row names the sheet it belongs to; the bench takes the rest.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
-  which === 'scrub' ? SCRUB_UPGRADES :
+  which === 'filter' ? FILTER_UPGRADES :
   // The grounds' own rows and the kit row that lodges with each (`lodgers`).
   which === 'quarry' ? [...QUARRY_UPGRADES, ...lodgers('quarry')] :
   which === 'farm' ? [...FARM_UPGRADES, ...lodgers('farm')] :
@@ -728,7 +728,7 @@ function fill(which) {
   // a station's board being open is what reads its news
   markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
+  if (which === 'filter') refresh(filterShopEl, FILTER_UPGRADES, null);
   if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), groundHeads);
   if (which === 'farm') refresh(farmShopEl, listFor('farm'), groundHeads);
   if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);

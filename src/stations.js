@@ -15,7 +15,7 @@
 // and not a step in a chain.
 
 import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW } from './config.js';
-import { S, bench, casino, scrub, tower, outhouse, shack } from './state.js';
+import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
 import { apothHut } from './apothecary.js';
@@ -46,7 +46,7 @@ export const STATIONS = [
     after: ['quarry'],
     // The yard has been invested in: a second rock, not any one building.
     needs: () => S.boulderNo >= 2 },
-  { key: 'scrub', open: () => S.scrubOpen, stand: () => scrub, board: 'scrubBoardOpen',
+  { key: 'filter', open: () => S.filterOpen, stand: () => filter, board: 'filterBoardOpen',
     after: [],
     // After the first rain (the problem arriving), after the sky's readout has
     // been seen (you know what the house has to keep up with), and after the

@@ -1,5 +1,5 @@
 // A door opens with somebody already in it: every place that is worked -- the
-// plots, the cut, the scrubbing house, the janitor's closet, the apothecary --
+// plots, the cut, the air filter, the janitor's closet, the apothecary --
 // sends one spare body over the frame it lands, through the same `assign` the
 // board's + button uses. Nobody idle, and the count stays where it was: the
 // door asks the way the button asks, and the button says no.
@@ -17,7 +17,7 @@ const rich = (...crew) => {
   window.__crew(...crew);
   window.__grant({ cores: 9, dust: 90000, shards: 900, spores: 900, sparks: 500 });
   window.__answered('props', 'net', 'arch');
-  // the scrubbing house is sold after the first rain, with a machine running
+  // the air filter is sold after the first rain, with a machine running
   window.__machine('ram', { bought: true });
   window.__air({ rains: 1 });
   S.seenAir = true;
@@ -28,7 +28,7 @@ const rich = (...crew) => {
 const DOORS = [
   ['unlockfarm',       JOB.FARM],
   ['unlockquarry',     JOB.QUARRY],
-  ['unlockscrub',      JOB.PURIFY],
+  ['unlockfilter',      JOB.PURIFY],
   ['unlockouthouse',   JOB.JANITOR],
   ['unlockapothecary', JOB.STIR]
 ];

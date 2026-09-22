@@ -40,7 +40,7 @@ import { newBuilder, stepBuilder } from './builders.js';
 import { upTop } from './body.js';
 import { newQuarrier, stepQuarrier } from '../quarry.js';
 import { newFarmhand, stepFarmhand } from '../farm.js';
-import { newPurifier, stepPurifier } from '../scrubhouse.js';
+import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';

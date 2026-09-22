@@ -41,7 +41,7 @@ const allTrades = () =>
 // every building the yard can put up, standing
 const allBuilt = () =>
   S.quarryOpen && S.farmOpen && S.apothecaryOpen && S.casinoOpen &&
-  S.shackOpen && S.outhouseOpen && S.towerOpen && S.scrubOpen;
+  S.shackOpen && S.outhouseOpen && S.towerOpen && S.filterOpen;
 
 // A body on every post, read off the JOB word list so a new job is counted
 // without this being touched. It must be `jobs.js` (the words) and not

@@ -2,7 +2,7 @@
 
 import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
-import { S, casino, lab, outhouse, scrub, tower } from '../state.js';
+import { S, casino, lab, outhouse, filter, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShed, quarryShed } from '../world.js';
@@ -51,7 +51,7 @@ const BUILDING_OF = {
 
 // The finished rect of each place a `kind: 'building'` work can raise, keyed
 // the way risingPlace names them, readable mid-build.
-const RISING_BOX = { lab: () => lab, scrub: () => scrub,
+const RISING_BOX = { lab: () => lab, filter: () => filter,
                      casino: () => casino, outhouse: () => outhouse,
                      tower: towerSpireBox,
                      apothecary: () => apothHut(),

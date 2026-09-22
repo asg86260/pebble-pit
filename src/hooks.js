@@ -33,7 +33,7 @@ import { UPGRADES, lodgers, SECTIONS, buy as buyRow, billOf, take, HOUSE_ROW } f
 import { rungOf, rungsOf, maxed } from './words.js';
 import { gainText } from './words.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
-import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
+import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
 import { skipBeat } from './beats.js';
@@ -330,7 +330,7 @@ export const setAir = (o = {}) => {
   // A sky wound up from here was never climbed into, so it is filled in
   // (`fillSky`); in play nothing appears in the band that did not go up there.
   if (o.haze != null) { S.haze = o.haze; fillSky(); }
-  if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
+  if (o.open != null) { S.filterOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.purifiers != null) { S.purifiers = o.purifiers; rebalance(); syncWorkers(); }
   if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
@@ -530,7 +530,7 @@ export const upgrades = () => UPGRADES;
 let unsectioned = null;
 export const unsection = key => {
   const all = [SECTIONS, TOWER_SECTIONS,
-               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS,
+               FILTER_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS,
                SHACK_SECTIONS];
   if (unsectioned) {
     for (const [sect, keys] of unsectioned) sect.keys = keys;
@@ -558,7 +558,7 @@ export const boards = () => [
                                                           sections: SECTIONS.map(x => x.keys) },
   { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
-  { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
+  { name: 'filter',  keys: FILTER_UPGRADES.map(u => u.key),  sections: FILTER_SECTIONS.map(x => x.keys) },
   // With the kit row lodging on each (`lodgers` in upgrades.js).
   { name: 'quarry', keys: [...QUARRY_UPGRADES, ...lodgers('quarry')].map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
   { name: 'farm',   keys: [...FARM_UPGRADES, ...lodgers('farm')].map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
@@ -595,7 +595,7 @@ export const allRows = () => { buildShop(); return everyRow().map(u => ({
 // nothing.
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...OUTHOUSE_UPGRADES,
-                        ...SCRUB_UPGRADES,
+                        ...FILTER_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
                         // On the crew board, not the bench.

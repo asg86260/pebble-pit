@@ -32,7 +32,7 @@
      with the missing coin marked. -->
 <!-- The ids board.js and shop.js take hold of at load, so their modules can be
      imported here. Nothing in them is drawn. -->
-<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="scrub"></div><div id="scrubshop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlist"></div><div id="crewlistrows"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
 <div id="out"></div>
 <script type="module">
 import { mountRows } from './src/shop.js';
@@ -57,7 +57,7 @@ const rows = [
     bill: () => [['dust', 1000], ['spore', 333], ['shard', 83]], work: () => 5, ...pips(0, 3) },
   ladder('haulcarry', 'hauler carry', LADDER - 1, 'px', 'carry', 9, 13, [['dust', 614], ['spore', 205], ['shard', 51]]),
   ladder('haulpace', 'hauler speed', LADDER - 1, 'px/s', 'walk', 108, 118, [['dust', 1200], ['spore', 393], ['shard', 98]], true),
-  ladder('fan', 'fan power', LADDER - 1, 'motes/s', 'scrub', 40, 45, [['dust', 3300], ['spore', 1100]], true),
+  ladder('fan', 'fan power', LADDER - 1, 'motes/s', 'filter', 40, 45, [['dust', 3300], ['spore', 1100]], true),
   ladder('bufflength', 'brew concentration', 1, 's', 'lasts', 73, 87, [['dust', 1440]]),
   // A ground ladder at its spark rung: the deepest bill in the game.
   ladder('crop', 'crop yield', TIER_OWN, 'spores/cut', 'cut', 7, 11,

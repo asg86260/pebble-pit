@@ -168,7 +168,7 @@ group('a save with no build order lays out exactly as it did', async () => {
     ok(!s.buildOrder || s.buildOrder.length === 0,
        'the fixture predates buildOrder', JSON.stringify(s.buildOrder)),
     // the fixed table's own order: bench and the settlement first, then
-    // school, quarry, farm, lab, scrub, casino, tower -- see siteOrder() in
+    // school, quarry, farm, lab, filter, casino, tower -- see siteOrder() in
     // world.js
     ok(s.quarryX > s.farmX, 'the cut still stands nearer the rock than the plots',
        `quarry ${s.quarryX}, farm ${s.farmX}`),

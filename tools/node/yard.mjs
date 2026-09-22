@@ -20,7 +20,7 @@ const game = await import('../../src/game.js');
 const smog = await import('../../src/smog.js');
 const tower = await import('../../src/tower.js');
 const hooks = await import('../../src/hooks.js');
-const { S, floor, pit, bench, quarry, farm, lab, apothecary, casino, scrub, table } =
+const { S, floor, pit, bench, quarry, farm, lab, apothecary, casino, filter, table } =
   await import('../../src/state.js');
 const world = await import('../../src/world.js');
 const grid = await import('../../src/grid.js');
@@ -63,7 +63,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
   };
 
   return {
-    S, floor, pit, bench, quarry, farm, lab, apothecary, casino, scrub, table,
+    S, floor, pit, bench, quarry, farm, lab, apothecary, casino, filter, table,
     game, world, clock, upgrades, grid, pitMod, riftMod, persist, restore,
     // The same handles the browser checks call through `window.__`, by their
     // own names. Anything not here is a `hooks.` away.

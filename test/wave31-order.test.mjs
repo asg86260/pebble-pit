@@ -7,7 +7,7 @@
 // old order and nothing asked again.
 //
 // `layPiles` is asked every frame and answers from one cached key -- what the
-// ground depends on, written as a string. The key knew about the scrubbing
+// ground depends on, written as a string. The key knew about the filtering
 // house, the star and the sky, and not about the order the yard was bought in.
 // So buying one building before another put it exactly where buying it second
 // would have, and the feature was invisible rather than absent.

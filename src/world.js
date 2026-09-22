@@ -9,15 +9,15 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
-        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, HOPPER_H, TRAY_H,
-        SCRUB_W, SCRUB_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
-        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_FILTER, HOPPER_H, TRAY_H,
+        FILTER_W, FILTER_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, FILTER_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, LIFT_STAND_OFF,
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, scrub, table, tray, tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -74,7 +74,7 @@ export function resite() {
 // Whether a point on the ground belongs to a given station: the same reach
 // the boards use to decide you are standing at one.
 export function atStation(job, x) {
-  if (job === JOB.PURIFY) return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
+  if (job === JOB.PURIFY) return S.filterOpen && x > filter.x - P * 6 && x < filter.x + filter.w + P * 6;
   if (job === JOB.FARM) return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
   if (job === JOB.STIR) return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;
   if (job === JOB.QUARRY) return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
@@ -116,7 +116,7 @@ let laid = null;
 // key that depends on something the walk itself sets says "lay again" on
 // the frame after every laying.
 const groundKey = () =>
-  `${S.scrubOpen}|${S.meteorOpen}|${S.apothPots}|${(S.buildOrder || []).join(',')}`;
+  `${S.filterOpen}|${S.meteorOpen}|${S.apothPots}|${(S.buildOrder || []).join(',')}`;
 
 export function layPiles() {
   const now = groundKey();
@@ -199,7 +199,7 @@ export function placeSites() {
     at[row.key] = { x: left, w };
     if (pileW) {
       if (row.side === 'left') {
-        // The scrubbing house's spout is on its left wall, the tower drops the
+        // The air filter's spout is on its left wall, the tower drops the
         // star's rind on its far side: their heaps lie away from the rock.
         const to = snap(left - row.standoff);
         strips.push({ key: row.pile, from: to - pileW, to });
@@ -245,7 +245,7 @@ export function refreshPiles() {
     // The ground is reserved from the moment the table names a site; the
     // strip only *appears* once the site is standing, because until then
     // nothing pays out on to it.
-    ...(S.strips || []).filter(p => (p.key !== 'scrub' || S.scrubOpen)
+    ...(S.strips || []).filter(p => (p.key !== 'filter' || S.filterOpen)
                                  && (p.key !== 'sky' || S.meteorOpen)),
     // and the rock's, worked out fresh every time, because the rock it stands
     // off from is a different size for every boulder
@@ -259,9 +259,9 @@ export function refreshPiles() {
 
 
 // The ground under the recycler's spout, running left from the wall.
-function scrubHeap() {
-  const to = Math.round((scrub.x - P) / P) * P;
-  return { key: 'scrub', from: to - heapBase('scrub') * P, to };
+function filterHeap() {
+  const to = Math.round((filter.x - P) / P) * P;
+  return { key: 'filter', from: to - heapBase('filter') * P, to };
 }
 
 // A site's strip cut down to the width its limit needs, against its own
@@ -278,13 +278,13 @@ export function pileAt(x) {
 }
 
 // The left-hand end of the ground the crew work on. Not simply the first
-// pile: the scrubbing house's chute and the star's rind both drop real
+// pile: the air filter's chute and the star's rind both drop real
 // grains on ground left of it, and a grain landing on a barred column walks
 // outward into the farm's heap without anybody carrying it.
 export const yardLeft = () =>
   Math.min(S.piles[0] ? S.piles[0].from : 0,
            // the ground under the chute's reach, which is what it pays on to
-           S.scrubOpen ? scrub.x - P * SCRUB_CHUTE : Infinity,
+           S.filterOpen ? filter.x - P * FILTER_CHUTE : Infinity,
            // and the ground under the meteor, where the rind comes down
            S.meteorOpen ? sky.x - sky.r - P * 2 : Infinity);
 // The ground past the far wall of the hole: not a strip, but a throw that
@@ -508,7 +508,7 @@ export function seatSites() {
 
   seat(apothecary, 'apothecary', APOTHECARY_H);
 
-  seat(scrub, 'scrub', SCRUB_H);
+  seat(filter, 'filter', FILTER_H);
 
   // The rift does not stand among the buildings: it hangs in the hole
   // (`seatRift`).

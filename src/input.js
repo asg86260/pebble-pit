@@ -345,7 +345,7 @@ function cellLabel(v) {
 const BUILDING_NAME = {
   shack: 'the shack',
   bench: 'the bench', lab: 'the lab', casino: 'the casino',
-  scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
+  filter: 'the air filter', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
 };
 
 function buildingAt(x, y) {
@@ -385,7 +385,7 @@ function messAt(x, y) {
 
 // A balloon's box, the way `drawBalloons` in render.js draws one.
 function balloonAt(x, y) {
-  if (!S.scrubOpen) return false;
+  if (!S.filterOpen) return false;
   for (let i = 0; i < CRAFT.length; i++) {
     const by = craftY(i);
     const top = by - BALLOON_BASKET - BALLOON_FILTER_H - BALLOON_H;

@@ -64,7 +64,7 @@ group('nobody gets into a balloon without walking to it', async () => {
   buyNow('balloon');
   run(1);
   // Where the mast is, and where the body starts: the crew stand about the yard,
-  // and the craft is over by the scrubbing house.
+  // and the craft is over by the air filter.
   const mast = state().craft[0].x;
 
   window.__air({ purifiers: 2 });
@@ -85,7 +85,7 @@ group('nobody gets into a balloon without walking to it', async () => {
   for (let i = 0; i < 2500; i++) {
     run(1 / 60);
     const s = state();
-    const crew = s.scrubCrew || [];
+    const crew = s.filterCrew || [];
     // Two questions, and they are about different things. "Does anybody get
     // aboard" is about the yard; "does this body ever jump" is about one person,
     // and following the berth instead of the person answers neither.
@@ -153,7 +153,7 @@ group('a craft comes back and is let go of when the job ends', async () => {
   window.__air({ purifiers: 0 });
   const home = runUntil(() => state().craft[0].lift === 0, 90);
   const down = state();
-  const stuck = (down.scrubCrew || []).filter(w => w.aloft).length;
+  const stuck = (down.filterCrew || []).filter(w => w.aloft).length;
 
   return [
     ok(home, 'an empty craft comes down', `lift ${down.craft[0].lift}`),
@@ -191,7 +191,7 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
   // So the columns are collected as they appear. What is being asked is
   // unchanged: sky goes up, muck comes down, and it comes down under the craft
   // rather than on the house's own strip.
-  const scrubX = state().scrubX;
+  const filterX = state().filterX;
   const seen = new Map();
   for (let i = 0; i < 14 * 60 * 3; i++) {
     if (i % 180 === 0) window.__air({ haze: 2200 });
@@ -200,7 +200,7 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
   }
   const done = state();
   const laid = [...seen.keys()];
-  const far = laid.filter(c => c * 6 > scrubX + 400);
+  const far = laid.filter(c => c * 6 > filterX + 400);
   const flew = Math.abs(done.craft[0].x - lit.craft[0].x);
 
   window.__air({ haze: 0, muck: 0, purifiers: 0 });

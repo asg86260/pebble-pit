@@ -25,7 +25,7 @@ const { billOf } = await import('../src/upgrades.js');
 const BOARDS = Object.entries({
   bench: (await import('../src/upgrades.js')).UPGRADES,
   casino: (await import('../src/casino.js')).CASINO_UPGRADES,
-  'scrubbing house': (await import('../src/scrubhouse.js')).SCRUB_UPGRADES,
+  'air filter': (await import('../src/filter.js')).FILTER_UPGRADES,
   quarry: (await import('../src/quarry.js')).QUARRY_UPGRADES,
   farm: (await import('../src/farm.js')).FARM_UPGRADES,
   tower: (await import('../src/tower.js')).TOWER_UPGRADES

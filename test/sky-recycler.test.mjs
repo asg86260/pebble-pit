@@ -1,9 +1,9 @@
-// What the scrubbing house makes on the way to a clean sky: filters out the
+// What the air filter makes on the way to a clean sky: filters out the
 // back, a heap that clogs when there is no room, and a recycler under its chute.
 
 import { group, ok, state, run, runUntil, P } from './helpers.mjs';
 
-group('the scrubbing house empties its filters out the back, until the recycler', async () => {
+group('the air filter empties its filters out the back, until the recycler', async () => {
   const run1 = () => {
     window.__reset();
     window.__crew(0, 0);
@@ -55,7 +55,7 @@ group('the scrubbing house empties its filters out the back, until the recycler'
 group('the house heaps what it makes, and clogs when there is no room', async () => {
   window.__crew(0, 0);
   window.__clearFloor();
-  window.__tune('PILE_LIMIT.scrub', 40);      // a small strip, so this is seconds
+  window.__tune('PILE_LIMIT.filter', 40);      // a small strip, so this is seconds
   window.__air({ haze: 0, muck: 0, open: true, purifiers: 2, recycler: true });
   window.__air({ haze: 3000 });
   run(20);
@@ -79,7 +79,7 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
   for (let i = 0; i < 200 && !filled; i++) {
     window.__air({ haze: 3000, muck: 0 });
     run(2);
-    filled = state().pileFull.scrub;
+    filled = state().pileFull.filter;
   }
   const stuck = state();
   window.__air({ haze: 3000, muck: 0 });      // plenty overhead, and no rain muck on the step
@@ -94,12 +94,12 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
   const freed = state();
 
   window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
-  window.__tune('PILE_LIMIT.scrub', 140);
+  window.__tune('PILE_LIMIT.filter', 140);
   window.__clearFloor();
   return [
-    ok(on.pileCount.scrub > 0, 'what the spout makes lands on its own strip',
-       `${on.pileCount.scrub} grains under the chute`),
-    ok(filled, 'which fills up', `${stuck.pileCount.scrub} grains`),
+    ok(on.pileCount.filter > 0, 'what the spout makes lands on its own strip',
+       `${on.pileCount.filter} grains under the chute`),
+    ok(filled, 'which fills up', `${stuck.pileCount.filter} grains`),
     // Asked of what the house has *handed back*, not of the haze overhead.
     //
     // It used to watch the level hold still, and that stopped being a fact about
@@ -112,7 +112,7 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
     ok(held.smog.recycled === was,
        'and a full one stops the house rather than pouring on',
        `${was} grains out of the chute, then ${held.smog.recycled}`),
-    ok(!freed.pileFull.scrub && freed.smog.recycled > held.smog.recycled,
+    ok(!freed.pileFull.filter && freed.smog.recycled > held.smog.recycled,
        'and carrying it away starts it again',
        `${held.smog.recycled} -> ${freed.smog.recycled} grains`)
   ];
@@ -127,7 +127,7 @@ group('the recycler pays out on the ground under its own chute', async () => {
   // held topped up: the house empties a sky of 400 faster than a body crosses
   // the yard to it, and a house that runs dry mid-check is a check about the
   // walk rather than about the chute
-  for (let i = 0; i < 40 && !(state().smog.scrubbing > 0); i++) {
+  for (let i = 0; i < 40 && !(state().smog.filtering > 0); i++) {
     window.__air({ haze: 400 });
     run(1);
   }
@@ -148,10 +148,10 @@ group('the recycler pays out on the ground under its own chute', async () => {
     ok(paid.smog.recycled > 0 && paid.floor > 0,
        'the chute gives whole grains back',
        `${paid.smog.recycled} recycled, ${paid.floor} on the floor`),
-    ok(span.lo !== null && span.lo >= paid.scrubX - P * 12 &&
-       span.hi <= paid.scrubX + P * 24,
+    ok(span.lo !== null && span.lo >= paid.filterX - P * 12 &&
+       span.hi <= paid.filterX + P * 24,
        'and they come to rest on the ground beside the house, not in a heap that is not its own',
-       `lying ${span.lo}..${span.hi}, house at ${paid.scrubX}`),
+       `lying ${span.lo}..${span.hi}, house at ${paid.filterX}`),
     ok(swept.stored > 0,
        'where the crew fetch them in like anything else lying about',
        `${swept.stored} banked`)

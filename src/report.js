@@ -5,7 +5,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, scrub, table, tray, tower, outhouse, shack, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, filter, table, tray, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, handsAt } from './works.js';
@@ -313,7 +313,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   boardOpen: S.boardOpen,
   houseBoardOpen: S.houseBoardOpen,
   crewListOpen: S.crewListOpen,
-  scrubBoardOpen: S.scrubBoardOpen,
+  filterBoardOpen: S.filterBoardOpen,
   quarryBoardOpen: S.quarryBoardOpen,
   farmBoardOpen: S.farmBoardOpen,
   towerBoardOpen: S.towerBoardOpen,
@@ -379,10 +379,10 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   doseMeeting: S.workers.some(w => w.type === TYPE.WIZARD && !w.aloft && doseComing(w) &&
     S.workers.some(s => s.type === TYPE.STIR && s.dealTo === w && Math.abs(s.x - w.x) < 240)),
 
-  // The smog, and the house that scrubs it.
+  // The smog, and the house that filters it.
   smog: smogReport(),
   smogBand: (SMOG_TOP + SMOG_BAND) * P,
-  scrubX: Math.round(scrub.x),
+  filterX: Math.round(filter.x),
 
   // The cursor: what it is over, and what is following it.
   pointed: S.workers.filter(w => w.pointed > clockNow()).map(w => w.name),
@@ -553,7 +553,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
   // The purifiers are through a door or up in a basket; `berth` is -1 for the
   // house and the craft's index otherwise.
-  scrubCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
+  filterCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
     name: w.name, x: Math.round(w.x), y: Math.round(w.y),
     berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
   })),

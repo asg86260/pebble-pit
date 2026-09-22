@@ -21,7 +21,7 @@ import { onTap } from './tap.js';
 // The drawing each station's arrow wears: the glyph of the row that opened
 // it, or the nearest thing on the shelf to what it is.
 const GLYPH = {
-  bench: 'crate', casino: 'die', scrub: 'fan', quarry: 'hoist', farm: 'furrow',
+  bench: 'crate', casino: 'die', filter: 'fan', quarry: 'hoist', farm: 'furrow',
   apothecary: 'pot', tower: 'tower', house: 'house', stats: 'sack', outhouse: 'bucket',
   shack: 'hut'
 };

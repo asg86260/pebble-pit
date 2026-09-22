@@ -64,7 +64,7 @@ export function fall(w) {
     w.x += w.vx * f;
     w.vx *= HURL_DRAG ** f;
     // The ends are the WORLD's, not `yardLeft`: that is the first heap, and
-    // the farm, the tower and the scrubbing house all stand left of it.
+    // the farm, the tower and the air filter all stand left of it.
     const lo = floor.x, hi = pit.x + pit.w - WORKER;
     if (w.x < lo) { w.x = lo; w.vx = -w.vx * 0.4; }
     if (w.x > hi) { w.x = hi; w.vx = -w.vx * 0.4; }

@@ -40,7 +40,7 @@ const hands = () => { window.__crew(3, 6); };
 const sites = () => { window.__fullSites(); crew(); grantAll(); };
 const grounds = () => { window.__invest(); crew(); grantAll(); };
 const tower = () => { sites(); window.__answered('props', 'net', 'arch'); window.__meteor(); };
-const scrub = () => { sites(); window.__air({ open: true }); };
+const filter = () => { sites(); window.__air({ open: true }); };
 // The apothecary's ladders come on with the brews, so it is opened with a few
 // behind it -- the extra pot's own count is on its line.
 const apothecary = () => { sites(); window.__buy('unlockapothecary'); window.__finish(); window.__brews(3); };
@@ -71,7 +71,7 @@ export const ROWS = [
   { key: 'unlockcasino', part: 1, reach: () => { window.__invest(); } },
   { key: 'unlockapothecary', part: 1, reach: sites },
   { key: 'unlockouthouse', part: 1, reach: S => { crew(); S.seenMess = true; } },
-  { key: 'unlockscrub', part: 1,
+  { key: 'unlockfilter', part: 1,
     reach: S => { sites(); window.__machine('ram', { bought: true }); window.__air({ rains: 1 }); S.seenAir = true; } },
   { key: 'loopost', part: 1, reach: () => { sites(); window.__loo(); } },
 
@@ -109,11 +109,11 @@ export const ROWS = [
   { key: 'spellthrift', part: 2, reach: tower },
   { key: 'spellsweep', part: 2, reach: () => { tower(); window.__loo(); } },
 
-  // --- the scrubbing house ----------------------------------------------------
-  { key: 'fan', part: 2, reach: scrub },
+  // --- the air filter ----------------------------------------------------
+  { key: 'fan', part: 2, reach: filter },
   { key: 'airrate', dial: true, part: 2, reach: S => { S.seenAir = true; } },
-  { key: 'balloon', part: 2, reach: scrub },
-  { key: 'recycler', part: 2, reach: scrub },
+  { key: 'balloon', part: 2, reach: filter },
+  { key: 'recycler', part: 2, reach: filter },
 
   // --- the quarry -------------------------------------------------------------
   { key: 'seam', part: 2, reach: sites },

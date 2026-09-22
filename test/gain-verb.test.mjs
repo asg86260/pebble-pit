@@ -14,13 +14,13 @@ import { group, ok, openSites } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 
-const EVERY = [...UPGRADES, ...TOWER_UPGRADES, ...SCRUB_UPGRADES,
+const EVERY = [...UPGRADES, ...TOWER_UPGRADES, ...FILTER_UPGRADES,
                ...QUARRY_UPGRADES, ...FARM_UPGRADES, ...CASINO_UPGRADES, ...APOTHECARY_UPGRADES];
 
 group('every share on every board says what it is a share of', async () => {

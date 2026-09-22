@@ -5,7 +5,7 @@ import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 
-import { SCRUB_W } from './scrub.js';
+import { FILTER_W } from './filter.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 import { LIFT_STAND_OFF } from './kit.js';
@@ -39,7 +39,7 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 //             width that key's own limit needs at `BANK_SLOPE`, so the ground
 //             reserved and the ground used cannot disagree.
 //   side      which side of the site its heap lies on. 'right' means toward the
-//             rock, which is where a body throwing already aims. The scrubbing
+//             rock, which is where a body throwing already aims. The filtering
 //             house is the exception: its spout is on the left wall, so a strip
 //             laid the usual way round would put the heap inside the building.
 //
@@ -114,7 +114,7 @@ export const SITES = [
     hang: () => kitHang('apothecary') },
   // The lab has no row: a building that is gone must not go on holding ground.
   // See DESIGN.md, "The lab is deleted".
-  { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
+  { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: 'filter',  side: 'left' },
   // The casino holds no ground: a paid hand heaps in its own tray and flies
   // out of the hatch into the hole on its own.
   { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: null },

@@ -12393,7 +12393,7 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
-## The air filter (design, not built)
+## The air filter (built 2026-09-22)
 
 When the sky was a field of specks, you could watch the house work: specks
 thinned, a thread ran down its throat. Since "The sky is the clouds" the
@@ -12530,6 +12530,37 @@ stays exactly as it is.
 - **The dial and the shots.** The dial and the falling clod are drawings,
   so no test can see them. Shots of the filter at clean, half and brim, and
   at a clog, are the check.
+
+### What building it changed
+
+- **The dial sits on the far wall**, on a one-cell stub, seven cells across,
+  with its top six courses down the front so it clears the hood's flare. It
+  stands four cells past the hood's edge and nothing next to it crowds it, so
+  the building did not have to get taller.
+- **A needle tip that lands on the ring is left off.** Two cells out on a
+  diagonal is a cell of the rim, and drawn there the needle read as a notch
+  in the dial rather than as a needle. On a diagonal the needle is the hub
+  and one cell.
+- **`murk` moved to `smog/band.js`.** Read from `weather.js` it made an import
+  cycle that failed at load, since that file reaches the renderer. It is the
+  same one function, and `weather.js` passes it on.
+- **A load leaves from the clear cell under the lip, not from the lip.**
+  `outlet()` is the top of the lip cell, so a load born there spent the first
+  half of its fall behind the black.
+- **The loads are stepped before the filter pulls**, so a load made this frame
+  is in the air for at least one frame even when the heap is up at the lip.
+  Stepped after, a load onto a tall heap landed on the frame it was made,
+  which is a load appearing on the heap. The check counts those.
+- **The loads in the air are saved**, like the rain (`clods` in
+  `SAVED_BY_HAND`), rather than laid where they would land at save time: a
+  save that moved muck would make a saved yard play differently from one that
+  was never saved.
+- **The recycler's mark is a sieve**: every other cell along the top of the
+  arm left open.
+- The site key, the row key, the saved field and the board's heading are all
+  renamed by the migration (`2026-09-22-air-filter.js`, `SAVE_V` 5), checked
+  against `stuck-yard.json`, a player save from before the rename with the
+  house standing.
 
 ## The sky has depth (built 2026-09-21)
 

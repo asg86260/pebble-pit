@@ -56,7 +56,7 @@ export const AT_POST = IDLE_ROAM + P + WORKER;
 // against a person, not the building, so it is what tells you how big the rest
 // is. Four and four are the body plus a cell of clearance each way: a body is
 // three cells square, and a door it fills to the edges reads as a slot it was
-// squeezed through. Even on purpose: every front but the scrubbing house's is
+// squeezed through. Even on purpose: every front but the air filter's is
 // an even number of cells across, so an even door centers on the lattice.
 export const DOOR_W = 4;         // cells across a way in, everywhere in the yard
 export const DOOR_H = 4;         // and courses tall
@@ -65,20 +65,20 @@ export const DOOR_H = 4;         // and courses tall
 // of what its strip physically holds (the rock's holds a bit over two thousand
 // at this slope, a site's about three hundred), so a chip is never told there
 // is nowhere to put it, and a heap fills soon enough that the crew find their
-// level. The scrubbing house's and the sky's are here so their output heaps
+// level. The air filter's and the sky's are here so their output heaps
 // under them instead of walking outward over bare ground a grain at a time.
 // The casino has none: a paid hand heaps in its own tray and goes to the
 // hole by air.
-export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260 };
+export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, filter: 140, sky: 260 };
 
 // What lands on each strip, so the ground can be marked before anything lands
 // on it. A key with no entry holds dust (cell zero), which is what the rock,
-// the scrubbing house and any new station pay out; the painter and `drawMark`
+// the air filter and any new station pay out; the painter and `drawMark`
 // both read it that way.
 export const PILE_HOLDS = { quarry: SHARD_CELL, farm: SPORE_CELL, sky: SPARK_CELL };
 // What the back of the house may leave lying before it stops, with no recycler
 // on: cells of muck over the ground the spout reaches.
-export const SCRUB_CLOG = 26;
+export const FILTER_CLOG = 26;
 // No hysteresis on a full pile: a station stops when its pile is full and
 // starts the moment there is room for one more, so at the limit the crew mine
 // exactly as fast as the crew carry. Any margin is a chore of clearing before
@@ -131,8 +131,8 @@ export const CREW_KNOBS = [
     get: () => PILE_LIMIT.quarry, set: v => { PILE_LIMIT.quarry = v; } },
   { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4,
     get: () => PILE_LIMIT.farm, set: v => { PILE_LIMIT.farm = v; } },
-  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4,
-    get: () => PILE_LIMIT.scrub, set: v => { PILE_LIMIT.scrub = v; } },
+  { key: 'PILE_LIMIT.filter', label: 'house pile holds', min: 4, max: 400, step: 4,
+    get: () => PILE_LIMIT.filter, set: v => { PILE_LIMIT.filter = v; } },
   { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4,
     get: () => PILE_LIMIT.sky, set: v => { PILE_LIMIT.sky = v; } }
 ];

@@ -1,18 +1,19 @@
 # Still to do
 
-## The air filter -- DESIGNED, awaiting sign-off (2026-09-22)
+## The air filter -- BUILT (2026-09-22)
 
-"The air filter" in DESIGN.md. Since the sky became the clouds, the scrubbing
-house shows nothing of what it does. It becomes **the air filter**, renamed
-through the code and the save, with a migration. A **dial** on its far wall
-reads the sky at all times, off the same bent `murk` the clouds are drawn
-from. The **spout** is always drawn, and each load of muck (dust, once the
-recycler is fitted) falls out of it at the rate the filter takes motes, which
-it already does, just invisibly. No balance moves.
+"The air filter" in DESIGN.md. The scrubbing house is the air filter, renamed
+through the code and the save (migration `2026-09-22-air-filter.js`,
+`SAVE_V` 5). A dial on its far wall reads the sky at all times, off the same
+`murk` the clouds are drawn from. The spout is always drawn, and each load
+falls out of it (`CLODS`, `stepClods`) as muck, or as dust once the recycler
+is fitted. The recycler's mark is a sieve in the arm. No balance moves.
+Scenes `filterclean`, `filterhalf`, `filterbrim`, `filterclog`,
+`filtersieve`; check test/air-filter.test.mjs.
 
-Open: where the dial sits (far wall first, a new course between throat and
-shaft if that crowds), and the recycler's mark now that the chute is no
-longer what it adds. Both are settled by a shot.
+Left: `docs/upgrade-costs.html` still says "scrubbing house", because
+`tools/node/costs.mjs` fails before it writes (`rungsOf is not a function`,
+already broken before this).
 
 ## The rain has depth too -- BUILT (2026-09-22)
 

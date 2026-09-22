@@ -1204,7 +1204,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
    ran straight out of the sheet. The whole row is given to it instead, with the
    reading against the right edge like every other number on these boards. */
-#scrubshop button[data-key="airrate"] .gain { display: none; }
+#filtershop button[data-key="airrate"] .gain { display: none; }
 
 /* The bill wraps inside its own cell, right-aligned, filling from the right.
    It used to be counted and then stacked one coin to a line past four of them,
@@ -1282,7 +1282,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 #crewlist { max-height: 46vh; overflow-y: auto; }
 /* Two columns rather than three. Nothing on this sheet has a price, so the
    middle column -- what a purchase gives you -- is closed up, and where the body
-   is takes whatever room the longest answer needs: "at the scrubbing house" in
+   is takes whatever room the longest answer needs: "at the air filter" in
    the shop's 4.6em price column is a phrase running off the edge of the sheet. */
 
 /* A row that leads somewhere says so. Every other name on a board is a thing

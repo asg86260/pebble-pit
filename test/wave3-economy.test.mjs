@@ -8,7 +8,7 @@ import { rockhandBite } from '../src/levels.js';
 import { priceText } from '../src/words.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
-import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { FILTER_UPGRADES } from '../src/filter.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
@@ -173,7 +173,7 @@ group('nothing shard-, spore- or quarry-priced shows before its coin has been se
 
   const boards = {
     bench: UPGRADES, quarry: QUARRY_UPGRADES, farm: FARM_UPGRADES,
-    scrub: SCRUB_UPGRADES, tower: TOWER_UPGRADES, casino: CASINO_UPGRADES
+    filter: FILTER_UPGRADES, tower: TOWER_UPGRADES, casino: CASINO_UPGRADES
   };
   const notSold = u => u.job || u.dial || u.price;
   const bad = [];

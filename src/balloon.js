@@ -16,7 +16,7 @@ import { P, WORKER, FARM_WALK, BALLOON_DUST, BALLOON_RATE,
          BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
          BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE } from './config.js';
-import { S, scrub } from './state.js';
+import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
 import { bandTop, bandLow } from './smog.js';
 import { walkY, yardLeft } from './world.js';
@@ -49,12 +49,12 @@ export function buyCraft() {
 }
 
 // --- where it is ----------------------------------------------------------------------
-// The mast: to the right of the scrubbing house, clear of it. Derived, not
+// The mast: to the right of the air filter, clear of it. Derived, not
 // stored, since the house is re-sited whenever the yard is laid out. Over the
 // middle of the roof a moored envelope is drawn straight through the hood and
-// the bellows; the left is the spout's wall and its heap (`scrubHeap` in
+// the bellows; the left is the spout's wall and its heap (`filterHeap` in
 // world.js).
-export const mastX = () => scrub.x + scrub.w + P * 5;
+export const mastX = () => filter.x + filter.w + P * 5;
 
 // The height a craft cruises at, lane by lane down the top of the sky so a
 // fleet crosses rather than passing through itself. Off `bandTop`/`bandLow`

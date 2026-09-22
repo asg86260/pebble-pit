@@ -1,14 +1,14 @@
-import { P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_CLOG, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
+import { CLOUD_MURK_POW, P, FILTER_ARM, FILTER_CHUTE, FILTER_CLOG, SMOG_CAP, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { speedBoost, strengthBoost } from '../apothecary.js';
-import { S, scrub } from '../state.js';
+import { S, filter } from '../state.js';
 import { colAt, muckCols } from './layer.js';
 
-// Counted here rather than imported from `scrubhouse.js`: that import is a
-// ring (the boards read the sky, the scrubbing house is a board) and whichever
+// Counted here rather than imported from `filter.js`: that import is a
+// ring (the boards read the sky, the air filter is a board) and whichever
 // file is reached first comes up with its exports still empty.
 const inHouse = w => w.type === TYPE.PURIFY && w.goal === 'in';
-const inScrub = () => S.workers.filter(inHouse).length;
+const inFilter = () => S.workers.filter(inHouse).length;
 
 // Every mote in the air, climbing or arrived. This is the haze: the actual
 // things, not a number. One list, because the climb and the band are two
@@ -36,6 +36,9 @@ export const climbing = () => { let n = 0; for (const m of SKY) if (m.up) n++; r
 
 // On their way down, as muck. A sky mote becomes one of these when it rains.
 export const DROPS = [];
+// And out of the filter, as muck: a load dropped off the spout's lip, or off
+// a balloon's basket, falling to the heap it will land on (`stepClods`).
+export const CLODS = [];
 
 // Specks on their way out: taken by a mouth, and fading where they stood.
 // A separate list, not a flag on the mote: `reckon` counts `SKY`, so a fading
@@ -61,20 +64,25 @@ export const bandTop = () => S.camY + SMOG_TOP * P;
 export const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;
+// How dirty the whole sky is, nought to one: the one number the clouds are the
+// readout of (DESIGN.md, "The sky is the clouds"), and the air filter's dial
+// too. Not a mote's place -- the murk is the sky's total, and every cloud
+// takes it together.
+export const murk = () => Math.pow(Math.min(1, S.haze / SMOG_CAP), CLOUD_MURK_POW);
 // A house with somebody through the door (never the assigned count: nothing
 // comes out of the sky until they arrive) and somewhere to put what it takes
 // out. It has its own strip like every other station, and it clogs; without
 // that it sprays the walk, and every grain past the scatter goes looking for
 // a column with room elsewhere.
-export const clogged = () => !!S.pileFull.scrub || outletMuck() >= SCRUB_CLOG;
-export const scrubbing = () => S.scrubOpen && inScrub() > 0 && !clogged();
+export const clogged = () => !!S.pileFull.filter || outletMuck() >= FILTER_CLOG;
+export const filtering = () => S.filterOpen && inFilter() > 0 && !clogged();
 
 // Muck lying on the ground the spout reaches, which is what the back of the
 // house leaves when there is no recycler on it.
 export function outletMuck() {
-  if (!S.scrubOpen) return 0;
+  if (!S.filterOpen) return 0;
   const m = muckCols();
-  const from = colAt(scrub.x - P * (SCRUB_CHUTE + 2)), to = colAt(scrub.x + scrub.w);
+  const from = colAt(filter.x - P * (FILTER_CHUTE + 2)), to = colAt(filter.x + filter.w);
   let n = 0;
   for (let c = from; c <= to; c++) n += m[c] || 0;
   return n;
@@ -82,10 +90,10 @@ export function outletMuck() {
 // What one body in the house is worth, with whatever fan has been fitted:
 // motes a second off its list (config/rungs.js), the foot being the bare pull.
 export const fanPull = (lvl = S.fanLevel || 0) => rungValue('fan', lvl);
-// Summed a body at a time rather than `inScrub() * fanPull()`, because the
+// Summed a body at a time rather than `inFilter() * fanPull()`, because the
 // apothecary reaches in here: a stew and a strong brew both multiply one
 // body's rate. The bodies counted are the ones through the door (`inHouse`).
-export const scrubRate = () => (S.scrubOpen
+export const filterRate = () => (S.filterOpen
   ? S.workers.reduce((n, w) => n + (inHouse(w) ? fanPull() * speedBoost(w) * strengthBoost(w) : 0), 0)
   : 0);
 // Where the thread ends and where the dust comes back out, both places on the
@@ -93,9 +101,9 @@ export const scrubRate = () => (S.scrubOpen
 // run of them converging on a half cell is the one off-grid thing in the
 // yard. The middle column of an odd front is a whole column; the throat
 // closes on to it two courses below the last course of hood.
-export const intake = () => ({ x: scrub.x + Math.floor(scrub.w / (P * 2)) * P,
-                        y: scrub.y + P * 5 });
+export const intake = () => ({ x: filter.x + Math.floor(filter.w / (P * 2)) * P,
+                        y: filter.y + P * 5 });
 // The clear cell under the lip of the chute, not the lip: a grain spawned on
 // the lip is born inside solid black and climbs through the arm before it
 // falls.
-export const outlet = () => ({ x: scrub.x - P, y: scrub.y + scrub.h - P * SCRUB_ARM });
+export const outlet = () => ({ x: filter.x - P, y: filter.y + filter.h - P * FILTER_ARM });

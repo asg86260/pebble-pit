@@ -22,7 +22,7 @@ const el = document.getElementById('queue');
 // (`BUILDING_NAME` in input.js).
 const SITE_NAME = {
   yard: 'the yard', bench: 'the bench',
-  quarry: 'the quarry', farm: 'the farm', scrub: 'the scrubbing house',
+  quarry: 'the quarry', farm: 'the farm', filter: 'the air filter',
   tower: 'the tower', lab: 'the lab', apothecary: 'the apothecary',
   shack: 'the shack'
 };

@@ -7,7 +7,7 @@ import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, S
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { underground } from '../quarry.js';
-import { inHouse } from '../scrubhouse.js';
+import { inHouse } from '../filter.js';
 import { S } from '../state.js';
 import { unbook } from '../crew.js';
 import { assignDrop } from './assign.js';

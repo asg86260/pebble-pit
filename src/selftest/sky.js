@@ -1,4 +1,4 @@
-// The sky: the scrubbing house and the reading that is not a button.
+// The sky: the air filter and the reading that is not a button.
 
 import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy } from './kit.js';
 
@@ -6,13 +6,13 @@ export const TESTS = [
   // The problem, then the cure: the rain has to have come down on you once,
   // and something that dirties the sky has to be running, before the yard
   // will sell you anything to do about it.
-  ['the scrubbing house is offered after the rain and a machine', async () => {
+  ['the air filter is offered after the rain and a machine', async () => {
     newRun();
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
     window.__invest();
-    const has = () => { buildShopFromTest(); return !!shop().querySelector('[data-key="unlockscrub"]'); };
+    const has = () => { buildShopFromTest(); return !!shop().querySelector('[data-key="unlockfilter"]'); };
 
     run(2);
     const clean = has();
@@ -62,17 +62,17 @@ export const TESTS = [
     window.__fullSites();
     window.__machine('jaw', { bought: true });
     buildShopFromTest();
-    shop().querySelector('[data-key="unlockscrub"]').click();
+    shop().querySelector('[data-key="unlockfilter"]').click();
     window.__finish();  // the page's business, not the yard's
     buildShopFromTest();
 
-    const row = document.getElementById('scrubshop').querySelector('[data-key="airrate"]');
+    const row = document.getElementById('filtershop').querySelector('[data-key="airrate"]');
     // Read either side of the click with no clock in between: the sky fills on
     // its own, so a run() here would show the yard working and prove nothing.
     const before = state().smog.haze;
     row?.click();                                // nothing is hung on it to fire
     const after = state().smog.haze;
-    const buy = document.getElementById('scrubshop')
+    const buy = document.getElementById('filtershop')
                         .querySelector('[data-key]:not([data-key="airrate"])');
 
     window.__crew(0, 0);

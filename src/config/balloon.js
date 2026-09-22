@@ -1,7 +1,7 @@
 import { P } from './yard.js';
 
 // --- the purifier balloon ------------------------------------------------------
-// A craft the scrubbing house sells: it rides the sky, takes it in where it is,
+// A craft the air filter sells: it rides the sky, takes it in where it is,
 // and drops what it catches under itself. See DESIGN.md, "The purifier balloon",
 // and src/balloon.js.
 export const BALLOON_RUNGS = 3;      // a finite ladder, like every other one

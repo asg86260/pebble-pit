@@ -71,7 +71,7 @@ import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
-import { stepScrub } from './scrubhouse.js';
+import { stepFilter } from './filter.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is the chip loop's own question; every other place that puts a
@@ -234,7 +234,7 @@ export const STEPS = [
   { name: 'meteor',       step: c => stepMeteor(c.now) }, // and the sky, which has a rock in it now
   { name: 'summon',       step: c => stepSummon(c.dt) },  // and whatever the ring is pouring into it
   { name: 'sparkle',      step: c => stepSparkle(c.dt) }, // and the magic they leave in the air
-  { name: 'scrub',        step: c => stepScrub(c.dt) },   // and the pumps on the scrubbing house
+  { name: 'filter',        step: c => stepFilter(c.dt) },   // and the pumps on the air filter
   { name: 'apothecary',   step: c => stepApothecary(c.dt) },  // and the pot on the boil, minting its doses
   { name: 'doses',        step: stepDoses },              // spent tonics come off the bodies wearing them
   { name: 'dosemotes',    step: c => stepDoseMotes(c.dt) },   // and the rest burn off whoever is under them

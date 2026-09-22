@@ -4,7 +4,7 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, apothecary, scrub, sky, outhouse, shack } from './state.js';
+import { S, quarry, farm, apothecary, filter, sky, outhouse, shack } from './state.js';
 import { groundAt, kitX, liftX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
@@ -24,13 +24,13 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 
 // Each station and the job it stands for, in yard order, left to right.
 //
-// The lab and the scrubbing house hold one body each, and still have a
+// The lab and the air filter hold one body each, and still have a
 // counter: what you are deciding is whether that station is *running at all*,
 // and the yard deciding it for you means a pair of hands taken off the rock
 // by a building without you having said so.
 export const POSTS = [
-  { key: 'scrubjob', job: JOB.PURIFY,
-    at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
+  { key: 'filterjob', job: JOB.PURIFY,
+    at: () => filter.x + filter.w / 2, show: () => S.filterOpen },
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },

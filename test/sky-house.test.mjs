@@ -1,11 +1,11 @@
-// The two houses that take things away: the scrubbing house pulling the sky
+// The two houses that take things away: the air filter pulling the sky
 // back down, and the outhouse gathering what the crew leave for the tower.
 
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
 
-// An empty scrubbing house is a shed. The bodies are the whole cost of it, and
+// An empty air filter is a shed. The bodies are the whole cost of it, and
 // the recycler is what turns that cost into a wage.
-group('a staffed scrubbing house pulls the sky back down', async () => {
+group('a staffed air filter pulls the sky back down', async () => {
     run(0.4);
   window.__crew(2, 4);
   run(5);
@@ -24,7 +24,7 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   // One body: the house is a shed with a fan in it and holds exactly one, the
   // way the lab does -- see `capOf`.
   window.__air({ purifiers: 1, haze: 500 });
-  runUntil(() => state().smog.scrubbing > 0, 40);
+  runUntil(() => state().smog.filtering > 0, 40);
   // and then the sky has to arrive. The fan reaches about fifteen hundred
   // pixels; what is further out than that is slid along the band towards the
   // house rather than plucked out of it, so a house that has just started has a
@@ -41,11 +41,11 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   window.__air({ haze: 0, muck: 0, open: false, recycler: false, purifiers: 0 });
   window.__clearFloor();
   return [
-    ok(shut.haze >= 500 && shut.scrubbing === 0,
-       'an empty house does nothing at all', `${shut.haze}, ${shut.scrubbing}/min`),
-    ok(on.purifiers === 1 && on.scrubbing > 0 && on.haze < 500,
+    ok(shut.haze >= 500 && shut.filtering === 0,
+       'an empty house does nothing at all', `${shut.haze}, ${shut.filtering}/min`),
+    ok(on.purifiers === 1 && on.filtering > 0 && on.haze < 500,
        'bodies in it start pulling the sky down',
-       `${on.purifiers} in, ${on.scrubbing}/min, haze ${on.haze}`),
+       `${on.purifiers} in, ${on.filtering}/min, haze ${on.haze}`),
     ok(on.caught > 0, 'and you can see it: motes bend out of the drift towards it',
        `${on.caught} of ${on.motes} on their way in'`),
     ok(paid.smog.recycled > 0, 'a recycler keeps what it catches',

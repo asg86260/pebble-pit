@@ -33,8 +33,9 @@ app. No account, no ads, no ending.
   across the yard; they walk back.
 - **A sky that pushes back.** Everything you dig puts smog into the air, the
   air gathers into banks, and past a point it rains the lot back on you. The
-  scrubbing house is the answer, and it costs a body that could be on the
-  rock. It never goes permanently clean.
+  air filter is the answer, and it costs a body that could be on the rock;
+  its dial reads the sky, and what it takes out comes out of its spout as
+  muck to shovel. It never goes permanently clean.
 - **Upgrades change what happens.** A new worker, a new machine, a new place
   further out along the ground. Every ladder has an end and tells you where
   you are on it.
@@ -44,7 +45,7 @@ app. No account, no ads, no ending.
   built.
 - **No music.** You hear the yard: the swing, the drop, the machines.
 
-<p align="center"><img src="docs/readme/scrubbing.png" alt="The scrubbing house under a sky full of smog" width="800"></p>
+<p align="center"><img src="docs/readme/scrubbing.png" alt="The air filter under a sky full of smog" width="800"></p>
 
 ## Where to play
 

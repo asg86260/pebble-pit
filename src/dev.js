@@ -107,7 +107,7 @@ line('open', box => {
 });
 
 line('open too', box => {
-  button(box, 'scrub', () => { S.scrubOpen = !S.scrubOpen; S.seenAir = true; });
+  button(box, 'filter', () => { S.filterOpen = !S.filterOpen; S.seenAir = true; });
   button(box, 'casino', () => { S.casinoOpen = !S.casinoOpen; });
   button(box, 'tower', () => { S.towerOpen = !S.towerOpen; S.seenCore = true; });
   button(box, 'meteor', () => window.__meteor());

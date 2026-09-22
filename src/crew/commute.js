@@ -21,7 +21,7 @@ import { spareLifts } from '../kit.js';
 import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
-import { scrubDoor } from '../scrubhouse.js';
+import { filterDoor } from '../filter.js';
 import { apothecaryDoor } from '../apothecary.js';
 import { underMeteor } from '../wizard.js';
 import { outhouse } from '../state.js';
@@ -50,7 +50,7 @@ function handStationX(type) {
   if (type === TYPE.ROCK) return S.cx - WORKER / 2;
   if (type === TYPE.QUARRY) return quarryFace();
   if (type === TYPE.FARM) return plotX(0);
-  if (type === TYPE.PURIFY) return scrubDoor() - WORKER / 2;
+  if (type === TYPE.PURIFY) return filterDoor() - WORKER / 2;
   if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;
   if (type === TYPE.JANITOR) return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor: the going up is the

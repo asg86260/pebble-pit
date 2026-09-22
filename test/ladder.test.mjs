@@ -14,7 +14,7 @@ import { LADDER, TIER_BAND, LADDERS } from '../src/config.js';
 import { UPGRADES } from '../src/upgrades.js';
 import { maxed } from '../src/words.js';
 import { gainText } from '../src/words.js';
-import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
@@ -22,7 +22,7 @@ import { CASINO_UPGRADES } from '../src/casino.js';
 
 // Every board's rows in one list, for the checks that are about all of them
 // rather than about one ladder.
-const ALL_ROWS = [...UPGRADES, ...SCRUB_UPGRADES,
+const ALL_ROWS = [...UPGRADES, ...FILTER_UPGRADES,
                   ...QUARRY_UPGRADES, ...FARM_UPGRADES, ...TOWER_UPGRADES,
                   ...CASINO_UPGRADES];
 

@@ -8,7 +8,7 @@
 // who any of the bodies are: crew.js registers the one thing only it can
 // answer, how many pairs of hands are at a site this frame.
 
-import { S, bench, lab, scrub, tower, shack } from './state.js';
+import { S, bench, lab, filter, tower, shack } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
@@ -24,7 +24,7 @@ export const SITE_JOB = {
   quarry: JOB.BUILD,
   farm: JOB.BUILD,
   apothecary: JOB.BUILD,
-  scrub: JOB.PURIFY,
+  filter: JOB.PURIFY,
   tower: JOB.WIZARD,
   yard: JOB.BUILD,
   // The bench's own ladders, fitted at the bench: the one site where what is
@@ -63,7 +63,7 @@ export const OPENS_PLACE = {
   unlockshack: 'shack',
   unlockouthouse: 'outhouse',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
-  unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
+  unlockfilter: 'filter', unlockcasino: 'casino', unlocktower: 'tower',
   unlockapothecary: 'apothecary'
 };
 // The sites with no gang of their own, worked by whoever is spare, and by
@@ -199,7 +199,7 @@ export const takesTime = u => !!u.kind && workFor(u) > 0;
 const YARD_ROW_SITE = {
   house: 'house', unlockshack: 'shack', unlockouthouse: 'outhouse',
   unlockquarry: 'quarry', unlockfarm: 'farm',
-  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
+  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockfilter: 'filter',
   unlockapothecary: 'apothecary'
 };
 
@@ -211,7 +211,7 @@ const YARD_ROW_SITE = {
 // goes and the spare hand stands. The sheds are wired in from game.js
 // (`setSheds`): world.js and apothecary.js both import this file, so naming
 // them here reads them before they exist.
-const SITE_BOX = { scrub: () => scrub, tower: () => tower, bench: () => bench,
+const SITE_BOX = { filter: () => filter, tower: () => tower, bench: () => bench,
                    lab: () => lab, shack: () => shack };
 export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
 

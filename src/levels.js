@@ -85,7 +85,7 @@ const capOfBare = job =>
   // There is no lab. Kept as a nought rather than deleted so a save with
   // scholars still reads: `rebalance` lands them in the spare pool.
   job === JOB.SCHOLAR ? 0 :
-  // One body in the scrubbing house (a second pair of hands at one fan is a
+  // One body in the air filter (a second pair of hands at one fan is a
   // queue) and one in each balloon it has sold (a second mouth is a place).
   job === JOB.PURIFY ? 1 + craftCount() :
   // One janitor a post, and the outhouse hangs a cap on its stand for each --

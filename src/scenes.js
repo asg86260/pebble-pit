@@ -681,12 +681,29 @@ export const SCENES = {
   // --- the house and the sky --------------------------------------------------
   // A mouth is a few cells drawn in over the hood; nothing in the sky is
   // moved at all.
-  scrubbing: { about: 'the house and the sky', say: 'the house scrubbing a filthy sky',
+  filtering: { about: 'the house and the sky', say: 'the house filtering a filthy sky',
     run: () => { rich(); window.__air({ open: true, haze: 2600, purifiers: 1 }); window.__fast(25);
-                 window.__look(st().scrubX - 300); } },
+                 window.__look(st().filterX - 300); } },
+  // The dial at three readings and the spout at work, clogged and sieved
+  // (DESIGN.md, "The air filter").
+  filterclean: { about: 'the house and the sky', say: 'the air filter, empty, under a clean sky',
+    run: () => { rich(); window.__air({ open: true, haze: 0, purifiers: 0 }); window.__fast(20);
+                 window.__look(st().filterX - 300); } },
+  filterhalf: { about: 'the house and the sky', say: 'the air filter pumping muck under a half sky',
+    run: () => { rich(); window.__air({ open: true, haze: 1400, purifiers: 1, muck: 0 }); window.__fast(20);
+                 window.__look(st().filterX - 300); } },
+  filterbrim: { about: 'the house and the sky', say: 'the air filter reading a sky at the brim',
+    run: () => { rich(); window.__air({ open: true, haze: 4200, purifiers: 1, muck: 0 }); window.__fast(20);
+                 window.__look(st().filterX - 300); } },
+  filterclog: { about: 'the house and the sky', say: 'the air filter stopped by its own heap',
+    run: () => { rich(); window.__crew(0, 0); window.__air({ open: true, haze: 4200, purifiers: 1, muck: 0 });
+                 window.__fast(150); window.__look(st().filterX - 300); } },
+  filtersieve: { about: 'the house and the sky', say: 'the air filter with the recycler fitted',
+    run: () => { rich(); window.__air({ open: true, haze: 2600, purifiers: 1, recycler: true }); window.__fast(20);
+                 window.__look(st().filterX - 300); } },
   moored: { about: 'the house and the sky', say: 'a balloon moored at the mast',
     run: () => { rich(); window.__air({ open: true }); window.__fast(2);
-                 window.__buy('balloon'); window.__fast(2); window.__look(st().scrubX - 220); } },
+                 window.__buy('balloon'); window.__fast(2); window.__look(st().filterX - 220); } },
   // `page` on the two with a craft in the air: the camera reads `craft` off
   // the page's snapshot, which the node yard's has not got.
   balloon: { about: 'the house and the sky', say: 'a balloon crewed and out over the yard', page: true,

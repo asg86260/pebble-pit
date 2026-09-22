@@ -1,7 +1,7 @@
 // What a rung costs and what a coin is worth, on their own so a row file can
 // price itself without importing upgrades.js: the station modules build their
 // ladders at module load, and a helper that imported upgrades.js for these
-// would close a cycle (upgrades.js -> scrubhouse.js -> tiers.js ->
+// would close a cycle (upgrades.js -> filter.js -> tiers.js ->
 // upgrades.js) and find itself uninitialized. Re-exported from upgrades.js.
 
 import { S } from '../state.js';

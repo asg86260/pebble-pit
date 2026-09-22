@@ -1,9 +1,9 @@
 import { now } from '../clock.js';
-import { DRAUGHT_FROM, DRAUGHT_PACE, DRAUGHT_PER_S, GOING_CAP, P, SCRUB_PULL, SMOG_GO_LEAN } from '../config.js';
+import { DRAUGHT_FROM, DRAUGHT_PACE, DRAUGHT_PER_S, GOING_CAP, P, FILTER_PULL, SMOG_GO_LEAN } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { windAt } from '../wind.js';
-import { GOING, SKY, intake, scrubRate } from './band.js';
+import { GOING, SKY, intake, filterRate } from './band.js';
 import { swallow } from './craft.js';
 import { dropped, moteX, moteY } from './sky.js';
 import { look } from './vents.js';
@@ -16,7 +16,7 @@ import { look } from './vents.js';
 export const DRAUGHT = [];
 
 export function breathe(secs) {
-  breatheAt(intake(), scrubRate() / SCRUB_PULL, secs, DRAUGHT_FROM);
+  breatheAt(intake(), filterRate() / FILTER_PULL, secs, DRAUGHT_FROM);
 }
 
 // A few cells drawn in to a mouth. Metered by the real rate, so an unstaffed
@@ -65,7 +65,7 @@ let sweep = 0;
 // eats the air it is in, so the sky thins where the works is cleaning it and
 // fills back in as the band drifts.
 export function pull(secs) {
-  gullet = Math.min(gullet + scrubRate() * secs, scrubRate());
+  gullet = Math.min(gullet + filterRate() * secs, filterRate());
   eat(() => gullet, n => { gullet = n; }, null);
 }
 

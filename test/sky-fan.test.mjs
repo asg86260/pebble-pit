@@ -7,14 +7,14 @@
 // not grow, a yard that buys its third machine has bought a sky it can never get
 // back down again however much it spends.
 //
-// It did not grow. `pull` took its draught strength as `scrubRate() / fanPull()`
-// -- and `scrubRate()` is bodies times `fanPull()`, so the fan cancelled clean
+// It did not grow. `pull` took its draught strength as `filterRate() / fanPull()`
+// -- and `filterRate()` is bodies times `fanPull()`, so the fan cancelled clean
 // out of the one line that moves a mote, leaving the count of bodies, which is
 // one, for ever. Five rungs and three hundred and sixty-nine shards bought a
 // draught byte-for-byte identical to the one you started with.
 //
 // And the board agreed that it had worked, which is the worse half. It quoted
-// `scrubRate()` -- what the fan is *rated* at, in motes a second -- beside a
+// `filterRate()` -- what the fan is *rated* at, in motes a second -- beside a
 // fouling figure in haze a second. A mote is SMOG_PER_MOTE of haze, so the
 // house's column read about twice what it was worth; it went on quoting the full
 // figure with the house clogged, or with the sky too thin to have anything in
@@ -26,8 +26,8 @@
 
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
-import { scrubRate } from '../src/smog.js';
-import { inScrub } from '../src/scrubhouse.js';
+import { filterRate } from '../src/smog.js';
+import { inFilter } from '../src/filter.js';
 import { SMOG_PER_MOTE, LADDER } from '../src/config.js';
 
 // The yard from the field, which is the only honest place to ask this: a fresh
@@ -95,7 +95,7 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   //
   // It was three seconds, and that made every reading below partly a measurement
   // of a walk. The house does nothing at all until somebody is through the door
-  // -- `inScrub`, not `S.purifiers`, which counts everybody it has been given
+  // -- `inFilter`, not `S.purifiers`, which counts everybody it has been given
   // including one still crossing the yard -- so a run that started before the
   // body arrived spent part of its thirty seconds measuring an empty shed. On a
   // busy yard the walk is longer than three seconds and the same setting came
@@ -105,7 +105,7 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   // The check passed for as long as the walk happened to fit. Same fault as the
   // dance's seed, and the same cure: wait for the state the measurement is
   // about instead of guessing how long it takes to arrive.
-  runUntil(() => inScrub() > 0, 60);
+  runUntil(() => inFilter() > 0, 60);
 };
 
 // Run a stretch of yard with **no rain in it**, and say whether one was had.
@@ -155,7 +155,7 @@ function cleared(fan) {
     const was = state().smog.haze;
     run(secs);
     const s = state().smog;
-    return { took: was - s.haze, left: s.haze, rate: s.scrubbing / 60, rains: s.rains };
+    return { took: was - s.haze, left: s.haze, rate: s.filtering / 60, rains: s.rains };
   }, () => window.__air({ haze: 1800 }));
 }
 
@@ -203,7 +203,7 @@ group('the house takes what it is rated at', async () => {
     const before = state().smog.haze;
     let rated = 0;
     for (let i = 0; i < secs; i++) {
-      rated += scrubRate() * SMOG_PER_MOTE;    // haze a second, the board's unit
+      rated += filterRate() * SMOG_PER_MOTE;    // haze a second, the board's unit
       run(1);
     }
     const s = state().smog;
@@ -230,7 +230,7 @@ group('the board counts what the mouth swallows', async () => {
   // after the sky was cleared almost nothing had arrived. A mouth takes its
   // share of the sky the moment the speck has settled now -- see `eat` -- so a
   // fouling yard is a yard with something to take, and the house honestly reads
-  // as scrubbing it. What this group is about is the board quoting what was
+  // as filtering it. What this group is about is the board quoting what was
   // *swallowed* rather than what the fan is rated at, and that needs a sky with
   // nothing in it.
   fromTheField(LADDER, []);
@@ -265,22 +265,22 @@ group('the board counts what the mouth swallows', async () => {
   // about the sampling rather than about the board.
   const run30 = dryStretch(30, secs => {
     const was = state().smog.haze;
-    const foul = [], scrub = [];
+    const foul = [], filter = [];
     for (let i = 0; i < secs; i++) {
       run(1);
       foul.push(state().smog.fouling);
-      scrub.push(state().smog.scrubbing);
+      filter.push(state().smog.filtering);
     }
     const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
-    return { was, s: state().smog, foul: mean(foul), scrub: mean(scrub) };
+    return { was, s: state().smog, foul: mean(foul), filter: mean(filter) };
   });
-  const { was, s, foul, scrub, dry } = run30;
+  const { was, s, foul, filter, dry } = run30;
   const fell = (was - s.haze) / 30;            // how the sky actually went
-  const said = (scrub - foul) / 60;            // and what the board said it would
+  const said = (filter - foul) / 60;            // and what the board said it would
   return [
-    ok(idle.scrubbing < 1,
-       'a fan over a clear sky is not scrubbing anything, whatever it is rated at',
-       `${idle.scrubbing}/min with nothing overhead`),
+    ok(idle.filtering < 1,
+       'a fan over a clear sky is not filtering anything, whatever it is rated at',
+       `${idle.filtering}/min with nothing overhead`),
     // Both are the same quantity from the two ends: what the sky did over the
     // stretch, and what the board's two columns said it would do. In the same
     // unit they agree; in the old ones the board was out by about a factor of
@@ -336,8 +336,8 @@ group('a speck a mouth takes fades rather than popping', async () => {
 
   // The level is the count of the sky, so a fading speck must already be out of
   // it: the board cannot be made to lag the truth by the length of a fade.
-  const rated = scrubRate() * SMOG_PER_MOTE * 60;
-  const said = working.smog.scrubbing;
+  const rated = filterRate() * SMOG_PER_MOTE * 60;
+  const said = working.smog.filtering;
 
   window.__air({ purifiers: 0 });
   run(3);

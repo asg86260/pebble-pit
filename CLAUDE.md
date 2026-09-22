@@ -30,7 +30,7 @@ goes red before the fix is written (see "The save is the fixture").
 drawing. `node tools/look.mjs <scene> --zoom 4` sets the yard up, runs a second
 of it and writes a png to `shots/` in a few seconds. There are ninety
 scenes, one for every part of the game — `crew`, `quarry`, `farm`, `rock`,
-`yard`, `boards`, `belt`, `rift`, `endgame`, `scrubbing` and the rest; the list
+`yard`, `boards`, `belt`, `rift`, `endgame`, `filtering` and the rest; the list
 is `SCENES` in `src/scenes.js`, grouped by the part each is about, and
 `node tools/look.mjs --list` prints it. Several can be named at once,
 comma-separated. It needs a dev server — pass `GAME=http://localhost:<port>/`.
@@ -269,7 +269,7 @@ Adding a station requires two things, neither optional:
    from there has a count on the boards and no bodies in the yard — `room[w.type]`
    comes back undefined and every body of that type is stood down on the frame
    it is made.
-2. Make the station's output depend on bodies **through the door** (`inScrub()`,
+2. Make the station's output depend on bodies **through the door** (`inFilter()`,
    `inLab()`), never on the assigned count, or the walk is decoration.
 
 ### Systems a new station joins unasked
@@ -372,9 +372,9 @@ Two harness facts, each of which cost a full launch cycle:
   red sink (DESIGN.md, "A machine's ladder ends"). The paint store in DESIGN.md is a *secondary* plan for the
   same resource, not the primary sink. The pit press (`packpile`) is cut.
 - **The sky is beatable, but only if you invest.** A yard running all three
-  machines should still rain on you if you ignore the scrubbing house, and
+  machines should still rain on you if you ignore the air filter, and
   should come under control once you buy into it. Balance goes through the fan
-  ladder and the scrubbing house — no new plant or greenery sink, and no
+  ladder and the air filter — no new plant or greenery sink, and no
   fully-invested yard that goes permanently clean. An upgrade that quietly
   cleaned the sky would be a number you buy once and never think about again;
   the sky is meant to stay a live decision.

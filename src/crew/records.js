@@ -6,7 +6,7 @@ import { S, quarry } from '../state.js';
 import { P, WORKER } from '../config.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
-import { inHouse } from '../scrubhouse.js';
+import { inHouse } from '../filter.js';
 import { JOB_OF } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { FACTORY } from './jobs.js';

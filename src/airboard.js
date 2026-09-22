@@ -1,7 +1,7 @@
-// The readout: one number, on the scrubbing house's board. What the yard is
+// The readout: one number, on the air filter's board. What the yard is
 // putting into the sky less what the house is taking out, a minute; the one
 // question anybody has is whether they are winning or losing. It lives on
-// the scrubbing house alone, because the one thing you do about it is put
+// the air filter alone, because the one thing you do about it is put
 // bodies in that house.
 
 import { S } from './state.js';

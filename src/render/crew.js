@@ -13,7 +13,7 @@ import { drawCoreGlow } from '../render/cores.js';
 import { hash } from './flicker.js';
 import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
-import { inHouse } from '../scrubhouse.js';
+import { inHouse } from '../filter.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
 import { ctx } from './ctx.js';

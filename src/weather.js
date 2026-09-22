@@ -86,10 +86,10 @@ export function swell() {
   return heft * (1 - smooth(dryTime() / CLOUD_SETTLE_S));
 }
 
-// How dirty the whole sky is, nought to one: the one number the clouds are the
-// readout of (DESIGN.md, "The sky is the clouds"). Not a mote's place -- the
-// murk is the sky's total, and every cloud takes it together.
-export const murk = () => Math.pow(Math.min(1, S.haze / SMOG_CAP), CLOUD_MURK_POW);
+// How dirty the whole sky is (smog/band.js): the clouds are its readout, and
+// the air filter's dial reads the same number.
+import { murk } from './smog/band.js';
+export { murk };
 
 // The tones a cloud can be, parsed once: its two pales, the smoke's brown it
 // slides toward with the murk (and stops at -- a dirty sky is a heavy brown,

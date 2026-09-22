@@ -9,7 +9,7 @@ import { JOB_OF as JOBS_AT } from './levels.js';
 import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showCrewList } from './board.js';
-import { inHouse as inScrubHouse } from './scrubhouse.js';
+import { inHouse as inFilterHouse } from './filter.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
 import { WORKER } from './config.js';
@@ -20,7 +20,7 @@ import { minding } from './crew/tenders.js';
 // without reads as `undefined` on its row.
 const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
              farmhands: 'at the farm plots',
-             purifiers: 'at the scrubbing house',
+             purifiers: 'at the air filter',
              janitors: 'clearing up' };
 
 export function whereIs(w) {
@@ -29,7 +29,7 @@ export function whereIs(w) {
   if (w.inside) return 'at home';
   // Through a door is not standing at one: a body you cannot see is a body
   // the board has to account for.
-  if (inScrubHouse(w)) return 'inside the scrubbing house';
+  if (inFilterHouse(w)) return 'inside the air filter';
 
   // Standing on it beats what it is doing on it. A hauler is the exception:
   // it is at home everywhere, so only the doing says anything.

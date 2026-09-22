@@ -14,7 +14,7 @@ import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js'
 import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { closeSubmenu, keepSubmenu } from './board.js';
 import { tookLook } from './world.js';
-import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
+import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
@@ -31,7 +31,7 @@ const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');
 const crewEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlistrows');
-const scrubEl = document.getElementById('scrubshop');
+const filterEl = document.getElementById('filtershop');
 const quarryEl = document.getElementById('quarryshop');
 const farmEl = document.getElementById('farmshop');
 const apothEl = document.getElementById('apothshop');
@@ -731,7 +731,7 @@ export function buildCrewList() {
 // not exist yet when this line runs.
 const BOARDS = {
   bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
-  scrub:  () => [scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit'],
+  filter:  () => [filterEl, FILTER_UPGRADES, FILTER_SECTIONS, 'nothing to fit'],
   // Each ground draws the kit row that lodges with it (`lodgers`).
   quarry: () => [quarryEl, [...QUARRY_UPGRADES, ...lodgers('quarry')], QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
   farm:   () => [farmEl, [...FARM_UPGRADES, ...lodgers('farm')], FARM_SECTIONS, 'the ground is all broken'],

@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).
 - The rain has depth like the sky does: it falls in three sheets, fine pale flecks far off and long dark strokes close in, sliding past each other as you scroll, with the clouds in front of the far ones (src/scenes.js `raindepth`; test/sky-rain.test.mjs).
 - Each machine's tuning is a proper three-rung ladder now -- pips on the card, a written price a rung, and an end you reach -- and the rows are named for what goes up: ram strike, drill bite, tiller pace (test/machine-tune.test.mjs).
 - The sky has depth: three sheets of cloud, far to near, each paler, finer-grained and lower the farther it is, and every cloud is its own cumulus -- a spine of big circles with puffs on top, lit from above and shaded like the boulder (src/scenes.js `cloudswell`, `rock`; test/weather.test.mjs).

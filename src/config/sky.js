@@ -4,9 +4,9 @@
 // once, all over the yard, as muck. It is the only thing in this game that
 // makes the works worse, and it is caused by the one thing you do most.
 //
-// This, SCRUB_PULL, RECYCLE_PER, SCRUB_PER_MUCK and RAIN_PER_S move together:
+// This, FILTER_PULL, RECYCLE_PER, FILTER_PER_MUCK and RAIN_PER_S move together:
 // they are one cycle, and changing one alone changes the balance, not the
-// pace. Fouling against scrubbing is the number that decides whether the house
+// pace. Fouling against filtering is the number that decides whether the house
 // is worth buying ("the air" in DESIGN.md).
 //
 // Small on purpose: hand labor should barely mark the sky, so that the

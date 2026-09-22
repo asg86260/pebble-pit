@@ -67,9 +67,9 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
   healJaw();
   return [
-    ok(losing.fouling > 0 && losing.scrubbing === 0,
+    ok(losing.fouling > 0 && losing.filtering === 0,
        'a yard with nobody in the house is putting up and taking down nothing',
-       `+${losing.fouling}/min, -${losing.scrubbing}/min`),
+       `+${losing.fouling}/min, -${losing.filtering}/min`),
     // That the yard goes on fouling, not that it fouls at exactly the same rate.
     //
     // This used to compare the two readings and demand they be close, which
@@ -80,14 +80,14 @@ group('the sky reads as one rate, and it can go negative', async () => {
     // any few seconds depends on where in that cycle you looked. Comparing two
     // samples of it measures the dig, not the house.
     //
-    // The claim was only ever that scrubbing and fouling are two different
+    // The claim was only ever that filtering and fouling are two different
     // things and the house does not stop the works.
     ok(winning.fouling > 0,
        'and the works goes on fouling whether or not somebody is in the house',
        `${losing.fouling} -> ${winning.fouling}`),
-    ok(winning.scrubbing > 0 && winning.fouling - winning.scrubbing < 0,
+    ok(winning.filtering > 0 && winning.fouling - winning.filtering < 0,
        'so a staffed house turns it the other way, which is the whole reading',
-       `${winning.fouling} - ${winning.scrubbing} = ${(winning.fouling - winning.scrubbing).toFixed(1)}/min`),
+       `${winning.fouling} - ${winning.filtering} = ${(winning.fouling - winning.filtering).toFixed(1)}/min`),
     ok(losing.trend > 0 && winning.trend < 0,
        'and the arrow follows a minute of it, not a second',
        `${losing.trend.toFixed(2)} -> ${winning.trend.toFixed(2)}`)

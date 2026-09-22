@@ -17,7 +17,7 @@ export const QUARRY_CORES = 1;     // and the cut, once the plots are feeding it
 export const FARM_DUST = 600;      // the plots, and the first real bill
 // Higher and the door sits shown-and-red for hours of a greedy run.
 export const QUARRY_DUST = 2000;   // the quarry
-export const SCRUB_DUST = 3500;    // the scrubbing house
+export const FILTER_DUST = 3500;    // the air filter
 
 export const LAB_DUST = 12000;     // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing

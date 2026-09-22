@@ -2,7 +2,7 @@
 //
 // Every grain taken out of the ground is a mote in the sky for the whole of
 // its life: it climbs from the swing, settles in the band, drifts, clumps, and
-// comes down one at a time as muck or leaves through the scrubbing house. There
+// comes down one at a time as muck or leaves through the air filter. There
 // is no cloud sprite; the sky is the dust you put there.
 //
 // The parts, one file each:
@@ -11,7 +11,7 @@
 //   vents.js    what goes up, and what a speck looks like
 //   draught.js  a hand through the smoke
 //   sky.js      how the sky is arranged: slots, sway, creep, settling
-//   house.js    the scrubbing house pulling on the band
+//   house.js    the air filter pulling on the band
 //   craft.js    what the balloons take
 //   rain.js     the shower, and whether one breaks
 //   layer.js    the muck it leaves on the ground, and shifting it
@@ -22,8 +22,8 @@
 
 import { S } from './state.js';
 import { RAIN_FALL, PUFF_UP, SMOG_PER_MOTE } from './config.js';
-import { DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, clogged, fanPull,
-         outletMuck, raining, scrubRate, scrubbing } from './smog/band.js';
+import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, clogged, fanPull, murk,
+         outletMuck, raining, filterRate, filtering } from './smog/band.js';
 import { foul, look, puffStack, reckon, skyMote, stepPuffs, stepStack } from './smog/vents.js';
 import { enter } from './smog/sky.js';
 
@@ -36,7 +36,7 @@ export function skyKindCounts() {
 import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
-import { pullCraft } from './smog/craft.js';
+import { pullCraft, stepClods } from './smog/craft.js';
 import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
          stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
@@ -96,7 +96,7 @@ export function skyFromSave(kinds = null, drops = null, puffs = null) {
 // what it is made of, the rain already falling, and every speck still on its
 // way up. Counts, not motes: the band itself is rebuilt on the way back in.
 export const SAVE = {
-  fields: ['haze', 'poop', 'skyKinds', 'drops', 'puffs'],
+  fields: ['haze', 'poop', 'skyKinds', 'drops', 'puffs', 'clods'],
   write(out) {
     // Rounded: a fraction of a mote is not worth the characters.
     out.haze = Math.round(S.haze);
@@ -109,10 +109,13 @@ export const SAVE = {
     out.puffs = SKY.filter(m => m.up).map(m => [Math.round(m.x), Math.round(m.y), m.kind || 'dust', +(m.vy || 0).toFixed(3),
                                              Math.round(m.y0 ?? m.y), +(m.lean || 0).toFixed(2), +(m.fade ?? 1).toFixed(2), Math.round(m.age || 0)]);
     out.poop = S.poop || [];
+    // And the filter's loads still falling off the spout: each is a load of
+    // muck the heap is owed.
+    out.clods = CLODS.map(k => [Math.round(k.x), Math.round(k.y), +k.vy.toFixed(2), k.n]);
   },
   read(s) {
     S.haze = s.haze || 0;
-    S.scrubBank = 0;
+    S.filterBank = 0;
     // The weather in flight comes back with the sky (`raining`, `rainFor`,
     // `stormFor` are plain saved fields); the bolt is a flash of a few
     // frames and is not.
@@ -124,14 +127,18 @@ export const SAVE = {
     // before the save is read (main.js), so there is a width to spread it
     // across.
     skyFromSave(s.skyKinds, s.drops, s.puffs);
+    CLODS.length = 0;
+    for (const k of Array.isArray(s.clods) ? s.clods : [])
+      if (Array.isArray(k) && Number.isFinite(k[0]) && Number.isFinite(k[1]))
+        CLODS.push({ x: k[0], y: k[1], vy: Number.isFinite(k[2]) ? k[2] : 0, n: +k[3] || 1 });
   },
   // A new yard's sky is seeded by `reset` itself: the fresh-yard arm of
   // `restore` runs on a page whose layout has already seeded one.
   blank() {}
 };
 
-export { SKY, DROPS, GOING, STACK, bandTop, bandLow, raining, clogged, scrubbing,
-         outletMuck, fanPull, scrubRate, climbing,
+export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining, clogged, filtering,
+         outletMuck, fanPull, filterRate, climbing,
          foul, puffStack, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
          DRAUGHT, dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
@@ -147,9 +154,12 @@ export { SKY, DROPS, GOING, STACK, bandTop, bandLow, raining, clogged, scrubbing
 export function stepSmog(dt) {
   const secs = dt / 1000;
   stepPuffs(secs);
+  // Before the house takes anything this frame, so a load made this frame is
+  // in the air for at least one frame even when the heap is up at the lip.
+  stepClods();
   // The house takes motes and nothing else docks the number for the fan: that
   // is the same dirt subtracted twice.
-  if (scrubbing()) { pull(secs); breathe(secs); }
+  if (filtering()) { pull(secs); breathe(secs); }
   else { DRAUGHT.length = 0; }
   // After the house, so a mote in the throat is the house's rather than
   // fought over.
@@ -166,7 +176,7 @@ export function stepSmog(dt) {
     S.stormHeft = rollHeft();
     S.rainDue = nextDue();
     // The first rain is what shows you the sky's reading; nothing else sets
-    // `seenAir`, and the scrubbing house is gated on it.
+    // `seenAir`, and the air filter is gated on it.
     if (!S.seenAir) { S.seenAir = true; }
     markSky();
   }

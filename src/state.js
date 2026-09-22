@@ -293,7 +293,7 @@ export const S = {
   // Where the tiller has got to on its run up the row and back, 0..2;
   // everything about the machine is read off it.
   tillerAt: 0,
-  // How much harder the scrubbing house pulls.
+  // How much harder the air filter pulls.
   fanLevel: 0,
   // The tower's enchantments laid on the yard: a set of keys, on or not.
   // True for the few lines a machine is driving a station's own code: the
@@ -349,7 +349,7 @@ export const S = {
   looPosts: LOO_POSTS,    // how many caps the outhouse's stand has; `loopost` sells the second
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
-  scrubBoardOpen: false,
+  filterBoardOpen: false,
   // The books over the pit: the one board that belongs to no building.
   statsBoardOpen: false,
   // --- the record (notices.js) ---
@@ -375,7 +375,7 @@ export const S = {
   stormHeft: 1,           // how big the front on the way (or pouring) is, 0..1
   stormLeft: 0,           // marked motes still to fall in this shower
   rains: 0,               // how many times they have
-  scrubOpen: false,       // the house is built
+  filterOpen: false,       // the house is built
   purifiers: 0,           // and this many bodies are in it
   janitors: 0,            // and how many are shovelling up after everybody
   seenMess: false,        // and whether the yard has ever been left in a state
@@ -386,9 +386,11 @@ export const S = {
   skipHeldAt: 0,
   introCut: false,
   recycler: false,        // which keep what they catch rather than binning it
-  scrubBank: 0,           // part of a grain, on its way to being a whole one
-  scrubMuck: 0,           // and part of a clod of muck, on its way out of the spout
+  filterBank: 0,           // part of a grain, on its way to being a whole one
+  filterMuck: 0,           // and part of a clod of muck, on its way out of the spout
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
+  dialAt: 0,              // what the filter's dial reads, eased toward the sky
+  dialStep: 0,            // and the line of cells its needle is drawn on
   recycled: 0,            // and how many whole ones it has given back
   seenAir: false,         // the lab has been told to watch the sky
 
@@ -508,7 +510,7 @@ export const SAVED = [
   'shelf',
   'potency',
   'casinoOpen',
-  'scrubOpen',
+  'filterOpen',
   'towerOpen',
   'outhouseOpen',
   'shackOpen',
@@ -590,6 +592,7 @@ export const SAVED_BY_HAND = [
   'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
   'drops',                // and the rain in the air, [x, y, vy] a drop; the same
   'puffs',                // and the plume still climbing, a speck a row; the same
+  'clods',                // and the filter's loads falling off its spout; the same
   // Moments on the clock, written as how far off they are (`danceLeft`,
   // `nextBoulderIn`).
   'danceUntil', 'nextBoulderAt',
@@ -695,14 +698,14 @@ export const EPHEMERAL = [
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
-  'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
+  'towerBoardOpen', 'filterBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',
   'shackBoardOpen',
   'nextHit', 'nextToss', 'resetArmed',
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // The weather, and the part-grain the house is partway through.
-  'bolt', 'scrubBank', 'scrubMuck', 'pumpAt',
+  'bolt', 'filterBank', 'filterMuck', 'pumpAt', 'dialAt', 'dialStep',
   'placed', 'strips', 'introHeart',
   'shopStale', 'fatal', 'lastFrame', 'settleAt',
   // A reload finds the one under the rock packed in, the way every rock
@@ -742,7 +745,7 @@ export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
 export const apothecary = { x: 0, y: 0, w: 0, h: 0 };
 export const casino = { x: 0, y: 0, w: 0, h: 0 };
-export const scrub = { x: 0, y: 0, w: 0, h: 0 };
+export const filter = { x: 0, y: 0, w: 0, h: 0 };
 // The rift stands past the far wall of the hole, a plot like any other
 // (rift.js).
 export const rift = { x: 0, y: 0, w: 0, h: 0 };

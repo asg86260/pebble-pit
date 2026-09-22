@@ -131,7 +131,7 @@ export const TESTS = [
     run(20);
     const bad = [];
     const seen = new Set();
-    for (const name of ['bench', 'house', 'quarry', 'farm', 'scrub',
+    for (const name of ['bench', 'house', 'quarry', 'farm', 'filter',
                         'tower', 'casino', 'outhouse']) {
       window.__board(name);
       await sleep(320);                        // the sheet scales in; let it land
@@ -179,7 +179,7 @@ export const TESTS = [
     // rule does not yet cover) is off the bench.
     window.__shack();
     run(20);
-    const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'scrub',
+    const boards = ['bench', 'shack', 'house', 'quarry', 'farm', 'filter',
                     'tower', 'casino'];
     const bad = [];
     let seen = 0;
@@ -835,7 +835,7 @@ export const TESTS = [
     run(20);
 
     const boards = { bench: '#shop', lab: '#labshop', shack: '#shackshop',
-                     casino: '#casinoshop', scrub: '#scrubshop', quarry: '#quarryshop',
+                     casino: '#casinoshop', filter: '#filtershop', quarry: '#quarryshop',
                      farm: '#farmshop', tower: '#towershop', house: '#crewshop' };
     const bad = [];
     let rows = 0;
@@ -876,7 +876,7 @@ export const TESTS = [
     St.towerOpen = false;
     St.casinoOpen = false;
     St.outhouseOpen = false;
-    St.scrubOpen = false;
+    St.filterOpen = false;
     window.__build();
     window.__board('bench');
     await raf();

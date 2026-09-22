@@ -29,7 +29,7 @@ import { drawAuras, drawFlags } from './render/aura.js';
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawShield } from './render/shield.js';
-import { drawScrub } from './render/scrub.js';
+import { drawFilter, drawClods } from './render/filter.js';
 import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
@@ -54,7 +54,7 @@ export { drawDraught, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } fr
 export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 export { drawShack } from './render/shack.js';
 export { drawBalloons, drawBrollies } from './render/balloon.js';
-export { drawScrub } from './render/scrub.js';
+export { drawFilter } from './render/filter.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
@@ -113,7 +113,7 @@ const LAYERS = [
   { name: 'belt', draw: drawBelt },              // the road from the rock to the hole
   { name: 'sky', draw: drawSky },
   { name: 'casino', draw: drawCasino },
-  { name: 'scrub house', draw: drawScrub },
+  { name: 'air filter', draw: drawFilter },
   { name: 'tower', draw: drawTower },
   { name: 'outhouse', draw: drawOuthouse },
   { name: 'pot pile', draw: drawPotPile },       // what is on the table, as a heap on the ground
@@ -141,6 +141,7 @@ const LAYERS = [
   { name: 'floor', draw: drawFloor },
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
+  { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
 
   { name: 'pit outline', draw: drawPitOutline },
@@ -153,7 +154,7 @@ const LAYERS = [
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands
-  { name: 'draught', draw: drawDraught },        // the air going into the scrubbing house
+  { name: 'draught', draw: drawDraught },        // the air going into the air filter
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went

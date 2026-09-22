@@ -93,7 +93,7 @@ export const GLYPH_OF = {
   critchance: ['spark'], critmult: ['cracked'],
   haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], belt: ['belt'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
-  unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockscrub: ['fan'],
+  unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['fan'],
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
   // the shack
@@ -110,7 +110,7 @@ export const GLYPH_OF = {
   wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
-  // the scrubbing house
+  // the air filter
   fan: ['fan'], balloon: ['balloon'], recycler: ['lever'],
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],

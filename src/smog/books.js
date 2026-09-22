@@ -1,6 +1,6 @@
-import { P, RAIN_FIRST_S, SCRUB_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
+import { P, RAIN_FIRST_S, FILTER_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
-import { DROPS, SKY, STACK, climbing, intake, raining, resetDrift, scrubbing } from './band.js';
+import { CLODS, DROPS, SKY, STACK, climbing, intake, raining, resetDrift, filtering } from './band.js';
 import { resetGullet } from './house.js';
 import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
 import { EMBERS, LEDGER, dryFor, resetRain, stormLen } from './rain.js';
@@ -9,7 +9,7 @@ import { spread } from './vents.js';
 
 // --- the books ------------------------------------------------------------------------
 // What the yard has put up since the last reading, counted at the source.
-// Inferred from the change in the haze it reads equal to the scrubbing the
+// Inferred from the change in the haze it reads equal to the filtering the
 // moment the house starts winning, and the net sits at nought however many
 // bodies you move. Rain and the house are not production and are not counted.
 let made = 0;
@@ -18,7 +18,7 @@ export const countMade = add => { made += add; };
 let mark = { at: 0, rate: 0, drew: 0 };
 
 // What the house has actually taken, counted at the mouth as motes go down
-// the throat. Not `scrubRate()`: a rating is in motes a second against a
+// the throat. Not `filterRate()`: a rating is in motes a second against a
 // fouling in haze a second, and it goes on quoting the full figure while the
 // house stands clogged or the sky is too thin to reach.
 let drew = 0;
@@ -56,17 +56,17 @@ export function airTrend() {
 }
 const fouling = () => mark.rate;
 // What the house took out over the last second, not what its fan is rated at.
-const scrubbed = () => mark.drew;
+const filtered = () => mark.drew;
 
 export function airReadout() {
-  const net = fouling() - scrubbed();
+  const net = fouling() - filtered();
   return {
     haze: Math.round(S.haze),
     at: SMOG_RAIN_AT,
     cap: SMOG_CAP,
     share: Math.min(1, S.haze / SMOG_CAP),
     fouling: +(fouling() * 60).toFixed(1),
-    scrubbing: +(scrubbed() * 60).toFixed(1),
+    filtering: +(filtered() * 60).toFixed(1),
     // blank when the house is winning, which is the number worth playing for
     dueMs: net <= 0 ? null : Math.round(((SMOG_CAP - S.haze) / net) * 1000),
     dryFor: dryFor === Infinity ? null : +dryFor.toFixed(1)
@@ -103,10 +103,10 @@ export const skyBins = () => strips().filter(Boolean).length;
 // how much of the sky the house has hold of: specks inside a few cells of the
 // mouth, on their way down the throat
 export function drawnIn() {
-  if (!S.scrubOpen) return 0;
+  if (!S.filterOpen) return 0;
   const to = intake();
   let n = 0;
-  for (const m of SKY) if (Math.hypot(moteX(m) - to.x, moteY(m) - to.y) < SCRUB_CATCH) n++;
+  for (const m of SKY) if (Math.hypot(moteX(m) - to.x, moteY(m) - to.y) < FILTER_CATCH) n++;
   return n;
 }
 
@@ -125,7 +125,7 @@ export function smogReport() {
            // a settled mote a pixel or two over a second, which whole pixels
            // would swallow
            skyX: spread(SKY.filter(m => !m.up), 200).map(m => +moteX(m).toFixed(2)),
-           puffs: climbing(), drops: DROPS.length, trend: airTrend(),
+           puffs: climbing(), drops: DROPS.length, clods: CLODS.length, trend: airTrend(),
            // Motes the draught has hold of: near the mouth and plainly coming.
            caught: drawnIn(), clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
@@ -137,7 +137,7 @@ export function smogReport() {
            rainDue: S.rainDue, stormLen: stormLen(), rainFor: S.rainFor, left: S.stormLeft,
            // what the shower has landed and laid, by kind of drop
            landed: { ...LEDGER },
-           purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,
+           purifiers: S.purifiers, filterOpen: S.filterOpen, recycler: S.recycler,
            muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },
@@ -163,6 +163,7 @@ export function seedSmog() {
   clearSky();
   resetDrift();
   DROPS.length = 0;
+  CLODS.length = 0;
   EMBERS.length = 0;
   S.bolt = null;
   S.muck = [];

@@ -1,4 +1,4 @@
-// The filter balloons the scrubbing house sells, and anyone stepped out under a
+// The filter balloons the air filter sells, and anyone stepped out under a
 // brolly.
 
 import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftY, mastX } from '../balloon.js';
@@ -7,7 +7,7 @@ import { S } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
 
-// The craft the scrubbing house sells, one per lane. See balloon.js.
+// The craft the air filter sells, one per lane. See balloon.js.
 //
 // Everything about where it is comes off the craft's own geometry; nothing is
 // remembered, so a balloon cannot be drawn over a house re-sited under it.
@@ -15,7 +15,7 @@ import { ctx } from './ctx.js';
 // The filter is the point of the drawing: without the vented box slung between
 // bag and basket the craft is a nice picture of the wrong thing.
 export function drawBalloons() {
-  if (!S.scrubOpen) return;
+  if (!S.filterOpen) return;
   for (let i = 0; i < CRAFT.length; i++) {
     const c = CRAFT[i];
     // Whole pixels, and *not* the lattice: a balloon is not standing on

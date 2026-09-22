@@ -179,7 +179,7 @@ group('the ground is laid out to match the order things were bought in', async (
   const before = state();
 
   // Nothing bought yet: the fixed order, bench and house first and then the
-  // table's own sequence -- school, quarry, farm, lab, scrub, casino, tower.
+  // table's own sequence -- school, quarry, farm, lab, filter, casino, tower.
   const fixedTowerBehindQuarry = before.quarryX > before.towerX;
 
   // The tower bought first, ahead of everything else. Set directly rather

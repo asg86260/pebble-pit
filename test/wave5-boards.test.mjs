@@ -13,7 +13,7 @@ import { group, ok, state, run, yard } from './helpers.mjs';
 import { UPGRADES } from '../src/upgrades.js';
 import { gainText, unitText, MARK } from '../src/words.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
@@ -22,7 +22,7 @@ import { STATS_WINDOW_S } from '../src/config.js';
 import { showPanel, hud } from '../src/board.js';
 
 const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES,
-                  ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
+                  ...FILTER_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                   ...APOTHECARY_UPGRADES];
 
 // --- seconds are a clock ------------------------------------------------------

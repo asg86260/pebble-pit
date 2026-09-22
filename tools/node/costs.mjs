@@ -25,7 +25,7 @@ const { workFor, takesTime } = await import('../../src/works.js');
 const { shackRows, shackSections } = await import('../../src/shack.js');
 const { crewSections } = await import('../../src/crewboard.js');
 const { CASINO_UPGRADES, CASINO_SECTIONS } = await import('../../src/casino.js');
-const { SCRUB_UPGRADES, SCRUB_SECTIONS } = await import('../../src/scrubhouse.js');
+const { FILTER_UPGRADES, FILTER_SECTIONS } = await import('../../src/filter.js');
 const { QUARRY_UPGRADES, QUARRY_SECTIONS } = await import('../../src/quarry.js');
 const { FARM_UPGRADES, FARM_SECTIONS } = await import('../../src/farm.js');
 const { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } = await import('../../src/apothecary.js');
@@ -44,7 +44,7 @@ const BOARDS = [
   ['the casino', CASINO_UPGRADES, CASINO_SECTIONS],
   ['the outhouse', OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS],
   ['the tower', TOWER_UPGRADES, TOWER_SECTIONS],
-  ['the scrubbing house', SCRUB_UPGRADES, SCRUB_SECTIONS]
+  ['the air filter', FILTER_UPGRADES, FILTER_SECTIONS]
 ];
 
 // A row's sections and then whatever it forgot to name -- `grouped` in shop.js.

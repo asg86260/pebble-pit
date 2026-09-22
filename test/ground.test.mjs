@@ -674,13 +674,13 @@ group('a rock landing throws the dust off its footprint rather than shovelling i
 // as holding dust. That is a wrong drawing with nothing to say it is wrong, so
 // it is checked here rather than looked for on screen. The other direction is
 // deliberately NOT an error: a strip with no entry holds dust, which is what the
-// rock and the scrubbing house pay out and what a new station pays out until
+// rock and the air filter pay out and what a new station pays out until
 // somebody gives it a find of its own.
 group('every strip on the ground says whose it is', async () => {
   // Everything the yard can open, so every strip that can exist does.
   openSites();
   window.__meteor();
-  window.__buy('unlockscrub');
+  window.__buy('unlockfilter');
   window.__finish();
   run(1);
   const keys = state().piles.map(p => p.key);

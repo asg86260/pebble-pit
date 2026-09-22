@@ -1,14 +1,14 @@
-// The scrubbing house: the building, the bodies in it, and its board.
+// The air filter: the building, the bodies in it, and its board.
 //
 // The air itself lives in `smog.js`. This is the place on the ground you walk
 // up to, the crew standing in it, and what you can buy there. It is a house
 // rather than a purchase because the bodies in it are bodies not on the rock
 // (DESIGN.md).
 
-import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS, BALLOON_RUNGS } from './config.js';
+import { WORKER, FARM_WALK, FILTER_DUST, RECYCLE_SHARDS, FILTER_PUMP, FILTER_FOLDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
-import { fanPull } from './smog.js';
-import { S, scrub } from './state.js';
+import { fanPull, murk } from './smog.js';
+import { S, filter } from './state.js';
 import { walkY } from './world.js';
 
 import { airRows, airSection } from './airboard.js';
@@ -17,17 +17,17 @@ import { registerRows } from './works.js';
 import { TYPE } from './jobs.js';
 
 export function newPurifier() {
-  return { type: TYPE.PURIFY, goal: 'to', x: scrub.x, y: 0 };
+  return { type: TYPE.PURIFY, goal: 'to', x: filter.x, y: 0 };
 }
 
 // the door, and who is through it
-export const scrubDoor = () => scrub.x + scrub.w * 0.5;
+export const filterDoor = () => filter.x + filter.w * 0.5;
 export const inHouse = w => w.type === TYPE.PURIFY && w.goal === 'in';
 
 // Not `S.purifiers`: that counts everybody the house has been given, and one
 // may still be crossing the yard. Nothing comes out of the sky until they are
 // through the door.
-export const inScrub = () => S.workers.filter(inHouse).length;
+export const inFilter = () => S.workers.filter(inHouse).length;
 
 // The bellows on the front, in folds of stroke. It breathes while somebody is
 // in there, quickening with the roster to a cap of four, and an empty house
@@ -36,20 +36,32 @@ export const inScrub = () => S.workers.filter(inHouse).length;
 // It closes rather than stops: the folds fall shut toward nought from
 // whichever side of the stroke they are on, so the last thing it does is close.
 //
-// Stepped in the sim, not in drawScrub: a clock kept by the draw loop runs at
+// Stepped in the sim, not in drawFilter: a clock kept by the draw loop runs at
 // double speed the moment anything draws the yard twice in a frame. Kept
 // inside one stroke rather than counting up forever, so a float never runs
 // out of precision to say which fold it is on.
-export function stepScrub(dt) {
-  if (!S.scrubOpen) return;
-  const step = SCRUB_PUMP * dt / 1000, cycle = SCRUB_FOLDS * 2;
-  const n = Math.min(4, inScrub());
+export function stepFilter(dt) {
+  if (!S.filterOpen) return;
+  stepDial(dt / 1000);
+  const step = FILTER_PUMP * dt / 1000, cycle = FILTER_FOLDS * 2;
+  const n = Math.min(4, inFilter());
   if (n) { S.pumpAt = (S.pumpAt + step * n) % cycle; return; }
   if (!S.pumpAt) return;
   // shutting: the near half of the triangle runs back down to nought, the far
   // half runs on to the end of the stroke; both are the folds closing
-  if (S.pumpAt <= SCRUB_FOLDS) S.pumpAt = Math.max(0, S.pumpAt - step);
+  if (S.pumpAt <= FILTER_FOLDS) S.pumpAt = Math.max(0, S.pumpAt - step);
   else S.pumpAt = Math.min(cycle, S.pumpAt + step) % cycle;
+}
+
+// The dial reads what the clouds are drawn from, so the two cannot disagree,
+// and reads it whether or not anybody is inside: it says what the air is
+// like, not whether the filter is working. The needle eases toward the
+// reading and moves to another line of cells only once the reading is well
+// past its own, so a sky sitting on a boundary does not set it trembling.
+function stepDial(secs) {
+  S.dialAt += (murk() - S.dialAt) * Math.min(1, DIAL_EASE * secs);
+  const want = S.dialAt * (DIAL_STEPS - 1);
+  if (Math.abs(want - S.dialStep) > DIAL_GIVE) S.dialStep = Math.round(want);
 }
 
 export function stepPurifier(w) {
@@ -64,7 +76,7 @@ export function stepPurifier(w) {
   if (w.craft != null) dismount(w);
 
   w.y = walkY(w.x + WORKER / 2);
-  const d = scrubDoor() - WORKER / 2 - w.x;
+  const d = filterDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
   w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
 }
@@ -74,10 +86,10 @@ export function stepPurifier(w) {
 // stops being an answer at exactly the point the yard is worth having one.
 const FAN = tierRows({
   field: 'fanLevel',
-  unit: 'motes/s', pct: true, does: 'scrub',
+  unit: 'motes/s', pct: true, does: 'filter',
   value: lvl => fanPull(lvl),
-  site: 'scrub',
-  show: () => S.scrubOpen,
+  site: 'filter',
+  show: () => S.filterOpen,
   bands: named('fan', 'fan power')
 });
 
@@ -88,18 +100,18 @@ const FAN = tierRows({
 // happens to walk it. The calls are wrapped for the same reason.
 const CRAFT_ROW = {
   key: 'balloon',
-  // Built at the scrubbing house, where it is moored, in a machine's time.
-  kind: 'machine', site: 'scrub',
+  // Built at the air filter, where it is moored, in a machine's time.
+  kind: 'machine', site: 'filter',
   name: 'the balloon',
   note: () => 'rides the sky and drops what it catches under itself',
   rung: () => CRAFT.length,
   cost: () => craftCost(),
   currency: 'dust',
   buy: () => buyCraft(),
-  show: () => S.scrubOpen && CRAFT.length < BALLOON_RUNGS
+  show: () => S.filterOpen && CRAFT.length < BALLOON_RUNGS
 };
 
-export const SCRUB_UPGRADES = [
+export const FILTER_UPGRADES = [
   ...FAN,
 
   // No row for who is in it: it is a shed with a fan in it (`capOf`), so it
@@ -110,27 +122,27 @@ export const SCRUB_UPGRADES = [
   CRAFT_ROW,
   {
     key: 'recycler',
-    // A fitting the house's own body puts in, so the house is not scrubbing
+    // A fitting the house's own body puts in, so the house is not filtering
     // while it happens.
-    kind: 'place', site: 'scrub',
+    kind: 'place', site: 'filter',
     name: 'the recycler',
     note: () => 'replaces the filters: what it catches comes back as pebbles',
     cost: () => RECYCLE_SHARDS,
     currency: 'shard',
     buy: () => { S.recycler = true; },
     // Priced in ore, so not before the quarry stands.
-    show: () => S.scrubOpen && S.quarryOpen && !S.recycler
+    show: () => S.filterOpen && S.quarryOpen && !S.recycler
   }
 ];
 
-export const SCRUB_SECTIONS = [
+export const FILTER_SECTIONS = [
   airSection(),
   { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
 ];
 
 // Dust, like every other building: a core buys the one thing nothing else can.
-export const scrubCost = () => SCRUB_DUST;
+export const filterCost = () => FILTER_DUST;
 
 // So a work coming back out of a save knows which row it belongs to
 // (`registerRows` in works.js).
-registerRows(SCRUB_UPGRADES);
+registerRows(FILTER_UPGRADES);

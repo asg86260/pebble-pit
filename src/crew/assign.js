@@ -19,7 +19,7 @@ import { lifted } from './pointer.js';
 
 // Which job a drop on a station means: only the stations that hire. A body
 // dropped on the bench or the house is a body thrown at a building.
-const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, scrub: JOB.PURIFY,
+const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, filter: JOB.PURIFY,
                  tower: JOB.WIZARD, apothecary: JOB.STIR,
                  outhouse: JOB.JANITOR };
 

@@ -1,13 +1,14 @@
-// The scrubbing house: its hood open to the sky and the bellows breathing
+// The air filter: its hood open to the sky and the bellows breathing
 // under it.
 
-import { DOOR_H, DOOR_W, P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_FOLDS } from '../config.js';
-import { inScrub } from '../scrubhouse.js';
-import { S, floor, scrub } from '../state.js';
+import { DIAL_STEPS, DOOR_H, DOOR_W, MUCK_TONE, P, FILTER_ARM, FILTER_CHUTE, FILTER_FOLDS } from '../config.js';
+import { CLODS } from '../smog.js';
+import { inFilter } from '../filter.js';
+import { S, floor, filter } from '../state.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 
-// The scrubbing house: a hood open to the sky, and a bellows breathing under it.
+// The air filter: a hood open to the sky, and a bellows breathing under it.
 //
 // The only building that takes anything in at the top, because what it takes
 // comes out of the sky: five courses of wall flaring open at the haze, each
@@ -26,8 +27,8 @@ import { rising as risingAt, withRise } from './rise.js';
 // a fan halted at some angle could never say. It opens a fold at a time from
 // the mount downward, because a fold is a whole cell. Under work the count of
 // open folds runs one, two, three, two and never reaches nought; shut is rest
-// only, and it settles fold by fold when the last body leaves (scrubhouse.js
-// stepScrub). One bellows for any number of bodies, beating faster with each
+// only, and it settles fold by fold when the last body leaves (filter.js
+// stepFilter). One bellows for any number of bodies, beating faster with each
 // up to four: what the building says is how hard it is being worked.
 //
 // Every edge is a whole cell off the building's own corner, which world.js
@@ -37,13 +38,13 @@ const HOOD_WALL = 4;     // and cells of black through each of its two walls
 const BAY = 8;           // courses of shaft the bellows hangs in
 const LEAF = 5;          // and cells across every leaf of it, in a shaft LEAF + 2 wide
 // see config.js: the mechanic reads these two as well, so they live there
-const CHUTE = SCRUB_CHUTE;
-export function drawScrub() {
-  const rising = risingAt('scrub') && 'scrub';
-  if (!S.scrubOpen && !rising) return;
-  const { x, y, w, h } = scrub;
+const CHUTE = FILTER_CHUTE;
+export function drawFilter() {
+  const rising = risingAt('filter') && 'filter';
+  if (!S.filterOpen && !rising) return;
+  const { x, y, w, h } = filter;
   withRise(rising, x, S.groundY, w, h, () => {
-  const on = inScrub() > 0;
+  const on = inFilter() > 0;
   const across = Math.round(w / P), down = Math.round(h / P);
   const throatMid = (across - 1) / 2;      // the middle column, wanted before the shaft is
   const c = (n) => x + P * n;                        // cell n across the front
@@ -70,15 +71,7 @@ export function drawScrub() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(c(throatMid), r(HOOD), P, P);
 
-  // A vent out of the far wall, the one face of this building with nothing on
-  // it. A stub with an elbow turned up, drawn on sky rather than cut into the
-  // wall: white over a face already painted white is a nick you cannot see,
-  // and a hole in the black reads as a second way in. UP because what this
-  // house has spare is air; the chute on the other side turns down for grit.
-  ctx.fillStyle = '#000';
-  const vent = c(across - towerL);
-  ctx.fillRect(vent, r(HOOD + 2), P * 2, P);
-  ctx.fillRect(vent + P, r(HOOD + 1), P, P);
+  drawDial(c(across - towerL), r);
 
   // The shaft, and the bellows in it. It starts one whole solid course below
   // the point of the throat, or a hole opening into a hole is one tall opening
@@ -91,18 +84,18 @@ export function drawScrub() {
 
   // The folds, a cell at a time: half a cell of travel is a leaf drawn across
   // a fraction of a device pixel. The count of open folds is the whole of the
-  // animation, and scrubhouse.js keeps it, because a clock kept in the draw
+  // animation, and filter.js keeps it, because a clock kept in the draw
   // loop runs at double speed the moment anything draws the yard twice in a
   // frame. Worked, the count never reaches nought, so the one pose that means
   // nobody is home is a pose the working cycle cannot show. The shaft is deep
   // enough for the whole stroke and one cell over, so the foot never lands on
   // the floor of its own shaft. A leaf is one cell thick because a fold is
   // thin: a moving part, not a member.
-  const k = Math.floor(S.pumpAt) % (SCRUB_FOLDS * 2);
-  const fold = k <= SCRUB_FOLDS ? k : SCRUB_FOLDS * 2 - k;
+  const k = Math.floor(S.pumpAt) % (FILTER_FOLDS * 2);
+  const fold = k <= FILTER_FOLDS ? k : FILTER_FOLDS * 2 - k;
   const open = on ? Math.max(1, fold) : fold;
   ctx.fillStyle = '#000';
-  for (let i = 0; i <= SCRUB_FOLDS; i++)
+  for (let i = 0; i <= FILTER_FOLDS; i++)
     ctx.fillRect(c(mid - (LEAF - 1) / 2), r(head + i + Math.min(i, open)), P * LEAF, P);
 
   // The way in, DOOR_W by DOOR_H like every other door, since what a door is
@@ -114,21 +107,85 @@ export function drawScrub() {
   ctx.fillRect(c(mid - DOOR_W / 2 + 1), r(down - DOOR_H), P * DOOR_W, P * DOOR_H);
   ctx.fillStyle = '#000';
 
-  // The recycler is a chute: an arm out of the near wall, two courses deep,
-  // turning a cell down at its end. Black on sky, since every white version
-  // disappeared against ground the building had already painted white. The arm
-  // is CHUTE cells long so it comes out one cell past the corner the hood's
-  // flare comes down to, ending over the cell smog.js releases the grain from
-  // (outlet()); the lip drops from that same end, so the two cannot come apart
-  // if the shaft is ever a course deeper. It hangs off the foot of the building
-  // and the courses of daylight wanted under it, never off the door: measured
-  // off the door, widening the way in by a course swung the arm down into the
-  // crew, whose heads are three courses tall.
-  if (!S.recycler) return;
+  // The spout is a chute: an arm out of the near wall, two courses deep,
+  // turning a cell down at its end. It is the filter's from the day it stands,
+  // since everything it takes out of the sky comes out here. Black on sky,
+  // since every white version disappeared against ground the building had
+  // already painted white. The arm is CHUTE cells long so it comes out one
+  // cell past the corner the hood's flare comes down to, ending over the cell
+  // smog.js releases a load from (outlet()); the lip drops from that same end,
+  // so the two cannot come apart if the shaft is ever a course deeper. It hangs
+  // off the foot of the building and the courses of daylight wanted under it,
+  // never off the door: measured off the door, widening the way in by a course
+  // swung the arm down into the crew, whose heads are three courses tall.
   ctx.fillStyle = '#000';
   const end = c(towerL) - P * CHUTE;
-  const armTop = down - SCRUB_ARM - 2;
+  const armTop = down - FILTER_ARM - 2;
   ctx.fillRect(end, r(armTop), P * CHUTE, P * 2);
   ctx.fillRect(end, r(armTop + 2), P, P);
+  // The recycler is a sieve let into the arm: a row of open cells along its
+  // top, every other one, so what goes down the chute is sorted on the way.
+  if (S.recycler) {
+    ctx.fillStyle = '#fff';
+    for (let i = 1; i < CHUTE - 1; i += 2) ctx.fillRect(end + P * i, r(armTop), P, P);
+  }
   });
+}
+
+// The dial: a ring of cells round a white face, on a stub off the far wall,
+// the one face of this building with nothing else on it. Laid out as a mask
+// rather than as a circle, because at seven cells a circle is a choice about
+// which cells, and the choice should be made once, here, where it can be
+// looked at.
+const DIAL = [
+  '..###..',
+  '.#...#.',
+  '#.....#',
+  '#.....#',
+  '#.....#',
+  '.#...#.',
+  '..###..'
+];
+const DIAL_ROW = 6;      // courses down the front its top sits: clear of the hood's flare
+const HUB = 3;           // the middle cell, across and down
+
+// Three quarters of a turn, clean at the lower left, through the top, brim at
+// the lower right, the way a pressure gauge reads. No zones and no red line:
+// the rain keeps its own clock, so no reading is a threshold.
+function needle(step) {
+  const a = Math.PI * 0.75 + (step / (DIAL_STEPS - 1)) * Math.PI * 1.5;
+  const dx = Math.cos(a), dy = Math.sin(a);
+  // A cell a step from the hub along the needle's angle, and one two steps
+  // out: every angle is a line of whole cells. A tip that lands on the ring
+  // is left off, or the needle reads as a notch in the rim; on a diagonal
+  // the needle is the hub and one cell.
+  return [1, 2].map(d => [HUB + Math.round(dx * d), HUB + Math.round(dy * d)])
+    .filter(([i, j]) => DIAL[j][i] !== '#');
+}
+
+function drawDial(wall, r) {
+  const x0 = wall + P, y0 = r(DIAL_ROW);
+  ctx.fillStyle = '#000';
+  // the stub it hangs on, one cell out of the wall at the hub's height
+  ctx.fillRect(wall, y0 + P * HUB, P, P);
+  ctx.fillStyle = '#fff';
+  for (let j = 1; j < DIAL.length - 1; j++) {
+    const row = DIAL[j], from = row.indexOf('#') + 1, to = row.lastIndexOf('#');
+    ctx.fillRect(x0 + P * from, y0 + P * j, P * (to - from), P);
+  }
+  ctx.fillStyle = '#000';
+  for (let j = 0; j < DIAL.length; j++)
+    for (let i = 0; i < DIAL[j].length; i++)
+      if (DIAL[j][i] === '#') ctx.fillRect(x0 + P * i, y0 + P * j, P, P);
+  ctx.fillRect(x0 + P * HUB, y0 + P * HUB, P, P);
+  for (const [i, j] of needle(S.dialStep)) ctx.fillRect(x0 + P * i, y0 + P * j, P, P);
+}
+
+// A load on its way down off the spout, or off a balloon's basket: one cell
+// of muck, in the muck's own tone, falling to the heap it will land on.
+export function drawClods() {
+  if (!CLODS.length) return;
+  ctx.fillStyle = MUCK_TONE;
+  for (const k of CLODS)
+    ctx.fillRect(Math.floor(k.x / P) * P, Math.floor(k.y / P) * P, P, P);
 }
