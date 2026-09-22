@@ -7,18 +7,92 @@ import { P } from './yard.js';
 // nothing in the sky may borrow them. The clouds keep clear of the haze
 // (`band` in `weather.js`), so the two are layered rather than mixed.
 export const CLOUDS_ON = true;
-export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in view
+// The sky is deep: three sheets of cloud, one behind the other, and a cloud
+// is born into one of them and stays there. `far` is the sheet's parallax
+// (how much of the camera's scroll it takes, so the far sheet barely moves and
+// the near one nearly keeps up with the ground) and its drift comes off it
+// too, so the sheets slide past each other. `scale` is how big a cloud in the
+// sheet is: the far ones are small and the near ones tall enough to be cut by
+// the window's top, which is what puts them overhead. `fade` is the air
+// between you and the sheet: the far sheet's colors are mixed that far toward
+// the page's white, so it is a pale suggestion and the near sheet is the one
+// with weight -- the only depth of field a flat-color picture can have. `lane`
+// is where in the band the sheet sits, nought at the top to one at the bottom:
+// the far clouds low toward the horizon, the near ones overhead, the way a
+// sky recedes. `n` is how many are kept in the strip of sky in view.
+// The sheets follow how a sky recedes (John Muir Laws, "How to draw clouds
+// in perspective"): the far ones are more, packed closer, squashed into thin
+// horizontal slips with their flat bases lined up near the horizon; the near
+// ones fewer, tall, in their true shape, overhead. `scale` is a cloud's width
+// in the sheet, in its own cells, and `flat` how much of its height it keeps.
+// `cell` is the size of the sheet's cell against the yard's: the near sheet
+// is drawn in cells twice the yard's and the far one in half-cells, so a
+// far cloud is finer-grained as well as smaller and paler -- the grain is
+// the depth, the way a thing close up is coarse and a thing far off is fine.
+// `lane` is where in the band the sheet's bases sit, nought at the top to one
+// at the bottom, kept narrow so a sheet's bases line up the way cumulus bases
+// do.
+export const CLOUD_LAYERS = [
+  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7,  cell: 0.5, lane: [0.9, 1.0],   n: 5 },
+  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9,  cell: 1,   lane: [0.65, 0.78], n: 3 },
+  { name: 'near', far: 0.40, scale: 0.85, flat: 1.0,  cell: 1.5, lane: [0.4, 0.55],  n: 2 }
+];
+export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
+// a sheet's clouds are not all at one exact depth: each is this far either
+// side of its sheet's `far`, so two in a sheet still slide past each other
+// and the one in front is the one drawn last
+export const CLOUD_FAR_JITTER = 0.03;
+// how far above the ground line the lowest cloud's base can sit: the bottom of
+// the sky, behind the works, where the far sheet's slips lie along the horizon
+export const CLOUD_FLOOR = P * 16;
+// The air between you and a cloud: its tones are mixed this far toward the
+// page's white at the farthest depth, nothing at the nearest, straight off its
+// `far` -- so the far sheet is a pale slip with its shades pressed together,
+// and the near sheet has the whole range. The only depth of field a flat
+// picture can have, and it takes the same share off dirt and weather, so a far
+// cloud on a dirty day is a paler brown, not a cleaner one.
+export const CLOUD_FADE_FAR = 0.45;
+// A cloud is shaded like the boulder, in steps between CLOUD_TONE and
+// CLOUD_UNDER: lit, body, shade, and the underside. It is lit from above: a
+// cell's depth is how far below the nearest bit of the top outline it sits
+// (its own column or up to CLOUD_SHADE_REACH either side), as a share of the
+// cloud's height -- lit down to CLOUD_LIT, body down to CLOUD_MID, shade
+// below that -- so the shade pools under the heaps and thins under the dips.
+export const CLOUD_TONES = 4;
+export const CLOUD_LIT = 0.35;
+export const CLOUD_MID = 0.7;
+export const CLOUD_SHADE_REACH = 4;
+// The kinds of cloud, and how often each is born (`share`, relative): how
+// many big circles its spine has along the base and how many puffs ride on
+// them, how tall it is as a share of its width, and how wide it is against
+// its sheet's size. One recipe for every cloud made a sky of the same cloud
+// over and over; the kinds are what make two clouds two clouds.
+export const CLOUD_KINDS = [
+  { name: 'puff',  share: 3, spine: [1, 2], puffs: [1, 3], tall: [0.55, 0.8], wide: [0.5, 0.75] },
+  { name: 'heap',  share: 4, spine: [2, 4], puffs: [2, 5], tall: [0.45, 0.7], wide: [0.9, 1.2] },
+  { name: 'tower', share: 2, spine: [2, 3], puffs: [3, 5], tall: [0.6, 0.85], wide: [0.8, 1.0] },
+  { name: 'bank',  share: 3, spine: [4, 6], puffs: [2, 4], tall: [0.25, 0.4], wide: [1.2, 1.5] }
+];
+// A spine circle's radius as a share of the cloud's height, how far two
+// neighbors overlap (a share of their radii summed), and how low its center
+// sits (a share of its radius above the base: low, so the bottom is one long
+// rounded shape). A puff's radius, likewise, and how far it sinks into the
+// spine's surface (a share of its radius) -- mostly above it.
+export const CLOUD_SPINE_R = [0.42, 0.6];
+export const CLOUD_SPINE_LAP = [0.55, 0.75];
+export const CLOUD_SPINE_LOW = [0.35, 0.7];
+export const CLOUD_PUFF_R = [0.25, 0.45];
+export const CLOUD_PUFF_SINK = [0.0, 0.4];
 // The clouds are the front. Through a storm's brew they swell -- each one
 // wider, taller, with a heavier underside -- and more come in off the sides,
 // up to CLOUDS_STORM at a full heft; through the taper and for CLOUD_SETTLE_S
 // after it they shed it all again. The swell is derived off the storm's clock
 // every frame and never saved (`swell` in weather.js).
-export const CLOUDS_STORM = 12;
+export const CLOUDS_STORM = 16;
 export let CLOUD_SETTLE_S = 30;
 // How far a bump's radius grows at a full swell, as a share of itself: the
 // front is a bigger cloud, not a new shape.
-export const CLOUD_GROW_R = 0.9;
-export const CLOUD_GROW_UNDER = 2;   // rows the underside deepens by at a full swell
+export const CLOUD_GROW_R = 0.5;
 // The murk: the clouds are the sky's dirt readout (DESIGN.md, "The sky is the
 // clouds"). One number, `S.haze / SMOG_CAP`, grows and browns every cloud
 // together. Murk grows a cloud less than a storm swells it -- a dirty sky is a
@@ -29,7 +103,7 @@ export const CLOUD_MURK_GROW = 0.5;
 // heavy brown and no further. Not black -- a black sky over the works read as
 // night, and hid the storm that was the thing worth seeing.
 export const CLOUD_MURK_TONE = '#6b4d28';
-export const CLOUD_MURK_UNDER = '#503a20';
+export const CLOUD_MURK_UNDER = '#3a2812';
 export const CLOUD_MURK_TINT = 0.6;
 // How the murk answers the haze: the share of the cap raised to this power.
 // SMOG_CAP is a slow-fill ceiling (tens of minutes of machines), so a linear
@@ -43,7 +117,7 @@ export let CLOUD_MURK_POW = 0.45;
 // makes a front read as a heavy sky. Bluish rather than a rock grey, so the
 // sky borrows none of the six shades even where it dips as dark.
 export const CLOUD_STORM_TONE = '#a6a6b0';
-export const CLOUD_STORM_UNDER = '#868692';
+export const CLOUD_STORM_UNDER = '#62626e';
 export const CLOUD_STORM_TINT = 0.7;
 export const CLOUD_STORM_UNDER_TINT = 0.85;
 // World pixels a frame a full gust carries a fully swelled cloud, on top of
@@ -70,8 +144,12 @@ export const STINK_RISE = 26;        // pixels a second a wisp climbs
 export const STINK_LIFE = 2.4;       // seconds before it has gone
 export const STINK_EVERY = 3;        // one column in this many gets one
 
-export const CLOUD_TONE = '#e4e4e4';
-export const CLOUD_UNDER = '#d6d6d6';   // the bottom bar, so a cloud has an underside
+// The two ends of a dry cloud's shading, its lit crown and its base; the
+// steps between are mixed. The base stays lighter than the lightest rock
+// shade, since the six shades are the rock's and nothing in the sky borrows
+// them.
+export const CLOUD_TONE = '#dadada';
+export const CLOUD_UNDER = '#909090';
 export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
 export const BIRD_TONE = '#5f5f5f';
 export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next

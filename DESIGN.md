@@ -12359,6 +12359,70 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
+## The sky has depth (built 2026-09-21)
+
+Every cloud sat in one band at one depth, drawn the same, and the sky read as
+a strip of paint with the yard in front of it. This gives the sky a back and a
+front, and makes each cloud a thing rather than a stamp.
+
+### Three sheets
+
+`CLOUD_LAYERS` in `config/weather.js` is three sheets, far, mid and near, and
+a cloud is born into one and stays there. The sheets follow how a real sky
+recedes (John Muir Laws, "How to draw clouds in perspective"): the far sheet
+is more clouds, smaller, squashed toward horizontal slips, their bases lined
+up low near the horizon behind the works; the near sheet is two clouds, tall,
+in their true shape, overhead. Each sheet has its own parallax, so they slide
+past each other when the view scrolls, and drawing goes far to near so an
+overlap says which is in front.
+
+Three cues carry the depth, and each one is derived off the cloud's `far`,
+not tuned a sheet at a time:
+
+- **Air.** A cloud's tones are mixed toward the page's white by its depth
+  (`CLOUD_FADE_FAR` at the farthest, nothing at the nearest), *after* the
+  murk and the storm have colored it -- so a far cloud on a dirty day is a
+  paler brown, not a cleaner one, and its shades are pressed together as well
+  as paler. The only depth of field a flat picture can have.
+- **Grain.** Each sheet is drawn in its own cell: the far one in half the
+  yard's cell, the near one in one and a half. A far cloud is fine-grained,
+  a near one coarse, the way a thing close up is coarse and a thing far off
+  is fine. This is the one deliberate exception to "everything on the P
+  grid": a half-cell still lands on the grid's half-lines and every edge is
+  snapped to a whole device pixel (`snap` in `drawClouds`), so no fill meets
+  another between pixels and there is no hairline of page through a cloud.
+  Cells are joined along rows, not up columns, for the same reason.
+- **Place.** A near cloud sits high, a far one low; and a cloud is never
+  placed so high that its dry crown is off the top of the window, since a
+  tall cloud cut flat at the top is a slab.
+
+### A cloud is a spine and puffs
+
+A cloud is one mass of circles on a flat base, the way a cumulus is: a spine
+of big circles sitting low along the base and overlapping heavily, so the
+bottom is one long shape with rounded ends, and smaller puffs of varied size
+riding on the spine's surface, which is what gives the top its heaps and dips.
+`CLOUD_KINDS` says which cumulus it is -- a puff, a heap, a tower, a long low
+bank -- by spine count, puff count, height and width; one recipe for every
+cloud made a sky of the same cloud over and over. Circle crowns are rounded to
+the grid, not raised, so a puff's top spans a few cells rather than coming to
+a point.
+
+### Shaded like the boulder
+
+A cloud is lit from above and shaded in steps between `CLOUD_TONE` and
+`CLOUD_UNDER`, the way a rock cell is shaded by its depth into the rock. A
+cell's depth is how far it sits below the nearest bit of the cloud's top
+outline, up its own column or a few either side; the top `CLOUD_LIT` of the
+cloud's height is lit, down to `CLOUD_MID` is the body, below that the shade,
+and the base is one row of underside. The shade pools under the heaps and
+thins under the dips, so the puffs read as volume without an outline. Rims
+drawn around each lobe were tried and cut: they made a cauliflower. A thick
+underside (a share of the height, deeper in a storm) was tried and cut: it
+was a bar the cloud sat on. A storm darkens the base rather than thickening
+it, and swells a cloud by half rather than nine tenths, since the bigger swell
+flattened every cloud into a dome.
+
 ## The sky is the clouds (built 2026-09-21)
 
 The sky had grown four textures at once -- a haze band of specks, the drifting
