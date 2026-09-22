@@ -23,6 +23,7 @@ import { fadeIn, fadeOut } from './fade.js';
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
 import { refreshGear, refreshHeldSeat } from './gear.js';    // and the way to the settings on a phone
+import { refreshCorner } from './corner.js';                // and the row they stand in, with the crew switch
 
 // The veil comes off one frame after the first, so the frame is painted under
 // it before it starts to go.
@@ -97,6 +98,7 @@ function frame() {
     refreshHop();
     refreshFullscreen();
     refreshGear();
+    refreshCorner();
     refreshHeldSeat();
     fillQueue();
     fillPin();

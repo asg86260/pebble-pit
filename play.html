@@ -191,9 +191,6 @@ try {
   <!-- the thumb switch: the hop, the sheet and the tap gate follow the
        pointer the platform reports, and this overrides it (prefs.js, coarse) -->
   <button id="touch" type="button" data-pane="settings" hidden>touch: off</button>
-  <!-- the crew drawn faint, so a late yard's crowd does not hide the
-       buildings behind it (render.js, a `dim` layer) -->
-  <button id="crewfade" type="button" data-pane="settings" hidden>crew: full</button>
   <!-- white on black (prefs.js, dark): follows the system until pressed -->
   <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <!-- the whole screen, where the platform will give it (fullscreen.js);
@@ -296,13 +293,19 @@ try {
      at each edge of the mid sky, wearing the glyph of the next standing
      station that way, and a tap glides the view there. hop.js seats and
      dresses them; an arrow with nothing past it is not drawn. -->
-<!-- The fullscreen button, top-right in the sky, where the platform can go
-     fullscreen at all (fullscreen.js). -->
-<button id="fullscreen" type="button" hidden><i class="frame"></i></button>
-<!-- The gear, on a phone only: the way to the settings where there is no
-     escape key (gear.js). It stands beside the fullscreen button, or in its
-     spot where there is none. -->
-<button id="gear" type="button" hidden><i class="cog"></i></button>
+<!-- The corner: a row of squares in the sky's top-right, laid right to left
+     so a button that is not there leaves no gap (corner.js). -->
+<div id="corner">
+  <!-- the whole screen, where the platform can go fullscreen at all
+       (fullscreen.js) -->
+  <button id="fullscreen" type="button" hidden><i class="frame"></i></button>
+  <!-- the gear, on a phone only: the way to the settings where there is
+       no escape key (gear.js) -->
+  <button id="gear" type="button" hidden><i class="cog"></i></button>
+  <!-- the crew drawn faint, so a late yard's crowd does not hide the
+       buildings behind it (corner.js; render.js, a `dim` layer) -->
+  <button id="crewfade" type="button" hidden><i class="body"></i></button>
+</div>
 <div id="hop" hidden>
   <button class="left" type="button" hidden><span class="arrow">&#9664;</span><i class="pic"></i></button>
   <button class="right" type="button" hidden><i class="pic"></i><span class="arrow">&#9654;</span></button>

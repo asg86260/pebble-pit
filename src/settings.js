@@ -2,7 +2,7 @@
 // that is not the yard. This file wires the shelf; escape, resume and the
 // reset's two-click arming are input.js's.
 
-import { pref, setPref, reducedMotion, coarse, dark, fadedCrew } from './prefs.js';
+import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
@@ -95,19 +95,6 @@ function sayTouch() {
 touchEl.addEventListener('click', () => {
   setPref('touch', !coarse());
   sayTouch();
-});
-
-// The crew switch: the bodies drawn faint, so an endgame yard's crowd can be
-// looked through to the buildings behind it. A preference and not a state,
-// like the two above, and read by the drawing loop each frame, so nothing has
-// to be repainted here.
-const crewEl = document.getElementById('crewfade');
-function sayCrew() {
-  crewEl.textContent = fadedCrew() ? 'crew: faded' : 'crew: full';
-}
-crewEl.addEventListener('click', () => {
-  setPref('faded', !fadedCrew());
-  sayCrew();
 });
 
 // And the dark switch: a desk that asked its system for dark reads "on"
@@ -228,7 +215,6 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   if (sheet.hidden) { S.fellBack = false; S.newerSave = null; return; }
   sayMotion();
   sayTouch();
-  sayCrew();
   sayDark();
   paste.hidden = true;
   box.value = '';
@@ -237,7 +223,6 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 sayMotion();
 sayTouch();
-sayCrew();
 sayDark();
 
 // The mute and the volume. The wake on the first pointer gesture is the one

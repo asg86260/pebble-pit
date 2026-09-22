@@ -127,15 +127,19 @@ canvas {
 #hop button.left { left: calc(var(--hop-inset) + env(safe-area-inset-left, 0px)); }
 #hop button.right { right: calc(var(--hop-inset) + env(safe-area-inset-right, 0px)); }
 #hop .pic { display: block; line-height: 0; }
-/* The fullscreen button (fullscreen.js): the hop's square in the sky's
-   top-right corner, inside the safe area. Its glyph is drawn here: a frame
-   with the corners marked to go in, the corners turned inward to come out. */
-#fullscreen {
+/* The corner (corner.js): the hop's squares in a row in the sky's top-right,
+   inside the safe area, laid right to left. The row is a flex box so a
+   square that is hidden takes its room with it: nobody works out who stands
+   where. */
+#corner {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
   right: calc(env(safe-area-inset-right, 0px) + var(--fs-inset));
-  width: var(--fs-size); height: var(--fs-size);
   z-index: 4;
+  display: flex; flex-direction: row-reverse; gap: var(--fs-inset);
+}
+#corner > button {
+  width: var(--fs-size); height: var(--fs-size);
   display: flex; align-items: center; justify-content: center;
   background: var(--paper); color: var(--ink);
   border: 2px solid var(--ink);
@@ -143,6 +147,8 @@ canvas {
   padding: 0;
   cursor: pointer;
 }
+/* The fullscreen button's glyph (fullscreen.js): a frame with the corners
+   marked to go in, the corners turned inward to come out. */
 #fullscreen .frame {
   display: block; position: relative; width: 18px; height: 18px; box-sizing: border-box;
   border: 2px solid var(--ink);
@@ -157,26 +163,20 @@ canvas {
 /* in fullscreen: the corners turned inward, which is a square in the middle */
 #fullscreen[data-on="1"] .frame { border-color: transparent; background: var(--ink); }
 #fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
-/* The gear (gear.js): the same square, beside the fullscreen button or in
-   its spot. The cog is a thirteen-cell pixel drawing at two screen pixels a
-   cell: a ring two cells thick, hollow, with eight teeth. */
-#gear {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
-  right: calc(env(safe-area-inset-right, 0px) + var(--fs-inset) + var(--gear-shift, 0px));
-  width: var(--fs-size); height: var(--fs-size);
-  z-index: 4;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--paper); color: var(--ink);
-  border: 2px solid var(--ink);
-  box-sizing: border-box;
-  padding: 0;
-  cursor: pointer;
-}
+/* The gear (gear.js): the cog is a thirteen-cell pixel drawing at two
+   screen pixels a cell: a ring two cells thick, hollow, with eight teeth. */
 #gear .cog {
   display: block; width: 26px; height: 26px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Cpath d='M5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM12 7h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 26px 26px;
 }
+/* The crew switch (corner.js): one body, three cells square at two screen
+   pixels a cell, as the yard draws it -- at full ink, or at the faded ink
+   the switch puts the crew in, so the square shows what the yard is doing. */
+#crewfade .body {
+  display: block; width: 18px; height: 18px; box-sizing: border-box;
+  border: 2px solid var(--ink); background: var(--paper);
+}
+#crewfade[data-on="1"] .body { opacity: var(--crew-fade, 0.4); }
 /* The held sheet as a sheet from the bottom, on a phone (gear.js, through
    the boards' seat in sheet.js): the same box, handle and slide as a board
    (the .bottom rules below), scrolling inside itself. It moves as one thing
@@ -513,8 +513,8 @@ body.still #scroller { scroll-behavior: auto; }
    the dev panel's corner, which is dev only. */
 .pin {
   position: fixed;
-  /* under the fullscreen button where there is one (fullscreen.js writes
-     --fs-room), and inside the safe area */
+  /* under the corner's row where there is one (corner.js writes --fs-room),
+     and inside the safe area */
   right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(8px + env(safe-area-inset-top, 0px) + var(--fs-room, 0px));
   z-index: 9;
   display: block;

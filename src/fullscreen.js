@@ -63,14 +63,8 @@ if (rowEl) {
 }
 
 // Seated every frame like the rest of the shell: gone while the game is
-// held, since the sheet is up and has its own row.
-let shown = null;
+// held, since the sheet is up and has its own row. Where it stands is the
+// corner's row (corner.js).
 export function refreshFullscreen() {
-  if (!button) return;
-  const want = fullscreenAble() && !S.paused;
-  if (want === shown) return;
-  shown = want;
-  button.hidden = !want;
-  // and the pin under it gives the corner up
-  root.style.setProperty('--fs-room', want ? `${FS_SIZE + FS_INSET}px` : '0px');
+  if (button) button.hidden = !(fullscreenAble() && !S.paused);
 }
