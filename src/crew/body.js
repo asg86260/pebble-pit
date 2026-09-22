@@ -54,6 +54,3 @@ export const homeCount = () => S.workers.filter(atHome).length;
 // the sky in the middle of the drop zone. Only a body on a rung or on the
 // floor of a hole has something over its head.
 export const onYard = w => !inWorking(w);
-
-// Up on the surface, rather than down on the floor of a working.
-export const upTop = w => w.y + WORKER <= S.groundY + 1;

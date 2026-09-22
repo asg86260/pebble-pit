@@ -19,8 +19,8 @@ import { writeFileSync } from 'node:fs';
 import { newYard } from './yard.mjs';
 
 const yard = await newYard();
-const { UPGRADES, SECTIONS, HOUSE_ROW, rungsOf } = await import('../../src/upgrades.js');
-const { gainText } = await import('../../src/words.js');
+const { UPGRADES, SECTIONS, HOUSE_ROW } = await import('../../src/upgrades.js');
+const { gainText, rungsOf } = await import('../../src/words.js');
 const { workFor, takesTime } = await import('../../src/works.js');
 const { shackRows, shackSections } = await import('../../src/shack.js');
 const { crewSections } = await import('../../src/crewboard.js');

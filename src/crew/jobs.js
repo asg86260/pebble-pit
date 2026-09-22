@@ -37,7 +37,7 @@ import { newRockhand, rockhandWork, rockhandMess, rockhandBack } from './rockhan
 import { newJanitor, janitorWork, janitorBack } from './janitor.js';
 import { newHauler, haulerWork, haulerBack } from './hauler.js';
 import { newBuilder, stepBuilder } from './builders.js';
-import { upTop } from './body.js';
+import { onYard } from './body.js';
 import { newQuarrier, stepQuarrier } from '../quarry.js';
 import { newFarmhand, stepFarmhand } from '../farm.js';
 import { newPurifier, stepPurifier } from '../filter.js';
@@ -66,7 +66,7 @@ export const JOBS = {
     step: {
       work: (w, c) => stepQuarrier(w, c.now, c),
       mess: {
-        when: w => upTop(w) && (quarryMuck() > 0 || S.pileFull.quarry),
+        when: w => onYard(w) && (quarryMuck() > 0 || S.pileFull.quarry),
         // `to` is the walk back to the station, so nobody is put back.
         back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
       }
@@ -79,7 +79,7 @@ export const JOBS = {
     step: {
       work: (w, c) => stepFarmhand(w, c.now, c.dt, c),
       mess: {
-        when: w => upTop(w) && (plotMuck() > 0 || S.pileFull.farm),
+        when: w => onYard(w) && (plotMuck() > 0 || S.pileFull.farm),
         back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
       }
     }

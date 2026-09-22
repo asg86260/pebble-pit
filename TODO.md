@@ -77,27 +77,16 @@ against 1195). The clean rain already draws from a `stream()` of its own; the
 motes want the same. Until then no check can assert frame-exact timing across a
 camera change.
 
-### Two tests fail at random
+### `inWorking` reads the ground line to a pixel again (2026-09-22)
 
-- `test/rock.test.mjs`, "the one underneath is covered by the rock" -- about 1
-  run in 6, alone as well as under load. It watches 400 frames and asserts a
-  body says something; the window is timing-sensitive.
-- Browser, "a body is thrown rather than dropped" -- only under full-suite load,
-  a different assertion each time. Real pointer, real `sleep()`s.
-
-Both want to assert what must be true rather than what happened in a window.
-
-### Small
-
-- `tools/node/costs.mjs` fails before it writes (`rungsOf is not a function`;
-  it moved to `src/words.js`), so `docs/upgrade-costs.html` is stale and still
-  says "scrubbing house".
-- `wayAt` answers `rock` for a body under a rock still 620 px up, and
-  `verify.js`'s `deepest` measures it against the airborne `rockTopY`. Falls run
-  42 frames against `BURIED_FRAMES` = 60, so it never fires; `rockDown()` in
-  rock.js is the exemption if it ever does.
-- `upTop` survives at two station-errand predicates with a 1 px fragility (a
-  false negative costs one frame of an errand).
+`onYard` is `!inWorking`, and since b58041ac `inWorking` answers true for any
+feet more than a pixel under the ground line -- the tolerance 8e16327f took out
+of the dance's duck because the idle bob crosses it (a body mid-bob sits about
+1.17px low). The duck, the commute's duck, the fall rule and the quarry's and
+farm's muck errands all ask it. b58041ac wanted a body under the ground with no
+working under it (the cut moved on a re-walk) read as down a hole; the fix is a
+depth that means that, not a pixel. Blocker: `inWorking` is asked across the
+yard, so it moves bodies in checks that are not about it.
 
 ---
 

@@ -16,6 +16,7 @@ import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, standTop, WORKINGS } from './route.js';
 import { cutTop } from './quarry.js';
+import { rockDown } from './rock.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf, driving } from './kit.js';
 import { count, countDust } from './grid.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
@@ -240,9 +241,12 @@ export function verifyWorld() {
     // Nobody is inside the hill or the floor of the hole, give or take the
     // climb lag BURIED and BURIED_FRAMES allow. See `deepest` for why the
     // surface asked about is the lowest column rather than the highest.
+    // A rock still in the air is not a hill yet: `wayAt` answers `rock` for
+    // a body under its footprint, and its top is hundreds of pixels up, so
+    // every body there reads as deep inside it until it lands.
     const way = wayAt(w.x, w.y, all);
     const surf = deepest(w.x, way.at);
-    if (feet - surf > BURIED) {
+    if (feet - surf > BURIED && (way.key !== 'rock' || rockDown())) {
       const since = sunkSince.get(w) ?? S.tick;
       sunkSince.set(w, since);
       if (S.tick - since > BURIED_FRAMES)
