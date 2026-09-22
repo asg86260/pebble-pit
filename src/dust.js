@@ -3,7 +3,7 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER, BELT_THROW_LOW, BELT_SCATTER } from './config.js';
+import { P, GRAV, WORKER, BELT_THROW_LOW, BELT_THROW_TOP, BELT_SCATTER } from './config.js';
 import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit, band } from './state.js';
@@ -356,7 +356,7 @@ export function stepBelt(now, f) {
     const tall = Math.max(1, highOf(last));
     for (let r = 0; r < band.rows; r++) {
       const v = at(band, last, r);
-      if (v) tipOff(head - P, r, (r + 1) / tall, v);
+      if (v) tipOff(head, r, (r + 1) / tall, v);
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;
@@ -367,14 +367,15 @@ export function stepBelt(now, f) {
   }
 }
 
-// A grain off the front of the load, from the cell it sat in, somewhere
-// across that cell rather than all on one x. Fanned by `share`, how high in
-// its column it stood: every grain leaving on the one speed falls as the
-// column did, a slab hanging off the head.
+// A grain off the front of the load, from where it sat, somewhere across its
+// cell rather than all on one x, and up the head's ramp: as much up as along,
+// the ramp's slope (`BELT_RAMP`, drawn in render/machines.js). Fanned by
+// `share`, how high in its column it stood: every grain leaving on the one
+// speed falls as the column did, a slab hanging off the head.
 function tipOff(x, r, share, v) {
-  const s = BELT_THROW_LOW + (1 - BELT_THROW_LOW) * share;
+  const s = BELT_THROW_LOW + (BELT_THROW_TOP - BELT_THROW_LOW) * share;
   const vx = Math.max(0, BELT_PACE * (s + bell() * BELT_SCATTER));
-  spawnChip(x + rand() * P, bottomY(band) - (r + 1) * P, vx, 0, v);
+  spawnChip(x + rand() * P, bottomY(band) - (r + 1) * P, vx, -vx * (0.85 + 0.3 * rand()), v);
 }
 
 // The head is a drop, so the load's front stands at the slope it rests at

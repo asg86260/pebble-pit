@@ -2,7 +2,7 @@
 // their run switch.
 
 import { now } from '../clock.js';
-import { MACHINE_IDLE_MS, P, WORKER } from '../config.js';
+import { BELT_RAMP, MACHINE_IDLE_MS, P, WORKER } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY } from '../dust.js';
 
 import { drawGrid } from './ground.js';
@@ -151,6 +151,9 @@ export function drawBelt() {
   const from = beltFrom(), to = beltTo(), y = beltY();
   ctx.fillStyle = '#000';
   ctx.fillRect(from, y, to - from, P);                   // the band
+  // The ramp at the head the load is flicked off: a cell up for a cell out,
+  // the slope `tipOff` throws at, filled underneath so it reads as a wedge.
+  for (let i = 0; i < BELT_RAMP; i++) ctx.fillRect(to + i * P, y - i * P, P, (i + 1) * P);
   // The legs, only as far as there is ground to stand on: the head overhangs
   // the mouth of the hole.
   for (let x = from; x < beltReach(); x += P * 8) {
