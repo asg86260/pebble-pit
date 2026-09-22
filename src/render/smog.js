@@ -2,9 +2,9 @@
 // leaves behind.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
-import { DRAUGHT, DROPS, EMBERS, GOING, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
+import { DROPS, EMBERS, GOING, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
 import { CLOUD_LAYERS } from '../config.js';
 import { paled } from '../weather.js';
@@ -239,23 +239,6 @@ const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 // A climbing mote and a settled one are drawn by `drawSmog` in the same pass.
 // Kept as the name the shell calls; nothing left for it to do.
 export function drawPuffs() {}
-
-// The air going into the house: faint specks falling in to the cupola's vent
-// while somebody is inside. Worth nothing and counted nowhere, and drawn thin
-// enough to say so; they are what shows a fan over a clean sky still pulling.
-export function drawDraught() {
-  if (!DRAUGHT.length) return;
-  ctx.fillStyle = SMOG_TINTS.dust[0];
-  ctx.beginPath();
-  for (const k of DRAUGHT) {
-    if (!onScreen(k.x)) continue;
-    ctx.rect(Math.round(k.x / P) * P, Math.round(k.y / P) * P, P, P);
-  }
-  ctx.globalAlpha = HAZE_INK * DRAUGHT_INK;
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#000';
-}
 
 // The shower is drawn in sheets, the way the sky is (DESIGN.md, "The rain has
 // depth too"). A drop carries the index of its sheet in RAIN_SHEETS, and the

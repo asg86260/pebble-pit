@@ -83,20 +83,19 @@ export const working = i => !!CRAFT[i] && CRAFT[i].phase === 'aloft' && crewed(i
 export const atCloud = i => working(i) && !!CRAFT[i].sky && !!CRAFT[i].sky.cloud &&
                             CRAFT[i].sky.go >= BALLOON_TRAVEL_S;
 
-// Which berth a body on the purifiers takes: `-1` for the house, or the index
-// of a craft. **Claimed once and kept.** A berth worked out from the body's
-// place in the roster changes under it, because the roster's order is not
-// stable: the rider already aloft was handed the house's berth and pulled
-// straight back out of its craft, over and over.
+// Which craft a body on the purifiers rides: its index, or `-1` with none
+// free. **Claimed once and kept.** A berth worked out from the body's place in
+// the roster changes under it, because the roster's order is not stable: the
+// rider already aloft was handed another berth and pulled straight back out
+// of its craft, over and over.
 export function berthFor(w) {
   const others = S.workers.filter(o => o !== w && o.type === TYPE.PURIFY && o.berth != null);
   const taken = new Set(others.map(o => o.berth));
   // What it already holds, if that is still a real place: a save from a
   // smaller fleet can land a body on a craft that is not there.
-  if (w.berth != null && !taken.has(w.berth) && (w.berth < 0 || w.berth < CRAFT.length)) {
+  if (w.berth != null && w.berth >= 0 && !taken.has(w.berth) && w.berth < CRAFT.length) {
     return w.berth;
   }
-  if (!taken.has(-1)) return (w.berth = -1);
   for (let i = 0; i < CRAFT.length; i++) if (!taken.has(i)) return (w.berth = i);
   // Every berth spoken for: `capOf` should not have let it be assigned, and
   // a body with nowhere to be goes somewhere obvious.

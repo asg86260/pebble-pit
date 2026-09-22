@@ -1,57 +1,49 @@
-// The two houses that take things away: the air filter pulling the sky
-// back down, and the outhouse gathering what the crew leave for the tower.
+// The two places that take things away: the air filter's balloons pulling the
+// sky back down, and the outhouse gathering what the crew leave for the tower.
 
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
 
-// An empty air filter is a shed. The bodies are the whole cost of it, and
-// the recycler is what turns that cost into a wage.
-group('a staffed air filter pulls the sky back down', async () => {
-    run(0.4);
+// The air filter is a shed: it takes nothing out of the sky itself. A balloon
+// bought there and crewed does, and the recycler turns what it catches from
+// muck into dust.
+group('a crewed balloon pulls the sky back down, and the shed alone does not', async () => {
+  run(0.4);
   window.__crew(2, 4);
+  window.__grant({ dust: 90000, shards: 900 });
   run(5);
   window.__clearFloor();
 
-  // built, and nobody in it
-  window.__air({ open: true, haze: 500 });
-  run(6);
-  const shut = state().smog;
+  // built, and no balloon
+  window.__air({ open: true, haze: 500, purifiers: 1 });
+  run(8);
+  const shed = state().smog;
 
-  // Put on it, and then given the walk. A body moved onto the house is
-  // whichever body was nearest to hand -- it keeps where it is standing and
-  // walks over, which from the middle of the yard to the quiet end of it is a
-  // good twenty seconds, and nothing comes out of the sky until it is through
-  // the door. Waiting a fixed six was waiting for the walk to be decoration.
-  // One body: the house is a shed with a fan in it and holds exactly one, the
-  // way the lab does -- see `capOf`.
+  // a balloon bought off the row, crewed, and given the walk and the climb
+  window.__buy('balloon');
+  window.__finish();
   window.__air({ purifiers: 1, haze: 500 });
-  runUntil(() => state().smog.filtering > 0, 40);
-  // and then the sky has to arrive. The fan reaches about fifteen hundred
-  // pixels; what is further out than that is slid along the band towards the
-  // house rather than plucked out of it, so a house that has just started has a
-  // warm-up while the first of the band comes over the roof. Six seconds was
-  // enough when the draught acted on the whole world at once.
-  run(25);
+  runUntil(() => state().smog.filtering > 0, 60);
+  run(20);
   const on = state().smog;
 
   window.__air({ recycler: true, haze: 500 });
   const floorWas = state().floor;
-  run(12);
+  run(20);
   const paid = state();
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0, open: false, recycler: false, purifiers: 0 });
   window.__clearFloor();
   return [
-    ok(shut.haze >= 500 && shut.filtering === 0,
-       'an empty house does nothing at all', `${shut.haze}, ${shut.filtering}/min`),
+    ok(shed.haze >= 500 && shed.filtering === 0 && shed.purifiers === 0,
+       'the shed alone takes nothing, and has no place for a body',
+       `${shed.haze}, ${shed.filtering}/min, ${shed.purifiers} on it`),
     ok(on.purifiers === 1 && on.filtering > 0 && on.haze < 500,
-       'bodies in it start pulling the sky down',
-       `${on.purifiers} in, ${on.filtering}/min, haze ${on.haze}`),
-    ok(on.caught > 0, 'and you can see it: motes bend out of the drift towards it',
-       `${on.caught} of ${on.motes} on their way in'`),
+       'a crewed balloon pulls the sky down',
+       `${on.purifiers} aloft, ${on.filtering}/min, haze ${on.haze}`),
     ok(paid.smog.recycled > 0, 'a recycler keeps what it catches',
        `${paid.smog.recycled} grains`),
     ok(paid.floor > floorWas,
-       'and pays it out as real dust on the ground, not as a number going up',
+       'and lets it fall as real dust on the ground, not as a number going up',
        `${floorWas} -> ${paid.floor}`)
   ];
 });

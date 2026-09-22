@@ -6,7 +6,6 @@ import { S, quarry } from '../state.js';
 import { P, WORKER } from '../config.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
-import { inHouse } from '../filter.js';
 import { JOB_OF } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { FACTORY } from './jobs.js';
@@ -268,7 +267,7 @@ export const SAVE = {
 // what follows it (in the air, falling, seeing stars). One list, asked by the
 // celebration and by the loo clock below.
 export const outOfYard = w =>
-  !!(w.inside || w.aloft || inHouse(w) ||
+  !!(w.inside || w.aloft ||
      w.lifted || w.falling || w.dizzyUntil);
 
 // one frame of getting older, and of being somewhere

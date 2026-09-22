@@ -13,7 +13,6 @@ import { drawCoreGlow } from '../render/cores.js';
 import { hash } from './flicker.js';
 import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
-import { inHouse } from '../filter.js';
 import { inBasket } from '../balloon.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
@@ -307,7 +306,7 @@ export function drawPointed() {
   const t = now();
   for (const w of S.workers) {
     if (!w.pointed || w.pointed < t) continue;
-    if (underground(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
+    if (underground(w) || atPot(w) || atHome(w)) continue;
     const bob = Math.round(Math.sin(t / 140) * 1.5) * P;
     const x = Math.round(w.x) + WORKER / 2;
     const top = Math.round(w.y) - P * 5 + bob;
@@ -321,7 +320,7 @@ export function drawPointed() {
 
 export function drawSays() {
   for (const w of S.workers) {
-    if (!w.say || underground(w) || inHouse(w) || atHome(w)) continue;
+    if (!w.say || underground(w) || atHome(w)) continue;
     drawSay(w);
   }
   ctx.fillStyle = '#000';
@@ -460,7 +459,7 @@ export function drawWorkers() {
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
-    if (underground(w) || inHouse(w) || atHome(w) || inBasket(w)) continue;
+    if (underground(w) || atHome(w) || inBasket(w)) continue;
 
     // Somebody digging at the one in the ground is drawn as a builder,
     // whatever job the body came from.

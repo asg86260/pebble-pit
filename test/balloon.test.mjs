@@ -23,11 +23,8 @@ group('a balloon is bought at the house, moors at its own post, and goes up amon
   const bought = buyNow('balloon') && buyNow('balloon');
   run(1);
   const moored = state();
-  // Nobody in them yet: bought is not crewed, and a craft with nobody in it
-  // stays at its post.
-  run(10);
-  const idle = state();
-  window.__air({ purifiers: 2 });
+  // A craft opens like a door: a spare hand is sent over to ride each one.
+  const manned = yard.S.purifiers;
   const up = runUntil(() => state().craft[0] && state().craft[0].up, 90);
   const flying = state();
   return [
@@ -37,8 +34,8 @@ group('a balloon is bought at the house, moors at its own post, and goes up amon
        'each at its own post, side by side', moored.craft.map(c => c.post).join(', ')),
     ok(moored.craft.every(c => c.post > moored.filterX), 'beside the filter, past its dial',
        `filter at ${moored.filterX}`),
-    ok(idle.craft.every(c => c.phase === 'moored' && !c.crewed), 'and nobody aboard, so they stay put'),
-    ok(up, 'with somebody aboard it goes up'),
+    ok(manned === 2, 'and a spare hand is sent over to ride each', `${manned} on the purifiers`),
+    ok(up, 'and with somebody aboard it goes up'),
     ok(up && flying.craft[0].far < 0.5, 'into the clouds, at their depth', `far ${flying.craft[0].far}`)
   ];
 });
@@ -157,12 +154,13 @@ group('what a balloon pulls does not depend on where you are looking', async () 
   ];
 }, { reload: false });
 
-// A balloon's rider is on the purifiers like the body in the house, and the
-// filter's cap is one plus a body a craft. Read back, the crew is dealt out
+// A balloon's rider is on the purifiers, and the filter's cap is a body a
+// craft. Read back, the crew is dealt out
 // against that cap, so the craft have to be back before the deal, or the cap
-// is one and the rider is stood down on every load.
+// is nought and every rider is stood down on every load.
 group('a balloon rider is still on the job after a reload', async () => {
   rich();
+  buyNow('balloon');
   buyNow('balloon');
   window.__air({ purifiers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
@@ -178,7 +176,7 @@ group('a balloon rider is still on the job after a reload', async () => {
   const after = yard.S.purifiers;
   const flies = runUntil(() => state().craft[0] && state().craft[0].up, 60);
   return [
-    ok(before === 2, 'one in the house and one in the balloon', `${before}`),
+    ok(before === 2, 'one in each balloon', `${before}`),
     ok(after === 2, 'and both are still on the purifiers after a reload', `${before} -> ${after}`),
     ok(flies, 'and the balloon goes back up')
   ];

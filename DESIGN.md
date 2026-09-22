@@ -12799,6 +12799,35 @@ The mast is measured off the dial as before, which now hangs off the shed's
 wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
 `filterclog`, `filtersieve`, `moored`.
 
+## The air filter is the balloons' shed (built 2026-09-22)
+
+The player's call: the balloons do all the cleaning, and the air filter's shed
+keeps only its gauge and its board. The shed had a mouth of its own -- a body
+inside, a pull off the fan, an intake at the cupola, slats that turned, a spout
+and a heap and a clog -- and two sinks that did the same job read as one too
+many once the balloons were the picture of cleaning.
+
+What stays: the shed, drawn as before with its slats shut; the dial on its
+wall and its hover; the board with the fan ladder (now every balloon's pull),
+the balloon row, the recycler (now what a balloon's catch comes down as) and
+the air readout, which counts what the balloons swallow. What goes: the body
+inside (`capOf('purifiers')` is one a craft), `filterRate`, `filtering`, the
+house's gullet and `pull`, the draught cells, `intake`, `outlet`, the spout,
+its heap strip (`pile: null` on the site), `FILTER_CLOG` and `outletMuck`, the
+slat clock, and the unlock's door staffing -- the shed has no place for a body,
+so its first balloon is the door: buying a craft sends a spare hand over to
+ride it (`staffDoor`). The apothecary's tonics reach a balloon's rider the way
+they reached the body in the house (`craftRate`).
+
+The balance checks carried over unchanged in shape: one crewed balloon with
+no fan still pulls the sky down, three machines are more than a bare fan can
+hold and less than a full one (test/sky-fan.test.mjs).
+
+Building it surfaced a belt bug: `beltGrains` wrote the band's grains and the
+grains still on the scoop into one list of position and shade, so a grain
+mid-scoop was read back as a band grain a column out. A scoop grain carries its
+height now and goes back on the scoop (test/save-owners.test.mjs).
+
 ## The balloons ride the clouds (built 2026-09-22)
 
 The balloons patrol the whole width of the world at one height, turning hard

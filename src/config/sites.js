@@ -118,7 +118,7 @@ export const SITES = [
   // The filter keeps ground on its rock side for its dial and the row of posts
   // its balloons moor at, one for every craft it can sell, so buying one never
   // moves a building (the apothecary reserves its pots the same way).
-  { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: 'filter',  side: 'left',
+  { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: null,
     right: () => P * (DIAL_STUB + DIAL_CELLS - FILTER_WALL)
                + BALLOON_RUNGS * (BALLOON_SPAN + P * BALLOON_MAST_GAP) + P * BALLOON_MAST_GAP },
   // The casino holds no ground: a paid hand heaps in its own tray and flies

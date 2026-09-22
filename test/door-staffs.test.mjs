@@ -28,7 +28,9 @@ const rich = (...crew) => {
 const DOORS = [
   ['unlockfarm',       JOB.FARM],
   ['unlockquarry',     JOB.QUARRY],
-  ['unlockfilter',      JOB.PURIFY],
+  // The air filter's shed has no place for a body; its first balloon does.
+  ['unlockfilter',      null],
+  ['balloon',           JOB.PURIFY],
   ['unlockouthouse',   JOB.JANITOR],
   ['unlockapothecary', JOB.STIR]
 ];
@@ -38,6 +40,8 @@ group('a door opens with one spare body sent over', async () => {
   run(1);
   const out = [];
   for (const [key, job] of DOORS) {
+    // A place with no room for a body opens without sending anybody over.
+    if (job == null) { out.push(ok(buyBuilt(key, 300), `${key} goes up`)); continue; }
     const before = S[job];
     const up = buyBuilt(key, 300);
     // and a body of that trade is in the yard: assigned is a count, and the

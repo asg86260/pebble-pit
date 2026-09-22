@@ -252,7 +252,10 @@ export function beltGrains(limit = Infinity) {
       }
     }
   }
-  for (const b of S.belt) { if (out.length >= limit) break; out.push([Math.round(b.x), b.s]); }
+  // A grain on the scoop or the ramp carries its height as a third field, so
+  // it goes back on the scoop rather than into the band it has not reached:
+  // read back as a band grain it came in a column out (test/save-owners).
+  for (const b of S.belt) { if (out.length >= limit) break; out.push([Math.round(b.x), b.s, Math.round(b.y)]); }
   return out;
 }
 
@@ -268,8 +271,10 @@ export function emptyBelt() {
 // the strip is wired, or -- before the world is laid out -- as lifts at the
 // band's height, which the first frame puts in.
 export function fillBelt(grains) {
-  for (const [x, sh] of grains) {
+  for (const [x, sh, y] of grains) {
     if (band.grid && x >= beltTo()) { onRamp(x, sh || 1, rand()); continue; }
+    // on the scoop, climbing to the band: back where it was on it
+    if (Number.isFinite(y)) { S.belt.push({ x, y, s: sh || 1 }); continue; }
     if (band.grid && addGrain(band, x, null, sh || 1)) continue;
     S.belt.push({ x, y: bandY(), s: sh || 1 });
   }

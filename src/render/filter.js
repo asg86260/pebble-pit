@@ -1,30 +1,23 @@
-// The air filter: a louvered shed, its slats open while somebody is inside.
+// The air filter: a louvered shed with the balloons' gauge on its wall.
 
-import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DIAL_ZONE_NAMES, DOOR_H, DOOR_W, FILTER_PORT, FILTER_SLATS,
-         FILTER_SPOUT, FILTER_VENT, FILTER_WALL, HOUSE_CURTAIN, MUCK_TONE, P } from '../config.js';
+import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DIAL_ZONE_NAMES, DOOR_H, DOOR_W,
+         FILTER_VENT, FILTER_WALL, HOUSE_CURTAIN, MUCK_TONE, P } from '../config.js';
 import { CLODS } from '../smog.js';
-import { inFilter } from '../filter.js';
 import { S, filter } from '../state.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 
 // The air filter: a gabled shed like the quarry's and the farm's, with a
 // cupola on its ridge and a bank of slats across its front. It is drawn in
-// the yard's own way, solid black with the openings cut out of it.
-//
-// The air goes in at the vent in the cupola (`intake` in smog/band.js), which
-// is why the cupola is there: the one building that takes something in at the
-// top shows where. What the shed is DOING is the slats: shut is a grey band,
-// open is white, and while somebody is inside they stand open with one of
-// them swinging shut in turn, going round faster the more are in there. No
-// frame of the working bank is the idle one, since the idle one is every slat
-// shut. The dial hangs off the far wall and the spout comes out of the near
-// one, low, throwing what the shed catches onto its heap.
+// the yard's own way, solid black with the openings cut out of it. The shed
+// takes nothing out of the sky itself -- the balloons do -- so its slats stay
+// shut; it is where the balloons are sold and moored, and the dial on its far
+// wall reads the sky for them.
 //
 // Every edge is a whole cell off the building's own corner, which world.js
 // snaps to the lattice; a quarter-cell edge antialiases.
 const ROOF = 5;          // courses of roof, from the ridge down to the eaves
-const LOUVER = [9, 11, 13];   // the courses the slats are cut in, one per slat
+const LOUVER = [9, 11, 13];   // the courses the slats are cut in
 const DIAL_ROW = 8;      // courses down the front the dial's top sits: under the eaves
 
 // Cells across a course, from col `a` to col `b`, and down `n` courses.
@@ -57,13 +50,10 @@ export function drawFilter() {
 
   ctx.fillStyle = '#fff';
   box(c, r, mid, FILTER_VENT, mid);
-  // The slats. Shut, a slat is a grey band; open, it is cut through.
-  const on = inFilter() > 0;
-  const shut = on ? Math.floor(S.slatAt) % FILTER_SLATS : -1;
-  LOUVER.slice(0, FILTER_SLATS).forEach((row, i) => {
-    ctx.fillStyle = on && i !== shut ? '#fff' : HOUSE_CURTAIN;
-    box(c, r, wallL + 2, row, wallR - 2);
-  });
+  // The slats across the front, shut: grey bands, the house's own window
+  // grey. The shed filters nothing now (the balloons do), so they never open.
+  ctx.fillStyle = HOUSE_CURTAIN;
+  for (const row of LOUVER) box(c, r, wallL + 2, row, wallR - 2);
 
   // The way in, DOOR_W by DOOR_H like every other door, since what a door is
   // measured against is a body. An even door on an odd front lands half a
@@ -73,16 +63,6 @@ export function drawFilter() {
 
   ctx.fillStyle = '#000';
   drawDial(c(wallR + 1), r, DIAL_ROW);
-  // The spout: a stub out of the near wall, low, pointing out over the heap.
-  // It ends a cell short of where a load leaves (`outlet`), so nothing is
-  // born inside the black.
-  box(c, r, wallL - FILTER_SPOUT, down - FILTER_PORT, wallL - 1);
-  // The recycler is a sieve over its mouth: the stub's end cell left open,
-  // so what comes out has been sorted on the way.
-  if (S.recycler) {
-    ctx.fillStyle = HOUSE_CURTAIN;
-    box(c, r, wallL - FILTER_SPOUT, down - FILTER_PORT, wallL - FILTER_SPOUT);
-  }
   });
 }
 

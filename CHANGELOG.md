@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The air filter no longer filters: the balloons do all the cleaning, and the shed keeps the gauge and the board they are bought from; each balloon bought sends a spare hand over to ride it (test/sky-fan.test.mjs, test/door-staffs.test.mjs).
 - Haulers tip their loads onto the belt just past the rock once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
 - The belt ends in a ramp the band runs up, carrying its load up it in step with the band and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
 - The books and the crew list open in a window in the middle of the screen instead of a popover taller than the window: the books' four sheets side by side, the crew a card a body; it stays until you close it, and the yard keeps running underneath (src/selftest/house.js).
@@ -47,6 +48,7 @@ feature lives in DESIGN.md.
 - A rock hand's next swing is no longer moved every time the game is reloaded (test/save-owners.test.mjs).
 - A yard with wizards no longer gains three new workers every time the game is reloaded (test/crew-load.test.mjs).
 - A balloon's rider stays on the job after the game is reloaded, instead of being sent back to the spare crew (test/balloon.test.mjs).
+- A grain riding up the belt's scoop is still on the scoop after a reload, instead of turning up on the band a column over (test/save-owners.test.mjs).
 - A hat knocked off somebody's head is still lying where it fell after a refresh, instead of turning up back on the stand, and whoever was walking for it still goes and gets it (test/hat-save.test.mjs).
 - A worker can no longer be put on a quarry or farm that is not open yet, where they stood under the ground with nothing to dig (test/closed-station.test.mjs).
 - The gang shovelling rain off the rock no longer bob up and down its flank as they step from one column to the next (test/muck-jitter.test.mjs).

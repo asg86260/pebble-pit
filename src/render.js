@@ -37,7 +37,7 @@ import { drawFilter, drawClods } from './render/filter.js';
 import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
-import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
+import { drawBolt, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
@@ -54,7 +54,7 @@ export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from 
 export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
-export { drawDraught, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
+export { drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 export { drawShack } from './render/shack.js';
 export { drawFilter } from './render/filter.js';
@@ -159,7 +159,6 @@ const LAYERS = [
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands
-  { name: 'draught', draw: drawDraught },        // the air going into the air filter
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went

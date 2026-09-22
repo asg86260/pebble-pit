@@ -4,12 +4,12 @@
 // same rows as the shop so it reads as the same game's menu.
 
 import { S } from './state.js';
+import { inBasket } from './balloon.js';
 import { houseRect } from './house.js';
 import { JOB_OF as JOBS_AT } from './levels.js';
 import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showWindow, closeWindow } from './modal.js';
-import { inHouse as inFilterHouse } from './filter.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
 import { WORKER } from './config.js';
@@ -27,9 +27,9 @@ export function whereIs(w) {
   if (w.lifted) return 'in your hand';
   if (w.falling) return 'in mid-air';
   if (w.inside) return 'at home';
-  // Through a door is not standing at one: a body you cannot see is a body
-  // the board has to account for.
-  if (inFilterHouse(w)) return 'inside the air filter';
+  // Up in a balloon is not standing anywhere: a body you cannot see in the
+  // yard is a body the board has to account for.
+  if (inBasket(w)) return 'up in a balloon';
 
   // Standing on it beats what it is doing on it. A hauler is the exception:
   // it is at home everywhere, so only the doing says anything.

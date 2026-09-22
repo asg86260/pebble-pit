@@ -1,7 +1,6 @@
-import { P, RAIN_FIRST_S, FILTER_CATCH, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
+import { P, RAIN_FIRST_S, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
-import { CLODS, DROPS, SKY, STACK, climbing, intake, raining, resetDrift, filtering } from './band.js';
-import { resetGullet } from './house.js';
+import { CLODS, DROPS, SKY, STACK, climbing, raining, resetDrift } from './band.js';
 import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
 import { EMBERS, LEDGER, dryFor, resetRain, stormLen } from './rain.js';
 import { clearSky, cloudR, moteX, moteY } from './sky.js';
@@ -10,17 +9,17 @@ import { spread } from './vents.js';
 // --- the books ------------------------------------------------------------------------
 // What the yard has put up since the last reading, counted at the source.
 // Inferred from the change in the haze it reads equal to the filtering the
-// moment the house starts winning, and the net sits at nought however many
-// bodies you move. Rain and the house are not production and are not counted.
+// moment the balloons start winning, and the net sits at nought however many
+// bodies you move. Rain and the balloons are not production and are not counted.
 let made = 0;
 // An imported `let` is read-only, so the tally has a door of its own.
 export const countMade = add => { made += add; };
 let mark = { at: 0, rate: 0, drew: 0 };
 
-// What the house has actually taken, counted at the mouth as motes go down
-// the throat. Not `filterRate()`: a rating is in motes a second against a
-// fouling in haze a second, and it goes on quoting the full figure while the
-// house stands clogged or the sky is too thin to reach.
+// What the balloons have actually taken, counted at the mouth as motes go
+// in. Not a rating: a rating is in motes a second against a fouling in haze a
+// second, and it goes on quoting the full figure while the sky is too thin to
+// reach.
 let drew = 0;
 export const countDrew = () => { drew += 1; };
 
@@ -113,16 +112,6 @@ export function clumpiness() {
 
 export const skyBins = () => strips().filter(Boolean).length;
 
-// how much of the sky the house has hold of: specks inside a few cells of the
-// mouth, on their way down the throat
-export function drawnIn() {
-  if (!S.filterOpen) return 0;
-  const to = intake();
-  let n = 0;
-  for (const m of SKY) if (Math.hypot(moteX(m) - to.x, moteY(m) - to.y) < FILTER_CATCH) n++;
-  return n;
-}
-
 export function smogReport() {
   // the tint is drawn straight off this, so a check can see whether a dirty
   // sky knows what dirtied it
@@ -139,8 +128,7 @@ export function smogReport() {
            // would swallow
            skyX: spread(SKY.filter(m => !m.up), 200).map(m => +moteX(m).toFixed(2)),
            puffs: climbing(), drops: DROPS.length, clods: CLODS.length, trend: airTrend(),
-           // Motes the draught has hold of: near the mouth and plainly coming.
-           caught: drawnIn(), clumpiness: clumpiness(), skyBins: skyBins(),
+           clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
            // a strike in the sky: how many cells it is, or 0 for none
@@ -172,7 +160,6 @@ export function seedSmog() {
   oldest = 0;
   mark = { at: 0, rate: 0, drew: 0 };
   drew = 0;
-  resetGullet();
   clearSky();
   resetDrift();
   DROPS.length = 0;

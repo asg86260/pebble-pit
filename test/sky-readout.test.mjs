@@ -60,6 +60,11 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__clearFloor();
   const losing = state().smog;
 
+  // Balloons are the only thing that takes the sky down: two bought off the
+  // shed's row and crewed.
+  window.__grant({ dust: 90000 });
+  window.__buy('balloon'); window.__finish();
+  window.__buy('balloon'); window.__finish();
   window.__air({ purifiers: 2, haze: 600 });
   run(40);
   const winning = state().smog;

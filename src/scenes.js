@@ -700,27 +700,22 @@ export const SCENES = {
                  window.__fast(20); window.__look(st().shackX - 300); } },
 
   // --- the house and the sky --------------------------------------------------
-  // A mouth is a few cells drawn in over the hood; nothing in the sky is
-  // moved at all.
-  filtering: { about: 'the house and the sky', say: 'the house filtering a filthy sky',
-    run: () => { rich(); window.__air({ open: true, haze: 2600, purifiers: 1 }); window.__fast(25);
+  // The balloons are what take the sky down: two up among the clouds, each
+  // drawing a stream out of its cloud.
+  filtering: { about: 'the house and the sky', say: 'the balloons filtering a filthy sky',
+    run: () => { rich(); window.__air({ open: true, haze: 2600 }); window.__fast(2);
+                 window.__buy('balloon'); window.__finish(); window.__buy('balloon'); window.__finish();
+                 window.__air({ purifiers: 2 }); window.__fast(14);
+                 window.__look(st().filterX - 200); } },
+  // The shed and its dial at three readings (DESIGN.md, "The air filter").
+  filterclean: { about: 'the house and the sky', say: 'the air filter under a clean sky',
+    run: () => { rich(); window.__air({ open: true, haze: 0 }); window.__fast(20);
                  window.__look(st().filterX - 300); } },
-  // The dial at three readings and the spout at work, clogged and sieved
-  // (DESIGN.md, "The air filter").
-  filterclean: { about: 'the house and the sky', say: 'the air filter, empty, under a clean sky',
-    run: () => { rich(); window.__air({ open: true, haze: 0, purifiers: 0 }); window.__fast(20);
-                 window.__look(st().filterX - 300); } },
-  filterhalf: { about: 'the house and the sky', say: 'the air filter pumping muck under a half sky',
-    run: () => { rich(); window.__air({ open: true, haze: 1400, purifiers: 1, muck: 0 }); window.__fast(20);
+  filterhalf: { about: 'the house and the sky', say: 'the air filter reading a half sky',
+    run: () => { rich(); window.__air({ open: true, haze: 1400, muck: 0 }); window.__fast(20);
                  window.__look(st().filterX - 300); } },
   filterbrim: { about: 'the house and the sky', say: 'the air filter reading a sky at the brim',
-    run: () => { rich(); window.__air({ open: true, haze: 4200, purifiers: 1, muck: 0 }); window.__fast(20);
-                 window.__look(st().filterX - 300); } },
-  filterclog: { about: 'the house and the sky', say: 'the air filter stopped by its own heap',
-    run: () => { rich(); window.__crew(0, 0); window.__air({ open: true, haze: 4200, purifiers: 1, muck: 0 });
-                 window.__fast(150); window.__look(st().filterX - 300); } },
-  filtersieve: { about: 'the house and the sky', say: 'the air filter with the recycler fitted',
-    run: () => { rich(); window.__air({ open: true, haze: 2600, purifiers: 1, recycler: true }); window.__fast(20);
+    run: () => { rich(); window.__air({ open: true, haze: 4200, muck: 0 }); window.__fast(20);
                  window.__look(st().filterX - 300); } },
   moored: { about: 'the house and the sky', say: 'a balloon moored at the mast',
     run: () => { rich(); window.__air({ open: true }); window.__fast(2);

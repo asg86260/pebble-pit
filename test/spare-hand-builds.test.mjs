@@ -29,22 +29,24 @@ function watchBuild(key, site, gang, atPost) {
   return { bought, landed, free, off, seen };
 }
 
-group('a fan rung is put in by a spare hand while the filter goes on filtering', async () => {
+group('a fan rung is put in by a spare hand while the balloon goes on filtering', async () => {
   window.__reset();
   openSites();
   window.__crew(0, 2);
-  window.__air({ open: true, haze: 1800, muck: 0, purifiers: 1 });
+  window.__air({ open: true, haze: 1800, muck: 0 });
   window.__grant({ shards: 400, spores: 400, dust: 90000 });
-  runUntil(() => yard.S.workers.some(w => w.type === 'purifier' && w.goal === 'in'), 60);
+  window.__buy('balloon'); window.__finish();
+  window.__air({ purifiers: 1 });
+  runUntil(() => yard.S.workers.some(w => w.type === 'purifier' && w.goal === 'aloft'), 60);
   const was = yard.S.fanLevel;
-  const b = watchBuild('fan', 'filter', 'purifier', w => w.goal === 'in');
+  const b = watchBuild('fan', 'filter', 'purifier', w => w.goal === 'aloft');
 
   return [
     ok(b.bought, 'the rung is bought off the filter\'s board'),
     ok(b.landed && yard.S.fanLevel === was + 1, 'and it lands', `${was} -> ${yard.S.fanLevel}`),
     ok(b.seen, 'a spare hand walked over to put it in'),
     ok(b.free === 0, 'and the bar never moved without one there', `${b.free} frames`),
-    ok(b.off === 0, 'while the purifier stayed inside the whole time', `${b.off} frames out`)
+    ok(b.off === 0, 'while the rider stayed up in its balloon the whole time', `${b.off} frames out`)
   ];
 });
 

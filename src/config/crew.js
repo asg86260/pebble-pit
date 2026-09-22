@@ -69,16 +69,13 @@ export const DOOR_H = 4;         // and courses tall
 // under them instead of walking outward over bare ground a grain at a time.
 // The casino has none: a paid hand heaps in its own tray and goes to the
 // hole by air.
-export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, filter: 140, sky: 260 };
+export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, sky: 260 };
 
 // What lands on each strip, so the ground can be marked before anything lands
-// on it. A key with no entry holds dust (cell zero), which is what the rock,
-// the air filter and any new station pay out; the painter and `drawMark`
+// on it. A key with no entry holds dust (cell zero), which is what the rock
+// and any new station pay out; the painter and `drawMark`
 // both read it that way.
 export const PILE_HOLDS = { quarry: SHARD_CELL, farm: SPORE_CELL, sky: SPARK_CELL };
-// What the back of the house may leave lying before it stops, with no recycler
-// on: cells of muck over the ground the spout reaches.
-export const FILTER_CLOG = 26;
 // No hysteresis on a full pile: a station stops when its pile is full and
 // starts the moment there is room for one more, so at the limit the crew mine
 // exactly as fast as the crew carry. Any margin is a chore of clearing before
@@ -131,8 +128,6 @@ export const CREW_KNOBS = [
     get: () => PILE_LIMIT.quarry, set: v => { PILE_LIMIT.quarry = v; } },
   { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4,
     get: () => PILE_LIMIT.farm, set: v => { PILE_LIMIT.farm = v; } },
-  { key: 'PILE_LIMIT.filter', label: 'house pile holds', min: 4, max: 400, step: 4,
-    get: () => PILE_LIMIT.filter, set: v => { PILE_LIMIT.filter = v; } },
   { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4,
     get: () => PILE_LIMIT.sky, set: v => { PILE_LIMIT.sky = v; } }
 ];

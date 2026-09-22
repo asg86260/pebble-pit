@@ -1,55 +1,52 @@
-import { CRAFT, craftAt, working } from '../balloon.js';
+import { CRAFT, craftAt, riderOf, working } from '../balloon.js';
+import { speedBoost, strengthBoost } from '../apothecary.js';
 import { GRAV, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
 import { frames } from '../clock.js';
-import { aim, bell, spawnChip } from '../dust.js';
+import { spawnChip } from '../dust.js';
 import { shadeNear } from '../grid.js';
-import { pileOf } from '../world.js';
 import { S } from '../state.js';
-import { CLODS, fanPull, outlet } from './band.js';
+import { CLODS, fanPull } from './band.js';
 import { countDrew } from './books.js';
 import { eat } from './house.js';
 import { colAt, dropMuckAt, muckCols, muckFloor } from './layer.js';
 
 // --- what the craft take -------------------------------------------------------------
-// The house's mouth, in the sky (`eat`). Each craft has its own gullet for
-// the reason the house has one: a rate below one a frame rounds away to
-// nothing spent a frame at a time, and a craft over clear air must not bank
-// a gulp to spend the moment it reaches something.
+// A mouth on the sky (`eat`), one a craft. Each has its own gullet: a rate
+// below one a frame rounds away to nothing spent a frame at a time, and a
+// craft over clear air must not bank a gulp to spend the moment it reaches
+// something.
 const gullets = [];
+
+// What a craft is rated to take, in motes a second: the fan is the shed's, so
+// a bigger fan is a bigger draught at every mouth; and the apothecary reaches
+// the rider, so a stew and a strong brew both quicken the craft it is working.
+export function craftRate(i) {
+  if (!working(i)) return 0;
+  const w = riderOf(i);
+  return fanPull() * (w ? speedBoost(w) * strengthBoost(w) : 1);
+}
+// And every craft together: what the sky is being taken down at.
+export const airRate = () => CRAFT.reduce((n, c, i) => n + craftRate(i), 0);
 
 export function pullCraft(secs) {
   for (let i = 0; i < CRAFT.length; i++) {
-    if (!working(i)) { gullets[i] = 0; continue; }
-    // The fan is the station's, so a bigger fan is a bigger draught at every
-    // mouth the station has.
-    const rate = fanPull();
+    const rate = craftRate(i);
+    if (!rate) { gullets[i] = 0; continue; }
     gullets[i] = Math.min((gullets[i] || 0) + rate * secs, rate);
     // What you see of it is the haze it draws in (craftair.js).
     eat(() => gullets[i], n => { gullets[i] = n; }, i);
   }
 }
 
-// Where a throw off the filter's spout comes down: on its heap, most of it
-// near the building and tailing away out along the heap, which is the shape a
-// heap somebody is throwing onto takes (`spawnSpoil` in dust.js). Off the
-// yard's chance, since where the muck lands is what the crew then shovel.
-function landing(out) {
-  const heap = pileOf('filter');
-  if (!heap) return out.x - P * 6;
-  const near = heap.to - P, far = heap.from + P;
-  return Math.max(far, near - P - Math.abs(bell()) * (near - far) * 0.45);
-}
-
-// How a load or a grain leaves: thrown off the filter's spout onto its heap,
-// or let fall from under a balloon's basket, wherever the balloon is drawn.
-// A balloon is among the clouds, and where it is drawn over the ground is a
-// matter of the view, so where its loads land follows the view too; the
-// player chose that over bringing the catch home (DESIGN.md, "The balloons
-// ride the clouds"). How much falls does not follow the view.
+// How a load or a grain leaves a balloon: let fall from under its basket,
+// wherever the balloon is drawn. A balloon is among the clouds, and where it
+// is drawn over the ground is a matter of the view, so where its loads land
+// follows the view too; the player chose that over bringing the catch home
+// (DESIGN.md, "The balloons ride the clouds"). How much falls does not follow
+// the view.
 function launch(craft) {
-  if (craft != null) { const a = craftAt(craft); return { x: a.x, y: a.y, vx: 0, vy: 0, land: null }; }
-  const out = outlet(), land = landing(out), v = aim(out.x, out.y, land, P);
-  return { ...out, vx: v.vx, vy: v.vy, land };
+  const a = craftAt(craft);
+  return { x: a.x, y: a.y, vx: 0, vy: 0, land: null };
 }
 
 // A mote down a mouth, and what comes out for it.

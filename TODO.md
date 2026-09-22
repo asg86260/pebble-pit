@@ -1,5 +1,11 @@
 # Still to do
 
+## The air filter is the balloons' shed -- BUILT (2026-09-22)
+
+"The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:
+no body inside, no spout or heap. It keeps the gauge and the board; the
+balloons do all the cleaning, and buying one sends a spare hand to ride it.
+
 ## The balloons ride the clouds -- BUILT (2026-09-22)
 
 "The balloons ride the clouds" in DESIGN.md. A row of moorings beside the

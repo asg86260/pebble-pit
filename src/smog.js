@@ -23,8 +23,8 @@
 import { S } from './state.js';
 import { RAIN_FALL, RAIN_MARK, PUFF_UP, SMOG_PER_MOTE } from './config.js';
 import { rand } from './rng.js';
-import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, clogged, fanPull, murk,
-         outletMuck, raining, filterRate, filtering } from './smog/band.js';
+import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, fanPull, murk,
+         raining } from './smog/band.js';
 import { foul, look, puffStack, reckon, skyMote, stepPuffs, stepStack } from './smog/vents.js';
 import { enter } from './smog/sky.js';
 
@@ -36,8 +36,7 @@ export function skyKindCounts() {
 }
 import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
-import { DRAUGHT, breathe, pull } from './smog/house.js';
-import { pullCraft, stepClods } from './smog/craft.js';
+import { airRate, pullCraft, stepClods } from './smog/craft.js';
 import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
          stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
@@ -45,7 +44,7 @@ import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          plotMuck, poopCols, poopLeft, quarryMuck, retally, rockMuck, slumpMess,
          sweepMuckAt, throughPlotMuck, throughQuarryMuck, throughRockMuck,
          workSpot, yardMuck, yardMuckFor } from './smog/layer.js';
-import { airReadout, airSides, airTrend, clumpiness, drawnIn, sampleAir, seedSmog,
+import { airReadout, airSides, airTrend, clumpiness, sampleAir, seedSmog,
          skyBins, smogReport } from './smog/books.js';
 
 // A save coming back. The band is rebuilt out of the haze (sky.js); a storm
@@ -143,32 +142,28 @@ export const SAVE = {
   blank() {}
 };
 
-export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining, clogged, filtering,
-         outletMuck, fanPull, filterRate, climbing,
+export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining,
+         fanPull, airRate, climbing,
          foul, puffStack, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
-         DRAUGHT, dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
+         dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,
          nearestMuck, rockMuck, quarryMuck, plotMuck, buried, retally,
          throughRockMuck, throughQuarryMuck, throughPlotMuck, cleanSpotNear,
          workSpot, dropMuckAt, slumpMess, sweepMuckAt,
-         sampleAir, airTrend, airSides, airReadout, clumpiness, skyBins, drawnIn,
+         sampleAir, airTrend, airSides, airReadout, clumpiness, skyBins,
          smogReport, seedSmog };
 
 // --- one frame ---------------------------------------------------------------------
 export function stepSmog(dt) {
   const secs = dt / 1000;
   stepPuffs(secs);
-  // Before the house takes anything this frame, so a load made this frame is
-  // in the air for at least one frame even when the heap is up at the lip.
+  // Before the balloons take anything this frame, so a load made this frame
+  // is in the air for at least one frame.
   stepClods();
-  // The house takes motes and nothing else docks the number for the fan: that
-  // is the same dirt subtracted twice.
-  if (filtering()) { pull(secs); breathe(secs); }
-  else { DRAUGHT.length = 0; }
-  // After the house, so a mote in the throat is the house's rather than
-  // fought over.
+  // The balloons take motes and nothing else docks the number for the fan:
+  // that is the same dirt subtracted twice.
   pullCraft(secs);
   // Before the front, whose marking has to be about what is actually overhead.
   reckon();

@@ -1,11 +1,12 @@
 // The fan, and the one number that says whether you are winning.
 //
-// The house is the only sink in the game -- the sky fills from the machines and
-// the only thing that takes it back out is a body standing in that shed -- and
-// `capOf` allows exactly one body in there. So the fan is not a nice-to-have on
-// the side of the house: it is the *whole* of how the sink grows, and if it does
-// not grow, a yard that buys its third machine has bought a sky it can never get
-// back down again however much it spends.
+// The balloons are the only sink in the game -- the sky fills from the machines
+// and the only thing that takes it back out is a crewed balloon -- and every
+// one of them pulls with the shed's fan. So the fan is not a nice-to-have: it is
+// the *whole* of how each mouth grows, and if it does not grow, a yard that buys
+// its third machine has bought a sky it can never get back down again however
+// much it spends. (It was written of the shed's own mouth, which is gone; the
+// balloons took the job over.)
 //
 // It did not grow. `pull` took its draught strength as `filterRate() / fanPull()`
 // -- and `filterRate()` is bodies times `fanPull()`, so the fan cancelled clean
@@ -26,8 +27,8 @@
 
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
-import { filterRate } from '../src/smog.js';
-import { inFilter } from '../src/filter.js';
+import { airRate } from '../src/smog.js';
+import { working } from '../src/balloon.js';
 import { SMOG_PER_MOTE, LADDER } from '../src/config.js';
 
 // The yard from the field, which is the only honest place to ask this: a fresh
@@ -89,13 +90,20 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   // What this file measures is the house against the machines, so it buys the
   // room outright rather than measuring a jammed yard.
   window.__spend(20000);
-  window.__air({ haze: 1800, muck: 0, purifiers: 1, recycler: true, open: true });
-  // Wait for the body to actually be IN the house, rather than assuming three
-  // seconds of walking is enough.
+  window.__air({ haze: 1800, muck: 0, recycler: true, open: true });
+  // One balloon, the mouth this file measures, bought off its row and crewed.
+  if (!state().craft.length) {
+    window.__grant({ dust: 90000 });
+    window.__buy('balloon');
+    window.__finish();
+  }
+  window.__air({ purifiers: 1 });
+  // Wait for the balloon to actually be up and working, rather than assuming
+  // a walk and a climb take any given time.
   //
   // It was three seconds, and that made every reading below partly a measurement
   // of a walk. The house does nothing at all until somebody is through the door
-  // -- `inFilter`, not `S.purifiers`, which counts everybody it has been given
+  // -- `working`, not `S.purifiers`, which counts everybody it has been given
   // including one still crossing the yard -- so a run that started before the
   // body arrived spent part of its thirty seconds measuring an empty shed. On a
   // busy yard the walk is longer than three seconds and the same setting came
@@ -105,7 +113,7 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   // The check passed for as long as the walk happened to fit. Same fault as the
   // dance's seed, and the same cure: wait for the state the measurement is
   // about instead of guessing how long it takes to arrive.
-  runUntil(() => inFilter() > 0, 60);
+  runUntil(() => working(0), 90);
 };
 
 // Run a stretch of yard with **no rain in it**, and say whether one was had.
@@ -165,7 +173,7 @@ group('a bigger fan is a bigger draught, not a bigger number', async () => {
   return [
     ok(bare.dry && full.dry, 'both stretches were measured without a shower in them',
        `bare ${bare.dry}, full ${full.dry}`),
-    ok(bare.took > 0, 'a house with no fan on it still pulls the sky down',
+    ok(bare.took > 0, 'a balloon with no fan on it still pulls the sky down',
        `${Math.round(bare.took)} haze in thirty seconds`),
     // The ladder is worth a little over three times at the top (FAN_TOP, the
     // old five quarters spread over nine rungs). Well short of that here and the fan is decoration again; this asks
@@ -185,7 +193,7 @@ group('a bigger fan is a bigger draught, not a bigger number', async () => {
 // draught swept into the throat was swallowed, which is a question about the
 // shape of the sky and came to roughly twice the rating, so one body with no fan
 // held three machines on its own and there was nothing to spend shards on.
-group('the house takes what it is rated at', async () => {
+group('a balloon takes what it is rated at', async () => {
   fromTheField(2, []);
   run(20);                                  // past the first mote and into the steady state
   // Through `dryStretch`, like every other rate in this file. This one read
@@ -203,7 +211,7 @@ group('the house takes what it is rated at', async () => {
     const before = state().smog.haze;
     let rated = 0;
     for (let i = 0; i < secs; i++) {
-      rated += filterRate() * SMOG_PER_MOTE;    // haze a second, the board's unit
+      rated += airRate() * SMOG_PER_MOTE;       // haze a second, the board's unit
       run(1);
     }
     const s = state().smog;
@@ -330,14 +338,18 @@ group('a speck a mouth takes fades rather than popping', async () => {
   window.__reset();
   window.__crew(0, 3);
   window.__clearFloor();
-  window.__air({ open: true, haze: 2000, muck: 0, purifiers: 1 });
+  window.__grant({ dust: 90000 });
+  window.__air({ open: true, haze: 2000, muck: 0 });
+  window.__buy('balloon');
+  window.__finish();
+  window.__air({ purifiers: 1, haze: 2000 });
   run(25);
-  const working = state();
+  const busy = state();
 
   // The level is the count of the sky, so a fading speck must already be out of
   // it: the board cannot be made to lag the truth by the length of a fade.
-  const rated = filterRate() * SMOG_PER_MOTE * 60;
-  const said = working.smog.filtering;
+  const rated = airRate() * SMOG_PER_MOTE * 60;
+  const said = busy.smog.filtering;
 
   window.__air({ purifiers: 0 });
   run(3);
@@ -346,12 +358,12 @@ group('a speck a mouth takes fades rather than popping', async () => {
   window.__air({ haze: 0, muck: 0, open: false });
   window.__clearFloor();
   return [
-    ok(working.going > 0, 'a working mouth always has a few specks on the way out',
-       `${working.going} fading`),
+    ok(busy.going > 0, 'a working mouth always has a few specks on the way out',
+       `${busy.going} fading`),
     // The fade is short, so what is in flight at any moment is the rate times its
     // length and no more. A number far above that is a list nobody is emptying.
-    ok(working.going < 60, 'and only a few: the fade is short',
-       `${working.going} against a rate of ${Math.round(rated / 60)} a second`),
+    ok(busy.going < 60, 'and only a few: the fade is short',
+       `${busy.going} against a rate of ${Math.round(rated / 60)} a second`),
     ok(Math.abs(said - rated) < Math.max(20, rated * 0.25),
        'and the board still reads the rate, so nothing is counted twice',
        `board ${said}/min against a rating of ${rated.toFixed(0)}/min`),
