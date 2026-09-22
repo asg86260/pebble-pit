@@ -9088,6 +9088,99 @@ built and taken out the same day: it steadied the rare coins by averaging them
 over up to five minutes, which is also five minutes of a windfall reading as a
 rate, and it was a rule the player could not see.
 
+### Amendment — the books grow three sheets: income, the sky, the crew (built)
+
+The books are five rates and a tally: enough to say the yard is earning, not
+enough to say how it is going. Three things a player actually asks while
+standing in front of the noticeboard are each already known to the game and
+said nowhere: *is this coin coming in faster or slower than it was*, *am I
+winning against the sky*, and *who is doing what*. This builds the board out to
+answer those three, with numbers the yard already keeps wherever it can.
+
+**The bargain.** Readouts only. Nothing here is bought, nothing unlocks, and no
+number feeds a rate -- the same bargain the record strikes. What it costs the
+player is nothing; what it is worth is not having to count heads or watch the
+clouds to know. The one new saved fact is the lifetime income per coin, which
+the income record makes free to keep.
+
+**Three sections, on the one board** (the open call below), each under its own
+heading, after the window row and before the tally:
+
+*Income, a second* -- one line a coin, as now, plus:
+- **a trend arrow** beside each rate: this window against the one before it,
+  in the air board's own arrows (▲ ▲▲ ▲▲▲, ▼ …, — for level), so an arrow means
+  the same thing on both boards. Arithmetic on the income record, which already
+  holds ten minutes; the ten-minute window compares against nothing and wears no
+  arrow.
+- **the window's total** under it, dim: *312 in the last minute*. The rate is a
+  division and a player often wants the sum.
+- **lifetime income** per coin, joining the tally (*ore earned*, *crops
+  earned*…). Counted by `earned` in income.js into one new saved field,
+  `S.earnedTotal`, so a refund is kept out of it for the same reason it is kept
+  out of the rate. *pebbles banked* stays, being a different fact (refunds in).
+
+*The sky* -- what the air filter's dial and arrow say, plus what they cannot:
+- **pollution**, the air board's arrows, from the same `airTrend`.
+- **put up** and **taken out**, a minute each (`airReadout`'s fouling and
+  filtering), so the arrow's reason is on the board.
+- **haze**, as the haze against the line it rains at: *140 of 300*.
+- **rain in**, the time until the sky tips (`dueMs`), blank while the house is
+  winning -- blank is the number worth playing for, as the readout already says.
+- **dirtied by**, the sky's motes by what kicked them up (`m.kind`: the rock's
+  dust, the quarry, the farm, the machines' soot), as shares: *machines 62% ·
+  rock 30% · farm 8%*. The one line here that tells a player *which* station to
+  answer for.
+- **showers weathered** (`S.rains`) and **muck lying about** (`muckLeft`).
+Shown once the sky has been seen (`S.seenAir`), like the air board's row.
+
+*The crew* -- the house board says who, this says how many and how well:
+- **on the payroll**, by job: *rock 4 · pit 6 · quarry 3 · farm 3 · filter 2*.
+- **right now**: *working 11 · on the way 4 · on a break 2 · at home 1*, read
+  off the same `whereIs` the crew list uses, so the two boards cannot disagree.
+- **best hand** in each job with a record -- most mined, quarried, farmed,
+  stored, tidied -- by name: *most mined: wren, 4.1k*. Off the per-body records
+  (`crew/records.js`), which have been kept since the crew had names and have
+  never been shown.
+- *longest on one clock* moves here from the tally.
+Shown once there is a crew (`S.crew >= 1`).
+
+**What it must not break.** Every value is read, never estimated -- the books'
+first rule. The crew's *right now* line is the same classification the crew
+list shows, not a second one. No per-row magic numbers: the arrow steps are the
+air board's, shared rather than copied.
+
+**Left out, on purpose.** *Where income comes from*, by station: a grain landing
+in the pit does not know who threw it, and tagging every grain in flight is a
+change to the whole carry for one line of a board. *Earned against spent*:
+nothing records spending yet; it is the natural next sheet once this one has
+been read in play. Charts: see below.
+
+**Decided (2026-09-22):** one board, numbers only. The sheet scrolls. A
+ten-minute pixel strip per coin stays the obvious follow-up if the arrows are
+not enough.
+
+**As built, where it moved from the above.**
+- *An arrow is held level inside the counts' own scatter.* Two windows of the
+  same steady yard differ by about the square root of their sum, and a relative
+  step on eight ore a minute flipped between two arrows on one lump. Outside
+  that scatter the steps are `STATS_TREND_STEPS`, as a share of the window
+  before. The arrow drawing itself moved to words.js (`arrowsFor`) with the sky's
+  steps in config (`AIR_TREND_STEPS`), because the books importing the air
+  board's module was a load-order cycle.
+- *"Full in", not "rain in".* Rain keeps its own clock since the weather; what
+  the readout counts down to is a full sky (`SMOG_CAP`). The countdown and the two
+  sides are all off the same minute (`airSides`, beside `airTrend`), so they
+  cannot tell three stories; the air readout's one-second figures would have.
+- *The crew's "right now" reads the crew card's `doing`*, not `whereIs`:
+  `whereIs` says a carrying hauler is "on the way" for ever.
+- *Lifetime income* is shown for every coin but pebbles, which keep *pebbles
+  banked*. A save from before this starts `earnedTotal` at nought; nothing could
+  reconstruct it without counting refunds back in.
+- A window's sum is only written under a rate that had one; a nought already
+  says nothing came in.
+
+Scene `booksall`; checks test/books-sheets.test.mjs.
+
 ### Amendment — a toast when one lands (built)
 
 The original design said, in so many words, "no toast, no banner, no card sliding in over the
@@ -12641,7 +12734,27 @@ The mast is measured off the dial as before, which now hangs off the shed's
 wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
 `filterclog`, `filtersieve`, `moored`.
 
-## The balloons pull from the clouds (built 2026-09-22)
+## The balloons draw the haze in (built 2026-09-22)
+
+The cloud threads (below) were cut. The clouds scroll slower than the ground,
+so a thread tied to a cloud slid, stretched and jumped to another cloud with
+every scroll. That is not a tuning problem: anything drawn between a thing in
+the yard and a thing in a sheet moves when the view does.
+
+So a balloon's pull is drawn on the balloon alone. While it works, cells
+gather into its filter box from above and the sides (`craftair.js`, drawn by
+`drawCraftAir` behind the balloon so the envelope stays a clean shape), kept
+as a direction and a distance from the box so they ride along with it and
+nothing about the view can move them. They are drawn in the color the air is
+(`murkTone` in weather.js, a cloud's underside at the sky's murk), and there
+are more of them the dirtier the sky (`DRAWIN_MURK`): a filthy sky is a thick
+brown stream, a clean one a pale trickle. The clouds are no longer paled; the
+per-cloud `drawn` share and `cloudHold` are gone. Picture only, as before,
+off a stream of its own, and the check that the pull does not depend on the
+view stands. The lanes under the clouds stay: the haze is drawn against open
+sky. Scene `balloonpan` is gone with the threads.
+
+## The balloons pull from the clouds (built 2026-09-22, the threads cut the same day)
 
 Cutting the balloons was the wrong fix for the right complaint. The dial
 stood where they moored, and with the specks gone they took the air in as

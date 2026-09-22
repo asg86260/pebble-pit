@@ -377,6 +377,24 @@ export const TESTS = [
       ok(!able || row.dataset.pane === 'settings', 'and the settings sheet has the same row', row.dataset.pane),
     ];
   }],
+  ['the crew switch in the corner fades the crew and puts it back', async () => {
+    window.__nocine();
+    await frames(2);
+    const b = document.getElementById('crewfade');
+    const faded = () => JSON.parse(localStorage.getItem('boulder-clicker/prefs') || '{}').faded === true;
+    const shown = !b.hidden;
+    await tap(b);
+    await frames(1);
+    const on = faded() && b.dataset.on === '1';
+    await tap(b);
+    await frames(1);
+    const off = !faded() && b.dataset.on === '';
+    return [
+      ok(shown, 'the switch stands in the corner while the yard is running'),
+      ok(on, 'a tap fades the crew, and the glyph says so'),
+      ok(off, 'and a second tap puts it back'),
+    ];
+  }],
   ['the pinned card stands under the corner buttons, not over them', async () => {
     // The gear is a phone's only way to the settings, and the story pins the
     // goal card into the same corner by itself: a pin drawn at the top of the

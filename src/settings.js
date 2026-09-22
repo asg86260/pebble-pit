@@ -2,7 +2,7 @@
 // that is not the yard. This file wires the shelf; escape, resume and the
 // reset's two-click arming are input.js's.
 
-import { setPref, reducedMotion, coarse, dark } from './prefs.js';
+import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot } from './persist.js';
 import { S } from './state.js';
@@ -229,7 +229,6 @@ sayDark();
 // line outside audio.js that knows a context exists: the browser allows
 // nothing before one. Both are preferences (prefs.js), put in order on open
 // by their own observer, guarded like the one above.
-import { pref } from './prefs.js';
 import { wakeAudio, muteAudio, setVolume } from './audio.js';
 
 const soundEl = document.getElementById('sound');

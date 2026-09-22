@@ -123,11 +123,6 @@ export const CLOUD_MURK_TINT = 0.6;
 // to read a working machine. Bent below one, a little haze shows at once and
 // the darkening eases toward the brim.
 export let CLOUD_MURK_POW = 0.45;
-// A cloud a balloon's thread is on pales (DESIGN.md, "The balloons pull from
-// the clouds"): it is drawn at the sky's murk less this share at the most, so a
-// pulled cloud on a filthy day is a paler brown and never a clean white.
-export const CLOUD_DRAWN_MAX = 0.6;
-export const CLOUD_DRAWN_EASE = 0.5;   // share of the way it goes a second, paling and filling back
 // The storm's own color: a cool grey, laid over whatever brown the murk has
 // put there, so weather and dirt are told apart -- brown is the yard being
 // dirty, grey is rain on the way. The underside takes it harder, which is what

@@ -2,14 +2,18 @@
 //
 // `LAYERS` is the picture back to front, one entry a layer; moving a layer is
 // moving one line. An entry is `{ name, draw }` plus an optional `when` for a
-// layer that is only in the picture some of the time. Every draw lives in
-// `src/render/`; this file draws nothing.
+// layer that is only in the picture some of the time, and an optional `dim`
+// for one the crew switch fades. Every draw lives in `src/render/`; this file
+// draws nothing.
 
+import { CREW_FADE } from './config.js';
+import { fadedCrew } from './prefs.js';
+import { ctx } from './render/ctx.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
-import { drawBalloons, drawBrollies, drawThreads } from './render/balloon.js';
+import { drawBalloons, drawBrollies, drawCraftAir } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
@@ -159,12 +163,12 @@ const LAYERS = [
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
-  { name: 'dropped hats', draw: drawDroppedHats },// and any that has been shaken off somebody
+  { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
-  { name: 'workers', draw: drawWorkers },
+  { name: 'workers', draw: drawWorkers, dim: 1 },
   { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
-  { name: 'says', draw: drawSays },              // and what any of them stood about is saying
+  { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
 
@@ -172,8 +176,8 @@ const LAYERS = [
   // world: painted back with the pit, it warped blank page and read as a plain
   // disc. Nothing that has to stay readable is ever over the pit's near end.
   { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
-  { name: 'threads', draw: drawThreads },        // what the craft are drawing down out of the clouds
-  { name: 'balloons', draw: drawBalloons },      // and the craft crossing it, in front of their own threads
+  { name: 'craft air', draw: drawCraftAir },     // the haze the craft are drawing in, behind them
+  { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
   { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
   { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
@@ -213,6 +217,13 @@ export function draw() {
   for (const layer of LAYERS) {
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
+    // A `dim` layer is the crew's own plane, and the settings sheet's crew
+    // switch takes ink out of it so the buildings behind a late yard's crowd
+    // can be read (prefs.js, `fadedCrew`). The alpha is put back the same frame:
+    // nothing else in the picture is ever drawn faint.
+    const faint = layer.dim && fadedCrew();
+    if (faint) ctx.globalAlpha = CREW_FADE;
     layer.draw();
+    if (faint) ctx.globalAlpha = 1;
   }
 }

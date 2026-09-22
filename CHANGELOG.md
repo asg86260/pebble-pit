@@ -14,9 +14,11 @@ feature lives in DESIGN.md.
 **New this release**
 - Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
+- The books have three new sheets: each income rate wears an arrow and the sum under it, the sky says what is putting it up and when it will be full, and the crew says who is doing what and who is best at it (test/books-sheets.test.mjs).
 - The income books are a running record of what came in, averaged over a window you pick -- half a minute, one, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
-- A working balloon now pulls its catch out of a cloud: a thread of cells runs down from the nearest cloud above it, and that cloud pales while it is being drawn from; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `balloonpan`, `moored`; test/balloon.test.mjs).
+- A working balloon draws the haze in: a stream of cells in the air's own color gathers into its filter box from all round it, thicker the dirtier the sky; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `moored`; test/balloon.test.mjs).
 - The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).
+- A crew switch in the top-right corner, beside fullscreen, draws the workers faint so a crowded late yard's buildings can be seen through them (src/selftest/touch.js).
 - The rain has depth like the sky does: it falls in three sheets, fine pale flecks far off and long dark strokes close in, sliding past each other as you scroll, with the clouds in front of the far ones (src/scenes.js `raindepth`; test/sky-rain.test.mjs).
 - Each machine's tuning is a proper three-rung ladder now -- pips on the card, a written price a rung, and an end you reach -- and the rows are named for what goes up: ram strike, drill bite, tiller pace (test/machine-tune.test.mjs).
 - The sky has depth: three sheets of cloud, far to near, each paler, finer-grained and lower the farther it is, and every cloud is its own cumulus -- a spine of big circles with puffs on top, lit from above and shaded like the boulder (src/scenes.js `cloudswell`, `rock`; test/weather.test.mjs).
@@ -43,6 +45,7 @@ feature lives in DESIGN.md.
 - A body put on the ram or the drill climbs up to its seat instead of appearing on the roof (test/movers-y.test.mjs).
 - A balloon's rider climbs the mast into the basket instead of appearing in it (test/movers-y.test.mjs).
 - Skipping the opening while the survivor is thrown clear carries on from where it is in the air instead of snapping it to the ground (test/movers-y.test.mjs).
+- A shop board taller than the window, as a full bench is on a 1080p screen, stays on screen and scrolls to its last row instead of running off the bottom (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
 - The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
 - A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
 - The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).

@@ -2,11 +2,16 @@
 // record is income.js's, written where each coin lands; this file is the
 // board that reads it.
 
-import { STATS_OVER_S } from './config.js';
+import { STATS_OVER_S, STATS_TREND_STEPS } from './config.js';
 import { S } from './state.js';
 import { MARK } from './words.js';
 import { fmt } from './words.js';
-import { bookRate, overNow } from './income.js';
+import { bookRate, bookGot, bookTrend, overNow } from './income.js';
+import { arrowsFor } from './words.js';
+import { AIR_TREND_STEPS } from './config.js';
+import { airReadout, airSides, airTrend, skyKindCounts, muckLeft } from './smog.js';
+import { doing } from './crewboard.js';
+import { JOB, JOB_OF, jobSaid } from './jobs.js';
 
 // What the books show, in board order. A currency appears once you have seen
 // one.
@@ -34,6 +39,12 @@ const say = v =>
   String(Math.round(v));
 
 // --- the board ----------------------------------------------------------------
+// Every row is a readout in the shape every other board uses; `read` takes the
+// cursor and the hover off in the stylesheet. A row's `note` is the dim line
+// under it on the ledger.
+const readout = (key, name, price, show, note) =>
+  ({ key, name, price, note, read: true, dead: () => false, cost: () => 0, buy: () => {}, show });
+
 // The window the rates are taken over, pressed to step to the next. A
 // signpost's press: nothing is bought, and it carries no pushpin.
 const OVER_ROW = {
@@ -48,19 +59,104 @@ const OVER_ROW = {
   show: () => true
 };
 
-// Rows in the shape every other board uses. They are readouts, not purchases:
-// `read` takes the cursor and the hover off in the stylesheet.
-export const STATS_UPGRADES = BOOKS.map(b => ({
-  key: `rate${b.key}`,
-  name: b.name,
+// --- income, a second -------------------------------------------------------------
+// The rate, its arrow against the window before, and under it the window's sum.
+const lastWords = over =>
+  over < 60 ? 'the last half minute' : over === 60 ? 'the last minute' : `the last ${Math.round(over / 60)} minutes`;
+const arrowOf = coin => {
+  const t = bookTrend(coin);
+  return t == null ? '' : arrowsFor(t, STATS_TREND_STEPS) + ' ';
+};
+const INCOME_ROWS = BOOKS.map(b => readout(`rate${b.key}`, b.name,
   // The number and its coin; that it is a rate is the heading's to say, once.
-  price: () => `${MARK[b.mark]} ${say(bookRate(b.key))}`,
-  read: true,
-  dead: () => false,
-  cost: () => 0,
-  buy: () => {},
-  show: () => b.seen()
-}));
+  () => `${arrowOf(b.key)}${MARK[b.mark]} ${say(bookRate(b.key))}`,
+  () => b.seen(),
+  // Nothing in is said by the rate's nought already.
+  () => { const n = bookGot(b.key); return n > 0 ? `${fmt(n)} in ${lastWords(overNow())}` : ''; }));
+
+// --- the sky ----------------------------------------------------------------------
+// What the air filter's arrow says, and why: the two sides of it over the same
+// minute, how full the sky is, and what put it there.
+const perMin = v => say(Math.max(0, v) * 60);
+// The sky's motes by what kicked them up (`SMOG_TINTS` names the kinds).
+const DIRT = [
+  { kind: 'mach',  name: 'from the machines' },
+  { kind: 'dust',  name: 'from the rock' },
+  { kind: 'shard', name: 'from the quarry' },
+  { kind: 'spore', name: 'from the farm' }
+];
+const dirtShare = kind => {
+  const k = skyKindCounts();
+  const all = Object.values(k).reduce((a, b) => a + b, 0);
+  return all ? (k[kind] || 0) / all : 0;
+};
+const sayPct = v => `${Math.round(v * 100)}%`;
+// A countdown to a full sky, as a clock, off the same minute as the arrow so
+// the two cannot disagree; nothing to count while the house is winning, which
+// is the reading worth playing for.
+const sayDue = () => {
+  const { up, down } = airSides();
+  const { haze, cap } = airReadout();
+  const net = up - down;
+  if (net <= 0) return 'not at this rate';
+  return `${MARK.time} ${sayClock(Math.max(0, cap - haze) / net * 1000)}`;
+};
+const seenSky = () => S.seenAir;
+const SKY_ROWS = [
+  readout('skytrend', 'pollution', () => arrowsFor(airTrend() * 60, AIR_TREND_STEPS), seenSky),
+  readout('skyup', 'put up, a minute', () => perMin(airSides().up), seenSky),
+  readout('skydown', 'taken out, a minute', () => perMin(airSides().down), seenSky),
+  readout('skyhaze', 'the sky is', () => `${sayPct(airReadout().share)} full`, seenSky),
+  readout('skydue', 'full in', sayDue, seenSky),
+  ...DIRT.map(d => readout(`sky${d.kind}`, d.name, () => sayPct(dirtShare(d.kind)),
+                           () => seenSky() && dirtShare(d.kind) >= 0.01)),
+  readout('skyrains', 'showers weathered', () => fmt(S.rains || 0), () => seenSky() && S.rains >= 1),
+  readout('skymuck', 'muck lying about', () => fmt(muckLeft()), () => seenSky() && muckLeft() > 0)
+];
+
+// --- the crew ---------------------------------------------------------------------
+// How many, doing what, and who is best at it. The doing is the crew card's own
+// word (`doing` in crewboard.js), so the two boards cannot disagree.
+const JOBS_SHOWN = [JOB.ROCK, JOB.HAUL, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.JANITOR,
+                    JOB.STIR, JOB.SCHOLAR, JOB.WIZARD, JOB.BUILD];
+const headcount = job => S.workers.filter(w => JOB_OF[w.type] === job).length;
+const NOW_IS = [
+  { key: 'working', name: 'working' },
+  { key: 'walking', name: 'on the way' },
+  { key: 'resting', name: 'on a break' },
+  { key: 'home',    name: 'at home' },
+  { key: 'idle',    name: 'nothing much' }
+];
+const OFF_WORK = { 'on a break': 'resting', 'at home': 'home', 'walking there': 'walking',
+                   'heading home': 'walking', 'nothing much': 'idle',
+                   'in your hand': 'idle', 'in mid-air': 'idle' };
+const nowIs = key => S.workers.filter(w => (OFF_WORK[doing(w)] || 'working') === key).length;
+// The records every body keeps (crew/records.js), best of the crew standing.
+const BEST = [
+  { field: 'mined',    name: 'most off the rock' },
+  { field: 'quarried', name: 'most ore mined' },
+  { field: 'farmed',   name: 'most crops farmed' },
+  { field: 'stored',   name: 'most into the hole' },
+  { field: 'tidied',   name: 'most muck cleared' }
+];
+const best = field => S.workers.reduce((b, w) => ((w[field] || 0) > (b ? b[field] || 0 : 0) ? w : b), null);
+// `lived` is a body's own clock, kept by the crew. Minutes under an hour,
+// hours after.
+const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
+const sayTime = ms =>
+  ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
+const hasCrew = () => S.workers.length > 0;
+const CREW_ROWS = [
+  ...JOBS_SHOWN.map(j => readout(`crew${j}`, jobSaid(j), () => String(headcount(j)),
+                                 () => headcount(j) > 0)),
+  ...NOW_IS.map(n => readout(`now${n.key}`, n.name, () => String(nowIs(n.key)),
+                             () => hasCrew() && nowIs(n.key) > 0)),
+  ...BEST.map(r => readout(`best${r.field}`, r.name,
+                           () => { const w = best(r.field); return w ? `${w.name} · ${fmt(w[r.field])}` : ''; },
+                           () => !!best(r.field))),
+  readout('tallyeldest', 'longest on one clock', () => `${MARK.time} ${sayTime(eldest())}`,
+          () => eldest() >= 60000)
+];
 
 // --- the tally ------------------------------------------------------------------
 // Lifetime totals, read straight off `S`; nothing here is measured or eased.
@@ -72,6 +168,10 @@ const TALLY = [
     count: () => S.banked, seen: () => S.banked > 0 },
   { key: 'ore',    name: 'ore dug', mark: 'shard',
     count: () => S.quarryTotal, seen: () => S.seenShard },
+  // Income over the whole game, refunds kept out, as the rates count it.
+  ...BOOKS.filter(b => b.key !== 'dust').map(b => ({
+    key: `earned${b.key}`, name: `${b.name} earned`, mark: b.mark,
+    count: () => S.earnedTotal[b.key] || 0, seen: () => b.seen() && (S.earnedTotal[b.key] || 0) > 0 })),
   { key: 'rift',   name: 'through the rift', mark: 'dust',
     count: () => S.riftAte, seen: () => S.riftOpen },
   { key: 'brews',  name: 'batches brewed',
@@ -84,12 +184,6 @@ const TALLY = [
     count: () => S.won.length, seen: () => S.won.length >= 1 }
 ];
 
-// `lived` is a body's own clock, kept by the crew. Minutes under an hour,
-// hours after.
-const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);
-const sayTime = ms =>
-  ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
-
 // The clock over the one under the rock, read as a stopwatch because it is a
 // time you are racing. Two rows for the one number: still running while they
 // are under, what the rescue took once they are out.
@@ -100,50 +194,24 @@ export const sayClock = ms => {
   return s >= 3600 ? `${Math.floor(s / 3600)}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
-const TALLY_UPGRADES = [
-  ...TALLY.map(t => ({
-    key: `tally${t.key}`,
-    name: t.name,
-    price: () => `${t.mark ? MARK[t.mark] + ' ' : ''}${fmt(t.count() || 0)}`,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => t.seen()
-  })),
-  { key: 'tallyeldest',
-    name: 'longest on one clock',
-    price: () => `${MARK.time} ${sayTime(eldest())}`,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => eldest() >= 60000 },
-  { key: 'tallyunder',
-    name: 'sqwife under the rock for',
-    price: () => `${MARK.time} ${sayClock(S.buriedMs)}`,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => S.buried },
-  { key: 'tallysaved',
-    name: 'sqwife saved in',
-    price: () => `${MARK.time} ${sayClock(S.buriedMs)}`,
-    read: true,
-    dead: () => false,
-    cost: () => 0,
-    buy: () => {},
-    show: () => S.rescued }
+const TALLY_ROWS = [
+  ...TALLY.map(t => readout(`tally${t.key}`, t.name,
+                            () => `${t.mark ? MARK[t.mark] + ' ' : ''}${fmt(t.count() || 0)}`,
+                            () => t.seen())),
+  readout('tallyunder', 'sqwife under the rock for', () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+          () => S.buried),
+  readout('tallysaved', 'sqwife saved in', () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+          () => S.rescued)
 ];
 
 // One list, so board.js and shop.js get every kind without being told.
-STATS_UPGRADES.unshift(OVER_ROW);
-STATS_UPGRADES.push(...TALLY_UPGRADES);
+export const STATS_UPGRADES = [OVER_ROW, ...INCOME_ROWS, ...SKY_ROWS, ...CREW_ROWS, ...TALLY_ROWS];
 
 export const STATS_SECTIONS = [
-  { title: 'income, a second', keys: STATS_UPGRADES.filter(u => u.key.startsWith('rate')).map(u => u.key) },
-  { title: 'the tally', keys: TALLY_UPGRADES.map(u => u.key) }
+  { title: 'income, a second', keys: [OVER_ROW, ...INCOME_ROWS].map(u => u.key) },
+  { title: 'the sky', keys: SKY_ROWS.map(u => u.key) },
+  { title: 'the crew', keys: CREW_ROWS.map(u => u.key) },
+  { title: 'the tally', keys: TALLY_ROWS.map(u => u.key) }
 ];
 
 // --- the eased per-minute rates ----------------------------------------------

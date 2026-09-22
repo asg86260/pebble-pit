@@ -710,13 +710,6 @@ export const SCENES = {
     run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
                  window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
                  window.__look(st().craft[0].x - 380); window.__fast(3); } },
-  // The same craft with the view scrolled on under it: the clouds slide
-  // slower than the ground, so its thread lets go and reaches for another.
-  balloonpan: { about: 'the house and the sky', say: 'a balloon thread re-reaching as the view scrolls', page: true,
-    run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
-                 window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
-                 window.__look(st().craft[0].x - 380); window.__fast(1);
-                 window.__look(st().craft[0].x - 120); window.__fast(1.5); } },
   // Taken off the purifiers while the craft was up.
   brolly: { about: 'the house and the sky', say: 'a rider stepping out under an umbrella', page: true,
     run: () => { rich(); window.__air({ open: true, haze: 1600 }); window.__fast(2);
@@ -864,6 +857,11 @@ export const SCENES = {
   // noughts.
   books: { about: 'the pit and the rift', say: 'the books over the pit',
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
+  // Every sheet of the books: long enough for the arrows (two windows of
+  // record), and a machine putting soot up so the sky sheet has a story.
+  booksall: { about: 'the pit and the rift', say: 'every sheet of the books, arrows and all',
+    run: () => { rich(); S.seenAir = true; window.__machine('jaw', { bought: true }); window.__fast(150);
+                 window.__board('stats'); window.__look(st().pitX - 300); } },
   // Half a second in lands this in the middle of the gulp. Not `rich()`: its
   // grant opens the rift during the setup, so the scene would open on a yard
   // that had already had the moment.

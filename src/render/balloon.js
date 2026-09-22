@@ -1,10 +1,10 @@
 // The filter balloons the air filter sells, and anyone stepped out under a
 // brolly.
 
-import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftY, mastX } from '../balloon.js';
-import { THREADS, threadEnds } from '../thread.js';
-import { cloudThreadTone } from '../weather.js';
-import { BROLLY_STICK, BROLLY_W, P, THREAD_GIVE, WORKER } from '../config.js';
+import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftMouth, craftY, mastX } from '../balloon.js';
+import { DRAWN } from '../craftair.js';
+import { murkTone } from '../weather.js';
+import { BROLLY_STICK, BROLLY_W, P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
@@ -109,24 +109,22 @@ export function drawBrollies() {
   }
 }
 
-// A working craft's thread: its cells, each where its share of the way down
-// puts it on the line from the cloud to the filter box this frame, so the
-// thread stretches as the cloud and the craft slide apart rather than
-// trailing behind. A cell wanders off the line near the cloud and comes in to
-// the mouth, the way the cloud is being drawn together into it. Drawn in the
-// held cloud's own underside, so it reads as the cloud coming down.
-export function drawThreads() {
-  for (let i = 0; i < THREADS.length; i++) {
-    const th = THREADS[i];
-    if (!th || !th.cells.length || !CRAFT[i]) continue;
-    const { top, mouth: m } = threadEnds(i);
-    const dx = m.x - top.x, dy = m.y - top.y, len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len;           // across the line
-    ctx.fillStyle = cloudThreadTone(th.cloud);
+// The haze a working craft is drawing in: each cell on its way from where it
+// started, round the craft, into the middle of the filter box, placed off the
+// craft this frame so it rides along with it. Behind the balloon, so the
+// envelope stays a clean shape and the haze goes in out of sight. Drawn in the
+// color the air is, so a filthy sky is a brown stream and a clean one a pale
+// trickle.
+export function drawCraftAir() {
+  for (let i = 0; i < DRAWN.length; i++) {
+    const cells = DRAWN[i];
+    if (!cells || !cells.length || !CRAFT[i]) continue;
+    const m = craftMouth(i), cy = m.y + BALLOON_FILTER_H / 2;
+    ctx.fillStyle = murkTone();
     ctx.beginPath();
-    for (const c of th.cells) {
-      const wander = c.off * THREAD_GIVE * (1 - c.t);
-      const x = top.x + dx * c.t + nx * wander, y = top.y + dy * c.t + ny * wander;
+    for (const c of cells) {
+      const d = c.d * (1 - c.t);
+      const x = m.x + Math.cos(c.a) * d, y = cy + Math.sin(c.a) * d;
       ctx.rect(Math.round(x / P) * P, Math.round(y / P) * P, P, P);
     }
     ctx.fill();

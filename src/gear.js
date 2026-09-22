@@ -8,13 +8,11 @@
 // it is the tap outside. `hold` in input.js is still the one flag; this
 // only reaches for it.
 
-import { FS_SIZE, FS_INSET } from './config.js';
 import { S } from './state.js';
 import { coarse } from './prefs.js';
 import { onTap } from './tap.js';
 import { hold } from './input.js';
 import { showPane } from './settings.js';
-import { fullscreenAble } from './fullscreen.js';
 import { sheetSeat } from './sheet.js';
 
 const gear = document.getElementById('gear');
@@ -25,23 +23,10 @@ const scrim = document.getElementById('scrim');
 // already the sheet from below and not the desk's card for a frame.
 onTap(gear, () => { hold(true); showPane('settings'); refreshHeldSeat(); });
 
-// Seated every frame like the rest of the shell. It takes the fullscreen
-// button's spot when there is none, and the pin gives the corner up to
-// whichever of the two is there (`--fs-room`, shared with fullscreen.js).
-let shown = null, beside = null;
+// Seated every frame like the rest of the shell. Where it stands is the
+// corner's row (corner.js), beside the fullscreen button or in its spot.
 export function refreshGear() {
-  const want = coarse() && !S.paused;
-  if (want !== shown) {
-    shown = want;
-    gear.hidden = !want;
-    if (want) document.documentElement.style.setProperty('--fs-room', `${FS_SIZE + FS_INSET}px`);
-  }
-  if (!want) return;
-  const next = fullscreenAble();
-  if (next !== beside) {
-    beside = next;
-    gear.style.setProperty('--gear-shift', next ? `${FS_SIZE + FS_INSET}px` : '0px');
-  }
+  gear.hidden = !(coarse() && !S.paused);
 }
 
 // The held sheet's seat. The sheet is its own scroller, so it carries no

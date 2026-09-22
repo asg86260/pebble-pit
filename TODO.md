@@ -1,5 +1,13 @@
 # Still to do
 
+## The balloons draw the haze in -- BUILT (2026-09-22)
+
+"The balloons draw the haze in" in DESIGN.md. The cloud threads are cut: tied
+to clouds that scroll slower than the ground, they slid and switched clouds on
+every scroll. A working balloon now gathers murk-colored cells into its box
+from above and the sides, kept relative to the craft (`craftair.js`), thicker
+the dirtier the sky. Clouds are no longer paled.
+
 Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history (this file before

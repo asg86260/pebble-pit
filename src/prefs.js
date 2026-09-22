@@ -11,6 +11,7 @@ const DEFAULTS = {
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
   dark: null,        // null = follow the system; true = white on black; false = black on white
+  faded: false,      // the crew drawn faint, so a crowded yard can still be read
   name: '',          // the name on the board of times, typed once (times.js)
 };
 
@@ -36,6 +37,11 @@ export function reducedMotion() {
   if (prefs.motion != null) return prefs.motion;
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+// Whether the crew is drawn faint (render.js, a `dim` layer): the sheet's
+// switch. A late yard is a crowd, and this is the player saying they would
+// rather see the buildings through it.
+export const fadedCrew = () => !!prefs.faded;
 
 // Whether the pointer is a thumb (DESIGN.md, "Playing it on a phone"): the
 // sheet's switch, else what the platform says its primary pointer is. Not

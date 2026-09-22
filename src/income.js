@@ -35,6 +35,7 @@ export function resetBooks() {
 export function earned(coin, n) {
   if (!(n > 0)) return;
   open[coin] = (open[coin] || 0) + n;
+  S.earnedTotal[coin] = (S.earnedTotal[coin] || 0) + n;
 }
 
 // Closes a bucket every STATS_SAMPLE_S; every frame would be tens of
@@ -54,13 +55,15 @@ export function sampleBooks(now) {
   while (ring.length && ring[0].at <= cut) ring.shift();
 }
 
-// How far back a window of `over` seconds reaches in the record: its length,
-// or the whole record while the record is shorter.
-function take(over) {
-  let span = 0;
+// A window of `over` seconds, starting `skip` seconds back: what came in over
+// it and the seconds it covers -- its length, or less while the record is
+// shorter.
+function take(over, skip = 0) {
+  let span = 0, back = 0;
   const got = {};
   for (let i = ring.length - 1; i >= 0; i--) {
     const b = ring[i];
+    if (back + b.dt <= skip + 1e-6) { back += b.dt; continue; }
     if (span + b.dt > over + 1e-6) break;
     span += b.dt;
     for (const c in b.got) got[c] = (got[c] || 0) + b.got[c];
@@ -82,3 +85,22 @@ export function bookRate(coin, over = overNow()) {
 
 // The seconds a rate is actually divided by.
 export const bookSpan = (over = overNow()) => take(over).span;
+
+// What came in over the window, not divided: the sum a player often wants.
+export const bookGot = (coin, over = overNow()) => take(over).got[coin] || 0;
+
+// This window against the one before it, as a share of the one before; null
+// until the record holds both whole. From nothing to something is a doubling
+// as far as the arrows care. A difference inside the counts' own scatter is no
+// change at all: eight ore a minute against seven is one lump landing either
+// side of the edge, and two counts from the same steady yard differ by about
+// the square root of their sum.
+export function bookTrend(coin, over = overNow()) {
+  const now = take(over), was = take(over, over);
+  if (now.span < over - STATS_SAMPLE_S || was.span < over - STATS_SAMPLE_S) return null;
+  const na = now.got[coin] || 0, nb = was.got[coin] || 0;
+  if (Math.abs(na - nb) <= 2 * Math.sqrt(na + nb)) return 0;
+  const a = na / now.span, b = nb / was.span;
+  if (b <= 0) return a > 0 ? 1 : 0;
+  return (a - b) / b;
+}
