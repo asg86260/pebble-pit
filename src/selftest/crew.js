@@ -39,11 +39,17 @@ export const TESTS = [
     // to travel before it lands, which measures the drop rather than the
     // throw. It goes up first, stands still long enough for the climb to go
     // stale, and is then flicked across.
+    //
+    // Each gesture is played on the game's clock and nothing else: a frame of
+    // yard between two moves, and no await anywhere inside one, so no real
+    // frame can land in the middle of it. The flick, the stale climb and the
+    // shaking window are all read off `now()`, and a busy machine used to
+    // stretch a real sleep into a stale throw or a lapsed shaking.
     const a = grab();
-    await sleep(20);
-    for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 2); await sleep(16); }
-    await sleep(180);                            // the climb is not the throw
-    for (let i = 1; i <= 6; i++) { point('pointermove', a.sx + i * 20, a.sy - 200, 2); await sleep(16); }
+    run(1 / 60);
+    for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 2); run(1 / 60); }
+    run(11 / 60);                                // the climb is not the throw
+    for (let i = 1; i <= 6; i++) { run(1 / 60); point('pointermove', a.sx + i * 20, a.sy - 200, 2); }
     point('pointerup', a.sx + 140, a.sy - 200, 0);
     const thrown = posOf(a.who);
     const landedAt = landed(a.who);
@@ -52,9 +58,9 @@ export const TESTS = [
     // and dropped from a standstill: it goes where it was let go of
     run(3);
     const b = grab();
-    await sleep(20);
-    for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 2); await sleep(16); }
-    await sleep(180);                            // stood still before letting go
+    run(1 / 60);
+    for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 2); run(1 / 60); }
+    run(11 / 60);                                // stood still before letting go
     point('pointerup', b.sx, b.sy - 200, 0);
     const still = posOf(b.who);
     const stillLanded = landed(b.who);
@@ -63,12 +69,12 @@ export const TESTS = [
     // shaken about: it lands seeing stars
     run(3);
     const c = grab();
-    await sleep(20);
+    run(1 / 60);
     // Derived from the threshold: n moves alternating sides is n-1 changes of
     // direction, so SHAKE_TURNS + 3 clears the bar with margin. Written as a
     // number it silently stops being a shaking the day the threshold moves.
     const waggles = (await import('../config.js')).SHAKE_TURNS + 3;
-    for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); await sleep(30); }
+    for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); run(2 / 60); }
     point('pointerup', c.sx, c.sy, 0);
     run(0.6);
     const dizzy = state();
