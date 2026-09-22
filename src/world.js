@@ -515,6 +515,20 @@ export function seatSites() {
   seatRift();
 
   seat(casino, 'casino', CASINO_H);
+  // The casino's plots of sand go where the building goes, here and not once
+  // at load: a site bought later moves the casino along, and its sand has to
+  // move with it. The hopper on its roof, where the stake stands, the
+  // building's inner width, a wall in from each side, the top of the block
+  // (see casino.js); and the tray in its foot, the same width, stood on the
+  // building's floor.
+  table.x = casino.x + P;
+  table.cols = CASINO_W / P - 2;
+  table.rows = HOPPER_H;
+  table.y = casino.y;
+  tray.x = casino.x + P;
+  tray.cols = CASINO_W / P - 2;
+  tray.rows = TRAY_H;
+  tray.y = casino.y + casino.h - TRAY_H * P;
 
   seat(outhouse, 'outhouse', OUTHOUSE_H);
 
@@ -558,19 +572,6 @@ export function resize(after) {
   shapePit();
 
   seatSites();
-
-  // The casino's plot of sand: the hopper on its roof, where the stake
-  // stands, the building's inner width, a wall in from each side, the top of
-  // the block. See casino.js.
-  table.x = casino.x + P;
-  table.cols = CASINO_W / P - 2;
-  table.rows = HOPPER_H;
-  table.y = casino.y;
-  // and the tray in its foot: the same width, stood on the building's floor
-  tray.x = casino.x + P;
-  tray.cols = CASINO_W / P - 2;
-  tray.rows = TRAY_H;
-  tray.y = casino.y + casino.h - TRAY_H * P;
 
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.

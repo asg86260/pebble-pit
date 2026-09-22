@@ -29,6 +29,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).
 - A casino stake in the millions no longer freezes the game while it pays out (test/casino-big-stake.test.mjs).
 - The casino's pay comes down on the pile in the hole, instead of vanishing at ground level and turning up below it (test/casino-big-stake.test.mjs).
 - The income books hold still: a rate that comes in lumps, like ore or sparks, no longer halves and doubles from one second to the next while nothing in the yard has changed (test/wave5-boards.test.mjs, "a coin that arrives in lumps is read over a longer window than one that streams").
