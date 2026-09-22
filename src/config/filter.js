@@ -65,6 +65,12 @@ export const FILTER_FOLDS = 3;
 // cells long can point sixteen ways; three quarters of a turn of those is
 // twelve, and the needle lands on one of them.
 export const DIAL_STEPS = 12;
+// Its size, and the courses of hood above the tower it hangs off. Here rather
+// than in the drawing because the balloons' mast is stood clear of the dial,
+// and the two have to agree on where the dial ends.
+export const FILTER_HOOD = 5;         // courses of hood standing against the sky, above the tower
+export const DIAL_CELLS = 7;          // across the gauge's face and ring
+export const DIAL_STUB = 1;           // and the stub it hangs on, out of the wall
 export const DIAL_EASE = 1.5;         // share of the way to the reading it closes a second
 export const DIAL_GIVE = 0.6;         // steps past its own the reading must be before it moves
 export const FILTER_PUMP = 3.2;       // folds a second, at one body in the house

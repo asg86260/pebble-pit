@@ -14,7 +14,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
-         SMOG_CAP,
+         SMOG_CAP, CLOUD_DRAWN_MAX,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
@@ -90,6 +90,9 @@ export function swell() {
 // the air filter's dial reads the same number.
 import { murk } from './smog/band.js';
 export { murk };
+// One cloud's murk: the sky's, less what a balloon's thread has paled it
+// (`drawn`, eased by thread.js). Picture only; the count is the sky's.
+const murkOf = c => murk() * (1 - (c.drawn || 0) * CLOUD_DRAWN_MAX);
 
 // The tones a cloud can be, parsed once: its two pales, the smoke's brown it
 // slides toward with the murk (and stops at -- a dirty sky is a heavy brown,
@@ -244,7 +247,7 @@ const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet
 // up. A storm cloud's radii are scaled by the swell, from nothing.
 function columnsOf(c, sw) {
   const flat = CLOUD_LAYERS[c.sheet].flat;
-  const k = Math.min(1, (sw + murk() * CLOUD_MURK_GROW) * c.give);
+  const k = Math.min(1, (sw + murkOf(c) * CLOUD_MURK_GROW) * c.give);
   const grow = 1 + CLOUD_GROW_R * k;
   // A front's cloud is nothing when it is born and comes up out of nothing
   // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
@@ -541,6 +544,25 @@ export function startle(wx, wy) {
 // is drawn, and rounding it to its cell first made it hop a cell at a time
 // against a camera that scrolls smoothly.
 const skyAt = s => s.x + S.camX * (1 - s.far);
+
+// Where a balloon's thread takes hold of a cloud: on its underside, as nearly
+// over `x` as the cloud reaches, where the cloud is drawn this frame -- which
+// is not its world x, since the sheets scroll slower than the ground. A cloud
+// on its way out is not held.
+export function cloudHold(c, x) {
+  if (melting(c)) return null;
+  const cp = cellOf(c), left = skyAt(c), right = left + c.w * cp;
+  if (right < S.camX || left > S.camX + S.viewW) return null;
+  return { x: Math.max(left + cp, Math.min(right - cp, x)), y: cloudY(c), mid: (left + right) / 2 };
+}
+// And the tone the thread is drawn in: the cloud's own underside, so the
+// thread reads as the cloud coming down. Not faded by the cloud's depth: the
+// thread is at the craft, in front of every sheet, and faded it all but
+// vanished against the page.
+export function cloudThreadTone(c) {
+  const col = partColor('under', c ? murkOf(c) : murk(), swell());
+  return `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`;
+}
 const skyX = s => Math.round(skyAt(s) / P) * P;
 
 // The tone of one cell, `cx` across and `r` rows above the base: lit from
@@ -578,7 +600,11 @@ export function drawClouds() {
   const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
   for (const c of order) {
-    const tones = cloudTones(crown, base, c.far, fade(c));
+    // A cloud a thread has paled has its own two colors; the rest share the sky's.
+    const own = c.drawn > 0.01;
+    const tones = own
+      ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far, fade(c))
+      : cloudTones(crown, base, c.far, fade(c));
     const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
     const x = skyAt(c), y = cloudY(c);
     const { lo, hi, h, under: u } = columnsOf(c, sw);

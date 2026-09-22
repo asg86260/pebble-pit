@@ -12562,7 +12562,7 @@ stays exactly as it is.
   against `stuck-yard.json`, a player save from before the rename with the
   house standing.
 
-## The balloons pull from the clouds (design, not built)
+## The balloons pull from the clouds (built 2026-09-22)
 
 Cutting the balloons was the wrong fix for the right complaint. The dial
 stood where they moored, and with the specks gone they took the air in as
@@ -12647,6 +12647,32 @@ fan ladder, the house. Nothing about the thread or the paling reaches the sim.
   `balloon` shows a thread on a near cloud, `balloonpan` shows it
   re-reaching as the view scrolls, and `moored` shows the mast clear of the
   dial.
+
+### What building it changed
+
+- **The balloons fly under the clouds now.** They used to cruise a share of
+  the way down the haze band, which put the first lane level with the cloud
+  bases: no sky above it for a thread, and the envelope among the clouds.
+  `laneY` is now measured from the lowest base the middle sheet can have
+  (`CLOUD_TOP` plus its lane), `BALLOON_UNDER` cells under it with the whole
+  craft hung above, each lane `BALLOON_LANE_STEP` lower, and none lower than
+  `BALLOON_CLEAR` over the ground. On a short window the ground wins and a
+  craft rides among the clouds.
+- **The thread comes down beside the envelope, not through it.** The intake
+  is right under the envelope, so a thread straight down ran behind the
+  balloon. It holds its cloud a little to the side it is on and goes into
+  that end of the filter box, which is wider than the envelope.
+- **It only reaches up.** A cloud whose base is not `THREAD_RISE` cells above
+  the box is not pulled on: the far sheet's bases sit lower than the first
+  lane, and a thread running sideways to a cloud level with the craft read
+  as nothing.
+- **The thread is drawn in the cloud's underside tone without its depth
+  fade.** Faded like the cloud, it all but vanished against the page; the
+  thread is at the craft, in front of every sheet.
+- **The balloon's old draught of cells is gone.** The thread replaces it.
+- **The check that bites** swings the view far enough that the craft is off
+  screen every other second. A swing that always kept a cloud in view could
+  not tell a pull that depends on the view from one that does not.
 
 ## The balloons are cut (2026-09-22, reverted the same day)
 

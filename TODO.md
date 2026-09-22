@@ -1,13 +1,14 @@
 # Still to do
 
-## The balloons pull from the clouds -- DESIGNED, awaiting sign-off (2026-09-22)
+## The balloons pull from the clouds -- BUILT (2026-09-22)
 
-"The balloons pull from the clouds" in DESIGN.md. Revert the cut, stand the
-mast clear of the dial, and give a working balloon a thread of cloud-colored
-cells running up to the nearest cloud on screen. That cloud pales while the
-thread is on it. The thread and the paling are drawing only; the rate, the
-price and the drop under the basket are unchanged. The cut is reverted whole,
-migration and all; saves are local for now.
+"The balloons pull from the clouds" in DESIGN.md. The cut is reverted, the
+mast stands clear of the dial, and the balloons fly under the middle sheet
+of cloud. A working balloon draws a thread of cells down out of the nearest
+cloud above it, coming down beside the envelope into the end of its box, and
+that cloud pales while it is held (`thread.js`, `cloudHold` and `drawn` in
+weather.js). Picture only: `test/balloon.test.mjs` checks the pull is the
+same whichever way the view swings. Scenes `moored`, `balloon`, `balloonpan`.
 
 ## The air filter -- BUILT (2026-09-22)
 

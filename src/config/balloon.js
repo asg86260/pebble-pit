@@ -40,13 +40,27 @@ export const BROLLY_FALL = 0.95;
 export const BROLLY_W = P * 11;
 // And how far over the head it rides, which is the length of the stick.
 export const BROLLY_STICK = P * 7;
-// The lanes, as a share of the sky's depth, measured to the *basket*: a hundred
-// pixels of craft hang above the number set here, and at a fifth of the way
-// down the crown was off the top of the window. Each craft after the first
-// rides a little lower, so a fleet crosses rather than passing through itself.
-export const BALLOON_LANE_TOP = 0.36;
-export const BALLOON_LANE_GAP = 0.16;
+// The lanes, measured to the *basket*, in cells: the first rides this far under
+// the lowest base the middle sheet of cloud can have (with the whole craft
+// hung above it), so its thread has sky to run down through, and each craft
+// after the first a step lower, so a fleet crosses rather than passing through
+// itself. None rides lower than BALLOON_CLEAR over the ground, clear of the
+// buildings; on a short window that wins, and a craft rides among the clouds.
+export const BALLOON_UNDER = 3;
+export const BALLOON_LANE_STEP = 5;
+export const BALLOON_CLEAR = 26;
 export const BALLOON_EDGE = 6;       // cells it turns short of either end of the world
-// No reach or draught: a balloon is *in* the sky, so what is near it comes to
-// it and nothing is dragged (`eat` in smog.js).
-export const BALLOON_WISP_FROM = 90;  // and how far out the cells drawn in come from
+// Cells of air between the filter's dial and the widest part of a moored
+// craft, which is its filter box.
+export const BALLOON_MAST_GAP = 2;
+// The thread a working craft draws down out of the nearest cloud (thread.js):
+// cells a second at the bare fan, pixels a second they come down at, how far
+// either side of the line they wander near the cloud, and how much nearer a
+// new cloud has to be before the thread lets go of the one it has.
+export const THREAD_PER_S = 40;
+export const THREAD_PACE = 70;
+export const THREAD_GIVE = P * 2;
+export const THREAD_SWITCH = 0.7;
+// Cells a cloud's base has to stand above the box before a thread reaches up
+// to it: a cloud level with the craft, or under it, is not one it pulls on.
+export const THREAD_RISE = 3;

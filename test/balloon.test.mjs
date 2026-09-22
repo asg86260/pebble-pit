@@ -6,7 +6,7 @@
 // back door proves the state can be set, and nothing about whether you can get
 // there.
 
-import { group, ok, state, run, runUntil, buyBuilt, buyNow } from './helpers.mjs';
+import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED } from './helpers.mjs';
 
 const rich = () => {
   window.__reset();
@@ -217,3 +217,31 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
        `${far.length} columns more than 400px past the house`)
   ];
 });
+
+// The thread a craft draws down out of a cloud is a fact about the view (the
+// clouds scroll slower than the ground, so which cloud is over a craft depends
+// on where you are looking), and nothing it does may reach the yard. The same
+// yard run twice from one seed, once with the view swung back and forth over
+// it, takes the same sky and lays the same muck.
+group('what a balloon pulls does not depend on where you are looking', async () => {
+  const yardRun = swing => {
+    window.__seed(SEED);
+    rich();
+    buyNow('balloon');
+    window.__air({ purifiers: 2, haze: 2400, muck: 0 });
+    runUntil(() => state().craft[0] && state().craft[0].up, 60);
+    for (let s = 0; s < 40; s++) {
+      if (swing) window.__look(state().craft[0].x + (s % 2 ? 3000 : -380));
+      run(1);
+    }
+    const st = state();
+    return { haze: Math.round(st.smog.haze), muck: Math.round(st.smog.muck.yard), x: Math.round(st.craft[0].x) };
+  };
+  const still = yardRun(false);
+  const swung = yardRun(true);
+  return [
+    ok(still.haze < 2400, 'the craft takes the sky down', `${still.haze}`),
+    ok(JSON.stringify(still) === JSON.stringify(swung), 'and does the same whichever way the view swings',
+       `still ${JSON.stringify(still)}, swung ${JSON.stringify(swung)}`)
+  ];
+}, { reload: false });

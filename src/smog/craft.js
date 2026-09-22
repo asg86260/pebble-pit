@@ -1,5 +1,5 @@
-import { CRAFT, craftDrop, craftMouth, working } from '../balloon.js';
-import { BALLOON_WISP_FROM, CLOD_FALL, CLOD_PULL, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, FILTER_PULL, P } from '../config.js';
+import { CRAFT, craftDrop, working } from '../balloon.js';
+import { CLOD_FALL, CLOD_PULL, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
 import { frames } from '../clock.js';
 import { spawnChip } from '../dust.js';
 import { shadeNear } from '../grid.js';
@@ -7,7 +7,7 @@ import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { CLODS, fanPull, outlet } from './band.js';
 import { countDrew } from './books.js';
-import { breatheAt, eat } from './house.js';
+import { eat } from './house.js';
 import { colAt, dropMuckAt, muckCols, muckFloor } from './layer.js';
 
 // --- what the craft take -------------------------------------------------------------
@@ -24,8 +24,8 @@ export function pullCraft(secs) {
     // mouth the station has.
     const rate = fanPull();
     gullets[i] = Math.min((gullets[i] || 0) + rate * secs, rate);
+    // What you see of it is its thread down out of a cloud (thread.js).
     eat(() => gullets[i], n => { gullets[i] = n; }, i);
-    breatheAt(craftMouth(i), rate / FILTER_PULL, secs, BALLOON_WISP_FROM);
   }
 }
 

@@ -1,7 +1,7 @@
 // The air filter: its hood open to the sky and the bellows breathing
 // under it.
 
-import { DIAL_STEPS, DOOR_H, DOOR_W, MUCK_TONE, P, FILTER_ARM, FILTER_CHUTE, FILTER_FOLDS } from '../config.js';
+import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DOOR_H, FILTER_HOOD, DOOR_W, MUCK_TONE, P, FILTER_ARM, FILTER_CHUTE, FILTER_FOLDS } from '../config.js';
 import { CLODS } from '../smog.js';
 import { inFilter } from '../filter.js';
 import { S, floor, filter } from '../state.js';
@@ -33,7 +33,7 @@ import { rising as risingAt, withRise } from './rise.js';
 //
 // Every edge is a whole cell off the building's own corner, which world.js
 // snaps to the lattice; a quarter-cell edge antialiases.
-const HOOD = 5;          // courses of hood standing against the sky, above the tower
+const HOOD = FILTER_HOOD;
 const HOOD_WALL = 4;     // and cells of black through each of its two walls
 const BAY = 8;           // courses of shaft the bellows hangs in
 const LEAF = 5;          // and cells across every leaf of it, in a shaft LEAF + 2 wide
@@ -147,7 +147,7 @@ const DIAL = [
   '..###..'
 ];
 const DIAL_ROW = 6;      // courses down the front its top sits: clear of the hood's flare
-const HUB = 3;           // the middle cell, across and down
+const HUB = (DIAL_CELLS - 1) / 2;   // the middle cell, across and down
 
 // Three quarters of a turn, clean at the lower left, through the top, brim at
 // the lower right, the way a pressure gauge reads. No zones and no red line:
@@ -164,10 +164,10 @@ function needle(step) {
 }
 
 function drawDial(wall, r) {
-  const x0 = wall + P, y0 = r(DIAL_ROW);
+  const x0 = wall + P * DIAL_STUB, y0 = r(DIAL_ROW);
   ctx.fillStyle = '#000';
   // the stub it hangs on, one cell out of the wall at the hub's height
-  ctx.fillRect(wall, y0 + P * HUB, P, P);
+  ctx.fillRect(wall, y0 + P * HUB, P * DIAL_STUB, P);
   ctx.fillStyle = '#fff';
   for (let j = 1; j < DIAL.length - 1; j++) {
     const row = DIAL[j], from = row.indexOf('#') + 1, to = row.lastIndexOf('#');

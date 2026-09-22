@@ -5,20 +5,20 @@
 // balloon". It is a thing the house sells, not a replacement: the throat, the
 // fan, the board and the door are all still the house's.
 //
-// `smog.js` owns the air; this owns the craft. The one thing the two must
-// agree on is the height of the sky, so a craft's cruising height is derived
-// from the same `bandTop`/`bandLow` the motes are placed against (`craftY`).
-// The two files call each other's functions and neither reads the other's
-// values at load time, which is what keeps the import ring from biting.
+// `smog.js` owns the air; this owns the craft. The one thing a craft must
+// agree with the sky on is where the clouds are, since it rides under them and
+// its thread reaches up to one (`laneY`, thread.js). The files call each
+// other's functions and none reads another's values at load time, which is
+// what keeps the import ring from biting.
 
 import { P, WORKER, FARM_WALK, BALLOON_DUST, BALLOON_RATE,
          BALLOON_PACE, BALLOON_LIFT, BALLOON_W, BALLOON_H, BALLOON_BASKET,
-         BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
+         BALLOON_UNDER, BALLOON_LANE_STEP, BALLOON_CLEAR, BALLOON_EDGE, CLOUD_TOP, CLOUD_LANES,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
-         BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE } from './config.js';
+         BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE, BALLOON_MAST_GAP,
+         FILTER_HOOD, DIAL_CELLS, DIAL_STUB } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
-import { bandTop, bandLow } from './smog.js';
 import { walkY, yardLeft } from './world.js';
 import { windAt } from './wind.js';
 import { TYPE } from './jobs.js';
@@ -49,21 +49,25 @@ export function buyCraft() {
 }
 
 // --- where it is ----------------------------------------------------------------------
-// The mast: to the right of the air filter, clear of it. Derived, not
-// stored, since the house is re-sited whenever the yard is laid out. Over the
-// middle of the roof a moored envelope is drawn straight through the hood and
-// the bellows; the left is the spout's wall and its heap (`filterHeap` in
-// world.js).
-export const mastX = () => filter.x + filter.w + P * 5;
+// The mast: to the right of the air filter, clear of its dial. Derived, not
+// stored, since the house is re-sited whenever the yard is laid out, and off
+// where the dial ends rather than where the building does, or a moored craft
+// stands over the gauge. Over the middle of the roof a moored envelope is
+// drawn straight through the hood and the bellows; the left is the spout's
+// wall and its heap (`filterHeap` in world.js).
+const dialEnd = () => filter.x + filter.w - P * (FILTER_HOOD - 1) + P * (DIAL_STUB + DIAL_CELLS);
+export const mastX = () => dialEnd() + P * BALLOON_MAST_GAP + BALLOON_FILTER_W / 2;
 
-// The height a craft cruises at, lane by lane down the top of the sky so a
-// fleet crosses rather than passing through itself. Off `bandTop`/`bandLow`
-// and not a constant: the sky is read from the window and the ground line,
-// and a height of its own would cruise above the haze on a tall window and
-// in the dirt on a short one.
+// The height a craft cruises at, lane by lane, under the clouds it pulls on
+// (thread.js). Off where the middle sheet's bases can be (`cloudY` in
+// weather.js puts a base CLOUD_TOP cells under the camera and its lane below
+// that), so the clouds and the craft cannot disagree about which is higher;
+// held off the ground so a fleet on a short window does not ride through the
+// works.
+const CRAFT_TALL = BALLOON_H + BALLOON_FILTER_H + BALLOON_BASKET;
 export function laneY(i) {
-  const top = bandTop(), deep = bandLow() - top;
-  return top + deep * Math.min(0.9, BALLOON_LANE_TOP + i * BALLOON_LANE_GAP);
+  const under = S.camY + P * (CLOUD_TOP + CLOUD_LANES.mid[1] + BALLOON_UNDER + i * BALLOON_LANE_STEP) + CRAFT_TALL;
+  return Math.min(under, S.groundY - P * BALLOON_CLEAR);
 }
 
 // Where a craft's basket sits this frame: on the ground at the mast when

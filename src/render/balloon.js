@@ -2,7 +2,9 @@
 // brolly.
 
 import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftY, mastX } from '../balloon.js';
-import { BROLLY_STICK, BROLLY_W, P, WORKER } from '../config.js';
+import { THREADS, threadEnds } from '../thread.js';
+import { cloudThreadTone } from '../weather.js';
+import { BROLLY_STICK, BROLLY_W, P, THREAD_GIVE, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
@@ -104,5 +106,29 @@ export function drawBrollies() {
 
     // The stick, one cell wide, to the top of the head.
     ctx.fillRect(cx, hemY - P, P, Math.max(P, Math.round(w.y) - hemY + P));
+  }
+}
+
+// A working craft's thread: its cells, each where its share of the way down
+// puts it on the line from the cloud to the filter box this frame, so the
+// thread stretches as the cloud and the craft slide apart rather than
+// trailing behind. A cell wanders off the line near the cloud and comes in to
+// the mouth, the way the cloud is being drawn together into it. Drawn in the
+// held cloud's own underside, so it reads as the cloud coming down.
+export function drawThreads() {
+  for (let i = 0; i < THREADS.length; i++) {
+    const th = THREADS[i];
+    if (!th || !th.cells.length || !CRAFT[i]) continue;
+    const { top, mouth: m } = threadEnds(i);
+    const dx = m.x - top.x, dy = m.y - top.y, len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;           // across the line
+    ctx.fillStyle = cloudThreadTone(th.cloud);
+    ctx.beginPath();
+    for (const c of th.cells) {
+      const wander = c.off * THREAD_GIVE * (1 - c.t);
+      const x = top.x + dx * c.t + nx * wander, y = top.y + dy * c.t + ny * wander;
+      ctx.rect(Math.round(x / P) * P, Math.round(y / P) * P, P, P);
+    }
+    ctx.fill();
   }
 }
