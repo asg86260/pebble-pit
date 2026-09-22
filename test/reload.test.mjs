@@ -95,23 +95,39 @@ group('a refresh does not send the gang back down the ladder', async () => {
 // A hand paid is money on its way out of the foot: each bin's pay falls
 // through the building into the tray, stands there, and flies out of the
 // hatch into the hole, so for a few seconds the whole of it is in the air
-// or standing as sand nobody saves -- and the
-// field that wrote it down was once the one field in that building nobody
-// wrote. A refresh mid-pay came back on an empty sky, and four thousand dust
-// was simply gone. Now what is flying or in the tray comes back owed and is
-// thrown again,
-// and the bins that had not paid come back as a stake in the funnel.
+// or standing as sand nobody saves. What is flying or in the tray comes
+// back owed and is thrown again, and the bins that had not paid come back
+// as a stake in the funnel.
+//
+// The account is kept a coin at a time, in the purse, with nobody in the
+// yard: a bin can pay in spores, and `paid` is the pay's worth in dust, so
+// a spore bin read against a dust tally is three grains short; and a crew
+// banks the rock's dust into the same tally, so any sum with them in it is
+// the pay plus whatever the carters happened to bring. This is one frame of
+// one hand; casino-reload-sweep.test.mjs lands the refresh on every few.
+const purse = () => ({ dust: yard.S.stored, spore: yard.S.spores, shard: yard.S.shards, spark: yard.S.sparks });
+const gained = p0 => { const p = purse(); return Object.fromEntries(Object.keys(p0).map(k => [k, p[k] - p0[k]])); };
+const sameKinds = (a, b) => Object.keys(b).every(k => (a[k] || 0) === b[k]);
+// anything of a hand's pay still on the building or over the yard
+const payInPlay = () => !!(yard.S.drop || yard.S.paying || state().tray ||
+  yard.S.tableAir.some(k => k.lands === 'tray' || k.lands === 'hole'));
+
 group('a refresh in the middle of a payout does not eat the pot', async () => {
   const S = yard.S;
-  window.__crew(2, 4);
   window.__casino(true);
   window.__give(6000);
   run(1);
   const s0 = window.__casinoStake(120);
-  const before = S.stored, floorBefore = S.floorGrains, heldBefore = held();
+  const p0 = purse();
   const dropped = window.__tapSign();
-  // into the pay, with something out of a bin and in the air
-  const paying = runUntil(() => state().drop && state().drop.stage === 'pay' && state().toTray + state().tray > 0, 40);
+  // into the pay, with something out of a bin and in the air -- a frame at a
+  // time, since a small hand is paid out in under a second
+  let paying = false;
+  for (let f = 0; f < 60 * 40 && !paying; f++) {
+    run(1 / 60);
+    const s = state();
+    paying = !!(s.drop && s.drop.stage === 'pay' && s.toTray + s.tray > 0);
+  }
   const mid = state();
   // what had left a bin: falling into the tray, or standing in it as its pebbles
   const out = mid.toTray + mid.tray;
@@ -120,8 +136,8 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
 
   window.__reload();
   const back = state();
-  run(8);                                      // and let the grains finish their trip
-  const landed = (S.floorGrains - floorBefore) + (held() - heldBefore) + (S.stored - before);
+  runUntil(() => !payInPlay(), 30);            // and let the grains finish their trip
+  const got = gained(p0);
 
   return [
     ok(s0 > 0 && dropped && paying, 'a hand is paying with its pay in the air or the tray', `${out} out of the bins`),
@@ -131,8 +147,8 @@ group('a refresh in the middle of a payout does not eat the pot', async () => {
        `${JSON.stringify(mid.drop.pays)} paid out, ${back.payLeft} owed`),
     ok(back.pot && back.pot.stake === mid.pot.stake && !back.letting, 'and the bins that had not paid are a stake in the funnel again',
        JSON.stringify(back.pot)),
-    ok(!S.paying && landed >= mid.drop.paid, 'and the hole is paid every grain that had left a bin',
-       `${mid.drop.paid} paid out, ${landed} landed, carried or banked`)
+    ok(!S.paying && sameKinds(got, mid.drop.pays), 'and the purse is paid every grain that had left a bin, coin for coin',
+       `${JSON.stringify(mid.drop.pays)} paid out, ${JSON.stringify(got)} landed`)
   ];
 // One particular hand across more than five seconds, and a reload of its own
 // in the middle: the harness's would put the pot back in the hopper.
