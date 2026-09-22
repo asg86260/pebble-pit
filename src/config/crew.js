@@ -156,7 +156,7 @@ CREW_KNOBS.push(
     get: () => HOVER_PAUSE_MS, set: v => { HOVER_PAUSE_MS = v; } });
 
 // --- the faded crew -----------------------------------------------------------
-// The settings sheet's crew switch (prefs.js, `faded`): how much of the ink a
+// The corner's crew switch set to fade (prefs.js, `crewView`): how much of the ink a
 // body keeps when the player has asked for the yard to be read rather than
 // watched. A late yard is a crowd, and the buildings behind it are the thing
 // you are trying to look at.

@@ -377,22 +377,21 @@ export const TESTS = [
       ok(!able || row.dataset.pane === 'settings', 'and the settings sheet has the same row', row.dataset.pane),
     ];
   }],
-  ['the crew switch in the corner fades the crew and puts it back', async () => {
+  ['the crew switch in the corner goes show, fade, hide and back', async () => {
     window.__nocine();
     await frames(2);
     const b = document.getElementById('crewfade');
-    const faded = () => JSON.parse(localStorage.getItem('boulder-clicker/prefs') || '{}').faded === true;
+    const stored = () => JSON.parse(localStorage.getItem('boulder-clicker/prefs') || '{}').crew || 'show';
     const shown = !b.hidden;
-    await tap(b);
-    await frames(1);
-    const on = faded() && b.dataset.on === '1';
-    await tap(b);
-    await frames(1);
-    const off = !faded() && b.dataset.on === '';
+    const seen = [stored()];
+    for (let i = 0; i < 3; i++) {
+      await tap(b);
+      await frames(1);
+      seen.push(stored() === b.dataset.view ? stored() : `${stored()}/${b.dataset.view}`);
+    }
     return [
       ok(shown, 'the switch stands in the corner while the yard is running'),
-      ok(on, 'a tap fades the crew, and the glyph says so'),
-      ok(off, 'and a second tap puts it back'),
+      ok(seen.join(' ') === 'show fade hide show', 'each tap is a step round the three, and the glyph says which', seen.join(' ')),
     ];
   }],
   ['the pinned card stands under the corner buttons, not over them', async () => {

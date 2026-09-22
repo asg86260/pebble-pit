@@ -170,13 +170,16 @@ canvas {
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Cpath d='M5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM12 7h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 26px 26px;
 }
 /* The crew switch (corner.js): one body, three cells square at two screen
-   pixels a cell, as the yard draws it -- at full ink, or at the faded ink
-   the switch puts the crew in, so the square shows what the yard is doing. */
+   pixels a cell, as the yard draws it -- at full ink, at the faded ink the
+   switch puts the crew in, or gone, leaving the ground it stood on (a dashed
+   ghost read as the fullscreen corners beside it), so the square shows what
+   the yard is doing. */
 #crewfade .body {
   display: block; width: 18px; height: 18px; box-sizing: border-box;
   border: 2px solid var(--ink); background: var(--paper);
 }
-#crewfade[data-on="1"] .body { opacity: var(--crew-fade, 0.4); }
+#crewfade[data-view="fade"] .body { opacity: var(--crew-fade, 0.4); }
+#crewfade[data-view="hide"] .body { height: 2px; margin-top: 16px; border: 0; background: var(--ink); }
 /* The held sheet as a sheet from the bottom, on a phone (gear.js, through
    the boards' seat in sheet.js): the same box, handle and slide as a board
    (the .bottom rules below), scrolling inside itself. It moves as one thing

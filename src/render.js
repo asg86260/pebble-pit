@@ -3,11 +3,11 @@
 // `LAYERS` is the picture back to front, one entry a layer; moving a layer is
 // moving one line. An entry is `{ name, draw }` plus an optional `when` for a
 // layer that is only in the picture some of the time, and an optional `dim`
-// for one the crew switch fades. Every draw lives in `src/render/`; this file
+// for one the crew switch fades or hides. Every draw lives in `src/render/`; this file
 // draws nothing.
 
 import { CREW_FADE } from './config.js';
-import { fadedCrew } from './prefs.js';
+import { crewView } from './prefs.js';
 import { ctx } from './render/ctx.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
@@ -217,11 +217,14 @@ export function draw() {
   for (const layer of LAYERS) {
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
-    // A `dim` layer is the crew's own plane, and the settings sheet's crew
-    // switch takes ink out of it so the buildings behind a late yard's crowd
-    // can be read (prefs.js, `fadedCrew`). The alpha is put back the same frame:
-    // nothing else in the picture is ever drawn faint.
-    const faint = layer.dim && fadedCrew();
+    // A `dim` layer is the crew's own plane, and the corner's crew switch
+    // takes ink out of it, or takes it out of the picture, so the buildings
+    // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
+    // picture: the bodies still walk and work where nobody is drawing them.
+    // The alpha is put back the same frame: nothing else is ever drawn faint.
+    const view = layer.dim ? crewView() : 'show';
+    if (view === 'hide') continue;
+    const faint = view === 'fade';
     if (faint) ctx.globalAlpha = CREW_FADE;
     layer.draw();
     if (faint) ctx.globalAlpha = 1;

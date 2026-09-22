@@ -13,9 +13,14 @@ import { unbook } from '../crew.js';
 import { assignDrop } from './assign.js';
 import { load } from './hole.js';
 import { earn } from '../notices.js';
+import { crewView } from '../prefs.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
+  // A crew the corner's switch has taken out of the picture cannot be put a
+  // pointer on either: the click is for the building they were standing in
+  // front of, which is why the player hid them.
+  if (crewView() === 'hide') return null;
   const pad = P * 1.5;
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];

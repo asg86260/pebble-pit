@@ -3,38 +3,40 @@
 // right to left, so this file does not say who stands where; it says only
 // whether the row holds anything, for the pin under it to give the corner up.
 //
-// The crew switch draws the bodies faint (render.js, a `dim` layer), so an
-// endgame yard's crowd can be looked through to the buildings behind it. It
+// The crew switch draws the bodies at full ink, faint, or not at all
+// (render.js, a `dim` layer), a press a step round the three, so an endgame
+// yard's crowd can be looked through or cleared off the buildings behind it. It
 // is on the screen rather than on the settings sheet because it is a thing
 // you reach for while watching, not a setting you make once. A preference
-// (prefs.js, `faded`), so it outlasts the run.
+// (prefs.js, `crewView`), so it outlasts the run.
 
 import { FS_SIZE, FS_INSET, CREW_FADE } from './config.js';
 import { S } from './state.js';
-import { fadedCrew, setPref } from './prefs.js';
+import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
 
 const row = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
 
-// The glyph is one body at the ink the yard's bodies are at, so it shows
-// which way the switch is; the note under it on a hover only names it -- the
-// yard's own note (board.js, `#tip`) rather than the browser's, so it reads
-// like every other note in the game.
-const NOTE = 'fade workers';
+// The glyph is one body drawn the way the yard's bodies are, so it shows
+// where the switch stands; the note under it on a hover says what a press
+// does next -- the yard's own note (board.js, `#tip`) rather than the
+// browser's, so it reads like every other note in the game.
+const next = () => CREW_VIEWS[(CREW_VIEWS.indexOf(crewView()) + 1) % CREW_VIEWS.length];
+const NOTE = { show: 'show workers', fade: 'fade workers', hide: 'hide workers' };
 let noting = false;
 function note() {
   if (!noting) return;
   const r = crew.getBoundingClientRect();
-  showTipAt(NOTE, r.left + r.width / 2, r.bottom + 6, true);
+  showTipAt(NOTE[next()], r.left + r.width / 2, r.bottom + 6, true);
 }
 function dress() {
-  crew.dataset.on = fadedCrew() ? '1' : '';
-  crew.setAttribute('aria-label', NOTE);
-  crew.setAttribute('aria-pressed', fadedCrew() ? 'true' : 'false');
+  crew.dataset.view = crewView();
+  crew.setAttribute('aria-label', NOTE[next()]);
+  note();
 }
-onTap(crew, () => { setPref('faded', !fadedCrew()); dress(); });
+onTap(crew, () => { setPref('crew', next()); dress(); });
 // A mouse's hover only: a thumb has no hover, and a note left standing after
 // a tap would cover the yard it was pressed to clear.
 crew.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { noting = true; note(); } });
