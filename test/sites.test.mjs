@@ -2,6 +2,7 @@
 // the quarry, and where each of them stands.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { quarryFloor } from '../src/quarry.js';
 
 // A shard is brought up and set down. Nothing counts it there: somebody has to
 // walk over and pick it up, the same as everything else in this yard.
@@ -53,8 +54,14 @@ group('the quarry is a worked cut, benched and uneven', async () => {
   run(6);
   const s = state();
   const c = s.quarryShape;
-  const q = s.workerPos.filter(p => p[0] === 'q').map(p => +p.split(',')[1]);
-  const feet = new Set(q);
+  // Each quarrier against the floor under its own column: three bodies can
+  // honestly stand on one line, so "not all one height" was reading the
+  // swing's bob, and which seed put the bobs in step.
+  const q = s.workerPos.filter(p => p[0] === 'q').map(p => p.slice(2).split(',').map(Number));
+  const onFloor = q.every(([x, y]) => {
+    const gap = quarryFloor(x) - (y + WORKER);       // daylight under the feet
+    return gap <= P * 4 && gap >= -P;                // the fall bar above, a cell's rounding below
+  });
   return [
     ok(c.deep - s.groundY > 100 && s.quarryW > 120,
        'it is a cut somebody has been down for a while, not a step down',
@@ -66,8 +73,8 @@ group('the quarry is a worked cut, benched and uneven', async () => {
     ok(c.from > s.quarryX && c.to < s.quarryX + s.quarryW,
        'the walls eat in, so the floor is narrower than the mouth',
        `${c.from}..${c.to} in ${s.quarryX}..${s.quarryX + s.quarryW}`),
-    ok(q.length === 3 && feet.size > 1, 'and the crew stand on it, not on one line',
-       q.join(' '))
+    ok(q.length === 3 && onFloor, 'and the crew stand on it, feet on the floor under them',
+       q.map(([x, y]) => `${x}: feet ${y + WORKER}, floor ${quarryFloor(x)}`).join('; '))
   ];
 });
 
