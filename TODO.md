@@ -30,20 +30,6 @@ frame (`jig` in crew/dance.js), and `w.foot` is re-taken from the new y on the
 same frame -- measured up to seventeen pixels of snap. Only when the beat starts
 while the crew are commuting, which `dance.test.mjs` does not arrange.
 
-### `addGrain` on bare ground has no region (2026-09-09)
-
-The region lookup returns `null` for bare yard, the same value as "no region",
-so `inRegion` is always true and the search runs to `b.cols` -- it can walk
-into a neighbor's strip, which is a teleport. Neither perf-gate yard hits it.
-
-### The sim is camera-dependent (2026-09-09)
-
-The sky's motes spend the shared seeded RNG at *screen* positions, so two camera
-placements draw different numbers (the intro's thrown grain lands on frame 1180
-against 1195). The clean rain already draws from a `stream()` of its own; the
-motes want the same. Until then no check can assert frame-exact timing across a
-camera change.
-
 ### `inWorking` reads the ground line to a pixel again (2026-09-22)
 
 `onYard` is `!inWorking`, and since b58041ac `inWorking` answers true for any

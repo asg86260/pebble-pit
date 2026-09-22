@@ -38,6 +38,8 @@ feature lives in DESIGN.md.
 - A worker can no longer be put on a quarry or farm that is not open yet, where they stood under the ground with nothing to dig (test/closed-station.test.mjs).
 - The gang shovelling rain off the rock no longer bob up and down its flank as they step from one column to the next (test/muck-jitter.test.mjs).
 - Two bodies shovelling on the same spot step a whole body's width apart instead of stopping a cell short and shovelling through each other (test/janitor.test.mjs).
+- Dust dropped on full bare ground no longer turns up in the station's heap next door (test/grain-region.test.mjs).
+- Where you point the view no longer changes what happens in the yard: the same game plays out the same wherever you scroll (test/camera-sim.test.mjs).
 - The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
 - A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
 - The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).

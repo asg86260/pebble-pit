@@ -174,6 +174,10 @@ export const REPOSE_DROP = 2;
 // in a heap nobody filled. A rock grown wider wants this raised.
 export const BARRED_REACH = 96;
 
+// What `addGrain` keeps to when it keeps to no ground at all: a value no
+// `region` can answer.
+const ANYWHERE = Symbol('anywhere');
+
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
 // `free` ignores the ceiling: what a bank may stand at is about heaps of dust,
@@ -192,13 +196,18 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   const full = c => (globalThis.__perf.grainCols++, barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1)));
   if (full(col)) {
     const out = barred(col);
-    const from = out || !b.region ? null : b.region(col);
+    // `region` answers `null` for the bare yard between strips, which is
+    // ground like any strip and bounded like one. So "no region to keep to"
+    // -- barred, or a grid with no regions -- is its own answer, and not the
+    // bare yard's, or a grain on a full stretch of bare yard walks into the
+    // strip next door.
+    const from = out || !b.region ? ANYWHERE : b.region(col);
     const reach = out ? BARRED_REACH : b.cols;
     // The region is asked *before* the column is, and a side that has left
     // the region is not looked at again: `full` walks a column's rows, and
     // asking it of every column in the world for each grain landing on a
     // heaped strip was the whole of the endgame's frame spike.
-    const inRegion = c => from === null || b.region(c) === from;
+    const inRegion = c => from === ANYWHERE || b.region(c) === from;
     let alt = -1, left = true, right = true;
     for (let d = 1; d <= reach && d < b.cols && (left || right); d++) {
       if (left) {
