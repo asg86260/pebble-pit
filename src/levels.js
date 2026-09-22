@@ -11,6 +11,7 @@ import { LADDER, rungValue, HAUL_SCOOP_MS } from './config.js';
 import { COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY } from './config.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, SPELL_DRIVE } from './config.js';
 import { S } from './state.js';
+import { craftCount } from './balloon.js';
 import { benches, plotCount } from './world.js';
 import { machineFor, UNMANNED, machine, JOB_MACHINE, tuneGain } from './machines.js';
 import { spelled } from './tower.js';
@@ -84,8 +85,9 @@ const capOfBare = job =>
   // There is no lab. Kept as a nought rather than deleted so a save with
   // scholars still reads: `rebalance` lands them in the spare pool.
   job === JOB.SCHOLAR ? 0 :
-  // One body in the air filter: a second pair of hands at one fan is a queue.
-  job === JOB.PURIFY ? 1 :
+  // One body in the air filter (a second pair of hands at one fan is a
+  // queue) and one in each balloon it has sold (a second mouth is a place).
+  job === JOB.PURIFY ? 1 + craftCount() :
   // One janitor a post, and the outhouse hangs a cap on its stand for each --
   // read off the kit table rather than `LOO_POSTS` so a post and its cap are
   // one fact.

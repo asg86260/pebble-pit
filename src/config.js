@@ -14,6 +14,7 @@ export * from './config/filter.js';
 export * from './config/buildings.js';
 export * from './config/unlocks.js';
 export * from './config/notices.js';
+export * from './config/balloon.js';
 export * from './config/tower.js';
 export * from './config/casino.js';
 export * from './config/kit.js';

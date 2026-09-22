@@ -197,7 +197,9 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
 // it walked at a flat FARM_WALK a frame and nothing above could see it. At
 // thirty it crawled between plots at half speed while the tending clock it was
 // walking to kept perfect time, and a hand on a slow machine spent twice as long
-// walking for it.
+// walking for it. (The purifier's walk to the balloon mast, in balloon.js, was
+// the same line and is fixed with it; there is no readout in this tier to
+// measure that one's pace off.)
 //
 // Measured as a pace and not as a distance, and the difference is the whole
 // check: the distance between two plots is the same at any rate, because it is

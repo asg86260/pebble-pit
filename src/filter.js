@@ -5,13 +5,14 @@
 // rather than a purchase because the bodies in it are bodies not on the rock
 // (DESIGN.md).
 
-import { WORKER, FARM_WALK, FILTER_DUST, RECYCLE_SHARDS, FILTER_PUMP, FILTER_FOLDS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
+import { WORKER, FARM_WALK, FILTER_DUST, RECYCLE_SHARDS, FILTER_PUMP, FILTER_FOLDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { fanPull, murk } from './smog.js';
 import { S, filter } from './state.js';
 import { walkY } from './world.js';
 
 import { airRows, airSection } from './airboard.js';
+import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
 import { TYPE } from './jobs.js';
 
@@ -65,6 +66,15 @@ function stepDial(secs) {
 
 export function stepPurifier(w) {
   if (w.goal === 'in') return;                   // through the door, out of sight
+
+  // A body whose berth is a craft walks to the mast instead and boards a
+  // basket standing on the ground (`stepRider`).
+  const berth = berthFor(w);
+  if (berth >= 0) { stepRider(w, berth); return; }
+  // One that has come off a craft lets go of it here, rather than leaving it
+  // on the body to be believed by something else later.
+  if (w.craft != null) dismount(w);
+
   w.y = walkY(w.x + WORKER / 2);
   const d = filterDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
@@ -83,6 +93,24 @@ const FAN = tierRows({
   bands: named('fan', 'fan power')
 });
 
+// The craft the house sells: a finite ladder on the building that owns the
+// number. Written here rather than in balloon.js because this list reads it
+// at load, and balloon.js and this file are in one import cycle -- a row
+// read across the cycle at load is a TDZ error whichever way the entry
+// happens to walk it. The calls are wrapped for the same reason.
+const CRAFT_ROW = {
+  key: 'balloon',
+  // Built at the air filter, where it is moored, in a machine's time.
+  kind: 'machine', site: 'filter',
+  name: 'the balloon',
+  note: () => 'rides the sky and drops what it catches under itself',
+  rung: () => CRAFT.length,
+  cost: () => craftCost(),
+  currency: 'dust',
+  buy: () => buyCraft(),
+  show: () => S.filterOpen && CRAFT.length < BALLOON_RUNGS
+};
+
 export const FILTER_UPGRADES = [
   ...FAN,
 
@@ -90,6 +118,8 @@ export const FILTER_UPGRADES = [
   // staffs itself while it is standing (`rebalance`). The sky's reading sits
   // over the rows that decide what to do about it.
   ...airRows(),
+  // The craft the house sells; see balloon.js.
+  CRAFT_ROW,
   {
     key: 'recycler',
     // A fitting the house's own body puts in, so the house is not filtering
@@ -107,7 +137,7 @@ export const FILTER_UPGRADES = [
 
 export const FILTER_SECTIONS = [
   airSection(),
-  { title: 'equipment', keys: ['fan', 'recycler'] }
+  { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
 ];
 
 // Dust, like every other building: a core buys the one thing nothing else can.

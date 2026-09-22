@@ -242,6 +242,10 @@ const potOf = w => stirrers().indexOf(w);
 // reached them first and the rest of the menu would go nowhere.
 const buffable = (w, key) => {
   if (w.type === TYPE.STIR) return false;
+  // A body up in a balloon does not come down for a drink the way a wizard
+  // does (`landForDose`); a stirrer waiting under the basket would stand there
+  // for the whole ride.
+  if (w.craft != null) return false;
   const t = tonicOf(key);
   if (!t || !takesTonic(w, t)) return false;
   return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);

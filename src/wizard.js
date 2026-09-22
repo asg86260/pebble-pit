@@ -5,7 +5,7 @@
 // the one thing in the yard allowed to happen at range.
 
 import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN, WIZ_DASH, WIZ_DASH_EASE,
-         WIZ_REACH, WIZ_TRAIL_MS, WIZ_TRAIL_LIFE } from './config.js';
+         WIZ_REACH, WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, BROLLY_FALL } from './config.js';
 import { frames } from './clock.js';
 import { S, sky } from './state.js';
 import { STEP } from './mult.js';
@@ -98,11 +98,15 @@ function trail(w, now) {
 export function floatDown(w) {
   const foot = walkY(w.x + WORKER / 2);
   w.aloft = w.y < foot;
+  // The canopy goes with the landing: an umbrella left up on a body on the
+  // ground is an umbrella drawn over somebody shovelling.
   if (w.y >= foot) {
-    w.y = foot; w.floating = false; w.aloft = false;
+    w.y = foot; w.floating = false; w.aloft = false; w.brolly = false;
     return true;
   }
-  w.y = Math.min(foot, w.y + WIZ_RISE * 1.6 * frames());   // pixels a frame
+  // Under an umbrella it comes down slower.
+  const pace = w.brolly ? BROLLY_FALL : WIZ_RISE * 1.6;
+  w.y = Math.min(foot, w.y + pace * frames());   // pixels a frame
   return false;
 }
 

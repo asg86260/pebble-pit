@@ -33,6 +33,7 @@ import { card } from './crewboard.js';
 import { houseRect } from './house.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
+import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
@@ -382,6 +383,18 @@ function messAt(x, y) {
   return poo ? 'poop' : 'muck';
 }
 
+// A balloon's box, the way `drawBalloons` in render.js draws one.
+function balloonAt(x, y) {
+  if (!S.filterOpen) return false;
+  for (let i = 0; i < CRAFT.length; i++) {
+    const by = craftY(i);
+    const top = by - BALLOON_BASKET - BALLOON_FILTER_H - BALLOON_H;
+    const left = CRAFT[i].x - BALLOON_W / 2;
+    if (x >= left && x <= left + BALLOON_W && y >= top && y <= by + P * 2) return true;
+  }
+  return false;
+}
+
 // A plot's crop once it has grown, the box `drawFarm` in render.js fills.
 function cropAt(x, y) {
   if (!S.farmOpen) return false;
@@ -415,6 +428,7 @@ export function whatIsAt(x, y) {
   const machine = machineAt(x, y);
   if (machine) return machine;
   if (overBird(x, y)) return 'bird';
+  if (balloonAt(x, y)) return 'balloon';
   if (cropAt(x, y)) return 'crop';
   return null;
 }

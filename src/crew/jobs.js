@@ -85,13 +85,13 @@ export const JOBS = {
     }
   },
 
-  // A purifier is behind a door, and a body behind a door is taken back by
-  // every rule below (the fall, the lip, the muck errand, the re-plant)
-  // unless it is shut in.
+  // A purifier is behind a door, and a balloon is a door too: a rider in a
+  // basket several hundred pixels up is taken back by every rule below (the
+  // fall, the lip, the muck errand, the re-plant) unless it is shut in.
   [TYPE.PURIFY]: {
     factory: newPurifier,
     want: () => S.purifiers,
-    step: { work: stepPurifier, shutIn: w => w.goal === 'in' }
+    step: { work: stepPurifier, shutIn: w => w.goal === 'in' || w.goal === 'aloft' }
   },
 
   // A stirrer out dealing a dose belongs to the yard again; `shutIn` only

@@ -43,6 +43,7 @@ import { smogReport, muckCols, GOING } from './smog.js';
 import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
+import { CRAFT, craftY, crewed, working } from './balloon.js';
 import { benchMark } from './upgrades.js';
 import { mineMs, capacity, mineRate, rockhandMs, haulCap, haulSpeed, capOf, handsOf, machineRate, kitFull, hats } from './levels.js';
 import { idle } from './staffing.js';
@@ -548,9 +549,13 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // Specks a mouth has taken that are still fading where they stood: a count
   // of a picture, so a check can tell a fade from a pop.
   going: GOING.length,
-  // The purifiers, on their way or through the door.
+  // Anybody under a canopy, with their heights.
+  brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
+  // The purifiers are through a door or up in a basket; `berth` is -1 for the
+  // house and the craft's index otherwise.
   filterCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
-    name: w.name, x: Math.round(w.x), y: Math.round(w.y), goal: w.goal || null
+    name: w.name, x: Math.round(w.x), y: Math.round(w.y),
+    berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
   })),
   workers: S.workers.length,
   workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
@@ -574,6 +579,12 @@ const snapshotOf = (survey, apron, stranded, air) => ({
 
   // The yard's floor and the piles standing on it.
   floor: survey.n.reduce((a, b) => a + b, 0),
+  // The craft: `up` is the one worth reading, since a crewed craft still
+  // climbing off the mast is not working yet.
+  craft: CRAFT.map((c, i) => ({
+    x: Math.round(c.x), dir: c.dir, lift: +c.lift.toFixed(3),
+    y: Math.round(craftY(i)), crewed: crewed(i), up: working(i)
+  })),
   yardFull: !!S.pileFull.rock,
   pileCount: { ...S.pileCount },
   pileFull: { ...S.pileFull },

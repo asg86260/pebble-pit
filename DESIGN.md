@@ -12577,10 +12577,8 @@ the umbrella, the save field, the scenes and `test/balloon.test.mjs`. The
 price ladder, the berth claim, the patrol and the drop under the basket stay
 exactly as they were. Everything below is added to that.
 
-The save version never goes backwards. `2026-09-22-no-balloons.js` stays in
-the list at `v: 6` but does nothing any more. A save it already ran on keeps
-its refund and has no balloons, which is a fair trade. A save from before it
-keeps its balloons.
+The cut's migration goes with it. Every save is local for now, so nothing
+has to be carried across.
 
 ### The mast stands clear of the dial
 
@@ -12645,14 +12643,12 @@ fan ladder, the house. Nothing about the thread or the paling reaches the sim.
 - A new group there: **the pull does not depend on the view.** Two runs from
   the same seed, one with the camera scrolled back and forth, lay the same
   muck and take the same motes.
-- The migration: a save stamped `v: 5` with balloons keeps them, and a save
-  stamped 6 without them loads as it is.
 - The thread and the paling are drawings, and no check sees them. The scene
   `balloon` shows a thread on a near cloud, `balloonpan` shows it
   re-reaching as the view scrolls, and `moored` shows the mast clear of the
   dial.
 
-## The balloons are cut (2026-09-22)
+## The balloons are cut (2026-09-22, reverted the same day)
 
 The filter's dial went on the far wall, and the balloons were moored at a
 mast on that same side: a moored envelope stood over the dial. Moving one of

@@ -608,7 +608,7 @@ export function sendDigger() {
   const at = buriedAt();
   let who = null, near = Infinity;
   for (const w of S.workers) {
-    if (w.inside || w.inPit || w.aloft || w.walking) continue;
+    if (w.inside || w.inPit || w.aloft || w.walking || w.craft) continue;
     // On the floor of the yard: under the dome the rockhands stand on the
     // rock it is holding, and a body that came down off that would climb
     // through the air under a hill for as long as the climb took.

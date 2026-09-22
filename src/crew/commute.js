@@ -18,6 +18,7 @@ import { grabHat, kitFree } from './kitwalk.js';
 import { spareKit } from '../levels.js';
 import { JOB } from '../jobs.js';
 import { spareLifts } from '../kit.js';
+import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
 import { filterDoor } from '../filter.js';
@@ -167,6 +168,9 @@ export function retask(w, type) {
   // whatever it is put on next reads its height as the ground. It floats
   // rather than falls, the way it went up.
   if (w.aloft && type !== TYPE.WIZARD) w.floating = true;
+  // A body taken out of a balloon goes over the side under an umbrella and
+  // lets go of the craft so the craft can leave.
+  bailOut(w);
   w.type = type;
   w.fetching = null;
   w.wanting = null;

@@ -4,7 +4,7 @@ import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { windAt } from '../wind.js';
 import { GOING, SKY, intake, filterRate } from './band.js';
-import { swallow } from './spout.js';
+import { swallow } from './craft.js';
 import { dropped, moteX, moteY } from './sky.js';
 import { look } from './vents.js';
 
@@ -21,8 +21,9 @@ export function breathe(secs) {
 
 // A few cells drawn in to a mouth. Metered by the real rate, so an unstaffed
 // or clogged mouth makes none and a bigger fan visibly pulls harder: it cannot
-// say anything untrue about how hard the thing is working.
-function breatheAt(to, power, secs, from) {
+// say anything untrue about how hard the thing is working. Shared by the
+// house and the craft.
+export function breatheAt(to, power, secs, from) {
   if (power <= 0) return;
   let n = DRAUGHT_PER_S * power * secs;
   while (n > 0) {
@@ -65,7 +66,7 @@ let sweep = 0;
 // fills back in as the band drifts.
 export function pull(secs) {
   gullet = Math.min(gullet + filterRate() * secs, filterRate());
-  eat();
+  eat(() => gullet, n => { gullet = n; }, null);
 }
 
 // One mouth, taking what it is owed out of the sky, from anywhere: a mouth
@@ -73,11 +74,15 @@ export function pull(secs) {
 // clears its rating on one yard and a fortieth of it on another, and the
 // board's rate is a number that lies. The specks are picked off a rolling
 // sweep so the whole sky thins rather than one part wearing out.
-function eat() {
-  if (gullet < 1 || !SKY.length) return;
-  let left = gullet;
+//
+// `owe`/`pay` rather than a number in and out, so the caller keeps its own
+// gullet: a house and three balloons each have one, and one going hungry
+// must not spend another's.
+export function eat(owe, pay, craft) {
+  if (owe() < 1 || !SKY.length) return;
+  let left = owe();
   // Bounded, so a mouth cannot walk the whole sky in a frame looking for one
-  // speck; with tens of thousands that walk is the frame.
+  // speck; with tens of thousands and four mouths that walk is the frame.
   const look = Math.min(SKY.length, 400);
   for (let n = 0; n < look && left >= 1; n++) {
     sweep = SKY.length ? (sweep + 1) % SKY.length : 0;
@@ -97,7 +102,7 @@ function eat() {
     dropped(m);
     SKY.splice(sweep, 1);
     if (sweep >= SKY.length) sweep = 0;
-    swallow();
+    swallow(craft);
   }
-  gullet = left;
+  pay(left);
 }

@@ -214,8 +214,9 @@ const STAGES = [
       if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
       return false;
     }
-    // A body through a door cannot dance in the yard.
-    if (outOfYard(w)) return false;
+    // A body through a door, in the balloon, or on its way to crew one cannot
+    // dance in the yard.
+    if (outOfYard(w) || w.craft) return false;
     celebrate(w, c.now, c.zone);
     return true;
   },
@@ -230,7 +231,7 @@ const STAGES = [
   // being in the air, not on the zone: a scene takes the zone away while the
   // dome holds a rock overhead.
   (w, c) => {
-    if (outOfYard(w) || !onYard(w)) return false;
+    if (outOfYard(w) || w.craft || !onYard(w)) return false;
     const coming = S.rockFall > 0;
     if (!c.zone && !(coming && w.type === TYPE.ROCK)) return false;
     if (!(c.zone && duck(w, c.zone)) && w.type !== TYPE.ROCK) return false;
@@ -351,7 +352,7 @@ export function updateWorkers(now, dt) {
 // business, and a body in your hand or under the ground is not walking.
 function holdTheLine(w, x0, zone) {
   if (!zone || x0 == null || w.type === TYPE.ROCK) return;
-  if (outOfYard(w) || !onYard(w) || w.lifted || w.falling) return;
+  if (outOfYard(w) || w.craft || !onYard(w) || w.lifted || w.falling) return;
   const inside = x => x + WORKER > zone.from && x < zone.to;
   if (inside(x0) || !inside(w.x)) return;
   w.x = x0 + WORKER <= zone.from ? zone.from - WORKER : zone.to;
@@ -367,7 +368,7 @@ function faceTravel(was) {
     const d = w.x - x0;
     if (Math.abs(d) > FACE_STILL) w.face = Math.sign(d);
     // A footstep every body's width of ground: the bodies have no walk cycle,
-    // so the stride is the ground covered. Not on the cursor or in the air.
+    // so the stride is the ground covered. Not on the cursor or in the balloon.
     if (d && !w.lifted && !w.aloft && Math.floor(x0 / WORKER) !== Math.floor(w.x / WORKER)) {
       sfx('footstep', { x: w.x });
     }
