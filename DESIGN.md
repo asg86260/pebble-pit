@@ -12479,6 +12479,65 @@ was a bar the cloud sat on. A storm darkens the base rather than thickening
 it, and swells a cloud by half rather than nine tenths, since the bigger swell
 flattened every cloud into a dome.
 
+## The rain has depth too (design, not built)
+
+The sky got a back and a front and the rain did not. A shower is one plane:
+every drop the same cell, one of two tones, dashes two to five cells long off
+the drop's own fall speed. Against three sheets of cloud with their own
+parallax, grain and air, the water reads as a texture laid over the picture
+rather than as weather falling through it.
+
+**The rain falls from the sheet it came out of.** Not a second depth table --
+the sky has one, `CLOUD_LAYERS`, and a drop takes a sheet's index and borrows
+that sheet's `far`, `cell` and fade. A fourth sheet added to the clouds
+tomorrow gets its rain for free, and a sky whose clouds and rain could
+disagree about how deep "far" is would be the same bug written twice.
+`RAIN_SHEETS` holds only what the rain adds: what share of the water is born
+into each sheet, and the speed multiplier on `RAIN_FALL`.
+
+The three cues are the clouds' three, derived the same way:
+
+- **Air.** A drop's tone is mixed toward the page by its depth, through the
+  clouds' own `fadeAt` -- exported rather than copied. The far sheet is a pale
+  suggestion of rain; the near sheet is the tone the whole shower is drawn in
+  now. It takes the same share off the water tone and the muck tone, so far
+  acid is a paler brown and not a cleaner one.
+- **Grain.** Each sheet draws in its own cell, as the clouds do: half-cells
+  far, one and a half near. A far drop is a fine fleck, a near one a coarse
+  stroke. The dash length scales with the cell, so near rain is longer *and*
+  thicker rather than only longer.
+- **Speed and lean.** A far drop falls slower on the glass and leans less with
+  the gust, since it is further away and moving the same. This replaces the
+  proto-depth already there, where `RAIN_FALL_GIVE` gave each drop a random
+  speed and the dash came off it: the depth becomes the one number and the
+  speed comes off the depth, rather than the depth being inferred back out of
+  a random speed.
+
+### Only the near sheet lands
+
+A drop drawn with parallax no longer sits over the column it lands in, and the
+acid's whole rule is that the muck lands under the sky that made it. So the
+far and mid sheets **never land**: they fall behind the works, past the ground
+line, and are culled there having laid nothing. Pure backdrop, free to
+parallax because nothing depends on where they end up.
+
+Everything that lands is on the near sheet, at parallax 1 -- its true world x,
+the rain that exists today. `colAt`, `muckFloor`, `RAIN_MARK` and the LEDGER
+are untouched, and every acid drop is born near. This is what keeps the
+feature a drawing change: the near sheet is the simulation, the two behind it
+are scenery, and no rule in `verify.js` has to learn about depth.
+
+**Painting order.** `drawRain` splits in two. The backdrop sheets go into
+`LAYERS` right after `clouds`, in front of the sky and behind everything in
+the yard; the landing sheet stays exactly where `rain` sits now, in front of
+the works and behind the bolt. Moving an entry in `LAYERS` is a visual change,
+and this adds one rather than moving any.
+
+**What it costs.** One more field on a drop and one more pass over `DROPS` a
+frame. `DROPS` is ephemeral and never saved, so nothing joins the save lists.
+The far sheets carry the bulk of the count at the smallest cell, which is the
+cheap end.
+
 ## The sky is the clouds (built 2026-09-21)
 
 The sky had grown four textures at once -- a haze band of specks, the drifting

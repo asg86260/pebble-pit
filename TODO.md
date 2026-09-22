@@ -1,5 +1,23 @@
 # Still to do
 
+## The rain has depth too -- DESIGNED, not built (2026-09-22)
+
+"The rain has depth too" in DESIGN.md. The clouds got three sheets and the
+rain did not, so the shower reads as a texture over the picture rather than
+weather falling through it. A drop is born into one of the clouds' own
+`CLOUD_LAYERS` sheets and borrows its `far`, `cell` and fade -- not a second
+depth table -- with `RAIN_SHEETS` holding only the share of the water and the
+speed multiplier each sheet adds.
+
+The one decision that shapes it: **only the near sheet lands.** A parallaxed
+drop does not sit over the column it lands in, and the acid must mark under
+the sky that made it, so the far and mid sheets fall behind the works and are
+culled at the ground line having laid nothing. Every acid drop is born near,
+at its true world x, so `colAt`, `muckFloor`, `RAIN_MARK` and the LEDGER are
+untouched and the feature stays a drawing change.
+
+Blocked on nothing; awaiting sign-off before implementation code.
+
 ## The shoveller's elbow stalls a cell short (2026-09-21)
 
 `test/janitor.test.mjs`, "a shoveller with somebody in its elbow moves off
