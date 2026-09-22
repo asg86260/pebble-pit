@@ -31,7 +31,7 @@ import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';
 import { stepWorks, setGround, setDone, setFoot, setRooms, setSheds } from './works.js';
 import { cubes as houseCubes } from './house.js';
-import { sampleBooks } from './stats.js';
+import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
 
 // The ground is laid the moment the order the yard was bought in changes, not

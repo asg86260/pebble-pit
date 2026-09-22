@@ -16,6 +16,7 @@ import { now } from './clock.js';
 import { ownsYard, beatDone } from './beats.js';
 import { rand } from './rng.js';
 import { sfx } from './audio.js';
+import { earned } from './income.js';
 
 // The core sits at the *foot* of the rock: the gang take the rock down from
 // the top, and a core pinned to a fraction of the full height ends up hanging
@@ -66,6 +67,7 @@ export function bankCore(x) {
   if (!addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL)) return false;
   sfx('core-bank', { x: at, big: true });   // a core is a boulder's worth of weight
   S.cores++;
+  earned('core', 1);
   S.seenCore = true;
   S.shopStale = true;       // core-priced rows appear the first time one lands
   return true;

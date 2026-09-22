@@ -352,7 +352,7 @@ export const S = {
   filterBoardOpen: false,
   // The books over the pit: the one board that belongs to no building.
   statsBoardOpen: false,
-  booksOver: 0,           // the books' window in seconds; 0 is each coin its own (stats.js)
+  booksOver: 60,          // the seconds the books average over (STATS_OVER_S)
   // --- the record (notices.js) ---
   // Recognition only: nothing in here feeds a rate.
   won: [],                // the notices earned, in the order they landed

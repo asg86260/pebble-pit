@@ -35,6 +35,7 @@ import { SAVE as CORE } from './core.js';
 import { SAVE as DANCE } from './crew/dance.js';
 import { SAVE as FARM } from './farm.js';
 import { resetRates } from './stats.js';
+import { resetBooks } from './income.js';
 import { resetNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { migrate } from './migrations/index.js';
@@ -543,6 +544,7 @@ export function reset(fresh = true) {
   for (const o of SAVERS) o.blank();
   syncWorkers();                   // the crew walks out, every count being nought
   resetRates();
+  resetBooks();
   resetNotices();
   S.shopStale = true;
   persist();

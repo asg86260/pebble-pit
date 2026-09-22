@@ -9062,25 +9062,31 @@ panel), each with a line or two of ink on it. Every edge is a whole cell; the pa
 cells wide because that is what three three-cell sheets with a cell around each come to, rather
 than the sheets squeezed into a panel sized first.
 
-### Amendment — the books read each coin over its own window, or one you pick (built)
+### Amendment — the books are a running record of income (built)
 
-**Auto, by default.** A fixed thirty seconds held a hundred arrivals of dust and
-two of ore, so the ore row was decided by which side of the edge the second lump
-fell: 0.07, 0.13, 0.07, with nothing in the yard changed. Each currency now reaches
-back until it has both `STATS_WINDOW_S` seconds and `STATS_ARRIVALS` arrivals
-behind it, capped at `STATS_WINDOW_MAX_S`. Arrivals, not units, so the rule means
-the same to a coin that comes a thousand at a time as to one that comes singly. A
-streaming coin sits at the short window and stays live; a rare one widens until it
-holds still. Still a window and not an easing, for the reason the books always
-gave: an eased figure reads high after the thing making it has stopped.
+**Income is written down where it lands.** The books used to guess income from
+balances: each reading kept the rise in a counter and threw the fall away. A
+balance rises for things that are not income -- a bill handed back comes home
+through the same hole -- so a refund of five hundred ore read as a quarry for as
+long as the window held it. Now the pit records each coin as it comes in
+(`earned` in income.js, called from `bankDust`, `throughRift` and `bankCore`), and
+a refund says it is not income. The record is a ring of half-second buckets
+holding the longest window.
 
-**Or a window the player picks.** The first line under "income, a second" is
-*averaged over*, and pressing it steps auto → 1 min → 5 min → 10 min → auto
-(`STATS_OVER_S`). A picked window reads every coin over exactly that stretch, lumps
-and all -- what the line says is what it does. The unit stays a second whatever is
-picked, so a number never changes meaning under the player's eye; the heading is
-said once and stays true. The choice is saved (`booksOver`). It is a signpost's
-press rather than a purchase: no price, no pushpin, no pip.
+**The window is only arithmetic.** The first line under "income, a second" is
+*averaged over*, and pressing it steps ½ min → 1 min → 5 min → 10 min → round
+(`STATS_OVER_S`; 1 min to start, `STATS_OVER_DEFAULT`). A rate is what came in over
+that many seconds, divided by them -- or by the seconds the record holds, in a yard
+younger than the window. A lumpy coin reads steadier over a longer window, and
+which is worth it is the player's call rather than a rule's. The unit stays a
+second whatever is picked, so the heading stays true. The choice is saved
+(`booksOver`); the record is not, since minutes of a game you were not playing
+are not a rate. The row is a signpost's press: no price, no pushpin, no pip.
+
+A per-coin automatic window (reach back until a coin has two dozen arrivals) was
+built and taken out the same day: it steadied the rare coins by averaging them
+over up to five minutes, which is also five minutes of a windfall reading as a
+rate, and it was a rule the player could not see.
 
 ### Amendment — a toast when one lands (built)
 

@@ -12,7 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
-- The income books can be averaged over a window you pick -- auto, a minute, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
+- The income books are a running record of what came in, averaged over a window you pick -- half a minute, one, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
 - A working balloon now pulls its catch out of a cloud: a thread of cells runs down from the nearest cloud above it, and that cloud pales while it is being drawn from; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `balloonpan`, `moored`; test/balloon.test.mjs).
 - The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).
 - The rain has depth like the sky does: it falls in three sheets, fine pale flecks far off and long dark strokes close in, sliding past each other as you scroll, with the clouds in front of the far ones (src/scenes.js `raindepth`; test/sky-rain.test.mjs).
@@ -36,7 +36,7 @@ feature lives in DESIGN.md.
 - The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).
 - A casino stake in the millions no longer freezes the game while it pays out (test/casino-big-stake.test.mjs).
 - The casino's pay comes down on the pile in the hole, instead of vanishing at ground level and turning up below it (test/casino-big-stake.test.mjs).
-- The income books hold still: a rate that comes in lumps, like ore or sparks, no longer halves and doubles from one second to the next while nothing in the yard has changed (test/wave5-boards.test.mjs, "a coin that arrives in lumps is read over a longer window than one that streams").
+- The income books no longer count a bill handed back as income, so a refund stops reading as a busy quarry for minutes afterwards (test/wave5-boards.test.mjs, "a bill handed back is not income").
 - The tiller's driver rides behind the steering column over the big wheel, not perched on the bonnet in the exhaust (test/machines.test.mjs).
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
 - The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").

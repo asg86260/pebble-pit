@@ -17,9 +17,11 @@ import { FILTER_UPGRADES } from '../src/filter.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
-import { bookRate, bookSpan, STATS_UPGRADES } from '../src/stats.js';
-import { STATS_WINDOW_S, STATS_OVER_S } from '../src/config.js';
+import { STATS_UPGRADES } from '../src/stats.js';
+import { bookRate, bookSpan } from '../src/income.js';
+import { STATS_OVER_S, STATS_OVER_DEFAULT } from '../src/config.js';
 import { buy } from '../src/upgrades.js';
+import { refund } from '../src/pit.js';
 import { showPanel, hud } from '../src/board.js';
 
 const ALL_ROWS = [...UPGRADES, ...TOWER_UPGRADES,
@@ -70,9 +72,9 @@ group('the books report what the yard actually earned', async () => {
   run(60);                                     // long enough to fill the window
 
   const before = yard.S.banked;
-  run(30);                                     // exactly one window's worth
+  run(STATS_OVER_DEFAULT);                     // exactly one window's worth
   const after = yard.S.banked;
-  const truth = (after - before) / 30;
+  const truth = (after - before) / STATS_OVER_DEFAULT;
   const said = bookRate('dust');
 
   return [
@@ -80,9 +82,9 @@ group('the books report what the yard actually earned', async () => {
     ok(bookSpan() > 20, 'and the books have a window to divide by',
        `${bookSpan().toFixed(1)}s`),
     ok(said > 0, 'so they report a rate', said.toFixed(2)),
-    // A band rather than an equality: the window covers the same thirty seconds
-    // but its edges are a sample either side of them.
-    ok(said > truth * 0.6 && said < truth * 1.6,
+    // A band rather than an equality: the window covers the same seconds but
+    // its edges are a bucket either side of them.
+    ok(said > truth * 0.9 && said < truth * 1.1,
        'and it is the rate the counter actually moved at',
        `books ${said.toFixed(2)}/s against ${truth.toFixed(2)}/s`)
   ];
@@ -109,79 +111,73 @@ group('a purchase does not read as the yard running backwards', async () => {
   ];
 });
 
-// A rate a player watched halve and double while nothing changed. Thirty
-// seconds of ore is two arrivals or four, and which side of the window's edge
-// the second one falls decided the whole number. The window is each currency's
-// own now, and the mechanism is what is asserted: a coin that arrives in lumps
-// reaches further back than the short window, a coin that streams does not, and
-// the reading holds still from one second to the next.
-group('a coin that arrives in lumps is read over a longer window than one that streams', async () => {
-  window.__reset();
-  window.__fullSites();
-  window.__crew(4, 4, 4, 0);                   // rockhands and carters streaming dust, quarriers lumping ore
-  run(150);                                    // long enough for the ore window to have widened
-
-  const dustWin = bookSpan('dust');
-  const oreWin = bookSpan('shard');
-
-  // Sixty readings a second apart, the way a player watching the board sees it.
-  const seen = [];
-  for (let i = 0; i < 60; i++) { run(1); seen.push(bookRate('shard')); }
-  const mean = seen.reduce((a, b) => a + b, 0) / seen.length;
-  let step = 0;
-  for (let i = 1; i < seen.length; i++) step = Math.max(step, Math.abs(seen[i] - seen[i - 1]));
-
-  return [
-    ok(mean > 0, 'the quarry is bringing ore up', mean.toFixed(3)),
-    ok(dustWin >= STATS_WINDOW_S,
-       'no window is shorter than the short one', `${dustWin.toFixed(1)}s`),
-    ok(oreWin > dustWin * 1.5,
-       'and ore arrives in fewer, bigger lumps, so its window reaches further back',
-       `ore ${oreWin.toFixed(1)}s against dust's ${dustWin.toFixed(1)}s`),
-    // A fifth of itself in one second was the old reading's ordinary behavior;
-    // it went 0.07, 0.13, 0.07 on a yard that had not changed.
-    ok(step < mean * 0.25, 'and the ore rate holds still from one second to the next',
-       `biggest step ${step.toFixed(3)} on ${mean.toFixed(3)}`)
-  ];
-});
-
-// The window can be picked on the board. Pressed the way the board presses a
-// row (`buy`, which is what the tap calls), it steps auto -> each fixed window
-// -> auto, a fixed window reads every coin over exactly that stretch, and the
-// choice comes back after a reload.
-group('the books can be read over a window the player picks', async () => {
+// A bill handed back is the player's own coin coming home. The books once read
+// every rise in a balance as income, so five hundred ore handed back read as a
+// quarry for as long as the window held it. `refund` is what a row pressed
+// back out of the line calls (`buy` in upgrades.js).
+group('a bill handed back is not income', async () => {
   window.__reset();
   window.__fullSites();
   window.__crew(4, 4, 4, 0);
-  run(150);
+  run(90);
+  const ore = bookRate('shard'), dust = bookRate('dust');
+  const had = yard.S.shards;
 
-  const row = STATS_UPGRADES.find(u => u.key === 'ratesover');
-  const says = [];
-  const steps = [];
-  for (let i = 0; i <= STATS_OVER_S.length; i++) {
-    says.push(row.price());
-    steps.push(yard.S.booksOver);
-    buy(row);
-  }
-  const back = yard.S.booksOver;               // round the loop to auto
-
-  const autoOre = bookSpan('shard');
-  buy(row);                                    // a minute
-  const minuteOre = bookSpan('shard');
-  const minuteDust = bookSpan('dust');
-  const picked = yard.S.booksOver;
-  window.__reload();
+  refund('shard', 500, 0, 0);
+  refund('dust', 5000, 0, 0);
+  run(1);
 
   return [
-    ok(row && steps.join(',') === [0, ...STATS_OVER_S].join(','),
-       'pressing it steps auto and then each fixed window', steps.join(',')),
-    ok(back === 0, 'and round to auto again', String(back)),
-    ok(says[0] === 'auto' && says[1] === '1 min', 'and it says which one it is on', says.join(' | ')),
-    ok(autoOre > STATS_OVER_S[0] * 1.2 && minuteOre <= STATS_OVER_S[0] && minuteOre > STATS_OVER_S[0] - 1,
-       'a minute reads ore over a minute, however lumpy', `auto ${autoOre.toFixed(1)}s, picked ${minuteOre.toFixed(1)}s`),
-    ok(Math.abs(minuteDust - minuteOre) < 1, 'and every coin over the same minute',
-       `dust ${minuteDust.toFixed(1)}s, ore ${minuteOre.toFixed(1)}s`),
-    ok(yard.S.booksOver === picked, 'and the choice is still there after a reload', String(yard.S.booksOver))
+    ok(yard.S.shards >= had + 500, 'the ore came back to the purse', `${had} -> ${yard.S.shards}`),
+    ok(bookRate('shard') < ore + 1, 'and the ore rate did not jump for it',
+       `${ore.toFixed(2)} -> ${bookRate('shard').toFixed(2)}`),
+    ok(bookRate('dust') < dust + 5, 'nor the pebbles',
+       `${dust.toFixed(2)} -> ${bookRate('dust').toFixed(2)}`)
+  ];
+});
+
+// The window is picked on the board. Pressed the way the board presses a row
+// (`buy`, which is what the tap calls), it steps through every window and
+// round again, each rate is what came in over that many seconds, and the
+// choice comes back after a reload.
+group('the books can be read over a window the player picks', async () => {
+  window.__reset();
+  window.__crew(3, 3);
+  run(Math.max(...STATS_OVER_S) + 10);         // a record longer than any window
+
+  const row = STATS_UPGRADES.find(u => u.key === 'ratesover');
+  const steps = [], says = [], spans = [];
+  for (let i = 0; i < STATS_OVER_S.length; i++) {
+    buy(row);
+    steps.push(yard.S.booksOver);
+    says.push(row.price());
+    spans.push(bookSpan());
+  }
+
+  // Just the arithmetic: the same record, cut at two lengths.
+  const before = yard.S.banked;
+  run(30);
+  const truth = (yard.S.banked - before) / 30;
+  const short = bookRate('dust', 30);
+
+  const picked = yard.S.booksOver;
+  buy(row);
+  const next = yard.S.booksOver;
+  window.__reload();
+
+  const want = [...STATS_OVER_S.slice(STATS_OVER_S.indexOf(STATS_OVER_DEFAULT) + 1),
+                ...STATS_OVER_S.slice(0, STATS_OVER_S.indexOf(STATS_OVER_DEFAULT) + 1)];
+  return [
+    ok(row && steps.join(',') === want.join(','), 'pressing it steps through every window and round',
+       steps.join(',')),
+    ok(says.every(w => /min$/.test(w)), 'and says each in minutes',
+       says.join(' | ')),
+    ok(spans.every((sp, i) => Math.abs(sp - steps[i]) <= 1), 'each rate is divided by the seconds it names',
+       spans.map(x => x.toFixed(1)).join(',')),
+    ok(short > truth * 0.9 && short < truth * 1.1, 'and is what came in over them',
+       `books ${short.toFixed(2)}/s against ${truth.toFixed(2)}/s`),
+    ok(yard.S.booksOver === next && next !== picked, 'and the choice is still there after a reload',
+       `${picked} -> ${next} -> ${yard.S.booksOver}`)
   ];
 });
 

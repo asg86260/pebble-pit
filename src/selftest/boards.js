@@ -1121,7 +1121,7 @@ export const TESTS = [
     // "a second" is the heading's word, said once over the rates rather than
     // as a clock on every line.
     const heading = [...document.querySelectorAll('#statsshop [data-sect]')].map(h => h.dataset.sect).join(' | ');
-    // The window row, pressed with the pointer: it steps off auto and says so.
+    // The window row, pressed with the pointer: it steps to the next window and says so.
     const over = () => document.querySelector('#statsshop [data-key="ratesover"]');
     const overWas = over()?.querySelector('.cost')?.textContent || '';
     over()?.click();
@@ -1142,7 +1142,7 @@ export const TESTS = [
       ok(rows.includes('ratedust'), 'and dust is on them', rows.join(',')),
       ok(/class="dust"/.test(said) && /\d/.test(said) && !/class="clock"/.test(said), 'with its rate as a mark and a number', said),
       ok(/a second/.test(heading), 'and the heading says the rate is a second', heading),
-      ok(overWas === 'auto' && overNow === '1 min', 'and pressing the window row steps it off auto',
+      ok(overWas === '1 min' && overNow === '5 min', 'and pressing the window row steps it to the next window',
          `${overWas} -> ${overNow}`),
       ok(shut, 'and walking away shuts them again')
     ];
