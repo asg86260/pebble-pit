@@ -6,7 +6,7 @@ import { MACHINE_IDLE_MS, P, WORKER } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY } from '../dust.js';
 
 import { drawGrid } from './ground.js';
-import { tillerAt, tillerWay } from '../farm.js';
+import { tillerAt, tillerCol, tillerWay } from '../farm.js';
 import { machine } from '../machines.js';
 import { jawX, jawY, rigTop, shaftX } from '../quarry.js';
 import { ramX, rockFaceX, rockShare } from '../rock.js';
@@ -116,10 +116,6 @@ export function drawRam() {
 // The tiller: a tractor, the only machine that travels. Its x is derived from
 // the plot it is working. The ground line is where a body's feet are: `walkY`
 // is the top of a body standing there, not the surface under it.
-// A column of the picture, in cells off its left edge, mirrored when it faces
-// the other way: one place that knows how the flip works, so the wheels cannot
-// disagree with the sprite about which end is the front.
-const tCol = c => tillerWay() < 0 ? spriteW(TILLER) - 1 - c : c;
 
 export function drawTiller() {
   if (!S.farmOpen || !built('tiller')) return;
@@ -139,8 +135,8 @@ export function drawTiller() {
   const y0 = g - spriteH(TILLER) * P;
   // The hubs, off the picture: the middle of each white ring, mirrored with
   // the picture so they stay inside the tires when it turns round.
-  for (const [wx, wy, r] of [[x + tCol(3) * P, y0 + P * 5, 1],
-                             [x + tCol(8) * P, y0 + P * 5, 0]]) {
+  for (const [wx, wy, r] of [[x + tillerCol(3) * P, y0 + P * 5, 1],
+                             [x + tillerCol(8) * P, y0 + P * 5, 0]]) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(Math.round((wx + Math.cos(a) * r * P) / P) * P,
                  Math.round((wy + Math.sin(a) * r * P) / P) * P, P, P);

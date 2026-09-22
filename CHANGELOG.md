@@ -29,6 +29,7 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The tiller's driver rides behind the steering column over the big wheel, not perched on the bonnet in the exhaust (test/machines.test.mjs).
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
 - The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").
 - Resizing the window no longer sends the clouds flying: they hold their height and come back into the strip in one step instead of a frame at a time (test/sky-air.test.mjs).

@@ -20,7 +20,7 @@ import { frames } from './clock.js';
 import { spelled } from './tower.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE, LADDER } from './config.js';
-import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
+import { spriteW, spriteH, stackCol, seatCol, roofRow, TILLER } from './sprites.js';
 import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
@@ -369,27 +369,42 @@ const tillerPlot = () => {
   return Math.max(0, Math.min(n - 1, Math.round(tillerRun() * (n - 1))));
 };
 
+// A column of the picture, in cells off its left edge, mirrored when the
+// tractor turns. The one place that knows how the flip works, so the seat, the
+// chimney and the drawing cannot disagree about which end is the front.
+export const tillerCol = c => tillerWay() < 0 ? spriteW(TILLER) - 1 - c : c;
+
+// The same mirror for the driver, which is a body wide rather than a cell:
+// mirroring its *left* edge like a point hangs it off the back of the tractor
+// by the two cells it is wider.
+const tillerSeatCol = () =>
+  tillerWay() < 0 ? spriteW(TILLER) - WORKER / P - seatCol(TILLER) : seatCol(TILLER);
+
+// The top-left of the picture, which is what both the seat and the chimney
+// measure off: the ground under the tractor, less its height.
+const tillerTop = x =>
+  Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P - spriteH(TILLER) * P;
+
 defineMachine('tiller', {
   job: JOB.FARM,
   type: TYPE.FARM,
   at: tillerAt,
   y: () => walkY(tillerAt() + WORKER / 2) - P,
-  // Where the driver sits: up on the back, over the axle. Registered with the
-  // machine rather than kept in the drawing, so the simulation does not import
-  // the renderer to find out where a body goes.
+  // Where the driver sits: on the deck at the end away from the chimney, over
+  // the big wheel and behind the column, read off the picture (`seatCol`,
+  // `roofRow`) as the drill's and the ram's are. A column named by hand sat
+  // the driver on the bonnet, facing the exhaust, with the wheel behind it.
+  // Registered with the machine rather than kept in the drawing, so the
+  // simulation does not import the renderer to find out where a body goes.
   seat: () => {
     const x = Math.round(tillerAt());
-    const c = tillerWay() < 0 ? spriteW(TILLER) - 1 - 6 - 2 : 6;
-    return { x: x + c * P,
-             y: Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P
-                - P * (spriteH(TILLER) - 1) };
+    return { x: x + tillerSeatCol() * P,
+             y: tillerTop(x) + roofRow(TILLER) * P - WORKER };
   },
   // The top of the exhaust, mirrored with the tractor when it turns.
   stack: () => {
     const x = Math.round(tillerAt());
-    const c = tillerWay() < 0 ? spriteW(TILLER) - 1 - stackCol(TILLER) : stackCol(TILLER);
-    return { x: x + c * P,
-             y: Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P - spriteH(TILLER) * P };
+    return { x: x + tillerCol(stackCol(TILLER)) * P, y: tillerTop(x) };
   },
   // A unit of the farm's work is a slice of tending: short beat, small bite.
   ms: rate => tendMs() / 40 / Math.max(0.01, rate),

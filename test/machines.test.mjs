@@ -355,6 +355,59 @@ group('a machine smokes out of its own chimney, whichever way it faces', async (
   ];
 });
 
+// The driver rides at the end away from the chimney, which is the one thing
+// that says which way round a machine is. The tiller's seat column was named
+// by hand -- 6, where `seatCol` reads 1 off the picture -- so the tractor
+// carried its driver on the bonnet, in the exhaust, with the steering column
+// empty behind it: a tractor running backwards. The jaw and the ram derive it,
+// so only the tiller was wrong; asserted for all three, because a fourth
+// machine with a hand-cut column is the same bug again.
+group('a machine carries its driver at the end away from its chimney', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0, 0, 1);
+  window.__machine('ram', { bought: true });
+  window.__machine('tiller', { bought: true });
+
+  // The seat and the chimney as columns of the picture, and whether the body
+  // -- three cells of it -- stands clear of the chimney and inside the shape.
+  const seatCols = key => {
+    const sp = specOf(key);
+    const c = Math.round((sp.seat().x - Math.round(sp.at())) / P);
+    return [c, c + 1, c + 2];
+  };
+  const pipeCol = key => {
+    const sp = specOf(key);
+    return Math.round((sp.stack().x - Math.round(sp.at())) / P);
+  };
+  const apart = (key, rows) => {
+    const seat = seatCols(key), pipe = pipeCol(key);
+    const mid = (spriteW(rows) - 1) / 2;
+    return { seat, pipe,
+             // not standing in the chimney, not hanging off either end, and on
+             // the far side of the picture's middle from the chimney.
+             ok: !seat.includes(pipe) && seat[0] >= 0 && seat[2] < spriteW(rows)
+                 && (pipe < mid) !== (seat[1] < mid) };
+  };
+
+  const ram = apart('ram', RAM);
+  yard.S.tillerAt = 0.4;                     // up the row
+  const up = apart('tiller', TILLER);
+  yard.S.tillerAt = 1.4;                     // and back down it, turned round
+  const back = apart('tiller', TILLER);
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(ram.ok, "the ram's body rides clear of its chimney",
+       `seat ${ram.seat.join(',')}, pipe ${ram.pipe}`),
+    ok(up.ok, 'the tractor going up the row carries its driver behind the exhaust',
+       `seat ${up.seat.join(',')}, pipe ${up.pipe}`),
+    ok(back.ok, '...and still does coming back down it, both of them mirrored',
+       `seat ${back.seat.join(',')}, pipe ${back.pipe}`)
+  ];
+});
+
 // A body put on a station with a machine on it walks to the machine.
 //
 // It walked to the *hand's* spot first. `stationX` answers "where is this job
