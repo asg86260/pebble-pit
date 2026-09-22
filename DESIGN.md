@@ -9088,6 +9088,82 @@ built and taken out the same day: it steadied the rare coins by averaging them
 over up to five minutes, which is also five minutes of a windfall reading as a
 rate, and it was a rule the player could not see.
 
+### Amendment — the books grow three sheets: income, the sky, the crew (design, not built)
+
+The books are five rates and a tally: enough to say the yard is earning, not
+enough to say how it is going. Three things a player actually asks while
+standing in front of the noticeboard are each already known to the game and
+said nowhere: *is this coin coming in faster or slower than it was*, *am I
+winning against the sky*, and *who is doing what*. This builds the board out to
+answer those three, with numbers the yard already keeps wherever it can.
+
+**The bargain.** Readouts only. Nothing here is bought, nothing unlocks, and no
+number feeds a rate -- the same bargain the record strikes. What it costs the
+player is nothing; what it is worth is not having to count heads or watch the
+clouds to know. The one new saved fact is the lifetime income per coin, which
+the income record makes free to keep.
+
+**Three sections, on the one board** (the open call below), each under its own
+heading, after the window row and before the tally:
+
+*Income, a second* -- one line a coin, as now, plus:
+- **a trend arrow** beside each rate: this window against the one before it,
+  in the air board's own arrows (▲ ▲▲ ▲▲▲, ▼ …, — for level), so an arrow means
+  the same thing on both boards. Arithmetic on the income record, which already
+  holds ten minutes; the ten-minute window compares against nothing and wears no
+  arrow.
+- **the window's total** under it, dim: *312 in the last minute*. The rate is a
+  division and a player often wants the sum.
+- **lifetime income** per coin, joining the tally (*ore earned*, *crops
+  earned*…). Counted by `earned` in income.js into one new saved field,
+  `S.earnedTotal`, so a refund is kept out of it for the same reason it is kept
+  out of the rate. *pebbles banked* stays, being a different fact (refunds in).
+
+*The sky* -- what the air filter's dial and arrow say, plus what they cannot:
+- **pollution**, the air board's arrows, from the same `airTrend`.
+- **put up** and **taken out**, a minute each (`airReadout`'s fouling and
+  filtering), so the arrow's reason is on the board.
+- **haze**, as the haze against the line it rains at: *140 of 300*.
+- **rain in**, the time until the sky tips (`dueMs`), blank while the house is
+  winning -- blank is the number worth playing for, as the readout already says.
+- **dirtied by**, the sky's motes by what kicked them up (`m.kind`: the rock's
+  dust, the quarry, the farm, the machines' soot), as shares: *machines 62% ·
+  rock 30% · farm 8%*. The one line here that tells a player *which* station to
+  answer for.
+- **showers weathered** (`S.rains`) and **muck lying about** (`muckLeft`).
+Shown once the sky has been seen (`S.seenAir`), like the air board's row.
+
+*The crew* -- the house board says who, this says how many and how well:
+- **on the payroll**, by job: *rock 4 · pit 6 · quarry 3 · farm 3 · filter 2*.
+- **right now**: *working 11 · on the way 4 · on a break 2 · at home 1*, read
+  off the same `whereIs` the crew list uses, so the two boards cannot disagree.
+- **best hand** in each job with a record -- most mined, quarried, farmed,
+  stored, tidied -- by name: *most mined: wren, 4.1k*. Off the per-body records
+  (`crew/records.js`), which have been kept since the crew had names and have
+  never been shown.
+- *longest on one clock* moves here from the tally.
+Shown once there is a crew (`S.crew >= 1`).
+
+**What it must not break.** Every value is read, never estimated -- the books'
+first rule. The crew's *right now* line is the same classification the crew
+list shows, not a second one. No per-row magic numbers: the arrow steps are the
+air board's, shared rather than copied.
+
+**Left out, on purpose.** *Where income comes from*, by station: a grain landing
+in the pit does not know who threw it, and tagging every grain in flight is a
+change to the whole carry for one line of a board. *Earned against spent*:
+nothing records spending yet; it is the natural next sheet once this one has
+been read in play. Charts: see below.
+
+**Open calls.**
+1. *One board or pages.* Three new sections on one board is about twenty-five
+   lines with the tally; the proposal is the one board, sections folded like the
+   other boards'. The alternative is three pages on the noticeboard (*income /
+   sky / crew*), which needs a page control the board does not have.
+2. *A picture or numbers only.* Proposed: numbers only for this round. A
+   ten-minute pixel strip per coin is possible (the shelf's glyphs already draw
+   into the DOM) and is the obvious follow-up if the arrows are not enough.
+
 ### Amendment — a toast when one lands (built)
 
 The original design said, in so many words, "no toast, no banner, no card sliding in over the
