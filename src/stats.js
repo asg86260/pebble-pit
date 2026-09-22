@@ -11,7 +11,7 @@ import { arrowsFor } from './words.js';
 import { AIR_TREND_STEPS } from './config.js';
 import { airReadout, airSides, airTrend, skyKindCounts, muckLeft } from './smog.js';
 import { doing } from './crewboard.js';
-import { JOB, JOB_OF, jobSaid } from './jobs.js';
+import { JOB, JOB_OF } from './jobs.js';
 import { showWindow } from './modal.js';
 
 // What the books show, in board order. A currency appears once you have seen
@@ -116,22 +116,31 @@ const SKY_ROWS = [
 ];
 
 // --- the crew ---------------------------------------------------------------------
-// How many, doing what, and who is best at it. The doing is the crew card's own
-// word (`doing` in crewboard.js), so the two boards cannot disagree.
-const JOBS_SHOWN = [JOB.ROCK, JOB.HAUL, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.JANITOR,
-                    JOB.STIR, JOB.SCHOLAR, JOB.WIZARD, JOB.BUILD];
-const headcount = job => S.workers.filter(w => JOB_OF[w.type] === job).length;
-const NOW_IS = [
-  { key: 'working', name: 'working' },
-  { key: 'walking', name: 'on the way' },
-  { key: 'resting', name: 'on a break' },
-  { key: 'home',    name: 'at home' },
-  { key: 'idle',    name: 'nothing much' }
+// How many, doing what, and who is best at it. The jobs are the stations a
+// player hires for, in the words a player uses, one line a station; the spare
+// hands putting a building up are nobody's station and are not counted here.
+const JOBS_SHOWN = [
+  { job: JOB.ROCK,    name: 'diggers' },
+  { job: JOB.QUARRY,  name: 'miners' },
+  { job: JOB.HAUL,    name: 'haulers' },
+  { job: JOB.FARM,    name: 'farmers' },
+  { job: JOB.JANITOR, name: 'janitors' },
+  { job: JOB.PURIFY,  name: 'air purifiers' },
+  { job: JOB.STIR,    name: 'apothecary' },
+  { job: JOB.WIZARD,  name: 'wizards' }
 ];
-const OFF_WORK = { 'on a break': 'resting', 'at home': 'home', 'walking there': 'walking',
-                   'heading home': 'walking', 'nothing much': 'idle',
-                   'in your hand': 'idle', 'in mid-air': 'idle' };
-const nowIs = key => S.workers.filter(w => (OFF_WORK[doing(w)] || 'working') === key).length;
+const headcount = job => S.workers.filter(w => JOB_OF[w.type] === job).length;
+// At it, or not: walking there, on a break, at home and nothing much are all
+// not at it, and telling them apart was more lines than it was worth. The
+// doing is the crew card's own word (`doing` in crewboard.js), so the two
+// boards cannot disagree.
+const NOT_AT_IT = new Set(['on a break', 'at home', 'walking there', 'heading home', 'nothing much',
+                           'in your hand', 'in mid-air']);
+const NOW_IS = [
+  { key: 'working', name: 'working', is: w => !NOT_AT_IT.has(doing(w)) },
+  { key: 'idle',    name: 'idle',    is: w => NOT_AT_IT.has(doing(w)) }
+];
+const nowIs = key => { const n = NOW_IS.find(x => x.key === key); return S.workers.filter(n.is).length; };
 // The records every body keeps (crew/records.js), best of the crew standing.
 const BEST = [
   { field: 'mined',    name: 'most off the rock' },
@@ -148,10 +157,9 @@ const sayTime = ms =>
   ms >= 3600000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`;
 const hasCrew = () => S.workers.length > 0;
 const CREW_ROWS = [
-  ...JOBS_SHOWN.map(j => readout(`crew${j}`, jobSaid(j), () => String(headcount(j)),
-                                 () => headcount(j) > 0)),
-  ...NOW_IS.map(n => readout(`now${n.key}`, n.name, () => String(nowIs(n.key)),
-                             () => hasCrew() && nowIs(n.key) > 0)),
+  ...JOBS_SHOWN.map(j => readout(`crew${j.job}`, j.name, () => String(headcount(j.job)),
+                                 () => headcount(j.job) > 0)),
+  ...NOW_IS.map(n => readout(`now${n.key}`, n.name, () => String(nowIs(n.key)), hasCrew)),
   ...BEST.map(r => readout(`best${r.field}`, r.name,
                            () => { const w = best(r.field); return w ? `${w.name} · ${fmt(w[r.field])}` : ''; },
                            () => !!best(r.field))),

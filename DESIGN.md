@@ -9175,9 +9175,14 @@ heading, after the window row and before the tally:
 Shown once the sky has been seen (`S.seenAir`), like the air board's row.
 
 *The crew* -- the house board says who, this says how many and how well:
-- **on the payroll**, by job: *rock 4 · pit 6 · quarry 3 · farm 3 · filter 2*.
-- **right now**: *working 11 · on the way 4 · on a break 2 · at home 1*, read
-  off the same `whereIs` the crew list uses, so the two boards cannot disagree.
+- **on the payroll**, a line a station in the words a player hires by --
+  *diggers, miners, haulers, farmers, janitors, air purifiers, apothecary,
+  wizards* (as built, same day; the spare hands putting a building up are
+  nobody's station and are not counted).
+- **right now**: *working 8 · idle 10* -- two lines, not five (as built, same
+  day: on the way, on a break, at home and nothing much were more lines than
+  they were worth). Read off the crew card's own `doing`, so the two boards
+  cannot disagree.
 - **best hand** in each job with a record -- most mined, quarried, farmed,
   stored, tidied -- by name: *most mined: wren, 4.1k*. Off the per-body records
   (`crew/records.js`), which have been kept since the crew had names and have

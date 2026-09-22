@@ -88,8 +88,10 @@ group('the sky sheet agrees with itself', async () => {
 });
 
 // --- the crew ---------------------------------------------------------------------
-// Heads by job and heads by what they are doing are two ways of counting the
-// same bodies, so each sums to the crew; the best hand is a body with the most.
+// Heads by what they are doing count every body once; heads by job count every
+// body at a station once (the spare hands putting a building up are nobody's
+// station). The jobs are named as a player names them. The best hand is a body
+// with the most.
 group('the crew sheet counts every body once, each way', async () => {
   window.__reset();
   window.__fullSites();
@@ -98,13 +100,18 @@ group('the crew sheet counts every body once, each way', async () => {
   const shown = BOOK_ROWS.filter(u => u.show());
   const sum = prefix => shown.filter(u => u.key.startsWith(prefix)).reduce((n, u) => n + +text(u.price()), 0);
   const bodies = yard.S.workers.length;
+  const builders = yard.S.workers.filter(w => w.type === 'builder').length;
+  const jobNames = shown.filter(u => u.key.startsWith('crew')).map(u => u.name);
   const top = Math.max(...yard.S.workers.map(w => w.mined || 0));
   const best = text(row('bestmined').price());
   const holder = yard.S.workers.find(w => (w.mined || 0) === top);
 
   return [
-    ok(sum('crew') === bodies, 'the jobs add up to the crew', `${sum('crew')} of ${bodies}`),
-    ok(sum('now') === bodies, 'and so do what they are doing', `${sum('now')} of ${bodies}`),
+    ok(sum('crew') === bodies - builders, 'the jobs add up to the crew at stations', `${sum('crew')} of ${bodies}, ${builders} building`),
+    ok(jobNames.join(',') === 'diggers,miners,haulers,farmers', 'named as a player names them, in order', jobNames.join(',')),
+    ok(sum('now') === bodies, 'working and idle add up to the crew', `${sum('now')} of ${bodies}`),
+    ok(shown.filter(u => u.key.startsWith('now')).map(u => u.name).join(',') === 'working,idle',
+       'and that is the whole of what they are doing', shown.filter(u => u.key.startsWith('now')).map(u => u.name).join(',')),
     ok(top > 0 && holder && best.startsWith(holder.name), 'the best on the rock is the one with the most off it',
        `${best} (top ${top})`)
   ];
