@@ -151,12 +151,11 @@ export const hoverHouse = () => hoverStation('house');
 // The crew is a submenu: the names come out beside the board when the cursor
 // reaches that row. Two frames, because opening it measures and re-seats the
 // panel and a rectangle read before that is the one the board had without it.
+// The crew list is a window (modal.js), opened by pressing the door.
 export async function openCrewList() {
   const door = document.querySelector('#crewshop button[data-key="crewlist"]');
   if (!door) return null;
-  const r = door.getBoundingClientRect();
-  door.dispatchEvent(new PointerEvent('pointerenter',
-    { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
+  door.click();
   await raf();
   await raf();
   return door;

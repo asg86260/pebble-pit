@@ -9088,6 +9088,43 @@ built and taken out the same day: it steadied the rare coins by averaging them
 over up to five minutes, which is also five minutes of a windfall reading as a
 rate, and it was a rule the player could not see.
 
+### Amendment — larger reading opens in a window (built)
+
+The books' four sheets hung off the noticeboard as one popover four screens
+tall, and the crew list had already needed a flyout of its own, with a seat
+beside the board, a crossing wedge and a fold grace, to stand at all. A popover
+is the right shape for something you glance at on the way past a station; it is
+the wrong shape for something you stop and read.
+
+**The window.** Larger reading opens in a window centered over the yard, on a
+wash of its own (the held sheet's stipple), coming up and going down as the same
+fade (`modal.js`). The yard keeps running under it -- the books are live
+readings, and a window that held the game would freeze the arrows it was opened
+to watch. It stays until it is closed: the cross, escape, or a press on the
+wash; the pointer wandering is not a close, because a thing you read is not a
+thing you pass. Escape closes the window before it holds the yard, and the held
+sheet stands over the window. A kind is registered by whoever owns what is in it
+(`windowFor`); the window knows nothing about the books or the crew.
+
+**The books.** The noticeboard's board is the five rates and *open the books*.
+The window has the four sheets side by side, a ledger a column, as many across
+as the glass holds -- two on an 800-pixel window, where the whole set fits with
+no scroll, four on a wide desk, one on a phone. A sheet with nothing on it yet
+folds away.
+
+**The crew.** *Who lives here* opens the crew in the window, a card a body, as
+many across as fit, scrolled inside past the window's height. Picking a name
+closes the window and takes the view to them, as it did. The door is pressed,
+not hovered: a window that came up on a pass of the pointer would be in the way.
+The flyout went with it -- its seat beside the board, the `port` side, the
+crossing wedge's allowance, the fold grace (`SUBMENU_GRACE_MS`), the phone's
+list page and its back arrow, and the frame step that tidied a list outliving its
+board.
+
+Scenes `booksall`, `crewlist`; checks src/selftest/house.js ("the crew opens in a
+window, and it closes three ways"), src/selftest/sheet.js, and
+test/books-sheets.test.mjs.
+
 ### Amendment — the books grow three sheets: income, the sky, the crew (built)
 
 The books are five rates and a tally: enough to say the yard is earning, not
@@ -9155,9 +9192,9 @@ change to the whole carry for one line of a board. *Earned against spent*:
 nothing records spending yet; it is the natural next sheet once this one has
 been read in play. Charts: see below.
 
-**Decided (2026-09-22):** one board, numbers only. The sheet scrolls. A
-ten-minute pixel strip per coin stays the obvious follow-up if the arrows are
-not enough.
+**Decided (2026-09-22):** one board, numbers only; then, the same day, the
+sheets moved into a window (the amendment above). A ten-minute pixel strip per
+coin stays the obvious follow-up if the arrows are not enough.
 
 **As built, where it moved from the above.**
 - *An arrow is held level inside the counts' own scatter.* Two windows of the

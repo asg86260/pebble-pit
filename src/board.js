@@ -1,12 +1,12 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS, SUBMENU_GRACE_MS,
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
          SHEET_MS } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
-import { crewRows, crewList } from './crewboard.js';
+import { crewRows } from './crewboard.js';
 import { UPGRADES, lodgers, markSectionsSeen, canPay, inLine } from './upgrades.js';
 import { maxed } from './words.js';
 import { markDoneSeen } from './works.js';
@@ -21,18 +21,17 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
-import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
+import { refresh, buildCrew, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
 import { shown } from './tween.js';
 import { JOB } from './jobs.js';
 import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
+import { stepWindow } from './modal.js';
 
 const shopEl = document.getElementById('shop');
 const crewShopEl = document.getElementById('crewshop');
-const crewListEl = document.getElementById('crewlist');
-const crewListRowsEl = document.getElementById('crewlistrows');
 const filterShopEl = document.getElementById('filtershop');
 const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
@@ -139,15 +138,12 @@ let sized = { w: 0, h: 0 };
 const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
                           h: panelEl.offsetHeight || sized.h });
 
-// The whole panel, flyout included, for the safe-zone wedge and the tip's
-// dodge: both have to cover the list of names, or crossing to it closes the
-// board.
+// The whole panel, for the safe-zone wedge and the tip's dodge.
 let full = { w: 0, h: 0 };
 
-// The main board's own width: the open page and the purse. The crew list is out
-// of the panel's flow, so it is not in this and cannot move the seat.
+// The main board's own width: the open page and the purse.
 function mainWidth() {
-  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
+  const sheet = panelEl.querySelector(':scope > .sheet');
   const purseW = purseEl.offsetWidth;
   return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + panelGap() : 0);
 }
@@ -166,7 +162,7 @@ function panelGap() {
 // measured once, when the set of rows changes, and pinned. Cleared before it
 // is read, or every measurement after the first is a measurement of the pin.
 function pinWidth() {
-  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
+  const sheet = panelEl.querySelector(':scope > .sheet');
   if (!sheet) return;
   // The room the sheet may take, written onto it so a stylesheet that sizes it
   // by content (the shelf) can cap itself without knowing the purse.
@@ -216,21 +212,6 @@ function pinWidth() {
   if (bar > 0) sheet.style.width = `${w + bar}px`;
 }
 
-// The crew list is one card wide, read off the board's layout (the door's width
-// plus the sheet's border and padding) rather than restated in the stylesheet.
-// Which side it stands on is `place`'s call.
-function seatFlyout() {
-  // Inside a bottom sheet the list is a page, and the stylesheet sizes it.
-  if (coarse()) { crewListEl.style.width = ''; crewListEl.style.marginLeft = ''; crewListEl.style.maxHeight = ''; return; }
-  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
-  const door = sheet && sheet.querySelector('.rows > button.door');
-  if (!door) return;
-  const rows = door.parentElement;
-  // On a shelf the door is one slot, too narrow for cards: two slots wide.
-  if (door.classList.contains('tile')) { crewListEl.style.width = `${2 * door.offsetWidth}px`; return; }
-  crewListEl.style.width = `${door.offsetWidth + sheet.offsetWidth - rows.offsetWidth}px`;
-}
-
 // `repin: false` is for the caller that knows the rows did not move (a hover
 // rewriting a note); re-pinning there would hand the width back to the words.
 export function remeasure(repin = true) {
@@ -238,7 +219,6 @@ export function remeasure(repin = true) {
   // the next open board off the window. Opening measures again.
   if (panelEl.hidden) return;
   if (repin) pinWidth();
-  seatFlyout();
   full = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
   sized = { w: mainWidth(), h: full.h };
 }
@@ -259,23 +239,7 @@ function place(el, at) {
   // board pinned to its left edge read as belonging to whatever was next along.
   const mid = at.x + (at.w || 0) / 2;
   const want = (mid - S.camX) * S.zoom - w / 2;
-  // `w` and `h` are the board's own; the crew list is out of the panel's flow.
-  let x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
-
-  // Which side the crew list stands on: right of the board; left of the purse
-  // (`port`) when the right runs out; and when neither side has the room it
-  // stays right and the board gives ground, just as far as it must.
-  const listW = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
-  let port = false;
-  if (listW && x + w + listW > S.W - GAP) {
-    if (x - listW >= GAP) port = true;
-    else x = Math.max(GAP, S.W - GAP - listW - w);
-  }
-  crewListEl.classList.toggle('port', port);
-  // When even that is not enough, the list slides back over the board's edge
-  // by the rest: readable over a corner beats off the glass.
-  const over = listW && !port ? Math.max(0, x + w + listW - (S.W - GAP)) : 0;
-  crewListEl.style.marginLeft = over ? `${-over}px` : '';
+  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
 
@@ -296,27 +260,20 @@ function place(el, at) {
   putX = x;
   putY = bottom;
   el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
-  // The crew list grows upward from the board's bottom edge, so its room is
-  // whatever is between that edge and the top of the window.
-  crewListEl.style.maxHeight = `min(46vh, ${S.H - bottom - GAP}px)`;
 }
 
 const GAP = 4;                             // never flush against the edge
-const FLY_GAP = 8;                         // the panel's gap, between the board and the list beside it
 
 // --- the sheet from the bottom ------------------------------------------------------
 // On a phone a board is a sheet (sheet.js; DESIGN.md, "Boards as bottom
 // sheets"): the panel through the one seat every sheet on the phone shares.
-// What is the board's own here: its name beside the grip, the crew list as a
-// page inside it rather than a card beside it, and the measuring the popover
-// wants back when the pointer stops being a thumb.
+// What is the board's own here: its name beside the grip, and the measuring
+// the popover wants back when the pointer stops being a thumb.
 const handleEl = document.getElementById('handle');
 const handleName = handleEl.querySelector('.name');
-const listBackEl = document.getElementById('listback');
-const sheetList = () => (S.crewListOpen ? crewListEl : panelEl.querySelector(':scope > .sheet:not(.flyout)'));
 const seat = sheetSeat(panelEl, {
   handle: handleEl,
-  list: sheetList,
+  list: () => panelEl.querySelector(':scope > .sheet'),
   open: () => panelEl.classList.contains('open'),
   dismiss: () => showPanel(null, true),
   // the popover's inline seat and the pinned width are not the sheet's
@@ -325,15 +282,10 @@ const seat = sheetSeat(panelEl, {
 
 function placeSheet() {
   seat.place();
-  // The name beside the grip, and the crew list as a page: the board's own
-  // title is hidden by the stylesheet in favor of this one.
+  // The name beside the grip: the board's own title is hidden by the
+  // stylesheet in favor of this one.
   const name = at ? pages[at]?.querySelector('.title')?.dataset.name || pages[at]?.querySelector('.title')?.textContent : '';
   if (name && handleName.textContent !== name) handleName.textContent = name;
-  const listing = !!S.crewListOpen;
-  if (panelEl.classList.contains('listing') !== listing) {
-    panelEl.classList.toggle('listing', listing);
-    listBackEl.hidden = !listing;
-  }
 }
 
 // Back to the popover: the switch on the sheet was turned off under an open
@@ -341,13 +293,11 @@ function placeSheet() {
 // seats itself afresh.
 function leaveSheet() {
   seat.leave();
-  panelEl.classList.remove('listing');
   putX = putY = null;
   remeasure();
 }
 
 const sheetRect = () => seat.rect();
-listBackEl.addEventListener('click', () => showCrewList(false));
 
 // For the checks: which stop the sheet stands at, how tall that is, and
 // the rail's reading.
@@ -403,10 +353,7 @@ export function seatCall() {
 // The board stands above the station that opened it, so reaching it means
 // crossing bare canvas that is neither. While it is open the whole wedge
 // between the station and the board counts as being on it: a wedge, not a box
-// round the pair, so the menu still shuts when you step out sideways. The
-// panel rectangle includes the crew list, so the wedge covers the submenu too.
-// The grace is generous on purpose: a hand crossing to the names dips below the
-// sheet and overshoots the gap, and a tight box shut the board mid-journey.
+// round the pair, so the menu still shuts when you step out sideways.
 const SAFE_SLACK = 34;
 
 // Where the board is on screen. `putY` is the bottom edge's height above the
@@ -414,13 +361,9 @@ const SAFE_SLACK = 34;
 const panelRect = () => {
   if (panelEl.classList.contains('bottom')) return sheetRect();
   if (putX === null) return null;
-  // The crew list is out of the panel's flow, so it is counted in by hand, gap
-  // and all, or the strip between the board and the names would be outside the
-  // menu. On the left (`port`) it pushes the left edge out instead.
-  const list = crewListEl.hidden ? 0 : crewListEl.offsetWidth + FLY_GAP;
-  const w = (panelEl.offsetWidth || full.w) + list;
-  const h = Math.max(panelEl.offsetHeight || full.h, crewListEl.hidden ? 0 : crewListEl.offsetHeight);
-  const x = putX - (crewListEl.classList.contains('port') ? list : 0);
+  const w = panelEl.offsetWidth || full.w;
+  const h = panelEl.offsetHeight || full.h;
+  const x = putX;
   return { x, y: S.H - putY - h, w, h };
 };
 
@@ -491,14 +434,6 @@ export function inSafeZone(px, py) {
     { x: r.x - g, y: r.y - g }, { x: r.x + r.w + g, y: r.y - g },
     { x: r.x - g, y: r.y + r.h + g }, { x: r.x + r.w + g, y: r.y + r.h + g }
   ]), px, py);
-}
-
-// The crew list may not outlive the house's board. Said every frame as a fact
-// rather than as a duty of every path that puts a board away, because a path
-// that forgets leaves the list hanging with nothing that will ever take it
-// down.
-export function tidyBoards() {
-  if (at !== 'house' && S.crewListOpen) showCrewList(false);
 }
 
 // Which board is up, by name, or null: the pan's rule and the sheet ask.
@@ -585,41 +520,6 @@ let leaving = 0;
 const LINGER = 130;                    // and how long the moment is
 
 
-// --- the sheet that opens off the house board ---------------------------------
-// The one submenu. It is a second sheet *inside* the panel, so it walks and
-// fades with the board and is part of every answer to "is the pointer on the
-// menu" without a second rule anywhere.
-// A row that leads nowhere asks the list to go, and it goes a moment later
-// unless the pointer has left the row again (`keepSubmenu`, off the row's
-// pointerleave and the list's own pointerenter): the row next to the door is
-// between the door and the list, and a close that fired on the crossing made
-// the list impossible to reach.
-let folding = 0;
-export function closeSubmenu() {
-  if (folding || !S.crewListOpen) return;
-  folding = setTimeout(() => { folding = 0; showCrewList(false); }, SUBMENU_GRACE_MS);
-}
-export function keepSubmenu() { clearTimeout(folding); folding = 0; }
-crewListEl.addEventListener('pointerenter', keepSubmenu);
-
-export function showCrewList(on) {
-  // Only ever out beside the house.
-  const want = !!on && at === 'house';
-  // Judged against the sheet as well as the flag: a new game blanks the flag
-  // before it puts the board away, and a check on the flag alone left the list
-  // standing into the next run.
-  keepSubmenu();
-  if (want === S.crewListOpen && crewListEl.hidden === !want) return;
-  S.crewListOpen = want;
-  crewListEl.hidden = !want;
-  // Filled before it is measured: an empty sheet measures narrower than it
-  // will be.
-  if (want) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
-  remeasure();
-  placeBoard();
-}
-
-
 // `now` is for a close that was *asked for* rather than wandered out of: a tap
 // on bare ground, a new game, the floor opening. Those are answers, and an
 // answer that takes a tenth of a second to arrive reads as a control that did
@@ -652,9 +552,6 @@ export function showPanel(want, now = false) {
 function settle(want) {
   if (want === at) return;
   shutOpts();                  // and a board swapped for another takes its lists with it
-  // Before `at` moves, so the list is put away while it still belongs to the
-  // board it is standing beside.
-  if (want !== 'house') showCrewList(false);
   const wasAt = at;
   at = want;
   // Each station's own flag, for the save and the checks that read one.
@@ -748,9 +645,6 @@ function fill(which) {
   if (which === 'house') {
     buildCrew();
     refresh(crewShopEl, crewRows(), null);
-    // and the list beside it while it is out: where a body stands moves on
-    // its own
-    if (S.crewListOpen) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
   }
 }
 
@@ -829,6 +723,8 @@ export function hud() {
   tweenCount(now());
   fillPurse();
   fill(at);
+  // and the window, if one is open: its readings move on their own too
+  stepWindow();
   // read from state every frame: a save restored after load would otherwise
   // leave the button out of step with the board
   sayHideDone();
