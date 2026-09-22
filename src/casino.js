@@ -536,7 +536,9 @@ function binHit(g, b) {
 // bin pays falls out of it: down through the foot into the tray on the
 // building's floor, where it heaps as a pile of its own. A pebble bin's
 // pebbles go down each carrying its share of the pay; a converting bin's
-// pay goes down in its own coin, one grain a coin. A tray with no cell left
+// pay goes down in its own coin, as the heap its count reads as on the
+// hopper's ladder (`shownFor`) -- a coin a grain up to a hundred, a reading
+// of the count past that -- each grain carrying its share. A tray with no cell left
 // holds the bin -- its foot lit, its pebbles in it -- until one frees, which
 // the tray emptying itself sees to; it never holds the next stake.
 function payBin(b) {
@@ -571,11 +573,14 @@ function payBin(b) {
       return { ...g, worth, big: true };
     });
   } else {
-    // the coin itself, one grain a coin, out of the pebbles' own cells
+    // the coin, out of the pebbles' own cells, each grain an even share of
+    // the coins and the remainder on the last
+    const n = Math.max(1, shownFor(pay.n)), each = Math.floor(pay.n / n);
     grains = [];
-    for (let i = 0; i < pay.n; i++) {
+    for (let i = 0; i < n; i++) {
       const g = cellsOut[i % cellsOut.length];
-      grains.push({ x: g.x + (i >= cellsOut.length ? (rand() - 0.5) * P * PEBBLE : 0), y: g.y, s: someFind(COIN_CELL[pay.kind]), worth: 1, big: true });
+      grains.push({ x: g.x + (i >= cellsOut.length ? (rand() - 0.5) * P * PEBBLE : 0), y: g.y, s: someFind(COIN_CELL[pay.kind]),
+                    worth: i === n - 1 ? pay.n - each * (n - 1) : each, big: true });
     }
   }
   for (const g of grains) {
@@ -585,19 +590,19 @@ function payBin(b) {
   }
 }
 
-// A grain of the pay landing in the tray: a coin is a coin, and a pebble
-// lands as the heap its share of the pay reads as, on the hopper's own
-// ladder (`shownFor`) -- so a win stands taller in the tray than its stake
-// stood in the bowl -- with the pebbles it stands for kept on a ledger the
-// way the hopper keeps the stake (`trayShare`). A tray with no cell for it
-// sends it on to the hole rather than nowhere, and holds the bins until it
-// has room again.
+// A grain of the pay landing in the tray lands as the heap its share of the
+// pay reads as, each kind on the hopper's own ladder (`shownFor`) -- so a win
+// stands taller in the tray than its stake stood in the bowl -- with what it
+// stands for kept on a ledger a kind, the way the hopper keeps the stake
+// (`trayShare`). A tray with no cell for it sends it on to the hole rather
+// than nowhere, and holds the bins until it has room again.
 function trayLand(k) {
-  const dust = isDust(k.s), worth = k.worth || 1;
-  const cells = dust ? Math.max(1, Math.round(shownFor(S.trayOwed + worth) - shownFor(S.trayOwed))) : 1;
+  const kind = kindOf(k.s), worth = k.worth || 1, owed = S.trayOwed[kind];
+  const cells = Math.max(1, Math.round(shownFor(owed + worth) - shownFor(owed)));
   let laid = 0;
   for (let i = 0; i < cells; i++) {
-    if (!addGrain(tray, k.x + (i ? (rand() - 0.5) * P * 8 : 0), null, dust ? 1 + Math.floor(rand() * SHADES.length) : k.s)) break;
+    const s = kind === 'dust' ? 1 + Math.floor(rand() * SHADES.length) : i ? someFind(COIN_CELL[kind]) : k.s;
+    if (!addGrain(tray, k.x + (i ? (rand() - 0.5) * P * 8 : 0), null, s)) break;
     laid++;
   }
   if (!laid) {
@@ -605,16 +610,23 @@ function trayLand(k) {
     bankDust(holeX(), k.s, worth);
     return;
   }
-  if (dust) { S.trayDust += laid; S.trayOwed += worth; }
+  S.trayCells[kind] += laid; S.trayOwed[kind] += worth;
   S.trayAt = now();
   sfx('hopper-land', { x: k.x });
 }
-// what one dust cell off the tray carries: an even share of what is owed,
-// the remainder on the last
-function trayShare() {
-  const left = Math.max(1, S.trayDust);
-  return left > 1 ? Math.min(S.trayOwed, Math.max(1, Math.round(S.trayOwed / left))) : S.trayOwed;
+// what one cell of a kind off the tray carries: an even share of what is
+// owed in that kind, the remainder on the last
+function trayShare(kind) {
+  const owed = S.trayOwed[kind], left = Math.max(1, S.trayCells[kind]);
+  return left > 1 ? Math.min(owed, Math.max(1, Math.round(owed / left))) : owed;
 }
+// which coin a cell is, by the ledger's names
+const kindOf = s => {
+  if (isDust(s)) return 'dust';
+  const f = findKind(s);
+  return f === SHARD_CELL ? 'shard' : f === SPORE_CELL ? 'spore' : f === SPARK_CELL ? 'spark' : 'dust';
+};
+const noKinds = () => ({ dust: 0, spore: 0, shard: 0, spark: 0 });
 // somewhere over the hole, for a grain on its way in
 const holeX = () => pit.x + P + rand() * Math.max(P, pit.cols * P - 2 * P);
 // the hatch in the foot's left wall, at the building's floor
@@ -777,13 +789,18 @@ function trayOut(dt) {
     const v = at(tray, c, r);
     put(tray, c, r, 0);
     tray.capped = null;
-    let worth = 1;
-    if (isDust(v)) { worth = trayShare(); S.trayOwed -= worth; S.trayDust = Math.max(0, S.trayDust - 1); }
-    flyToHole(tray.x + c * P, bottomY(tray) - (r + 1) * P, v, worth);
+    const kind = kindOf(v), worth = trayShare(kind);
+    S.trayOwed[kind] -= worth; S.trayCells[kind] = Math.max(0, S.trayCells[kind] - 1);
+    if (worth > 0) flyToHole(tray.x + c * P, bottomY(tray) - (r + 1) * P, v, worth);
   }
   // the ledger's rounding, or a cell the tray lost: what is still owed with
-  // no dust cell to carry it goes on its own
-  if (S.trayDust === 0 && S.trayOwed > 0) { const h = hatchAt(); flyToHole(h.x, h.y, 1, S.trayOwed); S.trayOwed = 0; }
+  // no cell of its kind to carry it goes on its own
+  for (const kind in S.trayOwed) {
+    if (S.trayCells[kind] > 0 || S.trayOwed[kind] <= 0) continue;
+    const h = hatchAt();
+    flyToHole(h.x, h.y, kind === 'dust' ? 1 : someFind(COIN_CELL[kind]), S.trayOwed[kind]);
+    S.trayOwed[kind] = 0;
+  }
 }
 
 // What a save caught on its way to the hole: the pay in the tray or in the
@@ -792,14 +809,16 @@ function trayOut(dt) {
 // only how many throws the pebbles are split across.
 function payOutStep(dt) {
   const p = S.paying;
-  const coins = p.left.spore + p.left.shard + p.left.spark;
+  const coins = shownFor(p.left.spore) + shownFor(p.left.shard) + shownFor(p.left.spark);
   const grains = coins + (p.left.dust > 0 ? Math.max(1, Math.min(p.grains, p.left.dust)) : 0);
   let n = Math.min(grains, Math.max(1, Math.ceil(grains * (dt / TRICKLE_MS))));
   while (n-- > 0 && payLeft() > 0) {
     const kind = ['spark', 'shard', 'spore'].find(k => p.left[k] > 0);
     const { x, y } = hatchAt();
     let v = kind ? someFind(COIN_CELL[kind]) : 1 + Math.floor(rand() * SHADES.length), worth = 1;
-    if (kind) p.left[kind]--;
+    // a coin a throw up to a hundred of them, and past that the count's
+    // reading on the hopper's ladder, each throw carrying its share
+    if (kind) { worth = Math.max(1, Math.round(p.left[kind] / Math.max(1, shownFor(p.left[kind])))); p.left[kind] -= worth; }
     else {
       const left = p.left.dust, throws = Math.max(1, Math.min(p.grains, left));
       worth = throws > 1 ? Math.max(1, Math.min(left - (throws - 1), Math.round(left / throws))) : left;
@@ -862,14 +881,13 @@ export function wireTable() {
 // plus every grain already in the air toward the strip, by kind.
 function payingOwed() {
   // falling into the tray, standing in it, or on its way out to the hole
-  const kindOf = s => findKind(s) === SHARD_CELL ? 'shard' : findKind(s) === SPORE_CELL ? 'spore' : findKind(s) === SPARK_CELL ? 'spark' : 'dust';
   const flying = (S.tableAir || []).filter(k => k.lands === 'tray' || k.lands === 'hole');
   const left = { dust: 0, spore: 0, shard: 0, spark: 0, ...(S.paying ? S.paying.left : {}) };
   for (const k of flying) left[kindOf(k.s)] += k.worth || 1;
-  // the tray's dust cells are the ledger's pebbles; its coins are themselves
+  // the tray's cells are the ledger's, a kind at a time
   let cells = 0;
-  if (tray.grid) for (const v of tray.grid) if (v) { cells++; if (!isDust(v)) left[kindOf(v)]++; }
-  left.dust += S.trayOwed || 0;
+  if (tray.grid) for (const v of tray.grid) if (v) cells++;
+  for (const kind in left) left[kind] += (S.trayOwed && S.trayOwed[kind]) || 0;
   if (!S.paying && !flying.length && !cells) return null;
   return { left, grains: (S.paying ? S.paying.grains : 0) + flying.length + cells };
 }
@@ -949,7 +967,7 @@ export function clearCasino() {
   table.capped = null;
   if (tray.grid) fillFlat(tray, 0);
   tray.capped = null;
-  S.trayOwed = 0; S.trayDust = 0;
+  S.trayOwed = noKinds(); S.trayCells = noKinds();
   S.tableFx = { pegs: [], edge: null, strobeAt: 0 };
 }
 

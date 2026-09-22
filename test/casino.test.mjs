@@ -64,6 +64,9 @@ function playHand() {
   return { dropped, bins, sent, fell, faded, stood, paid, movedAt, s: state() };
 }
 
+// the tray's ledger is square: nothing owed in any kind
+const owesNothing = s => Object.values(s.trayOwed).every(n => n === 0);
+
 // What the bins owe on a stake, by worth: each bin's pebbles times their
 // share, by the bin's pay, to the pour's own rounding.
 const owed = (bins, stakeN) => {
@@ -324,15 +327,16 @@ group('the pay heaps in the tray in its own kinds, and the tray flies it into th
   const after = state();
   return [
     ok(s0 > 0 && paid > 0, 'a hand was paid', `${paid} for ${s0}`),
-    ok(heaped.tray > 0 && heaped.tray >= pays.shard + pays.spore + pays.spark,
-       'the pay stands in the tray, a coin a grain and the pebbles as the grains that fell', `${heaped.tray} in the tray for ${JSON.stringify(pays)}`),
-    ok(heaped.trayOwed === pays.dust, 'and the tray owes the pebbles the hand paid', `${heaped.trayOwed} owed, ${pays.dust} paid`),
+    ok(heaped.tray > 0 && heaped.tray >= shownFor(pays.shard) + shownFor(pays.spore) + shownFor(pays.spark),
+       'the pay stands in the tray, each kind as the heap its count reads as', `${heaped.tray} in the tray for ${JSON.stringify(pays)}`),
+    ok(['dust', 'spore', 'shard', 'spark'].every(k => heaped.trayOwed[k] === pays[k]), 'and the tray owes what the hand paid, a kind at a time',
+       `${JSON.stringify(heaped.trayOwed)} owed, ${JSON.stringify(pays)} paid`),
     ok(heaped.stored === held, 'and no counter moves for it until it lands', `${heaped.stored} vs ${held}`),
     ok(!heaped.pileCount.casino && !heaped.piles.some(p => p.key === 'casino'), 'nothing goes on the ground'),
     ok(landed, 'the tray flies it into the hole, every counter moving as its kind lands',
        `${held} + ${pays.dust} -> ${after.stored}; ore ${ore} -> ${after.shards}, crops ${crops} -> ${after.spores}, sparks ${sparks} -> ${after.sparks}`),
-    ok(after.tray === 0 && after.trayOwed === 0 && after.stored === want, 'and the tray is empty, the exact pot paid',
-       `${after.tray} left, ${after.trayOwed} owed, ${after.stored} vs ${want}`)
+    ok(after.tray === 0 && owesNothing(after) && after.stored === want, 'and the tray is empty, the exact pot paid',
+       `${after.tray} left, ${JSON.stringify(after.trayOwed)} owed, ${after.stored} vs ${want}`)
   ];
 }, { reload: false });
 
@@ -358,8 +362,8 @@ group('the tray holds nothing up', async () => {
        `${paying.tray} in the tray, ${paying.toTray} falling in, ${paying.toHole} flying out`),
     ok(poured && again.pot && again.pot.stake > 0, 'and the arm pours a new stake meanwhile', `${again.pot && again.pot.stake}`),
     ok(dropped, 'and the sign drops it'),
-    ok(after.tray === 0 && after.trayOwed === 0 && after.tableAir === 0, 'and everything goes to the hole in the end',
-       `${after.tray} in the tray, ${after.trayOwed} owed, ${after.tableAir} flying`)
+    ok(after.tray === 0 && owesNothing(after) && after.tableAir === 0, 'and everything goes to the hole in the end',
+       `${after.tray} in the tray, ${JSON.stringify(after.trayOwed)} owed, ${after.tableAir} flying`)
   ];
 }, { reload: false });
 

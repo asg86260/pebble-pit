@@ -8,6 +8,7 @@
 // frame a second. See `bankDust` in pit.js.
 
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
+import { CASINO_PILE_BRIM } from '../src/config.js';
 
 function atTheTable(dust = 6000) {
   window.__reset();
@@ -36,7 +37,7 @@ group('a stake in the millions pays out without stalling a frame', async () => {
   window.__tapSign();
   const t0 = performance.now();                // the bug this is about never finished
   const perf = globalThis.__perf;
-  let worstCalls = 0, worstCols = 0, frames = 0, hand = null;
+  let worstCalls = 0, worstCols = 0, frames = 0, hand = null, peakAir = 0;
   const busy = () => state().letting || state().toTray || state().toHole || state().tray || state().paying;
   for (; frames < 60 * 90 && busy(); frames++) {
     perf.grains = 0; perf.grainCols = 0;
@@ -44,6 +45,7 @@ group('a stake in the millions pays out without stalling a frame', async () => {
     worstCalls = Math.max(worstCalls, perf.grains);
     worstCols = Math.max(worstCols, perf.grainCols);
     hand = state().hand || hand;
+    peakAir = Math.max(peakAir, yard.S.tableAir.length);
     if (performance.now() - t0 > 20000) break;
   }
   return [
@@ -53,6 +55,9 @@ group('a stake in the millions pays out without stalling a frame', async () => {
     // and never ask it again for every grain it has no room for
     ok(worstCalls <= 2 * cap, 'no frame drops more grains than the hole holds, twice over', `${worstCalls} for a hole of ${cap}`),
     ok(worstCols <= 40 * cap, 'nor asks more columns than a few for each', `${worstCols} columns`),
+    // the pay is sent down as the heap it reads as, never a grain a coin: a
+    // crop bin on this stake is some ninety thousand crops
+    ok(peakAir <= 16 * CASINO_PILE_BRIM, 'and the pay goes down as a reading of itself, not a grain a coin', `${peakAir} in the air at most`),
     ok(hand && hand.n > 0, 'and the hand was paid', hand ? `${hand.n} for ${hand.stake}` : 'no hand')
   ];
 }, { reload: false });

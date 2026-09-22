@@ -232,8 +232,8 @@ export const S = {
   pouring: false,
   tableAir: [],           // the casino's grains in the air: arriving, leaving, or on their way out of the foot
   paying: null,           // { left: { dust, spore, shard, spark }, grains } -- a paid hand on its way out of the foot
-  trayOwed: 0,            // the pebbles the tray's dust cells stand for, spent as they leave
-  trayDust: 0,            // how many of the tray's cells are dust, so each carries its share
+  trayOwed: { dust: 0, spore: 0, shard: 0, spark: 0 },   // what the tray's cells stand for, a kind at a time, spent as they leave
+  trayCells: { dust: 0, spore: 0, shard: 0, spark: 0 },  // how many of the tray's cells are each kind, so each carries its share
   trayAt: 0,              // when the last grain of the pay landed in the tray: it stands a beat after
   trayAcc: 0,             // the tray's pace out, in fractions of a grain
   readyAt: 0,             // when the sign went ready: it holds the count a beat before DROP IT
@@ -694,7 +694,7 @@ export const EPHEMERAL = [
   'tableAir', 'hand', 'drop', 'attract', 'tableFx', 'leverPulled', 'signPressed', 'holding', 'throttle', 'pourAcc', 'pourAt',
   // the tray's sand is never saved, so its ledger is not either: a save
   // writes what the tray holds as `paying` (persist.js, `payingOwed`)
-  'trayOwed', 'trayDust', 'trayAt', 'trayAcc', 'readyAt',
+  'trayOwed', 'trayCells', 'trayAt', 'trayAcc', 'readyAt',
   // Which boards are open, and what the pointer is doing.
   'boardOpen', 'apothBoardOpen', 'labBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',

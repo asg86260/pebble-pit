@@ -289,7 +289,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // kind; the grains standing in the tray and the pebbles they stand for;
   // and how much of the pay is in the air on its way to the hole
   tray: tray.n || 0,
-  trayOwed: S.trayOwed || 0,
+  trayOwed: { ...S.trayOwed },
   toHole: S.tableAir.reduce((n, k) => n + (k.lands === 'hole' ? (k.worth || 1) : 0), 0),
   toTray: S.tableAir.reduce((n, k) => n + (k.lands === 'tray' ? 1 : 0), 0),
   paying: S.paying ? { ...S.paying.left } : null,
