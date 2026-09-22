@@ -22,7 +22,7 @@ export function breathe(secs) {
 // A few cells drawn in to a mouth. Metered by the real rate, so an unstaffed
 // or clogged mouth makes none and a bigger fan visibly pulls harder: it cannot
 // say anything untrue about how hard the thing is working. A craft shows its
-// pull as a thread instead (thread.js).
+// pull with its own cells (craftair.js).
 function breatheAt(to, power, secs, from) {
   if (power <= 0) return;
   let n = DRAUGHT_PER_S * power * secs;

@@ -710,13 +710,6 @@ export const SCENES = {
     run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
                  window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
                  window.__look(st().craft[0].x - 380); window.__fast(3); } },
-  // The same craft with the view scrolled on under it: the clouds slide
-  // slower than the ground, so its thread lets go and reaches for another.
-  balloonpan: { about: 'the house and the sky', say: 'a balloon thread re-reaching as the view scrolls', page: true,
-    run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
-                 window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
-                 window.__look(st().craft[0].x - 380); window.__fast(1);
-                 window.__look(st().craft[0].x - 120); window.__fast(1.5); } },
   // Taken off the purifiers while the craft was up.
   brolly: { about: 'the house and the sky', say: 'a rider stepping out under an umbrella', page: true,
     run: () => { rich(); window.__air({ open: true, haze: 1600 }); window.__fast(2);

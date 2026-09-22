@@ -12641,7 +12641,27 @@ The mast is measured off the dial as before, which now hangs off the shed's
 wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
 `filterclog`, `filtersieve`, `moored`.
 
-## The balloons pull from the clouds (built 2026-09-22)
+## The balloons draw the haze in (built 2026-09-22)
+
+The cloud threads (below) were cut. The clouds scroll slower than the ground,
+so a thread tied to a cloud slid, stretched and jumped to another cloud with
+every scroll. That is not a tuning problem: anything drawn between a thing in
+the yard and a thing in a sheet moves when the view does.
+
+So a balloon's pull is drawn on the balloon alone. While it works, cells
+gather into its filter box from above and the sides (`craftair.js`, drawn by
+`drawCraftAir` behind the balloon so the envelope stays a clean shape), kept
+as a direction and a distance from the box so they ride along with it and
+nothing about the view can move them. They are drawn in the color the air is
+(`murkTone` in weather.js, a cloud's underside at the sky's murk), and there
+are more of them the dirtier the sky (`DRAWIN_MURK`): a filthy sky is a thick
+brown stream, a clean one a pale trickle. The clouds are no longer paled; the
+per-cloud `drawn` share and `cloudHold` are gone. Picture only, as before,
+off a stream of its own, and the check that the pull does not depend on the
+view stands. The lanes under the clouds stay: the haze is drawn against open
+sky. Scene `balloonpan` is gone with the threads.
+
+## The balloons pull from the clouds (built 2026-09-22, the threads cut the same day)
 
 Cutting the balloons was the wrong fix for the right complaint. The dial
 stood where they moored, and with the specks gone they took the air in as

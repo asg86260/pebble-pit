@@ -24,7 +24,7 @@ export function pullCraft(secs) {
     // mouth the station has.
     const rate = fanPull();
     gullets[i] = Math.min((gullets[i] || 0) + rate * secs, rate);
-    // What you see of it is its thread down out of a cloud (thread.js).
+    // What you see of it is the haze it draws in (craftair.js).
     eat(() => gullets[i], n => { gullets[i] = n; }, i);
   }
 }

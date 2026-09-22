@@ -6,8 +6,8 @@
 // fan, the board and the door are all still the house's.
 //
 // `smog.js` owns the air; this owns the craft. The one thing a craft must
-// agree with the sky on is where the clouds are, since it rides under them and
-// its thread reaches up to one (`laneY`, thread.js). The files call each
+// agree with the sky on is where the clouds are, since it rides under them
+// (`laneY`). The files call each
 // other's functions and none reads another's values at load time, which is
 // what keeps the import ring from biting.
 
@@ -58,8 +58,8 @@ export function buyCraft() {
 const dialEnd = () => filter.x + filter.w - P * FILTER_WALL + P * (DIAL_STUB + DIAL_CELLS);
 export const mastX = () => dialEnd() + P * BALLOON_MAST_GAP + BALLOON_FILTER_W / 2;
 
-// The height a craft cruises at, lane by lane, under the clouds it pulls on
-// (thread.js). Off where the middle sheet's bases can be (`cloudY` in
+// The height a craft cruises at, lane by lane, under the clouds, so the haze
+// it draws in is drawn against open sky. Off where the middle sheet's bases can be (`cloudY` in
 // weather.js puts a base CLOUD_TOP cells under the camera and its lane below
 // that), so the clouds and the craft cannot disagree about which is higher;
 // held off the ground so a fleet on a short window does not ride through the

@@ -53,14 +53,11 @@ export const BALLOON_EDGE = 6;       // cells it turns short of either end of th
 // Cells of air between the filter's dial and the widest part of a moored
 // craft, which is its filter box.
 export const BALLOON_MAST_GAP = 2;
-// The thread a working craft draws down out of the nearest cloud (thread.js):
-// cells a second at the bare fan, pixels a second they come down at, how far
-// either side of the line they wander near the cloud, and how much nearer a
-// new cloud has to be before the thread lets go of the one it has.
-export const THREAD_PER_S = 40;
-export const THREAD_PACE = 70;
-export const THREAD_GIVE = P * 2;
-export const THREAD_SWITCH = 0.7;
-// Cells a cloud's base has to stand above the box before a thread reaches up
-// to it: a cloud level with the craft, or under it, is not one it pulls on.
-export const THREAD_RISE = 3;
+// The haze a working craft draws in (craftair.js): cells a second at the bare
+// fan over a clean sky, and how much more at the brim, so a filthy sky is a
+// thick stream and a clean one a trickle; how far out they start, and pixels
+// a second they close at.
+export const DRAWIN_PER_S = 10;
+export const DRAWIN_MURK = 3;
+export const DRAWIN_FROM = P * 16;
+export const DRAWIN_PACE = 40;
