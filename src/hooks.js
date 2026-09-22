@@ -61,6 +61,7 @@ import { JOB, TYPE } from './jobs.js';
 import { dustUnder, sweep, release } from './hands.js';
 import { setTimesUrl, postTime, bootTimes } from './times.js';
 import { surfaceY, colOf } from './grid.js';
+import { showWindow } from './modal.js';
 
 // --- the machines ---------------------------------------------------------------
 // A machine's facts set outright. A check about *buying* one must use `__buy`
@@ -895,6 +896,8 @@ export const waysNow = () => {
 // suites spread; a hook in one suite and not the other fails a check in a way
 // that has nothing to do with what it is checking.
 export const HANDLES = {
+  // a window (modal.js) by kind, or null to close it
+  __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
   __preview: preview, __next: next, __drop: drop,
   __birds: birds, __crew: crew, __kit: kit,

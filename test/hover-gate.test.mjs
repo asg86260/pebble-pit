@@ -51,3 +51,31 @@ test('the scanner finds a hover rule left out in the open', () => {
   assert.deepEqual(ungated('@media (max-width: 500px) { .a:hover { x: y } }'), ['.a:hover']);
   assert.deepEqual(ungated('/* .c:hover */ @media (hover: hover) { @media (max-width: 500px) { .b:hover { x: y } } }'), []);
 });
+
+// A reading (`.stat`) is never inverted under the cursor, so a hover rule that
+// turns a note the page's own color must leave readings out: the books' "44 in
+// the last minute" went white on white under the pointer. Every rule head with
+// both a hover and a note in it, whose body paints the note paper, has to say
+// `:not(.stat)`.
+function whitensReadings(css) {
+  const bad = [];
+  const flat = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of flat.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const heads = m[1].split(',').map(h => h.trim());
+    if (!/color:\s*var\(--paper\)/.test(m[2])) continue;
+    for (const h of heads) if (h.includes(':hover') && /\.note\b/.test(h) && !h.includes(':not(.stat)')) bad.push(h.replace(/\s+/g, ' '));
+  }
+  return bad;
+}
+
+for (const file of FILES) {
+  test(`${file}: no hover turns a reading's note the page's color`, () => {
+    const bad = whitensReadings(readFileSync(new URL('../' + file, import.meta.url), 'utf8'));
+    assert.deepEqual(bad, [], `hover rules whitening every note in ${file}:\n  ${bad.join('\n  ')}`);
+  });
+}
+
+test('the note scanner finds a rule that whitens a reading', () => {
+  assert.deepEqual(whitensReadings('@media (hover: hover) { .rows button:hover .note { color: var(--paper); } }'), ['.rows button:hover .note']);
+  assert.deepEqual(whitensReadings('.rows button:hover:not(.stat) .note { color: var(--paper); }'), []);
+});

@@ -9110,7 +9110,11 @@ sheet stands over the window. A kind is registered by whoever owns what is in it
 The window has the four sheets side by side, a ledger a column, as many across
 as the glass holds -- two on an 800-pixel window, where the whole set fits with
 no scroll, four on a wide desk, one on a phone. A sheet with nothing on it yet
-folds away.
+folds away. The window holds its layout while it is open: a row that has shown
+keeps its place until the window goes down, its figure moving and the rows under
+it still, and a rate's line under it is said even when nothing came in. Rows
+that came and went on a count crossing nought -- one body arriving and setting
+off again -- walked the sheets up and down several times a second.
 
 **The crew.** *Who lives here* opens the crew in the window, a card a body, as
 many across as fit, scrolled inside past the window's height. Picking a name

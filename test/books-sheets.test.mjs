@@ -146,3 +146,35 @@ group('the board is the rates, and the books open in a window', async () => {
     ok(yard.S.modal === null, 'and it closes again')
   ];
 });
+
+// The window holds its layout while it is open: a row that has shown keeps its
+// place, its figure moving and the rows under it standing still. A row that
+// came and went on a count crossing nought -- one body arriving and setting off
+// again -- walked every sheet under it up and down several times a second.
+group('the books window never loses a row while it is open', async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__crew(4, 4, 4, 4);
+  window.__machine('jaw', { bought: true });
+  yard.S.seenAir = true;
+  run(90);
+  showWindow('books');
+  hud();
+  const ids = ['bookincome', 'booksky', 'bookcrew', 'booktally'];
+  const keys = () => new Set(ids.flatMap(id => [...document.getElementById(id).children].map(r => r.dataset.key).filter(Boolean)));
+  let was = keys();
+  const lost = [];
+  for (let i = 0; i < 160; i++) {
+    run(0.125);
+    hud();
+    const now = keys();
+    for (const k of was) if (!now.has(k)) lost.push(k);
+    was = now;
+  }
+  showWindow(null);
+  hud();
+  return [
+    ok(was.size > 10, 'the window has its sheets up', `${was.size} rows`),
+    ok(lost.length === 0, 'and no row left while it stood open', [...new Set(lost)].join(', ') || 'none')
+  ];
+});

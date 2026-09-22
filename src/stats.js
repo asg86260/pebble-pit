@@ -72,8 +72,8 @@ const INCOME_ROWS = BOOKS.map(b => readout(`rate${b.key}`, b.name,
   // The number and its coin; that it is a rate is the heading's to say, once.
   () => `${arrowOf(b.key)}${MARK[b.mark]} ${say(bookRate(b.key))}`,
   () => b.seen(),
-  // Nothing in is said by the rate's nought already.
-  () => { const n = bookGot(b.key); return n > 0 ? `${fmt(n)} in ${lastWords(overNow())}` : ''; }));
+  // Said even when nothing came in, so the line does not come and go.
+  () => { const n = bookGot(b.key); return `${n > 0 ? fmt(n) : 'nothing'} in ${lastWords(overNow())}`; }));
 
 // --- the sky ----------------------------------------------------------------------
 // What the air filter's arrow says, and why: the two sides of it over the same

@@ -23,8 +23,9 @@ const closeEl = document.getElementById('modalclose');
 // What can be opened, by name: its title, the body that holds it, and how to
 // fill it. `fill` builds and refreshes the body's rows; it is asked every frame
 // the window is open, the way an open board is, because what it reads moves on
-// its own. Registered by the owner of the content (`windowFor`), so this file
-// knows nothing about the books or the crew.
+// its own. `open`, if given, is told each time the window comes up. Registered
+// by the owner of the content (`windowFor`), so this file knows nothing about
+// the books or the crew.
 const KINDS = {};
 export function windowFor(kind, o) { KINDS[kind] = o; }
 
@@ -37,7 +38,7 @@ export function showWindow(kind) {
     const body = document.getElementById(o.body);
     if (body) body.hidden = name !== S.modal;
   }
-  if (k) { titleEl.textContent = k.title; k.fill(); }
+  if (k) { titleEl.textContent = k.title; k.open?.(); k.fill(); }
 }
 
 export const closeWindow = () => { if (!S.modal) return false; showWindow(null); return true; };

@@ -728,13 +728,25 @@ export function buildCrewList() {
 const BOOK_SHEETS = [['bookincome', 0], ['booksky', 1], ['bookcrew', 2], ['booktally', 3]]
   .map(([id, i]) => [document.getElementById(id), i]);
 const LEDGERS = [statsEl, ...BOOK_SHEETS.map(([el]) => el)];
+// A row that has shown since the window came up keeps its place until it goes
+// down: its figure goes on moving, the layout does not. Rows that come and go
+// on a count crossing nought -- one body arriving and setting off again, a
+// share either side of a per cent -- walked every sheet under them up and down
+// the glass several times a second.
+const held = new Set();
+const HOLDING = new Map();
+const holding = u => {
+  if (!HOLDING.has(u.key)) HOLDING.set(u.key, { ...u, show: () => held.has(u.key) || (u.show() && !!held.add(u.key)) });
+  return HOLDING.get(u.key);
+};
 windowFor('books', {
   title: 'the books',
   body: 'modalbooks',
+  open: () => held.clear(),
   fill: () => {
     for (const [el, i] of BOOK_SHEETS) {
       const sect = BOOK_SECTIONS[i];
-      const rows = BOOK_ROWS.filter(u => sect.keys.includes(u.key));
+      const rows = BOOK_ROWS.filter(u => sect.keys.includes(u.key)).map(holding);
       build(el, rows, [sect], '');
       refresh(el, rows, null);
     }

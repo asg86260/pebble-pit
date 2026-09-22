@@ -712,10 +712,12 @@ body.still #scroller { scroll-behavior: auto; }
 }
 /* On an inverted row -- one under the cursor, or the tonic the pot is set to --
    the words go white with the rest of the row, so the description stays readable
-   on the black rather than turning to ink on ink. */
+   on the black rather than turning to ink on ink. A reading (`.stat`) is never
+   inverted, so its note keeps its ink: white on the page was a note that went
+   away under the cursor. */
 .rows button.pick.on .note { color: var(--paper); opacity: .9; }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled) .note { color: var(--paper); opacity: .9; }
+  .rows button:hover:not(:disabled):not(.stat) .note { color: var(--paper); opacity: .9; }
 }
 
 /* The count and its two buttons, held in the one cell that a price would fill,
@@ -1842,7 +1844,9 @@ html.dark .modal {
 .modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .modalhead .title { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; }
 #modalclose { padding: 0 6px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: 1.4; cursor: pointer; }
-#modalclose:hover { background: var(--ink); color: var(--paper); }
+@media (hover: hover) {
+  #modalclose:hover { background: var(--ink); color: var(--paper); }
+}
 .modalbody { overflow-y: auto; overscroll-behavior: contain; min-height: 0;
              scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }   /* inked: no grey in the picture */
 /* The books: a column a sheet, each a ledger as wide as the board's, as many

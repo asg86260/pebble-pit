@@ -7,9 +7,9 @@
 // the rescue is walked, in shield.test.mjs.
 import { group, ok, state, run, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { STATS_UPGRADES } from '../src/stats.js';
+import { BOOK_ROWS } from '../src/stats.js';
 
-const row = key => STATS_UPGRADES.find(u => u.key === key);
+const row = key => BOOK_ROWS.find(u => u.key === key);
 
 group('the clock over the one under the rock runs while they are under', async () => {
   window.__reset();

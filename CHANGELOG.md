@@ -53,6 +53,8 @@ feature lives in DESIGN.md.
 - A casino stake in the millions no longer freezes the game while it pays out (test/casino-big-stake.test.mjs).
 - The casino's pay comes down on the pile in the hole, instead of vanishing at ground level and turning up below it (test/casino-big-stake.test.mjs).
 - The income books no longer count a bill handed back as income, so a refund stops reading as a busy quarry for minutes afterwards (test/wave5-boards.test.mjs, "a bill handed back is not income").
+- A reading's line underneath, like the books' "44 in the last minute", no longer disappears when the pointer is over its row (test/hover-gate.test.mjs, "no hover turns a reading's note the page's color").
+- The books window holds still while it is open: rows no longer come and go as a count crosses nought, so the sheets stop jumping up and down (test/books-sheets.test.mjs, "the books window never loses a row while it is open").
 - The tiller's driver rides behind the steering column over the big wheel, not perched on the bonnet in the exhaust (test/machines.test.mjs).
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
 - The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").

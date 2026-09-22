@@ -4,7 +4,6 @@
 // the browser suite. The `__` names are not an interface; the game itself
 // never calls one.
 
-import { showWindow } from './modal.js';
 import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
@@ -20,9 +19,7 @@ Object.assign(window, {
   // Open or close a board without walking to it. No linger either way: a check
   // that put the board away and hovered a pot found the board still up for a
   // tenth of a second and the picker refusing to open under it.
-  __board: which => showPanel(which, true),
-  // and a window (modal.js) the same way: by kind, or null to close it
-  __window: kind => showWindow(kind)
+  __board: which => showPanel(which, true)
 });
 
 // Facts about the page rather than the game, which is why they are here and
