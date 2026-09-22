@@ -12483,7 +12483,11 @@ Two things the first cut got wrong, found in play:
   beat now also throws `STACK_PUFFS` off the stack (`puffStack`, `STACK` in
   band.js): decoration, never counted, rising and fading over `STACK_LIFE_S`
   at smoke's own weight (`STACK_INK`), only on a beat so an idle machine puts
-  up nothing. The motes are what lingers; the puffs are the smoke you see.
+  up nothing. The motes are what lingers; the puffs are the smoke you see --
+  and the only thing seen: a machine's motes are not drawn on the climb
+  either (`drawSmog` skips `mach`), since the speck plume rising beside the
+  puffs read as a second kind of pollution. They go straight into the count
+  the clouds show.
 
 ## Weather (built 2026-09-20)
 

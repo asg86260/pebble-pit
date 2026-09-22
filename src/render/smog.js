@@ -122,8 +122,12 @@ export function drawSmog() {
     // drawn -- so a swing visibly puts something up -- but the settled sky is
     // the clouds' to show now, not a field of specks over them (DESIGN.md,
     // "The sky is the clouds"). A mote climbs, fades into the cloud, and from
-    // there is only counted.
-    if (!m.up) continue;
+    // there is only counted. And not a machine's motes at all: the smoke off
+    // a stack is the puffs (`puffStack`, below), and its motes are the count
+    // behind them -- drawing both put the old speck-plume up beside the
+    // smoke, in the soot browns with a fringe on, and the two read as two
+    // kinds of pollution.
+    if (!m.up || m.kind === 'mach') continue;
     // Asked of the sky rather than read off the mote: a settled mote is not
     // written every frame (`moteX` in smog.js). The cull on x comes first, so
     // the height and the fringe are only worked out for what is on the glass.
@@ -154,7 +158,7 @@ export function drawSmog() {
   // a lighter weight, so the same buckets. No fringe on them; the chromatic
   // edge is a thing about the sky's depth, and these are on their way out.
   for (const g of GOING) {
-    if (!onScreen(g.x)) continue;
+    if (g.kind === 'mach' || !onScreen(g.x)) continue;
     const shades = SMOG_TINTS[g.kind] || SMOG_TINTS.dust;
     const tint = shades[(g.tone ?? 0) % shades.length];
     const step = Math.round((g.ink ?? 1) * g.t * 20) / 20;
