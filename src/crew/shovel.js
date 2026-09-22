@@ -84,6 +84,8 @@ export function takeMess(w, c) {
     const pick = (w.type === TYPE.JANITOR ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
       ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
+    // The elbow's push belongs to the stance it was pushed on (see below).
+    w.shovelAt = null;
   }
   // The patch, and the ground to work it from: a body cannot stand on a site,
   // so it walks to the edge and reaches across. The claim is the muck's own
@@ -135,11 +137,14 @@ export function takeMess(w, c) {
   const on = wayOver(at, all);
   // A couple of cells short is arrived, but only from the right way: the
   // mess's x at the yard's height under a heap on the hill is one coordinate
-  // out of two. Once stood there, a body's width of slack: the elbow parts two
-  // shovellers by three cells, and two cells of slack walks the parted body
+  // out of two. Once stood there, a body's width more than that: the elbow
+  // parts two shovellers by a body's width from wherever they arrived, and
+  // arrival may be the two cells short, so any less walks a parted body
   // straight back in.
-  const slack = w.route ? P * 2 : WORKER;
+  const arrive = P * 2;
+  const slack = w.route ? arrive : arrive + WORKER;
   if (Math.abs(at - w.x) > slack || wayAt(w.x, w.y, all).key !== on.key) {
+    w.shovelAt = null;
     // Nowhere a route reaches: give the patch up rather than hold a claim on
     // it; `mess.back` puts the body on its own goal and it looks again.
     if (!keepTo(w, at, on)) return false;
@@ -152,20 +157,32 @@ export function takeMess(w, c) {
   // off. Snapped, not pinned, because the elbow has to be able to move a body
   // or the gang bunches onto one spot.
   //
-  // The fraction lives on `shovelAt` and `w.x` is what it rounds to (the trap
-  // balloon.js writes up: a thing moving less than a pixel a frame has to
-  // remember the part of a pixel it has moved), or the elbow's third of a
-  // pixel is undone by the next frame's round and two bodies shovel through
-  // each other for the whole clear-up. Snapped TOWARD `at`, never past it:
+  // The fraction lives on `shovelAt` (the trap balloon.js writes up: a thing
+  // moving less than a pixel a frame has to remember the part of a pixel it
+  // has moved), or the elbow's third of a pixel is undone by the next frame's
+  // round and two bodies shovel through each other for the whole clear-up.
+  //
+  // The feet go down on `at`'s cells, snapped TOWARD `at`, never past it:
   // rounding to the world's cells sends a body arrived a fraction short back
   // the other way, and `faceTravel` turns it round on the frame it arrives.
-  // "Not already stood on its own spot" is read off the SNAPPED spot: the
-  // fraction sits up to a cell from the feet by construction, so testing it
-  // against a cell is floating-point noise and the elbow could push one cell
-  // and never a second.
+  // Once down, the feet move a whole cell each time the push adds up to one
+  // from where they stand. Rounding the push itself toward `at` would make the
+  // cell on `at` two cells wide -- a push crossing it pays double, and a
+  // fraction left behind that side starts a cell in arrears -- so a pair
+  // elbowed across their patch parts one cell short of a body's width.
+  //
+  // The push is the stance's: a new claim or a walk forgets it. Kept, a push
+  // left over from the column before pulls a body that has just stepped a
+  // cell to its next column straight back, off that column's ground, and the
+  // body climbs back and drops again five times a second.
   const spot = s => { const d = s - at; return at + Math.sign(d) * Math.floor(Math.abs(d) / P) * P; };
-  if (w.shovelAt == null || Math.abs(spot(w.shovelAt) - w.x) > P) w.shovelAt = w.x;
-  w.x = spot(w.shovelAt);
+  const cells = (w.x - at) / P;
+  if (Math.abs(cells - Math.round(cells)) > 1e-6) { w.x = spot(w.x); w.shovelAt = null; }
+  // Further from the feet than a frame's push can leave it is a push from
+  // some other stance (a load): it starts again from here.
+  if (w.shovelAt == null || Math.abs(w.shovelAt - w.x) >= 2 * P) w.shovelAt = w.x;
+  const push = w.shovelAt - w.x;
+  if (Math.abs(push) >= P) w.x += Math.sign(push) * Math.floor(Math.abs(push) / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);

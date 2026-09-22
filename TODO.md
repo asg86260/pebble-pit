@@ -9,16 +9,6 @@ and CHANGELOG.md; the old entries are in git history (this file before
 
 ## Defects
 
-### The shoveller's elbow stalls a cell short (2026-09-21)
-
-`test/janitor.test.mjs`, "a shoveller with somebody in its elbow moves off
-the spot": with the other body pinned on top of it, the janitor is nudged two
-cells (12 px) and never takes the third to be clear of an 18 px body.
-`elbowMuck` is a third of a pixel a frame and `shovelAt` snaps to whole cells
-toward the claim, and under the seed the cloud rework moved the run to, the
-snap settles at two. Not a timing matter -- eight seconds does not get the
-third cell. Red on main until the elbow is looked at.
-
 ### Five movers still write `y` as a position (2026-09-08)
 
 A mover that sets `w.y = walkY(...)` outright is a teleport whenever the body
@@ -39,29 +29,6 @@ Same hunt: a body joining the dance out of a walk runs `w.y = stand(w)` that
 frame (`jig` in crew/dance.js), and `w.foot` is re-taken from the new y on the
 same frame -- measured up to seventeen pixels of snap. Only when the beat starts
 while the crew are commuting, which `dance.test.mjs` does not arrange.
-
-### Workers jitter on the rock's flank during a muck clear-up
-
-Bodies shovelling the hill after a rain ease up a few pixels, snap down 8-10,
-about three times a second (~130 cycles/min since the stuck-yard fixes; 26
-before `bed9ba5`).
-
-**Mechanism.** `bed9ba5` made a body releasing a finished muck column `return
-false` for one frame so the re-pick happens against a claim book without its
-own elbows. That hands the body back to its own job for the frame, which
-re-plants it on the rock (`plant`/`standOn`), and muck duty takes it back next
-frame.
-
-**Blocker.** Both fixes tried -- hold the body in muck duty for the release
-frame, or re-pick in the same breath -- drop the jitter to ~17/min and collapse
-the janitors' clearing rate (the sky-house check goes from 15 poop left to
-80-95). Why the one-frame fallthrough *doubles* clearing is not understood;
-`janitorWork` only loiters. Answer that first; the fix is then a few lines in
-`takeMess`'s release branch.
-
-Repro: seed 20250830; open sites, loo, 2 miners + 2 haulers + 2 janitors; relay
-3 cells of muck across the rock's columns every 5 s; count climb-then-drop
-cycles (up >= 2 px, then down >= 12 px from the high point) over 60 s.
 
 ### `addGrain` on bare ground has no region (2026-09-09)
 
