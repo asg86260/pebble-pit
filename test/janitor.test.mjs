@@ -273,9 +273,13 @@ group('a shoveller with somebody in its elbow moves off the spot', async () => {
     w.type === 'janitor' && w.goal === 'muck' && w.muckAt != null &&
     !w.route && !w.walking && w.x % P === 0);
   const came = runUntil(() => { heap(); return !!shovelling(); }, 60);
-  const jan = shovelling();
-  const other = came ? yard.S.workers.find(w => w !== jan) : null;
-  const from = jan ? jan.x : 0;
+  // Held by place in the crew, not as objects: the harness reloads the yard
+  // every five seconds and a load stands up new bodies, so a body held across
+  // one is a statue and the nudge stops adding up the moment it lands.
+  const j = yard.S.workers.indexOf(shovelling());
+  const k = came ? yard.S.workers.findIndex((w, i) => i !== j) : -1;
+  const jan = () => yard.S.workers[j], other = () => yard.S.workers[k];
+  const from = j >= 0 ? jan().x : 0;
 
   // ...and somebody else stood in exactly its place, on the same errand: the end
   // of a clear-up, where the last patch is claimed and a second body comes for
@@ -284,19 +288,19 @@ group('a shoveller with somebody in its elbow moves off the spot', async () => {
   // to a body's width is a fact about the seed, and what is being checked is
   // that it adds up at all rather than managing a third of a pixel and sitting.
   let moved = 0;
-  for (let i = 0; i < 80 && other && moved < WORKER; i++) {
+  for (let i = 0; i < 80 && k >= 0 && moved < WORKER; i++) {
     heap();
-    other.goal = 'muck';
-    other.x = jan.x;
-    other.y = jan.y;
+    other().goal = 'muck';
+    other().x = jan().x;
+    other().y = jan().y;
     run(0.1);
-    moved = Math.abs(jan.x - from);
+    moved = Math.abs(jan().x - from);
   }
 
   window.__air({ janitors: 0 });
   window.__crew(0, 0);
   return [
-    ok(came && !!other, 'a janitor is stood at a heap with somebody at its elbow'),
+    ok(came && j >= 0 && k >= 0, 'a janitor is stood at a heap with somebody at its elbow'),
     // Before this was fixed it managed one frame's worth -- a third of a pixel --
     // and then sat there for ever. A body is eighteen wide, and clear of the
     // other body is the whole point of the elbow.
