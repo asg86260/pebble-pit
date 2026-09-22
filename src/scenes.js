@@ -316,6 +316,14 @@ export const SCENES = {
                  window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
                  window.__jump(4); window.__fast(12); window.__clearFloor(); window.__fast(3);
                  window.__look(st().pitX - 400); } },
+  // The tail of the belt at the rock: where the rockhands' spoil should
+  // come down on the band.
+  belttail: { about: 'the crew', say: 'the rockhands throwing spoil on to the belt at the rock',
+    run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
+                 window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
+                 window.__jump(4); window.__fast(12);
+                 window.__look(st().rockX - 250); } },
   // Both marks want a station whose pile has filled and which has something
   // to sell, so the yard runs a while with nobody to carry anything away.
   marks: { about: 'the crew', say: 'the stopped triangle and the offer diamond',

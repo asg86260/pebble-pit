@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 - Haulers tip their loads onto the belt just past the rock once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
-- The belt ends in a ramp the band runs up, carrying its load to the lip and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
+- The belt ends in a ramp the band runs up, carrying its load up it in step with the band and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
 - The books and the crew list open in a window in the middle of the screen instead of a popover taller than the window: the books' four sheets side by side, the crew a card a body; it stays until you close it, and the yard keeps running underneath (src/selftest/house.js).
 - Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
@@ -39,6 +39,8 @@ feature lives in DESIGN.md.
 - When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
+- The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
+- A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).
 - The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).
 - Wizards going up to the star no longer rise out of the same spot as one smudge; each takes its own patch of ground under it (test/sky-work.test.mjs).
 - A rock hand's next swing is no longer moved every time the game is reloaded (test/save-owners.test.mjs).

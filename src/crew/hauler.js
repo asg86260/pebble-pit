@@ -10,7 +10,7 @@ import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, rockLeft } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
-import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach } from '../dust.js';
+import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach, bandY } from '../dust.js';
 import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck, foul } from '../smog.js';
@@ -444,7 +444,11 @@ export function haulerWork(w, c) {
         // gets its own peak, so they land spread in time as well as place.
         const fx = from + (rand() - 0.5) * TOSS_SPREAD;
         const fy = up - rand() * P;
-        const rise = above + TOSS_RISE * (1 + bell() * TOSS_RISE_VARY);
+        // Onto the band, never under it: a low roll of the dice from hands
+        // standing below the band's height peaked short of it, and the grain
+        // passed under the band to the ground.
+        const rise = Math.max(above + TOSS_RISE * (1 + bell() * TOSS_RISE_VARY),
+                              tip.belt ? S.groundY - bandY() + P * 2 : 0);
         const v = aim(fx, fy, land, P, rise);
         spawnChip(fx, fy, v.vx, v.vy, w.load?.[i] || 1);
       }

@@ -5,7 +5,8 @@
 
 import { P, GRAV, WORKER, BELT_RAMP, BELT_THROW_LOW, BELT_THROW_TOP, BELT_SCATTER } from './config.js';
 import { makePainter } from './painter.js';
-import { rockEdge, pileOf } from './world.js';
+import { rockEdge, rockLeft, pileOf } from './world.js';
+import { rockTopY } from './rock.js';
 import { S, floor, pit, band } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY, addGrain, settle, topRow, grainsIn, recount, resizeGrid, fillFlat, REPOSE_DROP } from './grid.js';
@@ -36,8 +37,25 @@ export function spawnSpoil(px, py, shade, key = 'rock') {
   // most of it near the rock end of the heap, tailing away out along it, which
   // is the shape a heap somebody is throwing onto actually takes
   const land = Math.min(far, near + P * 2 + Math.abs(bell()) * (far - near) * 0.45);
-  const v = aim(px, py, land, P);
+  const v = aim(px, py, land, P, clearRock(px, py, land));
   spawnChip(px, py, v.vx, v.vy, shade, land);
+}
+
+// A grain dug out of the middle of the boulder has the rest of it between
+// it and the heap, and the arc sized to the distance alone flew through the
+// rock and came down on its flank, where the belt's tail lies buried and
+// caught it: dust thrown on to the boulder. So the pop is raised to clear
+// the highest of the rock's surface between here and there, a cell over it;
+// null when nothing of the rock stands above the grain, and the arc is the
+// distance's own.
+function clearRock(x, y, land) {
+  if (!S.rockTops || !S.gw) return null;
+  const L = rockLeft();
+  const c0 = Math.max(0, Math.floor((Math.min(x, land) - L) / P));
+  const c1 = Math.min(S.gw - 1, Math.floor((Math.max(x, land) - L) / P));
+  let top = Infinity;
+  for (let c = c0; c <= c1; c++) top = Math.min(top, rockTopY(c));
+  return top < y ? S.groundY - top + P : null;
 }
 
 // A crit throws its spoil up as a fountain: the same grains, on a taller arc,
@@ -108,6 +126,14 @@ export const beltY = () => S.groundY - P * 5;
 // for a cell out, the band running up it to the lip it flicks its load off.
 // `rampTop` is the top of the step under x, the band's own height short of
 // the head.
+//
+// The ramp is the band's strip carried on: a column that runs off the head
+// goes on to the first step whole, and every cell the band runs it moves a
+// step up, as the load on the flat moves a column along, so the heap keeps
+// its shape up the ramp and comes apart only at the lip. Its grains are
+// riders in `S.belt`, `{ x, r, s, k }`: a step's x, the row in the column
+// it stands in, and how high in its column it left the band (`k`, how far
+// it is thrown). Anything in `S.belt` past the head is on the ramp.
 export const rampLip = () => beltTo() + BELT_RAMP * P;
 export const rampTop = x => beltY() - Math.max(0, Math.min(BELT_RAMP - 1, Math.floor((x - beltTo()) / P))) * P;
 
@@ -243,7 +269,7 @@ export function emptyBelt() {
 // band's height, which the first frame puts in.
 export function fillBelt(grains) {
   for (const [x, sh] of grains) {
-    if (band.grid && x >= beltTo()) { S.belt.push({ x, y: rampTop(x + P - 1) - P, s: sh || 1 }); continue; }
+    if (band.grid && x >= beltTo()) { onRamp(x, sh || 1, rand()); continue; }
     if (band.grid && addGrain(band, x, null, sh || 1)) continue;
     S.belt.push({ x, y: bandY(), s: sh || 1 });
   }
@@ -330,22 +356,12 @@ export function catchBelt(ch, now, f) {
 export function stepBelt(now, f) {
   if (!band.grid) return;
   if (!beltRunning(now)) return;
-  // The lifts: up to the surface of the column each is under, and in. And
-  // the riders on the ramp: up it, and off the lip.
-  const head = beltTo(), lip = rampLip();
+  // The lifts: up to the surface of the column each is under, and in. The
+  // riders on the ramp move with the band's cells, below.
+  const head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
-    if (b.x >= head) {
-      b.x += BELT_PACE * f;
-      // Carried at the height it came off the load until the ramp rises
-      // under it, and then up the steps: a step is climbed when the grain's
-      // front meets it, or the grain stands half inside the step ahead.
-      b.y = Math.min(b.y, rampTop(b.x + P - 1) - P);
-      if (b.x < lip) continue;
-      S.belt.splice(i, 1);
-      flick(b.x, b.y, b.k ?? rand(), b.s);
-      continue;
-    }
+    if (b.x >= head) continue;
     const c = Math.max(0, Math.min(band.cols - 1, colOf(band, b.x)));
     const d = highY(c) - b.y;
     if (Math.abs(d) > BELT_LIFT * f) {
@@ -365,19 +381,19 @@ export function stepBelt(now, f) {
   // have torn the hole open was one it was holding. What the head drops that
   // the pile has no cell for goes through the rift (`bankDust` in pit.js).
   //
-  spillFront();
-  // It has run a cell: every column a cell toward the head, and the last
-  // column off the end on to the ramp, to ride up it and be flicked into
-  // the hole.
+  // It has run a cell: every column a cell toward the head, the ramp's a
+  // step up it, the top step's off the lip into the air, and the last
+  // column on to the first step.
   S.beltRun = (S.beltRun || 0) + BELT_PACE * f;
   while (S.beltRun >= P) {
     S.beltRun -= P;
-    if (!grainsIn(band)) { S.beltRun = 0; break; }
+    if (!grainsIn(band) && !S.belt.some(b => b.x >= head)) { S.beltRun = 0; break; }
+    climbRamp();
     const last = band.cols - 1;
     const tall = Math.max(1, highOf(last));
     for (let r = 0; r < band.rows; r++) {
       const v = at(band, last, r);
-      if (v) ride(r, (r + 1) / tall, v);
+      if (v) onRamp(head, v, (r + 1) / tall, r);
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;
@@ -388,11 +404,25 @@ export function stepBelt(now, f) {
   }
 }
 
-// A grain off the head column on to the ramp, from the row it sat in and
-// somewhere across the first step rather than all on one x. `k` is how high
-// in its column it stood, which is how far it is thrown off the lip.
-function ride(r, k, v) {
-  S.belt.push({ x: beltTo() + rand() * P, y: bottomY(band) - (r + 1) * P, s: v, k });
+// A grain on to the ramp at the step at x, on top of what stands there
+// already unless its row is given.
+function onRamp(x, v, k, r = null) {
+  x = beltTo() + Math.max(0, Math.round((x - beltTo()) / P)) * P;
+  if (r == null) r = S.belt.filter(b => b.x === x).length;
+  S.belt.push({ x, r, y: rampTop(x) - (r + 1) * P, s: v, k });
+}
+
+// The ramp's run of a cell: every rider a step on and a step up, and off
+// the top step into the air.
+function climbRamp() {
+  const lip = rampLip();
+  for (let i = S.belt.length - 1; i >= 0; i--) {
+    const b = S.belt[i];
+    if (b.x < beltTo()) continue;
+    if (b.x + P >= lip) { S.belt.splice(i, 1); flick(b.x, b.y, b.k, b.s); continue; }
+    b.x += P;
+    b.y = rampTop(b.x) - (b.r + 1) * P;
+  }
 }
 
 // Off the lip and into the air, on the ramp's slope: as much up as along.
@@ -402,27 +432,6 @@ function flick(x, y, k, v) {
   const s = BELT_THROW_LOW + (BELT_THROW_TOP - BELT_THROW_LOW) * k;
   const vx = Math.max(0, BELT_PACE * (s + bell() * BELT_SCATTER));
   spawnChip(x, y, vx, -vx * (0.85 + 0.3 * rand()), v);
-}
-
-// The head is a drop, so the load's front stands at the slope it rests at
-// down to it, as a heap does at the end of its strip: a column may stand
-// `REPOSE_DROP` rows a cell back from the edge, and the top grain of one
-// standing over that slides a cell forward, off the last on to the ramp.
-// Carried to the head at full height instead, the load met the ramp as a
-// wall. A grain a column a frame, so the front trickles over rather than
-// shearing off in lumps.
-function spillFront() {
-  const last = band.cols - 1;
-  for (let c = last; c >= 0; c--) {
-    const may = (last - c + 1) * REPOSE_DROP;
-    if (may >= band.rows) break;
-    const h = highOf(c);
-    if (h <= may) continue;
-    const v = at(band, c, h - 1);
-    put(band, c, h - 1, 0);
-    if (c === last) ride(h - 1, 1, v);
-    else put(band, c + 1, highOf(c + 1), v);
-  }
 }
 
 // And the load lies the way ground does -- and lies *still* by the end of
