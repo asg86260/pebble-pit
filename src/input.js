@@ -35,7 +35,7 @@ import { card } from './crewboard.js';
 import { houseRect } from './house.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
-import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
+import { CRAFT, craftAt, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
@@ -385,14 +385,15 @@ function messAt(x, y) {
   return poo ? 'poop' : 'muck';
 }
 
-// A balloon's box, the way `drawBalloons` in render.js draws one.
+// A balloon's box, where render/balloon.js draws it: at its size, among the
+// clouds or at its post.
 function balloonAt(x, y) {
   if (!S.filterOpen) return false;
   for (let i = 0; i < CRAFT.length; i++) {
-    const by = craftY(i);
-    const top = by - BALLOON_BASKET - BALLOON_FILTER_H - BALLOON_H;
-    const left = CRAFT[i].x - BALLOON_W / 2;
-    if (x >= left && x <= left + BALLOON_W && y >= top && y <= by + P * 2) return true;
+    const a = craftAt(i);
+    const top = a.y - (BALLOON_BASKET + BALLOON_FILTER_H + BALLOON_H) * a.s;
+    const half = BALLOON_W / 2 * a.s;
+    if (x >= a.x - half && x <= a.x + half && y >= top && y <= a.y + P * 2 * a.s) return true;
   }
   return false;
 }

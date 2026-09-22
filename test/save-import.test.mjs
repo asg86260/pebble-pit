@@ -79,11 +79,10 @@ group('a blob that is not a save is refused and costs nothing', async () => {
   ];
 });
 
-// `craft` is the balloons' list, and `craftLoad` walks it with `for..of` --
-// so a number where the list should be parses as JSON, passes the door
-// (`stored` and `boulder` are what the door looks at) and throws from the
-// middle of `restore`, with the pit, the sky and the rift already read out of
-// the bad blob by then.
+// A number where the shield should be parses as JSON, passes the door
+// (`stored` and `boulder` are what the door looks at) and fails in the middle
+// of `restore`, with the pit, the sky and the rift already read out of the bad
+// blob by then.
 group('a save that parses but will not restore leaves the old one standing', async () => {
   const S = yard.S;
   window.__crew(2, 2);
@@ -91,7 +90,7 @@ group('a save that parses but will not restore leaves the old one standing', asy
   yard.persist();
   const before = localStorage.getItem(KEY), stored = S.stored, who = roster();
   const bad = JSON.parse(player());
-  bad.craft = 1;
+  bad.shield = 1;
   const took = importSave(JSON.stringify(bad));
   const after = localStorage.getItem(KEY);
   const now = { stored: S.stored, who: roster() };

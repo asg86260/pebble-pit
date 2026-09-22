@@ -45,6 +45,7 @@ import { MUCK_ELBOW, colAt, poopCols, muckFloor } from '../smog.js';
 import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { floatDown } from '../wizard.js';
+import { comeHome } from '../balloon.js';
 import { stopJig, celebrate, MOVE_KEYS } from './dance.js';
 import { stepDig } from '../intro.js';
 import { stepTender } from './tenders.js';
@@ -142,6 +143,10 @@ const STAGES = [
     retask(w, w.type);
     return true;
   },
+
+  // Being brought home in a balloon's basket (`comeHome`): held out of the
+  // yard until the craft is moored, then off at the foot of its post.
+  w => w.homeward != null && !comeHome(w),
 
   // Drifting down out of the sky (`floatDown`); falls *through* on the frame
   // it lands.

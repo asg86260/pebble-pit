@@ -1,5 +1,5 @@
-import { CRAFT, craftDrop, working } from '../balloon.js';
-import { GRAV, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
+import { CRAFT, mastX, postY, working } from '../balloon.js';
+import { GRAV, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, FILTER_H, BALLOON_BASKET, BALLOON_FILTER_H, P } from '../config.js';
 import { frames } from '../clock.js';
 import { aim, bell, spawnChip } from '../dust.js';
 import { shadeNear } from '../grid.js';
@@ -41,15 +41,36 @@ function landing(out) {
 }
 
 // How a load or a grain leaves: thrown off the filter's spout onto its heap,
-// or let fall from under a balloon's basket, wherever that is at the time.
+// or, for a balloon home at its post, thrown from its box over the shed onto
+// the same heap -- on an arc high enough to clear the roof, since the posts
+// stand on the far side of the building from the heap.
+const OVER_ROOF = FILTER_H + P * 4;
 function launch(craft) {
-  if (craft != null) { const out = craftDrop(craft); return { ...out, vx: 0, vy: 0, land: null }; }
-  const out = outlet(), land = landing(out), v = aim(out.x, out.y, land, P);
+  const out = craft == null ? outlet()
+    : { x: mastX(craft), y: postY(craft) - BALLOON_BASKET - BALLOON_FILTER_H / 2 };
+  const land = landing(out);
+  const v = craft == null ? aim(out.x, out.y, land, P) : aim(out.x, out.y, land, P, OVER_ROOF);
   return { ...out, vx: v.vx, vy: v.vy, land };
 }
 
+// A mote down a mouth. The house's goes out of its spout; a balloon's is
+// carried in its basket until it is home (`unloadCraft`), since a load let go
+// from the sky would land where the view happened to put the balloon.
 export function swallow(craft = null) {
   countDrew();                     // counted at the mouth -- see `sampleAir`
+  if (craft != null) { CRAFT[craft].load += 1; return; }
+  spill(null);
+}
+
+// A balloon home at its post throwing out `n` motes of what it carried.
+export function unloadCraft(i, n) {
+  for (let k = 0; k < n; k++) spill(i);
+  CRAFT[i].load = Math.max(0, CRAFT[i].load - n);
+}
+
+// One mote's worth out onto the heap: muck a load at a time, or with the
+// recycler dust a grain at a time, off whichever mouth it came in by.
+function spill(craft) {
   if (!S.recycler) {
     S.filterMuck = (S.filterMuck || 0) + 1;
     while (S.filterMuck >= FILTER_PER_MUCK) {

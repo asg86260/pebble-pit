@@ -14,6 +14,7 @@ import { hash } from './flicker.js';
 import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
 import { inHouse } from '../filter.js';
+import { inBasket } from '../balloon.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
 import { ctx } from './ctx.js';
@@ -457,8 +458,9 @@ export function drawWorkers() {
   for (const w of S.workers) {
     // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
-    // reason to skip it here.
-    if (underground(w) || inHouse(w) || atHome(w)) continue;
+    // reason to skip it here. A body in a balloon's basket is drawn by the
+    // balloon, wherever in the sky it is (render/balloon.js).
+    if (underground(w) || inHouse(w) || atHome(w) || inBasket(w)) continue;
 
     // Somebody digging at the one in the ground is drawn as a builder,
     // whatever job the body came from.

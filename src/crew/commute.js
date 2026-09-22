@@ -18,7 +18,7 @@ import { grabHat, kitFree } from './kitwalk.js';
 import { spareKit } from '../levels.js';
 import { JOB } from '../jobs.js';
 import { spareLifts } from '../kit.js';
-import { bailOut } from '../balloon.js';
+import { bailOut, berthFor, mastX } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
 import { filterDoor } from '../filter.js';
@@ -30,8 +30,10 @@ import { FACTORY } from './jobs.js';
 
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
-export function stationX(type) {
-  const base = handStationX(type);
+// `w`, when given, is the body going: a filter hand whose berth is a balloon
+// works at that balloon's post, not at the filter's door.
+export function stationX(type, w = null) {
+  const base = handStationX(type, w);
   if (base === null) return null;              // carrying: already at work anywhere
   // A station with a machine on it is worked *from the machine*, or a body put
   // on the rock climbs the hill and is walked straight back down to the ram.
@@ -46,11 +48,14 @@ export function stationX(type) {
 
 // Where the job is done by hand, which is where a body goes when there is no
 // machine standing on it.
-function handStationX(type) {
+function handStationX(type, w) {
   if (type === TYPE.ROCK) return S.cx - WORKER / 2;
   if (type === TYPE.QUARRY) return quarryFace();
   if (type === TYPE.FARM) return plotX(0);
-  if (type === TYPE.PURIFY) return filterDoor() - WORKER / 2;
+  if (type === TYPE.PURIFY) {
+    const berth = w ? berthFor(w) : -1;
+    return (berth >= 0 ? mastX(berth) : filterDoor()) - WORKER / 2;
+  }
   if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;
   if (type === TYPE.JANITOR) return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor: the going up is the
@@ -150,7 +155,7 @@ function arrive(w) {
 export function errand(w, job, what) {
   w.fetching = job;
   if (what === 'wear') w.wanting = job;
-  w.legs = [{ to: kitX(job), do: what }, { to: stationX(w.type) ?? w.x, do: 'back' }];
+  w.legs = [{ to: kitX(job), do: what }, { to: stationX(w.type, w) ?? w.x, do: 'back' }];
   nextLeg(w);
 }
 
@@ -193,7 +198,7 @@ export function retask(w, type) {
     w.wanting = job;
     legs.push({ to: kitX(job), do: 'wear' });
   }
-  const to = stationX(type);
+  const to = stationX(type, w);
   if (to !== null) legs.push({ to, do: 'work' });
   // No legs means nothing to walk for; it does NOT mean the kit comes off. The
   // hauler has no station, and a carter retasked in place with its cart

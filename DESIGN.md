@@ -12794,7 +12794,7 @@ The mast is measured off the dial as before, which now hangs off the shed's
 wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
 `filterclog`, `filtersieve`, `moored`.
 
-## The balloons ride the clouds (design, not built)
+## The balloons ride the clouds (built 2026-09-22)
 
 The balloons patrol the whole width of the world at one height, turning hard
 at each end, and a rider stepping off sends the craft up out of the window to
@@ -12869,9 +12869,8 @@ view, and gains one that the catch comes down at the post, onto the heap.
 ### What goes
 
 The patrol across the world, the lanes, the bob and wind pace along a lane,
-the flight up out of the window and the reappearance at the mast, and the drop
-under the basket. The umbrella stays: a rider taken off the job mid-sky still
-steps out under one.
+the flight up out of the window and the reappearance at the mast, the drop
+under the basket, and the umbrella (below).
 
 ### What it costs
 
@@ -12879,6 +12878,38 @@ The craft save its state and its clock (`craft` in the save gains a phase, a
 time in it and the load it carries); where it is in the sky is not saved, and
 comes back wherever the picture puts it. The clouds are not saved either, so a
 reload finds each craft a new cloud.
+
+### What building it changed
+
+- **The umbrella is gone; a rider is brought home.** The design kept the
+  umbrella for a rider taken off the job mid-sky. But a body stepping out of a
+  craft in the sky steps out wherever the camera has drawn the craft, which
+  puts a view-dependent place into the yard. So a rider taken off stays in the
+  basket (`homeward`), the craft turns for home, and the body steps off at the
+  foot of its post (`comeHome`, early in the crew's frame) and goes to its new
+  job from there. The umbrella's drawing, its numbers and its scene went with
+  it; the wizards' own float-down is untouched.
+- **A craft is drawn by the clouds' pass, not the yard's.** `drawClouds` asks
+  `skyGuests` (render/balloon.js) for the craft each frame and draws them
+  between the sheets by depth, so a craft is behind the clouds nearer than it.
+  Asked for at draw time rather than registered at load: weather.js and the
+  renderer are in one import ring. The posts are drawn in the yard, after the
+  filter.
+- **Size and air by depth.** A craft is drawn at the cell size of the sheet
+  it is among against the nearest sheet's (`sizeAt`), eased between sheets as
+  it travels, and faded by the clouds' own `fadeAt`. The gap it hangs under a
+  cloud is scaled the same way, or a far craft hung a whole craft's height
+  below the cloud it is drawn a third the size of.
+- **The throw home clears the roof.** The posts are on the far side of the
+  shed from the heap, so a craft's catch is thrown on an arc high enough to
+  clear it (`aim` with a rise over `FILTER_H`), a basket's worth over a second
+  and a half, and the craft goes up again only once it is empty.
+- **Riders' walk.** A rider's commute is to its own post (`stationX` takes the
+  body), at `COMMUTE_PACE`; the last steps and the climb are the craft's.
+- The rider in the basket is drawn by the balloon, with the crew's own
+  `drawBody`, sized with the craft; the yard hides it (`inBasket`).
+- `save-import`'s example of a save that parses but will not restore is a
+  numeric shield now: the craft list is read defensively and no longer throws.
 
 ## The balloons draw the haze in (built 2026-09-22)
 

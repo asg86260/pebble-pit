@@ -89,7 +89,7 @@ function grabErrand(w, owner) {
   w.claimHat = owner;
   w.fetching = owner.hatOff.of;
   w.legs = [{ to: owner.hatOff.x, do: 'grab' },
-            { to: stationX(w.type) ?? w.x, do: 'back' }];
+            { to: stationX(w.type, w) ?? w.x, do: 'back' }];
   nextLeg(w);
 }
 
@@ -218,6 +218,6 @@ function stepLifts() {
 function liftErrand(w, what) {
   w.fetching = LIFT_ERRAND;
   if (what === 'lift') w.wanting = LIFT_ERRAND;
-  w.legs = [{ to: liftX(), do: what }, { to: stationX(w.type) ?? w.x, do: 'back' }];
+  w.legs = [{ to: liftX(), do: what }, { to: stationX(w.type, w) ?? w.x, do: 'back' }];
   nextLeg(w);
 }

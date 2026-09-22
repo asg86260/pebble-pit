@@ -715,12 +715,6 @@ export const SCENES = {
     run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
                  window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
                  window.__look(st().craft[0].x - 380); window.__fast(3); } },
-  // Taken off the purifiers while the craft was up.
-  brolly: { about: 'the house and the sky', say: 'a rider stepping out under an umbrella', page: true,
-    run: () => { rich(); window.__air({ open: true, haze: 1600 }); window.__fast(2);
-                 window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(35);
-                 window.__look(st().craft[0].x - 400);
-                 window.__air({ purifiers: 0 }); window.__fast(2.2); } },
   // The sky at four levels (DESIGN.md, "The sky is the band").
   sky0: { about: 'the house and the sky', say: 'a clear sky', run: () => skyAt(0) },
   sky1: { about: 'the house and the sky', say: 'a light sky', run: () => skyAt(900) },

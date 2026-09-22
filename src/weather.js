@@ -14,7 +14,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
-         SMOG_CAP,
+         SMOG_CAP, CLOUD_DRAWN_MAX,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
@@ -89,7 +89,11 @@ export function swell() {
 // How dirty the whole sky is (smog/band.js): the clouds are its readout, and
 // the air filter's dial reads the same number.
 import { murk } from './smog/band.js';
+import { skyGuests } from './render/balloon.js';
 export { murk };
+// One cloud's murk: the sky's, less what a balloon drawing it in has paled it
+// (`drawn`, eased by balloon.js). Picture only; the count is the sky's.
+const murkOf = c => murk() * (1 - (c.drawn || 0) * CLOUD_DRAWN_MAX);
 
 // The tones a cloud can be, parsed once: its two pales, the smoke's brown it
 // slides toward with the murk (and stops at -- a dirty sky is a heavy brown,
@@ -244,7 +248,7 @@ const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet
 // up. A storm cloud's radii are scaled by the swell, from nothing.
 function columnsOf(c, sw) {
   const flat = CLOUD_LAYERS[c.sheet].flat;
-  const k = Math.min(1, (sw + murk() * CLOUD_MURK_GROW) * c.give);
+  const k = Math.min(1, (sw + murkOf(c) * CLOUD_MURK_GROW) * c.give);
   const grow = 1 + CLOUD_GROW_R * k;
   // A front's cloud is nothing when it is born and comes up out of nothing
   // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
@@ -542,6 +546,23 @@ export function startle(wx, wy) {
 // against a camera that scrolls smoothly.
 const skyAt = s => s.x + S.camX * (1 - s.far);
 
+// Where a balloon hangs under a cloud, in the cloud's own space: the middle of
+// its base, as an `x` the camera is added to the way it is added to a cloud's
+// (`skyAt`), the cloud's depth, and the base line. Null for a cloud on its way
+// out.
+export function cloudSpot(c) {
+  if (melting(c)) return null;
+  return { x: c.x + c.w * cellOf(c) / 2, far: c.far, y: cloudY(c) };
+}
+// Drawn where the clouds are drawn: a balloon's `x` and depth, on the glass.
+export const onSky = (x, far) => x + S.camX * (1 - far);
+
+// Things that live among the clouds and are drawn between their sheets by
+// depth: the balloons (`skyGuests` in render/balloon.js), asked each frame
+// for a list of `{ far, draw }`, farthest drawn first, interleaved with the
+// clouds. Asked at draw time rather than registered at load, since the two
+// files are in one import ring.
+
 // The color the air is this frame, as a cloud's underside shows it: what a
 // balloon is drawing in is drawn in this (render/balloon.js), so the haze
 // going into the box is the same brown the clouds are.
@@ -585,8 +606,15 @@ export function drawClouds() {
   // fills meeting there blend into a hairline of page through the cloud.
   const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
+  const visitors = skyGuests().slice().sort((a, b) => a.far - b.far);
+  let g = 0;
   for (const c of order) {
-    const tones = cloudTones(crown, base, c.far, fade(c));
+    // Anything farther than this cloud goes down first, so the cloud covers it.
+    while (g < visitors.length && visitors[g].far < c.far) visitors[g++].draw();
+    // A cloud a balloon is drawing in has its own colors; the rest share the sky's.
+    const tones = c.drawn > 0.01
+      ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far, fade(c))
+      : cloudTones(crown, base, c.far, fade(c));
     const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
     const x = skyAt(c), y = cloudY(c);
     const { lo, hi, h, under: u } = columnsOf(c, sw);
@@ -622,6 +650,8 @@ export function drawClouds() {
       }
     }
   }
+  // and whatever is nearer than every cloud
+  while (g < visitors.length) visitors[g++].draw();
   ctx.fillStyle = '#000';
 }
 

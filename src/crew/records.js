@@ -73,7 +73,7 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       'inside',
                       // in the air on its own account, or a wizard saved aloft
                       // falls and starts the climb again on every refresh
-                      'aloft', 'floating', 'brolly', 'spot',
+                      'aloft', 'floating', 'spot', 'homeward',
                       // which craft it is aboard, and the berth a purifier was
                       // dealt, which puts it back in the same basket
                       'craft', 'berth',

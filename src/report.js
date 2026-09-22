@@ -43,7 +43,7 @@ import { smogReport, muckCols, GOING } from './smog.js';
 import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
-import { CRAFT, craftY, crewed, working } from './balloon.js';
+import { CRAFT, craftAt, crewed, mastX, working } from './balloon.js';
 import { benchMark } from './upgrades.js';
 import { mineMs, capacity, mineRate, rockhandMs, haulCap, haulSpeed, capOf, handsOf, machineRate, kitFull, hats } from './levels.js';
 import { idle } from './staffing.js';
@@ -550,7 +550,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // of a picture, so a check can tell a fade from a pop.
   going: GOING.length,
   // Anybody under a canopy, with their heights.
-  brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
+  // Anybody being brought home in a basket.
+  homeward: S.workers.filter(w => w.homeward != null).length,
   // The purifiers are through a door or up in a basket; `berth` is -1 for the
   // house and the craft's index otherwise.
   filterCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
@@ -580,11 +581,15 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // The yard's floor and the piles standing on it.
   floor: survey.n.reduce((a, b) => a + b, 0),
   // The craft: `up` is the one worth reading, since a crewed craft still
-  // climbing off the mast is not working yet.
-  craft: CRAFT.map((c, i) => ({
-    x: Math.round(c.x), dir: c.dir, lift: +c.lift.toFixed(3),
-    y: Math.round(craftY(i)), crewed: crewed(i), up: working(i)
-  })),
+  // climbing off its post is not working yet. `x`, `y` and `far` are where it
+  // is drawn this frame, among the clouds or at its post; `post` is where it
+  // moors.
+  craft: CRAFT.map((c, i) => {
+    const a = craftAt(i);
+    return { phase: c.phase, load: c.load, post: Math.round(mastX(i)),
+             x: Math.round(a.x), y: Math.round(a.y), far: +a.far.toFixed(3),
+             crewed: crewed(i), up: working(i) };
+  }),
   yardFull: !!S.pileFull.rock,
   pileCount: { ...S.pileCount },
   pileFull: { ...S.pileFull },

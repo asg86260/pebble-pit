@@ -1,6 +1,6 @@
 # Still to do
 
-## The balloons ride the clouds -- DESIGNED, awaiting sign-off (2026-09-22)
+## The balloons ride the clouds -- BUILT (2026-09-22)
 
 "The balloons ride the clouds" in DESIGN.md. A row of moorings beside the
 dial, like the pots, inside a wider filter footprint; riders commute straight

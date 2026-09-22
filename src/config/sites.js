@@ -5,7 +5,8 @@ import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
 import { BRIDGE_RUN, QUARRY_W } from './quarry.js';
 
-import { FILTER_W } from './filter.js';
+import { DIAL_CELLS, DIAL_STUB, FILTER_W, FILTER_WALL } from './filter.js';
+import { BALLOON_FILTER_W, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 import { LIFT_STAND_OFF } from './kit.js';
@@ -114,7 +115,12 @@ export const SITES = [
     hang: () => kitHang('apothecary') },
   // The lab has no row: a building that is gone must not go on holding ground.
   // See DESIGN.md, "The lab is deleted".
-  { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: 'filter',  side: 'left' },
+  // The filter keeps ground on its rock side for its dial and the row of posts
+  // its balloons moor at, one for every craft it can sell, so buying one never
+  // moves a building (the apothecary reserves its pots the same way).
+  { key: 'filter',    w: () => FILTER_W,                     standoff: P,  pile: 'filter',  side: 'left',
+    right: () => P * (DIAL_STUB + DIAL_CELLS - FILTER_WALL)
+               + BALLOON_RUNGS * (BALLOON_FILTER_W + P * BALLOON_MAST_GAP) + P * BALLOON_MAST_GAP },
   // The casino holds no ground: a paid hand heaps in its own tray and flies
   // out of the hatch into the hole on its own.
   { key: 'casino',   w: () => CASINO_W,                    standoff: P,  pile: null },

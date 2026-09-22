@@ -1,5 +1,6 @@
-// The purifier balloon: bought off the house's board, boarded on foot, and
-// crossing the sky. See src/balloon.js and DESIGN.md, "The purifier balloon".
+// The purifier balloon: bought off the house's board, boarded on foot at its
+// own post, and up among the clouds. See src/balloon.js and DESIGN.md, "The
+// balloons ride the clouds".
 //
 // Bought the way a player buys it -- `__buy('balloon')` presses the row -- rather
 // than by pushing a craft into the array. A check that sets the state through a
@@ -7,6 +8,7 @@
 // there.
 
 import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED, yard } from './helpers.mjs';
+import { BALLOON_LOAD } from '../src/config.js';
 
 const rich = () => {
   window.__reset();
@@ -17,45 +19,28 @@ const rich = () => {
   run(2);
 };
 
-group('a balloon is bought at the house and rides the sky', async () => {
+group('a balloon is bought at the house, moors at its own post, and goes up among the clouds', async () => {
   rich();
-  const before = state().craft.length;
-  const bought = buyNow('balloon');
+  const bought = buyNow('balloon') && buyNow('balloon');
   run(1);
   const moored = state();
-
-  // Nobody in it yet: bought is not crewed, and a craft with nobody in it stays
-  // tied to its mast. The same bargain every other station makes when you buy
-  // the room before the body.
+  // Nobody in them yet: bought is not crewed, and a craft with nobody in it
+  // stays at its post.
   run(10);
   const idle = state();
-
-  // ...and then somebody is put on it. The house takes the first body and the
-  // craft the second, so two on the purifiers is one indoors and one aloft.
   window.__air({ purifiers: 2 });
-  const up = runUntil(() => state().craft[0] && state().craft[0].up, 60);
+  const up = runUntil(() => state().craft[0] && state().craft[0].up, 90);
   const flying = state();
-
-  const from = flying.craft[0].x;
-  run(12);
-  const later = state();
-
-  window.__air({ purifiers: 0 });
   return [
-    ok(before === 0 && bought && moored.craft.length === 1,
-       'the board sells one, and the yard has one', `${before} -> ${moored.craft.length}`),
-    ok(moored.craft[0].lift === 0, 'which starts on the ground at its mast',
-       `lift ${moored.craft[0].lift}`),
-    ok(!idle.craft[0].crewed && idle.craft[0].lift === 0,
-       'and stays there while there is nobody in it',
-       `crewed ${idle.craft[0].crewed}, lift ${idle.craft[0].lift}`),
-    ok(up, 'a body put on the purifiers gets into it and it goes up',
-       `lift ${flying.craft[0].lift}`),
-    ok(flying.craft[0].y < moored.craft[0].y - 40,
-       'and it is a long way over the yard once it is up',
-       `${moored.craft[0].y} -> ${flying.craft[0].y}`),
-    ok(Math.abs(later.craft[0].x - from) > 40, 'and then it crosses the sky',
-       `${from} -> ${later.craft[0].x}`)
+    ok(bought && moored.craft.length === 2, 'two bought off the row', `${moored.craft.length}`),
+    ok(moored.craft[0].post !== moored.craft[1].post &&
+       Math.abs(moored.craft[1].post - moored.craft[0].post) > 30,
+       'each at its own post, side by side', moored.craft.map(c => c.post).join(', ')),
+    ok(moored.craft.every(c => c.post > moored.filterX), 'beside the filter, past its dial',
+       `filter at ${moored.filterX}`),
+    ok(idle.craft.every(c => c.phase === 'moored' && !c.crewed), 'and nobody aboard, so they stay put'),
+    ok(up, 'with somebody aboard it goes up'),
+    ok(up && flying.craft[0].far < 0.5, 'into the clouds, at their depth', `far ${flying.craft[0].far}`)
   ];
 });
 
@@ -65,7 +50,7 @@ group('nobody gets into a balloon without walking to it', async () => {
   run(1);
   // Where the mast is, and where the body starts: the crew stand about the yard,
   // and the craft is over by the air filter.
-  const mast = state().craft[0].x;
+  const mast = state().craft[0].post;
 
   window.__air({ purifiers: 2 });
   // Watched every frame from the moment it is assigned. The one thing that must
@@ -107,120 +92,53 @@ group('nobody gets into a balloon without walking to it', async () => {
   ];
 });
 
-group('taken off the job, the rider steps out and the craft leaves', async () => {
+group('a rider taken off the job is brought home in the basket and steps off at the post', async () => {
   rich();
   buyNow('balloon');
   window.__air({ purifiers: 2 });
-  runUntil(() => state().craft[0] && state().craft[0].up, 60);
-  const flying = state().craft[0];
-
-  // Off the purifiers while it is up. Nobody rides a balloon home: the body puts
-  // an umbrella up, goes over the side, and the craft goes up out of the window.
+  runUntil(() => state().craft[0] && state().craft[0].up, 90);
   window.__air({ purifiers: 0 });
-  const opened = runUntil(() => (state().brollies || []).length > 0, 10);
-  const first = (state().brollies || [])[0];
-  const rose = runUntil(() => state().craft[0].y < flying.y - 100, 20);
-  const climbing = state().craft[0].y;
-
-  // ...and it turns up again at its mast, moored, with nothing remembered about
-  // the trip.
-  const home = runUntil(() => state().craft[0].lift === 0, 60);
-  const back = state().craft[0];
-
-  // and the umbrella comes down and is put down
-  const landed = runUntil(() => (state().brollies || []).length === 0, 60);
-
-  window.__air({ purifiers: 0 });
+  run(1);
+  const turned = state();
+  const home = runUntil(() => state().craft[0].phase === 'moored', 30);
+  run(1);
+  const after = state();
   return [
-    ok(opened, 'the rider steps out under an umbrella', `at y ${first}`),
-    ok(rose, 'and the craft goes up rather than coming home across the yard',
-       `${flying.y} -> ${climbing}`),
-    ok(home && back.lift === 0, 'and turns up again moored at its mast',
-       `lift ${back.lift}, x ${back.x}`),
-    ok(landed, 'and the umbrella is put down when its feet are down')
+    ok(turned.craft[0].phase === 'down', 'the craft turns for home', turned.craft[0].phase),
+    ok(turned.homeward === 1, 'with its rider still in the basket', `${turned.homeward} homeward`),
+    ok(home, 'and is back at its post'),
+    ok(after.homeward === 0, 'where the rider steps off', `${after.homeward} homeward`)
   ];
 });
 
-group('a craft comes back and is let go of when the job ends', async () => {
+group("a craft carries its catch home and throws it onto the filter's heap", async () => {
   rich();
   buyNow('balloon');
+  // A dirty sky, nobody in the house, one aloft; nothing else fouls it.
+  window.__air({ purifiers: 2, haze: 3000, muck: 0 });
+  window.__crew(0, 0);
   window.__air({ purifiers: 2 });
-  runUntil(() => state().craft[0] && state().craft[0].up, 60);
-
-  // Taken off the purifiers altogether. The craft has nobody in it, so it comes
-  // down and goes home to its mast -- and the body is not left believing it is
-  // still in a balloon.
-  window.__air({ purifiers: 0 });
-  const home = runUntil(() => state().craft[0].lift === 0, 90);
-  const down = state();
-  const stuck = (down.filterCrew || []).filter(w => w.aloft).length;
-
+  const heap = state().piles.find(p => p.key === 'filter');
+  const onHeap = () => { const m = yard.S.muck || []; let n = 0;
+    for (let c = Math.floor(heap.from / 6); c <= Math.ceil(heap.to / 6); c++) n += m[c] || 0; return n; };
+  runUntil(() => state().craft[0].up, 90);
+  const full = runUntil(() => state().craft[0].load >= BALLOON_LOAD || state().craft[0].phase === 'down', 400);
+  const carrying = state().craft[0].load;
+  const before = onHeap();
+  const home = runUntil(() => state().craft[0].phase === 'moored', 30);
+  const emptied = runUntil(() => state().craft[0].load === 0, 10);
+  run(3);
+  const after = onHeap();
   return [
-    ok(home, 'an empty craft comes down', `lift ${down.craft[0].lift}`),
-    ok(!down.craft[0].crewed, 'with nobody in it', `${down.craft[0].crewed}`),
-    ok(stuck === 0, 'and nobody is left in the sky', `${stuck} still aloft`)
+    ok(full && carrying > 0, 'it fills as it pulls, and turns for home when full', `${carrying} carried`),
+    ok(home && emptied, 'at its post it throws the lot out'),
+    ok(after > before, "and it lands on the filter's heap", `${before} -> ${after}`)
   ];
 });
 
-group('a craft takes the sky in where it is, and drops it under itself', async () => {
-  rich();
-  window.__clearFloor();
-  buyNow('balloon');
-  // The house shut and the craft crewed. `capOf` fills the house's berth first,
-  // so three on the purifiers is one indoors and two aloft -- but there is only
-  // one craft here, so it is one indoors and one up. What isolates the craft is
-  // not the staffing, it is *where the muck lands*: the house's own spout is a
-  // fixed lip on its left wall and the craft is halfway across the yard.
-  window.__air({ haze: 2200, muck: 0, purifiers: 2 });
-  runUntil(() => state().craft[0] && state().craft[0].up, 60);
-  const lit = state();
-
-  // Held topped up, so what is being measured is the craft working rather than
-  // the craft running out of sky -- and no rain, which would drop muck of its
-  // own all over the answer.
-  //
-  // Watched all the way through rather than read off the last frame. What the
-  // craft puts on the ground is muck, and muck is what the yard's spare hands
-  // shovel: the three idlers here clear it as fast as one balloon can drop it,
-  // so whether any is still lying there at the final frame is a race between
-  // the craft and the crew and not a fact about the craft. Measured that way it
-  // came out at three columns and then at none, on a run where the craft had
-  // plainly worked harder -- more sky caught, five columns of muck laid down
-  // over the same forty seconds and every one of them tidied away again.
-  //
-  // So the columns are collected as they appear. What is being asked is
-  // unchanged: sky goes up, muck comes down, and it comes down under the craft
-  // rather than on the house's own strip.
-  const filterX = state().filterX;
-  const seen = new Map();
-  for (let i = 0; i < 14 * 60 * 3; i++) {
-    if (i % 180 === 0) window.__air({ haze: 2200 });
-    run(1 / 60);
-    for (const [c, n] of state().muckAt || []) seen.set(c, Math.max(seen.get(c) || 0, n));
-  }
-  const done = state();
-  const laid = [...seen.keys()];
-  const far = laid.filter(c => c * 6 > filterX + 400);
-  const flew = Math.abs(done.craft[0].x - lit.craft[0].x);
-
-  window.__air({ haze: 0, muck: 0, purifiers: 0 });
-  window.__clearFloor();
-  return [
-    ok(done.smog.recycled >= 0 && laid.length > 0,
-       'a crewed craft brings the sky down and it lands as muck',
-       `${laid.length} columns had muck laid in them`),
-    ok(flew > 100, 'while crossing the yard', `moved ${Math.round(flew)}px`),
-    // The claim the whole feature rests on: the sink is the ground the craft is
-    // over, not a heap on the house's own strip.
-    ok(far.length > 0,
-       'and it comes down well away from the house, under wherever the craft was',
-       `${far.length} columns more than 400px past the house`)
-  ];
-});
-
-// The thread a craft draws down out of a cloud is a fact about the view (the
-// clouds scroll slower than the ground, so which cloud is over a craft depends
-// on where you are looking), and nothing it does may reach the yard. The same
+// Where a craft is among the clouds is a fact about the view (the clouds scroll
+// slower than the ground, so where it is drawn depends on where you are
+// looking), and nothing about it may reach the yard. The same
 // yard run twice from one seed, once with the view swung back and forth over
 // it, takes the same sky and lays the same muck.
 group('what a balloon pulls does not depend on where you are looking', async () => {
@@ -235,7 +153,8 @@ group('what a balloon pulls does not depend on where you are looking', async () 
       run(1);
     }
     const st = state();
-    return { haze: Math.round(st.smog.haze), muck: Math.round(st.smog.muck.yard), x: Math.round(st.craft[0].x) };
+    return { haze: Math.round(st.smog.haze), muck: Math.round(st.smog.muck.yard),
+             phase: st.craft[0].phase, load: st.craft[0].load };
   };
   const still = yardRun(false);
   const swung = yardRun(true);
