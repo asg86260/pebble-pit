@@ -205,7 +205,15 @@ function pinWidth() {
   // fractional width off and the last word folds under; a client rect is
   // scaled while the board is still easing open. Rounded up, since a fraction
   // short is the fold.
-  sheet.style.width = `${Math.ceil(parseFloat(getComputedStyle(sheet).width))}px`;      // border-box, so this is exact
+  const cs = getComputedStyle(sheet);
+  const w = Math.ceil(parseFloat(cs.width));      // border-box, so this is exact
+  sheet.style.width = `${w}px`;
+  // A board taller than the window scrolls, and its scrollbar comes out of the
+  // width the words were measured in: a shelf a slot short, and taller for it.
+  // The bar is measured off the box and given back.
+  const bar = sheet.offsetWidth - sheet.clientWidth
+            - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+  if (bar > 0) sheet.style.width = `${w + bar}px`;
 }
 
 // The crew list is one card wide, read off the board's layout (the door's width

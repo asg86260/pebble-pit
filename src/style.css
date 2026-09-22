@@ -1590,6 +1590,15 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
      media rule. */
   width: fit-content;
   max-width: var(--sheet-w);
+  /* No taller than the window. `place` stands a board that will not fit with
+     its top at the window's edge, so without a ceiling the rows past the
+     bottom of the glass were rows nobody could reach -- a full bench on a
+     1080p screen. It scrolls inside itself instead, as it does on a phone. */
+  max-height: calc(100dvh - 8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink) var(--paper);
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px var(--sheet-pad-x);
   background: var(--paper);

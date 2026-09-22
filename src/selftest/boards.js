@@ -960,6 +960,35 @@ export const TESTS = [
     ];
   }],
 
+  // A full bench is taller than the suite's window, as it is than a 1080p
+  // browser's: its last row has to be reachable by scrolling the sheet, not
+  // hanging off the bottom of the glass.
+  ['a board taller than the window scrolls to its last row', async () => {
+    newRun();
+    window.__crew(3, 3, 5, 7);
+    window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 90000 });
+    window.__board('bench');
+    await settle();
+    const sheet = board().closest('.sheet');
+    const r = sheet.getBoundingClientRect();
+    const tall = sheet.scrollHeight > innerHeight;
+    sheet.scrollTop = sheet.scrollHeight;
+    await raf();
+    const last = [...shop().querySelectorAll('[data-key]')].pop().getBoundingClientRect();
+    const cols = [...new Set([...shop().querySelectorAll('[data-key]')]
+      .map(el => Math.round(el.getBoundingClientRect().left)))].length;
+    window.__board(null);
+    return [
+      ok(tall, 'the bench holds more than the window has room for',
+         `${sheet.scrollHeight} in ${innerHeight}`),
+      ok(r.top >= 0 && r.bottom <= innerHeight, 'the board stands inside the window', JSON.stringify(r)),
+      ok(last.top >= r.top && last.bottom <= r.bottom, 'and its last row scrolls into view',
+         `${Math.round(last.top)}..${Math.round(last.bottom)} in ${Math.round(r.top)}..${Math.round(r.bottom)}`),
+      // the scrollbar comes out of the words' width unless it is given back
+      ok(cols >= 3, 'and the scrollbar costs the shelf no column', `${cols} columns`)
+    ];
+  }],
+
   // Pressed the way a player presses it: the board is opened, the shut
   // control is clicked, and an option is chosen. The hooks only stand the
   // building up.
