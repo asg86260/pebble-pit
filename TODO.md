@@ -1,5 +1,19 @@
 # Still to do
 
+## The air filter -- DESIGNED, awaiting sign-off (2026-09-22)
+
+"The air filter" in DESIGN.md. Since the sky became the clouds, the scrubbing
+house shows nothing of what it does. It becomes **the air filter**, renamed
+through the code and the save, with a migration. A **dial** on its far wall
+reads the sky at all times, off the same bent `murk` the clouds are drawn
+from. The **spout** is always drawn, and each load of muck (dust, once the
+recycler is fitted) falls out of it at the rate the filter takes motes, which
+it already does, just invisibly. No balance moves.
+
+Open: where the dial sits (far wall first, a new course between throat and
+shaft if that crowds), and the recycler's mark now that the chute is no
+longer what it adds. Both are settled by a shot.
+
 ## The rain has depth too -- BUILT (2026-09-22)
 
 "The rain has depth too" in DESIGN.md. The clouds got three sheets and the

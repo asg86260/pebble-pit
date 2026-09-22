@@ -12393,6 +12393,144 @@ crossed a thousand: a phone rule had let the number's slot go; the slot is
 the widest count `fmt` writes (five figures, tabular) on the desk and the
 phone alike, one rule.
 
+## The air filter (design, not built)
+
+When the sky was a field of specks, you could watch the house work: specks
+thinned, a thread ran down its throat. Since "The sky is the clouds" the
+specks are gone, and what is left is a faint ring of cells at the intake and
+eaten motes fading at random spots across the window, tied to nothing. The
+house still does the same work, and nothing in the picture says so. It also
+says nothing about the one fact it exists for, how dirty the air is: that
+now lives only in the clouds, which are over the window and not over the
+building.
+
+So the building says two things at all times: **how dirty the air is**, on a
+dial, and **what it has taken out**, as muck pumped out of a spout. And it
+is called what it is, **the air filter**.
+
+### The name
+
+"The scrubbing house" becomes **the air filter**, everywhere: the board
+title, the tile, the tooltips, the notices, the unlock row (`unlockfilter`),
+and the code. `scrubhouse.js`, `render/scrub.js`, `config/scrub.js` and
+`upgrades/rows-scrub.js` become `filter.js`, `render/filter.js`,
+`config/filter.js` and `upgrades/rows-filter.js`. The site key `scrub`
+becomes `filter`, the `SCRUB_*` constants become `FILTER_*`, `inScrub()`
+becomes `inFilter()`, and the `scrubbing` scene becomes `filtering`.
+
+The body in it keeps its name. A purifier is a person who purifies, and
+`JOB.PURIFY` and `S.purifiers` are still true of them.
+
+The save carries the old names, so this is a migration,
+`2026-09-22-air-filter.js`: `scrubOpen` becomes `filterOpen`, the site key
+`scrub` becomes `filter` wherever a saved structure is keyed by site (the
+pile strips, the full marks, the works queue, the rising tile), and the row
+key `unlockscrub` becomes `unlockfilter` wherever a bought or done list holds
+it. The migration is written against the `SAVED` and `SAVED_BY_HAND` lists as
+they stand at build time, not against this paragraph. A grep for `scrub`
+over `src/` is the check that the rename is whole. CLAUDE.md,
+ARCHITECTURE.md and the scene list move with it; the history in DESIGN.md
+and CHANGELOG.md keeps the old name, since it was the name then.
+
+### The dial
+
+A round gauge on the building, its needle reading the sky from clean to brim.
+It is drawn **whenever the building stands**, staffed or empty, working or
+clogged. The bellows says whether the filter is working; the dial says what
+the air is like, and that is true whether or not anybody is inside. It is
+the one reading of the sky that sits somewhere you can walk the view to.
+
+- **What it reads:** the same number the clouds are drawn from,
+  `murk = (S.haze / SMOG_CAP) ^ CLOUD_MURK_POW`. Exported from where the
+  clouds read it, not worked out a second time, so the dial and the clouds
+  can never disagree. A linear dial would sit at the bottom for the first
+  twenty minutes of machines, which is the fault the bend was made to fix.
+- **Its sweep:** three quarters of a turn, from clean at the lower left
+  through the top to brim at the lower right, the way a pressure gauge
+  reads. There are no zones and no red line: rain runs on its own clock
+  ("Weather"), so no reading is a threshold, and a line would be a lie
+  about when it rains.
+- **The drawing:** a black ring of cells around a white face, with a hub
+  cell and a one-cell needle. It is laid on the `P` grid by stepping from
+  the hub along the needle's angle and filling the cell each step lands
+  in, so every angle is a line of whole cells. The face is **seven cells
+  across**; at that size the needle can point about a dozen clearly
+  different ways, which is enough for a gauge read at a glance.
+- **It never flickers.** The needle's angle eases toward the reading, and
+  it only moves to a new cell line once the reading has passed the middle
+  of the next step. A reading that sits on a boundary must not make the
+  needle tremble between two lines ("Nothing in the sky blinks").
+- **Where it sits:** it replaces the vent stub on the far wall. That is the
+  one face with nothing on it, it stands against sky so the black ring
+  reads, and a gauge on a stub off a boiler's side is the picture everybody
+  already knows. It comes out three cells past the hood's edge, so the
+  building gets wider on that side. The spot is settled by a shot. If the
+  far wall crowds the neighbor, the other place is a new course between
+  the throat and the shaft, which makes the building taller.
+
+It is drawn, not read off a board, so it is `render/filter.js`'s. It reads
+`S.haze` and nothing reads it back. No new saved field.
+
+### The spout
+
+The filter already pumps out muck in step with what it takes: one load of
+`SCRUB_MUCK` for every `SCRUB_PER_MUCK` (135) motes down the throat, counted
+at the mouth (`swallow` in `smog/craft.js`). With one body in, that is a load
+every four or five seconds on a bare fan and nearly one a second at the top
+of the ladder, over a dirty sky. What is wrong is that you cannot see it
+happen. The chute is only drawn once the recycler is fitted, so without it
+the muck appears on the ground beside the building, with nothing to show it
+came out of the building.
+
+- **The chute is always there.** It is the filter's spout, drawn from the
+  moment the building stands, at the same place as today's recycler arm.
+  The outlet the muck drops from is where it always was.
+- **A load falls out of it.** A clod leaves the lip and falls to the heap
+  under it, then lands through `dropMuckAt` exactly as now. It falls as the
+  load it is, in the muck's own tone, with per-cell variation. It must not
+  appear on the ground. A clod in the air when the yard is saved is laid
+  where it would have landed; the fall is under a second, and a clod has no
+  claim to a place in the save.
+- **The heap is the rate.** Nothing new counts it. A filter pulling hard
+  builds a visible heap under its spout, and the crew shovel it like any
+  other muck. When the heap reaches `SCRUB_CLOG` the filter stops, as it
+  does now (`clogged`), and the bellows stops with it. So a filter nobody
+  shovels for shows it has stopped in two places.
+- **The recycler turns it into dust.** Fitted, the same spout pays out
+  dust grains in place of muck, at `RECYCLE_PER` as now, so the tax
+  becomes a wage. Since the chute is no longer what the recycler adds, the
+  recycler needs a mark of its own on the chute, and the grains coming out
+  in dust's tone are the rest of the telling. What that mark looks like is
+  settled by a shot.
+- **The balloons** already drop what they catch under the basket. They get
+  the falling clod the same way. They get no dial: a craft is small, and
+  the filter's dial is the sky's.
+
+### What does not move
+
+The balance. `SCRUB_PULL`, the fan ladder, `SCRUB_PER_MUCK`, `SCRUB_CLOG`,
+`RECYCLE_PER`, `RAIN_WASH` and the haze accounting are untouched. Everything
+new is drawing and names; the only new simulation is a clod's fall, and
+that lays the same load at the same place. The pollution rate on the board
+stays exactly as it is.
+
+### What is checked
+
+- **The rename is whole.** `node tools/unresolved.mjs` is clean, a grep for
+  `scrub` over `src/` and `test/` finds nothing but the migration, and the
+  `filtering` scene draws.
+- **An old save comes back.** A fixture save written before the rename
+  (`test/fixtures/scrub-house.json`) restores with the filter standing,
+  staffed, with its strip and its bought rows, through the migration.
+- **The filter pumps what it takes** (`test/air-filter.test.mjs`, node
+  tier, bought through `__buy` like a player): over a dirty sky with one
+  body in, the muck laid under the spout over a minute is the motes taken
+  over `SCRUB_PER_MUCK` loads, within one load. No muck is laid while no
+  clod is in the air.
+- **The dial and the shots.** The dial and the falling clod are drawings,
+  so no test can see them. Shots of the filter at clean, half and brim, and
+  at a clog, are the check.
+
 ## The sky has depth (built 2026-09-21)
 
 Every cloud sat in one band at one depth, drawn the same, and the sky read as
