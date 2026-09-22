@@ -12475,7 +12475,17 @@ back into it, and a sky growing or shedding moves instead of stepping. It is
 also the only softening a flat picture gets: the edge reads as cloud rather
 than as a staircase. Rounding the height was what made a cell blink.
 
-A front's own cloud goes further: as the front lets go of it, it thins from the
+A front's own cloud arrives the same way it leaves. The front adds its clouds
+as the swell climbs, anywhere across the strip, so a cloud born at nine tenths
+of a swell would be drawn at nine tenths on the frame it was made -- a cloud
+appearing whole in the middle of the sky. Each one comes up out of nothing over
+`CLOUD_BLOOM_S` on its own clock instead. Growing it means growing the circles'
+*centers* along with their radii, which the swell's own grow deliberately does
+not do: a cloud that keeps its centers and shrinks only its radii still stands
+its full height wherever a circle covers a column at all, so it arrives at full
+height in a few columns and spreads sideways from there. That is the pop.
+
+And as the front lets go of it, it thins from the
 bottom a cell at a time, paling toward the page, on the swell's own fall -- so it breaks up rather than vanishing, and is gone exactly
 when the sky has settled. The ordinary sky needs no such life. It wraps around
 the strip, an edge at a time, well outside the window where nobody sees it;

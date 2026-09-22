@@ -9,7 +9,7 @@
 
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 import { RAIN_FIRST_S, STORM_BREW_S, RAIN_WASH, RAIN_MARK, CLOUD_SETTLE_S } from '../src/config.js';
-import { seedWeather, skyReport } from '../src/weather.js';
+import { CLOUDS, seedWeather, skyReport } from '../src/weather.js';
 
 group('it rains on a clean yard, on its own clock', async () => {
   run(0.4);
@@ -247,5 +247,41 @@ group('the sky is spread where the camera ends up, not where it started', async 
     ok(onStrip, 'and spread about the view the camera actually ended on',
        first.cloudAcross.join(' ')),
     ok(moved === 0, 'and no cloud is wound anywhere once it is there', `${moved} moved`)
+  ];
+});
+
+// The front does not add all its clouds at once: it adds them as the swell
+// climbs, anywhere across the strip. So each one has to come up out of nothing
+// on its own clock -- one drawn at the swell it happened to be born into is a
+// cloud appearing whole in the middle of the sky, which is what `CLOUD_BLOOM_S`
+// is for.
+group("a front's clouds come up out of nothing where they are born", async () => {
+  run(0.4);
+  window.__crew(0, 0);
+  // whatever is already up is not the front's: a group that ran before this
+  // one may have left a sky behind, and the clouds are not cleared between
+  // games any more (a relayout calls the seed, and clearing there swapped the
+  // whole sky every time the window was dragged).
+  const seen = new Map(CLOUDS.map(c => [c, 1]));
+  window.__front(1);
+  let born = 0, popped = 0, biggest = 0;
+  for (let f = 0; f < STORM_BREW_S * 60 && !state().smog.raining; f++) {
+    run(1 / 60);
+    const r = skyReport();
+    CLOUDS.forEach((c, i) => {
+      if (seen.has(c)) return;
+      seen.set(c, 1);
+      if (!c.storm) return;
+      born++;
+      // weighed, not counted: a cloud at a thousandth of its size still
+      // touches a dozen columns, and every one of them counts as a cell
+      biggest = Math.max(biggest, r.cloudInk[i]);
+      if (r.cloudInk[i] > 1) popped++;        // a cloud you would see arrive
+    });
+  }
+  return [
+    ok(born >= 4, 'the front brings its clouds through the brew', `${born} of them`),
+    ok(popped === 0, 'and not one of them is drawn whole on the frame it is made',
+       `${popped} popped, the most any of them was worth on its first frame ${biggest} cells`)
   ];
 });

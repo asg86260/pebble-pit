@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -218,12 +218,8 @@ function makeCloud(x, sheet, storm = false) {
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
-  const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
-              give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, melt: 0 };
-  // its height on a dry day, in its own cells, for keeping its crown in view
-  const { lo, hi, h } = columnsOf(c, 0);
-  for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > c.tall) c.tall = h[cx];
-  return c;
+  return { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
+           give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
 
 // a cloud's cell in world pixels: its sheet's
@@ -250,11 +246,22 @@ function columnsOf(c, sw) {
   const flat = CLOUD_LAYERS[c.sheet].flat;
   const k = Math.min(1, (sw + murk() * CLOUD_MURK_GROW) * c.give);
   const grow = 1 + CLOUD_GROW_R * k;
-  const scale = (c.storm ? Math.min(1, sw * c.give) : 1) * grow;
+  // A front's cloud is nothing when it is born and comes up out of nothing
+  // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
+  // adds its clouds as the swell climbs and one born at nine tenths would
+  // otherwise be drawn at nine tenths on the frame it was made.
+  //
+  // `up` takes the circles' centers down with their radii, which the swell's
+  // own grow deliberately does not: a cloud that keeps its centers and shrinks
+  // only its radii still stands its full height wherever a circle covers a
+  // column at all, so it arrives at full height in a few columns and spreads
+  // sideways. That is the pop. Growing the centers too is what makes it come
+  // up out of the base line.
+  const up = c.storm ? Math.min(1, c.age / CLOUD_BLOOM_S) * Math.min(1, sw * c.give) : 1;
   const h = [];
   let lo = Infinity, hi = -Infinity;
   for (const b of c.bumps) {
-    const r = b.r * scale;
+    const r = b.r * up * grow, by = b.y * up;
     const x0 = Math.floor(b.x - r), x1 = Math.ceil(b.x + r);
     for (let cx = x0; cx <= x1; cx++) {
       const dx = cx + 0.5 - b.x;
@@ -264,7 +271,7 @@ function columnsOf(c, sw) {
       // bump's top edge -- kept as it falls, fraction and all: the part of a
       // cell the cloud fills is what says how solid that cell is drawn, and
       // rounding here is what made a cell blink on and off as the sky swelled
-      const top = -(b.y - Math.sqrt(d2)) * flat;
+      const top = -(by - Math.sqrt(d2)) * flat;
       if (top <= 0) continue;
       h[cx] = Math.max(h[cx] || 0, top);
       if (cx < lo) lo = cx; if (cx > hi) hi = cx;
@@ -339,9 +346,11 @@ export function stepWeather(now) {
   const lean = gust() * CLOUD_LEAN * sw;
   // the front has peaked and is letting go: neither brewing nor pouring
   const letting = !S.raining && S.stormFor < 0;
+  const secs = f / 60;
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
+    c.age += secs;
     // A cloud the front brought breaks up as the front lets go of it: its melt
     // is the swell's own fall, so it is gone exactly when the sky has settled
     // rather than hanging on after it, and every cell it sheds sinks back into
@@ -411,6 +420,7 @@ export function skyReport() {
     swell: +swell().toFixed(3),
     storm: CLOUDS.filter(c => c.storm).length,
     cloudEach: CLOUDS.map(c => cellsOf(c, swell())),
+    cloudInk: CLOUDS.map(c => inkOf(c, swell())),
     cloudCells: CLOUDS.reduce((n, c) => n + cellsOf(c, swell()), 0)
   };
 }
@@ -424,6 +434,17 @@ function cellsOf(c, sw) {
   let n = 0;
   for (let cx = lo; cx <= hi; cx++) n += Math.ceil(h[cx] || 0);
   return n;
+}
+
+// ...and how much cloud is actually there, fractions and all. A cloud coming
+// up out of nothing covers a dozen columns with a thousandth of a cell each
+// long before there is anything to see, so a check asking whether it arrived
+// whole has to weigh it rather than count its columns.
+function inkOf(c, sw) {
+  const { lo, hi, h } = columnsOf(c, sw);
+  let n = 0;
+  for (let cx = lo; cx <= hi; cx++) n += h[cx] || 0;
+  return Math.round(n * 100) / 100;
 }
 
 // A few birds, strung out rather than in a formation: same heading, each a

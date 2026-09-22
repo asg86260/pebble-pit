@@ -52,6 +52,12 @@ export const CLOUD_FADE_FAR = 0.45;
 // goes back down. Few, deliberately -- this is a cloud's edge softening, not
 // a gradient, and the sky is still a handful of flat tones.
 export const CLOUD_EDGE_STEPS = 3;
+// How long a front's own cloud takes to come up out of nothing where it is
+// born, in seconds of its own age rather than of the sky's swell: the front
+// adds its clouds as the swell climbs, so a late one drawn at the swell it was
+// born into is a cloud appearing whole in the middle of the sky. Slower than
+// the eye looks for the next thing, quicker than the brew.
+export const CLOUD_BLOOM_S = 9;
 // A front's own clouds go further: as the front lets go of them they thin from
 // the bottom a cell at a time and climb as they thin, paling toward the page,
 // on the swell's own fall -- so they are gone exactly when the sky has settled
