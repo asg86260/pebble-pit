@@ -26,22 +26,19 @@ export const CLOUD_LAYERS = [
   { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
   { name: 'near', far: 0.40, scale: 0.85, flat: 1.0, cell: 1.5, n: 2 }
 ];
-// Every cloud's base sits in this one lane of the band, nought at the top to
-// one at the bottom, whichever sheet it is in: cumulus forms at the height the
-// air gives it and they all sit on that, so a sheet is told apart by size,
-// grain and paleness and never by height. Narrow, but not a line -- bases
-// exactly level read as a shelf.
-export const CLOUD_LANE = [0.28, 0.46];
+// Every cloud's base sits this many cells below the top of the band, whichever
+// sheet it is in: cumulus forms at the height the air gives it and they all
+// sit on that, so a sheet is told apart by size, grain and paleness and never
+// by height. In cells, not a share of the sky, so the height a cloud sits at
+// does not move when the window is resized. Narrow, but not a line -- bases
+// exactly level read as a shelf. High: the sky over the works is mostly empty
+// and the clouds belong near the top of it.
+export const CLOUD_LANE = [4, 13];
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
 // side of its sheet's `far`, so two in a sheet still slide past each other
 // and the one in front is the one drawn last
 export const CLOUD_FAR_JITTER = 0.03;
-// how far above the ground line the lowest cloud's base can sit: the bottom
-// of the sky. Well clear of the works -- the far sheet reads as distance
-// because it is small, pale and fine-grained, not because it is low, and
-// clouds hanging down near the roofs read as fog in the yard
-export const CLOUD_FLOOR = P * 20;
 // The air between you and a cloud: its tones are mixed this far toward the
 // page's white at the farthest depth, nothing at the nearest, straight off its
 // `far` -- so the far sheet is a pale slip with its shades pressed together,

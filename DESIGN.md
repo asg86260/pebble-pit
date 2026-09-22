@@ -12427,12 +12427,21 @@ not tuned a sheet at a time:
   another between pixels and there is no hairline of page through a cloud.
   Cells are joined along rows, not up columns, for the same reason.
 Height is deliberately *not* one of them. Every cloud's base sits in the one
-lane (`CLOUD_LANE`), whichever sheet it is in: cumulus forms at the height the
+lane (`CLOUD_LANE`), a few cells under the top of the band, whichever sheet it
+is in: cumulus forms at the height the
 air gives it and they all sit on that, so a sky reads as one sky. Perspective
 says a far cloud should sink toward the horizon, and it was built that way
 first -- at this scale it read as a cloud that had come down rather than one
 that was far away. A cloud is never placed so high that its dry crown is off
 the top of the window, since a tall cloud cut flat at the top is a slab.
+
+The lane is measured in cells down from the top of the band, not as a share of
+the sky between the window's top and the ground. A share slides every cloud up
+and down as the window is resized, and how high clouds sit has nothing to do
+with how tall the window is. The strip they wrap around is the window's width,
+so a resize moves both its ends: a cloud outside it is wound back in with one
+modulo rather than shifted a strip a frame, which was the sky thrashing while
+a window was dragged.
 
 ### A cloud is a spine and puffs
 

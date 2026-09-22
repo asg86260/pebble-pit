@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANE, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANE, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -55,20 +55,22 @@ function inBand() {
 // place would strand above or below it once the view moved (and the clouds are
 // the sky now, so a stranded cloud is a missing sky). `yb` is its lane in the
 // band, nought at the top to one at the bottom.
-// The clouds' band runs deeper than the birds': down to CLOUD_FLOOR above the
-// ground line, behind the works, so the far sheet can sit low toward the
-// horizon and the sky has a bottom as well as a top. The birds keep the
-// shallow band, since a bird is a click and a click behind a stack is lost.
+// A cloud's base, measured down from the top of the window rather than as a
+// share of anything: a share of a band whose bottom is the ground line slides
+// every cloud up and down the sky as the window is resized, and the height
+// clouds sit at has nothing to do with how tall the window is. `yb` is that
+// depth, in world pixels, picked once at birth. Never so high that its crown
+// is off the top of the window, though -- a near cloud is tall, and a tall
+// cloud cut flat at the top is a slab.
 function cloudBand() {
-  const { top } = band();
-  return { top, low: Math.max(top + P * 12, S.groundY - CLOUD_FLOOR) };
+  const top = S.camY + CLOUD_TOP * P;
+  let low = top + CLOUD_LANE[1] * P;
+  for (const c of CLOUDS) low = Math.max(low, top + (c.tall + 1) * cellOf(c));
+  return { top, low };
 }
-// ...but never so high that its crown is off the top of the window on a dry
-// day: a near cloud is tall, and a tall cloud cut flat at the top is a slab.
 function cloudY(c) {
-  const { top, low } = cloudBand();
-  const fit = top + (c.tall + 1) * cellOf(c);
-  return Math.max(fit, top + (c.yb ?? 0.5) * (low - top));
+  const top = S.camY + CLOUD_TOP * P;
+  return top + Math.max(c.yb ?? 0, (c.tall + 1) * cellOf(c));
 }
 
 // --- the front ---------------------------------------------------------------
@@ -216,7 +218,7 @@ function makeCloud(x, sheet, storm = false) {
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
-  const yb = between(CLOUD_LANE);
+  const yb = between(CLOUD_LANE) * P;   // its base, in pixels below the band's top
   const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
               give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, melt: 0 };
   // its height on a dry day, in its own cells, for keeping its crown in view
@@ -340,9 +342,16 @@ export function stepWeather(now) {
     // crosses an edge well outside the window, so nobody sees it go; melting
     // it there would let a jump of the camera strand one dissolving in the
     // middle of the sky for no reason anybody could see.
-    const at = acrossView(c);
-    if (at > S.viewW + P * 8) c.x -= wide;
-    else if (at < -c.w * cellOf(c) - P * 8) c.x += wide;
+    //
+    // Wound back into the strip in one step rather than shifted by a strip's
+    // width: the strip is the window's own width, so resizing the window moves
+    // both ends of it, and a cloud several strips outside it took a frame a
+    // strip to come back -- which is the sky thrashing while a window is
+    // dragged.
+    const at = acrossView(c), from = -c.w * cellOf(c) - P * 8;
+    if (at > S.viewW + P * 8 || at < from) {
+      c.x = from + (((at - from) % wide) + wide) % wide + S.camX * c.far;
+    }
   }
 
   if (!nextBirds) nextBirds = now + BIRD_GAP / 2;
