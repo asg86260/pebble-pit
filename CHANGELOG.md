@@ -13,7 +13,7 @@ feature lives in DESIGN.md.
 
 **New this release**
 - Haulers tip their loads up onto the belt at its tail once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
-- The belt ends in a little ramp that flicks its load up and out over the hole in a fan, the front of the heap sloping down to it, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
+- The belt ends in a ramp the band runs up, carrying its load to the lip and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
 - The books and the crew list open in a window in the middle of the screen instead of a popover taller than the window: the books' four sheets side by side, the crew a card a body; it stays until you close it, and the yard keeps running underneath (src/selftest/house.js).
 - Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).

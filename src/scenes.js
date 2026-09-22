@@ -308,6 +308,14 @@ export const SCENES = {
     run: () => { rich(); lip(); window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish(); window.__jump(30);
                  window.__meteor(); window.__give(60000); window.__buy('rift');
                  window.__fast(12); window.__look(st().pitX - 400); } },
+  // The head's ramp itself, lightly loaded, so the steps and the band's marks
+  // running up them are not buried under the pour.
+  beltramp: { about: 'the crew', say: "the belt head's ramp, a light load going up it",
+    run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
+                 window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
+                 window.__jump(4); window.__fast(12); window.__clearFloor(); window.__fast(3);
+                 window.__look(st().pitX - 400); } },
   // Both marks want a station whose pile has filled and which has something
   // to sell, so the yard runs a while with nobody to carry anything away.
   marks: { about: 'the crew', say: 'the stopped triangle and the offer diamond',

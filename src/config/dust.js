@@ -42,11 +42,11 @@ export const WOBBLE_BEAT = 11;     // radians a second -- unsteady, not a shiver
 
 // --- off the belt's head ----------------------------------------------------------
 // The head ends in a ramp, a staircase of cells climbing a cell a cell out over
-// the hole, and the load goes up it and off: every grain leaves on the ramp's
-// own slope, as much up as along. The top of the load goes furthest, the
+// the hole, and the band runs up it and flicks the load off the top: every
+// grain leaves on the ramp's own slope, as much up as along. The top of the load goes furthest, the
 // bottom shortest, so a column comes off as a fan rather than a slab. Throws
 // are shares of the band's speed.
-export const BELT_RAMP = 3;         // cells long, and a cell less than that high
+export const BELT_RAMP = 5;         // cells long, and a cell less than that high
 export let BELT_THROW_LOW = 0.6;   // what the grain on the band itself leaves with
 export let BELT_THROW_TOP = 1.2;   // what the top of the load leaves with
 export let BELT_SCATTER = 0.18;    // and each grain's own give either side of its row's

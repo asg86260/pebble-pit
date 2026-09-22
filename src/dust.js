@@ -3,7 +3,7 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, WORKER, BELT_THROW_LOW, BELT_THROW_TOP, BELT_SCATTER } from './config.js';
+import { P, GRAV, WORKER, BELT_RAMP, BELT_THROW_LOW, BELT_THROW_TOP, BELT_SCATTER } from './config.js';
 import { makePainter } from './painter.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit, band } from './state.js';
@@ -104,6 +104,12 @@ export const beltTo = () => Math.round((pit.x + P * 4) / P) * P;
 export const beltReach = () => Math.round((pit.x - P * 2) / P) * P;
 export const beltPost = () => beltReach() - WORKER - P;
 export const beltY = () => S.groundY - P * 5;
+// The ramp the head ends in: `BELT_RAMP` cells out from the head, a cell up
+// for a cell out, the band running up it to the lip it flicks its load off.
+// `rampTop` is the top of the step under x, the band's own height short of
+// the head.
+export const rampLip = () => beltTo() + BELT_RAMP * P;
+export const rampTop = x => beltY() - Math.max(0, Math.min(BELT_RAMP - 1, Math.floor((x - beltTo()) / P))) * P;
 
 // How fast the band runs, in world pixels a frame at sixty.
 export const BELT_PACE = P * 0.9;
@@ -231,11 +237,13 @@ export function emptyBelt() {
   if (band.grid) { fillFlat(band, 0); measureHigh(); }
 }
 
-// A save's grains, `[x, shade]`, back onto the machine: into the strip at
-// each one's column while the strip is wired, or -- before the world is laid
-// out -- as lifts at the band's height, which the first frame puts in.
+// A save's grains, `[x, shade]`, back onto the machine: one past the head on
+// the ramp where it was, the rest into the strip at each one's column while
+// the strip is wired, or -- before the world is laid out -- as lifts at the
+// band's height, which the first frame puts in.
 export function fillBelt(grains) {
   for (const [x, sh] of grains) {
+    if (band.grid && x >= beltTo()) { S.belt.push({ x, y: rampTop(x + P - 1) - P, s: sh || 1 }); continue; }
     if (band.grid && addGrain(band, x, null, sh || 1)) continue;
     S.belt.push({ x, y: bandY(), s: sh || 1 });
   }
@@ -322,9 +330,22 @@ export function catchBelt(ch, now, f) {
 export function stepBelt(now, f) {
   if (!band.grid) return;
   if (!beltRunning(now)) return;
-  // The lifts: up to the surface of the column each is under, and in.
+  // The lifts: up to the surface of the column each is under, and in. And
+  // the riders on the ramp: up it, and off the lip.
+  const head = beltTo(), lip = rampLip();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
+    if (b.x >= head) {
+      b.x += BELT_PACE * f;
+      // Carried at the height it came off the load until the ramp rises
+      // under it, and then up the steps: a step is climbed when the grain's
+      // front meets it, or the grain stands half inside the step ahead.
+      b.y = Math.min(b.y, rampTop(b.x + P - 1) - P);
+      if (b.x < lip) continue;
+      S.belt.splice(i, 1);
+      flick(b.x, b.y, b.k ?? rand(), b.s);
+      continue;
+    }
     const c = Math.max(0, Math.min(band.cols - 1, colOf(band, b.x)));
     const d = highY(c) - b.y;
     if (Math.abs(d) > BELT_LIFT * f) {
@@ -346,17 +367,17 @@ export function stepBelt(now, f) {
   //
   spillFront();
   // It has run a cell: every column a cell toward the head, and the last
-  // column off the end, out over the mouth, dropping with the band's speed
-  // for the chip loop to put in the hole like everything else.
+  // column off the end on to the ramp, to ride up it and be flicked into
+  // the hole.
   S.beltRun = (S.beltRun || 0) + BELT_PACE * f;
   while (S.beltRun >= P) {
     S.beltRun -= P;
     if (!grainsIn(band)) { S.beltRun = 0; break; }
-    const head = band.x + band.cols * P, last = band.cols - 1;
+    const last = band.cols - 1;
     const tall = Math.max(1, highOf(last));
     for (let r = 0; r < band.rows; r++) {
       const v = at(band, last, r);
-      if (v) tipOff(head, r, (r + 1) / tall, v);
+      if (v) ride(r, (r + 1) / tall, v);
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;
@@ -367,24 +388,29 @@ export function stepBelt(now, f) {
   }
 }
 
-// A grain off the front of the load, from where it sat, somewhere across its
-// cell rather than all on one x, and up the head's ramp: as much up as along,
-// the ramp's slope (`BELT_RAMP`, drawn in render/machines.js). Fanned by
-// `share`, how high in its column it stood: every grain leaving on the one
-// speed falls as the column did, a slab hanging off the head.
-function tipOff(x, r, share, v) {
-  const s = BELT_THROW_LOW + (BELT_THROW_TOP - BELT_THROW_LOW) * share;
+// A grain off the head column on to the ramp, from the row it sat in and
+// somewhere across the first step rather than all on one x. `k` is how high
+// in its column it stood, which is how far it is thrown off the lip.
+function ride(r, k, v) {
+  S.belt.push({ x: beltTo() + rand() * P, y: bottomY(band) - (r + 1) * P, s: v, k });
+}
+
+// Off the lip and into the air, on the ramp's slope: as much up as along.
+// Fanned by `k`: every grain leaving on the one speed falls as the column
+// did, a slab hanging off the head, and the top of the load goes furthest.
+function flick(x, y, k, v) {
+  const s = BELT_THROW_LOW + (BELT_THROW_TOP - BELT_THROW_LOW) * k;
   const vx = Math.max(0, BELT_PACE * (s + bell() * BELT_SCATTER));
-  spawnChip(x + rand() * P, bottomY(band) - (r + 1) * P, vx, -vx * (0.85 + 0.3 * rand()), v);
+  spawnChip(x, y, vx, -vx * (0.85 + 0.3 * rand()), v);
 }
 
 // The head is a drop, so the load's front stands at the slope it rests at
 // down to it, as a heap does at the end of its strip: a column may stand
 // `REPOSE_DROP` rows a cell back from the edge, and the top grain of one
-// standing over that tumbles forward off it. Carried to the head at full
-// height instead, the load met the air as a wall, and the fall began on a
-// ruled line one cell past it. A grain a column a frame, so the front
-// trickles over rather than shearing off in lumps.
+// standing over that slides a cell forward, off the last on to the ramp.
+// Carried to the head at full height instead, the load met the ramp as a
+// wall. A grain a column a frame, so the front trickles over rather than
+// shearing off in lumps.
 function spillFront() {
   const last = band.cols - 1;
   for (let c = last; c >= 0; c--) {
@@ -394,7 +420,8 @@ function spillFront() {
     if (h <= may) continue;
     const v = at(band, c, h - 1);
     put(band, c, h - 1, 0);
-    tipOff(band.x + c * P, h - 1, 1, v);
+    if (c === last) ride(h - 1, 1, v);
+    else put(band, c + 1, highOf(c + 1), v);
   }
 }
 
