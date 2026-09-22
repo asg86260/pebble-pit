@@ -12794,6 +12794,92 @@ The mast is measured off the dial as before, which now hangs off the shed's
 wall (`dialEnd` in balloon.js). Scenes `filterclean`, `filterhalf`,
 `filterclog`, `filtersieve`, `moored`.
 
+## The balloons ride the clouds (design, not built)
+
+The balloons patrol the whole width of the world at one height, turning hard
+at each end, and a rider stepping off sends the craft up out of the window to
+reappear at a mast they all share. Asked to look again at how they behave in
+the sky, the player picked this: **a balloon lives among the clouds, in their
+parallax, and travels from cloud to cloud between the sheets.**
+
+The cloud threads were cut because they joined a thing in the yard to a thing
+in a sheet, and the two slide apart whenever the view scrolls. A balloon that
+is itself in the sky has no such seam: it moves with the clouds it is working,
+at their depth, and scrolls the way they do.
+
+### A row of moorings, like the pots
+
+Each balloon has its own post in a row to the right of the filter's dial,
+rather than all of them sharing one mast and stacking. The row is part of the
+filter's footprint, reserved for the whole ladder of craft
+(`BALLOON_RUNGS`) the way the apothecary reserves room for every pot it can
+have, so buying a balloon never moves the buildings. `FILTER_W` grows to
+take the dial and the row; today the dial already stands out past the
+footprint, and a neighbor could crowd it.
+
+### Riders walk straight to their own post
+
+Today every filter worker commutes to the filter's door at `COMMUTE_PACE` and
+only then does a rider walk on to the mast, at `FARM_WALK`, about a quarter of
+the pace. The commute (`seatX` in crew/commute.js) sends a body whose berth
+is a craft straight to that craft's post, at the commute's own pace.
+
+### The flight
+
+A crewed balloon rises off its post and goes up into the sky. There it is in
+the clouds' own space: an `x` in sky coordinates and a depth (`far`), drawn
+where the clouds are drawn (`skyAt`), scaled and faded by its depth the way a
+cloud of that sheet is. It picks a cloud, from any sheet, and travels to it,
+easing its depth toward that cloud's sheet as it goes, so it moves visibly
+nearer or farther. It hangs under the cloud for a while, drawing the haze in
+(the cells from "The balloons draw the haze in", now pulled out of that
+cloud), and the cloud pales while it does. Then it picks another.
+
+Rising off the post and coming back down to it, the depth eases between the
+yard's (`far` of one: world coordinates) and the sheet's. That is the one
+stretch where the craft's drawn position depends on the view, as a cloud's
+does, and it is picture only (below).
+
+### What does not depend on the view
+
+Where a balloon is in the sky, and which cloud it is at, are pictures: the
+clouds are drawn with the camera, and a balloon going up off a post has to
+land somewhere in sky coordinates that depends on where the camera was.
+Nothing the yard does may hang off them. So the craft's work is a clock of
+its own, the same whatever the view:
+
+- **The pull** is the fan's, out of the sky's one count, for as long as the
+  craft is up, whichever cloud it is at or travelling to (as now).
+- **The catch is carried home.** Dropped from the sky, a load would land on a
+  column that depended on the view. Instead a balloon fills as it pulls
+  (`BALLOON_LOAD`, in motes), and when it is full it comes back down to its
+  post and throws the load onto the filter's heap from there, on the same arc
+  as the spout, dust as well once the recycler is fitted. So the balloons add
+  to the heap the crew already shovel, and a full heap stops them as it stops
+  the filter.
+- **The trips are timed, not flown.** Up to the sky and back down to the post
+  take a fixed time each (`BALLOON_CLIMB_S`); where the craft is drawn along
+  the way is worked out from that time, never the other way round.
+- **The rider** is out of the yard while aloft (as now), and stands at the
+  post as far as the yard is concerned; it is drawn in the basket.
+
+`test/balloon.test.mjs` keeps the check that the pull does not depend on the
+view, and gains one that the catch comes down at the post, onto the heap.
+
+### What goes
+
+The patrol across the world, the lanes, the bob and wind pace along a lane,
+the flight up out of the window and the reappearance at the mast, and the drop
+under the basket. The umbrella stays: a rider taken off the job mid-sky still
+steps out under one.
+
+### What it costs
+
+The craft save its state and its clock (`craft` in the save gains a phase, a
+time in it and the load it carries); where it is in the sky is not saved, and
+comes back wherever the picture puts it. The clouds are not saved either, so a
+reload finds each craft a new cloud.
+
 ## The balloons draw the haze in (built 2026-09-22)
 
 The cloud threads (below) were cut. The clouds scroll slower than the ground,

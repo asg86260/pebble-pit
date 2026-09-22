@@ -1,5 +1,15 @@
 # Still to do
 
+## The balloons ride the clouds -- DESIGNED, awaiting sign-off (2026-09-22)
+
+"The balloons ride the clouds" in DESIGN.md. A row of moorings beside the
+dial, like the pots, inside a wider filter footprint; riders commute straight
+to their own post. Aloft, a balloon lives in the clouds' parallax and travels
+from cloud to cloud between the sheets, drawing each in. Because where it is
+in the sky depends on the view, its work is a clock of its own: the pull is
+the fan's as now, the catch is carried home to the post and thrown on the
+filter's heap, and the trips up and down take a fixed time.
+
 ## The balloons draw the haze in -- BUILT (2026-09-22)
 
 "The balloons draw the haze in" in DESIGN.md. The cloud threads are cut: tied
