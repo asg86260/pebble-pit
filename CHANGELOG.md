@@ -28,6 +28,9 @@ feature lives in DESIGN.md.
 - The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
 
 - The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
+- The clouds sit higher in the sky; the far ones no longer hang down among the roofs (src/scenes.js `rock`, `yard`).
+- No cloud blinks out any more: one on its way out thins from the bottom a cell at a time, rising and paling as it goes (src/scenes.js `cloudsettle`).
+- A machine's smoke hangs a little longer off the stack before it thins away (src/scenes.js `yard`).
 - The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").
 - A working machine's smoke is the brown puffs off its stack and nothing else; the fringed specks that climbed beside them and the black wisps on their own timer are gone, and the dirt shows in the clouds (test/machines.test.mjs, "smoke rises and goes out, and does not pile up").
 - The water and the acid come down as one sheet across the whole window, not the water in patches under the clouds and the acid everywhere (src/scenes.js `acidrain`; test/weather.test.mjs, "it rains on a clean yard").

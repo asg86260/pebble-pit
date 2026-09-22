@@ -43,7 +43,7 @@ export let MACHINE_FOUL = 0.4;
 // as most of a chimney's does, while the motes are what lingers. Only on a
 // beat: a stack over an idle machine puts up nothing.
 export let STACK_PUFFS = 3;
-export const STACK_LIFE_S = 2.2;
+export const STACK_LIFE_S = 3.2;
 export const STACK_RISE = 0.7;      // pixels a frame it climbs, easing off
 export const STACK_SCATTER = 0.5;   // sideways throw either way, pixels a frame
 // How the ram gets about: a slow crawl forward as the face retreats, and a

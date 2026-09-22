@@ -8,7 +8,7 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FLOOR, CLOUD_FADE_FAR, CLOUD_MELT_S, CLOUD_DAWN_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
@@ -118,8 +118,8 @@ const fadeAt = far => CLOUD_FADE_FAR * (1 - (far - FAR_MIN) / (FAR_MAX - FAR_MIN
 // two part colors, every step then faded toward the page by the cloud's depth
 // -- the air takes the same share off every tone, so a far cloud's shades are
 // pressed together as well as paler. A dozen strings a frame, no more.
-function cloudTones(crown, base, far) {
-  const fade = fadeAt(far), out = [];
+function cloudTones(crown, base, far, off = 0) {
+  const fade = Math.min(1, fadeAt(far) + off * (1 - fadeAt(far))), out = [];
   for (let k = 0; k < CLOUD_TONES; k++) {
     let col = mix(crown, base, k / (CLOUD_TONES - 1));
     if (fade > 0) col = mix(col, PAGE, fade);
@@ -180,7 +180,7 @@ function makeCloud(x, sheet, storm = false) {
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = L.lane[0] + rand() * (L.lane[1] - L.lane[0]);
   const c = { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
-              give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0 };
+              give: 0.7 + (off + 1) / 2 * 0.6, storm, tall: 0, dawn: 0, melt: 0 };
   // its height on a dry day, in its own cells, for keeping its crown in view
   const { lo, hi, h } = columnsOf(c, 0);
   for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > c.tall) c.tall = h[cx];
@@ -190,8 +190,16 @@ function makeCloud(x, sheet, storm = false) {
 // a cloud's cell in world pixels: its sheet's
 const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
 
-// how many of a sheet's clouds are in the sky
-const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm), 0);
+// A cloud on its way out, which is every cloud in the end: nothing in the sky
+// blinks off. It thins from the bottom a cell at a time and climbs as it goes,
+// paling toward the page, the way a cloud actually breaks up -- over
+// CLOUD_MELT_S. A melting cloud no longer counts toward its sheet, so its
+// replacement drifts in while it is still going.
+const melting = c => c.melt > 0;
+const fade = c => Math.min(1, c.melt) * 0.9 + (1 - Math.min(1, c.dawn)) * 0.9;
+
+// how many of a sheet's clouds are in the sky, not counting the ones going
+const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
 
 // The columns a cloud is drawn as this frame: for each column across it, how
 // many cells stand above the base line, and how many of the lowest are the
@@ -274,17 +282,30 @@ export function stepWeather(now) {
     CLOUDS.push(c);
     storms++;
   }
-  if (sw <= 0) for (let i = CLOUDS.length - 1; i >= 0; i--) if (CLOUDS[i].storm) CLOUDS.splice(i, 1);
   // Pixels a frame, stepped by how long the frame was, or the sky slows down
   // on a slow machine while the clock behind it does not.
   const f = frames();
   // a swelled cloud leans with the wind the rain under it leans with
   const lean = gust() * CLOUD_LEAN * sw;
-  for (const c of CLOUDS) {
+  const secs = f / 60;
+  // the front has peaked and is letting go: neither brewing nor pouring
+  const letting = !S.raining && S.stormFor < 0;
+  for (let i = CLOUDS.length - 1; i >= 0; i--) {
+    const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
+    if (c.dawn < 1) c.dawn = Math.min(1, c.dawn + secs / CLOUD_DAWN_S);
+    // A cloud melts once it is on its way out. One the front brought breaks up
+    // as the front lets go of it -- its melt is the swell's own fall, so it is
+    // gone exactly when the sky has settled, rather than hanging on after it.
+    // Any other goes by the clock once it is off the end of the strip.
     const at = acrossView(c);
-    if (at > S.viewW + P * 8) c.x -= wide;     // out the right, back in the left
-    else if (at < -c.w * cellOf(c) - P * 8) c.x += wide;
+    if (c.storm && letting) c.melt = Math.max(c.melt, 1 - sw);
+    else if (at > S.viewW + P * 8) c.melt = Math.max(c.melt, 1e-6) + secs / CLOUD_MELT_S;
+    if (melting(c)) {
+      if (c.melt >= 1) CLOUDS.splice(i, 1);
+    } else if (at < -c.w * cellOf(c) - P * 8) {
+      c.x += wide;                             // in off the left again, still whole
+    }
   }
 
   if (!nextBirds) nextBirds = now + BIRD_GAP / 2;
@@ -322,6 +343,7 @@ export function skyReport() {
     drifts: CLOUDS.every(c => c.vx > 0),
     fars: CLOUDS.map(c => +c.far.toFixed(2)),
     sheets: CLOUD_LAYERS.map((L, i) => inSheet(i, false)),
+    melting: CLOUDS.filter(melting).length,
     // the front: how far the sky is swelled, and how many cells of cloud
     // are drawn, so a check can watch it grow a cell at a time
     swell: +swell().toFixed(3),
@@ -458,25 +480,28 @@ export function drawClouds() {
   const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
   for (const c of order) {
-    const tones = cloudTones(crown, base, c.far);
+    const tones = cloudTones(crown, base, c.far, fade(c));
     const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
     const x = skyAt(c), y = cloudY(c);
     const { lo, hi, h, under: u } = columnsOf(c, sw);
     let peak = 0;
     for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];
     const cap = Math.min(peak, Math.floor((y - top) / cp));   // clipped at the window's top
+    // What a melting cloud has lost off its bottom, in whole cells; it is
+    // drawn that far up as well, so it climbs as it thins.
+    const eaten = Math.floor(c.melt * (peak + 1));
     // Row by row from the base up, runs of one tone as one rect: cells
     // joined along the row rather than up the column, or every column's
     // edge is a seam once the zoom puts it between device pixels.
-    for (let r = 0; r < cap; r++) {
+    for (let r = eaten; r < cap; r++) {
       let from = lo, tone = -1;
       for (let cx = lo; cx <= hi + 1; cx++) {
         const t = cx <= hi && (h[cx] || 0) > r ? cellTone(h, peak, cx, r, u) : -1;
         if (t === tone) continue;
         if (tone >= 0) {
-          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1) * cp);
+          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1 + eaten) * cp);
           ctx.fillStyle = tones[tone];
-          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - r * cp) - y0);
+          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - (r + eaten) * cp) - y0);
         }
         tone = t; from = cx;
       }

@@ -12408,6 +12408,16 @@ cloud made a sky of the same cloud over and over. Circle crowns are rounded to
 the grid, not raised, so a puff's top spans a few cells rather than coming to
 a point.
 
+### Nothing in the sky blinks off
+
+A cloud on its way out thins from the bottom a cell at a time and climbs as it
+thins, paling toward the page, so it breaks up rather than vanishing. One the
+front brought melts on the swell's own fall, so the front's clouds are gone
+exactly when the sky has settled and not a moment after; any other melts by
+the clock (`CLOUD_MELT_S`) once it is off the end of the strip, and a new one
+comes up out of nothing over `CLOUD_DAWN_S`. The same rule as the yard's:
+nothing appears where it is wanted and nothing pops out.
+
 ### Shaded like the boulder
 
 A cloud is lit from above and shaded in steps between `CLOUD_TONE` and

@@ -42,9 +42,11 @@ export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // side of its sheet's `far`, so two in a sheet still slide past each other
 // and the one in front is the one drawn last
 export const CLOUD_FAR_JITTER = 0.03;
-// how far above the ground line the lowest cloud's base can sit: the bottom of
-// the sky, behind the works, where the far sheet's slips lie along the horizon
-export const CLOUD_FLOOR = P * 16;
+// how far above the ground line the lowest cloud's base can sit: the bottom
+// of the sky. Well clear of the works -- the far sheet reads as distance
+// because it is small, pale and fine-grained, not because it is low, and
+// clouds hanging down near the roofs read as fog in the yard
+export const CLOUD_FLOOR = P * 46;
 // The air between you and a cloud: its tones are mixed this far toward the
 // page's white at the farthest depth, nothing at the nearest, straight off its
 // `far` -- so the far sheet is a pale slip with its shades pressed together,
@@ -52,6 +54,14 @@ export const CLOUD_FLOOR = P * 16;
 // picture can have, and it takes the same share off dirt and weather, so a far
 // cloud on a dirty day is a paler brown, not a cleaner one.
 export const CLOUD_FADE_FAR = 0.45;
+// Nothing in the sky blinks off. A cloud on its way out -- off the end of the
+// strip, or one a passing front brought -- thins from the bottom a cell at a
+// time and climbs as it thins, paling toward the page, over CLOUD_MELT_S; a
+// new one comes up out of nothing over CLOUD_DAWN_S. Slow, both of them: a
+// cloud breaking up is the slowest thing in the picture, and a melt you can
+// catch happening reads as a fault.
+export const CLOUD_MELT_S = 22;
+export const CLOUD_DAWN_S = 14;
 // A cloud is shaded like the boulder, in steps between CLOUD_TONE and
 // CLOUD_UNDER: lit, body, shade, and the underside. It is lit from above: a
 // cell's depth is how far below the nearest bit of the top outline it sits
