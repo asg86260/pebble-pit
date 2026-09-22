@@ -12618,6 +12618,13 @@ rain keeps its own clock still holds for rain: the zones say how dirty the
 air is, not when it will rain. Red here is not a spark's red; the player
 chose the standard gauge over a palette that avoids it.
 
+**The gauge says what it reads when you hover it** (`dialRect`, `dialZone`,
+`askedAbout` in input.js): the band the needle is in and how full the sky is,
+the yard's fouling and the filter's filtering a minute (the board's own
+`airReadout`), and whether the sky is filling, clearing or holding. The band
+is read off the needle's own line of cells, so the words and the picture
+cannot disagree.
+
 **The spout throws onto a pile.** A two-cell stub low on the near wall
 (`FILTER_PORT`, `FILTER_SPOUT`) throws each load on the yard's own arc
 (`aim` in dust.js, `GRAV`) onto the filter's heap strip, near the building

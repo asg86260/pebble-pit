@@ -1,6 +1,6 @@
 // The sky: the air filter and the reading that is not a button.
 
-import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy } from './kit.js';
+import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy, sleep, point, onScreen, hoverAway } from './kit.js';
 
 export const TESTS = [
   // The problem, then the cure: the rain has to have come down on you once,
@@ -90,6 +90,36 @@ export const TESTS = [
       ok(!buy || getComputedStyle(buy).cursor === 'pointer',
          'while a real row on the same board still offers itself',
          buy && getComputedStyle(buy).cursor)
+    ];
+  }],
+
+  // The gauge says what it reads when you look at it: the band the needle is
+  // in and how full the sky is, the two rates, and which way it is going.
+  ["the air filter's gauge says what it reads when you hover it", async () => {
+    newRun();
+    await settle();
+    window.__crew(0, 0);
+    window.__air({ open: true, haze: state().smog.cap, purifiers: 1 });
+    run(8);
+    const tip = document.getElementById('tip');
+    const hover = async (wx, wy) => {
+      window.__look(wx - 380);
+      await sleep(60);
+      const [x, y] = onScreen(wx, wy);
+      point('pointermove', x, y, 0);
+      await sleep(140);
+      return tip.hidden ? null : tip.textContent;
+    };
+    const r = window.__dialRect();
+    const on = await hover(r.x + r.w / 2, r.y + r.h / 2);
+    const off = await hover(r.x + r.w / 2, r.y - r.h * 3);
+    await hoverAway();
+    return [
+      ok(on && /air: filthy/i.test(on), 'a brim sky reads filthy on the gauge', String(on)),
+      ok(on && /% of the brim/i.test(on) && /fouling \d+ a min, filtering \d+ a min/i.test(on),
+         'with how full it is and both rates', String(on)),
+      ok(on && /the sky is (filling|clearing|holding)/i.test(on), 'and which way it is going', String(on)),
+      ok(!off || !/air:/i.test(off), 'and only over the gauge', String(off))
     ];
   }],
 ];

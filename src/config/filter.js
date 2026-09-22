@@ -69,6 +69,7 @@ export const DIAL_CELLS = 7;          // across the gauge's face and ring
 // The ring in three bands along its sweep, clean to brim: how bad the air is,
 // read at a glance before the needle is.
 export const DIAL_ZONES = ['#3aa655', '#e2c12b', '#d23b2e'];
+export const DIAL_ZONE_NAMES = ['clean', 'dirty', 'filthy'];   // what its hover calls each band
 export const DIAL_STUB = 1;           // and the stub it hangs on, out of the wall
 export const DIAL_EASE = 1.5;         // share of the way to the reading it closes a second
 export const DIAL_GIVE = 0.6;         // steps past its own the reading must be before it moves

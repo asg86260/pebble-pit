@@ -11,7 +11,8 @@ import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
-import { stirSmoke } from './smog.js';
+import { stirSmoke, airReadout } from './smog.js';
+import { dialRect, dialZone } from './render/filter.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
@@ -481,6 +482,19 @@ function askedAbout(x, y, cx, cy) {
   }
   // A board over the same spot has nothing to add to.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
+  // The air filter's gauge: what it is reading, in words and numbers, and
+  // which way the sky is going -- the board's own reading, where you are
+  // looking at the needle.
+  if (inRect(dialRect(), x, y)) {
+    const r = dialRect(), a = airReadout();
+    const way = a.fouling > a.filtering ? 'filling' : a.filtering > a.fouling ? 'clearing' : 'holding';
+    showTip(`air: ${dialZone()}, ${Math.round(a.share * 100)}% of the brim
+` +
+            `fouling ${Math.round(a.fouling)} a min, filtering ${Math.round(a.filtering)} a min
+` +
+            `the sky is ${way}`, { x: r.x + r.w / 2, y: r.y + r.h });
+    return true;
+  }
   // The counter says what it counts: nothing else names the coin.
   if (overCount(cx, cy)) {
     const r = countRect();
@@ -510,6 +524,7 @@ const CURSORS = [
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
+  [(x, y) => inRect(dialRect(), x, y), 'help'],
   [(x, y) => overBird(x, y), 'pointer']
 ];
 

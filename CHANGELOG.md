@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- Hovering the air filter's gauge says what it reads: clean, dirty or filthy and how full the sky is, how fast the yard is fouling it and the filter clearing it, and which way it is going (src/selftest/sky.js).
 - The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
 - The income books are a running record of what came in, averaged over a window you pick -- half a minute, one, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
 - A working balloon now pulls its catch out of a cloud: a thread of cells runs down from the nearest cloud above it, and that cloud pales while it is being drawn from; the balloons fly under the clouds and moor clear of the air filter's dial (src/scenes.js `balloon`, `balloonpan`, `moored`; test/balloon.test.mjs).

@@ -9,6 +9,7 @@ import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
 import { seatBoard, boardFit, showPanel } from './board.js';
 import { barSpot, pileMarkAt } from './render.js';
+import { dialRect } from './render/filter.js';
 import { siteBox } from './works.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
@@ -27,6 +28,7 @@ Object.assign(window, {
 window.__barAt = barSpot;
 window.__siteBox = siteBox;
 window.__pileMarkAt = pileMarkAt;
+window.__dialRect = dialRect;
 
 window.__state = () => ({
   ...snapshot(),

@@ -1,6 +1,6 @@
 // The air filter: a louvered shed, its slats open while somebody is inside.
 
-import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DOOR_H, DOOR_W, FILTER_PORT, FILTER_SLATS,
+import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DIAL_ZONE_NAMES, DOOR_H, DOOR_W, FILTER_PORT, FILTER_SLATS,
          FILTER_SPOUT, FILTER_VENT, FILTER_WALL, HOUSE_CURTAIN, MUCK_TONE, P } from '../config.js';
 import { CLODS } from '../smog.js';
 import { inFilter } from '../filter.js';
@@ -85,6 +85,18 @@ export function drawFilter() {
   }
   });
 }
+
+// The dial's box in the world, for its hover (input.js): the face and ring,
+// where `drawDial` puts them off the far wall.
+export function dialRect() {
+  if (!S.filterOpen) return null;
+  return { x: filter.x + filter.w - P * FILTER_WALL + P * DIAL_STUB, y: filter.y + P * DIAL_ROW,
+           w: P * DIAL_CELLS, h: P * DIAL_CELLS };
+}
+// Which band the needle is in, by name: the same line of cells it is drawn on,
+// so the hover and the picture cannot disagree.
+export const dialZone = () =>
+  DIAL_ZONE_NAMES[Math.min(DIAL_ZONE_NAMES.length - 1, Math.floor(S.dialStep / DIAL_STEPS * DIAL_ZONE_NAMES.length))];
 
 // Where the station's flag stands (render/aura.js): on the cupola's cap, the
 // top of the building.
