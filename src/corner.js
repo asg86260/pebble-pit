@@ -18,26 +18,21 @@ import { showTipAt } from './board.js';
 const row = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
 
-// The glyph is one body at the ink the yard's bodies are at. The note under
-// it says what the switch is, where it stands and what a press does -- the
+// The glyph is one body at the ink the yard's bodies are at, so it shows
+// which way the switch is; the note under it on a hover only names it -- the
 // yard's own note (board.js, `#tip`) rather than the browser's, so it reads
-// like every other note in the game and changes the moment it is pressed.
-const NOTE = {
-  off: 'crew: full ink\nclick to fade the workers,\nso the buildings behind\nthem show through',
-  on: 'crew: faded\nclick to put the workers\nback at full ink',
-};
+// like every other note in the game.
+const NOTE = 'fade workers';
 let noting = false;
 function note() {
   if (!noting) return;
   const r = crew.getBoundingClientRect();
-  showTipAt(NOTE[fadedCrew() ? 'on' : 'off'], r.left + r.width / 2, r.bottom + 6, true);
+  showTipAt(NOTE, r.left + r.width / 2, r.bottom + 6, true);
 }
 function dress() {
-  const on = fadedCrew();
-  crew.dataset.on = on ? '1' : '';
-  crew.setAttribute('aria-label', on ? 'crew faded' : 'crew at full ink');
-  crew.setAttribute('aria-pressed', on ? 'true' : 'false');
-  note();
+  crew.dataset.on = fadedCrew() ? '1' : '';
+  crew.setAttribute('aria-label', NOTE);
+  crew.setAttribute('aria-pressed', fadedCrew() ? 'true' : 'false');
 }
 onTap(crew, () => { setPref('faded', !fadedCrew()); dress(); });
 // A mouse's hover only: a thumb has no hover, and a note left standing after
