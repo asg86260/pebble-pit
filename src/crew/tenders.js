@@ -2,11 +2,11 @@
 // stands there, and steps its stroke.
 
 import { frames, now } from '../clock.js';
-import { MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER, STACK_PUFFS } from '../config.js';
+import { MACHINE_FOUL, MACHINE_CATCHUP_MS, MUCK_SWING, P, SPELL_SWEEP, WORKER, STACK_PUFFS, CLIMB_PACE } from '../config.js';
 import { JOB_MACHINE, MACHINES, UNMANNED, machine, specOf } from '../machines.js';
 import { sfx } from '../audio.js';
 
-import { inWorking, keepTo, stepRoute, ways } from '../route.js';
+import { inWorking, keepTo, stepRoute, ways, climbTo, plant } from '../route.js';
 import { foul, puffStack } from '../smog.js';
 import { S, floor } from '../state.js';
 import { spelled } from '../tower.js';
@@ -71,23 +71,36 @@ export function stepTender(w, now) {
   if (spec.seat) {
     const seat = spec.seat();
     const d = seat.x - w.x;
+    w.resting = false;
     if (Math.abs(d) > WORKER * 2) {                // still catching it up
-      w.y = walkY(w.x + WORKER / 2);
+      w.y = climbTo(w, walkY(w.x + WORKER / 2));
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.resting = false;
       return true;
     }
-    w.x = seat.x;                                  // aboard
-    w.y = seat.y;
     // A seat is a body's height over the ground, and the "nothing floats" rule
     // would read it as standing on air. A stamp rather than a flag, like
-    // `scaleAt`: nothing has to remember to clear it.
+    // `scaleAt`: nothing has to remember to clear it. Stamped for the climb
+    // as well, which holds the body up the side of the machine on purpose.
     w.aboardAt = S.tick;
-    w.resting = false;
+    // Up the side and along the roof at a ladder's pace: the seat is five to
+    // nine cells over the ground, and set there outright the body is on the
+    // roof a frame after it stood beside the machine. Planted, so whatever
+    // takes it off afterwards starts from the roof, not the ground it left.
+    const up = seat.y - w.y;
+    if (Math.abs(d) > 1 || Math.abs(up) > 0.5) {
+      const step = CLIMB_PACE * frames();
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+      plant(w, w.y + Math.sign(up) * Math.min(step, Math.abs(up)));
+      return true;
+    }
+    w.x = seat.x;                                  // aboard, and ridden
+    plant(w, seat.y);
     return true;
   }
 
-  w.y = walkY(w.x + WORKER / 2);
+  // Through the climber, as everywhere: a body handed over off the walk line
+  // (down off a roof, out of a dance) would drop to it in one frame.
+  w.y = climbTo(w, walkY(w.x + WORKER / 2));
   // Beside it, not on top of it.
   const to = (spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P);
   const d = to - w.x;

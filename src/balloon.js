@@ -16,10 +16,11 @@ import { P, WORKER, FARM_WALK, BALLOON_DUST, BALLOON_RATE,
          BALLOON_UNDER, BALLOON_LANE_STEP, BALLOON_CLEAR, BALLOON_EDGE, CLOUD_TOP, CLOUD_LANES,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
          BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE, BALLOON_MAST_GAP,
-         FILTER_WALL, DIAL_CELLS, DIAL_STUB } from './config.js';
+         FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
 import { walkY, yardLeft } from './world.js';
+import { climbTo, plant } from './route.js';
 import { windAt } from './wind.js';
 import { TYPE } from './jobs.js';
 
@@ -70,16 +71,16 @@ export function laneY(i) {
   return Math.min(under, S.groundY - P * BALLOON_CLEAR);
 }
 
-// Where a craft's basket sits this frame: on the ground at the mast when
-// down, at its lane when up, eased between by `lift`.
+// Where the bottom of a craft's basket sits this frame: down at the mast
+// when moored, at its lane when up, eased between by `lift`.
 //
-// **When the craft is moored the basket is on the ground.** Nothing in this
-// yard arrives anywhere it did not walk to, so there is no climb and no
-// lift: the thing came down to be got into.
+// Moored, it hangs off its tether a basket's depth over the walk line, which
+// is a body's height over the ground: a rider climbs the tether into it
+// (`stepRider`) rather than being set in it.
 export function craftY(i) {
   const c = CRAFT[i];
   if (!c) return 0;
-  const down = walkY(c.x) - BALLOON_BASKET;      // basket on the ground at the mast
+  const down = walkY(c.x) - BALLOON_BASKET;      // moored at the mast
   // The bob is scaled by `lift` so a balloon on the ground does not float.
   const up = laneY(i) + bobOf(i) * c.lift - (c.rise || 0);
   return down + (up - down) * c.lift;
@@ -135,7 +136,7 @@ export function bailOut(w) {
   w.brolly = true;
   w.craft = null;
   w.berth = null;
-  if (w.goal === 'aloft') w.goal = 'to';
+  if (w.goal === 'aloft' || w.goal === 'board') w.goal = 'to';
 }
 
 // Out of the basket, but still on the purifiers: it keeps its berth. Used
@@ -143,7 +144,7 @@ export function bailOut(w) {
 export function dismount(w) {
   w.craft = null;
   w.aloft = false;
-  if (w.goal === 'aloft') w.goal = 'to';
+  if (w.goal === 'aloft' || w.goal === 'board') w.goal = 'to';
 }
 
 // --- the wander ------------------------------------------------------------------
@@ -231,21 +232,34 @@ export function stepBalloons() {
 }
 
 // --- the body walking to it -------------------------------------------------------------
-// A purifier whose berth is a craft walks to the mast on its feet and steps
-// into the basket at ground level. Returns true when it has taken the body
-// for this frame, so the house's stepper is left only the bodies going in.
+// A purifier whose berth is a craft walks to the mast on its feet and climbs
+// into the basket. Returns true when it has taken the body for this frame, so
+// the house's stepper is left only the bodies going in.
 export function stepRider(w, berth) {
+  // Up the tether and into the basket at a ladder's pace: the basket hangs
+  // over a body's head, and set in it outright the body is seven cells up a
+  // frame after it stood at the foot. `aloft` from the first rung, which is
+  // what the fall rule asks; `goal` is not 'aloft' until it is in, so the
+  // craft does not leave without it.
+  if (w.goal === 'board') {
+    if (w.craft == null || !CRAFT[w.craft]) { w.goal = 'to'; w.craft = null; w.aloft = false; return false; }
+    const want = craftY(w.craft) - WORKER;
+    const up = want - w.y;
+    plant(w, w.y + Math.sign(up) * Math.min(CLIMB_PACE * frames(), Math.abs(up)));
+    if (Math.abs(want - w.y) < 0.5) w.goal = 'aloft';   // in, and the craft takes it from here
+    return true;
+  }
   if (w.goal === 'aloft') {
     // Aboard: its place is read off the craft every frame rather than
     // stepped alongside it, since two positions kept in step can drift.
     const c = CRAFT[berth];
     if (!c) { w.goal = 'to'; w.craft = null; w.aloft = false; return false; }
     w.x = c.x - WORKER / 2;
-    w.y = craftY(berth) - WORKER;
+    plant(w, craftY(berth) - WORKER);
     return true;
   }
 
-  w.y = walkY(w.x + WORKER / 2);
+  w.y = climbTo(w, walkY(w.x + WORKER / 2));
   const c = CRAFT[berth];
   // To the basket, only worth stepping into while it is actually down; a
   // craft still coming home is waited for at the mast.
@@ -264,7 +278,7 @@ export function stepRider(w, berth) {
     // wizard escapes it too. It also makes `retask` float the body down
     // rather than drop it.
     w.aloft = true;
-    w.goal = 'aloft';                  // in, and the craft takes it from here
+    w.goal = 'board';                  // and up the mast, above
     w.craft = berth;
   }
   return true;

@@ -40,6 +40,9 @@ feature lives in DESIGN.md.
 - Two bodies shovelling on the same spot step a whole body's width apart instead of stopping a cell short and shovelling through each other (test/janitor.test.mjs).
 - Dust dropped on full bare ground no longer turns up in the station's heap next door (test/grain-region.test.mjs).
 - Where you point the view no longer changes what happens in the yard: the same game plays out the same wherever you scroll (test/camera-sim.test.mjs).
+- A body put on the ram or the drill climbs up to its seat instead of appearing on the roof (test/movers-y.test.mjs).
+- A balloon's rider climbs the mast into the basket instead of appearing in it (test/movers-y.test.mjs).
+- Skipping the opening while the survivor is thrown clear carries on from where it is in the air instead of snapping it to the ground (test/movers-y.test.mjs).
 - The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
 - A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
 - The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).

@@ -22,6 +22,7 @@ import { posts } from './roster.js';
 import { now, frames } from './clock.js';
 import { rand } from './rng.js';
 import { walkY } from './world.js';
+import { climbTo } from './route.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance } from './staffing.js';
 import { commutePace } from './levels.js';
@@ -324,7 +325,9 @@ export function stepStirrer(w) {
       shelve(key, w.holding);
       w.holding = 0; w.dealTo = null; w.goal = 'to'; return;
     }
-    w.y = walkY(w.x + WORKER / 2);
+    // Through the climber, never a bare assignment: a body handed over from
+    // anything that held it off the walk line would drop to it in one frame.
+    w.y = climbTo(w, walkY(w.x + WORKER / 2));
     const d = t.x - w.x;
     if (Math.abs(d) < WORKER) {
       // A body in the sky is not in reach, whatever its x says: the stirrer
@@ -349,7 +352,7 @@ export function stepStirrer(w) {
 
   // Walking back to its own pot. A body with no pot of its own stands at the
   // last one rather than out on ground the building does not own.
-  w.y = walkY(w.x + WORKER / 2);
+  w.y = climbTo(w, walkY(w.x + WORKER / 2));
   const mine = Math.min(Math.max(0, idx), Math.max(0, S.apothPots - 1));
   const d = potStandX(mine) - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
