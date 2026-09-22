@@ -147,20 +147,58 @@ export let STORM_BREW_S = 40;       // seconds of brewing before the first drop
 export let RAIN_DRIZZLE_S = 6;      // seconds of drizzle before the pour comes on
 export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full takes
 export const RAIN_TAPER_FLOOR = 0.1; // the taper never goes below this share of the rate
-// How a drop moves, in pixels a frame. One speed: rain is at terminal velocity
-// long before it is anywhere you can see it, and a drop gaining speed down the
-// window reads as something dropped. The give is how much one drop may differ
-// from the next; wide, because the speed is also the depth (RAIN_DASH_MIN).
+// How a drop moves, in pixels a frame at the nearest sheet. One speed: rain is
+// at terminal velocity long before it is anywhere you can see it, and a drop
+// gaining speed down the window reads as something dropped. The give is how
+// much one drop may differ from the next *within its sheet*, so a sheet is not
+// falling in lockstep; the depth between the sheets is RAIN_SHEETS' `speed`.
 export let RAIN_FALL = 6.5;
-export let RAIN_FALL_GIVE = 4;
-// How far the wind carries a drop sideways at a full gust. The whole sheet
-// leans together, and the dash is drawn along the way its drop is going.
+export let RAIN_FALL_GIVE = 1.2;
+// How far the wind carries a drop sideways at a full gust, at the nearest
+// sheet. The whole sheet leans together, and the dash is drawn along the way
+// its drop is going; a far sheet leans by its own `speed`, since a drop
+// further off covers less glass for the same air.
 export let RAIN_LEAN = 2.2;
-// How long a dash is, in cells, from the slowest drop to the fastest. The fast
-// ones are the near ones, so the shower gets a depth: short flecks far off,
-// long strokes close in.
+// How long a dash is, in its sheet's own cells, from the farthest sheet to the
+// nearest: short fine flecks far off, long coarse strokes close in.
 export const RAIN_DASH_MIN = 2;
 export const RAIN_DASH_MAX = 5;
+
+// --- how deep the rain is -----------------------------------------------------
+// The rain falls from the sheet it came out of. `sheet` indexes CLOUD_LAYERS,
+// and the drop takes that sheet's parallax, cell and fade from there -- the
+// sky has one depth table and this is not a second one, so a fourth sheet of
+// cloud gets its rain for free and the two can never disagree about how deep
+// "far" is. What is written here is only what the rain adds.
+//
+// `share` is how much of the water is born into the sheet. The far sheets
+// carry the bulk of it at the smallest cell, which is both how a downpour
+// reads and the cheap end to draw.
+//
+// `speed` is the multiple of RAIN_FALL it falls at: a drop further off covers
+// less glass a second for the same fall, so the depth is in the motion as well
+// as the tone. It scales the lean for the same reason.
+//
+// `lands` is the whole of why this is safe. A drop drawn with parallax does
+// not sit over the column it comes down in, and the acid's rule is that the
+// muck lands under the sky that made it -- so only the nearest sheet lands and
+// marks, at parallax 1, its true world x, which is the rain that was here
+// before this. The two behind it fall past the ground line having laid
+// nothing: scenery, free to parallax because nothing depends on where they
+// end up. Every acid drop is born on the landing sheet.
+export const RAIN_SHEETS = [
+  { sheet: 0, share: 0.45, speed: 0.55, lands: false },
+  { sheet: 1, share: 0.35, speed: 0.78, lands: false },
+  { sheet: 2, share: 0.20, speed: 1,    lands: true }
+];
+// The landing sheet is in the yard, not in the sky: it is nearer than the
+// nearest cloud, so its parallax is the world's own and not CLOUD_LAYERS'.
+// Read as an index so nothing counts the sheets twice.
+export const RAIN_NEAR = RAIN_SHEETS.findIndex(s => s.lands);
+// How far past the ground line a backdrop drop falls before it is culled. It
+// is drawn behind the ground, so it is already out of sight; the margin is
+// only so it is not culled on the frame it goes under.
+export const RAIN_BEHIND_DROP = 24;
 // Lightning. Weather only: a strike costs the yard nothing and touches no
 // body. The odds a second scale with the square of the storm envelope, so a
 // drizzle almost never flashes and the full pour does about every

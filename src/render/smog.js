@@ -2,10 +2,12 @@
 // leaves behind.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, EMBERS, GOING, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
+import { CLOUD_LAYERS } from '../config.js';
+import { paled } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { screenAt } from './frame.js';
@@ -255,31 +257,88 @@ export function drawDraught() {
   ctx.fillStyle = '#000';
 }
 
-export function drawRain() {
-  if (!DROPS.length) return;
-  // Two paths for the whole shower (see `drawSmog`): the water in its pale
-  // tone and the acid in the muck's, so the sheet says what it is before it
-  // lands. A drop is a dash of cells along the way it is going, each cell
-  // stepped sideways by however far the wind carries it in one cell of fall,
-  // so the whole sheet comes down slanted at one angle: a shower drawn in
-  // squares is a dirtier sky, not a storm.
-  const lean = gust() * RAIN_LEAN;
-  // The dash is as long as the drop is fast: slow far flecks, long near strokes.
-  const slowest = RAIN_FALL - RAIN_FALL_GIVE / 2;
-  const cellsPer = (RAIN_DASH_MAX - RAIN_DASH_MIN + 1) / (RAIN_FALL_GIVE || 1);
+// The shower is drawn in sheets, the way the sky is (DESIGN.md, "The rain has
+// depth too"). A drop carries the index of its sheet in RAIN_SHEETS, and the
+// sheet borrows its parallax, its cell and its fade off the cloud sheet it
+// falls out of -- the sky has one depth table and this is not a second one.
+//
+// Three cues, all derived off the sheet and none tuned per drop: the cell it
+// is drawn in (fine far, coarse near), the tone faded toward the page by the
+// air between (`paled`, the clouds' own), and the dash length in that cell.
+// The dash, in the sheet's own cells, plus a cell either way off the drop's
+// own speed within its sheet -- or a sheet is a hundred identical strokes,
+// which is a comb and not a shower. The clouds jitter their depth for the
+// same reason (CLOUD_FAR_JITTER).
+const dashOf = (d, fast) => RAIN_DASH_MIN + (fast ? 1 : 0) +
+  Math.round((RAIN_DASH_MAX - RAIN_DASH_MIN - 1) * d / Math.max(1, RAIN_SHEETS.length - 1));
+
+// A sheet's parallax. The landing sheet is in the yard rather than in the sky,
+// so it keeps the world's own -- its drawn x is its true x, which is where it
+// marks.
+const farOf = d => RAIN_SHEETS[d].lands ? 1 : CLOUD_LAYERS[RAIN_SHEETS[d].sheet].far;
+// The grain, off the cloud sheets, normalized so the landing sheet is the
+// yard's own cell: that sheet is *in* the yard and everything around it is
+// drawn at P, so a drop there is a cell like anything else, and the sheets
+// behind it are the same fractions finer that their clouds are. Taking the
+// cloud cell raw put 9px bars through the near shower.
+const NEAR_CELL = CLOUD_LAYERS[RAIN_SHEETS[RAIN_NEAR].sheet].cell;
+const cellOf = d => P * CLOUD_LAYERS[RAIN_SHEETS[d].sheet].cell / NEAR_CELL;
+
+// One sheet's worth, in one kind's tone. Two paths a sheet (see `drawSmog`):
+// the water in its pale tone and the acid in the muck's, so a drop says what
+// it is before it lands. A drop is a dash of cells along the way it is going,
+// each cell stepped sideways by however far the wind carries it in one cell of
+// fall, so the whole sheet comes down slanted at one angle: a shower drawn in
+// squares is a dirtier sky, not a storm.
+function sheetRain(d, lean) {
+  const far = farOf(d), cp = cellOf(d);
+  // The drops in a sheet that are at the fast end of its give get the longer
+  // dash, so a sheet has two lengths in it rather than one.
+  const quick = RAIN_FALL * RAIN_SHEETS[d].speed;
+  // Back onto the parallax, exactly as a cloud does (`skyAt` in weather.js):
+  // the world is already scrolled by the camera, so adding this much of it
+  // back is what leaves a far sheet barely moving. Nought for the landing
+  // sheet, whose `far` is 1.
+  const slide = S.camX * (1 - far);
+  // The sheet's cell is not the yard's, so its edges land between device
+  // pixels at most zooms; snapped as the clouds' are, or two cells meeting
+  // there leave a hairline of page through the sheet.
+  const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   for (const dirt of [false, true]) {
-    ctx.fillStyle = dirt ? MUCK_GREY : RAIN_WATER_TONE;
+    let any = false;
     ctx.beginPath();
-    for (const d of DROPS) {
-      if (!!d.dirt !== dirt || !onScreen(d.x)) continue;
-      const x = Math.round(d.x), y = Math.round(d.y);
-      const step = lean / d.vy * P;             // sideways per cell of fall
-      const len = Math.min(RAIN_DASH_MAX, RAIN_DASH_MIN + Math.floor((d.vy - slowest) * cellsPer));
-      for (let k = 0; k < len; k++)
-        ctx.rect(x - Math.round(k * step), y - k * P, P, P);
+    for (const drop of DROPS) {
+      if (drop.d !== d || !!drop.dirt !== dirt) continue;
+      const wx = drop.x + slide;
+      if (!onScreen(wx)) continue;
+      any = true;
+      const step = lean * RAIN_SHEETS[d].speed / drop.vy * cp;   // sideways per cell of fall
+      const len = dashOf(d, drop.vy > quick);
+      for (let j = 0; j < len; j++) {
+        const x0 = snap(wx - j * step), y0 = snap(drop.y - j * cp);
+        ctx.rect(x0, y0, snap(x0 + cp) - x0, snap(y0 + cp) - y0);
+      }
     }
+    if (!any) continue;
+    ctx.fillStyle = paled(dirt ? MUCK_GREY : RAIN_WATER_TONE, far);
     ctx.fill();
   }
+}
+
+// The sheets that never land, behind the works: drawn farthest first, so a
+// nearer sheet covers a farther one and the overlap says which is in front.
+export function drawRainBack() {
+  if (!DROPS.length) return;
+  const lean = gust() * RAIN_LEAN;
+  for (let d = 0; d < RAIN_SHEETS.length; d++)
+    if (!RAIN_SHEETS[d].lands) sheetRain(d, lean);
+}
+
+// And the sheet that does, in front of them: the rain that was here before
+// the sky had a back to it.
+export function drawRain() {
+  if (!DROPS.length) return;
+  sheetRain(RAIN_NEAR, gust() * RAIN_LEAN);
 }
 
 // The bolt: black, full for the first half of its life and fading through the

@@ -1,6 +1,6 @@
 # Still to do
 
-## The rain has depth too -- DESIGNED, not built (2026-09-22)
+## The rain has depth too -- BUILT (2026-09-22)
 
 "The rain has depth too" in DESIGN.md. The clouds got three sheets and the
 rain did not, so the shower reads as a texture over the picture rather than
@@ -16,7 +16,14 @@ culled at the ground line having laid nothing. Every acid drop is born near,
 at its true world x, so `colAt`, `muckFloor`, `RAIN_MARK` and the LEDGER are
 untouched and the feature stays a drawing change.
 
-Blocked on nothing; awaiting sign-off before implementation code.
+Built. Two things the design did not know: the cloud sheets' `cell` had to be
+normalized so the landing sheet is the yard's own `P` (borrowed raw it put 9px
+bars through the near shower), and `rain behind` goes *before* `clouds` rather
+than after, or a far drop crosses a nearer cloud. Building it also turned the
+lightning off -- the water's thousands of draws a frame walked the yard's RNG
+in a fixed stride and the bolt's once-a-frame roll sampled an arithmetic run
+through mulberry32's counter -- so the clean water now draws from a `stream()`
+of its own and the acid stays on the yard's. Scene `raindepth`.
 
 ## The shoveller's elbow stalls a cell short (2026-09-21)
 

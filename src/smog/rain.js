@@ -1,6 +1,6 @@
 import { frames } from '../clock.js';
-import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
-import { rand } from '../rng.js';
+import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { rand, stream } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
@@ -67,6 +67,50 @@ function envLeft(t, len) {
   return sum;
 }
 
+// The water has a stream of its own, the way the audio's noise does
+// (`stream` in rng.js). A shower is thousands of draws a frame, all of them
+// about nothing but pixels -- where a clean drop is born, which sheet it is
+// in, how fast it falls -- and taken from the yard's `rand()` they shift
+// every other roll in the game by however heavy the rain happens to be.
+// mulberry32's word advances by a fixed step a draw, so a near-constant
+// number of drops a frame walks the yard's stream in a near-constant stride,
+// and a roll made once a frame at long odds (the lightning) then samples an
+// arithmetic run through the counter rather than a fresh number. Adding one
+// draw a drop was enough to make the bolt stop coming.
+//
+// Seeded off the storm's number, so it is still a seeded run doing the same
+// thing twice, and derived rather than saved: the drops are ephemeral, so
+// there is nothing here for a reload to carry.
+let water = stream(0);
+let wateredAt = -1;
+const waterRand = () => {
+  if (wateredAt !== S.rains) { water = stream((S.runSeed ^ (S.rains * 0x9E3779B1)) >>> 0); wateredAt = S.rains; }
+  return water();
+};
+
+// Which sheet a clean drop is born into: a roll against the sheets' shares,
+// walked in order so the shares read as written.
+function sheetRoll() {
+  let r = waterRand();
+  for (let i = 0; i < RAIN_SHEETS.length; i++) {
+    r -= RAIN_SHEETS[i].share;
+    if (r <= 0) return i;
+  }
+  return RAIN_NEAR;
+}
+
+// One drop, at its sheet's speed. The give is within the sheet, so a sheet is
+// not falling in lockstep; the depth between sheets is the sheet's own `speed`.
+// `d` is the index into RAIN_SHEETS, not into CLOUD_LAYERS: the drawing looks
+// the cloud sheet up through it.
+// A dirty drop is the yard's business -- which mote fell is a fact about the
+// sky -- so its give comes off the yard's stream; a clean one is scenery and
+// takes the water's.
+const drop = (x, y, d, dirt) => ({
+  x, y, d, dirt,
+  vy: RAIN_FALL * RAIN_SHEETS[d].speed * (1 + ((dirt ? rand() : waterRand()) - 0.5) * RAIN_FALL_GIVE / RAIN_FALL)
+});
+
 // What the rain has done, for the rules: drops landed by kind and the muck the
 // dirty ones laid. Only a dirty drop may mark, so `laid` never passes `dirty`.
 export const LEDGER = { clean: 0, dirty: 0, laid: 0 };
@@ -95,13 +139,14 @@ export function pour(secs) {
   const top = S.camY - P;
   const world = Math.max(S.viewW, S.worldW || 0);
 
-  // The water, RAIN_PER_S a window's width, across every window's worth.
-  let water = RAIN_PER_S * secs * env * (world / S.viewW);
-  while (water > 0) {
-    if (water < 1 && rand() > water) break;
-    water -= 1;
-    DROPS.push({ x: rand() * world, y: top, dirt: false,
-                 vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
+  // The water, RAIN_PER_S a window's width, across every window's worth,
+  // shared out over the sheets by their `share` so the far ones carry the bulk
+  // of it. A drop is born into a sheet and stays in it.
+  let owed = RAIN_PER_S * secs * env * (world / S.viewW);
+  while (owed > 0) {
+    if (owed < 1 && waterRand() > owed) break;
+    owed -= 1;
+    DROPS.push(drop(waterRand() * world, top, sheetRoll(), false));
   }
 
   // The acid: which marked motes may fall, as indices. This runs every frame
@@ -129,8 +174,9 @@ export function pour(secs) {
     // A marked mote is consumed -- the sky thins, the clouds pale by the
     // number -- and a dirty drop falls where the mote hung, so the muck lands
     // under the sky that made it, the world over, and not only in the view.
-    DROPS.push({ x: moteX(SKY[i]), y: top, dirt: true,
-                 vy: RAIN_FALL + (rand() - 0.5) * RAIN_FALL_GIVE });
+    // Always on the landing sheet: the muck has to come down under the sky
+    // that made it, and only that sheet keeps its true world x.
+    DROPS.push(drop(moteX(SKY[i]), top, RAIN_NEAR, true));
     dropped(SKY[i]);
   }
 
@@ -279,11 +325,21 @@ export function stepDrops() {
   const lean = gust() * RAIN_LEAN;
   for (let i = DROPS.length - 1; i >= 0; i--) {
     const d = DROPS[i];
-    // pixels a frame, so it moves by however long the frame was
-    d.x += lean * f;
+    const sheet = RAIN_SHEETS[d.d] || RAIN_SHEETS[RAIN_NEAR];
+    // pixels a frame, so it moves by however long the frame was. A drop
+    // further off covers less glass for the same air, so the lean is its
+    // sheet's as much as its fall is.
+    d.x += lean * sheet.speed * f;
     d.y += d.vy * f;
     const c = colAt(d.x);
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
+    // A backdrop drop is scenery: it falls behind the works, past the ground
+    // line, and is taken off there having laid nothing. Nothing about it is
+    // ever asked where it came down, which is what lets it parallax.
+    if (!sheet.lands) {
+      if (d.y > S.groundY + RAIN_BEHIND_DROP) DROPS.splice(i, 1);
+      continue;
+    }
     const rest = muckFloor(c) - m[c] * P;
     if (d.y < rest - P) continue;
     // Only what was sky leaves a mark; the water is water.

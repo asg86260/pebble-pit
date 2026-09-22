@@ -718,6 +718,12 @@ export const SCENES = {
     run: () => { skyAt(4200); untilRaining(); window.__fast(2); } },
   rain: { about: 'the house and the sky', say: 'the full pour',
     run: () => { skyAt(4200); untilRaining(); window.__fast(18); } },
+  // The three sheets against each other, scrolled well off the seed so the
+  // backdrop ones have slid behind the near one: fine pale flecks far off,
+  // long coarse strokes close in, and a cloud in front of everything but the
+  // sheet that lands (DESIGN.md, "The rain has depth too").
+  raindepth: { about: 'the house and the sky', say: 'the pour in three sheets: fine and pale far, coarse and dark near',
+    run: () => { skyAt(4200); untilRaining(); window.__fast(18); window.__look(st().shackX - 900); window.__fast(1.5); } },
   lightning: { about: 'the house and the sky', say: 'a bolt over the pour',
     run: () => { skyAt(4200); untilRaining(); window.__fast(14); window.__strike(9, 0); } },
   lightningflash: { about: 'the house and the sky', say: 'the flash of a strike',

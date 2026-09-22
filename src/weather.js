@@ -113,7 +113,22 @@ function partColor(part, mk, sw) {
 // The air between you and a depth: how far its tones go toward the page.
 const FAR_MIN = CLOUD_LAYERS[0].far - CLOUD_FAR_JITTER;
 const FAR_MAX = CLOUD_LAYERS[CLOUD_LAYERS.length - 1].far + CLOUD_FAR_JITTER;
-const fadeAt = far => CLOUD_FADE_FAR * (1 - (far - FAR_MIN) / (FAR_MAX - FAR_MIN));
+// Exported, because the rain falls from these same sheets and has to be
+// faded by the same air (`drawRainBack` in render/smog.js). Copied into the
+// rain instead, the two would drift apart the first time a sheet moved.
+export const fadeAt = far => CLOUD_FADE_FAR * (1 - (far - FAR_MIN) / (FAR_MAX - FAR_MIN));
+// One flat color faded by a depth, for anything in the sky that is not a
+// cloud: the same mix toward the page, so a far drop and a far cloud are the
+// same distance away. Takes the hex the tone is written as and hands back a
+// css string, since that is what a fill wants. Called a handful of times a
+// frame (one per sheet per kind), never per drop.
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+export const paled = (tone, far) => {
+  const f = fadeAt(far);
+  if (!(f > 0)) return tone;
+  const c = mix(hex(tone), PAGE, f);
+  return `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
+};
 // One cloud's colors this frame, crown to base: CLOUD_TONES steps between the
 // two part colors, every step then faded toward the page by the cloud's depth
 // -- the air takes the same share off every tone, so a far cloud's shades are

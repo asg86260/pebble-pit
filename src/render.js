@@ -33,7 +33,7 @@ import { drawScrub } from './render/scrub.js';
 import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
-import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
+import { drawBolt, drawDraught, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 import { drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
@@ -50,7 +50,7 @@ export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from 
 export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
-export { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
+export { drawDraught, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 export { drawShack } from './render/shack.js';
 export { drawBalloons, drawBrollies } from './render/balloon.js';
@@ -77,6 +77,12 @@ const LAYERS = [
 
   // The sky goes down first: clouds and birds are the far end of everything.
   { name: 'world', draw: enterWorld },
+  // The rain out of the far sheets goes down before the clouds, not after:
+  // it is scenery and never lands (DESIGN.md, "The rain has depth too"), and
+  // drawn over them a far drop crosses a cloud nearer than itself, which is
+  // the one thing the depth is for. The sheet that does land is the `rain`
+  // entry far below, in front of the yard, where the whole shower used to be.
+  { name: 'rain behind', draw: drawRainBack },
   { name: 'clouds', draw: drawClouds },
   { name: 'birds', draw: drawBirds },
   { name: 'world:done', draw: leaveWorld },

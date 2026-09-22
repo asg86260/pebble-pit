@@ -12479,7 +12479,7 @@ was a bar the cloud sat on. A storm darkens the base rather than thickening
 it, and swells a cloud by half rather than nine tenths, since the bigger swell
 flattened every cloud into a dome.
 
-## The rain has depth too (design, not built)
+## The rain has depth too (built 2026-09-22)
 
 The sky got a back and a front and the rain did not. A shower is one plane:
 every drop the same cell, one of two tones, dashes two to five cells long off
@@ -12528,10 +12528,43 @@ feature a drawing change: the near sheet is the simulation, the two behind it
 are scenery, and no rule in `verify.js` has to learn about depth.
 
 **Painting order.** `drawRain` splits in two. The backdrop sheets go into
-`LAYERS` right after `clouds`, in front of the sky and behind everything in
-the yard; the landing sheet stays exactly where `rain` sits now, in front of
-the works and behind the bolt. Moving an entry in `LAYERS` is a visual change,
-and this adds one rather than moving any.
+`LAYERS` as `rain behind`, and the shot settled where: **before** `clouds`,
+not after. Drawn after them, a far drop crosses a cloud nearer than itself,
+which is the one thing the depth is for. Before them it is hidden where a
+cloud covers it, which is what being behind a cloud looks like. The landing
+sheet stays exactly where `rain` sat, in front of the works and behind the
+bolt. This adds an entry rather than moving one.
+
+**The grain is normalized, not borrowed raw.** Taking the cloud sheet's
+`cell` straight put 9px bars through the near shower: a cloud is a soft mass
+and can be drawn coarse, a drop is a stroke and cannot. The landing sheet is
+*in* the yard, where everything is drawn at `P`, so the cells are divided
+through by the near sheet's -- far 1/3, mid 2/3, near 1. The sheets behind
+are the same fractions finer that their clouds are, and the near shower is
+the cell it always was.
+
+### The water gets a stream of its own
+
+Building this turned the lightning off, and the reason is worth keeping.
+
+A shower is thousands of `rand()` draws a frame, all about nothing but
+pixels. mulberry32's word advances by a fixed step a draw, so a near-constant
+number of drops a frame walks the yard's stream in a near-constant stride --
+and the bolt's roll, made once a frame at long odds, then samples an
+arithmetic run through the counter instead of a fresh number. Adding one draw
+a drop was enough for `test/sky-rain.test.mjs` to stop seeing a strike in
+forty seconds of full pour, where twelve came before.
+
+So the water draws from `stream()` in rng.js, the mechanism already there for
+the audio's noise and written for exactly this: "a thing that needs a lot of
+chance and must not spend the yard's". Seeded off the run seed and the storm's
+number, so a seeded run still does the same thing twice, and derived rather
+than saved, since the drops are ephemeral and a reload rebuilds them.
+
+The acid stays on the yard's stream. Which mote falls is a fact about the sky
+and belongs to the yard's chance; only the clean water is scenery. That line
+is the rule: **if a roll can change what the yard does, it spends the yard's
+chance; if it can only change what the yard looks like, it spends its own.**
 
 **What it costs.** One more field on a drop and one more pass over `DROPS` a
 frame. `DROPS` is ephemeral and never saved, so nothing joins the save lists.
