@@ -1337,8 +1337,9 @@ group('a grain rides the belt rather than being thrown over it', async () => {
     if (s.belt > onBand) onBand = s.belt;
     if (s.beltX.length) seen.push(s.beltX[0]);
   }
-  // and it all arrives
-  run(10);
+  // and it all arrives: waited on, not timed, since how fast the ground
+  // clears is the hauler's pace as well as the belt's
+  runUntil(() => state().floor === 0 && state().belt === 0, 30);
   const after = state();
   window.__crew(0, 0);
 

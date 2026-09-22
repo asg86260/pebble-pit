@@ -9,7 +9,8 @@ import { group, ok, openSites, buyNow, state, P } from './helpers.mjs';
 import { beltFrom, onBelt } from '../src/dust.js';
 import { S, floor } from '../src/state.js';
 import { at } from '../src/grid.js';
-import { LADDER } from '../src/config.js';
+import { LADDER, ROCK_W, ROCK_W_MAX, ROCK_GROW_W } from '../src/config.js';
+import { rockSand } from '../src/rock.js';
 
 const WORKER = 18;
 
@@ -22,6 +23,15 @@ function groundIn(from, to) {
 }
 const groundBefore = x => groundIn(0, x);
 
+// Grains lying on the hill itself: where a toss that fell short of the band
+// comes down.
+const onRock = () => rockSand().reduce((n, col) => n + (col ? col.length : 0), 0);
+
+// The first rock at its widest: the belt is a late buy, and the tail of the
+// band is buried deepest in the hill beside the biggest rock.
+const WIDEST = 1 + Math.ceil((ROCK_W_MAX - ROCK_W) / ROCK_GROW_W);
+
+
 group('with the belt running, a laden hauler tips at the tail and the band takes it', async () => {
   window.__reset();
   openSites();
@@ -32,17 +42,18 @@ group('with the belt running, a laden hauler tips at the tail and the band takes
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__kit({ carters: 6 });
   const ram = buyNow('ram'), belt = buyNow('belt');
-  window.__jump(4);
+  window.__jump(WIDEST);
   window.__clearFloor();
+  const sand = onRock();
   // A heap out past the rock, on the far side from the hole.
   const tail = beltFrom();
-  const heapX = state().rockX - P * 30;
+  const heapX = state().rockLeftX - P * 20;
   window.__pile(heapX, 120);
   const had = groundBefore(tail);
 
   const tips = [];
   const carry = new Map();
-  let caught = 0, missed = 0;
+  let caught = 0, missed = 0, short = 0;
   for (let f = 0; f < 60 * 40; f++) {
     window.__fast(1 / 60);
     for (const w of S.workers) {
@@ -53,18 +64,23 @@ group('with the belt running, a laden hauler tips at the tail and the band takes
     caught = Math.max(caught, onBelt());
     // Under the band, where a toss that missed it would come down.
     missed = Math.max(missed, groundIn(tail, state().pitX));
+    short = Math.max(short, onRock() - sand);
   }
   const lip = state().pitX - WORKER;
   const atLip = tips.filter(x => Math.abs(x - lip) < P * 2).length;
-  const atTail = tips.filter(x => x < tail).length;
+  // At the rock's foot, where the open band begins: a body tipping any
+  // nearer the hill throws onto the rock.
+  const foot = state().rockLeftX + S.gw * P + P * 2 - WORKER / 2;
+  const atTail = tips.filter(x => Math.abs(x - foot) < P).length;
   return [
     ok(ram && belt, 'the ram and the belt were bought', `ram ${ram}, belt ${belt}`),
     ok(had >= 100, 'a heap lay out past the rock', `${had} grains`),
     ok(tips.length > 0, 'the haulers tipped loads', `${tips.length} tips`),
     ok(atLip === 0, 'nobody walked a load to the lip', `${atLip} of ${tips.length} at the lip`),
-    ok(atTail === tips.length, 'every load was tipped at the tail',
-       `${atTail} of ${tips.length}, tail at ${tail}, tips at ${[...new Set(tips.map(Math.round))].slice(0, 6)}`),
+    ok(atTail === tips.length, "every load was tipped at the rock's foot, the tail of the open band",
+       `${atTail} of ${tips.length}, foot at ${foot}, tips at ${[...new Set(tips.map(Math.round))].slice(0, 6)}`),
     ok(caught > 0, 'and the band carried it', `${caught} grains on the belt at most`),
+    ok(short === 0, 'and nothing thrown at it came down on the rock', `${short} grains at most`),
     ok(missed === 0, 'and nothing thrown at it missed and fell under it', `${missed} grains at most`),
     ok(groundBefore(tail) === 0, 'and the heap is gone off the ground',
        `${groundBefore(tail)} grains left`)

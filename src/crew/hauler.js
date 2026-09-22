@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
          LIFT_PACE, LIFT_FOUL, LIFT_PUFF_CELLS } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
-import { walkY } from '../world.js';
+import { walkY, rockLeft } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
 import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach } from '../dust.js';
 import { holeLanding } from '../pit.js';
@@ -189,21 +189,27 @@ function liftSmoke(w) {
 }
 
 // Where a load is tipped from, and onto what. While the belt runs the band
-// goes to the hole by itself, so a trip ends at the tail rather than the lip
-// -- the walk from the rock to the hole is the belt's -- and a body already
-// under the band tips where it stands. A core still goes to the lip: it is
-// lobbed onto the pile and counted when it touches it (`stepCore`).
+// goes to the hole by itself, so a trip ends where the band comes out from
+// under the rock rather than at the lip -- the walk from the rock to the hole
+// is the belt's -- and a body already over the open band tips where it
+// stands. Not at the tail itself: that is buried in the hill, where the
+// band catches the rock's spoil coming down, and a load tipped from there
+// lands on the rock. Two cells past the rock's foot, so the body stands off
+// the hill. A core still goes to the lip: it is lobbed onto the pile and
+// counted when it touches it (`stepCore`).
 function tipSpot(w, now) {
   const lip = pit.x - WORKER;
   if (w.hasCore || !beltRunning(now)) return { x: lip, belt: false };
-  return { x: Math.min(lip, Math.max(w.x, beltFrom() - WORKER / 2)), belt: true };
+  const foot = Math.max(beltFrom(), rockLeft() + S.gw * P + P * 2);
+  return { x: Math.min(lip, Math.max(w.x, foot - WORKER / 2)), belt: true };
 }
 
 // Where a grain tossed onto the band comes down: a few cells ahead of the
-// hands, toward the head, and never off either end of the run.
+// hands, toward the head -- out over open band, not back over the hill --
+// and never off either end of the run.
 function bandLanding(from) {
   const lo = beltFrom() + P, hi = beltReach() - P;
-  return Math.max(lo, Math.min(hi, from + P + rand() * P * 4));
+  return Math.max(lo, Math.min(hi, from + P * 3 + rand() * P * 4));
 }
 
 export function haulerWork(w, c) {
