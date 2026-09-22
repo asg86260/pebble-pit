@@ -75,21 +75,26 @@ export function syncWorkers() {
 
   // A body stood down while another job is short is the same person, and it
   // walks over: the surplus is spent before anything is made from nothing.
+  const joined = new Set();
   for (const type of TYPES) {
     for (let short = want[type] - have(type); short > 0; short--) {
       const spare = stood.shift();
-      if (spare) { retask(spare, type); S.workers.push(spare); }
-      else S.workers.push(Object.assign(FACTORY(type), newRecord()));
+      const w = spare || Object.assign(FACTORY(type), newRecord());
+      if (spare) retask(spare, type);
+      S.workers.push(w);
+      joined.add(w);
     }
   }
 
   // number the rock hands off so they can be spaced evenly round the rock, and
-  // stagger the new ones through the swing cycle so the crew never hits as one
+  // stagger the ones who have just joined through the swing cycle so the crew
+  // never hits as one. Only those: a swing not yet due is `next` 0 too, and
+  // re-timed here it would move every time the yard is read back.
   let slot = 0;
   for (const w of S.workers) {
     if (w.type !== TYPE.ROCK) continue;
     w.slot = slot++;
-    if (!w.next) w.next = now() + rockhandMs() * (w.slot / Math.max(1, S.rockhands));
+    if (joined.has(w)) w.next = now() + rockhandMs() * (w.slot / Math.max(1, S.rockhands));
   }
 
   // Nothing here hands out hats: a hat is on a head because that body walked

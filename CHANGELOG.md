@@ -41,6 +41,7 @@ feature lives in DESIGN.md.
 
 - The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).
 - Wizards going up to the star no longer rise out of the same spot as one smudge; each takes its own patch of ground under it (test/sky-work.test.mjs).
+- A rock hand's next swing is no longer moved every time the game is reloaded (test/save-owners.test.mjs).
 - A yard with wizards no longer gains three new workers every time the game is reloaded (test/crew-load.test.mjs).
 - A balloon's rider stays on the job after the game is reloaded, instead of being sent back to the spare crew (test/balloon.test.mjs).
 - A hat knocked off somebody's head is still lying where it fell after a refresh, instead of turning up back on the stand, and whoever was walking for it still goes and gets it (test/hat-save.test.mjs).
