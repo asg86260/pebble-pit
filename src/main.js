@@ -18,7 +18,7 @@ import { buildShop, fillPin } from './shop.js';
 import { persist, restore, claimSave, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
-import { TITLE_COLUMN, DEMO_HEAD_START_S } from './config.js';
+import { TITLE_COLUMN, DEMO_HEAD_START_S, PICTURE_UP } from './config.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
@@ -191,5 +191,11 @@ if (import.meta.env.DEV) {
 }
 
 requestAnimationFrame(frame);
+// The landing page holds its veil until its picture is there: the frame after
+// the first, so the first is painted (title.js, `pictureUp`).
+if (demo) requestAnimationFrame(() => requestAnimationFrame(() => {
+  window[PICTURE_UP] = true;
+  parent.postMessage(PICTURE_UP, location.origin);
+}));
 if (!demo) startTimes();
 if (!demo) unveil();

@@ -48,6 +48,7 @@ feature lives in DESIGN.md.
 
 - Hold to toss, throw pace, throw reach and the pollution gauge wear their own pictures instead of a blank crate (test/row-glyphs.test.mjs).
 - The janitor's second cap is fitted at the janitor's closet, by a spare hand, instead of at the bench (test/built-where-sold.test.mjs).
+- The title screen no longer stands blank for four seconds before it shows (src/selftest/view.js, "the landing page's picture says when it is up").
 - A late yard runs about a quarter faster: the belt, the pit, the paths the crew walk and everything drawn by the thousand in the air are cheaper every frame (test/belt-load.test.mjs).
 - A storm no longer costs the frame rate a quarter of its speed: the rain and the clouds it swells are cheaper to move and draw (test/sky-rain.test.mjs).
 - A new boulder falling no longer drags the frame rate down for as long as it is in the air (src/scenes.js `introfall`).

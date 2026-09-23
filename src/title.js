@@ -10,7 +10,7 @@ import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
-import { VEIL_MS, PICTURE_WAIT_MS, LIGHT_PAPER, DARK_PAPER } from './config.js';
+import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -103,10 +103,7 @@ darkEl.addEventListener('click', async () => {
   await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
   document.documentElement.classList.toggle('dark', dark());
   sayDark();
-  const up = new Promise(r => {
-    yard.addEventListener('load', () => setTimeout(r, 60), { once: true });
-    setTimeout(r, PICTURE_WAIT_MS);
-  });
+  const up = pictureDrawn(true);
   yard.contentWindow?.location.reload();
   await up;
   requestAnimationFrame(() => veil.classList.remove('up'));
@@ -164,16 +161,33 @@ if (window.desk) {
 document.getElementById('build').textContent = version();
 
 const yard = document.getElementById('yard');
+
+// When the picture is on the glass. The frame says so itself once its first
+// frame is drawn (`PICTURE_UP` in main.js), as a flag for a page that asks
+// after and a message for one already waiting: the frame is in the HTML and
+// loads beside this script, usually ahead of it, so a listener for its `load`
+// was nearly always too late and the page stood white for the whole ceiling.
+// `fresh` is for a frame about to reload, whose old flag still stands. A
+// frame that never comes must not hold the page white, so the wait has a
+// ceiling.
+function pictureDrawn(fresh = false) {
+  return new Promise(r => {
+    try { if (!fresh && yard.contentWindow?.[PICTURE_UP]) return r(); } catch {}
+    const heard = e => {
+      if (e.source !== yard.contentWindow || e.data !== PICTURE_UP) return;
+      removeEventListener('message', heard);
+      r();
+    };
+    addEventListener('message', heard);
+    setTimeout(() => { removeEventListener('message', heard); r(); }, PICTURE_WAIT_MS);
+  });
+}
 if (reducedMotion()) document.body.classList.add('still');
 
-// The veil lifts once the store is read and the picture is there too (the
-// frame's load plus a frame for its first draw); lifted on the store alone it
-// showed the menu and then the yard popping in behind it. A frame that never
-// loads must not hold the page white, so the wait has a ceiling.
-const pictureUp = new Promise(r => {
-  yard.addEventListener('load', () => setTimeout(r, 60), { once: true });
-  setTimeout(r, PICTURE_WAIT_MS);
-});
+// The veil lifts once the store is read and the picture is there too; lifted
+// on the store alone it showed the menu and then the yard popping in behind
+// it.
+const pictureUp = pictureDrawn();
 await primeStore();
 showPane('main');
 await pictureUp;

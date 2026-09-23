@@ -3,6 +3,7 @@
 
 import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
   hoverStation, run, runUntil, buy, asScreen, finger, touch, newRun, settle, haveRock } from './kit.js';
+import { PICTURE_UP, PICTURE_WAIT_MS } from '../config.js';
 
 export const TESTS = [
   ['the opening view is looking at the rock', async () => {
@@ -352,5 +353,31 @@ export const TESTS = [
     }
     window.__crew(0, 0);
     return checks;
+  }],
+  // The landing page lifts its veil when its picture says it is up
+  // (title.js, `pictureDrawn`). It used to wait for the frame's `load`, which
+  // had nearly always fired before the title's script was listening, so the
+  // page stood white for the whole ceiling. The frame is opened here the way
+  // the title opens it, and asked both ways: heard while waiting, and found up
+  // by a page that asks late.
+  ["the landing page's picture says when it is up, however late it is asked", async () => {
+    const f = document.createElement('iframe');
+    f.src = 'play.html?demo';
+    f.style.cssText = 'position: fixed; left: -2000px; top: 0; width: 800px; height: 600px; border: 0;';
+    const t0 = performance.now();
+    const heard = new Promise(r => {
+      const on = e => { if (e.source === f.contentWindow && e.data === PICTURE_UP) { removeEventListener('message', on); r(true); } };
+      addEventListener('message', on);
+      setTimeout(() => { removeEventListener('message', on); r(false); }, PICTURE_WAIT_MS);
+    });
+    document.body.append(f);
+    const said = await heard;
+    const took = Math.round(performance.now() - t0);
+    const up = !!f.contentWindow?.[PICTURE_UP];
+    f.remove();
+    return [
+      ok(said, 'the picture calls out once it is drawn, inside the ceiling', `${took} ms`),
+      ok(up, 'and a page that asks after it has called finds it up')
+    ];
   }],
 ];

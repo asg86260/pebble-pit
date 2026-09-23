@@ -92,10 +92,12 @@ export const VEIL_MS = 350;
 // and how long the held sheet and its wash take to come up and go down
 // (fade.js; style.css fades #held and #scrim in the same time)
 export const SHEET_FADE_MS = 180;
-// The most the landing page waits for its picture (the demo frame's load)
-// before lifting its veil regardless: a frame that will not come must not
-// hold the page white.
+// The most the landing page waits for its picture (the demo frame's first
+// drawn frame) before lifting its veil regardless: a frame that will not come
+// must not hold the page white.
 export const PICTURE_WAIT_MS = 4000;
+// What the demo frame calls out, and sets on itself, once it has drawn.
+export const PICTURE_UP = 'boulder-picture-up';
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.
