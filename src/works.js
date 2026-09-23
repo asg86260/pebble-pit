@@ -89,9 +89,10 @@ export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 export const busyBuilderSites = () =>
   SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD
                                         || (noGang(site) && !UP_THERE.has(site))));
-// A site in the air, which a spare hand lent from the ground could walk under
-// and never reach.
-const UP_THERE = new Set(['sphere']);
+// The sites in the air, which a spare hand lent from the ground could walk
+// under and never reach: their work is done by whoever is up there (the
+// sphere's rungs, by its tender).
+export const UP_THERE = new Set(['sphere']);
 
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`

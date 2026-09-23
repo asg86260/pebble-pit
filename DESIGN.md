@@ -14038,9 +14038,13 @@ wizards, the row stops at three with pips like any other, and the sphere's gate
 is a full set. *(As built: the gate reads `stockOf(JOB.WIZARD) >= KIT_MAX`,
 since `kitFull` measures the set against `handsOf`, which for the tower is the
 hats themselves and so is always full.)* A save holding more than three hats
-comes back with three wizards and the rest carrying: the floor plan is read
-through the set's ceiling (`stockOf`), because a fourth body on the tower
-would be a wizard with no hat to fly in.
+keeps them and the wizards wearing them: the wizard's row in `KIT` has a
+`set` and no `max`, so nothing is taken off a yard for a rule it did not
+break, and the hat row simply offers no more. The sphere stands in for a set
+of three whatever the yard holds (`handsOf`). *(As first built the extras
+were stood down on load; the player save in test/fixtures/belt-lip.json has
+five wizards, and taking two hats off bodies wearing them is a hat counted
+worn that the yard no longer owns.)*
 
 **Buying it opens a pour, not a finished machine.** Nothing teleports, and a
 shell in the sky has no builders who can reach it. The wizards pour it the way

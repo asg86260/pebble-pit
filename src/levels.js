@@ -98,9 +98,7 @@ const capOfBare = job =>
   // one fact.
   job === JOB.JANITOR ? hats(JOB.JANITOR) :
   // The tower's floor plan is the hats it has made: one body per hat.
-  // Read through the set's ceiling (`stockOf`): a save with more hats than a
-  // set stands the extras down to carrying rather than grounding them hatless.
-  job === JOB.WIZARD ? stockOf(JOB.WIZARD) :
+  job === JOB.WIZARD ? S.wizardHats :
   // Building is derived from the spares (`rebalance`), never assigned.
   job === JOB.BUILD ? 0 :
   // The rock and the lip have no plan.
@@ -121,6 +119,9 @@ export const roomAt = job => capOf(job) - S[job];
 // job keeps `Infinity` rather than being handed the rock's number.
 export const handsOf = job =>
   job === JOB.ROCK ? ROCK_GANG :
+  // The tower's set: a save from before the cap keeps its extra wizards, but
+  // the sphere stands in for a set of three and no more.
+  job === JOB.WIZARD ? Math.min(S.wizardHats, kitSetOf(JOB.WIZARD)) :
   job === JOB.HAUL ? LIP_GANG :
   capOfBare(job);
 
