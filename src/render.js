@@ -6,7 +6,7 @@
 // for one the crew switch fades or hides. Every draw lives in `src/render/`; this file
 // draws nothing.
 
-import { CREW_FADE, P } from './config.js';
+import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx } from './render/ctx.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -44,9 +44,9 @@ import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
-import { drawDeepSky, drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
+import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
          drawSwimmers, drawDeepInvert } from './render/deep.js';
-import { deepFade, yardFade } from './view.js';
+import { ripple, deepCamera } from './view.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
 import { drawSinking, drawLifting } from './render/scales.js';
@@ -156,7 +156,6 @@ const LAYERS = [
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
-  { name: 'glide dim', draw: drawGlideDim },     // in a glide, the yard fading to its sky round the abyss
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
   { name: 'portal', draw: drawPortal },          // the whirlpool in the surface: the snatch's, and the wizards' held open
   { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
@@ -180,7 +179,6 @@ const LAYERS = [
   // floor, the scales lying on it and its stations, then the serpent and
   // everything in the water with it. Before the roster, so a deep station's
   // post stands on the deep's floor like any other.
-  { name: 'deep sky', draw: drawDeepSky },
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
   { name: 'deep floor', draw: drawDeepFloor },
@@ -265,7 +263,7 @@ export const asPicture = on => { picture = on; };
 // in the deep every other layer is the yard's and is not drawn; in the yard
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
-const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
+const DEEP = new Set(['deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
                       'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
@@ -277,29 +275,8 @@ const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const inHalf = (layer, i, deep) =>
   BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
 
-// In a glide the picture fades round the abyss (view.js): in the deep,
-// everything but the page, the camera's own moves, the sky and the water
-// (which fades round its band itself) and the turn of the palette; in the
-// yard, what is drawn over the liquid -- what is under it fades to the sky's
-// white in 'glide dim'. Both halves are then white sky over the abyss's
-// liquid at the turn, which is what the deep looks like.
-const UNFADED = new Set(['page', 'world', 'world:done', 'screen', 'deep sky', 'deep water', 'deep invert']);
-const OVER_ABYSS = LAYERS.findIndex(l => l.name === 'abyss');
-
-// The yard fading to its sky round the abyss: white over everything drawn so
-// far, the liquid drawn over it after.
-function drawGlideDim() {
-  const k = 1 - yardFade();
-  if (k <= 0) return;
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = k;
-  ctx.fillRect(S.camX - P * 4, S.camY - P * 4, S.viewW + P * 8, S.viewH + P * 8);
-  ctx.globalAlpha = 1;
-}
-
-export function draw() {
-  const deep = S.view === 'deep';
-  const fadeAll = deep ? deepFade() : yardFade();
+// One half, every layer that belongs to it, with whatever camera is standing.
+function drawHalf(deep) {
   for (let i = 0; i < LAYERS.length; i++) {
     const layer = LAYERS[i];
     if (!inHalf(layer, i, deep)) continue;
@@ -312,11 +289,51 @@ export function draw() {
     // The alpha is put back the same frame: nothing else is ever drawn faint.
     const view = layer.dim ? crewView() : 'show';
     if (view === 'hide') continue;
-    const fade = UNFADED.has(layer.name) || (!deep && i <= OVER_ABYSS) ? 1 : fadeAll;
-    const a = (view === 'fade' ? CREW_FADE : 1) * fade;
-    if (a <= 0) continue;
-    if (a < 1) ctx.globalAlpha = a;
+    const faint = view === 'fade';
+    if (faint) ctx.globalAlpha = CREW_FADE;
     layer.draw();
-    if (a < 1) ctx.globalAlpha = 1;
+    if (faint) ctx.globalAlpha = 1;
   }
+}
+
+// The half on screen, and in a glide the deep through the ripple out of the
+// portal (view.js, `ripple`): drawn a second time with the deep's own
+// camera, clipped to the leading ring, so neither half's camera moves while
+// the other shows through; then the rings themselves over both.
+export function draw() {
+  drawHalf(S.view === 'deep');
+  const rip = ripple();
+  if (!rip || rip.r <= 0) return;
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH };
+  Object.assign(S, deepCamera(), { view: 'deep' });
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.beginPath();
+  ctx.arc(rip.cx * S.dpr, rip.cy * S.dpr, rip.r * S.dpr, 0, Math.PI * 2);
+  ctx.clip();
+  drawHalf(true);
+  ctx.restore();
+  Object.assign(S, keep);
+  drawRipples(rip);
+}
+
+// The rings: the leading one bright, three more following it in darker
+// purples, each a ring of cells on the screen's own cell grid.
+function drawRipples(rip) {
+  const cell = P * S.zoom;
+  ctx.save();
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  for (let n = 0; n < RIPPLE_RINGS; n++) {
+    const r = rip.r - n * cell * RIPPLE_GAP;
+    if (r <= 0) continue;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, n)];
+    const steps = Math.max(12, Math.ceil(Math.PI * 2 * r / cell));
+    for (let k = 0; k < steps; k++) {
+      const a = k / steps * Math.PI * 2;
+      ctx.fillRect(Math.round((rip.cx + Math.cos(a) * r) / cell) * cell,
+                   Math.round((rip.cy + Math.sin(a) * r) / cell) * cell, cell, cell);
+    }
+  }
+  ctx.restore();
+  ctx.fillStyle = '#000';
 }

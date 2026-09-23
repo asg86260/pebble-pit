@@ -4,16 +4,11 @@
 import { P } from './yard.js';
 
 // --- the view, and the glide between the two halves -----------------------------
-// The glide is one clock: the camera closes on the pit's liquid over the
-// first half, hands over at the middle to the same liquid in the deep, and
-// opens out over the second while the deep fades in (view.js).
+// The glide is one clock: a ripple out of the wizards' portal that the deep
+// is drawn inside, the camera still (view.js).
 export let VIEW_GLIDE_S = 1.8;       // the whole glide, down or up
-export const GLIDE_FOCUS = 1.5;      // how far the camera pushes in on the abyss at the turn, times the yard's own zoom
-// The deep is framed whole, and mostly water -- about nine tenths of the
-// window under the water line (the owner's call, 2026-09-23): a window too
-// short to hold it from the floor to the sky over the surface is pulled back
-// until it does. This much sky shows over the deep's top edge.
-export const DEEP_ROOF = P;
+export const RIPPLE_RINGS = 4;       // rings in the ripple out of the portal, the leading one brightest
+export const RIPPLE_GAP = 3;         // cells between one ring and the next
 // The floor kept up off the window's foot, with the deep's roster in the band
 // under it: a station stood on the very edge of the glass, under its own
 // plus and minus, was hard to find.

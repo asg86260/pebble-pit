@@ -14909,18 +14909,16 @@ the snatch on:
   water line in the deep -- not in the light itself, where a white arrow is
   white on white. A click on it goes through.
 
-**The glide goes through the abyss.** *(Voted the same day from a mock.)*
-The deep's water is the drowned pit's liquid carried on under its surface
-(render/abyssfield.js, one painter for both). The camera shifts onto the
-abyss and pushes in only a little (`GLIDE_FOCUS`) while the yard darkens
-round it (`yardFade`, 'glide dim'), leaving the liquid lit; at the turn it
-hands over to the same band of liquid in the deep, and opens out while the
-rest of the water and the deep's roof, light, serpent and stations fade in
-round that band (`deepFade`). Going up is the same backwards. No black
-fade, no cut, and no zoom all the way in: closing on the liquid until it
-filled the frame was tried first and read as a dive into black (the
-liquid is a third of the window tall).
-The deep's water took the pit's numbers, so it is the pit's liquid at depth.
+**A ripple out of the portal.** *(Voted the same day, C of three mocked
+full-screen transitions, after a camera glide through the abyss was built
+and read as choppy: a zoom that steps a whole cell size at a time, and two
+eases that stopped the camera dead at the hand-over.)* The camera never
+moves. Going down, purple rings go out one after another from the portal
+as the yard sees it, and the deep is drawn inside the leading ring -- with
+its own camera, the frame drawn twice (render.js, `draw`) -- until it has
+swept the window. Going up, the ring draws back into the portal and the
+yard is left. The deep itself fills the window: water from the top edge to
+its floor and the roster under it, no surface or sky over it.
 
 The surface and the ceiling no longer take a click (the owner's call, the
 same day): the square and the arrow are the way, and a click on the liquid

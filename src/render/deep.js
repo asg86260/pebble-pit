@@ -31,7 +31,6 @@ import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopper
          spriteRect, standOf, waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
 import { abyssLine } from '../pit.js';
-import { deepFade, abyssBand } from '../view.js';
 import { SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
@@ -65,41 +64,6 @@ export function deepWindow() {
   return { x0, y0, x1: Math.ceil((S.camX + S.viewW) / P) * P, y1: Math.ceil((S.camY + S.viewH) / P) * P };
 }
 
-// The underside of the surface at a world column: the same swell the pit's
-// surface breathes with (`swellAt`), seen from below.
-export const ceilingAt = (x, t) => deepTop() + DEEP_SURFACE + swellAt(Math.round(x / P), t);
-
-// --- the sky: the yard's own, over the water line ----------------------------------
-// The deep is looked at the way the drowned pit is from above, closer in
-// (DESIGN.md, "Two crews and a portal"): the paper-white sky over the water
-// line, and the line itself in the abyss's purple, breathing on the pit's own
-// swell -- not a black roof. One fill a column for the sky, one cell for the
-// line.
-export function drawDeepSky() {
-  const t = now();
-  const { x0, y0, x1 } = deepWindow();
-  const top = PURPLES.length - 1;
-  for (let x = x0; x < x1; x += P) {
-    const c = x / P;
-    const line = ceilingAt(x, t);
-    if (line > y0) { ctx.fillStyle = GREYS[GREYS.length - 1]; ctx.fillRect(x, y0, P, line - y0); }
-    const crest = (swellAt(c, t) / P + 3) / 6;
-    ctx.fillStyle = PURPLES[Math.max(2, Math.min(top, Math.round(top - 3 + crest * 3 + (seeth(c, 3) % 2))))];
-    ctx.fillRect(x, line, P, P);
-  }
-  // Where somebody went through, the surface closes over them in a notch of
-  // dark, the way the pit's does from above.
-  for (const r of S.ripples) {
-    const k = Math.min(1, (t - r.at) / ABYSS_RIPPLE_MS);
-    const wide = P * (1 + Math.round(k * 2));
-    const rx = Math.round((r.x - wide / 2) / P) * P;
-    if (rx + wide < x0 || rx > x1) continue;
-    ctx.fillStyle = GREYS[0];
-    ctx.fillRect(rx, ceilingAt(rx, t), wide, P);
-  }
-  ctx.fillStyle = '#000';
-}
-
 // --- the water ----------------------------------------------------------------
 // The drowned pit's flowing interference, everywhere and faint: the same
 // field (`drawAbyss`, render/cores.js), the same constants, so the deep is
@@ -107,25 +71,13 @@ export function drawDeepSky() {
 // sparsely, and never reach the bright end of their ramp.
 export function drawDeepWater() {
   const { x0, y0, x1, y1 } = deepWindow();
-  const top = Math.max(y0, deepTop() + DEEP_SURFACE + P * 2);
-  const bottom = Math.min(y1, deepFloor());
+  // The whole window, top edge to floor: the deep has no surface on screen
+  // (DESIGN.md, "The way between the halves"). The field is the drowned
+  // pit's own liquid, carried on under it.
+  const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
-  // The drowned pit's own liquid, carried on under its surface: this row of
-  // the deep is the pit's row as far under the pit's surface as it is under
-  // the deep's, so the glide hands over on one picture (view.js).
-  const line = abyssLine(), shift = waterShift(), t = now();
-  // In a glide the band the pit's own liquid stands in is drawn whole, and
-  // the rest of the water fades in round it (view.js, `deepFade`).
-  const band = abyssBand(), k = deepFade();
-  const bTop = Math.round((band.top - shift) / P) * P, bBottom = Math.round((band.bottom - shift) / P) * P;
-  const rows = [[top, Math.min(bottom, bTop), k], [Math.max(top, bTop), Math.min(bottom, bBottom), 1],
-                [Math.max(top, bBottom), bottom, k]];
-  for (const [a, b, alpha] of rows) {
-    if (b <= a || alpha <= 0) continue;
-    if (alpha < 1) ctx.globalAlpha = alpha;
-    paintAbyssField({ from: x0, to: x1, top: a, bottom: b, line, rowShift: shift, tones: GREYS, magic: PURPLES, t });
-    ctx.globalAlpha = 1;
-  }
+  paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
+                    tones: GREYS, magic: PURPLES, t: now() });
   ctx.fillStyle = '#000';
 }
 

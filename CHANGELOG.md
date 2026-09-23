@@ -16,7 +16,7 @@ feature lives in DESIGN.md.
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 - The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, the sqwife living in its first pod, and the portal a wizard flies out and summons in the middle of the pit -- clicked, or its arrow or the corner's square -- is the player's way down; the deep is seen under the yard's own sky, mostly water (test/two-crews.test.mjs, test/snatch.test.mjs).
 - A square in the corner and an arrow at the shaft take you between the yard and the deep (test/deep-shaft.test.mjs).
-- Going between the yard and the deep zooms into the drowned pit's liquid and fades the deep in over it, instead of cutting through black (src/selftest/deep.js).
+- Going between the yard and the deep is a ripple out of the portal, the deep full-screen water inside it, with the camera still (src/selftest/deep.js).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
