@@ -483,6 +483,9 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
   if (o.cores) { S.cores += o.cores; S.seenCore = true; }
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
+  // Scales lie on the deep's floor, not in the hole, and are counted by the
+  // bed: laid there by the serpent's own handle.
+  if (o.scales) HANDLES.__scales(o.scales);
   // Every counter is a *pile*, not a number: the coin you own is the coin
   // lying in the hole, so the cells move with the counter. `seedPitCores`
   // lays down what the hole will take and sends the rest through the rift.
@@ -575,7 +578,10 @@ export const boards = () => [
   { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) },
   // The shack's rows are objects in UPGRADES above; what is checked is that
   // they are on this sheet and off that one.
-  { name: 'shack',  keys: shackRows().map(u => u.key),    sections: shackSections().map(x => x.keys) }
+  { name: 'shack',  keys: shackRows().map(u => u.key),    sections: shackSections().map(x => x.keys) },
+  // The deep's five (deep/rows.js).
+  ...Object.keys(DEEP_ROWS).map(name => ({ name, keys: DEEP_ROWS[name].map(u => u.key),
+                                           sections: DEEP_SECTIONS[name].map(x => x.keys) }))
 ];
 
 // The boards are built first, as the frame would have by the time a player
@@ -608,6 +614,7 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...FILTER_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
+                        ...DEEP_UPGRADES,
                         // On the crew board, not the bench.
                         HOUSE_ROW];
 
@@ -1133,3 +1140,7 @@ HANDLES.__deepCrew = (o = {}) => {
   rebalance(); syncWorkers(); buildShop();
   return Object.fromEntries(DEEP_JOBS.map(j => [j, S[j]]));
 };
+
+// --- wave serpent: BOARD ---
+// The deep's boards, for `boards()` and `everyRow()` above.
+import { DEEP_ROWS, DEEP_SECTIONS, DEEP_UPGRADES } from './deep/rows.js';

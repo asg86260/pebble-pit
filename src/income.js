@@ -15,7 +15,7 @@
 import { STATS_SAMPLE_S, STATS_FLOOR, STATS_OVER_S, STATS_OVER_DEFAULT } from './config.js';
 import { S } from './state.js';
 
-export const COINS = ['dust', 'core', 'shard', 'spore', 'spark'];
+export const COINS = ['dust', 'core', 'shard', 'spore', 'spark', 'scale'];
 
 const KEEP_S = Math.max(...STATS_OVER_S);
 const ring = [];                   // { at, dt, got: { coin: n } }, oldest first

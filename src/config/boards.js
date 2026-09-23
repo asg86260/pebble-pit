@@ -93,5 +93,9 @@ export const SHELF_FLOAT_SPREAD = 0.35; // how far a tile's own rate strays from
 export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor at the tile's edge
 // What the stroke round a glyph is painted in: the deepest coin on the next
 // rung's bill. Dust is nothing -- black on the ground is the default -- and a
-// climbed ladder is grey. The three colors are the marks' own.
-export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the outline of the unbuilt part of a glyph
+// climbed ladder is grey. The three colors are the marks' own. The scale's
+// mark is ink and paper, the deep being the one place in the game with no
+// color in it, so its stroke is a dark grey: a coin of its own, and never the
+// light grey of a glyph you cannot pay for.
+export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', scale: '#5a5a5a',
+                           short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the outline of the unbuilt part of a glyph
