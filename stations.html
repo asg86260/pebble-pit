@@ -6,7 +6,7 @@
 <style>
   /* The station editor: every station drawn in the deep, painted here. Pick
      one from the list, paint it on the grid in its five tones, and it is
-     shown as drawn -- at STATION_SCALE, under its dome, with the dome's
+     shown as drawn -- cell for cell, under its dome, with the dome's
      middle and the drawing's middle marked -- and in the real game beside it.
      Edits live in the browser (`SPRITES_KEY` in deep/sprites.js, read by a
      dev build), so the game frame shows them on its next reload; "copy"
@@ -24,6 +24,7 @@
   .grid { display: grid; gap: 1px; background: #444; border: 1px solid #000; width: max-content; user-select: none; touch-action: none; }
   .grid i { display: block; width: 22px; height: 22px; cursor: crosshair; }
   .grid i.mid { box-shadow: inset 2px 0 0 #f33; }
+  .grid i.midc { box-shadow: inset 2px 0 0 #f33, inset -2px 0 0 #f33; }
   .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
   button.t { font: inherit; letter-spacing: .06em; padding: 3px 8px; border: 1px solid #000; background: #fff; color: #000; cursor: pointer; }
   button.t:hover, button.t.on { background: #000; color: #fff; }
@@ -51,7 +52,7 @@
   </div>
   <div class="edit">
     <div class="name" id="editing">—</div>
-    <div class="hint">left-drag paints the tone picked, right-drag erases. the red line is the grid's middle.</div>
+    <div class="hint">left-drag paints the tone picked, right-drag erases. the red line is the drawing's middle.</div>
     <div class="tools" id="tones"></div>
     <div id="grid" class="grid"></div>
     <div class="tools">
@@ -81,7 +82,7 @@
 </div>
 <script type="module">
 import { SPRITES, COMMITTED, SPRITES_KEY } from './src/deep/sprites.js';
-import { P, STATION_SCALE, DOME_PAD, DOME_WALL } from './src/config.js';
+import { P, DOME_PAD, DOME_WALL } from './src/config.js';
 
 // The tones a character is seen in, near enough for painting by: the game
 // frame is the truth.
@@ -135,13 +136,16 @@ function put(rows, now = true) {
   settle(now);
 }
 function paintGrid(rows) {
-  const w = rows[0].length;
+  const w = rows[0].length, ink = inkOf(rows);
+  // the drawing's middle: a line between two columns, or its middle column
+  const half = ink.c1 < 0 ? null : ink.c0 + ink.cols / 2;
   grid.style.gridTemplateColumns = `repeat(${w}, 22px)`;
   grid.replaceChildren();
   rows.forEach((row, r) => [...row].forEach((ch, c) => {
     const i = document.createElement('i');
     i.style.background = TONES[ch]?.[1] || (((r + c) % 2) ? '#2a2a31' : '#33333b');
-    if (c === w / 2 || (w % 2 && c === (w - 1) / 2)) i.classList.add('mid');
+    if (c === half) i.classList.add('mid');
+    else if (c === half - 0.5) i.classList.add('midc');
     i.dataset.r = r; i.dataset.c = c;
     grid.append(i);
   }));
@@ -185,36 +189,35 @@ const OPS = {
 document.querySelectorAll('[data-op]').forEach(b => b.onclick = () => put(OPS[b.dataset.op](rowsOf(key))));
 
 // --- as drawn ---------------------------------------------------------------------
-// The same geometry place.js and render/deep.js use: each drawn cell reads the
-// sprite cell under it, nearest first; the grid is centered on the spot; the
-// dome is centered on the grid; the stack of works hangs over the ink's middle.
-const cellsOf = n => Math.round(n * STATION_SCALE);
+// The same geometry place.js and render/deep.js use: a sprite cell is a
+// drawn cell; the drawing's middle is on the spot; the dome is the drawing
+// and DOME_PAD either side.
 const ZOOM = 2;
 const canvas = document.getElementById('drawn'), ctx = canvas.getContext('2d');
-function drawn(rows) {
-  const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
-  const at = (r, c) => rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))][Math.min(rows[0].length - 1, Math.floor(c / STATION_SCALE))];
-  let c0 = cw, c1 = -1, r0 = ch;
-  for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) if (at(r, c) !== '.') { c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); }
-  return { cw, ch, at, c0, c1, r0 };
+function inkOf(rows) {
+  let c0 = rows[0].length, c1 = -1, r0 = rows.length;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch !== '.') { c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); }
+  }));
+  return { c0, c1, r0, cols: c1 - c0 + 1 };
 }
 function drawPreview(rows) {
-  const d = drawn(rows);
-  const domeW = cellsOf(16) * P + DOME_PAD * 2, r = domeW / 2;
-  const w = d.cw * P, h = d.ch * P;
-  const margin = P * 6, W = Math.max(domeW, w) + margin * 2;
+  const ink = inkOf(rows);
+  if (ink.c1 < 0) { canvas.width = 0; document.getElementById('read').textContent = 'nothing drawn.'; return; }
+  const snap = v => Math.round(v / P) * P;
+  const w = rows[0].length * P, h = rows.length * P;
+  const domeW = ink.cols * P + DOME_PAD * 2, r = domeW / 2;
+  const margin = P * 4, W = Math.max(domeW, w) + margin * 2;
   const floor = h + DOME_WALL + r + margin, H = floor + P * 3;
   canvas.width = W * ZOOM; canvas.height = H * ZOOM;
-  canvas.style.width = W * ZOOM + 'px';
   ctx.setTransform(ZOOM, 0, 0, ZOOM, 0, 0);
   ctx.fillStyle = WATER; ctx.fillRect(0, 0, W, H);
-  const snap = v => Math.round(v / P) * P;
   const spot = snap(W / 2);
-  const left = snap(spot - w / 2), top = floor - h;
-  const mid = left + w / 2;
+  const left = snap(spot - (ink.c0 + ink.cols / 2) * P), top = floor - h;
+  const standX = left + ink.c0 * P, standY = top + ink.r0 * P;
   // the dome, as drawDome paints it
-  const spring = floor - h - DOME_WALL;
-  const dTop = Math.round((spring - r) / P) * P, dLeft = Math.round((mid - r) / P) * P;
+  const dLeft = standX - DOME_PAD, spring = standY - DOME_WALL;
+  const dTop = Math.round((spring - r) / P) * P;
   const inside = (x, y) => {
     if (x < dLeft || x >= dLeft + domeW || y >= floor || y < dTop) return false;
     if (y >= spring) return true;
@@ -227,24 +230,25 @@ function drawPreview(rows) {
     ctx.fillRect(x, y, P, P);
   }
   ctx.fillStyle = '#555'; ctx.fillRect(0, floor, W, H - floor);
-  for (let rr = 0; rr < d.ch; rr++) for (let c = 0; c < d.cw; c++) {
-    const ink = TONES[d.at(rr, c)]?.[1];
-    if (!ink) continue;
-    ctx.fillStyle = ink; ctx.fillRect(left + c * P, top + rr * P, P, P);
+  rows.forEach((row, rr) => [...row].forEach((ch, c) => {
+    const tone = TONES[ch]?.[1];
+    if (tone) { ctx.fillStyle = tone; ctx.fillRect(left + c * P, top + rr * P, P, P); }
+  }));
+  // Mirror check: a column that does not match its opposite across the
+  // drawing's middle is marked under the floor line.
+  const odd = [];
+  for (let c = ink.c0; c <= ink.c1; c++) {
+    const m = ink.c0 + ink.c1 - c;
+    if (rows.some(row => row[c] !== row[m])) odd.push(c);
   }
-  // the middles: the dome's (blue), the drawing's (red), where the works hang (tick)
-  const domeMid = dLeft + domeW / 2, inkMid = left + (d.c0 + d.c1 + 1) / 2 * P;
-  const line = (x, color) => { ctx.fillStyle = color; ctx.fillRect(x - 0.5 / ZOOM * 2, dTop - P * 2, 1 / ZOOM * 2, floor - dTop + P * 4); };
-  line(domeMid, '#39f'); line(inkMid, '#f33');
-  ctx.fillStyle = '#f33'; ctx.fillRect(snap(inkMid) - P, top + d.r0 * P - P * 3, P * 2, P);
-  const off = inkMid - domeMid;
-  const tick = snap(inkMid) - inkMid;
+  ctx.fillStyle = '#f33';
+  for (const c of odd) ctx.fillRect(left + c * P, floor + P, P, P);
+  const mid = standX + ink.cols * P / 2;
+  ctx.fillRect(mid - 1, dTop - P * 2, 2, floor - dTop + P * 2);
   document.getElementById('read').innerHTML =
-    `drawn ${d.cw}×${d.ch} cells, ink ${d.c1 - d.c0 + 1} wide. ` +
-    `<span style="color:#f33">drawing's middle</span> is ` +
-    (off === 0 ? `<b>on</b>` : `<b class="bad">${off > 0 ? '+' : ''}${off}px (${off / P} cells)</b> from`) +
-    ` the <span style="color:#39f">dome's middle</span>` +
-    (tick ? `; the works over it snap <b class="bad">${tick > 0 ? '+' : ''}${tick}px</b> off it` : '') + '.';
+    `${rows[0].length}×${rows.length} cells, drawing ${ink.cols} wide (${ink.cols % 2 ? 'odd' : 'even'}). ` +
+    `the <span style="color:#f33">red line</span> is the drawing's middle, and the dome's. ` +
+    (odd.length ? `<b class="bad">${odd.length} columns</b> differ from their mirror (red under the floor).` : 'symmetric.');
 }
 
 // --- as code ----------------------------------------------------------------------

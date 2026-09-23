@@ -18,13 +18,11 @@ export const DEEP_ROOF = P * 4;
 // plus and minus, was hard to find.
 export const DEEP_FLOOR_MARGIN = P * 12;
 export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the floor
-// The stations are drawn at half as big again as their sprites, each under a
-// lit dome: at one cell a cell they were lost against the dark and the bed,
-// and at two they crowded the floor.
-// The dome stands DOME_PAD out from the sprite either side, its walls rise to
-// DOME_WALL over the sprite's top, and the arch is a half circle over that.
-export const STATION_SCALE = 1.5;
-export const DOME_PAD = P * 3;
+// The stations are drawn cell for cell off their sprites, each under a lit
+// dome. The dome stands DOME_PAD out from the drawing either side, its walls
+// rise to DOME_WALL over the drawing's top, and the arch is a half circle
+// over that.
+export const DOME_PAD = P * 4;
 export const DOME_WALL = P * 4;
 // The crusher's rollers, as seen through its window.
 export const CRUSHER_ROLLER = P * 4;

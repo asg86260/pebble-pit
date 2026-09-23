@@ -16,6 +16,7 @@ feature lives in DESIGN.md.
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 
+- The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 
 ## v0.4.1 — 2026-09-23

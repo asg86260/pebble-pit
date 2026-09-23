@@ -11,7 +11,7 @@
 
 import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
-         STATION_SCALE, COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
+         COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 import { SPRITES } from './sprites.js';
@@ -37,38 +37,29 @@ export const mouthX = () => snap(pit.x + DEEP_MOUTH);
 // A station's middle, on the floor.
 export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);
 
-// A sprite `n` cells across drawn at STATION_SCALE is this many cells: the
-// scale need not be whole, since each drawn cell reads the sprite cell under
-// it, nearest first, and so every cell stays on the grid.
-export const cellsOf = n => Math.round(n * STATION_SCALE);
-
-// Where a station's sprite is painted: its whole grid, blank edges and all,
-// centered on its spot and standing on the floor.
-export function spriteRect(key) {
-  const rows = SPRITES[key];
-  const w = cellsOf(rows[0].length) * P, h = cellsOf(rows.length) * P;
-  return { x: snap(spotX(key) - w / 2), y: deepFloor() - h, w, h };
-}
-
-// The drawn cells' extent inside that grid, in drawn cells, found by walking
-// the same nearest-cell reading the renderer paints with. A sprite's blank
-// rows and columns are room for its dome, not part of the station.
+// The drawn cells' extent inside a sprite's grid. A sprite's blank rows and
+// columns are room for its dome, not part of the station.
 const inked = new Map();
 function inkOf(key) {
   if (inked.has(key)) return inked.get(key);
   const rows = SPRITES[key];
-  const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
-  let c0 = cw, c1 = -1, r0 = ch, r1 = -1;
-  for (let r = 0; r < ch; r++) {
-    const row = rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))];
-    for (let c = 0; c < cw; c++) {
-      if (row[Math.min(row.length - 1, Math.floor(c / STATION_SCALE))] === '.') continue;
-      c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
-    }
-  }
+  let c0 = rows[0].length, c1 = -1, r0 = rows.length, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
   const ink = { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
   inked.set(key, ink);
   return ink;
+}
+
+// Where a station's sprite is painted: its whole grid, standing on the floor,
+// with the DRAWING's middle on its spot rather than the grid's, so a blank
+// column more on one side of a sprite moves nothing.
+export function spriteRect(key) {
+  const rows = SPRITES[key], ink = inkOf(key);
+  const w = rows[0].length * P, h = rows.length * P;
+  return { x: snap(spotX(key) - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
 }
 
 // The ground a station stands on: the station as drawn, so the pointer, the

@@ -15,7 +15,7 @@
 // serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
-import { STATION_SCALE, DOME_PAD, DOME_WALL, CRUSHER_W, CRUSHER_H, HOPPER_W, CRUSH_SHOW_MS,
+import { DOME_PAD, DOME_WALL, CRUSHER_W, CRUSHER_H, HOPPER_W, CRUSH_SHOW_MS,
          CRUSHER_ROLLER } from '../config.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -28,7 +28,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopperRect, podAt,
-         cellsOf, spriteRect } from '../deep/place.js';
+         spriteRect, standOf } from '../deep/place.js';
 import { SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
@@ -221,13 +221,16 @@ const STANDS = {
 };
 
 // The dome over a station: walls from the floor to DOME_WALL above the
-// sprite, and a half circle over them, cell by cell so it sits on the grid.
+// drawing, and a half circle over them, cell by cell so it sits on the grid.
+// As wide as the drawing and DOME_PAD either side, so the two share one
+// middle whatever the drawing's width: a dome of one width for every station
+// had half a cell to spare on one side of every odd-width drawing.
 // Lit from inside a shade above the water, its rim a shade above that, and
 // every cell dealt a tone near it so the dome is not a flat block.
-function drawDome(mid, spriteH) {
-  const w = cellsOf(16) * P + DOME_PAD * 2, r = w / 2;
-  const spring = deepFloor() - spriteH - DOME_WALL;
-  const top = Math.round((spring - r) / P) * P, left = Math.round((mid - r) / P) * P;
+function drawDome(stand) {
+  const w = stand.w + DOME_PAD * 2, r = w / 2, left = stand.x - DOME_PAD;
+  const spring = stand.y - DOME_WALL;
+  const top = Math.round((spring - r) / P) * P;
   const inside = (x, y) => {
     if (x < left || x >= left + w || y >= deepFloor() || y < top) return false;
     if (y >= spring) return true;
@@ -338,14 +341,12 @@ export function drawDeepStations() {
   for (const key in SPRITES) {
     if (!STANDS[key]()) continue;
     const rows = SPRITES[key];
-    const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
-    const { x: left, y: top, w, h } = spriteRect(key);
+    const { x: left, y: top, w } = spriteRect(key);
     if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
-    drawDome(left + w / 2, h);
-    for (let r = 0; r < ch; r++) {
-      const row = rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))];
-      for (let c = 0; c < cw; c++) {
-        const ink = SPRITE_INK[row[Math.min(row.length - 1, Math.floor(c / STATION_SCALE))]];
+    drawDome(standOf(key));
+    for (let r = 0; r < rows.length; r++) {
+      for (let c = 0; c < rows[r].length; c++) {
+        const ink = SPRITE_INK[rows[r][c]];
         if (!ink) continue;
         ctx.fillStyle = ink;
         ctx.fillRect(left + c * P, top + r * P, P, P);
