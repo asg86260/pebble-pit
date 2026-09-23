@@ -7,7 +7,7 @@
 // back door proves the state can be set, and nothing about whether you can get
 // there.
 
-import { group, ok, state, run, runUntil, buyBuilt, buyNow, climb, SEED, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, buyBuilt, buyNow, climb, SEED, yard, openSites } from './helpers.mjs';
 import { CRAFT } from '../src/balloon.js';
 
 const rich = () => {
@@ -239,5 +239,39 @@ group('the balloon row has a pip for each balloon there is to buy', async () => 
     ok(seen.every(n => n === 3), 'three pips from the first', seen.join(', ')),
     ok(CRAFT.length === 3, 'three bought off the row', `${CRAFT.length}`),
     ok(!last || last.done, 'and the row is finished at the third', JSON.stringify(last && { rung: last.rung, rungs: last.rungs }))
+  ];
+});
+
+// A rider takes a tonic at its post: the stirrer walks the vial out, the craft
+// comes home for it, and goes back up once it is in the basket.
+group('a balloon rider is dosed: the craft comes down for the vial and goes back up', async () => {
+  rich();
+  openSites();
+  window.__crew(0, 3);
+  window.__grant({ cores: 3, dust: 20000, spores: 2000 });
+  run(1);
+  window.__buy('unlockapothecary');
+  window.__finish();
+  buyNow('balloon');
+  const up = runUntil(() => state().craft[0] && state().craft[0].up, 120);
+  window.__pot('stew');
+  window.__potPrefer('purifiers');
+  window.__assign('stirrers', 1);
+  const rider = () => yard.S.workers.find(w => w.craft === 0 && w.goal === 'aloft');
+  // Frame by frame: the vial is handed over and the craft lifts again within
+  // one frame, so what is watched is the craft moored with its rider aboard.
+  let mooredAboard = false, dosed = false;
+  for (let i = 0; i < 300 * 60 && !dosed; i++) {
+    run(1 / 60);
+    const r = rider();
+    if (r && CRAFT[0].phase === 'moored') mooredAboard = true;
+    dosed = !!(r && r.doses && r.doses.some(d => d.tonic === 'stew'));
+  }
+  const back = runUntil(() => state().craft[0].up, 60);
+  return [
+    ok(up, 'the balloon is up with its rider'),
+    ok(dosed, 'the rider ends up under the stew'),
+    ok(mooredAboard, 'the craft came home to its post for it'),
+    ok(back, 'and the craft goes back up to work')
   ];
 });

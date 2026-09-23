@@ -16,7 +16,7 @@
 //  * Potency is climbed one tonic at a time; batch speed, dose length, batch
 //    size and carry are the building's.
 
-import { LADDER, BREW_BILL, BREW_MS, rungValue, TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT, APOTH_POTS_MAX, POT_COST, POT_RATE, DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH, POT_W, POT_H, WORKER, APOTH_HUT_W, APOTH_HUT_H, DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
+import { LADDER, BREW_BILL, BREW_MS, rungValue, TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT, APOTH_POTS_MAX, POT_COST, POT_RATE, DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH, POT_W, POT_H, WORKER, APOTH_HUT_W, APOTH_HUT_H, P, DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
 import { posts } from './roster.js';
 import { now, frames } from './clock.js';
@@ -31,6 +31,7 @@ import { registerRows } from './works.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE, YARD_JOBS } from './jobs.js';
+import { moored, inBasket, craftAt } from './balloon.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Clamped to the ladder, so a save from before a ladder landed reads as level
@@ -243,10 +244,10 @@ const potOf = w => stirrers().indexOf(w);
 // reached them first and the rest of the menu would go nowhere.
 const buffable = (w, key) => {
   if (w.type === TYPE.STIR) return false;
-  // A body up in a balloon does not come down for a drink the way a wizard
-  // does (`landForDose`); a stirrer waiting under the basket would stand there
-  // for the whole ride.
-  if (w.craft != null) return false;
+  // A balloon's rider is dosed at its post: the craft comes home for the vial
+  // (`sentFor` in balloon.js). Not one still climbing in, nor one being
+  // brought home off the job.
+  if (w.craft != null && (w.goal !== 'aloft' || w.homeward != null)) return false;
   const t = tonicOf(key);
   if (!t || !takesTonic(w, t)) return false;
   return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);
@@ -331,9 +332,10 @@ export function stepStirrer(w) {
     const d = t.x - w.x;
     if (Math.abs(d) < WORKER) {
       // A body in the sky is not in reach, whatever its x says: the stirrer
-      // stands under it and waits, and the wizard is on its way down
-      // (`doseComing`).
-      if (t.aloft) { w.face = Math.sign(d) || w.face || 1; return; }
+      // stands under it and waits, and the wizard or the balloon is on its way
+      // down (`doseComing`). A rider is in reach once its craft is moored.
+      const reach = t.craft != null ? moored(t.craft) : !t.aloft;
+      if (!reach) { w.face = Math.sign(d) || w.face || 1; return; }
       deal(w, t, key);
       w.holding--;
       // Still loaded: straight on to the next body, without the walk home.
@@ -429,15 +431,23 @@ export function stepDoseMotes(dt) {
     const at = now();
     if (at < (w.moteAt || 0)) continue;
     w.moteAt = at + DOSE_MOTE_MS;
+    // A rider is held at its post to the yard, but seen in the basket: the
+    // plume goes up off the head drawn there (`drawCraft`), at the craft's
+    // depth and size, so it is drawn among the clouds with it.
+    const sky = inBasket(w) ? craftAt(w.craft) : null;
+    const mx = sky ? sky.cx : w.x + WORKER / 2;
+    const my = sky ? sky.y - (P + WORKER) * sky.s : w.y;
+    const k = sky ? sky.s : 1;
     // A body under several tonics gives off one mote of each color, not a
     // blend: an average of green and purple is a color that is neither. Two
     // motes a beat per tonic, or a single-tonic body's column thins to a
     // thread.
     for (const t of doseTonics(w))
-      puff(w.x + WORKER / 2, w.y, {
+      puff(mx, my, {
         n: 2,
-        s: 0.55,
-        rise: DOSE_MOTE_RISE,
+        s: 0.55 * k,
+        rise: DOSE_MOTE_RISE * k,
+        far: sky ? sky.far : null,
         life: DOSE_MOTE_LIFE,
         color: t.color
       });
