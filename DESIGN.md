@@ -14211,3 +14211,104 @@ topped.
   star yields in proportion to the ring, and the 1.7x hat price was what held
   the ring's size down before. Worth a playbot run on the tower's spark rate at
   three hats before and after.
+
+## The forklifts drive themselves (design, not built)
+
+*(2026-09-22, the owner's call: "the forklifts shouldn't require a hauler to
+run ... I want the workers to eventually have nothing to do." Supersedes "Who
+wears it" in "The forklift", above.)*
+
+**The yard is heading toward running without its crew.** Every station's end
+of the line is a machine, and the sphere made the tower's one too. Carrying
+was the last one where a machine still needed a body on it: a forklift is
+worn by a carter, so a yard with six forklifts still has six haulers on the
+payroll, and buying more of them never frees anybody. What the owner wants
+next is a yard whose people run out of work, which is the ground the next
+phase of the game stands on. The forklift is where carrying gets there.
+
+**A forklift is a vehicle, not kit.** It stops being the second rung of the
+haulers' kit and becomes its own kind of body: a self-driving forklift that
+leaves the bench's stand, drives to a pile, loads its forks, drives the load
+to the hole and tips it, then goes for the next one. It does everything a
+driver did (the four-times load, the twice pace, the soot laden) with no
+driver on it. Nothing teleports: the forklift is the body crossing the yard
+with the load.
+
+### What it is
+
+- **A new body type, `TYPE.LIFT`,** in `S.workers` like a wizard or a hauler,
+  so it is drawn, stepped, saved and claims piles through the machinery
+  every body already uses. Its count is `S.drivers` (renamed in meaning,
+  not in the save: "forklifts in the yard"), and `syncWorkers` stands one up
+  for each (the `want` map, as every station's job is). It is **not crew**:
+  it is not in `S.crew`, not housed, not on the roster's headcount, not a
+  worker the house hires or the dance calls.
+- **It hauls by the haulers' own step.** The loop in `crew/hauler.js` (find
+  a pile, claim it, load, drive to the hole, tip) is the hauler's job; the
+  forklift runs the same loop, with its load and pace read off `LIFT_LOAD`
+  and `LIFT_PACE` over the haulers' ladders as the driver's were. The claims
+  are shared, so forklifts and haulers split the piles and never double up.
+- **It skips everything a person does.** No breaks, no smoke, no outhouse,
+  no brews, no dance, no house at night, no crew card, no kit. It can't be
+  picked up with the pointer. Every system that walks `S.workers` and means
+  "the people" has to say so, and that list is the bulk of the work
+  (roughly forty modules walk the crew; about a dozen mean only people).
+- **Idle, it parks.** With nothing to carry it drives back to its slot at
+  the stand beside the bench (`liftX`) and waits there, engine off. A parked
+  forklift is a picture of a yard with nothing left to haul.
+
+### Buying one
+
+The row stays as it is: `driver` on the bench under the haulers' heading,
+sparks and dust, gated on a full set of carts and both hauler ladders
+topped, no end. Only the words change ("a forklift that drives itself", and
+the row's `does` line loses "the driver's"). A bought forklift appears on
+the stand, the way a bought cart or hat does, and rolls out from there.
+
+**The carts are untouched.** A cart is still worn by a hauler, still the
+haulers' kit, still gates the forklift row. What changes is that a forklift
+no longer needs one: nobody climbs aboard.
+
+### The smoke
+
+Unchanged: `LIFT_FOUL` a cell driven laden, from the forklift's own stack,
+through `foul()`. More forklifts running more roads is more soot, and the
+balloons are the answer to it, as before.
+
+### Saves
+
+A save from before this has forklifts worn by carters (`w.lift`). On the
+way in, each worn forklift comes off its carter at the stand, the carter
+keeps its cart, and `S.drivers` is left as it was, so the same number of
+forklifts stand up as self-driving bodies at the stand. A forklift lying
+loose on the ground (`hatOff.lift`) is counted the same way. A migration in
+`src/migrations/`, with a fixture save that has a driver in it.
+
+### What it must not break
+
+- *Nothing teleports*: every load crosses the yard on the forklift.
+- *The belt*: untouched; `machineRate` still does not know forklifts exist.
+- *The haulers' station*: haulers still carry, still wear carts, still
+  climb their ladders; the forklifts take work off them rather than
+  replacing the job.
+- *The sky stays a live decision*: the soot still goes through `foul()`.
+
+### Checks
+
+`test/forklift.test.mjs` rewritten around the new shape: bought through the
+row; rolls off the stand with nobody on it; carries a pile to the hole at the
+lift's load and pace; parks at the stand when the yard is clean; a yard of
+forklifts and no haulers still empties its piles; a hauler and a forklift
+never claim the same pile; the old-save fixture comes back with its
+forklifts self-driving and its carters still carting. `verify.js` gains a
+rule that a forklift is never counted as crew.
+
+### Open
+
+- **What haulers do once the forklifts have taken all the carrying.** Today
+  an idle body finds something ordinary to do (a smoke, a sit). That is
+  where "the workers have nothing to do" shows, and whatever the next phase
+  gives them is its own design.
+- **Whether a forklift's load and pace should get a ladder of their own**,
+  now it is a machine rather than kit on a body. Left on the haulers'
+  ladders for now, which keeps this change to one thing.

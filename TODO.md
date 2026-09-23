@@ -107,6 +107,12 @@ touching `src/config/build.js`.
 
 ## Approved or designed, not built
 
+- **The forklifts drive themselves** (designed 2026-09-22, awaiting sign-off).
+  DESIGN.md, "The forklifts drive themselves": a forklift becomes its own
+  body (`TYPE.LIFT`, not crew) that hauls by the haulers' loop with nobody
+  aboard and parks at the bench's stand when idle; old saves' worn forklifts
+  come off their carters. The bulk of the work is every crew-walking system
+  saying whether it means people.
 - **The noticeboard** (approved 2026-09-10). DESIGN.md, "The noticeboard, and
   the record on it": forty-two notices, recognition only, the books move onto
   its second sheet. Thresholds are dev-panel questions. Wave-sized: catalog,
