@@ -130,6 +130,9 @@ export const SPHERE_OUT = 2;
 // A plate is this many cells square, and a one-cell seam runs between plates:
 // the seams are where the light gets out.
 export const SPHERE_PANEL = 4;
+// How fast the sphere turns on its upright axis, radians a second: a slow
+// turn, a whole one in about three quarters of a minute.
+export const SPHERE_SPIN = 0.14;
 // The vents on the shell's crown, in cells tall: where its soot comes off.
 export const SPHERE_VENT = 2;
 // How long a slit burns brighter after its panel drops a chip, ms.

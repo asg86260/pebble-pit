@@ -129,6 +129,8 @@ export function kitStands() {
   const out = [];
   for (const p of POSTS) {
     if (!p.kit || !p.show()) continue;
+    // The tower keeps its spare hats indoors: no stand under it.
+    if (p.job === JOB.WIZARD) continue;
     const n = spareKit(p.job);
     if (n < 1) continue;
     const x = Math.round(kitX(p.job) / P) * P;

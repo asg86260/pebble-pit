@@ -97,7 +97,9 @@ export const kitX = job =>
   job === JOB.QUARRY ? quarry.x - KIT_OUT.quarry :
   job === JOB.FARM ? farm.x - KIT_OUT.farm :
   job === JOB.STIR ? apothecary.x - KIT_OUT.apothecary :
-  job === JOB.WIZARD ? tower.x - KIT_OUT.tower :
+  // The tower's hats are kept inside it, so a wizard fetches or hands one in
+  // at the door rather than at a stand (`kitStands` in roster.js draws none).
+  job === JOB.WIZARD ? tower.x + tower.w / 2 - WORKER / 2 :
   job === JOB.JANITOR ? outhouse.x - KIT_OUT.outhouse : null;
 
 // The engines' stand, a trestle beyond the carts' (DESIGN.md, "The forklift"):

@@ -14066,7 +14066,11 @@ in the proportion `makeMeteor` lays rind and core (`METEOR_CORE`). The spec's
 `ms` is `wizMs()` divided by `wizBite()` and by the rate. The yield is read off
 the tower's topped ladders and the hats, with no new rate constant to tune.
 
-**The hats stay the tower's.** *(As built; the design had the sphere take the
+**The hats stay the tower's, indoors.** *(Amended: no stand under the tower.)*
+Spare hats are kept inside, so `kitStands` draws no stand for the wizards and a
+wizard fetches or hands one in at the tower's door (`kitX`). The walk that
+spaces the yard still pads the tower's left side by `KIT_OUT.tower`, which a
+stand no longer uses.  *(As built; the design had the sphere take the
 kit as the drill does.)* A machine that takes its kit empties the stand, and a
 wizard's hat is its license to fly, so the tender would be grounded by the
 machine it tends. So `takesKit: false`: the two stood-down wizards hand their
@@ -14134,6 +14138,15 @@ is a **disc**, not a ring: `sky.r + SPHERE_OUT` cells across, tiled in square
 plates `SPHERE_PANEL` cells a side with a one-cell seam between them
 (`shellCells` in sphere.js, worked out once for where the star is).
 
+- **It turns** *(amended, "have the sphere actually spin")*: the plates are laid
+  on the ball, not the page -- bands of latitude and sectors of longitude inside
+  the band -- and the ball turns on an upright axis at `SPHERE_SPIN`, so the
+  meridian seams slide across its face and crowd toward the edge like a globe's
+  while the seams of latitude stand still. Upright rather than turning flat like
+  a wheel, which keeps the horizontal seams on the grid and reads as a ball. The
+  bevels are read off the neighbors (a seam just above or left lights a cell,
+  one just below or right shades it), and a rung's covered seams belong to
+  their plate, so they go round with it.
 - **The plates** are the ink's darker `SHADES`, a tone a plate and a shade
   either side a cell, and beveled: lit along the top and left edges, shadowed
   along the bottom and right, so each reads as a plate with thickness.

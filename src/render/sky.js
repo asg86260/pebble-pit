@@ -2,7 +2,7 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_PANEL, SPHERE_VENT } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
@@ -276,7 +276,7 @@ function drawShell() {
       // A plate, beveled: lit along its top and left edges, in shadow along
       // its bottom and right, its own tone between, a shade either way a cell.
       const base = 3 + hash(c.tile) % 2;
-      const lit = c.mc === 0 || c.mr === 0, dark = c.mc === SPHERE_PANEL - 1 || c.mr === SPHERE_PANEL - 1;
+      const lit = c.lit, dark = c.dark;
       const k = lit && !dark ? base - 2 : dark && !lit ? 5 : base + (hash(c.x * 31 + c.y) % 3) - 1;
       ctx.fillStyle = SHADES[Math.max(0, Math.min(SHADES.length - 1, k))];
     } else if (covered(c)) {

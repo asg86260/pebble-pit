@@ -7,7 +7,7 @@
 // because nobody on the ground can reach it: it is poured by the ring after it
 // is bought (`standing`), and its one tender works it from the air (`aloft`).
 
-import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_FLARE_MS, METEOR_CORE,
+import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_SPIN, SPHERE_FLARE_MS, METEOR_CORE,
          METEOR_SPARKS, METEOR_CORE_SPARKS, SPARK_CELL, SUMMON_SHAKE, someFind } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
@@ -27,55 +27,104 @@ export const sphereUp = () => sphereBought() && pouredAt() >= 1;
 export const sphereRising = () => sphereBought() && !sphereUp() && meteorAlive();
 
 // --- the shell's geometry --------------------------------------------------------
-// Seen face on, a sphere covers its star: a disc of plates `SPHERE_OUT` cells
-// wider than the star, square plates `SPHERE_PANEL` cells a side with a
-// one-cell seam between them, and the seams are where the light gets out.
-// Derived from the star, never stored, and worked out once for where the star
-// is: the drawing and the machine both walk it every frame.
+// Seen face on, a sphere covers its star: a disc `SPHERE_OUT` cells wider than
+// the star, a riveted band round its edge and plates inside it, with a one-cell
+// seam between plates where the light gets out. The plates are laid on the
+// sphere, not on the page: bands of latitude and sectors of longitude, and the
+// sphere turns on an upright axis (`SPHERE_SPIN`), so the meridian seams slide
+// across its face and crowd together toward the edge the way a globe's do,
+// while the seams of latitude stand still. The disc's cells are worked out once
+// for where the star is; which of them are seams is worked out once a frame.
 export const shellR = () => sky.r + SPHERE_OUT * P;
 
-let cached = null, cachedAt = '';
-export function shellCells() {
-  const R = shellR();
-  const key = `${sky.x},${sky.y},${R}`;
-  if (cached && cachedAt === key) return cached;
-  const every = SPHERE_PANEL + 1;
+let cached = null, cachedAt = '', turnedAt = -1;
+function discCells(R) {
   const n = Math.ceil(R / P);
   // The top-left of the middle cell, on the lattice: a cell centered on the
   // star's middle would sit half a cell off it.
   const ox = Math.round((sky.x - P / 2) / P) * P, oy = Math.round((sky.y - P / 2) / P) * P;
+  const around = Math.round(Math.PI * 2 * R / P);
   const out = [];
   for (let r = -n; r <= n; r++) {
     for (let c = -n; c <= n; c++) {
       const dx = c * P, dy = r * P;
-      if (Math.hypot(dx, dy) > R) continue;
-      // Seams centered on the star, so the lattice is symmetric about it.
-      const mc = ((c + (every >> 1)) % every + every) % every;
-      const mr = ((r + (every >> 1)) % every + every) % every;
-      const seam = mc === SPHERE_PANEL || mr === SPHERE_PANEL;
-      // Which plate, for its tone; and how far round from the bottom this cell
-      // is, nought straight under the star and one straight over it, which is
-      // the order the ring pours in: up both sides, closing over the top.
-      const tile = Math.floor((c + (every >> 1)) / every) * 31 + Math.floor((r + (every >> 1)) / every);
-      const far = Math.abs(Math.atan2(dx, dy)) / Math.PI;
       const d = Math.hypot(dx, dy);
-      out.push({ x: ox + dx, y: oy + dy, seam, tile, far, mc, mr,
-                 // where two seams cross: a bolt, not a gap
-                 cross: mc === SPHERE_PANEL && mr === SPHERE_PANEL,
-                 // the outermost cell of the disc: the riveted band the
-                 // plates are hung in
+      if (d > R) continue;
+      out.push({ x: ox + dx, y: oy + dy, dx, dy,
+                 // how far round from the bottom, nought straight under the
+                 // star and one straight over it: the order the ring pours in,
+                 // up both sides and closing over the top
+                 far: Math.abs(Math.atan2(dx, dy)) / Math.PI,
+                 // the outermost cell of the disc: the band the plates hang in,
+                 // a rivet every third cell round it, by angle
                  band: d > R - P,
-                 // a rivet every third cell round the band, by angle so the
-                 // spacing holds all the way round
-                 rivet: (Math.round(Math.atan2(dy, dx) / (Math.PI * 2) * Math.round(Math.PI * 2 * R / P)) % 3 + 3) % 3 === 0,
-                 // a fixed quarter for each seam cell, so a rung covers a
-                 // quarter of them and the same quarter every frame
-                 quarter: ((c * 7 + r * 13) % 4 + 4) % 4,
-                 rim: d > R - P * 2, low: dy > 0 });
+                 rivet: (Math.round(Math.atan2(dy, dx) / (Math.PI * 2) * around) % 3 + 3) % 3 === 0,
+                 rim: d > R - P * 2, low: dy > 0,
+                 // filled in each frame by `turn`
+                 seam: false, cross: false, lit: false, dark: false, tile: 0, quarter: 0 });
     }
   }
-  cachedAt = key;
-  return (cached = out);
+  return out;
+}
+
+// The sphere's plating, as it stands at turn `th`. The inside of the band is a
+// ball of radius `ri`; a cell's place on it is its latitude and longitude,
+// and a seam is a cell within half a cell of a line of either. As many bands
+// and sectors as make a plate about `SPHERE_PANEL` cells across at the middle.
+function plating(ri, th) {
+  const step = (SPHERE_PANEL + 1) * P;
+  const lats = Math.max(2, Math.round(Math.PI * ri / step));
+  const lons = Math.max(4, 2 * Math.round(Math.PI * ri / step));
+  // the screen height of each line of latitude, fixed while it turns
+  const latY = [];
+  for (let k = 1; k < lats; k++) latY.push(ri * Math.sin(-Math.PI / 2 + k * Math.PI / lats));
+  const at = (dx, dy) => {
+    const sy = Math.max(-1, Math.min(1, dy / ri));
+    const w = Math.sqrt(1 - sy * sy);
+    const lat = latY.some(y => Math.abs(dy - y) < P / 2);
+    // a line of longitude on the near side lands at `ri w sin(its angle less
+    // the turn)` across this row
+    let lon = false;
+    for (let k = 0; k < lons && !lon; k++) {
+      const a = k * Math.PI * 2 / lons - th;
+      if (Math.cos(a) <= 0) continue;
+      if (Math.abs(dx - ri * w * Math.sin(a)) < P / 2) lon = true;
+    }
+    const sx = w > 0 ? Math.max(-1, Math.min(1, dx / (ri * w))) : 0;
+    const L = ((Math.asin(sx) + th) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+    const band = Math.min(lats - 1, Math.floor((Math.asin(sy) + Math.PI / 2) / (Math.PI / lats)));
+    return { lat, lon, j: Math.floor(L / (Math.PI * 2 / lons)), i: band };
+  };
+  return at;
+}
+
+function turn(cells, R, th) {
+  const at = plating(R - P, th);
+  for (const c of cells) {
+    if (c.band) continue;
+    const here = at(c.dx, c.dy);
+    c.seam = here.lat || here.lon;
+    c.cross = here.lat && here.lon;
+    c.tile = here.j * 31 + here.i;
+    // A covered seam belongs to its plate and turns with it, so a rung paves
+    // the same seams all the way round.
+    c.quarter = ((here.j * 7 + here.i * 13 + (here.lat ? 1 : 0)) % 4 + 4) % 4;
+    if (c.seam) { c.lit = c.dark = false; continue; }
+    const s = (x, y) => { const o = at(x, y); return o.lat || o.lon; };
+    // Lit where a seam is just above or to its left, shadowed where one is just
+    // below or to its right: a plate with an edge the light catches.
+    c.lit = s(c.dx, c.dy - P) || s(c.dx - P, c.dy);
+    c.dark = s(c.dx, c.dy + P) || s(c.dx + P, c.dy);
+  }
+}
+
+export function shellCells() {
+  const R = shellR();
+  const key = `${sky.x},${sky.y},${R}`;
+  if (!cached || cachedAt !== key) { cached = discCells(R); cachedAt = key; turnedAt = -1; }
+  const t = now();
+  if (t !== turnedAt) { turn(cached, R, (t / 1000) * SPHERE_SPIN); turnedAt = t; }
+  return cached;
 }
 // Snapped to whole cells: `x` and `y` above are each cell's top-left.
 const snap = v => Math.round(v / P) * P;

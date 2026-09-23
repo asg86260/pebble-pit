@@ -833,6 +833,10 @@ export const SCENES = {
     run: () => sphereAt(20) },
   sphere: { about: 'the tower', say: 'the sphere closed, one wizard tending it, sparks falling',
     run: () => sphereAt(60) },
+  // Ten seconds on from `sphere`: the same shell turned a fifth of the way
+  // round, for looking at the two side by side.
+  sphereturned: { about: 'the tower', say: 'the sphere ten seconds later, turned on its axis',
+    run: () => sphereAt(70) },
   spheretopped: { about: 'the tower', say: 'the sphere with its three rungs: most seams covered over',
     run: () => { sphereAt(60); S.machines.sphere.tune = 3; } },
 
