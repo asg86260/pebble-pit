@@ -23,8 +23,11 @@ group('a crewed balloon pulls the sky back down, and the shed alone does not', a
   window.__finish();
   window.__air({ purifiers: 1, haze: 500 });
   runUntil(() => state().smog.filtering > 0, 60);
-  run(20);
-  const on = state().smog;
+  // The best rate over the stretch, not the last frame's: a balloon pulls
+  // only while it hangs at a cloud, and reads nought on the trip between.
+  let best = 0;
+  for (let s = 0; s < 20; s++) { run(1); best = Math.max(best, state().smog.filtering); }
+  const on = { ...state().smog, filtering: best };
 
   window.__air({ recycler: true, haze: 500 });
   const floorWas = state().floor;
