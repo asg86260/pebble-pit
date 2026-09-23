@@ -24,12 +24,9 @@ export const POD_W = P * 7;
 export const POD_H = P * 5;
 export const POD_GAP = P;
 export const POD_COLS = 4;
-// A station's footprint on the floor and how tall it stands: its dome, which
-// is where the pointer opens its board (the sprite at STATION_SCALE, 16 cells
-// across and at most 14 up, under DOME_PAD, DOME_WALL and the arch; see
-// config/deepdraw.js).
+// How far either side of a station's middle a body working it may stand.
+// The station's own ground is its drawing (`standOf` in deep/place.js).
 export const DEEP_STAND_W = P * 30;
-export const DEEP_STAND_H = P * 40;
 
 // --- the crusher ------------------------------------------------------------------
 // The purse's mouth, at the deep's left end (DESIGN.md, "The crusher"): a

@@ -247,6 +247,16 @@ const deepScenes = {
                  crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
       lookDeep(spotX('font'));
     } },
+  // A line at the altar: the stack of glyphs over a station's dome, one going
+  // up and the rest in outline behind it.
+  'deep-queue': { about: 'the deep', say: 'the altar with a line of rungs stacked over it',
+    run: () => {
+      deepYard({ open: ['well'], run: 2 });
+      window.__scales(99999);
+      for (const k of ['punch', 'brawl', 'punch']) window.__buy(k);
+      window.__fast(3);
+      lookDeep(spotX('altar'));
+    } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {

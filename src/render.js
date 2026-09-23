@@ -161,12 +161,10 @@ const LAYERS = [
   { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
   { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
-  { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
-  { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
@@ -195,6 +193,11 @@ const LAYERS = [
   { name: 'punches', draw: drawPunches },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
+  // What a station is putting up and what it has finished hang over it in
+  // front of the deep's domes as well as the yard's roofs: behind them, the
+  // stack over a station on the deep's floor was inside its own dome.
+  { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
+  { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines

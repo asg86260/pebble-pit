@@ -24,6 +24,7 @@ import { S, bench, lab, tower } from '../state.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
+import { groundOf } from '../deep/place.js';
 
 // Whether a station is offering is `hasOffer`, one rule for every station, the
 // bench included: `benchMark()` counts an unread heading as well and would fly
@@ -92,6 +93,9 @@ function flagBase(rect, which) {
 export function flagReach(which) {
   const r = standRect(which);
   if (!r) return null;
+  // The flags are the yard's layer: a station on the deep's floor flies none,
+  // and clearing one there stood its stack a flag's height over nothing.
+  if (groundOf(r.y) !== S.groundY) return null;
   return flagBase(r, which).y - (FLAG_POLE + FLAG_CREST) * P;
 }
 

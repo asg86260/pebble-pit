@@ -27,7 +27,9 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_STAR_EVERY, DEEP_STAR_TOP, DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
-import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt, crusherRect, hopperRect, podAt } from '../deep/place.js';
+import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopperRect, podAt,
+         cellsOf, spriteRect } from '../deep/place.js';
+import { SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage, turned } from '../ink.js';
@@ -205,81 +207,8 @@ export function bedTop(x) {
 }
 
 // --- the stations ------------------------------------------------------------------
-// Each drawn on the floor at its spot, a cell a character, in the tones they
-// are seen in: `#` the white of anything made, `+` and `-` its greys, `o` the
-// black water held in it, `*` the abyss's purple, `.` nothing. Each is its
-// weapon's shape: the altar a slab, the well a ring holding black water with
-// a lance stood in it, the font a goblet with a ball of held ripples, the
-// circle a standing stone over its ring, the spire a tower to a point.
-const SPRITES = {
-  altar: [
-    '................',
-    '..############..',
-    '..#++++++++++#..',
-    '..#+-*----*-+#..',
-    '..############..',
-    '....#+#..#+#....',
-    '....#-#..#-#....',
-    '....#+#..#+#....',
-    '..############..',
-    '.##############.'
-  ],
-  well: [
-    '.......#........',
-    '.......#........',
-    '.......#........',
-    '......*#*.......',
-    '.......*........',
-    '.##.........##..',
-    '.#+#########+#..',
-    '.#+oo*ooo*oo+#..',
-    '.#+ooooooooo+#..',
-    '.#+ooo*oooo*+#..',
-    '.#############..'
-  ],
-  font: [
-    '.....-++-.......',
-    '....+*oo*+......',
-    '....+o**o+......',
-    '....+*oo*+......',
-    '.....-++-.......',
-    '..###########...',
-    '...#+++++++#....',
-    '....#######.....',
-    '......#+#.......',
-    '......#-#.......',
-    '....#######.....',
-    '...#########....'
-  ],
-  circle: [
-    '.......##.......',
-    '......#++#......',
-    '......#*+#......',
-    '......#+-#......',
-    '......#+*#......',
-    '......#-+#......',
-    '......#++#......',
-    '..**..#++#..**..',
-    '.*..**####**..*.',
-    '..**........**..'
-  ],
-  spire: [
-    '.......#........',
-    '......###.......',
-    '......#*#.......',
-    '.....##+##......',
-    '.....#+++#......',
-    '.....#+*+#......',
-    '.....#+-+#......',
-    '....##+++##.....',
-    '....#++o++#.....',
-    '....#++o++#.....',
-    '...##+++++##....',
-    '...#+++*+++#....',
-    '..###########...',
-    '.#############..'
-  ]
-};
+// The sprites and where each stands are the deep's geometry (deep/sprites.js);
+// these are the tones their characters are seen in.
 const SPRITE_INK = {
   '#': seen('#ffffff'), '+': GREYS[9], '-': GREYS[6], 'o': seen('#000000'), '*': PURPLES[11]
 };
@@ -382,11 +311,6 @@ function drawCrusher() {
   ctx.fillStyle = '#000';
 }
 
-// A sprite `n` cells across drawn at STATION_SCALE is this many cells: the
-// scale need not be whole, since each drawn cell reads the sprite cell under
-// it, nearest first, and so every cell stays on the grid.
-const cellsOf = n => Math.round(n * STATION_SCALE);
-
 // The pods: a capsule for each of the crew who lives down here, stacked from
 // the floor. A hull a shade above the dark, a rim a shade above that, and a
 // porthole lit from inside, so a stack reads as somewhere people live.
@@ -415,11 +339,9 @@ export function drawDeepStations() {
     if (!STANDS[key]()) continue;
     const rows = SPRITES[key];
     const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
-    const w = cw * P, h = ch * P;
-    const left = Math.round((spotX(key) - w / 2) / P) * P;
+    const { x: left, y: top, w, h } = spriteRect(key);
     if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
     drawDome(left + w / 2, h);
-    const top = deepFloor() - h;
     for (let r = 0; r < ch; r++) {
       const row = rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))];
       for (let c = 0; c < cw; c++) {

@@ -15,6 +15,8 @@ feature lives in DESIGN.md.
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 
+- What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
+
 ## v0.4.1 — 2026-09-23
 
 - Balloon riders get the apothecary's tonics: the balloon comes down to its post for the vial and goes back up, and the brew's plume rises off the basket in the sky (test/balloon.test.mjs).

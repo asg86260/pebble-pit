@@ -5,11 +5,12 @@
 // in `STATIONS`, so the hover, the queue card and the hop read it from there.
 
 import { group, ok, yard } from './helpers.mjs';
-import { WORKER } from '../src/config.js';
+import { P, WORKER, SHELF_GLYPH_CELLS } from '../src/config.js';
 import { STATIONS } from '../src/stations.js';
 import { GLYPHS } from '../src/glyphs.js';
 import { deepTop, standOf } from '../src/deep/place.js';
-import { progressOf, workAt } from '../src/works.js';
+import { progressOf, workAt, worksAt } from '../src/works.js';
+import { stackSlot } from '../src/render/bars.js';
 
 const S = yard.S;
 
@@ -48,4 +49,23 @@ group('a door of the deep is built by a builder standing at it, down the shaft',
 group('every place with ground says its name and its drawing', async () => {
   const bare = STATIONS.filter(r => r.stand && (!r.name || !GLYPHS[r.glyph])).map(r => r.key);
   return [ok(bare.length === 0, 'no station row is missing a name or a drawn glyph', bare.join(', '))];
+}, { reload: false });
+
+// The stack over a deep station hangs off the station as drawn, not off the
+// dome round it or a flag the deep does not fly: the first glyph's foot is
+// over the station's top, and closer to it than a glyph is tall.
+group('the works in line at a deep station hang just over the station', async () => {
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__deepCrew({ brawlers: 1 });
+  window.__scales(99999);
+  const bought = window.__buy('punch');
+  const top = standOf('altar').y;
+  const at = stackSlot('altar', 0, worksAt('altar')[0]);
+  const foot = at && at.cy + SHELF_GLYPH_CELLS / 2 * P;
+  return [
+    ok(bought && worksAt('altar').length > 0, 'a punch rung is in line at the altar'),
+    ok(at && foot < top, 'its glyph stands over the altar', at && `${foot} vs ${top}`),
+    ok(at && top - foot < SHELF_GLYPH_CELLS * P, "within a glyph's height of it", at && `${(top - foot) / P} cells`)
+  ];
 }, { reload: false });
