@@ -399,6 +399,13 @@ export const SCENES = {
   // stand together to be compared.
   bench: { about: 'the bench', say: "the bench's board, every heading",
     run: () => { rich(); window.__board('bench'); } },
+  // The toss rows open once you have dragged: hold to toss, then its two ladders.
+  tossboard: { about: 'the bench', say: "the bench's board with the throwing rows on it",
+    run: () => { rich(); S.seenDrag = true; window.__board('bench'); } },
+  tossboardheld: { about: 'the bench', say: "the bench's board with hold to toss bought",
+    run: () => { rich(); S.seenDrag = S.autoToss = true; window.__board('bench'); } },
+  filterboard: { about: 'the house and the sky', say: "the air filter's board, its gauge on top",
+    run: () => { rich(); window.__air({ open: true, haze: 0.5 }); S.seenAir = true; window.__board('filter'); } },
   fitting: { about: 'the bench', say: 'a rung being fitted at the bench',
     run: () => { window.__reset(); window.__crew(0, 1); window.__grant({ dust: 9000 });
                  window.__fast(2); window.__buy('carry'); window.__fast(3); window.__look(st().benchX - 300); } },

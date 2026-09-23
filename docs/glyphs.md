@@ -36,11 +36,11 @@ cells wide); those are redrawn at eight, the shape settled.
 |-----------------|----------------------------------------------------------------------------------------|
 | sack            | `carry`, `haulcarry`, `potency-strong` +plus, `bank` +dust                              |
 | pick head       | `pick`, `rockhandpick`                                                                 |
-| pick mid-swing  | `speed`, `rockhandspeed`, `quarrypace`                                                 |
+| pick mid-swing  | `speed`, `rockhandspeed`, `quarrypace`, `toss` +up                                     |
 | spark (4-point) | `critchance`, `potency-brace` +plus                                                    |
 | cracked rock    | `critmult`                                                                             |
 | boot            | `haulpace` +up                                                                         |
-| lever           | `auto`, `recycler`, `letgo`                                                            |
+| lever           | `auto`, `autotoss`, `recycler`, `letgo`                                                |
 | cart            | `carter`                                                                               |
 | belt            | `belt`                                                                               |
 | forklift        | `driver`                                                                             |
@@ -61,7 +61,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
 | tower           | `unlocktower`                                                                          |
-| fan             | `unlockscrub`, `fan`                                                                   |
+| fan             | `unlockscrub`, `fan`, `airrate`                                                        |
 | balloon         | `balloon`                                                                              |
 | shovel          | `quarrybench` +plus                                                                    |
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |
@@ -75,7 +75,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | dome arc        | `dome`                                                                                 |
 | planks          | `props`                                                                                |
 | net             | `net`                                                                                  |
-| arch            | `arch`                                                                                 |
+| arch            | `arch`, `reach`                                                                        |
 | chip            | `chip` +plus, `stakedust` +dust, `stakeshard` +ore, `stakespore` +crop                       |
 
 That is every one of the sixty-one.

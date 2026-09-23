@@ -90,6 +90,7 @@ export const GLYPH_OF = {
   // the bench
   props: ['planks'], net: ['net'], arch: ['arch'], askwizards: ['point'],
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
+  autotoss: ['lever'], toss: ['swing', 'up'], reach: ['arch'],
   critchance: ['spark'], critmult: ['cracked'],
   haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], belt: ['belt'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
@@ -111,7 +112,7 @@ export const GLYPH_OF = {
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the air filter
-  fan: ['fan'], balloon: ['balloon'], recycler: ['lever'],
+  fan: ['fan'], balloon: ['balloon'], recycler: ['lever'], airrate: ['fan'],
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
   letgo: ['lever'], bank: ['sack', 'dust'], ride: ['die'],
