@@ -108,6 +108,15 @@ reasonable shape, put the options to the user before building one — a shot is
 the cheap way to show them. A removal ("scrap X") is a grep-survey-then-delete
 job, not an iterate-and-check one.
 
+**A design change is mock, vote, build.** When the user asks for a change to
+how something looks or behaves, the first thing made is mockups -- several
+options side by side, animated where the change is motion -- and no game code
+is touched until the user has voted on them. Then build the one chosen, and
+a follow-up tweak to it ("make it weirder", "try the pattern still") is a new
+mock before it is new code, not an edit to see how it looks. The mock is a
+page drawn from plain shapes, not the game; say so, and say what it cannot
+show.
+
 ---
 
 ## The two test tiers
