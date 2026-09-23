@@ -170,6 +170,15 @@ export const overRoster = (x, y) => posts().some(p => {
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y);
 });
 
+// Whether a point is on the shaft's post anywhere, buttons, body or count: the
+// pointer's label says what the count is of.
+export const onShaftPost = (x, y) => posts().some(p => {
+  if (!p.shaft) return false;
+  const b = boxes(p);
+  const left = hit(b.less), right = hit(b.more);
+  return x >= left.x && x < right.x + right.w && y >= left.y && y < left.y + left.h;
+});
+
 // A click on a roster, in world units: true if it was one, so the yard knows
 // not to treat it as a swing at the ground.
 export function rosterHit(x, y) {

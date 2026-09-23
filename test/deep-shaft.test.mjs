@@ -90,3 +90,21 @@ group("the shaft's buttons go pale when there is nobody to move", async () => {
        "with it on the altar, the shaft's - does not pull it off the weapon", `brawlers ${S.brawlers}, deepCrew ${S.deepCrew}`)
   ];
 });
+
+// What the pointer says over them: the post is the abyssal workers' count in
+// both halves, and the arrow at the shaft says which way it goes.
+group('the shaft post and arrow say what they are', async () => {
+  deepYard();
+  const { whatIsAt } = await import('../src/input.js');
+  const { arrowBox } = await import('../src/render/shaftway.js');
+  const at = key => { const p = post(key); return whatIsAt((p.less[0] + p.more[0]) / 2, p.less[1]); };
+  const yardPost = at('shaft');
+  const yardArrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(false));
+  window.__view('deep');
+  const deepPost = at('shaftdeep');
+  const deepArrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(true));
+  return [
+    ok(yardPost === 'abyssal workers' && deepPost === 'abyssal workers', 'the post, in both halves', `${yardPost} / ${deepPost}`),
+    ok(yardArrow === 'down to the deep' && deepArrow === 'up to the yard', 'and the arrow', `${yardArrow} / ${deepArrow}`)
+  ];
+}, { reload: false });

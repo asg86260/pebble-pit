@@ -179,6 +179,14 @@ canvas {
   border: 2px solid var(--ink); background: var(--paper);
 }
 #crewfade[data-view="fade"] .body { opacity: var(--crew-fade, 0.4); }
+/* The way through the surface (corner.js): the chevron the shaft's arrow is
+   drawn with (render/shaftway.js), five cells by three at three screen
+   pixels a cell, point down in the yard and turned over in the deep. */
+#way .chevron {
+  display: block; width: 15px; height: 9px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h5v1h-5zM1 1h3v1h-3zM2 2h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 15px 9px;
+}
+#way[data-way="up"] .chevron { transform: rotate(180deg); }
 #crewfade[data-view="hide"] .body { height: 2px; margin-top: 16px; border: 0; background: var(--ink); }
 /* The held sheet as a sheet from the bottom, on a phone (gear.js, through
    the boards' seat in sheet.js): the same box, handle and slide as a board

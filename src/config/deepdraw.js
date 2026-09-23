@@ -40,6 +40,15 @@ export const SHAFT_SPILL = P * 36;
 // the light: its middle this far under the deep's top edge, clear of the
 // surface's lowest trough.
 export const SHAFT_POST_DOWN = P * 2;
+// The arrow at the shaft that says the view goes through (render/shaftway.js):
+// in the yard this far over the drowned pit's surface, in the deep this far
+// under the deep's top edge -- under the water line, in the light's spill,
+// since in the light itself a white arrow is white on white -- bobbing a
+// cell each way over SHAFT_ARROW_MS.
+export const SHAFT_ARROW_UP = P * 8;
+export const SHAFT_ARROW_DOWN = P * 11;
+export const SHAFT_ARROW_BOB = P;
+export const SHAFT_ARROW_MS = 1600;
 // From the yard, how far under the surface a click still means "go down":
 // the liquid's own top few cells, not the plank over it.
 export const SURFACE_CLICK = P * 6;

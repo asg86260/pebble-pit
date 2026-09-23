@@ -14874,3 +14874,20 @@ crew has caught up; the weapons never hold more than it. The old rule
 spare below brings one down; an idle deep hand never goes up with a yard
 pile full. `pods.test.mjs` loses its lending group; `crusher.test.mjs`
 sends its gatherers down through the shaft.
+
+### The way between the halves (built)
+
+*Voted 2026-09-23 from three mocked controls (A and C together).* The only
+way through the surface was a click on the drowned pit's liquid or on the
+deep's ceiling, and nothing on the screen said so. Now two things do, from
+the snatch on:
+- **A square in the corner row** (`#way`, corner.js), beside the fullscreen
+  and crew squares: a chevron pointing down in the yard and up in the deep,
+  with the yard's own note on a hover. Always in the same place.
+- **An arrow at the shaft** (render/shaftway.js): the same chevron, bobbing a
+  cell over the plank in the yard and rising in the light's spill under the
+  water line in the deep -- not in the light itself, where a white arrow is
+  white on white. A click on it goes through.
+
+The surface and the ceiling still take a click as before. The shaft's post
+reads "abyssal workers" under the pointer in both halves.

@@ -15,9 +15,11 @@ import { S } from './state.js';
 import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
+import { goDeep, goUp, gliding } from './view.js';
 
 const row = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
+const way = document.getElementById('way');
 
 // The glyph is one body drawn the way the yard's bodies are, so it shows
 // where the switch stands; the note under it on a hover says what a press
@@ -43,12 +45,38 @@ crew.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { no
 crew.addEventListener('pointerleave', () => { if (noting) { noting = false; showTipAt(null); } });
 dress();
 
+// The way through the surface: the same as a click on the drowned pit or the
+// deep's ceiling, and on the shaft's arrow, put where the hand already goes
+// for the screen's own buttons. From the snatch on; nothing while the camera
+// is between the halves.
+onTap(way, () => { if (gliding()) return; if (S.view === 'deep') goUp(); else goDeep(); });
+// Its note the yard's own, as the crew switch's is.
+let wayNoting = false;
+function wayNote() {
+  if (!wayNoting) return;
+  const r = way.getBoundingClientRect();
+  showTipAt(way.getAttribute('aria-label'), r.left + r.width / 2, r.bottom + 6, true);
+}
+way.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { wayNoting = true; wayNote(); } });
+way.addEventListener('pointerleave', () => { if (wayNoting) { wayNoting = false; showTipAt(null); } });
+function seatWay() {
+  way.hidden = S.paused || !S.snatched;
+  const up = S.view === 'deep';
+  if (way.dataset.way !== (up ? 'up' : 'down')) {
+    way.dataset.way = up ? 'up' : 'down';
+    way.setAttribute('aria-label', up ? 'up to the yard' : 'down to the deep');
+    wayNote();
+  }
+  if (way.hidden && wayNoting) { wayNoting = false; showTipAt(null); }
+}
+
 // Seated every frame like the rest of the shell, after the squares that
 // decide for themselves (fullscreen.js, gear.js): gone while the game is
 // held, since the sheet is up over the yard it would fade.
 let room = null;
 export function refreshCorner() {
   crew.hidden = S.paused;
+  seatWay();
   if (crew.hidden && noting) { noting = false; showTipAt(null); }
   crew.style.setProperty('--crew-fade', CREW_FADE);
   const any = [...row.children].some(b => !b.hidden);

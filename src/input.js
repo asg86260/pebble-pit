@@ -24,7 +24,7 @@ import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { rosterHit, overRoster } from './roster.js';
+import { rosterHit, overRoster, onShaftPost } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -46,6 +46,7 @@ import { sayStore, showPane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
+import { onShaftArrow } from './render/shaftway.js';
 import { clickDeep } from './deep/serpent.js';
 import { deepTop, nearestSeg, coilThick } from './deep/place.js';
 import { abyssLine } from './pit.js';
@@ -172,6 +173,7 @@ canvas.addEventListener('pointerdown', e => {
   if (gliding()) return;
   // The shaft's post stands in the air over the water line: a press on it is
   // the post's, and anywhere else up there is the way home.
+  if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (onCeiling(p.x, p.y)) { if (!rosterHit(p.x, p.y)) goUp(); return; }
   if (onSurface(p.x, p.y)) { goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;
@@ -445,6 +447,10 @@ export function whatIsAt(x, y) {
   if (w) return w.type;
   // Down there nothing of the yard is under the pointer: the way up, and the
   // serpent.
+  // The shaft's post and arrow stand in both halves, the post in the air
+  // the ceiling's click would otherwise answer for.
+  if (onShaftPost(x, y)) return 'abyssal workers';
+  if (onShaftArrow(x, y)) return S.view === 'deep' ? 'up to the yard' : 'down to the deep';
   if (S.view === 'deep') {
     if (onCeiling(x, y)) return 'the surface — click to go up';
     if (onCoil(x, y)) return 'the serpent';
@@ -553,7 +559,7 @@ const CURSORS = [
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
-  [(x, y) => onSurface(x, y) || onCeiling(x, y) || onCoil(x, y), 'pointer'],
+  [(x, y) => onShaftArrow(x, y) || onSurface(x, y) || onCeiling(x, y) || onCoil(x, y), 'pointer'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],

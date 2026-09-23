@@ -16,6 +16,7 @@ import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecar
 import { drawBalloonPosts } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
+import { drawYardArrow, drawDeepArrow } from './render/shaftway.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
@@ -154,6 +155,7 @@ const LAYERS = [
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
+  { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
 
   { name: 'pit outline', draw: drawPitOutline },
 
@@ -193,6 +195,7 @@ const LAYERS = [
   { name: 'punches', draw: drawPunches },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
+  { name: 'deep arrow', draw: drawDeepArrow },   // the way up, rising in the shaft's light
   { name: 'silt', draw: drawSilt },              // off a builder's blows down there, in the water with the rest
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
@@ -263,7 +266,7 @@ export const asPicture = on => { picture = on; };
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
-                      'punches', 'sinking', 'lifting', 'silt', 'deep invert']);
+                      'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves and are simply off the glass in one.
