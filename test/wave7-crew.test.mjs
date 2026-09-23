@@ -11,7 +11,7 @@ import { GROSS_MS, HOVER_PAUSE_MS } from '../src/config.js';
 import { whatIsAt } from '../src/input.js';
 import { OUTHOUSE_SECTIONS } from '../src/outhouse.js';
 import { OUTHOUSE_ROWS } from '../src/upgrades/rows-outhouse.js';
-import { rosterReport, postAt, POSTS } from '../src/roster.js';
+import { rosterReport, postAt, posts } from '../src/roster.js';
 import { card } from '../src/crewboard.js';
 import { hoverAt } from '../src/crew/pointer.js';
 import { now } from '../src/clock.js';
@@ -120,7 +120,7 @@ group('the trade line stands a clear cell under the counter, and the janitor has
   const report = rosterReport();
   const rock = report.find(r => r.key === 'mine');
   const loo = report.find(r => r.key === 'loojob');
-  const rockPost = POSTS.find(p => p.key === 'mine');
+  const rockPost = posts().find(p => p.key === 'mine');
   // The counter body spans WORKER cells around its post's y; the trade body's
   // center sits WORKER + P*3 under the post, which leaves one clear cell
   // between the hat standing a cell proud of the trade square and the counter.
