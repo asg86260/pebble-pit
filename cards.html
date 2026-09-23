@@ -32,13 +32,13 @@
      with the missing coin marked. -->
 <!-- The ids board.js and shop.js take hold of at load, so their modules can be
      imported here. Nothing in them is drawn. -->
-<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div><div id="altarboard"></div><div id="altarshop"></div><div id="wellboard"></div><div id="wellshop"></div><div id="fontboard"></div><div id="fontshop"></div><div id="circleboard"></div><div id="circleshop"></div><div id="spireboard"></div><div id="spireshop"></div><div id="handle"><span class="name"></span></div></div>
 <div id="out"></div>
 <script type="module">
 import { mountRows } from './src/shop.js';
 import { S } from './src/state.js';
 import { LADDER, TIER_BAND, TIER_RUNGS, TIER_OWN } from './src/config.js';
-Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, cores: 1, pinned: 'critchance' });
+Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, cores: 1, scales: 400, pinned: 'critchance' });
 
 const pips = (at, of) => ({ rung: () => at, rungs: () => of });
 
@@ -63,6 +63,14 @@ const rows = [
   // A ground ladder at its spark rung: the deepest bill in the game.
   ladder('crop', 'crop yield', TIER_OWN, 'spores/cut', 'cut', 7, 11,
          [['dust', 23000], ['shard', 1900], ['spore', 7700], ['core', 7], ['spark', 1150]], false, 120, TIER_RUNGS),
+  // The deep's: a scale ladder in its first band, where the bill is scales
+  // alone, and at its spark band; and the dearest door. The scale's mark is
+  // designed against these.
+  { ...ladder('punch', 'punch strength', 1, 'dmg', 'punch', 2, 3, [['scale', 30], ['dust', 0]]), lead: 'scale' },
+  { ...ladder('beam', 'beam strength', LADDER - 1, 'dmg/s', 'channel', 250, 350,
+              [['scale', 18000], ['dust', 180000], ['shard', 15000], ['spark', 9000]]), lead: 'scale' },
+  { key: 'unlockspire', kind: 'building', name: 'raise the spire', blurb: 'wizards that light the coil',
+    bill: () => [['scale', 2500], ['dust', 150000], ['shard', 6000], ['spark', 200]], work: () => 45 },
 ];
 
 const out = document.getElementById('out');

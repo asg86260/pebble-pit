@@ -3,7 +3,7 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
+import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
@@ -31,27 +31,45 @@ function digits(n) {
   return s;
 }
 
+// The scale's mark, pixel for pixel the stylesheet's (SCALE_MARK in
+// config/deepboard.js): its ink laid on the card, whose white is its paper.
+// Centered in the MARK square the other coins stand in.
+function drawScale(g, x, y) {
+  const ox = x + Math.floor((MARK - SCALE_MARK[0].length) / 2);
+  const oy = y + Math.floor((MARK - SCALE_MARK.length) / 2);
+  SCALE_MARK.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) if (row[c] === '#') g.fillRect(ox + c, oy + r, 1, 1);
+  });
+}
+
 // Where the card was last drawn, in screen pixels, for the tip over it.
 let countBox = null;
 export const countRect = () => countBox;
 export const overCount = (sx, sy) => !!countBox && sx >= countBox.x && sx < countBox.x + countBox.w
                                      && sy >= countBox.y && sy < countBox.y + countBox.h;
 
-export function drawCount() {
-  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.font = '13px ui-monospace, "Courier New", monospace';
-  ctx.textAlign = 'left';
-
-  // Top row first, in the purse's order: dust, core, ore, crops, sparks. Each
-  // read through the tweener, so a load tipping in counts up and a purchase
-  // counts down. Gathered before any of it is placed, because how wide the
-  // card is decides where it can stand.
+// The card's lines, top row first, in the purse's order: dust, core, ore,
+// crops, sparks, scales. Each read through the tweener, so a load tipping in
+// counts up and a purchase counts down. Gathered before any of it is placed,
+// because how wide the card is decides where it can stand.
+export function countLines() {
   const dust = digits(Math.round(shown('dust', S.stored)));
   const lines = [{ cell: null, text: dust }];
   if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(Math.round(shown('card:core', S.cores))) });
   if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(Math.round(shown('card:shard', S.shards))) });
   if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: digits(Math.round(shown('card:spore', S.spores))) });
   if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: digits(Math.round(shown('card:spark', S.sparks))) });
+  // The deep's coin, last, as on the purse. Not a grain of the pit, so it has
+  // no cell: its line carries the mark's own pixels instead.
+  if (S.seenScale) lines.push({ cell: 'scale', text: digits(Math.round(shown('card:scale', S.scales))) });
+  return lines;
+}
+
+export function drawCount() {
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.textAlign = 'left';
+  const lines = countLines();
 
   // The card: a white sheet with a black edge, the same panel every menu is
   // made of, so the numbers are never black on a heap of dust behind them.
@@ -142,6 +160,7 @@ export function drawCount() {
       lines.forEach((l, i) => {
         const at = y - (lines.length - 1 - i) * ROW;
         if (!l.cell) g.fillRect(x, at - MARK, MARK, MARK);
+        else if (l.cell === 'scale') drawScale(g, x, at - MARK);
         else drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
       });
       markKey = key;

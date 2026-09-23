@@ -46,6 +46,7 @@ export const MARK = {
   shard: '<i class="shard"></i>',
   spore: '<i class="spore"></i>',
   spark: '<i class="spark"></i>',
+  scale: '<i class="scale"></i>',
   time: '<i class="clock"></i>'
 };
 
@@ -57,6 +58,8 @@ export const purse = money =>
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
   money === 'spark' ? S.sparks :
+  // Every scale lying on the deep's floor, counted by the bed that holds them.
+  money === 'scale' ? S.scales :
   S.stored;
 
 // What a unit is *drawn* as, for the units the yard has a coin for. A unit not

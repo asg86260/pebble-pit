@@ -23,6 +23,7 @@ import { windowFor } from './modal.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections, crewList, crewListSections, WHERE_WORDS } from './crewboard.js';
+import { DEEP_ROWS, DEEP_SECTIONS } from './deep/rows.js';
 import { shown } from './tween.js';
 import { onTap } from './tap.js';
 import { now as clockNow } from './clock.js';
@@ -40,6 +41,11 @@ const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
 const looEl = document.getElementById('looshop');
 const shackEl = document.getElementById('shackshop');
+const altarEl = document.getElementById('altarshop');
+const wellEl = document.getElementById('wellshop');
+const fontEl = document.getElementById('fontshop');
+const circleEl = document.getElementById('circleshop');
+const spireEl = document.getElementById('spireshop');
 
 // The sections a board draws: the ones it declares, then a last group holding
 // every row nobody named. The rows are the source of truth for what exists;
@@ -72,7 +78,7 @@ function shape(list, sections) {
       // signature says "unchanged" while the board it would build differs.
       return u && revealed(u) && !(S.hideDone && folds(u));
     });
-    if (rows.length) out.push(sect.title, ...rows);
+    if (rows.length || sect.roster) out.push(sect.title, ...rows);
   }
   return out.join(',');
 }
@@ -157,7 +163,9 @@ addEventListener('pointerdown', e => {
 // The picture a shelf row stands behind: a zero-width anchor on the tile's
 // center line that the glyph hangs off (`.tile .pic` in shelf.css).
 const PIC = '<span class="pic"></span>';
-const COIN_ORDER = ['dust', 'spore', 'shard', 'core', 'spark'];
+// The scale first: on a deep board it is the coin the ladder is written in,
+// and the yard's coins are what the later bands add to it.
+const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'core', 'spark'];
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +
@@ -226,7 +234,9 @@ function build(el, list, sections, empty, heads) {
       .filter(u => u && revealed(u))
       // a section with nothing left in it goes with its finished rows
       .filter(u => !(S.hideDone && folds(u)));
-    if (!rows.length) continue;
+    // A roster heading stands with nothing under it: it is there to say how
+    // many are posted at the station (deep/rows.js).
+    if (!rows.length && !sect.roster) continue;
 
     if (!(lone && sect.title === title)) {
       const head = document.createElement('div');
@@ -598,6 +608,9 @@ export function refresh(el, list, headcount) {
       if (pips.length) for (let i = 0; i < pips.length; i += u.group || pips.length) groups.push(`<b>${pips.slice(i, i + (u.group || pips.length)).join('')}</b>`);
       const want = groups.join('');
       if (ladder.innerHTML !== want) ladder.innerHTML = want;
+      // The coin the ladder is written in, for the stylesheet to tint its
+      // bands by (a scale ladder's second band is dust, not crops).
+      if (u.lead && ladder.dataset.lead !== u.lead) ladder.dataset.lead = u.lead;
     }
 
     // A row the yard is building says so where the numbers go; a row in line
@@ -814,7 +827,14 @@ const BOARDS = {
   outhouse: () => [looEl, OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS, 'the brooms are all on their hooks'],
   // The fifth thing is whom the sheet counts: the shack has one group and so
   // no heading to hang the rockhands on, so the count rides the title.
-  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands]
+  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands],
+  // The deep's, one a station on its floor. The roster heading's count is
+  // `deepHeads`, handed to `refresh` by board.js.
+  altar:  () => [altarEl, DEEP_ROWS.altar, DEEP_SECTIONS.altar, 'nothing to strike with'],
+  well:   () => [wellEl, DEEP_ROWS.well, DEEP_SECTIONS.well, 'the well is still'],
+  font:   () => [fontEl, DEEP_ROWS.font, DEEP_SECTIONS.font, 'the font is still'],
+  circle: () => [circleEl, DEEP_ROWS.circle, DEEP_SECTIONS.circle, 'the floor is bare'],
+  spire:  () => [spireEl, DEEP_ROWS.spire, DEEP_SECTIONS.spire, 'the spire is dark']
 };
 
 // One board, rebuilt if the set of rows on it has moved. The open board asks

@@ -24,6 +24,7 @@ import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
 import { canAfford } from './upgrades.js';
+import { standOf } from './deep/place.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -105,6 +106,21 @@ export const STATIONS = [
   // sells them either.
   { key: 'stats', open: () => S.banked > 0, stand: () => S.noticeboard, board: 'statsBoardOpen',
     after: [], needs: () => false },
+
+  // The deep's stations, on its floor under the drowned pit
+  // (docs/wave-serpent.md). The altar stands from the snatch and nobody sells
+  // it; the rest are sold on it, each on the stage before the one its weapon
+  // answers, so the order is the order the serpent's defenses fall.
+  { key: 'altar', open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
+    after: [], needs: () => false },
+  { key: 'well', open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
+    after: ['altar'], needs: () => S.serpentStage >= 1 },
+  { key: 'font', open: () => S.fontOpen, stand: () => standOf('font'), board: 'fontBoardOpen',
+    after: ['well'], needs: () => S.serpentStage >= 2 },
+  { key: 'circle', open: () => S.circleOpen, stand: () => standOf('circle'), board: 'circleBoardOpen',
+    after: ['well'], needs: () => S.serpentStage >= 2 },
+  { key: 'spire', open: () => S.spireOpen, stand: () => standOf('spire'), board: 'spireBoardOpen',
+    after: ['font', 'circle'], needs: () => S.serpentStage >= 3 },
 
   // The shields, each offered only once its predecessor has failed and the
   // place before it stands (DESIGN.md, "The shields are the spine"). A shield

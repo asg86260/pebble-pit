@@ -54,7 +54,7 @@
 <body>
 <!-- The ids board.js and shop.js take hold of at load, so the boards' row lists
      can be imported here for their names. Nothing in them is drawn. -->
-<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div><div id="altarboard"></div><div id="altarshop"></div><div id="wellboard"></div><div id="wellshop"></div><div id="fontboard"></div><div id="fontshop"></div><div id="circleboard"></div><div id="circleshop"></div><div id="spireboard"></div><div id="spireshop"></div></div>
 <div class="app">
   <div class="list">
     <h1>drawings</h1>
@@ -100,13 +100,15 @@ import { FARM_UPGRADES } from './src/farm.js';
 import { APOTHECARY_UPGRADES } from './src/apothecary.js';
 import { TOWER_UPGRADES } from './src/tower.js';
 import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
+import { DEEP_ROWS } from './src/deep/rows.js';
 
 // Where a row lives and what it is called, read off the boards themselves.
 // The bench's list carries the shack's rows and the house's too, so those
 // two are named by hand.
 const ROW = {};
 const SHACK = new Set(['rockhandpick', 'rockhandspeed', 'breaker', 'ram', 'tuneram']);
-for (const [board, list] of [['the bench', UPGRADES], ['the casino', CASINO_UPGRADES], ['the air filter', FILTER_UPGRADES], ['the quarry', QUARRY_UPGRADES], ['the farm', FARM_UPGRADES], ['the apothecary', APOTHECARY_UPGRADES], ['the tower', TOWER_UPGRADES], ["the janitor's closet", OUTHOUSE_UPGRADES]])
+for (const [board, list] of [['the bench', UPGRADES], ['the casino', CASINO_UPGRADES], ['the air filter', FILTER_UPGRADES], ['the quarry', QUARRY_UPGRADES], ['the farm', FARM_UPGRADES], ['the apothecary', APOTHECARY_UPGRADES], ['the tower', TOWER_UPGRADES], ["the janitor's closet", OUTHOUSE_UPGRADES],
+                            ...Object.entries(DEEP_ROWS).map(([k, list]) => [`the ${k}`, list])])
   for (const u of list) ROW[u.key] = { board: SHACK.has(u.key) ? 'the shack' : u.key === 'house' ? 'the house' : board, name: u.name, u };
 ROW.crewlist = { board: 'the house', name: 'who lives here', u: null };
 // What an upgrade does, in the words its row says it in: the gain line for

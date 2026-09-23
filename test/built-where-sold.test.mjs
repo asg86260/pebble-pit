@@ -5,7 +5,7 @@
 // the closet and fitted at the bench, across the yard from the stand it hangs on.
 
 import { yard, group, ok, run, runUntil, WORKER } from './helpers.mjs';
-import { rowFor, takesTime, SITE_JOB, workAt, UP_THERE } from '../src/works.js';
+import { rowFor, takesTime, SITE_JOB, workAt, UP_THERE, DOWN_THERE } from '../src/works.js';
 import { outhouse } from '../src/state.js';
 import { JOB, TYPE } from '../src/jobs.js';
 
@@ -17,10 +17,13 @@ group('every row that takes building is built at its own board, by spare hands',
   for (const b of window.__boards()) for (const key of b.keys) {
     const u = rowFor(key);
     if (!u || !takesTime(u)) continue;
-    // Work in the air is the one exception, and it is a stated one: nobody on
+    // Work in the air is one exception, and it is a stated one: nobody on
     // the ground can reach it, so whoever is up there does it (`UP_THERE` in
     // works.js; the sphere's rungs, poured by its tender).
-    if (UP_THERE.has(u.site)) continue;
+    // The deep is the other: nobody is lent down the shaft, so every deep
+    // station's rungs are its own gang's and the doors the brawlers' at the
+    // altar that sells them (`DOWN_THERE`).
+    if (UP_THERE.has(u.site) || DOWN_THERE.has(u.site)) continue;
     if (u.site !== b.name && u.site !== 'yard') astray.push(`${key}@${u.site} sold at ${b.name}`);
     if (SITE_JOB[u.site] !== JOB.BUILD) ganged.push(`${key}@${u.site}`);
   }

@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
-         SHEET_MS } from './config.js';
+         SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
@@ -21,6 +21,8 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
+import { DEEP_ROWS, deepHeads } from './deep/rows.js';
+import { inDeep, deepFloor } from './deep/place.js';
 import { refresh, buildCrew, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
@@ -40,6 +42,11 @@ const towerShopEl = document.getElementById('towershop');
 const statsShopEl = document.getElementById('statsshop');
 const looShopEl = document.getElementById('looshop');
 const shackShopEl = document.getElementById('shackshop');
+// The deep's five, one a station on its floor (deep/rows.js), each page
+// `<key>board` holding its rows in `<key>shop`. Written out rather than read
+// off the rows: this runs while the import ring is still closing.
+const DEEP_PAGES = ['altar', 'well', 'font', 'circle', 'spire'];
+const deepShopEl = Object.fromEntries(DEEP_PAGES.map(k => [k, document.getElementById(k + 'shop')]));
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'),
@@ -51,7 +58,8 @@ const pages = { bench: document.getElementById('board'),
                 tower: document.getElementById('towerboard'),
                 stats: document.getElementById('statsboard'),
                 outhouse: document.getElementById('looboard'),
-                shack: document.getElementById('shackboard') };
+                shack: document.getElementById('shackboard'),
+                ...Object.fromEntries(DEEP_PAGES.map(k => [k, document.getElementById(k + 'board')])) };
 
 // The pips' size and tone live in config and are handed to the stylesheet
 // here, once, on the root, so no two boards can disagree about them.
@@ -63,6 +71,14 @@ for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHE
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);
+// The scale's mark, the same pixels the counter lays on its card: a mask of
+// its ink, so the stylesheet paints it in the words' own color and the paper
+// shows through the rest (`.scale` in style.css).
+const scaleInk = SCALE_MARK.flatMap((row, y) => [...row].map((c, x) => c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ''));
+document.documentElement.style.setProperty?.('--scale-mark',
+  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${SCALE_MARK[0].length}" height="${SCALE_MARK.length}" shape-rendering="crispEdges">${scaleInk.join('')}</svg>`)}")`);
+document.documentElement.style.setProperty?.('--scale-w', `${SCALE_MARK[0].length}px`);
+document.documentElement.style.setProperty?.('--scale-h', `${SCALE_MARK.length}px`);
 // Where you stand to open each board, and where the board goes up: the same
 // place, for every station today, read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
@@ -83,7 +99,8 @@ const listFor = which =>
   which === 'stats' ? STATS_UPGRADES :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
   which === 'shack' ? shackRows() :
-  which === 'house' ? crewRows() : [];
+  which === 'house' ? crewRows() :
+  DEEP_ROWS[which] || [];
 
 // Every station that has a board; what is true of all of them (the mark under
 // the foot, for one) is written once against this list.
@@ -245,8 +262,10 @@ function place(el, at) {
 
   // Clear of the rosters, which stand in their own strip under the ground line:
   // a board taller than the room above its station is pushed down by the
-  // window clamp, and the counters are the worst thing it could land on.
-  const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
+  // window clamp, and the counters are the worst thing it could land on. A
+  // station in the deep has the deep's floor for its ground.
+  const floorY = inDeep(mid, at.y) ? deepFloor() : S.groundY;
+  const strip = (floorY + P * 11 - S.camY) * S.zoom;         // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
   const highest = S.H - h - GAP;
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
@@ -641,6 +660,7 @@ function fill(which) {
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
   if (which === 'shack') refresh(shackShopEl, shackRows(), null);
+  if (DEEP_PAGES.includes(which)) refresh(deepShopEl[which], DEEP_ROWS[which], deepHeads);
   // rebuilt as well as refreshed: the crew is a list that changes length
   if (which === 'house') {
     buildCrew();
@@ -656,18 +676,20 @@ const PURSE = [
   ['core', () => S.seenCore, () => S.cores],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],
-  ['spark', () => S.seenSpark, () => S.sparks]
+  ['spark', () => S.seenSpark, () => S.sparks],
+  ['scale', () => S.seenScale, () => S.scales]
 ];
+
+// The coins the purse shows now and what it holds of each, in its order.
+export const purseCoins = () => PURSE.filter(([, seen]) => seen()).map(([mark, , count]) => [mark, count()]);
 
 // Written only when it changes: this runs every frame a board is open, and
 // `innerHTML` is a parse.
 let purseWas = null;
 function fillPurse() {
   let html = '';
-  for (const [mark, seen, count] of PURSE) {
-    if (!seen()) continue;
-    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(shown('purse:' + mark, count()))}</b></div>`;
-  }
+  for (const [mark, n] of purseCoins())
+    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(shown('purse:' + mark, n))}</b></div>`;
   if (html === purseWas) return;
   // A row appearing or going resizes the panel; a digit does not, since the
   // count sits in a slot of its own width.

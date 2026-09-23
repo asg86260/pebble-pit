@@ -532,7 +532,7 @@ body.still #scroller { scroll-behavior: auto; }
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
    pile up. */
-.dust, .core, .shard, .spore, .spark, .clock {
+.dust, .core, .shard, .spore, .spark, .scale, .clock {
   display: inline-block;
   vertical-align: baseline;
 }
@@ -614,6 +614,18 @@ body.still #scroller { scroll-behavior: auto; }
   width: 9px; height: 9px;
   background: #2e9e4b;   /* the farm */
   clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
+}
+/* a scale: the mark that means the deep. Ink and paper, like the place it
+   comes from: a square with its foot rounded in and a crescent across it, a
+   fish's scale seen flat. The pixels are SCALE_MARK in config/deepboard.js,
+   handed over by board.js as a mask of the ink (`--scale-mark`), so the
+   counter's card and the board draw the one coin. The ink is the words' own
+   color and the paper is whatever the board is. */
+.scale {
+  width: var(--scale-w, 9px); height: var(--scale-h, 9px);
+  background: currentColor;
+  -webkit-mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
+  mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
 }
 
 /* What the row gives you. It sits left in its own column rather than right
@@ -793,6 +805,11 @@ body.still #scroller { scroll-behavior: auto; }
 .rows .ladder b:nth-child(2) { color: #2e9e4b; }   /* the farm's green, as the spore mark */
 .rows .ladder b:nth-child(3) { color: #2f5fd0; }   /* the quarry's blue, as the shard mark */
 .rows .ladder b:nth-child(4) { color: #d93a25; }   /* the spark's red: the grounds' last rung */
+/* A deep ladder's second band adds dust, not crops (`lead: 'scale'` in
+   upgrades/tiers.js): its pips are the ink the dust and the scale are both
+   drawn in. The shelf's column (shelf.css) the same way. */
+.rows .ladder[data-lead="scale"] b:nth-child(2),
+.rows.shelves > .tile .ladder[data-lead="scale"] b:nth-child(2) { color: inherit; }
 /* The hover is a share of the way from the resting tone to full black rather
    than a second tone found by hand -- two hand-tuned numbers would part company
    the moment either was retuned. */

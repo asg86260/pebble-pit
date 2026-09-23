@@ -17,6 +17,7 @@ import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 
 import { spelled } from './tower.js';
+import { spendScales, shed } from './deep/scales.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut } from './works.js';
 import { nextHouseAt } from './house.js';
@@ -156,8 +157,14 @@ export function markSectionsSeen() {
 // pile; every other coin is a grain in that pile, so paying lifts that many
 // grains out of it. `spendHeld` takes off what the rift is holding for
 // whatever the hole did not have, the same order paying in dust keeps.
-export function take(money, n) {
+//
+// A scale is not in the pile: it lies on the deep's floor, and paying lifts
+// it off the bed to the station taking it, `to` (a point, the paying
+// station's stand). The bed's own count is the purse (`S.scales`), so
+// nothing here subtracts it.
+export function take(money, n, to = null) {
   if (!n) return;
+  if (money === 'scale') { spendScales(n, to?.x ?? S.cx, to?.y ?? S.groundY); return; }
   if (money === 'dust') spend(n);
   else if (money === 'core') { S.cores -= n; spendHeld(n, CORE_CELL); }
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
@@ -178,6 +185,9 @@ export const billOf = u => {
     for (const [money, n] of bill) dust += (DUST_PER[money] || 0) * n;
     if (dust > 0) bill = [...bill, ['dust', Math.round(dust)]];
   }
+  // A coin named at nought is a row saying "none of this": a scale ladder's
+  // first band asks no dust and names it so, or the line above would add it.
+  bill = bill.filter(([, n]) => n !== 0);
   if (!takesTime(u)) return bill;
   const on = workOn(u.key);
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
@@ -193,7 +203,8 @@ export const tintOf = u => {
   const coins = billOf(u).map(([m]) => m);
   return coins.includes('spark') ? SHELF_INK.spark
        : coins.includes('shard') ? SHELF_INK.shard
-       : coins.includes('spore') ? SHELF_INK.spore : null;
+       : coins.includes('spore') ? SHELF_INK.spore
+       : coins.includes('scale') ? SHELF_INK.scale : null;
 };
 
 // Being built, or bought and waiting its turn; only the second can be pressed
@@ -230,7 +241,9 @@ export function buy(u) {
     const bill = billOf(u);
     if (!pullOut(u.site, u.key)) return false;
     const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
-    for (const [money, n] of bill) if (money !== 'time') refund(money, n, x, y);
+    // Scales go back into the water they came out of, and sink to the bed.
+    for (const [money, n] of bill) if (money === 'scale') shed(x, y, n);
+                                   else if (money !== 'time') refund(money, n, x, y);
     S.shopStale = true;
     return false;
   }
@@ -249,9 +262,10 @@ export function buy(u) {
   const box = u.site === 'yard' ? siteBox('yard', workOn(u.key))
             : u.site           ? siteBox(u.site)
             : null;
-  if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
+  const to = box && { x: box.x + box.w / 2, y: (box.y ?? S.groundY) - P * 2 };
+  if (to) payTo(to.x, to.y);
   // Nothing is taken until all of it can be (`canPay` above).
-  for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
+  for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n, to);
   payTo();
 
   if (!takesTime(u)) u.buy();

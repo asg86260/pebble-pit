@@ -75,7 +75,7 @@
 </div>
 <!-- The ids board.js and shop.js take hold of at load, so the row modules can
      be imported here. Nothing in them is drawn. -->
-<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div></div>
+<div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><div id="c"></div><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div><div id="altarboard"></div><div id="altarshop"></div><div id="wellboard"></div><div id="wellshop"></div><div id="fontboard"></div><div id="fontshop"></div><div id="circleboard"></div><div id="circleshop"></div><div id="spireboard"></div><div id="spireshop"></div></div>
 <script type="module">
 import { S } from './src/state.js';
 import { TUNABLE } from './src/config.js';
@@ -87,6 +87,7 @@ import { QUARRY_UPGRADES } from './src/quarry.js';
 import { FARM_UPGRADES } from './src/farm.js';
 import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
 import { APOTHECARY_UPGRADES } from './src/apothecary.js';
+import { DEEP_ROWS } from './src/deep/rows.js';
 import { DUST_PER } from './src/upgrades/price.js';
 import { LADDERS } from './src/config.js';
 
@@ -102,7 +103,10 @@ Object.assign(S, {
   crew: 8, farmOpen: true, quarryOpen: true, apothecaryOpen: true, filterOpen: true,
   towerOpen: true, shackOpen: true, outhouseOpen: true, casinoOpen: true,
   seenShard: true, seenSpore: true, seenCore: true, seenSpark: true, seenAir: true,
-  brews: 9, autoMine: true, boulderNo: 3, introDone: true
+  brews: 9, autoMine: true, boulderNo: 3, introDone: true,
+  // and the deep, every station of it open and its star bought
+  snatched: true, seenScale: true, wellOpen: true, fontOpen: true, circleOpen: true, spireOpen: true,
+  starOpen: true
 });
 
 const ROWS = [
@@ -113,10 +117,11 @@ const ROWS = [
   ...QUARRY_UPGRADES.map(u => ({ u, board: 'quarry' })),
   ...FARM_UPGRADES.map(u => ({ u, board: 'farm' })),
   ...APOTHECARY_UPGRADES.map(u => ({ u, board: 'apothecary' })),
+  ...Object.entries(DEEP_ROWS).flatMap(([board, list]) => list.map(u => ({ u, board }))),
   { u: HOUSE_ROW, board: 'crew' }
 ].filter(({ u }) => u.rung && (u.bill || u.cost));
 
-const COINS = ['dust', 'spore', 'shard', 'core', 'spark'];
+const COINS = ['dust', 'scale', 'spore', 'shard', 'core', 'spark'];
 
 // Everything on S a climb might move, kept and put back: the level fields are
 // plain numbers, the potions' potency and the multipliers are objects of
@@ -200,18 +205,19 @@ function render() {
     let work = 0, spent = 0;
     for (const r of rows) {
       const tr = document.createElement('tr');
-      if (r.error) { tr.innerHTML = `<td colspan="13" style="color:#d93a25">${r.error}</td>`; t.appendChild(tr); continue; }
+      if (r.error) { tr.innerHTML = `<td colspan="${8 + COINS.length}" style="color:#d93a25">${r.error}</td>`; t.appendChild(tr); continue; }
       if (r.bill.spark) tr.className = 'spark-rung';
       const eq = dustEq(r.bill), pct = pctOf(r);
       spent += eq;
-      // The dust is a box too, over the table's cost for this rung; the coins
-      // beside it are read back off the bill.
-      const dustBox = LADDERS[key]
+      // The coin the table is written in is a box too, over the table's cost
+      // for this rung -- dust for the yard, scales for the deep (`lead` in
+      // upgrades/tiers.js); the coins beside it are read back off the bill.
+      const lead = u.lead || 'dust';
+      const coinCell = c => c === lead && LADDERS[key]
         ? `<input class="rung" data-key="${key}" data-list="dust" data-i="${r.rung - 1}" value="${fmt(LADDERS[key].dust[r.rung - 1])}" step="1">`
-        : (r.bill.dust != null ? fmt(r.bill.dust) : '');
+        : (r.bill[c] != null ? fmt(r.bill[c]) : '');
       tr.innerHTML = `<td>${r.rung}</td>` + cell(r, u, key) +
-        `<td class="dust">${dustBox}</td>` +
-        COINS.slice(1).map(c => `<td class="${c}">${r.bill[c] != null ? fmt(r.bill[c]) : ''}</td>`).join('') +
+        COINS.map(c => `<td class="${c}">${coinCell(c)}</td>`).join('') +
         `<td class="time">${r.work != null ? fmt(r.work) : ''}</td>` +
         `<td class="eq">${fmt(Math.round(eq))}</td><td class="per">${pct ? fmt(Math.round(eq / pct)) : ''}</td><td class="eq">${fmt(Math.round(spent))}</td>`;
       for (const c of COINS) total[c] += r.bill[c] || 0;

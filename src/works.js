@@ -12,6 +12,7 @@ import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
+import { standOf } from './deep/place.js';
 
 // Where a row's work stands, and therefore whose hands do it: the yard's spare
 // hands (`builders` in crew.js) everywhere a station's own gang is at a post.
@@ -39,7 +40,17 @@ export const SITE_JOB = {
   outhouse: JOB.BUILD,
   // The sphere's rungs: nobody on the ground can reach the shell, so its one
   // tender pours them from the ring (`setHands` in crew/muster.js).
-  sphere: JOB.WIZARD
+  sphere: JOB.WIZARD,
+  // The deep's: a spare hand lent from the yard would have to swim down the
+  // shaft to hammer on a rung, so every station down there is built by its
+  // own gang, and the doors by the brawlers at the altar, where they are sold
+  // (docs/wave-serpent.md, "The deep's work is done by the deep's own gang").
+  altar: JOB.BRAWL,
+  well: JOB.LANCE,
+  font: JOB.GRENADE,
+  circle: JOB.SCRIBE,
+  spire: JOB.WARLOCK,
+  deep: JOB.BRAWL
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -88,11 +99,17 @@ export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 
 export const busyBuilderSites = () =>
   SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD
-                                        || (noGang(site) && !UP_THERE.has(site))));
+                                        || (noGang(site) && !UP_THERE.has(site) && !DOWN_THERE.has(site))));
 // The sites in the air, which a spare hand lent from the ground could walk
 // under and never reach: their work is done by whoever is up there (the
 // sphere's rungs, by its tender).
 export const UP_THERE = new Set(['sphere']);
+// And the sites under the drowned pit, the same rule the other way: nobody is
+// lent down the shaft, and a deep station with nobody posted at it waits.
+// SEAM: who counts as hands at these is `setHands` in crew/muster.js, which
+// answers nought for every site not built by the yard's builders until it
+// counts the station's own gang, arrived at its post.
+export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'deep']);
 
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -105,6 +122,8 @@ export const siteX = site => {
   if (!w) return null;
   if (w.at != null) return w.at;
   if (site === 'bench') return bench.x + bench.w / 2;
+  // The deep's doors are raised at a station that is not their own site.
+  if (site === 'deep') { const b = siteBox(site); return b.x + b.w / 2; }
   // Without this a spare hand sent to help at a station had nowhere to walk
   // to and the work sat at nought forever.
   return footHook(site);
@@ -224,7 +243,12 @@ const YARD_ROW_SITE = {
 // them here reads them before they exist.
 const SITE_BOX = { filter: () => filter, tower: () => tower, bench: () => bench,
                    lab: () => lab, shack: () => shack,
-                   outhouse: () => outhouse };
+                   outhouse: () => outhouse,
+                   // The deep's stations on its floor; a door goes up at the
+                   // altar, where the brawlers are.
+                   altar: () => standOf('altar'), well: () => standOf('well'),
+                   font: () => standOf('font'), circle: () => standOf('circle'),
+                   spire: () => standOf('spire'), deep: () => standOf('altar') };
 export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
 
 // Every room the settlement will have once the one going up lands, the same
@@ -432,8 +456,12 @@ export function stepWorks(dt) {
 // building until its board is read. The yard's own builds are the exception:
 // a building arriving is its own announcement, and the yard has no box to
 // center a tick on.
+// A door of the deep lands at the altar, whose board sold it, so its tick is
+// the altar's to show and the altar's board to clear.
+const TICKS_AT = { deep: 'altar' };
 export function workFinished(site, key) {
   if (site === 'yard') return;
+  site = TICKS_AT[site] || site;
   // Everything landed since the board was read, oldest first: the stack over
   // the station shows them all, ticked, in the order they landed. A fresh
   // array, as `markRowSeen` writes one, for the save.
