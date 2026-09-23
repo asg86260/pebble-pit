@@ -166,7 +166,7 @@ export const TOWER_UPGRADES = [
   {
     key: 'sphere',
     name: 'the sphere',
-    note: () => 'a shell round the star: it catches the light and drops sparks, and the star is never used up',
+    note: () => 'capture the power of a star',
     bill: () => [...SPHERE_BILL.map(l => [...l]), ['time', SPHERE_WORK * 1000]],
     cost: () => SPHERE_BILL.find(([m]) => m === 'dust')[1],
     buy: () => buyMachine('sphere'),
