@@ -14736,10 +14736,13 @@ nothing says "a body, inside it".
 columns: a cell is the serpent's if its middle is within the body's half
 thickness of the centerline, measured across the body, not straight down.
 Its ends are round -- the head's snout and the tail's tip are caps, not a
-column stopping. The scale lattice is read in the body's own coordinates
-(how far along it, how far across), so the pattern follows the coil round a
-bend instead of printing a screen-column stripe over it. The bottom edge's
-shade is the edge across the body, not the last row of a column. No plates
+column stopping. The hide is plain white with a grey spine down the middle
+and a shaded belly: lines that follow the curve and only step with it. A
+dot lattice read off the body's coordinates was built first and cut the
+same day -- the dots popped in and out as the body bent, and plain white is
+what the cracks read on. A pattern held still behind the body, parallaxed,
+was mocked and turned down as too strange. The bottom edge's shade is the
+edge across the body, not the last row of a column. No plates
 and no seams. **The splitting stage does not split the body**: the coil
 stays whole and thrashes, a ripple a length running down it
 (`SPLIT_WRITHE`), and the lengths are only the rings' accounting.

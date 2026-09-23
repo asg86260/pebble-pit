@@ -135,7 +135,14 @@ export function drawSerpent() {
       continue;
     }
     let ramp = GREYS;
-    let rung = c.across > c.r - P ? WHITE - 1 : (aI + (((cI % 2) + 2) % 2) * 2) % 4 === 0 ? WHITE - 2 : WHITE;
+    // The hide: a spine down the middle and a shaded belly, plain white
+    // between. Lines that follow the curve only step with it; a lattice of
+    // dots read off the body's coordinates popped in and out as it bent, and
+    // plain white is what the cracks show up on.
+    let rung = c.across > c.r - P ? WHITE - 3
+             : Math.abs(c.across) < P / 2 ? WHITE - 2
+             : c.across > P * 0.9 ? WHITE - 1
+             : WHITE;
     if (stage === 1 && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
       ramp = PURPLES; rung = WHITE - (seeth(aI, cI) % 3);
     }
