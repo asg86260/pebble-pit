@@ -58,7 +58,16 @@ export const COIL_Y = 0.5;           // its centerline, a fraction of DEEP_H dow
 export const COIL_AMP = P * 9;       // how far it swings either side of that
 export const COIL_WAVES = 3;         // waves along its length
 export const COIL_SWAY_MS = 7000;    // one sway
-export const COIL_THICK = P * 5;     // the body's width
+// The body's girth along it, a python's: a head fuller than the slim neck
+// behind it, swelling to its thickest where he is held and holding that to
+// COIL_TAIL_FROM, then a long taper to the tip. `coilThick` in place.js is
+// the one reader, for the drawing and for every hit alike.
+export const HEAD_SEGS = 3;          // segments of head
+export const COIL_HEAD = P * 8;      // the head, across
+export const COIL_NECK = P * 5;      // the neck behind it, the slimmest of the body
+export const COIL_GIRTH = P * 9;     // the body at its thickest, from the belly back
+export const COIL_TAIL_FROM = 0.75;  // where the tail starts to thin, head to tail
+export const COIL_TIP = 0.25;        // the tip, a share of the girth
 export const BELLY_AT = 0.58;        // where he is held, a fraction of the way from head to tail
 export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this many lengths
 

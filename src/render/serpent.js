@@ -14,12 +14,12 @@
 // deep, and the gap at the belly breaking the cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
 
 import { now } from '../clock.js';
-import { P, WORKER, COIL_SEGS, COIL_THICK, COIL_TAIL, HEAD_SEGS, HEAD_PLUS, WARD_MS, WARD_AT,
+import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
          CRACK_REACH, COIL_STEP, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W } from '../config.js';
 import { S } from '../state.js';
-import { coilLine, mouthX } from '../deep/place.js';
+import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -32,14 +32,12 @@ const snap = v => Math.round(v / P) * P;
 const WHITE = GREYS.length - 1;
 const SNOUT = P * 3;          // the snout, run on past the head's segment
 
-// How thick the body is at `u` segments from the head: the head a little
-// fuller, the tail thinning over its last stretch, the snout tapering.
+// How far the body reaches either side of its centerline at `u` segments
+// from the head: the coil's own girth (`coilThick`), and the snout, run on
+// past the head, tapering.
 function radiusAt(u, snoutU) {
-  const head = (COIL_THICK + HEAD_PLUS) / 2;
-  if (u < 0) return head * (1 - 0.55 * Math.min(1, -u / snoutU));
-  if (u < HEAD_SEGS) return head;
-  const tail = Math.max(0, (u / (COIL_SEGS - 1) - 0.6) / 0.4);
-  return COIL_THICK / 2 * (1 - (1 - COIL_TAIL) * tail * tail);
+  if (u < 0) return COIL_HEAD / 2 * (1 - 0.55 * Math.min(1, -u / snoutU));
+  return coilThick(u) / 2;
 }
 
 // A length of coil over a sigil is held: bands of the circle's purple across
@@ -68,10 +66,11 @@ function lay(t, x0, x1) {
     last = p;
     const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
     const tx = (q.x - p.x) / len, ty = (q.y - p.y) / len;
-    pts.push({ u, x: p.x, y: p.y, tx, ty, nx: -ty, ny: tx, along, r: radiusAt(u, snoutU) });
+    const r = radiusAt(u, snoutU);
+    pts.push({ u, x: p.x, y: p.y, tx, ty, nx: -ty, ny: tx, along, r, r0: r });
   }
   const alongAt = u => pts[Math.max(0, Math.min(pts.length - 1, Math.round((u + snoutU) / du)))].along;
-  const reach = COIL_THICK * 2;
+  const reach = COIL_GIRTH * 2;
   return { pts: pts.filter(p => p.x > x0 - reach && p.x < x1 + reach), alongAt };
 }
 
@@ -110,7 +109,7 @@ export function drawSerpent() {
         const key = cx / P * 65536 + cy / P;
         const had = cells.get(key);
         if (had && had.dist <= dist) continue;
-        cells.set(key, { x: cx, y: cy, dist, r: p.r, u: p.u,
+        cells.set(key, { x: cx, y: cy, dist, r: p.r, r0: p.r0, u: p.u,
                          along: p.along + dx * p.tx + dy * p.ty, across: dx * p.nx + dy * p.ny });
       }
     }
@@ -129,7 +128,7 @@ export function drawSerpent() {
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
     // between. Pale because a body in the deep is dark with a light edge,
     // and on a dark inside he was a hole in a hole.
-    if (held && Math.abs(da) < BELLY_LEN && c.dist < c.r - P && c.r > COIL_THICK / 2 + P / 2) {
+    if (held && Math.abs(da) < BELLY_LEN && c.dist < c.r - P && c.r > c.r0 + P / 2) {
       if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push(c);
       else { ctx.fillStyle = GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]; ctx.fillRect(c.x, c.y, P, P); }
       continue;

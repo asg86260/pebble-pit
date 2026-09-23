@@ -20,7 +20,7 @@
 // (src/crew/jobs.js) once the body is at its station.
 
 import { S } from '../state.js';
-import { P, WORKER, COIL_SEGS, COIL_THICK, SPLIT_LENGTHS, DEEP_STAND_W, DEEP_GRAV,
+import { P, WORKER, COIL_SEGS, SPLIT_LENGTHS, DEEP_STAND_W, DEEP_GRAV,
          SWIM_PACE, PUNCH_REACH, LANCE_DRAW_S, LANCE_FLY, LANCE_THROW_R, GRENADE_DRAW_S,
          GRENADE_FLY_S, GRENADE_R, GRENADE_RING_S, SIGIL_DRAW_S, SIGIL_GAP, BEAM_REACH,
          DOT_TICK_S, STAR_EVERY_S, STAR_DMG, STAR_FALL_S, STAR_SKY_H, STAR_UNDER_S,
@@ -28,7 +28,7 @@ import { P, WORKER, COIL_SEGS, COIL_THICK, SPLIT_LENGTHS, DEEP_STAND_W, DEEP_GRA
 import { frames } from '../clock.js';
 import { commutePace } from '../levels.js';
 import { abyssLine } from '../pit.js';
-import { deepTop, deepFloor, deepX0, deepX1, inDeep, mouthX, spotX, coilAt, nearestSeg } from './place.js';
+import { deepTop, deepFloor, deepX0, deepX1, inDeep, mouthX, spotX, coilAt, coilThick, nearestSeg } from './place.js';
 import { strike } from './serpent.js';
 
 // --- a body in the water ----------------------------------------------------------
@@ -83,8 +83,8 @@ export const stepBrawler = (w, c) => {
   const t = c.now;
   const seg = nearestSeg(mid(w), w.y, t).seg;
   const p = coilAt(seg, t);
-  if (!swim(w, p.x - WORKER / 2, p.y + COIL_THICK / 2)
-      && Math.hypot(p.x - mid(w), p.y - w.y) > PUNCH_REACH + COIL_THICK / 2) {
+  if (!swim(w, p.x - WORKER / 2, p.y + coilThick(seg) / 2)
+      && Math.hypot(p.x - mid(w), p.y - w.y) > PUNCH_REACH + coilThick(seg) / 2) {
     w.goal = 'rise';
     return;
   }
@@ -112,7 +112,7 @@ export const stepLancer = (w, c) => {
   w.goal = 'swim';
   const near = nearestSeg(mid(w), w.y, t);
   const p = coilAt(near.seg, t);
-  if (near.d > LANCE_THROW_R) { swim(w, p.x - WORKER / 2, p.y + COIL_THICK); return; }
+  if (near.d > LANCE_THROW_R) { swim(w, p.x - WORKER / 2, p.y + coilThick(near.seg)); return; }
   afloat(w);
   S.lances.push({ x: mid(w), y: w.y, x0: mid(w), y0: w.y, at: t, seg: near.seg,
                   until: 0, stuck: false, tickAt: 0 });
@@ -253,7 +253,8 @@ function stepGrenades(t) {
     g.vy += DEEP_GRAV * f;
     g.x += g.vx * f;
     g.y += g.vy * f;
-    const reached = nearestSeg(g.x, g.y, t).d <= COIL_THICK;
+    const near = nearestSeg(g.x, g.y, t);
+    const reached = near.d <= coilThick(near.seg);
     const lost = t - g.at > GRENADE_FLY_S * 2000 || g.y < deepTop() || g.y > deepFloor();
     if (reached || lost) { S.rings.push({ x: g.x, y: g.y, at: t, r: 0, hit: [] }); continue; }
     S.grenades[keep++] = g;
@@ -274,7 +275,7 @@ function stepRings(t) {
       const len = lengthOf(i);
       if (ring.hit.includes(len)) continue;
       const p = coilAt(i, t);
-      if (Math.hypot(p.x - ring.x, p.y - ring.y) > ring.r + COIL_THICK / 2) continue;
+      if (Math.hypot(p.x - ring.x, p.y - ring.y) > ring.r + coilThick(i) / 2) continue;
       ring.hit.push(len);
       strike('grenade', dmg, p.x, p.y);
     }

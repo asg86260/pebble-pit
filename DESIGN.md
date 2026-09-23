@@ -14747,6 +14747,14 @@ and no seams. **The splitting stage does not split the body**: the coil
 stays whole and thrashes, a ripple a length running down it
 (`SPLIT_WRITHE`), and the lengths are only the rings' accounting.
 
+**A python's girth.** *(Voted 2026-09-23 from five mocked profiles.)* The
+body is not one thickness: a head of `COIL_HEAD` narrowing to a slim neck of
+`COIL_NECK`, swelling to `COIL_GIRTH` at the belly and holding it to
+`COIL_TAIL_FROM`, then a long taper to a tip of `COIL_TIP` of the girth.
+`coilThick(u)` in place.js is the one answer, read by the drawing and by
+every hit -- the click, the grenade's reach, the ring, the punch's stand-off,
+the lance's tip -- so a blow on the fat middle lands where the fat middle is.
+
 **The wound is read on the body (D1).**
 - *Cracks.* Dark cracks run out along the coil from the belly, both ways;
   how far they reach is the wound's share of its stage's depth (`woundK`),

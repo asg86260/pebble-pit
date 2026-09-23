@@ -12,10 +12,10 @@
 
 import { S } from '../state.js';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, FADE_UNLIT, SIGIL_HEAL_CUT,
-         SIGIL_CUT_MAX, CURSE_CUT_MAX, SCALE_PER_DMG, SCALE_HIT_MAX, COIL_THICK,
+         SIGIL_CUT_MAX, CURSE_CUT_MAX, SCALE_PER_DMG, SCALE_HIT_MAX,
          COIL_SEGS, BEAM_LIGHT, rungValue } from '../config.js';
 import { now } from '../clock.js';
-import { nearestSeg, coilAt } from './place.js';
+import { nearestSeg, coilAt, coilThick } from './place.js';
 import { shed } from './scales.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
@@ -56,7 +56,7 @@ export function clickDeep(x, y) {
   if (!S.snatched) return false;
   const t = now();
   const near = nearestSeg(x, y, t);
-  if (near.d > COIL_THICK) return false;
+  if (near.d > coilThick(near.seg)) return false;
   const p = coilAt(near.seg, t);
   strike('punch', rungValue('punch', S.punchLevel), p.x, p.y);
   return true;

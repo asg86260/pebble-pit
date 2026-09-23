@@ -5,7 +5,7 @@
 
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TOSS_DELAY, THUMB, BRUSH, DEEP_CEILING, SURFACE_CLICK, COIL_THICK } from './config.js';
+         FARM_H, TOSS_DELAY, THUMB, BRUSH, DEEP_CEILING, SURFACE_CLICK } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -47,7 +47,7 @@ import { isTap } from './tap.js';   // one definition of a tap for the whole pag
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { clickDeep } from './deep/serpent.js';
-import { deepTop, nearestSeg } from './deep/place.js';
+import { deepTop, nearestSeg, coilThick } from './deep/place.js';
 import { abyssLine } from './pit.js';
 
 const canvas = document.getElementById('c');
@@ -119,7 +119,11 @@ const atStation = (x, y) => stationAt(x, y) !== null;
 const onSurface = (x, y) => S.snatched && S.drowned && S.view !== 'deep' &&
   x > pit.x && x < pit.x + pit.w && y > S.groundY && y < abyssLine() + SURFACE_CLICK;
 const onCeiling = (x, y) => S.view === 'deep' && y < deepTop() + DEEP_CEILING;
-const onCoil = (x, y) => S.view === 'deep' && nearestSeg(x, y, now()).d <= COIL_THICK;
+const onCoil = (x, y) => {
+  if (S.view !== 'deep') return false;
+  const near = nearestSeg(x, y, now());
+  return near.d <= coilThick(near.seg);
+};
 
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything.

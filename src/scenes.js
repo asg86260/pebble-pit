@@ -202,6 +202,11 @@ const deepScenes = {
     run: snatchAt('take') },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
+  // The ends of it: the head and its slim neck, and the long taper of the tail.
+  'serpent-head': { about: 'the deep', say: "the serpent's head and the neck behind it",
+    run: () => { deepYard({}); lookDeep(coilAt(4, now()).x + S.viewW * 0.25); } },
+  'serpent-tail': { about: 'the deep', say: "the serpent's tail, tapering to its tip",
+    run: () => { deepYard({}); lookDeep(coilAt(COIL_SEGS - 8, now()).x); } },
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open',
     run: stageScene(0, 52, []) },
   'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, lances in it',

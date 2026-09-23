@@ -12,8 +12,6 @@ Open:
   the first half's length (the dev panel has the heals and a depth scale).
 - **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
-- **The coil reads thin** at 5 cells across a 520-cell deep in a wide window
-  (`COIL_THICK`, `DEEP_H`).
 - **The sheet before the snatch** still says it is the end of the story.
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)

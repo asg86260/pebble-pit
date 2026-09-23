@@ -12,7 +12,7 @@
 import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
-         COIL_WAVES, COIL_SWAY_MS, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
+         COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 import { SPRITES } from './sprites.js';
 
@@ -121,6 +121,16 @@ export function coilLine(u, t) {
 export function coilAt(i, t) {
   const p = coilLine(i, t);
   return { x: snap(p.x), y: snap(p.y) };
+}
+// How thick the body is at `u` segments from the head (DESIGN.md, "The
+// serpent, redrawn"): the head, then the neck swelling to the girth at the
+// belly, held, then tapering to the tip.
+export function coilThick(u) {
+  const k = u / (COIL_SEGS - 1), headK = HEAD_SEGS / (COIL_SEGS - 1);
+  if (k < headK) return COIL_HEAD;
+  if (k < BELLY_AT) return COIL_NECK + (COIL_GIRTH - COIL_NECK) * Math.sin(Math.PI / 2 * (k - headK) / (BELLY_AT - headK));
+  if (k < COIL_TAIL_FROM) return COIL_GIRTH;
+  return COIL_GIRTH * (1 - (1 - COIL_TIP) * ((k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM)) ** 1.5);
 }
 export const bellySeg = () => Math.round(BELLY_AT * (COIL_SEGS - 1));
 export const bellyAt = t => coilAt(bellySeg(), t);

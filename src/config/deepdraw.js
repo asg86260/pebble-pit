@@ -68,9 +68,6 @@ export const DEEP_CHURN_LIFE = 2.5;  // seconds they churn
 export const DEEP_MOTES_MAX = 400;   // however much is going on
 
 // --- the serpent -------------------------------------------------------------------
-export const COIL_TAIL = 0.3;        // the tail's width, as a share of the body's
-export const HEAD_SEGS = 3;          // segments of head, thicker than the neck
-export const HEAD_PLUS = P * 2;      // and how much thicker
 export const WARD_MS = 2600;         // one pass of the ward's shimmer along the scales
 export const WARD_AT = 0.55;         // how much of the shimmer's wave is lit
 // Splitting: the coil stays whole and thrashes, a ripple a length running

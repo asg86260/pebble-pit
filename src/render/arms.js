@@ -9,11 +9,11 @@
 // being drawn on fewer.
 
 import { now } from '../clock.js';
-import { P, WORKER, COIL_THICK, LANCE_FLY, GRENADE_R, GRENADE_RING_S,
+import { P, WORKER, LANCE_FLY, GRENADE_R, GRENADE_RING_S,
          LANCE_LEN, RING_CELLS, BEAM_MS, BEAM_WAVE, SIGIL_RX, SIGIL_RY, STAR_TAIL, PUNCH_MS,
          MAGIC_TONES } from '../config.js';
 import { S } from '../state.js';
-import { coilAt, nearestSeg, deepTop } from '../deep/place.js';
+import { coilAt, coilThick, nearestSeg, deepTop } from '../deep/place.js';
 import { TYPE } from '../jobs.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -41,7 +41,7 @@ export function drawPunches() {
     if (w.type !== TYPE.BRAWL || !inTheDeep(w)) continue;
     const cx = w.x + WORKER / 2, cy = w.y + WORKER / 2;
     const near = nearestSeg(cx, cy, t);
-    if (near.d > COIL_THICK + WORKER) continue;
+    if (near.d > coilThick(near.seg) + WORKER) continue;
     const p = coilAt(near.seg, t);
     const ph = ((t + hash(w.id ?? w.x) * PUNCH_MS) % PUNCH_MS) / PUNCH_MS;
     const out = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
@@ -71,7 +71,7 @@ export function drawLances() {
     const stuck = target && t >= l.at + LANCE_FLY * 1000;
     // Stuck, its point is a cell into the underside of the coil and the
     // shaft hangs out below, the way it came up from the floor.
-    const tipX = stuck ? target.x : l.x, tipY = stuck ? target.y + COIL_THICK / 2 - P : l.y;
+    const tipX = stuck ? target.x : l.x, tipY = stuck ? target.y + coilThick(l.seg) / 2 - P : l.y;
     // in the water it points along its flight: from where it came, toward the coil
     let dx = target ? target.x - l.x : 1, dy = target ? target.y - l.y : 0;
     if (stuck) { dx = -0.35; dy = -1; }
@@ -139,7 +139,7 @@ export function drawSigils() {
     // the thread: every other cell, up to the underside of the coil
     const seg = nearestSeg(cx, floor, t);
     const p = coilAt(seg.seg, t);
-    for (let y = floor - SIGIL_RY * 2; y > p.y + COIL_THICK / 2 + P; y -= P * 2)
+    for (let y = floor - SIGIL_RY * 2; y > p.y + coilThick(seg.seg) / 2 + P; y -= P * 2)
       cell(cx, y, PURPLES[WHITE - 4]);
   }
   ctx.fillStyle = '#000';
