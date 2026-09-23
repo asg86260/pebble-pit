@@ -50,7 +50,7 @@ if (!merged) {
 // stations and nobody else in the deep.
 function deepYard(counts = {}, where = 'station') {
   standIns = [];
-  if (typeof window.__snatch === 'function') { window.__snatch(); runUntil(() => S.snatched, 120); }
+  if (typeof window.__snatch === 'function') window.__snatch({ played: true });
   else S.snatched = true;
   window.__serpent({ stage: 0, wound: 0 });
   for (const k of Object.values(KINDS)) if (k.open) S[k.open] = true;

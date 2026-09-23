@@ -6,7 +6,7 @@
 // what these checks are about.
 import { group, ok, state, run } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { WORKER, BRAWL_CAP, GRENADE_CAP } from '../src/config.js';
+import { P, WORKER, BRAWL_CAP, GRENADE_CAP } from '../src/config.js';
 import { rosterHit } from '../src/roster.js';
 import { assign } from '../src/staffing.js';
 import { commutePace } from '../src/levels.js';
@@ -112,7 +112,8 @@ group('a reload with bodies in the deep brings them back in the deep', async () 
     ok(before.length === 2 && before.every(b => b.y + WORKER > S.groundY + WORKER),
        'two brawlers stand in the deep', JSON.stringify(before)),
     ok(after.every((w, i) => w && w.type === 'brawler' && belowYard(w)
-                   && Math.abs(w.x - before[i].x) <= 1 && Math.abs(w.y - before[i].y) <= 1),
+                   // a frame's swim at most: a brawler at work goes on swimming to the coil
+                   && Math.abs(w.x - before[i].x) <= P && Math.abs(w.y - before[i].y) <= P),
        'and come back where they stood, in the deep', JSON.stringify(after.map(w => w && [w.type, w.x, w.y])))
   ];
 });
