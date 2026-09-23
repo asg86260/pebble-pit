@@ -13,7 +13,7 @@ import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          DEEP_STAND_W, DEEP_STAND_H, COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM } from '../config.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 
 const snap = v => Math.round(v / P) * P;
 
@@ -48,6 +48,22 @@ export const inHopper = (x, y) => {
   const h = hopperRect();
   return x >= h.x && x < h.x + h.w && y >= h.y + h.h && y < h.y + CRUSHER_H / 2;
 };
+// Pod `i`, bottom course first and left to right within a course, standing
+// on the deep's floor at the pods' spot; and the ground the stack stands on,
+// for the build going up there and the pointer.
+export function podAt(i) {
+  const across = POD_COLS * (POD_W + POD_GAP) - POD_GAP;
+  const left = snap(spotX('pods') - across / 2);
+  const col = i % POD_COLS, row = Math.floor(i / POD_COLS);
+  return { x: left + col * (POD_W + POD_GAP), y: deepFloor() - (row + 1) * (POD_H + POD_GAP) + POD_GAP,
+           w: POD_W, h: POD_H };
+}
+export const podsRect = () => {
+  const a = podAt(0), top = podAt(Math.max(0, S.pods)).y;
+  const across = POD_COLS * (POD_W + POD_GAP) - POD_GAP;
+  return { x: a.x, y: top, w: across, h: deepFloor() - top };
+};
+
 // Where a gatherer stands to toss a load in: on the floor, beside the
 // crusher on the side the rest of the deep is.
 export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;

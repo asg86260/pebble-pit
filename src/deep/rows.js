@@ -14,9 +14,9 @@
 // altar.
 
 import { S } from '../state.js';
-import { rungValue, DOOR_BILLS, STAR_SPARKS, STAR_TUNE_SPARKS, STAR_EVERY_S } from '../config.js';
+import { rungValue, DOOR_BILLS, STAR_SPARKS, STAR_TUNE_SPARKS, STAR_EVERY_S, POD_SCALES0, POD_RATE } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
-import { staffDoor } from '../staffing.js';
+import { staffDoor, hirePod } from '../staffing.js';
 import { open, offered } from '../stations.js';
 import { registerRows } from '../works.js';
 import { JOB, jobSaid } from '../jobs.js';
@@ -67,6 +67,19 @@ const DOORS = [
          note: () => 'a hand takes the robe and channels a beam that strikes the coil and lights it' })
 ];
 
+// A pod: one more of the crew, living down here (DESIGN.md, "One crew, two
+// homes"). Sold on the altar and built at the pods by the brawlers, a
+// steeper price in scales each one, like the yard's rooms.
+const POD = {
+  key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'altar',
+  note: () => 'a capsule on the deep\'s far side: one more of the crew, living down here',
+  from: () => S.crew, to: () => S.crew + 1,
+  // Scales alone: naming no dust at nought would have `billOf` add its worth.
+  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, S.pods || 0))], ['dust', 0]],
+  buy: () => { hirePod(); S.shopStale = true; },
+  show: () => S.snatched
+};
+
 // --- the well, the font, the circle --------------------------------------------
 const LANCE = ladder('lance', 'lance bleed', 'well', { unit: 'dmg/s', does: 'bleed' });
 const LANCEHOLD = ladder('lancehold', 'lance hold', 'well', { unit: 's', does: 'hold' });
@@ -112,7 +125,7 @@ const TUNESTAR = {
 // Each station's rows, keyed by the station, for board.js and shop.js to draw
 // and hooks.js to reach.
 export const DEEP_ROWS = {
-  altar: [...PUNCH, ...BRAWL, ...DOORS],
+  altar: [...PUNCH, ...BRAWL, ...DOORS, POD],
   well: [...LANCE, ...LANCEHOLD],
   font: [...GRENADE, ...GRENADEPACE],
   circle: [...SIGIL],
@@ -133,7 +146,8 @@ const roster = station => ({ title: jobSaid(DEEP_JOB_AT[station]), roster: true,
 export const DEEP_SECTIONS = {
   altar: [roster('altar'),
           { title: 'the fist', keys: ['punch', 'brawl'] },
-          { title: 'the deep', keys: DOORS.map(u => u.key) }],
+          { title: 'the deep', keys: DOORS.map(u => u.key) },
+          { title: 'the pods', keys: ['pod'] }],
   well: [roster('well'), { title: 'the lance', keys: ['lance', 'lancehold'] }],
   font: [roster('font'), { title: 'the grenade', keys: ['grenade', 'grenadepace'] }],
   circle: [roster('circle'), { title: 'the circle', keys: ['sigil'] }],

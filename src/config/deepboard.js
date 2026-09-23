@@ -40,4 +40,8 @@ export const SCALE_MARK = [
   '   ###   '
 ];
 
+// A pod: scales, a steeper price each one, like the yard's rooms (HOUSE_RATE).
+export const POD_SCALES0 = 150;
+export const POD_RATE = 1.3;
+
 export const DEEP_BOARD_KNOBS = [];

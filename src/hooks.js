@@ -1105,19 +1105,19 @@ function deepReady() {
     S.snatched = true;
     S.rescued = true;
     S.buried = false;
-    markDone('rescue', 'ending', 'snatch');
+    markDone('meet', 'part', 'rescue', 'ending', 'snatch');
   }
 }
 
 // Both facts true -- torn and drowned, and the sqwife out with her sheet put
-// down -- so the snatch is due: it plays from the next frame. A crew of two
+// down, the reunion long behind her -- so the snatch is due: it plays from the next frame. A crew of two
 // at least, as the rescue leaves it. `{ played: true }` runs the beat out
 // as well, for a yard that wants the snatch behind it.
 HANDLES.__snatch = (o = {}) => {
   openRift();
   S.rescued = true;
   S.buried = false;
-  markDone('rescue', 'ending');
+  markDone('meet', 'part', 'rescue', 'ending');
   if (S.crew < 2) { S.crew = 2; rebalance(); syncWorkers(); }
   if (o.played) for (let f = 0; f < 60 * 120 && !S.beatsDone.includes('snatch'); f++) fast(1 / 60);
   buildShop();

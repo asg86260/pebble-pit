@@ -28,6 +28,9 @@ export const GATHER_PER = 40;
 export const GATHER_KEEP = 1;
 export const GATHER_LINGER_S = 20;
 export const GATHER_SCOOP = 8;       // scales a second, into a hauler's arms
+// A yard hauler is lent down only while every yard pile is under this share
+// of its limit, and called back up the moment one fills.
+export const LEND_CALM = 0.5;
 
 
 // --- the snatch ----------------------------------------------------------------------

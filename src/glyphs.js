@@ -123,7 +123,7 @@ export const GLYPH_OF = {
   unlockwell: ['bucket'], unlockfont: ['bowl'], unlockcircle: ['wand'], unlockspire: ['tower'],
   lance: ['bolt'], lancehold: ['bolt', 'plus'], grenade: ['chip'], grenadepace: ['chip', 'up'],
   sigil: ['wand', 'plus'], beam: ['wand'], curse: ['cracked'],
-  callstar: ['star'], tunestar: ['star', 'plus'],
+  callstar: ['star'], tunestar: ['star', 'plus'], pod: ['house'],
 };
 
 // A row's drawing; the crate while it is not made yet.

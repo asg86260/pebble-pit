@@ -465,6 +465,8 @@ export const S = {
   punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
   grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
   gatherBare: 0,          // seconds the deep's floor has lain bare, for the gatherers going home
+  yardLends: true,        // whether the yard's piles are calm enough to lend a hauler down
+  pods: 0,                // the deep's houses: how many of the crew live down there
   crushAt: 0,             // when a scale last went into the crusher, for its rollers
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
@@ -628,7 +630,7 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks', 'gatherers',
+  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks', 'gatherers', 'pods',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
 ];
@@ -774,7 +776,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'gatherBare',
+  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'gatherBare', 'yardLends',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 

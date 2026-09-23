@@ -7,7 +7,9 @@
 // board: a caller that changed the roster and wants the sheet to say so
 // rebuilds the shop itself.
 
-import { LADDER, GATHER_CAP, GATHER_PER, GATHER_KEEP, GATHER_LINGER_S } from './config.js';
+import { LADDER, WORKER, GATHER_CAP, GATHER_PER, GATHER_KEEP, GATHER_LINGER_S, LEND_CALM,
+         PILE_LIMIT } from './config.js';
+import { podAt, deepFloor } from './deep/place.js';
 import { S, deepBed } from './state.js';
 import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
@@ -97,8 +99,9 @@ export function rebalance() {
   S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   S.builders = sites.length ? Math.min(gang, Math.max(0, spareHands())) : 0;
   // The deep's gatherers are haulers too, lent down the shaft while scales lie
-  // on its floor (DESIGN.md, "The crusher"), never the yard's last carrier.
-  S.gatherers = Math.min(gatherTarget(), Math.max(0, spareHands() - S.builders - GATHER_KEEP));
+  // on its floor (DESIGN.md, "The crusher"): its own residents first, and the
+  // yard's haulers only while the yard's piles are calm, never its last.
+  S.gatherers = Math.min(gatherTarget(), gatherRoom());
   // Carrying is what a body does when it is on nothing, less whoever is
   // building or gathering. The carts are the lip's kit and are not held out.
   S.haulers = Math.max(0, spareHands() - S.builders - S.gatherers);
@@ -117,12 +120,49 @@ export function gatherTarget() {
   return Math.max(need, loaded, stay);
 }
 
-// A frame of the lending: how long the floor has lain bare, and a new deal
-// when the deep wants a different gang from the one it has.
+// How many can be spared to gather: the deep's own residents not on a deep
+// job, and, while the yard is calm, the yard's haulers less its last.
+const deepFree = () => Math.max(0, (S.pods || 0) - DEEP_JOBS.reduce((n, j) => n + (S[j] || 0), 0));
+function gatherRoom() {
+  const spare = Math.max(0, spareHands() - S.builders);
+  return S.yardLends ? Math.max(0, spare - GATHER_KEEP, Math.min(deepFree(), spare))
+                     : Math.min(deepFree(), spare);
+}
+
+// The yard is calm while every pile is under LEND_CALM of its limit, and
+// busy the moment one is full; between the two the last answer stands.
+function stepCalm() {
+  if (S.piles.some(p => S.pileFull[p.key])) S.yardLends = false;
+  else if (S.piles.every(p => (S.pileCount?.[p.key] || 0) < LEND_CALM * (PILE_LIMIT[p.key] || Infinity)))
+    S.yardLends = true;
+}
+
+// A frame of the lending: how long the floor has lain bare, whether the yard
+// can spare anybody, and a new deal when the deep wants a different gang
+// from the one it has.
 export function stepGatherers(c) {
   S.gatherBare = deepBed.n ? 0 : (S.gatherBare || 0) + c.dt / 1000;
-  const want = Math.min(gatherTarget(), Math.max(0, spareHands() - S.builders - GATHER_KEEP));
+  stepCalm();
+  const want = Math.min(gatherTarget(), gatherRoom());
   if (want !== S.gatherers) { rebalance(); syncWorkers(); }
+}
+
+// A body for a new pod: one more of the crew, who comes out of the pod on the
+// deep's floor and lives down there (`deepHome`). What it does is the deal's,
+// as for any hire.
+export function hirePod() {
+  const had = new Set(S.workers);
+  const at = podAt(S.pods || 0);
+  S.crew++;
+  S.pods = (S.pods || 0) + 1;
+  rebalance();
+  syncWorkers();
+  const fresh = S.workers.find(w => !had.has(w));
+  if (fresh) {
+    fresh.deepHome = true;
+    fresh.x = at.x + (at.w - WORKER) / 2;
+    fresh.y = deepFloor() - WORKER;
+  }
 }
 
 // The deal, on the save (persist.js, `SAVERS`). `read` is where the load's

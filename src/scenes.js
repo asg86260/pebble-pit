@@ -218,6 +218,14 @@ const deepScenes = {
       deepYard({ crew: { brawlers: 2 }, loose: 2500, run: 6 });
       lookDeep(spotX('altar'));
     } },
+  // The pods at the deep's far end, a stack of them, some of their people home.
+  pods: { about: 'the deep', say: "the pods: the deep's houses, stacked at its far end",
+    run: () => {
+      deepYard({ open: ['well', 'font', 'circle', 'spire'], run: 2 });
+      for (let i = 0; i < 7; i++) { window.__scales(99999); window.__buy('pod'); window.__finish(); }
+      window.__fast(4);
+      lookDeep(spotX('pods') - S.viewW * 0.2);
+    } },
   // Every station on the floor at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep, every station standing',
     run: () => {

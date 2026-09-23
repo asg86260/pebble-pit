@@ -17,7 +17,13 @@ export const DEEP_W = P * 520;       // and across
 export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: where a body goes in and comes up
 // The stations stand on the deep's floor, at these fractions of its width from
 // its left edge. The altar is the deep's bench: punching, and the doors.
-export const DEEP_SPOTS = { crusher: 0.055, altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82 };
+export const DEEP_SPOTS = { crusher: 0.055, altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82, pods: 0.935 };
+// The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
+// the floor up at the deep's far right end (DESIGN.md, "One crew, two homes").
+export const POD_W = P * 7;
+export const POD_H = P * 5;
+export const POD_GAP = P;
+export const POD_COLS = 4;
 // A station's footprint on the floor and how tall it stands: its dome, which
 // is where the pointer opens its board (the sprite at STATION_SCALE, 16 cells
 // across and at most 14 up, under DOME_PAD, DOME_WALL and the arch; see

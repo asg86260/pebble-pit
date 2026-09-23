@@ -171,6 +171,7 @@ export const ROWS = [
   { key: 'unlockfont', part: 1, reach: deepAt(2, 'well') },
   { key: 'unlockcircle', part: 1, reach: deepAt(2, 'well') },
   { key: 'unlockspire', part: 1, reach: deepAt(3, 'well', 'font', 'circle') },
+  { key: 'pod', part: 1, reach: deep },
 
   // --- the deep: the well, the font, the circle, the spire ----------------------
   { key: 'lance', part: 2, reach: deepAt(1, 'well') },

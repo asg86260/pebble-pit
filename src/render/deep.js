@@ -27,7 +27,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_STAR_EVERY, DEEP_STAR_TOP, DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
-import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt, crusherRect, hopperRect } from '../deep/place.js';
+import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt, crusherRect, hopperRect, podAt } from '../deep/place.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { warning } from './pilemarks.js';
@@ -394,9 +394,30 @@ function drawCrusher() {
 // it, nearest first, and so every cell stays on the grid.
 const cellsOf = n => Math.round(n * STATION_SCALE);
 
+// The pods: a capsule for each of the crew who lives down here, stacked from
+// the floor. A hull a shade above the dark, a rim a shade above that, and a
+// porthole lit from inside, so a stack reads as somewhere people live.
+function drawPods() {
+  for (let i = 0; i < (S.pods || 0); i++) {
+    const r = podAt(i);
+    for (let y = r.y; y < r.y + r.h; y += P) {
+      for (let x = r.x; x < r.x + r.w; x += P) {
+        const edgeX = x === r.x || x === r.x + r.w - P, edgeY = y === r.y || y === r.y + r.h - P;
+        if (edgeX && edgeY) continue;                                  // rounded
+        ctx.fillStyle = GREYS[(edgeX || edgeY ? 7 : 4) + (seeth(x / P, y / P) % 2)];
+        ctx.fillRect(x, y, P, P);
+      }
+    }
+    const px = r.x + Math.round((r.w / 2 - P) / P) * P, py = r.y + P;
+    ctx.fillStyle = GREYS[GREYS.length - 2];
+    ctx.fillRect(px, py, P * 2, P * 2);
+  }
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
+  drawPods();
   for (const key in SPRITES) {
     if (!STANDS[key]()) continue;
     const rows = SPRITES[key];

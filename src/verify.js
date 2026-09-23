@@ -437,6 +437,9 @@ export function verifyWorld() {
     }
     if (!(S.scales >= 0))
       fail('the crusher owes scales', `account ${S.scales}`);
+    const residents = S.workers.filter(w => w.deepHome).length;
+    if (residents > (S.pods || 0))
+      fail('somebody lives in a pod nobody bought', `${residents} living down there, ${S.pods || 0} pods`);
     if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
       fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
   }

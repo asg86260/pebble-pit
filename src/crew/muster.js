@@ -8,7 +8,8 @@ import { setHands, setHandsOn, setStaff, onTheGo, builderManned, SITE_JOB } from
 import { JOB_OF, hats, rockhandMs } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { KIT_JOBS } from '../kit.js';
-import { TYPE, TYPE_OF, DEEP_JOBS } from '../jobs.js';
+import { TYPE, TYPE_OF, DEEP_JOBS, isDeepType } from '../jobs.js';
+import { deepTop } from '../deep/place.js';
 import { belowYard } from '../route.js';
 import { now } from '../clock.js';
 import { newRecord } from './records.js';
@@ -53,6 +54,10 @@ setHandsOn((site, key) =>
 // them back; both have to be walked out to the yard on the frame it happens.
 setStaff(() => { rebalance(); syncWorkers(); });
 
+// Whether a body is (or would be, on `type`) working in the half it does not
+// live in: a deep resident on a yard job, or a yard body on a deep one.
+const away = (w, type = w.type) => !!w.deepHome !== isDeepType(type);
+
 export function syncWorkers() {
   syncLifts();
   // The registry is the one list that decides whether a job exists at all
@@ -64,12 +69,25 @@ export function syncWorkers() {
   const room = { ...want };                 // want, counted down as bodies are kept
   const keep = [], stood = [];
   // A body lent to a build is the one its station gives up, so it is
-  // considered last and therefore stood down first.
-  const ordered = [...S.workers.filter(w => !w.lentFrom), ...S.workers.filter(w => w.lentFrom)];
-  for (const w of ordered) (room[w.type]-- > 0 ? keep : stood).push(w);
+  // considered last and therefore stood down first; before it, a body working
+  // in the half it does not live in (DESIGN.md, "One crew, two homes"). The
+  // kept keep the order they had, so nobody's slot moves for being chosen.
+  const ordered = [...S.workers.filter(w => !w.lentFrom && !away(w)),
+                   ...S.workers.filter(w => !w.lentFrom && away(w)),
+                   ...S.workers.filter(w => w.lentFrom)];
+  const kept = new Set();
+  for (const w of ordered) (room[w.type]-- > 0 ? kept.add(w) : stood.push(w));
+  keep.push(...S.workers.filter(w => kept.has(w)));
   for (const w of stood) {
-    for (let i = 0; i < (w.carry || 0); i++)
-      spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
+    // In the deep what it carried was scales, and they go into the water
+    // where it is, not onto the yard's ground.
+    if (w.y + WORKER > deepTop()) {
+      for (let i = 0; i < (w.carry || 0); i++)
+        S.sinking.push({ x: w.x + WORKER / 2, y: w.y, vx: 0, vy: 0, s: w.load?.[i] || 1 });
+    } else {
+      for (let i = 0; i < (w.carry || 0); i++)
+        spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
+    }
     if (w.hasCore) {
       S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
       if (S.coreTaker === w) S.coreTaker = null;
@@ -93,7 +111,9 @@ export function syncWorkers() {
   const joined = new Set();
   for (const type of TYPES) {
     for (let short = want[type] - have(type); short > 0; short--) {
-      const spare = stood.shift();
+      // The stood body that lives in this job's half, if there is one.
+      const home = stood.findIndex(w => !away(w, type));
+      const spare = home >= 0 ? stood.splice(home, 1)[0] : stood.shift();
       const w = spare || Object.assign(FACTORY(type), newRecord());
       if (spare) retask(spare, type);
       S.workers.push(w);
