@@ -14713,6 +14713,70 @@ by hand into the hopper counts; a purchase takes from the account and the
 flecks leave the crusher; a first-pass save loads with its scales crushed.
 Scenes: `crusher`, `gathering`.
 
+### The serpent, redrawn: a smooth coil, a wound you can read, him in a cage of ribs (design, not built)
+
+*Proposed 2026-09-23, from the mockups S2, D1 + D3 and B2.* Three things were
+wrong with the coil as built. The body is columns stepping a whole cell at a
+time, so its edges are stairs and each segment's join is a notch. The wound
+is a gap at the belly that is a cell wide for most of a stage, so the one
+reading of the fight is invisible until the stage is nearly won. And he is a
+grey square on a nearly-white body, then a hollow outline through the gap:
+nothing says "a body, inside it".
+
+**A smooth coil (S2).** The body is laid along its curve rather than down
+columns: a cell is the serpent's if its middle is within the body's half
+thickness of the centerline, measured across the body, not straight down.
+Its ends are round -- the head's snout and the tail's tip are caps, not a
+column stopping. The scale lattice is read in the body's own coordinates
+(how far along it, how far across), so the pattern follows the coil round a
+bend instead of printing a screen-column stripe over it. The bottom edge's
+shade is the edge across the body, not the last row of a column. No plates
+and no seams. **The splitting stage** keeps its lengths, each drawn the same
+way and capped round at both ends, so a break is a clean end and not a
+stair. *(The call to confirm: "no splits" read as "no plates or seams", the
+S3 mockup. If it meant the splitting defense itself goes, that is a change
+to the four defenses and wants its own design.)*
+
+**The wound is read on the body (D1 + D3).**
+- *Cracks.* Dark cracks run out along the coil from the belly, both ways;
+  how far they reach is the wound's share of its stage's depth (`woundK`),
+  from nothing at a closed wound to `CRACK_REACH` either side at a wound
+  about to break the stage. They close as it heals, from the tips inward,
+  so holding the wound open is watching the cracks hold. The cells cracked
+  are dealt by a hash of the cell, the same every frame, so a crack does
+  not flicker, it grows. Near the belly they are near black; toward their
+  tips a grey.
+- *A hit flash.* Every strike that does damage blinks the length of coil it
+  landed on -- `FLASH_CELLS` along the body either side of where it hit --
+  black for `FLASH_MS`. A hit that glances (did nothing) does not blink, so
+  a weapon the stage shrugs off is seen shrugging off. The strike records
+  where and when on `S.serpentHits`, EPHEMERAL, a short list the renderer
+  reads and drops.
+- The gap at the belly stays, and now opens the ribs (below). This replaces
+  "the wound is a gap in the coil, the picture is the reading, not a bar":
+  still no bar, but the picture is loud about it.
+
+**Him in a cage of ribs (B2).** The belly swells round him, `BELLY_BULGE`
+cells fuller than the body either side, an oval along the coil. Inside the
+swell is dark, crossed by rib bars every `RIB_EVERY` cells, and he is drawn
+whole in it -- the crew's own body, white -- seen between the ribs from the
+first frame. The wound's gap opens at the belly as now, and the ribs in the
+gap are gone: the wound is the cage breaking. At the fourth stage's break
+the last ribs go and he swims out, as built.
+
+**Rules it keeps.** Black and white and the abyss's purple only, flat, every
+cell on the `P` grid; the ward's shimmer and a sigil's bands are read in the
+same body coordinates, so they follow the coil too. The body a click lands
+on is the body drawn (`nearestSeg` is unchanged: the centerline is the
+same). No new number in the renderer: `CRACK_REACH`, `FLASH_CELLS`,
+`FLASH_MS`, `BELLY_BULGE` and `RIB_EVERY` go in `config/deepdraw.js`.
+
+**Checks.** Drawing, so the shots are the check: `deep`, `deep-wound`,
+`deep-warded`, `deep-split` and `deep-fading` before and after, and a new
+scene `deep-cracked` with the wound held at nine tenths of the bare stage.
+One node check that a strike that does damage adds a hit to
+`S.serpentHits` and a glancing one does not.
+
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 
 *The owner's calls, 2026-09-23: one crew, pods cost scales, the weapon

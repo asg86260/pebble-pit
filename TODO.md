@@ -16,6 +16,13 @@ Open:
   (`COIL_THICK`, `DEEP_H`).
 - **The sheet before the snatch** still says it is the end of the story.
 
+## The serpent, redrawn -- DESIGNED, AWAITING SIGN-OFF (2026-09-23)
+
+"The serpent, redrawn" in DESIGN.md: a smooth coil laid along its curve with
+round ends, cracks out from the wound and a flash on every hit, and him whole
+in a cage of ribs that the wound breaks. One call to confirm: "no splits"
+read as no plates or seams, the splitting defense kept.
+
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
 "The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:
