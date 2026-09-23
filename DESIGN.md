@@ -14747,6 +14747,16 @@ and no seams. **The splitting stage does not split the body**: the coil
 stays whole and thrashes, a ripple a length running down it
 (`SPLIT_WRITHE`), and the lengths are only the rings' accounting.
 
+**It keeps its length.** *(Voted 2026-09-23, option A of three mocked.)*
+The wave the coil lies along travels as before, but the body is laid along
+it from the head at a fixed length a segment (`coilLine` walks the line a
+frame and looks each segment up by arc length). Read off each segment's
+own x, the wave pulled the segments apart on its slopes and bunched them
+on its crests, so the body seemed to stretch and shrink as it moved. The
+tail's end now drifts in and out as the wave passes instead. Swimming
+along its own path (option B) was mocked and left for a design of its
+own: it moves the belly across the deep.
+
 **A python's girth.** *(Voted 2026-09-23 from five mocked profiles.)* The
 body is not one thickness: a head of `COIL_HEAD` narrowing, eased over
 `COIL_NECK_EASE` segments, to a slim neck of `COIL_NECK`, swelling to `COIL_GIRTH` at the belly and holding it to

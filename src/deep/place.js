@@ -110,18 +110,56 @@ export const podsRect = () => {
 export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 
 // The serpent's centerline at `u` segments from the head (fractional), at
-// time `t` in ms: a travelling wave along a line across the deep, and in the
-// splitting stage a thrash running down it on top. Unsnapped, so the body
-// can be laid smoothly along it; everything that asks where a segment is
-// uses `coilAt`, the same point on the grid.
-export function coilLine(u, t) {
-  const k = u / (COIL_SEGS - 1);
-  const x = deepX0() + (COIL_X0 + (COIL_X1 - COIL_X0) * k) * DEEP_W;
-  let y = deepTop() + COIL_Y * DEEP_H
-        + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+// time `t` in ms. The line it lies along is a travelling wave across the
+// deep (and in the splitting stage a thrash running down it on top); the
+// body is laid ALONG that line from the head, a fixed length a segment, so
+// it never stretches on a slope or bunches on a crest -- read off each
+// segment's own x, the wave pulled the segments apart and together as it
+// passed. The tail's end drifts in and out as the wave goes by instead.
+// Unsnapped, so the body can be laid smoothly along it; everything that
+// asks where a segment is uses `coilAt`, the same point on the grid.
+const waveY = (x, t) => {
+  const k = (x - coilX0()) / coilSpan();
+  let y = deepTop() + COIL_Y * DEEP_H + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
   if (S.serpentStage === 2 && !S.serpentFreed)
     y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
-  return { x, y };
+  return y;
+};
+const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
+const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
+
+// The line walked once a frame: x at every step of arc length along it,
+// so a segment's place is a lookup. Keyed on the clock and the stage, the
+// only things the line moves with.
+const STEP = 2;                           // px of arc a table entry
+let walked = null;
+function walk(t) {
+  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}`;
+  if (walked?.key === key) return walked;
+  const xs = [coilX0()];
+  let x = xs[0], y = waveY(x, t), acc = 0;
+  const end = coilSpan() * 1.02;          // the body's length, and a little over
+  // Small x steps, arc summed, a table entry every STEP of arc.
+  while (acc < end) {
+    const nx = x + 0.5, ny = waveY(nx, t);
+    acc += Math.hypot(0.5, ny - y);
+    x = nx; y = ny;
+    while (xs.length * STEP <= acc) xs.push(x);
+  }
+  walked = { key, xs };
+  return walked;
+}
+export function coilLine(u, t) {
+  const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
+  if (s <= 0) {
+    // The snout, run on past the head along the same wave.
+    const x = coilX0() + s;
+    return { x, y: waveY(x, t) };
+  }
+  const { xs } = walk(t);
+  const i = Math.min(xs.length - 2, Math.floor(s / STEP)), f = s / STEP - i;
+  const x = xs[i] + (xs[i + 1] - xs[i]) * f;
+  return { x, y: waveY(x, t) };
 }
 // Segment `i`, on the cell grid.
 export function coilAt(i, t) {
