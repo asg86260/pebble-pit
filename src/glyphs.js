@@ -53,6 +53,8 @@ export const GLYPHS = {
   brim:       ['........', '........', '........', '........', '..###...', '#######.', '........', '........'],
   crate:      ['...##...', '..####..', '.######.', '########', '#......#', '#.#..#.#', '#......#', '########'],
   shield:     ['#.#.#.#.', '########', '#......#', '#.####.#', '#.#..#.#', '#.####.#', '#......#', '########'],
+  // the tower's machine: a shell round a star, a slit in it either side
+  sphere:     ['..##.#..', '.#....#.', '#......#', '...##...', '...##...', '#......#', '.#....#.', '..#.##..'],
   hat:        ['........', '...##...', '..####..', '.######.', '########', '........', '........', '........'],
   // the casino's same-bet button: a turn, an arrow chasing its own tail
   again:      ['..####..', '.#....#.', '#......#', '#..#...#', '#...##.#', '#..####.', '.#......', '..####..'],
@@ -109,7 +111,7 @@ export const GLYPH_OF = {
   // the tower
   wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
-  dome: ['dome'],
+  dome: ['dome'], sphere: ['sphere'], tunesphere: ['sphere', 'plus'],
   // the air filter
   power: ['balloon', 'plus'], balloonspeed: ['balloon', 'up'], balloon: ['balloon'], recycler: ['lever'],
   // the casino

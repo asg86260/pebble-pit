@@ -51,6 +51,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | lamp hat *      | `blaster` +plus                                                                            |
 | brim hat *      | `grower` +plus                                                                             |
 | pointed hat *   | `wizard` +plus, `askwizards`                                                           |
+| sphere          | `sphere`, `tunesphere` +plus                                                       |
 | cap *           | `loopost` +plus, `spellsweep` +star                                                    |
 | house           | `house` +plus, `spellthrift` +star                                                     |
 | door            | `crewlist`                                                                             |
