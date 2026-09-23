@@ -14435,11 +14435,12 @@ drifts down and settles on the floor for whoever is sweeping. Scales do not
 run out; the serpent regrows them.
 
 **Damage is a rate, not a total.** The serpent has a *wound* you hold open.
-Every strike deepens it; the serpent heals it back at `SERPENT_HEAL`, cells a
-second. Stop striking and it closes, strike slower than it heals and it
-never opens. Once damage a second stays above the heal long enough that the
-wound reaches `SERPENT_WOUND`, the belly opens and the sqhusband comes out.
-That is the second half's rescue. The wound is drawn as a gap in the coil
+Every strike deepens it; the serpent heals it back at its stage's heal
+(`SERPENT_HEAL`, cells a second, one a stage). Stop striking and it closes,
+strike slower than it heals and it never opens. Once damage a second stays
+above the heal long enough that the wound reaches the stage's depth
+(`SERPENT_WOUND`, one a stage), the defense breaks; at the fourth, the belly
+opens and the sqhusband comes out. That is the second half's rescue. The wound is drawn as a gap in the coil
 opening and closing -- the picture is the reading, not a bar -- and he is
 seen through it more clearly the deeper it is.
 
@@ -14450,17 +14451,93 @@ dust, crops, ore and sparks spend in the deep as they do up top, so the two
 halves are one economy. Its ladders are the yard's shape -- `tierRows` with
 `named` bands, `LADDER` rungs, a written table in `config/rungs.js` -- and
 the coin order is scales only, then scales and dust, then scales, dust and
-ore, then a spark at the top. No new coin past the scale. Machines in the
-deep are bought in sparks, by the rule that sparks buy every machine.
+ore, then a spark at the top. No new coin past the scale. The deep's
+machine, the called star, is bought in sparks, by the rule that sparks buy
+every machine.
 
-### How the deep progresses (open -- designed next)
+### How the deep progresses: four defenses, and the abyss's own weapons
 
-The first sketch was four rows -- the strike, hands, sweeping, a machine or
-two -- and that is a board, not half a game. What the deep unlocks in what
-order, what its doors are, what the serpent does as the wound deepens, and
-how long the half is meant to take are all undecided, and they are the next
-thing to design. `SERPENT_HEAL` waits on them: it is the second half's
-`ABYSS_AT`, tuned against a progression that does not exist yet.
+*Settled 2026-09-23.* The second half is **as long as the first**, and it is
+the first turned inside out. In the yard the rock attacks and the player
+answers with shields -- props, net, arch, dome -- each opened by stations.
+In the deep the player attacks and the serpent answers with **defenses**,
+four of them, each one beaten by a weapon the one before it could not
+bring. The stations of the deep are not new trades and bring no new coin:
+every one of them is a new way to hurt the serpent. The scale stays the only
+new coin, and every hit, from any weapon, knocks one loose.
+
+**The magic is the abyss's own.** The weapons are made of the deep, not
+forged: black water drawn up, the surface's ripples held in a hand. They are
+drawn in the interference the drowned surface already shows (`abyssLine`) --
+flat, black and white, on the cell grid -- so the magic reads as the place
+itself, and no glow or gradient is needed to say it is magic.
+
+#### The serpent's four defenses
+
+The serpent is in one of four stages (`S.serpentStage`, saved). Each stage
+has its own heal and its own wound depth, and holding the wound open to that
+stage's depth breaks the defense and moves it on, the way a finished shield
+moves the yard on. The fourth stage's depth is the belly.
+
+1. **Bare coil.** It only heals. Punching opens it.
+2. **Warded scales.** A shimmer over the coil that punches glance off.
+   Lances pierce it.
+3. **Splitting.** The coil divides into many writhing lengths, each healing
+   on its own. Grenades hit them all at once; sigils hold them still.
+4. **Fading into the dark.** The serpent dims out of reach, and a coil that
+   cannot be seen cannot be hit. The wizards' light pins it visible for the
+   last blow, and the called star lands on what they light.
+
+How hard each defense is on each weapon is one table in config.js
+(`SERPENT_DEFENSE`, a multiplier a weapon a stage), not a rule written into
+each weapon: "punches glance off wards" is a small number in a cell, and a
+weapon that answers a stage is a large one. A glancing weapon still lands a
+little, so no station goes dead when the stage turns; it just stops being
+the answer.
+
+#### The weapons
+
+Each is a station of the deep, opened in door order by the `after` column
+of `STATIONS` like the yard's, each with its own job in the `want` map, and
+each station's output counted from bodies through the surface. Each carries
+its own ladders through `tierRows`: scales first, then scales and the yard's
+coins, then a spark on the last band.
+
+- **Punching.** The click and the sqwife's fists, the rock hand's ladder
+  over again; the late rungs wrap the fists in black water. Damage a hit.
+  Open from the snatch.
+- **Abyssal lances.** A well of black water on the deep's floor. A hand
+  draws a lance from it, swims to the coil and throws; the lance sticks and
+  bleeds the serpent until it dissolves, and the thrower swims back to the
+  well for another. Damage over time; pierces wards. Its ladders: the bleed,
+  how long a lance holds, how fast the well gives them.
+- **Abyssal grenades.** A font where the surface's ripples are held in a
+  ball. Thrown, it bursts in rings, and every length of coil a ring crosses
+  is hit. Damage in an area; the answer to splitting.
+- **Binding sigils.** Scribes draw circles on the floor. A length of coil
+  over a sigil is held: it cannot thrash and it cannot heal there. No damage
+  of its own -- it makes everything else's damage stay.
+- **Abyssal wizards.** A spire in the deep where a hand takes the robe. A
+  wizard channels from a distance, damage for as long as the beam is held,
+  and lights the coil it touches, which is what the fourth stage needs. The
+  late rungs curse the heal itself: a lower heal, not a bigger hit.
+- **The called star.** Bought in sparks, by the rule that sparks buy every
+  machine. A star is pulled down out of the yard's sky, falls into the pit
+  -- seen from the yard as it goes -- and through the surface onto the
+  serpent. The deep's machine, and the late half's damage, as the machines
+  are the yard's.
+
+The weapons join the yard's crew the way every station does: a robe, a
+lance, a grenade are carried by a body that swam there, and nothing strikes
+the serpent that a body did not bring or a click did not swing.
+
+#### Pace
+
+The half is tuned to the first half's length, measured the way the rescue
+is. The knobs are the four stages' heals and depths, and the doors: each
+weapon's door opens on the stage before being broken, so the order is fixed
+and the length is the sum of four waits. The ladder book reads the deep's
+ladders as it reads the yard's.
 
 ### What it costs
 
@@ -14489,8 +14566,13 @@ must not push a frame over the yard alone by more than the serpent's draw.
 2. **The purse crosses over** -- yes (2026-09-23).
 3. **The snatch** -- at the rescue when the pit has drowned, at the drowning
    when it has not; it takes the sqhusband (2026-09-23).
-4. **The deep's progression** -- open, next.
-5. **The heal rate** -- after 4.
+4. **The deep's progression** -- four defenses, each answered by a weapon
+   made of the abyss: punching, lances, grenades, sigils, wizards, and a
+   called star in sparks; as long as the first half (2026-09-23).
+5. **The heals and depths** -- the four stages' `SERPENT_HEAL` and
+   `SERPENT_WOUND`, and the `SERPENT_DEFENSE` table, tuned so the half runs
+   the first half's length. Open; numbers, for the ladder book once rows
+   exist.
 6. **The ending's sheet and dance** -- "you saved your sqwife" and the second
    dance come at the rescue today. When the snatch follows straight on, the
    proposal is the sheet first, then the pair walk to the pit in place of
@@ -14503,8 +14585,12 @@ plays once both facts are true, in either order, and once only, and the
 sqhusband is gone from the crew; a body put on a deep job walks to the pit
 and goes in, and taken off it comes back out; a click on the coil drops a
 scale that settles on the floor; the wound closes when nobody strikes; a
-strike rate under the heal never opens it, one over it does, and he is
-freed at the depth; a reload in the deep comes back in the deep with the
-wound where it was. A `verify.js` rule: the wound is never below nought nor
-above its depth, and nobody is in the deep before the snatch. Scenes:
-`snatch`, `deep`, `serpent-wound`, `serpent-freed`.
+strike rate under the heal never opens it, one over it does; each stage
+breaks at its depth and not before, in order, and he is freed at the
+fourth; a weapon bought through `__buy` hits harder on the stage it answers
+than one that glances; a lance is carried from the well by a body before it
+lands; a reload in the deep comes back in the deep with the stage and the
+wound where they were. A `verify.js` rule: the wound is never below nought
+nor above its stage's depth, the stage never goes back, and nobody is in the
+deep before the snatch. Scenes: `snatch`, `deep`, one for each of the four
+defenses and each weapon at work, and `serpent-freed`.

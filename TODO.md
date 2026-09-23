@@ -5,9 +5,11 @@
 "The serpent: the second half of the game" at the end of DESIGN.md. When the
 sqwife is out and the pit has drowned (whichever comes second), a serpent
 takes the sqhusband down; a click on the surface takes the view into the
-deep. The yard's crew cross in and out, the purse crosses over. The deep's
-progression is undesigned and is next; the heal rate waits on it, and so
-does where the ending's sheet and dance go.
+deep. The yard's crew cross in and out, the purse crosses over. The deep is
+as long as the yard: four serpent defenses (bare, warded, splitting,
+fading), each answered by a weapon made of the abyss -- punching, lances,
+grenades, sigils, wizards, a called star in sparks. Open: the stages' heals
+and depths (numbers), and where the ending's sheet and dance go.
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
