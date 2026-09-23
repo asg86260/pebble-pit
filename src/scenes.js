@@ -44,6 +44,19 @@ const rich = () => {
   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
 };
 
+// Holding the camera on a spot against whatever pans it (a meteor called down
+// sends it off to the star): every frame the page draws, for long enough to
+// take a shot and no longer. A pin that ran for ever held every later scene
+// on this one's spot, and in the node yard, where a frame is a timer, it kept
+// the process alive after its checks were done, so a sweep never finished.
+const PIN_FRAMES = 240;
+function pinCamera(x) {
+  if (typeof window.__scene !== 'function') return;     // the page's alone
+  let left = PIN_FRAMES;
+  const pin = () => { window.__look(x); if (--left > 0) requestAnimationFrame(pin); };
+  pin();
+}
+
 const sphereAt = secs => {
   rich();
   window.__crew(0, 8, 0, 0, 0, 3);
@@ -52,7 +65,8 @@ const sphereAt = secs => {
   window.__meteor();
   window.__buy('sphere');
   window.__fast(secs);
-  const pin = () => { window.__look(st().towerX - 420); requestAnimationFrame(pin); }; pin();
+  window.__look(st().towerX - 420);
+  pinCamera(st().towerX - 420);
 };
 
 // The lip bought out, which is what the belt is gated behind; `__fullSites`
@@ -948,7 +962,8 @@ export const SCENES = {
   towerflag: { about: 'the tower', say: "the tower's offer flag", page: true,
     run: () => { rich(); window.__meteor(); window.__fast(3);
                  const x = st().towerX - 361;
-                 const pin = () => { window.__look(x); requestAnimationFrame(pin); }; pin(); } },
+                 window.__look(x);
+                 pinCamera(x); } },
   // The things the enchantments are about (a machine, the closet) stand, so
   // every spell row does.
   towerboard: { about: 'the tower', say: "the tower's board",
