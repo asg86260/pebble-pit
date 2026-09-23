@@ -16,7 +16,7 @@ import { rand } from './rng.js';
 import { critRoll } from './crit.js';
 import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
-import { sphereRising, sphereUp, pourSphere } from './sphere.js';
+import { sphereRising, sphereUp, pourSphere, stepSphere, underSphere } from './sphere.js';
 
 // The ground under the meteor: where a wizard walks to before it goes up, and
 // comes back down to.
@@ -192,6 +192,10 @@ export function stepWizard(w, now) {
           || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
     w.next = now + wizMs();
   }
+  // A closed sphere is tended from under it, not from the ring: the body hangs
+  // below the shell and its beam turns it (`stepSphere`).
+  if (sphereUp()) { tendSphere(w, now); return; }
+
   // Out to the ring straight away from the middle, never across it: a wizard
   // sent to the far side in a straight line flew through the star.
   const mid = ringMid();
@@ -275,7 +279,29 @@ export function stepWizard(w, now) {
 
 // Everybody in the ring, pouring. Once a frame rather than once a body: it
 // is one thing being made by all of them.
+// Up to its place under the shell at the climb's pace, then held there on the
+// same slow breath the ring rides, beaming.
+function tendSphere(w, now) {
+  const k = S.workers.filter(o => o.type === TYPE.WIZARD).indexOf(w);
+  const to = underSphere(Math.max(0, k));
+  const dx = to.x - w.x, dy = to.y - w.y, d = Math.hypot(dx, dy);
+  w.cell = null;
+  if (d > WIZ_RISE + WIZ_BOB) {
+    const pace = WIZ_RISE * frames();
+    w.pace = pace / frames();
+    w.x += (dx / d) * Math.min(pace, d);
+    w.y += (dy / d) * Math.min(pace, d);
+    w.channel = false;
+    return;
+  }
+  w.pace = 0;
+  w.x = to.x;
+  w.y = to.y + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
+  w.channel = true;
+}
+
 export function stepSummon(dt) {
+  stepSphere(dt);
   const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
   // The dome first: while one is rising every channel pours into it.
   if (domeRising()) { pourDome(hands, dt / 1000); return; }

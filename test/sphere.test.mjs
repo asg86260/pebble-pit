@@ -11,6 +11,9 @@
 import { group, ok, state, run, runUntil, yard, buyBuilt, buyNow } from './helpers.mjs';
 import { KIT_MAX, RUNGS, SPHERE_WORK } from '../src/config.js';
 
+// Off the module, the one the yard runs: the turn is a picture, not a report field.
+const { spinShare } = await import('../src/sphere.js');
+
 const row = key => window.__rows().find(r => r.key === key);
 const S = () => yard.S;
 
@@ -90,14 +93,18 @@ group('the closed sphere drops sparks for the haulers, and needs its tender', as
   run(60);
   const tended = S().sparks - before;
   const worked = state().machines.sphere.workedAt;
+  const turning = spinShare();
   // The tender taken off, as a player does it: the station's minus.
   window.__assign('wizards', -1);
   run(10);                                   // down off the ring
   const idleWorked = state().machines.sphere.workedAt;
   run(40);
+  const stopped = spinShare();
   return [
     ok(tended > 0, 'sparks reach the hole while it is tended', `+${tended}`),
     ok(worked > 0, 'and the machine says it is working', `${worked}`),
+    ok(turning > 0.9, 'its tender turns it with the beam', `${turning.toFixed(2)} of its pace`),
+    ok(stopped === 0, 'and it runs down to a stop without one', `${stopped.toFixed(3)} of its pace`),
     // Within a few milliseconds: a reload carries the clock as a distance.
     ok(Math.abs(state().machines.sphere.workedAt - idleWorked) < 5, 'and none with nobody up there',
        `${idleWorked} -> ${state().machines.sphere.workedAt}`)

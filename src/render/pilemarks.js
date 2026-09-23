@@ -6,6 +6,7 @@ import { P } from '../config.js';
 import { S, farm, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawTriangle } from './marks.js';
+import { sphereUp, shellR } from '../sphere.js';
 
 // --- the ground a station pays out on to -------------------------------------
 // The strips in `S.piles` are unmarked ground: the heaps themselves are their
@@ -51,13 +52,16 @@ const SLOT_W = P * 5.5;
 export function pileMarkAt(key) {
   const strip = S.piles.find(p => p.key === key);
   // The star's dust hangs in the air with no ground under it, so its mark
-  // stays under the meteor where the wizards are. A key with neither a strip
-  // nor a station falls back to the farm.
-  const x = key === 'sky' ? sky.x
+  // stays under the meteor where the wizards are -- or, once a sphere stands,
+  // beside it, since its tender hangs under it. A key with neither a strip nor
+  // a station falls back to the farm.
+  const beside = key === 'sky' && sphereUp();
+  const x = beside ? sky.x + shellR() + P * 5
+          : key === 'sky' ? sky.x
           : strip ? (strip.from + strip.to) / 2
           : key === 'rock' ? S.cx
           : (f => f != null ? f : farm.x + farm.w / 2)(stationFoot(key));
-  const y = key === 'sky' ? sky.y + sky.r + P * 9 : S.groundY + P * 7;
+  const y = beside ? sky.y : key === 'sky' ? sky.y + sky.r + P * 9 : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
 }
 

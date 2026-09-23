@@ -9,7 +9,7 @@ import { ctx } from './ctx.js';
 import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
-import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents } from '../sphere.js';
+import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents, spinShare, shellR } from '../sphere.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -324,10 +324,37 @@ function drawShell() {
     const edges = sphereEdges();
     drawBeams(() => edges, pouredAt(), true);
   } else if (up) {
-    drawBeams((fx, fy) => {
-      const dx = fx - sky.x, dy = fy - sky.y, d = Math.hypot(dx, dy) || 1;
-      const R = sky.r + P * 2;
-      return [{ x: sky.x + dx / d * R, y: sky.y + dy / d * R }];
-    }, 0.4);
+    // The tender's beam, straight up into the underside: the thing turning it.
+    // Aimed two cells inside the rim: `drawBeams` stops two short of its
+    // mark, and this one has to land on the band.
+    const foot = { x: sky.x, y: sky.y + shellR() - P * 2 };
+    drawBeams(() => [foot], 0.3 + spinShare() * 0.7);
+    drawAura(cells);
   }
+}
+
+// The magic that turns it, over the whole shell: a faint wash of the wizards'
+// purple, a little stronger round the edge, breathing slowly, and only as
+// strong as the turn. A sphere nobody is beaming has none.
+function drawAura(cells) {
+  const k = spinShare();
+  if (k <= 0) return;
+  const breath = 0.8 + 0.2 * Math.sin(now() / 1000 * 1.3);
+  ctx.fillStyle = MAGIC_TONES[2];
+  for (const c of cells) {
+    ctx.globalAlpha = (c.band ? 0.22 : 0.1) * k * breath;
+    ctx.fillRect(c.x, c.y, P, P);
+  }
+  // and a halo a cell out, thinner
+  const R = shellR() + P, n = Math.round(Math.PI * 2 * R / P);
+  ctx.globalAlpha = 0.14 * k * breath;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    ctx.rect(Math.round((sky.x + Math.cos(a) * R - P / 2) / P) * P,
+             Math.round((sky.y + Math.sin(a) * R - P / 2) / P) * P, P, P);
+  }
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
 }

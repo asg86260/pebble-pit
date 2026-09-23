@@ -7,7 +7,7 @@
 // because nobody on the ground can reach it: it is poured by the ring after it
 // is bought (`standing`), and its one tender works it from the air (`aloft`).
 
-import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_SPIN, SPHERE_FLARE_MS, METEOR_CORE,
+import { P, WORKER, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_SPIN, SPHERE_SPIN_EASE, SPHERE_UNDER, SPHERE_FLARE_MS, METEOR_CORE,
          METEOR_SPARKS, METEOR_CORE_SPARKS, SPARK_CELL, SUMMON_SHAKE, someFind } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
@@ -31,7 +31,8 @@ export const sphereRising = () => sphereBought() && !sphereUp() && meteorAlive()
 // the star, a riveted band round its edge and plates inside it, with a one-cell
 // seam between plates where the light gets out. The plates are laid on the
 // sphere, not on the page: bands of latitude and sectors of longitude, and the
-// sphere turns on an upright axis (`SPHERE_SPIN`), so the meridian seams slide
+// sphere turns on an upright axis (`SPHERE_SPIN`) while its tender's beam is on
+// it (`stepSphere`), so the meridian seams slide
 // across its face and crowd together toward the edge the way a globe's do,
 // while the seams of latitude stand still. The disc's cells are worked out once
 // for where the star is; which of them are seams is worked out once a frame.
@@ -122,10 +123,33 @@ export function shellCells() {
   const R = shellR();
   const key = `${sky.x},${sky.y},${R}`;
   if (!cached || cachedAt !== key) { cached = discCells(R); cachedAt = key; turnedAt = -1; }
-  const t = now();
-  if (t !== turnedAt) { turn(cached, R, (t / 1000) * SPHERE_SPIN); turnedAt = t; }
+  if (angle !== turnedAt) { turn(cached, R, angle); turnedAt = angle; }
   return cached;
 }
+
+// --- the turn --------------------------------------------------------------------
+// The tender's beam is what turns it: with the beam on, the sphere comes up to
+// `SPHERE_SPIN`; with nobody up there it runs down and stops. Where it has got
+// to is a picture, not a fact about the yard, so it is not saved: a reload
+// finds it where it started, which no body walks across.
+let angle = 0, spin = 0;
+export const spinShare = () => spin / SPHERE_SPIN;
+export function stepSphere(dt) {
+  if (!sphereUp()) { spin = 0; return; }
+  const beamed = S.workers.some(w => w.type === TYPE.WIZARD && w.aloft && w.channel);
+  const want = beamed ? SPHERE_SPIN : 0;
+  spin += (want - spin) * Math.min(1, dt / 1000 / SPHERE_SPIN_EASE);
+  if (spin < SPHERE_SPIN * 0.002 && !beamed) spin = 0;
+  angle = (angle + spin * dt / 1000) % (Math.PI * 2);
+}
+
+// Where the tender hangs to beam it round: under the middle of the shell. A
+// second or third body, on its way down after the pour, hangs a little either
+// side rather than on top of it.
+export const underSphere = k => ({
+  x: sky.x - WORKER / 2 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * WORKER,
+  y: sky.y + shellR() + SPHERE_UNDER * P
+});
 // Snapped to whole cells: `x` and `y` above are each cell's top-left.
 const snap = v => Math.round(v / P) * P;
 

@@ -14050,8 +14050,7 @@ and it resumes where it stopped.
 
 ### Worked by one tender
 
-**It is a manned machine.** One wizard stays up on the ring and tends the
-shell, and the rest are stood down to the ground and to carrying, the way the
+**It is a manned machine.** One wizard stays up and tends the shell, and the rest are stood down to the ground and to carrying, the way the
 rest of a quarry gang is when the drill goes in. With nobody up there, the
 shell catches nothing and puts up no soot (`stepMachines`, like every other
 machine). The tender is drawn channeling a thin purple beam to the shell: what
@@ -14161,8 +14160,16 @@ plates `SPHERE_PANEL` cells a side with a one-cell seam between them
 - **While it is poured,** the plates come in up both sides from under the star
   and close over the top, and the ring's beams land on the two growing edges.
   The star shows through wherever the plates have not reached.
-- **Closed,** the star and its corona are not drawn at all. The tender's beam
-  runs to the rim nearest it, and the vents puff on each beat.
+- **Closed,** the star and its corona are not drawn at all, and the vents puff
+  on each beat.
+- **The tender turns it** *(amended, the owner's call)*: it leaves the ring and
+  hangs `SPHERE_UNDER` cells below the shell, beaming straight up into the
+  band, and the beam is what turns the sphere. With the beam on, the turn comes
+  up to `SPHERE_SPIN` over `SPHERE_SPIN_EASE` seconds; with nobody beaming it
+  runs down and stops (`stepSphere`). The angle is a picture and is not saved.
+  A faint purple aura lies over the shell and a cell out from it, breathing
+  slowly and only as strong as the turn. The sky's pile-full mark, which hung
+  where the tender now hangs, stands beside the sphere once it is closed.
 
 ### What it touches
 
