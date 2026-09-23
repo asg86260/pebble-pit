@@ -14345,11 +14345,18 @@ rule that a forklift is never counted as crew.
 - **The garage appears with the first forklift** rather than being built by
   spare hands, the way a stand appears with its first hat.
 
-## The serpent: the second half of the game (design, not built)
+## The serpent: the second half of the game (built 2026-09-23)
 
-*Proposed 2026-09-20, the first calls answered 2026-09-23. Not built. The
-deep's progression is the open part and is designed next; nothing here is
-code until that is settled too.*
+*Proposed 2026-09-20, the calls answered and built 2026-09-23 as the wave in
+`docs/wave-serpent.md`. The calls made at build: the deep is drawn inverted
+(a `difference` over the deep's rect, so a dark-mode page gets a light
+deep); the ending's sheet comes first and the snatch plays in place of the
+second dance; the sqwife goes in on her own as the snatch ends; the space
+bar hurries the snatch rather than cutting it, so nobody teleports; while
+the deep is on screen the yard's sky and its falling rocks keep the yard's
+window (`skyCam` in view.js). The heals and depths are first guesses and
+far too kind -- a half-built deep with every door open frees him in a
+quarter of an hour -- and are the open tuning.*
 
 The story so far ends with a rescue: the dome holds the rock, the sqwife
 walks out, the two of them are a crew of two again and the sheet says how

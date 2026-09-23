@@ -15,10 +15,11 @@ const click = (wx, wy) => {
   point('pointerup', x, y);
 };
 
-// A drowned yard past the snatch.
-function deepYard() {
+// A drowned yard, the camera on the shaft; `snatched` plays the snatch out.
+function deepYard(snatched = true) {
   window.__crew(3, 3, 5, 7);
-  window.__snatch({ played: true });
+  if (snatched) window.__snatch({ played: true });
+  else window.__rift();
   window.__view('yard');
   window.__look(mouthX() - S.viewW / 2);
   run(0.5);
@@ -26,13 +27,12 @@ function deepYard() {
 
 export const TESTS = [
   ['deep: a click on the drowned surface goes down, and one on the ceiling comes up', async () => {
-    deepYard();
     // Before the snatch the surface is only the abyss.
-    S.snatched = false;
+    deepYard(false);
     click(mouthX(), abyssLine() + P * 2);
     run(VIEW_GLIDE_S + 0.5);
     const before = S.view;
-    S.snatched = true;
+    deepYard();
     click(mouthX(), abyssLine() + P * 2);
     run(VIEW_GLIDE_S + 0.5);
     const down = S.view;
