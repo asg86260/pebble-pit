@@ -65,6 +65,7 @@ export const COIL_SWAY_MS = 7000;    // one sway
 export const HEAD_SEGS = 3;          // segments of head
 export const COIL_HEAD = P * 8;      // the head, across
 export const COIL_NECK = P * 5;      // the neck behind it, the slimmest of the body
+export const COIL_NECK_EASE = 2;     // segments the head takes to narrow to the neck
 export const COIL_GIRTH = P * 9;     // the body at its thickest, from the belly back
 export const COIL_TAIL_FROM = 0.75;  // where the tail starts to thin, head to tail
 export const COIL_TIP = 0.25;        // the tip, a share of the girth

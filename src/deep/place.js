@@ -12,7 +12,7 @@
 import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
-         COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
+         COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 import { SPRITES } from './sprites.js';
 
@@ -126,8 +126,15 @@ export function coilAt(i, t) {
 // serpent, redrawn"): the head, then the neck swelling to the girth at the
 // belly, held, then tapering to the tip.
 export function coilThick(u) {
-  const k = u / (COIL_SEGS - 1), headK = HEAD_SEGS / (COIL_SEGS - 1);
-  if (k < headK) return COIL_HEAD;
+  if (u < HEAD_SEGS) return COIL_HEAD;
+  const body = bodyThick(u / (COIL_SEGS - 1));
+  // The head narrows onto the neck over COIL_NECK_EASE segments, eased at
+  // both ends: dropped at once, the underside fell three cells in a step.
+  const e = Math.min(1, (u - HEAD_SEGS) / COIL_NECK_EASE);
+  return COIL_HEAD + (body - COIL_HEAD) * e * e * (3 - 2 * e);
+}
+function bodyThick(k) {
+  const headK = HEAD_SEGS / (COIL_SEGS - 1);
   if (k < BELLY_AT) return COIL_NECK + (COIL_GIRTH - COIL_NECK) * Math.sin(Math.PI / 2 * (k - headK) / (BELLY_AT - headK));
   if (k < COIL_TAIL_FROM) return COIL_GIRTH;
   return COIL_GIRTH * (1 - (1 - COIL_TIP) * ((k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM)) ** 1.5);
