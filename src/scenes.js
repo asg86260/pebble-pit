@@ -236,6 +236,8 @@ const deepScenes = {
     run: glideAt('deep', 0.52) },
   'glide-up-turn': { about: 'the deep', say: "going up, just past the turn: the pit's liquid from the yard's side",
     run: glideAt('yard', 0.52) },
+  'glide-down-in': { about: 'the deep', say: 'going down, a quarter in: the camera shifting onto the abyss',
+    run: glideAt('deep', 0.25) },
   'glide-down-fade': { about: 'the deep', say: 'going down, the deep fading in over the water as the camera opens out',
     run: glideAt('deep', 0.8) },
   // The ends of it: the head and its slim neck, and the long taper of the tail.

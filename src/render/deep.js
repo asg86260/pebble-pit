@@ -31,6 +31,7 @@ import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopper
          spriteRect, standOf, waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
 import { abyssLine } from '../pit.js';
+import { deepFade, abyssBand } from '../view.js';
 import { SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
@@ -137,9 +138,19 @@ export function drawDeepWater() {
   // The drowned pit's own liquid, carried on under its surface: this row of
   // the deep is the pit's row as far under the pit's surface as it is under
   // the deep's, so the glide hands over on one picture (view.js).
-  const line = abyssLine();
-  paintAbyssField({ from: x0, to: x1, top, bottom, line, rowShift: waterShift(),
-                    tones: GREYS, magic: PURPLES, t: now() });
+  const line = abyssLine(), shift = waterShift(), t = now();
+  // In a glide the band the pit's own liquid stands in is drawn whole, and
+  // the rest of the water fades in round it (view.js, `deepFade`).
+  const band = abyssBand(), k = deepFade();
+  const bTop = Math.round((band.top - shift) / P) * P, bBottom = Math.round((band.bottom - shift) / P) * P;
+  const rows = [[top, Math.min(bottom, bTop), k], [Math.max(top, bTop), Math.min(bottom, bBottom), 1],
+                [Math.max(top, bBottom), bottom, k]];
+  for (const [a, b, alpha] of rows) {
+    if (b <= a || alpha <= 0) continue;
+    if (alpha < 1) ctx.globalAlpha = alpha;
+    paintAbyssField({ from: x0, to: x1, top: a, bottom: b, line, rowShift: shift, tones: GREYS, magic: PURPLES, t });
+    ctx.globalAlpha = 1;
+  }
   ctx.fillStyle = '#000';
 }
 

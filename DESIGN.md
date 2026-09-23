@@ -14891,11 +14891,15 @@ the snatch on:
 
 **The glide goes through the abyss.** *(Voted the same day from a mock.)*
 The deep's water is the drowned pit's liquid carried on under its surface
-(render/abyssfield.js, one painter for both), so the camera closes on the
-middle of the pit's liquid until it fills the frame, hands over at that
-zoom to the same cells in the deep, and opens out while the deep's roof,
-light, serpent, stations and everything else fade in over the water
-(`deepFade` in view.js). Going up is the same backwards. No black, no cut.
+(render/abyssfield.js, one painter for both). The camera shifts onto the
+abyss and pushes in only a little (`GLIDE_FOCUS`) while the yard darkens
+round it (`yardFade`, 'glide dim'), leaving the liquid lit; at the turn it
+hands over to the same band of liquid in the deep, and opens out while the
+rest of the water and the deep's roof, light, serpent and stations fade in
+round that band (`deepFade`). Going up is the same backwards. No black
+fade, no cut, and no zoom all the way in: closing on the liquid until it
+filled the frame was tried first and read as a dive into black (the
+liquid is a third of the window tall).
 The deep's water took the pit's numbers, so it is the pit's liquid at depth.
 
 The surface and the ceiling no longer take a click (the owner's call, the

@@ -16,7 +16,7 @@
 // does, rather than leaving the one way out off the top of the screen.
 
 import { S, pit } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, VIEW_GLIDE_ZOOM, DEEP_H, DEEP_ROOF, DEEP_FLOOR_MARGIN } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, GLIDE_FOCUS, DEEP_H, DEEP_ROOF, DEEP_FLOOR_MARGIN } from './config.js';
 import { clampCam, setZoom } from './world.js';
 import { mouthX, waterShift } from './deep/place.js';
 import { abyssLine, pitDepth } from './pit.js';
@@ -54,22 +54,23 @@ function frameOn(v) {
   clampCam();
 }
 
-// The point the glide closes on: the middle of the pit's liquid, clear of
-// its surface and its floor, and in the deep the same cells of the same
-// liquid. At the turn both halves are framed on it at one zoom, so the two
-// frames are one picture.
-function focusOf(v) {
-  const y = (abyssLine() + P * 4 + S.groundY + pitDepth()) / 2;
-  return { x: pit.x + pit.w / 2, y: v === 'deep' ? y - waterShift() : y };
+// The pit's liquid, as rows of the yard: from a few cells under its surface
+// to its floor. The deep's water holds the same band (`waterShift` rows up).
+export const abyssBand = () => ({ top: abyssLine() + P * 3, bottom: S.groundY + pitDepth() });
+
+// The framing at the turn (`pose`), worked out when the glide sets off: the
+// camera shifted onto the abyss and pushed in a little (GLIDE_FOCUS), its
+// middle on the liquid as near as the world's bottom edge allows and across
+// wherever it was, held over the pit. In the deep, the same cells of the
+// same liquid, so the two halves frame one band of it at the turn.
+let pose = null;
+function poseFrom(x) {
+  const w = S.W / (yardZoom() * GLIDE_FOCUS), h = S.H / (yardZoom() * GLIDE_FOCUS);
+  const band = abyssBand();
+  const lo = pit.x + Math.min(w, pit.w) / 2, hi = pit.x + pit.w - Math.min(w, pit.w) / 2;
+  return { x: Math.max(lo, Math.min(hi, x)), y: Math.min((band.top + band.bottom) / 2, S.worldH - h / 2) };
 }
-// How far in at the turn, as a share of the yard's own zoom: at least
-// VIEW_GLIDE_ZOOM, and far enough that the frame holds nothing but the
-// liquid, so no bank, sky or floor is in the picture being handed over.
-function peakZoom() {
-  const w = S.W / yardZoom(), h = S.H / yardZoom();
-  const roomW = Math.max(P, pit.w - P * 4), roomH = Math.max(P, pitDepth() - P * 10);
-  return Math.max(VIEW_GLIDE_ZOOM, w / roomW, h / roomH);
-}
+const poseIn = v => (v === 'deep' ? { x: pose.x, y: pose.y - waterShift() } : pose);
 
 // The camera's middle, where the glide set out from and where the far half
 // opens: module state, being a glide in progress, which a reload does not
@@ -92,6 +93,9 @@ function start(v) {
   S.follow = null;
   from = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 };
   to = null;
+  // Across, the yard's camera where it is (or was, seen from the deep).
+  const yx = S.view === 'yard' ? from.x : (yardCam ? yardCam.x + yardCam.w / 2 : mouthX());
+  pose = poseFrom(yx);
 }
 
 // The camera the yard's sky is laid out against. Clouds, the smog's band and
@@ -153,23 +157,32 @@ function glide(dt) {
     from = to = null;
     return;
   }
-  // How far in: nothing at either end, all the way at the turn.
+  // How far onto the abyss: nothing at either end, all the way at the turn.
   const into = ease(k < 0.5 ? k * 2 : (1 - k) * 2);
   const home = k < 0.5 ? from : to;
-  if (!home) return;
-  const at = focusOf(S.view);
+  if (!home || !pose) return;
+  const at = poseIn(S.view);
   const base = zoomOf(S.view);
-  setZoom(base + (peakZoom() - base) * into);
+  setZoom(base + (GLIDE_FOCUS - base) * into);
   const cx = home.x + (at.x - home.x) * into, cy = home.y + (at.y - home.y) * into;
   S.camX = cx - S.viewW / 2;
   S.camLockY = cy - S.viewH / 2;
   clampCam();
 }
 
-// How much of the deep is drawn over its water: all of it, except in a
-// glide, where it fades in as the camera opens out of the water on the way
-// down and out as it closes in on the way up. The water itself is never
-// faded: it is the picture the glide hands over on.
+// How much of the yard is drawn round the abyss: all of it, except in a
+// glide, where it darkens away as the camera shifts onto the abyss on the
+// way down and comes back as it pulls off on the way up. The liquid itself
+// is never faded: it is the picture the glide hands over on.
+export function yardFade() {
+  if (!gliding() || S.view !== 'yard') return 1;
+  const k = S.viewFade;
+  return S.viewTo === 'deep' ? 1 - ease(Math.min(1, k * 2))
+                             : ease(Math.max(0, Math.min(1, (k - 0.5) * 2)));
+}
+
+// And of the deep round the same band of water: it fades in as the camera
+// opens out of the abyss on the way down, and out on the way up.
 export function deepFade() {
   if (!gliding() || S.view !== 'deep') return 1;
   const k = S.viewFade;

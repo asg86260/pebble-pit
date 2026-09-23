@@ -6,7 +6,7 @@
 // for one the crew switch fades or hides. Every draw lives in `src/render/`; this file
 // draws nothing.
 
-import { CREW_FADE } from './config.js';
+import { CREW_FADE, P } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx } from './render/ctx.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -45,7 +45,7 @@ import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepSky, drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
          drawSwimmers, drawDeepInvert } from './render/deep.js';
-import { deepFade } from './view.js';
+import { deepFade, yardFade } from './view.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
 import { drawSinking, drawLifting } from './render/scales.js';
@@ -155,6 +155,7 @@ const LAYERS = [
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
+  { name: 'glide dim', draw: drawGlideDim },     // in a glide, the yard darkening round the abyss
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
   { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
 
@@ -274,14 +275,27 @@ const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const inHalf = (layer, i, deep) =>
   BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
 
-// In a glide the deep's picture fades over its water (view.js, `deepFade`):
-// everything but the page, the camera's own moves, the water and the turn
-// of the palette, which are the ground the fade happens on.
+// In a glide the picture fades round the abyss (view.js): in the deep,
+// everything but the page, the camera's own moves, the water (which fades
+// round its band itself) and the turn of the palette; in the yard, what is
+// drawn over the liquid -- what is under it is darkened by 'glide dim'.
 const UNFADED = new Set(['page', 'world', 'world:done', 'screen', 'deep water', 'deep invert']);
+const OVER_ABYSS = LAYERS.findIndex(l => l.name === 'abyss');
+
+// The yard darkening round the abyss: black over everything drawn so far,
+// the liquid drawn over it after.
+function drawGlideDim() {
+  const k = 1 - yardFade();
+  if (k <= 0) return;
+  ctx.fillStyle = '#000';
+  ctx.globalAlpha = k;
+  ctx.fillRect(S.camX - P * 4, S.camY - P * 4, S.viewW + P * 8, S.viewH + P * 8);
+  ctx.globalAlpha = 1;
+}
 
 export function draw() {
   const deep = S.view === 'deep';
-  const fade = deep ? deepFade() : 1;
+  const fadeAll = deep ? deepFade() : yardFade();
   for (let i = 0; i < LAYERS.length; i++) {
     const layer = LAYERS[i];
     if (!inHalf(layer, i, deep)) continue;
@@ -294,7 +308,8 @@ export function draw() {
     // The alpha is put back the same frame: nothing else is ever drawn faint.
     const view = layer.dim ? crewView() : 'show';
     if (view === 'hide') continue;
-    const a = (view === 'fade' ? CREW_FADE : 1) * (UNFADED.has(layer.name) ? 1 : fade);
+    const fade = UNFADED.has(layer.name) || (!deep && i <= OVER_ABYSS) ? 1 : fadeAll;
+    const a = (view === 'fade' ? CREW_FADE : 1) * fade;
     if (a <= 0) continue;
     if (a < 1) ctx.globalAlpha = a;
     layer.draw();

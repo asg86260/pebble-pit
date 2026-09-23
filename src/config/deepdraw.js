@@ -8,7 +8,7 @@ import { P } from './yard.js';
 // first half, hands over at the middle to the same liquid in the deep, and
 // opens out over the second while the deep fades in (view.js).
 export let VIEW_GLIDE_S = 1.8;       // the whole glide, down or up
-export const VIEW_GLIDE_ZOOM = 3;    // at least how far in the camera has pulled at the turn, times the yard's own
+export const GLIDE_FOCUS = 1.5;      // how far the camera pushes in on the abyss at the turn, times the yard's own zoom
 // The deep is framed whole: a window too short to hold it from the floor to
 // the underside of the surface is pulled back until it does, so the way home
 // is always on the screen. This much of the roof shows over the ceiling.
