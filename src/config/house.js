@@ -24,13 +24,18 @@ export const HOUSE_CURTAIN = '#8f8f8f';
 // in it; this says something quieter, that somebody is in.
 export const HOUSE_PUFF_MS = 5200;
 // --- knocking off -------------------------------------------------------------
-// How long a body with nothing to carry hangs about before it goes home. Long,
-// and staggered per body, so the yard empties over a minute or two rather than
-// downing tools together. It has to be longer than a break's turn comes round,
-// or the yard empties before anybody has stood in it long enough to light
-// anything: knocking off and taking five are the same idle stretch, and this
-// is the far end of it.
-export const HOME_AFTER = 60000;  // idle before a body knocks off
+// How long a body with nothing to carry hangs about before it goes home. Short
+// (the owner's call, 2026-09-23): a yard run by machines empties of people,
+// and an idle worker goes indoors rather than standing about. Staggered per
+// body, so they still trickle off rather than downing tools together; a body
+// already on a break finishes it first.
+export let HOME_AFTER = 6000;     // idle before a body knocks off
+// The dev panel's row for it, beside the binding because an imported `let`
+// is read-only; config.js gathers every file's rows into TUNABLE.
+export const HOUSE_KNOBS = [
+  { key: 'HOME_AFTER', label: 'idle before going home, ms', min: 0, max: 120000, step: 1000,
+    get: () => HOME_AFTER, set: v => { HOME_AFTER = v; } }
+];
 // The trip to or from the shacks, as a multiple of the commute. It is the one
 // trip with nothing to do at either end, so it is the one to hurry, and it
 // rides the pace ladder with `commutePace`.

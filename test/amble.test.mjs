@@ -11,12 +11,16 @@
 // a standstill), and sheds no more than that either.
 
 import { yard, group, ok, run } from './helpers.mjs';
-import { AMBLE_RAMP } from '../src/config.js';
+import { AMBLE_RAMP, tuned } from '../src/config.js';
 import { haulSpeed } from '../src/levels.js';
 import { ROAM_PACE } from '../src/crew/idle.js';
 
 group('an idle hauler gets going and slows down rather than switching on and off', async () => {
   window.__reset();
+  // Held out of the house for the length of the watch: this is about a
+  // stroll's pace, and an idle body goes indoors after a few seconds.
+  const was = tuned('HOME_AFTER');
+  window.__tune('HOME_AFTER', 10 * 60 * 1000);
   window.__crew(0, 4);
   window.__air({ haze: 0, muck: 0 });
   run(5);                                    // walked in from the door and settled
@@ -50,6 +54,7 @@ group('an idle hauler gets going and slows down rather than switching on and off
   // The fault this is about is an order of magnitude bigger than the share.
   const gain = haulSpeed() * ROAM_PACE * 1.3 / AMBLE_RAMP;
 
+  window.__tune('HOME_AFTER', was);
   window.__reset();
   return [
     ok(strolled > 600, 'the haulers spend a good part of the time strolling', `${strolled} frames`),
