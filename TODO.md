@@ -48,14 +48,18 @@ yard, so it moves bodies in checks that are not about it.
 
 ## Balance calls, waiting on a decision
 
-### The sphere's numbers (built 2026-09-22)
+### The sphere's numbers (built 2026-09-22, measured 2026-09-23)
 
-`SPHERE_BILL`, `SPHERE_WORK` and `SPHERE_TUNE_WORK` are first guesses. Its
-yield is derived (the ring's
-topped rate times `MACHINE_GAIN`), and a closed sphere brims the sky pile
-within a minute in the `sphere` scene, so the haulers set its real pace;
-worth a playbot run on spark income before and after, and on what the
-three-hat cap costs a yard that used to train more.
+`SPHERE_BILL`, `SPHERE_WORK` and `SPHERE_TUNE_WORK` are first guesses; the
+owner has looked at the figures and is content. Measured in a node yard with
+the game's own books (`airSides`): the sphere banks ~2,460 sparks a minute
+untuned and ~4,170 tuned against ~450 for a ring of three, and puts up about
+1.5 haze a second of its own -- less than a tiller, and well inside what
+three bottom-rung balloons take down. What limits it is carrying: its sparks
+land under the tower, and twelve haulers with no forklifts move 30-70 a
+minute, so without forklifts it stands idle on a full sky pile. Left as is
+(the owner's call): forklifts are its companion. If it reads badly in play,
+gating the row on owning a forklift is the one-line answer.
 
 ### Rain muck clogs the air filter
 
