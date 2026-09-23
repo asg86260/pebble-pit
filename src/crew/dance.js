@@ -288,7 +288,7 @@ export function workJig(w, at, zone = null) {
     w.lunge = 1;
     // One puff per hit, off the body's waist rather than its feet: a chip at
     // ground level is drawn on the ground line, which is already black.
-    spawnGrit(w.x + WORKER / 2, w.foot + WORKER / 2);
+    spawnGrit(w.x + WORKER / 2, w.foot + WORKER / 2, { floor: w.foot + WORKER });
     if (++w.hits >= w.hitsWanted) {
       // Burst done: rest a beat, then the next patch a step along, turning
       // back at the edge of the span so a long build does not walk the body

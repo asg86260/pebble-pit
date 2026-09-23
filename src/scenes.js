@@ -257,6 +257,17 @@ const deepScenes = {
       window.__fast(3);
       lookDeep(spotX('altar'));
     } },
+  // A door going up down there: a builder down the shaft at the well, the
+  // silt off each blow sinking back to the floor.
+  'deep-build': { about: 'the deep', say: 'a builder hammering at the well, silt stirred up off each blow',
+    run: () => {
+      deepYard({ stage: 1, run: 2 });
+      window.__buy('unlockwell');
+      for (let i = 0; i < 60 * 120 && !S.workers.some(w => w.type === TYPE.BUILD && w.jigAt != null
+                                                       && w.y > S.groundY); i++) window.__fast(1 / 60);
+      window.__fast(1);
+      lookDeep(spotX('well'));
+    } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {

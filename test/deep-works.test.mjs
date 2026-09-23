@@ -69,3 +69,33 @@ group('the works in line at a deep station hang just over the station', async ()
     ok(at && top - foot < SHELF_GLYPH_CELLS * P, "within a glyph's height of it", at && `${(top - foot) / P} cells`)
   ];
 }, { reload: false });
+
+// A blow struck in the deep stirs up silt that sinks back to the floor it was
+// struck over and lies there, rather than grit that is gone the frame it is
+// thrown for being under the yard's ground line.
+group('a builder hammering in the deep stirs up silt that settles on the floor', async () => {
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(0, 4);
+  window.__deepCrew({ brawlers: 1 });
+  window.__serpent({ stage: 1 });
+  window.__scales(99999);
+  window.__grant({ dust: 900000 });
+  const bought = window.__buy('unlockwell');
+  let oldest = 0, settled = false, sunk = [];
+  for (let f = 0; f < 60 * 120 && !S.wellOpen; f++) {
+    yard.fast(1 / 60);
+    for (const g of S.grit) {
+      if (!g.sea) continue;
+      oldest = Math.max(oldest, g.t);
+      if (g.y > g.floor - P + 1e-6) sunk.push(Math.round(g.y - g.floor));
+      if (g.vy === 0 && g.y === g.floor - P) settled = true;
+    }
+  }
+  return [
+    ok(bought, 'the well\'s door is sold on the altar'),
+    ok(oldest > 0.5, 'a chip thrown in the deep lives past the frame it was thrown', oldest.toFixed(2)),
+    ok(settled, 'and one comes to rest on the floor'),
+    ok(sunk.length === 0, 'and none sinks through it', sunk.slice(0, 5).join(', '))
+  ];
+}, { reload: false });

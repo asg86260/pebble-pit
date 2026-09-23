@@ -73,6 +73,16 @@ export const GRIT_SPREAD = 1.2;   // sideways throw, px per frame
 export const GRIT_RISE = 3.2;     // and upward, enough to top out ~3 cells up
 export const GRIT_GRAV = 26;      // px per second per second, pulling them back
 export const GRIT_LIFE = 0.42;    // seconds -- gone before the next blow lands
+// The same chips struck in the deep, where the water has them. The throw is
+// cut short by the drag, the fall is slow enough to watch, and they lie on the
+// floor a while: silt stirred up, not grit flung. The pull is small against the
+// drag, so a chip sinks at about pull / -ln(drag) px a frame, two cells a
+// second, rather than accelerating.
+export const GRIT_SEA_SPREAD = 1.2;  // sideways throw, px per frame
+export const GRIT_SEA_RISE = 1.3;    // and upward, topping out ~4 cells up
+export const GRIT_SEA_DRAG = 0.1;    // what is left of a chip's speed after a second
+export const GRIT_SEA_GRAV = 0.5;    // px per frame per second, the sink
+export const GRIT_SEA_LIFE = 2.0;    // seconds -- several bursts hang at once
 
 // --- lobbing a core ------------------------------------------------------------
 // A core leaving a hauler's hands at the lip is thrown on the same arc as every

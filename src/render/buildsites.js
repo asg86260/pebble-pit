@@ -69,11 +69,18 @@ export function drawBuildSites() {
 // black mass in the yard, so black grains are black-on-black. `difference`
 // against white gives each grain the opposite of its ground and needs no test
 // of what is underneath.
-export function drawGrit() {
+export function drawGrit() { paintGrit(false); }
+
+// The same chips struck in the deep, painted with the deep's layers: the water
+// is laid down after the yard's, and silt under it was never seen.
+export function drawSilt() { paintGrit(true); }
+
+function paintGrit(sea) {
   ctx.save();
   ctx.globalCompositeOperation = 'difference';
   ctx.fillStyle = xorInk;
   for (const g of S.grit) {
+    if (!g.sea !== !sea) continue;
     ctx.globalAlpha = Math.max(0, 1 - (g.t / g.life) ** 2);
     ctx.fillRect(Math.round(g.x / P) * P, Math.round(g.y / P) * P, P, P);
   }

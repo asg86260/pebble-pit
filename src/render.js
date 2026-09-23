@@ -15,7 +15,7 @@ import { drawBirds, drawClouds } from './weather.js';
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloonPosts } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
-import { drawBuildSites, drawGrit } from './render/buildsites.js';
+import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
@@ -193,6 +193,7 @@ const LAYERS = [
   { name: 'punches', draw: drawPunches },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
+  { name: 'silt', draw: drawSilt },              // off a builder's blows down there, in the water with the rest
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
   // stack over a station on the deep's floor was inside its own dome.
@@ -262,7 +263,7 @@ export const asPicture = on => { picture = on; };
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
-                      'punches', 'sinking', 'lifting', 'deep invert']);
+                      'punches', 'sinking', 'lifting', 'silt', 'deep invert']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves and are simply off the glass in one.
