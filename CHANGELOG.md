@@ -11,6 +11,8 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+## v0.4.0 — 2026-09-23
+
 **New this release**
 - Weather: rain comes on its own clock and carries down a share of the smoke as acid; a storm washes the sky clean (test/weather.test.mjs, test/wave6-sky.test.mjs).
 - The sky is three sheets of cumulus that fill with smoke and brown as the yard dirties; rain falls from them in three sheets of its own (test/sky-air.test.mjs, test/sky-rain.test.mjs).
