@@ -4,6 +4,7 @@
 // kind does differently is a field in KINDS. A shield failing is never a
 // bill: `dropZone` has walked the crew clear, and the wreck mines back as
 // dust.
+import { belowYard } from './route.js';
 import { S } from './state.js';
 import { P, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
@@ -178,7 +179,7 @@ function strainOn(s, kind) {
 function lookUp(ms) {
   const at = now();
   for (const w of S.workers) {
-    if (w.inside || w.inPit || w.aloft) continue;
+    if (w.inside || w.inPit || w.aloft || belowYard(w)) continue;   // the deep's never see it
     w.say = { mark: 'bang', until: at + ms };
   }
 }

@@ -14,7 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
-- The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, the sqwife living in its first pod, and the wizards' conjured portal -- clicked, or its arrow or the corner's square -- is the player's way down (test/two-crews.test.mjs, test/snatch.test.mjs).
+- The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, the sqwife living in its first pod, and the portal a wizard flies out and summons in the middle of the pit -- clicked, or its arrow or the corner's square -- is the player's way down; the deep is seen under the yard's own sky, mostly water (test/two-crews.test.mjs, test/snatch.test.mjs).
 - A square in the corner and an arrow at the shaft take you between the yard and the deep (test/deep-shaft.test.mjs).
 - Going between the yard and the deep zooms into the drowned pit's liquid and fades the deep in over it, instead of cutting through black (src/selftest/deep.js).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
@@ -23,6 +23,8 @@ feature lives in DESIGN.md.
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
+- The deep draws its water, serpent, stations and floor as a few images a frame instead of thousands of cells, so it no longer drops to a crawl on a large screen (scene deep-all).
+- The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 

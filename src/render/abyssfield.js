@@ -25,6 +25,7 @@ import { P, ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_STAR_FLOOR, ABYSS_STAR_VARY, 
          ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
          ABYSS_FLOW_LIFT } from '../config.js';
 import { ctx } from './ctx.js';
+import { inkOf } from '../ink.js';
 
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
@@ -33,12 +34,48 @@ const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 // "do not draw".
 const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1, Math.round(k * (ramp.length - 1))));
 
+// The field is worked out a cell at a time into an image one pixel a cell,
+// and that image drawn once, scaled up with no smoothing: the same cells on
+// the same grid, but one draw where a fillRect a lit cell was thousands a
+// frame over a whole window of water -- the deep ran at a fraction of the
+// yard's frame rate on a large screen. The tones go through the page's own
+// palette (`inkOf`), as a fillStyle would.
+let img = null, octx = null, buf = null;
+const rgbOf = new Map();
+function rgba(c) {
+  let v = rgbOf.get(c);
+  if (v) return v;
+  const h = inkOf(c).replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map(d => d + d).join('') : h, 16);
+  v = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  rgbOf.set(c, v);
+  return v;
+}
+function surface(cols, rows) {
+  if (!img) { img = document.createElement('canvas'); octx = img.getContext('2d'); }
+  if (img.width < cols || img.height < rows) {
+    img.width = Math.max(img.width, cols); img.height = Math.max(img.height, rows);
+    buf = null;
+  }
+  if (!buf || buf.width !== cols || buf.height !== rows) buf = octx.createImageData(cols, rows);
+  buf.data.fill(0);
+  return buf.data;
+}
+
 // Columns `from`..`to` and rows `top`..`bottom` of the screen's world, the
 // liquid's surface at `line` in the pit's own rows, and this place's rows
 // `rowShift` under the pit's (nought in the pit itself). `tones` and `magic`
 // are the ramps as drawn: the yard's as they are, the deep's turned over for
 // its inversion.
 export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, tones, magic, t }) {
+  const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
+  if (!cols || !rows) return;
+  const data = surface(cols, rows);
+  const put = (x, y, c) => {
+    const [r, g, b] = rgba(c);
+    const i = (((y - top) / P) * cols + (x - from) / P) * 4;
+    data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
+  };
   const a = t / ABYSS_FLOW_MS * Math.PI * 2;
   const dragY = [];
   for (let x = from; x < to; x += P) {
@@ -81,11 +118,7 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, ton
         const allowed = ABYSS_STAR_FLOOR + Math.round(depth * (ramp.length - 1 - ABYSS_STAR_FLOOR));
         const ceiling = allowed - (h >> 3) % ABYSS_STAR_VARY;
         const rung = Math.min(ramp.length - 1, Math.round(k * ceiling));
-        if (rung > 0) {
-          ctx.fillStyle = ramp[rung];
-          ctx.fillRect(x, y, P, P);
-          continue;
-        }
+        if (rung > 0) { put(x, y, ramp[rung]); continue; }
       }
       const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
       if (off > band || h % ABYSS_VEIL_EVERY === 0) continue;
@@ -96,8 +129,12 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, ton
       const lit = thick * (ABYSS_VEIL_LIT + depth * ABYSS_VEIL_DEEP) + (h % 3 - 1) * ABYSS_VEIL_JITTER;
       const rung = rungFor(tones, lit);
       if (rung === 0) continue;                  // its edges reach black and stop
-      ctx.fillStyle = tones[rung];
-      ctx.fillRect(x, y, P, P);
+      put(x, y, tones[rung]);
     }
   }
+  octx.putImageData(buf, 0, 0);
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, cols, rows, from, top, cols * P, rows * P);
+  ctx.imageSmoothingEnabled = smooth;
 }

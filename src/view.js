@@ -18,7 +18,7 @@
 import { S, pit } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, GLIDE_FOCUS, DEEP_H, DEEP_ROOF, DEEP_FLOOR_MARGIN } from './config.js';
 import { clampCam, setZoom } from './world.js';
-import { mouthX, waterShift } from './deep/place.js';
+import { portalX, waterShift } from './deep/place.js';
 import { abyssLine, pitDepth } from './pit.js';
 import { reducedMotion } from './prefs.js';
 
@@ -49,7 +49,7 @@ function frameOn(v) {
   S.view = v;
   S.camLockY = null;
   setZoom(zoomOf(v));
-  S.camX = mouthX() - S.viewW / 2;
+  S.camX = portalX() - S.viewW / 2;
   S.camTo = null;
   clampCam();
 }
@@ -99,8 +99,8 @@ function start(v) {
   from = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 };
   to = null;
   // Across, the yard's camera where it is (or was, seen from the deep).
-  const yx = S.view === 'yard' ? from.x : (yardCam ? yardCam.x + yardCam.w / 2 : mouthX());
-  pose = poseFrom(yx);
+  // Across, onto the portal: the way down is through it.
+  pose = poseFrom(portalX());
 }
 
 // The camera the yard's sky is laid out against. Clouds, the smog's band and
@@ -115,7 +115,7 @@ export function skyCam() {
   if (S.view !== 'deep' && !gliding()) return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
   if (yardCam) return yardCam;
   const z = yardZoom(), w = S.W / z, h = S.H / z;
-  return { x: Math.max(0, mouthX() - w / 2), y: S.worldH - h, w, h };
+  return { x: Math.max(0, portalX() - w / 2), y: S.worldH - h, w, h };
 }
 
 export const goDeep = () => start('deep');

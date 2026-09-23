@@ -26,6 +26,9 @@ import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
 import { drawBody } from './crew.js';
 import { swellAt } from './cores.js';
+import { cellImage } from './cellimage.js';
+
+const coil = cellImage();
 
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 const snap = v => Math.round(v / P) * P;
@@ -96,40 +99,59 @@ export function drawSerpent() {
   }
 
   // Each cell takes the sample nearest it. A cell a cell proud of the body
-  // is kept too, for a sigil's band.
-  const cells = new Map();
+  // is kept too, for a sigil's band. On flat arrays over the coil's box, and
+  // painted into one image (`coil`): a map of cell objects and a fillRect a
+  // cell was the deep's whole frame on a large screen.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const p of pts) {
-    const R = p.r + P;
+    const R = p.r + P * 2;
+    if (p.x - R < minX) minX = p.x - R;
+    if (p.x + R > maxX) maxX = p.x + R;
+    if (p.y - R < minY) minY = p.y - R;
+    if (p.y + R > maxY) maxY = p.y + R;
+  }
+  minX = snap(minX) - P; minY = snap(minY) - P;
+  const cols = Math.ceil((maxX - minX) / P) + 2, rows = Math.ceil((maxY - minY) / P) + 2;
+  const best = new Float32Array(cols * rows).fill(Infinity);
+  const own = new Int32Array(cols * rows).fill(-1);
+  for (let k = 0; k < pts.length; k++) {
+    const p = pts[k], R = p.r + P;
     for (let cy = snap(p.y - R) - P; cy <= p.y + R; cy += P) {
+      const row = (cy - minY) / P;
       for (let cx = snap(p.x - R) - P; cx <= p.x + R; cx += P) {
         const dx = cx + P / 2 - p.x, dy = cy + P / 2 - p.y;
         const dist = Math.hypot(dx, dy);
         if (dist > R) continue;
-        const key = cx / P * 65536 + cy / P;
-        const had = cells.get(key);
-        if (had && had.dist <= dist) continue;
-        cells.set(key, { x: cx, y: cy, dist, r: p.r, r0: p.r0, u: p.u,
-                         along: p.along + dx * p.tx + dy * p.ty, across: dx * p.nx + dy * p.ny });
+        const i = row * cols + (cx - minX) / P;
+        if (dist >= best[i]) continue;
+        best[i] = dist; own[i] = k;
       }
     }
   }
 
+  coil.begin(cols, rows);
   const ribs = [];
-  for (const c of cells.values()) {
-    const da = c.along - bellyA;
+  for (let i = 0; i < own.length; i++) {
+    if (own[i] < 0) continue;
+    const p = pts[own[i]];
+    const x = minX + (i % cols) * P, y = minY + Math.floor(i / cols) * P;
+    const dx = x + P / 2 - p.x, dy = y + P / 2 - p.y;
+    const dist = best[i], r = p.r;
+    const along = p.along + dx * p.tx + dy * p.ty, across = dx * p.nx + dy * p.ny;
+    const da = along - bellyA;
     if (gap && Math.abs(da) < gap / 2) continue;                 // the wound: open water
-    if (c.dist > c.r) {
+    if (dist > r) {
       // a sigil's band stands a cell proud of the body on each side
-      if (boundBand(c.x)) { ctx.fillStyle = PURPLES[WHITE - 1]; ctx.fillRect(c.x, c.y, P, P); }
+      if (boundBand(x)) coil.put(i, PURPLES[WHITE - 1]);
       continue;
     }
-    const aI = Math.round(c.along / P), cI = Math.round(c.across / P);
+    const aI = Math.round(along / P), cI = Math.round(across / P);
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
     // between. Pale because a body in the deep is dark with a light edge,
     // and on a dark inside he was a hole in a hole.
-    if (held && Math.abs(da) < BELLY_LEN && c.dist < c.r - P && c.r > c.r0 + P / 2) {
-      if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push(c);
-      else { ctx.fillStyle = GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]; ctx.fillRect(c.x, c.y, P, P); }
+    if (held && Math.abs(da) < BELLY_LEN && dist < r - P && r > p.r0 + P / 2) {
+      if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push({ x, y });
+      else coil.put(i, GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]);
       continue;
     }
     let ramp = GREYS;
@@ -137,30 +159,30 @@ export function drawSerpent() {
     // between. Lines that follow the curve only step with it; a lattice of
     // dots read off the body's coordinates popped in and out as it bent, and
     // plain white is what the cracks show up on.
-    let rung = c.across > c.r - P ? WHITE - 3
-             : Math.abs(c.across) < P / 2 ? WHITE - 2
-             : c.across > P * 0.9 ? WHITE - 1
+    let rung = across > r - P ? WHITE - 3
+             : Math.abs(across) < P / 2 ? WHITE - 2
+             : across > P * 0.9 ? WHITE - 1
              : WHITE;
     if (stage === 1 && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
       ramp = PURPLES; rung = WHITE - (seeth(aI, cI) % 3);
     }
-    if (stage === 3 && !lit.has(Math.round(c.u))) rung = Math.max(1, Math.round(rung * FADE_SEEN));
+    if (stage === 3 && !lit.has(Math.round(p.u))) rung = Math.max(1, Math.round(rung * FADE_SEEN));
     // The cracks: two, wandering across the body, out from the belly as far
     // as the wound is deep; near black at the wound, greyer at their tips.
     if (reach > 0 && Math.abs(da) < reach) {
-      const w1 = Math.sin(c.along / (P * 2.3)) * c.r * 0.5;
-      const w2 = Math.sin(c.along / (P * 3.1) + 2) * c.r * 0.55;
-      if (Math.abs(c.across - w1) < P * 0.6 || (Math.abs(c.across - w2) < P * 0.6 && seeth(aI, 7) % 3)) {
+      const w1 = Math.sin(along / (P * 2.3)) * r * 0.5;
+      const w2 = Math.sin(along / (P * 3.1) + 2) * r * 0.55;
+      if (Math.abs(across - w1) < P * 0.6 || (Math.abs(across - w2) < P * 0.6 && seeth(aI, 7) % 3)) {
         ramp = GREYS; rung = 1 + Math.round(3 * Math.abs(da) / reach);
       }
     }
     // The snout's jaw, a line through it, and the eye behind it.
-    if (c.along < headA && Math.abs(c.across) < P / 2) { ramp = GREYS; rung = 0; }
-    if (Math.abs(c.along - headA - P) < P / 2 && Math.abs(c.across + c.r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
-    if (boundBand(c.x)) { ramp = PURPLES; rung = WHITE; }
-    ctx.fillStyle = ramp[rung];
-    ctx.fillRect(c.x, c.y, P, P);
+    if (along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
+    if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
+    if (boundBand(x)) { ramp = PURPLES; rung = WHITE; }
+    coil.put(i, ramp[rung]);
   }
+  coil.draw(ctx, minX, minY);
   // The crest: a fin of the abyss's purple standing up off the head and
   // running back along the neck, spikes a cell apart, every other one a cell
   // taller, shortening to nothing at its end. Stood on the body's top edge

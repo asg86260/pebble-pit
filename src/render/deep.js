@@ -23,7 +23,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX, ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER,
          ABYSS_STAR_MS, ABYSS_BREATH_BEND, ABYSS_RIPPLE_MS,
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
-         DEEP_SURFACE, SHAFT_LIGHT_W, SHAFT_SPILL,
+         DEEP_SURFACE,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
@@ -69,48 +69,23 @@ export function deepWindow() {
 // surface breathes with (`swellAt`), seen from below.
 export const ceilingAt = (x, t) => deepTop() + DEEP_SURFACE + swellAt(Math.round(x / P), t);
 
-// --- the sky: the roof, the underside of the surface, the shaft's light --------
-// Overhead is the underside of the pit's surface, breathing on the pit's own
-// clock, and over it the dark it holds up. The one light in the deep is the
-// yard showing through where the pit opens, straight down the shaft, and a
-// thin spill of it under the surface, thinning with depth.
+// --- the sky: the yard's own, over the water line ----------------------------------
+// The deep is looked at the way the drowned pit is from above, closer in
+// (DESIGN.md, "Two crews and a portal"): the paper-white sky over the water
+// line, and the line itself in the abyss's purple, breathing on the pit's own
+// swell -- not a black roof. One fill a column for the sky, one cell for the
+// line.
 export function drawDeepSky() {
   const t = now();
   const { x0, y0, x1 } = deepWindow();
-  const mx = mouthX(), half = SHAFT_LIGHT_W / 2;
+  const top = PURPLES.length - 1;
   for (let x = x0; x < x1; x += P) {
     const c = x / P;
     const line = ceilingAt(x, t);
-    const lit = Math.abs(x + P / 2 - mx) <= half;
-    // the roof, mottled so no stretch of it is one flat tone
-    for (let y = y0; y < line; y += P) {
-      const h = seeth(c, y / P);
-      ctx.fillStyle = lit ? GREYS[GREYS.length - 1 - (h % 7 === 0 ? 1 : 0)] : GREYS[h % 5 === 0 ? 2 : 1];
-      ctx.fillRect(x, y, P, P);
-    }
-    // The surface itself: a line of light where it crests, dimmer in its
-    // troughs, so the swell is read off the line as it is on the pit.
+    if (line > y0) { ctx.fillStyle = GREYS[GREYS.length - 1]; ctx.fillRect(x, y0, P, line - y0); }
     const crest = (swellAt(c, t) / P + 3) / 6;
-    const rung = Math.max(4, Math.min(GREYS.length - 2, Math.round(4 + crest * 5 + (seeth(c, 3) % 2))));
-    ctx.fillStyle = lit ? GREYS[GREYS.length - 1] : GREYS[rung];
+    ctx.fillStyle = PURPLES[Math.max(2, Math.min(top, Math.round(top - 3 + crest * 3 + (seeth(c, 3) % 2))))];
     ctx.fillRect(x, line, P, P);
-  }
-  // The spill: a cone of sparse cells under the shaft, their chance and their
-  // tone both falling with depth, each cell breathing on its own phase so the
-  // light shivers the way light under water does.
-  const top = deepTop() + DEEP_SURFACE + P;
-  for (let d = 0; d < SHAFT_SPILL; d += P) {
-    const k = d / SHAFT_SPILL;
-    const wide = Math.round((half + d * 0.35) / P) * P;
-    for (let x = Math.round((mx - wide) / P) * P; x <= mx + wide; x += P) {
-      if (x < x0 || x >= x1) continue;
-      const h = seeth(x / P, d / P + 11);
-      const breath = (Math.sin(t / 900 + h) + 1) / 2;
-      if (h % 100 > (1 - k) * 55 * breath) continue;
-      const r = Math.round((1 - k) * (GREYS.length - 3)) + 1;
-      ctx.fillStyle = GREYS[Math.max(1, r - (h % 2))];
-      ctx.fillRect(x, top + d, P, P);
-    }
   }
   // Where somebody went through, the surface closes over them in a notch of
   // dark, the way the pit's does from above.
@@ -157,17 +132,32 @@ export function drawDeepWater() {
 // --- the floor -----------------------------------------------------------------
 // The ground under the deep, mottled dark, and the scales lying on it through
 // the bed's own painter (deep/scales.js lays it): a plot like the pit's.
+// The ground never changes, so it is painted once into an image, a world
+// pixel a pixel, and drawn from there (a fillRect a cell was a sizeable share
+// of the deep's frame). Deep enough for the tallest window the deep is
+// framed in, and painted afresh if the deep has moved.
+let ground = null;
+const GROUND_ROWS = 40;
 export function drawDeepFloor() {
-  const { x0, x1, y1 } = deepWindow();
-  const fy = deepFloor();
-  for (let y = fy; y < y1; y += P) {
-    for (let x = Math.max(x0, deepX0() - P * 4); x < Math.min(x1, deepX1() + P * 4); x += P) {
-      const h = seeth(x / P, y / P + 7);
-      ctx.fillStyle = GREYS[2 + (h % 3) + (y === fy ? 2 : 0)];
-      ctx.fillRect(x, y, P, P);
+  const fy = deepFloor(), from = deepX0() - P * 4, to = deepX1() + P * 4;
+  const id = `${fy}|${from}|${to}`;
+  if (!ground || ground.id !== id) {
+    const img = document.createElement('canvas');
+    img.width = to - from; img.height = GROUND_ROWS * P;
+    const g = img.getContext('2d');
+    for (let r = 0; r < GROUND_ROWS; r++) {
+      for (let x = from; x < to; x += P) {
+        const y = fy + r * P, h = seeth(x / P, y / P + 7);
+        g.fillStyle = GREYS[2 + (h % 3) + (r === 0 ? 2 : 0)];
+        g.fillRect(x - from, r * P, P, P);
+      }
     }
+    ground = { id, img };
   }
-  ctx.fillStyle = '#000';
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(ground.img, from, fy);
+  ctx.imageSmoothingEnabled = smooth;
 }
 
 export function drawDeepBed() {
@@ -209,7 +199,7 @@ const STANDS = {
 // had half a cell to spare on one side of every odd-width drawing.
 // Lit from inside a shade above the water, its rim a shade above that, and
 // every cell dealt a tone near it so the dome is not a flat block.
-function drawDome(stand) {
+function drawDome(stand, g = ctx) {
   const w = stand.w + DOME_PAD * 2, r = w / 2, left = stand.x - DOME_PAD;
   const spring = stand.y - DOME_WALL;
   const top = Math.round((spring - r) / P) * P;
@@ -223,8 +213,8 @@ function drawDome(stand) {
     for (let x = left; x < left + w; x += P) {
       if (!inside(x, y)) continue;
       const rim = !inside(x - P, y) || !inside(x + P, y) || !inside(x, y - P);
-      ctx.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x / P, y / P) % 2)];
-      ctx.fillRect(x, y, P, P);
+      g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x / P, y / P) % 2)];
+      g.fillRect(x, y, P, P);
     }
   }
 }
@@ -316,25 +306,53 @@ function drawPods() {
   }
 }
 
+// A station and its dome never change once they stand, so each is painted
+// once into an image of its own, a world pixel a pixel, and drawn from there:
+// several hundred cells a station were a fillRect each, every frame. Kept by
+// where it stands, so a station that moves (a resize, a sprite edited in the
+// station editor) is painted afresh.
+const painted = new Map();
+function stationImage(key) {
+  const rows = SPRITES[key];
+  const s = spriteRect(key), stand = standOf(key);
+  const r = (stand.w + DOME_PAD * 2) / 2;
+  const x = stand.x - DOME_PAD, y = Math.round((stand.y - DOME_WALL - r) / P) * P - P;
+  const w = stand.w + DOME_PAD * 2, h = deepFloor() - y;
+  const id = `${key}|${x}|${y}|${rows.join('')}`;
+  const had = painted.get(key);
+  if (had && had.id === id) return had;
+  const img = document.createElement('canvas');
+  img.width = w; img.height = h;
+  const g = img.getContext('2d');
+  g.translate(-x, -y);
+  drawDome(stand, g);
+  for (let rr = 0; rr < rows.length; rr++) {
+    for (let c = 0; c < rows[rr].length; c++) {
+      const ink = SPRITE_INK[rows[rr][c]];
+      if (!ink) continue;
+      g.fillStyle = ink;
+      g.fillRect(s.x + c * P, s.y + rr * P, P, P);
+    }
+  }
+  const out = { id, img, x, y };
+  painted.set(key, out);
+  return out;
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
   drawPods();
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
   for (const key in SPRITES) {
     if (!STANDS[key]()) continue;
-    const rows = SPRITES[key];
-    const { x: left, y: top, w } = spriteRect(key);
+    const { x: left, w } = spriteRect(key);
     if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
-    drawDome(standOf(key));
-    for (let r = 0; r < rows.length; r++) {
-      for (let c = 0; c < rows[r].length; c++) {
-        const ink = SPRITE_INK[rows[r][c]];
-        if (!ink) continue;
-        ctx.fillStyle = ink;
-        ctx.fillRect(left + c * P, top + r * P, P, P);
-      }
-    }
+    const p = stationImage(key);
+    ctx.drawImage(p.img, p.x, p.y);
   }
+  ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';
 }
 

@@ -51,6 +51,11 @@ export const PORTAL_RX = P * 11;
 export const PORTAL_RY = P * 3;
 export const PORTAL_OPEN_MS = 1500;
 export const PORTAL_TURN_MS = 2400;    // one turn of its rim
+// The wizards' portal is summoned, not bought outright: a wizard flies out
+// over the pit and pours it for this many wizard-seconds, from this high
+// over the surface.
+export const PORTAL_POUR_S = 18;
+export const PORTAL_HOVER = P * 18;
 // What the wizards ask to hold one open: the dome's shape, smaller -- a
 // first guess, like every price of the second half.
 export const PORTAL_BILL = [['dust', 120000], ['shard', 2500], ['spore', 5000], ['spark', 2500]];

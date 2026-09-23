@@ -97,7 +97,8 @@ export const ROWS = [
   { key: 'arch', part: 1, reach: () => { window.__invest(); window.__answered('props', 'net'); } },
   { key: 'dome', part: 1, reach: () => { tower(); window.__wizardHat(1); } },
   // The way down: the snatch played with no portal conjured behind it.
-  { key: 'portal', part: 1, reach: () => { sites(); window.__snatch({ played: true, portal: false }); } },
+  { key: 'portal', part: 1,
+    reach: () => { tower(); window.__wizardHat(1); window.__assign('wizards', 1); window.__snatch({ played: true, portal: false }); } },
   { key: 'askwizards', dial: true, part: 1, reach: () => { window.__answered('props', 'net', 'arch'); } },
   { key: 'breaker', part: 1, reach: () => { grounds(); window.__shack(); window.__answered('props'); } },
   { key: 'carter', part: 1, reach: () => { grounds(); window.__answered('props'); } },

@@ -14981,6 +14981,18 @@ the arrow and the square bring it back up (the glide as
 built, through the abyss). Until it is bought the deep runs unseen: the
 sqwife punches, the wound opens and heals, scales fall on its floor.
 
+**Later the same day, the owner's calls.** The conjured portal stands in the
+middle of the drowned pit (`portalX`), clear of where the dust comes down;
+the snatch's own brief portal stays at the mouth, where the pair stand. It
+is summoned, not bought outright: a wizard leaves the ring, flies out over
+the pit and pours it from above for `PORTAL_POUR_S` wizard-seconds, a beam
+from its hands to the whirlpool, which opens as it is poured. The deep is
+seen the way the pit is from above, closer in: the yard's white sky over the
+water line and the line in the abyss's purple, not a black roof, framed so
+about nine tenths of the window is water. In a glide the yard fades to that
+same white round the abyss, so the two halves are one picture at the turn.
+The pods stand between the crusher and the altar.
+
 **What goes.** The shaft's count and its two posts, `S.deepCrew` as a thing
 the player sets, `sendDeep`, the shaft walk for bodies, the yard's builders
 going down, and "+ under a deep station brings a yard hand down". The

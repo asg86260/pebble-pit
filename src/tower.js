@@ -17,7 +17,6 @@ import { registerRows, workOn, progressOf } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
 import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
-import { now } from './clock.js';
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
@@ -209,8 +208,10 @@ export const TOWER_UPGRADES = [
     note: () => 'a way down into the abyss, held open.',
     bill: () => PORTAL_BILL.map(l => [...l]),
     cost: () => PORTAL_BILL.find(([m]) => m === 'dust')[1],
-    buy: () => { S.portalOpen = true; S.portalAt = now(); S.shopStale = true; },
-    show: () => !!S.snatched && !S.portalOpen
+    // Bought, then summoned: a wizard flies out over the pit and pours it
+    // (`pourPortal` in wizard.js). Offered while there is a wizard to do it.
+    buy: () => { S.portalPour = 1e-6; S.shopStale = true; },
+    show: () => !!S.snatched && !S.portalOpen && !(S.portalPour > 0) && S[JOB.WIZARD] > 0
   }
 ];
 

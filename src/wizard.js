@@ -17,6 +17,9 @@ import { critRoll } from './crit.js';
 import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 import { sphereRising, sphereUp, pourSphere, stepSphere, underSphere } from './sphere.js';
+import { portalX } from './deep/place.js';
+import { abyssLine } from './pit.js';
+import { PORTAL_POUR_S, PORTAL_HOVER } from './config.js';
 
 // The ground under the meteor: where a wizard walks to before it goes up, and
 // comes back down to.
@@ -154,6 +157,12 @@ export function stepWizard(w, now) {
   // drink, and the stirrer waits it out.
   if (doseComing(w) && !domeRising()) { landForDose(w); return; }
 
+  // The portal (DESIGN.md, "Two crews and a portal"): one wizard leaves
+  // whatever it was doing, flies out over the drowned pit and pours it from
+  // above, and comes back to the ring when it stands.
+  if (pouringPortal() && portalHand() === w) { pourPortalFrom(w); return; }
+  w.portalPour = false;
+
   // No hat, no flying: a body put on this before the tower has finished one
   // waits under the meteor.
   if (!w.trained || (!meteorAlive() && !summoning() && !domeRising())) {
@@ -277,6 +286,28 @@ export function stepWizard(w, now) {
   }
 }
 
+// The portal being summoned: bought and not yet standing.
+export const pouringPortal = () => S.portalPour > 0 && !S.portalOpen;
+// Which wizard goes: the first with a hat, the same one every frame.
+const portalHand = () => S.workers.find(o => o.type === TYPE.WIZARD && o.trained) || null;
+// Where it pours from: over the portal's middle, high over the surface.
+export const portalHover = () => ({ x: portalX() - WORKER / 2, y: abyssLine() - PORTAL_HOVER });
+
+// Out over the pit, lifting off where it stands and flying there flat out as
+// it does for the dome, and pouring once it is within reach.
+function pourPortalFrom(w) {
+  w.aloft = true;
+  w.cell = null;
+  w.channel = false;
+  const to = portalHover();
+  const dx = to.x - w.x, dy = to.y - w.y, d = Math.hypot(dx, dy) || 1;
+  const pace = Math.min(WIZ_DASH, Math.max(WIZ_RISE, d / WIZ_DASH_EASE)) * frames();
+  w.pace = pace / frames();
+  w.x += (dx / d) * Math.min(pace, d);
+  w.y += (dy / d) * Math.min(pace, d);
+  w.portalPour = d < WIZ_REACH;
+}
+
 // Everybody in the ring, pouring. Once a frame rather than once a body: it
 // is one thing being made by all of them.
 // Up to its place under the shell at the climb's pace, then held there on the
@@ -302,6 +333,17 @@ function tendSphere(w, now) {
 
 export function stepSummon(dt) {
   stepSphere(dt);
+  // The portal, poured by whoever is over it: done, it stands for good.
+  if (pouringPortal()) {
+    const hands = S.workers.filter(w => w.portalPour).length;
+    S.portalPour = Math.min(1, S.portalPour + hands * dt / 1000 / PORTAL_POUR_S);
+    if (S.portalPour >= 1) {
+      S.portalOpen = true;
+      S.portalPour = 0;
+      for (const w of S.workers) w.portalPour = false;
+      S.shopStale = true;
+    }
+  }
   const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
   // The dome first: while one is rising every channel pours into it.
   if (domeRising()) { pourDome(hands, dt / 1000); return; }

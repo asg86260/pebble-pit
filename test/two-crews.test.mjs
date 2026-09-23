@@ -101,30 +101,63 @@ group('a hand thrown in the deep sinks to its floor and stays down there', async
 }, { reload: false });
 
 // The way down is the wizards' portal: until it is conjured the view stays
-// in the yard and there is no arrow; bought on the tower's board, the view
-// can go down.
-group("the view goes down only once the wizards' portal is conjured", async () => {
+// in the yard and there is no arrow; bought on the tower's board, a wizard
+// flies out over the middle of the pit and pours it, and then the view can
+// go down.
+group("a wizard flies out and summons the portal, and only then does the view go down", async () => {
   const { whatIsAt } = await import('../src/input.js');
   const { arrowBox, onShaftArrow } = await import('../src/render/shaftway.js');
   twoCrews(false);
+  window.__answered('props', 'net', 'arch');
+  window.__meteor();
+  window.__wizardHat(1);
+  window.__assign('wizards', 1);
   goDeep();
   run(3);
   const before = S.view;
   const noArrow = !onShaftArrow(...(b => [b.x + b.w / 2, b.y + b.h / 2])(arrowBox(false)));
   window.__grant({ dust: 1e8, shards: 1e6, spores: 1e6, sparks: 1e6 });
   const bought = window.__buy('portal');
-  const arrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(false));
-  run(2);                                 // the portal opening
-  const { mouthX } = await import('../src/deep/place.js');
+  const { portalX } = await import('../src/deep/place.js');
   const { abyssLine } = await import('../src/pit.js');
-  const portal = whatIsAt(mouthX(), abyssLine());
+  let poured = false, over = false;
+  runUntil(() => {
+    const w = S.workers.find(o => o.portalPour);
+    if (w) { poured = true; if (Math.abs(w.x + WORKER / 2 - portalX()) < WORKER && w.y < abyssLine()) over = true; }
+    return S.portalOpen;
+  }, 120);
+  const arrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(false));
+  const portal = whatIsAt(portalX(), abyssLine());
   goDeep();
   run(3);
   return [
     ok(before === 'yard' && noArrow, 'before the portal the view stays up, and there is no arrow', before),
-    ok(bought && S.portalOpen, 'the tower sells the portal'),
+    ok(bought, 'the tower sells the portal'),
+    ok(poured && over && S.portalOpen, 'a wizard flies out over the middle of the pit and pours it'),
     ok(arrow === 'down to the deep', 'then the arrow at it says the way down', `${arrow}`),
     ok(portal === 'the portal — down to the deep', 'and so does the portal itself', `${portal}`),
     ok(S.view === 'deep', 'and the view goes down', S.view)
+  ];
+}, { reload: false });
+
+// A rock caught by the shields is the yard's: everybody up there looks up
+// and shouts, and the deep's crew, under the abyss, never hears it.
+group("a rock caught by the shields makes the yard shout, not the deep", async () => {
+  window.__fullSites();
+  window.__crew(2, 4);                    // rockhands, so the rock is worked and the next one comes
+  window.__answered('props', 'net', 'arch');
+  window.__snatch({ played: true });
+  window.__deepCrew({ spare: 3 });
+  let yardShout = false, deepShout = false;
+  for (let f = 0; f < 60 * 240 && !yardShout; f++) {
+    run(1 / 60);
+    if (S.workers.some(w => !belowYard(w) && w.say?.mark === 'bang')) yardShout = true;
+    if (below().some(w => w.say?.mark === 'bang')) deepShout = true;
+  }
+  run(0.5);
+  if (below().some(w => w.say?.mark === 'bang')) deepShout = true;
+  return [
+    ok(yardShout, 'the yard shouts when it lands'),
+    ok(!deepShout, 'and the deep does not')
   ];
 }, { reload: false });

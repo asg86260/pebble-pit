@@ -156,7 +156,7 @@ const LAYERS = [
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
-  { name: 'glide dim', draw: drawGlideDim },     // in a glide, the yard darkening round the abyss
+  { name: 'glide dim', draw: drawGlideDim },     // in a glide, the yard fading to its sky round the abyss
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
   { name: 'portal', draw: drawPortal },          // the whirlpool in the surface: the snatch's, and the wizards' held open
   { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
@@ -278,18 +278,20 @@ const inHalf = (layer, i, deep) =>
   BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
 
 // In a glide the picture fades round the abyss (view.js): in the deep,
-// everything but the page, the camera's own moves, the water (which fades
-// round its band itself) and the turn of the palette; in the yard, what is
-// drawn over the liquid -- what is under it is darkened by 'glide dim'.
-const UNFADED = new Set(['page', 'world', 'world:done', 'screen', 'deep water', 'deep invert']);
+// everything but the page, the camera's own moves, the sky and the water
+// (which fades round its band itself) and the turn of the palette; in the
+// yard, what is drawn over the liquid -- what is under it fades to the sky's
+// white in 'glide dim'. Both halves are then white sky over the abyss's
+// liquid at the turn, which is what the deep looks like.
+const UNFADED = new Set(['page', 'world', 'world:done', 'screen', 'deep sky', 'deep water', 'deep invert']);
 const OVER_ABYSS = LAYERS.findIndex(l => l.name === 'abyss');
 
-// The yard darkening round the abyss: black over everything drawn so far,
-// the liquid drawn over it after.
+// The yard fading to its sky round the abyss: white over everything drawn so
+// far, the liquid drawn over it after.
 function drawGlideDim() {
   const k = 1 - yardFade();
   if (k <= 0) return;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = '#fff';
   ctx.globalAlpha = k;
   ctx.fillRect(S.camX - P * 4, S.camY - P * 4, S.viewW + P * 8, S.viewH + P * 8);
   ctx.globalAlpha = 1;

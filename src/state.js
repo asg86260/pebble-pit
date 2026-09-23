@@ -469,6 +469,7 @@ export const S = {
   deepCrew: 0,            // how many of the crew are the deep's: the sqwife, and a body a pod
   portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
   portalAt: 0,            // when it was conjured, for its opening
+  portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
   crushAt: 0,             // when a scale last went into the crusher, for its rollers
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
@@ -632,7 +633,7 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen',
+  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
 ];

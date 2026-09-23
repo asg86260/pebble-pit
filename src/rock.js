@@ -22,7 +22,7 @@ import { beatRunning } from './beats.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
 import { pickCount, rockhandBite, rockhandMs } from './levels.js';
-import { inWorking } from './route.js';
+import { inWorking, belowYard } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
@@ -185,7 +185,9 @@ export function landRock(gentle = false) {
       const at = now();
       const k = Math.min(1.6, S.gh / ROCK_H);
       for (const w of S.workers) {
-        if (w.inside || inWorking(w) || w.aloft) continue;
+        // The deep's crew is under the abyss: a rock landing in the yard is
+        // nothing it heard.
+        if (w.inside || inWorking(w) || w.aloft || belowYard(w)) continue;
         w.say = { mark: 'bang', until: at + LAND_SAY_MS };
         if (w.falling || w.lifted || w.floating) continue;
         if (w.jigAt != null && w.y < w.foot) continue;

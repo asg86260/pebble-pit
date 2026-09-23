@@ -16,10 +16,12 @@ export const DEEP_LEFT = P * 140;    // how far it reaches left of the pit's nea
 export const DEEP_W = P * 520;       // and across
 export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: where a body goes in and comes up
 // The stations stand on the deep's floor, at these fractions of its width from
-// its left edge. The altar is the deep's bench: punching, and the doors.
-export const DEEP_SPOTS = { crusher: 0.055, altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82, pods: 0.935 };
+// its left edge. The altar is the deep's bench: punching, and the doors. The
+// pods stand between the crusher and the altar (the owner's call,
+// 2026-09-23), clear of the gatherers' toss at the crusher's side.
+export const DEEP_SPOTS = { crusher: 0.045, pods: 0.125, altar: 0.205, well: 0.35, font: 0.5, circle: 0.65, spire: 0.82 };
 // The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
-// the floor up at the deep's far right end (DESIGN.md, "One crew, two homes").
+// the floor up (DESIGN.md, "One crew, two homes").
 export const POD_W = P * 7;
 export const POD_H = P * 5;
 export const POD_GAP = P;

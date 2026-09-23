@@ -7,7 +7,7 @@
 import { ok, point, onScreen, run } from './kit.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
-import { mouthX, deepTop } from '../deep/place.js';
+import { mouthX, portalX, deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
@@ -68,8 +68,9 @@ export const TESTS = [
   }],
   ['deep: a click on the conjured portal goes down', async () => {
     deepYard();
+    window.__look(portalX() - S.viewW / 2);
     run(2);                                // held open, and open all the way
-    click(mouthX(), abyssLine());
+    click(portalX(), abyssLine());
     run(VIEW_GLIDE_S + 0.5);
     return [ok(S.view === 'deep', 'the portal in the surface takes the view down', S.view)];
   }],

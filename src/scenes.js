@@ -21,7 +21,7 @@ import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS } from './config.js';
-import { mouthX, spotX, coilAt, bellySeg } from './deep/place.js';
+import { mouthX, portalX, spotX, coilAt, bellySeg } from './deep/place.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -229,10 +229,16 @@ const deepScenes = {
       S.snatch.hurry = 1;
       S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
     } },
+  // A wizard out over the middle of the pit, pouring the portal.
+  'portal-pour': { about: 'the deep', say: 'a wizard over the pit, pouring the portal',
+    run: () => { rich(); window.__fullSites(); window.__crew(0, 4); window.__snatch({ played: true, portal: false });
+                 window.__answered('props', 'net', 'arch'); window.__meteor();
+                 window.__wizardHat(1); window.__assign(JOB.WIZARD, 1); window.__view('yard');
+                 window.__grant({ dust: 1e7 }); window.__fast(20); window.__buy('portal'); window.__fast(13); window.__look(portalX() - S.viewW / 2); } },
   // The wizards' portal, conjured and held open, the arrow over it.
   portal: { about: 'the deep', say: "the wizards' portal held open over the abyss, the way down",
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
-                 window.__view('yard'); window.__look(mouthX() - S.viewW / 2); } },
+                 window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   // The glide between the halves, caught at a point of it (`glideAt`): just

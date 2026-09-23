@@ -35,6 +35,12 @@ export const inDeep = (x, y) => y >= deepTop() && y <= deepFloor() && x >= deepX
 // is straight.
 export const mouthX = () => snap(pit.x + DEEP_MOUTH);
 
+// The wizards' portal, and the deep's way in and out for the player: out in
+// the middle of the drowned pit, clear of where the dust comes down (DESIGN.md,
+// "Two crews and a portal"). The snatch's own portal opens at the mouth, where
+// the pair stand; this one is summoned where nothing falls into it.
+export const portalX = () => snap(pit.x + pit.w / 2);
+
 // How far the drowned pit's surface stands from the deep's underside of it:
 // the deep's water is the pit's liquid carried on below (render/abyssfield.js),
 // so a row down here is this far from the same row of the pit's liquid.

@@ -9,14 +9,15 @@ import { P } from './yard.js';
 // opens out over the second while the deep fades in (view.js).
 export let VIEW_GLIDE_S = 1.8;       // the whole glide, down or up
 export const GLIDE_FOCUS = 1.5;      // how far the camera pushes in on the abyss at the turn, times the yard's own zoom
-// The deep is framed whole: a window too short to hold it from the floor to
-// the underside of the surface is pulled back until it does, so the way home
-// is always on the screen. This much of the roof shows over the ceiling.
-export const DEEP_ROOF = P * 4;
+// The deep is framed whole, and mostly water -- about nine tenths of the
+// window under the water line (the owner's call, 2026-09-23): a window too
+// short to hold it from the floor to the sky over the surface is pulled back
+// until it does. This much sky shows over the deep's top edge.
+export const DEEP_ROOF = P;
 // The floor kept up off the window's foot, with the deep's roster in the band
 // under it: a station stood on the very edge of the glass, under its own
 // plus and minus, was hard to find.
-export const DEEP_FLOOR_MARGIN = P * 12;
+export const DEEP_FLOOR_MARGIN = P * 9;
 export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the floor
 // The stations are drawn cell for cell off their sprites, each under a lit
 // dome. The dome stands DOME_PAD out from the drawing either side, its walls
@@ -26,17 +27,13 @@ export const DOME_PAD = P * 4;
 export const DOME_WALL = P * 4;
 // The crusher's rollers, as seen through its window.
 export const CRUSHER_ROLLER = P * 4;
-// Where the underside of the surface stands, under the deep's top edge, and
-// how far it breathes (the same swell the drowned pit's surface has).
-export const DEEP_SURFACE = P * 7;
-// The shaft's light: the yard showing through where the pit opens, as wide
-// as a body going down it, and how far its spill reaches into the water.
-export const SHAFT_LIGHT_W = P * 5;
-export const SHAFT_SPILL = P * 36;
+// Where the water line stands, under the deep's top edge, and how far it
+// breathes (the same swell the drowned pit's surface has).
+export const DEEP_SURFACE = P * 5;
 // The arrow at the shaft that says the view goes through (render/shaftway.js):
 // in the yard this far over the drowned pit's surface, in the deep this far
-// under the deep's top edge -- under the water line, in the light's spill,
-// since in the light itself a white arrow is white on white -- bobbing a
+// under the deep's top edge -- under the water line, white on the dark --
+// bobbing a
 // cell each way over SHAFT_ARROW_MS.
 export const SHAFT_ARROW_UP = P * 8;
 export const SHAFT_ARROW_DOWN = P * 11;
