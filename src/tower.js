@@ -20,6 +20,7 @@ import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE } fro
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
+import { registerBoard } from './boardrows.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -216,3 +217,5 @@ export const TOWER_SECTIONS = [
 
 // so a work coming back out of a save knows which row it belongs to
 registerRows(TOWER_UPGRADES);
+
+registerBoard('tower', { rows: () => TOWER_UPGRADES, sections: () => TOWER_SECTIONS });

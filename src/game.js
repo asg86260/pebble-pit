@@ -29,7 +29,7 @@ import { stepNotices } from './notices.js';
 import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';
-import { stepWorks, setGround, setDone, setFoot, setRooms, setSheds } from './works.js';
+import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
 import { cubes as houseCubes } from './house.js';
 import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
@@ -45,7 +45,6 @@ setFoot(stationFoot);
 // and the settlement's rooms, so a build there is fenced round what will stand
 setRooms(houseCubes);
 // and the sheds the quarry's, the farm's and the apothecary's works are done at
-setSheds({ quarry: quarryShed, farm: farmShed, apothecary: apothHut });
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir, tossFromPile } from './hands.js';

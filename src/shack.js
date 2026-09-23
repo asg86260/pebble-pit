@@ -8,6 +8,8 @@
 // what takes it off the bench.
 
 import { UPGRADES } from './upgrades.js';
+import { registerBoard } from './boardrows.js';
+import { S } from './state.js';
 
 // In the order the board reads them: the ladder first, the machine that climbs
 // past it last. The breaker's helmets sit between the ladder and the ram they
@@ -27,3 +29,5 @@ export const shackRows = () =>
 // fresh array on every call would hand it a copy nothing reads again.
 export const SHACK_SECTIONS = [{ title: 'diggers', keys: SHACK_GEAR }];
 export const shackSections = () => SHACK_SECTIONS;
+
+registerBoard('shack', { rows: shackRows, sections: shackSections, count: () => S.rockhands });

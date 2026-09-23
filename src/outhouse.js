@@ -6,6 +6,7 @@ import { LOOPOST_SHARDS, LOO_POSTS } from './config.js';
 import { S } from './state.js';
 import { rebalance } from './staffing.js';
 import { registerRows } from './works.js';
+import { registerBoard } from './boardrows.js';
 
 export const OUTHOUSE_UPGRADES = [
   // The second cap on the stand outside, priced in shards because the mess is
@@ -32,3 +33,5 @@ export const OUTHOUSE_SECTIONS = [
 // A rung is built rather than had, and a save closed mid-build has to find its
 // way back to this row's own `buy` (`registerRows` in works.js).
 registerRows(OUTHOUSE_UPGRADES);
+
+registerBoard('outhouse', { rows: () => OUTHOUSE_UPGRADES, sections: () => OUTHOUSE_SECTIONS });

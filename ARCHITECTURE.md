@@ -126,22 +126,31 @@ yard put the frame over budget on its own. Settled in bands the cost is flat
 whatever is lying about, and the sand slumps a beat behind itself, which nobody
 can see.
 
-**A new site.** Four of them went in this way and it held up every time:
+**A new site.** The place itself is one row in `STATIONS` (`stations.js`),
+and that row is the whole of it for every system that shows or staffs a
+place:
 
 1. a distance from the rock and its own tuning numbers in `config.js`
 2. its rect and its state in `state.js`, its placement in `layout` in `world.js`
-3. a row in `STATIONS` (`stations.js`): its `open` flag, where you stand,
-   which flag says its board is up, and its gate -- the doors before it and
-   the facts it needs. That row is what the pointer, the boards' list, the
-   hop, the flags and the door's `show` all read, so none of them is edited.
-4. one new file for the behaviour
-5. a hire row via `crew({...})` in `upgrades.js`, and a door row through
-   `site({ key, ... })` in `upgrades/site.js` -- no `show` of its own; the
-   gate is the row in 3
+3. **its row in `STATIONS`**: `open`, `stand` (its ground), `board` (the flag
+   that says its board is up) and its gate (`after`, `needs`, `sticky`); its
+   `name` and `glyph`, which the pointer's label, the queue card, the hop and
+   any row it sells without a drawing read; `empty`, what its board says with
+   nothing on it; `post`, the job its roster puts on (and a `show`, `at` or
+   `kit` where they differ); `site` or a board makes it a site for works,
+   built by the spare hands on its `stand` unless it says `builtBy`; a `pile`
+   gives it a pile-full mark and hover. The board's page is made from the
+   row when the markup has none (`pages.js`), so no HTML is needed.
+4. one new file for the behaviour, which ends with `registerBoard(key, { rows,
+   sections })` (`boardrows.js`): what the board sells. A section that counts
+   bodies says `heads`.
+5. a door row through `site({ key, ... })` in `upgrades/site.js` -- no `show`
+   of its own; the gate is the row in 3
 6. a `draw` in `render.js`, in painting order, and a step in `main.js`
-7. its `SAVE` (`fields`, `write`, `read`, `blank`), one line in `SAVERS` in `persist.js` — a by-hand name with no saver is a red test
-8. checks in `selftest/`, in the file for the subject, and a line in
-   `test/shop-rows.mjs` for the door
+7. its `SAVE` (`fields`, `write`, `read`, `blank`), one line in `SAVERS` in
+   `persist.js` -- a by-hand name with no saver is a red test
+8. checks in `selftest/`, and a line in `test/shop-rows.mjs` for every row
+   (`test/deep-works.test.mjs` fails a station row with no name or glyph)
 
 Sites are placed by their distance from the rock, so adding one moves nothing
 else. Unlocking one should `lookAt()` it: it is several cores and a row in a

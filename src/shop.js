@@ -29,6 +29,9 @@ import { onTap } from './tap.js';
 import { now as clockNow } from './clock.js';
 import { coarse } from './prefs.js';
 import { station as stationRow } from './stations.js';
+import { boardOf } from './boardrows.js';
+import { shopOf } from './pages.js';
+import { BOARDS as BOARD_KEYS } from './stations.js';
 
 // A row with no drawing of its own wears the drawing of the station whose
 // board sells it, or of the site it is built at.
@@ -41,19 +44,7 @@ const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');
 const crewEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlistrows');
-const filterEl = document.getElementById('filtershop');
-const quarryEl = document.getElementById('quarryshop');
-const farmEl = document.getElementById('farmshop');
-const apothEl = document.getElementById('apothshop');
-const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
-const looEl = document.getElementById('looshop');
-const shackEl = document.getElementById('shackshop');
-const altarEl = document.getElementById('altarshop');
-const wellEl = document.getElementById('wellshop');
-const fontEl = document.getElementById('fontshop');
-const circleEl = document.getElementById('circleshop');
-const spireEl = document.getElementById('spireshop');
 
 // The sections a board draws: the ones it declares, then a last group holding
 // every row nobody named. The rows are the source of truth for what exists;
@@ -196,12 +187,12 @@ export const boardReworded = () => { const was = reworded; reworded = false; ret
 // One row per available upgrade, under a heading. Rebuilt only when the set of
 // rows changes: rebuilding takes the row under the cursor, and its hover, with
 // it.
-function build(el, list, sections, empty, heads) {
+function build(el, list, sections, empty, heads, ledgerBoard = false) {
   const inSubmenu = el === crewListEl;
   // The shelf (DESIGN.md, "The shelf"): a section is a plank and a row a thing
   // standing on it. The crew submenu and the pin keep the cards; the books are
   // a ledger, a line a reading, laid out by the stylesheet on the card markup.
-  const ledger = LEDGERS.includes(el);
+  const ledger = ledgerBoard || LEDGERS.includes(el);
   const shelf = !inSubmenu && !ledger;
   el.classList.toggle('shelves', shelf);
   el.classList.toggle('ledger', ledger);
@@ -767,7 +758,7 @@ export function buildCrewList() {
 // to show yet is empty and folded away by the stylesheet.
 const BOOK_SHEETS = [['bookincome', 0], ['booksky', 1], ['bookcrew', 2], ['booktally', 3]]
   .map(([id, i]) => [document.getElementById(id), i]);
-const LEDGERS = [statsEl, ...BOOK_SHEETS.map(([el]) => el)];
+const LEDGERS = BOOK_SHEETS.map(([el]) => el);
 // A row that has shown since the window came up keeps its place until it goes
 // down: its figure goes on moving, the layout does not. Rows that come and go
 // on a count crossing nought -- one body arriving and setting off again, a
@@ -819,30 +810,11 @@ windowFor('crew', {
   fill: () => { buildCrewList(); refresh(crewListEl, crewList(), null); if (!crewFit) fitCrewColumn(); }
 });
 
-// Every board, by the name the panel knows it by. Each row is asked for rather
-// than held: farm.js and quarry.js import this file back, so their lists do
-// not exist yet when this line runs.
-const BOARDS = {
-  bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
-  filter:  () => [filterEl, FILTER_UPGRADES, FILTER_SECTIONS, 'nothing to fit'],
-  // Each ground draws the kit row that lodges with it (`lodgers`).
-  quarry: () => [quarryEl, [...QUARRY_UPGRADES, ...lodgers('quarry')], QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
-  farm:   () => [farmEl, [...FARM_UPGRADES, ...lodgers('farm')], FARM_SECTIONS, 'the ground is all broken'],
-  apothecary: () => [apothEl, APOTHECARY_UPGRADES, APOTHECARY_SECTIONS, 'the pot stands cold'],
-  tower:  () => [towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet'],
-  // The books and the record, two sections on the one sheet.
-  stats:  () => [statsEl, STATS_UPGRADES, STATS_SECTIONS, 'nothing has come in yet'],
-  outhouse: () => [looEl, OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS, 'the brooms are all on their hooks'],
-  // The fifth thing is whom the sheet counts: the shack has one group and so
-  // no heading to hang the rockhands on, so the count rides the title.
-  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock', () => S.rockhands],
-  // The deep's, one a station on its floor. The roster heading's count is
-  // `deepHeads`, handed to `refresh` by board.js.
-  altar:  () => [altarEl, DEEP_ROWS.altar, DEEP_SECTIONS.altar, 'nothing to strike with'],
-  well:   () => [wellEl, DEEP_ROWS.well, DEEP_SECTIONS.well, 'the well is still'],
-  font:   () => [fontEl, DEEP_ROWS.font, DEEP_SECTIONS.font, 'the font is still'],
-  circle: () => [circleEl, DEEP_ROWS.circle, DEEP_SECTIONS.circle, 'the floor is bare'],
-  spire:  () => [spireEl, DEEP_ROWS.spire, DEEP_SECTIONS.spire, 'the spire is dark']
+// What a board sells: its own rows (boardrows.js), and every row that names
+// the board as the one it lodges on (`lodgers`: a ground's kit row, say).
+export const boardList = which => {
+  const own = boardOf(which)?.rows() || [];
+  return [...own, ...lodgers(which).filter(u => !own.includes(u))];
 };
 
 // One board, rebuilt if the set of rows on it has moved. The open board asks
@@ -850,8 +822,10 @@ const BOARDS = {
 // the press, has nobody to say so, and `build` returns without touching the
 // DOM unless the set has changed.
 export function buildBoard(which) {
-  const board = BOARDS[which];
-  if (board) build(...board());
+  const b = boardOf(which);
+  // The house's sheet is the crew, built by `buildCrew`.
+  if (!b || which === 'house') return;
+  build(shopOf(which), boardList(which), b.sections(), stationRow(which)?.empty || '', b.count, b.ledger);
 }
 
 // Every board. The sim never calls this: it raises `S.shopStale` and the
@@ -861,7 +835,7 @@ export function buildBoard(which) {
 // for is not asked for again by the frame.
 export function buildShop() {
   S.shopStale = false;
-  for (const which of Object.keys(BOARDS)) buildBoard(which);
+  for (const which of BOARD_KEYS) buildBoard(which);
 }
 
 // Draw rows into any element with no yard behind them, for the card bench

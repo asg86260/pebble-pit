@@ -34,6 +34,7 @@ import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
+import { registerBoard } from './boardrows.js';
 
 // Where the two quarry ladders stand, clamped to their length (`tierLevel`).
 export const paceLadder = () => tierLevel('quarryPaceLevel');
@@ -920,7 +921,7 @@ export const QUARRY_UPGRADES = [
 // upgrades/rows-kit.js, see `lodgers`), and what the hole pays. Every card of
 // both ladders is named; only the band you are on answers `true` to `show`.
 export const QUARRY_SECTIONS = [
-  { title: JOB.QUARRY, keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
+  { title: JOB.QUARRY, heads: () => S[JOB.QUARRY], keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
   { title: 'the ore',   keys: ['seam', 'quarrypace'] }
 ];
 
@@ -1026,3 +1027,5 @@ defineMachine('jaw', {
 // So a work coming back out of a save knows which row it belongs to
 // (`registerRows` in works.js).
 registerRows(QUARRY_UPGRADES);
+
+registerBoard('quarry', { rows: () => QUARRY_UPGRADES, sections: () => QUARRY_SECTIONS });

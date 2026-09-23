@@ -21,46 +21,21 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
-import { DEEP_ROWS, deepHeads } from './deep/rows.js';
 import { inDeep, deepFloor } from './deep/place.js';
 import { refresh, buildCrew, buildShop, buildBoard, boardMoved,
-         boardReworded, shutOpts } from './shop.js';
+         boardReworded, shutOpts, boardList } from './shop.js';
 import { now } from './clock.js';
 import { shown } from './tween.js';
 import { JOB } from './jobs.js';
 import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
 import { stepWindow } from './modal.js';
+import { boardOf } from './boardrows.js';
+import { pageOf, shopOf } from './pages.js';
+import { BOARDS } from './stations.js';
 
-const shopEl = document.getElementById('shop');
-const crewShopEl = document.getElementById('crewshop');
-const filterShopEl = document.getElementById('filtershop');
-const quarryShopEl = document.getElementById('quarryshop');
-const farmShopEl = document.getElementById('farmshop');
-const apothShopEl = document.getElementById('apothshop');
-const towerShopEl = document.getElementById('towershop');
-const statsShopEl = document.getElementById('statsshop');
-const looShopEl = document.getElementById('looshop');
-const shackShopEl = document.getElementById('shackshop');
-// The deep's five, one a station on its floor (deep/rows.js), each page
-// `<key>board` holding its rows in `<key>shop`. Written out rather than read
-// off the rows: this runs while the import ring is still closing.
-const DEEP_PAGES = ['altar', 'well', 'font', 'circle', 'spire'];
-const deepShopEl = Object.fromEntries(DEEP_PAGES.map(k => [k, document.getElementById(k + 'shop')]));
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
-const pages = { bench: document.getElementById('board'),
-                house: document.getElementById('house'),
-                filter: document.getElementById('filter'),
-                quarry: document.getElementById('quarryboard'),
-                farm: document.getElementById('farmboard'),
-                apothecary: document.getElementById('apothboard'),
-                tower: document.getElementById('towerboard'),
-                stats: document.getElementById('statsboard'),
-                outhouse: document.getElementById('looboard'),
-                shack: document.getElementById('shackboard'),
-                ...Object.fromEntries(DEEP_PAGES.map(k => [k, document.getElementById(k + 'board')])) };
-
 // The pips' size and tone live in config and are handed to the stylesheet
 // here, once, on the root, so no two boards can disagree about them.
 document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
@@ -87,20 +62,7 @@ const anchor = which => station(which)?.stand?.();
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
 // whichever list had not been reached yet.
-const listFor = which =>
-  // A row names the sheet it belongs to; the bench takes the rest.
-  which === 'bench' ? UPGRADES.filter(u => !u.board) :
-  which === 'filter' ? FILTER_UPGRADES :
-  // The grounds' own rows and the kit row that lodges with each (`lodgers`).
-  which === 'quarry' ? [...QUARRY_UPGRADES, ...lodgers('quarry')] :
-  which === 'farm' ? [...FARM_UPGRADES, ...lodgers('farm')] :
-  which === 'apothecary' ? APOTHECARY_UPGRADES :
-  which === 'tower' ? TOWER_UPGRADES :
-  which === 'stats' ? STATS_UPGRADES :
-  which === 'outhouse' ? OUTHOUSE_UPGRADES :
-  which === 'shack' ? shackRows() :
-  which === 'house' ? crewRows() :
-  DEEP_ROWS[which] || [];
+const listFor = which => (which === 'house' ? crewRows() : boardList(which));
 
 // Every station that has a board; what is true of all of them (the mark under
 // the foot, for one) is written once against this list.
@@ -303,7 +265,7 @@ function placeSheet() {
   seat.place();
   // The name beside the grip: the board's own title is hidden by the
   // stylesheet in favor of this one.
-  const name = at ? pages[at]?.querySelector('.title')?.dataset.name || pages[at]?.querySelector('.title')?.textContent : '';
+  const name = at ? pageOf(at)?.querySelector('.title')?.dataset.name || pageOf(at)?.querySelector('.title')?.textContent : '';
   if (name && handleName.textContent !== name) handleName.textContent = name;
 }
 
@@ -586,13 +548,13 @@ function settle(want) {
     closing = setTimeout(() => {
       if (at) return;                            // opened again on the way out
       panelEl.hidden = true;
-      for (const k of Object.keys(pages)) pages[k].hidden = true;
+      for (const k of BOARDS) pageOf(k).hidden = true;
     }, panelEl.classList.contains('bottom') ? SHEET_MS : 140);
     return;
   }
 
   clearTimeout(closing);
-  for (const k of Object.keys(pages)) pages[k].hidden = k !== want;
+  for (const k of BOARDS) pageOf(k).hidden = k !== want;
   // opening the bench reads every heading on it
   if (want === 'bench') markSectionsSeen();
   panelEl.hidden = false;
@@ -630,18 +592,12 @@ export function tweenCount(at) {
   S.shownStored = shown('dust', S.stored, at);
 }
 
-// how many bodies a section has, so a heading can say so
-const headcount = title =>
-  title === 'the crew' ? S.crew :
-  title === 'the rock' ? S.rockhands :
-  title === 'the quarry' ? S.quarriers :
-  title === 'the farm' ? S.farmhands : 0;
-
-const apothHeads = title => title === 'the pot' ? S.stirrers : 0;
-
-const groundHeads = title =>
-  title === JOB.QUARRY ? S[JOB.QUARRY] :
-  title === JOB.FARM ? S[JOB.FARM] : 0;
+// How many bodies a section's heading counts: its own `heads`, where a section
+// says one (the grounds' gangs, the pot, the deep's rosters).
+const headsOf = which => {
+  const sections = boardOf(which)?.sections() || [];
+  return title => sections.find(x => x.title === title)?.heads?.() || 0;
+};
 
 // The numbers on whichever board is open. Out of `hud` so that opening a board
 // can fill it before it is measured.
@@ -651,20 +607,11 @@ function fill(which) {
   buildBoard(which);
   // a station's board being open is what reads its news
   markDoneSeen(which);
-  if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  if (which === 'filter') refresh(filterShopEl, FILTER_UPGRADES, null);
-  if (which === 'quarry') refresh(quarryShopEl, listFor('quarry'), groundHeads);
-  if (which === 'farm') refresh(farmShopEl, listFor('farm'), groundHeads);
-  if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
-  if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
-  if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
-  if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
-  if (which === 'shack') refresh(shackShopEl, shackRows(), null);
-  if (DEEP_PAGES.includes(which)) refresh(deepShopEl[which], DEEP_ROWS[which], deepHeads);
+  if (which !== 'house' && boardOf(which)) refresh(shopOf(which), listFor(which), headsOf(which));
   // rebuilt as well as refreshed: the crew is a list that changes length
   if (which === 'house') {
     buildCrew();
-    refresh(crewShopEl, crewRows(), null);
+    refresh(shopOf('house'), crewRows(), null);
   }
 }
 

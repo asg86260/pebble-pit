@@ -30,6 +30,7 @@ import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
+import { registerBoard } from './boardrows.js';
 
 // Where the two farm ladders stand, clamped to their length.
 export const tendLadder = () => tierLevel('tendLevel');
@@ -322,7 +323,7 @@ export const FARM_UPGRADES = [
 // upgrades/rows-kit.js, see `lodgers`), and what a plot pays. Every card of
 // both ladders is named; only the band you are on answers `true` to `show`.
 export const FARM_SECTIONS = [
-  { title: JOB.FARM, keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
+  { title: JOB.FARM, heads: () => S[JOB.FARM], keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
   { title: 'the crop',  keys: ['crop', 'tend'] }
 ];
 
@@ -442,3 +443,5 @@ defineMachine('tiller', {
 // So a work coming back out of a save knows which row it belongs to
 // (`registerRows` in works.js).
 registerRows(FARM_UPGRADES);
+
+registerBoard('farm', { rows: () => FARM_UPGRADES, sections: () => FARM_SECTIONS });

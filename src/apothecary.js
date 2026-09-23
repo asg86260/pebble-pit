@@ -32,6 +32,7 @@ import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE, YARD_JOBS } from './jobs.js';
 import { moored, inBasket, craftAt } from './balloon.js';
+import { registerBoard } from './boardrows.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Clamped to the ladder, so a save from before a ladder landed reads as level
@@ -597,7 +598,7 @@ export const APOTHECARY_UPGRADES = [
 
 // How it is run, how well it runs, and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
-  { title: 'the pot', keys: ['potkeep', 'anotherpot'] },
+  { title: 'the pot', heads: () => S.stirrers, keys: ['potkeep', 'anotherpot'] },
   { title: 'brewing', keys: ['bufflength', 'brewdoses'] },
   { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
 ];
@@ -632,3 +633,5 @@ export function doseCount(i, job) {
 // enter the works list, and `room` would only let rungs climb in parallel at
 // a station every other board works one at a time.
 registerRows(APOTHECARY_UPGRADES);
+
+registerBoard('apothecary', { rows: () => APOTHECARY_UPGRADES, sections: () => APOTHECARY_SECTIONS });

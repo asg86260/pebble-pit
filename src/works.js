@@ -12,46 +12,21 @@ import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
-import { standOf, podsRect } from './deep/place.js';
 
 // Where a row's work stands, and therefore whose hands do it: the yard's spare
 // hands (`builders` in crew.js) everywhere a station's own gang is at a post.
 export const SITE_JOB = {
-  // A spare hand at the shed, not one of the station's own gang: a body at its
-  // post is a body the player put there to produce, and a one-body gang with
-  // a load in its hands never qualified, so the claim could stall for good.
-  quarry: JOB.BUILD,
-  farm: JOB.BUILD,
-  apothecary: JOB.BUILD,
-  // The purifier's post and the wizard's are where they work, so crediting
-  // them had the fan rung fill while the filter scrubbed and the hat rise
-  // while the wizard cast: a rung for free.
-  filter: JOB.BUILD,
-  tower: JOB.BUILD,
+  // The yard's own ground: a door going up, a room, a machine.
   yard: JOB.BUILD,
-  // The bench's own ladders, fitted at the bench: the one site where what is
-  // being built is not a place but a thing about somebody.
-  bench: JOB.BUILD,
+  // The lab's own gang, when there was a lab.
   lab: JOB.SCHOLAR,
-  // The rock's gang is capped at one by the ram and had nobody to spare; a
-  // carrier off the dust is a cost the yard can always pay.
-  shack: JOB.BUILD,
-  // A spare hand, not a janitor: the janitors are what the cap is for.
-  outhouse: JOB.BUILD,
   // The sphere's rungs: nobody on the ground can reach the shell, so its one
   // tender pours them from the ring (`setHands` in crew/muster.js).
   sphere: JOB.WIZARD,
-  // The deep's, by the same spare hands as the yard's: a builder goes down the
-  // shaft to the work and hammers there like anywhere else (crew/builders.js
-  // routes it to the deep's floor). A door goes up at its own station and a
-  // pod at the pods.
-  altar: JOB.BUILD,
-  well: JOB.BUILD,
-  font: JOB.BUILD,
-  circle: JOB.BUILD,
-  spire: JOB.BUILD,
-  pods: JOB.BUILD,
+  // A door of the deep, raised where its station will stand.
   deep: JOB.BUILD
+  // ...and every station that is a site, built by the spare hands unless its
+  // row says otherwise (`registerSites`, from stations.js).
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -73,6 +48,18 @@ export const effortAt = site => Math.max(0, SITE_SAYS[site]?.effort?.() ?? BUILD
 
 export const SITES = Object.keys(SITE_JOB);
 
+// The stations that are sites, and the ground each stands on, from their rows
+// in stations.js: works.js is imported by every board and cannot import the
+// station table back, so the table hands itself in.
+let stationBox = () => null;
+export function registerSites(sites, box) {
+  for (const [key, job] of sites) {
+    if (!(key in SITE_JOB)) SITES.push(key);
+    SITE_JOB[key] = job;
+  }
+  stationBox = box;
+}
+
 // Which row opens which place on the ground, keyed as `SITES` in config.js
 // is. The yard remembers the order these are bought in, so `placeSites` can
 // walk the table in that order. Exported so render.js can tell which place a
@@ -84,10 +71,6 @@ export const OPENS_PLACE = {
   unlockfilter: 'filter', unlockcasino: 'casino', unlocktower: 'tower',
   unlockapothecary: 'apothecary'
 };
-// The sites with no gang of their own, worked by whoever is spare, and by
-// whoever is nearest when nobody is (`rebalance` in upgrades.js).
-export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === JOB.BUILD);
-
 // "Empty" is whether that job has ANYBODY on it, not how busy anybody is: a
 // cut with quarriers in it digs its own bench however long they take, and a
 // cut with nobody in it would otherwise take your spores and sit there for
@@ -240,16 +223,9 @@ const YARD_ROW_SITE = {
 // goes and the spare hand stands. The sheds are wired in from game.js
 // (`setSheds`): world.js and apothecary.js both import this file, so naming
 // them here reads them before they exist.
-const SITE_BOX = { filter: () => filter, tower: () => tower, bench: () => bench,
-                   lab: () => lab, shack: () => shack,
-                   outhouse: () => outhouse,
-                   // The deep's stations on its floor; a door goes up at the
-                   // altar, where the brawlers are.
-                   altar: () => standOf('altar'), well: () => standOf('well'),
-                   font: () => standOf('font'), circle: () => standOf('circle'),
-                   spire: () => standOf('spire'), pods: () => podsRect(),
-                   deep: () => standOf('altar') };
-export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
+// The lab's room, which no station row stands for; every other site's ground
+// is its station's (`stationBox`).
+const SITE_BOX = { lab: () => lab };
 
 // Every room the settlement will have once the one going up lands, the same
 // way `nextHouseAt` in house.js asks.
@@ -270,7 +246,7 @@ export function siteBox(site, which = null) {
     const boxed = w && rowFor(w.key)?.box?.();
     if (boxed) return boxed;
   }
-  const box = SITE_BOX[site]?.();
+  const box = SITE_BOX[site]?.() || stationBox(site);
   if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
   if (site !== 'yard') return null;
   const w = which || workAt(site);

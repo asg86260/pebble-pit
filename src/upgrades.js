@@ -40,6 +40,7 @@ import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
+import { registerBoard } from './boardrows.js';
 
 // A ladder sold in more than one row shows one row at a time: a row naming
 // `after` stays off every board until that row's ladder is finished. Wraps
@@ -273,3 +274,4 @@ export function buy(u) {
   return true;
 }
 
+registerBoard('bench', { rows: () => UPGRADES.filter(u => !u.board), sections: () => SECTIONS });

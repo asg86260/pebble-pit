@@ -13,6 +13,7 @@ import { airReadout, airSides, airTrend, skyKindCounts, muckLeft } from './smog.
 import { doing } from './crewboard.js';
 import { JOB, JOB_OF, jobSaid } from './jobs.js';
 import { showWindow } from './modal.js';
+import { registerBoard } from './boardrows.js';
 
 // What the books show, in board order. A currency appears once you have seen
 // one.
@@ -267,3 +268,5 @@ export function sampleRates(now) {
 }
 
 const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });
+
+registerBoard('stats', { rows: () => STATS_UPGRADES, sections: () => STATS_SECTIONS, ledger: true });

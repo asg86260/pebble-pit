@@ -21,6 +21,7 @@ import { open, offered } from '../stations.js';
 import { registerRows } from '../works.js';
 import { JOB, jobSaid } from '../jobs.js';
 import { spotX, standOf } from './place.js';
+import { registerBoard } from '../boardrows.js';
 
 // One weapon's ladder, on the board of the station that throws it. The level
 // field is the ladder's key and `Level` (state.js), and the rung's value is
@@ -143,7 +144,8 @@ export const DEEP_JOB_AT = { altar: JOB.BRAWL, well: JOB.LANCE, font: JOB.GRENAD
 // under it (`roster` in shop.js's `build`): the bodies are put on and taken
 // off at the posts on the floor, and the heading is where the board says how
 // many are down there.
-const roster = station => ({ title: jobSaid(DEEP_JOB_AT[station]), roster: true, keys: [] });
+const roster = station => ({ title: jobSaid(DEEP_JOB_AT[station]), roster: true, keys: [],
+                             heads: () => S[DEEP_JOB_AT[station]] || 0 });
 
 export const DEEP_SECTIONS = {
   altar: [roster('altar'),
@@ -158,9 +160,7 @@ export const DEEP_SECTIONS = {
           { title: 'the star', keys: ['callstar', 'tunestar'] }]
 };
 
-// How many are posted at a station, by its roster heading's words.
-const HEADS_OF = Object.fromEntries(Object.values(DEEP_JOB_AT).map(job => [jobSaid(job), job]));
-export const deepHeads = title => (HEADS_OF[title] ? S[HEADS_OF[title]] || 0 : 0);
-
 // So a work coming back out of a save knows which row it belongs to.
 registerRows(DEEP_UPGRADES);
+for (const key of Object.keys(DEEP_ROWS))
+  registerBoard(key, { rows: () => DEEP_ROWS[key], sections: () => DEEP_SECTIONS[key] });

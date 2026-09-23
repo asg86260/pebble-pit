@@ -16,6 +16,7 @@ import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './bal
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { staffDoor } from './staffing.js';
+import { registerBoard } from './boardrows.js';
 
 export function newPurifier() {
   return { type: TYPE.PURIFY, goal: 'to', x: filter.x, y: 0 };
@@ -130,3 +131,5 @@ export const filterCost = () => FILTER_DUST;
 // So a work coming back out of a save knows which row it belongs to
 // (`registerRows` in works.js).
 registerRows(FILTER_UPGRADES);
+
+registerBoard('filter', { rows: () => FILTER_UPGRADES, sections: () => FILTER_SECTIONS });

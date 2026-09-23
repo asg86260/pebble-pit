@@ -4,7 +4,8 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN } from './config.js';
-import { spotX, deepFloor } from './deep/place.js';
+import { deepFloor, deepTop } from './deep/place.js';
+import { STATIONS } from './stations.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { houseRect } from './house.js';
@@ -30,57 +31,40 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 // A roster stands centered under its station's building: the box `siteBox`
 // answers for the site, which is the shed, the hut or the shack the board
 // opens at and the bar hangs over, not the station's whole ground. One rule,
-// so a station added later is placed by naming its site.
+// and the posts are the station rows' own (`post` in stations.js), so a
+// station added later has its roster by saying which job stands there. A post
+// in the deep stands a band under the deep's floor; one in the yard, below
+// the ground line. Nothing stands over a hole: a post that would reach the
+// quarry's mouth is held clear of it, the strip being three times as wide as
+// the shed.
 //
 // The lab and the air filter hold one body each, and still have a
 // counter: what you are deciding is whether that station is *running at all*,
 // and the yard deciding it for you means a pair of hands taken off the rock
 // by a building without you having said so.
-const under = site => () => { const b = siteBox(site); return b.x + b.w / 2; };
-export const POSTS = [
-  { key: 'filterjob', job: JOB.PURIFY, at: under('filter'), show: () => S.filterOpen },
-  { key: 'stirjob', job: JOB.STIR, at: under('apothecary'), show: () => S.apothecaryOpen },
-  // The shed does not clean anything; what it buys is somebody whose job the
-  // mess is (`capOf`), so the post stands under it.
-  { key: 'loojob', job: JOB.JANITOR, at: under('outhouse'), show: () => S.outhouseOpen, kit: true },
-  { key: 'farmjob', job: JOB.FARM, at: under('farm'), show: () => S.farmOpen, kit: true },
-  { key: 'quarryjob', job: JOB.QUARRY,
-    // Held clear of the mouth: the strip is three times as wide as the shed,
-    // and centered exactly its plus reaches into the hole's wall, which runs
-    // down past the roster as the quarry is dug.
-    at: () => Math.min(under('quarry')(), quarry.x - WIDE / 2 - P),
-    show: () => S.quarryOpen,
-    kit: true },
-  { key: 'skyjob', job: JOB.WIZARD, at: under('tower'), show: () => S.meteorOpen, kit: true },
-  // `S.cx` before the shack stands, since the row is here from the first hire
-  // and the shack is not. `kitX` in world.js answers the stand the same way.
-  { key: 'mine', job: JOB.ROCK,
-    at: () => (S.shackOpen ? under('shack')() : S.cx), show: () => S.crew > 0, kit: true },
-  // Under the houses: carrying has no place its work is done, and what this
-  // number counts is the bodies that are not on anything, so it belongs where
-  // the bodies come from. The block as it stands, not the plot reserved for it.
-  { key: 'carry', job: JOB.HAUL,
-    at: () => { const h = houseRect(); return h.x + h.w / 2; },
-    show: () => S.crew > 0, fixed: true, kit: true },
-  // The deep's, under each of its stations on the deep's floor, from the
-  // moment its door is open (docs/wave-serpent.md). `+` sends a body from the
-  // yard down the shaft to it; `-` sends one back up. `deep` says which half
-  // of the works the post is drawn in.
-  deepRoster('altarjob', JOB.BRAWL, 'altar', () => S.snatched),
-  deepRoster('welljob', JOB.LANCE, 'well', () => S.wellOpen),
-  deepRoster('fontjob', JOB.GRENADE, 'font', () => S.fontOpen),
-  deepRoster('circlejob', JOB.SCRIBE, 'circle', () => S.circleOpen),
-  deepRoster('spirejob', JOB.WARLOCK, 'spire', () => S.spireOpen)
-];
-function deepRoster(key, job, station, show) {
-  return { key, job, at: () => spotX(station), y: () => deepFloor() + DEEP_POST_DOWN, show, deep: true };
+const clearOfHoles = x => (S.quarryOpen && x + WIDE / 2 + P > quarry.x && x - WIDE / 2 < quarry.x + quarry.w
+  ? Math.min(x, quarry.x - WIDE / 2 - P) : x);
+function postOf(row) {
+  const p = row.post;
+  const box = () => siteBox(row.key) || row.stand();
+  const mid = () => { const b = box(); return b.x + b.w / 2; };
+  const deep = () => { const b = row.stand(); return !!b && b.y > deepTop(); };
+  return {
+    key: p.key, job: p.job, kit: !!p.kit, fixed: !!p.fixed,
+    show: p.show || (() => row.open()),
+    at: () => clearOfHoles(p.at?.() ?? mid()),
+    y: () => (deep() ? deepFloor() + DEEP_POST_DOWN : null),
+    get deep() { return deep(); }
+  };
 }
+let POSTS = null;
+const allPosts = () => (POSTS ||= STATIONS.filter(r => r.post).map(postOf));
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
 // height (the deep's) stands there instead.
 export function postAt(p) {
-  const y = p.y ? p.y() : S.groundY + P * 10;
+  const y = p.y?.() ?? S.groundY + P * 10;
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -128,7 +112,7 @@ function boxes(p) {
   };
 }
 
-export const posts = () => POSTS.filter(p => p.show());
+export const posts = () => allPosts().filter(p => p.show());
 
 // --- the kit stand ------------------------------------------------------------
 // A hat belongs to the station, so a hat nobody is wearing waits at it: one
@@ -138,7 +122,7 @@ export { KIT_MARK } from './kit.js';
 
 export function kitStands() {
   const out = [];
-  for (const p of POSTS) {
+  for (const p of allPosts()) {
     if (!p.kit || !p.show()) continue;
     // The tower keeps its spare hats indoors: no stand under it.
     if (p.job === JOB.WIZARD) continue;
