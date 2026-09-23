@@ -25,6 +25,7 @@ import { shackRows, shackSections } from './shack.js';
 import { crewRows, crewSections, crewList, crewListSections, WHERE_WORDS } from './crewboard.js';
 import { shown } from './tween.js';
 import { onTap } from './tap.js';
+import { now as clockNow } from './clock.js';
 import { coarse } from './prefs.js';
 
 const shopEl = document.getElementById('shop');
@@ -449,16 +450,28 @@ function wearGlyph(row, key, tint, ink, built = null, hands = []) {
 // `SHELF_HAND_FADE` frames after the body steps on and falls back after it
 // steps off; a body that has left stays on the tile's list until it has faded,
 // throwing nothing.
+//
+// Stepped on the game's clock, not once a call: the pinned tile and the open
+// board can both be showing the one site, and a display faster than sixty
+// asks more often, and either used to run the chips and the fade that much
+// faster. A second ask on the same instant gets the same poses back.
 const hits = new WeakMap();
 const SCALE = SHELF_GLYPH_CELL / P;
 const seen = new Map();                        // key -> Map(body -> on)
+const posed = new Map();                       // key -> { at, out }
+const FRAME_MS = 1000 / 60;
 function handsFor(key) {
+  const t = clockNow(), last = posed.get(key);
+  if (last && last.at === t) return last.out;
+  // In frames. Time on a shut board ages the chips and the fade in full, but
+  // moves nothing further than a few frames' worth.
+  const f = last ? Math.max(0, (t - last.at) / FRAME_MS) : 1, step = Math.min(3, f);
   const here = bodiesOn(key), was = seen.get(key) || new Map();
   const now = new Map();
-  for (const [w, on] of was) if (!here.includes(w) && on > 1 / SHELF_HAND_FADE) now.set(w, on - 1 / SHELF_HAND_FADE);
-  for (const w of here) now.set(w, Math.min(1, (was.get(w) ?? 0) + 1 / SHELF_HAND_FADE));
+  for (const [w, on] of was) if (!here.includes(w) && on > f / SHELF_HAND_FADE) now.set(w, on - f / SHELF_HAND_FADE);
+  for (const w of here) now.set(w, Math.min(1, (was.get(w) ?? 0) + f / SHELF_HAND_FADE));
   if (now.size) seen.set(key, now); else seen.delete(key);
-  return [...now].map(([w, on]) => {
+  const out = [...now].map(([w, on]) => {
     const gone = !here.includes(w);
     const dy = gone ? 0 : ((w.y - w.foot) / P + (w.lunge || 0)) * SHELF_GLYPH_CELL;
     let chips = hits.get(w)?.chips || [];
@@ -474,12 +487,17 @@ function handsFor(key) {
     }
     // grit stops at the floor, the body's own foot, as the yard's does
     const floor = SHELF_HAND_CELLS * SHELF_GLYPH_CELL - SHELF_GLYPH_CELL;
-    chips = chips.map(c => ({ ...c, t: c.t + 1 / 60, vy: c.vy + GRIT_GRAV / 60 * SCALE, x: c.x + c.vx, y: Math.min(floor, c.y + c.vy) }))
+    chips = chips.map(c => {
+      const vy = c.vy + GRIT_GRAV / 60 * SCALE * step;
+      return { ...c, t: c.t + f / 60, vy, x: c.x + c.vx * step, y: Math.min(floor, c.y + vy * step) };
+    })
                  .filter(c => c.t < c.life)
                  .map(c => ({ ...c, a: 1 - (c.t / c.life) ** 2 }));
     hits.set(w, { hits: w.hits, chips });
     return { dy, chips, on };
   });
+  if (out.length) posed.set(key, { at: t, out }); else posed.delete(key);
+  return out;
 }
 
 export function refresh(el, list, headcount) {

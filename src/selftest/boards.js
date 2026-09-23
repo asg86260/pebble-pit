@@ -1591,11 +1591,23 @@ export const TESTS = [
     // the swing runs on the frame clock: watch a few frames
     const feet = new Set();
     for (let i = 0; i < 24; i++) { window.__fast(1 / 60); await raf(); feet.add(read('jaw').foot); }
+    // Pinned as well as on the open board, the site is asked for twice a
+    // frame: both tiles show the one pose, not the second a step further on.
+    const pinMark = () => tile('jaw')?.querySelector('.pinmark');
+    pinMark()?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    const pinPose = () => document.querySelector(`#pin [data-key="jaw"] .pic`)?.dataset.tint;
+    let twins = 0, apart = [];
+    for (let i = 0; i < 24; i++) {
+      window.__fast(1 / 60); await raf();
+      const a = tile('jaw')?.querySelector('.pic')?.dataset.tint, b = pinPose();
+      if (a && a === b) twins++; else apart.push(`${a} vs ${b}`);
+    }
+    pinMark()?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     // some cells up, then nobody at the site: the hand fades out over
-    // SHELF_HAND_FADE frames of the frame clock, and the cells hold
+    // SHELF_HAND_FADE frames of the game clock, and the cells hold
     await settle(8);
     window.__crew(0, 0, 0, 0);
-    await settle(3);
+    for (let i = 0; i < 10; i++) { window.__fast(1 / 60); await raf(); }
     const leaving = read('jaw');
     for (let i = 0; i < SHELF_HAND_FADE + 10; i++) await raf();
     const alone = read('jaw');
@@ -1630,6 +1642,7 @@ export const TESTS = [
       ok(bare.w === 28 && pressed.hand === 0, 'a tile for sale, and one just pressed, has no hand on it', `${bare.w}px wide; ${pressed.hand} hand pixels after the press`),
       ok(state().jigging >= 0 && arrived.hand > 0 && arrived.w > bare.w, `a hand is on the tile once a body is on the patch (${at}s)`, `${arrived.hand} pixels, ${arrived.w}px wide`),
       ok(feet.size > 1, 'and it moves with the swing', `feet at rows ${[...feet].join('/')}`),
+      ok(twins === 24, 'pinned and on the board, the hand and its chips are one pose', `${twins}/24 alike; ${apart[0] || ''}`),
       ok(queuedSaid === 'queued' && queued.hand === 0 && queued.w === 28, 'a row in line draws no hand', `${queuedSaid}: ${queued.hand} pixels, ${queued.w}px`),
       ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
       ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),

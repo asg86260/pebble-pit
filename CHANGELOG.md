@@ -29,6 +29,7 @@ feature lives in DESIGN.md.
 - Every station's counter stands centered under its building (src/scenes.js `liftroster`).
 - Hold to toss, throw pace, throw reach and the gauge have their own pictures (test/row-glyphs.test.mjs).
 
+- The chips off a builder's hammer on a shop tile fly at the yard's pace, pinned or sped up (src/selftest/boards.js, "a hand on a tile being built").
 - A late yard runs about a quarter faster (test/belt-load.test.mjs, src/scenes.js `everything`).
 - A storm no longer costs a quarter of the frame rate (test/sky-rain.test.mjs).
 - A falling boulder no longer drags the frame rate (src/scenes.js `introfall`).
