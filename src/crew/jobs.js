@@ -15,9 +15,9 @@
 // registry of what each type does.
 
 import { S } from '../state.js';
-import { TYPE } from '../jobs.js';
+import { TYPE, isDeepType } from '../jobs.js';
 import { rand } from '../rng.js';
-import { wayOver, feetOn } from '../route.js';
+import { wayOver, feetOn, ways } from '../route.js';
 
 // `step`, and the three answers the stages want from a row:
 //
@@ -44,6 +44,7 @@ import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';
+import { newBrawler, newLancer, newGrenadier, newScribe, newWarlock } from './deep.js';
 
 export const JOBS = {
   [TYPE.ROCK]: {
@@ -118,6 +119,35 @@ export const JOBS = {
     step: { work: (w, c) => stepWizard(w, c.now) }
   },
 
+  // The deep's five (docs/wave-serpent.md): down the shaft, where nothing of
+  // the yard's reaches -- no mess, no door, no rock to dodge. What each does
+  // at its station is the weapon's (deep/arms.js).
+  [TYPE.BRAWL]: {
+    factory: newBrawler,
+    want: () => S.brawlers,
+    step: { work: () => {} }             // SEAM: deep/arms.js stepBrawler
+  },
+  [TYPE.LANCE]: {
+    factory: newLancer,
+    want: () => S.lancers,
+    step: { work: () => {} }             // SEAM: deep/arms.js stepLancer
+  },
+  [TYPE.GRENADE]: {
+    factory: newGrenadier,
+    want: () => S.grenadiers,
+    step: { work: () => {} }             // SEAM: deep/arms.js stepGrenadier
+  },
+  [TYPE.SCRIBE]: {
+    factory: newScribe,
+    want: () => S.scribes,
+    step: { work: () => {} }             // SEAM: deep/arms.js stepScribe
+  },
+  [TYPE.WARLOCK]: {
+    factory: newWarlock,
+    want: () => S.warlocks,
+    step: { work: () => {} }             // SEAM: deep/arms.js stepWarlock
+  },
+
   [TYPE.BUILD]: {
     factory: newBuilder,
     want: () => S.builders,
@@ -161,7 +191,9 @@ export const FACTORY = type => {
   };
   // And its feet on the ground under it, asked here once: a factory that
   // leaves the climb to bring a body down from `y: 0` sinks it through the
-  // sky for five seconds.
-  if (Number.isFinite(made.x)) made.y = feetOn(wayOver(made.x), made.x);
+  // sky for five seconds. A deep job's ground is the deep's floor, which an x
+  // alone cannot say: the deep lies under the yard.
+  if (Number.isFinite(made.x))
+    made.y = feetOn(isDeepType(type) ? ways().deep : wayOver(made.x), made.x);
   return made;
 };

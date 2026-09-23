@@ -57,7 +57,7 @@ import { advance, restart as restartClock } from './clock.js';
 import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
-import { JOB, TYPE } from './jobs.js';
+import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { dustUnder, sweep, release } from './hands.js';
 import { setTimesUrl, postTime, bootTimes } from './times.js';
 import { surfaceY, colOf } from './grid.js';
@@ -157,6 +157,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // before walks bodies off to a station the caller never mentioned.
   S.purifiers = 0;
   S.janitors = 0;
+  S.brawlers = 0; S.lancers = 0; S.grenadiers = 0; S.scribes = 0; S.warlocks = 0;
   // Every machine goes back in the box, for the same reason one level worse:
   // a machine left standing rewrites what the next `__crew(0, 0, 3)` is
   // allowed to mean.
@@ -257,8 +258,13 @@ export const kit = (o = {}) => {
 // first: the board can only send somebody to a station that is standing, and
 // a shut quarry or farm holds nobody (`capOfBare`), so without this the move
 // is refused.
-const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
+// The deep's places are its doors, and the altar's is the snatch; any of them
+// wants the pit drowned first, or there is no shaft to send anybody down.
+const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen',
+                   brawlers: 'snatched', lancers: 'wellOpen', grenadiers: 'fontOpen',
+                   scribes: 'circleOpen', warlocks: 'spireOpen' };
 export const assign = (job, d = 1) => {
+  if (d > 0 && DEEP_JOBS.includes(job)) deepReady();
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
   assignJob(job, d);
   // The roster's move does not rebuild the boards itself (staffing.js);
@@ -292,7 +298,10 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'powerLevel', 'riftLevel',
                    'critChanceLevel', 'critMultLevel', 'dosesLevel', 'lengthLevel',
-                   'tossSpeedLevel', 'tossReachLevel']) {
+                   'tossSpeedLevel', 'tossReachLevel',
+                   // the deep's ladders and the star's rungs (docs/wave-serpent.md)
+                   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
+                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
@@ -1040,3 +1049,57 @@ export const HANDLES = {
 // `null` to follow the system. Answers with what the camera will actually do.
 import { setPref, reducedMotion } from './prefs.js';
 HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
+
+// --- wave serpent: CREW ---
+// The snatch and the deep's crew, for the setup a check is not about
+// (docs/wave-serpent.md). A check about the snatch itself reaches it the way
+// a player does: the rescue, the drowning, the sheet put down.
+import { markDone } from './beats.js';
+
+// The pit drowned and the snatch played, so the shaft is open and the altar
+// stands, with no beat owed: a deep job set up by a hook is not the story.
+function deepReady() {
+  if (!S.drowned) openRift();
+  if (!S.snatched) {
+    S.snatched = true;
+    S.rescued = true;
+    S.buried = false;
+    markDone('rescue', 'ending', 'snatch');
+  }
+}
+
+// Both facts true -- torn and drowned, and the sqwife out with her sheet put
+// down -- so the snatch is due: it plays from the next frame. A crew of two
+// at least, as the rescue leaves it. `{ played: true }` runs the beat out
+// as well, for a yard that wants the snatch behind it.
+HANDLES.__snatch = (o = {}) => {
+  openRift();
+  S.rescued = true;
+  S.buried = false;
+  markDone('rescue', 'ending');
+  if (S.crew < 2) { S.crew = 2; rebalance(); syncWorkers(); }
+  if (o.played) for (let f = 0; f < 60 * 120 && !S.beatsDone.includes('snatch'); f++) fast(1 / 60);
+  buildShop();
+  return { snatched: S.snatched, done: S.beatsDone.includes('snatch') };
+};
+
+// The deep's gang, stood at their stations: the counts set outright, the
+// doors they need opened, and the crew grown by as many as were added so
+// nobody is taken off a yard job to make them. New bodies are made at their
+// stations (their factories stand them there); the walk down is a check of
+// its own.
+const DEEP_DOOR = { lancers: 'wellOpen', grenadiers: 'fontOpen', scribes: 'circleOpen', warlocks: 'spireOpen' };
+HANDLES.__deepCrew = (o = {}) => {
+  deepReady();
+  let more = 0;
+  for (const job of DEEP_JOBS) {
+    if (o[job] == null) continue;
+    const n = Math.max(0, o[job] | 0);
+    if (n > 0 && DEEP_DOOR[job]) S[DEEP_DOOR[job]] = true;
+    more += n - S[job];
+    S[job] = n;
+  }
+  S.crew = Math.max(0, S.crew + more);
+  rebalance(); syncWorkers(); buildShop();
+  return Object.fromEntries(DEEP_JOBS.map(j => [j, S[j]]));
+};

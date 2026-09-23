@@ -15,7 +15,8 @@ import { cutTop } from '../quarry.js';
 import { rebalance } from '../staffing.js';
 import { busyBuilderSites } from '../works.js';
 import { hushNotices } from '../notices.js';
-import { standTop, rockTop, footing, solidNear, SOLID } from '../route.js';
+import { heldBodies } from '../snatch.js';
+import { standTop, rockTop, footing, solidNear, SOLID, belowYard } from '../route.js';
 
 // --- who they are --------------------------------------------------------------
 const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',
@@ -94,7 +95,10 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // seeing stars, and the spot it rocks about: a refresh
                       // that clears them puts the owner in the race for its
                       // hat (`ownerRacing`) that the stars had it sitting out
-                      'dizzyFor', 'landedAt'];
+                      'dizzyFor', 'landedAt',
+                      // where a weapon of the deep is in its round, beside
+                      // `goal` (deep/arms.js)
+                      'phase'];
 
 // Moments on a body's clock, kept as how far off they are because the clock
 // starts again with the page: written as `field - now()`, read back the
@@ -236,6 +240,12 @@ export const SAVE = {
       if (at >= 0) k.claimHat = at;
       return k;
     });
+    // The two the snatch has off the crew while it plays are written as
+    // hands of the crew where they stand at the edge, and counted: the beat
+    // is not saved, and a reload plays it again, taking them from there.
+    for (const h of heldBodies()) out.who.push({ ...keepOf(h.w), type: TYPE.HAUL, x: h.x, y: h.y,
+                                                  walking: false, legs: null, leg: null, walkTo: null });
+    out.crew = S.crew + heldBodies().length;
     // Where the mouth of the cut was under them, so a load can tell a
     // layout that moved from one that did not (`restoreCrew`).
     out.mouth = S.quarryOpen ? quarry.x : null;
@@ -263,12 +273,12 @@ export const SAVE = {
   blank() { S.crew = 0; }
 };
 
-// Not in the yard: behind a door, up in the balloon, or on the cursor and
-// what follows it (in the air, falling, seeing stars). One list, asked by the
-// celebration and by the loo clock below.
+// Not in the yard: behind a door, up in the balloon, down the shaft, or on
+// the cursor and what follows it (in the air, falling, seeing stars). One
+// list, asked by the celebration and by the loo clock below.
 export const outOfYard = w =>
   !!(w.inside || w.aloft ||
-     w.lifted || w.falling || w.dizzyUntil);
+     w.lifted || w.falling || w.dizzyUntil) || belowYard(w);
 
 // one frame of getting older, and of being somewhere
 export function stepRecords(dt) {

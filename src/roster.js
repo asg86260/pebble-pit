@@ -3,7 +3,8 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER, LIFT_SEAT as SEAT } from './config.js';
+import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_UP } from './config.js';
+import { spotX, deepFloor } from './deep/place.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { houseRect } from './house.js';
@@ -59,13 +60,26 @@ export const POSTS = [
   // the bodies come from. The block as it stands, not the plot reserved for it.
   { key: 'carry', job: JOB.HAUL,
     at: () => { const h = houseRect(); return h.x + h.w / 2; },
-    show: () => S.crew > 0, fixed: true, kit: true }
+    show: () => S.crew > 0, fixed: true, kit: true },
+  // The deep's, under each of its stations on the deep's floor, from the
+  // moment its door is open (docs/wave-serpent.md). `+` sends a body from the
+  // yard down the shaft to it; `-` sends one back up. `deep` says which half
+  // of the works the post is drawn in.
+  deepRoster('altarjob', JOB.BRAWL, 'altar', () => S.snatched),
+  deepRoster('welljob', JOB.LANCE, 'well', () => S.wellOpen),
+  deepRoster('fontjob', JOB.GRENADE, 'font', () => S.fontOpen),
+  deepRoster('circlejob', JOB.SCRIBE, 'circle', () => S.circleOpen),
+  deepRoster('spirejob', JOB.WARLOCK, 'spire', () => S.spireOpen)
 ];
+function deepRoster(key, job, station, show) {
+  return { key, job, at: () => spotX(station), y: () => deepFloor() - DEEP_POST_UP, show, deep: true };
+}
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
-// down and 2.6 tall) that hangs just under it.
+// down and 2.6 tall) that hangs just under it. A post that says its own
+// height (the deep's) stands there instead.
 export function postAt(p) {
-  const y = S.groundY + P * 10;
+  const y = p.y ? p.y() : S.groundY + P * 10;
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 

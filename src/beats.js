@@ -26,6 +26,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release } from './cutscene.js';
+import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 
@@ -94,12 +95,30 @@ export const BEATS = [
   // Once the rescue's beat is over and the newcomer is one of the crew. It
   // waits for the camera because the rock is still being set down as the
   // beat ends. The sheet stands until the player picks it up (ending.js);
-  // putting it down is the skip, and the crew have their dance about it.
+  // putting it down is the skip, and the crew have their dance about it --
+  // unless the pit has drowned, when what comes next is the snatch.
   { key: 'ending', owns: 'sheet', next: null,
     when: () => S.rescued && !S.beat.yard && !S.beat.camera,
     enter: () => {},
     step: () => true,
-    skip: () => { if (S.rockhands > 0) S.danceUntil = now() + DANCE_MS; } },
+    skip: () => { if (S.rockhands > 0 && !S.drowned) S.danceUntil = now() + DANCE_MS; } },
+
+  // --- the second half (snatch.js; docs/wave-serpent.md, "The story") -----
+  // The serpent takes him: once the sqwife is out and the pit has drowned,
+  // whichever was second, and once only.
+  { key: 'snatch', owns: 'yard', next: null,
+    when: snatchDue, enter: startSnatch, step: stepSnatch, skip: cutSnatch },
+  // The fourth defense broken: the belly opens and he comes out. A skip
+  // opens it the rest of the way; he still comes out and swims.
+  { key: 'freed', owns: 'yard', next: null,
+    when: () => S.serpentFreed, enter: startFreed, step: stepFreed,
+    skip: () => { S.introAt = -Infinity; return false; } },
+  // And the sheet that says so, stood until it is put down (ending.js).
+  { key: 'freedsheet', owns: 'sheet', next: null,
+    when: () => beatDone('freed') && !S.beat.yard && !S.beat.camera,
+    enter: () => {},
+    step: () => true,
+    skip: () => {} },
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));

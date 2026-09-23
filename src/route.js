@@ -15,9 +15,14 @@
 // out; take it away and there is no route, and a body asked for one stays
 // where it is. Adding a place to the yard means adding a way and saying what
 // it links to.
+//
+// The deep is a way like any other, under the world (docs/wave-serpent.md):
+// its floor is one level line, and the only link to it is the shaft, from the
+// plank over the drowned pit straight down through the liquid.
 
-import { P, WORKER, CLIMB_PACE } from './config.js';
+import { P, WORKER, CLIMB_PACE, SHAFT_PACE } from './config.js';
 import { S, floor, pit, quarry } from './state.js';
+import { deepTop, deepFloor, deepX0, deepX1, mouthX } from './deep/place.js';
 import { groundAt, rockLeft } from './world.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { surfaceY, colOf } from './grid.js';
@@ -218,8 +223,24 @@ function buildWays(span) {
   // last of it down and every route that used it stops being offered.
   if (span) out.rock = { key: 'rock', from: span.from, to: span.to, at: rockTop };
 
+  // The deep's floor, under the world. There from the start, because a place
+  // is a place; what is not there until the pit drowns is the way in (`links`).
+  out.deep = { key: 'deep', from: deepX0(), to: deepX1(), at: deepFloorAt };
+
   return out;
 }
+const deepFloorAt = () => deepFloor();
+
+// The shaft: the drowned pit's column at `mouthX`, from under the plank down
+// to the deep's floor. A body in it is between the two ends of a link, the
+// way a body on a rung is, and a route from there starts with the rest of
+// that climb, one way or the other (`routeFor`).
+export const inShaft = w => !!S.drowned && Math.abs(w.x - mouthX()) < 1
+  && w.y + WORKER > S.groundY + 1 && w.y + WORKER < deepFloor() - 0.5;
+
+// Down the shaft or in the deep: not in the yard at all, and nothing up there
+// reaches it.
+export const belowYard = w => inShaft(w) || w.y + WORKER > deepTop();
 
 // Which way a body is on, from where it is. Asked rather than stored, so a
 // body dropped into a hole is in the hole and a body thrown on to the crest
@@ -232,6 +253,10 @@ function buildWays(span) {
 // on the yard, higher up.
 export function wayAt(x, y, all = ways()) {
   const feet = y + WORKER;
+  // In the deep's water, or on the way down to it: the deep's. First, because
+  // the deep lies under the cut and the hole alike, and read by x alone a
+  // body on its floor is down whichever working is over its head.
+  if (all.deep && (feet > deepTop() || inShaft({ x, y }))) return all.deep;
   if (feet > S.groundY + 1) {
     for (const key of WORKINGS) {
       const w = all[key];
@@ -336,6 +361,17 @@ export function links(all = ways()) {
     out.push({ x: all.rock.from - WORKER, a: 'yard', b: 'rock', name: 'near rock flank' });
     out.push({ x: all.rock.to, a: 'yard', b: 'rock', name: 'far rock flank' });
   }
+  // The shaft, once the pit has drowned: before then the hole has a floor
+  // and there is nothing under it to go down to. Its head is the plank, which
+  // a body walking the yard reaches along the yard and a body already stood
+  // on the plank reaches where it stands (the drowned hole's way is the
+  // plank), so it joins both. Swum rather than climbed, at a share of the
+  // body's own pace (`stepRoute`).
+  if (S.drowned && all.deep) {
+    const x = mouthX();
+    out.push({ x, a: 'yard', b: 'deep', name: 'shaft', pace: SHAFT_PACE });
+    if (all.hole) out.push({ x, a: 'hole', b: 'deep', name: 'shaft', pace: SHAFT_PACE });
+  }
   return out;
 }
 
@@ -386,8 +422,30 @@ export function route(fromX, fromWay, toX, toWay, all = ways(), reach = links(al
 // as one leg straight across the mouth.
 export const routeFor = (w, toX, toWay = null) => {
   const all = ways();
-  return route(w.x, wayAt(w.x, w.y, all), toX, toWay || openFloor(toX, all), all);
+  const to = toWay || openFloor(toX, all);
+  if (inShaft(w)) return fromShaft(w, toX, to, all);
+  return route(w.x, wayAt(w.x, w.y, all), toX, to, all);
 };
+
+// A body part way down the shaft (a reload, or a retask mid-swim) is on no
+// floor: it finishes the swim to one end or the other, whichever makes the
+// whole trip cheaper, and goes on from there. Never a walk along a floor from
+// where it hangs, which would be a floor it is not standing on.
+function fromShaft(w, toX, to, all) {
+  const reach = links(all);
+  let best = null;
+  for (const l of reach) {
+    if (l.name !== 'shaft') continue;
+    for (const end of [all[l.a], all[l.b]]) {
+      if (!end) continue;
+      const r = route(l.x, end, toX, to, all, reach);
+      if (!r) continue;
+      const cost = r.cost + Math.abs(feetOn(end, l.x) - w.y) * CLIMB_COST;
+      if (!best || cost < best.cost) best = { cost, legs: [{ climb: l, to: end }, ...r.legs] };
+    }
+  }
+  return best;
+}
 
 // The floor at a place. Over the mouth of a hole there is no floor, and a
 // caller naming a bare x means the lip it would stand at: a bare x has no
@@ -421,14 +479,22 @@ export function stepRoute(w, pace) {
   const leg = legs[0];
 
   // Up or down a ladder, and nothing else while on one: a body on a rung is
-  // not somewhere it can be walked sideways from.
+  // not somewhere it can be walked sideways from. A link that says its own
+  // pace (the shaft) is gone at that share of the body's.
   if (leg.climb) {
     w.x = leg.climb.x;
     const want = feetOn(leg.to, w.x);
-    plant(w, w.y + Math.sign(want - w.y) * Math.min(CLIMB_PACE * dt, Math.abs(want - w.y)));
+    const rate = leg.climb.pace ? leg.climb.pace * pace : CLIMB_PACE;
+    plant(w, w.y + Math.sign(want - w.y) * Math.min(rate * dt, Math.abs(want - w.y)));
     if (Math.abs(want - w.y) < 0.5) { plant(w, want); w.way = leg.to.key; legs.shift(); }
     return true;
   }
+
+  // In the deep a body swims: straight at where it is going, height and all,
+  // at its pace and no faster. A body stopped working up at the coil comes
+  // down to the floor on the same stroke that carries it along, rather than
+  // being eased down a cell a frame by the climber, which is a fall.
+  if (leg.along.key === 'deep') return swim(w, leg, pace * dt, legs);
 
   const d = leg.to - w.x;
   if (Math.abs(d) > 0.5) {
@@ -442,6 +508,17 @@ export function stepRoute(w, pace) {
   // holds the body back at the foot of it.
   w.y = climbTo(w, feetOn(leg.along, w.x));
   if (Math.abs(leg.to - w.x) < 0.5) legs.shift();
+  return legs.length > 0;
+}
+
+function swim(w, leg, reach, legs) {
+  const feet = feetOn(leg.along, w.x);
+  const dx = leg.to - w.x, dy = feet - w.y;
+  const d = Math.hypot(dx, dy);
+  if (d <= Math.max(0.5, reach)) { w.x = leg.to; w.y = feet; legs.shift(); }
+  else { w.x += dx / d * reach; w.y += dy / d * reach; }
+  w.foot = w.y;
+  w.footAt = w.x;
   return legs.length > 0;
 }
 
