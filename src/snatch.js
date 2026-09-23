@@ -34,6 +34,7 @@ import { spawnChip, bell } from './dust.js';
 import { rebalance, JOBS } from './staffing.js';
 import { syncWorkers, retask, FACTORY, newRecord, unbook } from './crew.js';
 import { plant, belowYard } from './route.js';
+import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone } from './beats.js';
 
@@ -59,8 +60,11 @@ const onPlank = x => walkY(x + WORKER / 2);
 // goes with them, so the crew is not made up again behind them.
 function takeOff(n) {
   const mx = mouthX();
+  // Stood on the yard's own floor, so the walk to the edge starts from the
+  // ground it is walked on: not on the hill, not down the cut.
   const free = w => !w.lifted && !w.falling && !w.aloft && !w.craft && !w.inside
-                 && !w.lentFrom && w.type !== TYPE.BUILD && !belowYard(w);
+                 && !w.lentFrom && w.type !== TYPE.BUILD && onYard(w)
+                 && Math.abs(w.y - onPlank(w.x)) < 1;
   let pool = S.workers.filter(free);
   if (pool.length < n) pool = S.workers.filter(w => !w.lifted && !w.craft && !belowYard(w));
   const took = pool.sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx)).slice(0, n);
@@ -99,7 +103,7 @@ export function startSnatch(t) {
   S.pair = took.map(w => ({ x: w.x, y: w.y, say: null, body: w }));
   const surface = abyssLine();
   S.snatch = { phase: after ? 'close' : 'walk', at: t, headY: surface, carried: after, hurry: 1,
-               him: null };
+               him: null, stood: null };
   lookAt(mouthX() + WORKER / 2);
 }
 
@@ -125,24 +129,24 @@ export function stepSnatch(t) {
 
   if (s.phase === 'walk') {
     // Out to the plank at the pace anybody crosses the yard at, a little
-    // apart, and stood at its edge.
+    // apart, and stood at its edge looking in; one of them says so.
     let there = true;
     for (const [i, b] of S.pair.entries()) {
       const d = edgeX(S.pair.length === 1 ? 1 : i) - b.x;
       if (Math.abs(d) > 1) { b.x += Math.sign(d) * Math.min(COMMUTE_PACE * f, Math.abs(d)); there = false; }
       else b.x = edgeX(S.pair.length === 1 ? 1 : i);
-      b.y = onPlank(b.x);
+      // Feet to the floor at the same pace, for one taken off the hill.
+      const up = onPlank(b.x) - b.y;
+      b.y += Math.sign(up) * Math.min(COMMUTE_PACE * f, Math.abs(up));
+      if (Math.abs(up) > 1) there = false;
     }
-    if (there) next('look');
-    return true;
-  }
-  if (s.phase === 'look') {
-    // Looking into it, and one of them says so.
+    if (!there) { s.stood = null; return true; }
+    s.stood ??= t;
     if (t >= (S.introSaid || 0) && S.pair[0]) {
       S.introSaid = t + INTRO_BEAT * 1.4;
       S.pair[0].say = { mark: 'dots', n: 3, until: t + INTRO_BEAT };
     }
-    if (held(SNATCH_LOOK_MS)) next('rise');
+    if (t - s.stood >= SNATCH_LOOK_MS / s.hurry) next('rise');
     return true;
   }
   if (s.phase === 'rise') {
