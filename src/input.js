@@ -484,12 +484,12 @@ function askedAbout(x, y, cx, cy) {
   }
   // A board over the same spot has nothing to add to.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
-  // The air filter's gauge: the band the needle is in, how full the sky is,
-  // and which way it is going. The rates themselves are the books' business.
+  // The air filter's gauge: the band the needle is in and which way it is
+  // going. How full and how fast are the books' business.
   if (inRect(dialRect(), x, y)) {
     const r = dialRect(), a = airReadout();
     const way = a.fouling > a.filtering ? 'getting worse' : a.filtering > a.fouling ? 'getting better' : 'holding steady';
-    showTip(`${dialZone()}, ${Math.round(a.share * 100)}% full, ${way}`, { x: r.x + r.w / 2, y: r.y + r.h });
+    showTip(`${dialZone()}, ${way}`, { x: r.x + r.w / 2, y: r.y + r.h });
     return true;
   }
   // The counter says what it counts: nothing else names the coin.

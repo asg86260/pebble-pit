@@ -68,9 +68,8 @@ export const TESTS = [
     await hoverAway();
     return [
       ok(on && /^filthy, /i.test(on), 'a brim sky reads filthy on the gauge', String(on)),
-      ok(on && /, \d+% full, /i.test(on), 'with how full it is', String(on)),
       ok(on && /(getting worse|getting better|holding steady)$/i.test(on), 'and which way it is going', String(on)),
-      ok(!off || !/% full/i.test(off), 'and only over the gauge', String(off))
+      ok(!off || !/getting|holding/i.test(off), 'and only over the gauge', String(off))
     ];
   }],
 ];
