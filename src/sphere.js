@@ -9,7 +9,7 @@
 
 import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_FLARE_MS, METEOR_CORE,
          METEOR_SPARKS, METEOR_CORE_SPARKS, SPARK_CELL, SUMMON_SHAKE, someFind } from './config.js';
-import { S, sky, tower } from './state.js';
+import { S, sky } from './state.js';
 import { now } from './clock.js';
 import { machine, defineMachine, tuneOf } from './machines.js';
 import { meteorAlive } from './meteor.js';
@@ -153,10 +153,9 @@ defineMachine('sphere', {
   standing: sphereUp,
   at: () => underMeteor(),
   y: () => sky.y,
-  // Two kinds of chimney: the vents on the shell, where the light is being
-  // worked, and the tower's spire, the station the machine belongs to. The
-  // runner shares the soot out between them.
-  stacks: () => [...sphereVents().map(v => v.mouth), { x: tower.x + tower.w / 2, y: tower.y }],
+  // The vents on the shell, where the light is being worked; the runner
+  // shares the soot out between them.
+  stacks: () => sphereVents().map(v => v.mouth),
   // The ring's own clock, a bolt's worth of cells at a time, divided by what
   // the machine is worth over the three bodies it replaced.
   ms: rate => wizMs() / wizBite() / Math.max(0.01, rate),

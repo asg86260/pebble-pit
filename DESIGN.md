@@ -14105,15 +14105,14 @@ which is the rule the ring already follows. Because the shell sits where the
 star always did, the chips land where the star's chips always landed, and the
 pile, the carry and the pile-full mark need no new plumbing.
 
-### It fouls the sky, off the star and the tower
+### It fouls the sky, off the star
 
-*(Amended 2026-09-22, the owner's call: the soot comes off the star as well.)*
-**Four chimneys share it:** three vents standing out of the shell's crown
-(`sphereVents`) and the tower's spire. A spec may name several `stacks`, and
-the runner shares each beat's soot evenly between them and puffs each one, so
-the sphere fouls no more than a one-stack machine did. The dirt rises from
-where the light is being worked, in the sky, and from the station on the ground
-the machine belongs to.
+*(Amended 2026-09-22, the owner's call: the soot comes off the star, and then
+off the star alone.)* **Three vents share it,** standing out of the shell's
+crown (`sphereVents`). A spec may name several `stacks`, and the runner shares
+each beat's soot evenly between them and puffs each one, so the sphere fouls no
+more than a one-stack machine does. The dirt rises where the light is being
+worked; the tower's spire does not smoke.
 
 **As first designed, the spire alone was the stack.** A machine is the sky's only producer, and
 the sphere is no exception: `MACHINE_FOUL` a unit, charged in `stepMachines`,
@@ -14150,7 +14149,7 @@ plates `SPHERE_PANEL` cells a side with a one-cell seam between them
   and close over the top, and the ring's beams land on the two growing edges.
   The star shows through wherever the plates have not reached.
 - **Closed,** the star and its corona are not drawn at all. The tender's beam
-  runs to the rim nearest it, and the vents and the spire puff on each beat.
+  runs to the rim nearest it, and the vents puff on each beat.
 
 ### What it touches
 
