@@ -31,6 +31,7 @@ import { registerRows } from './works.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE, YARD_JOBS } from './jobs.js';
+import { moored } from './balloon.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Clamped to the ladder, so a save from before a ladder landed reads as level
@@ -243,10 +244,10 @@ const potOf = w => stirrers().indexOf(w);
 // reached them first and the rest of the menu would go nowhere.
 const buffable = (w, key) => {
   if (w.type === TYPE.STIR) return false;
-  // A body up in a balloon does not come down for a drink the way a wizard
-  // does (`landForDose`); a stirrer waiting under the basket would stand there
-  // for the whole ride.
-  if (w.craft != null) return false;
+  // A balloon's rider is dosed at its post: the craft comes home for the vial
+  // (`sentFor` in balloon.js). Not one still climbing in, nor one being
+  // brought home off the job.
+  if (w.craft != null && (w.goal !== 'aloft' || w.homeward != null)) return false;
   const t = tonicOf(key);
   if (!t || !takesTonic(w, t)) return false;
   return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);
@@ -331,9 +332,10 @@ export function stepStirrer(w) {
     const d = t.x - w.x;
     if (Math.abs(d) < WORKER) {
       // A body in the sky is not in reach, whatever its x says: the stirrer
-      // stands under it and waits, and the wizard is on its way down
-      // (`doseComing`).
-      if (t.aloft) { w.face = Math.sign(d) || w.face || 1; return; }
+      // stands under it and waits, and the wizard or the balloon is on its way
+      // down (`doseComing`). A rider is in reach once its craft is moored.
+      const reach = t.craft != null ? moored(t.craft) : !t.aloft;
+      if (!reach) { w.face = Math.sign(d) || w.face || 1; return; }
       deal(w, t, key);
       w.holding--;
       // Still loaded: straight on to the next body, without the walk home.
