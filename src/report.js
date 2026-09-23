@@ -605,7 +605,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // has on its forks.
   drivers: S.drivers || 0,
   lifts: (S.lifts || []).map(w => ({ x: Math.round(w.x), carry: w.carry || 0, goal: w.goal,
-                                     core: !!w.hasCore })),
+                                     core: !!w.hasCore, inside: !!w.inside })),
 
   // The piles as they are drawn.
   pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key),

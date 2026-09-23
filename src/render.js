@@ -21,7 +21,7 @@ import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand }
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
@@ -163,6 +163,7 @@ const LAYERS = [
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
+  { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock

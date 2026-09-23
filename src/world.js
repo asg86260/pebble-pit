@@ -102,8 +102,8 @@ export const kitX = job =>
   job === JOB.WIZARD ? tower.x + tower.w / 2 - WORKER / 2 :
   job === JOB.JANITOR ? outhouse.x - KIT_OUT.outhouse : null;
 
-// Where the forklifts park, beyond the carts' stand: the first one's slot, the
-// rest in a row off to the left (`parkX` in crew/lifts.js).
+// Where the forklifts' garage stands, beyond the carts' stand (`garage` in
+// crew/lifts.js).
 export const liftX = () => kitX(JOB.HAUL) - LIFT_STAND_OFF;
 
 // The strips are laid once and kept. Rather than every door remembering to

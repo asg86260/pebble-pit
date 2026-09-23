@@ -14276,9 +14276,15 @@ with the load.
   haulers is exactly where they coordinate: the claim book (`claims`,
   `keptBy`, `firstPick`'s spread), the claims let go under a falling rock,
   `holdTheLine`, and the rock's footprint check (`footprintClear`).
-- **Idle, it parks.** With nothing to carry it drives back to its slot at
-  the stand beside the bench (`liftX`) and waits there, engine off. A parked
-  forklift is a picture of a yard with nothing left to haul.
+- **Idle, it goes in the garage** *(amended, the owner's call: a row of parked
+  forklifts has no room for a lot of them)*. The first forklift stands up a
+  small shed on the old engine stand's ground left of the carts' stand
+  (`garage` in crew/lifts.js, `GARAGE_W` by `GARAGE_H`). A new forklift is
+  made inside it; one with nothing to fetch drives to the door and goes in,
+  out of sight like a body in its house, and drives out through the same door
+  the moment there is dust. Any number fit. The count of those inside rides
+  over the roof like a stand's, and the slatted door stands open while one is
+  in the doorway.
 
 ### Buying one
 
@@ -14332,7 +14338,5 @@ rule that a forklift is never counted as crew.
   own design.
 - **The ladders' numbers** in `LADDERS` are first guesses, for the ladder
   book.
-- **Where they park.** At `parkX`, a row running left from the old engine
-  stand, `LIFT_PARK` apart. The row runs into the noticeboard's legs from
-  the first slot on, and a yard of many forklifts runs further into it; the
-  spot is the owner's call (`liftstand` scene).
+- **The garage appears with the first forklift** rather than being built by
+  spare hands, the way a stand appears with its first hat.

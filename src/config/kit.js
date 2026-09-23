@@ -37,8 +37,10 @@ export const LIFT_PUFF_CELLS = 6;
 // of ground before the carts' slab. The bench pads its left side by it
 // (`hang` in sites.js), which is what keeps it off the noticeboard.
 export const LIFT_STAND_OFF = P * 11;
-// How far apart the forklifts park at the stand: a truck's width and a cell.
-export const LIFT_PARK = P * 7;
+// The forklifts' garage, on the old engine stand's ground left of the carts'
+// stand: a shed a forklift drives into when there is nothing to fetch.
+export const GARAGE_W = P * 8;
+export const GARAGE_H = P * 6;
 // How far the truck lifts its driver: a wheel and the truck's box. The yard
 // draws the driver this high and the roster leaves this much room for one.
 export const LIFT_SEAT = P * 3;

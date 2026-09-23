@@ -8,6 +8,7 @@ import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
+import { garage, hasGarage, doorX, inGarage } from '../crew/lifts.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
 import { hash } from './flicker.js';
@@ -199,11 +200,17 @@ export function drawKitStands() {
 // The count over it, in screen pixels like every other number in the yard.
 export function drawKitCounts(screenAt) {
   const stands = kitStands();
-  if (!stands.length) return;
+  if (!stands.length && !hasGarage()) return;
   ctx.font = '13px ui-monospace, "Courier New", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
+  // How many forklifts are in the garage, over its roof like a stand's count.
+  if (hasGarage()) {
+    const g = garage();
+    const at = screenAt(g.x + g.w / 2, S.groundY - g.h - P * 3);
+    ctx.fillText(String(Math.round(shown('garage', inGarage()))), Math.round(at.x), Math.round(at.y));
+  }
   for (const k of stands) {
     // A clear two cells over whatever is on the slab, measured off the mark
     // rather than fixed: the wizard's cone is three courses on its own.
@@ -462,6 +469,7 @@ const LEAN = 0.5;
 // (the crew switch in the corner is about people).
 export function drawForklifts() {
   for (const w of S.lifts || []) {
+    if (w.inside) continue;                      // in the garage
     const ground = Math.round(w.y);
     const x = Math.round(w.x);
     const lift = drawLift(x, ground, w.face || 1);
@@ -570,4 +578,26 @@ export function drawWorkers() {
 // so the crew's own drawing stays here.
 export function drawRosterBodies() {
   drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch, drawLift);
+}
+
+// The forklifts' garage: a flat-roofed shed, a roll-up door of slats that
+// stand open (dark) while a forklift is in the doorway, and nothing else. Drawn
+// before the forklifts, so one driving past is in front of it.
+export function drawGarage() {
+  if (!hasGarage()) return;
+  const g = garage();
+  const top = S.groundY - g.h;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(g.x, top, g.w, g.h);                              // the shed
+  ctx.fillRect(g.x - P, top - P, g.w + P * 2, P);                // its eaves
+  // The door: a cell in from each side, up to a cell under the eaves.
+  const dx = g.x + P, dw = g.w - P * 2, dy = top + P;
+  const busy = (S.lifts || []).some(w => !w.inside && Math.abs(w.x - doorX()) < WORKER);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(dx, dy, dw, S.groundY - dy);
+  if (!busy) {
+    ctx.fillStyle = '#000';
+    for (let y = dy + P; y < S.groundY; y += P * 2) ctx.fillRect(dx, y, dw, 2);   // its slats
+  }
+  ctx.fillStyle = '#000';
 }

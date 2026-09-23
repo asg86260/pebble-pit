@@ -121,8 +121,6 @@ touching `src/config/build.js`.
 
 ## Drawing and listening
 
-- Where the self-driving forklifts park (`parkX`, crew/lifts.js): the row runs
-  into the noticeboard's legs. The owner's call; the `liftstand` scene shows it.
 - The forklift (`drawLiftBox`, render/crew.js) and its `lift` shelf glyph are
   first sketches; want a pass in `glyphs.html` and a shot.
 - The farm shed, the quarry shed and the bench share one silhouette at 1x. One

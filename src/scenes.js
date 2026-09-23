@@ -716,13 +716,13 @@ export const SCENES = {
     run: () => { rich(); lip(); window.__kit({ drivers: 2 }); window.__fast(20);
                  const s = st(); window.__look(s.houses.door - s.viewW / 2);
                  S.camLockY = S.groundY - S.viewH * 0.35; } },
-  liftstand: { about: 'the kit', say: 'three forklifts parked at their slots by the bench, the yard clean',
-    // The floor cleared and nobody working, so nothing new falls to fetch and
-    // they stay parked.
+  liftstand: { about: 'the kit', say: 'the garage by the bench with all three forklifts inside, the yard clean',
+    // The floor cleared and nobody working, so nothing falls to fetch and all
+    // three stay in the garage.
     run: () => { window.__reset(); window.__crew(0, 0); window.__fullSites(); window.__crew(0, 0);
                  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
                  for (let i = 0; i < 3; i++) { window.__buy('driver'); window.__finish(); }
-                 window.__clearFloor(); window.__fast(0.5);
+                 window.__clearFloor(); window.__fast(3);
                  window.__look(st().benchX - 180 - st().viewW / 2); } },
   driverrow: { about: 'the kit', say: 'the forklift row on the bench, beside the carts',
     run: () => { rich(); S.shieldsDone = ['props']; lip(); window.__board('bench'); } },
