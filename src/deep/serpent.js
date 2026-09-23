@@ -13,7 +13,7 @@
 import { S } from '../state.js';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, FADE_UNLIT, SIGIL_HEAL_CUT,
          SIGIL_CUT_MAX, CURSE_CUT_MAX, SCALE_PER_DMG, SCALE_HIT_MAX, COIL_THICK,
-         COIL_SEGS, BEAM_LIGHT, rungValue } from '../config.js';
+         COIL_SEGS, BEAM_LIGHT, FLASH_MS, rungValue } from '../config.js';
 import { now } from '../clock.js';
 import { nearestSeg, coilAt } from './place.js';
 import { shed } from './scales.js';
@@ -46,6 +46,9 @@ export function strike(weapon, dmg, x, y) {
   // (`stepSerpent`), and a wound past its depth is a number nothing draws.
   if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + done);
   shed(x, y, Math.min(SCALE_HIT_MAX, Math.max(1, Math.round(done * SCALE_PER_DMG))));
+  // Where it landed on the body, for the blink: a blow that did nothing
+  // returned above, so a glancing weapon is seen not to land.
+  S.serpentHits.push({ u: nearestSeg(x, y, now()).seg, at: now() });
   return done;
 }
 
@@ -98,6 +101,10 @@ export const boundK = () => sigilCut() / SIGIL_CUT_MAX;
 // reached it. The circles on the floor were drawn against the defense they
 // held, and go with it.
 export const stepSerpent = c => {
+  if (S.serpentHits.length) {
+    const t = now();
+    S.serpentHits = S.serpentHits.filter(h => t - h.at < FLASH_MS);
+  }
   if (!S.snatched || S.serpentStage > LAST) return;
   const d = depth();
   if (S.serpentWound < d) {

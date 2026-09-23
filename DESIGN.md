@@ -14526,8 +14526,9 @@ moves the yard on. The fourth stage's depth is the belly.
 1. **Bare coil.** It only heals. Punching opens it.
 2. **Warded scales.** A shimmer over the coil that punches glance off.
    Lances pierce it.
-3. **Splitting.** The coil divides into many writhing lengths, each healing
-   on its own. Grenades hit them all at once; sigils hold them still.
+3. **Splitting.** The coil thrashes, and heals as many lengths, each on
+   its own (the body stays whole on screen since "The serpent, redrawn").
+   Grenades hit them all at once; sigils hold them still.
 4. **Fading into the dark.** The serpent dims out of reach, and a coil that
    cannot be seen cannot be hit. The wizards' light pins it visible for the
    last blow, and the called star lands on what they light.
@@ -14713,9 +14714,17 @@ by hand into the hopper counts; a purchase takes from the account and the
 flecks leave the crusher; a first-pass save loads with its scales crushed.
 Scenes: `crusher`, `gathering`.
 
-### The serpent, redrawn: a smooth coil, a wound you can read, him in a cage of ribs (design, not built)
+### The serpent, redrawn: a smooth coil, a wound you can read, him in a cage of ribs (built)
 
-*Proposed 2026-09-23, from the mockups S2, D1 + D3 and B2.* Three things were
+*Proposed 2026-09-23, from the mockups S2, D1 + D3 and B2; built the same
+day. The calls made at build: the splitting stage no longer splits the body
+(the user's call) -- the coil stays whole and thrashes, a ripple laid into
+the centerline itself (`coilLine` in place.js), so every weapon lands on the
+body as drawn, while the lengths stay the rings' accounting (`lengthOf`);
+the cage is pale with dark ribs rather than dark with pale ones, because a
+body in the deep's inverted palette is dark with a light edge and was lost
+on a dark inside; and `deep-wound` already holds the wound at nine tenths,
+so it is the cracked scene.* Three things were
 wrong with the coil as built. The body is columns stepping a whole cell at a
 time, so its edges are stairs and each segment's join is a notch. The wound
 is a gap at the belly that is a cell wide for most of a stage, so the one
@@ -14731,11 +14740,9 @@ column stopping. The scale lattice is read in the body's own coordinates
 (how far along it, how far across), so the pattern follows the coil round a
 bend instead of printing a screen-column stripe over it. The bottom edge's
 shade is the edge across the body, not the last row of a column. No plates
-and no seams. **The splitting stage** keeps its lengths, each drawn the same
-way and capped round at both ends, so a break is a clean end and not a
-stair. *(The call to confirm: "no splits" read as "no plates or seams", the
-S3 mockup. If it meant the splitting defense itself goes, that is a change
-to the four defenses and wants its own design.)*
+and no seams. **The splitting stage does not split the body**: the coil
+stays whole and thrashes, a ripple a length running down it
+(`SPLIT_WRITHE`), and the lengths are only the rings' accounting.
 
 **The wound is read on the body (D1 + D3).**
 - *Cracks.* Dark cracks run out along the coil from the belly, both ways;

@@ -4,16 +4,23 @@
 //
 // In the deep it is drawn in the deep's inverted palette (render/deep.js,
 // `seen`): white scales on the black, its wards in the abyss's purple. The
-// picture is the reading: the wound is a gap in the coil at the belly that
-// opens as it deepens, and he is seen through it; there is no bar.
+// body is laid along its curve, not down columns: a cell is the serpent's if
+// its middle is within the body's half thickness of the centerline, so the
+// edges run smooth and the head and tail are round. Every cell is read in
+// the body's own coordinates -- how far along it, how far across -- so the
+// lattice, the ward and the cracks follow the coil round a bend.
+//
+// The wound is read on the body: cracks out from the belly as far as it is
+// deep, a blink wherever a blow lands, and the gap at the belly breaking the
+// cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
 
 import { now } from '../clock.js';
-import { P, WORKER, COIL_SEGS, COIL_THICK, SPLIT_LENGTHS, SERPENT_WOUND,
-         COIL_TAIL, HEAD_SEGS, HEAD_PLUS, WARD_MS, WARD_AT, SPLIT_GAP, SPLIT_WRITHE, SPLIT_WRITHE_MS,
-         FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX,
+import { P, WORKER, COIL_SEGS, COIL_THICK, COIL_TAIL, HEAD_SEGS, HEAD_PLUS, WARD_MS, WARD_AT,
+         FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
+         CRACK_REACH, FLASH_CELLS, FLASH_MS, COIL_STEP, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W } from '../config.js';
 import { S } from '../state.js';
-import { coilAt, bellyAt, mouthX } from '../deep/place.js';
+import { coilLine, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -24,80 +31,16 @@ import { swellAt } from './cores.js';
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 const snap = v => Math.round(v / P) * P;
 const WHITE = GREYS.length - 1;
+const SNOUT = P * 3;          // the snout, run on past the head's segment
 
-// The wound as a share of the stage's depth: the serpent's own answer.
-const woundNow = woundK;
-
-// How thick the body is at `k` of the way from head to tail: the head a
-// little fuller, the tail thinning over its last stretch.
-function thickAt(i, k) {
-  if (i < HEAD_SEGS) return COIL_THICK + HEAD_PLUS;
-  const tail = Math.max(0, (k - 0.6) / 0.4);
-  return COIL_THICK * (1 - (1 - COIL_TAIL) * tail * tail);
-}
-
-// Per stage, one question a cell asks: what tone is it seen in. Everything
-// else about a cell is the lattice's.
-export function drawSerpent() {
-  const t = now();
-  const stage = S.serpentStage;
-  const { x0, x1 } = deepWindow();
-  const wk = stage >= 4 ? 0 : woundNow();
-  const belly = bellyAt(t);
-  const gap = stage >= 4 ? 0 : Math.round(wk * WOUND_GAP / P) * P;
-  const gapL = snap(belly.x) - gap / 2, gapR = gapL + gap;
-  // Which segments a beam is lighting: stage four's coil is seen only there.
-  const lit = new Set();
-  for (const b of S.beams) for (let d = -BEAM_LIGHTS; d <= BEAM_LIGHTS; d++) lit.add(b.seg + d);
-  const segLen = (COIL_SEGS - 1) / SPLIT_LENGTHS;
-  const wardPh = t / WARD_MS * Math.PI * 2;
-
-  for (let i = 0; i < COIL_SEGS - 1; i++) {
-    const p = coilAt(i, t), q = coilAt(i + 1, t);
-    if (q.x < x0 - P * 4 || p.x > x1 + P * 4) continue;
-    const run = Math.max(P, q.x - p.x);
-    for (let x = p.x; x < q.x; x += P) {
-      const fr = (x - p.x) / run;
-      const u = i + fr, k = u / (COIL_SEGS - 1);
-      let yc = p.y + (q.y - p.y) * fr;
-      // Splitting: the coil in lengths with open water between them, each
-      // throwing itself about on its own phase.
-      if (stage === 2) {
-        const L = Math.min(SPLIT_LENGTHS - 1, Math.floor(u / segLen));
-        const within = u - L * segLen;
-        const px = run * within, left = run * (segLen - within);
-        if ((L > 0 && px < SPLIT_GAP / 2) || (L < SPLIT_LENGTHS - 1 && left < SPLIT_GAP / 2)) continue;
-        yc += Math.sin(t / SPLIT_WRITHE_MS * Math.PI * 2 + L * 2.1) * Math.sin(Math.PI * within / segLen) * SPLIT_WRITHE;
-      }
-      // The wound: open water at the belly, as wide as it is deep.
-      if (gap && x >= gapL && x < gapR) continue;
-      const n = Math.max(1, Math.round(thickAt(i, k) / P));
-      const top = snap(yc) - Math.floor(n / 2) * P;
-      const c = x / P;
-      const bound = boundBand(x);
-      for (let rr = 0; rr < n; rr++) {
-        const y = top + rr * P;
-        let rung = rr === n - 1 ? WHITE - 1 : (c + (rr % 2) * 2) % 4 === 0 ? WHITE - 2 : WHITE;
-        let ramp = GREYS;
-        if (stage === 1 && Math.sin(c * 0.45 + rr * 1.1 - wardPh) > WARD_AT) {
-          ramp = PURPLES; rung = WHITE - (seeth(c, rr) % 3);
-        }
-        if (stage === 3 && !lit.has(i)) rung = Math.max(1, Math.round(rung * FADE_SEEN));
-        if (bound) { ramp = PURPLES; rung = WHITE; }
-        ctx.fillStyle = ramp[rung];
-        ctx.fillRect(x, y, P, P);
-      }
-      // a sigil's band stands a cell proud of the body on each side
-      if (bound) {
-        ctx.fillStyle = PURPLES[WHITE - 1];
-        ctx.fillRect(x, top - P, P, P);
-        ctx.fillRect(x, top + n * P, P, P);
-      }
-      if (i === 0 && x === p.x) drawHead(p.x, top, n);
-    }
-  }
-  if (!S.serpentFreed && stage < 4) drawHeld(belly, wk, gapL, gap);
-  ctx.fillStyle = '#000';
+// How thick the body is at `u` segments from the head: the head a little
+// fuller, the tail thinning over its last stretch, the snout tapering.
+function radiusAt(u, snoutU) {
+  const head = (COIL_THICK + HEAD_PLUS) / 2;
+  if (u < 0) return head * (1 - 0.55 * Math.min(1, -u / snoutU));
+  if (u < HEAD_SEGS) return head;
+  const tail = Math.max(0, (u / (COIL_SEGS - 1) - 0.6) / 0.4);
+  return COIL_THICK / 2 * (1 - (1 - COIL_TAIL) * tail * tail);
 }
 
 // A length of coil over a sigil is held: bands of the circle's purple across
@@ -112,37 +55,121 @@ function boundBand(x) {
   return false;
 }
 
-// The head, at the coil's near end: a snout of shortening columns in front
-// of it, the jaw's line through the middle, and an eye.
-function drawHead(x, top, n) {
-  for (let s = 1; s <= 3; s++) {
-    const m = Math.max(1, n - s * 2);
-    const t0 = top + Math.floor((n - m) / 2) * P;
-    for (let r = 0; r < m; r++) {
-      ctx.fillStyle = GREYS[r === m - 1 ? WHITE - 1 : WHITE];
-      ctx.fillRect(x - s * P, t0 + r * P, P, P);
-    }
+// The centerline laid out finely: where each sample is, which way the body
+// runs there (t) and which way is across it (n, pointing down), how far
+// along the body it is, and how thick.
+function lay(t, x0, x1) {
+  const segPx = coilLine(1, t).x - coilLine(0, t).x;
+  const du = COIL_STEP / segPx, snoutU = SNOUT / segPx;
+  const pts = [];
+  let along = 0, last = null;
+  for (let u = -snoutU; u <= COIL_SEGS - 1; u += du) {
+    const p = coilLine(u, t), q = coilLine(u + du, t);
+    if (last) along += Math.hypot(p.x - last.x, p.y - last.y);
+    last = p;
+    const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+    const tx = (q.x - p.x) / len, ty = (q.y - p.y) / len;
+    pts.push({ u, x: p.x, y: p.y, tx, ty, nx: -ty, ny: tx, along, r: radiusAt(u, snoutU) });
   }
-  const mid = top + Math.floor(n / 2) * P;
-  ctx.fillStyle = GREYS[0];
-  ctx.fillRect(x - P * 3, mid, P * 3, P);              // the line of the jaw
-  ctx.fillRect(x, top + P, P, P);                      // the eye
+  const alongAt = u => pts[Math.max(0, Math.min(pts.length - 1, Math.round((u + snoutU) / du)))].along;
+  const reach = COIL_THICK * 2;
+  return { pts: pts.filter(p => p.x > x0 - reach && p.x < x1 + reach), alongAt };
 }
 
-// The one it took, in its belly: a square silhouette seen through the white
-// of the coil, darker the deeper the wound, and whole through the gap once
-// the gap is open.
-function drawHeld(belly, wk, gapL, gap) {
-  const x = snap(belly.x) - WORKER / 2, y = snap(belly.y) - WORKER / 2;
-  ctx.fillStyle = GREYS[Math.max(2, Math.round(8 - 6 * wk))];
-  ctx.fillRect(x, y, WORKER, WORKER);
-  if (!gap) return;
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(gapL, y - P, gap, WORKER + P * 2);
-  ctx.clip();
-  drawBody(x, y);
-  ctx.restore();
+export function drawSerpent() {
+  const t = now();
+  const stage = S.serpentStage;
+  const { x0, x1 } = deepWindow();
+  const held = !S.serpentFreed && stage < 4;
+  const wk = stage >= 4 ? 0 : woundK();
+  const { pts, alongAt } = lay(t, x0, x1);
+  if (!pts.length) return;
+  const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
+  const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
+  const reach = wk * CRACK_REACH;
+  const hits = S.serpentHits.filter(h => t - h.at < FLASH_MS).map(h => alongAt(h.u));
+  // Which segments a beam is lighting: stage four's coil is seen only there.
+  const lit = new Set();
+  for (const b of S.beams) for (let d = -BEAM_LIGHTS; d <= BEAM_LIGHTS; d++) lit.add(b.seg + d);
+  const wardPh = t / WARD_MS * Math.PI * 2;
+
+  // The belly swells round him while he is in it.
+  if (held) for (const p of pts) {
+    const d = Math.abs(p.along - bellyA);
+    if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
+  }
+
+  // Each cell takes the sample nearest it. A cell a cell proud of the body
+  // is kept too, for a sigil's band.
+  const cells = new Map();
+  for (const p of pts) {
+    const R = p.r + P;
+    for (let cy = snap(p.y - R) - P; cy <= p.y + R; cy += P) {
+      for (let cx = snap(p.x - R) - P; cx <= p.x + R; cx += P) {
+        const dx = cx + P / 2 - p.x, dy = cy + P / 2 - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > R) continue;
+        const key = cx / P * 65536 + cy / P;
+        const had = cells.get(key);
+        if (had && had.dist <= dist) continue;
+        cells.set(key, { x: cx, y: cy, dist, r: p.r, u: p.u,
+                         along: p.along + dx * p.tx + dy * p.ty, across: dx * p.nx + dy * p.ny });
+      }
+    }
+  }
+
+  const ribs = [];
+  for (const c of cells.values()) {
+    const da = c.along - bellyA;
+    if (gap && Math.abs(da) < gap / 2) continue;                 // the wound: open water
+    if (c.dist > c.r) {
+      // a sigil's band stands a cell proud of the body on each side
+      if (boundBand(c.x)) { ctx.fillStyle = PURPLES[WHITE - 1]; ctx.fillRect(c.x, c.y, P, P); }
+      continue;
+    }
+    const aI = Math.round(c.along / P), cI = Math.round(c.across / P);
+    // The cage: inside the swell, pale, crossed by dark ribs he is seen
+    // between. Pale because a body in the deep is dark with a light edge,
+    // and on a dark inside he was a hole in a hole.
+    if (held && Math.abs(da) < BELLY_LEN && c.dist < c.r - P && c.r > COIL_THICK / 2 + P / 2) {
+      if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push(c);
+      else { ctx.fillStyle = GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]; ctx.fillRect(c.x, c.y, P, P); }
+      continue;
+    }
+    let ramp = GREYS;
+    let rung = c.across > c.r - P ? WHITE - 1 : (aI + (((cI % 2) + 2) % 2) * 2) % 4 === 0 ? WHITE - 2 : WHITE;
+    if (stage === 1 && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
+      ramp = PURPLES; rung = WHITE - (seeth(aI, cI) % 3);
+    }
+    if (stage === 3 && !lit.has(Math.round(c.u))) rung = Math.max(1, Math.round(rung * FADE_SEEN));
+    // The cracks: two, wandering across the body, out from the belly as far
+    // as the wound is deep; near black at the wound, greyer at their tips.
+    if (reach > 0 && Math.abs(da) < reach) {
+      const w1 = Math.sin(c.along / (P * 2.3)) * c.r * 0.5;
+      const w2 = Math.sin(c.along / (P * 3.1) + 2) * c.r * 0.55;
+      if (Math.abs(c.across - w1) < P * 0.6 || (Math.abs(c.across - w2) < P * 0.6 && seeth(aI, 7) % 3)) {
+        ramp = GREYS; rung = 1 + Math.round(3 * Math.abs(da) / reach);
+      }
+    }
+    // The snout's jaw, a line through it, and the eye behind it.
+    if (c.along < headA && Math.abs(c.across) < P / 2) { ramp = GREYS; rung = 0; }
+    if (Math.abs(c.along - headA - P) < P / 2 && Math.abs(c.across + c.r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
+    if (boundBand(c.x)) { ramp = PURPLES; rung = WHITE; }
+    // A blow that landed blinks the coil it landed on.
+    if (hits.some(a => Math.abs(c.along - a) < FLASH_CELLS * P)) { ramp = GREYS; rung = 0; }
+    ctx.fillStyle = ramp[rung];
+    ctx.fillRect(c.x, c.y, P, P);
+  }
+  // Him, whole in the cage, and the ribs over him: the wound's gap has
+  // already taken the ribs it crossed.
+  if (held) {
+    let b = pts[0];
+    for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(b.along - bellyA)) b = p;
+    if (Math.abs(b.along - bellyA) < BELLY_LEN) drawBody(snap(b.x) - WORKER / 2, snap(b.y) - WORKER / 2);
+    ctx.fillStyle = GREYS[2];
+    for (const c of ribs) ctx.fillRect(c.x, c.y, P, P);
+  }
+  ctx.fillStyle = '#000';
 }
 
 // --- the snatch, in the yard --------------------------------------------------

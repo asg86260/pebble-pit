@@ -12,7 +12,7 @@
 import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
-         COIL_WAVES, COIL_SWAY_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
+         COIL_WAVES, COIL_SWAY_MS, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 import { SPRITES } from './sprites.js';
 
@@ -103,15 +103,24 @@ export const podsRect = () => {
 // crusher on the side the rest of the deep is.
 export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 
-// The serpent's body: segment `i` of COIL_SEGS, head (0) to tail, at time `t`
-// in ms. A travelling wave along a line across the deep, snapped to the cell
-// grid so it never draws a hairline.
-export function coilAt(i, t) {
-  const k = i / (COIL_SEGS - 1);
+// The serpent's centerline at `u` segments from the head (fractional), at
+// time `t` in ms: a travelling wave along a line across the deep, and in the
+// splitting stage a thrash running down it on top. Unsnapped, so the body
+// can be laid smoothly along it; everything that asks where a segment is
+// uses `coilAt`, the same point on the grid.
+export function coilLine(u, t) {
+  const k = u / (COIL_SEGS - 1);
   const x = deepX0() + (COIL_X0 + (COIL_X1 - COIL_X0) * k) * DEEP_W;
-  const y = deepTop() + COIL_Y * DEEP_H
-          + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
-  return { x: snap(x), y: snap(y) };
+  let y = deepTop() + COIL_Y * DEEP_H
+        + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+  if (S.serpentStage === 2 && !S.serpentFreed)
+    y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+  return { x, y };
+}
+// Segment `i`, on the cell grid.
+export function coilAt(i, t) {
+  const p = coilLine(i, t);
+  return { x: snap(p.x), y: snap(p.y) };
 }
 export const bellySeg = () => Math.round(BELLY_AT * (COIL_SEGS - 1));
 export const bellyAt = t => coilAt(bellySeg(), t);

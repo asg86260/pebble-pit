@@ -16,6 +16,7 @@ feature lives in DESIGN.md.
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 
+- The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, every blow that lands blinks the coil, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 

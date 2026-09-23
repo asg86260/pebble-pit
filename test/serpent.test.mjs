@@ -226,3 +226,23 @@ group('a cold reload in the split comes back split, wounded and with its scales'
     ok(deepTop() < deepFloor(), 'the deep is where it was')
   ];
 });
+
+// The blink on the coil (DESIGN.md, "The serpent, redrawn"): a click that
+// lands leaves a hit where it landed, for as long as the blink lasts, and a
+// blow that did nothing leaves none, so a glancing weapon is seen to glance.
+group('a blow that lands blinks the coil where it landed, and one that does nothing does not', async () => {
+  deepYard();
+  const seg = bellySeg() - 6;
+  const p = coilAt(seg, now());
+  const landed = clickDeep(p.x, p.y);
+  const hit = S.serpentHits[S.serpentHits.length - 1];
+  const after = S.serpentHits.length;
+  strike('punch', 0, p.x, p.y);
+  const glanced = S.serpentHits.length === after;
+  run(1);
+  return [
+    ok(landed && hit && Math.abs(hit.u - seg) <= 1, 'a click on the coil blinks it there', hit && `seg ${hit.u} vs ${seg}`),
+    ok(glanced, 'a blow that did nothing does not blink'),
+    ok(S.serpentHits.length === 0, 'and the blink is gone a second later', `${S.serpentHits.length}`)
+  ];
+}, { reload: false });

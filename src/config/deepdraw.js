@@ -73,13 +73,24 @@ export const HEAD_SEGS = 3;          // segments of head, thicker than the neck
 export const HEAD_PLUS = P * 2;      // and how much thicker
 export const WARD_MS = 2600;         // one pass of the ward's shimmer along the scales
 export const WARD_AT = 0.55;         // how much of the shimmer's wave is lit
-export const SPLIT_GAP = P * 3;      // the open water between two lengths of a split coil
-export const SPLIT_WRITHE = P * 3;   // how far each length throws itself on its own
-export const SPLIT_WRITHE_MS = 1900; // and how fast
+// Splitting: the coil stays whole and thrashes, a ripple a length running
+// down it on top of the sway. place.js lays it into the centerline, so a
+// click, a lance and a ring all land on the body as drawn.
+export const SPLIT_WRITHE = P * 3;   // how far the thrash throws the body
+export const SPLIT_WRITHE_MS = 1900; // and how fast a ripple runs
 export const FADE_SEEN = 0.25;       // stage four: how much of the coil is seen where no beam lights it
 export const BEAM_LIGHTS = 5;        // segments either side of a beam's touch it lights
 export const WOUND_GAP = P * 6;      // the wound, wide open: a body's width and a cell of water each side
 export const BOUND_BANDS = 3;        // bands of sigil across a held length of coil
+// The wound read on the body (DESIGN.md, "The serpent, redrawn").
+export const CRACK_REACH = P * 34;   // how far the cracks run each way from the belly, at a wound about to break
+export const FLASH_CELLS = 3;        // cells of coil either side of a hit that blink
+export const FLASH_MS = 160;         // and for how long
+export const COIL_STEP = P / 2;      // how finely the body is laid along its curve
+// The belly swells round the one it holds, a cage of ribs he is seen through.
+export const BELLY_BULGE = P * 2;    // how much fuller than the body either side
+export const BELLY_LEN = P * 8;      // half its length along the coil
+export const RIB_EVERY = 3;          // cells between ribs
 
 // --- the weapons -------------------------------------------------------------------
 export const LANCE_LEN = P * 8;      // a lance of black water
