@@ -116,10 +116,18 @@ export function buildingGlyph(cx, cy, rows, at, tint = null) {
   paintRects(d.ghost, BUILD_GHOST_INK, x0, y0);
 }
 
+// One fill a color, the cells laid into a path the first time: a glyph is a
+// hundred-odd cells, and a stack of them is redrawn every frame.
 function paintRects(rects, color, x0, y0) {
   if (!rects.length) return;
+  if (!rects.path) {
+    rects.path = new Path2D();
+    for (let i = 0; i < rects.length; i += 4) rects.path.rect(rects[i], rects[i + 1], rects[i + 2], rects[i + 3]);
+  }
   ctx.fillStyle = color;
-  for (let i = 0; i < rects.length; i += 4) ctx.fillRect(x0 + rects[i], y0 + rects[i + 1], rects[i + 2], rects[i + 3]);
+  ctx.translate(x0, y0);
+  ctx.fill(rects.path);
+  ctx.translate(-x0, -y0);
 }
 
 // The shape of a drawing and of each stage of it going up, worked out once:

@@ -5,10 +5,19 @@
 import { S } from '../state.js';
 import { shockAge, shockReach } from '../shock.js';
 import { ctx } from './ctx.js';
-import { drawShockMote, drawShockRing } from './effects.js';
+import { shockMote, drawShockRing } from './effects.js';
 
 export function drawShocks() {
-  for (const m of S.shockMotes) drawShockMote(ctx, m.x, m.y, Math.min(1, m.t / m.life), m.color);
+  // The specks a color at a time, one path each: a driven ram throws
+  // hundreds a blow.
+  const runs = new Map();
+  for (const m of S.shockMotes) {
+    const color = m.color || '#000';
+    let path = runs.get(color);
+    if (!path) runs.set(color, path = new Path2D());
+    shockMote(path, m.x, m.y, Math.min(1, m.t / m.life));
+  }
+  for (const [color, path] of runs) { ctx.fillStyle = color; ctx.fill(path); }
   // The rings over the specks: the leading edge of the same blow.
   for (const s of S.shocks) drawShockRing(ctx, s.x, s.y, shockReach(s), shockAge(s), s.color);
   ctx.fillStyle = '#000';

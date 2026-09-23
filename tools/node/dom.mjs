@@ -164,6 +164,9 @@ export function installDom({ W = 800, H = 600, dpr = 1 } = {}) {
   // fires is the whole of it. input.js imports settings.js, and every yard
   // check imports input.js, so without this none of them load.
   globalThis.MutationObserver = class { observe() {} disconnect() {} takeRecords() { return []; } };
+  // The batched marks lay their squares into a path before one fill; nothing
+  // is filled here, so the path keeps nothing.
+  globalThis.Path2D = class { rect() {} moveTo() {} lineTo() {} arc() {} closePath() {} addPath() {} };
   globalThis.window = globalThis;
   globalThis.addEventListener = noop;
   globalThis.removeEventListener = noop;

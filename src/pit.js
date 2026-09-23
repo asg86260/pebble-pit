@@ -10,7 +10,7 @@ import { P, WORKER, PIT_W_MAX,
         RIFT_GULP, RIFT_SHAKE, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
         ABYSS_DOWN, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
-import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
+import { at, put, addGrain, grainsIn, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
@@ -326,7 +326,7 @@ export const inHole = () => Math.max(0, S.stored - (S.rift || 0));
 
 // Every cell in the plot, dust and finds alike: what the tearing has to get
 // through.
-export const pitGrains = () => count(pit);
+export const pitGrains = () => grainsIn(pit);
 
 // What the pile is allowed to show, which is what the hole will take.
 const pileTarget = () => Math.min(inHole(), pitCapacity());
@@ -528,7 +528,7 @@ export function spend(cost) {
 // end, not a crater at the mouth. `within` is how far from the mouth a grain
 // may lie and be taken (`riftReach`).
 export function swallow(n, show, everywhere, within = Infinity) {
-  const take = Math.max(0, Math.min(Math.floor(n), count(pit)));
+  const take = Math.max(0, Math.min(Math.floor(n), grainsIn(pit)));
   if (!take) return 0;
   const held = riftHeld();
   let dust = 0;

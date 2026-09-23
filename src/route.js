@@ -164,10 +164,24 @@ export const feetOn = (way, leftX) =>
 // thrashing between two outlines, which is what the counter is for.
 let last = null, lastKey = '', builtTick = -1;
 const builtKeys = new Set();
+// What the outline was built from, as numbers: every body asks for the ways
+// many times a frame, and the answer is nearly always the one it had, so the
+// question is eight comparisons rather than a string and a span built to be
+// thrown away.
+const was = new Float64Array(8).fill(NaN);
 
 export function ways() {
+  let lo = -1, hi = -1;
+  if (boulderAlive()) for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) { if (lo < 0) lo = c; hi = c; }
+  const holed = !!(pit.grid && pit.cols);
+  const q = S.quarryOpen ? 1 : 0, px = holed ? pit.x : -1, pw = holed ? pit.w : -1;
+  const left = lo < 0 ? 0 : rockLeft();
+  if (last && q === was[0] && px === was[1] && pw === was[2] && quarry.x === was[3] &&
+      quarry.w === was[4] && lo === was[5] && hi === was[6] && left === was[7]) return last;
+  was[0] = q; was[1] = px; was[2] = pw; was[3] = quarry.x;
+  was[4] = quarry.w; was[5] = lo; was[6] = hi; was[7] = left;
   const span = rockSpan();
-  const key = `${S.quarryOpen ? 1 : 0}|${pit.grid && pit.cols ? pit.x + ',' + pit.w : ''}|` +
+  const key = `${S.quarryOpen ? 1 : 0}|${holed ? pit.x + ',' + pit.w : ''}|` +
               `${quarry.x},${quarry.w}|${span ? span.from + ',' + span.to : ''}`;
   if (last && key === lastKey) return last;
   if (S.tick !== builtTick) { builtTick = S.tick; builtKeys.clear(); }

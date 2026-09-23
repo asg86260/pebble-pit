@@ -50,6 +50,26 @@ export function drawDiamond(x, y, r) {
 // `g` is the canvas it goes on: the counter keeps its column of marks on a
 // canvas of its own (`drawCount`), and a mark that could only be drawn on the
 // frame would have to be read back off it.
+// A batch of marks, a color at a time: most marks in the yard are squares
+// -- a grain of dust, a find lying out -- and a thousand of them are a
+// thousand fills and changes of color drawn one by one. `markInto` lays the
+// square `drawMark` would have put down into the batch's path for its color,
+// to the pixel, and draws anything that is not a square straight off;
+// `fillMarks` puts the batch down and empties it.
+export function markInto(runs, v, x, y, size = MARK_SIZE) {
+  const tones = isDust(v) ? null : FIND_COLOR[findKind(v)];
+  const tone = isDust(v) ? shadeOf(v) : tones ? tones[v - findKind(v)] : null;
+  if (!tone) { drawMark(v, x, y, size); return; }
+  let path = runs.get(tone);
+  if (!path) runs.set(tone, path = new Path2D());
+  path.rect(Math.round(x - size / 2), Math.round(y - size / 2), Math.round(size), Math.round(size));
+}
+export function fillMarks(runs) {
+  for (const [tone, path] of runs) { ctx.fillStyle = tone; ctx.fill(path); }
+  runs.clear();
+  ctx.fillStyle = '#000';
+}
+
 export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
   // `size` is a cell everywhere but on a crit's dust, which swells through the
   // top of its arc and shrinks back by the time it lands.

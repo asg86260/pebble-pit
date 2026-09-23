@@ -9,7 +9,7 @@ import { rockEdge, rockLeft, pileOf } from './world.js';
 import { rockTopY } from './rock.js';
 import { S, floor, pit, band } from './state.js';
 import { defineMachine, machine } from './machines.js';
-import { at, put, colOf, bottomY, addGrain, settle, topRow, grainsIn, recount, resizeGrid, fillFlat, REPOSE_DROP } from './grid.js';
+import { at, put, colOf, bottomY, addGrain, settle, topRow, grainsIn, resizeGrid, fillFlat, wake, isDust, REPOSE_DROP } from './grid.js';
 import { scoopMs, haulCap } from './levels.js';
 
 import { rand } from './rng.js';
@@ -396,16 +396,36 @@ export function stepBelt(now, f) {
     climbRamp();
     const last = band.cols - 1;
     const tall = Math.max(1, highOf(last));
-    for (let r = 0; r < band.rows; r++) {
+    // Only the rows the load stands in: the strip runs to the top of the
+    // world, and moving, counting, waking and repainting all of it for every
+    // cell the band ran was a quarter of the endgame's simulation.
+    let top = 0;
+    for (let c = 0; c < band.cols; c++) if (band.high[c] > top) top = band.high[c];
+    for (let r = 0; r < top; r++) {
       const v = at(band, last, r);
-      if (v) onRamp(head, v, (r + 1) / tall, r);
+      if (v) {
+        onRamp(head, v, (r + 1) / tall, r);
+        // Written behind `put`'s back, so the ledgers are told here: the
+        // shift moves every other grain and loses none of them.
+        if (band.n != null) band.n--;
+        if (band.d != null && isDust(v)) band.d--;
+      }
       const row = r * band.cols;
       band.grid.copyWithin(row + 1, row, row + last);
       band.grid[row] = 0;
     }
-    recount(band);                        // written behind `put`'s back
     band.high.copyWithin(1, 0, last); band.high[0] = 0;
-    band.painter.repaint();
+    // The load keeps its shape as it runs, so what was settled still is: the
+    // columns still moving move with their cells, and the two ends, one
+    // emptied and one cut off, are the only new edges.
+    const awake = band.awake;
+    if (awake && awake.length === band.cols && band.awakeOf === band.grid) {
+      awake.copyWithin(1, 0, last); awake[0] = 0;
+      let n = 0; for (let c = 0; c < band.cols; c++) n += awake[c];
+      band.awakeN = n;
+    }
+    wake(band, 0); wake(band, last);
+    band.painter.repaintBelow(top);
   }
 }
 

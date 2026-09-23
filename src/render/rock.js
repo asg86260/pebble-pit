@@ -6,7 +6,7 @@ import { depthOf, rockFootY, rockShape } from '../rock.js';
 import { S } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
-import { drawMark } from './marks.js';
+import { fillMarks, markInto } from './marks.js';
 
 // the tone of every thickness a rock cell can hold, filled in once a frame
 // rather than worked out per cell
@@ -107,16 +107,20 @@ function roundBands(deep) {
 // smallest, back to one cell at its launch speed `cv`. No apex is stored and
 // no timer runs. A harder crit (`cp`) blooms fatter, tying the two tells
 // together: it throws higher, so it hangs longer near the apex.
+const runs = new Map();
 export function drawChips() {
-  ctx.fillStyle = '#000';
-
+  // A color at a time (`markInto`): a late yard has thousands of grains in
+  // the air. Off the glass is not drawn at all.
+  const x0 = S.camX - P * 4, x1 = S.camX + S.viewW + P * 4;
+  const y0 = S.camY - P * 4, y1 = S.camY + S.viewH + P * 4;
   for (const ch of S.chips) {
+    if (ch.x < x0 || ch.x > x1 || ch.y < y0 || ch.y > y1) continue;
     let size = MARK_SIZE;
     if (ch.crit) {
       const slow = 1 - Math.min(1, Math.abs(ch.vy) / ch.cv);   // 0 at launch, 1 at apex
       size = P * (1 + (0.6 + 0.12 * (ch.cp || 3)) * slow);
     }
-    drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2, size);
+    markInto(runs, ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2, size);
   }
-  ctx.fillStyle = '#000';
+  fillMarks(runs);
 }

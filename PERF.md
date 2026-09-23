@@ -75,6 +75,22 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   in a yard with four machines on almost nothing ever reaches rest. The saving
   is the lategame and restored sky, which is where the cost was.
 
+- **The late yard, drawn (2026-09-22).** Measured on a GPU Chrome over the
+  `everything` scene, per layer and per step, not in the headless shell,
+  whose software raster makes the rift's bend look like a fifth of the frame
+  when on a GPU it is nothing. Back to back against main: 11.4 -> 8.5 ms a
+  frame. The belt was a quarter of the simulation: its strip runs to the top
+  of the world (328 rows) and every cell the band ran moved, counted, woke
+  and repainted all of it; now only the rows under the load, with the
+  ledgers told what went up the ramp and the wake flags carried along (the
+  same seeded minute comes out grain for grain). The pit's grain count and
+  the ways' outline key were walks and strings a call; now a ledger read and
+  eight comparisons. On the drawing side every mark drawn a thousand times a
+  frame -- grains in the air, crit specks, shock and glow rings, the done
+  marks' glyphs -- goes down a color at a time, one path a fill (the
+  grains through `markInto` in render/marks.js). A body's carried load was tried the same
+  way and measured nothing, so it was left as it was.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

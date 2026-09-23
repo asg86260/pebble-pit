@@ -66,6 +66,9 @@ export function drawCoreGlow(cx, cy, capAtGround) {
     const spokes = Math.max(8, Math.round((Math.PI * 2 * r) / P));
     const n = spokes + (spokes % 2);
     const seen = new Set();
+    // The ring's cells as one path and one fill: a pit full of cores is a
+    // hundred rings a frame.
+    const path = new Path2D();
     for (let j = 0; j < n; j++) {
       const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
       // Rounded away from nought rather than half-UP: `Math.round` lands plus
@@ -80,13 +83,16 @@ export function drawCoreGlow(cx, cy, capAtGround) {
       if (capAtGround && y - P / 2 >= S.groundY) continue;
 
 
-      const key = `${x},${y}`;
+      // Keyed in cells about the middle, which a glow never reaches a
+      // thousand of.
+      const key = Math.round((x - ox) / P) * 4096 + Math.round((y - oy) / P);
       if (seen.has(key)) continue;
       seen.add(key);
-      // `x, y` is the cell's MIDDLE; `fillRect` wants its top-left. This offset
+      // `x, y` is the cell's MIDDLE; a rect wants its top-left. This offset
       // is the conversion, not a nudge.
-      ctx.fillRect(x - P / 2, y - P / 2, P, P);
+      path.rect(x - P / 2, y - P / 2, P, P);
     }
+    ctx.fill(path);
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';

@@ -64,6 +64,11 @@ export function makePainter(b) {
 
   // the grid changed out from under us -- resized, refilled, loaded
   const repaint = () => { all = true; };
+  // Only its bottom `rows` changed, all the way across: the belt's load,
+  // moved a cell along a strip that runs to the top of the world.
+  const repaintBelow = rows => {
+    for (let r = 0; r < rows; r += TILE) for (let c = 0; c < b.cols; c += TILE) mark(c, r);
+  };
 
   // Rewrite one tile's worth of pixels, clamped to the plot at its far edges.
   // Row 0 is the floor of the grid, so the image is built upside down.
@@ -129,5 +134,5 @@ export function makePainter(b) {
     into.imageSmoothingEnabled = smooth;
   };
 
-  return { mark, repaint, paint };
+  return { mark, repaint, repaintBelow, paint };
 }

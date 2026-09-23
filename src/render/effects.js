@@ -66,6 +66,9 @@ export function drawShockRing(g, x, y, r, k, color = '#000') {
   // A leaf module has no rng, so the roll is a sine hash of the spoke and
   // this tick.
   const tick = Math.floor(k * 24);
+  // The ring's cells as one path and one fill: a crit yard has a dozen rings
+  // up at once, each a few hundred cells.
+  const path = new Path2D();
   for (let j = 0; j < n; j++) {
     const h = Math.sin(j * 127.1 + tick * 311.7) * 43758.5453;
     const f = h - Math.floor(h);
@@ -76,20 +79,23 @@ export function drawShockRing(g, x, y, r, k, color = '#000') {
     // half lands on 1 and its mirror at minus a half on 0, and the ring leans.
     const cx = x + Math.sign(Math.cos(a)) * Math.round(Math.abs(Math.cos(a) * rj / P)) * P;
     const cy = y + Math.sign(Math.sin(a)) * Math.round(Math.abs(Math.sin(a) * rj / P)) * P;
-    const key = `${cx},${cy}`;
+    // Keyed in cells about the middle, which a ring never reaches a
+    // thousand of.
+    const key = Math.round((cx - x) / P) * 4096 + Math.round((cy - y) / P);
     if (seen.has(key)) continue;
     seen.add(key);
-    // `cx, cy` is the cell's MIDDLE; `fillRect` wants its top-left.
-    g.fillRect(cx - CRIT_RING_WIDE / 2, cy - CRIT_RING_WIDE / 2, CRIT_RING_WIDE, CRIT_RING_WIDE);
+    // `cx, cy` is the cell's MIDDLE; a rect wants its top-left.
+    path.rect(cx - CRIT_RING_WIDE / 2, cy - CRIT_RING_WIDE / 2, CRIT_RING_WIDE, CRIT_RING_WIDE);
   }
+  g.fill(path);
   g.globalAlpha = 1;
 }
 
 // One speck of the burst: a whole cell at full ink for most of its life, half
 // a cell for the last part, gone. Two sizes and no alpha, and smaller than a
 // grain of dust at every moment, so nothing about it reads as bankable.
-export function drawShockMote(g, x, y, k, color = '#000') {
+// Laid into a path, since they go down a batch at a time (`drawShocks`).
+export function shockMote(path, x, y, k) {
   const size = k < 0.6 ? P : Math.max(1, P / 2);
-  g.fillStyle = color;
-  g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+  path.rect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
 }

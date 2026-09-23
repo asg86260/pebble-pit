@@ -22,9 +22,16 @@ import { ctx } from './ctx.js';
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
 // cells on the grid about the origin, a cell at nought starting on it
+const FILLS = new WeakMap();
 function fillCells(cells, color) {
+  let path = FILLS.get(cells);
+  if (!path) {
+    path = new Path2D();
+    for (const [dx, dy] of cells) path.rect(dx * P, dy * P, P, P);
+    FILLS.set(cells, path);
+  }
   ctx.fillStyle = color;
-  for (const [dx, dy] of cells) ctx.fillRect(dx * P, dy * P, P, P);
+  ctx.fill(path);
 }
 
 // A line round the outside of a shape, a third of a cell thick: each ink
@@ -33,21 +40,21 @@ function fillCells(cells, color) {
 // frame, and the flood under it never changes.
 const STROKES = new WeakMap();
 function strokeCells(cells, color) {
-  let rects = STROKES.get(cells);
-  if (!rects) {
-    rects = [];
+  let path = STROKES.get(cells);
+  if (!path) {
+    path = new Path2D();
     const t = Math.max(1, P / 3);
     for (const [ox, oy] of outsideEdge(cells))
       for (const [dx, dy] of cells) {
         if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
         const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
         const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
-        if (x1 > x0 && y1 > y0) rects.push(x0, y0, x1 - x0, y1 - y0);
+        if (x1 > x0 && y1 > y0) path.rect(x0, y0, x1 - x0, y1 - y0);
       }
-    STROKES.set(cells, rects);
+    STROKES.set(cells, path);
   }
   ctx.fillStyle = color;
-  for (let i = 0; i < rects.length; i += 4) ctx.fillRect(rects[i], rects[i + 1], rects[i + 2], rects[i + 3]);
+  ctx.fill(path);
 }
 
 // The empty cells round a shape that touch it from the outside, corners
