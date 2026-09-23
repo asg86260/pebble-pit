@@ -11,104 +11,70 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
-- The balloon row shows three pips, one for each balloon there is to buy, instead of five (test/balloon.test.mjs).
 **New this release**
-- Every station's counter stands centered under its building -- the tower, the farm's shed, the apothecary's hut -- and the carry count under the middle of the houses (src/scenes.js `liftroster`).
-- Idle workers go indoors after a few seconds with nothing to carry, instead of standing about for a minute, and come straight back out when there is work (test/home-pace.test.mjs).
-- Forklifts drive themselves: bought on the bench, they roll off the stand and haul to the pit with nobody aboard, drive into a garage by the bench when there is nothing to carry, and have two ladders of their own, forklift load and forklift speed (test/forklift.test.mjs).
-- The sphere: the tower's machine, a shell the wizards pour round the star that drops sparks without using the star up, tended by one wizard and tuned by three red rungs; the tower now trains a set of three wizards, like every station's kit (test/sphere.test.mjs).
-- The carry roster under the houses counts forklifts too, a driver on a truck under the cart line (test/forklift.test.mjs).
-- The air filter's board no longer carries a pollution row: the gauge on its wall reads the sky, and its hover says the rest (src/selftest/sky.js).
-- The fan is balloon power now, and a new balloon speed ladder makes the trips between clouds shorter; a balloon cleans only while it hangs at a cloud, no two balloons work the same cloud, and the filter box under the envelope is gone (test/balloon.test.mjs).
-- The books board keeps just the income rates; the full books sheet is put away for now (test/books-sheets.test.mjs).
-- The air filter no longer filters: the balloons do all the cleaning, and the shed keeps the gauge and the board they are bought from; each balloon bought sends a spare hand over to ride it (test/sky-fan.test.mjs, test/door-staffs.test.mjs).
-- Haulers tip their loads onto the belt just past the rock once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
-- The belt ends in a ramp the band runs up, carrying its load up it in step with the band and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).
-- The books and the crew list open in a window in the middle of the screen instead of a popover taller than the window: the books' four sheets side by side, the crew a card a body; it stays until you close it, and the yard keeps running underneath (src/selftest/house.js).
-- Hovering the air filter's gauge says what it reads in one line: clean, dirty or filthy, and whether it is getting worse or better (src/selftest/sky.js).
-- The air filter is a louvered shed now: its slats open and turn while somebody is inside, its flag stands on the cupola instead of floating, its gauge reads green, yellow and red, and its spout throws the muck onto a pile (src/scenes.js `filterhalf`, `filterclog`, `filtersieve`).
-- The books have three new sheets: each income rate wears an arrow and the sum under it, the sky says what is putting it up and when it will be full, and the crew says who is doing what and who is best at it (test/books-sheets.test.mjs).
-- The income books are a running record of what came in, averaged over a window you pick -- half a minute, one, five or ten -- from the first line under the heading (test/wave5-boards.test.mjs).
-- The balloons ride the clouds: each moors at its own post beside the air filter, its rider walks straight there, and up top it travels from cloud to cloud between the layers, drawing a stream down out of each one and letting what it catches fall wherever it is; they are bigger, shaped like real hot-air balloons, and each wears its own design (src/scenes.js `balloon`, `moored`; test/balloon.test.mjs).
-- The scrubbing house is the air filter now: a dial on its wall always reads how dirty the sky is, and what it takes out drops out of its spout as muck you can watch fall (src/scenes.js `filterhalf`, `filterclog`; test/air-filter.test.mjs).
-- A crew switch in the top-right corner, beside fullscreen, steps the workers, and the brew they trail, through show, fade and hide, so a crowded late yard's buildings can be seen (src/selftest/touch.js).
-- The rain has depth like the sky does: it falls in three sheets, fine pale flecks far off and long dark strokes close in, sliding past each other as you scroll, with the clouds in front of the far ones (src/scenes.js `raindepth`; test/sky-rain.test.mjs).
-- Each machine's tuning is a proper three-rung ladder now -- pips on the card, a written price a rung, and an end you reach -- and the rows are named for what goes up: ram strike, drill bite, tiller pace (test/machine-tune.test.mjs).
-- The sky has depth: three sheets of cloud, far to near, each paler, finer-grained and lower the farther it is, and every cloud is its own cumulus -- a spine of big circles with puffs on top, lit from above and shaded like the boulder (src/scenes.js `cloudswell`, `rock`; test/weather.test.mjs).
-- The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
-- The sky is the clouds now: the smoke gathers into them so they grow and darken as the yard dirties, the rain falls from their undersides, and hand work fouls a little so a first muck comes early while the yard is still slow to watch (test/sky-air.test.mjs).
-- A working machine now visibly dirties the sky instead of leaving it blank until the yard is nearly at the brim (test/weather.test.mjs).
-- Rain falls over the whole world at once, not just the part on screen, so scrolling during a storm finds it already raining there rather than a sheet that follows the camera and fills in behind it (test/weather.test.mjs, "a dirty sky shows in the clouds, and its rain falls in the yard").
-- A storm no longer dumps a heap of muck in its last moment; the acid comes down in the shape of the rain, a drizzle carrying little and the pour most, and is all down as the shower ends (test/wave6-sky.test.mjs, "a storm brews up, pours, and trails off").
-- The clouds pale again after a storm instead of staying black: a storm now washes most of the sky down (test/weather.test.mjs, "dirty rain is a share of the sky").
-- A working machine puts up visible smoke off its stack on every beat (src/scenes.js `yard`).
-- The drill and the tiller are for sale once the station's two ladders are topped and every hat is bought, like the ram; the last bench and the last furrow no longer stand in the way (test/machines.test.mjs).
-- Weather: it rains on its own clock now, clean rain that carries down a share of whatever smoke is overhead as acid among the water; the first storm of a yard comes in the first few minutes with the lightning, and the clouds swell before a front and settle after (test/weather.test.mjs).
-- The board of times is switched off for now (`TIMES_ON` in config/times.js): no panel, no page, no post.
-- The board of times: every rescue's clock on one board for everybody, best first, with your name typed once -- standing on the title screen the whole time, a page on the held sheet, and the post on the ending sheet (test/times.test.mjs, server/test/times.test.ts).
-- When the board cannot be reached, every place it shows says "the board is down right now" instead of going blank, and a rescue posted then is kept and goes up the next time the game is opened (src/selftest/times.js).
-- The forklift: a carter's cart with an engine under it, sold a lift at a time on the bench once the carts are a set and both hauling ladders are topped -- four times the load, twice the pace, and it smokes for every laden run (test/forklift.test.mjs).
+- Weather: rain comes on its own clock and carries down a share of the smoke as acid; a storm washes the sky clean (test/weather.test.mjs, test/wave6-sky.test.mjs).
+- The sky is three sheets of cumulus that fill with smoke and brown as the yard dirties; rain falls from them in three sheets of its own (test/sky-air.test.mjs, test/sky-rain.test.mjs).
+- A working machine smokes off its stack, and hand work fouls the air a little (test/machines.test.mjs, test/sky-air.test.mjs).
+- Balloons do the cleaning: each rides from cloud to cloud drawing the muck down, with balloon power and balloon speed ladders (test/balloon.test.mjs, test/sky-fan.test.mjs).
+- The air filter is a louvered shed; its gauge reads the sky, and its hover says clean, dirty or filthy and which way (src/selftest/sky.js).
+- The sphere: the tower's machine, dropping sparks without using up the star; the tower trains three wizards (test/sphere.test.mjs).
+- Forklifts drive themselves to the pit, park in a garage when idle, and have load and speed ladders (test/forklift.test.mjs).
+- The belt ends in a ramp that flings its load over the hole, and haulers tip onto it just past the rock (test/haul-belt.test.mjs).
+- Machine tuning is a three-rung ladder with pips and an end: ram strike, drill bite, tiller pace (test/machine-tune.test.mjs).
+- The drill and the tiller go on sale once their station's ladders and hats are bought (test/machines.test.mjs).
+- The books board keeps just the income rates, averaged over a window you pick (test/wave5-boards.test.mjs, test/books-sheets.test.mjs).
+- The crew list opens in a window mid-screen (src/selftest/house.js).
+- A crew switch in the corner shows, fades or hides the workers (src/selftest/touch.js).
+- Idle workers go indoors after a few seconds (test/home-pace.test.mjs).
+- Every station's counter stands centered under its building (src/scenes.js `liftroster`).
+- Hold to toss, throw pace, throw reach and the gauge have their own pictures (test/row-glyphs.test.mjs).
 
-- Hold to toss, throw pace, throw reach and the pollution gauge wear their own pictures instead of a blank crate (test/row-glyphs.test.mjs).
-- The janitor's second cap is fitted at the janitor's closet, by a spare hand, instead of at the bench (test/built-where-sold.test.mjs).
-- The title screen no longer stands blank for four seconds before it shows (src/selftest/view.js, "the landing page's picture says when it is up").
-- A late yard runs about a quarter faster: the belt, the pit, the paths the crew walk and everything drawn by the thousand in the air are cheaper every frame (test/belt-load.test.mjs).
-- A storm no longer costs the frame rate a quarter of its speed: the rain and the clouds it swells are cheaper to move and draw (test/sky-rain.test.mjs).
-- A new boulder falling no longer drags the frame rate down for as long as it is in the air (src/scenes.js `introfall`).
-- The apothecary, the shields and five other parts of the yard start up again after the air filter change, which had broken their loading (test/shield.test.mjs).
-- A late yard with every ladder bought no longer drops to half speed: the stack of finished-work ticks over a station and the thousands of grains in the air are cheap to draw and move again (src/scenes.js `everything`).
-- A build at the quarry, the farm or the apothecary with nobody free to work it says queued and sits down, instead of saying building with its clock stopped (src/selftest/boards.js).
-- A shelf tile's gain line uses the tile's whole width, so `8 → 10 /harvest` and `360 → 480 /dig` are no longer cut short (src/selftest/boards.js).
-- On a tile you can half afford, the coins you have are in black and the one you are short of stays grey (src/selftest/boards.js).
-- A gain's number no longer breaks from its coin at the end of a line (src/selftest/house.js).
-- The crew window's cards are always wide enough to say where a body is (src/selftest/boards.js).
-- The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
-- A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).
-- The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).
-- Wizards going up to the star no longer rise out of the same spot as one smudge; each takes its own patch of ground under it (test/sky-work.test.mjs).
-- A rock hand's next swing is no longer moved every time the game is reloaded (test/save-owners.test.mjs).
-- A yard with wizards no longer gains three new workers every time the game is reloaded (test/crew-load.test.mjs).
-- A balloon's rider stays on the job after the game is reloaded, instead of being sent back to the spare crew (test/balloon.test.mjs).
-- A grain riding up the belt's scoop is still on the scoop after a reload, instead of turning up on the band a column over (test/save-owners.test.mjs).
-- A hat knocked off somebody's head is still lying where it fell after a refresh, instead of turning up back on the stand, and whoever was walking for it still goes and gets it (test/hat-save.test.mjs).
-- A worker can no longer be put on a quarry or farm that is not open yet, where they stood under the ground with nothing to dig (test/closed-station.test.mjs).
-- The gang shovelling rain off the rock no longer bob up and down its flank as they step from one column to the next (test/muck-jitter.test.mjs).
-- Two bodies shovelling on the same spot step a whole body's width apart instead of stopping a cell short and shovelling through each other (test/janitor.test.mjs).
-- Dust dropped on full bare ground no longer turns up in the station's heap next door (test/grain-region.test.mjs).
-- Where you point the view no longer changes what happens in the yard: the same game plays out the same wherever you scroll (test/camera-sim.test.mjs).
-- A body put on the ram or the drill climbs up to its seat instead of appearing on the roof (test/movers-y.test.mjs).
-- A balloon's rider climbs the mast into the basket instead of appearing in it (test/movers-y.test.mjs).
-- Skipping the opening while the survivor is thrown clear carries on from where it is in the air instead of snapping it to the ground (test/movers-y.test.mjs).
-- A shop board taller than the window, as a full bench is on a 1080p screen, stays on screen and scrolls to its last row instead of running off the bottom (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
-- The air filter's and the tower's upgrades no longer build themselves while the purifier filters and the wizard casts: a spare hand walks over and puts them in (test/spare-hand-builds.test.mjs).
-- A big casino win no longer lags as the crop, ore and spark bins pay; they pour out as a heap that reads the count, like the pebbles do, instead of a grain a coin (test/casino-big-stake.test.mjs).
-- The casino's stake pours into its funnel again after the apothecary grows, instead of landing off to one side where the building used to stand (test/casino-moves.test.mjs).
-- A casino stake in the millions no longer freezes the game while it pays out (test/casino-big-stake.test.mjs).
-- The casino's pay comes down on the pile in the hole, instead of vanishing at ground level and turning up below it (test/casino-big-stake.test.mjs).
-- The income books no longer count a bill handed back as income, so a refund stops reading as a busy quarry for minutes afterwards (test/wave5-boards.test.mjs, "a bill handed back is not income").
-- A reading's line underneath, like the books' "44 in the last minute", no longer disappears when the pointer is over its row (test/hover-gate.test.mjs, "no hover turns a reading's note the page's color").
-- The books window holds still while it is open: rows no longer come and go as a count crosses nought, so the sheets stop jumping up and down (test/books-sheets.test.mjs, "the books window never loses a row while it is open").
-- The tiller's driver rides behind the steering column over the big wheel, not perched on the bonnet in the exhaust (test/machines.test.mjs).
-- The clouds no longer hop a cell at a time when the view scrolls; they slide with it (src/scenes.js `cloudswell`, scroll while looking).
-- The clouds sit near the top of the sky, the nearest highest and each sheet behind it a little lower, with no near cloud ever hanging below one behind it (test/weather.test.mjs, "the nearer the sheet, the higher it rides").
-- Resizing the window no longer sends the clouds flying: they hold their height and come back into the strip in one step instead of a frame at a time (test/sky-air.test.mjs).
-- A cloud no longer pops in at the edge of the window while you scroll; the sky's strip is wide enough that a cloud coming round is still off the screen (test/weather.test.mjs, "no cloud ever jumps in view while you scroll").
-- The sky no longer rearranges itself a moment after the page comes up, and resizing the window no longer swaps every cloud for a new one or takes the birds out of the air (test/weather.test.mjs, "the sky is spread where the camera ends up, not where it started").
-- The rain behind the yard no longer shows through the ground it is supposed to be behind; it stops at the ground line (src/scenes.js `rain`).
-- The rain is lighter (src/scenes.js `rain`, `acidrain`).
-- A front's clouds thin away in place as it lets go instead of climbing out of the sky (src/scenes.js `cloudsettle`).
-- A storm's clouds no longer appear whole in the middle of the sky as it brews; each one comes up out of nothing where it forms (test/weather.test.mjs, "a front's clouds come up out of nothing where they are born").
-- A new game starts under a new sky again, rather than keeping the last one's clouds (test/golden.test.mjs, "the same seed is the same run").
-- No cell of cloud blinks in or out any more: it comes up out of the page as it fills and goes back down into it as it empties, so a sky swelling or letting go after a shower moves instead of stepping (src/scenes.js `cloudswell`, `cloudsettle`).
-- A machine's smoke hangs a little longer off the stack before it thins away (src/scenes.js `yard`).
-- The ram keeps up with the face it is eating: a tuned ram no longer falls behind and strikes across a widening gap (test/machines.test.mjs, "the ram advances into the hill as it eats it").
-- A working machine's smoke is the brown puffs off its stack and nothing else; the fringed specks that climbed beside them and the black wisps on their own timer are gone, and the dirt shows in the clouds (test/machines.test.mjs, "smoke rises and goes out, and does not pile up").
-- The water and the acid come down as one sheet across the whole window, not the water in patches under the clouds and the acid everywhere (src/scenes.js `acidrain`; test/weather.test.mjs, "it rains on a clean yard").
-- The air reading no longer runs a hair over the sky while it is raining (test/sky-readout.test.mjs, "what the readout says is what is overhead").
-- The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
-- On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").
-- The load on the belt lies as a heap: no needles standing up out of it under a tuned ram, and no cliff at the tail (test/belt-load.test.mjs).
-- Haulers cross the quarry on the bridge instead of climbing down the ladder and back out again and again: the cut's sand stays under the quarry after a load, and one grain on the floor calls one hauler down, not a crowd (test/quarry-crossing.test.mjs).
+- A late yard runs about a quarter faster (test/belt-load.test.mjs, src/scenes.js `everything`).
+- A storm no longer costs a quarter of the frame rate (test/sky-rain.test.mjs).
+- A falling boulder no longer drags the frame rate (src/scenes.js `introfall`).
+- The title screen no longer stands blank for four seconds (src/selftest/view.js, "the landing page's picture says when it is up").
+- A reload no longer adds three workers to a yard with wizards (test/crew-load.test.mjs).
+- A reload keeps a balloon's rider on the job (test/balloon.test.mjs).
+- A reload keeps a rock hand's swing and a grain on the belt's scoop where they were (test/save-owners.test.mjs).
+- A knocked-off hat stays where it fell across a reload (test/hat-save.test.mjs).
+- Bodies climb onto the ram, the drill and a balloon's basket instead of appearing there (test/movers-y.test.mjs).
+- Skipping the opening mid-throw carries on from the air (test/movers-y.test.mjs).
+- Nobody can be put on a quarry or farm that is not open (test/closed-station.test.mjs).
+- Haulers cross the quarry on the bridge instead of climbing down and out for nothing (test/quarry-crossing.test.mjs).
+- The rock's spoil clears the boulder onto the belt (test/rock-spoil-belt.test.mjs).
+- A hauler's toss up to the belt no longer falls a grain short (test/haul-belt.test.mjs).
+- The belt's load lies as a heap, no needles and no cliff (test/belt-load.test.mjs).
+- The ram keeps up with the face it is eating (test/machines.test.mjs, "the ram advances into the hill as it eats it").
+- The shovelling gang no longer bob on the rock's flank (test/muck-jitter.test.mjs).
+- Two shovellers on one spot stand a body apart (test/janitor.test.mjs).
+- Dust dropped on full bare ground stays off the neighbor's heap (test/grain-region.test.mjs).
+- Scrolling the view no longer changes what happens in the yard (test/camera-sim.test.mjs).
+- Wizards rise to the star from their own patches of ground (test/sky-work.test.mjs).
+- The filter's and the tower's upgrades are put in by a spare hand (test/spare-hand-builds.test.mjs).
+- The janitor's second cap is fitted at the closet (test/built-where-sold.test.mjs).
+- A build with nobody free says queued (src/selftest/boards.js).
+- The tiller's driver sits behind the column (test/machines.test.mjs).
+- The casino pays big stakes without freezing or lag, onto the pile in the hole (test/casino-big-stake.test.mjs).
+- The casino's stake pours into its funnel after the apothecary grows (test/casino-moves.test.mjs).
+- A refund no longer counts as income (test/wave5-boards.test.mjs, "a bill handed back is not income").
+- A reading's note stays put under the pointer (test/hover-gate.test.mjs, "no hover turns a reading's note the page's color").
+- A board taller than the window scrolls to its last row (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
+- A tile's gain line uses the tile's whole width (src/selftest/boards.js).
+- On a half-affordable tile, the coins you have are black and the missing one grey (src/selftest/boards.js).
+- A gain's number no longer breaks from its coin (src/selftest/house.js).
+- The crew window's cards are wide enough to say where a body is (src/selftest/boards.js).
+- The forklift row sits with the haulers (test/boards.test.mjs).
+- The balloon row has a pip for each balloon (test/balloon.test.mjs).
+- A price's clock is the same ink as its coins, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
+- On an iPhone on itch, the yard holds still under a sweeping finger (src/selftest/touch.js, "one finger on the yard scrolls it").
+- Clouds slide with the scroll, keep their height on a resize, and never pop in at the edge (test/weather.test.mjs, "no cloud ever jumps in view while you scroll"; test/sky-air.test.mjs).
+- The near clouds ride highest (test/weather.test.mjs, "the nearer the sheet, the higher it rides").
+- The sky no longer rearranges itself after load or on a resize (test/weather.test.mjs, "the sky is spread where the camera ends up, not where it started").
+- A front's clouds grow out of nothing and thin away in place, a cell at a time (test/weather.test.mjs, "a front's clouds come up out of nothing where they are born"; src/scenes.js `cloudsettle`).
+- A new game gets a new sky (test/golden.test.mjs, "the same seed is the same run").
+- A storm's acid falls with the rain instead of in a heap at the end (test/wave6-sky.test.mjs, "a storm brews up, pours, and trails off").
+- Rain falls over the whole world, as one sheet, and stops at the ground line (test/weather.test.mjs, "it rains on a clean yard"; src/scenes.js `rain`).
+- The air reading matches the sky while it rains (test/sky-readout.test.mjs, "what the readout says is what is overhead").
 
 ## v0.3.3 — 2026-09-17
 
