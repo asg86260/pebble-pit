@@ -113,6 +113,10 @@ export function syncWorkers() {
     }
   }
 
+  // A body lives in the half its job is in: the half it is sent to next
+  // prefers the same (`away` above), and the shaft's count is what moves it.
+  for (const w of S.workers) w.deepHome = isDeepType(w.type);
+
   // number the rock hands off so they can be spaced evenly round the rock, and
   // stagger the ones who have just joined through the swing cycle so the crew
   // never hits as one. Only those: a swing not yet due is `next` 0 too, and

@@ -59,7 +59,10 @@ group('+ under the altar sends a hand from the yard down the shaft to it', async
   ];
 });
 
-group('- sends it back up the shaft to the yard', async () => {
+// `-` under a station takes the body off its weapon and leaves it in the
+// deep, gathering; the shaft's `-` is what sends one up (DESIGN.md, "The
+// deep's crew is set at the shaft").
+group("- under the altar keeps it down there; the shaft's - sends it up", async () => {
   window.__crew(0, 3);
   run(1);
   window.__deepCrew({ brawlers: 1 });    // one at the altar already
@@ -67,13 +70,18 @@ group('- sends it back up the shaft to the yard', async () => {
   const w = S.workers.find(o => o.type === 'brawler');
   const down = w && belowYard(w);
   const pressed = press('altarjob', 'less');
-  const now = S.workers.find(o => o.name === w.name);
+  const now = S.workers.find(o => o.name === w.name)?.type;
+  run(3);
+  const still = S.workers.find(o => o.name === w.name);
+  const stillDown = !!still && belowYard(still) && S.deepCrew === 1;
+  const called = press('shaft', 'less');
   const pace = commutePace();
   const trip = follow(w.name, inYard);
   return [
     ok(down, 'the brawler starts in the deep'),
-    ok(pressed && S.brawlers === 0 && now && now.type !== 'brawler', 'the - takes it off the job',
-       `brawlers ${S.brawlers}, ${now && now.type}`),
+    ok(pressed && now === 'gatherer', 'the - takes it off the altar, and it gathers', `${now}`),
+    ok(stillDown, 'and it stays down there'),
+    ok(called && S.deepCrew === 0, "the shaft's - calls it up", `deepCrew ${S.deepCrew}`),
     ok(trip.there && trip.shaft, 'and it comes back up the shaft to the yard', `${trip.frames} frames`),
     ok(trip.jump <= pace + 0.01, 'never moving more than its pace in a frame', `${trip.jump.toFixed(2)} against ${pace}`)
   ];

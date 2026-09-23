@@ -1,0 +1,92 @@
+// The deep's crew is set at the shaft (DESIGN.md, "The deep's crew is set at
+// the shaft"): one count, a post over the drowned pit and another at the
+// shaft's foot, and a body stays in the half it is put in. Every move here is
+// a press on the roster's buttons, the way a player makes it; the deep itself
+// (the pit drowned, the snatch behind it) is set up with the hooks.
+
+import { group, ok, run, runUntil, state } from './helpers.mjs';
+import { S } from '../src/state.js';
+import { WORKER, PILE_LIMIT } from '../src/config.js';
+import { rosterHit } from '../src/roster.js';
+import { belowYard } from '../src/route.js';
+import { mouthX, deepFloor } from '../src/deep/place.js';
+
+const post = key => state().roster.find(p => p.key === key);
+const press = (key, which) => { const p = post(key); return !!p && rosterHit(p[which][0], p[which][1]); };
+const deepBodies = () => S.workers.filter(w => belowYard(w));
+
+// The snatch behind it, nobody on a weapon, a yard of haulers.
+function deepYard(haulers = 4) {
+  window.__snatch({ played: true });
+  window.__deepCrew({});
+  window.__crew(0, haulers);
+  run(1);
+}
+
+group("the shaft's + walks a yard hand down the shaft, and it gathers down there", async () => {
+  deepYard();
+  const shown = !!post('shaft') && !!post('shaftdeep');
+  const haulers = S.haulers;
+  const pressed = press('shaft', 'more');
+  const w = S.workers.find(o => o.type === 'gatherer');
+  let shaft = false;
+  const there = runUntil(() => {
+    const b = w && S.workers.find(o => o.name === w.name);
+    if (b && Math.abs(b.x + WORKER / 2 - mouthX()) < WORKER && b.y > S.groundY) shaft = true;
+    return b && belowYard(b) && Math.abs(b.y + WORKER - deepFloor()) < 1;
+  }, 90);
+  return [
+    ok(shown, 'the shaft has its post in both halves'),
+    ok(pressed && S.deepCrew === 1 && S.gatherers === 1 && S.haulers === haulers - 1,
+       'the + makes one of the haulers the deep\'s', `deepCrew ${S.deepCrew}, gatherers ${S.gatherers}, haulers ${S.haulers}`),
+    ok(there && shaft, 'and it walks down the shaft to the deep\'s floor')
+  ];
+});
+
+group('+ under the altar with nobody spare below brings a hand down to it', async () => {
+  deepYard();
+  const pressed = press('altarjob', 'more');
+  const w = S.workers.find(o => o.type === 'brawler');
+  const there = runUntil(() => w && belowYard(S.workers.find(o => o.name === w.name) || w), 90);
+  return [
+    ok(pressed && S.brawlers === 1 && S.deepCrew === 1 && S.gatherers === 0,
+       'the altar takes one, and the deep\'s crew is one more for it', `brawlers ${S.brawlers}, deepCrew ${S.deepCrew}`),
+    ok(there, 'and it goes down')
+  ];
+});
+
+group("a hand of the deep's with nothing to do stays down, however full the yard's piles", async () => {
+  deepYard(6);
+  press('shaft', 'more');
+  press('shaft', 'more');
+  runUntil(() => deepBodies().length === 2, 90);
+  // A yard pile heaped past its limit: the lent haulers used to be called up
+  // for this. The deep's own are the deep's.
+  const pile = S.piles.find(p => p.key === 'quarry');
+  window.__pile((pile.from + pile.to) / 2, PILE_LIMIT.quarry + 60);
+  let up = 0;
+  for (let f = 0; f < 60 * 20; f++) {
+    run(1 / 60);
+    if (S.workers.filter(w => w.type === 'gatherer').some(w => !belowYard(w))) up++;
+  }
+  return [
+    ok(S.deepCrew === 2 && S.gatherers === 2, 'the deep keeps its two', `deepCrew ${S.deepCrew}`),
+    ok(up === 0, 'and neither comes up to haul', `${up} frames with one up top`)
+  ];
+});
+
+group("the shaft's buttons go pale when there is nobody to move", async () => {
+  deepYard(1);
+  const start = post('shaft');
+  press('shaft', 'more');                 // the one hauler, sent down
+  const sent = post('shaft');
+  press('altarjob', 'more');              // and put on the altar
+  const onAltar = post('shaft');
+  const refused = !press('shaft', 'less') || S.deepCrew === 1;
+  return [
+    ok(start.canMore && !start.canLess, 'with nobody down there, only + is live'),
+    ok(!sent.canMore && sent.canLess, 'with the one hauler down there, only - is', JSON.stringify(sent)),
+    ok(!onAltar.canLess && refused && S.brawlers === 1,
+       "with it on the altar, the shaft's - does not pull it off the weapon", `brawlers ${S.brawlers}, deepCrew ${S.deepCrew}`)
+  ];
+});

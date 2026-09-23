@@ -1,10 +1,11 @@
 // The crusher: a scale is money once it lands in the hopper, and not before
 // (DESIGN.md, "The crusher"). The floor's loose scales are gathered to it by
-// haulers lent down the shaft while they lie there, or thrown in by hand; a
-// payment comes back out of it.
+// the deep's crew on no weapon (sent down at the shaft), or thrown in by
+// hand; a payment comes back out of it.
 
-import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, P, GATHER_LINGER_S } from '../src/config.js';
+import { group, ok, yard, run, runUntil, state } from './helpers.mjs';
+import { WORKER, P } from '../src/config.js';
+import { rosterHit } from '../src/roster.js';
 import { haulCap } from '../src/levels.js';
 import { deepBed } from '../src/state.js';
 import { hopperRect, crusherRect, deepTop, deepFloor } from '../src/deep/place.js';
@@ -14,6 +15,7 @@ import crusherMigration from '../src/migrations/2026-09-23-crusher.js';
 
 const S = yard.S;
 const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
+const press = (key, which) => { const p = state().roster.find(o => o.key === key); return !!p && rosterHit(p[which][0], p[which][1]); };
 
 // A yard the serpent has come for, nobody down there, a floor of loose scales.
 function floorOf(n) {
@@ -34,11 +36,13 @@ group('a scale on the floor is not money', async () => {
   ];
 }, { reload: false });
 
-group('haulers go down to gather the floor, with their own load, and it counts as it lands', async () => {
+group('hands sent down the shaft gather the floor, with their own load, and it counts as it lands', async () => {
   floorOf(300);
   window.__levels({ haulCarryLevel: 3 });
   const load = haulCap();
-  const haulers = S.haulers + S.gatherers;   // the yard's carriers, lent or not
+  const haulers = S.haulers;             // the yard's carriers, before any go down
+  // Two of them sent down at the shaft: with no weapon, they gather.
+  const sent = press('shaft', 'more') && press('shaft', 'more');
   // Every frame, every scale is somewhere: in the purse, on the floor, in the
   // water or in a gatherer's arms. One counted before it had crossed the
   // water, or one lost on the way, is a frame where the sum is not 300.
@@ -57,20 +61,23 @@ group('haulers go down to gather the floor, with their own load, and it counts a
     arcs = Math.max(arcs, S.sinking.filter(s => s.arc != null).length);
     if (where() !== 300) early.push(`${f}: ${where()}`);
   }
-  // The floor cleared, the gang waits a while and then goes back up to haul.
-  runUntil(() => S.gatherers === 0 && gatherers().length === 0, GATHER_LINGER_S + 240);
+  // Two hands take longer than two minutes over three hundred: let them
+  // finish. The floor cleared, they stay down there, waiting by the crusher,
+  // until they are called up.
+  runUntil(() => deepBed.n === 0 && S.sinking.length === 0 && arms() === 0, 600);
+  run(5);
   const cleared = deepBed.n === 0;
+  const stayed = S.gatherers === 2 && gatherers().every(g => g.y + WORKER > deepTop());
   return [
-    ok(most > 0 && most < haulers, 'haulers were lent to the deep, and not all of them',
-       `${most} of ${haulers}`),
+    ok(sent && most === 2 && S.haulers === haulers - 2, 'two were sent down, and the rest stayed hauling',
+       `${most} gathering, ${S.haulers} of ${haulers} hauling`),
     ok(down, 'they went down the shaft'),
     ok(carried === load && over === 0, 'each carried a hauler\'s load and no more', `${carried} of ${load}`),
     ok(arcs > 0, 'and tossed it up over the lip', `${arcs}`),
     ok(early.length === 0, 'and on every frame each scale was in the purse, the floor, the water or an arm',
        early.slice(0, 5).join(', ')),
     ok(cleared && S.scales === 300, 'the floor cleared into the purse', `${S.scales}, ${deepBed.n} lying`),
-    ok(S.gatherers === 0 && S.haulers === haulers, 'and once it had lain bare a while, they went back to hauling',
-       `${S.gatherers} gathering, ${S.haulers} hauling`)
+    ok(stayed, 'and with the floor bare they stayed down there', `${S.gatherers} gathering`)
   ];
 }, { reload: false });
 

@@ -464,9 +464,8 @@ export const S = {
   // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
   punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
   grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
-  gatherBare: 0,          // seconds the deep's floor has lain bare, for the gatherers going home
-  yardLends: true,        // whether the yard's piles are calm enough to lend a hauler down
-  pods: 0,                // the deep's houses: how many of the crew live down there
+  pods: 0,                // the deep's houses: how many have been bought
+  deepCrew: 0,            // how many of the crew are the deep's, set at the shaft
   crushAt: 0,             // when a scale last went into the crusher, for its rollers
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
@@ -672,6 +671,7 @@ export const SAVED_BY_HAND = [
   'belt',                 // what is riding the belt, on the band or the scoop, as [x, shade] pairs
   'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
+  'deepCrew',             // clamped on the way in against the deep's weapons and the spares
   'haze',                 // rounded: a fraction of a mote is not worth the characters
   'rockSand',             // what is lying on the rock, a column at a time
   'pot',                  // the casino: what is on the table, and which plot it stands in...
@@ -776,7 +776,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'gatherBare', 'yardLends',
+  'starFall', 'deepMotes', 'crushAt', 'heldScales',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 

@@ -29,7 +29,7 @@ const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]))
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 import { now } from './clock.js';
-import { JOB } from './jobs.js';
+import { JOB, DEEP_JOBS, isDeepType } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
 import { SERPENT_WOUND } from './config.js';
@@ -437,9 +437,14 @@ export function verifyWorld() {
     }
     if (!(S.scales >= 0))
       fail('the crusher owes scales', `account ${S.scales}`);
-    const residents = S.workers.filter(w => w.deepHome).length;
-    if (residents > (S.pods || 0))
-      fail('somebody lives in a pod nobody bought', `${residents} living down there, ${S.pods || 0} pods`);
+    // The deep's crew is the shaft's count, and its weapons are out of it
+    // (DESIGN.md, "The deep's crew is set at the shaft").
+    const weapons = DEEP_JOBS.reduce((n, j) => n + (S[j] || 0), 0);
+    if (weapons > (S.deepCrew || 0))
+      fail("the deep's weapons hold more than its crew", `${weapons} on weapons, ${S.deepCrew} down there`);
+    const bodies = S.workers.filter(w => isDeepType(w.type)).length;
+    if (bodies !== (S.deepCrew || 0))
+      fail("the bodies on the deep's jobs are not its crew", `${bodies} on them, ${S.deepCrew} down there`);
     if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
       fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
   }

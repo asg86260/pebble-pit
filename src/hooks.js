@@ -157,7 +157,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // before walks bodies off to a station the caller never mentioned.
   S.purifiers = 0;
   S.janitors = 0;
-  S.brawlers = 0; S.lancers = 0; S.grenadiers = 0; S.scribes = 0; S.warlocks = 0;
+  S.brawlers = 0; S.lancers = 0; S.grenadiers = 0; S.scribes = 0; S.warlocks = 0; S.deepCrew = 0;
   // Every machine goes back in the box, for the same reason one level worse:
   // a machine left standing rewrites what the next `__crew(0, 0, 3)` is
   // allowed to mean.

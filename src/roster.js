@@ -4,14 +4,14 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN } from './config.js';
-import { deepFloor, deepTop } from './deep/place.js';
+import { deepFloor, deepTop, mouthX } from './deep/place.js';
 import { STATIONS } from './stations.js';
-import { S, quarry } from './state.js';
+import { S, quarry, pit } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { houseRect } from './house.js';
 import { siteBox } from './works.js';
 import { JOB_MACHINE, running } from './machines.js';
-import { assign, idle } from './staffing.js';
+import { assign, idle, sendDeep, canSendDown, canCallUp } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
 import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
 import { JOB } from './jobs.js';
@@ -57,8 +57,24 @@ function postOf(row) {
     get deep() { return deep(); }
   };
 }
+// The shaft's post, twice: over the drowned pit in the yard and at the
+// shaft's foot on the deep's floor, the one count either way (DESIGN.md, "The
+// deep's crew is set at the shaft"). Not a job: its buttons move a body
+// between the halves, so it says what they do and when they can.
+const shaftPost = deep => ({
+  key: deep ? 'shaftdeep' : 'shaft', job: 'deepCrew', kit: false, fixed: false, shaft: true,
+  show: () => !!S.snatched,
+  // Below, at the shaft's foot. Above, the shaft comes up through the
+  // drowned pit, and a post over the liquid is black on black: it stands on
+  // the pit's near bank instead.
+  at: () => (deep ? mouthX() : Math.min(mouthX(), pit.x - WIDE / 2 - P)),
+  y: () => (deep ? deepFloor() + DEEP_POST_DOWN : null),
+  deep,
+  move: sendDeep, canLess: canCallUp, canMore: canSendDown
+});
 let POSTS = null;
-const allPosts = () => (POSTS ||= STATIONS.filter(r => r.post).map(postOf));
+const allPosts = () => (POSTS ||= [...STATIONS.filter(r => r.post).map(postOf), shaftPost(false), shaftPost(true)]);
+const press = (p, d) => (p.move ? p.move(d) : assign(p.job, d));
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
@@ -162,8 +178,8 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(hit(b.less), x, y)) { assign(p.job, -1); S.shopStale = true; return true; }
-    if (inside(hit(b.more), x, y)) { assign(p.job, 1); S.shopStale = true; return true; }
+    if (inside(hit(b.less), x, y)) { press(p, -1); S.shopStale = true; return true; }
+    if (inside(hit(b.more), x, y)) { press(p, 1); S.shopStale = true; return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
     // The machine's mark is not a button either (a machine is stopped by
     // taking its tender off, the `-` two rows up), but a click there is not a
@@ -188,6 +204,11 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
     if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
 
     drawBody(b.badge.x, b.badge.y);
+    if (p.shaft) {
+      button(ctx, b.less, '-', p.canLess());
+      button(ctx, b.more, '+', p.canMore());
+      continue;
+    }
     // Where the hat *is* the job (the sky, and a job with kit but no bought
     // trade, like the janitor) the badge wears it and there is no second
     // line: a count of hats under a count of wizards is the same number
@@ -290,6 +311,11 @@ export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
     const H = hit(b.less);
+    if (p.shaft)
+      return { key: p.key, job: p.job, n: S[p.job], shaft: true, fixed: false, hitW: H.w, hitH: H.h,
+               canLess: p.canLess(), canMore: p.canMore(),
+               less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
+               more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
     return { key: p.key, job: p.job, n: S[p.job], hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
              room: Math.min(99, roomAt(p.job)),

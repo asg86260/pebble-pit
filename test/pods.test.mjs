@@ -1,16 +1,17 @@
 // One crew, two homes (DESIGN.md, "One crew, two homes: pods in the deep").
 // A pod is bought in scales and adds a body who lives down there; bodies
-// fill jobs in their own half first; the yard lends its haulers to the deep's
-// floor only while its piles are calm; and a gatherer stood down with a load
+// fill jobs in their own half first; and a gatherer stood down with a load
 // drops it in the deep, not in the yard.
 
-import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, PILE_LIMIT } from '../src/config.js';
+import { group, ok, yard, run, runUntil, state } from './helpers.mjs';
+import { WORKER } from '../src/config.js';
 import { deepTop, podAt } from '../src/deep/place.js';
+import { rosterHit } from '../src/roster.js';
 
 const S = yard.S;
 const residents = () => S.workers.filter(w => w.deepHome);
 const inDeep = w => w.y + WORKER > deepTop();
+const press = (key, which) => { const p = state().roster.find(o => o.key === key); return !!p && rosterHit(p[which][0], p[which][1]); };
 
 function deepYard() {
   window.__fullSites();
@@ -53,36 +54,18 @@ group('a deep job is filled from the deep\'s residents first', async () => {
   ];
 });
 
-group('the yard lends haulers only while its piles are calm', async () => {
-  deepYard();
-  window.__crew(0, 8);
-  // A yard pile heaped past its limit: the yard is busy, and with nobody
-  // living down there nobody goes down to gather.
-  const pile = S.piles.find(p => p.key === 'quarry');
-  window.__pile((pile.from + pile.to) / 2, PILE_LIMIT.quarry + 60);
-  window.__looseScales(400);
-  run(1);
-  const busy = { lends: S.yardLends, gatherers: S.gatherers };
-  // The pile carted off: calm again, and the yard lends.
-  window.__clearFloor();
-  run(1);
-  const calm = { lends: S.yardLends, gatherers: S.gatherers };
-  return [
-    ok(!busy.lends && busy.gatherers === 0, "a full pile keeps the yard's haulers up top", JSON.stringify(busy)),
-    ok(calm.lends && calm.gatherers > 0, 'and with the piles calm the yard lends them down', JSON.stringify(calm))
-  ];
-}, { reload: false });
-
 group('a gatherer stood down with a load drops it in the deep', async () => {
   deepYard();
   window.__crew(0, 6);
+  // Four sent down the shaft to be the deep's: with no weapon, they gather.
+  for (let i = 0; i < 4; i++) press('shaft', 'more');
   window.__looseScales(300);
   runUntil(() => S.workers.some(w => w.type === 'gatherer' && (w.carry || 0) > 1 && inDeep(w)), 120);
   const loads = S.workers.filter(w => w.type === 'gatherer').reduce((n, w) => n + (w.carry || 0), 0);
   const dust = S.chips.length, water = S.sinking.length;
-  // A crew of two: one hauler kept up top, so every gatherer is stood down
-  // where it is, load and all.
-  window.__crew(0, 2);
+  // Called back up at the shaft: every gatherer is stood down where it is,
+  // load and all, and walks up empty-handed.
+  for (let i = 0; i < 4; i++) press('shaft', 'less');
   const stood = S.workers.filter(w => w.type === 'gatherer').length;
   return [
     ok(loads > 1, 'the gatherers had loads', `${loads}`),
