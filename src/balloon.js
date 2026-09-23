@@ -3,8 +3,7 @@
 // The house draws the sky down into itself; a balloon goes up into the clouds,
 // travels from one to the next drawing each in, and brings what it catches
 // home to its post. See DESIGN.md, "The balloons ride the clouds". It is a
-// thing the house sells, not a replacement: the vent, the fan, the board and
-// the door are all still the house's.
+// thing the shed sells: the board and the gauge are the shed's.
 //
 // Two halves, kept apart on purpose. **The yard's half** is a clock: a craft is
 // moored, going up, aloft or coming down, for a time. Nothing
@@ -15,10 +14,11 @@
 // never reads the picture.
 
 import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_W, BALLOON_H,
-         BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H, BALLOON_BOB,
+         BALLOON_BASKET, BALLOON_LINES, BALLOON_BOB,
          BALLOON_MAST_GAP, BALLOON_CLIMB_S, BALLOON_TRAVEL_S, BALLOON_DWELL_S,
          BALLOON_HANG, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
-         BALLOON_SPAN, BALLOON_MIN_SIZE, FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE } from './config.js';
+         BALLOON_SPAN, BALLOON_MIN_SIZE, FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE,
+         rungValue } from './config.js';
 import { S, filter } from './state.js';
 import { frames, now } from './clock.js';
 import { walkY } from './world.js';
@@ -28,11 +28,13 @@ import { stream } from './rng.js';
 import { GUESTS } from './skyguests.js';
 
 // --- the craft ----------------------------------------------------------------------
-// A craft is `{ phase, t }` to the yard:
+// A craft is `{ phase, t, hang }` to the yard:
 //
 //   phase  'moored' at its post, 'up' on the way into the sky, 'aloft' at
 //          work among the clouds, 'down' on the way home.
-//   t      seconds into the phase, for the trips up and down.
+//   t      seconds into the phase, or aloft into the hang or the trip.
+//   hang   aloft, whether it is hanging at a cloud drawing it in or on its
+//          way to the next one. Only the hanging cleans anything.
 //
 // and carries `sky`, the picture's half (below), which is never saved.
 // Its post is its index, so two craft cannot disagree about which is which.
@@ -46,7 +48,7 @@ export const craftCost = () => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, 
 // Bought moored, with nobody in it, like every other station that sells the
 // room before the body.
 export function buyCraft() {
-  CRAFT.push({ phase: 'moored', t: 0, sky: null });
+  CRAFT.push({ phase: 'moored', t: 0, hang: false, sky: null });
 }
 
 // --- the posts ----------------------------------------------------------------------
@@ -76,12 +78,17 @@ export const inBasket = w => w.craft != null && (w.goal === 'aloft' || w.homewar
 // Anybody in craft `i`'s basket, working or on the way home.
 export const aboard = i => S.workers.some(w => w.craft === i && inBasket(w));
 
-// A craft works only while it is up among the clouds with somebody in it.
+// A craft is at work while it is up among the clouds with somebody in it,
 export const working = i => !!CRAFT[i] && CRAFT[i].phase === 'aloft' && crewed(i);
-// And it is seen drawing a cloud in only while it hangs under one (craftair.js):
-// a picture question, asked of the picture's half.
-export const atCloud = i => working(i) && !!CRAFT[i].sky && !!CRAFT[i].sky.cloud &&
-                            CRAFT[i].sky.go >= BALLOON_TRAVEL_S;
+// and takes anything out of the sky only while it hangs at a cloud: the trips
+// between are time it is not cleaning, which is what its speed buys back.
+export const drawing = i => working(i) && CRAFT[i].hang;
+// And it is seen drawing a cloud in only once the picture has it under one
+// (craftair.js): a picture question, asked of the picture's half.
+export const atCloud = i => drawing(i) && !!CRAFT[i].sky && !!CRAFT[i].sky.cloud && CRAFT[i].sky.go >= 1;
+
+// Seconds a trip from one cloud to the next takes, at the fleet's speed.
+export const travelS = () => BALLOON_TRAVEL_S / rungValue('balloonspeed', S.balloonSpeedLevel || 0);
 
 // Which craft a body on the purifiers rides: its index, or `-1` with none
 // free. **Claimed once and kept.** A berth worked out from the body's place in
@@ -163,9 +170,13 @@ export function stepBalloons(dt) {
       c.t += secs;
       // Let go of on the way up: it turns round where it is.
       if (!manned) { c.phase = 'down'; c.t = Math.max(0, BALLOON_CLIMB_S - c.t); }
-      else if (c.t >= BALLOON_CLIMB_S) { c.phase = 'aloft'; c.t = 0; }
+      // Up, it is at its first cloud.
+      else if (c.t >= BALLOON_CLIMB_S) { c.phase = 'aloft'; c.t = 0; c.hang = true; }
     } else if (c.phase === 'aloft') {
-      if (!manned) { c.phase = 'down'; c.t = 0; }
+      c.t += secs;
+      if (!manned) { c.phase = 'down'; c.t = 0; c.hang = false; }
+      else if (c.hang && c.t >= BALLOON_DWELL_S) { c.hang = false; c.t = 0; }
+      else if (!c.hang && c.t >= travelS()) { c.hang = true; c.t = 0; }
     } else if (c.phase === 'down') {
       c.t += secs;
       if (c.t >= BALLOON_CLIMB_S) { c.phase = 'moored'; c.t = 0; }
@@ -188,7 +199,7 @@ const ease = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k);
 const lerp = (a, b, k) => a + (b - a) * k;
 const mix = (a, b, k) => ({ x: lerp(a.x, b.x, k), far: lerp(a.far, b.far, k), y: lerp(a.y, b.y, k) });
 const here = k => ({ x: k.x, far: k.far, y: k.y });
-const CRAFT_TALL = BALLOON_H + P + BALLOON_FILTER_H + BALLOON_BASKET;   // the lines are a course between bag and box
+const CRAFT_TALL = BALLOON_H + BALLOON_LINES + BALLOON_BASKET;
 
 const atPost = i => ({ x: mastX(i), far: 1, y: postY(i) });
 // Where something at a depth is drawn on the glass: the camera added by depth,
@@ -205,20 +216,25 @@ function under(cloud) {
   return { x: s.x, far: s.far + 0.005, y: s.y + (P * BALLOON_HANG + CRAFT_TALL) * sizeAt(s.far) };
 }
 
-// The next cloud: any sheet, not the one it is at, among those within a
-// window's width of where it is on the glass, so it goes visiting rather than
-// crossing the world.
-function nextCloud(from, not) {
+// The next cloud: any sheet, not the one it is at nor one another craft is at
+// or going to, among those within a window's width of where it is on the
+// glass, so it goes visiting rather than crossing the world.
+function nextCloud(i, from, not) {
   const at = onSky(from.x, from.far);
-  const open = GUESTS.clouds().filter(c => c !== not && GUESTS.spot(c));
+  const held = new Set(CRAFT.map((c, n) => n !== i && c.sky && c.sky.cloud).filter(Boolean));
+  const open = GUESTS.clouds().filter(c => c !== not && !held.has(c) && GUESTS.spot(c));
   const near = open.filter(c => Math.abs(onSky(GUESTS.spot(c).x, c.far) - at) < (S.viewW || 800));
   const pool = near.length ? near : open;
   return pool.length ? pool[Math.floor(roll() * pool.length)] : null;
 }
 
+// The trips between clouds are the yard's clock (`c.hang`, `c.t`): the picture
+// only chooses where they go. `k.go` is how far along its last trip the
+// picture is, nought to one; a cloud that goes out from under a hanging craft
+// (a front's, melted away) is a trip the picture makes up at the same pace.
 function stepSky(i, c, secs) {
   const post = atPost(i);
-  if (!c.sky) c.sky = { ...post, cloud: null, from: null, leg: null, go: 0, wait: 0 };
+  if (!c.sky) c.sky = { ...post, cloud: null, from: null, leg: null, go: 0 };
   const k = c.sky;
   if (c.phase === 'moored') {
     Object.assign(k, post, { cloud: null, from: null, leg: null });
@@ -232,33 +248,34 @@ function stepSky(i, c, secs) {
     return;
   }
   if (c.phase === 'up') {
-    if (!under(k.cloud)) k.cloud = nextCloud(post, null);
+    if (!under(k.cloud)) k.cloud = nextCloud(i, post, null);
     const to = under(k.cloud) || { ...post, y: post.y - CRAFT_TALL * 3 };
     Object.assign(k, mix(post, to, ease(c.t / BALLOON_CLIMB_S)));
-    k.leg = 'up'; k.from = null; k.go = BALLOON_TRAVEL_S; k.wait = 0;
+    k.leg = 'up'; k.from = null; k.go = 1;
     return;
   }
-  // Aloft: at a cloud, or on the way to the next one. A cloud that has gone
-  // (a front's, melted away) is let go of where the craft is.
-  if (!under(k.cloud)) { k.from = here(k); k.cloud = nextCloud(k, null); k.go = 0; k.wait = 0; }
+  // Aloft. Set off for the next cloud the moment the clock does, or when the
+  // one it was at has gone.
+  if (!c.hang && k.leg !== 'trip') {
+    k.from = here(k); k.cloud = nextCloud(i, k, k.cloud); k.leg = 'trip';
+  }
+  if (!under(k.cloud)) { k.from = here(k); k.cloud = nextCloud(i, k, null); k.go = 0; }
   const to = under(k.cloud);
   if (!to) return;
-  k.leg = 'aloft';
-  if (k.go < BALLOON_TRAVEL_S) {
-    k.go += secs;
+  if (!c.hang) {
+    k.go = Math.min(1, c.t / travelS());
+  } else {
+    if (k.leg === 'trip') { k.leg = 'aloft'; k.go = 1; }
+    if (k.go < 1) k.go = Math.min(1, k.go + secs / travelS());
+  }
+  if (k.go < 1) {
     if (!k.from) k.from = here(k);
-    Object.assign(k, mix(k.from, to, ease(k.go / BALLOON_TRAVEL_S)));
+    Object.assign(k, mix(k.from, to, ease(k.go)));
     return;
   }
-  // At the cloud, swaying a little on its own breath, until it moves on.
+  // At the cloud, swaying a little on its own breath.
   Object.assign(k, to);
   k.y += bobOf(i) * sizeAt(k.far);
-  k.wait += secs;
-  if (k.wait >= BALLOON_DWELL_S) {
-    k.from = here(k);
-    k.cloud = nextCloud(k, k.cloud);
-    k.go = 0; k.wait = 0;
-  }
 }
 
 // A cloud a working craft is at pales, and fills back in once it has gone.
@@ -266,7 +283,7 @@ function paleClouds(secs) {
   const held = new Set();
   for (let i = 0; i < CRAFT.length; i++) {
     const k = CRAFT[i].sky;
-    if (working(i) && k && k.cloud && k.go >= BALLOON_TRAVEL_S) held.add(k.cloud);
+    if (atCloud(i)) held.add(k.cloud);
   }
   const e = Math.min(1, CLOUD_DRAWN_EASE * secs);
   for (const cl of GUESTS.clouds()) cl.drawn = (cl.drawn || 0) + ((held.has(cl) ? 1 : 0) - (cl.drawn || 0)) * e;
@@ -309,12 +326,8 @@ export function craftAt(i) {
   const k = c && c.sky ? c.sky : atPost(i);
   return { x: onSky(k.x, k.far), y: k.y, far: k.far, s: sizeAt(k.far) };
 }
-// The bottom of the basket, and the top of the filter box: its intake.
+// The bottom of the basket.
 export const craftY = i => craftAt(i).y;
-export function craftMouth(i) {
-  const a = craftAt(i);
-  return { x: a.x, y: a.y - (BALLOON_BASKET + BALLOON_FILTER_H) * a.s, s: a.s };
-}
 
 // --- the body walking to it -------------------------------------------------------------
 // A purifier whose berth is a craft walks to its post, at the pace any body
@@ -371,7 +384,7 @@ export function stepRider(w, berth) {
 // The clock. Where the craft is in the sky is a picture and is
 // not written down: the clouds it was among are not saved either, so a craft
 // read back aloft finds a cloud of the new sky.
-export const craftSave = () => CRAFT.map(c => ({ phase: c.phase, t: +c.t.toFixed(2) }));
+export const craftSave = () => CRAFT.map(c => ({ phase: c.phase, t: +c.t.toFixed(2), hang: !!c.hang }));
 
 const PHASES = new Set(['moored', 'up', 'aloft', 'down']);
 export function craftLoad(list) {
@@ -380,6 +393,7 @@ export function craftLoad(list) {
     CRAFT.push({
       phase: PHASES.has(c && c.phase) ? c.phase : 'moored',
       t: Number.isFinite(c && c.t) ? Math.max(0, c.t) : 0,
+      hang: !!(c && c.hang),
       sky: null
     });
   }
@@ -395,4 +409,4 @@ export const SAVE = {
   blank() { clearCraft(); }
 };
 
-export { BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H };
+export { BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_LINES };

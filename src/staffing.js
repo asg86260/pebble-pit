@@ -154,3 +154,13 @@ export function assign(job, d) {
   rebalance();
   syncWorkers();
 }
+
+// A place opens with one spare body sent over through the same `assign` the
+// board's + button uses. `rebalance` first: a build with nobody spare borrows
+// the nearest body off its station, and on the frame the door lands that body
+// is still on loan, off its count, and reads as idle -- asked then, `assign`
+// would hand the yard's one rockhand to the new place.
+export function staffDoor(job) {
+  rebalance();
+  assign(job, 1);
+}

@@ -3,16 +3,16 @@
 // crown of the envelope, thicker the dirtier the sky (DESIGN.md, "The balloons
 // ride the clouds").
 //
-// Picture only. How fast a craft pulls is the fan's pull out of the sky's one
+// Picture only. How fast a craft pulls is its power's pull out of the sky's one
 // count (`pullCraft` in smog/craft.js); the stream is what that looks like.
 // The craft hangs in its cloud's own sheet, so the stream runs between two
 // things at one depth and scrolls with both: nothing about the view can pull
 // it apart. Nothing here spends the yard's chance or is read by anything that
 // changes the yard: the cells come off a stream of their own.
-import { FILTER_PULL, DRAWIN_PER_S, DRAWIN_MURK, DRAWIN_WIDE, DRAWIN_PACE, BALLOON_HANG, P } from './config.js';
+import { BALLOON_PULL, DRAWIN_PER_S, DRAWIN_MURK, DRAWIN_WIDE, DRAWIN_PACE, BALLOON_HANG, P } from './config.js';
 import { stream } from './rng.js';
 import { CRAFT, atCloud } from './balloon.js';
-import { fanPull, murk } from './smog.js';
+import { balloonPull, murk } from './smog.js';
 
 // One list a craft, by its index. A cell is how far down from the cloud it
 // has come (`t`, nought at the cloud, one at the vent) and where across the
@@ -30,7 +30,7 @@ export function stepCraftAir(dt) {
     // on nothing it can be seen to draw on. The cells already coming down
     // still arrive.
     if (atCloud(i)) {
-      let n = DRAWIN_PER_S * (1 + DRAWIN_MURK * murk()) * (fanPull() / FILTER_PULL) * secs;
+      let n = DRAWIN_PER_S * (1 + DRAWIN_MURK * murk()) * (balloonPull() / BALLOON_PULL) * secs;
       while (n > 0) {
         if (n < 1 && roll() > n) break;
         n -= 1;

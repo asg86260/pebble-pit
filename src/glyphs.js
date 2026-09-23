@@ -29,7 +29,6 @@ export const GLYPHS = {
   hut:        ['########', '.##..##.', '.#....#.', '.######.', '.######.', '.#....#.', '.#....#.', '.#....#.'],
   bucket:     ['........', '........', '..#.....', '..#.....', '..#.....', '..#.....', '.###....', '.###....'],
   tower:      ['.#......', '###.....', '#.#.....', '###.#...', '######..', '#.##.#..', '######..', '#.####..'],
-  fan:        ['........', '##....##', '.##..##.', '..####..', '..####..', '..####..', '..#..#..', '..#..#..'],
   door:       ['........', '........', '.######.', '.#....#.', '.#....#.', '.#....#.', '.#....#.', '.######.'],
   house:      ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
   cap:        ['........', '........', '...#....', '...#....', '...#....', '...#....', '..###...', '..###...'],
@@ -49,6 +48,7 @@ export const GLYPHS = {
   bolt:       ['...#....', '..#.#...', '........', '..###...', '..###...', '...#....', '...#....', '...#....'],
   dome:       ['........', '........', '........', '..####..', '.#....#.', '#......#', '#......#', '#......#'],
   chip:       ['........', '...##...', '..#..#..', '.#.##.#.', '.#.##.#.', '..#..#..', '...##...', '........'],
+  fan:        ['........', '##....##', '.##..##.', '..####..', '..####..', '..####..', '..#..#..', '..#..#..'],
   balloon:    ['...#....', '..#.#...', '.#...#..', '.#...#..', '..#.#...', '...#....', '...#....', '...#....'],
   lamp:       ['........', '........', '........', '........', '........', '........', '.#......', '###.....'],
   brim:       ['........', '........', '........', '........', '........', '........', '..###...', '#######.'],
@@ -94,7 +94,7 @@ export const GLYPH_OF = {
   critchance: ['spark'], critmult: ['cracked'],
   haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], belt: ['belt'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
-  unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['fan'],
+  unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['balloon'],
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
   // the shack
@@ -112,7 +112,7 @@ export const GLYPH_OF = {
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the air filter
-  fan: ['fan'], balloon: ['balloon'], recycler: ['lever'], airrate: ['fan'],
+  power: ['balloon', 'plus'], balloonspeed: ['balloon', 'up'], balloon: ['balloon'], recycler: ['lever'], airrate: ['fan'],
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
   letgo: ['lever'], bank: ['sack', 'dust'], ride: ['die'],

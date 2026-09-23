@@ -7,20 +7,20 @@ export const FILTER_WALL = 3;
 // The vent on the cupola: courses down from the top of the footprint.
 export const FILTER_VENT = 1;
 
-// The bare fan's pull, set against SMOG_PER_DUST: a balloon takes specks out
+// A balloon's bare pull, set against SMOG_PER_DUST: a balloon takes specks out
 // of a sky that is filled at the same pace, and what it is worth against the
-// yard is the only number here that decides anything. The fan ladder's rungs
+// yard is the only number here that decides anything. Balloon power's rungs
 // (config/rungs.js) are what a balloon pulls; this is the measure the drawn-in
 // stream is sized against.
-export let FILTER_PULL = 29.25;       // motes a second, per balloon -- per mote
+export let BALLOON_PULL = 29.25;       // motes a second, per balloon -- per mote
 // What a balloon lets fall for what it catches, before the recycler is fitted:
 // the crew shovel it like any other mess.
 export const FILTER_PER_MUCK = 135;  // motes caught per load let fall -- per mote
 export const FILTER_MUCK = 1;        // and how much a load is, in cells deep
-// The fan's ladder: a machine dirties the sky far harder than hands and never
+// Balloon power: a machine dirties the sky far harder than hands and never
 // stops for a cigarette, so balloons that could only pull at the rate they
 // were built with stop being an answer the moment the yard is worth having
-// them. What a fan pulls at each rung, and what each rung costs, is a list in
+// them. What a balloon pulls at each rung, and what each rung costs, is a list in
 // config/rungs.js: if the sky comes under control too early on a real yard,
 // that is the dial.
 export const RECYCLE_SHARDS = 120;    // and what turns catching into keeping
@@ -52,6 +52,6 @@ export const DIAL_GIVE = 0.6;         // steps past its own the reading must be 
 // The dev panel's row for the pull: the house's whole ladder scales off it,
 // so it is the one dial that moves the sky bargain.
 export const FILTER_KNOBS = [
-  { key: 'FILTER_PULL', label: 'house pull', min: 2, max: 60, step: 0.25,
-    get: () => FILTER_PULL, set: v => { FILTER_PULL = v; } }
+  { key: 'BALLOON_PULL', label: 'balloon pull', min: 2, max: 60, step: 0.25,
+    get: () => BALLOON_PULL, set: v => { BALLOON_PULL = v; } }
 ];

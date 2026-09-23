@@ -1,11 +1,11 @@
-import { CRAFT, craftAt, riderOf, working } from '../balloon.js';
+import { CRAFT, craftAt, riderOf, drawing } from '../balloon.js';
 import { speedBoost, strengthBoost } from '../apothecary.js';
 import { GRAV, RECYCLE_PER, RECYCLE_TONE, FILTER_MUCK, FILTER_PER_MUCK, P } from '../config.js';
 import { frames } from '../clock.js';
 import { spawnChip } from '../dust.js';
 import { shadeNear } from '../grid.js';
 import { S } from '../state.js';
-import { CLODS, fanPull } from './band.js';
+import { CLODS, balloonPull } from './band.js';
 import { countDrew } from './books.js';
 import { eat } from './house.js';
 import { colAt, dropMuckAt, muckCols, muckFloor } from './layer.js';
@@ -17,13 +17,14 @@ import { colAt, dropMuckAt, muckCols, muckFloor } from './layer.js';
 // something.
 const gullets = [];
 
-// What a craft is rated to take, in motes a second: the fan is the shed's, so
-// a bigger fan is a bigger draught at every mouth; and the apothecary reaches
+// What a craft is rated to take, in motes a second: balloon power is the
+// fleet's, so a rung is a bigger draught at every mouth; and the apothecary reaches
 // the rider, so a stew and a strong brew both quicken the craft it is working.
+// Only while it hangs at a cloud: on the way between two it takes nothing.
 export function craftRate(i) {
-  if (!working(i)) return 0;
+  if (!drawing(i)) return 0;
   const w = riderOf(i);
-  return fanPull() * (w ? speedBoost(w) * strengthBoost(w) : 1);
+  return balloonPull() * (w ? speedBoost(w) * strengthBoost(w) : 1);
 }
 // And every craft together: what the sky is being taken down at.
 export const airRate = () => CRAFT.reduce((n, c, i) => n + craftRate(i), 0);

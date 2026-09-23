@@ -110,7 +110,8 @@ export const ROWS = [
   { key: 'spellsweep', part: 2, reach: () => { tower(); window.__loo(); } },
 
   // --- the air filter ----------------------------------------------------
-  { key: 'fan', part: 2, reach: filter },
+  { key: 'power', part: 2, reach: filter },
+  { key: 'balloonspeed', part: 2, reach: filter },
   { key: 'airrate', dial: true, part: 2, reach: S => { S.seenAir = true; } },
   { key: 'balloon', part: 2, reach: filter },
   { key: 'recycler', part: 2, reach: filter },

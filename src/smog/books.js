@@ -67,7 +67,7 @@ export function airSides() {
   return { up: u / filled, down: d / filled };
 }
 const fouling = () => mark.rate;
-// What the house took out over the last second, not what its fan is rated at.
+// What the balloons took out over the last second, not what they are rated at.
 const filtered = () => mark.drew;
 
 export function airReadout() {

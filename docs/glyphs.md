@@ -61,8 +61,8 @@ cells wide); those are redrawn at eight, the shape settled.
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
 | tower           | `unlocktower`                                                                          |
-| fan             | `unlockscrub`, `fan`, `airrate`                                                        |
-| balloon         | `balloon`                                                                              |
+| fan             | `airrate`                                                                              |
+| balloon         | `unlockfilter`, `balloon`, `power` +plus, `balloonspeed` +up                           |
 | shovel          | `quarrybench` +plus                                                                    |
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |
 | ear of crop     | `crop` +plus, `spellgmo` +star                                                       |
@@ -89,13 +89,12 @@ By the board they first appear on, so a shelf can be finished at a time:
 
 - **bench** (14): sack, pick head, pick mid-swing, spark, cracked rock,
   boot, lever, cart, forklift, belt, hoist frame, furrow, die, hut, bucket and mop,
-  tower, fan -- the last seven double as their stations' own marks
+  tower, balloon -- the last seven double as their stations' own marks
 - **house** (2): house, door
 - **quarry** (2): shovel, ore lump
 - **farm** (2): ear of crop, hoe
 - **apothecary** (4): pot, vial, bowl, star
 - **tower** (3): wand, bolt, dome arc
-- **scrub** (1): balloon
 - **casino** (1): chip
 - **the sky** (3): planks, net, arch
 - **redrawn at eight** (8): ram, jaw, tiller, helmet, lamp, brim, point, cap

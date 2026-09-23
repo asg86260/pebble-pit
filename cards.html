@@ -57,7 +57,8 @@ const rows = [
     bill: () => [['dust', 1000], ['spore', 333], ['shard', 83]], work: () => 5, ...pips(0, 3) },
   ladder('haulcarry', 'hauler carry', LADDER - 1, 'px', 'carry', 9, 13, [['dust', 614], ['spore', 205], ['shard', 51]]),
   ladder('haulpace', 'hauler speed', LADDER - 1, 'px/s', 'walk', 108, 118, [['dust', 1200], ['spore', 393], ['shard', 98]], true),
-  ladder('fan', 'fan power', LADDER - 1, 'motes/s', 'filter', 40, 45, [['dust', 3300], ['spore', 1100]], true),
+  ladder('power', 'balloon power', LADDER - 1, 'motes/s', 'filter', 40, 45, [['dust', 3300], ['spore', 1100]], true),
+  ladder('balloonspeed', 'balloon speed', 3, 'x', 'filter', 1.6, 1.8, [['dust', 3000], ['spore', 900]]),
   ladder('bufflength', 'brew concentration', 1, 's', 'lasts', 73, 87, [['dust', 1440]]),
   // A ground ladder at its spark rung: the deepest bill in the game.
   ladder('crop', 'crop yield', TIER_OWN, 'spores/cut', 'cut', 7, 11,

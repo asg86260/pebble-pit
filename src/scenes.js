@@ -732,6 +732,10 @@ export const SCENES = {
   moored: { about: 'the house and the sky', say: 'a balloon moored at the mast',
     run: () => { rich(); window.__air({ open: true }); window.__fast(2);
                  window.__buy('balloon'); window.__finish(); window.__fast(2); window.__look(st().filterX - 220); } },
+  filterboard: { about: 'the house and the sky', say: "the air filter's board",
+    run: () => { rich(); window.__air({ open: true }); window.__fast(2);
+                 window.__buy('balloon'); window.__finish(); window.__board('filter');
+                 window.__look(st().filterX - 300); } },
   // `page` on the two with a craft in the air: the camera reads `craft` off
   // the page's snapshot, which the node yard's has not got.
   balloon: { about: 'the house and the sky', say: 'a balloon crewed and out over the yard', page: true,

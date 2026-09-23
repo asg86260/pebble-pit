@@ -289,7 +289,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
                    'cropLevel', 'seamLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
-                   'fanLevel', 'riftLevel',
+                   'powerLevel', 'riftLevel',
                    'critChanceLevel', 'critMultLevel', 'dosesLevel', 'lengthLevel',
                    'tossSpeedLevel', 'tossReachLevel']) {
     if (k in o) S[k] = o[k];

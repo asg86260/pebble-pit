@@ -8,8 +8,8 @@
 // much it spends. (It was written of the shed's own mouth, which is gone; the
 // balloons took the job over.)
 //
-// It did not grow. `pull` took its draught strength as `filterRate() / fanPull()`
-// -- and `filterRate()` is bodies times `fanPull()`, so the fan cancelled clean
+// It did not grow. `pull` took its draught strength as `filterRate() / balloonPull()`
+// -- and `filterRate()` is bodies times `balloonPull()`, so the fan cancelled clean
 // out of the one line that moves a mote, leaving the count of bodies, which is
 // one, for ever. Five rungs and three hundred and sixty-nine shards bought a
 // draught byte-for-byte identical to the one you started with.
@@ -71,7 +71,7 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   // below rather than fix anything.
   if (!machines.length)
     for (const m of ['jaw', 'ram', 'tiller', 'belt']) window.__machine(m, { bought: false });
-  yard.S.fanLevel = fan;
+  yard.S.powerLevel = fan;
   // Room in the hole.
   //
   // This save came from a yard whose pit was nearly full, and it was written on

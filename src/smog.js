@@ -23,7 +23,7 @@
 import { S } from './state.js';
 import { RAIN_FALL, RAIN_MARK, PUFF_UP, SMOG_PER_MOTE } from './config.js';
 import { rand } from './rng.js';
-import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, fanPull, murk,
+import { CLODS, DROPS, GOING, SKY, STACK, bandLow, bandTop, climbing, balloonPull, murk,
          raining } from './smog/band.js';
 import { foul, look, puffStack, reckon, skyMote, stepPuffs, stepStack } from './smog/vents.js';
 import { enter } from './smog/sky.js';
@@ -143,7 +143,7 @@ export const SAVE = {
 };
 
 export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining,
-         fanPull, airRate, climbing,
+         balloonPull, airRate, climbing,
          foul, puffStack, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
          dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
@@ -162,7 +162,7 @@ export function stepSmog(dt) {
   // Before the balloons take anything this frame, so a load made this frame
   // is in the air for at least one frame.
   stepClods();
-  // The balloons take motes and nothing else docks the number for the fan:
+  // The balloons take motes and nothing else docks the number for them:
   // that is the same dirt subtracted twice.
   pullCraft(secs);
   // Before the front, whose marking has to be about what is actually overhead.

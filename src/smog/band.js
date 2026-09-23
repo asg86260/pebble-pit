@@ -59,6 +59,6 @@ export const raining = () => !!S.raining;
 // too. Not a mote's place -- the murk is the sky's total, and every cloud
 // takes it together.
 export const murk = () => Math.pow(Math.min(1, S.haze / SMOG_CAP), CLOUD_MURK_POW);
-// What one balloon pulls, with whatever fan has been fitted: motes a second
-// off its list (config/rungs.js), the foot being the bare pull.
-export const fanPull = (lvl = S.fanLevel || 0) => rungValue('fan', lvl);
+// What one balloon pulls at the power it has been bought: motes a second off
+// its list (config/rungs.js), the foot being the bare pull.
+export const balloonPull = (lvl = S.powerLevel || 0) => rungValue('power', lvl);

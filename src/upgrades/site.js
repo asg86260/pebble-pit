@@ -1,6 +1,6 @@
 import { S } from '../state.js';
 import { lookAt } from '../world.js';
-import { assign, rebalance } from '../staffing.js';
+import { staffDoor } from '../staffing.js';
 import { station, open, offered } from '../stations.js';
 
 // The shape every "open a place" row on the bench is cut from. It lives here
@@ -36,13 +36,5 @@ export const site = ({ key, name, note, blurb, cores, dust, more, at, job, then 
   get show() { return station(key).sticky ? () => !open(key) : () => offered(key); }
 });
 
-// A place opens with one spare body sent over through the same `assign` the
-// board's + button uses. `rebalance` first: a build with nobody spare borrows
-// the nearest body off its station, and on the frame the door lands that body
-// is still on loan, off its count, and reads as idle -- asked then, `assign`
-// would hand the yard's one rockhand to the new place.
-export function staffDoor(job) {
-  rebalance();
-  assign(job, 1);
-}
+export { staffDoor };
 

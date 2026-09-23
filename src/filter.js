@@ -2,12 +2,12 @@
 // the gauge on its wall.
 //
 // It takes nothing out of the sky itself; the balloons do all of that
-// (balloon.js, smog/craft.js). The shed is where you buy them and their fan,
+// (balloon.js, smog/craft.js). The shed is where you buy them and their power,
 // the gauge that reads the sky, and the row of posts they moor at.
 
-import { WORKER, COMMUTE_PACE, FILTER_DUST, RECYCLE_SHARDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
+import { WORKER, COMMUTE_PACE, rungValue, FILTER_DUST, RECYCLE_SHARDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
-import { fanPull, murk } from './smog.js';
+import { balloonPull, murk } from './smog.js';
 import { S, filter } from './state.js';
 import { walkY } from './world.js';
 import { climbTo } from './route.js';
@@ -16,7 +16,7 @@ import { airRows, airSection } from './airboard.js';
 import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
-import { staffDoor } from './upgrades/site.js';
+import { staffDoor } from './staffing.js';
 
 export function newPurifier() {
   return { type: TYPE.PURIFY, goal: 'to', x: filter.x, y: 0 };
@@ -53,17 +53,28 @@ export function stepPurifier(w) {
   if (Math.abs(d) >= 1) w.x += Math.sign(d) * Math.min(COMMUTE_PACE, Math.abs(d));
 }
 
-// The balloons' fan ladder, in bands (CLAUDE.md, "Decided"): the machines
-// out-dirty hand labor several times over, and without a ladder the balloons
-// stop being an answer at exactly the point the yard is worth having them.
-// The fan is the shed's and every craft pulls with it.
-const FAN = tierRows({
-  field: 'fanLevel',
-  unit: 'motes/s', pct: true, does: 'filter',
-  value: lvl => fanPull(lvl),
+// Balloon power, in bands (CLAUDE.md, "Decided"): the machines out-dirty hand
+// labor several times over, and without a ladder the balloons stop being an
+// answer at exactly the point the yard is worth having them. One ladder for
+// the whole fleet: every craft pulls at it.
+// And how fast they go from one cloud to the next: a balloon draws only while
+// it hangs at a cloud, so the trips between are time it is not cleaning.
+const SPEED = tierRows({
+  field: 'balloonSpeedLevel',
+  unit: 'x', does: 'fly',
+  value: lvl => rungValue('balloonspeed', lvl),
   site: 'filter',
   show: () => S.filterOpen,
-  bands: named('fan', 'fan power')
+  bands: named('balloonspeed', 'balloon speed')
+});
+
+const FAN = tierRows({
+  field: 'powerLevel',
+  unit: 'motes/s', pct: true, does: 'filter',
+  value: lvl => balloonPull(lvl),
+  site: 'filter',
+  show: () => S.filterOpen,
+  bands: named('power', 'balloon power')
 });
 
 // The craft the shed sells: a finite ladder on the building that owns the
@@ -88,6 +99,7 @@ const CRAFT_ROW = {
 
 export const FILTER_UPGRADES = [
   ...FAN,
+  ...SPEED,
 
   // No row for who is aboard: a craft is a place for one (`capOf`), so the
   // balloons staff themselves (`rebalance`). The sky's reading sits over the
@@ -97,7 +109,7 @@ export const FILTER_UPGRADES = [
   CRAFT_ROW,
   {
     key: 'recycler',
-    // A fitting a spare hand puts in (`SITE_JOB`), like the fan's rungs.
+    // A fitting a spare hand puts in (`SITE_JOB`), like balloon power's rungs.
     kind: 'place', site: 'filter',
     name: 'the recycler',
     note: () => 'what the balloons catch comes down as pebbles instead of muck',
@@ -111,7 +123,7 @@ export const FILTER_UPGRADES = [
 
 export const FILTER_SECTIONS = [
   airSection(),
-  { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
+  { title: 'equipment', keys: ['power', 'balloonspeed', 'balloon', 'recycler'] }
 ];
 
 // Dust, like every other building: a core buys the one thing nothing else can.

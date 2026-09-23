@@ -7,7 +7,8 @@
 // back door proves the state can be set, and nothing about whether you can get
 // there.
 
-import { group, ok, state, run, runUntil, buyBuilt, buyNow, SEED, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, buyBuilt, buyNow, climb, SEED, yard } from './helpers.mjs';
+import { CRAFT } from '../src/balloon.js';
 
 const rich = () => {
   window.__reset();
@@ -181,3 +182,47 @@ group('a balloon rider is still on the job after a reload', async () => {
     ok(flies, 'and the balloon goes back up')
   ];
 }, { reload: false });
+
+// Aloft, a craft hangs at a cloud and then travels to the next, and only the
+// hanging cleans: the trip is the yard's clock, so balloon speed shortens it
+// whatever the view. Timed off the clock's own hang flag, in game seconds.
+// Read afresh each time: the reload check reads the craft back as new objects.
+const tripTime = () => {
+  const c = () => CRAFT[0];
+  runUntil(() => c().phase === 'aloft' && !c().hang, 120);
+  let t = 0;
+  while (!c().hang && t < 60) { run(0.1); t += 0.1; }
+  return t;
+};
+
+group('balloon speed shortens the trip from one cloud to the next', async () => {
+  rich();
+  buyNow('balloon');
+  window.__air({ purifiers: 1 });
+  const bare = tripTime();
+  const rungs = climb('balloonspeed', 2);   // the dust-only band
+  const quick = tripTime();
+  return [
+    ok(bare > 0 && bare < 60, 'a trip ends at the next cloud', `${bare.toFixed(1)} s`),
+    ok(rungs === 2 && yard.S.balloonSpeedLevel === 2, 'two rungs bought off the card', `${rungs}`),
+    ok(quick < bare * 0.75, 'and the trip is quicker for them', `${bare.toFixed(1)} -> ${quick.toFixed(1)} s`)
+  ];
+});
+
+group('no two balloons hang at the same cloud', async () => {
+  rich();
+  buyNow('balloon'); buyNow('balloon'); buyNow('balloon');
+  window.__air({ purifiers: 3 });
+  runUntil(() => CRAFT.every(c => c.phase === 'aloft'), 120);
+  let shared = 0, looked = 0;
+  for (let s = 0; s < 90; s++) {
+    run(1);
+    const at = CRAFT.map(c => c.sky && c.sky.cloud).filter(Boolean);
+    looked += at.length;
+    if (new Set(at).size < at.length) shared++;
+  }
+  return [
+    ok(looked > 0, 'the craft are among the clouds', `${looked} sightings`),
+    ok(shared === 0, 'and never two at, or bound for, one cloud', `${shared} seconds shared`)
+  ];
+});

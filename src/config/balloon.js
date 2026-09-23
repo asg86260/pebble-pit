@@ -10,9 +10,9 @@ export const BALLOON_RATE = 1.9;     // and how much steeper each one gets
 export const BALLOON_W = P * 11;     // the envelope
 export const BALLOON_H = P * 13;
 export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a body gets into
-// The filter, slung between the envelope's neck and the basket.
-export const BALLOON_FILTER_W = P * 7;
-export const BALLOON_FILTER_H = P * 4;
+// The lines the basket hangs from, off the envelope's neck. It draws the sky
+// in at the crown, so there is nothing else between bag and basket.
+export const BALLOON_LINES = P * 3;
 // How far a craft hanging under a cloud sways on its own breath, in pixels
 // either way; derived off the clock so there is nothing to save. See `bobOf`.
 export const BALLOON_BOB = P * 2;
@@ -21,7 +21,7 @@ export const BALLOON_BOB = P * 2;
 // and the next.
 export const BALLOON_MAST_GAP = 2;
 // The widest part of a craft, which is what the posts are spaced by.
-export const BALLOON_SPAN = Math.max(BALLOON_W, BALLOON_FILTER_W);
+export const BALLOON_SPAN = BALLOON_W;
 // The smallest a craft is drawn, as a share of its size, however far back a
 // sheet it is among: at a far sheet's own size it was a speck.
 export const BALLOON_MIN_SIZE = 0.55;
@@ -36,7 +36,7 @@ export const BALLOON_DWELL_S = 14;
 // under it: room for the stream the craft draws down out of the cloud.
 export const BALLOON_HANG = 6;
 // The stream a working craft draws down out of its cloud (craftair.js): cells
-// a second at the bare fan over a clean sky, and how much more at the brim, so
+// a second at bare power over a clean sky, and how much more at the brim, so
 // a filthy sky is a thick stream and a clean one a trickle; how many cells
 // either side of the line it is gathered from at the cloud, narrowing to the
 // vent; and pixels a second it comes down at.

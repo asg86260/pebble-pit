@@ -12828,6 +12828,33 @@ grains still on the scoop into one list of position and shade, so a grain
 mid-scoop was read back as a band grain a column out. A scoop grain carries its
 height now and goes back on the scoop (test/save-owners.test.mjs).
 
+## Balloon power and balloon speed (built 2026-09-22)
+
+The player's call: the fan ladder goes, and what it bought becomes the
+balloons' own. **Balloon power** is the old fan's rungs, renamed (`power` in
+`LADDERS`, `S.powerLevel`): motes a second every balloon pulls. **Balloon
+speed** is new (`balloonspeed`, `S.balloonSpeedLevel`): how fast a balloon
+goes from one cloud to the next, a multiple of `BALLOON_TRAVEL_S`.
+
+Speed is only worth buying if the trips cost something, so they do now:
+aloft, a balloon hangs at a cloud for `BALLOON_DWELL_S` and then travels to
+the next, and it pulls only while it hangs (`drawing` in balloon.js). That
+clock moved from the picture into the yard (`c.hang`, `c.t`, saved with the
+craft), so what a balloon cleans still does not depend on the view; the
+picture only chooses which cloud each trip goes to. At bare speed a balloon
+hangs fourteen seconds of every twenty; three rungs of speed make it
+fourteen of eighteen. The balance check (three machines against a bare and a
+full ladder) held without retuning.
+
+No two balloons share a cloud: `nextCloud` passes over any cloud another
+craft is at or bound for, so a fleet spreads out over the sky rather than
+queuing under one cloud.
+
+The filter box between envelope and basket is gone. A balloon draws the sky
+in at the vent in its crown, so the box was a second intake that did
+nothing; the basket hangs on two lines off the neck, splayed out a cell to a
+five-cell woven basket so the rider stands between them.
+
 ## The balloons ride the clouds (built 2026-09-22)
 
 The balloons patrol the whole width of the world at one height, turning hard

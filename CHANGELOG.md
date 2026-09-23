@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The fan is balloon power now, and a new balloon speed ladder makes the trips between clouds shorter; a balloon cleans only while it hangs at a cloud, no two balloons work the same cloud, and the filter box under the envelope is gone (test/balloon.test.mjs).
 - The books board keeps just the income rates; the full books sheet is put away for now (test/books-sheets.test.mjs).
 - The air filter no longer filters: the balloons do all the cleaning, and the shed keeps the gauge and the board they are bought from; each balloon bought sends a spare hand over to ride it (test/sky-fan.test.mjs, test/door-staffs.test.mjs).
 - Haulers tip their loads onto the belt just past the rock once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
@@ -44,6 +45,7 @@ feature lives in DESIGN.md.
 - Hold to toss, throw pace, throw reach and the pollution gauge wear their own pictures instead of a blank crate (test/row-glyphs.test.mjs).
 - The janitor's second cap is fitted at the janitor's closet, by a spare hand, instead of at the bench (test/built-where-sold.test.mjs).
 - A new boulder falling no longer drags the frame rate down for as long as it is in the air (src/scenes.js `introfall`).
+- The apothecary, the shields and five other parts of the yard start up again after the air filter change, which had broken their loading (test/shield.test.mjs).
 - A late yard with every ladder bought no longer drops to half speed: the stack of finished-work ticks over a station and the thousands of grains in the air are cheap to draw and move again (src/scenes.js `everything`).
 - The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
 - A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).

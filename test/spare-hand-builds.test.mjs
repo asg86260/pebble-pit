@@ -38,12 +38,12 @@ group('a fan rung is put in by a spare hand while the balloon goes on filtering'
   window.__buy('balloon'); window.__finish();
   window.__air({ purifiers: 1 });
   runUntil(() => yard.S.workers.some(w => w.type === 'purifier' && w.goal === 'aloft'), 60);
-  const was = yard.S.fanLevel;
-  const b = watchBuild('fan', 'filter', 'purifier', w => w.goal === 'aloft');
+  const was = yard.S.powerLevel;
+  const b = watchBuild('power', 'filter', 'purifier', w => w.goal === 'aloft');
 
   return [
     ok(b.bought, 'the rung is bought off the filter\'s board'),
-    ok(b.landed && yard.S.fanLevel === was + 1, 'and it lands', `${was} -> ${yard.S.fanLevel}`),
+    ok(b.landed && yard.S.powerLevel === was + 1, 'and it lands', `${was} -> ${yard.S.powerLevel}`),
     ok(b.seen, 'a spare hand walked over to put it in'),
     ok(b.free === 0, 'and the bar never moved without one there', `${b.free} frames`),
     ok(b.off === 0, 'while the rider stayed up in its balloon the whole time', `${b.off} frames out`)

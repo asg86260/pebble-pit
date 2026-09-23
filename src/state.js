@@ -294,7 +294,8 @@ export const S = {
   // everything about the machine is read off it.
   tillerAt: 0,
   // How much harder the air filter pulls.
-  fanLevel: 0,
+  powerLevel: 0,
+  balloonSpeedLevel: 0,   // and how fast they go from one cloud to the next
   // The tower's enchantments laid on the yard: a set of keys, on or not.
   // True for the few lines a machine is driving a station's own code: the
   // station does not foul where the work happened, the machine's stack does
@@ -518,7 +519,8 @@ export const SAVED = [
   'outhouseOpen',
   'shackOpen',
   'labKitLevel',
-  'fanLevel',
+  'powerLevel',
+  'balloonSpeedLevel',
   'spells',
   'wizSpeedLevel',
   'wizPowerLevel',

@@ -4,7 +4,7 @@
 // once, all over the yard, as muck. It is the only thing in this game that
 // makes the works worse, and it is caused by the one thing you do most.
 //
-// This, FILTER_PULL, RECYCLE_PER, FILTER_PER_MUCK and RAIN_PER_S move together:
+// This, BALLOON_PULL, RECYCLE_PER, FILTER_PER_MUCK and RAIN_PER_S move together:
 // they are one cycle, and changing one alone changes the balance, not the
 // pace. Fouling against filtering is the number that decides whether the house
 // is worth buying ("the air" in DESIGN.md).

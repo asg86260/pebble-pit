@@ -35,7 +35,7 @@ import { card } from './crewboard.js';
 import { houseRect } from './house.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
-import { CRAFT, craftAt, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
+import { CRAFT, craftAt, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_LINES } from './balloon.js';
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
@@ -391,7 +391,7 @@ function balloonAt(x, y) {
   if (!S.filterOpen) return false;
   for (let i = 0; i < CRAFT.length; i++) {
     const a = craftAt(i);
-    const top = a.y - (BALLOON_BASKET + BALLOON_FILTER_H + BALLOON_H) * a.s;
+    const top = a.y - (BALLOON_BASKET + BALLOON_LINES + BALLOON_H) * a.s;
     const half = BALLOON_W / 2 * a.s;
     if (x >= a.x - half && x <= a.x + half && y >= top && y <= a.y + P * 2 * a.s) return true;
   }
