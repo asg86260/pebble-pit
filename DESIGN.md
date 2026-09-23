@@ -14344,3 +14344,167 @@ rule that a forklift is never counted as crew.
   book.
 - **The garage appears with the first forklift** rather than being built by
   spare hands, the way a stand appears with its first hat.
+
+## The serpent: the second half of the game (design, not built)
+
+*Proposed 2026-09-20, the first calls answered 2026-09-23. Not built. The
+deep's progression is the open part and is designed next; nothing here is
+code until that is settled too.*
+
+The story so far ends with a rescue: the dome holds the rock, the sqwife
+walks out, the two of them are a crew of two again and the sheet says how
+long it took. That is the end of the *first* half. The second half starts at
+the pit.
+
+### The snatch
+
+The serpent needs two facts: the sqwife is out (`S.rescued`) and the pit has
+drowned (`S.drowned`). The two arrive on their own clocks -- the dome's bill
+and `ABYSS_AT` do not know about each other -- so the snatch fires on
+whichever comes second, and its timing is not the same from run to run:
+
+- **Drowned first.** The rescue cutscene does not end. The sqwife walks out,
+  the pair walk over to the abyss together, and something comes up out of it.
+- **Rescued first.** The yard carries on with the pair together, and the
+  snatch plays when the pit drowns, the drowning's camera running straight
+  into it.
+
+Either way it is one beat, `snatch` in `BEATS`, owning the yard and the
+camera the way the rescue does. A serpent whose head is the width of the pit
+rises through the surface, takes **the sqhusband** and goes down again. The
+surface closes. The one just rescued is the one left standing at the edge,
+which is the whole turn of the story: the rescue is paid for at once.
+Nothing pops in: the serpent rises a cell a frame, the body it takes is
+carried down through the surface, and the surface is what it always was
+afterward. A save from before this comes back with the pair where they are
+and plays the beat when both facts are true, once (`beatsDone`).
+
+The yard carries on. The crew keep mining, the machines keep running, the
+purse keeps filling. By the time the sqwife is out the yard runs itself,
+which is what lets the second half take bodies away from it.
+
+### Two views, one game
+
+**Clicking the abyss changes the view.** From the snatch onward a click on
+the drowned surface takes the view down into it, and a click on the
+underside of the surface brings it back up. One save, one clock, one purse,
+two views: the yard and the deep. Both run on every frame whether or not
+they are on screen -- the deep is not a modal, it is the other half of the
+same works, and a player who goes back up to buy a rung finds the fight
+where they left it.
+
+The view is a fact on `S` (`S.view`, `'yard' | 'deep'`, saved), and the
+switch is a camera glide down through the surface, not a cut: the surface
+fills the frame, the frame goes black, the deep fades in. Under reduced
+motion it is the two framings, one then the other.
+
+**The deep is another place, drawn by the same rules.** Black and white,
+flat shapes, the cell grid, per-cell variation. What is different is the
+*motion*: nothing in the yard moves unless a body carries it, and nothing in
+the deep is still. The serpent's coils sway on their own clock; the water
+has currents, drawn as the interference the abyss's surface already has
+(`abyssLine`), only everywhere; scales that come off drift on the current
+before they settle, where dust in the yard drops. Bodies do not walk in the
+deep, they swim -- the same commute at the same pace, along a curve with a
+lag, so the whole place reads as liquid. Still nothing teleports.
+
+### The crew cross both ways
+
+There is no crew of the deep's own. The deep's hands are the yard's crew,
+and a body crosses in both directions: a deep job is a job like any other,
+in the `want` map in `syncWorkers`, so a body put on it walks to the pit,
+goes in through the surface and swims down to its place; taken off it, it
+swims up, climbs out and walks back to whatever the yard wants of it. A body
+in the deep is not working the yard, and that is the trade: the yard is
+automated enough by now to spare hands, and how many it can spare is the
+player's call. The deep's output depends on bodies *through the surface*,
+never on the assigned count, the way the filter's does on `inFilter()`.
+
+The sqwife is the first of them. She goes in after him on the player's first
+click on the surface, and she is the deep's one body until hands are sent
+down.
+
+### The serpent is the rock
+
+The deep begins the way the yard began: one body, one thing to hit, a click
+a strike. The sqhusband is in the serpent's belly -- drawn, a square
+silhouette through the coil, so the goal is on screen from the first frame.
+A click strikes the serpent where it is clicked, the way a click swung at
+the rock. A strike knocks off a **scale**: the deep's coin, a grain that
+drifts down and settles on the floor for whoever is sweeping. Scales do not
+run out; the serpent regrows them.
+
+**Damage is a rate, not a total.** The serpent has a *wound* you hold open.
+Every strike deepens it; the serpent heals it back at `SERPENT_HEAL`, cells a
+second. Stop striking and it closes, strike slower than it heals and it
+never opens. Once damage a second stays above the heal long enough that the
+wound reaches `SERPENT_WOUND`, the belly opens and the sqhusband comes out.
+That is the second half's rescue. The wound is drawn as a gap in the coil
+opening and closing -- the picture is the reading, not a bar -- and he is
+seen through it more clearly the deeper it is.
+
+### What the scale buys
+
+The deep's board sells in scales, and **the yard's purse crosses over**:
+dust, crops, ore and sparks spend in the deep as they do up top, so the two
+halves are one economy. Its ladders are the yard's shape -- `tierRows` with
+`named` bands, `LADDER` rungs, a written table in `config/rungs.js` -- and
+the coin order is scales only, then scales and dust, then scales, dust and
+ore, then a spark at the top. No new coin past the scale. Machines in the
+deep are bought in sparks, by the rule that sparks buy every machine.
+
+### How the deep progresses (open -- designed next)
+
+The first sketch was four rows -- the strike, hands, sweeping, a machine or
+two -- and that is a board, not half a game. What the deep unlocks in what
+order, what its doors are, what the serpent does as the wound deepens, and
+how long the half is meant to take are all undecided, and they are the next
+thing to design. `SERPENT_HEAL` waits on them: it is the second half's
+`ABYSS_AT`, tuned against a progression that does not exist yet.
+
+### What it costs
+
+The board of times reads the first rescue, unchanged; the second half is not
+timed. The engine gets a second scene to draw and step, both every frame.
+The endgame pass's budget (PERF.md) is the gate: the deep on a driven yard
+must not push a frame over the yard alone by more than the serpent's draw.
+
+### The rules it must not break
+
+- Nothing teleports. The snatch is a body carried down; the view switch is
+  a camera move; a scale drifts to the floor; a hand walks to the pit and
+  swims.
+- `config.js` owns the heal rate, the wound depth, the strike, the swim and
+  the coil's sway. `state.js` owns `S.view`, the wound, the scale count,
+  each in `SAVED`, `SAVED_BY_HAND` or `EPHEMERAL`.
+- The deep's ladders go through `tierRows`. No flat rows.
+- The sim does not read the view. `S.view` is the renderer's and the
+  pointer's; nothing in game.js branches on it.
+- A save from any earlier era comes back in the yard view with no serpent,
+  and the snatch plays when it is due.
+
+### The calls, answered and open
+
+1. **The deep's hands** -- the yard's crew, crossing both ways (2026-09-23).
+2. **The purse crosses over** -- yes (2026-09-23).
+3. **The snatch** -- at the rescue when the pit has drowned, at the drowning
+   when it has not; it takes the sqhusband (2026-09-23).
+4. **The deep's progression** -- open, next.
+5. **The heal rate** -- after 4.
+6. **The ending's sheet and dance** -- "you saved your sqwife" and the second
+   dance come at the rescue today. When the snatch follows straight on, the
+   proposal is the sheet first, then the pair walk to the pit in place of
+   the dance. Open.
+
+### How it is checked
+
+`test/serpent.test.mjs`, node tier, buying it like a player: the snatch
+plays once both facts are true, in either order, and once only, and the
+sqhusband is gone from the crew; a body put on a deep job walks to the pit
+and goes in, and taken off it comes back out; a click on the coil drops a
+scale that settles on the floor; the wound closes when nobody strikes; a
+strike rate under the heal never opens it, one over it does, and he is
+freed at the depth; a reload in the deep comes back in the deep with the
+wound where it was. A `verify.js` rule: the wound is never below nought nor
+above its depth, and nobody is in the deep before the snatch. Scenes:
+`snatch`, `deep`, `serpent-wound`, `serpent-freed`.

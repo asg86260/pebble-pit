@@ -1,5 +1,14 @@
 # Still to do
 
+## The serpent: the second half of the game -- DESIGNING (2026-09-23)
+
+"The serpent: the second half of the game" at the end of DESIGN.md. When the
+sqwife is out and the pit has drowned (whichever comes second), a serpent
+takes the sqhusband down; a click on the surface takes the view into the
+deep. The yard's crew cross in and out, the purse crosses over. The deep's
+progression is undesigned and is next; the heal rate waits on it, and so
+does where the ending's sheet and dance go.
+
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
 "The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:
