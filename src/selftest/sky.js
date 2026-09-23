@@ -67,11 +67,10 @@ export const TESTS = [
     const off = await hover(r.x + r.w / 2, r.y - r.h * 3);
     await hoverAway();
     return [
-      ok(on && /air: filthy/i.test(on), 'a brim sky reads filthy on the gauge', String(on)),
-      ok(on && /% of the brim/i.test(on) && /fouling \d+ a min, filtering \d+ a min/i.test(on),
-         'with how full it is and both rates', String(on)),
-      ok(on && /the sky is (filling|clearing|holding)/i.test(on), 'and which way it is going', String(on)),
-      ok(!off || !/air:/i.test(off), 'and only over the gauge', String(off))
+      ok(on && /^filthy, /i.test(on), 'a brim sky reads filthy on the gauge', String(on)),
+      ok(on && /, \d+% full, /i.test(on), 'with how full it is', String(on)),
+      ok(on && /(getting worse|getting better|holding steady)$/i.test(on), 'and which way it is going', String(on)),
+      ok(!off || !/% full/i.test(off), 'and only over the gauge', String(off))
     ];
   }],
 ];
