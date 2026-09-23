@@ -136,8 +136,6 @@ function drawLiftBox(x, ground, fwd = 1) {
   ctx.fillRect(mastX, ground - LIFT_MAST, P, LIFT_MAST);        // the mast
   const forkX = fwd > 0 ? mastX + P : mastX - LIFT_FORK;
   ctx.fillRect(forkX, bottom, LIFT_FORK, P);                    // and the forks
-  const stackX = fwd > 0 ? x - P : x + LIFT_W;
-  ctx.fillRect(stackX, top - P, P, P * 2);                      // the stack, out the back
   // The antenna on the roof: it drives itself, and this is what it listens
   // with. A thin stalk up the middle of a cell over the cab and a knob on top.
   const antX = x + (fwd > 0 ? P : LIFT_W - P * 2);
