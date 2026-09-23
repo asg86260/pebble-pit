@@ -14408,6 +14408,37 @@ before they settle, where dust in the yard drops. Bodies do not walk in the
 deep, they swim -- the same commute at the same pace, along a curve with a
 lag, so the whole place reads as liquid. Still nothing teleports.
 
+**The deep is the inside of the abyss in the pit** (the owner's ask,
+2026-09-23). The player has looked at the drowned pit from above for hours;
+going down should feel like going into *that* -- the same black liquid, the
+same slow swell and flowing interference, the same full fades and no popping
+-- not into a second, unrelated level. So the deep has its own of every
+thing the yard's picture is made of, each one the abyss's version:
+
+- **Its own sky.** Overhead is the underside of the pit's surface: the same
+  line `abyssLine` stands the surface at, seen from below, swelling a cell
+  or two on the same clock, with the pale of the yard showing through it as
+  the one light in the deep. That surface is also the way back up, so the
+  way home is always on screen.
+- **Its own particles.** The yard's sky has motes by kind (`SMOG_TINTS`);
+  the deep has its own kinds -- silt hanging in the water, flecks shed from
+  the serpent, the churn off a thrown grenade -- each with its own tones
+  from its own palette, so no stretch of the deep is one flat tone.
+- **Its own gravity.** Everything is buoyant and slowed. A scale sinks at a
+  fraction of a grain's fall and is pushed sideways by the current as it
+  goes; a thrown lance or grenade arcs long and slow; a body kicked loose by
+  the thrash drifts before it rights itself. Settled things still settle --
+  the floor of the deep holds scales the way the yard's floor holds dust --
+  but nothing in the water arrives in a straight line. All of it is
+  numbers in config.js (a fall rate, a drag, a current), one block for the
+  deep.
+
+The palette is the one open picture call: the liquid is black, so the deep
+is most naturally the yard's picture inverted -- a black field, the bodies,
+coil and scales in white and greys -- rather than black marks on white.
+Both are one ink; the inverted one is proposed, and it is settled by shots
+of each before any of it is drawn for real.
+
 ### The crew cross both ways
 
 There is no crew of the deep's own. The deep's hands are the yard's crew,
@@ -14573,6 +14604,9 @@ must not push a frame over the yard alone by more than the serpent's draw.
    `SERPENT_WOUND`, and the `SERPENT_DEFENSE` table, tuned so the half runs
    the first half's length. Open; numbers, for the ladder book once rows
    exist.
+7. **The deep's look** -- the inside of the pit's abyss, with its own sky,
+   particles and gravity (2026-09-23). Open: inverted palette or not,
+   settled by shots.
 6. **The ending's sheet and dance** -- "you saved your sqwife" and the second
    dance come at the rescue today. When the snatch follows straight on, the
    proposal is the sheet first, then the pair walk to the pit in place of

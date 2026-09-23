@@ -8,8 +8,10 @@ takes the sqhusband down; a click on the surface takes the view into the
 deep. The yard's crew cross in and out, the purse crosses over. The deep is
 as long as the yard: four serpent defenses (bare, warded, splitting,
 fading), each answered by a weapon made of the abyss -- punching, lances,
-grenades, sigils, wizards, a called star in sparks. Open: the stages' heals
-and depths (numbers), and where the ending's sheet and dance go.
+grenades, sigils, wizards, a called star in sparks. It looks like the inside
+of the pit's abyss, with its own sky, particles and gravity. Open: the
+stages' heals and depths (numbers), where the ending's sheet and dance go,
+and whether the deep's palette is inverted (shots).
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
