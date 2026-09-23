@@ -77,3 +77,13 @@ export const SPRITES = {
     '.#############..'
   ]
 };
+
+// The station editor (stations.html) keeps its work in the browser; a dev
+// build reads it over the table above, before anything measures a station.
+// Nothing of this ships.
+export const SPRITES_KEY = 'boulder-clicker/sprites';
+export const COMMITTED = Object.fromEntries(Object.entries(SPRITES).map(([k, rows]) => [k, [...rows]]));
+if (import.meta.env && import.meta.env.DEV && typeof localStorage !== 'undefined') {
+  try { Object.assign(SPRITES, JSON.parse(localStorage.getItem(SPRITES_KEY) || '{}')); }
+  catch { /* a bad save is no save */ }
+}

@@ -60,6 +60,12 @@ the browser and a dev build reads them, so `shelf.html` and the game show them
 on the plank at once; "copy" hands back the line for `GLYPHS` in `glyphs.js`,
 which is where a finished drawing goes.
 
+For the deep's **stations**, `stations.html` is the station editor: paint a
+station's sprite in its five tones, see it as drawn under its dome with the
+dome's middle and the drawing's middle marked, and the real game beside it
+reloading on each stroke. Edits live in the browser like the glyph editor's;
+"copy" hands back the entry for `SPRITES` in `deep/sprites.js`.
+
 For anything about what a **ladder** costs or is worth, `ladders.html` is the
 ladder book: every ladder on every board climbed rung by rung -- bill, work,
 from/to -- read off the real rows, with the `TUNABLE` knobs beside it so a first

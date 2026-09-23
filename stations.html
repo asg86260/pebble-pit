@@ -1,0 +1,301 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>stations</title>
+<style>
+  /* The station editor: every station drawn in the deep, painted here. Pick
+     one from the list, paint it on the grid in its five tones, and it is
+     shown as drawn -- at STATION_SCALE, under its dome, with the dome's
+     middle and the drawing's middle marked -- and in the real game beside it.
+     Edits live in the browser (`SPRITES_KEY` in deep/sprites.js, read by a
+     dev build), so the game frame shows them on its next reload; "copy"
+     hands back the entry for SPRITES, which is where a finished drawing goes. */
+  body { background: #fff; margin: 0; font: 12px/1.4 ui-monospace, "Courier New", monospace; color: #000; height: 100vh; overflow: hidden; }
+  .app { display: grid; grid-template-columns: 170px minmax(0, 1fr) 440px; height: 100vh; }
+  .app > * { overflow: auto; padding: 12px 14px; }
+  .list { border-right: 1px solid #000; }
+  .out { border-left: 1px solid #000; }
+  h1, h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 8px; }
+  h2 { display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin-top: 14px; }
+  .list button { display: block; width: 100%; text-align: left; font: inherit; letter-spacing: .06em; padding: 3px 6px; border: 0; background: none; color: #000; cursor: pointer; }
+  .list button.on { background: #000; color: #fff; }
+  .list button.edited::after { content: ' •'; }
+  .grid { display: grid; gap: 1px; background: #444; border: 1px solid #000; width: max-content; user-select: none; touch-action: none; }
+  .grid i { display: block; width: 22px; height: 22px; cursor: crosshair; }
+  .grid i.mid { box-shadow: inset 2px 0 0 #f33; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  button.t { font: inherit; letter-spacing: .06em; padding: 3px 8px; border: 1px solid #000; background: #fff; color: #000; cursor: pointer; }
+  button.t:hover, button.t.on { background: #000; color: #fff; }
+  .tone { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; vertical-align: -2px; margin-right: 4px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .hint { opacity: .65; margin: 4px 0 10px; }
+  .name { font-weight: bold; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+  .read { margin: 6px 0; }
+  .read b.bad { color: #d00; }
+  textarea { width: 100%; box-sizing: border-box; height: 220px; font: 11px/1.4 ui-monospace, monospace; border: 1px solid #000; padding: 6px; white-space: pre; }
+  iframe { width: 100%; height: 300px; border: 1px solid #000; display: block; }
+  /* narrow: the game and the code go under the painting */
+  @media (max-width: 1100px) {
+    body { height: auto; overflow: auto; }
+    .app { height: auto; grid-template-columns: 130px minmax(0, 1fr); }
+    .out { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #000; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="list">
+    <h1>stations</h1>
+    <div id="names"></div>
+  </div>
+  <div class="edit">
+    <div class="name" id="editing">—</div>
+    <div class="hint">left-drag paints the tone picked, right-drag erases. the red line is the grid's middle.</div>
+    <div class="tools" id="tones"></div>
+    <div id="grid" class="grid"></div>
+    <div class="tools">
+      <button class="t" data-op="fliph">flip ↔</button>
+      <button class="t" data-op="mirror">mirror left → right</button>
+      <button class="t" data-op="left">◀</button><button class="t" data-op="right">▶</button>
+      <button class="t" data-op="up">▲</button><button class="t" data-op="down">▼</button>
+      <button class="t" data-op="addcol">+ column</button><button class="t" data-op="dropcol">− column</button>
+      <button class="t" data-op="addrow">+ row on top</button><button class="t" data-op="droprow">− row on top</button>
+      <button class="t" data-op="clear">clear</button>
+      <button class="t" data-op="revert">revert to committed</button>
+    </div>
+    <h2>as drawn</h2>
+    <div class="read" id="read"></div>
+    <canvas id="drawn"></canvas>
+  </div>
+  <div class="out">
+    <h1>in the deep</h1>
+    <div class="hint">the real game (play.html?bench), standing the deep with every door open. it reloads when you stop painting.</div>
+    <div class="tools"><button class="t" id="reload">reload the game</button></div>
+    <iframe id="yard" title="the deep"></iframe>
+    <h1 style="margin-top:14px">as code</h1>
+    <div class="hint">the entry for SPRITES in src/deep/sprites.js. every edited station is in the box; paste them in, then "forget edits" here.</div>
+    <div class="tools"><button class="t" id="copyone">copy this one</button><button class="t" id="copyall">copy all edited</button><button class="t" id="forget">forget edits</button></div>
+    <textarea id="code" readonly></textarea>
+  </div>
+</div>
+<script type="module">
+import { SPRITES, COMMITTED, SPRITES_KEY } from './src/deep/sprites.js';
+import { P, STATION_SCALE, DOME_PAD, DOME_WALL } from './src/config.js';
+
+// The tones a character is seen in, near enough for painting by: the game
+// frame is the truth.
+const TONES = { '#': ['white', '#fff'], '+': ['light', '#bbb'], '-': ['grey', '#777'],
+                'o': ['water', '#000'], '*': ['purple', '#7a4fd0'], '.': ['nothing', null] };
+const WATER = '#15151a', DOME_IN = '#25252c', DOME_RIM = '#43434c';
+
+const load = () => { try { return JSON.parse(localStorage.getItem(SPRITES_KEY) || '{}'); } catch { return {}; } };
+const edits = load();
+const rowsOf = key => edits[key] || COMMITTED[key];
+const save = () => { localStorage.setItem(SPRITES_KEY, JSON.stringify(edits)); };
+
+let key = Object.keys(COMMITTED)[0], tone = '#';
+
+// --- the list and the tones -----------------------------------------------------
+const names = document.getElementById('names');
+function list() {
+  names.replaceChildren(...Object.keys(COMMITTED).map(k => {
+    const b = document.createElement('button');
+    b.textContent = k;
+    b.className = (k === key ? 'on ' : '') + (edits[k] ? 'edited' : '');
+    b.onclick = () => { key = k; draw(); lookAt(); };
+    return b;
+  }));
+}
+const tones = document.getElementById('tones');
+function toneBar() {
+  tones.replaceChildren(...Object.entries(TONES).map(([ch, [name, ink]]) => {
+    const b = document.createElement('button');
+    b.className = 't' + (ch === tone ? ' on' : '');
+    b.innerHTML = `<span class="tone" style="background:${ink || 'repeating-linear-gradient(45deg,#2a2a31 0 3px,#33333b 3px 6px)'}"></span>${ch} ${name}`;
+    b.onclick = () => { tone = ch; toneBar(); };
+    return b;
+  }));
+}
+
+// --- the paint grid ---------------------------------------------------------------
+const grid = document.getElementById('grid');
+let painting = null;
+function setCell(r, c, ch) {
+  const rows = rowsOf(key).slice();
+  if (rows[r][c] === ch) return;
+  rows[r] = rows[r].slice(0, c) + ch + rows[r].slice(c + 1);
+  put(rows, false);
+}
+function put(rows, now = true) {
+  edits[key] = rows;
+  if (rows.join('\n') === COMMITTED[key]?.join('\n')) delete edits[key];
+  save();
+  draw();
+  settle(now);
+}
+function paintGrid(rows) {
+  const w = rows[0].length;
+  grid.style.gridTemplateColumns = `repeat(${w}, 22px)`;
+  grid.replaceChildren();
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    const i = document.createElement('i');
+    i.style.background = TONES[ch]?.[1] || (((r + c) % 2) ? '#2a2a31' : '#33333b');
+    if (c === w / 2 || (w % 2 && c === (w - 1) / 2)) i.classList.add('mid');
+    i.dataset.r = r; i.dataset.c = c;
+    grid.append(i);
+  }));
+}
+grid.addEventListener('contextmenu', e => e.preventDefault());
+grid.addEventListener('pointerdown', e => {
+  const i = e.target.closest('i'); if (!i) return;
+  painting = e.button === 2 ? '.' : tone;
+  grid.setPointerCapture(e.pointerId);
+  last = [+i.dataset.r, +i.dataset.c];
+  setCell(...last, painting);
+});
+// Every cell between two pointer samples, so a quick stroke leaves no gaps.
+let last = null;
+function stroke(r, c) {
+  const [r0, c0] = last, n = Math.max(Math.abs(r - r0), Math.abs(c - c0));
+  for (let k = 1; k <= n; k++) setCell(Math.round(r0 + (r - r0) * k / n), Math.round(c0 + (c - c0) * k / n), painting);
+  last = [r, c];
+}
+grid.addEventListener('pointermove', e => {
+  if (!painting) return;
+  const i = document.elementFromPoint(e.clientX, e.clientY)?.closest('#grid i');
+  if (i) stroke(+i.dataset.r, +i.dataset.c);
+});
+addEventListener('pointerup', () => { if (painting) { painting = null; settle(true); } });
+
+const OPS = {
+  fliph: rows => rows.map(r => [...r].reverse().join('')),
+  mirror: rows => rows.map(r => { const h = Math.ceil(r.length / 2); const a = r.slice(0, h); return a + [...r.slice(0, r.length - h)].reverse().join(''); }),
+  left: rows => rows.map(r => r.slice(1) + '.'),
+  right: rows => rows.map(r => '.' + r.slice(0, -1)),
+  up: rows => [...rows.slice(1), '.'.repeat(rows[0].length)],
+  down: rows => ['.'.repeat(rows[0].length), ...rows.slice(0, -1)],
+  addcol: rows => rows.map(r => r + '.'),
+  dropcol: rows => rows[0].length > 1 ? rows.map(r => r.slice(0, -1)) : rows,
+  addrow: rows => ['.'.repeat(rows[0].length), ...rows],
+  droprow: rows => rows.length > 1 ? rows.slice(1) : rows,
+  clear: rows => rows.map(r => '.'.repeat(r.length)),
+  revert: () => COMMITTED[key]
+};
+document.querySelectorAll('[data-op]').forEach(b => b.onclick = () => put(OPS[b.dataset.op](rowsOf(key))));
+
+// --- as drawn ---------------------------------------------------------------------
+// The same geometry place.js and render/deep.js use: each drawn cell reads the
+// sprite cell under it, nearest first; the grid is centered on the spot; the
+// dome is centered on the grid; the stack of works hangs over the ink's middle.
+const cellsOf = n => Math.round(n * STATION_SCALE);
+const ZOOM = 2;
+const canvas = document.getElementById('drawn'), ctx = canvas.getContext('2d');
+function drawn(rows) {
+  const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
+  const at = (r, c) => rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))][Math.min(rows[0].length - 1, Math.floor(c / STATION_SCALE))];
+  let c0 = cw, c1 = -1, r0 = ch;
+  for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) if (at(r, c) !== '.') { c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); }
+  return { cw, ch, at, c0, c1, r0 };
+}
+function drawPreview(rows) {
+  const d = drawn(rows);
+  const domeW = cellsOf(16) * P + DOME_PAD * 2, r = domeW / 2;
+  const w = d.cw * P, h = d.ch * P;
+  const margin = P * 6, W = Math.max(domeW, w) + margin * 2;
+  const floor = h + DOME_WALL + r + margin, H = floor + P * 3;
+  canvas.width = W * ZOOM; canvas.height = H * ZOOM;
+  canvas.style.width = W * ZOOM + 'px';
+  ctx.setTransform(ZOOM, 0, 0, ZOOM, 0, 0);
+  ctx.fillStyle = WATER; ctx.fillRect(0, 0, W, H);
+  const snap = v => Math.round(v / P) * P;
+  const spot = snap(W / 2);
+  const left = snap(spot - w / 2), top = floor - h;
+  const mid = left + w / 2;
+  // the dome, as drawDome paints it
+  const spring = floor - h - DOME_WALL;
+  const dTop = Math.round((spring - r) / P) * P, dLeft = Math.round((mid - r) / P) * P;
+  const inside = (x, y) => {
+    if (x < dLeft || x >= dLeft + domeW || y >= floor || y < dTop) return false;
+    if (y >= spring) return true;
+    const dx = x + P / 2 - (dLeft + r), dy = y + P / 2 - spring;
+    return dx * dx + dy * dy <= r * r;
+  };
+  for (let y = dTop; y < floor; y += P) for (let x = dLeft; x < dLeft + domeW; x += P) {
+    if (!inside(x, y)) continue;
+    ctx.fillStyle = (!inside(x - P, y) || !inside(x + P, y) || !inside(x, y - P)) ? DOME_RIM : DOME_IN;
+    ctx.fillRect(x, y, P, P);
+  }
+  ctx.fillStyle = '#555'; ctx.fillRect(0, floor, W, H - floor);
+  for (let rr = 0; rr < d.ch; rr++) for (let c = 0; c < d.cw; c++) {
+    const ink = TONES[d.at(rr, c)]?.[1];
+    if (!ink) continue;
+    ctx.fillStyle = ink; ctx.fillRect(left + c * P, top + rr * P, P, P);
+  }
+  // the middles: the dome's (blue), the drawing's (red), where the works hang (tick)
+  const domeMid = dLeft + domeW / 2, inkMid = left + (d.c0 + d.c1 + 1) / 2 * P;
+  const line = (x, color) => { ctx.fillStyle = color; ctx.fillRect(x - 0.5 / ZOOM * 2, dTop - P * 2, 1 / ZOOM * 2, floor - dTop + P * 4); };
+  line(domeMid, '#39f'); line(inkMid, '#f33');
+  ctx.fillStyle = '#f33'; ctx.fillRect(snap(inkMid) - P, top + d.r0 * P - P * 3, P * 2, P);
+  const off = inkMid - domeMid;
+  const tick = snap(inkMid) - inkMid;
+  document.getElementById('read').innerHTML =
+    `drawn ${d.cw}×${d.ch} cells, ink ${d.c1 - d.c0 + 1} wide. ` +
+    `<span style="color:#f33">drawing's middle</span> is ` +
+    (off === 0 ? `<b>on</b>` : `<b class="bad">${off > 0 ? '+' : ''}${off}px (${off / P} cells)</b> from`) +
+    ` the <span style="color:#39f">dome's middle</span>` +
+    (tick ? `; the works over it snap <b class="bad">${tick > 0 ? '+' : ''}${tick}px</b> off it` : '') + '.';
+}
+
+// --- as code ----------------------------------------------------------------------
+const entry = k => `  ${k}: [\n${rowsOf(k).map(r => `    '${r}'`).join(',\n')}\n  ]`;
+const code = document.getElementById('code');
+const copy = text => { code.value = text; code.select(); navigator.clipboard?.writeText(text).catch(() => {}); };
+document.getElementById('copyone').onclick = () => copy(entry(key));
+document.getElementById('copyall').onclick = () => copy(Object.keys(edits).map(entry).join(',\n'));
+document.getElementById('forget').onclick = () => {
+  if (!confirm('forget every edited station in this browser?')) return;
+  for (const k in edits) delete edits[k];
+  save(); draw(); settle(true);
+};
+
+function draw() {
+  const rows = rowsOf(key);
+  document.getElementById('editing').textContent = `${key}${edits[key] ? ' (edited)' : ''}`;
+  list(); paintGrid(rows); drawPreview(rows);
+  code.value = entry(key);
+}
+
+// --- the game frame ---------------------------------------------------------------
+// Staged from boot (play.html?bench), so it never touches the save in the
+// game's own tab. Reloaded so sprites.js reads the edits afresh.
+const frame = document.getElementById('yard');
+const yard = () => frame.contentWindow;
+let settleT = 0;
+function settle(now) {
+  clearTimeout(settleT);
+  if (painting) return;
+  settleT = setTimeout(reloadGame, now ? 300 : 900);
+}
+function reloadGame() { frame.src = `./play.html?bench&t=${Date.now()}`; }
+frame.addEventListener('load', () => {
+  const stand = () => {
+    if (!yard()?.__scene) return setTimeout(stand, 50);
+    yard().__scene('deep-all');
+    lookAt();
+  };
+  stand();
+});
+function lookAt() {
+  const w = yard();
+  if (!w?.__siteBox || !w.__look) return;
+  const box = w.__siteBox(key);
+  if (!box) return;
+  w.__look(box.x + box.w / 2 - (w.__state().viewW || 0) / 2);
+}
+document.getElementById('reload').onclick = reloadGame;
+
+toneBar(); draw(); reloadGame();
+</script>
+</body>
+</html>
