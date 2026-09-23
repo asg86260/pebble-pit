@@ -207,10 +207,10 @@ const deepScenes = {
   // pit in the yard and at the shaft's foot below, two sent down and one of
   // them on the altar.
   shaft: { about: 'the deep', say: "the shaft's post over the drowned pit: how many are the deep's",
-    run: () => { deepYard({ view: 'yard', run: 2 }); sendDeep(1); sendDeep(1); window.__assign('brawlers', 1);
+    run: () => { deepYard({ view: 'yard', run: 2 }); sendDeep(1); sendDeep(1); window.__assign(JOB.BRAWL, 1);
                  window.__fast(3); window.__look(mouthX() - S.viewW * 0.75); } },
   'shaft-deep': { about: 'the deep', say: "the shaft's post at its foot, on the deep's floor",
-    run: () => { deepYard({ run: 2 }); window.__fast(3); lookDeep(mouthX()); } },
+    run: () => { deepYard({ run: 2 }); window.__fast(3); lookDeep(mouthX() + S.viewW * 0.25); } },
   // The ends of it: the head and its slim neck, and the long taper of the tail.
   'serpent-head': { about: 'the deep', say: "the serpent's head and the neck behind it",
     run: () => { deepYard({}); lookDeep(coilAt(4, now()).x + S.viewW * 0.25); } },

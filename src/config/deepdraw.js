@@ -36,6 +36,10 @@ export const DEEP_SURFACE = P * 7;
 // as a body going down it, and how far its spill reaches into the water.
 export const SHAFT_LIGHT_W = P * 5;
 export const SHAFT_SPILL = P * 36;
+// The shaft's post in the deep stands in the air over the water line, beside
+// the light: its middle this far under the deep's top edge, clear of the
+// surface's lowest trough.
+export const SHAFT_POST_DOWN = P * 2;
 // From the yard, how far under the surface a click still means "go down":
 // the liquid's own top few cells, not the plank over it.
 export const SURFACE_CLICK = P * 6;

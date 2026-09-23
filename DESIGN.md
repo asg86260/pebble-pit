@@ -14826,9 +14826,11 @@ into the water where it is, never as dust in the yard.
 ### The deep's crew is set at the shaft (built)
 
 *Voted 2026-09-23 from three mocked controls (A, the counter at the shaft),
-with no pod cap; built the same day. The call made at build: the yard's
+with no pod cap; built the same day. The calls made at build: the yard's
 post stands on the drowned pit's near bank, not over the shaft, because a
-post over the liquid is black on black.* Nothing said how many of the crew are the deep's: the
+post over the liquid is black on black; the deep's stands in the air over
+the water line beside the shaft's light (the owner's call), where a click
+is otherwise the way home, so the post takes it first.* Nothing said how many of the crew are the deep's: the
 weapon rosters pulled bodies down one station at a time, an idle one went
 back up to haul, and the yard lent its haulers down when its piles were
 calm. So the deep's crew changed under the player with every pile and

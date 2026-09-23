@@ -3,7 +3,7 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN } from './config.js';
+import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN, SHAFT_LIGHT_W, SHAFT_POST_DOWN } from './config.js';
 import { deepFloor, deepTop, mouthX } from './deep/place.js';
 import { STATIONS } from './stations.js';
 import { S, quarry, pit } from './state.js';
@@ -64,11 +64,12 @@ function postOf(row) {
 const shaftPost = deep => ({
   key: deep ? 'shaftdeep' : 'shaft', job: 'deepCrew', kit: false, fixed: false, shaft: true,
   show: () => !!S.snatched,
-  // Below, at the shaft's foot. Above, the shaft comes up through the
-  // drowned pit, and a post over the liquid is black on black: it stands on
-  // the pit's near bank instead.
-  at: () => (deep ? mouthX() : Math.min(mouthX(), pit.x - WIDE / 2 - P)),
-  y: () => (deep ? deepFloor() + DEEP_POST_DOWN : null),
+  // Below, in the air over the water line beside the shaft's light, where a
+  // body sent down comes in. Above, the shaft comes up through the drowned
+  // pit, and a post over the liquid is black on black: it stands on the
+  // pit's near bank instead.
+  at: () => (deep ? mouthX() + SHAFT_LIGHT_W / 2 + GAP * 2 + WIDE / 2 : Math.min(mouthX(), pit.x - WIDE / 2 - P)),
+  y: () => (deep ? deepTop() + SHAFT_POST_DOWN : null),
   deep,
   move: sendDeep, canLess: canCallUp, canMore: canSendDown
 });

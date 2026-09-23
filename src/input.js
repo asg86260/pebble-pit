@@ -170,7 +170,9 @@ canvas.addEventListener('pointerdown', e => {
   // and in the deep a click is the serpent's first, the way one in the yard
   // is the rock's, and only the ordinary handling's if it missed the coil.
   if (gliding()) return;
-  if (onCeiling(p.x, p.y)) { goUp(); return; }
+  // The shaft's post stands in the air over the water line: a press on it is
+  // the post's, and anywhere else up there is the way home.
+  if (onCeiling(p.x, p.y)) { if (!rosterHit(p.x, p.y)) goUp(); return; }
   if (onSurface(p.x, p.y)) { goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;
   // the sky first, though nothing up there is ever over the rock
