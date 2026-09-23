@@ -1,6 +1,6 @@
-// The deep is built the way the yard is (DESIGN.md, "The serpent"): a door
-// or a rung bought down there is put up by the yard's builders, who go down
-// the shaft to it and hammer at the place itself, and every place a pointer
+// The deep is built the way the yard is, by its own hands (DESIGN.md, "Two
+// crews and a portal"): a door or a rung bought down there is put up by the
+// deep's builders, who hammer at the place itself, and every place a pointer
 // can stand at says what it is called and what it is drawn as, on its one row
 // in `STATIONS`, so the hover, the queue card and the hop read it from there.
 
@@ -14,7 +14,7 @@ import { stackSlot } from '../src/render/bars.js';
 
 const S = yard.S;
 
-group('a door of the deep is built by a builder standing at it, down the shaft', async () => {
+group("a door of the deep is built by the deep's own builder standing at it", async () => {
   window.__fullSites();
   window.__snatch({ played: true });
   window.__crew(0, 4);
@@ -32,7 +32,7 @@ group('a door of the deep is built by a builder standing at it, down the shaft',
     yard.fast(1 / 60);
     const w = workAt('deep');
     const p = w ? progressOf(w) : last;
-    const onSite = S.workers.some(b => b.type === 'builder' && b.y + WORKER > deepTop()
+    const onSite = S.workers.some(b => b.type === 'delver' && b.y + WORKER > deepTop()
                                      && b.x + WORKER > at.x && b.x < at.x + at.w);
     if (onSite) there = true;
     if (p > last + 1e-9 && !onSite) bad.push(f);
@@ -40,7 +40,7 @@ group('a door of the deep is built by a builder standing at it, down the shaft',
   }
   return [
     ok(bought, 'the well\'s door is sold on the altar'),
-    ok(there, 'a builder went down the shaft and stood at the well'),
+    ok(there, "a deep builder stood at the well"),
     ok(bad.length === 0, 'and the work only went up while one was there', bad.slice(0, 5).join(', ')),
     ok(S.wellOpen, 'and the well stands')
   ];

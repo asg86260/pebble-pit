@@ -20,11 +20,10 @@ import { JOB, TYPE } from './jobs.js';
 import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS } from './config.js';
 import { mouthX, spotX, coilAt, bellySeg } from './deep/place.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
-import { sendDeep } from './staffing.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -218,16 +217,24 @@ const deepScenes = {
     run: snatchAt('rise') },
   'snatch-take': { about: 'the deep', say: 'the snatch: the serpent going back under with him',
     run: snatchAt('take') },
+  // The portal in the abyss's surface (DESIGN.md, "Two crews and a portal"):
+  // opening before the head comes up, and closing as she leaps in after him.
+  'snatch-portal': { about: 'the deep', say: 'the snatch: the whirlpool opening in the surface',
+    run: snatchAt('open') },
+  'snatch-leap': { about: 'the deep', say: 'the snatch: the portal closing, and the sqwife leaping in after him',
+    run: () => {
+      snatchAt('close')();
+      // The shot comes a second after the scene: the closing set back so the
+      // second lands mid-leap, at the beat's own pace.
+      S.snatch.hurry = 1;
+      S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
+    } },
+  // The wizards' portal, conjured and held open, the arrow over it.
+  portal: { about: 'the deep', say: "the wizards' portal held open over the abyss, the way down",
+    run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
+                 window.__view('yard'); window.__look(mouthX() - S.viewW / 2); } },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
-  // The shaft's post: how many of the crew are the deep's, over the drowned
-  // pit in the yard and at the shaft's foot below, two sent down and one of
-  // them on the altar.
-  shaft: { about: 'the deep', say: "the shaft's post over the drowned pit: how many are the deep's",
-    run: () => { deepYard({ view: 'yard', run: 2 }); sendDeep(1); sendDeep(1); window.__assign(JOB.BRAWL, 1);
-                 window.__fast(3); window.__look(mouthX() - S.viewW * 0.75); } },
-  'shaft-deep': { about: 'the deep', say: "the shaft's post at its foot, on the deep's floor",
-    run: () => { deepYard({ run: 2 }); window.__fast(3); lookDeep(mouthX() + S.viewW * 0.25); } },
   // The glide between the halves, caught at a point of it (`glideAt`): just
   // past the turn going down is the deep's side of the hand-over, and the
   // same point going up is the yard's side, so the two shots should be one

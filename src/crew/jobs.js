@@ -36,7 +36,7 @@ import { wayOver, feetOn, ways } from '../route.js';
 import { newRockhand, rockhandWork, rockhandMess, rockhandBack } from './rockhand.js';
 import { newJanitor, janitorWork, janitorBack } from './janitor.js';
 import { newHauler, haulerWork, haulerBack } from './hauler.js';
-import { newBuilder, stepBuilder } from './builders.js';
+import { newBuilder, newDelver, stepBuilder } from './builders.js';
 import { onYard } from './body.js';
 import { newQuarrier, stepQuarrier } from '../quarry.js';
 import { newFarmhand, stepFarmhand } from '../farm.js';
@@ -159,6 +159,12 @@ export const JOBS = {
   [TYPE.BUILD]: {
     factory: newBuilder,
     want: () => S.builders,
+    step: { work: stepBuilder }
+  },
+  // The deep's builders: the same work, at the deep's own sites only.
+  [TYPE.DELVE]: {
+    factory: newDelver,
+    want: () => S.delvers,
     step: { work: stepBuilder }
   },
 

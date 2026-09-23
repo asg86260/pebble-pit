@@ -23,7 +23,8 @@ import { syncLifts } from './lifts.js';
 // and a site idles until somebody is *actually standing there*. Arrived, not
 // assigned, and at *its* site: a builder still crossing the yard, or standing
 // at the next station over, puts in nothing.
-const building = site => w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
+const builds = w => w.type === TYPE.BUILD || w.type === TYPE.DELVE;
+const building = site => w => builds(w) && w.goal === 'at' && w.site === site;
 
 setHands(site => {
   // The sphere's rung is poured by whoever is up on the ring pouring: the
@@ -39,7 +40,7 @@ setHands(site => {
 // The hands at ONE work of a site's several; only builders answer. A body
 // with no `workKey` yet is still walking and counts toward nothing.
 setHandsOn((site, key) =>
-  S.workers.filter(w => w.type === TYPE.BUILD && w.goal === 'at'
+  S.workers.filter(w => builds(w) && w.goal === 'at'
                      && w.site === site && w.workKey === key).length);
 
 // A build starting turns spare hands into builders and a build landing turns

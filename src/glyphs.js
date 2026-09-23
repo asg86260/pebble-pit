@@ -47,6 +47,8 @@ export const GLYPHS = {
   wand:       ['.###....', '.#.#....', '.###....', '..#.....', '..#.....', '..#.....', '..#.....', '..#.....'],
   bolt:       ['....####', '...#####', '...#..##', '..##..##', '.#.####.', '#.#.#...', '.#.#....', '#.#.....'],
   dome:       ['........', '........', '........', '..####..', '.#....#.', '#......#', '#......#', '#......#'],
+  // the whirlpool in the surface: a ring lying flat, a spiral in it
+  portal:     ['........', '........', '..####..', '.#....#.', '#..##..#', '.#....#.', '..####..', '........'],
   chip:       ['........', '...##...', '..#..#..', '.#.##.#.', '.#.##.#.', '..#..#..', '...##...', '........'],
   balloon:    ['...##...', '..#..#..', '.#....#.', '.#....#.', '.#....#.', '..#..#..', '...##...', '...##...'],
   lamp:       ['........', '........', '........', '........', '...##...', '.######.', '........', '........'],
@@ -111,7 +113,7 @@ export const GLYPH_OF = {
   // the tower
   wizard: ['point', 'plus'], wizspeed: ['wand', 'up'], wizpower: ['bolt'],
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
-  dome: ['dome'], sphere: ['sphere'], tunesphere: ['sphere', 'plus'],
+  dome: ['dome'], portal: ['portal'], sphere: ['sphere'], tunesphere: ['sphere', 'plus'],
   // the air filter
   power: ['balloon', 'plus'], balloonspeed: ['balloon', 'up'], balloon: ['balloon'], recycler: ['lever'],
   // the casino

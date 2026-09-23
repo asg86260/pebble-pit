@@ -81,16 +81,19 @@ const noGang = site => !(S[SITE_JOB[site]] > 0);
 // A station with a gang raises its own work, so nobody is lent to it.
 export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 
+// The yard's builders build the yard's sites; the deep's build the deep's
+// (DESIGN.md, "Two crews and a portal"). Nobody crosses between them.
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD
-                                        || (noGang(site) && !UP_THERE.has(site) && !DOWN_THERE.has(site))));
+  SITES.filter(site => busyAt(site) && !DOWN_THERE.has(site)
+                       && (SITE_JOB[site] === JOB.BUILD || (noGang(site) && !UP_THERE.has(site))));
+export const busyDeepSites = () =>
+  SITES.filter(site => busyAt(site) && DOWN_THERE.has(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
 // The sites in the air, which a spare hand lent from the ground could walk
 // under and never reach: their work is done by whoever is up there (the
 // sphere's rungs, by its tender).
 export const UP_THERE = new Set(['sphere']);
-// And the sites under the drowned pit: built like any other, but a builder
-// reaches them down the shaft, on the deep's floor (crew/builders.js), and
-// one working there is not sent back up (`surface` in crew/deep.js).
+// And the sites under the drowned pit: built by the deep's own builders
+// (`busyDeepSites`, TYPE.DELVE), never by a hand from the yard.
 export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'pods', 'deep']);
 
 // Where a station itself stands, for a body walking to a work that is not a

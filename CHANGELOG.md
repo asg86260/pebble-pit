@@ -14,7 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
-- The deep's crew is set at the shaft: a count over the drowned pit and at the shaft's foot sends hands down or calls them up, and they stay in the half they are put in (test/deep-shaft.test.mjs).
+- The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, and the wizards' conjured portal is the player's way down (test/two-crews.test.mjs, test/snatch.test.mjs).
 - A square in the corner and an arrow at the shaft take you between the yard and the deep (test/deep-shaft.test.mjs).
 - Going between the yard and the deep zooms into the drowned pit's liquid and fades the deep in over it, instead of cutting through black (src/selftest/deep.js).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).

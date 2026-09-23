@@ -33,10 +33,6 @@ export const DEEP_SURFACE = P * 7;
 // as a body going down it, and how far its spill reaches into the water.
 export const SHAFT_LIGHT_W = P * 5;
 export const SHAFT_SPILL = P * 36;
-// The shaft's post in the deep stands in the air over the water line, beside
-// the light: its middle this far under the deep's top edge, clear of the
-// surface's lowest trough.
-export const SHAFT_POST_DOWN = P * 2;
 // The arrow at the shaft that says the view goes through (render/shaftway.js):
 // in the yard this far over the drowned pit's surface, in the deep this far
 // under the deep's top edge -- under the water line, in the light's spill,

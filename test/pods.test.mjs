@@ -57,15 +57,15 @@ group('a deep job is filled from the deep\'s residents first', async () => {
 group('a gatherer stood down with a load drops it in the deep', async () => {
   deepYard();
   window.__crew(0, 6);
-  // Four sent down the shaft to be the deep's: with no weapon, they gather.
-  for (let i = 0; i < 4; i++) press('shaft', 'more');
+  // Four of the deep's own hands on no weapon: they gather.
+  window.__deepCrew({ brawlers: 0, spare: 4 });
   window.__looseScales(300);
   runUntil(() => S.workers.some(w => w.type === 'gatherer' && (w.carry || 0) > 1 && inDeep(w)), 120);
   const loads = S.workers.filter(w => w.type === 'gatherer').reduce((n, w) => n + (w.carry || 0), 0);
   const dust = S.chips.length, water = S.sinking.length;
-  // Called back up at the shaft: every gatherer is stood down where it is,
-  // load and all, and walks up empty-handed.
-  for (let i = 0; i < 4; i++) press('shaft', 'less');
+  // Put on the altar: every gatherer is stood down where it is, load and
+  // all, and walks to it empty-handed.
+  for (let i = 0; i < 4; i++) press('altarjob', 'more');
   const stood = S.workers.filter(w => w.type === 'gatherer').length;
   return [
     ok(loads > 1, 'the gatherers had loads', `${loads}`),

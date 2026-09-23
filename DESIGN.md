@@ -14840,7 +14840,10 @@ floor from backing up the yard's piles.
 **Nothing teleports.** A gatherer stood down with a load drops it as scales
 into the water where it is, never as dust in the yard.
 
-### The deep's crew is set at the shaft (built)
+### The deep's crew is set at the shaft (built, then superseded)
+
+*Superseded the same day by "Two crews and a portal": nobody crosses between
+the halves, and the shaft's count and posts are gone.*
 
 *Voted 2026-09-23 from three mocked controls (A, the counter at the shaft),
 with no pod cap; built the same day. The calls made at build: the yard's
@@ -14924,9 +14927,18 @@ same day): the square and the arrow are the way, and a click on the liquid
 or the deep's roof is an ordinary click. The shaft's post reads "abyssal
 workers" under the pointer in both halves.
 
-### Two crews and a portal (design, not built)
+### Two crews and a portal (built)
 
-*Proposed 2026-09-23 by the owner; the three calls answered the same day:
+*Proposed 2026-09-23 by the owner; the three calls answered the same day,
+the portal's look voted (C, a whirlpool in the abyss's own surface), built
+the same day. The calls made at build: the deep's builders are a job of
+their own (`TYPE.DELVE`, "deep builders"), lent off the deep's weapons when
+nobody is spare, as the yard lends off its stations; the conjured portal is
+bought outright (no pour, no time on its bill); the freed husband joins the
+deep's crew. The snatch's head still rises where it did -- out of the
+portal, which opens first.*
+
+*The owner's calls:
 the wizards' portal opens the way for the player, the deep's own crew
 builds the deep's works, one purse.* This undoes the shaft: nobody crosses
 between the halves any more. The yard and the deep become two crews on one

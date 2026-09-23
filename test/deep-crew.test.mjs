@@ -1,9 +1,8 @@
-// The deep's hands are the yard's crew, crossing both ways (docs/wave-serpent.md,
-// "Bodies go down and come up by the route"). A body is put on a deep job with
-// the roster's `+` under that station, the way a player does, and walks the
-// shaft down to it; `-` sends it back up. The deep itself (the pit drowned, the
-// snatch behind it, a door open) is set up with the hooks, because it is not
-// what these checks are about.
+// The deep's hands are its own crew (DESIGN.md, "Two crews and a portal"): the
+// roster's `+` under a deep station puts one of the deep's spare hands on it
+// and `-` takes it off to gather, down there; nobody from the yard is ever
+// sent. The deep itself (the pit drowned, the snatch behind it, a door open)
+// is set up with the hooks, because it is not what these checks are about.
 import { group, ok, state, run } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { P, WORKER, BRAWL_CAP, GRENADE_CAP } from '../src/config.js';
@@ -36,61 +35,49 @@ function follow(name, until, limit = 60 * 90) {
   return { there: false, jump, shaft, frames };
 }
 
-group('+ under the altar sends a hand from the yard down the shaft to it', async () => {
+group("+ under the altar takes one of the deep's own hands, never one of the yard's", async () => {
   window.__crew(0, 3);
   run(1);
-  window.__deepCrew({});                 // drowned, the snatch behind it: the altar stands
+  window.__deepCrew({ brawlers: 0, spare: 1 });   // the snatch behind it, and one hand down there on no weapon
+  run(3);
   const shown = !!post('altarjob');
-  const hands = S.workers.map(w => w.name);
+  const yard = S.workers.filter(w => !belowYard(w)).map(w => w.name);
   const pressed = press('altarjob', 'more');
   const w = S.workers.find(o => o.type === 'brawler');
-  const was = w && hands.includes(w.name);
-  const pace = commutePace();
-  const trip = w ? follow(w.name, o => !o.walking && belowYard(o)) : { there: false };
-  const there = w && S.workers.find(o => o.name === w.name);
+  run(3);
+  // With nobody left spare down there, a second press does nothing.
+  const again = press('altarjob', 'more');
+  const stillYard = S.workers.filter(o => yard.includes(o.name)).every(o => !belowYard(o));
   return [
     ok(shown && pressed, 'the altar has a roster in the deep, and its + takes the press'),
-    ok(S.brawlers === 1 && was, 'one of the yard\'s own hands is put on it, not one made from nothing',
-       `brawlers ${S.brawlers}`),
-    ok(trip.there && trip.shaft, 'it walks there by the shaft', `${trip.frames} frames`),
-    ok(trip.jump <= pace + 0.01, 'never moving more than its pace in a frame', `${(trip.jump || 0).toFixed(2)} against ${pace}`),
-    ok(there && Math.abs(there.y - floorFeet()) < 1 && Math.abs(there.x + WORKER / 2 - spotX('altar')) < 1,
-       'and stands on the deep\'s floor at the altar', there && `${Math.round(there.x)},${Math.round(there.y)}`)
+    ok(w && belowYard(w) && !yard.includes(w.name), "the one put on it is the deep's own", w && w.name),
+    ok(again && S.brawlers === 1, 'and with nobody spare down there, a second + puts nobody on', `brawlers ${S.brawlers}`),
+    ok(stillYard, "and none of the yard's hands went down")
   ];
 });
 
 // `-` under a station takes the body off its weapon and leaves it in the
-// deep, gathering; the shaft's `-` is what sends one up (DESIGN.md, "The
-// deep's crew is set at the shaft").
-group("- under the altar keeps it down there; the shaft's - sends it up", async () => {
+// deep, gathering.
+group('- under the altar keeps it down there, gathering', async () => {
   window.__crew(0, 3);
   run(1);
-  window.__deepCrew({ brawlers: 1 });    // one at the altar already
+  window.__deepCrew({ brawlers: 1 });
   run(1);
   const w = S.workers.find(o => o.type === 'brawler');
-  const down = w && belowYard(w);
   const pressed = press('altarjob', 'less');
   const now = S.workers.find(o => o.name === w.name)?.type;
-  run(3);
+  run(10);
   const still = S.workers.find(o => o.name === w.name);
-  const stillDown = !!still && belowYard(still) && S.deepCrew === 1;
-  const called = press('shaft', 'less');
-  const pace = commutePace();
-  const trip = follow(w.name, inYard);
   return [
-    ok(down, 'the brawler starts in the deep'),
     ok(pressed && now === 'gatherer', 'the - takes it off the altar, and it gathers', `${now}`),
-    ok(stillDown, 'and it stays down there'),
-    ok(called && S.deepCrew === 0, "the shaft's - calls it up", `deepCrew ${S.deepCrew}`),
-    ok(trip.there && trip.shaft, 'and it comes back up the shaft to the yard', `${trip.frames} frames`),
-    ok(trip.jump <= pace + 0.01, 'never moving more than its pace in a frame', `${trip.jump.toFixed(2)} against ${pace}`)
+    ok(still && belowYard(still), 'and it stays down there')
   ];
 });
 
-group('the deep\'s caps hold: nobody before a door, no more than a station holds after', async () => {
-  window.__crew(0, 20);
+group("the deep's caps hold: nobody before a door, no more than a station holds after", async () => {
+  window.__crew(0, 3);
   run(1);
-  window.__deepCrew({});
+  window.__deepCrew({ brawlers: 0, spare: 20 });
   for (let i = 0; i < BRAWL_CAP + 3; i++) press('altarjob', 'more');
   const brawlers = S.brawlers;
   const fontShut = !post('fontjob');

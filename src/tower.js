@@ -16,7 +16,8 @@ import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
-import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE } from './config.js';
+import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
+import { now } from './clock.js';
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
@@ -198,6 +199,18 @@ export const TOWER_UPGRADES = [
     // Gone once bought, and gone for good once the dome has done its work and
     // faded (`stepShield` in shield.js): its row in stations.js.
     show: () => offered('dome')
+  },
+  // The way down (DESIGN.md, "Two crews and a portal"): the snatch's portal
+  // held open over the abyss for good, and from then the view can go down
+  // through it. Nobody walks through it; it is the player's.
+  {
+    key: 'portal',
+    name: 'conjure the portal',
+    note: () => 'a way down into the abyss, held open.',
+    bill: () => PORTAL_BILL.map(l => [...l]),
+    cost: () => PORTAL_BILL.find(([m]) => m === 'dust')[1],
+    buy: () => { S.portalOpen = true; S.portalAt = now(); S.shopStale = true; },
+    show: () => !!S.snatched && !S.portalOpen
   }
 ];
 
@@ -212,7 +225,8 @@ export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   { title: 'the sphere', keys: ['sphere', 'tunesphere'] },
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
-  { title: 'the dome', goal: true, keys: ['dome'] }
+  { title: 'the dome', goal: true, keys: ['dome'] },
+  { title: 'the abyss', keys: ['portal'] }
 ];
 
 // so a work coming back out of a save knows which row it belongs to

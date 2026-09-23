@@ -37,7 +37,23 @@ export const SNATCH_RISE = P * 16;     // how far over the surface the head come
 export const SNATCH_EDGE = P * 4;      // how far apart the two stand at the edge, one nearer the water
 export const SNATCH_LOOK_MS = 1400;    // stood at the edge before anything comes up
 export const SNATCH_TAKE_MS = 900;     // the head held over them, him in its jaws, before it goes
-export const SNATCH_CLOSE_MS = 2600;   // the surface closing, and the one left standing at the edge
+export const SNATCH_CLOSE_MS = 3600;   // the portal closing; the one left standing leaps in before it shuts
+// The snatch goes through a portal in the abyss's own surface (DESIGN.md,
+// "Two crews and a portal"): a whirlpool opening on the liquid before the
+// head comes up out of it, and her leap into it as it closes.
+export const SNATCH_PORTAL_MS = 1100;  // the whirlpool opening on the surface
+export const SNATCH_LEAP_AT = 0.35;    // how far into the closing she runs and jumps
+export const SNATCH_LEAP_MS = 750;     // her leap, edge to whirlpool
+export const SNATCH_LEAP_H = P * 7;    // and how high it arcs
+// The portal itself: a ring turning on the surface over the shaft, this wide
+// and this deep, and how long the conjured one takes to open.
+export const PORTAL_RX = P * 11;
+export const PORTAL_RY = P * 3;
+export const PORTAL_OPEN_MS = 1500;
+export const PORTAL_TURN_MS = 2400;    // one turn of its rim
+// What the wizards ask to hold one open: the dome's shape, smaller -- a
+// first guess, like every price of the second half.
+export const PORTAL_BILL = [['dust', 120000], ['shard', 2500], ['spore', 5000], ['spark', 2500]];
 // The skip (space, held) does not cut to the end -- nothing teleports -- it
 // plays what is left of the beat this many times faster.
 export const SNATCH_HURRY = 4;

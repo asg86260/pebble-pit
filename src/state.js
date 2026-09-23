@@ -461,11 +461,14 @@ export const S = {
   wellOpen: false, fontOpen: false, circleOpen: false, spireOpen: false, starOpen: false,
   // The deep's jobs: bodies of the yard's crew, gone down the shaft.
   brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0, gatherers: 0,
+  delvers: 0,             // the deep's spare hands putting up the deep's works
   // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
   punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
   grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
   pods: 0,                // the deep's houses: how many have been bought
-  deepCrew: 0,            // how many of the crew are the deep's, set at the shaft
+  deepCrew: 0,            // how many of the crew are the deep's: the sqwife, and a body a pod
+  portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
+  portalAt: 0,            // when it was conjured, for its opening
   crushAt: 0,             // when a scale last went into the crusher, for its rollers
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
@@ -598,7 +601,7 @@ export const SAVED = [
   'noticeboard',
   // Derived by `rebalance` and re-derived on restore; saved like every other
   // job count so the roundtrip is honest.
-  JOB.BUILD,
+  JOB.BUILD, JOB.DELVE,
   // The record. `tally` is saved because who bit a rock half-mined when you
   // closed the tab is the whole question two of the feats ask.
   'won',
@@ -629,7 +632,7 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods',
+  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
 ];
@@ -776,7 +779,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes', 'crushAt', 'heldScales',
+  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'portalAt',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 

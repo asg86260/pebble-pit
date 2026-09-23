@@ -24,7 +24,7 @@ import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { rosterHit, overRoster, onShaftPost } from './roster.js';
+import { rosterHit, overRoster } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -436,9 +436,7 @@ export function whatIsAt(x, y) {
   if (w) return w.type;
   // Down there nothing of the yard is under the pointer: the way up, and the
   // serpent.
-  // The shaft's post and arrow stand in both halves, the post in the air
-  // the ceiling's click would otherwise answer for.
-  if (onShaftPost(x, y)) return 'abyssal workers';
+  // The arrow at the portal stands in both halves.
   if (onShaftArrow(x, y)) return S.view === 'deep' ? 'up to the yard' : 'down to the deep';
   if (S.view === 'deep') {
     if (onCoil(x, y)) return 'the serpent';

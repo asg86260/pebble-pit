@@ -17,6 +17,7 @@ import { drawBalloonPosts } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
 import { drawYardArrow, drawDeepArrow } from './render/shaftway.js';
+import { drawPortal } from './render/portal.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
@@ -157,6 +158,7 @@ const LAYERS = [
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
   { name: 'glide dim', draw: drawGlideDim },     // in a glide, the yard darkening round the abyss
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
+  { name: 'portal', draw: drawPortal },          // the whirlpool in the surface: the snatch's, and the wizards' held open
   { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
 
   { name: 'pit outline', draw: drawPitOutline },

@@ -14,14 +14,6 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
-## Two crews and a portal -- DESIGNED, AWAITING SIGN-OFF (2026-09-23)
-
-"Two crews and a portal" at the end of DESIGN.md: the snatch through a
-portal, the sqwife the deep's first and only hand, the deep growing only by
-pods and building its own works, the wizards' "conjure the portal" opening
-the player's way down. Undoes the shaft's count. The portal's look is to be
-mocked and voted before it is built.
-
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
 "The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:

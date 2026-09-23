@@ -27,15 +27,16 @@ const KINDS = {
 };
 
 // A yard the serpent has come for, with the hands asked for at their
-// stations and nobody else in the deep.
-function deepYard(counts = {}) {
+// stations, `spare` more of the deep's own on no weapon, and nobody else in
+// the deep.
+function deepYard(counts = {}, spare = 0) {
   window.__snatch({ played: true });
   window.__serpent({ stage: 0, wound: 0 });
   for (const k of Object.values(KINDS)) if (k.open) S[k.open] = true;
   window.__crew(0, 12);
   const want = { brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0 };
   for (const [type, n] of Object.entries(counts)) want[KINDS[type].job] = n;
-  window.__deepCrew(want);
+  window.__deepCrew({ ...want, spare });
 }
 const bodies = type => S.workers.filter(w => w.type === type);
 const arrived = w => !w.walking && w.y + WORKER > deepTop();
@@ -59,9 +60,10 @@ function watch(s, each = () => {}) {
 const everyKind = { brawler: 1, lancer: 1, grenadier: 1, scribe: 1, warlock: 1 };
 
 group('a body works only once it has arrived', async () => {
-  // Put on from the yard, so each walks the shaft down: nothing of theirs is
-  // in the water until they are standing in the deep.
-  deepYard({});
+  // Put on from the deep's own spare hands, waiting by the crusher, so each
+  // walks the floor to its station: nothing of theirs is in the water until
+  // they are standing at it.
+  deepYard({}, 2);
   window.__assign('lancers', 1);
   window.__assign('warlocks', 1);
   // Each weapon against its own body: the lancer may be down and throwing
@@ -78,7 +80,7 @@ group('a body works only once it has arrived', async () => {
   runUntil(() => Object.keys(everyKind).every(t => bodies(t).length && bodies(t).every(arrived)), 120);
   const at = watch(30);
   return [
-    ok(down, 'a lancer and a wizard put on from the yard walk down the shaft'),
+    ok(down, "a lancer and a wizard put on from the deep's spare hands walk to their stations"),
     ok(early.length === 0, 'and nothing of theirs is in the water before they are in the deep', early.slice(0, 5).join(', ')),
     ok(at.punched > 0, 'at its station a brawler punches'),
     ok(at.lances > 0, 'a lancer throws'),

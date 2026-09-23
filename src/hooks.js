@@ -1120,6 +1120,9 @@ HANDLES.__snatch = (o = {}) => {
   markDone('meet', 'part', 'rescue', 'ending');
   if (S.crew < 2) { S.crew = 2; rebalance(); syncWorkers(); }
   if (o.played) for (let f = 0; f < 60 * 120 && !S.beatsDone.includes('snatch'); f++) fast(1 / 60);
+  // A setup played past the snatch can go down: the portal is conjured with
+  // it, unless the check is about the portal (`portal: false`).
+  if (o.played && o.portal !== false) S.portalOpen = true;
   buildShop();
   return { snatched: S.snatched, done: S.beatsDone.includes('snatch') };
 };
@@ -1140,7 +1143,11 @@ HANDLES.__deepCrew = (o = {}) => {
     more += n - S[job];
     S[job] = n;
   }
-  S.crew = Math.max(0, S.crew + more);
+  // The deep's crew grows by as many as its weapons did, and by `spare`
+  // hands of its own on no weapon: the deep never takes from the yard.
+  const spare = Math.max(0, o.spare | 0);
+  S.crew = Math.max(0, S.crew + more + spare);
+  S.deepCrew = Math.max(0, (S.deepCrew || 0) + more + spare);
   rebalance(); syncWorkers(); buildShop();
   return Object.fromEntries(DEEP_JOBS.map(j => [j, S[j]]));
 };

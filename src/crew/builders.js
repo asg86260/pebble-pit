@@ -6,7 +6,8 @@
 import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
-import { busyBuilderSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
+import { busyBuilderSites, busyDeepSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
+import { deepPost } from './deep.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn, ways, belowYard, inShaft } from '../route.js';
 import { DOWN_THERE } from '../works.js';
 import { commutePace } from '../levels.js';
@@ -19,6 +20,10 @@ export function newBuilder() {
   const { x } = hireSpot();
   return { type: TYPE.BUILD, goal: 'to', site: null, x, y: walkY(x + WORKER / 2) };
 }
+// The deep's: made at the crusher like its gatherers, and building only the
+// deep's sites.
+export const newDelver = () => ({ type: TYPE.DELVE, goal: 'to', site: null, x: deepPost(TYPE.GATHER) });
+const sitesFor = w => (w.type === TYPE.DELVE ? busyDeepSites() : busyBuilderSites());
 
 // Which (site, work) slot a builder is on. The unit is a work, not a site: the
 // yard can hold two builds at once, and a body has to be at one of them or its
@@ -26,7 +31,7 @@ export function newBuilder() {
 // is on the go; when the work lands it takes the emptiest slot next, oldest
 // first on a tie, so a queue finishes in the order it was bought.
 function siteFor(w) {
-  const busy = busyBuilderSites();
+  const busy = sitesFor(w);
   if (w.site && busy.includes(w.site)
       && onTheGo(w.site).some(x => x.key === w.workKey)) return w.site;
   let pick = null, pickKey = null, fewest = Infinity;
@@ -34,7 +39,7 @@ function siteFor(w) {
     // Only what is being built: a work in line has nobody walking to it until
     // it reaches the front (`stepWorks` in works.js).
     for (const work of onTheGo(site)) {
-      const n = S.workers.filter(o => o.type === TYPE.BUILD && o !== w
+      const n = S.workers.filter(o => o.type === w.type && o !== w
                                    && o.site === site && o.workKey === work.key).length;
       if (n < fewest) { fewest = n; pick = site; pickKey = work.key; }
     }

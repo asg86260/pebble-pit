@@ -29,26 +29,17 @@ const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]))
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 import { now } from './clock.js';
-import { JOB, DEEP_JOBS, isDeepType } from './jobs.js';
+import { JOB, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
 import { SERPENT_WOUND } from './config.js';
 import { deepBed } from './state.js';
 import { deepTop } from './deep/place.js';
 
-// The jobs the roster is made of, and the count on S that owns each. Must be
-// the same list `syncWorkers` builds the crew from: a job missing from one is
-// a count with no bodies, which is what rule 4 catches.
-const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUARRY,
-                        farmhand: JOB.FARM, scholar: JOB.SCHOLAR,
-                        purifier: JOB.PURIFY, stirrer: JOB.STIR,
-                        janitor: JOB.JANITOR, wizard: JOB.WIZARD,
-                        // Nobody is put on building, but `syncWorkers` builds
-                        // bodies from the count all the same.
-                        builder: JOB.BUILD,
-                        // The deep's (docs/wave-serpent.md).
-                        brawler: JOB.BRAWL, lancer: JOB.LANCE, grenadier: JOB.GRENADE,
-                        scribe: JOB.SCRIBE, warlock: JOB.WARLOCK, gatherer: JOB.GATHER };
+// The jobs the roster is made of, and the count on S that owns each: every
+// body type and its job, read off the one table (jobs.js) rather than kept
+// by hand here, where a job added later was a count with no rule over it.
+const ROSTER_COUNTS = JOB_OF_TYPE;
 
 // How far below the surface of its way a body may be, and for how long. Feet
 // ease up to the ground fourteen per cent a frame (`climbTo` in crew.js), so

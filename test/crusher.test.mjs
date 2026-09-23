@@ -1,7 +1,7 @@
 // The crusher: a scale is money once it lands in the hopper, and not before
 // (DESIGN.md, "The crusher"). The floor's loose scales are gathered to it by
-// the deep's crew on no weapon (sent down at the shaft), or thrown in by
-// hand; a payment comes back out of it.
+// the deep's crew on no weapon, or thrown in by hand; a payment comes back
+// out of it.
 
 import { group, ok, yard, run, runUntil, state } from './helpers.mjs';
 import { WORKER, P } from '../src/config.js';
@@ -40,9 +40,10 @@ group('hands sent down the shaft gather the floor, with their own load, and it c
   floorOf(300);
   window.__levels({ haulCarryLevel: 3 });
   const load = haulCap();
-  const haulers = S.haulers;             // the yard's carriers, before any go down
-  // Two of them sent down at the shaft: with no weapon, they gather.
-  const sent = press('shaft', 'more') && press('shaft', 'more');
+  const haulers = S.haulers;             // the yard's carriers
+  // Two of the deep's own hands on no weapon: they gather.
+  window.__deepCrew({ spare: 2 });
+  const sent = S.gatherers === 2;
   // Every frame, every scale is somewhere: in the purse, on the floor, in the
   // water or in a gatherer's arms. One counted before it had crossed the
   // water, or one lost on the way, is a frame where the sum is not 300.
@@ -69,7 +70,7 @@ group('hands sent down the shaft gather the floor, with their own load, and it c
   const cleared = deepBed.n === 0;
   const stayed = S.gatherers === 2 && gatherers().every(g => g.y + WORKER > deepTop());
   return [
-    ok(sent && most === 2 && S.haulers === haulers - 2, 'two were sent down, and the rest stayed hauling',
+    ok(sent && most === 2 && S.haulers === haulers, "the deep's two gather, and the yard's haulers stay hauling",
        `${most} gathering, ${S.haulers} of ${haulers} hauling`),
     ok(down, 'they went down the shaft'),
     ok(carried === load && over === 0, 'each carried a hauler\'s load and no more', `${carried} of ${load}`),

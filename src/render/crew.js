@@ -388,6 +388,7 @@ function drawFloored(x, y) {
 
 export function drawIntro() {
   for (const b of S.pair) {
+    if (b.under) continue;              // gone into the portal after him
     const x = Math.round(b.x), y = Math.round(b.y);
     if (b.down) drawFloored(x, y);
     else drawBody(x, y);

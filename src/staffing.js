@@ -14,7 +14,7 @@ import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
 import { MACHINES, machine } from './machines.js';
 import { syncWorkers, FACTORY, newRecord } from './crew.js';
-import { busyBuilderSites, siteX } from './works.js';
+import { busyBuilderSites, busyDeepSites, siteX } from './works.js';
 import { capOf, roomAt } from './levels.js';
 
 // A job is a count, not a purchase: you buy a body once and move it freely.
@@ -74,15 +74,18 @@ export function rebalance() {
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'tossSpeedLevel', 'tossReachLevel'])
     S[k] = Math.max(0, Math.min(LADDER, S[k] || 0));
-  // The deep's crew is the player's (the shaft's post), held between what its
-  // weapons already take and those plus every spare hand: so a count set on a
-  // weapon directly (the snatch, a save from before the shaft) reads as that
-  // many down there, and a shrunk crew cannot leave the deep owed a body.
+  // The deep's crew is its own (DESIGN.md, "Two crews and a portal"): the
+  // sqwife, and a body a pod. Held between what its weapons already take and
+  // those plus every spare hand, so a count set on a weapon directly (a
+  // hook, a save from before) reads as that many down there, and a shrunk
+  // crew cannot leave the deep owed a body.
   S.deepCrew = Math.max(onWeapons(), Math.min(S.deepCrew || 0, onWeapons() + Math.max(0, spareHands())));
   // Builders are derived, one a site, never the whole yard: a build that
-  // swallowed every idle body would stop the dust moving.
+  // swallowed every idle body would stop the dust moving. The yard's build
+  // the yard's sites and the deep's the deep's, each half lending its own.
   const sites = busyBuilderSites();
   const gang = sites.length;
+  const deepSites = busyDeepSites();
   // Nobody spare: the body standing nearest the site is *lent* -- taken off
   // its count, which makes it spare -- and given back when nothing is left to
   // build. The loan rides on the body (`lentFrom`) rather than in a list
@@ -95,21 +98,33 @@ export function rebalance() {
     w.lentFrom = job;                    // stood down first, see syncWorkers
     S[job]--;
   }
+  // The deep lends off its weapons the same way: with nobody spare down
+  // there, its first pod is built by the sqwife leaving the altar.
+  for (let short = deepSites.length - deepSpare(); short > 0; short--) {
+    const w = nearestLendable(deepSites, true);
+    if (!w) break;
+    const job = JOB_OF[w.type];
+    w.lentFrom = job;
+    S[job]--;
+  }
   // Given back only if there is still room there and a body spare to be the
   // one going home; a count handed back that nobody stands behind is a roster
-  // that reads higher than the crew for ever.
-  if (!sites.length) {
-    for (const w of S.workers) {
-      const job = w.lentFrom;
-      if (!job) continue;
-      delete w.lentFrom;
-      if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
-    }
+  // that reads higher than the crew for ever. Each half's loans come home
+  // when that half has nothing left to build.
+  for (const w of S.workers) {
+    const job = w.lentFrom;
+    if (!job) continue;
+    const deep = DEEP_JOBS.includes(job);
+    if (deep ? deepSites.length : sites.length) continue;
+    delete w.lentFrom;
+    if (roomAt(job) > 0 && (deep ? deepSpare() : yardSpare()) > 0) S[job]++;
   }
   S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   S.builders = sites.length ? Math.min(gang, yardSpare()) : 0;
-  // The deep's crew on no weapon gathers, and stays down there doing it.
-  S.gatherers = deepSpare();
+  // The deep's crew on no weapon builds what the deep is building, and
+  // gathers otherwise; it stays down there doing either.
+  S.delvers = deepSites.length ? Math.min(deepSites.length, deepSpare()) : 0;
+  S.gatherers = deepSpare() - S.delvers;
   // Carrying is what a yard body does when it is on nothing, less whoever is
   // building. The carts are the lip's kit and are not held out.
   S.haulers = Math.max(0, yardSpare() - S.builders);
@@ -158,16 +173,16 @@ export const SAVE = {
   blank() { S.haulers = 0; S.deepCrew = 0; }
 };
 
-// The station body nearest any site that wants one and not already lent.
-function nearestLendable(sites) {
+// The station body nearest any site that wants one and not already lent:
+// in the yard a yard station's, in the deep (`deep`) a weapon's.
+function nearestLendable(sites, deep = false) {
   const xs = sites.map(siteX).filter(x => x != null);
   let best = null, dist = Infinity;
   for (const w of S.workers) {
     const job = JOB_OF[w.type];
     if (!job || !JOBS.includes(job) || w.lentFrom) continue;
-    // Never one of the deep's: the yard's builds are the yard's, and a body
-    // down the shaft is the furthest body there is from any of them.
-    if (DEEP_JOBS.includes(job)) continue;
+    // Each half builds with its own.
+    if (DEEP_JOBS.includes(job) !== deep) continue;
     if (S[job] < 1) continue;
     const d = xs.length ? Math.min(...xs.map(x => Math.abs(w.x - x))) : 0;
     if (d < dist) { dist = d; best = w; }
@@ -190,29 +205,16 @@ const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) dele
 // Move one body on to a job, or off it and back to carrying. The hat it was
 // wearing stays at the station.
 //
-// A body keeps to its half. On a deep weapon `+` takes a gatherer, or with
-// none brings a spare yard hand down the shaft to it; `-` leaves the body
-// down there, gathering. On a yard job `+` takes a spare yard hand only.
+// A body keeps to its half (DESIGN.md, "Two crews and a portal"). On a deep
+// weapon `+` takes one of the deep's spare hands and `-` gives it back to
+// gathering, down there; on a yard job, the yard's. Nothing crosses.
 export function assign(job, d) {
   const deep = DEEP_JOBS.includes(job);
-  if (d > 0 && (deep ? idle() : yardSpare()) < 1) return;
+  if (d > 0 && (deep ? deepSpare() : yardSpare()) < 1) return;
   if (d > 0 && roomAt(job) < 1) return;
   if (d < 0 && S[job] < 1) return;
-  if (deep && d > 0 && deepSpare() < 1) S.deepCrew = (S.deepCrew || 0) + 1;
   S[job] += d;
   forgive(job);
-  rebalance();
-  syncWorkers();
-}
-
-// The shaft's post: `+` sends a spare yard hand down to be the deep's, `-`
-// calls one of the deep's gatherers back up. Each walks the shaft.
-export const canSendDown = () => !!S.snatched && yardSpare() > 0;
-export const canCallUp = () => deepSpare() > 0;
-export function sendDeep(d) {
-  if (d > 0 && !canSendDown()) return;
-  if (d < 0 && !canCallUp()) return;
-  S.deepCrew = (S.deepCrew || 0) + d;
   rebalance();
   syncWorkers();
 }

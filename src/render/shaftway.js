@@ -1,9 +1,8 @@
-// The way through the surface, marked at the shaft (DESIGN.md, "The way
-// between the halves"): a pixel arrow bobbing over the plank in the yard,
-// pointing down, and one rising in the shaft's light in the deep, pointing
-// up. A click on either takes the view through, as a click on the surface or
-// the ceiling does; the arrow is only there to say that it can. From the
-// snatch on, while the camera is not already gliding.
+// The way through the portal, marked at it (DESIGN.md, "The way between the
+// halves"; "Two crews and a portal"): a pixel arrow bobbing over the plank
+// in the yard, pointing down, and one rising in the shaft's light in the
+// deep, pointing up. A click on either takes the view through. From the
+// wizards' portal on, while the camera is not already gliding.
 
 import { P, SHAFT_ARROW_UP, SHAFT_ARROW_DOWN, SHAFT_ARROW_BOB, SHAFT_ARROW_MS } from '../config.js';
 import { S } from '../state.js';
@@ -19,7 +18,7 @@ const CHEVRON = ['#####', '.###.', '..#..'];
 const W = CHEVRON[0].length * P, H = CHEVRON.length * P;
 
 const snap = v => Math.round(v / P) * P;
-const shown = () => !!S.snatched && !gliding();
+const shown = () => !!S.portalOpen && !gliding();
 
 // Where the arrow is in its half, top-left, on the grid. The bob is a whole
 // cell up and down on a slow sine, so it moves a cell at a time and never

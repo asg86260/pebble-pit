@@ -133,49 +133,70 @@ group('a reload mid-snatch plays it again from the start, or past the take from 
   ];
 });
 
-group('the brawler walks the shaft down, never faster than a pace', async () => {
+// The snatch goes through a portal in the abyss's own surface, and she leaps
+// in after him before it shuts (DESIGN.md, "Two crews and a portal"): her
+// leap is an arc a frame at a time, and she sinks to the deep's floor and is
+// its whole crew.
+group('the portal opens, she leaps in as it closes, and she is the deep\'s one hand', async () => {
   window.__crew(2, 2);
   run(1);
-  window.__snatch({ played: true });
-  const her = S.workers.find(w => w.type === 'brawler');
-  const pace = commutePace();
-  const trip = follow(her.name, w => !w.walking && belowYard(w));
-  const w = S.workers.find(o => o.name === her.name);
+  const yard0 = S.workers.length;
+  window.__snatch();                     // the facts, the beat left to play
+  let portal = 0, closedAfter = false, leapt = false, jump = 0, at = null, under = false;
+  for (let f = 0; f < 60 * 90 && !S.beatsDone.includes('snatch'); f++) {
+    run(1 / 60);
+    const sn = S.snatch;
+    if (sn) {
+      portal = Math.max(portal, sn.portal || 0);
+      if (portal >= 1 && (sn.portal || 0) < 0.2) closedAfter = true;
+      const b = S.pair[0];
+      if (b && b.leap && !b.under) {
+        leapt = true;
+        if (at) jump = Math.max(jump, Math.hypot(b.x - at.x, b.y - at.y));
+        at = { x: b.x, y: b.y };
+      }
+      if (b && b.under) under = true;
+    }
+  }
+  const name = S.workers.find(w => w.type === 'brawler')?.name;
+  runUntil(() => name && !S.workers.find(o => o.name === name)?.falling, 30);
+  const her = S.workers.find(o => o.name === name);
+  const down = S.workers.filter(w => belowYard(w));
   return [
-    ok(trip.there, 'she gets to the altar', `${trip.frames} frames`),
-    ok(trip.shaft && trip.high < S.groundY && trip.low >= deepFloor() - WORKER - 0.5,
-       'by the shaft: from the plank to the deep\'s floor', `y ${Math.round(trip.high)}..${Math.round(trip.low)}`),
-    ok(trip.jump <= pace + 0.01, 'never moving more than her pace in a frame',
-       `${trip.jump.toFixed(2)} against ${pace}`),
-    ok(w && Math.abs(w.y - (deepFloor() - WORKER)) < 1, 'and stands on the deep\'s floor')
+    ok(portal >= 1 && closedAfter, 'a portal opens in the surface and closes again', `widest ${portal}`),
+    ok(leapt && under, 'she leaps into it before it shuts'),
+    ok(jump < WORKER, 'an arc, a step a frame', `${jump.toFixed(1)}px`),
+    ok(her && belowYard(her) && S.deepCrew === 1 && down.length === 1 && down[0].name === name,
+       "and she is the deep's one hand, down there", `deepCrew ${S.deepCrew}, ${down.length} below`),
+    ok(S.workers.length === yard0 - 1, 'the crew is one fewer: he is not given back', `${S.workers.length} of ${yard0}`)
   ];
 });
 
-group('the freeing puts him back on the crew, and he walks up the shaft to the yard', async () => {
+group("the freeing gives the deep one more hand, and he stays down there", async () => {
   window.__crew(2, 2);
   run(1);
   window.__snatch({ played: true });
   const had = new Set(S.workers.map(w => w.name));
-  const crew0 = S.crew;
+  const crew0 = S.crew, deep0 = S.deepCrew;
   S.serpentStage = 4;                    // the fourth defense broken (deep/serpent.js)
   S.serpentFreed = true;
   run(1 / 60);
   const opening = S.beat.yard;
   runUntil(() => S.beatsDone.includes('freed'), 10);
   const him = S.workers.find(w => !had.has(w.name));
-  const out = him && { deep: belowYard(him), type: him.type };
   const sheet = S.beat.sheet;
   window.__skipBeat('sheet');
-  const pace = commutePace();
-  const trip = him ? follow(him.name, inYard, 60 * 90) : { there: false };
+  let up = false;
+  for (let f = 0; f < 60 * 20; f++) {
+    run(1 / 60);
+    const w = him && S.workers.find(o => o.name === him.name);
+    if (w && !belowYard(w)) up = true;
+  }
   return [
     ok(opening === 'freed', 'the belly opens as a beat', `yard ${opening}`),
-    ok(S.crew === crew0 + 1 && out && out.deep && out.type === 'hauler',
-       'he is one of the crew again, a spare hand, in the deep', JSON.stringify(out)),
+    ok(S.crew === crew0 + 1 && S.deepCrew === deep0 + 1 && him && belowYard(him),
+       "he is one of the deep's crew, down there", `crew ${S.crew}, deep ${S.deepCrew}`),
     ok(sheet === 'freedsheet', 'the sheet says so', `sheet ${sheet}`),
-    ok(S.beatsDone.includes('freedsheet') && S.beat.sheet === null, 'and is put down with its button'),
-    ok(trip.there && trip.shaft, 'he swims up the shaft and comes out on the yard', `${trip.frames} frames`),
-    ok(trip.jump <= pace + 0.01, 'never moving more than his pace in a frame',
-       `${(trip.jump || 0).toFixed(2)} against ${pace}`)
+    ok(!up, 'and he never goes up')
   ];
 });

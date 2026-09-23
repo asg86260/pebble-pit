@@ -83,8 +83,13 @@ let from = null, to = null;
 let posed = false;
 export const poseGlide = () => { posed = true; };
 
+// The way down is the wizards' portal (DESIGN.md, "Two crews and a
+// portal"): until it stands, the deep runs unseen.
+export const canGoDown = () => !!S.portalOpen;
+
 function start(v) {
   if (S.view === v || gliding()) return;
+  if (v === 'deep' && !canGoDown()) return;
   posed = false;
   if (reducedMotion()) { frameOn(v); return; }
   if (S.view === 'yard') keepYard();
@@ -131,6 +136,8 @@ const ease = k => k * k * (3 - 2 * k);
 
 export function stepView(c) {
   if (gliding()) { glide(c.dt); return; }
+  // A save left in the deep from before the portal comes back to the yard.
+  if (S.view === 'deep' && !canGoDown()) { setView('yard'); return; }
   // Held every frame, since a resize or a scene's zoom lets go of it.
   if (S.view !== 'deep') return;
   const z = deepZoom();

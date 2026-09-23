@@ -62,7 +62,7 @@ function handStationX(type, w) {
   // job, not the commute.
   if (type === TYPE.WIZARD) return underMeteor();
   // A builder picks a site of its own and walks itself there (`stepBuilder`).
-  if (type === TYPE.BUILD) return null;
+  if (type === TYPE.BUILD || type === TYPE.DELVE) return null;
   // The deep's stations stand on its floor, under the drowned pit.
   if (isDeepType(type)) return deepPost(type);
   return null;

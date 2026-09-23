@@ -6,34 +6,38 @@
 // on their own clocks; it plays on whichever comes second (`snatchDue`, read
 // by its row in beats.js). Two of the crew nearest the mouth are taken off it
 // for the length of the beat and walked as `S.pair`, the reunion's own
-// drawing: out to the plank, where something comes up out of the surface a
+// drawing: out to the plank, where a portal opens in the abyss's own surface
+// -- a whirlpool turning on the liquid -- and something comes up out of it a
 // cell a frame, takes the one nearer the water and goes back down. The
-// surface closes, the crew is one fewer, and the one left standing goes in
-// after him -- the deep's first job, a brawler, walking the shaft down like
-// anybody sent there.
+// portal starts to close, and the one left standing runs and leaps into it
+// before it shuts: she is the deep's whole crew, a brawler at the altar,
+// sinking to its floor under the portal (DESIGN.md, "Two crews and a
+// portal"). Nobody else ever crosses.
 //
 // The freeing is the fourth defense broken (deep/serpent.js sets the flag):
-// the belly opens, he comes out of it and is one of the crew again, a spare
-// hand in the deep who swims up the shaft to the yard.
+// the belly opens, he comes out of it and is one of the deep's crew, a spare
+// hand down there.
 //
 // `S.snatch` is the beat's state while it plays, and what the drawing reads:
-// `{ phase, at, headY, carried }` -- the phase, when it began, the world y of
-// the top of the head, and whether he is in its jaws. Nothing about it is
+// `{ phase, at, headY, carried, portal }` -- the phase, when it began, the
+// world y of the top of the head, whether he is in its jaws, and how open
+// the portal is (0..1). Nothing about it is
 // saved; a reload plays the beat again from the start, or, past the take,
 // from the surface closing (`startSnatch`).
 
 import { P, WORKER, COMMUTE_PACE, CORE_SIZE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
-         SNATCH_HURRY, FREED_OPEN_MS } from './config.js';
+         SNATCH_HURRY, FREED_OPEN_MS, SNATCH_PORTAL_MS, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
+         DEEP_SURFACE } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt } from './deep/place.js';
+import { mouthX, bellyAt, deepTop } from './deep/place.js';
 import { abyssLine } from './pit.js';
 import { walkY, lookAt } from './world.js';
 import { spawnChip, bell } from './dust.js';
 import { rebalance, JOBS } from './staffing.js';
 import { syncWorkers, retask, FACTORY, newRecord, unbook } from './crew.js';
-import { plant, belowYard } from './route.js';
+import { belowYard } from './route.js';
 import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone } from './beats.js';
@@ -103,7 +107,7 @@ export function startSnatch(t) {
   S.pair = took.map(w => ({ x: w.x, y: w.y, say: null, body: w }));
   const surface = abyssLine();
   S.snatch = { phase: after ? 'close' : 'walk', at: t, headY: surface, carried: after, hurry: 1,
-               him: null, stood: null };
+               him: null, stood: null, portal: after ? 1 : 0 };
   lookAt(mouthX() + WORKER / 2);
 }
 
@@ -146,7 +150,13 @@ export function stepSnatch(t) {
       S.introSaid = t + INTRO_BEAT * 1.4;
       S.pair[0].say = { mark: 'dots', n: 3, until: t + INTRO_BEAT };
     }
-    if (t - s.stood >= SNATCH_LOOK_MS / s.hurry) next('rise');
+    if (t - s.stood >= SNATCH_LOOK_MS / s.hurry) next('open');
+    return true;
+  }
+  if (s.phase === 'open') {
+    // The portal opens in the surface before anything comes out of it.
+    s.portal = Math.min(1, (t - s.at) / (SNATCH_PORTAL_MS / s.hurry));
+    if (s.portal >= 1) next('rise');
     return true;
   }
   if (s.phase === 'rise') {
@@ -176,29 +186,50 @@ export function stepSnatch(t) {
     }
     return true;
   }
-  // 'close': the surface closing over him, the one left at the edge.
-  if (!held(SNATCH_CLOSE_MS)) return true;
+  // 'close': the portal closing over him, and the one left at the edge
+  // running and leaping in before it shuts -- an arc from where she stands to
+  // the whirlpool's middle, and under.
+  const k = Math.min(1, (t - s.at) / (SNATCH_CLOSE_MS / s.hurry));
+  s.portal = 1 - k;
+  const b = S.pair[0];
+  if (b && k >= SNATCH_LEAP_AT) {
+    b.leap ??= { x: b.x, y: b.y };
+    const j = Math.min(1, (k - SNATCH_LEAP_AT) * SNATCH_CLOSE_MS / SNATCH_LEAP_MS);
+    const tx = mouthX() - WORKER / 2, ty = surface;
+    b.x = b.leap.x + (tx - b.leap.x) * j;
+    b.y = b.leap.y + (ty - b.leap.y) * j - Math.sin(j * Math.PI) * SNATCH_LEAP_H;
+    if (j >= 1) b.under = true;
+    b.say = null;
+  }
+  if (k < 1) return true;
   giveBack();
   return false;
 }
 
-// The one left standing is one of the crew again, as the rescue's body was,
-// and goes in after him on her own: the deep's first job. She walks it like
-// any body put on a job -- the shaft down, the deep's floor along -- from
-// where she stood.
+// The one who leapt is one of the crew again, as the rescue's body was, and
+// the deep's whole crew: she comes down through the liquid under the portal
+// and sinks to the deep's floor (crew/falls.js, `sink`), and from there
+// walks to the altar to punch. She is the deep's first body, and the only
+// one until a pod is built.
 function giveBack() {
   const b = S.pair[0];
   const w = b?.body || (b && Object.assign(FACTORY(TYPE.HAUL), newRecord()));
   S.pair = [];
   S.snatch = null;
   if (!w) return;
-  w.x = b.x;
-  plant(w, b.y);
-  w.say = null;
   S.crew++;
+  S.deepCrew = (S.deepCrew || 0) + 1;
   S.brawlers = 1;
   rebalance();
   retask(w, TYPE.BRAWL);
+  w.say = null;
+  w.x = mouthX() - WORKER / 2;
+  w.y = deepTop() + DEEP_SURFACE + P * 2;
+  w.walking = false;
+  w.route = null;
+  w.falling = true;
+  w.vx = 0;
+  w.vy = 0;
   S.workers.push(w);
   syncWorkers();
   S.shopStale = true;
@@ -213,19 +244,22 @@ export const heldBodies = () =>
 
 // --- the freeing ------------------------------------------------------------------
 // The belly opens for FREED_OPEN_MS (drawn off the flag), and he comes out of
-// it: one of the crew again, a body at the belly on no job, which is a spare
-// hand, so it swims to the floor and up the shaft to the yard (crew/deep.js,
-// `surface`). The beat is over the moment he is out, so a reload before then
-// opens the belly again and one after it has him in the crew already.
+// it: one of the deep's crew, a spare hand down there, who sinks to its
+// floor and gathers like any other. The beat is over the moment he is out,
+// so a reload before then opens the belly again and one after it has him in
+// the crew already.
 export function startFreed(t) { S.introAt = t; }
 
 export function stepFreed(t) {
   if (t - S.introAt < FREED_OPEN_MS) return true;
   const at = bellyAt(t);
-  const w = Object.assign(FACTORY(TYPE.HAUL), newRecord());
+  const w = Object.assign(FACTORY(TYPE.GATHER), newRecord());
   w.x = at.x - WORKER / 2;
-  plant(w, at.y - WORKER / 2);
+  w.y = at.y - WORKER / 2;
+  w.falling = true;
+  w.vx = w.vy = 0;
   S.crew++;
+  S.deepCrew = (S.deepCrew || 0) + 1;
   rebalance();
   S.workers.push(w);
   syncWorkers();

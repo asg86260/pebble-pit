@@ -60,7 +60,7 @@ function wayNote() {
 way.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { wayNoting = true; wayNote(); } });
 way.addEventListener('pointerleave', () => { if (wayNoting) { wayNoting = false; showTipAt(null); } });
 function seatWay() {
-  way.hidden = S.paused || !S.snatched;
+  way.hidden = S.paused || !S.portalOpen;
   const up = S.view === 'deep';
   if (way.dataset.way !== (up ? 'up' : 'down')) {
     way.dataset.way = up ? 'up' : 'down';
