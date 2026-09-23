@@ -432,10 +432,12 @@ export function stepDoseMotes(dt) {
     if (at < (w.moteAt || 0)) continue;
     w.moteAt = at + DOSE_MOTE_MS;
     // A rider is held at its post to the yard, but seen in the basket: the
-    // plume goes up off the head drawn there (`drawCraft`), at the craft's size.
+    // plume goes up off the head drawn there (`drawCraft`), at the craft's
+    // depth and size, so it is drawn among the clouds with it.
     const sky = inBasket(w) ? craftAt(w.craft) : null;
-    const mx = sky ? sky.x : w.x + WORKER / 2;
+    const mx = sky ? sky.cx : w.x + WORKER / 2;
     const my = sky ? sky.y - (P + WORKER) * sky.s : w.y;
+    const k = sky ? sky.s : 1;
     // A body under several tonics gives off one mote of each color, not a
     // blend: an average of green and purple is a color that is neither. Two
     // motes a beat per tonic, or a single-tonic body's column thins to a
@@ -443,8 +445,9 @@ export function stepDoseMotes(dt) {
     for (const t of doseTonics(w))
       puff(mx, my, {
         n: 2,
-        s: 0.55,
-        rise: DOSE_MOTE_RISE,
+        s: 0.55 * k,
+        rise: DOSE_MOTE_RISE * k,
+        far: sky ? sky.far : null,
         life: DOSE_MOTE_LIFE,
         color: t.color
       });

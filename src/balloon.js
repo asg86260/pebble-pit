@@ -337,8 +337,12 @@ function sheetSize(far) {
 export function craftAt(i) {
   const c = CRAFT[i];
   const k = c && c.sky ? c.sky : atPost(i);
-  return { x: onSky(k.x, k.far), y: k.y, far: k.far, s: sizeAt(k.far) };
+  return { x: onSky(k.x, k.far), y: k.y, far: k.far, s: sizeAt(k.far), cx: k.x };
 }
+// Where a thing let go at depth `far` is drawn this frame, from its `x` in the
+// clouds' own space: a plume off a rider keeps its place in the sky, not on
+// the glass.
+export const skyX = (x, far) => onSky(x, far);
 // The bottom of the basket.
 export const craftY = i => craftAt(i).y;
 
