@@ -86,6 +86,9 @@ export const ROWS = [
   // The belt's gate: a full set of carts and both of the haulers' ladders topped.
   { key: 'driver', part: 1,
     reach: () => { sites(); window.__levels({ haulCarryLevel: 99, haulPaceLevel: 99 }); window.__kit({ carters: 3 }); } },
+  // The forklifts' own ladders, offered once there is a forklift.
+  { key: 'liftload', part: 1, reach: () => { sites(); window.__kit({ drivers: 1 }); } },
+  { key: 'liftpace', part: 1, reach: () => { sites(); window.__kit({ drivers: 1 }); } },
   { key: 'blaster', part: 1, reach: () => { grounds(); window.__answered('props', 'net', 'arch'); } },
   { key: 'grower', part: 1, reach: () => { grounds(); window.__answered('props', 'net'); } },
 

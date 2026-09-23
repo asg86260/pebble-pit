@@ -17,7 +17,7 @@ import { P } from './config.js';
 import { ways, wayAt, standTop, WORKINGS } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
-import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf, driving } from './kit.js';
+import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf } from './kit.js';
 import { count, countDust } from './grid.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 
@@ -325,24 +325,18 @@ export function verifyWorld() {
            `${job}: ${out} worn, ${owned} owned now and never more than ${mark}`);
   }
 
-  // --- rule 3c: an engine is on a cart, and the books balance on engines ------
-  // A forklift is a cart with an engine under it (kit.js, `LIFT`): a body
-  // driving one is wearing the carts' kit, and no more are on the road than
-  // the stand has ever owned -- the same tolerance as the hats above, since a
-  // hook can lower the count under a driver and `stepLifts` walks one back.
+  // --- rule 3c: the forklifts are the count, and none of them is crew ----------
+  // A forklift drives itself (crew/lifts.js): one body in `S.lifts` for every
+  // one owned, and never one in `S.workers`, the people.
   {
-    for (const w of S.workers)
-      if (w.lift && !(w.trained && w.kitOf === JOB.HAUL))
-        fail('a body is driving a forklift with no cart under it', `${who(w)}`);
     const owned = liftsOf();
     if (!Number.isInteger(owned) || owned < 0)
-      fail('the engines are a count that is not a count', `${owned}`);
-    const out = driving();
-    const mark = out <= owned ? owned : Math.max(everOwned.get('lift') ?? owned, owned);
-    everOwned.set('lift', mark);
-    if (out > mark)
-      fail('more forklifts are driven than the stand has ever owned',
-           `${out} driven, ${owned} owned now and never more than ${mark}`);
+      fail('the forklifts are a count that is not a count', `${owned}`);
+    if ((S.lifts || []).length !== owned)
+      fail('the yard does not have a forklift for every one it owns',
+           `${(S.lifts || []).length} in the yard, ${owned} owned`);
+    for (const w of S.workers)
+      if (w.vehicle) fail('a forklift is on the crew', `${who(w)}`);
   }
 
   // --- rule 7: the ledgers --------------------------------------------------------

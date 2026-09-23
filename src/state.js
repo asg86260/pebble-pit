@@ -263,9 +263,11 @@ export const S = {
   // One pool of bodies, hired once and put wherever you like. A job is a
   // count; `haulers` is always the ones left over, never a job you hire into.
   workers: [],            // little squares that mine and ferry dust
+  lifts: [],              // the forklifts: not crew, they haul by themselves (crew/lifts.js)
   crew: 0,                // bodies hired, all told
   rockhands: 0, rockhandSpeedLevel: 0, rockhandPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
+  liftLoadLevel: 0, liftPaceLevel: 0,                  // the forklifts' own two ladders
   quarriers: 0, quarryPaceLevel: 0, seamLevel: 0,
   // How many cells deep each column of the quarry has been dug; the quarry is
   // what has been taken out (quarry.js).
@@ -486,6 +488,8 @@ export const SAVED = [
   'growers',
   'haulCarryLevel',
   'haulPaceLevel',
+  'liftLoadLevel',
+  'liftPaceLevel',
   'brews',
   'shards',
   'spores',
@@ -595,6 +599,7 @@ export const SAVED_BY_HAND = [
   'camX',                 // rounded out, and read back once, into `camWas`
   'coreItem',             // a core loose in the world: a spot, or the fact of one
   'workers',              // saved as `who`: a name and a record apiece, not four counts
+  'lifts',                // saved by crew/lifts.js: where each is and what is on its forks
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
   'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
   'drops',                // and the rain in the air, [x, y, vy] a drop; the same

@@ -5,12 +5,12 @@
 
 import { P, WORKER, LIFT_SEAT as SEAT } from './config.js';
 import { S, quarry, farm, apothecary, filter, sky, outhouse, shack } from './state.js';
-import { groundAt, kitX, liftX, quarryShed } from './world.js';
+import { groundAt, kitX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
-import { KIT_MARK, TRADE_OF, LIFT, spareLifts, liftsOf } from './kit.js';
+import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
 import { JOB } from './jobs.js';
 import { shown } from './tween.js';
 
@@ -73,8 +73,8 @@ export function postAt(p) {
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
-// The carts' second rung has a line of its own under the carters': the
-// engines the lip owns, drawn as a driver sat up on one.
+// The forklifts have a line of their own under the carters': how many the
+// yard owns, drawn as one with nobody aboard.
 const liftLine = p => p.job === JOB.HAUL && liftsOf() > 0;
 
 // The machine's mark stands under the count, at the bottom of the strip, below
@@ -135,13 +135,6 @@ export function kitStands() {
     if (n < 1) continue;
     const x = Math.round(kitX(p.job) / P) * P;
     out.push({ job: p.job, mark: KIT_MARK[p.job], n, x, y: Math.round(groundAt(x) / P) * P });
-  }
-  // The engines wait on a second trestle beside the carts', one stand's width
-  // over, so the two counts never sit on one another.
-  const lifts = spareLifts();
-  if (lifts >= 1) {
-    const x = Math.round(liftX() / P) * P;
-    out.push({ job: JOB.HAUL, mark: LIFT.mark, n: lifts, x, y: Math.round(groundAt(x) / P) * P });
   }
   return out;
 }
@@ -226,7 +219,6 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
     // minus slot and the stack stays clear of the count.
     if (liftLine(p) && drawLift) {
       drawLift(b.lift.x, b.lift.y, -1);
-      drawBody(b.lift.x, b.lift.y - SEAT);
     }
 
     if (p.fixed) continue;                       // carrying is read, not set

@@ -702,25 +702,29 @@ export const SCENES = {
   kitbench: { about: 'the kit', say: 'the carter on the bench, beside the belt',
     run: () => { rich(); S.shieldsDone = ['props']; window.__kit({ carters: 2 });
                  window.__board('bench'); } },
-  // Bought through the row, so the carters walk to the engines' stand for
-  // them; the run is long enough for the swaps and a laden drive or two.
-  forklift: { about: 'the kit', say: 'three forklifts on the road, smoking, and the driver row on the bench',
+  // Bought through the row; they roll off the stand by themselves, and the
+  // run is long enough for a laden drive or two.
+  forklift: { about: 'the kit', say: 'three forklifts on the road with nobody aboard, smoking',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
                  for (let i = 0; i < 3; i++) { window.__buy('driver'); window.__finish(); }
-                 window.__fast(30); window.__look(ladenHauler() - st().viewW / 2); } },
+                 window.__fast(30);
+                 const l = st().lifts.find(k => k.carry) || st().lifts[0];
+                 window.__look((l ? l.x : ladenHauler()) - st().viewW / 2); } },
   // The camera held up so the strip under the ground is in the picture.
-  liftroster: { about: 'the kit', say: 'the carry roster: bodies, carts, and forklifts under them',
+  liftroster: { about: 'the kit', say: 'the carry roster: bodies, carts, and the forklifts under them',
     run: () => { rich(); lip(); window.__kit({ drivers: 2 }); window.__fast(20);
                  const s = st(); window.__look(s.houses.door - s.viewW / 2);
                  S.camLockY = S.groundY - S.viewH * 0.35; } },
-  liftstand: { about: 'the kit', say: 'an engine waiting on its trestle beside the carts\' stand',
-    // No haulers, so nobody comes for it and it stays on the trestle.
-    run: () => { window.__reset(); window.__crew(3, 0, 5, 7); window.__fullSites();
+  liftstand: { about: 'the kit', say: 'three forklifts parked at their slots by the bench, the yard clean',
+    // The floor cleared and nobody working, so nothing new falls to fetch and
+    // they stay parked.
+    run: () => { window.__reset(); window.__crew(0, 0); window.__fullSites(); window.__crew(0, 0);
                  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
-                 window.__buy('driver'); window.__finish(); window.__fast(0.5);
-                 window.__look(st().benchX - 72 - st().viewW / 2); } },
-  driverrow: { about: 'the kit', say: 'the driver row on the bench, beside the carts',
+                 for (let i = 0; i < 3; i++) { window.__buy('driver'); window.__finish(); }
+                 window.__clearFloor(); window.__fast(0.5);
+                 window.__look(st().benchX - 180 - st().viewW / 2); } },
+  driverrow: { about: 'the kit', say: 'the forklift row on the bench, beside the carts',
     run: () => { rich(); S.shieldsDone = ['props']; lip(); window.__board('bench'); } },
   kit: { about: 'the kit', say: 'every hat there is, worn',
     run: () => { window.__reset(); window.__crew(3, 3, 3, 3);

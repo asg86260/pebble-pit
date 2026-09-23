@@ -37,6 +37,10 @@ export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, Math.round
 export const haulCap = (lvl = S.haulCarryLevel) => rungValue('haulcarry', lvl);
 // The walk is written in px/s and stepped in px a frame.
 export const haulSpeed = (lvl = S.haulPaceLevel) => rungValue('haulpace', lvl) / 60;
+// A forklift's, off its own two ladders (DESIGN.md, "The forklifts drive
+// themselves").
+export const liftCap = (lvl = S.liftLoadLevel) => rungValue('liftload', lvl);
+export const liftSpeed = (lvl = S.liftPaceLevel) => rungValue('liftpace', lvl) / 60;
 // The scoop rides the pace ladder, off its own written list; no row reads it.
 export const scoopMs = (lvl = S.haulPaceLevel) =>
   Math.max(1, HAUL_SCOOP_MS[Math.max(0, Math.min(HAUL_SCOOP_MS.length - 1, lvl | 0))]);

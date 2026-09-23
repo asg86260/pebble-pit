@@ -113,6 +113,8 @@ function drawCartBox(x, y) {
 // in the cell over the ground line, the box on the wheels. Five cells wide so
 // a three-cell body sits centered on it a whole cell in from each end.
 const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
+// the most drawn on the forks: the top of the load ladder
+const LIFT_CAP = 64;
 
 // One drawing for all three places it is seen: on the road under a body, on
 // its stand, and lying where it was thrown. `x` is the truck's left edge,
@@ -170,8 +172,7 @@ export function drawDroppedHats() {
     // Drawn as the thing it IS, off whose kit it is: a cart lying on the ground
     // is the box and its wheel, not a little hat.
     const mark = KIT_MARK[w.hatOff.of] || 'helmet';
-    if (w.hatOff.lift) drawLiftBox(x, y);
-    else if (mark === 'cart') drawCartBox(x, y - CART_H - P);
+    if (mark === 'cart') drawCartBox(x, y - CART_H - P);
     else drawHat(x, y, mark);
   }
 }
@@ -451,6 +452,30 @@ const PLAIN = { lunge: 0 };
 // whole cell sideways reads as a body stepping, not reaching.
 const LEAN = 0.5;
 
+// The forklifts: the truck and nobody on it, its load on the forks four
+// abreast, a core riding on top of the load. Not crew, so not faded with them
+// (the crew switch in the corner is about people).
+export function drawForklifts() {
+  for (const w of S.lifts || []) {
+    const ground = Math.round(w.y);
+    const x = Math.round(w.x);
+    const lift = drawLift(x, ground, w.face || 1);
+    const n = Math.min(w.carry || 0, LIFT_CAP);
+    for (let i = 0; i < n; i++) {
+      drawMark(w.load?.[i] || 1,
+               lift.forkX + (i % LIFT_ABREAST) * P + P / 2,
+               lift.forkTop - P * (Math.floor(i / LIFT_ABREAST) + 1) + P / 2);
+    }
+    ctx.fillStyle = '#000';
+    if (w.hasCore) {
+      const cx = lift.forkX + LIFT_FORK / 2;
+      const cy = lift.forkTop - P * (Math.ceil(n / LIFT_ABREAST) + 2);
+      drawCoreGlow(cx, cy);
+      drawCircle(cx, cy, P * 1.2);
+    }
+  }
+}
+
 export function drawWorkers() {
   const t0 = now();
   for (const w of S.workers) {
@@ -479,20 +504,17 @@ export function drawWorkers() {
     const ground = Math.round(w.y + throwOn * look.lunge * P - hop);
 
     // A cart is kit like any other, drawn off what the body is holding rather
-    // than what the books say it is: the same rule a helmet has. A forklift
-    // is the same rule with the body sat up on it: the truck is drawn on the
-    // ground and the body `LIFT_SEAT` above it, and nothing in the sim moves.
+    // than what the books say it is: the same rule a helmet has.
     const kit = wearing(w);
     const cart = kit === 'cart' ? cartBox(x, ground, w.face || 1) : null;
     if (cart) drawCart(x, ground, w.face || 1);       // behind the body it follows
-    const lift = kit === 'lift' ? drawLift(x, ground, w.face || 1) : null;
-    const y = lift ? ground - LIFT_SEAT : ground;
+    const y = ground;
 
     drawBody(x, y);
 
     // One line, for everybody: the whole of what "hats are always shown" means.
     const hat = kit;
-    if (hat && hat !== 'cart' && hat !== 'lift') drawHat(x, y, hat);
+    if (hat && hat !== 'cart') drawHat(x, y, hat);
 
     // The tonic is not drawn on the body: it is a plume of motes let go from
     // the head into the yard (`stepDoseMotes` in apothecary.js), so a walking
@@ -516,12 +538,11 @@ export function drawWorkers() {
     if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); continue; }
 
     // A load is drawn grain by grain as whatever each grain is: overhead two
-    // abreast, in the cart four abreast, or on the forks three abreast and as
-    // high as it goes.
-    const abreast = lift ? LIFT_ABREAST : cart ? CART_ABREAST : 2;
-    const left = lift ? lift.forkX : cart ? cart.x : x + (WORKER - P * 2) / 2;
-    const top = lift ? lift.forkTop : cart ? cart.y : y;
-    const cap = lift ? 48 : cart ? 40 : 24;
+    // abreast, or in the cart four abreast. (A forklift's is `drawForklifts`.)
+    const abreast = cart ? CART_ABREAST : 2;
+    const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
+    const top = cart ? cart.y : y;
+    const cap = cart ? 40 : 24;
     for (let i = 0; i < Math.min(w.carry, cap); i++) {
       drawMark(w.load?.[i] || 1,
                left + (i % abreast) * P + P / 2,

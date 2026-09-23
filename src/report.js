@@ -601,9 +601,11 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   blasters: S.blasters,
   growers: S.growers,
   trained: S.workers.filter(w => w.trained).map(w => w.type[0]).sort().join(''),
-  // The forklifts: owned, and on the road.
+  // The forklifts: owned, and each one in the yard, where it is and what it
+  // has on its forks.
   drivers: S.drivers || 0,
-  driving: S.workers.filter(w => w.lift).length,
+  lifts: (S.lifts || []).map(w => ({ x: Math.round(w.x), carry: w.carry || 0, goal: w.goal,
+                                     core: !!w.hasCore })),
 
   // The piles as they are drawn.
   pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key),

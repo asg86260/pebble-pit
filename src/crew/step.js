@@ -54,6 +54,7 @@ import { dispossessed, stepKit } from './kitwalk.js';
 import { onYard, stand, surfaceUnder, duck, sideOf } from './body.js';
 import { findPeak } from './rockhand.js';
 import { claims } from './hauler.js';
+import { stepLifts } from './lifts.js';
 import { fall, stepHat } from './falls.js';
 import { retask, stepCommute } from './commute.js';
 import { relieve } from './nature.js';
@@ -138,7 +139,6 @@ const STAGES = [
     }
     w.trained = true;
     w.kitOf = w.hatOff.of;
-    w.lift = !!w.hatOff.lift;
     w.hatOff = null;
     retask(w, w.type);
     return true;
@@ -317,7 +317,7 @@ export function updateWorkers(now, dt) {
     const from = Math.max(0, colOf(floor, zone.from));
     const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
     for (let col = from; col <= to; col++) taken.add(col);
-    for (const w of S.workers) {
+    for (const w of [...S.workers, ...(S.lifts || [])]) {
       if (w.type !== TYPE.HAUL || w.claim < 0) continue;
       const side = sideOf(zone, w.x);
       const across = side && sideOf(zone, floor.x + w.claim * P) !== side;
@@ -345,6 +345,10 @@ export function updateWorkers(now, dt) {
     if (!done) jobOf(w).work(w, c);
     holdTheLine(w, was.get(w), zone);
   }
+
+  // The forklifts, on the same books and held off the same footprint; not
+  // crew, so none of the stages above.
+  stepLifts(c, (w, x0) => holdTheLine(w, x0, zone));
 
   faceTravel(was);
 }

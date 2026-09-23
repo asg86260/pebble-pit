@@ -29,6 +29,7 @@ import { setPitGrain, SAVE as PIT } from './pit.js';
 import { SAVE as DUST } from './dust.js';
 import { SAVE as SHIELD } from './shield.js';
 import { syncWorkers, SAVE as CREW } from './crew.js';
+import { SAVE as LIFTS } from './crew/lifts.js';
 import { SAVE as STAFF } from './staffing.js';
 import { SAVE as TOWER } from './tower.js';
 import { SAVE as CORE } from './core.js';
@@ -469,6 +470,8 @@ export const SAVERS = [
   // The crew after `resite` (its own first line): the yard is as deep and
   // as wide as it was before a body is stood on it.
   CREW,
+  // The forklifts after the crew, whose rebalance they are not part of.
+  LIFTS,
   FLOOR,
   // The rift comes back before the dust is put away, because how much
   // belongs in the hole depends on how much is already through; the pit's

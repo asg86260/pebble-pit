@@ -26,8 +26,6 @@ export const KIT_KNOBS = [
 // machines' coin because it is machinery, and rising `TRADE_RATE` a lift the
 // way every hat does. Nothing caps the row; the sky does.
 export const LIFT_BILL = [['spark', 30], ['dust', 1800]];
-export let LIFT_LOAD = 2;      // over a carter's load: four times a bare hauler
-export let LIFT_PACE = 2;      // over the pace ladder, laden and empty
 // What goes up while it drives laden: soot a cell, put up a puff at a time so
 // the sky answers to the road actually driven. Empty driving is clean. The
 // foot is a machine's fouling spread over a rock-to-hole run, so one lift on
@@ -39,15 +37,13 @@ export const LIFT_PUFF_CELLS = 6;
 // of ground before the carts' slab. The bench pads its left side by it
 // (`hang` in sites.js), which is what keeps it off the noticeboard.
 export const LIFT_STAND_OFF = P * 11;
+// How far apart the forklifts park at the stand: a truck's width and a cell.
+export const LIFT_PARK = P * 7;
 // How far the truck lifts its driver: a wheel and the truck's box. The yard
 // draws the driver this high and the roster leaves this much room for one.
 export const LIFT_SEAT = P * 3;
 
 export const LIFT_KNOBS = [
-  { key: 'LIFT_LOAD', label: 'a lift carries, over a cart', min: 1, max: 6, step: 0.5,
-    get: () => LIFT_LOAD, set: v => { LIFT_LOAD = v; } },
-  { key: 'LIFT_PACE', label: 'a lift drives, over a boot', min: 1, max: 6, step: 0.5,
-    get: () => LIFT_PACE, set: v => { LIFT_PACE = v; } },
   { key: 'LIFT_FOUL', label: 'soot a cell a lift drives', min: 0, max: 1, step: 0.01,
     get: () => LIFT_FOUL, set: v => { LIFT_FOUL = v; } }
 ];

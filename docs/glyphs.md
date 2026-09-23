@@ -43,7 +43,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | lever           | `auto`, `autotoss`, `recycler`, `letgo`                                                |
 | cart            | `carter`                                                                               |
 | belt            | `belt`                                                                               |
-| forklift        | `driver`                                                                             |
+| forklift        | `driver`, `liftload` +plus, `liftpace` +up                                           |
 | ram *           | `ram`, `tuneram` +plus, `spelldrive` +star                                           |
 | jaw *           | `jaw`, `tunejaw` +plus                                                               |
 | tiller *        | `tiller`, `tunetiller` +plus                                                         |

@@ -87,7 +87,8 @@ export function pileTop(col) {
 const footprintClear = () => {
   const zone = dropZone();
   if (!zone) return true;
-  return !S.workers.some(w => onYard(w) && w.x + WORKER > zone.from && w.x < zone.to);
+  return ![...S.workers, ...(S.lifts || [])]
+    .some(w => onYard(w) && w.x + WORKER > zone.from && w.x < zone.to);
 };
 
 export function stepCore() {

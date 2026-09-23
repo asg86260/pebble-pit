@@ -17,7 +17,6 @@ import { postOf } from './tenders.js';
 import { grabHat, kitFree } from './kitwalk.js';
 import { spareKit } from '../levels.js';
 import { JOB } from '../jobs.js';
-import { spareLifts } from '../kit.js';
 import { bailOut, berthFor, mastX } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
@@ -122,8 +121,7 @@ export function nextLeg(w) {
 function arrive(w) {
   // `kitOf` travels with the hat: what a body wears is a fact about the kit,
   // not about the job it is on this second.
-  // The engine goes back with the cart it is bolted to.
-  if (w.leg === 'drop') { w.trained = false; w.kitOf = null; w.lift = false; }
+  if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
   // Only if there is still one on the stand: the count can go to nought behind
   // a body half way there, and putting one on anyway is a helmet out of
   // nothing.
@@ -131,16 +129,6 @@ function arrive(w) {
     if (spareKit(w.wanting) > 0) { w.trained = true; w.kitOf = w.wanting; }
     w.wanting = null;
   }
-  // A forklift goes on to the cart the body arrived wearing, and on to
-  // nothing else: a bare hauler at the stand is a hauler the cart row has not
-  // served yet, and a lift on a bare body is a lift on nothing.
-  if (w.leg === 'lift') {
-    if (spareLifts() > 0 && w.trained && w.kitOf === JOB.HAUL) w.lift = true;
-    w.wanting = null;
-  }
-  // The stand has fewer engines than there are on the road (a dev hook, an
-  // old save): the engine comes off here, where it was fitted.
-  if (w.leg === 'unlift') w.lift = false;
   // Picking up a hat off the ground sends the body straight back to work
   // through `retask`, so there is no leg left to walk.
   if (w.leg === 'grab' && grabHat(w)) return;
@@ -204,7 +192,7 @@ export function retask(w, type) {
   // hauler has no station, and a carter retasked in place with its cart
   // stripped here goes and fetches a phantom from the stand.
   if (!legs.length) {
-    if (w.trained && w.kitOf !== job) { w.trained = false; w.kitOf = null; w.lift = false; }
+    if (w.trained && w.kitOf !== job) { w.trained = false; w.kitOf = null; }
     settle(w);
     return;
   }

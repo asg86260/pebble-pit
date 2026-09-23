@@ -54,7 +54,7 @@ export const newRecord = () => ({
 // down. `lentFrom` is the loan, saved with the body it is on (`rebalance` in
 // upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
-                      'at', 'trained', 'kitOf', 'lift', 'x', 'y',
+                      'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom',
                       // the doses in a stirrer's arms, or a stirrer saved on a
                       // round comes back with `goal: 'out'` and empty hands
@@ -128,7 +128,7 @@ function hatKeep(h) {
     x = Math.round(x);
     y = standTop(x, rockTop);
   }
-  return { of: h.of, lift: !!h.lift, x, y };
+  return { of: h.of, x, y };
 }
 
 export function keepOf(w) {
@@ -154,7 +154,7 @@ export function wearRecord(w, from) {
   // has none, and the station's count puts that hat back on the stand.
   const h = from.hatOff;
   if (h && h.of && Number.isFinite(h.x) && Number.isFinite(h.y))
-    w.hatOff = { of: h.of, lift: !!h.lift, rest: true, x: h.x, y: h.y, vx: 0, vy: 0 };
+    w.hatOff = { of: h.of, rest: true, x: h.x, y: h.y, vx: 0, vy: 0 };
   // An old save has one `dose` rather than a list; older still, a dose with no
   // `left` was written as a moment on a clock since restarted, and the body
   // comes back sober.

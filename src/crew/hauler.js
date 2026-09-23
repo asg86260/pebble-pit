@@ -5,7 +5,7 @@
 // nobody else will pick up.
 
 import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
-         LIFT_PACE, LIFT_FOUL, LIFT_PUFF_CELLS } from '../config.js';
+         LIFT_FOUL, LIFT_PUFF_CELLS } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, rockLeft } from '../world.js';
@@ -14,7 +14,7 @@ import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach, bandY } from '.
 import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckAtCol, muckFor, nearestMuck, foul } from '../smog.js';
-import { haulSpeed, scoopMs, homePace } from '../levels.js';
+import { haulSpeed, liftSpeed, scoopMs, homePace } from '../levels.js';
 // the stew on a hauler's legs, read per body at every haul walk
 import { speedBoost } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
@@ -25,6 +25,11 @@ import { duck, stand, hireSpot, sideOf } from './body.js';
 import { downTheHole, downTheCut, nearestCutDust, cutDustAt, load, roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, amble, ROAM_PACE } from './idle.js';
+import { park } from './lifts.js';
+
+// Everybody who hauls: the haulers, and the forklifts, which are not crew but
+// share the haulers' books (crew/lifts.js).
+const hauling = () => [...S.workers.filter(o => o.type === TYPE.HAUL), ...(S.lifts || [])];
 
 export function newHauler() {
   // Feet on the ground from the first frame: a body put straight on to
@@ -68,8 +73,8 @@ const anyDust = taken => {
 function firstPick(w, taken, zone) {
   const last = lastCol();
   const others = [];
-  for (const o of S.workers) {
-    if (o === w || o.type !== TYPE.HAUL) continue;
+  for (const o of hauling()) {
+    if (o === w) continue;
     others.push(o.claim >= 0 ? o.claim : colOf(floor, o.x));
   }
   const side = zone ? sideOf(zone, w.x) : 0;
@@ -145,7 +150,7 @@ function nextNear(w, bare, taken) {
 // reads as hesitating.
 function keptBy(w, c) {
   const x = floor.x + c * P;
-  const o = S.workers.find(o => o !== w && o.type === TYPE.HAUL && o.claim === c);
+  const o = hauling().find(o => o !== w && o.claim === c);
   return !!o && Math.abs(o.x - x) <= Math.abs(w.x - x);
 }
 
@@ -157,7 +162,7 @@ function claim(w, c, taken) {
 // the columns already spoken for this frame
 export function claims() {
   const taken = new Set();
-  for (const w of S.workers) if (w.type === TYPE.HAUL && w.claim >= 0) taken.add(w.claim);
+  for (const w of hauling()) if (w.claim >= 0) taken.add(w.claim);
   return taken;
 }
 
@@ -166,11 +171,10 @@ export function topGrain(c) {
   return -1;
 }
 
-// A body's own pace on the road: the ladder's, a tonic on top, and the engine
-// on top of that. Every walk a hauler makes with work in mind goes through
-// here; the stroll (`ROAM_PACE`) does not, since an engine idling is not
-// driving.
-export const drive = w => haulSpeed() * speedBoost(w) * (w.lift ? LIFT_PACE : 1);
+// A body's own pace on the road: the ladder's and a tonic on top, or a
+// forklift's own ladder. Every walk a hauler makes with work in mind goes
+// through here; the stroll (`ROAM_PACE`) does not.
+export const drive = w => w.vehicle ? liftSpeed() : haulSpeed() * speedBoost(w);
 
 // A forklift smokes for the road it drives laden: a puff every
 // `LIFT_PUFF_CELLS` cells, off the back of it, counted off where the body
@@ -180,7 +184,7 @@ export const drive = w => haulSpeed() * speedBoost(w) * (w.lift ? LIFT_PACE : 1)
 function liftSmoke(w) {
   const was = w.liftAt;
   w.liftAt = w.x;
-  if (!w.lift || !w.carry || was == null) { w.liftOdo = 0; return; }
+  if (!w.vehicle || !w.carry || was == null) { w.liftOdo = 0; return; }
   w.liftOdo = (w.liftOdo || 0) + Math.abs(w.x - was) / P;
   if (w.liftOdo < LIFT_PUFF_CELLS) return;
   w.liftOdo -= LIFT_PUFF_CELLS;
@@ -221,7 +225,8 @@ export function haulerWork(w, c) {
   // it back on the ground line every other frame held it at the top for ever.
   // The patch it is going for is the same claim `takeMess` makes, made here
   // so the trip down the hole is made against it too: one patch, one body.
-  if (!w.carry && !w.hasCore) {
+  // A forklift does not shovel: muck, the hole and the cut are the haulers'.
+  if (!w.vehicle && !w.carry && !w.hasCore) {
     // Cleared and re-picked a frame apart, since the frame's set still
     // carries this body's own elbows -- and "a frame apart" has to hold across
     // the whole frame, or `takeMess` further down picks against those elbows
@@ -236,7 +241,7 @@ export function haulerWork(w, c) {
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }
   }
-  const patch = !w.carry && !w.hasCore && muckFor(w) > 0 && w.muckAt != null
+  const patch = !w.vehicle && !w.carry && !w.hasCore && muckFor(w) > 0 && w.muckAt != null
     ? w.muckAt * P + P / 2 : null;
 
   // In the hole, over the hole, or on the ground beyond it: one question --
@@ -340,14 +345,14 @@ export function haulerWork(w, c) {
   // rather than in the mess stage (`late` on the row): done only when there is
   // nothing else on, it is never done. Hands full is the exception: a load
   // put down to pick up a shovel is a trip wasted.
-  if (takeMess(w, c)) return;
+  if (!w.vehicle && takeMess(w, c)) return;
   haulerBack(w);                                   // the yard is clear
 
   // Fresh dust down the cut, before the yard's own: it is what keeps the
   // ladder trip working. One column, one hauler (`nearestCutDust`), never
   // more hands sent down than there are grains lying loose, and only for
   // empty hands with nothing claimed, so it never steals a load.
-  if ((w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry && !w.hasCore &&
+  if (!w.vehicle && (w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry && !w.hasCore &&
       w.cutClaim == null && cut.n - (cut.rock || 0) > cutTaken.size && bookRoom(w) > 0) {
     const pick = nearestCutDust(w.x + WORKER / 2, cutTaken);
     // Acted on the same frame it is found, or a floor column picked below
@@ -490,6 +495,8 @@ export function haulerWork(w, c) {
     // about when they get there, then another.
     unbook(w);                  // idle hands hold no room
     if (anyDust(taken)) { w.goal = 'seek'; w.idleSince = 0; return; }
+    // A forklift has no house and takes no break: it parks (crew/lifts.js).
+    if (w.vehicle) { park(w); return; }
 
     // After a good while of nothing -- staggered, so they trickle off rather
     // than clocking out together -- a body goes home. Every one is back the

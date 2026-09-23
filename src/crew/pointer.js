@@ -134,12 +134,11 @@ function flingHat(w, dx) {
   // `of` is the whole identity, which station's kit this is; the mark to draw
   // is derived from it.
   // The engine is bolted to the cart, so a forklift comes off in one piece.
-  w.hatOff = { of: w.kitOf, lift: !!w.lift, rest: false,
+  w.hatOff = { of: w.kitOf, rest: false,
                x: w.x, y: w.y - P,
                vx: Math.max(-HURL_MAX, Math.min(HURL_MAX, dx * SHAKE_FLING * 2 + bell())),
                vy: -SHAKE_LIFT * 1.4 + bell() * 0.4 };
   w.trained = false;
-  w.lift = false;
   earn('hatoff');
 }
 export function shakeHeld(w, dx) {

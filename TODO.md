@@ -107,12 +107,6 @@ touching `src/config/build.js`.
 
 ## Approved or designed, not built
 
-- **The forklifts drive themselves** (approved 2026-09-22, building).
-  DESIGN.md, "The forklifts drive themselves": a forklift becomes its own
-  body (`TYPE.LIFT`, not crew) that hauls by the haulers' loop with nobody
-  aboard and parks at the bench's stand when idle; old saves' worn forklifts
-  come off their carters. The bulk of the work is every crew-walking system
-  saying whether it means people. Plus two ladders, forklift load and speed.
 - **The noticeboard** (approved 2026-09-10). DESIGN.md, "The noticeboard, and
   the record on it": forty-two notices, recognition only, the books move onto
   its second sheet. Thresholds are dev-panel questions. Wave-sized: catalog,
@@ -127,6 +121,8 @@ touching `src/config/build.js`.
 
 ## Drawing and listening
 
+- Where the self-driving forklifts park (`parkX`, crew/lifts.js): the row runs
+  into the noticeboard's legs. The owner's call; the `liftstand` scene shows it.
 - The forklift (`drawLiftBox`, render/crew.js) and its `lift` shelf glyph are
   first sketches; want a pass in `glyphs.html` and a shot.
 - The farm shed, the quarry shed and the bench share one silhouette at 1x. One

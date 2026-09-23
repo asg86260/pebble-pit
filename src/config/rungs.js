@@ -40,6 +40,13 @@ export const LADDERS = {
   // --- the bench: the haulers ---------------------------------------------------
   haulcarry:    { value: [2, 4, 6, 8, 10, 12, 14, 15, 16], dust: [150, 200, 300, 400, 500, 750, 1000, 1500] },     // grains a load
   haulpace:     { value: [160, 200, 240, 280, 330, 390, 460, 530, 600], dust: [200, 300, 400, 500, 600, 900, 1200, 1800] },     // px/s, the walk
+  // --- the bench: the forklifts --------------------------------------------------
+  // A forklift's foot is what a driver had at the foot of the haulers'
+  // ladders: a load of two, doubled by the cart and again by the engine, at
+  // twice a bare hauler's walk. Dearer than the haulers': they are the late
+  // yard's.
+  liftload:     { value: [8, 12, 16, 20, 26, 32, 40, 50, 64], dust: [600, 900, 1200, 1800, 2400, 3600, 4800, 7200] },     // grains a load
+  liftpace:     { value: [320, 380, 440, 500, 580, 680, 800, 950, 1200], dust: [800, 1200, 1600, 2400, 3200, 4800, 6400, 9600] }, // px/s, the drive
   // --- the air filter -----------------------------------------------------
   power:        { value: [30, 35, 40, 45, 50, 60, 70, 90, 110], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // motes/s a balloon pulls
   balloonspeed: { value: [1, 1.2, 1.4, 1.6, 1.8, 2, 2.3, 2.6, 3], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // x, how fast a balloon goes cloud to cloud

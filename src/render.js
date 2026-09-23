@@ -21,7 +21,7 @@ import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand }
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
@@ -166,6 +166,7 @@ const LAYERS = [
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
+  { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
   { name: 'workers', draw: drawWorkers, dim: 1 },
   { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying

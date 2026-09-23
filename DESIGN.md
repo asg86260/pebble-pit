@@ -14231,7 +14231,7 @@ topped.
   the ring's size down before. Worth a playbot run on the tower's spark rate at
   three hats before and after.
 
-## The forklifts drive themselves (approved 2026-09-22, not built)
+## The forklifts drive themselves (built 2026-09-22)
 
 *(2026-09-22, the owner's call: "the forklifts shouldn't require a hauler to
 run ... I want the workers to eventually have nothing to do." Supersedes "Who
@@ -14255,23 +14255,27 @@ with the load.
 
 ### What it is
 
-- **A new body type, `TYPE.LIFT`,** in `S.workers` like a wizard or a hauler,
-  so it is drawn, stepped, saved and claims piles through the machinery
-  every body already uses. Its count is `S.drivers` (renamed in meaning,
-  not in the save: "forklifts in the yard"), and `syncWorkers` stands one up
-  for each (the `want` map, as every station's job is). It is **not crew**:
-  it is not in `S.crew`, not housed, not on the roster's headcount, not a
-  worker the house hires or the dance calls.
+- **A body of its own, in a list of its own.** *(As built: not a new type in
+  `S.workers`, as first written.)* A survey of the crew-walking code found
+  over twenty systems that take anything in `S.workers` for a person -- the
+  breaks, the outhouse, the dance, the pointer, the crew board, the stats, the
+  intro, the verify rules, the names -- so a forklift in that list is a
+  forklift every one of them has to be told about. Instead the forklifts are
+  `S.lifts` (crew/lifts.js), typed as haulers with `vehicle: true`, stepped
+  inside the crew's frame on the crew's own books, and seen by nothing that
+  is about people. Its count is `S.drivers`, and `syncLifts` (called from
+  `syncWorkers`) keeps one body a forklift owned.
 - **It hauls by the haulers' own step.** The loop in `crew/hauler.js` (find
   a pile, claim it, load, drive to the hole, tip) is the hauler's job; the
   forklift runs the same loop, with its load and pace read off its own two
   ladders (below). The claims are shared, so forklifts and haulers split the
   piles and never double up.
-- **It skips everything a person does.** No breaks, no smoke, no outhouse,
-  no brews, no dance, no house at night, no crew card, no kit. It can't be
-  picked up with the pointer. Every system that walks `S.workers` and means
-  "the people" has to say so, and that list is the bulk of the work
-  (roughly forty modules walk the crew; about a dozen mean only people).
+- **It skips everything a person does,** by not being in the people's list;
+  and inside the haulers' loop it skips the muck, the hole and the cut
+  (`!w.vehicle`), which stay the haulers' work. Where it does join the
+  haulers is exactly where they coordinate: the claim book (`claims`,
+  `keptBy`, `firstPick`'s spread), the claims let go under a falling rock,
+  `holdTheLine`, and the rock's footprint check (`footprintClear`).
 - **Idle, it parks.** With nothing to carry it drives back to its slot at
   the stand beside the bench (`liftX`) and waits there, engine off. A parked
   forklift is a picture of a yard with nothing left to haul.
@@ -14296,12 +14300,11 @@ balloons are the answer to it, as before.
 
 ### Saves
 
-A save from before this has forklifts worn by carters (`w.lift`). On the
-way in, each worn forklift comes off its carter at the stand, the carter
-keeps its cart, and `S.drivers` is left as it was, so the same number of
-forklifts stand up as self-driving bodies at the stand. A forklift lying
-loose on the ground (`hatOff.lift`) is counted the same way. A migration in
-`src/migrations/`, with a fixture save that has a driver in it.
+A save from before this has forklifts worn by carters (`w.lift`). No
+migration is needed: `lift` is no longer read off a body, the carter comes
+back a carter, and `S.drivers` is unchanged, so the same number of
+forklifts stand up as bodies of their own at the stand. Checked in
+test/forklift.test.mjs by rewriting a save into the old shape.
 
 ### What it must not break
 
@@ -14329,3 +14332,7 @@ rule that a forklift is never counted as crew.
   own design.
 - **The ladders' numbers** in `LADDERS` are first guesses, for the ladder
   book.
+- **Where they park.** At `parkX`, a row running left from the old engine
+  stand, `LIFT_PARK` apart. The row runs into the noticeboard's legs from
+  the first slot on, and a yard of many forklifts runs further into it; the
+  spot is the owner's call (`liftstand` scene).
