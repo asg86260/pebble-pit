@@ -14,6 +14,11 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
+## The deep's crew is set at the shaft -- BUILDING (2026-09-23)
+
+"The deep's crew is set at the shaft" in DESIGN.md: one count, a post at the
+shaft in both halves, bodies stay in the half they are put in, lending cut.
+
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
 "The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:

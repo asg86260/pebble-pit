@@ -14821,3 +14821,51 @@ floor from backing up the yard's piles.
 
 **Nothing teleports.** A gatherer stood down with a load drops it as scales
 into the water where it is, never as dust in the yard.
+
+### The deep's crew is set at the shaft (design, not built)
+
+*Voted 2026-09-23 from three mocked controls (A, the counter at the shaft),
+with no pod cap.* Nothing said how many of the crew are the deep's: the
+weapon rosters pulled bodies down one station at a time, an idle one went
+back up to haul, and the yard lent its haulers down when its piles were
+calm. So the deep's crew changed under the player with every pile and
+every roster press, and nothing kept a body down there.
+
+**One count, at the shaft.** `S.deepCrew` (saved) is how many of the crew
+are the deep's. A roster post stands at the shaft twice -- in the yard over
+the drowned pit, and on the deep's floor at the shaft's foot -- reading
+"down there: N" with a `-` and a `+`. `+` sends a spare yard hand down the
+shaft; `-` calls one of the deep's spare hands up it. Both walk: nothing
+teleports. Pale when there is nobody spare on the side it would take from.
+
+**They stay where they are put.** The deep's crew fills the deep's jobs
+and nothing else; the yard's fills the yard's. Of the deep's crew, whoever
+is on no weapon gathers -- scoops the floor into the crusher, or waits by
+it on a bare floor -- and never goes up to haul. So:
+- `-` under a deep station takes the body off that weapon, and it stays
+  down, gathering. Only the shaft's `-` sends anybody up.
+- `+` under a deep station takes a gatherer if there is one; with none, it
+  is also the shaft's `+`: a spare yard hand comes down to it.
+- The yard no longer lends its haulers to gather (`LEND_CALM`,
+  `GATHER_KEEP`, the linger): the shaft counter is that decision, made by
+  the player and kept.
+- Builders are unchanged: the yard's spare hands go down to put up the
+  deep's works and come back, as any build borrows hands.
+- A pod adds one to the crew and one to the deep's crew. No pod cap: pods
+  grow the crew, the shaft moves it.
+
+**Clamped, never made up.** `rebalance` holds `S.deepCrew` between the
+deep's weapon counts and those plus every spare hand, so the snatch
+putting the sqwife on the altar, or a save from before this, reads as that
+many down there. A save with no count gets its weapons' total.
+
+**Rules.** `verify.js`: the bodies on deep jobs number `S.deepCrew` once the
+crew has caught up; the weapons never hold more than it. The old rule
+"nobody lives in a pod nobody bought" goes with the cap.
+
+**Checks.** A new `test/deep-shaft.test.mjs`, through the roster's buttons:
+`+` at the shaft walks a yard hand down and it gathers; `-` walks one up;
+`-` under the altar keeps the body down; `+` under the altar with nobody
+spare below brings one down; an idle deep hand never goes up with a yard
+pile full. `pods.test.mjs` loses its lending group; `crusher.test.mjs`
+sends its gatherers down through the shaft.
