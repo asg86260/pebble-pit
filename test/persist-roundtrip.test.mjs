@@ -145,7 +145,7 @@ group('every field on S is accounted for', async () => {
       // ...and `mouth`, where the cut's mouth was: a fact about the layout the
       // crew were saved on, read by `restoreCrew` and kept by nothing.
       // ...and `saveV`, the shape number the migrations read off the blob.
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV'];
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV', 'deepBed'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })

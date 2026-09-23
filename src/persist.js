@@ -41,6 +41,7 @@ import { resetNotices } from './notices.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { migrate } from './migrations/index.js';
 import { snapShown } from './tween.js';
+import { SAVE as DEEP_BED } from './deep/scales.js';
 
 // A pile is nearly all long runs of the same value, so store the runs
 // ("value x length"): a full pit comes out a few kilobytes.
@@ -478,6 +479,8 @@ export const SAVERS = [
   // grain before its pile.
   PIT_CELLS,
   PIT,
+  // The deep's floor, laid under the world once the world has its size.
+  DEEP_BED,
   // The cut after `resetCut`, which reads the depth the quarry put back.
   CUT,
   // Last: the opening's pair are stood at the door after everything else is

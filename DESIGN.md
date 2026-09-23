@@ -14451,9 +14451,10 @@ automated enough by now to spare hands, and how many it can spare is the
 player's call. The deep's output depends on bodies *through the surface*,
 never on the assigned count, the way the filter's does on `inFilter()`.
 
-The sqwife is the first of them. She goes in after him on the player's first
-click on the surface, and she is the deep's one body until hands are sent
-down.
+The sqwife is the first of them. She goes in after him on her own as the
+snatch ends -- the deep's first job, a brawler -- and the player follows her
+down with a click on the surface. She is the deep's one body until hands are
+sent down. (The build spec is `docs/wave-serpent.md`.)
 
 ### The serpent is the rock
 

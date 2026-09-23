@@ -30,7 +30,7 @@ import { unitText } from './words.js';
 import { registerRows } from './works.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
-import { JOB, TYPE } from './jobs.js';
+import { JOB, TYPE, YARD_JOBS } from './jobs.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Clamped to the ladder, so a save from before a ladder landed reads as level
@@ -63,7 +63,7 @@ export const carryDoses = () => DOSE_CARRY;
 // of the bracing tonic walked out to them would be a dose for nothing.
 // `takesTonic` is a membership test on this list, so who a brew reaches and
 // what the picker offers cannot come apart. The stirrer is on none of them.
-const EVERY = Object.values(JOB).filter(j => j !== JOB.STIR);
+const EVERY = YARD_JOBS.filter(j => j !== JOB.STIR);
 const ROLLERS = EVERY.filter(j => j !== JOB.HAUL && j !== JOB.PURIFY);
 export const TONICS = [
   { key: 'stew',   name: 'hearty stew',   reagent: 'spore', kind: 'speed',

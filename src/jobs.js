@@ -17,7 +17,13 @@ export const TYPE = Object.freeze({
   STIR:    'stirrer',
   JANITOR: 'janitor',
   WIZARD:  'wizard',
-  BUILD:   'builder'
+  BUILD:   'builder',
+  // The deep's (docs/wave-serpent.md): the yard's crew, gone down the shaft.
+  BRAWL:   'brawler',
+  LANCE:   'lancer',
+  GRENADE: 'grenadier',
+  SCRIBE:  'scribe',
+  WARLOCK: 'warlock'
 });
 
 // What a body DOES. The roster's key, the kit table's key, and the field the
@@ -32,8 +38,18 @@ export const JOB = Object.freeze({
   STIR:    'stirrers',
   JANITOR: 'janitors',
   WIZARD:  'wizards',
-  BUILD:   'builders'
+  BUILD:   'builders',
+  BRAWL:   'brawlers',
+  LANCE:   'lancers',
+  GRENADE: 'grenadiers',
+  SCRIBE:  'scribes',
+  WARLOCK: 'warlocks'
 });
+
+// The deep's jobs, apart: a body down the shaft is out of reach of anything in
+// the yard that walks out to the crew (a tonic, a notice for every post).
+export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK]);
+export const YARD_JOBS = Object.freeze(Object.values(JOB).filter(j => !DEEP_JOBS.includes(j)));
 
 // Built from the two tables rather than written a third time, so a job added
 // above cannot be forgotten here.
@@ -48,5 +64,6 @@ export const TYPE_OF = Object.freeze(Object.fromEntries(
 // raw key. The keys stay `rockhands` and `quarriers` -- saves and hooks quote
 // them.
 const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.FARM]: 'farmers',
-                             [JOB.PURIFY]: 'air purifiers', [JOB.STIR]: 'apothecary' });
+                             [JOB.PURIFY]: 'air purifiers', [JOB.STIR]: 'apothecary',
+                             [JOB.WARLOCK]: 'abyssal wizards' });
 export const jobSaid = job => SAID[job] || job || '';

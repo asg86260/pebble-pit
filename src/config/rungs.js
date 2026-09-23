@@ -65,7 +65,20 @@ export const LADDERS = {
   // trade reads it in its own terms (DESIGN.md, "Three brews, one a coin").
   'potency-stew':   { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker
   'potency-strong': { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % stronger
-  'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] }   // points of crit
+  'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // points of crit
+  // --- the deep: the serpent's weapons -----------------------------------------
+  // The deep's ladders lead with scales, not dust: the `dust` column here is
+  // the scale a rung costs (`lead: 'scale'` in tierRows), and the bands add
+  // dust, ore and a spark on top of it (docs/wave-serpent.md).
+  punch:        { value: [1, 2, 3, 5, 8, 12, 18, 26, 40], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },            // damage a punch
+  brawl:        { value: [0.5, 0.7, 1, 1.3, 1.6, 2, 2.5, 3, 4], dust: [25, 50, 100, 200, 400, 700, 1200, 2000] },   // punches a second, a brawler
+  lance:        { value: [2, 3, 5, 8, 12, 18, 26, 40, 60], dust: [40, 80, 150, 300, 600, 1000, 1700, 2800] },       // bleed a second, a lance
+  lancehold:    { value: [4, 5, 6, 8, 10, 12, 15, 18, 22], dust: [40, 80, 150, 300, 600, 1000, 1700, 2800] },       // seconds a lance holds
+  grenade:      { value: [10, 15, 25, 40, 60, 90, 130, 190, 280], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] }, // damage a length, a burst
+  grenadepace:  { value: [4, 5, 6, 8, 10, 12, 15, 18, 22], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },    // grenades a minute, a grenadier
+  sigil:        { value: [1, 2, 3, 4, 5, 6, 7, 8, 9], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },         // circles the floor holds
+  beam:         { value: [20, 30, 45, 65, 90, 130, 180, 250, 350], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }, // damage a second, a wizard
+  curse:        { value: [0, 5, 10, 15, 20, 25, 30, 35, 40], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }  // % off the heal
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

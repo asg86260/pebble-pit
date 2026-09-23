@@ -20,7 +20,7 @@ import { S, pit } from './state.js';
 import { CATALOG } from './catalog.js';
 import { pitCapacity } from './pit.js';
 import { now } from './clock.js';
-import { JOB } from './jobs.js';
+import { YARD_JOBS } from './jobs.js';
 
 // --- the catalog ---------------------------------------------------------------
 // The names and notes are catalog.js's; here is how each is earned, a
@@ -43,13 +43,13 @@ const allBuilt = () =>
   S.quarryOpen && S.farmOpen && S.apothecaryOpen && S.casinoOpen &&
   S.shackOpen && S.outhouseOpen && S.towerOpen && S.filterOpen;
 
-// A body on every post, read off the JOB word list so a new job is counted
+// A body on every post, read off the yard's job words so a new job is counted
 // without this being touched. It must be `jobs.js` (the words) and not
 // `crew/jobs.js` (the registry): the registry reaches rock.js, which reaches
 // this file, and under that ring the quarry came back from a reload with
 // nobody at the face.
 const everyJobStaffed = () =>
-  Object.values(JOB).every(j => (S[j] | 0) > 0);
+  YARD_JOBS.every(j => (S[j] | 0) > 0);
 
 // the longest anybody has been on the payroll
 const eldest = () => S.workers.reduce((n, w) => Math.max(n, w.lived || 0), 0);

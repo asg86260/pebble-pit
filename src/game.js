@@ -73,6 +73,10 @@ import { stepBalloons } from './balloon.js';
 import { stepCraftAir } from './craftair.js';
 import { stationFoot } from './board.js';
 import { stepFilter } from './filter.js';
+import { stepSerpent } from './deep/serpent.js';
+import { stepArms } from './deep/arms.js';
+import { stepScales, wireBed } from './deep/scales.js';
+import { stepView } from './view.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is the chip loop's own question; every other place that puts a
@@ -102,6 +106,7 @@ export function settleIntoWorld() {
   placeRock();
   wireGround();
   wirePit();
+  wireBed();              // the deep's floor, under the world (deep/scales.js)
   wireCut();                               // the cut's own sand, sized off the quarry
   wireTable();                             // the hopper on the casino's roof
   wireBelt();                              // the strip of ground riding the belt
@@ -195,6 +200,7 @@ export const STEPS = [
   // ad hoc takes it.
   { name: 'beats',   step: c => stepBeats(c.now) },
   { name: 'camera',  step: c => stepCamera(c.now) },
+  { name: 'view',    step: c => stepView(c) },        // the glide between the yard and the deep (view.js)
   { name: 'shake',   step: stepShake },       // and whatever the last landing left
   { name: 'air',     step: stepAir },
   { name: 'paid',    step: stepPaid },
@@ -242,6 +248,11 @@ export const STEPS = [
   // (`swallow` in pit.js): the one thing that empties the hole and leaves the
   // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
+  // The deep, whether or not it is on screen: the serpent heals, the
+  // weapons in the water land, the scales sink (docs/wave-serpent.md).
+  { name: 'serpent',   step: c => stepSerpent(c) },
+  { name: 'arms',      step: c => stepArms(c) },
+  { name: 'scales',    step: c => stepScales(c) },
   { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
   { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in

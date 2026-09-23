@@ -43,6 +43,10 @@ export * from './config/apothecary.js';
 export * from './config/boards.js';
 export * from './config/effects.js';
 export * from './config/touch.js';
+export * from './config/deep.js';
+export * from './config/deepcrew.js';
+export * from './config/deepdraw.js';
+export * from './config/deepboard.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.
@@ -84,13 +88,18 @@ import { SOUND_KNOBS } from './config/sound.js';
 import { RUNG_KNOBS } from './config/rungs.js';
 import { CASINO_KNOBS } from './config/casino.js';
 import { HOUSE_KNOBS } from './config/house.js';
+import { DEEP_KNOBS } from './config/deep.js';
+import { DEEP_CREW_KNOBS } from './config/deepcrew.js';
+import { DEEP_DRAW_KNOBS } from './config/deepdraw.js';
+import { DEEP_BOARD_KNOBS } from './config/deepboard.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...FILTER_KNOBS, ...CREW_KNOBS, ...KIT_KNOBS, ...LIFT_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS,
-  ...CASINO_KNOBS, ...HOUSE_KNOBS
+  ...CASINO_KNOBS, ...HOUSE_KNOBS,
+  ...DEEP_KNOBS, ...DEEP_CREW_KNOBS, ...DEEP_DRAW_KNOBS, ...DEEP_BOARD_KNOBS
 ];
 
 // A knob with no row throws rather than reading `undefined`: setting one

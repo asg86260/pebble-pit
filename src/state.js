@@ -439,6 +439,44 @@ export const S = {
   lastFrame: 0,         // for the length of the last frame
   settleAt: 0,            // the column the pit settler got to last frame
 
+  // --- the deep: the serpent's half (docs/wave-serpent.md) ------------------
+  // Which half the player is looking at. The renderer's and the pointer's
+  // alone: nothing in the sim branches on it.
+  view: 'yard',
+  viewFade: 0,            // the glide between the two, 0..1 (view.js)
+  viewTo: null,           // the half the glide is going to, or null
+  // The serpent. `snatched` is the sqhusband taken; the stage is which of the
+  // four defenses is up (4 once the belly is open); the wound is held open
+  // against the stage's heal and breaks it at the stage's depth.
+  snatched: false,
+  serpentStage: 0,
+  serpentWound: 0,
+  serpentFreed: false,
+  snatch: null,           // the snatch beat's own state while it plays (snatch.js)
+  // The deep's coin: every scale lying on its floor, and whether one ever has.
+  scales: 0,
+  seenScale: false,
+  // The deep's doors.
+  wellOpen: false, fontOpen: false, circleOpen: false, spireOpen: false, starOpen: false,
+  // The deep's jobs: bodies of the yard's crew, gone down the shaft.
+  brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0,
+  // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
+  punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
+  grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
+  sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
+  // In the water, and so this session's: a reload finds them landed or gone.
+  sinking: [],            // scales falling to the floor: { x, y, vx, vy, s }
+  lifting: [],            // scales paid, rising off the bed to the station that took them
+  lances: [],             // a lance thrown or stuck: { x, y, at, seg, until }
+  grenades: [],           // a grenade in the water: { x, y, vx, vy }
+  rings: [],              // a burst's rings: { x, y, at }
+  beams: [],              // a wizard's beam, this frame: { x, y, seg }
+  starFall: null,         // the called star on its way: { x, y, at }
+  deepMotes: [],          // silt and flecks hanging in the water (drawn only)
+  starAt: 0,              // when the next star is called
+  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
+  circleBoardOpen: false, spireBoardOpen: false,
+
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
 
@@ -583,6 +621,12 @@ export const SAVED = [
   'looPosts',
   'coreBuried',           // whether this rock still owes you its core
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
+  // The deep (docs/wave-serpent.md).
+  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
+  'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
+  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks',
+  'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
+  'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
@@ -656,6 +700,7 @@ export const SAVED_BY_HAND = [
   'savedAt',
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
+  'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a
@@ -723,6 +768,10 @@ export const EPHEMERAL = [
   // A reload finds the one under the rock packed in, the way every rock
   // leaves it.
   'buriedDug',
+  // The deep's glide, the snatch mid-play, and everything in its water.
+  'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
+  'starFall', 'deepMotes',
+  'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 
 // The sand grids, mutated in place and never reassigned. `p` is the size of
@@ -737,6 +786,9 @@ export const EPHEMERAL = [
 // `recount` after anything that writes the cells wholesale, and watched by
 // rule 7 in verify.js.
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The deep's floor: the scales lying on it, a plot of sand like the pit's,
+// laid under the deep by `wireBed` in deep/scales.js. Every cell is a scale.
+export const deepBed = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The sand in the quarry: `y` is the ground line and the floor of the grid is
 // the deepest the cut will ever be dug. The ground nobody has taken out yet
