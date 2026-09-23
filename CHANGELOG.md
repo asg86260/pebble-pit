@@ -11,7 +11,7 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
-- Balloon riders get the apothecary's tonics: the balloon comes down to its post for the vial and goes back up (test/balloon.test.mjs).
+- Balloon riders get the apothecary's tonics: the balloon comes down to its post for the vial and goes back up, and the brew's plume rises off the basket in the sky (test/balloon.test.mjs).
 
 ## v0.4.0 — 2026-09-23
 
