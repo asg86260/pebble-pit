@@ -25,6 +25,17 @@ export function enterWorld() {
                    Math.round((-S.camY + S.shakeY) * k));
 }
 
+// The world, cut off at the ground line: the sky is drawn before the yard and
+// nothing paints the earth over it, so on a window too short for the clouds'
+// depth under its top they came through below the line.
+export function enterSky() {
+  enterWorld();
+  const far = 1e6;
+  ctx.beginPath();
+  ctx.rect(-far, -far, 2 * far, far + S.groundY);
+  ctx.clip();
+}
+
 export function leaveWorld() {
   ctx.restore();
 }

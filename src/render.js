@@ -23,7 +23,7 @@ import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
-import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
+import { clearPage, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
 import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
@@ -85,7 +85,7 @@ const LAYERS = [
   { name: 'page', draw: clearPage },
 
   // The sky goes down first: clouds and birds are the far end of everything.
-  { name: 'world', draw: enterWorld },
+  { name: 'world', draw: enterSky },
   // The rain out of the far sheets goes down before the clouds, not after:
   // it is scenery and never lands (DESIGN.md, "The rain has depth too"), and
   // drawn over them a far drop crosses a cloud nearer than itself, which is

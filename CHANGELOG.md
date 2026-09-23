@@ -19,6 +19,7 @@ feature lives in DESIGN.md.
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
+- Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 
 ## v0.4.1 — 2026-09-23
 
